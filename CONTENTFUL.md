@@ -7,21 +7,23 @@ camelCase) để khớp với code trong `src/lib/content/contentful.ts`. Sau kh
 
 ## `blogPost`
 
-| Field ID      | Type                  |
-|---------------|-----------------------|
-| slug          | Short text (unique)   |
-| categoryVi    | Short text            |
-| categoryEn    | Short text            |
-| titleVi       | Short text            |
-| titleEn       | Short text            |
-| excerptVi     | Long text             |
-| excerptEn     | Long text             |
-| bodyVi        | Rich text             |
-| bodyEn        | Rich text             |
-| coverImage    | Media (image)         |
-| publishedAt   | Date & time           |
-| minutesRead   | Integer               |
-| author        | Short text            |
+| Field ID      | Type                                   |
+|---------------|-----------------------------------------|
+| slug          | Short text (unique)                     |
+| type          | Short text, validated: `post` or `video`|
+| categoryVi    | Short text                              |
+| categoryEn    | Short text                              |
+| titleVi       | Short text                              |
+| titleEn       | Short text                              |
+| excerptVi     | Long text                               |
+| excerptEn     | Long text                               |
+| bodyVi        | Rich text                               |
+| bodyEn        | Rich text                               |
+| coverImage    | Media (image)                           |
+| videoUrl      | Short text (YouTube/Vimeo URL, optional)|
+| publishedAt   | Date & time                              |
+| minutesRead   | Integer                                 |
+| author        | Short text                              |
 
 ## `creditCardOffer`
 
@@ -31,6 +33,7 @@ camelCase) để khớp với code trong `src/lib/content/contentful.ts`. Sau kh
 | name           | Short text                    |
 | issuer         | Short text                    |
 | image          | Media (image)                 |
+| country        | Short text, validated: `US` or `CA` |
 | annualFeeVi    | Short text                    |
 | annualFeeEn    | Short text                    |
 | cardTypeVi     | Short text                    |

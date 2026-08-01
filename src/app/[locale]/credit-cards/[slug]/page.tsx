@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { getCreditCardOfferBySlug, getCreditCardOffers } from "@/lib/content";
 import { pickLocale } from "@/lib/pick-locale";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
+import { CardBadges } from "@/components/credit-cards/card-badges";
 
 export async function generateStaticParams() {
   const offers = await getCreditCardOffers();
@@ -47,15 +48,12 @@ export default async function CreditCardDetailPage({
 
       <MediaPlaceholder icon="credit-card" tone="tan" className="mt-6 h-56 w-full rounded-2xl" />
 
-      <div className="mt-6 flex flex-wrap items-center gap-2">
-        {offer.elevatedBonus && (
-          <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
-            + {t("elevatedBonus")}
-          </span>
-        )}
-        <span className="text-xs font-medium text-muted-foreground">
-          {pickLocale(offer.cardType, locale)} &middot; {offer.issuer}
-        </span>
+      <div className="mt-6">
+        <CardBadges
+          offer={offer}
+          cardType={`${pickLocale(offer.cardType, locale)} · ${offer.issuer}`}
+          elevatedBonusLabel={t("elevatedBonus")}
+        />
       </div>
 
       <h1 className="mt-2 font-display text-3xl font-extrabold text-foreground">{offer.name}</h1>

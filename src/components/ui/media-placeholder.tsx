@@ -4,6 +4,7 @@ import {
   Buildings,
   CreditCard,
   Globe,
+  Play,
   UserCircle,
 } from "@phosphor-icons/react/ssr";
 
@@ -28,17 +29,26 @@ export function MediaPlaceholder({
   icon,
   tone = "tan",
   className = "",
+  isVideo = false,
 }: {
   icon: PlaceholderIcon;
   tone?: keyof typeof tones;
   className?: string;
+  isVideo?: boolean;
 }) {
   const Icon = icons[icon];
   return (
     <div
-      className={`flex items-center justify-center overflow-hidden ${tones[tone]} ${className}`}
+      className={`relative flex items-center justify-center overflow-hidden ${tones[tone]} ${className}`}
     >
       <Icon size={40} weight="light" />
+      {isVideo && (
+        <span className="absolute inset-0 flex items-center justify-center bg-black/10">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-navy-ink shadow-md">
+            <Play size={20} weight="fill" />
+          </span>
+        </span>
+      )}
     </div>
   );
 }

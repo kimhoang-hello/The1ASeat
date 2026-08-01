@@ -40,11 +40,19 @@ export async function PostsSection() {
                 icon={post.coverImage as PlaceholderIcon}
                 tone="navy"
                 className="h-44 w-full"
+                isVideo={post.type === "video"}
               />
               <div className="flex flex-1 flex-col p-5">
-                <span className="text-xs font-semibold uppercase tracking-wide text-primary">
-                  {pickLocale(post.category, locale)}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-primary">
+                    {pickLocale(post.category, locale)}
+                  </span>
+                  {post.type === "video" && (
+                    <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground/70">
+                      {t("videoBadge")}
+                    </span>
+                  )}
+                </div>
                 <h3 className="mt-2 font-display text-base font-bold leading-snug text-foreground group-hover:text-primary">
                   {pickLocale(post.title, locale)}
                 </h3>

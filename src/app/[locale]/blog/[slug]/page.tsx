@@ -31,8 +31,9 @@ export default async function BlogPostPage({
   const { slug, locale: routeLocale } = await params;
   setRequestLocale(routeLocale);
 
-  const [common, locale, post] = await Promise.all([
+  const [common, t, locale, post] = await Promise.all([
     getTranslations("common"),
+    getTranslations("posts"),
     getLocale(),
     getPostBySlug(slug),
   ]);
@@ -49,11 +50,19 @@ export default async function BlogPostPage({
         icon={post.coverImage as PlaceholderIcon}
         tone="navy"
         className="mt-6 h-56 w-full rounded-2xl"
+        isVideo={post.type === "video"}
       />
 
-      <span className="mt-6 block text-xs font-semibold uppercase tracking-wide text-primary">
-        {pickLocale(post.category, locale)}
-      </span>
+      <div className="mt-6 flex items-center gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wide text-primary">
+          {pickLocale(post.category, locale)}
+        </span>
+        {post.type === "video" && (
+          <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground/70">
+            {t("videoBadge")}
+          </span>
+        )}
+      </div>
       <h1 className="mt-2 font-display text-3xl font-extrabold text-foreground">
         {pickLocale(post.title, locale)}
       </h1>

@@ -1,6 +1,7 @@
 [
   {
     "slug": "the-hoi-vien-hang-khong-nao-dang-gia",
+    "type": "post",
     "category": { "vi": "Thẻ tín dụng", "en": "Credit Cards" },
     "title": {
       "vi": "So sánh 2026: Thẻ đồng thương hiệu hàng không nào đáng mở nhất?",
@@ -21,6 +22,7 @@
   },
   {
     "slug": "chuyen-doi-diem-sang-ve-thuong-gia",
+    "type": "post",
     "category": { "vi": "Award Travel", "en": "Award Travel" },
     "title": {
       "vi": "Cách đổi điểm thẻ tín dụng thành vé thương gia đi châu Âu",
@@ -41,6 +43,7 @@
   },
   {
     "slug": "toi-uu-diem-thuong-khach-san",
+    "type": "post",
     "category": { "vi": "Khách sạn", "en": "Hotels" },
     "title": {
       "vi": "5 mẹo tối ưu điểm thưởng khách sạn cho người mới bắt đầu",
@@ -60,6 +63,7 @@
   },
   {
     "slug": "danh-gia-phong-cho-thuong-gia",
+    "type": "post",
     "category": { "vi": "Đánh giá", "en": "Reviews" },
     "title": {
       "vi": "Trải nghiệm phòng chờ thương gia sân bay Tân Sơn Nhất",
@@ -76,6 +80,50 @@
     "coverImage": "armchair",
     "publishedAt": "2026-07-02",
     "minutesRead": 5,
+    "author": "Bảo"
+  },
+  {
+    "slug": "review-phong-cho-thuong-gia-video",
+    "type": "video",
+    "category": { "vi": "Đánh giá", "en": "Reviews" },
+    "title": {
+      "vi": "[Video] Một vòng phòng chờ thương gia Tân Sơn Nhất",
+      "en": "[Video] A Walkthrough of the Tan Son Nhat Business Lounge"
+    },
+    "excerpt": {
+      "vi": "Cùng đi một vòng phòng chờ thương gia — đồ ăn, không gian nghỉ, và cách vào miễn phí bằng thẻ tín dụng.",
+      "en": "A quick walkthrough of the business lounge — food, seating, and how to get in free with a credit card."
+    },
+    "body": {
+      "vi": "<p>Nội dung mẫu — thay bằng video thật (YouTube/TikTok) và mô tả chi tiết khi bạn quay xong.</p>",
+      "en": "<p>Placeholder — replace with your real video (YouTube/TikTok) and a full description once it's filmed.</p>"
+    },
+    "coverImage": "armchair",
+    "videoUrl": "",
+    "publishedAt": "2026-07-24",
+    "minutesRead": 4,
+    "author": "Bảo"
+  },
+  {
+    "slug": "cach-dat-ve-award-video",
+    "type": "video",
+    "category": { "vi": "Award Travel", "en": "Award Travel" },
+    "title": {
+      "vi": "[Video] Đặt vé award thương gia trong 5 phút",
+      "en": "[Video] Booking a Business Class Award Seat in 5 Minutes"
+    },
+    "excerpt": {
+      "vi": "Xem trực tiếp cách tìm và đặt một vé award thương gia sang châu Âu bằng điểm thưởng.",
+      "en": "Watch a live walkthrough of finding and booking a business class award seat to Europe with points."
+    },
+    "body": {
+      "vi": "<p>Nội dung mẫu — thay bằng video thật khi có, kèm timestamp các bước chính.</p>",
+      "en": "<p>Placeholder — replace with the real video once filmed, with timestamps for each step.</p>"
+    },
+    "coverImage": "globe",
+    "videoUrl": "",
+    "publishedAt": "2026-07-08",
+    "minutesRead": 7,
     "author": "Bảo"
   }
 ]

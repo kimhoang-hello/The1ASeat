@@ -6,7 +6,7 @@
   "nav": {
     "creditCards": "Credit Cards",
     "blog": "Blog",
-    "resources": "Resources",
+    "pointsTools": "Points Tools",
     "calculator": "Points Calculator",
     "transferBonuses": "Transfer Bonuses",
     "about": "About",
@@ -16,7 +16,7 @@
     "title1": "Fly More.",
     "title2": "Spend Less.",
     "subtitle": "Learn how to maximize airline miles, hotel points, and credit card rewards to fly business class for the price of economy.",
-    "formLabel": "GET THE FREE WEEKLY NEWSLETTER",
+    "formLabel": "GET THE FREE NEWSLETTER",
     "emailPlaceholder": "you@email.com",
     "subscribe": "Subscribe Free",
     "disclaimer": "No spam. Unsubscribe anytime."
@@ -34,7 +34,11 @@
   "posts": {
     "eyebrow": "FROM THE BLOG",
     "title": "Latest Posts",
-    "viewAll": "View all posts"
+    "viewAll": "View all posts",
+    "videoBadge": "Video",
+    "tabAll": "All",
+    "tabPosts": "Posts",
+    "tabVideos": "Videos"
   },
   "bonuses": {
     "eyebrow": "UPDATED REGULARLY",
@@ -62,10 +66,10 @@
     "cta": "My Story"
   },
   "newsletterCta": {
-    "eyebrow": "WEEKLY NEWSLETTER",
+    "eyebrow": "NEWSLETTER",
     "title1": "Stay ahead of every deal,",
     "title2": "bonus & alert.",
-    "subtitle": "Join thousands of award travelers getting the weekly roundup every Sunday."
+    "subtitle": "Join thousands of award travelers getting deals, bonuses & alerts from Ghế 1A."
   },
   "footer": {
     "disclosure": "Ghế 1A may earn a commission from credit card partners when you apply through links on this site. Opinions, reviews, and analysis are our own and have not been reviewed, approved, or endorsed by any issuer. See our Terms & Privacy Policy.",

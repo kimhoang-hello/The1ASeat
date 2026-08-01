@@ -6,6 +6,7 @@ import { getCreditCardOffers } from "@/lib/content";
 import { pickLocale } from "@/lib/pick-locale";
 import { PageHeader } from "@/components/layout/page-header";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
+import { CardBadges } from "@/components/credit-cards/card-badges";
 
 export async function generateMetadata({
   params,
@@ -49,16 +50,11 @@ export default async function CreditCardsPage({
               />
 
               <div className="flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  {offer.elevatedBonus && (
-                    <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
-                      + {t("elevatedBonus")}
-                    </span>
-                  )}
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {pickLocale(offer.cardType, locale)} &middot; {offer.issuer}
-                  </span>
-                </div>
+                <CardBadges
+                  offer={offer}
+                  cardType={`${pickLocale(offer.cardType, locale)} · ${offer.issuer}`}
+                  elevatedBonusLabel={t("elevatedBonus")}
+                />
 
                 <h2 className="mt-1.5 font-display text-lg font-bold text-foreground">
                   {offer.name}

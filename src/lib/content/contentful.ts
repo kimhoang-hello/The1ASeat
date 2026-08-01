@@ -24,6 +24,7 @@ interface PostSkeleton {
   contentTypeId: "blogPost";
   fields: {
     slug: EntryFieldTypes.Symbol;
+    type: EntryFieldTypes.Symbol<"post" | "video">;
     categoryVi: EntryFieldTypes.Symbol;
     categoryEn: EntryFieldTypes.Symbol;
     titleVi: EntryFieldTypes.Symbol;
@@ -33,6 +34,7 @@ interface PostSkeleton {
     bodyVi: EntryFieldTypes.RichText;
     bodyEn: EntryFieldTypes.RichText;
     coverImage?: EntryFieldTypes.AssetLink;
+    videoUrl?: EntryFieldTypes.Symbol;
     publishedAt: EntryFieldTypes.Date;
     minutesRead: EntryFieldTypes.Integer;
     author: EntryFieldTypes.Symbol;
@@ -46,6 +48,7 @@ interface CardSkeleton {
     name: EntryFieldTypes.Symbol;
     issuer: EntryFieldTypes.Symbol;
     image?: EntryFieldTypes.AssetLink;
+    country: EntryFieldTypes.Symbol<"US" | "CA">;
     annualFeeVi: EntryFieldTypes.Symbol;
     annualFeeEn: EntryFieldTypes.Symbol;
     cardTypeVi: EntryFieldTypes.Symbol;
@@ -87,11 +90,13 @@ function toPost(entry: Entry<PostSkeleton, undefined>): BlogPost {
   const f = entry.fields;
   return {
     slug: f.slug,
+    type: f.type,
     category: { vi: f.categoryVi, en: f.categoryEn },
     title: { vi: f.titleVi, en: f.titleEn },
     excerpt: { vi: f.excerptVi, en: f.excerptEn },
     body: { vi: documentToHtmlString(f.bodyVi), en: documentToHtmlString(f.bodyEn) },
     coverImage: assetUrl(f.coverImage),
+    videoUrl: f.videoUrl,
     publishedAt: f.publishedAt,
     minutesRead: f.minutesRead,
     author: f.author,
@@ -105,6 +110,7 @@ function toCard(entry: Entry<CardSkeleton, undefined>): CreditCardOffer {
     name: f.name,
     issuer: f.issuer,
     image: assetUrl(f.image),
+    country: f.country,
     annualFee: { vi: f.annualFeeVi, en: f.annualFeeEn },
     cardType: { vi: f.cardTypeVi, en: f.cardTypeEn },
     headline: { vi: f.headlineVi, en: f.headlineEn },

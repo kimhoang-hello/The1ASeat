@@ -2,9 +2,10 @@
   {
     "slug": "premier-travel-rewards",
     "name": "Premier Travel Rewards",
-    "issuer": "Ngân hàng A",
+    "issuer": "Issuer A",
     "image": "credit-card",
-    "annualFee": { "vi": "1.200.000₫ — miễn năm đầu", "en": "1,200,000₫ — waived first year" },
+    "country": "US",
+    "annualFee": { "vi": "$95 — miễn năm đầu", "en": "$95 — waived first year" },
     "cardType": { "vi": "Thẻ cá nhân", "en": "Personal Credit Card" },
     "headline": {
       "vi": "Ưu đãi chào mừng lên đến 60.000 điểm sau khi đạt hạn mức chi tiêu.",
@@ -24,9 +25,10 @@
   {
     "slug": "everyday-dining-plus",
     "name": "Everyday Dining Plus",
-    "issuer": "Ngân hàng B",
+    "issuer": "Issuer B",
     "image": "credit-card",
-    "annualFee": { "vi": "500.000₫/năm", "en": "500,000₫/year" },
+    "country": "US",
+    "annualFee": { "vi": "$0/năm", "en": "$0/year" },
     "cardType": { "vi": "Thẻ cá nhân", "en": "Personal Credit Card" },
     "headline": {
       "vi": "Hoàn điểm gấp 3 lần cho ăn uống và siêu thị trên toàn thế giới.",
@@ -36,8 +38,8 @@
       "en": "Low annual fee, ideal as a daily-spend card to steadily build a points balance."
     },
     "keyBenefits": {
-      "vi": ["Hoàn 400.000đ tín dụng ăn uống mỗi năm", "Không phụ phí giao dịch nước ngoài", "Không yêu cầu điểm tín dụng cao"],
-      "en": ["$400,000₫ dining credit annually", "No foreign transaction fees", "No high credit-score requirement"]
+      "vi": ["Hoàn $10 tín dụng ăn uống mỗi tháng", "Không phụ phí giao dịch nước ngoài", "Không yêu cầu điểm tín dụng cao"],
+      "en": ["$10 dining credit monthly", "No foreign transaction fees", "No high credit-score requirement"]
     },
     "elevatedBonus": false,
     "applyUrl": "#"
@@ -45,9 +47,10 @@
   {
     "slug": "prestige-hotel-elite",
     "name": "Prestige Hotel Elite",
-    "issuer": "Ngân hàng C",
+    "issuer": "Issuer C",
     "image": "credit-card",
-    "annualFee": { "vi": "1.650.000₫/năm", "en": "1,650,000₫/year" },
+    "country": "CA",
+    "annualFee": { "vi": "C$120/năm", "en": "C$120/year" },
     "cardType": { "vi": "Thẻ cá nhân", "en": "Personal Credit Card" },
     "headline": {
       "vi": "Tặng 1 đêm miễn phí khách sạn hạng sang mỗi năm khi gia hạn thẻ.",
@@ -66,9 +69,10 @@
   {
     "slug": "business-explorer-corporate",
     "name": "Business Explorer Corporate",
-    "issuer": "Ngân hàng A",
+    "issuer": "Issuer A",
     "image": "credit-card",
-    "annualFee": { "vi": "2.000.000₫/năm", "en": "2,000,000₫/year" },
+    "country": "US",
+    "annualFee": { "vi": "$150/năm", "en": "$150/year" },
     "cardType": { "vi": "Thẻ doanh nghiệp", "en": "Business Credit Card" },
     "headline": {
       "vi": "Ưu đãi chào mừng 80.000 điểm dành cho chủ doanh nghiệp nhỏ.",

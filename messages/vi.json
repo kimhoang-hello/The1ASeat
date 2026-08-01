@@ -6,7 +6,7 @@
   "nav": {
     "creditCards": "Thẻ tín dụng",
     "blog": "Blog",
-    "resources": "Tài nguyên",
+    "pointsTools": "Công cụ điểm thưởng",
     "calculator": "Công cụ tính điểm",
     "transferBonuses": "Ưu đãi chuyển điểm",
     "about": "Giới thiệu",
@@ -16,7 +16,7 @@
     "title1": "Bay Nhiều Hơn.",
     "title2": "Chi Ít Hơn.",
     "subtitle": "Học cách tối ưu điểm thưởng hàng không, khách sạn và thẻ tín dụng để trải nghiệm hạng thương gia với chi phí hạng phổ thông.",
-    "formLabel": "NHẬN BẢN TIN MIỄN PHÍ HÀNG TUẦN",
+    "formLabel": "NHẬN BẢN TIN MIỄN PHÍ",
     "emailPlaceholder": "email-cua-ban@gmail.com",
     "subscribe": "Đăng ký miễn phí",
     "disclaimer": "Không spam. Huỷ đăng ký bất cứ lúc nào."
@@ -34,7 +34,11 @@
   "posts": {
     "eyebrow": "TỪ BLOG",
     "title": "Bài Viết Mới Nhất",
-    "viewAll": "Xem tất cả bài viết"
+    "viewAll": "Xem tất cả bài viết",
+    "videoBadge": "Video",
+    "tabAll": "Tất cả",
+    "tabPosts": "Bài viết",
+    "tabVideos": "Video"
   },
   "bonuses": {
     "eyebrow": "CẬP NHẬT THƯỜNG XUYÊN",
@@ -62,10 +66,10 @@
     "cta": "Câu chuyện của mình"
   },
   "newsletterCta": {
-    "eyebrow": "BẢN TIN HÀNG TUẦN",
+    "eyebrow": "BẢN TIN",
     "title1": "Luôn cập nhật mọi ưu đãi,",
     "title2": "bonus & cảnh báo mới nhất.",
-    "subtitle": "Tham gia cùng hàng nghìn người đang săn vé award mỗi Chủ Nhật."
+    "subtitle": "Tham gia cùng hàng nghìn người đang săn vé award cùng Ghế 1A."
   },
   "footer": {
     "disclosure": "Ghế 1A có thể nhận hoa hồng từ các đối tác thẻ tín dụng khi bạn mở thẻ qua liên kết trên trang. Ý kiến, đánh giá và phân tích hoàn toàn là quan điểm độc lập của chúng tôi, không được cung cấp, xét duyệt hay chấp thuận bởi bất kỳ tổ chức phát hành nào. Xem Điều khoản & Chính sách bảo mật.",
