@@ -10,7 +10,7 @@ export async function NewsletterCta() {
         <div>
           <p className="text-xs font-semibold tracking-wide text-white/60">{t("eyebrow")}</p>
           <h2 className="mt-2 font-display text-2xl font-extrabold sm:text-3xl">
-            {t("title1")} <span className="italic">{t("title2")}</span>
+            {t("title1")} {t("title2")}
           </h2>
           <p className="mt-3 max-w-md text-sm text-white/70">{t("subtitle")}</p>
         </div>

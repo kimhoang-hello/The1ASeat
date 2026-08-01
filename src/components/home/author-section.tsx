@@ -37,6 +37,7 @@ export async function AuthorSection() {
           photo={author.photo}
           name={author.name}
           className="h-48 w-48 justify-self-center"
+          rounded="rounded-full"
         />
       </div>
     </section>

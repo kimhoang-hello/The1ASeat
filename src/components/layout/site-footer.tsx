@@ -1,7 +1,7 @@
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 import { InstagramLogo, TiktokLogo, YoutubeLogo } from "@phosphor-icons/react/ssr";
 import { Link } from "@/i18n/navigation";
-import { LogoGlyph } from "@/components/brand/logo";
 
 export function SiteFooter() {
   const t = useTranslations("footer");
@@ -12,10 +12,10 @@ export function SiteFooter() {
   return (
     <footer className="border-t border-border bg-navy-ink text-white/70">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 font-display text-base font-extrabold text-white">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-white/10">
-              <LogoGlyph className="h-4 w-4" />
+            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-background">
+              <Image src="/images/logo.png" alt="" width={477} height={480} className="h-5 w-5" />
             </span>
             {site("name")}
           </div>

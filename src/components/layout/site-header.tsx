@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
+import Image from "next/image";
 import { List, X, CaretDown } from "@phosphor-icons/react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { LocaleSwitcher } from "./locale-switcher";
-import { LogoMark } from "@/components/brand/logo";
+import { routing } from "@/i18n/routing";
+
+const showLocaleSwitcher = routing.locales.length > 1;
 
 export function SiteHeader() {
   const t = useTranslations("nav");
@@ -33,6 +36,24 @@ export function SiteHeader() {
   const blogActive = pathname === "/blog" || pathname.startsWith("/blog/");
   const toolsActive = toolsLinks.some((link) => pathname === link.href);
 
+  const navRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    function closeOnOutsideClick(event: MouseEvent) {
+      if (!navRef.current?.contains(event.target as Node)) {
+        navRef.current
+          ?.querySelectorAll("details[open]")
+          .forEach((details) => details.removeAttribute("open"));
+      }
+    }
+    document.addEventListener("click", closeOnOutsideClick);
+    return () => document.removeEventListener("click", closeOnOutsideClick);
+  }, []);
+
+  function closeParentDropdown(event: React.MouseEvent<HTMLElement>) {
+    event.currentTarget.closest("details")?.removeAttribute("open");
+  }
+
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -40,11 +61,11 @@ export function SiteHeader() {
           href="/"
           className="flex items-center gap-2 font-display text-lg font-extrabold tracking-tight text-foreground"
         >
-          <LogoMark />
+          <Image src="/images/logo.png" alt="" width={477} height={480} className="h-9 w-9" priority />
           {site("name")}
         </Link>
 
-        <nav className="hidden items-center gap-7 lg:flex">
+        <nav ref={navRef} className="hidden items-center gap-7 lg:flex">
           {links.map((link) => {
             const active = pathname === link.href;
             return (
@@ -60,7 +81,7 @@ export function SiteHeader() {
             );
           })}
 
-          <details className="group relative">
+          <details name="nav-dropdown" className="group relative">
             <summary
               className={`flex cursor-pointer list-none items-center gap-1 text-sm font-medium transition-colors hover:text-primary [&::-webkit-details-marker]:hidden ${
                 blogActive ? "text-primary" : "text-foreground/80"
@@ -74,6 +95,7 @@ export function SiteHeader() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  onClick={closeParentDropdown}
                   className={`block rounded-lg px-3 py-2 text-sm hover:bg-secondary ${
                     pathname === "/blog" && activeType === link.type
                       ? "text-primary"
@@ -86,7 +108,7 @@ export function SiteHeader() {
             </div>
           </details>
 
-          <details className="group relative">
+          <details name="nav-dropdown" className="group relative">
             <summary
               className={`flex cursor-pointer list-none items-center gap-1 text-sm font-medium transition-colors hover:text-primary [&::-webkit-details-marker]:hidden ${
                 toolsActive ? "text-primary" : "text-foreground/80"
@@ -100,6 +122,7 @@ export function SiteHeader() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  onClick={closeParentDropdown}
                   className={`block rounded-lg px-3 py-2 text-sm hover:bg-secondary ${
                     pathname === link.href ? "text-primary" : "text-foreground/90"
                   }`}
@@ -121,7 +144,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-4 lg:flex">
-          <LocaleSwitcher currentLocale={locale} />
+          {showLocaleSwitcher && <LocaleSwitcher currentLocale={locale} />}
           <Link
             href="/#newsletter"
             className="cursor-pointer rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
@@ -196,11 +219,13 @@ export function SiteHeader() {
             </Link>
           </nav>
           <div className="mt-4 flex items-center justify-between gap-3 border-t border-border pt-4">
-            <LocaleSwitcher currentLocale={locale} />
+            {showLocaleSwitcher && <LocaleSwitcher currentLocale={locale} />}
             <Link
               href="/#newsletter"
               onClick={() => setOpen(false)}
-              className="cursor-pointer rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+              className={`cursor-pointer rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground ${
+                showLocaleSwitcher ? "" : "ml-auto"
+              }`}
             >
               {t("newsletter")}
             </Link>

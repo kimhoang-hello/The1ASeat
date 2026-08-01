@@ -9,7 +9,7 @@ export function Hero() {
       <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
         <h1 className="font-display text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">
           {t("title1")}{" "}
-          <span className="italic text-primary">{t("title2")}</span>
+          <span className="text-primary">{t("title2")}</span>
         </h1>
         <p className="mt-5 max-w-xl text-balance text-base leading-relaxed text-muted-foreground sm:text-lg">
           {t("subtitle")}
