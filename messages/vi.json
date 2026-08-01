@@ -1,0 +1,88 @@
+{
+  "site": {
+    "name": "Ghế 1A",
+    "tagline": "Miles & Points cho người Việt"
+  },
+  "nav": {
+    "creditCards": "Thẻ tín dụng",
+    "blog": "Blog",
+    "resources": "Tài nguyên",
+    "calculator": "Công cụ tính điểm",
+    "transferBonuses": "Ưu đãi chuyển điểm",
+    "about": "Giới thiệu",
+    "newsletter": "Đăng ký bản tin"
+  },
+  "hero": {
+    "title1": "Bay Nhiều Hơn.",
+    "title2": "Chi Ít Hơn.",
+    "subtitle": "Học cách tối ưu điểm thưởng hàng không, khách sạn và thẻ tín dụng để trải nghiệm hạng thương gia với chi phí hạng phổ thông.",
+    "formLabel": "NHẬN BẢN TIN MIỄN PHÍ HÀNG TUẦN",
+    "emailPlaceholder": "email-cua-ban@gmail.com",
+    "subscribe": "Đăng ký miễn phí",
+    "disclaimer": "Không spam. Huỷ đăng ký bất cứ lúc nào."
+  },
+  "stats": {
+    "newsletter": "Người đăng ký",
+    "instagram": "Instagram",
+    "youtube": "YouTube",
+    "tiktok": "TikTok"
+  },
+  "offers": {
+    "eyebrow": "ƯU ĐÃI NỔI BẬT",
+    "title": "Thẻ Tín Dụng Đáng Chú Ý",
+    "viewAll": "Xem tất cả thẻ",
+    "viewOffer": "Xem ưu đãi",
+    "keyBenefits": "Quyền lợi chính",
+    "annualFee": "Phí thường niên",
+    "editorsTake": "NHẬN ĐỊNH CỦA GHẾ 1A",
+    "elevatedBonus": "Ưu đãi tăng cường"
+  },
+  "posts": {
+    "eyebrow": "TỪ BLOG",
+    "title": "Bài Viết Mới Nhất",
+    "viewAll": "Xem tất cả bài viết"
+  },
+  "bonuses": {
+    "eyebrow": "CẬP NHẬT THƯỜNG XUYÊN",
+    "title": "Ưu Đãi Chuyển Điểm Đang Diễn Ra",
+    "viewAll": "Xem tất cả ưu đãi",
+    "partner": "Đối tác",
+    "expires": "Hết hạn",
+    "browsing": "Đang xem {shown}/{total} ưu đãi"
+  },
+  "calculator": {
+    "eyebrow": "CÔNG CỤ",
+    "title": "Máy Tính Giá Trị Điểm Thưởng",
+    "subtitle": "Ước tính giá trị quy đổi điểm/dặm của bạn cho một vé award cụ thể.",
+    "pointsLabel": "Số điểm/dặm cần dùng",
+    "cashPriceLabel": "Giá vé tiền mặt tương đương (VND)",
+    "taxesLabel": "Thuế, phí phải trả thêm (VND)",
+    "result": "Giá trị mỗi điểm",
+    "resultHint": "Kinh nghiệm: từ 15–20đ/điểm trở lên thường là một giao dịch đổi điểm tốt.",
+    "reset": "Tính lại"
+  },
+  "author": {
+    "eyebrow": "NGƯỜI ĐỨNG SAU GHẾ 1A",
+    "title": "Xin chào, mình là {name}.",
+    "bio": "Năm 2019, mình đã thực hiện một chuyến vòng quanh thế giới hoàn toàn bằng hạng thương gia — toàn bộ nhờ vào điểm thưởng và dặm bay tích luỹ được. Từ đó, mình lập Ghế 1A để giúp mọi người làm điều tương tự, thông minh và tiết kiệm hơn.",
+    "cta": "Câu chuyện của mình"
+  },
+  "newsletterCta": {
+    "eyebrow": "BẢN TIN HÀNG TUẦN",
+    "title1": "Luôn cập nhật mọi ưu đãi,",
+    "title2": "bonus & cảnh báo mới nhất.",
+    "subtitle": "Tham gia cùng hàng nghìn người đang săn vé award mỗi Chủ Nhật.",
+    "subscribersSuffix": "người đăng ký và đang tăng"
+  },
+  "footer": {
+    "disclosure": "Ghế 1A có thể nhận hoa hồng từ các đối tác thẻ tín dụng khi bạn mở thẻ qua liên kết trên trang. Ý kiến, đánh giá và phân tích hoàn toàn là quan điểm độc lập của chúng tôi, không được cung cấp, xét duyệt hay chấp thuận bởi bất kỳ tổ chức phát hành nào. Xem Điều khoản & Chính sách bảo mật.",
+    "terms": "Điều khoản",
+    "privacy": "Chính sách bảo mật",
+    "rights": "Bảo lưu mọi quyền."
+  },
+  "common": {
+    "readMore": "Đọc thêm",
+    "minRead": "phút đọc",
+    "backHome": "Về trang chủ"
+  }
+}

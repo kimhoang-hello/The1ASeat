@@ -9,12 +9,22 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@contentful/rich-text-html-renderer": "^17.2.3",
+    "@phosphor-icons/react": "^2.1.10",
+    "clsx": "^2.1.1",
+    "contentful": "^11.12.7",
+    "date-fns": "^4.4.0",
+    "gray-matter": "^4.0.3",
     "next": "16.2.12",
+    "next-intl": "^4.13.4",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "remark": "^15.0.1",
+    "remark-html": "^16.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@tailwindcss/typography": "^0.5.20",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

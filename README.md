@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ghế 1A
 
-## Getting Started
+Blog cá nhân về Miles & Points và Award Travel — song ngữ Việt/Anh, xây bằng
+Next.js (App Router), Tailwind CSS 4, và tích hợp Contentful (tuỳ chọn).
 
-First, run the development server:
+## Bắt đầu
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Mở [http://localhost:3000](http://localhost:3000). Mặc định chạy tiếng Việt ở `/`,
+tiếng Anh ở `/en`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Cấu trúc chính
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Đường dẫn                        | Nội dung                                           |
+|-----------------------------------|-----------------------------------------------------|
+| `src/app/[locale]/`               | Các trang (App Router), theo từng ngôn ngữ          |
+| `src/components/`                 | Component UI (layout, home sections, calculator...)  |
+| `src/lib/content/`                 | Tầng dữ liệu: Contentful hoặc nội dung mẫu           |
+| `content/sample/*.json`           | Nội dung mẫu (bài viết, thẻ tín dụng, transfer bonus)|
+| `messages/{vi,en}.json`           | Chuỗi giao diện đa ngôn ngữ (next-intl)              |
 
-## Learn More
+## Nội dung
 
-To learn more about Next.js, take a look at the following resources:
+Mặc định site chạy với nội dung mẫu trong `content/sample/`. Để chuyển sang
+Contentful thật, xem [CONTENTFUL.md](CONTENTFUL.md) rồi điền `CONTENTFUL_SPACE_ID`
+và `CONTENTFUL_ACCESS_TOKEN` vào `.env.local` (copy từ `.env.example`).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Xem [DEPLOY.md](DEPLOY.md) để deploy lên Hostinger VPS (PM2 + Nginx + GitHub Actions CI/CD).
 
-## Deploy on Vercel
+## Stack
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Next.js 16](https://nextjs.org) (App Router, Turbopack)
+- [Tailwind CSS 4](https://tailwindcss.com)
+- [next-intl](https://next-intl.dev) — đa ngôn ngữ VI/EN
+- [Contentful](https://www.contentful.com) — CMS (tuỳ chọn, có fallback nội dung mẫu)
+- [Phosphor Icons](https://phosphoricons.com)
