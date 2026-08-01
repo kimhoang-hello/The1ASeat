@@ -24,8 +24,8 @@ export function SiteFooter() {
             <Link href="/credit-cards" className="hover:text-white">
               {nav("creditCards")}
             </Link>
-            <Link href="/transfer-bonuses" className="hover:text-white">
-              {nav("transferBonuses")}
+            <Link href="/blog" className="hover:text-white">
+              {nav("blog")}
             </Link>
             <Link href="/#newsletter" className="hover:text-white">
               {nav("newsletter")}

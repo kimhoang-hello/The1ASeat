@@ -37,7 +37,12 @@ export default async function AboutPage({
         {t("title", { name: author.name })}
       </h1>
 
-      <AuthorPhoto photo={author.photo} name={author.name} className="mt-8 h-56 w-56" />
+      <AuthorPhoto
+        photo={author.photo}
+        name={author.name}
+        className="mt-8 h-56 w-56"
+        rounded="rounded-full"
+      />
 
       <div className="mt-8 space-y-5 text-lg leading-relaxed text-foreground/90">
         {pickLocale(author.bio, locale)

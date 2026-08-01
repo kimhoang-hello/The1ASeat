@@ -18,7 +18,7 @@
     "coverImage": "airplane",
     "publishedAt": "2026-07-28",
     "minutesRead": 8,
-    "author": "Bảo"
+    "author": "Hoàng"
   },
   {
     "slug": "chuyen-doi-diem-sang-ve-thuong-gia",
@@ -39,7 +39,7 @@
     "coverImage": "globe",
     "publishedAt": "2026-07-20",
     "minutesRead": 11,
-    "author": "Bảo"
+    "author": "Hoàng"
   },
   {
     "slug": "toi-uu-diem-thuong-khach-san",
@@ -59,7 +59,7 @@
     "coverImage": "building",
     "publishedAt": "2026-07-12",
     "minutesRead": 6,
-    "author": "Bảo"
+    "author": "Hoàng"
   },
   {
     "slug": "danh-gia-phong-cho-thuong-gia",
@@ -80,7 +80,7 @@
     "coverImage": "armchair",
     "publishedAt": "2026-07-02",
     "minutesRead": 5,
-    "author": "Bảo"
+    "author": "Hoàng"
   },
   {
     "slug": "review-phong-cho-thuong-gia-video",
@@ -102,7 +102,7 @@
     "videoUrl": "",
     "publishedAt": "2026-07-24",
     "minutesRead": 4,
-    "author": "Bảo"
+    "author": "Hoàng"
   },
   {
     "slug": "cach-dat-ve-award-video",
@@ -124,6 +124,6 @@
     "videoUrl": "",
     "publishedAt": "2026-07-08",
     "minutesRead": 7,
-    "author": "Bảo"
+    "author": "Hoàng"
   }
 ]
