@@ -2,7 +2,8 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getAuthor } from "@/lib/content";
 import { pickLocale } from "@/lib/pick-locale";
-import { MediaPlaceholder } from "@/components/ui/media-placeholder";
+import { AuthorPhoto } from "@/components/ui/author-photo";
+import { boldOccurrences } from "@/lib/bold-occurrences";
 
 export async function AuthorSection() {
   const [t, locale, author] = await Promise.all([
@@ -10,6 +11,8 @@ export async function AuthorSection() {
     getLocale(),
     getAuthor(),
   ]);
+
+  const [firstParagraph] = pickLocale(author.bio, locale).split("\n\n");
 
   return (
     <section className="border-t border-border bg-secondary px-4 py-16 sm:px-6 lg:px-8">
@@ -20,7 +23,7 @@ export async function AuthorSection() {
             {t("title", { name: author.name })}
           </h2>
           <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-            {pickLocale(author.bio, locale)}
+            {boldOccurrences(firstParagraph, "Ghế 1A")}
           </p>
           <Link
             href="/about"
@@ -30,10 +33,10 @@ export async function AuthorSection() {
           </Link>
         </div>
 
-        <MediaPlaceholder
-          icon="avatar"
-          tone="navy"
-          className="h-48 w-48 justify-self-center rounded-2xl"
+        <AuthorPhoto
+          photo={author.photo}
+          name={author.name}
+          className="h-48 w-48 justify-self-center"
         />
       </div>
     </section>

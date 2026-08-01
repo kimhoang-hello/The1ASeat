@@ -2,7 +2,8 @@ import { getLocale, getTranslations, setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
 import { getAuthor } from "@/lib/content";
 import { pickLocale } from "@/lib/pick-locale";
-import { MediaPlaceholder } from "@/components/ui/media-placeholder";
+import { AuthorPhoto } from "@/components/ui/author-photo";
+import { boldOccurrences } from "@/lib/bold-occurrences";
 
 export async function generateMetadata({
   params,
@@ -36,11 +37,15 @@ export default async function AboutPage({
         {t("title", { name: author.name })}
       </h1>
 
-      <MediaPlaceholder icon="avatar" tone="navy" className="mt-8 h-56 w-56 rounded-2xl" />
+      <AuthorPhoto photo={author.photo} name={author.name} className="mt-8 h-56 w-56" />
 
-      <p className="mt-8 text-lg leading-relaxed text-foreground/90">
-        {pickLocale(author.bio, locale)}
-      </p>
+      <div className="mt-8 space-y-5 text-lg leading-relaxed text-foreground/90">
+        {pickLocale(author.bio, locale)
+          .split("\n\n")
+          .map((paragraph) => (
+            <p key={paragraph.slice(0, 24)}>{boldOccurrences(paragraph, "Ghế 1A")}</p>
+          ))}
+      </div>
 
       <p className="mt-8 border-t border-border pt-6 text-sm text-muted-foreground">
         {site("name")} — {site("tagline")}
