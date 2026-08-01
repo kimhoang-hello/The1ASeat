@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { List, X, CaretDown } from "@phosphor-icons/react";
 import { Link, usePathname } from "@/i18n/navigation";
@@ -9,14 +10,19 @@ import { LogoMark } from "@/components/brand/logo";
 
 export function SiteHeader() {
   const t = useTranslations("nav");
+  const tPosts = useTranslations("posts");
   const site = useTranslations("site");
   const locale = useLocale();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeType = searchParams.get("type");
   const [open, setOpen] = useState(false);
 
-  const links = [
-    { href: "/credit-cards", label: t("creditCards") },
-    { href: "/blog", label: t("blog") },
+  const links = [{ href: "/credit-cards", label: t("creditCards") }];
+
+  const blogLinks = [
+    { href: "/blog?type=post", type: "post", label: tPosts("tabPosts") },
+    { href: "/blog?type=video", type: "video", label: tPosts("tabVideos") },
   ];
 
   const toolsLinks = [
@@ -24,6 +30,7 @@ export function SiteHeader() {
     { href: "/transfer-bonuses", label: t("transferBonuses") },
   ];
 
+  const blogActive = pathname === "/blog" || pathname.startsWith("/blog/");
   const toolsActive = toolsLinks.some((link) => pathname === link.href);
 
   return (
@@ -52,6 +59,32 @@ export function SiteHeader() {
               </Link>
             );
           })}
+
+          <details className="group relative">
+            <summary
+              className={`flex cursor-pointer list-none items-center gap-1 text-sm font-medium transition-colors hover:text-primary [&::-webkit-details-marker]:hidden ${
+                blogActive ? "text-primary" : "text-foreground/80"
+              }`}
+            >
+              {t("blog")}
+              <CaretDown size={14} className="transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="absolute left-0 top-full z-10 mt-2 w-44 rounded-xl border border-border bg-card p-2 shadow-lg">
+              {blogLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`block rounded-lg px-3 py-2 text-sm hover:bg-secondary ${
+                    pathname === "/blog" && activeType === link.type
+                      ? "text-primary"
+                      : "text-foreground/90"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </details>
 
           <details className="group relative">
             <summary
@@ -117,6 +150,24 @@ export function SiteHeader() {
                 href={link.href}
                 onClick={() => setOpen(false)}
                 className="rounded-md px-2 py-3 text-base font-medium text-foreground/90 hover:bg-secondary"
+              >
+                {link.label}
+              </Link>
+            ))}
+
+            <Link
+              href="/blog"
+              onClick={() => setOpen(false)}
+              className="rounded-md px-2 py-3 text-base font-medium text-foreground/90 hover:bg-secondary"
+            >
+              {t("blog")}
+            </Link>
+            {blogLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setOpen(false)}
+                className="rounded-md px-4 py-2 text-sm font-medium text-foreground/70 hover:bg-secondary"
               >
                 {link.label}
               </Link>
