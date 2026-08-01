@@ -34,7 +34,7 @@ export async function TransferBonusesSection() {
             <a
               key={bonus.slug}
               href={bonus.url}
-              className={`flex cursor-pointer items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-secondary ${
+              className={`flex cursor-pointer flex-col gap-2 px-5 py-4 transition-colors hover:bg-secondary sm:flex-row sm:items-center sm:justify-between ${
                 i !== 0 ? "border-t border-border" : ""
               }`}
             >
