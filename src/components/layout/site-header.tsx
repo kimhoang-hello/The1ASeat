@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { List, X, AirplaneTilt } from "@phosphor-icons/react";
+import { List, X } from "@phosphor-icons/react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { LocaleSwitcher } from "./locale-switcher";
+import { LogoMark } from "@/components/brand/logo";
 
 export function SiteHeader() {
   const t = useTranslations("nav");
@@ -28,9 +29,7 @@ export function SiteHeader() {
           href="/"
           className="flex items-center gap-2 font-display text-lg font-extrabold tracking-tight text-foreground"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <AirplaneTilt size={18} weight="fill" />
-          </span>
+          <LogoMark />
           {site("name")}
         </Link>
 

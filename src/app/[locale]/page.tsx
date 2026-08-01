@@ -1,6 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
 import { Hero } from "@/components/home/hero";
-import { StatsBar } from "@/components/home/stats-bar";
 import { OffersSection } from "@/components/home/offers-section";
 import { PostsSection } from "@/components/home/posts-section";
 import { TransferBonusesSection } from "@/components/home/transfer-bonuses-section";
@@ -18,7 +17,6 @@ export default async function HomePage({
   return (
     <>
       <Hero />
-      <StatsBar />
       <OffersSection />
       <PostsSection />
       <TransferBonusesSection />

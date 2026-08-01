@@ -1,6 +1,5 @@
 import { getTranslations } from "next-intl/server";
 import { NewsletterForm } from "./newsletter-form";
-import stats from "../../../content/sample/stats.json";
 
 export async function NewsletterCta() {
   const t = await getTranslations("newsletterCta");
@@ -18,9 +17,6 @@ export async function NewsletterCta() {
 
         <div className="flex w-full flex-col items-start gap-3 md:w-auto md:items-end">
           <NewsletterForm variant="dark" id="cta-newsletter" />
-          <span className="text-xs text-white/50">
-            {stats.newsletter} {t("subscribersSuffix")}
-          </span>
         </div>
       </div>
     </section>

@@ -21,12 +21,6 @@
     "subscribe": "Subscribe Free",
     "disclaimer": "No spam. Unsubscribe anytime."
   },
-  "stats": {
-    "newsletter": "Subscribers",
-    "instagram": "Instagram",
-    "youtube": "YouTube",
-    "tiktok": "TikTok"
-  },
   "offers": {
     "eyebrow": "FEATURED OFFERS",
     "title": "Latest Credit Card Offers",
@@ -71,8 +65,7 @@
     "eyebrow": "WEEKLY NEWSLETTER",
     "title1": "Stay ahead of every deal,",
     "title2": "bonus & alert.",
-    "subtitle": "Join thousands of award travelers getting the weekly roundup every Sunday.",
-    "subscribersSuffix": "subscribers and growing"
+    "subtitle": "Join thousands of award travelers getting the weekly roundup every Sunday."
   },
   "footer": {
     "disclosure": "Ghế 1A may earn a commission from credit card partners when you apply through links on this site. Opinions, reviews, and analysis are our own and have not been reviewed, approved, or endorsed by any issuer. See our Terms & Privacy Policy.",

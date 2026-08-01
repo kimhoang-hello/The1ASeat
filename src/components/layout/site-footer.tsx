@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
-import { AirplaneTilt, InstagramLogo, TiktokLogo, YoutubeLogo } from "@phosphor-icons/react/ssr";
+import { InstagramLogo, TiktokLogo, YoutubeLogo } from "@phosphor-icons/react/ssr";
 import { Link } from "@/i18n/navigation";
+import { LogoGlyph } from "@/components/brand/logo";
 
 export function SiteFooter() {
   const t = useTranslations("footer");
@@ -14,7 +15,7 @@ export function SiteFooter() {
         <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-center gap-2 font-display text-base font-extrabold text-white">
             <span className="flex h-7 w-7 items-center justify-center rounded-md bg-white/10">
-              <AirplaneTilt size={16} weight="fill" />
+              <LogoGlyph className="h-4 w-4" />
             </span>
             {site("name")}
           </div>

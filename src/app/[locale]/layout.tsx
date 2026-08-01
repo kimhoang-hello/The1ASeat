@@ -10,13 +10,13 @@ import "../globals.css";
 
 const fontHeading = Plus_Jakarta_Sans({
   variable: "--font-heading",
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext", "vietnamese"],
   weight: ["600", "700", "800"],
 });
 
 const fontBody = Inter({
   variable: "--font-body",
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext", "vietnamese"],
   weight: ["400", "500", "600", "700"],
 });
 
