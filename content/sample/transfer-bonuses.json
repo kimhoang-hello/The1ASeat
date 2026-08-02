@@ -2,7 +2,7 @@
   {
     "slug": "bank-a-to-flying-blue",
     "fromProgram": "Ngân hàng A",
-    "toProgram": "Flying Blue (Air France / KLM)",
+    "toProgram": "Flying Blue® (Air France / KLM)",
     "bonusPercent": 20,
     "expiresAt": "2026-08-22",
     "url": "#"
@@ -10,7 +10,7 @@
   {
     "slug": "bank-b-to-krisflyer",
     "fromProgram": "Ngân hàng B",
-    "toProgram": "KrisFlyer (Singapore Airlines)",
+    "toProgram": "KrisFlyer® (Singapore Airlines)",
     "bonusPercent": 30,
     "expiresAt": "2026-08-15",
     "url": "#"
@@ -18,7 +18,7 @@
   {
     "slug": "bank-a-to-marriott",
     "fromProgram": "Ngân hàng A",
-    "toProgram": "Marriott Bonvoy",
+    "toProgram": "Marriott Bonvoy®",
     "bonusPercent": 50,
     "expiresAt": "2026-07-31",
     "url": "#"
