@@ -77,6 +77,8 @@ export async function OffersSection() {
 
                 <a
                   href={offer.applyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="mt-4 inline-block cursor-pointer text-sm font-bold text-primary underline decoration-2 underline-offset-4 hover:text-primary-hover"
                 >
                   {t("viewOffer")} &rarr;

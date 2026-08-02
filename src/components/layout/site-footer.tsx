@@ -43,7 +43,13 @@ export function SiteFooter() {
           </nav>
 
           <div className="flex gap-4 text-white/60">
-            <a href="#" aria-label="YouTube" className="cursor-pointer hover:text-white">
+            <a
+              href="#"
+              aria-label="YouTube"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cursor-pointer hover:text-white"
+            >
               <YoutubeLogo size={20} />
             </a>
           </div>

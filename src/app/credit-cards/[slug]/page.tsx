@@ -77,6 +77,8 @@ export default async function CreditCardDetailPage({
 
       <a
         href={offer.applyUrl}
+        target="_blank"
+        rel="noopener noreferrer"
         className="mt-8 inline-block cursor-pointer rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
       >
         {offers("viewOffer")} &rarr;

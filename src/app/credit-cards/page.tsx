@@ -73,6 +73,8 @@ export default async function CreditCardsPage() {
                   </Link>
                   <a
                     href={offer.applyUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="cursor-pointer text-sm font-bold text-primary underline decoration-2 underline-offset-4 hover:text-primary-hover"
                   >
                     {offers_t("viewOffer")} &rarr;
