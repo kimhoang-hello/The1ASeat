@@ -33,7 +33,9 @@ interface PostSkeleton {
     excerptEn: EntryFieldTypes.Text;
     bodyVi: EntryFieldTypes.RichText;
     bodyEn: EntryFieldTypes.RichText;
-    coverImage?: EntryFieldTypes.AssetLink;
+    coverImage: EntryFieldTypes.Symbol<
+      "airplane" | "globe" | "building" | "armchair" | "credit-card" | "avatar"
+    >;
     videoUrl?: EntryFieldTypes.Symbol;
     publishedAt: EntryFieldTypes.Date;
     minutesRead: EntryFieldTypes.Integer;
@@ -47,7 +49,9 @@ interface CardSkeleton {
     slug: EntryFieldTypes.Symbol;
     name: EntryFieldTypes.Symbol;
     issuer: EntryFieldTypes.Symbol;
-    image?: EntryFieldTypes.AssetLink;
+    image: EntryFieldTypes.Symbol<
+      "airplane" | "globe" | "building" | "armchair" | "credit-card" | "avatar"
+    >;
     country: EntryFieldTypes.Symbol<"US" | "CA">;
     annualFeeVi: EntryFieldTypes.Symbol;
     annualFeeEn: EntryFieldTypes.Symbol;
@@ -95,7 +99,7 @@ function toPost(entry: Entry<PostSkeleton, undefined>): BlogPost {
     title: { vi: f.titleVi, en: f.titleEn },
     excerpt: { vi: f.excerptVi, en: f.excerptEn },
     body: { vi: documentToHtmlString(f.bodyVi), en: documentToHtmlString(f.bodyEn) },
-    coverImage: assetUrl(f.coverImage),
+    coverImage: f.coverImage,
     videoUrl: f.videoUrl,
     publishedAt: f.publishedAt,
     minutesRead: f.minutesRead,
@@ -109,7 +113,7 @@ function toCard(entry: Entry<CardSkeleton, undefined>): CreditCardOffer {
     slug: f.slug,
     name: f.name,
     issuer: f.issuer,
-    image: assetUrl(f.image),
+    image: f.image,
     country: f.country,
     annualFee: { vi: f.annualFeeVi, en: f.annualFeeEn },
     cardType: { vi: f.cardTypeVi, en: f.cardTypeEn },

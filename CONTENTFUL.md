@@ -19,7 +19,7 @@ camelCase) để khớp với code trong `src/lib/content/contentful.ts`. Sau kh
 | excerptEn     | Long text                               |
 | bodyVi        | Rich text                               |
 | bodyEn        | Rich text                               |
-| coverImage    | Media (image)                           |
+| coverImage    | Short text, validated: `airplane`, `globe`, `building`, `armchair`, `credit-card`, or `avatar` (placeholder icon key — not a real photo yet) |
 | videoUrl      | Short text (YouTube/Vimeo URL, optional)|
 | publishedAt   | Date & time                              |
 | minutesRead   | Integer                                 |
@@ -32,7 +32,7 @@ camelCase) để khớp với code trong `src/lib/content/contentful.ts`. Sau kh
 | slug           | Short text (unique)           |
 | name           | Short text                    |
 | issuer         | Short text                    |
-| image          | Media (image)                 |
+| image          | Short text, validated: `airplane`, `globe`, `building`, `armchair`, `credit-card`, or `avatar` (placeholder icon key — not a real photo yet) |
 | country        | Short text, validated: `US` or `CA` |
 | annualFeeVi    | Short text                    |
 | annualFeeEn    | Short text                    |

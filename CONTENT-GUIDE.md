@@ -1,19 +1,55 @@
 # Hướng dẫn sửa nội dung Ghế 1A
 
-Website hiện lấy nội dung từ các file JSON trong `content/sample/` (chưa nối
-Contentful — xem mục cuối). Sửa các file này rồi nhờ Claude Code commit + push
-là nội dung sẽ lên GitHub; muốn lên website thật thì Hostinger cần rebuild lại
-(xem [DEPLOY.md](DEPLOY.md)).
+Website hiện **lấy nội dung trực tiếp từ Contentful** (đã setup xong) —
+bạn tự đăng bài / sửa thẻ tín dụng / ưu đãi chuyển điểm qua giao diện web
+Contentful, không cần đụng code hay nhờ Claude Code mỗi lần.
 
-## 1. Sửa chữ trên giao diện (nút, tiêu đề mục, nhãn...)
+## 1. Đăng nhập Contentful
 
-File: **`messages/vi.json`**
+Vào **https://app.contentful.com** → đăng nhập → chọn Space **"Ghe1A"**.
 
-Đây là các câu chữ "khung" của trang — không phải nội dung bài viết. Tìm theo
-mục (`hero`, `offers`, `posts`, `bonuses`, `calculator`, `author`,
-`newsletterCta`, `footer`, `nav`...), mỗi dòng là một câu.
+Menu bên trái có mục **Content** — đây là nơi quản lý toàn bộ bài viết, thẻ
+tín dụng, ưu đãi chuyển điểm, và hồ sơ tác giả.
 
-Ví dụ muốn đổi chữ trên nút đăng ký bản tin:
+## 2. Viết bài blog mới
+
+1. Vào **Content** → bấm **"+ Add entry"** → chọn **"Blog Post"**
+2. Điền các trường (có bản tiếng Việt riêng `...Vi` và tiếng Anh riêng `...En`
+   — nếu chưa viết bản tiếng Anh, cứ điền tạm giống bản tiếng Việt, chưa ảnh
+   hưởng gì vì site hiện chỉ hiển thị tiếng Việt):
+
+   | Trường | Ý nghĩa |
+   |---|---|
+   | Slug | Đường dẫn bài viết, vd `cach-choi-diem-hieu-qua` (không dấu, không khoảng trắng) |
+   | Type | `post` (bài viết) hoặc `video` |
+   | Category Vi/En | Nhãn chủ đề, hiện phía trên tiêu đề |
+   | Title Vi/En | Tiêu đề |
+   | Excerpt Vi/En | Tóm tắt ngắn, hiện ở trang danh sách |
+   | Body Vi/En | Nội dung đầy đủ — có trình soạn thảo như Google Docs (in đậm, in nghiêng, tiêu đề phụ...) |
+   | Cover Image | Chọn 1 trong: `airplane`, `globe`, `building`, `armchair`, `credit-card`, `avatar` (icon minh hoạ tạm, chưa hỗ trợ ảnh thật) |
+   | Video URL | Chỉ cần nếu Type = video |
+   | Published At | Ngày đăng |
+   | Minutes Read | Số phút đọc, vd `6` |
+   | Author | Tên tác giả, vd `Hoàng` |
+
+3. Bấm **Publish** (góc trên bên phải) — bài sẽ lên web ngay, **không cần
+   deploy lại, không cần Claude Code**.
+
+## 3. Sửa/thêm thẻ tín dụng & ưu đãi chuyển điểm
+
+Tương tự — vào **Content → Add entry** → chọn **"Credit Card Offer"** hoặc
+**"Transfer Bonus"**, điền các trường, **Publish**.
+
+## 4. Sửa hồ sơ tác giả (ảnh, tiểu sử)
+
+Vào **Content**, tìm entry loại **"Author"** (tên "Hoàng") → sửa `Bio Vi`/
+`Bio En` hoặc đổi ảnh ở trường `Photo` → **Publish**.
+
+## 5. Sửa chữ giao diện (nút, tiêu đề mục cố định...)
+
+Phần này **không nằm trong Contentful** (vì là chữ "khung" của giao diện,
+không phải nội dung bài viết) — vẫn nằm trong code, ở file
+**`messages/vi.json`**. Muốn đổi, ví dụ chữ trên nút đăng ký bản tin, tìm:
 
 ```json
 "hero": {
@@ -21,92 +57,13 @@ Ví dụ muốn đổi chữ trên nút đăng ký bản tin:
 }
 ```
 
-Chỉ sửa phần chữ trong dấu `"..."`, giữ nguyên phần `"key":` phía trước.
+Phần này cần nhờ Claude Code sửa + commit + push (không tự sửa qua web được).
 
-## 2. Viết bài blog mới
+## 6. Lưu ý
 
-File: **`content/sample/posts.json`**
-
-Đây là một danh sách (mảng) các bài viết. Mỗi bài là một khối `{ ... }`. Để
-thêm bài mới, **copy một khối bài có sẵn, dán vào đầu danh sách (ngay sau dấu
-`[`), rồi sửa nội dung**, nhớ thêm dấu phẩy `,` sau dấu `}` đóng khối vừa dán
-(vì phía sau nó còn bài khác).
-
-Mẫu một bài viết (loại "post" — bài viết thường):
-
-```json
-{
-  "slug": "ten-duong-dan-bai-viet-khong-dau",
-  "type": "post",
-  "category": { "vi": "Thẻ tín dụng", "en": "Credit Cards" },
-  "title": {
-    "vi": "Tiêu đề bài viết bằng tiếng Việt",
-    "en": "Title in English"
-  },
-  "excerpt": {
-    "vi": "Tóm tắt ngắn 1-2 câu, hiện ở trang danh sách blog.",
-    "en": "Short 1-2 sentence summary shown on the blog listing."
-  },
-  "body": {
-    "vi": "<p>Đoạn văn đầu tiên.</p><p>Đoạn văn thứ hai.</p>",
-    "en": "<p>First paragraph.</p><p>Second paragraph.</p>"
-  },
-  "coverImage": "airplane",
-  "publishedAt": "2026-08-10",
-  "minutesRead": 6,
-  "author": "Hoàng"
-}
-```
-
-Giải thích từng trường:
-
-| Trường | Ý nghĩa | Lưu ý |
-|---|---|---|
-| `slug` | Đường dẫn bài viết (vd `/blog/ten-duong-dan...`) | Chỉ chữ thường, số, dấu gạch ngang `-`, không dấu, không trùng bài khác |
-| `type` | `"post"` (bài viết) hoặc `"video"` (video) | Bài video sẽ hiện icon ▶ và badge "Video" |
-| `category` | Nhãn chủ đề, hiện phía trên tiêu đề | Cả `vi` và `en` |
-| `title` | Tiêu đề bài | — |
-| `excerpt` | Tóm tắt ngắn | Hiện ở trang danh sách, nên ngắn gọn |
-| `body` | Nội dung đầy đủ | Mỗi đoạn văn bọc trong `<p>...</p>`, muốn xuống đoạn mới thì thêm `<p>` mới |
-| `coverImage` | Ảnh minh hoạ (hiện tại là icon placeholder) | Chọn 1 trong: `airplane`, `globe`, `building`, `armchair`, `credit-card`, `avatar` |
-| `publishedAt` | Ngày đăng | Định dạng `NĂM-THÁNG-NGÀY`, vd `2026-08-10` |
-| `minutesRead` | Số phút đọc ước tính | Chỉ cần số nguyên, vd `6` |
-| `author` | Tên tác giả hiện dưới tiêu đề | — |
-
-Bài video (`"type": "video"`) có thêm trường `"videoUrl"` (dán link YouTube/
-TikTok thật vào đó khi có).
-
-### Việc cần Claude Code làm giúp
-
-Sau khi bạn có nội dung muốn đăng (kể cả viết tay trong tin nhắn, không cần
-đúng định dạng JSON), chỉ cần nhắn cho Claude Code, ví dụ:
-
-> "Đăng bài mới: tiêu đề '...', nội dung: ...'"
-
-Claude Code sẽ tự thêm đúng định dạng vào `posts.json`, kiểm tra lỗi, và
-commit/push giúp bạn — bạn không bắt buộc phải tự sửa JSON.
-
-## 3. Thẻ tín dụng & ưu đãi chuyển điểm
-
-Tương tự bài viết, hai mục này nằm ở:
-
-- `content/sample/credit-cards.json` — danh sách thẻ tín dụng
-- `content/sample/transfer-bonuses.json` — ưu đãi chuyển điểm
-
-Cấu trúc tương tự (mỗi mục một khối `{ ... }`), cứ mô tả với Claude Code là
-được thêm/sửa đúng định dạng.
-
-## 4. Đưa thay đổi lên website thật
-
-Sau khi file được sửa và **commit + push lên GitHub** (Claude Code làm bước
-này), Hostinger cần chạy lại build để nội dung mới lên website — cách làm chi
-tiết ở [DEPLOY.md](DEPLOY.md). Nếu đã bật GitHub Actions tự động deploy (mục 3
-trong DEPLOY.md) thì bước này tự chạy sau khi push, không cần làm gì thêm.
-
-## 5. Về lâu dài: chuyển sang Contentful (khuyên dùng)
-
-Sửa JSON vẫn cần Claude Code hỗ trợ mỗi lần. Nếu muốn **tự đăng bài trực tiếp
-qua giao diện web** (giống viết Google Docs, không đụng code/JSON/git), hãy
-tạo tài khoản Contentful và làm theo [CONTENTFUL.md](CONTENTFUL.md) — website
-đã được lập trình sẵn để tự động chuyển sang lấy nội dung từ Contentful ngay
-khi bạn điền API key vào `.env.local`.
+- **Xoá entry** trong Contentful: phải bấm **Unpublish** trước, rồi mới **Delete**
+  được (Contentful chặn xoá trực tiếp entry đang published).
+- Nếu server chạy local (`npm run dev`) không thấy nội dung mới ngay, refresh
+  lại trang — nội dung được lấy trực tiếp từ Contentful mỗi lần tải trang.
+- Nếu vì lý do nào đó Contentful bị lỗi/mất kết nối, site tự động dùng lại nội
+  dung mẫu trong `content/sample/*.json` để không bị sập trang.
