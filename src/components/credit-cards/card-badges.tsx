@@ -1,13 +1,16 @@
 import type { CreditCardOffer } from "@/lib/content";
+import { formatDate } from "@/lib/format-date";
 
 export function CardBadges({
   offer,
   cardType,
   elevatedBonusLabel,
+  expiresOnLabel,
 }: {
   offer: CreditCardOffer;
   cardType: string;
   elevatedBonusLabel: string;
+  expiresOnLabel?: string;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -20,6 +23,11 @@ export function CardBadges({
         {offer.country}
       </span>
       <span className="text-xs font-medium text-muted-foreground">{cardType}</span>
+      {offer.expiresAt && expiresOnLabel && (
+        <span className="text-xs font-medium text-amber-700">
+          {expiresOnLabel} {formatDate(offer.expiresAt)}
+        </span>
+      )}
     </div>
   );
 }

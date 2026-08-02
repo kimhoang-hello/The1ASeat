@@ -21,6 +21,7 @@ export interface CreditCardOffer {
   name: string;
   issuer: string;
   image: string;
+  cardImage: string;
   country: CardCountry;
   annualFee: string;
   cardType: string;
@@ -28,6 +29,7 @@ export interface CreditCardOffer {
   editorsTake: string;
   keyBenefits: string[];
   elevatedBonus: boolean;
+  expiresAt?: string;
   applyUrl: string;
 }
 

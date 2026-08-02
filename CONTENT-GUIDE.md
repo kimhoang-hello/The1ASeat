@@ -40,6 +40,13 @@ tín dụng, ưu đãi chuyển điểm, và hồ sơ tác giả.
 Tương tự — vào **Content → Add entry** → chọn **"Credit Card Offer"** hoặc
 **"Transfer Bonus"**, điền các trường, **Publish**.
 
+Với **Credit Card Offer**, hai trường hay dùng nhất:
+
+| Trường | Ý nghĩa |
+|---|---|
+| Card Image | Bấm **"Add media"** để **upload ảnh thật của thẻ** (chụp/tải file ảnh). Nếu để trống, web tự hiện icon thẻ tín dụng minh hoạ thay thế. |
+| Expires At | Ngày hết hạn ưu đãi (nếu ưu đãi có giới hạn thời gian) — hiện tự động cạnh badge trên web. Không có ưu đãi giới hạn thời gian thì bỏ trống. |
+
 ## 4. Sửa hồ sơ tác giả (ảnh, tiểu sử)
 
 Vào **Content**, tìm entry loại **"Author"** (tên "Hoàng") → sửa `Bio Vi`

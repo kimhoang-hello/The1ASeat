@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CaretDown } from "@phosphor-icons/react/ssr";
 import { t as translate } from "@/lib/t";
 import { getCreditCardOffers } from "@/lib/content";
-import { MediaPlaceholder } from "@/components/ui/media-placeholder";
+import { CardImage } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
 
 const t = translate("offers");
@@ -32,9 +32,9 @@ export async function OffersSection() {
               key={offer.slug}
               className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5 sm:flex-row"
             >
-              <MediaPlaceholder
-                icon="credit-card"
-                tone="tan"
+              <CardImage
+                image={offer.cardImage}
+                name={offer.name}
                 className="h-32 w-full shrink-0 rounded-xl sm:h-auto sm:w-40"
               />
 
@@ -43,6 +43,7 @@ export async function OffersSection() {
                   offer={offer}
                   cardType={offer.cardType}
                   elevatedBonusLabel={t("elevatedBonus")}
+                  expiresOnLabel={t("expiresOn")}
                 />
 
                 <h3 className="mt-1.5 font-display text-lg font-bold text-foreground">

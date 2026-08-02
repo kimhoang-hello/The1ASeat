@@ -33,6 +33,7 @@ camelCase) để khớp với code trong `src/lib/content/contentful.ts`. Sau kh
 | name           | Short text                    |
 | issuer         | Short text                    |
 | image          | Short text, validated: `airplane`, `globe`, `building`, `armchair`, `credit-card`, or `avatar` (placeholder icon key — not a real photo yet) |
+| cardImage      | Media (image), optional — real photo of the card; falls back to the `image` placeholder icon when empty |
 | country        | Short text, validated: `US` or `CA` |
 | annualFeeVi    | Short text                    |
 | annualFeeEn    | Short text                    |
@@ -45,6 +46,7 @@ camelCase) để khớp với code trong `src/lib/content/contentful.ts`. Sau kh
 | keyBenefitsVi  | Short text, list              |
 | keyBenefitsEn  | Short text, list              |
 | elevatedBonus  | Boolean                       |
+| expiresAt      | Date & time, optional — offer/bonus expiry date, shown next to the badges when set |
 | applyUrl       | Short text                    |
 
 ## `transferBonus`

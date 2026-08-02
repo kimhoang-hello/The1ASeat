@@ -15,7 +15,9 @@
       "Bảo hiểm du lịch tự động"
     ],
     "elevatedBonus": true,
-    "applyUrl": "#"
+    "applyUrl": "#",
+    "cardImage": "",
+    "expiresAt": "2026-09-30"
   },
   {
     "slug": "everyday-dining-plus",
@@ -33,7 +35,8 @@
       "Không yêu cầu điểm tín dụng cao"
     ],
     "elevatedBonus": false,
-    "applyUrl": "#"
+    "applyUrl": "#",
+    "cardImage": ""
   },
   {
     "slug": "prestige-hotel-elite",
@@ -51,7 +54,8 @@
       "Tín dụng ăn sáng 2 người mỗi lần ở"
     ],
     "elevatedBonus": false,
-    "applyUrl": "#"
+    "applyUrl": "#",
+    "cardImage": ""
   },
   {
     "slug": "business-explorer-corporate",
@@ -69,6 +73,8 @@
       "Chuyển điểm sang chương trình cá nhân"
     ],
     "elevatedBonus": true,
-    "applyUrl": "#"
+    "applyUrl": "#",
+    "cardImage": "",
+    "expiresAt": "2026-09-30"
   }
 ]

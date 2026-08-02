@@ -50,6 +50,7 @@ interface CardSkeleton {
     image: EntryFieldTypes.Symbol<
       "airplane" | "globe" | "building" | "armchair" | "credit-card" | "avatar"
     >;
+    cardImage?: EntryFieldTypes.AssetLink;
     country: EntryFieldTypes.Symbol<"US" | "CA">;
     annualFeeVi: EntryFieldTypes.Symbol;
     cardTypeVi: EntryFieldTypes.Symbol;
@@ -57,6 +58,7 @@ interface CardSkeleton {
     editorsTakeVi: EntryFieldTypes.Text;
     keyBenefitsVi: EntryFieldTypes.Array<EntryFieldTypes.Symbol>;
     elevatedBonus: EntryFieldTypes.Boolean;
+    expiresAt?: EntryFieldTypes.Date;
     applyUrl: EntryFieldTypes.Symbol;
   };
 }
@@ -106,6 +108,7 @@ function toCard(entry: Entry<CardSkeleton, undefined>): CreditCardOffer {
     name: f.name,
     issuer: f.issuer,
     image: f.image,
+    cardImage: assetUrl(f.cardImage),
     country: f.country,
     annualFee: f.annualFeeVi,
     cardType: f.cardTypeVi,
@@ -113,6 +116,7 @@ function toCard(entry: Entry<CardSkeleton, undefined>): CreditCardOffer {
     editorsTake: f.editorsTakeVi,
     keyBenefits: f.keyBenefitsVi,
     elevatedBonus: f.elevatedBonus,
+    expiresAt: f.expiresAt,
     applyUrl: f.applyUrl,
   };
 }

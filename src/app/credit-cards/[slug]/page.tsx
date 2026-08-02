@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getCreditCardOfferBySlug, getCreditCardOffers } from "@/lib/content";
-import { MediaPlaceholder } from "@/components/ui/media-placeholder";
+import { CardImage } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
 import { t as translate } from "@/lib/t";
 
@@ -45,13 +45,14 @@ export default async function CreditCardDetailPage({
         &larr; {offers("viewAll")}
       </Link>
 
-      <MediaPlaceholder icon="credit-card" tone="tan" className="mt-6 h-56 w-full rounded-2xl" />
+      <CardImage image={offer.cardImage} name={offer.name} className="mt-6 h-56 w-full rounded-2xl" />
 
       <div className="mt-6">
         <CardBadges
           offer={offer}
           cardType={`${offer.cardType} · ${offer.issuer}`}
           elevatedBonusLabel={offers("elevatedBonus")}
+          expiresOnLabel={offers("expiresOn")}
         />
       </div>
 
