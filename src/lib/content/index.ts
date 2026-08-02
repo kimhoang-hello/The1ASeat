@@ -23,9 +23,17 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | undefined>
   return posts.find((post) => post.slug === slug);
 }
 
+function creditCardPriority(offer: CreditCardOffer): number {
+  if (offer.elevatedBonus) return 0;
+  if (offer.issuer.includes("American Express")) return 1;
+  return 2;
+}
+
 export async function getCreditCardOffers(): Promise<CreditCardOffer[]> {
-  if (isContentfulConfigured) return fetchContentfulCreditCardOffers();
-  return getSampleCreditCardOffers();
+  const offers = isContentfulConfigured
+    ? await fetchContentfulCreditCardOffers()
+    : await getSampleCreditCardOffers();
+  return [...offers].sort((a, b) => creditCardPriority(a) - creditCardPriority(b));
 }
 
 export async function getCreditCardOfferBySlug(slug: string): Promise<CreditCardOffer | undefined> {
