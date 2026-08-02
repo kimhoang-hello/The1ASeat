@@ -116,6 +116,36 @@ Nếu 4 biến môi trường trên chưa được điền, route vẫn chạy b
 nhưng chỉ làm mới cache của Next.js chứ không xoá được cache CDN Hostinger — bạn
 vẫn cần bấm Clear cache thủ công như trước.
 
+## Tự động gửi email cho subscriber khi có bài viết mới (không gồm video)
+
+Route `/api/revalidate` ở trên giờ làm thêm 1 việc: mỗi khi 1 `blogPost` với
+`type = "post"` (bài viết thường, **không phải video**) được Publish **lần
+đầu tiên**, nó tự gửi 1 email broadcast qua Kit đến toàn bộ danh sách
+subscriber, gồm tiêu đề + đoạn mô tả ngắn + link đến bài viết. Sửa bài đã
+đăng và Publish lại sẽ **không** gửi lại email (chỉ gửi ở lần Publish đầu).
+
+**1. Tạo API Key mới của Kit (khác với `KIT_API_KEY` đang dùng cho form đăng
+ký)** — đăng nhập Kit → **Settings → Developer** → **Add a new key** → đặt
+tên bất kỳ (vd "Ghế 1A auto broadcast") → copy lại ngay (chỉ hiện 1 lần).
+
+**2. Thêm biến môi trường cho site live** — vào đúng chỗ bạn đã điền
+`CONTENTFUL_SPACE_ID` (hPanel → website → Environment variables), thêm:
+
+| Biến             | Giá trị                                    |
+|-------------------|---------------------------------------------|
+| `KIT_V4_API_KEY`  | API key vừa tạo ở bước 1                    |
+
+**3. Không cần tạo webhook mới** — nếu bạn đã làm xong phần "Auto-refresh
+site khi bấm Publish" ở trên, webhook đó (`Refresh Ghế 1A site`) đã gửi kèm
+đủ dữ liệu bài viết cho route này dùng luôn. Nếu chưa làm phần đó, làm theo
+3 bước ở mục phía trên trước (đặc biệt bước 3: tạo webhook, nhớ tick
+**Publish**).
+
+**4. Kiểm tra** — viết 1 bài test `type = "post"` trên Contentful, Publish
+lần đầu, đợi ~10 giây rồi kiểm tra hộp thư (hoặc vào Kit → Broadcasts xem có
+broadcast mới không). Nếu chưa thấy, gửi tôi ảnh log lỗi (Contentful →
+Settings → Webhooks → chọn webhook → xem tab hoạt động gần nhất).
+
 ## Tự động đăng bài khi có video YouTube mới
 
 Route [`/api/sync-videos`](src/app/api/sync-videos/route.ts) kiểm tra kênh
