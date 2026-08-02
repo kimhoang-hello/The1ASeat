@@ -1,7 +1,9 @@
 # Ghế 1A
 
-Blog cá nhân về Miles & Points và Award Travel — song ngữ Việt/Anh, xây bằng
-Next.js (App Router), Tailwind CSS 4, và tích hợp Contentful (tuỳ chọn).
+Blog cá nhân về Miles & Points và Award Travel, xây bằng Next.js (App
+Router), Tailwind CSS 4, và tích hợp Contentful (tuỳ chọn). Hiện chỉ chạy
+tiếng Việt; hạ tầng đa ngôn ngữ (next-intl) vẫn giữ nguyên để bật tiếng Anh
+lại sau này (thêm `"en"` vào `src/i18n/routing.ts`).
 
 ## Bắt đầu
 
@@ -10,8 +12,12 @@ npm install
 npm run dev
 ```
 
-Mở [http://localhost:3000](http://localhost:3000). Mặc định chạy tiếng Việt ở `/`,
-tiếng Anh ở `/en`.
+Mở [http://localhost:3000](http://localhost:3000).
+
+## Sửa nội dung / viết bài
+
+Xem [CONTENT-GUIDE.md](CONTENT-GUIDE.md) — hướng dẫn sửa text giao diện và
+đăng bài blog mới, không cần biết code.
 
 ## Cấu trúc chính
 
