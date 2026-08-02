@@ -43,7 +43,7 @@
   },
   "bonuses": {
     "eyebrow": "CẬP NHẬT THƯỜNG XUYÊN",
-    "title": "Tranfer Bonus Đang Diễn Ra",
+    "title": "Transfer Bonus Đang Diễn Ra",
     "viewAll": "Xem tất cả offer",
     "partner": "Đối tác",
     "expires": "Hết hạn",
@@ -84,5 +84,10 @@
     "readMore": "Đọc thêm",
     "minRead": "phút đọc",
     "backHome": "Về trang chủ"
+  },
+  "notFound": {
+    "eyebrow": "404",
+    "title": "Không tìm thấy trang này",
+    "description": "Trang bạn tìm không tồn tại hoặc đã được di chuyển."
   }
 }

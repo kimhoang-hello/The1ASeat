@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getPostBySlug, getPosts } from "@/lib/content";
 import { formatDate } from "@/lib/format-date";
 import { MediaPlaceholder, type PlaceholderIcon } from "@/components/ui/media-placeholder";
+import { getVideoEmbedUrl } from "@/lib/video-embed";
 import { t } from "@/lib/t";
 
 const common = t("common");
@@ -31,18 +32,32 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   if (!post) notFound();
 
+  const embedUrl = post.type === "video" ? getVideoEmbedUrl(post.videoUrl ?? "") : null;
+
   return (
     <article className="mx-auto max-w-2xl px-4 py-12 sm:px-6 lg:px-8">
       <Link href="/blog" className="text-sm font-semibold text-primary hover:underline">
         &larr; {common("backHome")}
       </Link>
 
-      <MediaPlaceholder
-        icon={post.coverImage as PlaceholderIcon}
-        tone="navy"
-        className="mt-6 h-56 w-full rounded-2xl"
-        isVideo={post.type === "video"}
-      />
+      {embedUrl ? (
+        <div className="mt-6 aspect-video w-full overflow-hidden rounded-2xl bg-primary">
+          <iframe
+            src={embedUrl}
+            title={post.title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            className="h-full w-full"
+          />
+        </div>
+      ) : (
+        <MediaPlaceholder
+          icon={post.coverImage as PlaceholderIcon}
+          tone="navy"
+          className="mt-6 h-56 w-full rounded-2xl"
+          isVideo={post.type === "video"}
+        />
+      )}
 
       <div className="mt-6 flex items-center gap-2">
         <span className="text-xs font-semibold uppercase tracking-wide text-primary">

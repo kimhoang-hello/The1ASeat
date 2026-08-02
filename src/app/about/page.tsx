@@ -5,8 +5,9 @@ import { boldOccurrences } from "@/lib/bold-occurrences";
 import { t } from "@/lib/t";
 
 const author = t("author");
+const nav = t("nav");
 
-export const metadata: Metadata = { title: author("eyebrow") };
+export const metadata: Metadata = { title: nav("about") };
 
 export default async function AboutPage() {
   const site = t("site");
