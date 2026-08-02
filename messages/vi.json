@@ -53,10 +53,10 @@
     "title": "Tính Giá Trị Điểm Thưởng",
     "subtitle": "Ước tính giá trị quy đổi point/mile của bạn cho một vé award cụ thể.",
     "pointsLabel": "Số point/mile cần dùng",
-    "cashPriceLabel": "Giá vé tiền mặt tương đương (VND)",
-    "taxesLabel": "Thuế, phí phải trả thêm (VND)",
+    "cashPriceLabel": "Giá vé tiền mặt tương đương (CAD)",
+    "taxesLabel": "Thuế, phí phải trả thêm (CAD)",
     "result": "Giá trị mỗi điểm",
-    "resultHint": "Kinh nghiệm: từ 15–20đ/điểm trở lên thường là một giao dịch đổi điểm tốt.",
+    "resultHint": "Kinh nghiệm: từ 1.5–2¢/điểm trở lên thường là một giao dịch đổi điểm tốt.",
     "reset": "Tính lại"
   },
   "author": {
