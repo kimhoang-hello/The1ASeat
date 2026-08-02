@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { InstagramLogo, TiktokLogo, YoutubeLogo } from "@phosphor-icons/react/ssr";
+import { YoutubeLogo } from "@phosphor-icons/react/ssr";
 import { t as translate } from "@/lib/t";
 
 const t = translate("footer");
@@ -43,14 +43,8 @@ export function SiteFooter() {
           </nav>
 
           <div className="flex gap-4 text-white/60">
-            <a href="#" aria-label="Instagram" className="cursor-pointer hover:text-white">
-              <InstagramLogo size={20} />
-            </a>
             <a href="#" aria-label="YouTube" className="cursor-pointer hover:text-white">
               <YoutubeLogo size={20} />
-            </a>
-            <a href="#" aria-label="TikTok" className="cursor-pointer hover:text-white">
-              <TiktokLogo size={20} />
             </a>
           </div>
         </div>
