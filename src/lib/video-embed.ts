@@ -1,3 +1,22 @@
+export function getYouTubeThumbnailUrl(url: string): string | null {
+  if (!url) return null;
+
+  try {
+    const u = new URL(url);
+    let id: string | null = null;
+
+    if (u.hostname.includes("youtube.com")) {
+      id = u.pathname.startsWith("/shorts/") ? u.pathname.split("/")[2] : u.searchParams.get("v");
+    } else if (u.hostname === "youtu.be") {
+      id = u.pathname.slice(1);
+    }
+
+    return id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : null;
+  } catch {
+    return null;
+  }
+}
+
 export function getVideoEmbedUrl(url: string): string | null {
   if (!url) return null;
 

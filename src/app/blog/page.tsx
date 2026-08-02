@@ -1,9 +1,11 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { getPosts } from "@/lib/content";
 import { formatDate } from "@/lib/format-date";
 import { PageHeader } from "@/components/layout/page-header";
 import { MediaPlaceholder, type PlaceholderIcon } from "@/components/ui/media-placeholder";
+import { getYouTubeThumbnailUrl } from "@/lib/video-embed";
 import { t } from "@/lib/t";
 
 const posts_t = t("posts");
@@ -54,18 +56,26 @@ export default async function BlogPage({
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {posts.map((post) => (
+            {posts.map((post) => {
+              const thumbnail = post.type === "video" ? getYouTubeThumbnailUrl(post.videoUrl ?? "") : null;
+              return (
               <Link
                 key={post.slug}
                 href={`/blog/${post.slug}`}
                 className="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md"
               >
-                <MediaPlaceholder
-                  icon={post.coverImage as PlaceholderIcon}
-                  tone="navy"
-                  className="h-44 w-full"
-                  isVideo={post.type === "video"}
-                />
+                {thumbnail ? (
+                  <div className="relative h-44 w-full overflow-hidden bg-primary">
+                    <Image src={thumbnail} alt={post.title} fill sizes="384px" className="object-cover" />
+                  </div>
+                ) : (
+                  <MediaPlaceholder
+                    icon={post.coverImage as PlaceholderIcon}
+                    tone="navy"
+                    className="h-44 w-full"
+                    isVideo={post.type === "video"}
+                  />
+                )}
                 <div className="flex flex-1 flex-col p-5">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold uppercase tracking-wide text-primary">
@@ -90,7 +100,8 @@ export default async function BlogPage({
                   </div>
                 </div>
               </Link>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
