@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import Image from "next/image";
@@ -11,14 +11,52 @@ import { routing } from "@/i18n/routing";
 
 const showLocaleSwitcher = routing.locales.length > 1;
 
+type BlogLink = { href: string; type: string; label: string };
+
+function blogLinkClassName(active: boolean) {
+  return `block rounded-lg px-3 py-2 text-sm hover:bg-secondary ${
+    active ? "text-primary" : "text-foreground/90"
+  }`;
+}
+
+// Reads the ?type= search param to highlight the active Blog dropdown item.
+// Isolated in its own component so only this leaf needs a Suspense boundary
+// (useSearchParams() requires one during static prerendering) instead of the
+// whole header, avoiding a flash of unstyled header on first paint.
+function BlogDropdownLinks({
+  blogLinks,
+  pathname,
+  onNavigate,
+}: {
+  blogLinks: BlogLink[];
+  pathname: string;
+  onNavigate: (event: React.MouseEvent<HTMLElement>) => void;
+}) {
+  const searchParams = useSearchParams();
+  const activeType = searchParams.get("type");
+
+  return (
+    <>
+      {blogLinks.map((link) => (
+        <Link
+          key={link.href}
+          href={link.href}
+          onClick={onNavigate}
+          className={blogLinkClassName(pathname === "/blog" && activeType === link.type)}
+        >
+          {link.label}
+        </Link>
+      ))}
+    </>
+  );
+}
+
 export function SiteHeader() {
   const t = useTranslations("nav");
   const tPosts = useTranslations("posts");
   const site = useTranslations("site");
   const locale = useLocale();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const activeType = searchParams.get("type");
   const [open, setOpen] = useState(false);
 
   const links = [{ href: "/credit-cards", label: t("creditCards") }];
@@ -91,20 +129,24 @@ export function SiteHeader() {
               <CaretDown size={14} className="transition-transform group-open:rotate-180" />
             </summary>
             <div className="absolute left-0 top-full z-10 mt-2 w-44 rounded-xl border border-border bg-card p-2 shadow-lg">
-              {blogLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={closeParentDropdown}
-                  className={`block rounded-lg px-3 py-2 text-sm hover:bg-secondary ${
-                    pathname === "/blog" && activeType === link.type
-                      ? "text-primary"
-                      : "text-foreground/90"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
+              <Suspense
+                fallback={blogLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={closeParentDropdown}
+                    className={blogLinkClassName(false)}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              >
+                <BlogDropdownLinks
+                  blogLinks={blogLinks}
+                  pathname={pathname}
+                  onNavigate={closeParentDropdown}
+                />
+              </Suspense>
             </div>
           </details>
 
