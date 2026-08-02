@@ -19,7 +19,8 @@
     "formLabel": "GET THE FREE NEWSLETTER",
     "emailPlaceholder": "you@email.com",
     "subscribe": "Subscribe Free",
-    "disclaimer": "No spam. Unsubscribe anytime."
+    "disclaimer": "No spam. Unsubscribe anytime.",
+    "error": "Something went wrong, please try again."
   },
   "offers": {
     "eyebrow": "FEATURED OFFERS",

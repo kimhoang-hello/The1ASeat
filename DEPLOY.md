@@ -22,7 +22,7 @@ cd /var/www/ghe-1a
 
 # Tạo file môi trường thật trên server (KHÔNG commit file này)
 cp .env.example .env.local
-nano .env.local   # điền CONTENTFUL_SPACE_ID, CONTENTFUL_ACCESS_TOKEN, NEXT_PUBLIC_SITE_URL
+nano .env.local   # điền CONTENTFUL_SPACE_ID, CONTENTFUL_ACCESS_TOKEN, KIT_API_KEY, KIT_FORM_ID, NEXT_PUBLIC_SITE_URL
 
 npm ci
 npm run build

@@ -19,7 +19,8 @@
     "formLabel": "NHẬN BẢN TIN MIỄN PHÍ",
     "emailPlaceholder": "mail@gmail.com",
     "subscribe": "Đăng ký bản tin",
-    "disclaimer": "Không spam. Huỷ đăng ký bất cứ lúc nào."
+    "disclaimer": "Không spam. Huỷ đăng ký bất cứ lúc nào.",
+    "error": "Có lỗi xảy ra, vui lòng thử lại."
   },
   "offers": {
     "eyebrow": "ƯU ĐÃI NỔI BẬT",
