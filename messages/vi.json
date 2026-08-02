@@ -8,7 +8,7 @@
     "blog": "Blog",
     "pointsTools": "Công cụ điểm thưởng",
     "calculator": "Công cụ tính điểm",
-    "transferBonuses": "Ưu đãi chuyển điểm",
+    "transferBonuses": "Transfer Bonuses",
     "about": "Giới thiệu",
     "newsletter": "Đăng ký bản tin"
   },
@@ -43,7 +43,7 @@
   },
   "bonuses": {
     "eyebrow": "CẬP NHẬT THƯỜNG XUYÊN",
-    "title": "Tranfer bonus Đang Diễn Ra",
+    "title": "Tranfer Bonus Đang Diễn Ra",
     "viewAll": "Xem tất cả offer",
     "partner": "Đối tác",
     "expires": "Hết hạn",
