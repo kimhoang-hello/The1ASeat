@@ -72,6 +72,7 @@ interface BonusSkeleton {
     bonusPercent: EntryFieldTypes.Integer;
     expiresAt: EntryFieldTypes.Date;
     url: EntryFieldTypes.Symbol;
+    noteVi?: EntryFieldTypes.Text;
   };
 }
 
@@ -130,6 +131,7 @@ function toBonus(entry: Entry<BonusSkeleton, undefined>): TransferBonus {
     bonusPercent: f.bonusPercent,
     expiresAt: f.expiresAt,
     url: f.url,
+    note: f.noteVi,
   };
 }
 

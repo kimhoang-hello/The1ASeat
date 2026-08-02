@@ -40,6 +40,7 @@ export interface TransferBonus {
   bonusPercent: number;
   expiresAt: string;
   url: string;
+  note?: string;
 }
 
 export interface AuthorProfile {

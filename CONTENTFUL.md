@@ -59,6 +59,7 @@ camelCase) để khớp với code trong `src/lib/content/contentful.ts`. Sau kh
 | bonusPercent | Integer             |
 | expiresAt    | Date & time         |
 | url          | Short text          |
+| noteVi       | Long text, optional — shown under the two program names, e.g. a "must register first" caveat |
 
 ## `author`
 

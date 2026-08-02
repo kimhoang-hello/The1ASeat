@@ -32,10 +32,13 @@ export default async function TransferBonusesPage() {
                 i !== 0 ? "border-t border-border" : ""
               }`}
             >
-              <div className="flex flex-wrap items-center gap-2 text-sm">
-                <span className="font-semibold text-foreground">{bonus.fromProgram}</span>
-                <ArrowRight size={14} className="text-muted-foreground" />
-                <span className="font-semibold text-foreground">{bonus.toProgram}</span>
+              <div className="flex flex-col gap-1">
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="font-semibold text-foreground">{bonus.fromProgram}</span>
+                  <ArrowRight size={14} className="text-muted-foreground" />
+                  <span className="font-semibold text-foreground">{bonus.toProgram}</span>
+                </div>
+                {bonus.note && <p className="text-xs text-muted-foreground">{bonus.note}</p>}
               </div>
               <div className="flex items-center gap-4 text-sm">
                 <span className="text-muted-foreground">
