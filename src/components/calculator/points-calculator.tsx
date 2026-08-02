@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
+import { POINTS_PROGRAMS } from "@/lib/points-programs";
 
 function parseNumber(value: string): number {
   const n = Number(value.replace(/[^0-9.]/g, ""));
@@ -14,6 +15,7 @@ function formatCents(valuePerPointInDollars: number): string {
 
 export function PointsCalculator() {
   const t = useTranslations("calculator");
+  const [programId, setProgramId] = useState("");
   const [points, setPoints] = useState("60000");
   const [cashPrice, setCashPrice] = useState("3500");
   const [taxes, setTaxes] = useState("300");
@@ -26,9 +28,27 @@ export function PointsCalculator() {
     return Math.max(cash - fees, 0) / p;
   }, [points, cashPrice, taxes]);
 
+  const selectedProgram = POINTS_PROGRAMS.find((p) => p.id === programId);
+
   return (
     <div className="mx-auto max-w-xl rounded-2xl border border-border bg-card p-6 sm:p-8">
       <div className="grid gap-5">
+        <label className="block">
+          <span className="text-sm font-medium text-foreground/80">{t("programLabel")}</span>
+          <select
+            value={programId}
+            onChange={(e) => setProgramId(e.target.value)}
+            className="mt-1.5 w-full cursor-pointer rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value="">{t("programPlaceholder")}</option>
+            {POINTS_PROGRAMS.map((program) => (
+              <option key={program.id} value={program.id}>
+                {program.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <Field label={t("pointsLabel")} value={points} onChange={setPoints} />
         <Field label={t("cashPriceLabel")} value={cashPrice} onChange={setCashPrice} suffix="C$" />
         <Field label={t("taxesLabel")} value={taxes} onChange={setTaxes} suffix="C$" />
@@ -42,6 +62,12 @@ export function PointsCalculator() {
           {formatCents(valuePerPoint)}¢
         </p>
       </div>
+
+      {selectedProgram && (
+        <p className="mt-3 text-center text-xs text-muted-foreground">
+          {t("benchmark", { program: selectedProgram.name, value: selectedProgram.centsPerPoint })}
+        </p>
+      )}
 
       <p className="mt-4 text-xs leading-relaxed text-muted-foreground">{t("resultHint")}</p>
     </div>
