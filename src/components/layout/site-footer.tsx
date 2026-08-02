@@ -44,7 +44,7 @@ export function SiteFooter() {
 
           <div className="flex gap-4 text-white/60">
             <a
-              href="#"
+              href="https://youtube.com/@hoangleca"
               aria-label="YouTube"
               target="_blank"
               rel="noopener noreferrer"

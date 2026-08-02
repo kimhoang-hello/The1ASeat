@@ -11,7 +11,7 @@ export function getYouTubeThumbnailUrl(url: string): string | null {
       id = u.pathname.slice(1);
     }
 
-    return id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : null;
+    return id ? `https://i.ytimg.com/vi/${id}/maxresdefault.jpg` : null;
   } catch {
     return null;
   }
