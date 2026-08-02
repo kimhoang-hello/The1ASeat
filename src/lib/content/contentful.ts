@@ -34,6 +34,7 @@ interface PostSkeleton {
     coverImage: EntryFieldTypes.Symbol<
       "airplane" | "globe" | "building" | "armchair" | "credit-card" | "avatar"
     >;
+    coverPhoto?: EntryFieldTypes.AssetLink;
     videoUrl?: EntryFieldTypes.Symbol;
     publishedAt: EntryFieldTypes.Date;
     minutesRead: EntryFieldTypes.Integer;
@@ -95,6 +96,7 @@ function toPost(entry: Entry<PostSkeleton, undefined>): BlogPost {
     excerpt: f.excerptVi,
     body: documentToHtmlString(f.bodyVi),
     coverImage: f.coverImage,
+    coverPhoto: f.coverPhoto ? assetUrl(f.coverPhoto) || undefined : undefined,
     videoUrl: f.videoUrl,
     publishedAt: f.publishedAt,
     minutesRead: f.minutesRead,

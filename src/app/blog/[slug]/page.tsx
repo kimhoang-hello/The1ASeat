@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { getPostBySlug, getPosts } from "@/lib/content";
 import { formatDate } from "@/lib/format-date";
 import { MediaPlaceholder, type PlaceholderIcon } from "@/components/ui/media-placeholder";
@@ -53,6 +54,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             allowFullScreen
             className="h-full w-full"
           />
+        </div>
+      ) : post.coverPhoto ? (
+        <div className="relative mt-6 h-56 w-full overflow-hidden rounded-2xl bg-primary sm:h-80">
+          <Image src={post.coverPhoto} alt={post.title} fill sizes="672px" className="object-cover" />
         </div>
       ) : (
         <MediaPlaceholder

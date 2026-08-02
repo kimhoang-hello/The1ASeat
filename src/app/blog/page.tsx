@@ -57,7 +57,8 @@ export default async function BlogPage({
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {posts.map((post) => {
-              const thumbnail = post.type === "video" ? getYouTubeThumbnailUrl(post.videoUrl ?? "") : null;
+              const thumbnail =
+                post.coverPhoto ?? (post.type === "video" ? getYouTubeThumbnailUrl(post.videoUrl ?? "") : null);
               return (
               <Link
                 key={post.slug}

@@ -8,6 +8,7 @@ export interface BlogPost {
   excerpt: string;
   body: string;
   coverImage: string;
+  coverPhoto?: string;
   videoUrl?: string;
   publishedAt: string;
   minutesRead: number;
