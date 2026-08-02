@@ -1,7 +1,7 @@
 import { createClient, EntryFieldTypes } from "contentful";
 import type { Asset, Entry } from "contentful";
 import { documentToHtmlString } from "@contentful/rich-text-html-renderer";
-import type { AuthorProfile, BlogPost, CreditCardOffer, Locale, TransferBonus } from "./types";
+import type { AuthorProfile, BlogPost, CreditCardOffer, TransferBonus } from "./types";
 
 const spaceId = process.env.CONTENTFUL_SPACE_ID;
 const accessToken = process.env.CONTENTFUL_ACCESS_TOKEN;
@@ -20,19 +20,17 @@ function assetUrl(asset: unknown): string {
   return "";
 }
 
+// The Contentful content model still has "...Vi"/"...En" field pairs
+// (see CONTENTFUL.md) — the website only reads the Vi side now.
 interface PostSkeleton {
   contentTypeId: "blogPost";
   fields: {
     slug: EntryFieldTypes.Symbol;
     type: EntryFieldTypes.Symbol<"post" | "video">;
     categoryVi: EntryFieldTypes.Symbol;
-    categoryEn: EntryFieldTypes.Symbol;
     titleVi: EntryFieldTypes.Symbol;
-    titleEn: EntryFieldTypes.Symbol;
     excerptVi: EntryFieldTypes.Text;
-    excerptEn: EntryFieldTypes.Text;
     bodyVi: EntryFieldTypes.RichText;
-    bodyEn: EntryFieldTypes.RichText;
     coverImage: EntryFieldTypes.Symbol<
       "airplane" | "globe" | "building" | "armchair" | "credit-card" | "avatar"
     >;
@@ -54,15 +52,10 @@ interface CardSkeleton {
     >;
     country: EntryFieldTypes.Symbol<"US" | "CA">;
     annualFeeVi: EntryFieldTypes.Symbol;
-    annualFeeEn: EntryFieldTypes.Symbol;
     cardTypeVi: EntryFieldTypes.Symbol;
-    cardTypeEn: EntryFieldTypes.Symbol;
     headlineVi: EntryFieldTypes.Text;
-    headlineEn: EntryFieldTypes.Text;
     editorsTakeVi: EntryFieldTypes.Text;
-    editorsTakeEn: EntryFieldTypes.Text;
     keyBenefitsVi: EntryFieldTypes.Array<EntryFieldTypes.Symbol>;
-    keyBenefitsEn: EntryFieldTypes.Array<EntryFieldTypes.Symbol>;
     elevatedBonus: EntryFieldTypes.Boolean;
     applyUrl: EntryFieldTypes.Symbol;
   };
@@ -86,7 +79,6 @@ interface AuthorSkeleton {
     name: EntryFieldTypes.Symbol;
     photo?: EntryFieldTypes.AssetLink;
     bioVi: EntryFieldTypes.Text;
-    bioEn: EntryFieldTypes.Text;
   };
 }
 
@@ -95,10 +87,10 @@ function toPost(entry: Entry<PostSkeleton, undefined>): BlogPost {
   return {
     slug: f.slug,
     type: f.type,
-    category: { vi: f.categoryVi, en: f.categoryEn },
-    title: { vi: f.titleVi, en: f.titleEn },
-    excerpt: { vi: f.excerptVi, en: f.excerptEn },
-    body: { vi: documentToHtmlString(f.bodyVi), en: documentToHtmlString(f.bodyEn) },
+    category: f.categoryVi,
+    title: f.titleVi,
+    excerpt: f.excerptVi,
+    body: documentToHtmlString(f.bodyVi),
     coverImage: f.coverImage,
     videoUrl: f.videoUrl,
     publishedAt: f.publishedAt,
@@ -115,11 +107,11 @@ function toCard(entry: Entry<CardSkeleton, undefined>): CreditCardOffer {
     issuer: f.issuer,
     image: f.image,
     country: f.country,
-    annualFee: { vi: f.annualFeeVi, en: f.annualFeeEn },
-    cardType: { vi: f.cardTypeVi, en: f.cardTypeEn },
-    headline: { vi: f.headlineVi, en: f.headlineEn },
-    editorsTake: { vi: f.editorsTakeVi, en: f.editorsTakeEn },
-    keyBenefits: { vi: f.keyBenefitsVi, en: f.keyBenefitsEn },
+    annualFee: f.annualFeeVi,
+    cardType: f.cardTypeVi,
+    headline: f.headlineVi,
+    editorsTake: f.editorsTakeVi,
+    keyBenefits: f.keyBenefitsVi,
     elevatedBonus: f.elevatedBonus,
     applyUrl: f.applyUrl,
   };
@@ -142,7 +134,7 @@ function toAuthor(entry: Entry<AuthorSkeleton, undefined>): AuthorProfile {
   return {
     name: f.name,
     photo: assetUrl(f.photo),
-    bio: { vi: f.bioVi, en: f.bioEn },
+    bio: f.bioVi,
   };
 }
 
@@ -165,5 +157,3 @@ export async function fetchContentfulAuthor(): Promise<AuthorProfile | null> {
   const res = await client!.getEntries<AuthorSkeleton>({ content_type: "author", limit: 1 });
   return res.items[0] ? toAuthor(res.items[0]) : null;
 }
-
-export type { Locale };

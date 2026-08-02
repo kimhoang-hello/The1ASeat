@@ -1,11 +1,13 @@
-import { getLocale, getTranslations, setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Link } from "@/i18n/navigation";
+import Link from "next/link";
 import { getCreditCardOfferBySlug, getCreditCardOffers } from "@/lib/content";
-import { pickLocale } from "@/lib/pick-locale";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 import { CardBadges } from "@/components/credit-cards/card-badges";
+import { t as translate } from "@/lib/t";
+
+const offers = translate("offers");
+const common = translate("common");
 
 export async function generateStaticParams() {
   const offers = await getCreditCardOffers();
@@ -15,35 +17,28 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string; locale: string }>;
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug, locale } = await params;
+  const { slug } = await params;
   const offer = await getCreditCardOfferBySlug(slug);
   if (!offer) return {};
-  return { title: offer.name, description: pickLocale(offer.headline, locale) };
+  return { title: offer.name, description: offer.headline };
 }
 
 export default async function CreditCardDetailPage({
   params,
 }: {
-  params: Promise<{ slug: string; locale: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { slug, locale: routeLocale } = await params;
-  setRequestLocale(routeLocale);
-
-  const [t, common, locale, offer] = await Promise.all([
-    getTranslations("offers"),
-    getTranslations("common"),
-    getLocale(),
-    getCreditCardOfferBySlug(slug),
-  ]);
+  const { slug } = await params;
+  const offer = await getCreditCardOfferBySlug(slug);
 
   if (!offer) notFound();
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
       <Link href="/credit-cards" className="text-sm font-semibold text-primary hover:underline">
-        &larr; {t("viewAll")}
+        &larr; {offers("viewAll")}
       </Link>
 
       <MediaPlaceholder icon="credit-card" tone="tan" className="mt-6 h-56 w-full rounded-2xl" />
@@ -51,31 +46,27 @@ export default async function CreditCardDetailPage({
       <div className="mt-6">
         <CardBadges
           offer={offer}
-          cardType={`${pickLocale(offer.cardType, locale)} · ${offer.issuer}`}
-          elevatedBonusLabel={t("elevatedBonus")}
+          cardType={`${offer.cardType} · ${offer.issuer}`}
+          elevatedBonusLabel={offers("elevatedBonus")}
         />
       </div>
 
       <h1 className="mt-2 font-display text-3xl font-extrabold text-foreground">{offer.name}</h1>
       <p className="mt-2 text-base text-muted-foreground">
-        {t("annualFee")}: {pickLocale(offer.annualFee, locale)}
+        {offers("annualFee")}: {offer.annualFee}
       </p>
-      <p className="mt-4 text-lg leading-relaxed text-foreground/90">
-        {pickLocale(offer.headline, locale)}
-      </p>
+      <p className="mt-4 text-lg leading-relaxed text-foreground/90">{offer.headline}</p>
 
       <div className="mt-6 rounded-xl bg-secondary p-5">
         <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-          {t("editorsTake")}
+          {offers("editorsTake")}
         </p>
-        <p className="mt-2 leading-relaxed text-foreground/90">
-          {pickLocale(offer.editorsTake, locale)}
-        </p>
+        <p className="mt-2 leading-relaxed text-foreground/90">{offer.editorsTake}</p>
       </div>
 
-      <h2 className="mt-8 font-display text-xl font-bold text-foreground">{t("keyBenefits")}</h2>
+      <h2 className="mt-8 font-display text-xl font-bold text-foreground">{offers("keyBenefits")}</h2>
       <ul className="mt-3 list-disc space-y-2 pl-5 text-foreground/90">
-        {pickLocale(offer.keyBenefits, locale).map((benefit) => (
+        {offer.keyBenefits.map((benefit) => (
           <li key={benefit}>{benefit}</li>
         ))}
       </ul>
@@ -84,7 +75,7 @@ export default async function CreditCardDetailPage({
         href={offer.applyUrl}
         className="mt-8 inline-block cursor-pointer rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
       >
-        {t("viewOffer")} &rarr;
+        {offers("viewOffer")} &rarr;
       </a>
 
       <p className="mt-10 border-t border-border pt-4 text-xs text-muted-foreground">

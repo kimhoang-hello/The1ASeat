@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useTranslations } from "next-intl";
 import { PaperPlaneTilt, CheckCircle, CircleNotch } from "@phosphor-icons/react";
+import { t as translate } from "@/lib/t";
+
+const t = translate("hero");
 
 export function NewsletterForm({
   variant = "light",
@@ -11,7 +13,6 @@ export function NewsletterForm({
   variant?: "light" | "dark";
   id?: string;
 }) {
-  const t = useTranslations("hero");
   const [status, setStatus] = useState<"idle" | "submitting" | "submitted" | "error">("idle");
   const [email, setEmail] = useState("");
 

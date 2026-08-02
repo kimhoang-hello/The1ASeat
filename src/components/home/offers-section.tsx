@@ -1,17 +1,14 @@
-import { getLocale, getTranslations } from "next-intl/server";
+import Link from "next/link";
 import { CaretDown } from "@phosphor-icons/react/ssr";
-import { Link } from "@/i18n/navigation";
+import { t as translate } from "@/lib/t";
 import { getCreditCardOffers } from "@/lib/content";
-import { pickLocale } from "@/lib/pick-locale";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 import { CardBadges } from "@/components/credit-cards/card-badges";
 
+const t = translate("offers");
+
 export async function OffersSection() {
-  const [t, locale, offersAll] = await Promise.all([
-    getTranslations("offers"),
-    getLocale(),
-    getCreditCardOffers(),
-  ]);
+  const offersAll = await getCreditCardOffers();
   const offers = offersAll.slice(0, 4);
 
   return (
@@ -44,15 +41,17 @@ export async function OffersSection() {
               <div className="flex-1">
                 <CardBadges
                   offer={offer}
-                  cardType={pickLocale(offer.cardType, locale)}
+                  cardType={offer.cardType}
                   elevatedBonusLabel={t("elevatedBonus")}
                 />
 
                 <h3 className="mt-1.5 font-display text-lg font-bold text-foreground">
-                  {offer.name}
+                  <Link href={`/credit-cards/${offer.slug}`} className="cursor-pointer hover:text-primary">
+                    {offer.name}
+                  </Link>
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  {t("annualFee")}: {pickLocale(offer.annualFee, locale)}
+                  {t("annualFee")}: {offer.annualFee}
                 </p>
 
                 <div className="mt-3 rounded-lg bg-secondary p-3">
@@ -60,7 +59,7 @@ export async function OffersSection() {
                     {t("editorsTake")}
                   </p>
                   <p className="mt-1 text-sm leading-relaxed text-foreground/90">
-                    {pickLocale(offer.editorsTake, locale)}
+                    {offer.editorsTake}
                   </p>
                 </div>
 
@@ -70,7 +69,7 @@ export async function OffersSection() {
                     {t("keyBenefits")}
                   </summary>
                   <ul className="ml-5 mt-2 list-disc space-y-1 text-sm text-muted-foreground">
-                    {pickLocale(offer.keyBenefits, locale).map((benefit) => (
+                    {offer.keyBenefits.map((benefit) => (
                       <li key={benefit}>{benefit}</li>
                     ))}
                   </ul>

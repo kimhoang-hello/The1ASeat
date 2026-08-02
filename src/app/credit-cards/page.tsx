@@ -1,40 +1,22 @@
-import { getLocale, getTranslations, setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { CaretDown } from "@phosphor-icons/react/ssr";
-import { Link } from "@/i18n/navigation";
 import { getCreditCardOffers } from "@/lib/content";
-import { pickLocale } from "@/lib/pick-locale";
 import { PageHeader } from "@/components/layout/page-header";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 import { CardBadges } from "@/components/credit-cards/card-badges";
+import { t } from "@/lib/t";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}): Promise<Metadata> {
-  const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "offers" });
-  return { title: t("title") };
-}
+const offers_t = t("offers");
 
-export default async function CreditCardsPage({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
-  const { locale: routeLocale } = await params;
-  setRequestLocale(routeLocale);
+export const metadata: Metadata = { title: offers_t("title") };
 
-  const [t, locale, offers] = await Promise.all([
-    getTranslations("offers"),
-    getLocale(),
-    getCreditCardOffers(),
-  ]);
+export default async function CreditCardsPage() {
+  const offers = await getCreditCardOffers();
 
   return (
     <>
-      <PageHeader eyebrow={t("eyebrow")} title={t("title")} />
+      <PageHeader eyebrow={offers_t("eyebrow")} title={offers_t("title")} />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-6xl flex-col gap-5">
@@ -52,27 +34,27 @@ export default async function CreditCardsPage({
               <div className="flex-1">
                 <CardBadges
                   offer={offer}
-                  cardType={`${pickLocale(offer.cardType, locale)} · ${offer.issuer}`}
-                  elevatedBonusLabel={t("elevatedBonus")}
+                  cardType={`${offer.cardType} · ${offer.issuer}`}
+                  elevatedBonusLabel={offers_t("elevatedBonus")}
                 />
 
                 <h2 className="mt-1.5 font-display text-lg font-bold text-foreground">
-                  {offer.name}
+                  <Link href={`/credit-cards/${offer.slug}`} className="cursor-pointer hover:text-primary">
+                    {offer.name}
+                  </Link>
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  {t("annualFee")}: {pickLocale(offer.annualFee, locale)}
+                  {offers_t("annualFee")}: {offer.annualFee}
                 </p>
-                <p className="mt-2 text-sm leading-relaxed text-foreground/90">
-                  {pickLocale(offer.headline, locale)}
-                </p>
+                <p className="mt-2 text-sm leading-relaxed text-foreground/90">{offer.headline}</p>
 
                 <details className="group mt-3">
                   <summary className="flex cursor-pointer list-none items-center gap-1 text-sm font-semibold text-foreground/80 hover:text-primary">
                     <CaretDown size={14} className="transition-transform group-open:rotate-180" />
-                    {t("keyBenefits")}
+                    {offers_t("keyBenefits")}
                   </summary>
                   <ul className="ml-5 mt-2 list-disc space-y-1 text-sm text-muted-foreground">
-                    {pickLocale(offer.keyBenefits, locale).map((benefit) => (
+                    {offer.keyBenefits.map((benefit) => (
                       <li key={benefit}>{benefit}</li>
                     ))}
                   </ul>
@@ -83,13 +65,13 @@ export default async function CreditCardsPage({
                     href={`/credit-cards/${offer.slug}`}
                     className="cursor-pointer text-sm font-semibold text-foreground/80 hover:text-primary hover:underline"
                   >
-                    {t("editorsTake")} &rarr;
+                    {offers_t("editorsTake")} &rarr;
                   </Link>
                   <a
                     href={offer.applyUrl}
                     className="cursor-pointer text-sm font-bold text-primary underline decoration-2 underline-offset-4 hover:text-primary-hover"
                   >
-                    {t("viewOffer")} &rarr;
+                    {offers_t("viewOffer")} &rarr;
                   </a>
                 </div>
               </div>

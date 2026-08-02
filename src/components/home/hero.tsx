@@ -1,8 +1,9 @@
-import { useTranslations } from "next-intl";
+import { t as translate } from "@/lib/t";
 import { NewsletterForm } from "./newsletter-form";
 
+const t = translate("hero");
+
 export function Hero() {
-  const t = useTranslations("hero");
 
   return (
     <section className="border-b border-border bg-background px-4 py-20 sm:px-6 lg:px-8">

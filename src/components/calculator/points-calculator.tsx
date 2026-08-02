@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { t as translate } from "@/lib/t";
 import { POINTS_PROGRAMS } from "@/lib/points-programs";
+
+const t = translate("calculator");
 
 function parseNumber(value: string): number {
   const n = Number(value.replace(/[^0-9.]/g, ""));
@@ -14,7 +16,6 @@ function formatCents(valuePerPointInDollars: number): string {
 }
 
 export function PointsCalculator() {
-  const t = useTranslations("calculator");
   const [programId, setProgramId] = useState("");
   const [points, setPoints] = useState("60000");
   const [cashPrice, setCashPrice] = useState("3500");

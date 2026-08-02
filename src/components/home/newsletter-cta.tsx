@@ -1,9 +1,9 @@
-import { getTranslations } from "next-intl/server";
+import { t as translate } from "@/lib/t";
 import { NewsletterForm } from "./newsletter-form";
 
-export async function NewsletterCta() {
-  const t = await getTranslations("newsletterCta");
+const t = translate("newsletterCta");
 
+export function NewsletterCta() {
   return (
     <section className="bg-navy-ink px-4 py-16 text-white sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-8 md:flex-row md:items-center">

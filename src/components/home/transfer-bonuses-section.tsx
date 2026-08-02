@@ -1,15 +1,13 @@
-import { getLocale, getTranslations } from "next-intl/server";
+import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react/ssr";
-import { Link } from "@/i18n/navigation";
+import { t as translate } from "@/lib/t";
 import { getTransferBonuses } from "@/lib/content";
 import { formatDate } from "@/lib/format-date";
 
+const t = translate("bonuses");
+
 export async function TransferBonusesSection() {
-  const [t, locale, bonuses] = await Promise.all([
-    getTranslations("bonuses"),
-    getLocale(),
-    getTransferBonuses(),
-  ]);
+  const bonuses = await getTransferBonuses();
 
   return (
     <section className="bg-background px-4 py-16 sm:px-6 lg:px-8">
@@ -45,7 +43,7 @@ export async function TransferBonusesSection() {
               </div>
               <div className="flex items-center gap-4 text-sm">
                 <span className="text-muted-foreground">
-                  {t("expires")} {formatDate(bonus.expiresAt, locale)}
+                  {t("expires")} {formatDate(bonus.expiresAt)}
                 </span>
                 <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700">
                   +{bonus.bonusPercent}%

@@ -2,19 +2,10 @@
   {
     "slug": "the-hoi-vien-hang-khong-nao-dang-gia",
     "type": "post",
-    "category": { "vi": "Thẻ tín dụng", "en": "Credit Cards" },
-    "title": {
-      "vi": "So sánh 2026: Thẻ đồng thương hiệu hàng không nào đáng mở nhất?",
-      "en": "2026 Comparison: Which Co-Branded Airline Card Is Worth It?"
-    },
-    "excerpt": {
-      "vi": "Chúng tôi so sánh phí thường niên, ưu đãi chào mừng và giá trị quy đổi thực tế của các thẻ đồng thương hiệu phổ biến nhất.",
-      "en": "We compare annual fees, welcome bonuses, and real-world redemption value across the most popular co-branded cards."
-    },
-    "body": {
-      "vi": "<p>Đây là nội dung mẫu cho bài viết. Thay thế bằng phân tích chi tiết thực tế của bạn về các thẻ đồng thương hiệu hàng không, bao gồm biểu phí, ưu đãi chào mừng, hạn mức miễn phí hành lý và giá trị quy đổi điểm.</p><p>Một đoạn nội dung mẫu khác để minh hoạ độ dài bài viết trên trang chi tiết.</p>",
-      "en": "<p>This is placeholder content for the article. Replace with your own in-depth analysis of co-branded airline cards, covering fee structures, welcome offers, free-checked-bag perks, and real redemption value.</p><p>Another sample paragraph to illustrate article length on the detail page.</p>"
-    },
+    "category": "Thẻ tín dụng",
+    "title": "So sánh 2026: Thẻ đồng thương hiệu hàng không nào đáng mở nhất?",
+    "excerpt": "Chúng tôi so sánh phí thường niên, ưu đãi chào mừng và giá trị quy đổi thực tế của các thẻ đồng thương hiệu phổ biến nhất.",
+    "body": "<p>Đây là nội dung mẫu cho bài viết. Thay thế bằng phân tích chi tiết thực tế của bạn về các thẻ đồng thương hiệu hàng không, bao gồm biểu phí, ưu đãi chào mừng, hạn mức miễn phí hành lý và giá trị quy đổi điểm.</p><p>Một đoạn nội dung mẫu khác để minh hoạ độ dài bài viết trên trang chi tiết.</p>",
     "coverImage": "airplane",
     "publishedAt": "2026-07-28",
     "minutesRead": 8,
@@ -23,19 +14,10 @@
   {
     "slug": "chuyen-doi-diem-sang-ve-thuong-gia",
     "type": "post",
-    "category": { "vi": "Award Travel", "en": "Award Travel" },
-    "title": {
-      "vi": "Cách đổi điểm thẻ tín dụng thành vé thương gia đi châu Âu",
-      "en": "How to Turn Credit Card Points Into a Business Class Ticket to Europe"
-    },
-    "excerpt": {
-      "vi": "Hướng dẫn từng bước để chuyển điểm sang chương trình đối tác và săn được vé award thương gia với giá trị quy đổi cao.",
-      "en": "A step-by-step guide to transferring points to airline partners and locking in a high-value business class award seat."
-    },
-    "body": {
-      "vi": "<p>Nội dung mẫu — trình bày chiến lược tìm kiếm availability, thời điểm nên đặt, và các chương trình đối tác chuyển điểm tốt nhất hiện nay.</p>",
-      "en": "<p>Placeholder content — walk through your strategy for searching availability, timing bookings, and which transfer partners currently offer the best sweet spots.</p>"
-    },
+    "category": "Award Travel",
+    "title": "Cách đổi điểm thẻ tín dụng thành vé thương gia đi châu Âu",
+    "excerpt": "Hướng dẫn từng bước để chuyển điểm sang chương trình đối tác và săn được vé award thương gia với giá trị quy đổi cao.",
+    "body": "<p>Nội dung mẫu — trình bày chiến lược tìm kiếm availability, thời điểm nên đặt, và các chương trình đối tác chuyển điểm tốt nhất hiện nay.</p>",
     "coverImage": "globe",
     "publishedAt": "2026-07-20",
     "minutesRead": 11,
@@ -44,18 +26,10 @@
   {
     "slug": "toi-uu-diem-thuong-khach-san",
     "type": "post",
-    "category": { "vi": "Khách sạn", "en": "Hotels" },
-    "title": {
-      "vi": "5 mẹo tối ưu điểm thưởng khách sạn cho người mới bắt đầu",
-      "en": "5 Hotel Points Tips Every Beginner Should Know" },
-    "excerpt": {
-      "vi": "Từ chọn đúng chương trình trung thành đến tận dụng ưu đãi nâng hạng — đây là những điều nên biết trước khi tích điểm khách sạn.",
-      "en": "From picking the right loyalty program to unlocking elite-status perks — here's what to know before you start earning hotel points."
-    },
-    "body": {
-      "vi": "<p>Nội dung mẫu về chiến lược tích điểm khách sạn, chọn chuỗi phù hợp và tối ưu số đêm lưu trú.</p>",
-      "en": "<p>Placeholder content covering hotel points strategy, choosing the right chain, and optimizing qualifying nights.</p>"
-    },
+    "category": "Khách sạn",
+    "title": "5 mẹo tối ưu điểm thưởng khách sạn cho người mới bắt đầu",
+    "excerpt": "Từ chọn đúng chương trình trung thành đến tận dụng ưu đãi nâng hạng — đây là những điều nên biết trước khi tích điểm khách sạn.",
+    "body": "<p>Nội dung mẫu về chiến lược tích điểm khách sạn, chọn chuỗi phù hợp và tối ưu số đêm lưu trú.</p>",
     "coverImage": "building",
     "publishedAt": "2026-07-12",
     "minutesRead": 6,
@@ -64,19 +38,10 @@
   {
     "slug": "danh-gia-phong-cho-thuong-gia",
     "type": "post",
-    "category": { "vi": "Đánh giá", "en": "Reviews" },
-    "title": {
-      "vi": "Trải nghiệm phòng chờ thương gia sân bay Tân Sơn Nhất",
-      "en": "Review: Business Class Lounge at Tan Son Nhat Airport"
-    },
-    "excerpt": {
-      "vi": "Đánh giá chi tiết về ẩm thực, tiện nghi và cách vào phòng chờ miễn phí bằng thẻ tín dụng cao cấp.",
-      "en": "A detailed review of the food, amenities, and how to access it for free using a premium credit card."
-    },
-    "body": {
-      "vi": "<p>Nội dung mẫu đánh giá phòng chờ — thay bằng trải nghiệm thực tế kèm hình ảnh của bạn.</p>",
-      "en": "<p>Placeholder lounge review content — replace with your own first-hand experience and photos.</p>"
-    },
+    "category": "Đánh giá",
+    "title": "Trải nghiệm phòng chờ thương gia sân bay Tân Sơn Nhất",
+    "excerpt": "Đánh giá chi tiết về ẩm thực, tiện nghi và cách vào phòng chờ miễn phí bằng thẻ tín dụng cao cấp.",
+    "body": "<p>Nội dung mẫu đánh giá phòng chờ — thay bằng trải nghiệm thực tế kèm hình ảnh của bạn.</p>",
     "coverImage": "armchair",
     "publishedAt": "2026-07-02",
     "minutesRead": 5,
@@ -85,19 +50,10 @@
   {
     "slug": "review-phong-cho-thuong-gia-video",
     "type": "video",
-    "category": { "vi": "Đánh giá", "en": "Reviews" },
-    "title": {
-      "vi": "[Video] Một vòng phòng chờ thương gia Tân Sơn Nhất",
-      "en": "[Video] A Walkthrough of the Tan Son Nhat Business Lounge"
-    },
-    "excerpt": {
-      "vi": "Cùng đi một vòng phòng chờ thương gia — đồ ăn, không gian nghỉ, và cách vào miễn phí bằng thẻ tín dụng.",
-      "en": "A quick walkthrough of the business lounge — food, seating, and how to get in free with a credit card."
-    },
-    "body": {
-      "vi": "<p>Nội dung mẫu — thay bằng video thật (YouTube/TikTok) và mô tả chi tiết khi bạn quay xong.</p>",
-      "en": "<p>Placeholder — replace with your real video (YouTube/TikTok) and a full description once it's filmed.</p>"
-    },
+    "category": "Đánh giá",
+    "title": "[Video] Một vòng phòng chờ thương gia Tân Sơn Nhất",
+    "excerpt": "Cùng đi một vòng phòng chờ thương gia — đồ ăn, không gian nghỉ, và cách vào miễn phí bằng thẻ tín dụng.",
+    "body": "<p>Nội dung mẫu — thay bằng video thật (YouTube/TikTok) và mô tả chi tiết khi bạn quay xong.</p>",
     "coverImage": "armchair",
     "videoUrl": "",
     "publishedAt": "2026-07-24",
@@ -107,19 +63,10 @@
   {
     "slug": "cach-dat-ve-award-video",
     "type": "video",
-    "category": { "vi": "Award Travel", "en": "Award Travel" },
-    "title": {
-      "vi": "[Video] Đặt vé award thương gia trong 5 phút",
-      "en": "[Video] Booking a Business Class Award Seat in 5 Minutes"
-    },
-    "excerpt": {
-      "vi": "Xem trực tiếp cách tìm và đặt một vé award thương gia sang châu Âu bằng điểm thưởng.",
-      "en": "Watch a live walkthrough of finding and booking a business class award seat to Europe with points."
-    },
-    "body": {
-      "vi": "<p>Nội dung mẫu — thay bằng video thật khi có, kèm timestamp các bước chính.</p>",
-      "en": "<p>Placeholder — replace with the real video once filmed, with timestamps for each step.</p>"
-    },
+    "category": "Award Travel",
+    "title": "[Video] Đặt vé award thương gia trong 5 phút",
+    "excerpt": "Xem trực tiếp cách tìm và đặt một vé award thương gia sang châu Âu bằng điểm thưởng.",
+    "body": "<p>Nội dung mẫu — thay bằng video thật khi có, kèm timestamp các bước chính.</p>",
     "coverImage": "globe",
     "videoUrl": "",
     "publishedAt": "2026-07-08",

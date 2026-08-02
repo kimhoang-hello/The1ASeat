@@ -1,18 +1,15 @@
-import { getLocale, getTranslations } from "next-intl/server";
-import { Link } from "@/i18n/navigation";
+import Link from "next/link";
+import { t as translate } from "@/lib/t";
 import { getAuthor } from "@/lib/content";
-import { pickLocale } from "@/lib/pick-locale";
 import { AuthorPhoto } from "@/components/ui/author-photo";
 import { boldOccurrences } from "@/lib/bold-occurrences";
 
-export async function AuthorSection() {
-  const [t, locale, author] = await Promise.all([
-    getTranslations("author"),
-    getLocale(),
-    getAuthor(),
-  ]);
+const t = translate("author");
 
-  const [firstParagraph] = pickLocale(author.bio, locale).split("\n\n");
+export async function AuthorSection() {
+  const author = await getAuthor();
+
+  const [firstParagraph] = author.bio.split("\n\n");
 
   return (
     <section className="border-t border-border bg-secondary px-4 py-16 sm:px-6 lg:px-8">

@@ -1,37 +1,20 @@
-import { getLocale, getTranslations, setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
 import { ArrowRight } from "@phosphor-icons/react/ssr";
 import { getTransferBonuses } from "@/lib/content";
 import { formatDate } from "@/lib/format-date";
 import { PageHeader } from "@/components/layout/page-header";
+import { t } from "@/lib/t";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}): Promise<Metadata> {
-  const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "bonuses" });
-  return { title: t("title") };
-}
+const bonuses_t = t("bonuses");
 
-export default async function TransferBonusesPage({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
-  const { locale: routeLocale } = await params;
-  setRequestLocale(routeLocale);
+export const metadata: Metadata = { title: bonuses_t("title") };
 
-  const [t, locale, bonuses] = await Promise.all([
-    getTranslations("bonuses"),
-    getLocale(),
-    getTransferBonuses(),
-  ]);
+export default async function TransferBonusesPage() {
+  const bonuses = await getTransferBonuses();
 
   return (
     <>
-      <PageHeader eyebrow={t("eyebrow")} title={t("title")} />
+      <PageHeader eyebrow={bonuses_t("eyebrow")} title={bonuses_t("title")} />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl overflow-hidden rounded-2xl border border-border">
@@ -50,7 +33,7 @@ export default async function TransferBonusesPage({
               </div>
               <div className="flex items-center gap-4 text-sm">
                 <span className="text-muted-foreground">
-                  {t("expires")} {formatDate(bonus.expiresAt, locale)}
+                  {bonuses_t("expires")} {formatDate(bonus.expiresAt)}
                 </span>
                 <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700">
                   +{bonus.bonusPercent}%

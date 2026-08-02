@@ -1,17 +1,14 @@
-import { getLocale, getTranslations } from "next-intl/server";
-import { Link } from "@/i18n/navigation";
+import Link from "next/link";
+import { t as translate } from "@/lib/t";
 import { getPosts } from "@/lib/content";
-import { pickLocale } from "@/lib/pick-locale";
 import { formatDate } from "@/lib/format-date";
 import { MediaPlaceholder, type PlaceholderIcon } from "@/components/ui/media-placeholder";
 
+const t = translate("posts");
+const tCommon = translate("common");
+
 export async function PostsSection() {
-  const [t, tCommon, locale, allPosts] = await Promise.all([
-    getTranslations("posts"),
-    getTranslations("common"),
-    getLocale(),
-    getPosts(),
-  ]);
+  const allPosts = await getPosts();
   const posts = allPosts.slice(0, 3);
 
   return (
@@ -45,7 +42,7 @@ export async function PostsSection() {
               <div className="flex flex-1 flex-col p-5">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold uppercase tracking-wide text-primary">
-                    {pickLocale(post.category, locale)}
+                    {post.category}
                   </span>
                   {post.type === "video" && (
                     <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground/70">
@@ -54,13 +51,13 @@ export async function PostsSection() {
                   )}
                 </div>
                 <h3 className="mt-2 font-display text-base font-bold leading-snug text-foreground group-hover:text-primary">
-                  {pickLocale(post.title, locale)}
+                  {post.title}
                 </h3>
                 <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                  {pickLocale(post.excerpt, locale)}
+                  {post.excerpt}
                 </p>
                 <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-                  <time dateTime={post.publishedAt}>{formatDate(post.publishedAt, locale)}</time>
+                  <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
                   <span aria-hidden>&middot;</span>
                   <span>
                     {post.minutesRead} {tCommon("minRead")}

@@ -1,16 +1,12 @@
-export type Locale = "vi" | "en";
-
-export type Localized<T> = Record<Locale, T>;
-
 export type BlogPostType = "post" | "video";
 
 export interface BlogPost {
   slug: string;
   type: BlogPostType;
-  category: Localized<string>;
-  title: Localized<string>;
-  excerpt: Localized<string>;
-  body: Localized<string>;
+  category: string;
+  title: string;
+  excerpt: string;
+  body: string;
   coverImage: string;
   videoUrl?: string;
   publishedAt: string;
@@ -26,11 +22,11 @@ export interface CreditCardOffer {
   issuer: string;
   image: string;
   country: CardCountry;
-  annualFee: Localized<string>;
-  cardType: Localized<string>;
-  headline: Localized<string>;
-  editorsTake: Localized<string>;
-  keyBenefits: Localized<string[]>;
+  annualFee: string;
+  cardType: string;
+  headline: string;
+  editorsTake: string;
+  keyBenefits: string[];
   elevatedBonus: boolean;
   applyUrl: string;
 }
@@ -47,5 +43,5 @@ export interface TransferBonus {
 export interface AuthorProfile {
   name: string;
   photo: string;
-  bio: Localized<string>;
+  bio: string;
 }

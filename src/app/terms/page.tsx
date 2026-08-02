@@ -1,0 +1,24 @@
+import type { Metadata } from "next";
+import { t } from "@/lib/t";
+
+const footer = t("footer");
+
+export const metadata: Metadata = { title: footer("terms") };
+
+export default function TermsPage() {
+  return (
+    <article className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
+      <h1 className="font-display text-3xl font-extrabold text-foreground">{footer("terms")}</h1>
+      <p className="mt-6 rounded-lg bg-secondary p-4 text-sm text-muted-foreground">
+        Đây là nội dung mẫu. Vui lòng thay thế bằng điều khoản sử dụng thực tế (có tham vấn pháp lý)
+        trước khi website chính thức ra mắt.
+      </p>
+      <div className="prose prose-neutral mt-8 max-w-none">
+        <p>
+          Bằng việc sử dụng trang này, bạn đồng ý rằng nội dung chỉ mang tính tham khảo, không phải
+          lời khuyên tài chính.
+        </p>
+      </div>
+    </article>
+  );
+}

@@ -1,12 +1,13 @@
-import { useTranslations } from "next-intl";
 import Image from "next/image";
+import Link from "next/link";
 import { InstagramLogo, TiktokLogo, YoutubeLogo } from "@phosphor-icons/react/ssr";
-import { Link } from "@/i18n/navigation";
+import { t as translate } from "@/lib/t";
+
+const t = translate("footer");
+const nav = translate("nav");
+const site = translate("site");
 
 export function SiteFooter() {
-  const t = useTranslations("footer");
-  const nav = useTranslations("nav");
-  const site = useTranslations("site");
   const year = new Date().getFullYear();
 
   return (

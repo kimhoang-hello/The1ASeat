@@ -5,20 +5,15 @@
     "issuer": "Issuer A",
     "image": "credit-card",
     "country": "US",
-    "annualFee": { "vi": "$95 — miễn năm đầu", "en": "$95 — waived first year" },
-    "cardType": { "vi": "Thẻ cá nhân", "en": "Personal Credit Card" },
-    "headline": {
-      "vi": "Ưu đãi chào mừng lên đến 60.000 điểm sau khi đạt hạn mức chi tiêu.",
-      "en": "Welcome bonus of up to 60,000 points after meeting minimum spend."
-    },
-    "editorsTake": {
-      "vi": "Lựa chọn tốt nếu bạn bay từ 3-4 chuyến/năm và muốn chuyển điểm linh hoạt sang nhiều hãng hàng không.",
-      "en": "A strong pick if you fly 3-4 times a year and want flexible transfers to multiple airline partners."
-    },
-    "keyBenefits": {
-      "vi": ["Chuyển điểm 1:1 sang 10+ chương trình đối tác", "Miễn phí 2 lượt vào phòng chờ/năm", "Bảo hiểm du lịch tự động"],
-      "en": ["1:1 transfer to 10+ airline & hotel partners", "2 complimentary lounge visits per year", "Automatic travel insurance"]
-    },
+    "annualFee": "$95 — miễn năm đầu",
+    "cardType": "Thẻ cá nhân",
+    "headline": "Ưu đãi chào mừng lên đến 60.000 điểm sau khi đạt hạn mức chi tiêu.",
+    "editorsTake": "Lựa chọn tốt nếu bạn bay từ 3-4 chuyến/năm và muốn chuyển điểm linh hoạt sang nhiều hãng hàng không.",
+    "keyBenefits": [
+      "Chuyển điểm 1:1 sang 10+ chương trình đối tác",
+      "Miễn phí 2 lượt vào phòng chờ/năm",
+      "Bảo hiểm du lịch tự động"
+    ],
     "elevatedBonus": true,
     "applyUrl": "#"
   },
@@ -28,19 +23,15 @@
     "issuer": "Issuer B",
     "image": "credit-card",
     "country": "US",
-    "annualFee": { "vi": "$0/năm", "en": "$0/year" },
-    "cardType": { "vi": "Thẻ cá nhân", "en": "Personal Credit Card" },
-    "headline": {
-      "vi": "Hoàn điểm gấp 3 lần cho ăn uống và siêu thị trên toàn thế giới.",
-      "en": "3X points on dining and supermarkets worldwide." },
-    "editorsTake": {
-      "vi": "Phí thường niên thấp, phù hợp làm thẻ chi tiêu hàng ngày để tích điểm đều đặn.",
-      "en": "Low annual fee, ideal as a daily-spend card to steadily build a points balance."
-    },
-    "keyBenefits": {
-      "vi": ["Hoàn $10 tín dụng ăn uống mỗi tháng", "Không phụ phí giao dịch nước ngoài", "Không yêu cầu điểm tín dụng cao"],
-      "en": ["$10 dining credit monthly", "No foreign transaction fees", "No high credit-score requirement"]
-    },
+    "annualFee": "$0/năm",
+    "cardType": "Thẻ cá nhân",
+    "headline": "Hoàn điểm gấp 3 lần cho ăn uống và siêu thị trên toàn thế giới.",
+    "editorsTake": "Phí thường niên thấp, phù hợp làm thẻ chi tiêu hàng ngày để tích điểm đều đặn.",
+    "keyBenefits": [
+      "Hoàn $10 tín dụng ăn uống mỗi tháng",
+      "Không phụ phí giao dịch nước ngoài",
+      "Không yêu cầu điểm tín dụng cao"
+    ],
     "elevatedBonus": false,
     "applyUrl": "#"
   },
@@ -50,19 +41,15 @@
     "issuer": "Issuer C",
     "image": "credit-card",
     "country": "CA",
-    "annualFee": { "vi": "C$120/năm", "en": "C$120/year" },
-    "cardType": { "vi": "Thẻ cá nhân", "en": "Personal Credit Card" },
-    "headline": {
-      "vi": "Tặng 1 đêm miễn phí khách sạn hạng sang mỗi năm khi gia hạn thẻ.",
-      "en": "A free luxury hotel night every year upon card renewal." },
-    "editorsTake": {
-      "vi": "Phí thường niên cao nhưng bù lại bằng đêm miễn phí và hạng thành viên vàng tự động — hoà vốn nếu bạn ở khách sạn 1 đêm/năm.",
-      "en": "Steep annual fee, but the free night and automatic gold elite status can offset it if you stay just once a year."
-    },
-    "keyBenefits": {
-      "vi": ["1 đêm miễn phí khách sạn hạng sang/năm", "Hạng thành viên Vàng tự động", "Tín dụng ăn sáng 2 người mỗi lần ở"],
-      "en": ["1 free luxury hotel night annually", "Automatic Gold elite status", "Breakfast credit for two per stay"]
-    },
+    "annualFee": "C$120/năm",
+    "cardType": "Thẻ cá nhân",
+    "headline": "Tặng 1 đêm miễn phí khách sạn hạng sang mỗi năm khi gia hạn thẻ.",
+    "editorsTake": "Phí thường niên cao nhưng bù lại bằng đêm miễn phí và hạng thành viên vàng tự động — hoà vốn nếu bạn ở khách sạn 1 đêm/năm.",
+    "keyBenefits": [
+      "1 đêm miễn phí khách sạn hạng sang/năm",
+      "Hạng thành viên Vàng tự động",
+      "Tín dụng ăn sáng 2 người mỗi lần ở"
+    ],
     "elevatedBonus": false,
     "applyUrl": "#"
   },
@@ -72,19 +59,15 @@
     "issuer": "Issuer A",
     "image": "credit-card",
     "country": "US",
-    "annualFee": { "vi": "$150/năm", "en": "$150/year" },
-    "cardType": { "vi": "Thẻ doanh nghiệp", "en": "Business Credit Card" },
-    "headline": {
-      "vi": "Ưu đãi chào mừng 80.000 điểm dành cho chủ doanh nghiệp nhỏ.",
-      "en": "80,000-point welcome bonus built for small business owners." },
-    "editorsTake": {
-      "vi": "Phiên bản doanh nghiệp của dòng thẻ cao cấp, cộng dồn điểm cùng hệ sinh thái cá nhân — phù hợp freelancer & SME.",
-      "en": "The business twin of our top personal card, pooling points into the same ecosystem — great for freelancers and SMEs."
-    },
-    "keyBenefits": {
-      "vi": ["Hoàn gấp 4 lần cho quảng cáo & phần mềm", "Thẻ phụ nhân viên miễn phí", "Chuyển điểm sang chương trình cá nhân"],
-      "en": ["4X points on ads & software subscriptions", "Free employee cards", "Points pool with personal card"]
-    },
+    "annualFee": "$150/năm",
+    "cardType": "Thẻ doanh nghiệp",
+    "headline": "Ưu đãi chào mừng 80.000 điểm dành cho chủ doanh nghiệp nhỏ.",
+    "editorsTake": "Phiên bản doanh nghiệp của dòng thẻ cao cấp, cộng dồn điểm cùng hệ sinh thái cá nhân — phù hợp freelancer & SME.",
+    "keyBenefits": [
+      "Hoàn gấp 4 lần cho quảng cáo & phần mềm",
+      "Thẻ phụ nhân viên miễn phí",
+      "Chuyển điểm sang chương trình cá nhân"
+    ],
     "elevatedBonus": true,
     "applyUrl": "#"
   }

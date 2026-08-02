@@ -14,9 +14,9 @@ tín dụng, ưu đãi chuyển điểm, và hồ sơ tác giả.
 ## 2. Viết bài blog mới
 
 1. Vào **Content** → bấm **"+ Add entry"** → chọn **"Blog Post"**
-2. Điền các trường (có bản tiếng Việt riêng `...Vi` và tiếng Anh riêng `...En`
-   — nếu chưa viết bản tiếng Anh, cứ điền tạm giống bản tiếng Việt, chưa ảnh
-   hưởng gì vì site hiện chỉ hiển thị tiếng Việt):
+2. Điền các trường (mỗi trường có sẵn `...Vi` và `...En` do Contentful tạo sẵn
+   — **bỏ qua các trường `...En`, không cần điền** vì website chỉ có bản
+   tiếng Việt, chỉ trường `...Vi` được hiển thị):
 
    | Trường | Ý nghĩa |
    |---|---|
@@ -42,8 +42,8 @@ Tương tự — vào **Content → Add entry** → chọn **"Credit Card Offer"
 
 ## 4. Sửa hồ sơ tác giả (ảnh, tiểu sử)
 
-Vào **Content**, tìm entry loại **"Author"** (tên "Hoàng") → sửa `Bio Vi`/
-`Bio En` hoặc đổi ảnh ở trường `Photo` → **Publish**.
+Vào **Content**, tìm entry loại **"Author"** (tên "Hoàng") → sửa `Bio Vi`
+(bỏ qua `Bio En`) hoặc đổi ảnh ở trường `Photo` → **Publish**.
 
 ## 5. Sửa chữ giao diện (nút, tiêu đề mục cố định...)
 

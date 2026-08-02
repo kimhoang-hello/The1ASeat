@@ -17,20 +17,20 @@
     "title2": "Ghế 1A!",
     "subtitle": "Học cách tối ưu điểm thưởng hàng không, khách sạn và thẻ tín dụng để trải nghiệm hạng thương gia với chi phí hạng phổ thông.",
     "formLabel": "NHẬN BẢN TIN MIỄN PHÍ",
-    "emailPlaceholder": "mail@gmail.com",
+    "emailPlaceholder": "you@email.com",
     "subscribe": "Đăng ký bản tin",
     "disclaimer": "Không spam. Huỷ đăng ký bất cứ lúc nào.",
     "error": "Có lỗi xảy ra, vui lòng thử lại."
   },
   "offers": {
-    "eyebrow": "ƯU ĐÃI NỔI BẬT",
+    "eyebrow": "OFFER NỔI BẬT",
     "title": "Thẻ Tín Dụng Đáng Chú Ý",
     "viewAll": "Xem tất cả thẻ",
-    "viewOffer": "Xem ưu đãi",
+    "viewOffer": "Xem offer",
     "keyBenefits": "Quyền lợi chính",
     "annualFee": "Phí thường niên",
     "editorsTake": "NHẬN ĐỊNH CỦA GHẾ 1A",
-    "elevatedBonus": "Ưu đãi tăng cường"
+    "elevatedBonus": "Elevated offer"
   },
   "posts": {
     "eyebrow": "TỪ BLOG",
@@ -43,11 +43,11 @@
   },
   "bonuses": {
     "eyebrow": "CẬP NHẬT THƯỜNG XUYÊN",
-    "title": "Ưu Đãi Chuyển Điểm Đang Diễn Ra",
-    "viewAll": "Xem tất cả ưu đãi",
+    "title": "Tranfer bonus Đang Diễn Ra",
+    "viewAll": "Xem tất cả offer",
     "partner": "Đối tác",
     "expires": "Hết hạn",
-    "browsing": "Đang xem {shown}/{total} ưu đãi"
+    "browsing": "Đang xem {shown}/{total} offer"
   },
   "calculator": {
     "eyebrow": "CÔNG CỤ",
@@ -70,12 +70,12 @@
   },
   "newsletterCta": {
     "eyebrow": "BẢN TIN",
-    "title1": "Luôn cập nhật mọi ưu đãi,",
+    "title1": "Luôn cập nhật mọi offer,",
     "title2": "bonus & alert mới nhất.",
-    "subtitle": "Tham gia cùng mọi người đang săn vé award cùng Ghế 1A."
+    "subtitle": "Tham gia cùng mọi người săn vé award cùng Ghế 1A."
   },
   "footer": {
-    "disclosure": "Ghế 1A có thể nhận hoa hồng hay referral từ các đối tác thẻ tín dụng khi bạn mở thẻ qua liên kết trên trang. Ý kiến, đánh giá và phân tích hoàn toàn là quan điểm độc lập của chúng tôi, không được cung cấp, xét duyệt hay chấp thuận bởi bất kỳ tổ chức phát hành nào. Xem Điều khoản & Chính sách bảo mật.",
+    "disclosure": "Ghế 1A có thể nhận hoa hồng hay referral từ các đối tác thẻ tín dụng khi bạn mở thẻ qua liên kết trên trang. Các ý kiến, đánh giá và phân tích hoàn toàn là quan điểm độc lập của chúng tôi, không được cung cấp, xét duyệt hay chấp thuận bởi bất kỳ tổ chức phát hành nào. Xem Điều khoản & Chính sách bảo mật.",
     "terms": "Điều khoản",
     "privacy": "Chính sách bảo mật",
     "rights": "Bảo lưu mọi quyền."
