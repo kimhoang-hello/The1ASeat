@@ -115,3 +115,32 @@ Clear cache nữa.
 Nếu 4 biến môi trường trên chưa được điền, route vẫn chạy bình thường (không lỗi)
 nhưng chỉ làm mới cache của Next.js chứ không xoá được cache CDN Hostinger — bạn
 vẫn cần bấm Clear cache thủ công như trước.
+
+## Tự động đăng bài khi có video YouTube mới
+
+Route [`/api/sync-videos`](src/app/api/sync-videos/route.ts) kiểm tra kênh
+YouTube **@HoangLeCA**, và nếu thấy video nào chưa có trên site thì tự tạo +
+Publish một `blogPost` (type "video") tương ứng — không cần vào Contentful
+thêm tay. GitHub Actions ([`.github/workflows/sync-videos.yml`](.github/workflows/sync-videos.yml))
+gọi route này mỗi 6 tiếng.
+
+**1. Thêm 2 biến môi trường cho site live** — vào đúng chỗ bạn đã điền
+`CONTENTFUL_SPACE_ID` (hPanel → website → Environment variables), thêm:
+
+| Biến                          | Giá trị                                                                 |
+|--------------------------------|--------------------------------------------------------------------------|
+| `SYNC_VIDEOS_SECRET`           | một chuỗi bất kỳ bạn tự nghĩ ra, để không ai gọi được route này ngoài GitHub Actions |
+| `CONTENTFUL_MANAGEMENT_TOKEN`  | Content management token tạo ở app.contentful.com → Settings → API keys → Content management tokens (khác với token Delivery API bạn đã có) |
+
+**2. Thêm 1 secret trên GitHub** — vào repo trên GitHub → **Settings → Secrets
+and variables → Actions → New repository secret**:
+- Name: `SYNC_VIDEOS_SECRET`
+- Value: giống hệt giá trị bạn vừa điền ở bước 1
+
+**3. Kiểm tra** — vào tab **Actions** trên GitHub → chọn workflow
+**Sync new YouTube videos to Contentful** → **Run workflow** để chạy thử ngay
+thay vì chờ 6 tiếng.
+
+Bài viết tự tạo chỉ có tiêu đề gốc + 1 câu mô tả ngắn chung chung (không phải
+Claude Code viết riêng cho từng video như trước) — vào Contentful chỉnh lại
+`excerptVi`/`bodyVi`/`categoryVi` nếu muốn, publish lại là xong.

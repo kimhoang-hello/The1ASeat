@@ -1,0 +1,17 @@
+name: Sync new YouTube videos to Contentful
+
+# Calls the deployed site's /api/sync-videos endpoint, which checks
+# @HoangLeCA's YouTube RSS feed for videos not yet posted as a blogPost
+# entry and creates + publishes one automatically for each new video.
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call sync-videos endpoint
+        run: |
+          curl -sf -X POST "https://ghe1a.com/api/sync-videos?secret=${{ secrets.SYNC_VIDEOS_SECRET }}"
