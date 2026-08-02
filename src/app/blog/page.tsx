@@ -11,6 +11,10 @@ const common = t("common");
 
 export const metadata: Metadata = { title: posts_t("title") };
 
+// Content comes from Contentful; without this the page is fully static and
+// only picks up new Contentful publishes on the next code deploy.
+export const revalidate = 60;
+
 const TABS = [
   { value: "all", labelKey: "tabAll" },
   { value: "post", labelKey: "tabPosts" },

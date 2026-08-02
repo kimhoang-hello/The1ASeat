@@ -9,6 +9,10 @@ const nav = t("nav");
 
 export const metadata: Metadata = { title: nav("about") };
 
+// Content comes from Contentful; without this the page is fully static and
+// only picks up new Contentful publishes on the next code deploy.
+export const revalidate = 60;
+
 export default async function AboutPage() {
   const site = t("site");
   const authorProfile = await getAuthor();

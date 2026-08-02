@@ -9,6 +9,10 @@ const bonuses_t = t("bonuses");
 
 export const metadata: Metadata = { title: bonuses_t("title") };
 
+// Content comes from Contentful; without this the page is fully static and
+// only picks up new Contentful publishes on the next code deploy.
+export const revalidate = 60;
+
 export default async function TransferBonusesPage() {
   const bonuses = await getTransferBonuses();
 

@@ -10,6 +10,10 @@ import { t } from "@/lib/t";
 const common = t("common");
 const posts_t = t("posts");
 
+// Content comes from Contentful; without this the page is fully static and
+// only picks up new Contentful publishes on the next code deploy.
+export const revalidate = 60;
+
 export async function generateStaticParams() {
   const posts = await getPosts();
   return posts.map((post) => ({ slug: post.slug }));

@@ -11,6 +11,10 @@ const offers_t = t("offers");
 
 export const metadata: Metadata = { title: offers_t("title") };
 
+// Content comes from Contentful; without this the page is fully static and
+// only picks up new Contentful publishes on the next code deploy.
+export const revalidate = 60;
+
 export default async function CreditCardsPage() {
   const offers = await getCreditCardOffers();
 

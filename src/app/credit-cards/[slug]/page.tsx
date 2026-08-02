@@ -9,6 +9,10 @@ import { t as translate } from "@/lib/t";
 const offers = translate("offers");
 const common = translate("common");
 
+// Content comes from Contentful; without this the page is fully static and
+// only picks up new Contentful publishes on the next code deploy.
+export const revalidate = 60;
+
 export async function generateStaticParams() {
   const offers = await getCreditCardOffers();
   return offers.map((offer) => ({ slug: offer.slug }));
