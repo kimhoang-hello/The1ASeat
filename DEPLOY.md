@@ -1,10 +1,66 @@
-# Deploy lên Hostinger VPS
+# Deploy lên Hostinger
 
-Ứng dụng là Next.js (Node.js) chạy bằng `next start`, đứng sau Nginx reverse proxy,
-được PM2 quản lý process và tự khởi động lại khi VPS reboot. GitHub Actions tự
-động deploy mỗi khi push lên nhánh `main`.
+Site đang chạy trên **Hostinger "Websites" (Node.js hosting)** — sản phẩm hosting
+tự quản lý của Hostinger, có sẵn tích hợp GitHub riêng, khác với thuê 1 VPS trần rồi
+tự cài Node/PM2/Nginx. Không cần SSH tay hay GitHub Actions cho việc deploy.
 
-## 1. Chuẩn bị VPS lần đầu (SSH vào VPS Hostinger)
+## 1. Deploy tự động
+
+Website đã được **kết nối với GitHub repo này** trong Hostinger hPanel (mục
+**Connected with GitHub**, xem trong Dashboard của website) với **Auto-deployment**
+bật sẵn — mỗi lần push lên `main`, Hostinger tự `git pull`, `npm ci`, `npm run
+build`, rồi khởi động lại app. Không cần làm gì thêm, chỉ cần `git push`.
+
+Muốn deploy lại thủ công (vd sau khi đổi biến môi trường): vào Dashboard của
+website trên hPanel → bấm **Redeploy**.
+
+## 2. Biến môi trường
+
+Đặt ở **hPanel → Websites → ghe1a.com → Environment variables** (không phải file
+`.env.local` — file đó chỉ dùng khi chạy local). Cần các biến giống
+[.env.example](.env.example):
+
+- `CONTENTFUL_SPACE_ID`, `CONTENTFUL_ACCESS_TOKEN` — bắt buộc để site đọc nội dung
+  thật thay vì dữ liệu mẫu trong `content/sample/`
+- `NEXT_PUBLIC_SITE_URL=https://ghe1a.com`
+- `KIT_API_KEY`, `KIT_FORM_ID` — cho form đăng ký bản tin
+- `REVALIDATE_SECRET`, `HOSTINGER_API_TOKEN`, `HOSTINGER_USERNAME`,
+  `HOSTINGER_DOMAIN` — tuỳ chọn, xem [CONTENTFUL.md](CONTENTFUL.md#auto-refresh-site-khi-bấm-publish)
+
+Đổi biến môi trường xong nhớ bấm **Redeploy** để áp dụng.
+
+## 3. Cache — vì sao nội dung mới đôi khi chưa lên ngay
+
+Có 2 lớp cache tách biệt nhau:
+
+- **Next.js ISR** (trong code, `export const revalidate = 60` ở các trang đọc
+  Contentful) — tự làm mới dữ liệu tối đa 1 phút/lần, không cần deploy lại.
+- **CDN của Hostinger** (`hcdn`) — cache HTML tới 1 năm phía trước server. Sau khi
+  Contentful publish, nếu 1 phút trôi qua mà site vẫn chưa cập nhật, vào Dashboard
+  website → **Essentials → Cache → Clear cache**.
+
+Redeploy **không** tự xoá cache CDN — 2 việc độc lập nhau.
+
+## 4. Domain & SSL
+
+Quản lý ở **Manage domain** trong Dashboard website — Hostinger tự cấp SSL (mục
+**SSL** hiện ✓ trong Dashboard).
+
+## 5. Kiểm tra khi có lỗi
+
+- **Runtime logs** (sidebar website) — log lỗi runtime của app đang chạy.
+- **Deployments** (sidebar website) — xem lịch sử build, log build lỗi nếu có.
+- Xem [CONTENTFUL.md](CONTENTFUL.md) để chuyển từ nội dung mẫu sang Contentful thật.
+
+---
+
+## Phụ lục: setup VPS thuần (không dùng, giữ lại tham khảo)
+
+Kế hoạch ban đầu trước khi chuyển sang Hostinger Websites — tự thuê VPS, cài
+Node/PM2/Nginx, deploy qua GitHub Actions SSH
+([.github/workflows/deploy.yml](.github/workflows/deploy.yml), hiện đã tắt
+trigger tự động vì không dùng tới, chỉ chạy được qua "Run workflow" thủ công).
+Không cần làm theo phần này trừ khi thật sự chuyển sang tự quản lý VPS.
 
 ```bash
 # Cài Node.js 20 LTS (bắt buộc >=20.9 cho Next.js 16)
@@ -20,27 +76,22 @@ sudo chown $USER:$USER /var/www/ghe-1a
 git clone git@github.com:<github-user>/ghe-1a.git /var/www/ghe-1a
 cd /var/www/ghe-1a
 
-# Tạo file môi trường thật trên server (KHÔNG commit file này)
 cp .env.example .env.local
-nano .env.local   # điền CONTENTFUL_SPACE_ID, CONTENTFUL_ACCESS_TOKEN, KIT_API_KEY, KIT_FORM_ID, NEXT_PUBLIC_SITE_URL
+nano .env.local
 
 npm ci
 npm run build
-
-# Khởi động qua PM2 và lưu lại để tự chạy sau khi reboot VPS
 pm2 start ecosystem.config.js
 pm2 save
-pm2 startup   # chạy lệnh mà PM2 in ra để đăng ký systemd service
+pm2 startup
 ```
 
-## 2. Cấu hình Nginx reverse proxy
-
-Tạo `/etc/nginx/sites-available/ghe-1a`:
+Nginx reverse proxy (`/etc/nginx/sites-available/ghe-1a`):
 
 ```nginx
 server {
     listen 80;
-    server_name ghe1a.com www.ghe1a.com;  # hoặc subdomain tạm thời của Hostinger
+    server_name ghe1a.com www.ghe1a.com;
 
     location / {
         proxy_pass http://127.0.0.1:3000;
@@ -56,39 +107,14 @@ server {
 }
 ```
 
-```bash
-sudo ln -s /etc/nginx/sites-available/ghe-1a /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
-
-# HTTPS miễn phí (sau khi đã trỏ domain thật về VPS)
-sudo apt-get install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d ghe1a.com -d www.ghe1a.com
-```
-
-## 3. CI/CD tự động qua GitHub Actions
-
-Workflow đã có sẵn ở [.github/workflows/deploy.yml](.github/workflows/deploy.yml):
-mỗi lần push lên `main`, GitHub SSH vào VPS, `git pull`, `npm ci`, `npm run build`,
-rồi `pm2 reload` — không downtime.
-
-Vào **GitHub repo → Settings → Secrets and variables → Actions** và thêm:
+Muốn bật lại workflow SSH tự động: thêm `push: {branches: [main]}` vào phần
+`on:` của `deploy.yml`, và thêm 5 secret sau vào **GitHub repo → Settings →
+Secrets and variables → Actions**:
 
 | Secret          | Giá trị                                            |
 |------------------|----------------------------------------------------|
-| `VPS_HOST`       | IP hoặc hostname của VPS Hostinger                  |
-| `VPS_USERNAME`   | user SSH (vd: `root` hoặc user bạn tạo)             |
-| `VPS_SSH_KEY`    | private key SSH tương ứng (dạng PEM, toàn bộ nội dung) |
+| `VPS_HOST`       | IP hoặc hostname của VPS                            |
+| `VPS_USERNAME`   | user SSH                                            |
+| `VPS_SSH_KEY`    | private key SSH (dạng PEM, toàn bộ nội dung)        |
 | `VPS_PORT`       | cổng SSH (thường `22`)                              |
 | `VPS_APP_PATH`   | đường dẫn repo trên VPS, vd `/var/www/ghe-1a`       |
-
-## 4. Domain
-
-- Chưa có domain: dùng subdomain Hostinger cấp trước, trỏ A record về IP VPS.
-- Khi mua domain riêng (vd `ghe1a.com`): tạo A record `@` và `www` trỏ về IP VPS,
-  cập nhật `server_name` trong Nginx và chạy lại `certbot`.
-
-## 5. Sau khi deploy lần đầu
-
-- Kiểm tra `pm2 status` và `pm2 logs ghe-1a` nếu có lỗi.
-- Xem [CONTENTFUL.md](CONTENTFUL.md) để chuyển từ nội dung mẫu sang Contentful thật.

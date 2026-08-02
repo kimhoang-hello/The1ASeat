@@ -1,8 +1,13 @@
-name: Deploy to Hostinger VPS
+name: Deploy to Hostinger VPS (unused — Hostinger's own GitHub auto-deploy is what actually runs)
 
+# Manual-only. The site is actually hosted on Hostinger's own "Websites"
+# Node.js product, which auto-deploys on push via its own GitHub App
+# integration — unrelated to this workflow. This SSH/PM2/Nginx approach
+# was the original plan (see DEPLOY.md) before switching to that, and the
+# VPS_* secrets it needs were never configured, so it failed on every push
+# and spammed failure emails. Kept only for workflow_dispatch in case a
+# real self-managed VPS is set up later; see DEPLOY.md for the real setup.
 on:
-  push:
-    branches: [main]
   workflow_dispatch: {}
 
 jobs:
