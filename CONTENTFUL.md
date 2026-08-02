@@ -70,3 +70,45 @@ camelCase) để khớp với code trong `src/lib/content/contentful.ts`. Sau kh
 Cho tới khi bạn cấu hình xong, site chạy với nội dung mẫu ở `content/sample/*.json`
 — chỉnh sửa trực tiếp các file này để thay nội dung demo bằng nội dung thật nhanh
 hơn nếu bạn muốn bắt đầu với Markdown/JSON thay vì Contentful.
+
+## Auto-refresh site khi bấm Publish
+
+Mặc định, sau khi Publish trong Contentful, thay đổi chỉ lên web ngay khi có deploy
+code mới, hoặc bạn tự vào Hostinger bấm "Clear cache" thủ công (trang chủ và vài
+trang khác được build tĩnh + CDN Hostinger cache tới 1 năm). Để việc này tự động,
+route [`/api/revalidate`](src/app/api/revalidate/route.ts) làm 2 việc mỗi khi được
+gọi: yêu cầu Next.js build lại toàn bộ trang, và gọi API Hostinger xoá cache CDN —
+Contentful sẽ tự gọi route này mỗi khi bạn Publish/Unpublish một entry.
+
+**1. Lấy Hostinger API token và username** — vào hPanel (trang quản lý Hostinger,
+không phải dashboard website) → tìm mục **API** trong phần tài khoản/cài đặt → tạo
+token mới (quyền Hosting là đủ). Ghi lại token đó và **username** hiển thị cùng chỗ
+(khác email đăng nhập).
+
+**2. Thêm biến môi trường** — vào đúng chỗ bạn đã điền `CONTENTFUL_SPACE_ID` lúc
+trước cho site live (không phải file `.env.local` ở máy bạn, đó chỉ để chạy thử
+local), thêm 4 biến:
+
+| Biến                 | Giá trị                                              |
+|----------------------|-------------------------------------------------------|
+| `REVALIDATE_SECRET`  | một chuỗi bất kỳ bạn tự nghĩ ra (vd `ghe1a-xyz789`), dùng để không ai gọi được route này ngoài Contentful |
+| `HOSTINGER_API_TOKEN`| token vừa tạo ở bước 1                                |
+| `HOSTINGER_USERNAME` | username hPanel ở bước 1                              |
+| `HOSTINGER_DOMAIN`   | `ghe1a.com`                                            |
+
+**3. Tạo webhook trong Contentful** — app.contentful.com → chọn Space **Ghe1A** →
+**Settings → Webhooks → Add Webhook**:
+- Name: `Refresh Ghế 1A site`
+- URL: `https://ghe1a.com/api/revalidate?secret=<giá trị REVALIDATE_SECRET ở bước 2>`
+- Giữ method mặc định (POST)
+- Triggers: chọn **Select specific triggering events** → tick ít nhất **Publish**
+  (tick thêm Unpublish/Delete nếu muốn site cũng tự cập nhật khi bạn gỡ bài)
+- Save
+
+**4. Kiểm tra** — Publish thử 1 entry bất kỳ, đợi ~10 giây rồi mở lại `ghe1a.com`
+(F5 mạnh / Ctrl+Shift+R) — nội dung phải lên ngay, không cần vào Hostinger bấm
+Clear cache nữa.
+
+Nếu 4 biến môi trường trên chưa được điền, route vẫn chạy bình thường (không lỗi)
+nhưng chỉ làm mới cache của Next.js chứ không xoá được cache CDN Hostinger — bạn
+vẫn cần bấm Clear cache thủ công như trước.
