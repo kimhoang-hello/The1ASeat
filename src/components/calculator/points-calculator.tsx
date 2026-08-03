@@ -51,8 +51,8 @@ export function PointsCalculator() {
         </label>
 
         <Field label={t("pointsLabel")} value={points} onChange={setPoints} />
-        <Field label={t("cashPriceLabel")} value={cashPrice} onChange={setCashPrice} suffix="C$" />
-        <Field label={t("taxesLabel")} value={taxes} onChange={setTaxes} suffix="C$" />
+        <Field label={t("cashPriceLabel")} value={cashPrice} onChange={setCashPrice} suffix="$" />
+        <Field label={t("taxesLabel")} value={taxes} onChange={setTaxes} suffix="$" />
       </div>
 
       <div className="mt-6 rounded-xl bg-secondary p-5 text-center">

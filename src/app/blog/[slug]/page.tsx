@@ -6,6 +6,8 @@ import { getPostBySlug, getPosts } from "@/lib/content";
 import { formatDate } from "@/lib/format-date";
 import { MediaPlaceholder, type PlaceholderIcon } from "@/components/ui/media-placeholder";
 import { getVideoEmbedUrl } from "@/lib/video-embed";
+import { CommentSection } from "@/components/blog/comment-section";
+import { SITE_URL } from "@/lib/subscriber-email";
 import { t } from "@/lib/t";
 
 const common = t("common");
@@ -92,6 +94,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       <div
         className="prose prose-neutral mt-8 max-w-none prose-headings:font-display prose-a:text-primary"
         dangerouslySetInnerHTML={{ __html: post.body }}
+      />
+
+      <CommentSection
+        pageId={post.slug}
+        url={`${SITE_URL}/blog/${post.slug}`}
+        title={post.title}
       />
     </article>
   );

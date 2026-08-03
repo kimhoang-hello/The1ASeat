@@ -238,3 +238,31 @@ chưa, và xem log lỗi ở Resend Dashboard → **Logs**.
 
 Domain chưa verify xong ở Resend thì bước gửi email sẽ lỗi (subscriber vẫn
 đăng ký bình thường) — verify xong mới gửi được.
+
+## Bình luận dưới bài viết/video (Cusdis)
+
+Mỗi trang bài viết và video (`/blog/[slug]`) giờ có sẵn khung bình luận ở cuối
+bài, dùng dịch vụ miễn phí **Cusdis**. Chưa cấu hình gì thì khung này tự ẩn đi
+(không lỗi, không hiện gì cả) — cần làm theo các bước dưới đây để bật:
+
+**1. Tạo tài khoản Cusdis** — vào [cusdis.com](https://cusdis.com) → đăng ký
+miễn phí.
+
+**2. Tạo project mới** — Dashboard → **Create Website** (hoặc tương đương) →
+đặt tên (vd "Ghế 1A") → điền domain `ghe1a.com`.
+
+**3. Lấy App ID** — sau khi tạo xong, project sẽ có 1 **App ID** (chuỗi ký tự
+dài) hiện ngay trên trang cài đặt/embed code của project đó — copy lại.
+
+**4. Thêm biến môi trường cho site live** — vào đúng chỗ bạn đã điền
+`CONTENTFUL_SPACE_ID` (hPanel → website → Environment variables), thêm:
+
+| Biến                          | Giá trị                  |
+|--------------------------------|---------------------------|
+| `NEXT_PUBLIC_CUSDIS_APP_ID`   | App ID vừa copy ở bước 3  |
+
+**5. Kiểm tra** — mở thử 1 bài viết bất kỳ trên site live, cuộn xuống cuối bài
+sẽ thấy khung bình luận.
+
+Bình luận mới cần bạn duyệt trước khi hiện công khai — vào Cusdis Dashboard →
+project của bạn → **Moderation** để duyệt/xoá.

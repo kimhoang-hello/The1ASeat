@@ -57,8 +57,8 @@
     "programLabel": "Chương trình điểm thưởng (tuỳ chọn)",
     "programPlaceholder": "-- Chọn chương trình --",
     "pointsLabel": "Số point/mile cần dùng",
-    "cashPriceLabel": "Giá vé tiền mặt tương đương (CAD)",
-    "taxesLabel": "Thuế, phí phải trả thêm (CAD)",
+    "cashPriceLabel": "Giá vé tiền mặt tương đương",
+    "taxesLabel": "Thuế, phí phải trả thêm",
     "result": "Giá trị mỗi điểm",
     "resultHint": "Kinh nghiệm: từ 1.5–2¢/điểm trở lên thường là một giao dịch đổi điểm tốt.",
     "benchmark": "Giá trị trung bình theo Ghế 1A cho {program}: {value}¢/điểm",
@@ -71,7 +71,7 @@
   },
   "newsletterCta": {
     "eyebrow": "BẢN TIN",
-    "title1": "Luôn cập nhật mọi offer,",
+    "title1": "Luôn cập nhật offers,",
     "title2": "bonus & alert mới nhất.",
     "subtitle": "Tham gia cùng mọi người săn vé award cùng Ghế 1A."
   },
@@ -79,7 +79,8 @@
     "disclosure": "Ghế 1A có thể nhận hoa hồng hay referral từ các đối tác thẻ tín dụng khi bạn mở thẻ qua liên kết trên trang. Các ý kiến, đánh giá và phân tích hoàn toàn là quan điểm độc lập của chúng tôi, không được cung cấp, xét duyệt hay chấp thuận bởi bất kỳ tổ chức phát hành nào. Xem Điều khoản & Chính sách bảo mật.",
     "terms": "Điều khoản",
     "privacy": "Chính sách bảo mật",
-    "rights": "Bảo lưu mọi quyền."
+    "rights": "All Rights Reserved.",
+    "contact": "Liên hệ"
   },
   "common": {
     "readMore": "Đọc thêm",

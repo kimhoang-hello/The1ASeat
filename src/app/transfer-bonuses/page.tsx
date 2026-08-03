@@ -41,7 +41,7 @@ export default async function TransferBonusesPage() {
                 {bonus.note && <p className="text-xs text-muted-foreground">{bonus.note}</p>}
               </div>
               <div className="flex items-center gap-4 text-sm">
-                <span className="text-muted-foreground">
+                <span className="font-medium text-amber-700">
                   {bonuses_t("expires")} {formatDate(bonus.expiresAt)}
                 </span>
                 <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700">
