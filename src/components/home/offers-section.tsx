@@ -7,9 +7,20 @@ import { CardBadges } from "@/components/credit-cards/card-badges";
 
 const t = translate("offers");
 
+function shuffle<T>(items: T[]): T[] {
+  const result = [...items];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
 export async function OffersSection() {
   const offersAll = await getCreditCardOffers();
-  const offers = offersAll.slice(0, 4);
+  const notable = offersAll.filter((offer) => offer.elevatedBonus);
+  const rest = offersAll.filter((offer) => !offer.elevatedBonus);
+  const offers = [...shuffle(notable), ...shuffle(rest)].slice(0, 4);
 
   return (
     <section className="bg-background px-4 py-16 sm:px-6 lg:px-8">
