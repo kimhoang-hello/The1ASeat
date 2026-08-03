@@ -174,3 +174,46 @@ thay vì chờ 6 tiếng.
 Bài viết tự tạo chỉ có tiêu đề gốc + 1 câu mô tả ngắn chung chung (không phải
 Claude Code viết riêng cho từng video như trước) — vào Contentful chỉnh lại
 `excerptVi`/`bodyVi`/`categoryVi` nếu muốn, publish lại là xong.
+
+## Email chào mừng cho subscriber mới
+
+Route [`/api/subscribe`](src/app/api/subscribe/route.ts) (form đăng ký bản tin
+trên trang chủ) giờ làm thêm 1 việc: ngay sau khi đăng ký subscriber mới vào
+Kit, nó tự gửi 1 email chào mừng đến đúng subscriber đó (không phải gửi cho cả
+danh sách), từ địa chỉ **info@ghe1a.com**, qua dịch vụ **Resend**. Nếu bước
+gửi email này lỗi thì việc đăng ký vẫn thành công bình thường (không ảnh hưởng
+người dùng) — chỉ ghi log lỗi để bạn kiểm tra sau.
+
+Nội dung email hiện tại (tiêu đề + phần thân, ở đầu `route.ts`) chỉ là placeholder
+tạm — gửi nội dung thật cho Claude Code bất cứ lúc nào để thay vào.
+
+**1. Tạo tài khoản Resend** — vào [resend.com](https://resend.com) → đăng ký
+miễn phí (gói free đủ dùng cho quy mô site này).
+
+**2. Thêm domain `ghe1a.com` vào Resend** — Resend Dashboard → **Domains** →
+**Add Domain** → nhập `ghe1a.com`. Resend sẽ đưa ra vài bản ghi DNS (thường là
+2-3 bản ghi loại `TXT`/`CNAME`, dùng để xác minh domain + chống email bị đánh
+dấu spam).
+
+**3. Thêm các bản ghi DNS đó trên Hostinger** — hPanel → **Domains** → chọn
+`ghe1a.com` → **DNS / Nameservers** → **Manage records** → **Add record**,
+điền đúng Type/Name/Value Resend đưa ra ở bước 2 (copy chính xác, không thêm
+bớt). Sau vài phút đến vài giờ, quay lại Resend Dashboard bấm **Verify** —
+domain sẽ chuyển sang trạng thái "Verified".
+
+**4. Tạo API key** — Resend Dashboard → **API Keys** → **Create API Key** →
+đặt tên bất kỳ (vd "Ghế 1A welcome email") → copy lại ngay (chỉ hiện 1 lần).
+
+**5. Thêm biến môi trường cho site live** — vào đúng chỗ bạn đã điền
+`CONTENTFUL_SPACE_ID` (hPanel → website → Environment variables), thêm:
+
+| Biến              | Giá trị                        |
+|--------------------|---------------------------------|
+| `RESEND_API_KEY`  | API key vừa tạo ở bước 4        |
+
+**6. Kiểm tra** — đăng ký thử 1 email bất kỳ ở form trên trang chủ, kiểm tra
+hộp thư trong vài giây. Nếu chưa thấy, kiểm tra domain đã "Verified" ở bước 3
+chưa, và xem log lỗi ở Resend Dashboard → **Logs**.
+
+Domain chưa verify xong ở Resend thì bước gửi email sẽ lỗi (subscriber vẫn
+đăng ký bình thường) — verify xong mới gửi được.
