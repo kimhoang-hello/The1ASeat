@@ -82,6 +82,23 @@
     "rights": "All Rights Reserved.",
     "contact": "Liên hệ"
   },
+  "contactPage": {
+    "eyebrow": "LIÊN HỆ",
+    "title": "Liên Hệ Với Chúng Tôi",
+    "subtitle": "Rất vui được lắng nghe ý kiến của bạn. Gửi tin nhắn và chúng tôi sẽ phản hồi sớm nhất có thể.",
+    "firstName": "Họ",
+    "lastName": "Tên",
+    "email": "Địa chỉ email",
+    "subject": "Chủ đề",
+    "subjectGeneral": "Câu hỏi chung",
+    "subjectPartnership": "Hợp tác quảng cáo",
+    "subjectFeedback": "Góp ý về bài viết/website",
+    "subjectOther": "Khác",
+    "message": "Nội dung",
+    "send": "Gửi Tin Nhắn",
+    "sent": "Đã gửi! Cảm ơn bạn đã liên hệ, chúng tôi sẽ phản hồi sớm nhất.",
+    "error": "Có lỗi xảy ra, vui lòng thử lại hoặc gửi email trực tiếp đến info@ghe1a.com."
+  },
   "common": {
     "readMore": "Đọc thêm",
     "minRead": "phút đọc",

@@ -40,9 +40,9 @@ export function SiteFooter() {
             <Link href="/terms" className="hover:text-white">
               {t("terms")}
             </Link>
-            <a href="mailto:info@ghe1a.com" className="cursor-pointer hover:text-white">
+            <Link href="/contact" className="hover:text-white">
               {t("contact")}
-            </a>
+            </Link>
           </nav>
 
           <div className="flex gap-4 text-white/60">
