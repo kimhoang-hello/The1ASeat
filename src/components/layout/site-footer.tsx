@@ -28,9 +28,6 @@ export function SiteFooter() {
             <Link href="/blog" className="hover:text-white">
               {nav("blog")}
             </Link>
-            <Link href="/#newsletter" className="hover:text-white">
-              {nav("newsletter")}
-            </Link>
             <Link href="/about" className="hover:text-white">
               {nav("about")}
             </Link>
