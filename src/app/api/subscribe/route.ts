@@ -39,13 +39,12 @@ export async function POST(request: Request) {
   return NextResponse.json({ ok: true });
 }
 
-// Placeholder subject/body — Hoàng will supply the real welcome copy later,
-// just swap these two constants out when he does.
-const WELCOME_SUBJECT = "Chào mừng bạn đến với Ghế 1A!";
+const WELCOME_SUBJECT = "Chào mừng bạn đến với Ghế 1A";
 const WELCOME_HTML = `
-  <p>Cảm ơn bạn đã đăng ký nhận bản tin từ Ghế 1A!</p>
-  <p>Bạn sẽ nhận được email mỗi khi có bài viết mới về Miles &amp; Points, thẻ tín dụng, và Award Travel.</p>
-  <p>Hẹn gặp lại,<br />Hoàng — Ghế 1A</p>
+  <p>Chào mừng bạn đến với Ghế 1A.</p>
+  <p>Khởi đầu chỉ là một chút tò mò về Miles &amp; Points đã nhanh chóng trở thành đam mê của mình từ lúc nào không hay. Càng tìm hiểu về các offers thẻ tín dụng, các chương trình khách hàng thân thiết của hãng hàng không và khách sạn, cũng như cách đặt vé award, mình càng nhận ra rằng những trải nghiệm du lịch tuyệt vời không nhất thiết phải đi kèm với một mức giá đắt đỏ.</p>
+  <p>Ghế 1A là nơi mình chia sẻ tất cả những gì đã học được trên hành trình đó — từ chiến lược thẻ tín dụng trong thực tế, các mẹo tận dụng chương trình khách hàng thân thiết, hướng dẫn đặt vé award, đánh giá chuyến bay và khách sạn, đến những trải nghiệm đổi điểm thực tế. Mình hy vọng những kiến thức và kinh nghiệm này sẽ giúp bạn tận dụng tối đa số điểm của mình và truyền cảm hứng cho chuyến đi tiếp theo — dù đó là chuyến bay award đầu tiên hay chuyến đi trong mơ ở khoang hạng Nhất.</p>
+  <p>Hẹn gặp bạn ở ghế 1A.</p>
 `;
 
 // Sends a one-off welcome email to the new subscriber via Resend, from
