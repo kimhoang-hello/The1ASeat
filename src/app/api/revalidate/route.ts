@@ -55,8 +55,8 @@ async function purgeHostingerCache(): Promise<boolean | "not-configured"> {
 
 interface ContentfulEntryPayload {
   sys?: {
+    id?: string;
     contentType?: { sys?: { id?: string } };
-    publishedCounter?: number;
   };
   fields?: {
     type?: Record<string, string>;
@@ -66,16 +66,40 @@ interface ContentfulEntryPayload {
   };
 }
 
+// The webhook payload's `sys` is a trimmed snapshot that doesn't include
+// `publishedCounter` (confirmed by inspecting a real delivery — Contentful
+// only returns that field from a direct Content Management API fetch), so
+// whether this is the entry's first-ever publish has to be looked up with a
+// follow-up call instead of read off the webhook body directly.
+async function isFirstPublish(entryId: string): Promise<boolean | "not-configured"> {
+  const spaceId = process.env.CONTENTFUL_SPACE_ID;
+  const managementToken = process.env.CONTENTFUL_MANAGEMENT_TOKEN;
+  if (!spaceId || !managementToken) return "not-configured";
+
+  const res = await fetch(
+    `https://api.contentful.com/spaces/${spaceId}/environments/master/entries/${entryId}`,
+    { headers: { Authorization: `Bearer ${managementToken}` }, cache: "no-store" },
+  );
+  if (!res.ok) return false;
+  const data = await res.json();
+  return data.sys?.publishedCounter === 1;
+}
+
 // Sends a Kit newsletter broadcast the first time a "post"-type blogPost
 // entry is published. Skips video posts entirely, and skips edits/
-// republishes of an already-published post via sys.publishedCounter (only
-// fires when this is the entry's very first publish).
+// republishes of an already-published post.
 async function maybeNotifyNewPost(payload: unknown): Promise<boolean | string> {
   const entry = payload as ContentfulEntryPayload;
 
   if (entry?.sys?.contentType?.sys?.id !== "blogPost") return "not_blog_post";
-  if (entry.sys?.publishedCounter !== 1) return "not_first_publish";
   if (entry.fields?.type?.[LOCALE] !== "post") return "video_post";
+
+  const entryId = entry.sys?.id;
+  if (!entryId) return "missing_entry_id";
+
+  const firstPublish = await isFirstPublish(entryId);
+  if (firstPublish === "not-configured") return "not-configured";
+  if (!firstPublish) return "not_first_publish";
 
   const apiKey = process.env.KIT_V4_API_KEY;
   if (!apiKey) return "not-configured";

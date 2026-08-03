@@ -149,6 +149,12 @@ tên bất kỳ (vd "Ghế 1A auto broadcast") → copy lại ngay (chỉ hiện
 |-------------------|---------------------------------------------|
 | `KIT_V4_API_KEY`  | API key vừa tạo ở bước 2                    |
 
+Route này cũng cần `CONTENTFUL_MANAGEMENT_TOKEN` để xác định chính xác "đây có
+phải lần Publish đầu tiên" (payload webhook của Contentful không có đủ thông
+tin đó) — nếu bạn đã làm phần "Tự động đăng bài khi có video YouTube mới" bên
+dưới thì biến này đã có sẵn, dùng lại luôn, không cần tạo thêm. Nếu chưa, tạo
+theo hướng dẫn ở mục đó (Content management token, khác Delivery API token).
+
 **4. Không cần tạo webhook mới** — nếu bạn đã làm xong phần "Auto-refresh
 site khi bấm Publish" ở trên, webhook đó (`Refresh Ghế 1A site`) đã gửi kèm
 đủ dữ liệu bài viết cho route này dùng luôn. Nếu chưa làm phần đó, làm theo
