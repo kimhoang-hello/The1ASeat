@@ -30,12 +30,15 @@ const CUSDIS_LOCALE_VI: Record<string, string> = {
 };
 
 function hideEmailField(doc: Document) {
-  const emailInput = doc.querySelector<HTMLInputElement>('input[name="email"]');
-  const wrapper = emailInput?.closest("div");
-  if (!wrapper || wrapper.style.display === "none") return;
-  wrapper.style.display = "none";
-  const grid = wrapper.parentElement;
-  if (grid) grid.style.gridTemplateColumns = "1fr";
+  // Every reply form (top-level comment box, plus one per "Trả lời" thread)
+  // has its own email input, so all of them need hiding, not just the first.
+  doc.querySelectorAll<HTMLInputElement>('input[name="email"]').forEach((emailInput) => {
+    const wrapper = emailInput.closest("div");
+    if (!wrapper || wrapper.style.display === "none") return;
+    wrapper.style.display = "none";
+    const grid = wrapper.parentElement;
+    if (grid) grid.style.gridTemplateColumns = "1fr";
+  });
 }
 
 function syncHeight(iframe: HTMLIFrameElement, doc: Document) {
