@@ -134,6 +134,7 @@ async function maybeNotifyNewPost(payload: unknown): Promise<boolean | string> {
       preview_text: excerpt ?? title,
       description: `Auto-sent for new post: ${slug}`,
       content: html,
+      subscriber_filter: [],
       public: false,
       published_at: now.toISOString(),
       send_at: new Date(now.getTime() + 5000).toISOString(),
