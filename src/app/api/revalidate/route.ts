@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
+import {
+  SITE_URL,
+  emailHeadlineStyle,
+  emailParagraphStyle,
+  escapeHtml,
+  renderSubscriberEmailHtml,
+} from "@/lib/subscriber-email";
 
-const SITE_URL = "https://ghe1a.com";
 const LOCALE = "en-US";
 
 // Called by a Contentful webhook on publish/unpublish/delete so the site
@@ -82,6 +88,19 @@ async function maybeNotifyNewPost(payload: unknown): Promise<boolean | string> {
   const postUrl = `${SITE_URL}/blog/${slug}`;
   const now = new Date();
 
+  const bodyHtml = `
+    <p style="${emailParagraphStyle}" class="email-text">Có bài viết mới trên Ghế 1A:</p>
+    <p style="${emailHeadlineStyle}" class="email-brand">${escapeHtml(title)}</p>
+    ${excerpt ? `<p style="${emailParagraphStyle}" class="email-text">${escapeHtml(excerpt)}</p>` : ""}
+  `;
+  const html = renderSubscriberEmailHtml({
+    title,
+    preheader: excerpt ?? title,
+    bodyHtml,
+    ctaHref: postUrl,
+    ctaLabel: "Đọc bài viết đầy đủ tại Ghế 1A →",
+  });
+
   const res = await fetch("https://api.kit.com/v4/broadcasts", {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Kit-Api-Key": apiKey },
@@ -90,7 +109,7 @@ async function maybeNotifyNewPost(payload: unknown): Promise<boolean | string> {
       subject: title,
       preview_text: excerpt ?? title,
       description: `Auto-sent for new post: ${slug}`,
-      content: `<p>${excerpt ?? ""}</p><p><a href="${postUrl}">Đọc bài viết đầy đủ tại Ghế 1A →</a></p>`,
+      content: html,
       public: false,
       published_at: now.toISOString(),
       send_at: new Date(now.getTime() + 5000).toISOString(),

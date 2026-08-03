@@ -121,8 +121,11 @@ vẫn cần bấm Clear cache thủ công như trước.
 Route `/api/revalidate` ở trên giờ làm thêm 1 việc: mỗi khi 1 `blogPost` với
 `type = "post"` (bài viết thường, **không phải video**) được Publish **lần
 đầu tiên**, nó tự gửi 1 email broadcast qua Kit đến toàn bộ danh sách
-subscriber, gồm tiêu đề + đoạn mô tả ngắn + link đến bài viết. Sửa bài đã
-đăng và Publish lại sẽ **không** gửi lại email (chỉ gửi ở lần Publish đầu).
+subscriber, gồm tiêu đề + đoạn mô tả ngắn + link đến bài viết, trình bày theo
+đúng thiết kế (nền kem, card trắng, logo + "Ghế 1A", nút bấm pill) như email
+chào mừng subscriber mới — cả 2 dùng chung 1 template ở
+[src/lib/subscriber-email.ts](src/lib/subscriber-email.ts). Sửa bài đã đăng
+và Publish lại sẽ **không** gửi lại email (chỉ gửi ở lần Publish đầu).
 
 Broadcast này (và mọi email khác gửi cho subscriber) giờ gửi từ địa chỉ
 **info@ghe1a.com** — Kit yêu cầu địa chỉ gửi phải được thêm + xác minh trong

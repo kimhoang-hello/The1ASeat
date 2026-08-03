@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { SITE_URL, emailParagraphStyle, renderSubscriberEmailHtml } from "@/lib/subscriber-email";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -39,100 +40,22 @@ export async function POST(request: Request) {
   return NextResponse.json({ ok: true });
 }
 
-const SITE_URL = "https://ghe1a.com";
 const WELCOME_SUBJECT = "Chào mừng bạn đến với Ghế 1A";
 
-// Table-based layout with inline styles — email clients (Gmail especially)
-// strip <style> blocks and don't support Tailwind, so the site's cream/navy
-// palette and rounded-pill buttons have to be hand-inlined here to match
-// src/app/globals.css instead of reused from it.
-const WELCOME_HTML = `<!doctype html>
-<html lang="vi">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="light only" />
-    <meta name="supported-color-schemes" content="light only" />
-    <title>${WELCOME_SUBJECT}</title>
-    <style>
-      /* The site itself has no dark theme, so opt this email out of mail
-         clients' auto dark mode too — otherwise Gmail/Apple Mail invert or
-         wash out the navy logo and text on their own dark backgrounds. */
-      :root { color-scheme: light only; supported-color-schemes: light only; }
-      [data-ogsc] .email-bg { background-color: #FAF6EC !important; }
-      [data-ogsc] .email-card { background-color: #FFFFFF !important; }
-      [data-ogsc] .email-text { color: #1A1613 !important; }
-      [data-ogsc] .email-brand { color: #0F2A4A !important; }
-      [data-ogsc] .email-muted { color: #6B6259 !important; }
-    </style>
-  </head>
-  <body style="margin:0; padding:0; background-color:#FAF6EC;" class="email-bg">
-    <div style="display:none; max-height:0; overflow:hidden; opacity:0;">
-      Cảm ơn bạn đã đăng ký nhận bản tin từ Ghế 1A
-    </div>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#FAF6EC;" class="email-bg">
-      <tr>
-        <td align="center" style="padding:40px 20px;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
-            <tr>
-              <td align="center" style="padding-bottom:28px;">
-                <table role="presentation" cellpadding="0" cellspacing="0">
-                  <tr>
-                    <td style="padding-right:12px; vertical-align:middle;">
-                      <img
-                        src="${SITE_URL}/images/logo.png"
-                        width="56"
-                        height="56"
-                        alt=""
-                        style="display:block; border-radius:12px;"
-                      />
-                    </td>
-                    <td style="vertical-align:middle;">
-                      <span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; font-size:22px; font-weight:800; letter-spacing:-0.01em; color:#0F2A4A;" class="email-brand">Ghế 1A</span>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-            <tr>
-              <td style="background-color:#FFFFFF; border:1px solid #E5DAC3; border-radius:20px; padding:40px 36px;" class="email-card">
-                <p style="margin:0 0 18px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:15px; line-height:1.7; color:#1A1613;" class="email-text">
-                  Chào mừng bạn đến với Ghế 1A.
-                </p>
-                <p style="margin:0 0 18px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:15px; line-height:1.7; color:#1A1613;" class="email-text">
-                  Khởi đầu chỉ là một chút tò mò về Miles &amp; Points đã nhanh chóng trở thành đam mê của mình từ lúc nào không hay. Càng tìm hiểu về các offers thẻ tín dụng, các chương trình khách hàng thân thiết của hãng hàng không và khách sạn, cũng như cách đặt vé award, mình càng nhận ra rằng những trải nghiệm du lịch tuyệt vời không nhất thiết phải đi kèm với một mức giá đắt đỏ.
-                </p>
-                <p style="margin:0 0 28px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:15px; line-height:1.7; color:#1A1613;" class="email-text">
-                  Ghế 1A là nơi mình chia sẻ tất cả những gì đã học được trên hành trình đó — từ chiến lược thẻ tín dụng trong thực tế, các mẹo tận dụng chương trình khách hàng thân thiết, hướng dẫn đặt vé award, đánh giá chuyến bay và khách sạn, đến những trải nghiệm đổi điểm thực tế. Mình hy vọng những kiến thức và kinh nghiệm này sẽ giúp bạn tận dụng tối đa số điểm của mình và truyền cảm hứng cho chuyến đi tiếp theo — dù đó là chuyến bay award đầu tiên hay chuyến đi trong mơ ở khoang hạng Nhất.
-                </p>
-                <p style="margin:0 0 32px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:15px; line-height:1.7; color:#1A1613;" class="email-text">
-                  Hẹn gặp bạn ở ghế 1A.
-                </p>
-                <table role="presentation" cellpadding="0" cellspacing="0">
-                  <tr>
-                    <td style="border-radius:999px; background-color:#0F2A4A;">
-                      <a
-                        href="${SITE_URL}/blog"
-                        style="display:inline-block; padding:12px 26px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; font-size:14px; font-weight:600; color:#FFFFFF; text-decoration:none;"
-                      >
-                        Khám phá bài viết mới nhất →
-                      </a>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-            <tr>
-              <td align="center" style="padding-top:28px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:12px; color:#6B6259;" class="email-muted">
-                Ghế 1A · <a href="${SITE_URL}" style="color:#6B6259;">ghe1a.com</a>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>`;
+const WELCOME_BODY_HTML = `
+  <p style="${emailParagraphStyle}" class="email-text">Chào mừng bạn đến với Ghế 1A.</p>
+  <p style="${emailParagraphStyle}" class="email-text">Khởi đầu chỉ là một chút tò mò về Miles &amp; Points đã nhanh chóng trở thành đam mê của mình từ lúc nào không hay. Càng tìm hiểu về các offers thẻ tín dụng, các chương trình khách hàng thân thiết của hãng hàng không và khách sạn, cũng như cách đặt vé award, mình càng nhận ra rằng những trải nghiệm du lịch tuyệt vời không nhất thiết phải đi kèm với một mức giá đắt đỏ.</p>
+  <p style="${emailParagraphStyle}" class="email-text">Ghế 1A là nơi mình chia sẻ tất cả những gì đã học được trên hành trình đó — từ chiến lược thẻ tín dụng trong thực tế, các mẹo tận dụng chương trình khách hàng thân thiết, hướng dẫn đặt vé award, đánh giá chuyến bay và khách sạn, đến những trải nghiệm đổi điểm thực tế. Mình hy vọng những kiến thức và kinh nghiệm này sẽ giúp bạn tận dụng tối đa số điểm của mình và truyền cảm hứng cho chuyến đi tiếp theo — dù đó là chuyến bay award đầu tiên hay chuyến đi trong mơ ở khoang hạng Nhất.</p>
+  <p style="${emailParagraphStyle}" class="email-text">Hẹn gặp bạn ở ghế 1A.</p>
+`;
+
+const WELCOME_HTML = renderSubscriberEmailHtml({
+  title: WELCOME_SUBJECT,
+  preheader: "Cảm ơn bạn đã đăng ký nhận bản tin từ Ghế 1A",
+  bodyHtml: WELCOME_BODY_HTML,
+  ctaHref: `${SITE_URL}/blog`,
+  ctaLabel: "Khám phá bài viết mới nhất →",
+});
 
 // Sends a one-off welcome email to the new subscriber via Resend, from
 // info@ghe1a.com. Best-effort: a failure here never fails the subscribe
