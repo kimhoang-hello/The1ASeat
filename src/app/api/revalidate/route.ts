@@ -86,6 +86,7 @@ async function maybeNotifyNewPost(payload: unknown): Promise<boolean | string> {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Kit-Api-Key": apiKey },
     body: JSON.stringify({
+      email_address: "info@ghe1a.com",
       subject: title,
       preview_text: excerpt ?? title,
       description: `Auto-sent for new post: ${slug}`,

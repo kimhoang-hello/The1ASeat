@@ -124,27 +124,39 @@ Route `/api/revalidate` ở trên giờ làm thêm 1 việc: mỗi khi 1 `blogPo
 subscriber, gồm tiêu đề + đoạn mô tả ngắn + link đến bài viết. Sửa bài đã
 đăng và Publish lại sẽ **không** gửi lại email (chỉ gửi ở lần Publish đầu).
 
-**1. Tạo API Key mới của Kit (khác với `KIT_API_KEY` đang dùng cho form đăng
+Broadcast này (và mọi email khác gửi cho subscriber) giờ gửi từ địa chỉ
+**info@ghe1a.com** — Kit yêu cầu địa chỉ gửi phải được thêm + xác minh trong
+tài khoản Kit trước, xem bước 1 dưới đây.
+
+**1. Xác minh info@ghe1a.com là địa chỉ gửi trong Kit** — đăng nhập Kit →
+**Settings → Sending → Email addresses** (tên mục có thể khác chút tuỳ giao
+diện) → **Add email address** → nhập `info@ghe1a.com` → Kit gửi 1 email xác
+minh đến hộp thư đó, mở email và bấm xác nhận. Nếu bỏ qua bước này, broadcast
+sẽ gửi bằng địa chỉ mặc định của tài khoản Kit thay vì info@ghe1a.com (hoặc
+lỗi, tuỳ Kit xử lý).
+
+**2. Tạo API Key mới của Kit (khác với `KIT_API_KEY` đang dùng cho form đăng
 ký)** — đăng nhập Kit → **Settings → Developer** → **Add a new key** → đặt
 tên bất kỳ (vd "Ghế 1A auto broadcast") → copy lại ngay (chỉ hiện 1 lần).
 
-**2. Thêm biến môi trường cho site live** — vào đúng chỗ bạn đã điền
+**3. Thêm biến môi trường cho site live** — vào đúng chỗ bạn đã điền
 `CONTENTFUL_SPACE_ID` (hPanel → website → Environment variables), thêm:
 
 | Biến             | Giá trị                                    |
 |-------------------|---------------------------------------------|
-| `KIT_V4_API_KEY`  | API key vừa tạo ở bước 1                    |
+| `KIT_V4_API_KEY`  | API key vừa tạo ở bước 2                    |
 
-**3. Không cần tạo webhook mới** — nếu bạn đã làm xong phần "Auto-refresh
+**4. Không cần tạo webhook mới** — nếu bạn đã làm xong phần "Auto-refresh
 site khi bấm Publish" ở trên, webhook đó (`Refresh Ghế 1A site`) đã gửi kèm
 đủ dữ liệu bài viết cho route này dùng luôn. Nếu chưa làm phần đó, làm theo
 3 bước ở mục phía trên trước (đặc biệt bước 3: tạo webhook, nhớ tick
 **Publish**).
 
-**4. Kiểm tra** — viết 1 bài test `type = "post"` trên Contentful, Publish
+**5. Kiểm tra** — viết 1 bài test `type = "post"` trên Contentful, Publish
 lần đầu, đợi ~10 giây rồi kiểm tra hộp thư (hoặc vào Kit → Broadcasts xem có
-broadcast mới không). Nếu chưa thấy, gửi tôi ảnh log lỗi (Contentful →
-Settings → Webhooks → chọn webhook → xem tab hoạt động gần nhất).
+broadcast mới không) — email nhận được phải hiện người gửi là info@ghe1a.com.
+Nếu chưa thấy, gửi tôi ảnh log lỗi (Contentful → Settings → Webhooks → chọn
+webhook → xem tab hoạt động gần nhất).
 
 ## Tự động đăng bài khi có video YouTube mới
 
