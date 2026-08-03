@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
+import type { Document } from "@contentful/rich-text-types";
 import {
   SITE_URL,
   emailHeadlineStyle,
   emailParagraphStyle,
   escapeHtml,
+  renderPostBodyForEmail,
   renderSubscriberEmailHtml,
 } from "@/lib/subscriber-email";
 
@@ -66,12 +68,21 @@ interface ContentfulEntryPayload {
   };
 }
 
+interface ManagementEntry {
+  sys?: { publishedCounter?: number };
+  fields?: { bodyVi?: Record<string, Document> };
+}
+
 // The webhook payload's `sys` is a trimmed snapshot that doesn't include
 // `publishedCounter` (confirmed by inspecting a real delivery — Contentful
 // only returns that field from a direct Content Management API fetch), so
 // whether this is the entry's first-ever publish has to be looked up with a
-// follow-up call instead of read off the webhook body directly.
-async function isFirstPublish(entryId: string): Promise<boolean | "not-configured"> {
+// follow-up call instead of read off the webhook body directly. That same
+// call also hands us the full `bodyVi` rich-text document — the webhook
+// payload's `fields` are read straight off the trimmed request body above,
+// but the body text is long enough that fetching it fresh here is simpler
+// than trusting it survived the trimming too.
+async function fetchManagementEntry(entryId: string): Promise<ManagementEntry | "not-configured" | null> {
   const spaceId = process.env.CONTENTFUL_SPACE_ID;
   const managementToken = process.env.CONTENTFUL_MANAGEMENT_TOKEN;
   if (!spaceId || !managementToken) return "not-configured";
@@ -80,9 +91,8 @@ async function isFirstPublish(entryId: string): Promise<boolean | "not-configure
     `https://api.contentful.com/spaces/${spaceId}/environments/master/entries/${entryId}`,
     { headers: { Authorization: `Bearer ${managementToken}` }, cache: "no-store" },
   );
-  if (!res.ok) return false;
-  const data = await res.json();
-  return data.sys?.publishedCounter === 1;
+  if (!res.ok) return null;
+  return res.json();
 }
 
 // Sends a Kit newsletter broadcast the first time a "post"-type blogPost
@@ -97,9 +107,10 @@ async function maybeNotifyNewPost(payload: unknown): Promise<boolean | string> {
   const entryId = entry.sys?.id;
   if (!entryId) return "missing_entry_id";
 
-  const firstPublish = await isFirstPublish(entryId);
-  if (firstPublish === "not-configured") return "not-configured";
-  if (!firstPublish) return "not_first_publish";
+  const managementEntry = await fetchManagementEntry(entryId);
+  if (managementEntry === "not-configured") return "not-configured";
+  if (!managementEntry) return "fetch_failed";
+  if (managementEntry.sys?.publishedCounter !== 1) return "not_first_publish";
 
   const apiKey = process.env.KIT_V4_API_KEY;
   if (!apiKey) return "not-configured";
@@ -109,20 +120,20 @@ async function maybeNotifyNewPost(payload: unknown): Promise<boolean | string> {
   const slug = entry.fields?.slug?.[LOCALE];
   if (!title || !slug) return "missing_fields";
 
-  const postUrl = `${SITE_URL}/blog/${slug}`;
+  const bodyDocument = managementEntry.fields?.bodyVi?.[LOCALE];
   const now = new Date();
 
   const bodyHtml = `
     <p style="${emailParagraphStyle}" class="email-text">Có bài viết mới trên Ghế 1A:</p>
     <p style="${emailHeadlineStyle}" class="email-brand">${escapeHtml(title)}</p>
-    ${excerpt ? `<p style="${emailParagraphStyle}" class="email-text">${escapeHtml(excerpt)}</p>` : ""}
+    ${bodyDocument ? renderPostBodyForEmail(bodyDocument) : ""}
   `;
   const html = renderSubscriberEmailHtml({
     title,
     preheader: excerpt ?? title,
     bodyHtml,
-    ctaHref: postUrl,
-    ctaLabel: "Đọc bài viết đầy đủ tại Ghế 1A →",
+    ctaHref: `${SITE_URL}/blog`,
+    ctaLabel: "Đọc các bài viết khác tại Ghế 1A →",
   });
 
   const res = await fetch("https://api.kit.com/v4/broadcasts", {
