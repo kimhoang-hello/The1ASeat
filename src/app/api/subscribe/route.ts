@@ -63,20 +63,29 @@ const WELCOME_HTML = `<!doctype html>
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
             <tr>
               <td align="center" style="padding-bottom:28px;">
-                <img
-                  src="${SITE_URL}/images/logo.png"
-                  width="40"
-                  height="40"
-                  alt="Ghế 1A"
-                  style="display:block; border-radius:8px;"
-                />
+                <table role="presentation" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding-right:12px; vertical-align:middle;">
+                      <img
+                        src="${SITE_URL}/images/logo.png"
+                        width="56"
+                        height="56"
+                        alt=""
+                        style="display:block; border-radius:12px;"
+                      />
+                    </td>
+                    <td style="vertical-align:middle;">
+                      <span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; font-size:22px; font-weight:800; letter-spacing:-0.01em; color:#0F2A4A;">Ghế 1A</span>
+                    </td>
+                  </tr>
+                </table>
               </td>
             </tr>
             <tr>
               <td style="background-color:#FFFFFF; border:1px solid #E5DAC3; border-radius:20px; padding:40px 36px;">
-                <h1 style="margin:0 0 24px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; font-size:22px; font-weight:800; letter-spacing:-0.01em; color:#0F2A4A;">
-                  Chào mừng bạn đến với Ghế 1A
-                </h1>
+                <p style="margin:0 0 18px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:15px; line-height:1.7; color:#1A1613;">
+                  Chào mừng bạn đến với Ghế 1A.
+                </p>
                 <p style="margin:0 0 18px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:15px; line-height:1.7; color:#1A1613;">
                   Khởi đầu chỉ là một chút tò mò về Miles &amp; Points đã nhanh chóng trở thành đam mê của mình từ lúc nào không hay. Càng tìm hiểu về các offers thẻ tín dụng, các chương trình khách hàng thân thiết của hãng hàng không và khách sạn, cũng như cách đặt vé award, mình càng nhận ra rằng những trải nghiệm du lịch tuyệt vời không nhất thiết phải đi kèm với một mức giá đắt đỏ.
                 </p>
