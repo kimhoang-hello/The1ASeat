@@ -26,6 +26,9 @@ website trên hPanel → bấm **Redeploy**.
 - `KIT_API_KEY`, `KIT_FORM_ID` — cho form đăng ký bản tin
 - `REVALIDATE_SECRET`, `HOSTINGER_API_TOKEN`, `HOSTINGER_USERNAME`,
   `HOSTINGER_DOMAIN` — tuỳ chọn, xem [CONTENTFUL.md](CONTENTFUL.md#auto-refresh-site-khi-bấm-publish)
+- `NEXT_PUBLIC_GA_MEASUREMENT_ID` — tuỳ chọn, Measurement ID của Google
+  Analytics 4 (dạng `G-XXXXXXXXXX`, lấy ở analytics.google.com → Admin → Data
+  Streams). Không có thì site không gắn script analytics nào.
 
 Đổi biến môi trường xong nhớ bấm **Redeploy** để áp dụng.
 
