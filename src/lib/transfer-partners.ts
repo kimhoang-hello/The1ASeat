@@ -52,7 +52,7 @@ export const TRANSFER_PARTNERS: TransferPartnerRow[] = [
   },
   {
     program: "Marriott Bonvoy®",
-    amex: { ratio: "5 : 6", note: "Tối đa 48 giờ" },
+    amex: { ratio: "1,000 : 1,200", note: "Tối đa 48 giờ" },
     rbc: null,
   },
   {
