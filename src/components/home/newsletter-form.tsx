@@ -41,7 +41,7 @@ export function NewsletterForm({
         }`}
       >
         <CheckCircle size={18} weight="fill" className="text-emerald-500 shrink-0" />
-        Đã đăng ký!
+        {t("subscribed")}
       </div>
     );
   }

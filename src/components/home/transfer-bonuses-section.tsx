@@ -7,7 +7,8 @@ import { formatDate } from "@/lib/format-date";
 const t = translate("bonuses");
 
 export async function TransferBonusesSection() {
-  const bonuses = await getTransferBonuses();
+  const allBonuses = await getTransferBonuses();
+  const bonuses = allBonuses.slice(0, 3);
 
   return (
     <section className="bg-background px-4 py-16 sm:px-6 lg:px-8">

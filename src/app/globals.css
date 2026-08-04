@@ -20,9 +20,6 @@
 
   --border: #e5dac3;
 
-  --accent: #0f2a4a;
-  --accent-soft: #e7ecf1;
-
   --destructive: #b3261e;
   --destructive-foreground: #ffffff;
 
@@ -49,9 +46,6 @@
   --color-muted-foreground: var(--muted-foreground);
 
   --color-border: var(--border);
-
-  --color-accent: var(--accent);
-  --color-accent-soft: var(--accent-soft);
 
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
