@@ -65,6 +65,7 @@ export function SiteHeader() {
   const toolsLinks = [
     { href: "/calculator", label: nav("calculator") },
     { href: "/transfer-bonuses", label: nav("transferBonuses") },
+    { href: "/transfer-partners", label: nav("transferPartners") },
   ];
 
   const blogActive = pathname === "/blog" || pathname.startsWith("/blog/");
