@@ -6,6 +6,7 @@ import { TRANSFER_PARTNERS, type TransferLeg } from "@/lib/transfer-partners";
 const tp = t("transferPartners");
 
 export const metadata: Metadata = { title: tp("title") };
+export const revalidate = 60;
 
 const BADGE_STYLES = {
   amex: "bg-[#e7f2ea] text-[#1f6f43]",
