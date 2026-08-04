@@ -16,7 +16,7 @@ export type TransferPartnerRow = {
 
 export const TRANSFER_PARTNERS: TransferPartnerRow[] = [
   {
-    program: "Aeroplan® (Air Canada®)",
+    program: "Air Canada® Aeroplan®",
     amex: { ratio: "1,000 : 1,000", note: "~30 phút" },
     rbc: null,
   },
