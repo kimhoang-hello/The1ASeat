@@ -51,11 +51,6 @@ export const TRANSFER_PARTNERS: TransferPartnerRow[] = [
     rbc: null,
   },
   {
-    program: "Hudson's Bay® Rewards",
-    amex: null,
-    rbc: { ratio: "1,000 : 2,000", note: "Mọi hạng Avion" },
-  },
-  {
     program: "Marriott Bonvoy®",
     amex: { ratio: "5 : 6", note: "Tối đa 48 giờ" },
     rbc: null,

@@ -37,6 +37,25 @@ export default function TransferPartnersPage() {
           <div className="overflow-x-auto rounded-2xl border border-border">
             <table className="w-full min-w-[560px] border-collapse text-sm">
               <thead>
+                <tr className="border-b border-border bg-card">
+                  <th className="px-4 py-3" />
+                  <th className="px-2 py-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/images/logos/amex.svg"
+                      alt="American Express"
+                      className="mx-auto h-6 w-auto"
+                    />
+                  </th>
+                  <th className="px-2 py-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/images/logos/rbc.svg"
+                      alt="RBC"
+                      className="mx-auto h-8 w-auto"
+                    />
+                  </th>
+                </tr>
                 <tr className="bg-primary text-primary-foreground">
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">
                     {tp("columnProgram")}
