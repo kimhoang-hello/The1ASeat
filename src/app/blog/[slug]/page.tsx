@@ -43,7 +43,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   return (
     <article className="mx-auto max-w-2xl px-4 py-12 sm:px-6 lg:px-8">
-      <Link href="/blog" className="text-sm font-semibold text-primary hover:underline">
+      <Link href="/" className="text-sm font-semibold text-primary hover:underline">
         &larr; {common("backHome")}
       </Link>
 

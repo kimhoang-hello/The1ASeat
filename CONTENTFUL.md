@@ -196,6 +196,35 @@ Bài viết tự tạo chỉ có tiêu đề gốc + 1 câu mô tả ngắn chun
 Claude Code viết riêng cho từng video như trước) — vào Contentful chỉnh lại
 `excerptVi`/`bodyVi`/`categoryVi` nếu muốn, publish lại là xong.
 
+## Tự động ẩn thẻ tín dụng / transfer bonus hết hạn
+
+Route [`/api/expire-offers`](src/app/api/expire-offers/route.ts) kiểm tra mọi
+`creditCardOffer` và `transferBonus` đang Published có `Expires At` đã qua, và
+tự **Unpublish** (không xoá) — ưu đãi vẫn còn nguyên trong Contentful, nếu sau
+này có lại (elevated offer quay lại) chỉ cần vào sửa `Expires At` rồi Publish
+lại là hiện lên web ngay, không cần tạo mới. GitHub Actions
+([`.github/workflows/expire-offers.yml`](.github/workflows/expire-offers.yml))
+gọi route này mỗi ngày 1 lần.
+
+**1. Thêm 1 biến môi trường cho site live** — vào đúng chỗ bạn đã điền
+`CONTENTFUL_SPACE_ID` (hPanel → website → Environment variables), thêm:
+
+| Biến                   | Giá trị                                                                 |
+|-------------------------|--------------------------------------------------------------------------|
+| `EXPIRE_OFFERS_SECRET`  | một chuỗi bất kỳ bạn tự nghĩ ra, để không ai gọi được route này ngoài GitHub Actions |
+
+(`CONTENTFUL_MANAGEMENT_TOKEN` đã cần có sẵn từ phần "Tự động đăng bài khi có
+video YouTube mới" ở trên — route này dùng lại, không cần thêm.)
+
+**2. Thêm 1 secret trên GitHub** — vào repo trên GitHub → **Settings → Secrets
+and variables → Actions → New repository secret**:
+- Name: `EXPIRE_OFFERS_SECRET`
+- Value: giống hệt giá trị bạn vừa điền ở bước 1
+
+**3. Kiểm tra** — vào tab **Actions** trên GitHub → chọn workflow **Unpublish
+expired credit card offers & transfer bonuses** → **Run workflow** để chạy thử
+ngay thay vì chờ đến giờ chạy tự động.
+
 ## Email chào mừng cho subscriber mới
 
 Route [`/api/subscribe`](src/app/api/subscribe/route.ts) (form đăng ký bản tin

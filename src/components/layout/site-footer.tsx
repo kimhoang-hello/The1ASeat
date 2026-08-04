@@ -14,12 +14,15 @@ export function SiteFooter() {
     <footer className="border-t border-border bg-navy-ink text-white/70">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2 font-display text-base font-extrabold text-white">
+          <Link
+            href="/"
+            className="flex items-center gap-2 font-display text-base font-extrabold text-white"
+          >
             <span className="flex h-8 w-8 items-center justify-center rounded-md bg-background">
               <Image src="/images/logo.png" alt="" width={477} height={480} className="h-5 w-5" />
             </span>
             {site("name")}
-          </div>
+          </Link>
 
           <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
             <Link href="/credit-cards" className="hover:text-white">

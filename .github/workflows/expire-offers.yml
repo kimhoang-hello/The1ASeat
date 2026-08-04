@@ -1,0 +1,17 @@
+name: Unpublish expired credit card offers & transfer bonuses
+
+# Calls the deployed site's /api/expire-offers endpoint, which unpublishes
+# (never deletes) creditCardOffer/transferBonus entries whose expiresAt date
+# has passed, so they can just be republished later if the offer comes back.
+on:
+  schedule:
+    - cron: "0 8 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  expire:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call expire-offers endpoint
+        run: |
+          curl -sf -X POST "https://ghe1a.com/api/expire-offers?secret=${{ secrets.EXPIRE_OFFERS_SECRET }}"
