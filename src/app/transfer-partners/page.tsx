@@ -74,7 +74,17 @@ export default function TransferPartnersPage() {
                     key={row.program}
                     className={i % 2 === 0 ? "bg-card" : "bg-background"}
                   >
-                    <td className="px-4 py-4 font-medium text-foreground">{row.program}</td>
+                    <td className="px-4 py-4 font-medium text-foreground">
+                      <div className="flex items-center gap-3">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={row.logo}
+                          alt=""
+                          className="h-8 w-8 shrink-0 rounded-md border border-border object-contain bg-white p-1"
+                        />
+                        <span>{row.program}</span>
+                      </div>
+                    </td>
                     <LegCell leg={row.amex} tint="amex" />
                     <LegCell leg={row.rbc} tint="rbc" />
                   </tr>
