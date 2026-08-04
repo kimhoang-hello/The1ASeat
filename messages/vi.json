@@ -30,7 +30,7 @@
     "viewOffer": "Xem offer",
     "keyBenefits": "Quyền lợi chính",
     "annualFee": "Phí thường niên",
-    "editorsTake": "NHẬN ĐỊNH CỦA GHẾ 1A",
+    "editorsTake": "GHẾ 1A ĐÁNH GIÁ",
     "elevatedBonus": "Elevated offer",
     "expiresOn": "Hết hạn"
   },
@@ -46,7 +46,7 @@
   "bonuses": {
     "eyebrow": "CẬP NHẬT THƯỜNG XUYÊN",
     "title": "Transfer Bonus Đang Diễn Ra",
-    "viewAll": "Xem tất cả offer",
+    "viewAll": "Xem tất cả transfer",
     "partner": "Đối tác",
     "expires": "Hết hạn",
     "browsing": "Đang xem {shown}/{total} offer"
