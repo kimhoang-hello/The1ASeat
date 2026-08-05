@@ -16,7 +16,7 @@ export function Hero() {
           {t("subtitle")}
         </p>
 
-        <div className="mt-9 flex w-full flex-col items-center gap-3" id="newsletter">
+        <div className="mt-9 flex w-full scroll-mt-24 flex-col items-center gap-3" id="newsletter">
           <span className="text-xs font-semibold tracking-wide text-muted-foreground">
             {t("formLabel")}
           </span>

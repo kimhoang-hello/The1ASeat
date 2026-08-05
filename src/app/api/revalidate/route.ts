@@ -62,6 +62,7 @@ interface ContentfulEntryPayload {
   };
   fields?: {
     type?: Record<string, string>;
+    categoryVi?: Record<string, string>;
     titleVi?: Record<string, string>;
     excerptVi?: Record<string, string>;
     slug?: Record<string, string>;
@@ -96,13 +97,15 @@ async function fetchManagementEntry(entryId: string): Promise<ManagementEntry | 
 }
 
 // Sends a Kit newsletter broadcast the first time a "post"-type blogPost
-// entry is published. Skips video posts entirely, and skips edits/
-// republishes of an already-published post.
+// entry is published. Skips video posts and Deals posts (transfer bonus /
+// points-buy promos age out fast and aren't worth a broadcast), and skips
+// edits/republishes of an already-published post.
 async function maybeNotifyNewPost(payload: unknown): Promise<boolean | string> {
   const entry = payload as ContentfulEntryPayload;
 
   if (entry?.sys?.contentType?.sys?.id !== "blogPost") return "not_blog_post";
   if (entry.fields?.type?.[LOCALE] !== "post") return "video_post";
+  if (entry.fields?.categoryVi?.[LOCALE]?.trim().toLowerCase() === "deals") return "deals_post";
 
   const entryId = entry.sys?.id;
   if (!entryId) return "missing_entry_id";

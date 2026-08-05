@@ -116,7 +116,7 @@ Nếu 4 biến môi trường trên chưa được điền, route vẫn chạy b
 nhưng chỉ làm mới cache của Next.js chứ không xoá được cache CDN Hostinger — bạn
 vẫn cần bấm Clear cache thủ công như trước.
 
-## Tự động gửi email cho subscriber khi có bài viết mới (không gồm video)
+## Tự động gửi email cho subscriber khi có bài viết mới (không gồm video và Deals)
 
 Route `/api/revalidate` ở trên giờ làm thêm 1 việc: mỗi khi 1 `blogPost` với
 `type = "post"` (bài viết thường, **không phải video**) được Publish **lần
@@ -126,6 +126,13 @@ subscriber, gồm tiêu đề + đoạn mô tả ngắn + link đến bài viế
 chào mừng subscriber mới — cả 2 dùng chung 1 template ở
 [src/lib/subscriber-email.ts](src/lib/subscriber-email.ts). Sửa bài đã đăng
 và Publish lại sẽ **không** gửi lại email (chỉ gửi ở lần Publish đầu).
+
+**Ngoại lệ Deals:** nếu ô `Category Vi` của bài viết là `Deals` (transfer
+bonus, deal mua points, v.v.) thì email **sẽ không gửi**, kể cả khi đây là
+bài `post` và là lần Publish đầu tiên — những deal này thường ngắn hạn và hết
+hạn nhanh nên không đáng gửi broadcast riêng. Chỉ cần gõ đúng chữ `Deals` vào
+`Category Vi` (không phân biệt hoa/thường) là được, không cần cấu hình gì
+thêm.
 
 Broadcast này (và mọi email khác gửi cho subscriber) giờ gửi từ địa chỉ
 **info@ghe1a.com** — Kit yêu cầu địa chỉ gửi phải được thêm + xác minh trong
