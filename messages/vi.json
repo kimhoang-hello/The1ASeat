@@ -74,7 +74,8 @@
     "columnAmex": "Amex Membership Rewards®",
     "columnRbc": "RBC® Avion®",
     "noData": "—",
-    "aeroplanNote": "Lưu ý: RBC® Avion® không transfer được sang Aeroplan® — muốn tích điểm Aeroplan, dùng thẻ American Express® Aeroplan® hoặc thẻ Aeroplan của TD/CIBC."
+    "aeroplanNote": "Lưu ý: RBC® Avion® không transfer được sang Aeroplan® — muốn tích điểm Aeroplan, dùng thẻ American Express® Aeroplan® hoặc thẻ Aeroplan của TD/CIBC.",
+    "scrollHint": "Vuốt ngang để xem đầy đủ bảng →"
   },
   "author": {
     "eyebrow": "NGƯỜI ĐỨNG SAU GHẾ 1A",

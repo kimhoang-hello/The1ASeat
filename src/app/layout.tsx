@@ -4,6 +4,7 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { t } from "@/lib/t";
+import { SITE_URL } from "@/lib/subscriber-email";
 import "./globals.css";
 
 const fontHeading = Plus_Jakarta_Sans({
@@ -21,11 +22,20 @@ const fontBody = Inter({
 const site = t("site");
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: `${site("name")} — ${site("tagline")}`,
     template: `%s | ${site("name")}`,
   },
   description: site("tagline"),
+  openGraph: {
+    siteName: site("name"),
+    locale: "vi_VN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

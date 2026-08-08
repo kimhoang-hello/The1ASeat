@@ -5,7 +5,7 @@ import Image from "next/image";
 import { getPostBySlug, getPosts } from "@/lib/content";
 import { formatDate } from "@/lib/format-date";
 import { MediaPlaceholder, type PlaceholderIcon } from "@/components/ui/media-placeholder";
-import { getVideoEmbedUrl } from "@/lib/video-embed";
+import { getVideoEmbedUrl, getYouTubeThumbnailUrl } from "@/lib/video-embed";
 import { CommentSection } from "@/components/blog/comment-section";
 import { SITE_URL } from "@/lib/subscriber-email";
 import { t } from "@/lib/t";
@@ -30,7 +30,28 @@ export async function generateMetadata({
   const { slug } = await params;
   const post = await getPostBySlug(slug);
   if (!post) return {};
-  return { title: post.title, description: post.excerpt };
+
+  // post.coverImage is a MediaPlaceholder icon name (e.g. "airplane"), not a
+  // real image — the actual photo lives in post.coverPhoto (text posts) or
+  // is derived from the YouTube video (video posts).
+  const ogImage = post.coverPhoto || getYouTubeThumbnailUrl(post.videoUrl ?? "");
+
+  return {
+    title: post.title,
+    description: post.excerpt,
+    alternates: { canonical: `${SITE_URL}/blog/${post.slug}` },
+    openGraph: {
+      type: "article",
+      title: post.title,
+      description: post.excerpt,
+      url: `${SITE_URL}/blog/${post.slug}`,
+      publishedTime: post.publishedAt,
+      ...(ogImage && { images: [{ url: ogImage }] }),
+    },
+    twitter: {
+      card: ogImage ? "summary_large_image" : "summary",
+    },
+  };
 }
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {

@@ -35,6 +35,9 @@ export default function TransferPartnersPage() {
       <PageHeader eyebrow={tp("eyebrow")} title={tp("title")} subtitle={tp("subtitle")} />
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl">
+          <p className="mb-2 text-xs font-medium text-muted-foreground sm:hidden">
+            {tp("scrollHint")}
+          </p>
           <div className="overflow-x-auto rounded-2xl border border-border">
             <table className="w-full min-w-[560px] border-collapse text-sm">
               <thead>

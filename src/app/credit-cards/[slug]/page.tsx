@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getCreditCardOfferBySlug, getCreditCardOffers } from "@/lib/content";
 import { CardImage } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
+import { SITE_URL } from "@/lib/subscriber-email";
 import { t as translate } from "@/lib/t";
 
 const offers = translate("offers");
@@ -26,7 +27,20 @@ export async function generateMetadata({
   const { slug } = await params;
   const offer = await getCreditCardOfferBySlug(slug);
   if (!offer) return {};
-  return { title: offer.name, description: offer.headline };
+  return {
+    title: offer.name,
+    description: offer.headline,
+    alternates: { canonical: `${SITE_URL}/credit-cards/${offer.slug}` },
+    openGraph: {
+      title: offer.name,
+      description: offer.headline,
+      url: `${SITE_URL}/credit-cards/${offer.slug}`,
+      ...(offer.cardImage && { images: [{ url: offer.cardImage }] }),
+    },
+    twitter: {
+      card: offer.cardImage ? "summary_large_image" : "summary",
+    },
+  };
 }
 
 export default async function CreditCardDetailPage({
