@@ -36,12 +36,15 @@ for (const p of PROGRAMS) {
   }
 }
 for (const c of CABINS) if (!(c.labelKey in ns)) fails.push(`missing cabin key ${c.labelKey}`);
+for (const p2 of PROGRAMS) for (const o of p2.overrides ?? [])
+  if (o.noteKey && !(o.noteKey in ns)) fails.push(`${p2.id}: missing override noteKey ${o.noteKey}`);
 
 // 4. unused message keys
 const used = new Set([...literal, ...PROGRAMS.map(p => p.noteKey), ...PROGRAMS.flatMap(p => p.transferNoteKey ? [p.transferNoteKey] : []),
   ...PROGRAMS.flatMap(p => p.pricing.kind === "unquotable" ? [p.pricing.labelKey, p.pricing.hintKey] : []),
   ...CABINS.map(c => c.labelKey), ...[1,2,3,4].flatMap(n => [`howStep${n}Title`, `howStep${n}Body`]),
-  "eyebrow","title","subtitle",
+  "eyebrow","title","subtitle","noRouting","noRoutingShort","feederNote",
+  ...PROGRAMS.flatMap(p2 => (p2.overrides ?? []).flatMap(o => o.noteKey ? [o.noteKey] : [])),
   ...[...src.matchAll(/"(confidence[A-Z]\w+|surcharge[A-Z]\w+|transferNone)"/g)].map(m => m[1])]);
 const unused = Object.keys(ns).filter(k => !used.has(k));
 if (unused.length) fails.push(`unused message keys: ${unused.join(", ")}`);
@@ -77,12 +80,14 @@ for (const o of ORIGINS) for (const d of DESTINATIONS) for (const c of CABINS) {
     if (q.points !== null && (q.points < 1000 || q.points > 400000)) fails.push(`${o.code}->${d.code}/${c.id} ${q.program.id}: implausible ${q.points}`);
     for (const opt of q.options) {
       if (!opt.carriers?.length || opt.carriers.some(c2 => !c2?.name)) fails.push(`${o.code}->${d.code} ${q.program.id}: bad carriers`);
-      if (opt.carriers.length > 1 && !ORIGINS.some(g => g.code === opt.routing[1])) fails.push(`${q.program.id}: feeder second stop is not a Canadian gateway: ${opt.routing.join("-")}`);
-      if (opt.carriers.length > 2) fails.push(`${q.program.id}: too many carriers`);
+      if (opt.needsFeeder && !ORIGINS.some(g => g.code === opt.routing[1])) fails.push(`${q.program.id}: feeder second stop is not a Canadian gateway: ${opt.routing.join("-")}`);
+      if (opt.carriers.length > 3) fails.push(`${q.program.id}: too many carriers`);
       if (opt.routing.includes(o.code) === false) fails.push(`${q.program.id}: routing missing origin`);
       if (opt.routing.at(-1) !== d.code) fails.push(`${q.program.id}: routing missing destination`);
       if (new Set(opt.routing).size !== opt.routing.length) fails.push(`${q.program.id}: repeated airport in ${opt.routing.join("-")}`);
       if (opt.miles < 100) fails.push(`${q.program.id}: implausible distance ${opt.miles}`);
+      if (opt.needsFeeder && !q.program.pricesWithFeeder && opt.points !== null)
+        fails.push(`${q.program.id}: priced a feeder itinerary`);
     }
     const best = q.options.filter(o2 => o2.isBest);
     if (q.points !== null && best.length !== 1) fails.push(`${q.program.id}: ${best.length} best options`);

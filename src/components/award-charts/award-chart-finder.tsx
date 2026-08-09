@@ -122,7 +122,12 @@ function OptionRow({ option, currency }: { option: RoutingOption; currency: stri
       </div>
       <div className="shrink-0 text-right">
         {option.points === null ? (
-          <span className="text-sm text-muted-foreground/60">—</span>
+          <span
+            className="text-sm text-muted-foreground/60"
+            title={option.needsFeeder ? t("feederNote") : undefined}
+          >
+            —
+          </span>
         ) : (
           <>
             <p className="text-sm font-bold text-foreground">
@@ -175,7 +180,18 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
         </div>
 
         <div className="shrink-0 text-left sm:text-right">
-          {points === null ? (
+          {options.length === 0 ? (
+            // No number can be right when the programme's partners do not fly
+            // the route at all — say that, rather than blaming the chart.
+            <>
+              <p className="font-display text-lg font-bold text-muted-foreground sm:text-xl">
+                {t("noRoutingShort")}
+              </p>
+              <p className="mt-0.5 max-w-[15rem] text-xs leading-snug text-muted-foreground">
+                {t("noRouting")}
+              </p>
+            </>
+          ) : points === null ? (
             unquotable && program.pricing.kind === "unquotable" ? (
               <>
                 <p className="font-display text-lg font-bold text-muted-foreground sm:text-xl">
@@ -224,6 +240,14 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
         </div>
       </div>
 
+      {/* A rate that only applies to this city pair, and beats or contradicts
+          the programme's own chart — worth colour rather than a footnote. */}
+      {quote.routeNoteKey && (
+        <p className="mt-4 rounded-lg border border-[#8a5a10]/30 bg-[#fdf1d8] px-3 py-2 text-xs font-medium leading-relaxed text-[#8a5a10]">
+          {t(quote.routeNoteKey)}
+        </p>
+      )}
+
       {options.length > 0 && (
         <div className="mt-4 border-t border-border pt-3">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -254,14 +278,6 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
       </div>
 
       <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{t(program.noteKey)}</p>
-      <a
-        href={program.sourceUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-2 inline-block text-xs font-medium text-primary underline underline-offset-2"
-      >
-        {t("sourceLink")}
-      </a>
     </li>
   );
 }

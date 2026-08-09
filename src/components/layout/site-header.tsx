@@ -63,7 +63,7 @@ export function SiteHeader() {
   ];
 
   const toolsLinks = [
-    { href: "/award-charts", label: nav("awardCharts") },
+    { href: "/award-flight-finder", label: nav("awardCharts") },
     { href: "/calculator", label: nav("calculator") },
     { href: "/transfer-bonuses", label: nav("transferBonuses") },
     { href: "/transfer-partners", label: nav("transferPartners") },

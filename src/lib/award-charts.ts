@@ -57,13 +57,14 @@
 // Sources re-verified 2026-08-09. When a program changes, update the rates AND
 // its verifiedOn date so the page can show readers how fresh the number is.
 
-export type Cabin = "economy" | "premium" | "business" | "first";
+// No carrier sells a First cabin between Canada and Asia, so the option is
+// deliberately absent rather than shown empty.
+export type Cabin = "economy" | "premium" | "business";
 
 export const CABINS: { id: Cabin; labelKey: string }[] = [
   { id: "economy", labelKey: "cabinEconomy" },
   { id: "premium", labelKey: "cabinPremium" },
   { id: "business", labelKey: "cabinBusiness" },
-  { id: "first", labelKey: "cabinFirst" },
 ];
 
 /** AAdvantage's two Asia regions. Only meaningful for destinations — an
@@ -93,10 +94,9 @@ const AIRPORTS: Record<string, Airport> = {
   YWG: { code: "YWG", city: "Winnipeg", country: "Canada", lat: 49.91, lon: -97.2399 },
   YHZ: { code: "YHZ", city: "Halifax", country: "Canada", lat: 44.8808, lon: -63.5086 },
 
-  // Vietnam and Southeast Asia. Nha Trang (CXR) and Phú Quốc (PQC) are
-  // deliberately absent: no oneworld or Star Alliance carrier serves them, and
-  // Vietnam Airlines is SkyTeam, so none of these programs can ticket them
-  // without a domestic add-on they do not sell. Quoting them would price an
+  // Vietnam and Southeast Asia. Nha Trang (CXR), Phú Quốc (PQC) and Phnom
+  // Penh (PNH) are deliberately absent — no carrier in this tool's set flies
+  // them from a hub it also reaches from Canada, so any quote would price an
   // itinerary nobody can book.
   SGN: { code: "SGN", city: "TP. Hồ Chí Minh", country: "Việt Nam", lat: 10.8188, lon: 106.652, aaRegion: "asia2" },
   HAN: { code: "HAN", city: "Hà Nội", country: "Việt Nam", lat: 21.2212, lon: 105.8072, aaRegion: "asia2" },
@@ -105,7 +105,6 @@ const AIRPORTS: Record<string, Airport> = {
   SIN: { code: "SIN", city: "Singapore", country: "Singapore", lat: 1.3644, lon: 103.9915, aaRegion: "asia2" },
   KUL: { code: "KUL", city: "Kuala Lumpur", country: "Malaysia", lat: 2.7456, lon: 101.7099, aaRegion: "asia2" },
   MNL: { code: "MNL", city: "Manila", country: "Philippines", lat: 14.5086, lon: 121.0194, aaRegion: "asia2" },
-  PNH: { code: "PNH", city: "Phnom Penh", country: "Campuchia", lat: 11.5466, lon: 104.8441, aaRegion: "asia2" },
 
   // Asian gateways — pickable as destinations and used as connecting hubs.
   HKG: { code: "HKG", city: "Hong Kong", country: "Hong Kong", lat: 22.308, lon: 113.9185, aaRegion: "asia2" },
@@ -114,6 +113,7 @@ const AIRPORTS: Record<string, Airport> = {
   NRT: { code: "NRT", city: "Tokyo Narita", country: "Nhật Bản", lat: 35.772, lon: 140.3929, aaRegion: "asia1" },
   HND: { code: "HND", city: "Tokyo Haneda", country: "Nhật Bản", lat: 35.5494, lon: 139.7798, aaRegion: "asia1" },
   PEK: { code: "PEK", city: "Bắc Kinh", country: "Trung Quốc", lat: 40.0799, lon: 116.6031, aaRegion: "asia2" },
+  PVG: { code: "PVG", city: "Thượng Hải", country: "Trung Quốc", lat: 31.1443, lon: 121.8083, aaRegion: "asia2" },
 
   // European hubs — connection points only, never selectable.
   DOH: { code: "DOH", city: "Doha", country: "Qatar", lat: 25.2731, lon: 51.6081 },
@@ -127,13 +127,19 @@ export const ORIGINS = pick("YYZ", "YVR", "YUL", "YYC", "YOW", "YEG", "YWG", "YH
 
 export const DESTINATIONS = pick(
   "SGN", "HAN", "DAD",
-  "BKK", "SIN", "KUL", "MNL", "PNH",
-  "HKG", "TPE", "ICN", "NRT", "HND"
+  "BKK", "SIN", "KUL", "MNL",
+  "HKG", "TPE", "ICN", "NRT", "HND", "PEK", "PVG"
 );
 
-/** The airline actually flying the Asian portion of a routing. Shown so a
- *  reader can tell YYZ–TPE–SGN on EVA apart from YYZ–ICN–SGN on Asiana
- *  instead of seeing two anonymous airport strings. */
+/** An airline in one of these programmes, with the two facts that decide
+ *  whether a routing is real: where in Canada it departs, and which airports
+ *  in this tool's scope it actually serves.
+ *
+ *  Networks were read off flightconnections.com on 2026-08-09 (its own data is
+ *  dated 08-02-2026) rather than assumed. Several assumptions this file used
+ *  to make were simply wrong: Asiana no longer flies to Canada at all, Qatar
+ *  has no Doha–Da Nang and no Taipei, Cathay has dropped Da Nang, KLM does not
+ *  serve Vietnam, and Air France reaches Saigon but not Hanoi. */
 export type Carrier = {
   code: string;
   name: string;
@@ -142,58 +148,127 @@ export type Carrier = {
    *  else needs an Air Canada feeder first, which adds real distance — and on
    *  a chart banded by distance flown, ignoring it understates the price. */
   gateways: string[];
+  /** Airports in this tool's scope that the carrier serves at all. */
+  network: string[];
 };
 
-// Gateway sets, not timetables. Seasonal frequencies move around; what is
-// stable is which Canadian cities each carrier serves at all. EVA, Asiana and
-// Cathay reach both Toronto and Vancouver; ANA, JAL and Air China are
-// Vancouver-only; Qatar flies the eastern cities; the two European carriers
-// spread widest.
 const CARRIERS: Record<string, Carrier> = {
-  BR: { code: "BR", name: "EVA Air®", logo: "/images/logos/partners/eva-air.svg", gateways: ["YYZ", "YVR"] },
-  OZ: { code: "OZ", name: "Asiana Airlines®", logo: "/images/logos/partners/asiana.svg", gateways: ["YYZ", "YVR"] },
-  NH: { code: "NH", name: "ANA®", logo: "/images/logos/partners/ana.svg", gateways: ["YVR"] },
-  CA: { code: "CA", name: "Air China®", logo: "/images/logos/partners/air-china.svg", gateways: ["YVR"] },
-  CX: { code: "CX", name: "Cathay Pacific®", logo: "/images/logos/partners/cathay-pacific.png", gateways: ["YYZ", "YVR"] },
-  QR: { code: "QR", name: "Qatar Airways®", logo: "/images/logos/partners/qatar-airways.svg", gateways: ["YYZ", "YUL"] },
-  JL: { code: "JL", name: "Japan Airlines®", logo: "/images/logos/partners/japan-airlines.svg", gateways: ["YVR"] },
-  AF: { code: "AF", name: "Air France®", logo: "/images/logos/partners/air-france.png", gateways: ["YYZ", "YVR", "YUL"] },
-  KL: { code: "KL", name: "KLM®", logo: "/images/logos/partners/klm.svg", gateways: ["YYZ", "YVR", "YYC"] },
+  AC: {
+    code: "AC",
+    name: "Air Canada®",
+    logo: "/images/logos/partners/air-canada.svg",
+    gateways: ["YYZ", "YVR", "YUL", "YYC", "YOW", "YEG", "YWG", "YHZ"],
+    network: ["BKK", "SIN", "MNL", "HKG", "ICN", "NRT", "HND", "PEK", "PVG"],
+  },
+  BR: {
+    code: "BR",
+    name: "EVA Air®",
+    logo: "/images/logos/partners/eva-air.svg",
+    gateways: ["YYZ", "YVR"],
+    network: ["TPE", "SGN", "HAN", "DAD", "BKK", "SIN", "KUL", "MNL", "HKG", "ICN", "NRT", "HND", "PEK", "PVG"],
+  },
+  OZ: {
+    code: "OZ",
+    name: "Asiana Airlines®",
+    logo: "/images/logos/partners/asiana.svg",
+    // Asiana pulled out of Canada; it can only ever be the onward carrier now.
+    gateways: [],
+    network: ["ICN", "SGN", "HAN", "DAD", "BKK", "SIN", "MNL", "HKG", "TPE", "NRT", "HND", "PEK", "PVG"],
+  },
+  NH: {
+    code: "NH",
+    name: "ANA®",
+    logo: "/images/logos/partners/ana.svg",
+    gateways: ["YVR"],
+    network: ["NRT", "HND", "SGN", "HAN", "BKK", "SIN", "KUL", "MNL", "HKG", "PEK", "PVG"],
+  },
+  CA: {
+    code: "CA",
+    name: "Air China®",
+    logo: "/images/logos/partners/air-china.svg",
+    gateways: ["YYZ", "YVR"],
+    network: ["PEK", "PVG", "SGN", "HAN", "BKK", "SIN", "KUL", "MNL", "HKG", "TPE", "ICN", "NRT", "HND"],
+  },
+  CX: {
+    code: "CX",
+    name: "Cathay Pacific®",
+    logo: "/images/logos/partners/cathay-pacific.png",
+    gateways: ["YYZ", "YVR"],
+    network: ["HKG", "SGN", "HAN", "BKK", "SIN", "KUL", "MNL", "TPE", "ICN", "NRT", "HND", "PEK", "PVG"],
+  },
+  QR: {
+    code: "QR",
+    name: "Qatar Airways®",
+    logo: "/images/logos/partners/qatar-airways.svg",
+    gateways: ["YYZ", "YUL"],
+    network: ["DOH", "SGN", "HAN", "BKK", "SIN", "KUL", "MNL", "HKG", "ICN", "NRT", "HND", "PVG"],
+  },
+  JL: {
+    code: "JL",
+    name: "Japan Airlines®",
+    logo: "/images/logos/partners/japan-airlines.svg",
+    gateways: ["YVR"],
+    network: ["NRT", "HND", "SGN", "HAN", "BKK", "SIN", "KUL", "MNL", "HKG", "TPE", "PEK", "PVG"],
+  },
+  AF: {
+    code: "AF",
+    name: "Air France®",
+    logo: "/images/logos/partners/air-france.png",
+    gateways: ["YYZ", "YVR", "YUL", "YOW"],
+    network: ["CDG", "SGN", "BKK", "SIN", "MNL", "HKG", "ICN", "HND", "PEK", "PVG"],
+  },
+  KL: {
+    code: "KL",
+    name: "KLM®",
+    logo: "/images/logos/partners/klm.svg",
+    gateways: ["YYZ", "YVR", "YUL", "YYC", "YEG"],
+    network: ["AMS", "BKK", "SIN", "KUL", "MNL", "HKG", "TPE", "ICN", "NRT", "PEK", "PVG"],
+  },
+  VN: {
+    code: "VN",
+    name: "Vietnam Airlines®",
+    logo: "/images/logos/partners/vietnam-airlines.svg",
+    // SkyTeam, so Flying Blue can book it — and it is how you actually reach
+    // Hanoi or Da Nang from Europe, since Air France and KLM do not.
+    gateways: [],
+    network: ["CDG", "AMS", "SGN", "HAN", "DAD", "BKK", "SIN", "KUL", "MNL", "HKG", "TPE", "ICN", "NRT", "HND", "PEK", "PVG"],
+  },
 };
 
 /** The feeder to a gateway is always Air Canada in practice. */
-const FEEDER: Carrier = {
-  code: "AC",
-  name: "Air Canada®",
-  logo: "/images/logos/partners/air-canada.svg",
-  gateways: [],
-};
+const FEEDER = CARRIERS.AC;
 
-/** A connecting hub plus the partner that flies it. */
-type HubRoute = { hub: string; carrier: string };
+/** A connection: who flies Canada→hub, and who flies hub→destination. Both
+ *  halves are checked against the carriers' real networks before the option
+ *  is offered. */
+type HubRoute = { hub: string; inbound: string; onward: string };
 
-/** Star Alliance options for Aeroplan. EVA and Asiana fly Canada nonstop and
- *  onward to Vietnam themselves; ANA only serves Vancouver, and Air China
- *  routes over Beijing. */
+/** Star Alliance, for Aeroplan. EVA flies Taipei end to end; Asiana no longer
+ *  serves Canada so Seoul needs Air Canada inbound; ANA covers Tokyo from
+ *  Vancouver; Air China covers Beijing, and Air Canada reaches Shanghai. */
 const STAR_ROUTES: HubRoute[] = [
-  { hub: "TPE", carrier: "BR" },
-  { hub: "ICN", carrier: "OZ" },
-  { hub: "NRT", carrier: "NH" },
-  { hub: "HND", carrier: "NH" },
-  { hub: "PEK", carrier: "CA" },
+  { hub: "TPE", inbound: "BR", onward: "BR" },
+  { hub: "ICN", inbound: "AC", onward: "OZ" },
+  { hub: "NRT", inbound: "NH", onward: "NH" },
+  { hub: "HND", inbound: "NH", onward: "NH" },
+  { hub: "PEK", inbound: "CA", onward: "CA" },
+  { hub: "PVG", inbound: "AC", onward: "CA" },
 ];
 /** oneworld: Cathay over Hong Kong, Qatar over Doha, JAL over Tokyo. */
 const ONEWORLD_ROUTES: HubRoute[] = [
-  { hub: "HKG", carrier: "CX" },
-  { hub: "DOH", carrier: "QR" },
-  { hub: "NRT", carrier: "JL" },
+  { hub: "HKG", inbound: "CX", onward: "CX" },
+  { hub: "DOH", inbound: "QR", onward: "QR" },
+  { hub: "NRT", inbound: "JL", onward: "JL" },
 ];
 /** Cathay flies both legs of its own itineraries via Hong Kong. */
-const CATHAY_ROUTES: HubRoute[] = [{ hub: "HKG", carrier: "CX" }];
-/** SkyTeam, over Air France and KLM's own European hubs. */
+const CATHAY_ROUTES: HubRoute[] = [{ hub: "HKG", inbound: "CX", onward: "CX" }];
+/** SkyTeam. Air France and KLM cover part of Asia themselves; everywhere they
+ *  do not reach — Hanoi and Da Nang especially — Vietnam Airlines does. */
 const SKYTEAM_ROUTES: HubRoute[] = [
-  { hub: "CDG", carrier: "AF" },
-  { hub: "AMS", carrier: "KL" },
+  { hub: "CDG", inbound: "AF", onward: "AF" },
+  { hub: "CDG", inbound: "AF", onward: "VN" },
+  { hub: "AMS", inbound: "KL", onward: "KL" },
+  { hub: "AMS", inbound: "KL", onward: "VN" },
 ];
 
 export function airportByCode(code: string): Airport | undefined {
@@ -239,6 +314,18 @@ type PricingModel =
    *  down — they are different problems and deserve different wording. */
   | { kind: "unquotable"; hubs: HubRoute[]; labelKey: string; hintKey: string };
 
+/** A route the published chart gets wrong, or one worth annotating. Matched
+ *  on origin and destination, and optionally narrowed to a single hub. */
+export type RouteOverride = {
+  origins: string[];
+  destinations: string[];
+  hub?: string;
+  /** Replaces the chart price for the matching routings. */
+  rates?: Rates;
+  /** Highlighted note shown on the card for this route only. */
+  noteKey?: string;
+};
+
 export type Program = {
   id: string;
   name: string;
@@ -261,6 +348,13 @@ export type Program = {
   /** Overrides the transfer cell when the route to this program is
    *  indirect rather than simply absent. */
   transferNoteKey?: string;
+  /** Whether a chart figure still holds when the itinerary needs an Air
+   *  Canada domestic feeder. Only Aeroplan prices those as one award; on the
+   *  others the domestic hop is a separate ticket or repriced, so no number
+   *  shown here would be trustworthy. */
+  pricesWithFeeder: boolean;
+  /** Real-world corrections that beat the published chart on named routes. */
+  overrides?: RouteOverride[];
   noteKey: string;
   sourceUrl: string;
   verifiedOn: string;
@@ -296,28 +390,34 @@ export const PROGRAMS: Program[] = [
       bands: [
         {
           upTo: 5000,
-          rates: { economy: 32500, business: 55000, first: 90000 },
-          startingAt: { economy: 32500, premium: 45000, business: 55000, first: 90000 },
+          rates: { economy: 32500, business: 55000 },
+          startingAt: { economy: 32500, premium: 45000, business: 55000 },
         },
         {
           upTo: 7500,
-          rates: { economy: 50000, business: 85000, first: 120000 },
-          startingAt: { economy: 45000, premium: 60000, business: 85000, first: 110000 },
+          rates: { economy: 50000, business: 85000 },
+          startingAt: { economy: 45000, premium: 60000, business: 85000 },
         },
         {
           upTo: 11000,
-          rates: { economy: 65000, business: 102500, first: 140000 },
-          startingAt: { economy: 50000, premium: 85000, business: 85000, first: 130000 },
+          rates: { economy: 65000, business: 102500 },
+          startingAt: { economy: 50000, premium: 85000, business: 85000 },
         },
         {
           upTo: Infinity,
-          rates: { economy: 70000, business: 115000, first: 150000 },
-          startingAt: { economy: 70000, premium: 95000, business: 105000, first: 150000 },
+          rates: { economy: 70000, business: 115000 },
+          startingAt: { economy: 70000, premium: 95000, business: 105000 },
         },
       ],
     },
     confidence: "published",
     surcharge: "low",
+    pricesWithFeeder: true,
+    overrides: [
+      // Aeroplan prices Toronto–Taipei well below what the distance band
+      // implies; EVA sells it as a short-haul-style redemption in practice.
+      { origins: ["YYZ"], destinations: ["TPE"], noteKey: "noteAeroplanYyzTpe" },
+    ],
     transferPartnerKey: "Air Canada® Aeroplan®",
     noteKey: "noteAeroplan",
     sourceUrl: "https://www.aircanada.com/ca/en/aco/home/aeroplan/redeem/flight-rewards-chart.html",
@@ -332,12 +432,13 @@ export const PROGRAMS: Program[] = [
       kind: "zone",
       hubs: ONEWORLD_ROUTES,
       rates: {
-        asia1: { economy: 35000, premium: 50000, business: 60000, first: 80000 },
-        asia2: { economy: 37500, premium: 50000, business: 70000, first: 110000 },
+        asia1: { economy: 35000, premium: 50000, business: 60000 },
+        asia2: { economy: 37500, premium: 50000, business: 70000 },
       },
     },
     confidence: "published",
     surcharge: "low",
+    pricesWithFeeder: false,
     transferPartnerKey: "American Airlines® AAdvantage®",
     noteKey: "noteAadvantage",
     sourceUrl: "https://www.aa.com/i18n/aadvantage-program/miles/redeem/award-travel/partner-airline-award-chart.jsp",
@@ -357,14 +458,15 @@ export const PROGRAMS: Program[] = [
       hubs: CATHAY_ROUTES,
       bands: [
         { upTo: 750, rates: { economy: 7000, premium: 11000, business: 16000 } },
-        { upTo: 2750, rates: { economy: 9000, premium: 18000, business: 27000, first: 43000 } },
-        { upTo: 5000, rates: { economy: 20000, premium: 39000, business: 60000, first: 90000 } },
-        { upTo: 7500, rates: { economy: 27000, premium: 52000, business: 91000, first: 125000 } },
-        { upTo: Infinity, rates: { economy: 38000, premium: 78000, business: 119000, first: 160000 } },
+        { upTo: 2750, rates: { economy: 9000, premium: 18000, business: 27000 } },
+        { upTo: 5000, rates: { economy: 20000, premium: 39000, business: 60000 } },
+        { upTo: 7500, rates: { economy: 27000, premium: 52000, business: 91000 } },
+        { upTo: Infinity, rates: { economy: 38000, premium: 78000, business: 119000 } },
       ],
     },
     confidence: "unpublished",
     surcharge: "medium",
+    pricesWithFeeder: false,
     transferPartnerKey: "Cathay Pacific® Asia Miles®",
     noteKey: "noteAsiaMiles",
     sourceUrl: "https://flights.cathaypacific.com/en_CA/redeem-flights/flight-award-chart.html",
@@ -378,6 +480,7 @@ export const PROGRAMS: Program[] = [
     pricing: AVIOS_PRICING,
     confidence: "unquotable",
     surcharge: "medium",
+    pricesWithFeeder: false,
     transferPartnerKey: "British Airways® Avios",
     noteKey: "noteBaAvios",
     sourceUrl: "https://www.britishairways.com/content/the-british-airways-club",
@@ -391,6 +494,18 @@ export const PROGRAMS: Program[] = [
     pricing: AVIOS_PRICING,
     confidence: "unquotable",
     surcharge: "medium",
+    pricesWithFeeder: false,
+    overrides: [
+      // Qatar's own metal has no published chart, but these four city pairs
+      // are known fixed rates on QR-operated flights via Doha.
+      {
+        origins: ["YYZ", "YUL"],
+        destinations: ["SGN", "HAN", "BKK"],
+        hub: "DOH",
+        rates: { economy: 47500, business: 95000 },
+        noteKey: "noteQatarDohFixed",
+      },
+    ],
     // No Canadian card transfers to Qatar directly, but Avios are poolable,
     // so the route in is via British Airways.
     transferPartnerKey: null,
@@ -415,6 +530,7 @@ export const PROGRAMS: Program[] = [
     },
     confidence: "unquotable",
     surcharge: "high",
+    pricesWithFeeder: false,
     transferPartnerKey: "Air France KLM® Flying Blue®",
     noteKey: "noteFlyingBlue",
     sourceUrl: "https://www.flyingblue.com/en/spend-miles/flight-awards",
@@ -444,6 +560,8 @@ export type RoutingOption = {
   carriers: Carrier[];
   /** The number is a published floor on a dynamic fare, not a fixed rate. */
   startingAt: boolean;
+  /** The itinerary opens with an Air Canada domestic hop to reach a gateway. */
+  needsFeeder: boolean;
   /** True for the option this program would price cheapest. */
   isBest: boolean;
 };
@@ -454,38 +572,62 @@ export type Quote = {
   points: number | null;
   /** The headline number is a floor on a dynamic fare, not a fixed rate. */
   startingAt: boolean;
+  /** Highlighted note that applies only to this origin/destination pair. */
+  routeNoteKey?: string;
   /** Every routing this program can fly, cheapest first. */
   options: RoutingOption[];
 };
 
-/** Build every routing a program offers and price each one. `price` turns a
- *  list of segment distances into a points total, which is where the models
- *  diverge: one adds the distances up and prices that once, another ignores
- *  distance entirely.
+/** The cabin being priced. Set for the duration of one quoteRoute call so the
+ *  override lookup inside routingOptions can read it without threading an
+ *  extra parameter through every pricing model. */
+let currentCabin: Cabin = "business";
+
+/** Build every routing a program can actually fly, and price each one.
  *
- *  A nonstop is only offered when the destination is itself one of the
- *  program's hubs. No airline flies Canada→Vietnam nonstop, and quoting that
- *  fictional segment would understate the fare on any distance-priced chart. */
+ *  A routing only exists when both halves are real: the inbound carrier must
+ *  reach the hub from Canada, and the onward carrier must serve both the hub
+ *  and the destination. That single check is what keeps Qatar out of Da Nang
+ *  and Asiana out of Toronto.
+ *
+ *  `price` turns a list of segment distances into a points total, which is
+ *  where the models diverge: one adds the distances up and prices that once,
+ *  another ignores distance entirely. */
 function routingOptions(
   origin: Airport,
   destination: Airport,
   hubs: HubRoute[],
-  price: (segmentMiles: number[]) => Priced
+  price: (segmentMiles: number[]) => Priced,
+  pricesWithFeeder: boolean,
+  overrides: RouteOverride[] = []
 ): RoutingOption[] {
   const options: RoutingOption[] = [];
 
-  for (const { hub: hubCode, carrier: carrierCode } of hubs) {
-    const hub = AIRPORTS[hubCode];
-    const carrier = CARRIERS[carrierCode];
-    if (!hub || !carrier || hub.code === origin.code) continue;
+  for (const route of hubs) {
+    const hub = AIRPORTS[route.hub];
+    const inbound = CARRIERS[route.inbound];
+    const onward = CARRIERS[route.onward];
+    if (!hub || !inbound || !onward) continue;
+    if (hub.code === origin.code) continue;
 
-    // Where this carrier's own metal can pick you up. From anywhere else the
-    // journey really begins with an Air Canada hop, and that distance counts.
+    // The inbound carrier has to reach the hub from Canada at all.
+    if (!inbound.network.includes(hub.code) || inbound.gateways.length === 0) continue;
+
+    // Onward only matters when the hub is not itself the destination.
+    const nonstopToHub = hub.code === destination.code;
+    if (!nonstopToHub) {
+      if (!onward.network.includes(hub.code)) continue;
+      if (!onward.network.includes(destination.code)) continue;
+    }
+
     const stops: Airport[] = [origin];
     const carriers: Carrier[] = [];
 
-    if (!carrier.gateways.includes(origin.code)) {
-      const gateway = carrier.gateways
+    // Where this carrier's own metal can pick you up. From anywhere else the
+    // journey really begins with an Air Canada hop, and that distance counts.
+    const needsFeeder = !inbound.gateways.includes(origin.code);
+    if (needsFeeder) {
+      const gateway = inbound.gateways
         .map((code) => AIRPORTS[code])
         .filter(Boolean)
         .sort(
@@ -493,23 +635,45 @@ function routingOptions(
             greatCircleMiles(origin, a) + greatCircleMiles(a, hub) -
             (greatCircleMiles(origin, b) + greatCircleMiles(b, hub))
         )[0];
-      if (!gateway) continue;
+      if (!gateway || gateway.code === origin.code) continue;
       stops.push(gateway);
       carriers.push(FEEDER);
     }
 
-    // When the destination is the hub itself, the carrier flies it nonstop.
-    if (hub.code !== destination.code) stops.push(hub);
+    if (carriers.at(-1)?.code !== inbound.code) carriers.push(inbound);
+    if (!nonstopToHub) {
+      stops.push(hub);
+      if (onward.code !== inbound.code) carriers.push(onward);
+    }
     stops.push(destination);
-    carriers.push(carrier);
 
     const legs = stops.slice(1).map((to, i) => greatCircleMiles(stops[i], to));
     const priced = price(legs);
+
+    // A named real-world rate beats whatever the chart says.
+    const override = overrides.find(
+      (o) =>
+        o.rates &&
+        o.origins.includes(origin.code) &&
+        o.destinations.includes(destination.code) &&
+        (o.hub === undefined || o.hub === hub.code)
+    );
+    let points = override?.rates ? override.rates[currentCabin] ?? null : priced.points;
+    let startingAt = override?.rates ? false : priced.startingAt;
+
+    // Outside Aeroplan, a domestic feeder means the published figure no longer
+    // describes what you would actually be charged.
+    if (needsFeeder && !pricesWithFeeder) {
+      points = null;
+      startingAt = false;
+    }
+
     options.push({
       routing: stops.map((a) => a.code),
       miles: legs.reduce((sum, m) => sum + m, 0),
-      points: priced.points,
-      startingAt: priced.startingAt,
+      points,
+      startingAt,
+      needsFeeder,
       carriers,
       isBest: false,
     });
@@ -524,14 +688,28 @@ function routingOptions(
     return a.points === b.points ? a.miles - b.miles : a.points - b.points;
   });
 
-  if (options.length > 0 && options[0].points !== null) options[0].isBest = true;
-  return options;
+  // Two hub routes can produce the same string of airports — Air France to
+  // Saigon and Air France handing over to Vietnam Airlines, for instance. Keep
+  // whichever survived the sort first; it is the cheaper or simpler of the two.
+  const seen = new Set<string>();
+  const unique = options.filter((o) => {
+    const key = o.routing.join("-");
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  if (unique.length > 0 && unique[0].points !== null) unique[0].isBest = true;
+  return unique;
 }
 
 /** Price one route in one cabin across every program. Sorted cheapest first,
  *  with the programs that cannot be quoted pushed to the bottom. */
 export function quoteRoute(origin: Airport, destination: Airport, cabin: Cabin): Quote[] {
+  currentCabin = cabin;
+
   const quotes: Quote[] = PROGRAMS.map((program) => {
+    const { pricesWithFeeder, overrides } = program;
     let options: RoutingOption[];
 
     switch (program.pricing.kind) {
@@ -539,33 +717,45 @@ export function quoteRoute(origin: Airport, destination: Airport, cabin: Cabin):
         // The region table sets the price, so every routing costs the same.
         const region = destination.aaRegion ?? "asia2";
         const points = program.pricing.rates[region][cabin] ?? null;
-        options = routingOptions(origin, destination, program.pricing.hubs, () => ({
-          points,
-          startingAt: false,
-        }));
+        options = routingOptions(
+          origin, destination, program.pricing.hubs,
+          () => ({ points, startingAt: false }),
+          pricesWithFeeder, overrides
+        );
         break;
       }
 
       case "distance-total": {
         const { bands } = program.pricing;
-        options = routingOptions(origin, destination, program.pricing.hubs, (legs) =>
-          bandRate(bands, legs.reduce((sum, m) => sum + m, 0), cabin)
+        options = routingOptions(
+          origin, destination, program.pricing.hubs,
+          (legs) => bandRate(bands, legs.reduce((sum, m) => sum + m, 0), cabin),
+          pricesWithFeeder, overrides
         );
         break;
       }
 
       case "unquotable":
-        options = routingOptions(origin, destination, program.pricing.hubs, () => ({
-          points: null,
-          startingAt: false,
-        }));
+        options = routingOptions(
+          origin, destination, program.pricing.hubs,
+          () => ({ points: null, startingAt: false }),
+          pricesWithFeeder, overrides
+        );
         break;
     }
+
+    const note = overrides?.find(
+      (o) =>
+        o.noteKey &&
+        o.origins.includes(origin.code) &&
+        o.destinations.includes(destination.code)
+    );
 
     return {
       program,
       points: options[0]?.points ?? null,
       startingAt: options[0]?.startingAt ?? false,
+      routeNoteKey: note?.noteKey,
       options,
     };
   });

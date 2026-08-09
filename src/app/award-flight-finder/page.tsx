@@ -10,7 +10,7 @@ const seo = t("seo");
 export const metadata: Metadata = pageMetadata({
   title: seo("awardChartsTitle"),
   description: seo("awardChartsDescription"),
-  path: "/award-charts",
+  path: "/award-flight-finder",
 });
 
 // Same reasoning as /calculator: with no data fetching Next would hand the CDN

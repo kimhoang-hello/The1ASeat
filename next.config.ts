@@ -26,6 +26,13 @@ const nextConfig: NextConfig = {
         destination: "/blog",
         permanent: true,
       },
+      // The award tool shipped at /award-charts before it was named. It was in
+      // the sitemap under that path, so the old URL has to keep resolving.
+      {
+        source: "/award-charts",
+        destination: "/award-flight-finder",
+        permanent: true,
+      },
     ];
   },
 };
