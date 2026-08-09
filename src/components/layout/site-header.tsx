@@ -4,7 +4,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { List, X, CaretDown } from "@phosphor-icons/react";
+import { List, X, CaretDown, PaperPlaneTilt } from "@phosphor-icons/react";
 import { t } from "@/lib/t";
 
 type BlogLink = { href: string; type: string; label: string };
@@ -194,9 +194,10 @@ export function SiteHeader() {
         <div className="hidden items-center gap-4 lg:flex">
           <Link
             href="/#newsletter"
-            className="cursor-pointer rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
+            className="flex cursor-pointer items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
           >
             {nav("newsletter")}
+            <PaperPlaneTilt size={16} weight="bold" />
           </Link>
         </div>
 
@@ -269,9 +270,10 @@ export function SiteHeader() {
             <Link
               href="/#newsletter"
               onClick={() => setOpen(false)}
-              className="ml-auto cursor-pointer rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+              className="ml-auto flex cursor-pointer items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
             >
               {nav("newsletter")}
+              <PaperPlaneTilt size={16} weight="bold" />
             </Link>
           </div>
         </div>

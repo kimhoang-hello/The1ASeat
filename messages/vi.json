@@ -7,7 +7,7 @@
     "creditCards": "Thẻ tín dụng",
     "blog": "Blog",
     "pointsTools": "Công cụ điểm thưởng",
-    "calculator": "Công cụ tính điểm",
+    "calculator": "Points Calculator",
     "transferBonuses": "Transfer Bonus",
     "transferPartners": "Transfer Partners",
     "about": "Giới thiệu",
@@ -55,7 +55,7 @@
   },
   "calculator": {
     "eyebrow": "CÔNG CỤ",
-    "title": "Tính Giá Trị Điểm Thưởng",
+    "title": "Points Calculator",
     "subtitle": "Ước tính giá trị quy đổi point/mile của bạn cho một vé award cụ thể.",
     "programLabel": "Chương trình điểm thưởng (tuỳ chọn)",
     "programPlaceholder": "-- Chọn chương trình --",
