@@ -39,6 +39,8 @@ interface PostSkeleton {
     publishedAt: EntryFieldTypes.Date;
     minutesRead: EntryFieldTypes.Integer;
     author: EntryFieldTypes.Symbol;
+    seoTitleVi?: EntryFieldTypes.Symbol;
+    seoDescriptionVi?: EntryFieldTypes.Text;
   };
 }
 
@@ -99,8 +101,11 @@ function toPost(entry: Entry<PostSkeleton, undefined>): BlogPost {
     coverPhoto: f.coverPhoto ? assetUrl(f.coverPhoto) || undefined : undefined,
     videoUrl: f.videoUrl,
     publishedAt: f.publishedAt,
+    updatedAt: entry.sys.updatedAt,
     minutesRead: f.minutesRead,
     author: f.author,
+    seoTitle: f.seoTitleVi,
+    seoDescription: f.seoDescriptionVi,
   };
 }
 

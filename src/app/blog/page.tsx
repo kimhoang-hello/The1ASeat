@@ -1,17 +1,22 @@
 import Link from "next/link";
-import Image from "next/image";
 import type { Metadata } from "next";
 import { getPosts } from "@/lib/content";
-import { formatDate } from "@/lib/format-date";
 import { PageHeader } from "@/components/layout/page-header";
-import { MediaPlaceholder, type PlaceholderIcon } from "@/components/ui/media-placeholder";
-import { getYouTubeThumbnailUrl } from "@/lib/video-embed";
+import { PostCard } from "@/components/blog/post-card";
+import { JsonLd } from "@/components/seo/json-ld";
+import { CategoryLinks } from "@/components/blog/category-links";
+import { getCategories } from "@/lib/blog-categories";
 import { t } from "@/lib/t";
+import { pageMetadata, absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
 
 const posts_t = t("posts");
-const common = t("common");
+const seo = t("seo");
 
-export const metadata: Metadata = { title: posts_t("title") };
+export const metadata: Metadata = pageMetadata({
+  title: seo("blogTitle"),
+  description: seo("blogDescription"),
+  path: "/blog",
+});
 
 // Content comes from Contentful; without this the page is fully static and
 // only picks up new Contentful publishes on the next code deploy.
@@ -32,14 +37,44 @@ export default async function BlogPage({
 
   const activeTab = type === "post" || type === "video" ? type : "all";
   const posts = allPosts.filter((post) => activeTab === "all" || post.type === activeTab);
+  const categories = getCategories(allPosts);
+
+  // The ?type= views are filtered slices of this same list and all canonicalise
+  // back to /blog, so the ItemList only ever describes the unfiltered archive.
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      breadcrumbJsonLd([{ name: seo("breadcrumbBlog"), path: "/blog" }]),
+      {
+        "@type": "CollectionPage",
+        "@id": `${absoluteUrl("/blog")}#collection`,
+        name: seo("blogTitle"),
+        description: seo("blogDescription"),
+        url: absoluteUrl("/blog"),
+        inLanguage: "vi-VN",
+        isPartOf: { "@id": `${absoluteUrl("/")}/#website` },
+        mainEntity: {
+          "@type": "ItemList",
+          numberOfItems: allPosts.length,
+          itemListElement: allPosts.map((post, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            url: absoluteUrl(`/blog/${post.slug}`),
+            name: post.title,
+          })),
+        },
+      },
+    ],
+  };
 
   return (
     <>
+      <JsonLd data={jsonLd} />
       <PageHeader eyebrow={posts_t("eyebrow")} title={posts_t("title")} />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
-          <div className="mb-8 flex gap-2">
+          <div className="mb-6 flex gap-2">
             {TABS.map((tab) => (
               <Link
                 key={tab.value}
@@ -55,54 +90,12 @@ export default async function BlogPage({
             ))}
           </div>
 
+          <CategoryLinks categories={categories} className="mb-8" />
+
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {posts.map((post) => {
-              const thumbnail =
-                post.coverPhoto ?? (post.type === "video" ? getYouTubeThumbnailUrl(post.videoUrl ?? "") : null);
-              return (
-              <Link
-                key={post.slug}
-                href={`/blog/${post.slug}`}
-                className="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md"
-              >
-                {thumbnail ? (
-                  <div className="relative h-44 w-full overflow-hidden bg-primary">
-                    <Image src={thumbnail} alt={post.title} fill sizes="384px" className="object-cover" />
-                  </div>
-                ) : (
-                  <MediaPlaceholder
-                    icon={post.coverImage as PlaceholderIcon}
-                    tone="navy"
-                    className="h-44 w-full"
-                    isVideo={post.type === "video"}
-                  />
-                )}
-                <div className="flex flex-1 flex-col p-5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-primary">
-                      {post.category}
-                    </span>
-                    {post.type === "video" && (
-                      <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground/70">
-                        {posts_t("videoBadge")}
-                      </span>
-                    )}
-                  </div>
-                  <h2 className="mt-2 font-display text-base font-bold leading-snug text-foreground group-hover:text-primary">
-                    {post.title}
-                  </h2>
-                  <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{post.excerpt}</p>
-                  <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-                    <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
-                    <span aria-hidden>&middot;</span>
-                    <span>
-                      {post.minutesRead} {common("minRead")}
-                    </span>
-                  </div>
-                </div>
-              </Link>
-              );
-            })}
+            {posts.map((post) => (
+              <PostCard key={post.slug} post={post} />
+            ))}
           </div>
         </div>
       </section>

@@ -2,12 +2,18 @@ import type { Metadata } from "next";
 import { getAuthor } from "@/lib/content";
 import { AuthorPhoto } from "@/components/ui/author-photo";
 import { boldOccurrences } from "@/lib/bold-occurrences";
+import { JsonLd } from "@/components/seo/json-ld";
 import { t } from "@/lib/t";
+import { pageMetadata, absoluteUrl } from "@/lib/seo";
 
 const author = t("author");
-const nav = t("nav");
+const seo = t("seo");
 
-export const metadata: Metadata = { title: nav("about") };
+export const metadata: Metadata = pageMetadata({
+  title: seo("aboutTitle"),
+  description: seo("aboutDescription"),
+  path: "/about",
+});
 
 // Content comes from Contentful; without this the page is fully static and
 // only picks up new Contentful publishes on the next code deploy.
@@ -17,8 +23,31 @@ export default async function AboutPage() {
   const site = t("site");
   const authorProfile = await getAuthor();
 
+  // ProfilePage + Person gives the author an entity Google can tie every
+  // BlogPosting's `author` back to, which is what E-E-A-T signals hang off for
+  // a finance-adjacent site.
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    "@id": `${absoluteUrl("/about")}#profile`,
+    url: absoluteUrl("/about"),
+    inLanguage: "vi-VN",
+    isPartOf: { "@id": `${absoluteUrl("/")}/#website` },
+    mainEntity: {
+      "@type": "Person",
+      "@id": `${absoluteUrl("/about")}#person`,
+      name: authorProfile.name,
+      description: authorProfile.bio.split("\n\n")[0],
+      url: absoluteUrl("/about"),
+      ...(authorProfile.photo && { image: authorProfile.photo }),
+      sameAs: ["https://youtube.com/@hoangleca"],
+      worksFor: { "@id": `${absoluteUrl("/")}/#organization` },
+    },
+  };
+
   return (
     <section className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
+      <JsonLd data={jsonLd} />
       <p className="text-xs font-semibold tracking-wide text-primary">{author("eyebrow")}</p>
       <h1 className="mt-1 font-display text-3xl font-extrabold text-foreground sm:text-4xl">
         {author("title", { name: authorProfile.name })}

@@ -24,6 +24,29 @@ camelCase) để khớp với code trong `src/lib/content/contentful.ts`. Sau kh
 | publishedAt   | Date & time                              |
 | minutesRead   | Integer                                 |
 | author        | Short text                              |
+| seoTitleVi    | Short text (tuỳ chọn, tối đa 70 ký tự)  |
+| seoDescriptionVi | Long text (tuỳ chọn, tối đa 170 ký tự)|
+
+### `seoTitleVi` và `seoDescriptionVi` — dùng khi nào?
+
+Hai field này **không hiển thị trên trang**. Chúng chỉ thay đổi dòng tiêu đề
+xanh và dòng mô tả xám mà Google hiện trong kết quả tìm kiếm.
+
+- Để **trống** thì Google dùng `titleVi` và `excerptVi` như trước — không cần
+  làm gì cả.
+- Điền vào khi tiêu đề hiển thị không phải là thứ người Việt gõ vào Google.
+  Đây chính là trường hợp của các bài **video**: tiêu đề là tiêu đề YouTube
+  tiếng Anh (ví dụ *"I Flew Japan Airlines' NEW A350 1000 Business Class"*),
+  nên gần như không ai tìm ra bài đó bằng tiếng Việt. Điền `seoTitleVi` là
+  *"Review Business Class Japan Airlines A350-1000: JFK đi Tokyo"* thì trang
+  vẫn hiện tiêu đề tiếng Anh cho người xem, nhưng Google lại xếp hạng theo
+  cụm từ tiếng Việt.
+
+Mẹo viết:
+
+- `seoTitleVi`: dưới 70 ký tự, đặt từ khoá quan trọng nhất lên đầu.
+- `seoDescriptionVi`: 120–170 ký tự, viết như một lời mời đọc, có nhắc lại
+  từ khoá chính một cách tự nhiên.
 
 ## `creditCardOffer`
 

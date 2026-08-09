@@ -11,8 +11,14 @@ export interface BlogPost {
   coverPhoto?: string;
   videoUrl?: string;
   publishedAt: string;
+  /** Contentful's sys.updatedAt, used for dateModified in JSON-LD. */
+  updatedAt?: string;
   minutesRead: number;
   author: string;
+  /** Optional search-result title override; falls back to `title`. */
+  seoTitle?: string;
+  /** Optional meta-description override; falls back to `excerpt`. */
+  seoDescription?: string;
 }
 
 export type CardCountry = "US" | "CA";

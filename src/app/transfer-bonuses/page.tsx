@@ -4,10 +4,16 @@ import { getTransferBonuses } from "@/lib/content";
 import { formatDate } from "@/lib/format-date";
 import { PageHeader } from "@/components/layout/page-header";
 import { t } from "@/lib/t";
+import { pageMetadata } from "@/lib/seo";
 
 const bonuses_t = t("bonuses");
+const seo = t("seo");
 
-export const metadata: Metadata = { title: bonuses_t("title") };
+export const metadata: Metadata = pageMetadata({
+  title: seo("transferBonusesTitle"),
+  description: seo("transferBonusesDescription"),
+  path: "/transfer-bonuses",
+});
 
 // Content comes from Contentful; without this the page is fully static and
 // only picks up new Contentful publishes on the next code deploy.

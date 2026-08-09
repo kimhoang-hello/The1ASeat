@@ -121,5 +121,32 @@
     "eyebrow": "404",
     "title": "Không tìm thấy trang này",
     "description": "Trang bạn tìm không tồn tại hoặc đã được di chuyển."
+  },
+  "seo": {
+    "homeTitle": "Miles & Points cho người Việt",
+    "homeDescription": "Hướng dẫn tiếng Việt về cách tích và đổi điểm thẻ tín dụng ở Canada: welcome offer đang cao, transfer bonus, review hạng thương gia và khách sạn đổi điểm.",
+    "creditCardsTitle": "Thẻ tín dụng tích điểm du lịch tại Canada",
+    "creditCardsDescription": "Đánh giá bằng tiếng Việt các thẻ tín dụng Canada tích điểm du lịch: welcome offer đang có, phí thường niên, quyền lợi chính và điểm đổi được sang đối tác nào.",
+    "blogTitle": "Blog Miles & Points: kiến thức, review chuyến bay & khách sạn",
+    "blogDescription": "Bài viết và video tiếng Việt về Miles & Points: bắt đầu tích điểm từ đâu, review hạng thương gia và hạng nhất, khách sạn đổi điểm ở châu Á và châu Âu.",
+    "calculatorTitle": "Công cụ tính giá trị điểm thưởng",
+    "calculatorDescription": "Nhập số point/mile, giá vé tiền mặt và thuế phí để biết mỗi điểm của bạn đáng bao nhiêu cent, kèm mức tham chiếu theo từng chương trình điểm thưởng.",
+    "transferBonusesTitle": "Transfer Bonus đang diễn ra",
+    "transferBonusesDescription": "Danh sách transfer bonus còn hiệu lực sang các đối tác hàng không và khách sạn, kèm tỷ lệ thưởng và ngày hết hạn — cập nhật thường xuyên.",
+    "transferPartnersTitle": "Transfer Partners: tỷ lệ chuyển điểm Amex® và RBC®",
+    "transferPartnersDescription": "Bảng so sánh tỷ lệ transfer điểm từ Amex® Membership Rewards® (Canada) và RBC® Avion® sang từng hãng hàng không và chuỗi khách sạn đối tác.",
+    "aboutTitle": "Giới thiệu về Ghế 1A",
+    "aboutDescription": "Ghế 1A là blog và kênh YouTube tiếng Việt về Miles & Points — chia sẻ cách tích điểm thẻ tín dụng và đổi điểm lấy vé hạng thương gia, hạng nhất.",
+    "contactTitle": "Liên hệ",
+    "contactDescription": "Gửi câu hỏi, góp ý về bài viết hoặc đề nghị hợp tác cho Ghế 1A. Bạn cũng có thể email trực tiếp tới info@ghe1a.com.",
+    "privacyTitle": "Chính sách bảo mật",
+    "privacyDescription": "Ghế 1A thu thập và sử dụng dữ liệu của bạn như thế nào: email đăng ký bản tin, form liên hệ, bình luận và cookie phân tích lưu lượng.",
+    "termsTitle": "Điều khoản sử dụng",
+    "termsDescription": "Điều khoản sử dụng website Ghế 1A: nội dung chỉ mang tính tham khảo, không phải lời khuyên tài chính.",
+    "categoryDescription": "Tổng hợp {count} bài viết và video tiếng Việt của Ghế 1A về {category} — kinh nghiệm Miles & Points và trải nghiệm thực tế.",
+    "categoriesLabel": "Chuyên mục",
+    "relatedTitle": "Bài viết liên quan",
+    "breadcrumbBlog": "Blog",
+    "breadcrumbCreditCards": "Thẻ tín dụng"
   }
 }

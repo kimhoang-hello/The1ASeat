@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { t } from "@/lib/t";
+import { pageMetadata } from "@/lib/seo";
 import { TRANSFER_PARTNERS, type TransferLeg } from "@/lib/transfer-partners";
 
 const tp = t("transferPartners");
+const seo = t("seo");
 
-export const metadata: Metadata = { title: tp("title") };
+export const metadata: Metadata = pageMetadata({
+  title: seo("transferPartnersTitle"),
+  description: seo("transferPartnersDescription"),
+  path: "/transfer-partners",
+});
 export const revalidate = 60;
 
 const BADGE_STYLES = {

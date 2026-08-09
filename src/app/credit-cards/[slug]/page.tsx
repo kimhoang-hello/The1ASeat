@@ -4,11 +4,14 @@ import Link from "next/link";
 import { getCreditCardOfferBySlug, getCreditCardOffers } from "@/lib/content";
 import { CardImage } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
-import { SITE_URL } from "@/lib/subscriber-email";
+import { JsonLd } from "@/components/seo/json-ld";
+import { creditCardJsonLd } from "@/lib/credit-card-schema";
 import { t as translate } from "@/lib/t";
+import { pageMetadata, breadcrumbJsonLd } from "@/lib/seo";
 
 const offers = translate("offers");
 const common = translate("common");
+const seo = translate("seo");
 
 // Content comes from Contentful; without this the page is fully static and
 // only picks up new Contentful publishes on the next code deploy.
@@ -27,20 +30,13 @@ export async function generateMetadata({
   const { slug } = await params;
   const offer = await getCreditCardOfferBySlug(slug);
   if (!offer) return {};
-  return {
+
+  return pageMetadata({
     title: offer.name,
     description: offer.headline,
-    alternates: { canonical: `${SITE_URL}/credit-cards/${offer.slug}` },
-    openGraph: {
-      title: offer.name,
-      description: offer.headline,
-      url: `${SITE_URL}/credit-cards/${offer.slug}`,
-      ...(offer.cardImage && { images: [{ url: offer.cardImage }] }),
-    },
-    twitter: {
-      card: offer.cardImage ? "summary_large_image" : "summary",
-    },
-  };
+    path: `/credit-cards/${offer.slug}`,
+    image: offer.cardImage || undefined,
+  });
 }
 
 export default async function CreditCardDetailPage({
@@ -53,8 +49,20 @@ export default async function CreditCardDetailPage({
 
   if (!offer) notFound();
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      breadcrumbJsonLd([
+        { name: seo("breadcrumbCreditCards"), path: "/credit-cards" },
+        { name: offer.name, path: `/credit-cards/${offer.slug}` },
+      ]),
+      creditCardJsonLd(offer),
+    ],
+  };
+
   return (
     <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+      <JsonLd data={jsonLd} />
       <Link href="/credit-cards" className="text-sm font-semibold text-primary hover:underline">
         &larr; {offers("viewAll")}
       </Link>
@@ -93,7 +101,7 @@ export default async function CreditCardDetailPage({
       <a
         href={offer.applyUrl}
         target="_blank"
-        rel="noopener noreferrer"
+        rel="sponsored nofollow noopener noreferrer"
         className="mt-8 inline-block cursor-pointer rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
       >
         {offers("viewOffer")} &rarr;

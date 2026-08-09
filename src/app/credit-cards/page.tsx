@@ -5,11 +5,19 @@ import { getCreditCardOffers } from "@/lib/content";
 import { PageHeader } from "@/components/layout/page-header";
 import { CardImage } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
+import { JsonLd } from "@/components/seo/json-ld";
+import { creditCardJsonLd } from "@/lib/credit-card-schema";
 import { t } from "@/lib/t";
+import { pageMetadata, absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
 
 const offers_t = t("offers");
+const seo = t("seo");
 
-export const metadata: Metadata = { title: offers_t("title") };
+export const metadata: Metadata = pageMetadata({
+  title: seo("creditCardsTitle"),
+  description: seo("creditCardsDescription"),
+  path: "/credit-cards",
+});
 
 // Content comes from Contentful; without this the page is fully static and
 // only picks up new Contentful publishes on the next code deploy.
@@ -18,8 +26,35 @@ export const revalidate = 60;
 export default async function CreditCardsPage() {
   const offers = await getCreditCardOffers();
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      breadcrumbJsonLd([{ name: seo("breadcrumbCreditCards"), path: "/credit-cards" }]),
+      {
+        "@type": "CollectionPage",
+        "@id": `${absoluteUrl("/credit-cards")}#collection`,
+        name: seo("creditCardsTitle"),
+        description: seo("creditCardsDescription"),
+        url: absoluteUrl("/credit-cards"),
+        inLanguage: "vi-VN",
+        isPartOf: { "@id": `${absoluteUrl("/")}/#website` },
+        mainEntity: {
+          "@type": "ItemList",
+          numberOfItems: offers.length,
+          itemListElement: offers.map((offer, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            url: absoluteUrl(`/credit-cards/${offer.slug}`),
+            item: creditCardJsonLd(offer),
+          })),
+        },
+      },
+    ],
+  };
+
   return (
     <>
+      <JsonLd data={jsonLd} />
       <PageHeader eyebrow={offers_t("eyebrow")} title={offers_t("title")} />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
@@ -75,7 +110,7 @@ export default async function CreditCardsPage() {
                   <a
                     href={offer.applyUrl}
                     target="_blank"
-                    rel="noopener noreferrer"
+                    rel="sponsored nofollow noopener noreferrer"
                     className="cursor-pointer text-sm font-bold text-primary underline decoration-2 underline-offset-4 hover:text-primary-hover"
                   >
                     {offers_t("viewOffer")} &rarr;

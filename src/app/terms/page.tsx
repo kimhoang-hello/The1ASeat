@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
 import { t } from "@/lib/t";
+import { pageMetadata } from "@/lib/seo";
 
 const footer = t("footer");
+const seo = t("seo");
 
-export const metadata: Metadata = { title: footer("terms") };
+export const metadata: Metadata = pageMetadata({
+  title: seo("termsTitle"),
+  description: seo("termsDescription"),
+  path: "/terms",
+});
 
 export default function TermsPage() {
   return (

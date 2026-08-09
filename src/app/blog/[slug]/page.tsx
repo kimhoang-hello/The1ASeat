@@ -3,16 +3,21 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { getPostBySlug, getPosts } from "@/lib/content";
+import type { BlogPost } from "@/lib/content";
 import { formatDate } from "@/lib/format-date";
 import { MediaPlaceholder, type PlaceholderIcon } from "@/components/ui/media-placeholder";
-import { getVideoEmbedUrl, getYouTubeThumbnailUrl } from "@/lib/video-embed";
+import { getVideoEmbedUrl, getYouTubeThumbnailUrl, getYouTubeWatchUrl } from "@/lib/video-embed";
 import { CommentSection } from "@/components/blog/comment-section";
+import { PostCard } from "@/components/blog/post-card";
 import { JsonLd } from "@/components/seo/json-ld";
+import { categoryPath, getRelatedPosts, lastModified, slugifyVi } from "@/lib/blog-categories";
 import { SITE_URL } from "@/lib/subscriber-email";
 import { t } from "@/lib/t";
+import { pageMetadata, absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
 
 const common = t("common");
 const posts_t = t("posts");
+const seo = t("seo");
 
 // Content comes from Contentful; without this the page is fully static and
 // only picks up new Contentful publishes on the next code deploy.
@@ -21,6 +26,13 @@ export const revalidate = 60;
 export async function generateStaticParams() {
   const posts = await getPosts();
   return posts.map((post) => ({ slug: post.slug }));
+}
+
+// post.coverImage is a MediaPlaceholder icon name (e.g. "airplane"), not a real
+// image — the actual photo lives in post.coverPhoto (text posts) or is derived
+// from the YouTube video (video posts).
+function postImage(post: BlogPost): string | null {
+  return post.coverPhoto || getYouTubeThumbnailUrl(post.videoUrl ?? "");
 }
 
 export async function generateMetadata({
@@ -32,49 +44,81 @@ export async function generateMetadata({
   const post = await getPostBySlug(slug);
   if (!post) return {};
 
-  // post.coverImage is a MediaPlaceholder icon name (e.g. "airplane"), not a
-  // real image — the actual photo lives in post.coverPhoto (text posts) or
-  // is derived from the YouTube video (video posts).
-  const ogImage = post.coverPhoto || getYouTubeThumbnailUrl(post.videoUrl ?? "");
-
-  return {
-    title: post.title,
-    description: post.excerpt,
-    alternates: { canonical: `${SITE_URL}/blog/${post.slug}` },
-    openGraph: {
-      type: "article",
-      title: post.title,
-      description: post.excerpt,
-      url: `${SITE_URL}/blog/${post.slug}`,
+  // 24 of the posts are YouTube uploads whose displayed title is the original
+  // English one. seoTitle/seoDescription let a Vietnamese search title be set
+  // in Contentful without changing what readers see on the page.
+  return pageMetadata({
+    title: post.seoTitle || post.title,
+    description: post.seoDescription || post.excerpt,
+    path: `/blog/${post.slug}`,
+    image: postImage(post) ?? undefined,
+    article: {
       publishedTime: post.publishedAt,
-      ...(ogImage && { images: [{ url: ogImage }] }),
+      modifiedTime: lastModified(post),
+      section: post.category,
     },
-    twitter: {
-      card: ogImage ? "summary_large_image" : "summary",
-    },
-  };
+  });
 }
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const post = await getPostBySlug(slug);
+  const allPosts = await getPosts();
+  const post = allPosts.find((item) => item.slug === slug);
 
   if (!post) notFound();
 
   const embedUrl = post.type === "video" ? getVideoEmbedUrl(post.videoUrl ?? "") : null;
-  const image = post.coverPhoto || getYouTubeThumbnailUrl(post.videoUrl ?? "");
+  const image = postImage(post);
+  const url = absoluteUrl(`/blog/${post.slug}`);
+  const related = getRelatedPosts(allPosts, post);
+  const categoryHref = categoryPath(slugifyVi(post.category));
+
+  // Video posts get a nested VideoObject so they can qualify for video results
+  // as well as article results — without it these pages are just an iframe and
+  // a paragraph as far as a crawler is concerned.
+  const video =
+    post.type === "video" && post.videoUrl
+      ? {
+          "@type": "VideoObject",
+          name: post.title,
+          description: post.excerpt,
+          uploadDate: post.publishedAt,
+          ...(image && { thumbnailUrl: [image] }),
+          ...(embedUrl && { embedUrl }),
+          ...(getYouTubeWatchUrl(post.videoUrl) && { contentUrl: getYouTubeWatchUrl(post.videoUrl) }),
+        }
+      : null;
 
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    headline: post.title,
-    description: post.excerpt,
-    datePublished: post.publishedAt,
-    inLanguage: "vi-VN",
-    mainEntityOfPage: `${SITE_URL}/blog/${post.slug}`,
-    author: { "@type": "Person", name: post.author },
-    publisher: { "@id": `${SITE_URL}/#organization` },
-    ...(image && { image }),
+    "@graph": [
+      breadcrumbJsonLd([
+        { name: seo("breadcrumbBlog"), path: "/blog" },
+        { name: post.category, path: categoryHref },
+        { name: post.title, path: `/blog/${post.slug}` },
+      ]),
+      {
+        "@type": "BlogPosting",
+        "@id": `${url}#article`,
+        headline: post.title,
+        description: post.excerpt,
+        datePublished: post.publishedAt,
+        // publishedAt is set by hand in Contentful and can post-date the last
+        // edit; a dateModified earlier than datePublished is invalid markup.
+        // Compared as Dates because the two fields arrive in different ISO
+        // shapes ("...T00:00-04:00" vs "...T16:55:43.826Z").
+        dateModified: lastModified(post),
+        inLanguage: "vi-VN",
+        articleSection: post.category,
+        mainEntityOfPage: url,
+        url,
+        author: { "@type": "Person", name: post.author, url: absoluteUrl("/about") },
+        publisher: { "@id": `${SITE_URL}/#organization` },
+        isPartOf: { "@id": `${SITE_URL}/#website` },
+        ...(image && { image: [image] }),
+        ...(video && { video }),
+      },
+    ],
   };
 
   return (
@@ -108,9 +152,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       )}
 
       <div className="mt-6 flex items-center gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-primary">
+        <Link
+          href={categoryHref}
+          className="text-xs font-semibold uppercase tracking-wide text-primary hover:underline"
+        >
           {post.category}
-        </span>
+        </Link>
         {post.type === "video" && (
           <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground/70">
             {posts_t("videoBadge")}
@@ -133,11 +180,18 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         dangerouslySetInnerHTML={{ __html: post.body }}
       />
 
-      <CommentSection
-        pageId={post.slug}
-        url={`${SITE_URL}/blog/${post.slug}`}
-        title={post.title}
-      />
+      {related.length > 0 && (
+        <section className="mt-12 border-t border-border pt-8">
+          <h2 className="font-display text-xl font-bold text-foreground">{seo("relatedTitle")}</h2>
+          <div className="mt-5 grid gap-5 sm:grid-cols-2">
+            {related.map((item) => (
+              <PostCard key={item.slug} post={item} headingLevel="h3" />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <CommentSection pageId={post.slug} url={url} title={post.title} />
     </article>
   );
 }

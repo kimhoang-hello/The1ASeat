@@ -2,10 +2,16 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { PointsCalculator } from "@/components/calculator/points-calculator";
 import { t } from "@/lib/t";
+import { pageMetadata } from "@/lib/seo";
 
 const calc = t("calculator");
+const seo = t("seo");
 
-export const metadata: Metadata = { title: calc("title") };
+export const metadata: Metadata = pageMetadata({
+  title: seo("calculatorTitle"),
+  description: seo("calculatorDescription"),
+  path: "/calculator",
+});
 
 export default function CalculatorPage() {
   return (
