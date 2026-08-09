@@ -13,6 +13,12 @@ export const metadata: Metadata = pageMetadata({
   path: "/calculator",
 });
 
+// No data fetching here, so Next would ship `s-maxage=31536000` and let
+// Hostinger's CDN hold this HTML for a year — and a deploy does not purge that
+// CDN. That is how these pages kept serving their pre-SEO <head> after the SEO
+// deploy. An explicit window caps the CDN TTL so a deploy lands on its own.
+export const revalidate = 3600;
+
 export default function CalculatorPage() {
   return (
     <>
