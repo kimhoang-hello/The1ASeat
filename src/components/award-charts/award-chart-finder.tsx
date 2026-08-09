@@ -101,17 +101,23 @@ function OptionRow({ option, currency }: { option: RoutingOption; currency: stri
         option.isBest ? "border-primary/40 bg-primary/5" : "border-transparent bg-secondary/60"
       }`}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={option.carrier.logo}
-        alt={option.carrier.name}
-        title={option.carrier.name}
-        className="h-7 w-14 shrink-0 rounded border border-border bg-white object-contain p-0.5"
-      />
+      <div className="flex shrink-0 flex-col gap-0.5">
+        {option.carriers.map((carrier) => (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            key={carrier.code}
+            src={carrier.logo}
+            alt={carrier.name}
+            title={carrier.name}
+            className="h-6 w-14 rounded border border-border bg-white object-contain p-0.5"
+          />
+        ))}
+      </div>
       <div className="min-w-0 flex-1">
         <p className="font-mono text-sm text-foreground">{option.routing.join(" → ")}</p>
         <p className="text-[11px] text-muted-foreground">
-          {option.carrier.name} · {t("routingMiles", { miles: formatPoints(option.miles) })}
+          {option.carriers.map((c) => c.name).join(" + ")} ·{" "}
+          {t("routingMiles", { miles: formatPoints(option.miles) })}
         </p>
       </div>
       <div className="shrink-0 text-right">
@@ -212,10 +218,13 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
           <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
             {t("optionsHeading", { count: options.length })}
           </p>
+          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground/80">
+            {t("optionsCaveat")}
+          </p>
           <ul className="mt-2 grid gap-1.5">
             {options.map((option) => (
               <OptionRow
-                key={option.routing.join("-") + option.carrier.code}
+                key={option.routing.join("-")}
                 option={option}
                 currency={program.currency}
               />
@@ -234,6 +243,14 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
       </div>
 
       <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{t(program.noteKey)}</p>
+      <a
+        href={program.sourceUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-2 inline-block text-xs font-medium text-primary underline underline-offset-2"
+      >
+        {t("sourceLink")}
+      </a>
     </li>
   );
 }

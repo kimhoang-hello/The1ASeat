@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "audit:awards": "tsx scripts/audit-award-charts.mts"
   },
   "dependencies": {
     "@contentful/rich-text-html-renderer": "^17.2.3",

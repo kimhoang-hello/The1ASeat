@@ -31,6 +31,8 @@
 //    pre-May-2026 chart at 115,000. These are the Cathay-operated rates,
 //    which is right for Canada→Vietnam because Cathay flies both legs via
 //    Hong Kong; its partner-operated chart runs a few thousand higher.
+//    australianfrequentflyer.com.au independently confirms every cell used
+//    here including Premium Economy at 52,000 and 78,000.
 //
 //  - British Airways Club and Qatar Privilege Club — NOT QUOTABLE. An earlier
 //    version of this file published a distance chart topping out at 68,000
@@ -126,18 +128,39 @@ export const DESTINATIONS = pick(
 /** The airline actually flying the Asian portion of a routing. Shown so a
  *  reader can tell YYZ–TPE–SGN on EVA apart from YYZ–ICN–SGN on Asiana
  *  instead of seeing two anonymous airport strings. */
-export type Carrier = { code: string; name: string; logo: string };
+export type Carrier = {
+  code: string;
+  name: string;
+  logo: string;
+  /** Canadian airports this carrier flies its own long-haul from. Anywhere
+   *  else needs an Air Canada feeder first, which adds real distance — and on
+   *  a chart banded by distance flown, ignoring it understates the price. */
+  gateways: string[];
+};
 
+// Gateway sets, not timetables. Seasonal frequencies move around; what is
+// stable is which Canadian cities each carrier serves at all. EVA, Asiana and
+// Cathay reach both Toronto and Vancouver; ANA, JAL and Air China are
+// Vancouver-only; Qatar flies the eastern cities; the two European carriers
+// spread widest.
 const CARRIERS: Record<string, Carrier> = {
-  BR: { code: "BR", name: "EVA Air®", logo: "/images/logos/partners/eva-air.svg" },
-  OZ: { code: "OZ", name: "Asiana Airlines®", logo: "/images/logos/partners/asiana.svg" },
-  NH: { code: "NH", name: "ANA®", logo: "/images/logos/partners/ana.svg" },
-  CA: { code: "CA", name: "Air China®", logo: "/images/logos/partners/air-china.svg" },
-  CX: { code: "CX", name: "Cathay Pacific®", logo: "/images/logos/partners/cathay-pacific.png" },
-  QR: { code: "QR", name: "Qatar Airways®", logo: "/images/logos/partners/qatar-airways.svg" },
-  JL: { code: "JL", name: "Japan Airlines®", logo: "/images/logos/partners/japan-airlines.svg" },
-  AF: { code: "AF", name: "Air France®", logo: "/images/logos/partners/air-france.png" },
-  KL: { code: "KL", name: "KLM®", logo: "/images/logos/partners/klm.svg" },
+  BR: { code: "BR", name: "EVA Air®", logo: "/images/logos/partners/eva-air.svg", gateways: ["YYZ", "YVR"] },
+  OZ: { code: "OZ", name: "Asiana Airlines®", logo: "/images/logos/partners/asiana.svg", gateways: ["YYZ", "YVR"] },
+  NH: { code: "NH", name: "ANA®", logo: "/images/logos/partners/ana.svg", gateways: ["YVR"] },
+  CA: { code: "CA", name: "Air China®", logo: "/images/logos/partners/air-china.svg", gateways: ["YVR"] },
+  CX: { code: "CX", name: "Cathay Pacific®", logo: "/images/logos/partners/cathay-pacific.png", gateways: ["YYZ", "YVR"] },
+  QR: { code: "QR", name: "Qatar Airways®", logo: "/images/logos/partners/qatar-airways.svg", gateways: ["YYZ", "YUL"] },
+  JL: { code: "JL", name: "Japan Airlines®", logo: "/images/logos/partners/japan-airlines.svg", gateways: ["YVR"] },
+  AF: { code: "AF", name: "Air France®", logo: "/images/logos/partners/air-france.png", gateways: ["YYZ", "YVR", "YUL"] },
+  KL: { code: "KL", name: "KLM®", logo: "/images/logos/partners/klm.svg", gateways: ["YYZ", "YVR", "YYC"] },
+};
+
+/** The feeder to a gateway is always Air Canada in practice. */
+const FEEDER: Carrier = {
+  code: "AC",
+  name: "Air Canada®",
+  logo: "/images/logos/partners/air-canada.svg",
+  gateways: [],
 };
 
 /** A connecting hub plus the partner that flies it. */
@@ -350,8 +373,11 @@ export const PROGRAMS: Program[] = [
     pricing: {
       kind: "unquotable",
       hubs: SKYTEAM_ROUTES,
-      labelKey: "dynamicPrice",
-      hintKey: "dynamicPriceHint",
+      // Same wording as the two Avios programmes: from the reader's side the
+      // outcome is identical — no number to compare before transferring. The
+      // reason it cannot be quoted differs, and the note explains that.
+      labelKey: "noPublicChart",
+      hintKey: "noPublicChartHint",
     },
     confidence: "unquotable",
     surcharge: "high",
@@ -373,7 +399,9 @@ export type RoutingOption = {
   routing: string[];
   miles: number;
   points: number | null;
-  carrier: Carrier;
+  /** Carriers flying this itinerary in order — normally just the partner,
+   *  plus an Air Canada feeder when the origin has no long-haul service. */
+  carriers: Carrier[];
   /** True for the option this program would price cheapest. */
   isBest: boolean;
 };
@@ -402,29 +430,41 @@ function routingOptions(
 ): RoutingOption[] {
   const options: RoutingOption[] = [];
 
-  for (const { hub: code, carrier } of hubs) {
-    const hub = AIRPORTS[code];
-    if (!hub || hub.code === origin.code) continue;
+  for (const { hub: hubCode, carrier: carrierCode } of hubs) {
+    const hub = AIRPORTS[hubCode];
+    const carrier = CARRIERS[carrierCode];
+    if (!hub || !carrier || hub.code === origin.code) continue;
 
-    // Destination is the hub itself: that carrier flies it nonstop.
-    if (hub.code === destination.code) {
-      const miles = greatCircleMiles(origin, destination);
-      options.push({
-        routing: [origin.code, destination.code],
-        miles,
-        points: price([miles]),
-        carrier: CARRIERS[carrier],
-        isBest: false,
-      });
-      continue;
+    // Where this carrier's own metal can pick you up. From anywhere else the
+    // journey really begins with an Air Canada hop, and that distance counts.
+    const stops: Airport[] = [origin];
+    const carriers: Carrier[] = [];
+
+    if (!carrier.gateways.includes(origin.code)) {
+      const gateway = carrier.gateways
+        .map((code) => AIRPORTS[code])
+        .filter(Boolean)
+        .sort(
+          (a, b) =>
+            greatCircleMiles(origin, a) + greatCircleMiles(a, hub) -
+            (greatCircleMiles(origin, b) + greatCircleMiles(b, hub))
+        )[0];
+      if (!gateway) continue;
+      stops.push(gateway);
+      carriers.push(FEEDER);
     }
 
-    const legs = [greatCircleMiles(origin, hub), greatCircleMiles(hub, destination)];
+    // When the destination is the hub itself, the carrier flies it nonstop.
+    if (hub.code !== destination.code) stops.push(hub);
+    stops.push(destination);
+    carriers.push(carrier);
+
+    const legs = stops.slice(1).map((to, i) => greatCircleMiles(stops[i], to));
     options.push({
-      routing: [origin.code, hub.code, destination.code],
-      miles: legs[0] + legs[1],
+      routing: stops.map((a) => a.code),
+      miles: legs.reduce((sum, m) => sum + m, 0),
       points: price(legs),
-      carrier: CARRIERS[carrier],
+      carriers,
       isBest: false,
     });
   }

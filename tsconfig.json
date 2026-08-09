@@ -30,5 +30,8 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  // scripts/ runs standalone under tsx, outside the bundler's module
+  // resolution, so its explicit ".ts" import specifiers fail Next's type
+  // check even though the script itself is fine.
+  "exclude": ["node_modules", "scripts"]
 }
