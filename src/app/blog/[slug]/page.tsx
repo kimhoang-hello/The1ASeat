@@ -7,6 +7,7 @@ import { formatDate } from "@/lib/format-date";
 import { MediaPlaceholder, type PlaceholderIcon } from "@/components/ui/media-placeholder";
 import { getVideoEmbedUrl, getYouTubeThumbnailUrl } from "@/lib/video-embed";
 import { CommentSection } from "@/components/blog/comment-section";
+import { JsonLd } from "@/components/seo/json-ld";
 import { SITE_URL } from "@/lib/subscriber-email";
 import { t } from "@/lib/t";
 
@@ -61,9 +62,24 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   if (!post) notFound();
 
   const embedUrl = post.type === "video" ? getVideoEmbedUrl(post.videoUrl ?? "") : null;
+  const image = post.coverPhoto || getYouTubeThumbnailUrl(post.videoUrl ?? "");
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.excerpt,
+    datePublished: post.publishedAt,
+    inLanguage: "vi-VN",
+    mainEntityOfPage: `${SITE_URL}/blog/${post.slug}`,
+    author: { "@type": "Person", name: post.author },
+    publisher: { "@id": `${SITE_URL}/#organization` },
+    ...(image && { image }),
+  };
 
   return (
     <article className="mx-auto max-w-2xl px-4 py-12 sm:px-6 lg:px-8">
+      <JsonLd data={jsonLd} />
       <Link href="/" className="text-sm font-semibold text-primary hover:underline">
         &larr; {common("backHome")}
       </Link>

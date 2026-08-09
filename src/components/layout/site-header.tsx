@@ -96,7 +96,15 @@ export function SiteHeader() {
           href="/"
           className="flex items-center gap-2 font-display text-lg font-extrabold tracking-tight text-primary"
         >
-          <Image src="/images/logo.png" alt="" width={477} height={480} className="h-9 w-9" priority />
+          <Image
+            src="/images/logo.png"
+            alt=""
+            width={477}
+            height={480}
+            sizes="36px"
+            className="h-9 w-9"
+            priority
+          />
           {site("name")}
         </Link>
 

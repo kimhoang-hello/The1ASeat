@@ -19,7 +19,14 @@ export function SiteFooter() {
             className="flex items-center gap-2 font-display text-base font-extrabold text-white"
           >
             <span className="flex h-8 w-8 items-center justify-center rounded-md bg-background">
-              <Image src="/images/logo.png" alt="" width={477} height={480} className="h-5 w-5" />
+              <Image
+                src="/images/logo.png"
+                alt=""
+                width={477}
+                height={480}
+                sizes="20px"
+                className="h-5 w-5"
+              />
             </span>
             {site("name")}
           </Link>

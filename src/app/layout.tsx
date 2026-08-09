@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { JsonLd } from "@/components/seo/json-ld";
 import { t } from "@/lib/t";
 import { SITE_URL } from "@/lib/subscriber-email";
 import "./globals.css";
@@ -38,12 +39,36 @@ export const metadata: Metadata = {
   },
 };
 
+const siteJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      name: site("name"),
+      url: SITE_URL,
+      logo: `${SITE_URL}/images/logo.png`,
+      sameAs: ["https://youtube.com/@hoangleca"],
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      name: site("name"),
+      description: site("tagline"),
+      url: SITE_URL,
+      inLanguage: "vi-VN",
+      publisher: { "@id": `${SITE_URL}/#organization` },
+    },
+  ],
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
   return (
     <html lang="vi" className={`${fontHeading.variable} ${fontBody.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col bg-background text-foreground">
+        <JsonLd data={siteJsonLd} />
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />
