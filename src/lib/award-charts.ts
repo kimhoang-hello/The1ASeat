@@ -83,12 +83,25 @@ export const DESTINATIONS: Airport[] = [
   { code: "HND", city: "Tokyo Haneda", country: "Nhật Bản", lat: 35.5494, lon: 139.7798, aaRegion: "asia1" },
 ];
 
-/** Connecting hubs used to price the per-segment Avios programs. */
+/** Connecting hubs, assigned per program by alliance. There is no nonstop
+ *  Canada→Vietnam service, so every quote is priced over one of these — which
+ *  matters, because most of these programs charge on distance actually flown. */
 const HUBS: Record<string, Airport> = {
   HKG: { code: "HKG", city: "Hong Kong", country: "Hong Kong", lat: 22.308, lon: 113.9185, aaRegion: "asia2" },
   DOH: { code: "DOH", city: "Doha", country: "Qatar", lat: 25.2731, lon: 51.6081, aaRegion: "asia2" },
-  NRT: { code: "NRT", city: "Tokyo", country: "Nhật Bản", lat: 35.772, lon: 140.3929, aaRegion: "asia1" },
+  NRT: { code: "NRT", city: "Tokyo Narita", country: "Nhật Bản", lat: 35.772, lon: 140.3929, aaRegion: "asia1" },
+  HND: { code: "HND", city: "Tokyo Haneda", country: "Nhật Bản", lat: 35.5494, lon: 139.7798, aaRegion: "asia1" },
+  ICN: { code: "ICN", city: "Seoul", country: "Hàn Quốc", lat: 37.4602, lon: 126.4407, aaRegion: "asia1" },
+  TPE: { code: "TPE", city: "Đài Bắc", country: "Đài Loan", lat: 25.0777, lon: 121.2328, aaRegion: "asia2" },
+  CDG: { code: "CDG", city: "Paris", country: "Pháp", lat: 49.0097, lon: 2.5479, aaRegion: "north-america" },
+  AMS: { code: "AMS", city: "Amsterdam", country: "Hà Lan", lat: 52.3105, lon: 4.7683, aaRegion: "north-america" },
 };
+
+/** Star Alliance connection points an Aeroplan itinerary to Vietnam actually
+ *  uses: Air Canada across the Pacific, then ANA, Asiana or EVA onward. */
+const STAR_HUBS = ["NRT", "HND", "ICN", "TPE"];
+/** oneworld: Cathay via Hong Kong, Qatar via Doha, JAL via Tokyo. */
+const ONEWORLD_HUBS = ["HKG", "DOH", "NRT"];
 
 const AIRPORTS_BY_CODE = new Map<string, Airport>(
   [...ORIGINS, ...DESTINATIONS, ...Object.values(HUBS)].map((a) => [a.code, a])
@@ -114,19 +127,21 @@ export function greatCircleMiles(a: Airport, b: Airport): number {
 type Rates = Partial<Record<Cabin, number>>;
 type DistanceBand = { upTo: number; rates: Rates };
 
+/** Every model carries its own hubs: the routing is what gets priced, and a
+ *  Star Alliance itinerary connects in different places than a oneworld one. */
 type PricingModel =
-  /** One band lookup on the direct origin→destination distance. */
-  | { kind: "distance-od"; bands: DistanceBand[] }
   /** One band lookup on the total distance actually flown, connections
    *  included — so a routing through a hub can tip you into a pricier band. */
   | { kind: "distance-total"; bands: DistanceBand[]; hubs: string[] }
-  /** Points set by a fixed origin-region → destination-region table. */
-  | { kind: "zone"; rates: Record<"asia1" | "asia2", Rates> }
+  /** Points set by a fixed origin-region → destination-region table. The
+   *  routing does not change the price, but it is still shown so the reader
+   *  knows which itinerary the quote assumes. */
+  | { kind: "zone"; rates: Record<"asia1" | "asia2", Rates>; hubs: string[] }
   /** Each flown segment is priced on its own distance, then the prices are
    *  added up — quite different from pricing the total distance once. */
   | { kind: "distance-segments"; bands: DistanceBand[]; hubs: string[] }
   /** No chart exists — price is looked up live at booking time. */
-  | { kind: "dynamic" };
+  | { kind: "dynamic"; hubs: string[] };
 
 export type Program = {
   id: string;
@@ -159,7 +174,12 @@ export const PROGRAMS: Program[] = [
     currency: "điểm Aeroplan",
     logo: "/images/logos/partners/aeroplan.jpg",
     pricing: {
-      kind: "distance-od",
+      // Aeroplan bands on the CUMULATIVE distance of the segments flown, not
+      // the direct origin→destination distance. Routing therefore moves the
+      // price: YVR→SGN via Tokyo totals ~7,600 miles and lands a band above
+      // the same trip via Hong Kong at ~7,300.
+      kind: "distance-total",
+      hubs: STAR_HUBS,
       bands: [
         { upTo: 5000, rates: { economy: 32500, premium: 45000, business: 55000, first: 90000 } },
         { upTo: 7500, rates: { economy: 50000, premium: 60000, business: 85000, first: 120000 } },
@@ -181,6 +201,7 @@ export const PROGRAMS: Program[] = [
     logo: "/images/logos/partners/american-airlines.png",
     pricing: {
       kind: "zone",
+      hubs: ONEWORLD_HUBS,
       rates: {
         asia1: { economy: 35000, premium: 50000, business: 60000, first: 80000 },
         asia2: { economy: 37500, premium: 50000, business: 70000, first: 110000 },
@@ -200,7 +221,7 @@ export const PROGRAMS: Program[] = [
     logo: "/images/logos/partners/british-airways.png",
     pricing: {
       kind: "distance-segments",
-      hubs: ["HKG", "DOH", "NRT"],
+      hubs: ONEWORLD_HUBS,
       bands: [
         { upTo: 650, rates: { economy: 4000, business: 7750 } },
         { upTo: 1150, rates: { economy: 6500, business: 13000 } },
@@ -226,7 +247,7 @@ export const PROGRAMS: Program[] = [
     logo: "/images/logos/partners/qatar-airways.svg",
     pricing: {
       kind: "distance-segments",
-      hubs: ["HKG", "DOH", "NRT"],
+      hubs: ONEWORLD_HUBS,
       bands: [
         { upTo: 650, rates: { economy: 4000, business: 7750 } },
         { upTo: 1150, rates: { economy: 6500, business: 13000 } },
@@ -280,7 +301,8 @@ export const PROGRAMS: Program[] = [
     name: "Air France KLM® Flying Blue®",
     currency: "Flying Blue miles",
     logo: "/images/logos/partners/flying-blue.jpg",
-    pricing: { kind: "dynamic" },
+    // Air France and KLM route Canada→Vietnam over their own European hubs.
+    pricing: { kind: "dynamic", hubs: ["CDG", "AMS"] },
     confidence: "dynamic",
     surcharge: "high",
     transferPartnerKey: "Air France KLM® Flying Blue®",
@@ -348,10 +370,19 @@ function bestRouting(
 
   const priced = candidates.filter((c) => c.points !== null);
   if (priced.length > 0) {
-    return priced.reduce((best, c) => (c.points! < best.points! ? c : best));
+    // Cheapest wins; on a tie, the shorter itinerary does. The tie-break also
+    // makes this usable for programs whose price ignores routing entirely —
+    // pass a constant price and it simply returns the shortest way there.
+    return priced.reduce((best, c) => {
+      if (c.points !== best.points) return c.points! < best.points! ? c : best;
+      return c.miles < best.miles ? c : best;
+    });
   }
-  // Nothing priced: still report the routing so the UI can explain the gap.
-  return (
+  // Nothing priced — the cabin has no published rate. Still report the
+  // shortest routing so the card can show what itinerary it was reasoning
+  // about while explaining the gap.
+  return candidates.reduce(
+    (best, c) => (c.miles < best.miles ? c : best),
     candidates[0] ?? {
       points: null,
       miles: greatCircleMiles(origin, destination),
@@ -364,25 +395,14 @@ function bestRouting(
  *  with the programs that publish nothing pushed to the bottom. */
 export function quoteRoute(origin: Airport, destination: Airport, cabin: Cabin): Quote[] {
   const quotes: Quote[] = PROGRAMS.map((program) => {
-    const directMiles = greatCircleMiles(origin, destination);
-
     switch (program.pricing.kind) {
-      case "distance-od":
-        return {
-          program,
-          points: bandRate(program.pricing.bands, directMiles, cabin),
-          miles: directMiles,
-          routing: [origin.code, destination.code],
-        };
-
       case "zone": {
         const region = destination.aaRegion === "asia1" ? "asia1" : "asia2";
-        return {
-          program,
-          points: program.pricing.rates[region][cabin] ?? null,
-          miles: directMiles,
-          routing: [origin.code, destination.code],
-        };
+        const points = program.pricing.rates[region][cabin] ?? null;
+        // The region table sets the price, so every routing costs the same;
+        // pick the shortest one purely so the itinerary shown is sensible.
+        const shown = bestRouting(origin, destination, program.pricing.hubs, () => 0);
+        return { program, points, miles: shown.miles, routing: shown.routing };
       }
 
       case "distance-total": {
@@ -404,8 +424,10 @@ export function quoteRoute(origin: Airport, destination: Airport, cabin: Cabin):
         return { program, ...best };
       }
 
-      case "dynamic":
-        return { program, points: null, miles: directMiles, routing: [origin.code, destination.code] };
+      case "dynamic": {
+        const shown = bestRouting(origin, destination, program.pricing.hubs, () => 0);
+        return { program, points: null, miles: shown.miles, routing: shown.routing };
+      }
     }
   });
 

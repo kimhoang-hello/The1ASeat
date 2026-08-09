@@ -169,6 +169,11 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
             {routing.length > 2 ? t("routingLabel") : t("routingDirect")}
           </p>
           <p className="mt-1 font-mono text-sm text-foreground">{routing.join(" → ")}</p>
+          {/* Distance is what sets the band on most of these charts, so it
+              belongs on the card rather than hidden in the calculation. */}
+          <p className="text-[11px] text-muted-foreground">
+            {t("routingMiles", { miles: formatPoints(quote.miles) })}
+          </p>
         </div>
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">

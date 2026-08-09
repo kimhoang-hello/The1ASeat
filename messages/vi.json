@@ -168,8 +168,8 @@
     "cheapest": "Rẻ nhất",
     "pointsUnit": "{currency} một chiều",
     "vsCheapest": "+{diff} so với rẻ nhất",
-    "routingLabel": "Tính theo hành trình",
-    "routingDirect": "Tính theo khoảng cách thẳng",
+    "routingLabel": "Hành trình dùng để tính",
+    "routingDirect": "Chặng bay thẳng",
     "dynamicPrice": "Dynamic Pricing",
     "dynamicPriceHint": "Không có chart cố định để tra trước.",
     "notPublished": "Chưa có số công bố cho hạng này",
@@ -182,8 +182,8 @@
     "surchargeHigh": "Surcharge cao",
     "transferHeading": "Chuyển điểm từ",
     "transferNone": "Không thẻ Canada nào chuyển thẳng",
-    "noteAeroplan": "Chart cố định theo khoảng cách thẳng giữa hai đầu, không đổi theo ngày bay. Aeroplan vừa tăng giá từ 1/6/2026 — business chặng 7,501–11,000 miles lên 102,500 điểm. Điểm mạnh là surcharge thấp trên phần lớn partner Star Alliance.",
-    "noteAadvantage": "Chart theo vùng, Việt Nam và Đông Nam Á nằm trong Asia Region 2. Mức này chỉ áp dụng cho chuyến do partner khai thác — vé do chính American Airlines bay thì tính giá động. Đây thường là mức business rẻ nhất đi Việt Nam.",
+    "noteAeroplan": "Aeroplan tính theo TỔNG quãng đường thực bay, cộng cả chặng nối, chứ không phải khoảng cách thẳng giữa hai đầu — nên chọn hub nào là đổi giá. Chart cố định, không đổi theo ngày bay. Aeroplan vừa tăng giá từ 1/6/2026: business chặng 7,501–11,000 miles lên 102,500 điểm. Điểm mạnh là surcharge thấp trên phần lớn partner Star Alliance.",
+    "noteAadvantage": "Chart theo vùng nên quãng đường bay không ảnh hưởng giá: Việt Nam và Đông Nam Á đều nằm trong Asia Region 2. Mức này chỉ áp dụng cho chuyến do partner khai thác — vé do chính American Airlines bay thì tính dynamic pricing. Đây thường là mức business rẻ nhất đi Việt Nam.",
     "noteBaAvios": "Avios là đơn vị điểm dùng chung của British Airways, Qatar, Iberia và Aer Lingus — tên chương trình của BA là The British Airways Club. Avios tính giá riêng từng chặng rồi cộng lại, nên nối chuyến đắt hơn hẳn bay thẳng. Vì không có chặng thẳng Canada → Việt Nam, công cụ tự chọn hub cho ra tổng rẻ nhất. British Airways đã ngừng công bố chart, số này dựng lại từ giá quan sát được.",
     "noteQatarAvios": "Privilege Club là chương trình của Qatar Airways, cũng dùng Avios và áp đúng mức partner của The British Airways Club. Không thẻ Canada nào chuyển thẳng sang Qatar — cách đi vòng là chuyển sang Avios của British Airways rồi dùng tính năng combine Avios để gộp sang Qatar. Vé do chính Qatar khai thác không theo chart này.",
     "noteAsiaMiles": "Cathay có chart cố định nhưng cố tình không đăng công khai; số dưới đây là bản hiệu lực 1/5/2026. Asia Miles tính theo tổng quãng đường thực bay chứ không phải khoảng cách thẳng, nên nối chuyến có thể đẩy bạn sang band cao hơn. Bay máy bay Cathay rẻ hơn bay partner.",
@@ -199,7 +199,8 @@
     "howStep2Body": "Aeroplan và AAdvantage công bố chart nên bạn biết trước phải cần bao nhiêu điểm và có thể tích luỹ đúng mục tiêu. Flying Blue chạy dynamic pricing nên khó canh.",
     "howStep3Title": "Kiểm tra chỗ trống trước, transfer sau",
     "howStep3Body": "Giá tốt trên chart không có nghĩa là có ghế. Tìm được chỗ award đúng ngày rồi mới chuyển điểm sang.",
-    "howStep4Title": "Bay từ Vancouver thường rẻ hơn Toronto",
-    "howStep4Body": "Với chart tính theo khoảng cách như Aeroplan, YVR → SGN rơi vào band thấp hơn YYZ → SGN. Cùng hạng business, chênh lệch lên tới 17,500 điểm mỗi chiều."
+    "howStep4Title": "Chọn hub nào cũng làm đổi giá",
+    "howStep4Body": "Aeroplan và Asia Miles tính theo tổng quãng đường thực bay, nên nối chuyến vòng xa có thể đẩy bạn lên band cao hơn. Avios còn nặng hơn: tính giá riêng từng chặng rồi cộng lại. Công cụ luôn chọn hub cho ra giá thấp nhất.",
+    "routingMiles": "{miles} miles"
   }
 }
