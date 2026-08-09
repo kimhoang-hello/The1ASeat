@@ -122,12 +122,18 @@ function OptionRow({ option, currency }: { option: RoutingOption; currency: stri
       </div>
       <div className="shrink-0 text-right">
         {option.points === null ? (
-          <span
-            className="text-sm text-muted-foreground/60"
-            title={option.needsFeeder ? t("feederNote") : undefined}
-          >
-            —
-          </span>
+          option.dynamicPrice ? (
+            // No chart ever covered this flying, so a dash would read as a
+            // missing figure rather than the answer.
+            <span className="text-xs font-medium text-muted-foreground">{t("optionDynamic")}</span>
+          ) : (
+            <span
+              className="text-sm text-muted-foreground/60"
+              title={option.needsFeeder ? t("feederNote") : undefined}
+            >
+              —
+            </span>
+          )
         ) : (
           <>
             <p className="text-sm font-bold text-foreground">
@@ -240,10 +246,17 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
         </div>
       </div>
 
-      {/* A rate that only applies to this city pair, and beats or contradicts
-          the programme's own chart — worth colour rather than a footnote. */}
+      {/* Notes that apply to this city pair only. Amber is reserved for a rate
+          that contradicts the programme's own chart; a rate that merely
+          explains itself gets a neutral box, so the colour keeps its meaning. */}
       {quote.routeNoteKey && (
-        <p className="mt-4 rounded-lg border border-[#8a5a10]/30 bg-[#fdf1d8] px-3 py-2 text-xs font-medium leading-relaxed text-[#8a5a10]">
+        <p
+          className={`mt-4 rounded-lg border px-3 py-2 text-xs font-medium leading-relaxed ${
+            quote.routeNoteTone === "highlight"
+              ? "border-[#8a5a10]/30 bg-[#fdf1d8] text-[#8a5a10]"
+              : "border-border bg-secondary text-foreground/80"
+          }`}
+        >
           {t(quote.routeNoteKey)}
         </p>
       )}

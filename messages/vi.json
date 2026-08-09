@@ -202,9 +202,10 @@
     "fromPrefix": "từ",
     "startingAtHint": "Mức khởi điểm của Air Canada và select partners, không phải giá cố định — giá thật thay đổi theo chuyến.",
     "noRouting": "Chương trình này không có hành trình hợp lệ cho chặng bạn chọn.",
-    "noteQatarDohFixed": "Chặng này là ngoại lệ: bay bằng máy bay Qatar qua Doha có mức cố định 47,500 Avios cho Economy và 95,000 Avios cho Business — số đã xác nhận thực tế, không phải suy ra từ chart.",
+    "noteQatarDohFixed": "Chuyến do chính Qatar khai thác qua Doha có mức 47,500 Avios cho Economy và 95,000 Avios cho Business. Qatar không công bố chart, nên số này lấy từ giá đặt thực tế.",
     "noteAeroplanYyzTpe": "Thực tế chặng Toronto – Đài Bắc rẻ hơn nhiều so với band khoảng cách: chỉ 50,000 điểm Aeroplan cho Economy và 85,000 điểm cho Business.",
     "feederNote": "Có chặng nội địa Air Canada nên chương trình này không tính chung một award — Ghế 1A không hiển thị số.",
-    "noRoutingShort": "Không bay tới đây"
+    "noRoutingShort": "Không bay tới đây",
+    "optionDynamic": "Dynamic Pricing"
   }
 }

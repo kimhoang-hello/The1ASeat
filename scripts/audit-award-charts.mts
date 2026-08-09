@@ -43,7 +43,7 @@ for (const p2 of PROGRAMS) for (const o of p2.overrides ?? [])
 const used = new Set([...literal, ...PROGRAMS.map(p => p.noteKey), ...PROGRAMS.flatMap(p => p.transferNoteKey ? [p.transferNoteKey] : []),
   ...PROGRAMS.flatMap(p => p.pricing.kind === "unquotable" ? [p.pricing.labelKey, p.pricing.hintKey] : []),
   ...CABINS.map(c => c.labelKey), ...[1,2,3,4].flatMap(n => [`howStep${n}Title`, `howStep${n}Body`]),
-  "eyebrow","title","subtitle","noRouting","noRoutingShort","feederNote",
+  "eyebrow","title","subtitle","noRouting","noRoutingShort","feederNote","optionDynamic",
   ...PROGRAMS.flatMap(p2 => (p2.overrides ?? []).flatMap(o => o.noteKey ? [o.noteKey] : [])),
   ...[...src.matchAll(/"(confidence[A-Z]\w+|surcharge[A-Z]\w+|transferNone)"/g)].map(m => m[1])]);
 const unused = Object.keys(ns).filter(k => !used.has(k));
@@ -88,6 +88,11 @@ for (const o of ORIGINS) for (const d of DESTINATIONS) for (const c of CABINS) {
       if (opt.miles < 100) fails.push(`${q.program.id}: implausible distance ${opt.miles}`);
       if (opt.needsFeeder && !q.program.pricesWithFeeder && opt.points !== null)
         fails.push(`${q.program.id}: priced a feeder itinerary`);
+      if (opt.dynamicPrice && opt.points !== null)
+        fails.push(`${q.program.id}: priced a dynamically-priced itinerary`);
+      const dyn = q.program.dynamicCarriers ?? [];
+      if (dyn.length && opt.carriers.every(c2 => dyn.includes(c2.code)) && !opt.dynamicPrice)
+        fails.push(`${q.program.id}: all-dynamic itinerary not flagged: ${opt.routing.join("-")}`);
     }
     const best = q.options.filter(o2 => o2.isBest);
     if (q.points !== null && best.length !== 1) fails.push(`${q.program.id}: ${best.length} best options`);

@@ -157,7 +157,11 @@ const CARRIERS: Record<string, Carrier> = {
     code: "AC",
     name: "Air Canada®",
     logo: "/images/logos/partners/air-canada.svg",
-    gateways: ["YYZ", "YVR", "YUL", "YYC", "YOW", "YEG", "YWG", "YHZ"],
+    // Transpacific departure points only. Air Canada reaches every other
+    // Canadian city as the domestic feeder, but its Asia flying leaves from
+    // Vancouver and Toronto — listing Montréal or Calgary here would invent
+    // nonstops like YUL–PVG, and listing Halifax would invent YHZ–ICN.
+    gateways: ["YVR", "YYZ"],
     network: ["BKK", "SIN", "MNL", "HKG", "ICN", "NRT", "HND", "PEK", "PVG"],
   },
   BR: {
@@ -322,8 +326,12 @@ export type RouteOverride = {
   hub?: string;
   /** Replaces the chart price for the matching routings. */
   rates?: Rates;
-  /** Highlighted note shown on the card for this route only. */
+  /** Note shown on the card for this route only. */
   noteKey?: string;
+  /** "highlight" for a rate that contradicts the programme's own chart;
+   *  "info" — the default — for one that simply explains where the number
+   *  comes from. */
+  tone?: "highlight" | "info";
 };
 
 export type Program = {
@@ -355,6 +363,12 @@ export type Program = {
   pricesWithFeeder: boolean;
   /** Real-world corrections that beat the published chart on named routes. */
   overrides?: RouteOverride[];
+  /** Carriers whose own metal this programme prices dynamically rather than
+   *  from its chart. An itinerary flown entirely by these shows no number. */
+  dynamicCarriers?: string[];
+  /** Carriers that fly Canada→destination nonstop and are bookable here, so
+   *  the option is worth showing even though no chart covers it. */
+  nonstopCarriers?: string[];
   noteKey: string;
   sourceUrl: string;
   verifiedOn: string;
@@ -413,10 +427,16 @@ export const PROGRAMS: Program[] = [
     confidence: "published",
     surcharge: "low",
     pricesWithFeeder: true,
+    // Air Canada's own metal prices dynamically off the chart's floor, so a
+    // wholly Air Canada itinerary gets no fixed number — but it is still a
+    // real way to fly the route, and often the only nonstop.
+    dynamicCarriers: ["AC"],
+    nonstopCarriers: ["AC"],
     overrides: [
       // Aeroplan prices Toronto–Taipei well below what the distance band
       // implies; EVA sells it as a short-haul-style redemption in practice.
-      { origins: ["YYZ"], destinations: ["TPE"], noteKey: "noteAeroplanYyzTpe" },
+      // This one genuinely contradicts the published chart, so it is flagged.
+      { origins: ["YYZ"], destinations: ["TPE"], noteKey: "noteAeroplanYyzTpe", tone: "highlight" },
     ],
     transferPartnerKey: "Air Canada® Aeroplan®",
     noteKey: "noteAeroplan",
@@ -496,8 +516,9 @@ export const PROGRAMS: Program[] = [
     surcharge: "medium",
     pricesWithFeeder: false,
     overrides: [
-      // Qatar's own metal has no published chart, but these four city pairs
-      // are known fixed rates on QR-operated flights via Doha.
+      // Qatar prices its own metal by route rather than by chart. These are
+      // simply what those routes cost — normal Privilege Club pricing, not a
+      // special case — confirmed from real bookings rather than derived.
       {
         origins: ["YYZ", "YUL"],
         destinations: ["SGN", "HAN", "BKK"],
@@ -562,6 +583,9 @@ export type RoutingOption = {
   startingAt: boolean;
   /** The itinerary opens with an Air Canada domestic hop to reach a gateway. */
   needsFeeder: boolean;
+  /** Flown entirely on metal this programme prices dynamically, so there is
+   *  no chart figure to show — distinct from a gap in the chart. */
+  dynamicPrice: boolean;
   /** True for the option this program would price cheapest. */
   isBest: boolean;
 };
@@ -572,8 +596,10 @@ export type Quote = {
   points: number | null;
   /** The headline number is a floor on a dynamic fare, not a fixed rate. */
   startingAt: boolean;
-  /** Highlighted note that applies only to this origin/destination pair. */
+  /** Note that applies only to this origin/destination pair, and how loudly
+   *  to say it. */
   routeNoteKey?: string;
+  routeNoteTone?: "highlight" | "info";
   /** Every routing this program can fly, cheapest first. */
   options: RoutingOption[];
 };
@@ -599,9 +625,49 @@ function routingOptions(
   hubs: HubRoute[],
   price: (segmentMiles: number[]) => Priced,
   pricesWithFeeder: boolean,
-  overrides: RouteOverride[] = []
+  overrides: RouteOverride[] = [],
+  dynamicCarriers: string[] = [],
+  nonstopCarriers: string[] = []
 ): RoutingOption[] {
   const options: RoutingOption[] = [];
+
+  // Nonstops the programme can book but no chart covers — Air Canada's own
+  // transpacific flying, in practice.
+  for (const code of nonstopCarriers) {
+    const carrier = CARRIERS[code];
+    if (!carrier || !carrier.network.includes(destination.code)) continue;
+
+    const stops: Airport[] = [origin];
+    const carriers: Carrier[] = [];
+    const needsFeeder = !carrier.gateways.includes(origin.code);
+    if (needsFeeder) {
+      const gateway = carrier.gateways
+        .map((c) => AIRPORTS[c])
+        .filter(Boolean)
+        .sort(
+          (a, b) =>
+            greatCircleMiles(origin, a) + greatCircleMiles(a, destination) -
+            (greatCircleMiles(origin, b) + greatCircleMiles(b, destination))
+        )[0];
+      if (!gateway || gateway.code === origin.code) continue;
+      stops.push(gateway);
+      carriers.push(FEEDER);
+    }
+    if (carriers.at(-1)?.code !== carrier.code) carriers.push(carrier);
+    stops.push(destination);
+
+    const legs = stops.slice(1).map((to, i) => greatCircleMiles(stops[i], to));
+    options.push({
+      routing: stops.map((a) => a.code),
+      miles: legs.reduce((sum, m) => sum + m, 0),
+      points: null,
+      startingAt: false,
+      needsFeeder,
+      dynamicPrice: true,
+      carriers,
+      isBest: false,
+    });
+  }
 
   for (const route of hubs) {
     const hub = AIRPORTS[route.hub];
@@ -668,12 +734,22 @@ function routingOptions(
       startingAt = false;
     }
 
+    // Flown entirely on metal the programme prices dynamically — the chart
+    // never applied to it. Air Canada nonstops to its own Asian hubs land here.
+    const allDynamic =
+      dynamicCarriers.length > 0 && carriers.every((c) => dynamicCarriers.includes(c.code));
+    if (allDynamic) {
+      points = null;
+      startingAt = false;
+    }
+
     options.push({
       routing: stops.map((a) => a.code),
       miles: legs.reduce((sum, m) => sum + m, 0),
       points,
       startingAt,
       needsFeeder,
+      dynamicPrice: allDynamic,
       carriers,
       isBest: false,
     });
@@ -709,7 +785,7 @@ export function quoteRoute(origin: Airport, destination: Airport, cabin: Cabin):
   currentCabin = cabin;
 
   const quotes: Quote[] = PROGRAMS.map((program) => {
-    const { pricesWithFeeder, overrides } = program;
+    const { pricesWithFeeder, overrides, dynamicCarriers, nonstopCarriers } = program;
     let options: RoutingOption[];
 
     switch (program.pricing.kind) {
@@ -720,7 +796,7 @@ export function quoteRoute(origin: Airport, destination: Airport, cabin: Cabin):
         options = routingOptions(
           origin, destination, program.pricing.hubs,
           () => ({ points, startingAt: false }),
-          pricesWithFeeder, overrides
+          pricesWithFeeder, overrides, dynamicCarriers, nonstopCarriers
         );
         break;
       }
@@ -730,7 +806,7 @@ export function quoteRoute(origin: Airport, destination: Airport, cabin: Cabin):
         options = routingOptions(
           origin, destination, program.pricing.hubs,
           (legs) => bandRate(bands, legs.reduce((sum, m) => sum + m, 0), cabin),
-          pricesWithFeeder, overrides
+          pricesWithFeeder, overrides, dynamicCarriers, nonstopCarriers
         );
         break;
       }
@@ -739,7 +815,7 @@ export function quoteRoute(origin: Airport, destination: Airport, cabin: Cabin):
         options = routingOptions(
           origin, destination, program.pricing.hubs,
           () => ({ points: null, startingAt: false }),
-          pricesWithFeeder, overrides
+          pricesWithFeeder, overrides, dynamicCarriers, nonstopCarriers
         );
         break;
     }
@@ -756,6 +832,7 @@ export function quoteRoute(origin: Airport, destination: Airport, cabin: Cabin):
       points: options[0]?.points ?? null,
       startingAt: options[0]?.startingAt ?? false,
       routeNoteKey: note?.noteKey,
+      routeNoteTone: note?.tone ?? "info",
       options,
     };
   });
