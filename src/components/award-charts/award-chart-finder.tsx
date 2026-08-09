@@ -381,13 +381,16 @@ function Finder() {
 
         <div className="mt-4">
           <span className="text-sm font-medium text-foreground/80">{t("cabinLabel")}</span>
-          <div className="mt-1.5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {/* Flex rather than a fixed column count: the grid was still set to
+              four columns after First class was removed, leaving a gap on the
+              right, and this stays correct whatever CABINS holds. */}
+          <div className="mt-1.5 flex flex-wrap gap-2">
             {CABINS.map((c) => (
               <button
                 key={c.id}
                 type="button"
                 onClick={() => update({ cabin: c.id })}
-                className={`cursor-pointer rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                className={`flex-1 basis-[calc(50%-0.25rem)] cursor-pointer rounded-lg border px-3 py-2 text-sm font-medium transition-colors sm:basis-0 ${
                   cabin === c.id
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border bg-white text-foreground/80 hover:bg-secondary"
