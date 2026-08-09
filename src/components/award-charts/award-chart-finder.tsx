@@ -15,15 +15,28 @@ import {
   type Cabin,
   type Program,
   type Quote,
+  type RoutingOption,
 } from "@/lib/award-charts";
 
 const t = translate("awardCharts");
 
+const CONFIDENCE_LABELS: Record<Program["confidence"], string> = {
+  published: "confidencePublished",
+  unpublished: "confidenceUnpublished",
+  unquotable: "confidenceUnquotable",
+};
+
 const CONFIDENCE_STYLES: Record<Program["confidence"], string> = {
   published: "bg-[#e7f2ea] text-[#1f6f43]",
   unpublished: "bg-[#fdf1d8] text-[#8a5a10]",
-  dynamic: "bg-secondary text-muted-foreground",
+  unquotable: "bg-secondary text-muted-foreground",
 };
+
+const SURCHARGE_LABELS = {
+  low: "surchargeLow",
+  medium: "surchargeMedium",
+  high: "surchargeHigh",
+} as const;
 
 const SURCHARGE_STYLES = {
   low: "text-[#1f6f43]",
@@ -49,7 +62,7 @@ function readParams(params: URLSearchParams): Selection {
 }
 
 /** The transfer legs from transfer-partners.ts for one program, so a reader
- *  can see the points they hold reach this chart without leaving the page. */
+ *  can see whether the points they hold reach this chart at all. */
 function TransferLegs({ program }: { program: Program }) {
   const row = TRANSFER_PARTNERS.find((p) => p.program === program.transferPartnerKey);
   const legs = [
@@ -58,7 +71,11 @@ function TransferLegs({ program }: { program: Program }) {
   ].filter((entry) => entry.leg !== null);
 
   if (legs.length === 0) {
-    return <p className="text-xs text-muted-foreground/70">{t("transferNone")}</p>;
+    return (
+      <p className="text-xs leading-relaxed text-muted-foreground/80">
+        {t(program.transferNoteKey ?? "transferNone")}
+      </p>
+    );
   }
 
   return (
@@ -75,10 +92,47 @@ function TransferLegs({ program }: { program: Program }) {
   );
 }
 
+/** One bookable way of flying the route: who flies it, where it stops, how far
+ *  it is and what that costs. */
+function OptionRow({ option, currency }: { option: RoutingOption; currency: string }) {
+  return (
+    <li
+      className={`flex items-center gap-3 rounded-lg border px-3 py-2 ${
+        option.isBest ? "border-primary/40 bg-primary/5" : "border-transparent bg-secondary/60"
+      }`}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={option.carrier.logo}
+        alt={option.carrier.name}
+        title={option.carrier.name}
+        className="h-7 w-14 shrink-0 rounded border border-border bg-white object-contain p-0.5"
+      />
+      <div className="min-w-0 flex-1">
+        <p className="font-mono text-sm text-foreground">{option.routing.join(" → ")}</p>
+        <p className="text-[11px] text-muted-foreground">
+          {option.carrier.name} · {t("routingMiles", { miles: formatPoints(option.miles) })}
+        </p>
+      </div>
+      <div className="shrink-0 text-right">
+        {option.points === null ? (
+          <span className="text-sm text-muted-foreground/60">—</span>
+        ) : (
+          <>
+            <p className="text-sm font-bold text-foreground">{formatPoints(option.points)}</p>
+            <p className="text-[10px] text-muted-foreground">{currency}</p>
+          </>
+        )}
+      </div>
+    </li>
+  );
+}
+
 function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null }) {
-  const { program, points, routing } = quote;
+  const { program, points, options } = quote;
   const isCheapest = points !== null && points === cheapest;
   const gap = points !== null && cheapest !== null ? points - cheapest : 0;
+  const unquotable = program.pricing.kind === "unquotable";
 
   return (
     <li
@@ -102,22 +156,10 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
                   CONFIDENCE_STYLES[program.confidence]
                 }`}
               >
-                {t(
-                  program.confidence === "published"
-                    ? "confidencePublished"
-                    : program.confidence === "unpublished"
-                      ? "confidenceUnpublished"
-                      : "confidenceDynamic"
-                )}
+                {t(CONFIDENCE_LABELS[program.confidence])}
               </span>
               <span className={`text-[11px] font-medium ${SURCHARGE_STYLES[program.surcharge]}`}>
-                {t(
-                  program.surcharge === "low"
-                    ? "surchargeLow"
-                    : program.surcharge === "medium"
-                      ? "surchargeMedium"
-                      : "surchargeHigh"
-                )}
+                {t(SURCHARGE_LABELS[program.surcharge])}
               </span>
             </div>
           </div>
@@ -125,12 +167,14 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
 
         <div className="shrink-0 text-left sm:text-right">
           {points === null ? (
-            program.confidence === "dynamic" ? (
+            unquotable && program.pricing.kind === "unquotable" ? (
               <>
                 <p className="font-display text-lg font-bold text-muted-foreground sm:text-xl">
-                  {t("dynamicPrice")}
+                  {t(program.pricing.labelKey)}
                 </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{t("dynamicPriceHint")}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {t(program.pricing.hintKey)}
+                </p>
               </>
             ) : (
               // Not a number, so it must not borrow the number's type scale —
@@ -163,25 +207,29 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 border-t border-border pt-3 sm:grid-cols-2">
-        <div>
+      {options.length > 0 && (
+        <div className="mt-4 border-t border-border pt-3">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            {routing.length > 2 ? t("routingLabel") : t("routingDirect")}
+            {t("optionsHeading", { count: options.length })}
           </p>
-          <p className="mt-1 font-mono text-sm text-foreground">{routing.join(" → ")}</p>
-          {/* Distance is what sets the band on most of these charts, so it
-              belongs on the card rather than hidden in the calculation. */}
-          <p className="text-[11px] text-muted-foreground">
-            {t("routingMiles", { miles: formatPoints(quote.miles) })}
-          </p>
+          <ul className="mt-2 grid gap-1.5">
+            {options.map((option) => (
+              <OptionRow
+                key={option.routing.join("-") + option.carrier.code}
+                option={option}
+                currency={program.currency}
+              />
+            ))}
+          </ul>
         </div>
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("transferHeading")}
-          </p>
-          <div className="mt-1">
-            <TransferLegs program={program} />
-          </div>
+      )}
+
+      <div className="mt-4 border-t border-border pt-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          {t("transferHeading")}
+        </p>
+        <div className="mt-1.5">
+          <TransferLegs program={program} />
         </div>
       </div>
 

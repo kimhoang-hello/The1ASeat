@@ -2,35 +2,52 @@
 // programs a Canadian cardholder can actually reach with Amex Membership
 // Rewards or RBC Avion (see transfer-partners.ts for the transfer legs).
 //
-// Sourcing, all verified 2026-08-09:
-//  - Aeroplan: Air Canada's June 2026 flight reward chart, cross checked
-//    against princeoftravel.com/news/aeroplan-flight-reward-chart-june-2026
-//    and awardtravelfinder.com/award-charts/aeroplan. Both agree on every
-//    band, so these numbers are solid. Air Canada's own PDF is behind an
-//    Akamai block and cannot be fetched programmatically.
-//  - AAdvantage: awardfares.com/blog/aadvantage-guide (updated 2026-08-06).
-//    Partner chart only — AA-operated metal is dynamically priced.
-//  - British Airways / Qatar Avios: awardtravelfinder.com/award-charts/
-//    british-airways. NEITHER airline publishes an official chart any more,
-//    so this is a community reconstruction of observed partner pricing.
-//    Premium Economy is absent from every source found, hence the gaps.
-//    Qatar Privilege Club prices partner awards at the same rates as The
-//    British Airways Club, which is why the two share a band table.
-//  - Asia Miles: a real fixed chart that Cathay deliberately does not publish.
-//    Its official "Flight awards charts" page carries only the upgrade,
-//    companion and partner charts. Rates below are the 1 May 2026 revision
-//    from suitesmile.com/blog/2026/05/02/cathay-pacific-asia-miles-award-charts,
-//    cross checked against mainlymiles.com/2026/04/11/cathay-pacific-adjusts-
-//    asia-miles-award-rates-from-may-2026 — the two agree on every Economy,
-//    Business and First rate and differ by 1–3k on Premium Economy, where the
-//    later suitesmile figures are used. Do NOT trust awardtravelfinder for
-//    Cathay: it still serves the pre-May-2026 chart (119,000 business on the
-//    longest band, not 115,000).
-//  - Flying Blue: fully dynamic, no chart at any price point. Confirmed by
+// Only three of the six can be quoted at all. That is the honest state of the
+// industry in 2026, and the page says so rather than inventing numbers:
+//
+//  - Aeroplan — PUBLISHED. The fixed partner chart effective 1 June 2026,
+//    agreed on every band and cabin by princeoftravel.com, upgradedpoints.com,
+//    travel-on-points.com and onemileatatime.com. Note this is the fixed chart
+//    for partner-operated flights; Air Canada's own metal and its "select
+//    partners" (United, Emirates, Etihad, flydubai) price dynamically from
+//    these numbers as a floor. Band edges are 0–5,000 / 5,001–7,500 /
+//    7,501–11,000 / 11,001+ — one widely copied article says "5,001–7,000",
+//    which is wrong. Premium Economy on the two shortest bands rests on a
+//    single source; every figure this tool actually surfaces for Canada→SEA
+//    sits in the 5,001–7,500 band or higher and is multiply sourced.
+//    Air Canada's own PDF is Akamai-blocked and cannot be fetched.
+//
+//  - AAdvantage — PUBLISHED. Partner chart, agreed by awardfares.com
+//    (updated 2026-08-06) and 10xtravel.com, which also confirms Vietnam sits
+//    in Asia Region 2 alongside China, Hong Kong, Taiwan and the rest of
+//    Southeast Asia. AA-operated metal is dynamic and excluded.
+//
+//  - Asia Miles — UNPUBLISHED but real and verifiable. Cathay withdrew its
+//    chart; its official "Flight awards charts" page now carries only the
+//    upgrade, companion and partner charts. Rates below are the 1 May 2026
+//    revision from suitesmile.com, cross checked against mainlymiles.com and
+//    milelion.com — all three agree that the 7,501+ business rate went to
+//    119,000. Do NOT trust awardtravelfinder.com here: it still serves the
+//    pre-May-2026 chart at 115,000. These are the Cathay-operated rates,
+//    which is right for Canada→Vietnam because Cathay flies both legs via
+//    Hong Kong; its partner-operated chart runs a few thousand higher.
+//
+//  - British Airways Club and Qatar Privilege Club — NOT QUOTABLE. An earlier
+//    version of this file published a distance chart topping out at 68,000
+//    Avios in business, taken from awardtravelfinder.com. That chart is stale
+//    by years. The Points Guy and 10xtravel both describe nine bands topping
+//    out at 7,001+ and roughly 154,500 Avios in business — over double. On top
+//    of that, BA devalued partner awards again on 15 Dec 2025 (~10%), prices
+//    vary by peak/off-peak date, and there is now a SEPARATE chart per
+//    operating partner plus a multi-carrier chart. No public source
+//    reconstructs all of that reliably, so this tool refuses to guess and
+//    tells the reader to price it on ba.com instead.
+//
+//  - Flying Blue — NO CHART AT ALL. Fully dynamic, confirmed by
 //    awardfares.com/blog/flying-blue-guide (updated 2026-04-09).
 //
-// When a program changes, update the rates AND the verifiedOn date so the
-// page can tell readers how stale the number they are looking at is.
+// Sources re-verified 2026-08-09. When a program changes, update the rates AND
+// its verifiedOn date so the page can show readers how fresh the number is.
 
 export type Cabin = "economy" | "premium" | "business" | "first";
 
@@ -41,9 +58,9 @@ export const CABINS: { id: Cabin; labelKey: string }[] = [
   { id: "first", labelKey: "cabinFirst" },
 ];
 
-/** Which AAdvantage region an airport sits in. Only the two Asia regions and
- *  the North America origin region matter for this tool's scope. */
-type AaRegion = "north-america" | "asia1" | "asia2";
+/** AAdvantage's two Asia regions. Only meaningful for destinations — an
+ *  origin or a European connecting hub never needs one. */
+type AaRegion = "asia1" | "asia2";
 
 export type Airport = {
   code: string;
@@ -51,64 +68,107 @@ export type Airport = {
   country: string;
   lat: number;
   lon: number;
-  aaRegion: AaRegion;
+  aaRegion?: AaRegion;
 };
 
-export const ORIGINS: Airport[] = [
-  { code: "YYZ", city: "Toronto", country: "Canada", lat: 43.6777, lon: -79.6248, aaRegion: "north-america" },
-  { code: "YVR", city: "Vancouver", country: "Canada", lat: 49.1967, lon: -123.1815, aaRegion: "north-america" },
-  { code: "YUL", city: "Montréal", country: "Canada", lat: 45.4657, lon: -73.7455, aaRegion: "north-america" },
-  { code: "YYC", city: "Calgary", country: "Canada", lat: 51.1139, lon: -114.0203, aaRegion: "north-america" },
-  { code: "YOW", city: "Ottawa", country: "Canada", lat: 45.3225, lon: -75.6692, aaRegion: "north-america" },
-  { code: "YEG", city: "Edmonton", country: "Canada", lat: 53.3097, lon: -113.5801, aaRegion: "north-america" },
-  { code: "YWG", city: "Winnipeg", country: "Canada", lat: 49.91, lon: -97.2399, aaRegion: "north-america" },
-  { code: "YHZ", city: "Halifax", country: "Canada", lat: 44.8808, lon: -63.5086, aaRegion: "north-america" },
-];
+/** One definition per airport. Several of these are both a destination a
+ *  reader can pick and a hub some program connects through, so they must not
+ *  be declared twice — the coordinates would eventually drift apart. */
+const AIRPORTS: Record<string, Airport> = {
+  // Canadian origins
+  YYZ: { code: "YYZ", city: "Toronto", country: "Canada", lat: 43.6777, lon: -79.6248 },
+  YVR: { code: "YVR", city: "Vancouver", country: "Canada", lat: 49.1967, lon: -123.1815 },
+  YUL: { code: "YUL", city: "Montréal", country: "Canada", lat: 45.4657, lon: -73.7455 },
+  YYC: { code: "YYC", city: "Calgary", country: "Canada", lat: 51.1139, lon: -114.0203 },
+  YOW: { code: "YOW", city: "Ottawa", country: "Canada", lat: 45.3225, lon: -75.6692 },
+  YEG: { code: "YEG", city: "Edmonton", country: "Canada", lat: 53.3097, lon: -113.5801 },
+  YWG: { code: "YWG", city: "Winnipeg", country: "Canada", lat: 49.91, lon: -97.2399 },
+  YHZ: { code: "YHZ", city: "Halifax", country: "Canada", lat: 44.8808, lon: -63.5086 },
 
-export const DESTINATIONS: Airport[] = [
-  { code: "SGN", city: "TP. Hồ Chí Minh", country: "Việt Nam", lat: 10.8188, lon: 106.652, aaRegion: "asia2" },
-  { code: "HAN", city: "Hà Nội", country: "Việt Nam", lat: 21.2212, lon: 105.8072, aaRegion: "asia2" },
-  { code: "DAD", city: "Đà Nẵng", country: "Việt Nam", lat: 16.0439, lon: 108.1994, aaRegion: "asia2" },
-  { code: "CXR", city: "Nha Trang", country: "Việt Nam", lat: 11.9982, lon: 109.2192, aaRegion: "asia2" },
-  { code: "PQC", city: "Phú Quốc", country: "Việt Nam", lat: 10.1698, lon: 103.9931, aaRegion: "asia2" },
-  { code: "BKK", city: "Bangkok", country: "Thái Lan", lat: 13.69, lon: 100.7501, aaRegion: "asia2" },
-  { code: "SIN", city: "Singapore", country: "Singapore", lat: 1.3644, lon: 103.9915, aaRegion: "asia2" },
-  { code: "HKG", city: "Hong Kong", country: "Hong Kong", lat: 22.308, lon: 113.9185, aaRegion: "asia2" },
-  { code: "TPE", city: "Đài Bắc", country: "Đài Loan", lat: 25.0777, lon: 121.2328, aaRegion: "asia2" },
-  { code: "KUL", city: "Kuala Lumpur", country: "Malaysia", lat: 2.7456, lon: 101.7099, aaRegion: "asia2" },
-  { code: "MNL", city: "Manila", country: "Philippines", lat: 14.5086, lon: 121.0194, aaRegion: "asia2" },
-  { code: "PNH", city: "Phnom Penh", country: "Campuchia", lat: 11.5466, lon: 104.8441, aaRegion: "asia2" },
-  { code: "ICN", city: "Seoul", country: "Hàn Quốc", lat: 37.4602, lon: 126.4407, aaRegion: "asia1" },
-  { code: "NRT", city: "Tokyo Narita", country: "Nhật Bản", lat: 35.772, lon: 140.3929, aaRegion: "asia1" },
-  { code: "HND", city: "Tokyo Haneda", country: "Nhật Bản", lat: 35.5494, lon: 139.7798, aaRegion: "asia1" },
-];
+  // Vietnam and Southeast Asia. Nha Trang (CXR) and Phú Quốc (PQC) are
+  // deliberately absent: no oneworld or Star Alliance carrier serves them, and
+  // Vietnam Airlines is SkyTeam, so none of these programs can ticket them
+  // without a domestic add-on they do not sell. Quoting them would price an
+  // itinerary nobody can book.
+  SGN: { code: "SGN", city: "TP. Hồ Chí Minh", country: "Việt Nam", lat: 10.8188, lon: 106.652, aaRegion: "asia2" },
+  HAN: { code: "HAN", city: "Hà Nội", country: "Việt Nam", lat: 21.2212, lon: 105.8072, aaRegion: "asia2" },
+  DAD: { code: "DAD", city: "Đà Nẵng", country: "Việt Nam", lat: 16.0439, lon: 108.1994, aaRegion: "asia2" },
+  BKK: { code: "BKK", city: "Bangkok", country: "Thái Lan", lat: 13.69, lon: 100.7501, aaRegion: "asia2" },
+  SIN: { code: "SIN", city: "Singapore", country: "Singapore", lat: 1.3644, lon: 103.9915, aaRegion: "asia2" },
+  KUL: { code: "KUL", city: "Kuala Lumpur", country: "Malaysia", lat: 2.7456, lon: 101.7099, aaRegion: "asia2" },
+  MNL: { code: "MNL", city: "Manila", country: "Philippines", lat: 14.5086, lon: 121.0194, aaRegion: "asia2" },
+  PNH: { code: "PNH", city: "Phnom Penh", country: "Campuchia", lat: 11.5466, lon: 104.8441, aaRegion: "asia2" },
 
-/** Connecting hubs, assigned per program by alliance. There is no nonstop
- *  Canada→Vietnam service, so every quote is priced over one of these — which
- *  matters, because most of these programs charge on distance actually flown. */
-const HUBS: Record<string, Airport> = {
+  // Asian gateways — pickable as destinations and used as connecting hubs.
   HKG: { code: "HKG", city: "Hong Kong", country: "Hong Kong", lat: 22.308, lon: 113.9185, aaRegion: "asia2" },
-  DOH: { code: "DOH", city: "Doha", country: "Qatar", lat: 25.2731, lon: 51.6081, aaRegion: "asia2" },
+  TPE: { code: "TPE", city: "Đài Bắc", country: "Đài Loan", lat: 25.0777, lon: 121.2328, aaRegion: "asia2" },
+  ICN: { code: "ICN", city: "Seoul", country: "Hàn Quốc", lat: 37.4602, lon: 126.4407, aaRegion: "asia1" },
   NRT: { code: "NRT", city: "Tokyo Narita", country: "Nhật Bản", lat: 35.772, lon: 140.3929, aaRegion: "asia1" },
   HND: { code: "HND", city: "Tokyo Haneda", country: "Nhật Bản", lat: 35.5494, lon: 139.7798, aaRegion: "asia1" },
-  ICN: { code: "ICN", city: "Seoul", country: "Hàn Quốc", lat: 37.4602, lon: 126.4407, aaRegion: "asia1" },
-  TPE: { code: "TPE", city: "Đài Bắc", country: "Đài Loan", lat: 25.0777, lon: 121.2328, aaRegion: "asia2" },
-  CDG: { code: "CDG", city: "Paris", country: "Pháp", lat: 49.0097, lon: 2.5479, aaRegion: "north-america" },
-  AMS: { code: "AMS", city: "Amsterdam", country: "Hà Lan", lat: 52.3105, lon: 4.7683, aaRegion: "north-america" },
+  PEK: { code: "PEK", city: "Bắc Kinh", country: "Trung Quốc", lat: 40.0799, lon: 116.6031, aaRegion: "asia2" },
+
+  // European hubs — connection points only, never selectable.
+  DOH: { code: "DOH", city: "Doha", country: "Qatar", lat: 25.2731, lon: 51.6081 },
+  CDG: { code: "CDG", city: "Paris", country: "Pháp", lat: 49.0097, lon: 2.5479 },
+  AMS: { code: "AMS", city: "Amsterdam", country: "Hà Lan", lat: 52.3105, lon: 4.7683 },
 };
 
-/** Star Alliance connection points an Aeroplan itinerary to Vietnam actually
- *  uses: Air Canada across the Pacific, then ANA, Asiana or EVA onward. */
-const STAR_HUBS = ["NRT", "HND", "ICN", "TPE"];
-/** oneworld: Cathay via Hong Kong, Qatar via Doha, JAL via Tokyo. */
-const ONEWORLD_HUBS = ["HKG", "DOH", "NRT"];
+const pick = (...codes: string[]): Airport[] => codes.map((c) => AIRPORTS[c]);
 
-const AIRPORTS_BY_CODE = new Map<string, Airport>(
-  [...ORIGINS, ...DESTINATIONS, ...Object.values(HUBS)].map((a) => [a.code, a])
+export const ORIGINS = pick("YYZ", "YVR", "YUL", "YYC", "YOW", "YEG", "YWG", "YHZ");
+
+export const DESTINATIONS = pick(
+  "SGN", "HAN", "DAD",
+  "BKK", "SIN", "KUL", "MNL", "PNH",
+  "HKG", "TPE", "ICN", "NRT", "HND"
 );
 
+/** The airline actually flying the Asian portion of a routing. Shown so a
+ *  reader can tell YYZ–TPE–SGN on EVA apart from YYZ–ICN–SGN on Asiana
+ *  instead of seeing two anonymous airport strings. */
+export type Carrier = { code: string; name: string; logo: string };
+
+const CARRIERS: Record<string, Carrier> = {
+  BR: { code: "BR", name: "EVA Air®", logo: "/images/logos/partners/eva-air.svg" },
+  OZ: { code: "OZ", name: "Asiana Airlines®", logo: "/images/logos/partners/asiana.svg" },
+  NH: { code: "NH", name: "ANA®", logo: "/images/logos/partners/ana.svg" },
+  CA: { code: "CA", name: "Air China®", logo: "/images/logos/partners/air-china.svg" },
+  CX: { code: "CX", name: "Cathay Pacific®", logo: "/images/logos/partners/cathay-pacific.png" },
+  QR: { code: "QR", name: "Qatar Airways®", logo: "/images/logos/partners/qatar-airways.svg" },
+  JL: { code: "JL", name: "Japan Airlines®", logo: "/images/logos/partners/japan-airlines.svg" },
+  AF: { code: "AF", name: "Air France®", logo: "/images/logos/partners/air-france.png" },
+  KL: { code: "KL", name: "KLM®", logo: "/images/logos/partners/klm.svg" },
+};
+
+/** A connecting hub plus the partner that flies it. */
+type HubRoute = { hub: string; carrier: string };
+
+/** Star Alliance options for Aeroplan. EVA and Asiana fly Canada nonstop and
+ *  onward to Vietnam themselves; ANA only serves Vancouver, and Air China
+ *  routes over Beijing. */
+const STAR_ROUTES: HubRoute[] = [
+  { hub: "TPE", carrier: "BR" },
+  { hub: "ICN", carrier: "OZ" },
+  { hub: "NRT", carrier: "NH" },
+  { hub: "HND", carrier: "NH" },
+  { hub: "PEK", carrier: "CA" },
+];
+/** oneworld: Cathay over Hong Kong, Qatar over Doha, JAL over Tokyo. */
+const ONEWORLD_ROUTES: HubRoute[] = [
+  { hub: "HKG", carrier: "CX" },
+  { hub: "DOH", carrier: "QR" },
+  { hub: "NRT", carrier: "JL" },
+];
+/** Cathay flies both legs of its own itineraries via Hong Kong. */
+const CATHAY_ROUTES: HubRoute[] = [{ hub: "HKG", carrier: "CX" }];
+/** SkyTeam, over Air France and KLM's own European hubs. */
+const SKYTEAM_ROUTES: HubRoute[] = [
+  { hub: "CDG", carrier: "AF" },
+  { hub: "AMS", carrier: "KL" },
+];
+
 export function airportByCode(code: string): Airport | undefined {
-  return AIRPORTS_BY_CODE.get(code);
+  return AIRPORTS[code];
 }
 
 /** Great-circle distance in statute miles — the unit every one of these
@@ -132,16 +192,15 @@ type DistanceBand = { upTo: number; rates: Rates };
 type PricingModel =
   /** One band lookup on the total distance actually flown, connections
    *  included — so a routing through a hub can tip you into a pricier band. */
-  | { kind: "distance-total"; bands: DistanceBand[]; hubs: string[] }
+  | { kind: "distance-total"; bands: DistanceBand[]; hubs: HubRoute[] }
   /** Points set by a fixed origin-region → destination-region table. The
    *  routing does not change the price, but it is still shown so the reader
    *  knows which itinerary the quote assumes. */
-  | { kind: "zone"; rates: Record<"asia1" | "asia2", Rates>; hubs: string[] }
-  /** Each flown segment is priced on its own distance, then the prices are
-   *  added up — quite different from pricing the total distance once. */
-  | { kind: "distance-segments"; bands: DistanceBand[]; hubs: string[] }
-  /** No chart exists — price is looked up live at booking time. */
-  | { kind: "dynamic"; hubs: string[] };
+  | { kind: "zone"; rates: Record<AaRegion, Rates>; hubs: HubRoute[] }
+  /** No number can be quoted ahead of time. `labelKey` distinguishes a program
+   *  with no chart at all from one whose chart exists but cannot be pinned
+   *  down — they are different problems and deserve different wording. */
+  | { kind: "unquotable"; hubs: HubRoute[]; labelKey: string; hintKey: string };
 
 export type Program = {
   id: string;
@@ -153,33 +212,46 @@ export type Program = {
   logo: string;
   pricing: PricingModel;
   /** How much the number can be relied on, surfaced in the UI.
-   *  published  — the airline prints this chart itself.
-   *  unpublished — a real fixed chart the airline declines to publish;
-   *                reconstructed from reporting, so verify before transferring.
-   *  dynamic    — no chart exists at all. */
-  confidence: "published" | "unpublished" | "dynamic";
+   *  published   — the airline prints this chart itself.
+   *  unpublished — a real fixed chart the airline declines to publish,
+   *                reconstructed from agreeing reports.
+   *  unquotable  — no number can be shown; see the note for why. */
+  confidence: "published" | "unpublished" | "unquotable";
   /** Rough cash surcharge on top of the points, for this kind of route. */
   surcharge: "low" | "medium" | "high";
   /** Matches TRANSFER_PARTNERS[].program so the two datasets stay in step. */
   transferPartnerKey: string | null;
+  /** Overrides the transfer cell when the route to this program is
+   *  indirect rather than simply absent. */
+  transferNoteKey?: string;
   noteKey: string;
   sourceUrl: string;
   verifiedOn: string;
 };
 
+/** British Airways and Qatar share this: Avios, oneworld hubs, and the same
+ *  reason for being unquotable. */
+const AVIOS_PRICING = {
+  kind: "unquotable",
+  hubs: ONEWORLD_ROUTES,
+  labelKey: "noPublicChart",
+  hintKey: "noPublicChartHint",
+} as const;
+
 export const PROGRAMS: Program[] = [
   {
     id: "aeroplan",
     name: "Air Canada® Aeroplan®",
-    currency: "điểm Aeroplan",
+    currency: "Aeroplan",
     logo: "/images/logos/partners/aeroplan.jpg",
     pricing: {
       // Aeroplan bands on the CUMULATIVE distance of the segments flown, not
-      // the direct origin→destination distance. Routing therefore moves the
-      // price: YVR→SGN via Tokyo totals ~7,600 miles and lands a band above
-      // the same trip via Hong Kong at ~7,300.
+      // the direct origin→destination distance, capped by a routing rule of no
+      // more than double the nonstop distance. Routing therefore moves the
+      // price: YVR→SGN via Seoul totals ~7,300 miles and lands a band below
+      // the same trip via Tokyo at ~7,600.
       kind: "distance-total",
-      hubs: STAR_HUBS,
+      hubs: STAR_ROUTES,
       bands: [
         { upTo: 5000, rates: { economy: 32500, premium: 45000, business: 55000, first: 90000 } },
         { upTo: 7500, rates: { economy: 50000, premium: 60000, business: 85000, first: 120000 } },
@@ -201,7 +273,7 @@ export const PROGRAMS: Program[] = [
     logo: "/images/logos/partners/american-airlines.png",
     pricing: {
       kind: "zone",
-      hubs: ONEWORLD_HUBS,
+      hubs: ONEWORLD_ROUTES,
       rates: {
         asia1: { economy: 35000, premium: 50000, business: 60000, first: 80000 },
         asia2: { economy: 37500, premium: 50000, business: 70000, first: 110000 },
@@ -215,72 +287,17 @@ export const PROGRAMS: Program[] = [
     verifiedOn: "2026-08-09",
   },
   {
-    id: "ba-avios",
-    name: "British Airways® Club",
-    currency: "Avios",
-    logo: "/images/logos/partners/british-airways.png",
-    pricing: {
-      kind: "distance-segments",
-      hubs: ONEWORLD_HUBS,
-      bands: [
-        { upTo: 650, rates: { economy: 4000, business: 7750 } },
-        { upTo: 1150, rates: { economy: 6500, business: 13000 } },
-        { upTo: 2000, rates: { economy: 8500, business: 17000, first: 25500 } },
-        { upTo: 3000, rates: { economy: 10000, business: 22000, first: 34000 } },
-        { upTo: 4000, rates: { economy: 13000, business: 29500, first: 44000 } },
-        { upTo: 5500, rates: { economy: 16250, business: 47750, first: 68000 } },
-        { upTo: 6500, rates: { economy: 21750, business: 56000, first: 85000 } },
-        { upTo: Infinity, rates: { economy: 32500, business: 68000, first: 102000 } },
-      ],
-    },
-    confidence: "unpublished",
-    surcharge: "medium",
-    transferPartnerKey: "British Airways® Avios",
-    noteKey: "noteBaAvios",
-    sourceUrl: "https://awardtravelfinder.com/award-charts/british-airways",
-    verifiedOn: "2026-08-09",
-  },
-  {
-    id: "qatar-avios",
-    name: "Qatar Airways® Privilege Club",
-    currency: "Avios",
-    logo: "/images/logos/partners/qatar-airways.svg",
-    pricing: {
-      kind: "distance-segments",
-      hubs: ONEWORLD_HUBS,
-      bands: [
-        { upTo: 650, rates: { economy: 4000, business: 7750 } },
-        { upTo: 1150, rates: { economy: 6500, business: 13000 } },
-        { upTo: 2000, rates: { economy: 8500, business: 17000, first: 25500 } },
-        { upTo: 3000, rates: { economy: 10000, business: 22000, first: 34000 } },
-        { upTo: 4000, rates: { economy: 13000, business: 29500, first: 44000 } },
-        { upTo: 5500, rates: { economy: 16250, business: 47750, first: 68000 } },
-        { upTo: 6500, rates: { economy: 21750, business: 56000, first: 85000 } },
-        { upTo: Infinity, rates: { economy: 32500, business: 68000, first: 102000 } },
-      ],
-    },
-    confidence: "unpublished",
-    surcharge: "medium",
-    // No Canadian card transfers to Qatar directly — you route through Avios.
-    transferPartnerKey: null,
-    noteKey: "noteQatarAvios",
-    sourceUrl: "https://awardtravelfinder.com/award-charts/qatar-airways",
-    verifiedOn: "2026-08-09",
-  },
-  {
     id: "asia-miles",
     name: "Cathay Pacific® Asia Miles®",
     currency: "Asia Miles",
     logo: "/images/logos/partners/cathay-pacific.png",
     pricing: {
-      // Cathay flies both legs of a Canada→Vietnam routing via Hong Kong, so
-      // the (cheaper) Cathay-operated chart applies rather than the partner
-      // one. Bands 2 and 3 are the 751–2,750 "Type 1" and "Type 2" splits;
-      // Type 2 covers routes touching Bangladesh, India, Indonesia, Japan,
-      // Nepal or Sri Lanka. Every Canada→Southeast Asia routing lands in the
-      // 7,501+ band anyway, so the split never bites within this tool's scope.
+      // Bands 2 and 3 are the 751–2,750 "Type 1"/"Type 2" split, where Type 2
+      // covers routes touching Bangladesh, India, Indonesia, Japan, Nepal or
+      // Sri Lanka. Every Canada→Southeast Asia routing lands in the 7,501+
+      // band anyway, so the split never bites within this tool's scope.
       kind: "distance-total",
-      hubs: ["HKG"],
+      hubs: CATHAY_ROUTES,
       bands: [
         { upTo: 750, rates: { economy: 7000, premium: 11000, business: 16000 } },
         { upTo: 2750, rates: { economy: 9000, premium: 18000, business: 27000, first: 43000 } },
@@ -297,13 +314,46 @@ export const PROGRAMS: Program[] = [
     verifiedOn: "2026-08-09",
   },
   {
+    id: "ba-avios",
+    name: "British Airways® Club",
+    currency: "Avios",
+    logo: "/images/logos/partners/british-airways.png",
+    pricing: AVIOS_PRICING,
+    confidence: "unquotable",
+    surcharge: "medium",
+    transferPartnerKey: "British Airways® Avios",
+    noteKey: "noteBaAvios",
+    sourceUrl: "https://www.britishairways.com/content/the-british-airways-club",
+    verifiedOn: "2026-08-09",
+  },
+  {
+    id: "qatar-avios",
+    name: "Qatar Airways® Privilege Club",
+    currency: "Avios",
+    logo: "/images/logos/partners/qatar-airways.svg",
+    pricing: AVIOS_PRICING,
+    confidence: "unquotable",
+    surcharge: "medium",
+    // No Canadian card transfers to Qatar directly, but Avios are poolable,
+    // so the route in is via British Airways.
+    transferPartnerKey: null,
+    transferNoteKey: "transferViaAvios",
+    noteKey: "noteQatarAvios",
+    sourceUrl: "https://www.qatarairways.com/en/privilegeclub.html",
+    verifiedOn: "2026-08-09",
+  },
+  {
     id: "flying-blue",
     name: "Air France KLM® Flying Blue®",
     currency: "Flying Blue miles",
     logo: "/images/logos/partners/flying-blue.jpg",
-    // Air France and KLM route Canada→Vietnam over their own European hubs.
-    pricing: { kind: "dynamic", hubs: ["CDG", "AMS"] },
-    confidence: "dynamic",
+    pricing: {
+      kind: "unquotable",
+      hubs: SKYTEAM_ROUTES,
+      labelKey: "dynamicPrice",
+      hintKey: "dynamicPriceHint",
+    },
+    confidence: "unquotable",
     surcharge: "high",
     transferPartnerKey: "Air France KLM® Flying Blue®",
     noteKey: "noteFlyingBlue",
@@ -317,118 +367,110 @@ function bandRate(bands: DistanceBand[], miles: number, cabin: Cabin): number | 
   return band?.rates[cabin] ?? null;
 }
 
-export type Quote = {
-  program: Program;
-  /** null when the program publishes nothing usable for this cabin. */
-  points: number | null;
-  /** Distance the price was derived from, in miles. */
-  miles: number;
-  /** Airport codes the quote was priced over, e.g. ["YYZ", "HKG", "SGN"]. */
+/** One way of flying the route on one program: which airline, which stop, how
+ *  far, and what it costs. A program usually offers several. */
+export type RoutingOption = {
   routing: string[];
+  miles: number;
+  points: number | null;
+  carrier: Carrier;
+  /** True for the option this program would price cheapest. */
+  isBest: boolean;
 };
 
-type PricedRouting = { points: number | null; miles: number; routing: string[] };
+export type Quote = {
+  program: Program;
+  /** The cheapest option's price, or null when nothing can be quoted. */
+  points: number | null;
+  /** Every routing this program can fly, cheapest first. */
+  options: RoutingOption[];
+};
 
-/** Cheapest way to string an origin and destination together through one of a
- *  program's hubs. `price` turns a list of segment distances into a points
- *  total, which is where the two hub-based models diverge: one prices every
- *  segment separately and adds the prices up, the other adds the distances up
- *  and prices that once.
+/** Build every routing a program offers and price each one. `price` turns a
+ *  list of segment distances into a points total, which is where the models
+ *  diverge: one adds the distances up and prices that once, another ignores
+ *  distance entirely.
  *
- *  Pricing a nonstop is only allowed when the destination is itself one of the
- *  program's hubs. No airline flies Canada→Vietnam nonstop, and a per-segment
- *  program like Avios is markedly cheaper on a fictional nonstop than on the
- *  two real segments — quoting the nonstop would understate every Avios fare
- *  on the routes this tool exists to cover. */
-function bestRouting(
+ *  A nonstop is only offered when the destination is itself one of the
+ *  program's hubs. No airline flies Canada→Vietnam nonstop, and quoting that
+ *  fictional segment would understate the fare on any distance-priced chart. */
+function routingOptions(
   origin: Airport,
   destination: Airport,
-  hubCodes: string[],
+  hubs: HubRoute[],
   price: (segmentMiles: number[]) => number | null
-): PricedRouting {
-  const candidates: PricedRouting[] = [];
+): RoutingOption[] {
+  const options: RoutingOption[] = [];
 
-  if (hubCodes.includes(destination.code)) {
-    const directMiles = greatCircleMiles(origin, destination);
-    candidates.push({
-      points: price([directMiles]),
-      miles: directMiles,
-      routing: [origin.code, destination.code],
-    });
-  }
+  for (const { hub: code, carrier } of hubs) {
+    const hub = AIRPORTS[code];
+    if (!hub || hub.code === origin.code) continue;
 
-  for (const code of hubCodes) {
-    const hub = HUBS[code];
-    if (!hub || hub.code === destination.code || hub.code === origin.code) continue;
-    const legs = [greatCircleMiles(origin, hub), greatCircleMiles(hub, destination)];
-    candidates.push({
-      points: price(legs),
-      miles: legs[0] + legs[1],
-      routing: [origin.code, hub.code, destination.code],
-    });
-  }
-
-  const priced = candidates.filter((c) => c.points !== null);
-  if (priced.length > 0) {
-    // Cheapest wins; on a tie, the shorter itinerary does. The tie-break also
-    // makes this usable for programs whose price ignores routing entirely —
-    // pass a constant price and it simply returns the shortest way there.
-    return priced.reduce((best, c) => {
-      if (c.points !== best.points) return c.points! < best.points! ? c : best;
-      return c.miles < best.miles ? c : best;
-    });
-  }
-  // Nothing priced — the cabin has no published rate. Still report the
-  // shortest routing so the card can show what itinerary it was reasoning
-  // about while explaining the gap.
-  return candidates.reduce(
-    (best, c) => (c.miles < best.miles ? c : best),
-    candidates[0] ?? {
-      points: null,
-      miles: greatCircleMiles(origin, destination),
-      routing: [origin.code, destination.code],
+    // Destination is the hub itself: that carrier flies it nonstop.
+    if (hub.code === destination.code) {
+      const miles = greatCircleMiles(origin, destination);
+      options.push({
+        routing: [origin.code, destination.code],
+        miles,
+        points: price([miles]),
+        carrier: CARRIERS[carrier],
+        isBest: false,
+      });
+      continue;
     }
-  );
+
+    const legs = [greatCircleMiles(origin, hub), greatCircleMiles(hub, destination)];
+    options.push({
+      routing: [origin.code, hub.code, destination.code],
+      miles: legs[0] + legs[1],
+      points: price(legs),
+      carrier: CARRIERS[carrier],
+      isBest: false,
+    });
+  }
+
+  // Cheapest first; unpriced options fall to the bottom, and equal prices are
+  // broken by the shorter itinerary so the top option is also the quickest.
+  options.sort((a, b) => {
+    if (a.points === null && b.points === null) return a.miles - b.miles;
+    if (a.points === null) return 1;
+    if (b.points === null) return -1;
+    return a.points === b.points ? a.miles - b.miles : a.points - b.points;
+  });
+
+  if (options.length > 0 && options[0].points !== null) options[0].isBest = true;
+  return options;
 }
 
 /** Price one route in one cabin across every program. Sorted cheapest first,
- *  with the programs that publish nothing pushed to the bottom. */
+ *  with the programs that cannot be quoted pushed to the bottom. */
 export function quoteRoute(origin: Airport, destination: Airport, cabin: Cabin): Quote[] {
   const quotes: Quote[] = PROGRAMS.map((program) => {
+    let options: RoutingOption[];
+
     switch (program.pricing.kind) {
       case "zone": {
-        const region = destination.aaRegion === "asia1" ? "asia1" : "asia2";
+        // The region table sets the price, so every routing costs the same.
+        const region = destination.aaRegion ?? "asia2";
         const points = program.pricing.rates[region][cabin] ?? null;
-        // The region table sets the price, so every routing costs the same;
-        // pick the shortest one purely so the itinerary shown is sensible.
-        const shown = bestRouting(origin, destination, program.pricing.hubs, () => 0);
-        return { program, points, miles: shown.miles, routing: shown.routing };
+        options = routingOptions(origin, destination, program.pricing.hubs, () => points);
+        break;
       }
 
       case "distance-total": {
         const { bands } = program.pricing;
-        const best = bestRouting(origin, destination, program.pricing.hubs, (legs) =>
+        options = routingOptions(origin, destination, program.pricing.hubs, (legs) =>
           bandRate(bands, legs.reduce((sum, m) => sum + m, 0), cabin)
         );
-        return { program, ...best };
+        break;
       }
 
-      case "distance-segments": {
-        const { bands } = program.pricing;
-        const best = bestRouting(origin, destination, program.pricing.hubs, (legs) => {
-          const perLeg = legs.map((m) => bandRate(bands, m, cabin));
-          return perLeg.some((r) => r === null)
-            ? null
-            : perLeg.reduce((sum, r) => sum! + r!, 0);
-        });
-        return { program, ...best };
-      }
-
-      case "dynamic": {
-        const shown = bestRouting(origin, destination, program.pricing.hubs, () => 0);
-        return { program, points: null, miles: shown.miles, routing: shown.routing };
-      }
+      case "unquotable":
+        options = routingOptions(origin, destination, program.pricing.hubs, () => null);
+        break;
     }
+
+    return { program, points: options[0]?.points ?? null, options };
   });
 
   return quotes.sort((a, b) => {
