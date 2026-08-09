@@ -125,7 +125,10 @@ function OptionRow({ option, currency }: { option: RoutingOption; currency: stri
           <span className="text-sm text-muted-foreground/60">—</span>
         ) : (
           <>
-            <p className="text-sm font-bold text-foreground">{formatPoints(option.points)}</p>
+            <p className="text-sm font-bold text-foreground">
+              {option.startingAt && <span className="font-normal">{t("fromPrefix")} </span>}
+              {formatPoints(option.points)}
+            </p>
             <p className="text-[10px] text-muted-foreground">{currency}</p>
           </>
         )}
@@ -192,11 +195,19 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
           ) : (
             <>
               <p className="font-display text-2xl font-extrabold text-primary sm:text-3xl">
+                {quote.startingAt && (
+                  <span className="mr-1.5 text-base font-semibold">{t("fromPrefix")}</span>
+                )}
                 {formatPoints(points)}
               </p>
               <p className="text-xs text-muted-foreground">
                 {t("pointsUnit", { currency: program.currency })}
               </p>
+              {quote.startingAt && (
+                <p className="mt-0.5 max-w-[15rem] text-[11px] leading-snug text-muted-foreground">
+                  {t("startingAtHint")}
+                </p>
+              )}
               {isCheapest ? (
                 <span className="mt-1 inline-block rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
                   {t("cheapest")}

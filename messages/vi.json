@@ -175,7 +175,7 @@
     "surchargeHigh": "Surcharge cao",
     "transferHeading": "Chuyển điểm từ",
     "transferNone": "Không thẻ Canada nào chuyển thẳng",
-    "noteAeroplan": "Aeroplan tính theo TỔNG quãng đường thực bay, cộng cả chặng nối, chứ không phải khoảng cách thẳng — nên chọn hub nào là đổi giá. Lưu ý số này là chart CỐ ĐỊNH cho chuyến do partner khai thác; vé do chính Air Canada bay, hoặc do select partner như United, Emirates, Etihad khai thác, thì chạy dynamic pricing và lấy số này làm mức sàn. Aeroplan vừa tăng giá từ 1/6/2026. Riêng hạng Premium Economy được các nguồn ghi nhận mỏng hơn ba hạng còn lại, nên hãy kiểm tra lại trước khi transfer. Surcharge thấp là điểm mạnh lớn nhất.",
+    "noteAeroplan": "Aeroplan tính theo TỔNG quãng đường thực bay, cộng cả chặng nối, chứ không phải khoảng cách thẳng — nên chọn hub nào là đổi giá. Chart chính thức có hai cột: cột \"All other partners\" là giá CỐ ĐỊNH nhưng chỉ có Economy, Business và First, hoàn toàn không có Premium Economy; cột \"Air Canada and/or Select Partners\" (United, Emirates, Etihad, Flydubai) chạy dynamic pricing và chỉ công bố mức khởi điểm. Vì vậy số Premium Economy ở đây hiển thị kèm chữ \"từ\". Aeroplan tăng giá từ 1/6/2026. Đổi vé có chặng partner sẽ bị thu thêm partner booking fee, nhưng surcharge của Aeroplan vẫn thuộc nhóm thấp nhất.",
     "noteAadvantage": "Chart theo vùng nên quãng đường bay không ảnh hưởng giá: Việt Nam cùng Trung Quốc, Hong Kong, Đài Loan và toàn Đông Nam Á đều nằm trong Asia Region 2. Chỉ áp dụng cho chuyến do partner khai thác — vé do chính American Airlines bay thì chạy dynamic pricing. Bản thân AA cũng nói đây là mức khởi điểm, giá thực tế có thể cao hơn. Đây thường vẫn là mức business rẻ nhất đi Việt Nam.",
     "noteBaAvios": "Ghế 1A không đưa số cho chương trình này, vì không có con số nào đủ tin cậy để đưa. British Airways đã bỏ công bố award chart, lại vừa devalue vé partner ngày 15/12/2025 khoảng 10%. Nặng hơn: giá đổi theo ngày cao điểm hay thấp điểm, và mỗi hãng partner giờ có biểu giá riêng, cộng thêm một biểu riêng cho hành trình ghép nhiều hãng. Avios tính giá từng chặng rồi cộng lại nên nối chuyến rất đắt. Hãy tra thẳng trên ba.com trước khi transfer.",
     "noteQatarAvios": "Privilege Club là chương trình của Qatar Airways, cũng dùng Avios và áp cùng cách tính của British Airways Club — nên cũng không tra trước được, vì lý do y hệt. Không thẻ Canada nào chuyển thẳng sang Qatar: cách đi vòng là chuyển sang Avios của British Airways rồi dùng tính năng combine Avios để gộp sang Qatar. Vé do chính Qatar khai thác lại tính giá riêng không theo chart nào.",
@@ -200,6 +200,8 @@
     "noPublicChartHint": "Phải tự tra giá trên trang của hãng.",
     "optionsHeading": "Các lựa chọn hành trình ({count})",
     "transferViaAvios": "Có thể chuyển sang British Airways® Club rồi gộp Avios sang Qatar Airways® Privilege Club",
-    "optionsCaveat": "Hành trình mẫu để tính giá, không phải kết quả tìm chuyến. Chặng nội địa Air Canada được cộng vào khi thành phố của bạn không có chuyến bay thẳng. Luôn kiểm tra chỗ trống thật trên trang của chương trình."
+    "optionsCaveat": "Hành trình mẫu để tính giá, không phải kết quả tìm chuyến. Chặng nội địa Air Canada được cộng vào khi thành phố của bạn không có chuyến bay thẳng. Luôn kiểm tra chỗ trống thật trên trang của chương trình.",
+    "fromPrefix": "từ",
+    "startingAtHint": "Mức khởi điểm của Air Canada và select partners, không phải giá cố định — giá thật thay đổi theo chuyến."
   }
 }

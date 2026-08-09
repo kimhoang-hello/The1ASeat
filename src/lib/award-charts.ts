@@ -5,18 +5,24 @@
 // Only three of the six can be quoted at all. That is the honest state of the
 // industry in 2026, and the page says so rather than inventing numbers:
 //
-//  - Aeroplan — PUBLISHED. The fixed partner chart effective 1 June 2026,
-//    agreed on every band and cabin by princeoftravel.com, upgradedpoints.com,
-//    travel-on-points.com and onemileatatime.com. Note this is the fixed chart
-//    for partner-operated flights; Air Canada's own metal and its "select
-//    partners" (United, Emirates, Etihad, flydubai) price dynamically from
-//    these numbers as a floor. Band edges are 0–5,000 / 5,001–7,500 /
-//    7,501–11,000 / 11,001+ — one widely copied article says "5,001–7,000",
-//    which is wrong. Premium Economy on the two shortest bands rests on a
-//    single source; every figure this tool actually surfaces for Canada→SEA
-//    sits in the 5,001–7,500 band or higher and is multiply sourced.
-//    Air Canada's own PDF is Akamai-blocked and cannot be fetched.
-//
+//  - Aeroplan — PUBLISHED, straight from Air Canada's own PDF (document
+//    version 2026-04, the chart in force from 1 June 2026), page 5 "Between
+//    North America and Pacific zones". The PDF is Akamai-blocked to plain
+//    curl; it needs browser request headers.
+//    The chart has TWO columns and they are not interchangeable. "All other
+//    partners" is fixed and guaranteed, and publishes only Economy, Business
+//    and First — there is NO partner Premium Economy rate. "Air Canada and/or
+//    Select Partners" (United, Emirates, Flydubai, Etihad, Canadian North,
+//    Calm Air, Bearskin, PAL) is dynamic and publishes a "Starting at" floor
+//    plus a median. Premium Economy exists only in that second column, which
+//    is why those numbers are modelled as `startingAt` and rendered with a
+//    "from" prefix. An earlier version of this file took the Premium Economy
+//    figures from the dynamic column and presented them as fixed partner
+//    rates, which is exactly the error this split now prevents.
+//    The PDF also settles two things reporting got muddled: band edges are
+//    0-5,000 / 5,001-7,500 / 7,501-11,000 / 11,001+, and points are "based on
+//    the actual distance flown between origin and destination". A partner
+//    booking fee applies to any itinerary containing a partner segment.
 //  - AAdvantage — PUBLISHED. Partner chart, agreed by awardfares.com
 //    (updated 2026-08-06) and 10xtravel.com, which also confirms Vietnam sits
 //    in Asia Region 2 alongside China, Hong Kong, Taiwan and the rest of
@@ -208,7 +214,15 @@ export function greatCircleMiles(a: Airport, b: Airport): number {
 }
 
 type Rates = Partial<Record<Cabin, number>>;
-type DistanceBand = { upTo: number; rates: Rates };
+type DistanceBand = {
+  upTo: number;
+  /** Fixed rates — what the programme guarantees. */
+  rates: Rates;
+  /** Published floors for cabins the fixed table does not cover, where the
+   *  real price is dynamic and starts here. Kept separate so the UI can say
+   *  "from" rather than passing a floor off as a guaranteed rate. */
+  startingAt?: Rates;
+};
 
 /** Every model carries its own hubs: the routing is what gets priced, and a
  *  Star Alliance itinerary connects in different places than a oneworld one. */
@@ -275,11 +289,31 @@ export const PROGRAMS: Program[] = [
       // the same trip via Tokyo at ~7,600.
       kind: "distance-total",
       hubs: STAR_ROUTES,
+      // `rates` is the official "All other partners" column: fixed, guaranteed,
+      // and with no Premium Economy row at all. `startingAt` is the "Air Canada
+      // and/or Select Partners" column, which is dynamic and only publishes a
+      // floor — that is where Aeroplan's Premium Economy numbers actually live.
       bands: [
-        { upTo: 5000, rates: { economy: 32500, premium: 45000, business: 55000, first: 90000 } },
-        { upTo: 7500, rates: { economy: 50000, premium: 60000, business: 85000, first: 120000 } },
-        { upTo: 11000, rates: { economy: 65000, premium: 85000, business: 102500, first: 140000 } },
-        { upTo: Infinity, rates: { economy: 70000, premium: 95000, business: 115000, first: 150000 } },
+        {
+          upTo: 5000,
+          rates: { economy: 32500, business: 55000, first: 90000 },
+          startingAt: { economy: 32500, premium: 45000, business: 55000, first: 90000 },
+        },
+        {
+          upTo: 7500,
+          rates: { economy: 50000, business: 85000, first: 120000 },
+          startingAt: { economy: 45000, premium: 60000, business: 85000, first: 110000 },
+        },
+        {
+          upTo: 11000,
+          rates: { economy: 65000, business: 102500, first: 140000 },
+          startingAt: { economy: 50000, premium: 85000, business: 85000, first: 130000 },
+        },
+        {
+          upTo: Infinity,
+          rates: { economy: 70000, business: 115000, first: 150000 },
+          startingAt: { economy: 70000, premium: 95000, business: 105000, first: 150000 },
+        },
       ],
     },
     confidence: "published",
@@ -388,9 +422,15 @@ export const PROGRAMS: Program[] = [
   },
 ];
 
-function bandRate(bands: DistanceBand[], miles: number, cabin: Cabin): number | null {
+type Priced = { points: number | null; startingAt: boolean };
+
+function bandRate(bands: DistanceBand[], miles: number, cabin: Cabin): Priced {
   const band = bands.find((b) => miles <= b.upTo);
-  return band?.rates[cabin] ?? null;
+  const fixed = band?.rates[cabin];
+  if (fixed !== undefined) return { points: fixed, startingAt: false };
+  const floor = band?.startingAt?.[cabin];
+  if (floor !== undefined) return { points: floor, startingAt: true };
+  return { points: null, startingAt: false };
 }
 
 /** One way of flying the route on one program: which airline, which stop, how
@@ -402,6 +442,8 @@ export type RoutingOption = {
   /** Carriers flying this itinerary in order — normally just the partner,
    *  plus an Air Canada feeder when the origin has no long-haul service. */
   carriers: Carrier[];
+  /** The number is a published floor on a dynamic fare, not a fixed rate. */
+  startingAt: boolean;
   /** True for the option this program would price cheapest. */
   isBest: boolean;
 };
@@ -410,6 +452,8 @@ export type Quote = {
   program: Program;
   /** The cheapest option's price, or null when nothing can be quoted. */
   points: number | null;
+  /** The headline number is a floor on a dynamic fare, not a fixed rate. */
+  startingAt: boolean;
   /** Every routing this program can fly, cheapest first. */
   options: RoutingOption[];
 };
@@ -426,7 +470,7 @@ function routingOptions(
   origin: Airport,
   destination: Airport,
   hubs: HubRoute[],
-  price: (segmentMiles: number[]) => number | null
+  price: (segmentMiles: number[]) => Priced
 ): RoutingOption[] {
   const options: RoutingOption[] = [];
 
@@ -460,10 +504,12 @@ function routingOptions(
     carriers.push(carrier);
 
     const legs = stops.slice(1).map((to, i) => greatCircleMiles(stops[i], to));
+    const priced = price(legs);
     options.push({
       routing: stops.map((a) => a.code),
       miles: legs.reduce((sum, m) => sum + m, 0),
-      points: price(legs),
+      points: priced.points,
+      startingAt: priced.startingAt,
       carriers,
       isBest: false,
     });
@@ -493,7 +539,10 @@ export function quoteRoute(origin: Airport, destination: Airport, cabin: Cabin):
         // The region table sets the price, so every routing costs the same.
         const region = destination.aaRegion ?? "asia2";
         const points = program.pricing.rates[region][cabin] ?? null;
-        options = routingOptions(origin, destination, program.pricing.hubs, () => points);
+        options = routingOptions(origin, destination, program.pricing.hubs, () => ({
+          points,
+          startingAt: false,
+        }));
         break;
       }
 
@@ -506,11 +555,19 @@ export function quoteRoute(origin: Airport, destination: Airport, cabin: Cabin):
       }
 
       case "unquotable":
-        options = routingOptions(origin, destination, program.pricing.hubs, () => null);
+        options = routingOptions(origin, destination, program.pricing.hubs, () => ({
+          points: null,
+          startingAt: false,
+        }));
         break;
     }
 
-    return { program, points: options[0]?.points ?? null, options };
+    return {
+      program,
+      points: options[0]?.points ?? null,
+      startingAt: options[0]?.startingAt ?? false,
+      options,
+    };
   });
 
   return quotes.sort((a, b) => {
