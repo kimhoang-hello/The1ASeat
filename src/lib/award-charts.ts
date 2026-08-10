@@ -275,13 +275,9 @@ const SKYTEAM_ROUTES: HubRoute[] = [
   { hub: "AMS", inbound: "KL", onward: "VN" },
 ];
 
-export function airportByCode(code: string): Airport | undefined {
-  return AIRPORTS[code];
-}
-
 /** Great-circle distance in statute miles — the unit every one of these
  *  programs measures its distance bands in. */
-export function greatCircleMiles(a: Airport, b: Airport): number {
+function greatCircleMiles(a: Airport, b: Airport): number {
   const R = 3958.7613; // Earth radius, statute miles
   const toRad = (deg: number) => (deg * Math.PI) / 180;
   const dLat = toRad(b.lat - a.lat);
@@ -617,11 +613,6 @@ export type Quote = {
   options: RoutingOption[];
 };
 
-/** The cabin being priced. Set for the duration of one quoteRoute call so the
- *  override lookup inside routingOptions can read it without threading an
- *  extra parameter through every pricing model. */
-let currentCabin: Cabin = "business";
-
 /** Build every routing a program can actually fly, and price each one.
  *
  *  A routing only exists when both halves are real: the inbound carrier must
@@ -635,6 +626,7 @@ let currentCabin: Cabin = "business";
 function routingOptions(
   origin: Airport,
   destination: Airport,
+  cabin: Cabin,
   hubs: HubRoute[],
   price: (segmentMiles: number[]) => Priced,
   pricesWithFeeder: boolean,
@@ -744,7 +736,7 @@ function routingOptions(
         o.destinations.includes(destination.code) &&
         (o.hub === undefined || o.hub === hub.code)
     );
-    let points = override?.rates ? override.rates[currentCabin] ?? null : priced.points;
+    let points = override?.rates ? override.rates[cabin] ?? null : priced.points;
     let startingAt = override?.rates ? false : priced.startingAt;
 
     // Outside Aeroplan, a domestic feeder means the published figure no longer
@@ -823,8 +815,6 @@ function routingOptions(
 /** Price one route in one cabin across every program. Sorted cheapest first,
  *  with the programs that cannot be quoted pushed to the bottom. */
 export function quoteRoute(origin: Airport, destination: Airport, cabin: Cabin): Quote[] {
-  currentCabin = cabin;
-
   const quotes: Quote[] = PROGRAMS.map((program) => {
     const { pricesWithFeeder, overrides, dynamicCarriers, nonstopCarriers } = program;
     let options: RoutingOption[];
@@ -835,7 +825,7 @@ export function quoteRoute(origin: Airport, destination: Airport, cabin: Cabin):
         const region = destination.aaRegion ?? "asia2";
         const points = program.pricing.rates[region][cabin] ?? null;
         options = routingOptions(
-          origin, destination, program.pricing.hubs,
+          origin, destination, cabin, program.pricing.hubs,
           () => ({ points, startingAt: false }),
           pricesWithFeeder, overrides, dynamicCarriers, nonstopCarriers
         );
@@ -845,7 +835,7 @@ export function quoteRoute(origin: Airport, destination: Airport, cabin: Cabin):
       case "distance-total": {
         const { bands } = program.pricing;
         options = routingOptions(
-          origin, destination, program.pricing.hubs,
+          origin, destination, cabin, program.pricing.hubs,
           (legs) => bandRate(bands, legs.reduce((sum, m) => sum + m, 0), cabin),
           pricesWithFeeder, overrides, dynamicCarriers, nonstopCarriers,
           (miles) => {
@@ -858,7 +848,7 @@ export function quoteRoute(origin: Airport, destination: Airport, cabin: Cabin):
 
       case "unquotable":
         options = routingOptions(
-          origin, destination, program.pricing.hubs,
+          origin, destination, cabin, program.pricing.hubs,
           () => ({ points: null, startingAt: false }),
           pricesWithFeeder, overrides, dynamicCarriers, nonstopCarriers
         );

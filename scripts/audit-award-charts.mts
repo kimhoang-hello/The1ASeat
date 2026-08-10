@@ -43,7 +43,7 @@ for (const p2 of PROGRAMS) for (const o of p2.overrides ?? [])
 const used = new Set([...literal, ...PROGRAMS.map(p => p.noteKey), ...PROGRAMS.flatMap(p => p.transferNoteKey ? [p.transferNoteKey] : []),
   ...PROGRAMS.flatMap(p => p.pricing.kind === "unquotable" ? [p.pricing.labelKey, p.pricing.hintKey] : []),
   ...CABINS.map(c => c.labelKey), ...[1,2,3,4].flatMap(n => [`howStep${n}Title`, `howStep${n}Body`]),
-  "eyebrow","title","subtitle","noRouting","noRoutingShort","feederNote","optionDynamic","medianLabel",
+  "eyebrow","title","subtitle","noRouting","noRoutingShort","feederNote","feederOnlyShort","optionDynamic","medianLabel",
   ...PROGRAMS.flatMap(p2 => (p2.overrides ?? []).flatMap(o => o.noteKey ? [o.noteKey] : [])),
   ...[...src.matchAll(/"(confidence[A-Z]\w+|surcharge[A-Z]\w+|transferNone)"/g)].map(m => m[1])]);
 const unused = Object.keys(ns).filter(k => !used.has(k));

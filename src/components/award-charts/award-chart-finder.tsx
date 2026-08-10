@@ -147,12 +147,7 @@ function OptionRow({ option, currency }: { option: RoutingOption; currency: stri
               )}
             </div>
           ) : (
-            <span
-              className="text-sm text-muted-foreground/60"
-              title={option.needsFeeder ? t("feederNote") : undefined}
-            >
-              —
-            </span>
+            <span className="text-sm text-muted-foreground/60">—</span>
           )
         ) : (
           <>
@@ -225,6 +220,18 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {t(program.pricing.hintKey)}
+                </p>
+              </>
+            ) : options.every((o) => o.needsFeeder) ? (
+              // The chart is fine; it just stops applying once a domestic hop
+              // is in the ticket. Blaming a missing cabin rate sent every
+              // non-gateway city the wrong explanation.
+              <>
+                <p className="font-display text-lg font-bold text-muted-foreground sm:text-xl">
+                  {t("feederOnlyShort")}
+                </p>
+                <p className="mt-0.5 max-w-[15rem] text-xs leading-snug text-muted-foreground">
+                  {t("feederNote")}
                 </p>
               </>
             ) : (
@@ -416,6 +423,7 @@ function Finder() {
               <button
                 key={c.id}
                 type="button"
+                aria-pressed={cabin === c.id}
                 onClick={() => update({ cabin: c.id })}
                 className={`flex-1 basis-[calc(50%-0.25rem)] cursor-pointer rounded-lg border px-3 py-2 text-sm font-medium transition-colors sm:basis-0 ${
                   cabin === c.id
