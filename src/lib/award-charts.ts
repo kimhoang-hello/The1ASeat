@@ -301,6 +301,10 @@ type DistanceBand = {
    *  real price is dynamic and starts here. Kept separate so the UI can say
    *  "from" rather than passing a floor off as a guaranteed rate. */
   startingAt?: Rates;
+  /** Air Canada's published median of what members actually paid in this band.
+   *  NOT a ceiling — on the shortest band the business median runs three times
+   *  the floor — so it is shown as a median and never as the top of a range. */
+  median?: Rates;
 };
 
 /** Every model carries its own hubs: the routing is what gets priced, and a
@@ -406,21 +410,25 @@ export const PROGRAMS: Program[] = [
           upTo: 5000,
           rates: { economy: 32500, business: 55000 },
           startingAt: { economy: 32500, premium: 45000, business: 55000 },
+          median: { economy: 49500, premium: 94200, business: 171600 },
         },
         {
           upTo: 7500,
           rates: { economy: 50000, business: 85000 },
           startingAt: { economy: 45000, premium: 60000, business: 85000 },
+          median: { economy: 55000, premium: 100600, business: 120000 },
         },
         {
           upTo: 11000,
           rates: { economy: 65000, business: 102500 },
           startingAt: { economy: 50000, premium: 85000, business: 85000 },
+          median: { economy: 60000, premium: 103100, business: 100000 },
         },
         {
           upTo: Infinity,
           rates: { economy: 70000, business: 115000 },
           startingAt: { economy: 70000, premium: 95000, business: 105000 },
+          median: { economy: 75000, premium: 127100, business: 115000 },
         },
       ],
     },
@@ -586,6 +594,11 @@ export type RoutingOption = {
   /** Flown entirely on metal this programme prices dynamically, so there is
    *  no chart figure to show — distinct from a gap in the chart. */
   dynamicPrice: boolean;
+  /** What the airline publishes about that dynamic price: the floor it starts
+   *  at, and the median members actually paid. Absent when nothing is
+   *  published. */
+  dynamicFrom?: number;
+  dynamicMedian?: number;
   /** True for the option this program would price cheapest. */
   isBest: boolean;
 };
@@ -627,7 +640,10 @@ function routingOptions(
   pricesWithFeeder: boolean,
   overrides: RouteOverride[] = [],
   dynamicCarriers: string[] = [],
-  nonstopCarriers: string[] = []
+  nonstopCarriers: string[] = [],
+  /** What the airline publishes about its own dynamic pricing at a given
+   *  distance. Only the distance-banded programmes have anything to say. */
+  dynamicGuide: (miles: number) => { from?: number; median?: number } = () => ({})
 ): RoutingOption[] {
   const options: RoutingOption[] = [];
 
@@ -657,13 +673,17 @@ function routingOptions(
     stops.push(destination);
 
     const legs = stops.slice(1).map((to, i) => greatCircleMiles(stops[i], to));
+    const miles = legs.reduce((sum, m) => sum + m, 0);
+    const guide = dynamicGuide(miles);
     options.push({
       routing: stops.map((a) => a.code),
-      miles: legs.reduce((sum, m) => sum + m, 0),
+      miles,
       points: null,
       startingAt: false,
       needsFeeder,
       dynamicPrice: true,
+      dynamicFrom: guide.from,
+      dynamicMedian: guide.median,
       carriers,
       isBest: false,
     });
@@ -743,13 +763,18 @@ function routingOptions(
       startingAt = false;
     }
 
+    const totalMiles = legs.reduce((sum, m) => sum + m, 0);
+    const guide = allDynamic ? dynamicGuide(totalMiles) : {};
+
     options.push({
       routing: stops.map((a) => a.code),
-      miles: legs.reduce((sum, m) => sum + m, 0),
+      miles: totalMiles,
       points,
       startingAt,
       needsFeeder,
       dynamicPrice: allDynamic,
+      dynamicFrom: guide.from,
+      dynamicMedian: guide.median,
       carriers,
       isBest: false,
     });
@@ -767,9 +792,14 @@ function routingOptions(
   // Two hub routes can produce the same string of airports — Air France to
   // Saigon and Air France handing over to Vietnam Airlines, for instance. Keep
   // whichever survived the sort first; it is the cheaper or simpler of the two.
+  //
+  // Chart-priced and dynamically-priced flying stay separate even on identical
+  // airports, because they are different answers: Vancouver–Tokyo on ANA has a
+  // chart rate, the same pair on Air Canada does not, and collapsing them hid
+  // the Air Canada option entirely.
   const seen = new Set<string>();
   const unique = options.filter((o) => {
-    const key = o.routing.join("-");
+    const key = `${o.routing.join("-")}${o.dynamicPrice ? "|dynamic" : ""}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
@@ -806,7 +836,11 @@ export function quoteRoute(origin: Airport, destination: Airport, cabin: Cabin):
         options = routingOptions(
           origin, destination, program.pricing.hubs,
           (legs) => bandRate(bands, legs.reduce((sum, m) => sum + m, 0), cabin),
-          pricesWithFeeder, overrides, dynamicCarriers, nonstopCarriers
+          pricesWithFeeder, overrides, dynamicCarriers, nonstopCarriers,
+          (miles) => {
+            const band = bands.find((b) => miles <= b.upTo);
+            return { from: band?.startingAt?.[cabin], median: band?.median?.[cabin] };
+          }
         );
         break;
       }

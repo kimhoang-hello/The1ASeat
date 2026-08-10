@@ -174,7 +174,7 @@
     "surchargeHigh": "Surcharge cao",
     "transferHeading": "Chuyển điểm từ",
     "transferNone": "Không thẻ Canada nào chuyển thẳng",
-    "noteAeroplan": "Aeroplan tính theo TỔNG quãng đường thực bay, cộng cả chặng nối, chứ không phải khoảng cách thẳng — nên chọn hub nào là đổi giá. Chart chính thức có hai cột: cột \"All other partners\" là giá CỐ ĐỊNH nhưng chỉ có Economy và Business, hoàn toàn không có Premium Economy; cột \"Air Canada and/or Select Partners\" (United, Emirates, Etihad, Flydubai) chạy dynamic pricing và chỉ công bố mức khởi điểm. Vì vậy số Premium Economy ở đây hiển thị kèm chữ \"từ\". Aeroplan tăng giá từ 1/6/2026. Đổi vé có chặng partner sẽ bị thu thêm partner booking fee, nhưng surcharge của Aeroplan vẫn thuộc nhóm thấp nhất.",
+    "noteAeroplan": "Aeroplan tính theo TỔNG quãng đường thực bay, cộng cả chặng nối, chứ không phải khoảng cách thẳng — nên chọn hub nào là đổi giá. Chart chính thức có hai cột: cột \"All other partners\" là giá CỐ ĐỊNH nhưng chỉ có Economy và Business, hoàn toàn không có Premium Economy; cột \"Air Canada and/or Select Partners\" (United, Emirates, Etihad, Flydubai) chạy dynamic pricing và chỉ công bố mức khởi điểm. Vì vậy số Premium Economy ở đây hiển thị kèm chữ \"từ\". Aeroplan tăng giá từ 1/6/2026. Chặng do chính Air Canada bay không có giá cố định — Ghế 1A hiển thị mức khởi điểm và trung vị mà Air Canada công bố. Trung vị là mức giữa của những vé đã đổi, KHÔNG phải mức trần: có chặng trung vị cao gấp ba lần mức khởi điểm. Đổi vé có chặng partner sẽ bị thu thêm partner booking fee, nhưng surcharge của Aeroplan vẫn thuộc nhóm thấp nhất.",
     "noteAadvantage": "Chart theo vùng nên quãng đường bay không ảnh hưởng giá: Việt Nam cùng Trung Quốc, Hong Kong, Đài Loan và toàn Đông Nam Á đều nằm trong Asia Region 2. Chỉ áp dụng cho chuyến do partner khai thác — vé do chính American Airlines bay thì chạy dynamic pricing. Bản thân AA cũng nói đây là mức khởi điểm, giá thực tế có thể cao hơn. Đây thường vẫn là mức business rẻ nhất đi Việt Nam.",
     "noteBaAvios": "Ghế 1A không đưa số cho chương trình này, vì không có con số nào đủ tin cậy để đưa. British Airways đã bỏ công bố award chart, lại vừa devalue vé partner ngày 15/12/2025 khoảng 10%. Nặng hơn: giá đổi theo ngày cao điểm hay thấp điểm, và mỗi hãng partner giờ có biểu giá riêng, cộng thêm một biểu riêng cho hành trình ghép nhiều hãng. Avios tính giá từng chặng rồi cộng lại nên nối chuyến rất đắt. Hãy tra thẳng trên ba.com trước khi transfer.",
     "noteQatarAvios": "Privilege Club là chương trình của Qatar Airways, cũng dùng Avios và áp cùng cách tính của British Airways Club — nên cũng không tra trước được, vì lý do y hệt. Không thẻ Canada nào chuyển thẳng sang Qatar: cách đi vòng là chuyển sang Avios của British Airways rồi dùng tính năng combine Avios để gộp sang Qatar. Vé do chính Qatar khai thác lại tính giá riêng không theo chart nào.",
@@ -206,6 +206,7 @@
     "noteAeroplanYyzTpe": "Thực tế chặng Toronto – Đài Bắc rẻ hơn nhiều so với band khoảng cách: chỉ 50,000 điểm Aeroplan cho Economy và 85,000 điểm cho Business.",
     "feederNote": "Có chặng nội địa Air Canada nên chương trình này không tính chung một award — Ghế 1A không hiển thị số.",
     "noRoutingShort": "Không bay tới đây",
-    "optionDynamic": "Dynamic Pricing"
+    "optionDynamic": "Dynamic Pricing",
+    "medianLabel": "trung vị {points}"
   }
 }

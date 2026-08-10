@@ -43,7 +43,7 @@ for (const p2 of PROGRAMS) for (const o of p2.overrides ?? [])
 const used = new Set([...literal, ...PROGRAMS.map(p => p.noteKey), ...PROGRAMS.flatMap(p => p.transferNoteKey ? [p.transferNoteKey] : []),
   ...PROGRAMS.flatMap(p => p.pricing.kind === "unquotable" ? [p.pricing.labelKey, p.pricing.hintKey] : []),
   ...CABINS.map(c => c.labelKey), ...[1,2,3,4].flatMap(n => [`howStep${n}Title`, `howStep${n}Body`]),
-  "eyebrow","title","subtitle","noRouting","noRoutingShort","feederNote","optionDynamic",
+  "eyebrow","title","subtitle","noRouting","noRoutingShort","feederNote","optionDynamic","medianLabel",
   ...PROGRAMS.flatMap(p2 => (p2.overrides ?? []).flatMap(o => o.noteKey ? [o.noteKey] : [])),
   ...[...src.matchAll(/"(confidence[A-Z]\w+|surcharge[A-Z]\w+|transferNone)"/g)].map(m => m[1])]);
 const unused = Object.keys(ns).filter(k => !used.has(k));
@@ -90,6 +90,10 @@ for (const o of ORIGINS) for (const d of DESTINATIONS) for (const c of CABINS) {
         fails.push(`${q.program.id}: priced a feeder itinerary`);
       if (opt.dynamicPrice && opt.points !== null)
         fails.push(`${q.program.id}: priced a dynamically-priced itinerary`);
+      if (!opt.dynamicPrice && (opt.dynamicFrom !== undefined || opt.dynamicMedian !== undefined))
+        fails.push(`${q.program.id}: dynamic guidance on a chart-priced option`);
+      if (opt.dynamicFrom !== undefined && opt.dynamicMedian !== undefined && opt.dynamicMedian < opt.dynamicFrom)
+        fails.push(`${q.program.id}: median below the floor (${opt.dynamicFrom}/${opt.dynamicMedian})`);
       const dyn = q.program.dynamicCarriers ?? [];
       if (dyn.length && opt.carriers.every(c2 => dyn.includes(c2.code)) && !opt.dynamicPrice)
         fails.push(`${q.program.id}: all-dynamic itinerary not flagged: ${opt.routing.join("-")}`);

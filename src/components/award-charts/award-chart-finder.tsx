@@ -124,8 +124,28 @@ function OptionRow({ option, currency }: { option: RoutingOption; currency: stri
         {option.points === null ? (
           option.dynamicPrice ? (
             // No chart ever covered this flying, so a dash would read as a
-            // missing figure rather than the answer.
-            <span className="text-xs font-medium text-muted-foreground">{t("optionDynamic")}</span>
+            // missing figure. Air Canada does publish a floor and a median of
+            // what members paid, which is the most that can honestly be said.
+            <div className="leading-tight">
+              {option.dynamicFrom !== undefined ? (
+                <>
+                  <p className="text-sm font-bold text-foreground">
+                    <span className="font-normal">{t("fromPrefix")} </span>
+                    {formatPoints(option.dynamicFrom)}
+                  </p>
+                  {option.dynamicMedian !== undefined && (
+                    <p className="text-[10px] text-muted-foreground">
+                      {t("medianLabel", { points: formatPoints(option.dynamicMedian) })}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="text-xs font-medium text-muted-foreground">{t("optionDynamic")}</p>
+              )}
+              {option.dynamicFrom !== undefined && (
+                <p className="text-[10px] text-muted-foreground/70">{t("optionDynamic")}</p>
+              )}
+            </div>
           ) : (
             <span
               className="text-sm text-muted-foreground/60"
