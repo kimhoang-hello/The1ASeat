@@ -805,7 +805,18 @@ function routingOptions(
     return true;
   });
 
-  if (unique.length > 0 && unique[0].points !== null) unique[0].isBest = true;
+  // Only crown an option that is genuinely cheaper than every other. Aeroplan
+  // bands by distance, so a whole card of options routinely prices identically
+  // — highlighting one of them asserted a preference the price does not
+  // support, and because Beijing sits almost exactly on the great-circle line
+  // from Toronto to Asia it won the distance tie-break on most routes, which
+  // read as the tool pushing one hub everywhere.
+  const priced = unique.filter((o) => o.points !== null);
+  if (priced.length > 0) {
+    const cheapest = priced[0].points!;
+    const tied = priced.filter((o) => o.points === cheapest).length;
+    if (tied === 1) priced[0].isBest = true;
+  }
   return unique;
 }
 

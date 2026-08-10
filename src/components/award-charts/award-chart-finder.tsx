@@ -292,7 +292,14 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
           <ul className="mt-2 grid gap-1.5">
             {options.map((option) => (
               <OptionRow
-                key={option.routing.join("-")}
+                // The airports alone are not unique: Toronto–Beijing appears
+                // twice, once on Air China against the fixed chart and once on
+                // Air Canada priced dynamically. Sharing a key made React keep
+                // a stale row when the destination changed, so a leftover
+                // "YYZ → PEK" turned up on searches to other cities.
+                key={`${option.routing.join("-")}-${option.carriers
+                  .map((c) => c.code)
+                  .join("")}${option.dynamicPrice ? "-dyn" : ""}`}
                 option={option}
                 currency={program.currency}
               />

@@ -98,9 +98,21 @@ for (const o of ORIGINS) for (const d of DESTINATIONS) for (const c of CABINS) {
       if (dyn.length && opt.carriers.every(c2 => dyn.includes(c2.code)) && !opt.dynamicPrice)
         fails.push(`${q.program.id}: all-dynamic itinerary not flagged: ${opt.routing.join("-")}`);
     }
+    // Every option needs a key the UI can tell apart, or React reuses rows
+    // across searches and a stale routing survives a destination change.
+    const keys = q.options.map(o2 => `${o2.routing.join("-")}-${o2.carriers.map(c2=>c2.code).join("")}${o2.dynamicPrice?"-dyn":""}`);
+    if (new Set(keys).size !== keys.length)
+      fails.push(`${o.code}->${d.code} ${q.program.id}: duplicate option keys`);
+
     const best = q.options.filter(o2 => o2.isBest);
-    if (q.points !== null && best.length !== 1) fails.push(`${q.program.id}: ${best.length} best options`);
-    if (q.points !== null && best[0]?.points !== q.points) fails.push(`${q.program.id}: headline != best option`);
+    if (best.length > 1) fails.push(`${q.program.id}: ${best.length} best options`);
+    if (best.length === 1 && best[0].points !== q.points) fails.push(`${q.program.id}: headline != best option`);
+    // A crowned option must be strictly cheaper than every other priced one.
+    if (best.length === 1) {
+      const rivals = q.options.filter(o2 => o2 !== best[0] && o2.points !== null);
+      if (rivals.some(o2 => o2.points! <= best[0].points!))
+        fails.push(`${q.program.id}: crowned a tied option`);
+    }
   }
 }
 
