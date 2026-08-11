@@ -163,11 +163,60 @@ function OptionRow({ option, currency }: { option: RoutingOption; currency: stri
   );
 }
 
+/** The three ways a card ends up with no number. They differ only in wording,
+ *  and each says which of the three it is rather than defaulting to blaming
+ *  the chart. */
+function NoPrice({ title, detail }: { title: string; detail?: string }) {
+  return (
+    <>
+      <p className="font-display text-lg font-bold text-muted-foreground sm:text-xl">{title}</p>
+      {detail && (
+        <p className="mt-0.5 max-w-[15rem] text-xs leading-snug text-muted-foreground">{detail}</p>
+      )}
+    </>
+  );
+}
+
+function Price({
+  quote,
+  cheapest,
+}: {
+  quote: Quote;
+  cheapest: number | null;
+}) {
+  const { program, points, startingAt } = quote;
+  const gap = points !== null && cheapest !== null ? points - cheapest : 0;
+
+  return (
+    <>
+      <p className="font-display text-2xl font-extrabold text-primary sm:text-3xl">
+        {startingAt && <span className="mr-1.5 text-base font-semibold">{t("fromPrefix")}</span>}
+        {formatPoints(points!)}
+      </p>
+      <p className="text-xs text-muted-foreground">
+        {t("pointsUnit", { currency: program.currency })}
+      </p>
+      {startingAt && (
+        <p className="mt-0.5 max-w-[15rem] text-[11px] leading-snug text-muted-foreground">
+          {t("startingAtHint")}
+        </p>
+      )}
+      {gap === 0 ? (
+        <span className="mt-1 inline-block rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
+          {t("cheapest")}
+        </span>
+      ) : (
+        <p className="mt-1 text-[11px] font-medium text-muted-foreground">
+          {t("vsCheapest", { diff: formatPoints(gap) })}
+        </p>
+      )}
+    </>
+  );
+}
+
 function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null }) {
   const { program, points, options } = quote;
   const isCheapest = points !== null && points === cheapest;
-  const gap = points !== null && cheapest !== null ? points - cheapest : 0;
-  const unquotable = program.pricing.kind === "unquotable";
 
   return (
     <li
@@ -201,74 +250,20 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
         </div>
 
         <div className="shrink-0 text-left sm:text-right">
-          {options.length === 0 ? (
-            // No number can be right when the programme's partners do not fly
-            // the route at all — say that, rather than blaming the chart.
-            <>
-              <p className="font-display text-lg font-bold text-muted-foreground sm:text-xl">
-                {t("noRoutingShort")}
-              </p>
-              <p className="mt-0.5 max-w-[15rem] text-xs leading-snug text-muted-foreground">
-                {t("noRouting")}
-              </p>
-            </>
-          ) : points === null ? (
-            unquotable && program.pricing.kind === "unquotable" ? (
-              <>
-                <p className="font-display text-lg font-bold text-muted-foreground sm:text-xl">
-                  {t(program.pricing.labelKey)}
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {t(program.pricing.hintKey)}
-                </p>
-              </>
-            ) : options.every((o) => o.needsFeeder) ? (
-              // The chart is fine; it just stops applying once a domestic hop
-              // is in the ticket. Blaming a missing cabin rate sent every
-              // non-gateway city the wrong explanation.
-              <>
-                <p className="font-display text-lg font-bold text-muted-foreground sm:text-xl">
-                  {t("feederOnlyShort")}
-                </p>
-                <p className="mt-0.5 max-w-[15rem] text-xs leading-snug text-muted-foreground">
-                  {t("feederNote")}
-                </p>
-              </>
-            ) : (
-              // Not a number, so it must not borrow the number's type scale —
-              // at 375px the display size wrapped straight over the card edge.
-              <p className="max-w-[16rem] text-sm font-medium text-muted-foreground">
-                {t("notPublished")}
-              </p>
-            )
+          {points !== null ? (
+            <Price quote={quote} cheapest={cheapest} />
+          ) : options.length === 0 ? (
+            // The programme's partners do not fly this route at all.
+            <NoPrice title={t("noRoutingShort")} detail={t("noRouting")} />
+          ) : program.pricing.kind === "unquotable" ? (
+            <NoPrice title={t(program.pricing.labelKey)} detail={t(program.pricing.hintKey)} />
+          ) : options.every((o) => o.needsFeeder) ? (
+            // The chart is fine; it stops applying once a domestic hop is in
+            // the ticket. Blaming a missing cabin rate sent every non-gateway
+            // city the wrong explanation.
+            <NoPrice title={t("feederOnlyShort")} detail={t("feederNote")} />
           ) : (
-            <>
-              <p className="font-display text-2xl font-extrabold text-primary sm:text-3xl">
-                {quote.startingAt && (
-                  <span className="mr-1.5 text-base font-semibold">{t("fromPrefix")}</span>
-                )}
-                {formatPoints(points)}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {t("pointsUnit", { currency: program.currency })}
-              </p>
-              {quote.startingAt && (
-                <p className="mt-0.5 max-w-[15rem] text-[11px] leading-snug text-muted-foreground">
-                  {t("startingAtHint")}
-                </p>
-              )}
-              {isCheapest ? (
-                <span className="mt-1 inline-block rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
-                  {t("cheapest")}
-                </span>
-              ) : (
-                gap > 0 && (
-                  <p className="mt-1 text-[11px] font-medium text-muted-foreground">
-                    {t("vsCheapest", { diff: formatPoints(gap) })}
-                  </p>
-                )
-              )}
-            </>
+            <NoPrice title={t("notPublished")} />
           )}
         </div>
       </div>

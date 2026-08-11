@@ -613,158 +613,159 @@ export type Quote = {
   options: RoutingOption[];
 };
 
+const sum = (ns: number[]) => ns.reduce((a, b) => a + b, 0);
+const noGuide = () => ({});
+
+/** Everything a programme's own rules contribute to building its options. */
+type Policy = {
+  cabin: Cabin;
+  hubs: HubRoute[];
+  /** What a set of segment distances costs. */
+  price: (segmentMiles: number[]) => Priced;
+  /** What the airline publishes about its own dynamic price at a distance. */
+  dynamicGuide: (miles: number) => { from?: number; median?: number };
+  pricesWithFeeder: boolean;
+  overrides: RouteOverride[];
+  dynamicCarriers: string[];
+  nonstopCarriers: string[];
+};
+
+/** The two functions a pricing model contributes. */
+function pricingFns(pricing: PricingModel, destination: Airport, cabin: Cabin) {
+  switch (pricing.kind) {
+    case "zone": {
+      // The region table sets the price, so every routing costs the same.
+      const points = pricing.rates[destination.aaRegion ?? "asia2"][cabin] ?? null;
+      return { price: () => ({ points, startingAt: false }), dynamicGuide: noGuide };
+    }
+    case "distance-total": {
+      const { bands } = pricing;
+      return {
+        price: (legs: number[]) => bandRate(bands, sum(legs), cabin),
+        dynamicGuide: (miles: number) => {
+          const band = bands.find((b) => miles <= b.upTo);
+          return { from: band?.startingAt?.[cabin], median: band?.median?.[cabin] };
+        },
+      };
+    }
+    case "unquotable":
+      return { price: () => ({ points: null, startingAt: false }), dynamicGuide: noGuide };
+  }
+}
+
+/** Thread the origin onto a carrier's own metal. Where the carrier does not
+ *  serve the origin the journey really starts with an Air Canada hop, and that
+ *  distance counts on any chart banded by distance flown. `target` is wherever
+ *  the carrier flies next: its hub, or the destination on a nonstop. */
+function reachCarrier(
+  origin: Airport,
+  carrier: Carrier,
+  target: Airport
+): { stops: Airport[]; carriers: Carrier[]; needsFeeder: boolean } | null {
+  if (carrier.gateways.includes(origin.code)) {
+    return { stops: [origin], carriers: [carrier], needsFeeder: false };
+  }
+  const detour = (gw: Airport) => greatCircleMiles(origin, gw) + greatCircleMiles(gw, target);
+  const gateway = carrier.gateways
+    .map((code) => AIRPORTS[code])
+    .filter(Boolean)
+    .sort((a, b) => detour(a) - detour(b))[0];
+  if (!gateway || gateway.code === origin.code) return null;
+  return {
+    stops: [origin, gateway],
+    // Air Canada feeding Air Canada is still one airline.
+    carriers: carrier.code === FEEDER.code ? [FEEDER] : [FEEDER, carrier],
+    needsFeeder: true,
+  };
+}
+
+const legsOf = (stops: Airport[]) => stops.slice(1).map((to, i) => greatCircleMiles(stops[i], to));
+
 /** Build every routing a program can actually fly, and price each one.
  *
  *  A routing only exists when both halves are real: the inbound carrier must
  *  reach the hub from Canada, and the onward carrier must serve both the hub
  *  and the destination. That single check is what keeps Qatar out of Da Nang
- *  and Asiana out of Toronto.
- *
- *  `price` turns a list of segment distances into a points total, which is
- *  where the models diverge: one adds the distances up and prices that once,
- *  another ignores distance entirely. */
-function routingOptions(
-  origin: Airport,
-  destination: Airport,
-  cabin: Cabin,
-  hubs: HubRoute[],
-  price: (segmentMiles: number[]) => Priced,
-  pricesWithFeeder: boolean,
-  overrides: RouteOverride[] = [],
-  dynamicCarriers: string[] = [],
-  nonstopCarriers: string[] = [],
-  /** What the airline publishes about its own dynamic pricing at a given
-   *  distance. Only the distance-banded programmes have anything to say. */
-  dynamicGuide: (miles: number) => { from?: number; median?: number } = () => ({})
-): RoutingOption[] {
+ *  and Asiana out of Toronto. */
+function routingOptions(origin: Airport, destination: Airport, p: Policy): RoutingOption[] {
   const options: RoutingOption[] = [];
 
   // Nonstops the programme can book but no chart covers — Air Canada's own
   // transpacific flying, in practice.
-  for (const code of nonstopCarriers) {
+  for (const code of p.nonstopCarriers) {
     const carrier = CARRIERS[code];
-    if (!carrier || !carrier.network.includes(destination.code)) continue;
+    if (!carrier?.network.includes(destination.code)) continue;
+    const head = reachCarrier(origin, carrier, destination);
+    if (!head) continue;
 
-    const stops: Airport[] = [origin];
-    const carriers: Carrier[] = [];
-    const needsFeeder = !carrier.gateways.includes(origin.code);
-    if (needsFeeder) {
-      const gateway = carrier.gateways
-        .map((c) => AIRPORTS[c])
-        .filter(Boolean)
-        .sort(
-          (a, b) =>
-            greatCircleMiles(origin, a) + greatCircleMiles(a, destination) -
-            (greatCircleMiles(origin, b) + greatCircleMiles(b, destination))
-        )[0];
-      if (!gateway || gateway.code === origin.code) continue;
-      stops.push(gateway);
-      carriers.push(FEEDER);
-    }
-    if (carriers.at(-1)?.code !== carrier.code) carriers.push(carrier);
-    stops.push(destination);
-
-    const legs = stops.slice(1).map((to, i) => greatCircleMiles(stops[i], to));
-    const miles = legs.reduce((sum, m) => sum + m, 0);
-    const guide = dynamicGuide(miles);
+    const stops = [...head.stops, destination];
+    const miles = sum(legsOf(stops));
+    const guide = p.dynamicGuide(miles);
     options.push({
       routing: stops.map((a) => a.code),
       miles,
       points: null,
       startingAt: false,
-      needsFeeder,
+      needsFeeder: head.needsFeeder,
       dynamicPrice: true,
       dynamicFrom: guide.from,
       dynamicMedian: guide.median,
-      carriers,
+      carriers: head.carriers,
       isBest: false,
     });
   }
 
-  for (const route of hubs) {
+  for (const route of p.hubs) {
     const hub = AIRPORTS[route.hub];
     const inbound = CARRIERS[route.inbound];
     const onward = CARRIERS[route.onward];
-    if (!hub || !inbound || !onward) continue;
-    if (hub.code === origin.code) continue;
+    if (!hub || !inbound || !onward || hub.code === origin.code) continue;
 
     // The inbound carrier has to reach the hub from Canada at all.
     if (!inbound.network.includes(hub.code) || inbound.gateways.length === 0) continue;
 
     // Onward only matters when the hub is not itself the destination.
     const nonstopToHub = hub.code === destination.code;
-    if (!nonstopToHub) {
-      if (!onward.network.includes(hub.code)) continue;
-      if (!onward.network.includes(destination.code)) continue;
-    }
+    if (!nonstopToHub && !onward.network.includes(hub.code)) continue;
+    if (!nonstopToHub && !onward.network.includes(destination.code)) continue;
 
-    const stops: Airport[] = [origin];
-    const carriers: Carrier[] = [];
+    const head = reachCarrier(origin, inbound, hub);
+    if (!head) continue;
 
-    // Where this carrier's own metal can pick you up. From anywhere else the
-    // journey really begins with an Air Canada hop, and that distance counts.
-    const needsFeeder = !inbound.gateways.includes(origin.code);
-    if (needsFeeder) {
-      const gateway = inbound.gateways
-        .map((code) => AIRPORTS[code])
-        .filter(Boolean)
-        .sort(
-          (a, b) =>
-            greatCircleMiles(origin, a) + greatCircleMiles(a, hub) -
-            (greatCircleMiles(origin, b) + greatCircleMiles(b, hub))
-        )[0];
-      if (!gateway || gateway.code === origin.code) continue;
-      stops.push(gateway);
-      carriers.push(FEEDER);
-    }
+    const stops = [...head.stops, ...(nonstopToHub ? [] : [hub]), destination];
+    const carriers = [...head.carriers];
+    if (!nonstopToHub && onward.code !== inbound.code) carriers.push(onward);
 
-    if (carriers.at(-1)?.code !== inbound.code) carriers.push(inbound);
-    if (!nonstopToHub) {
-      stops.push(hub);
-      if (onward.code !== inbound.code) carriers.push(onward);
-    }
-    stops.push(destination);
-
-    const legs = stops.slice(1).map((to, i) => greatCircleMiles(stops[i], to));
-    const priced = price(legs);
+    const legs = legsOf(stops);
+    const miles = sum(legs);
 
     // A named real-world rate beats whatever the chart says.
-    const override = overrides.find(
+    const override = p.overrides.find(
       (o) =>
         o.rates &&
         o.origins.includes(origin.code) &&
         o.destinations.includes(destination.code) &&
         (o.hub === undefined || o.hub === hub.code)
     );
-    let points = override?.rates ? override.rates[cabin] ?? null : priced.points;
-    let startingAt = override?.rates ? false : priced.startingAt;
+    const priced = override?.rates
+      ? { points: override.rates[p.cabin] ?? null, startingAt: false }
+      : p.price(legs);
 
-    // Outside Aeroplan, a domestic feeder means the published figure no longer
-    // describes what you would actually be charged.
-    if (needsFeeder && !pricesWithFeeder) {
-      points = null;
-      startingAt = false;
-    }
-
-    // Flown entirely on metal the programme prices dynamically — the chart
-    // never applied to it. Air Canada nonstops to its own Asian hubs land here.
-    const allDynamic =
-      dynamicCarriers.length > 0 && carriers.every((c) => dynamicCarriers.includes(c.code));
-    if (allDynamic) {
-      points = null;
-      startingAt = false;
-    }
-
-    const totalMiles = legs.reduce((sum, m) => sum + m, 0);
-    const guide = allDynamic ? dynamicGuide(totalMiles) : {};
+    // Two reasons a chart figure stops describing what you would be charged:
+    // a domestic feeder in the ticket (everywhere but Aeroplan), or an
+    // itinerary flown entirely on metal the programme prices dynamically.
+    const dynamicPrice =
+      p.dynamicCarriers.length > 0 && carriers.every((c) => p.dynamicCarriers.includes(c.code));
+    const suppress = dynamicPrice || (head.needsFeeder && !p.pricesWithFeeder);
+    const guide = dynamicPrice ? p.dynamicGuide(miles) : {};
 
     options.push({
       routing: stops.map((a) => a.code),
-      miles: totalMiles,
-      points,
-      startingAt,
-      needsFeeder,
-      dynamicPrice: allDynamic,
+      miles,
+      points: suppress ? null : priced.points,
+      startingAt: suppress ? false : priced.startingAt,
+      needsFeeder: head.needsFeeder,
+      dynamicPrice,
       dynamicFrom: guide.from,
       dynamicMedian: guide.median,
       carriers,
@@ -782,32 +783,26 @@ function routingOptions(
   });
 
   // Two hub routes can produce the same string of airports — Air France to
-  // Saigon and Air France handing over to Vietnam Airlines, for instance. Keep
-  // whichever survived the sort first; it is the cheaper or simpler of the two.
-  //
-  // Chart-priced and dynamically-priced flying stay separate even on identical
-  // airports, because they are different answers: Vancouver–Tokyo on ANA has a
-  // chart rate, the same pair on Air Canada does not, and collapsing them hid
-  // the Air Canada option entirely.
+  // Saigon, and Air France handing over to Vietnam Airlines. Keep whichever
+  // survived the sort first. Chart-priced and dynamically-priced flying stay
+  // separate even on identical airports, because they are different answers:
+  // Vancouver–Tokyo on ANA has a chart rate, the same pair on Air Canada does
+  // not, and collapsing them hid the Air Canada option entirely.
   const seen = new Set<string>();
   const unique = options.filter((o) => {
-    const key = `${o.routing.join("-")}${o.dynamicPrice ? "|dynamic" : ""}`;
+    const key = `${o.routing.join("-")}|${o.dynamicPrice}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   });
 
-  // Only crown an option that is genuinely cheaper than every other. Aeroplan
-  // bands by distance, so a whole card of options routinely prices identically
-  // — highlighting one of them asserted a preference the price does not
-  // support, and because Beijing sits almost exactly on the great-circle line
-  // from Toronto to Asia it won the distance tie-break on most routes, which
-  // read as the tool pushing one hub everywhere.
+  // Only crown an option genuinely cheaper than every other. Aeroplan bands by
+  // distance, so a whole card routinely prices identically — highlighting one
+  // claimed a preference the price does not support, and Beijing sits almost
+  // exactly on the great-circle line from Toronto, so it won every tie-break.
   const priced = unique.filter((o) => o.points !== null);
-  if (priced.length > 0) {
-    const cheapest = priced[0].points!;
-    const tied = priced.filter((o) => o.points === cheapest).length;
-    if (tied === 1) priced[0].isBest = true;
+  if (priced.length === 1 || (priced.length > 1 && priced[0].points !== priced[1].points)) {
+    priced[0].isBest = true;
   }
   return unique;
 }
@@ -816,46 +811,17 @@ function routingOptions(
  *  with the programs that cannot be quoted pushed to the bottom. */
 export function quoteRoute(origin: Airport, destination: Airport, cabin: Cabin): Quote[] {
   const quotes: Quote[] = PROGRAMS.map((program) => {
-    const { pricesWithFeeder, overrides, dynamicCarriers, nonstopCarriers } = program;
-    let options: RoutingOption[];
+    const options = routingOptions(origin, destination, {
+      cabin,
+      hubs: program.pricing.hubs,
+      ...pricingFns(program.pricing, destination, cabin),
+      pricesWithFeeder: program.pricesWithFeeder,
+      overrides: program.overrides ?? [],
+      dynamicCarriers: program.dynamicCarriers ?? [],
+      nonstopCarriers: program.nonstopCarriers ?? [],
+    });
 
-    switch (program.pricing.kind) {
-      case "zone": {
-        // The region table sets the price, so every routing costs the same.
-        const region = destination.aaRegion ?? "asia2";
-        const points = program.pricing.rates[region][cabin] ?? null;
-        options = routingOptions(
-          origin, destination, cabin, program.pricing.hubs,
-          () => ({ points, startingAt: false }),
-          pricesWithFeeder, overrides, dynamicCarriers, nonstopCarriers
-        );
-        break;
-      }
-
-      case "distance-total": {
-        const { bands } = program.pricing;
-        options = routingOptions(
-          origin, destination, cabin, program.pricing.hubs,
-          (legs) => bandRate(bands, legs.reduce((sum, m) => sum + m, 0), cabin),
-          pricesWithFeeder, overrides, dynamicCarriers, nonstopCarriers,
-          (miles) => {
-            const band = bands.find((b) => miles <= b.upTo);
-            return { from: band?.startingAt?.[cabin], median: band?.median?.[cabin] };
-          }
-        );
-        break;
-      }
-
-      case "unquotable":
-        options = routingOptions(
-          origin, destination, cabin, program.pricing.hubs,
-          () => ({ points: null, startingAt: false }),
-          pricesWithFeeder, overrides, dynamicCarriers, nonstopCarriers
-        );
-        break;
-    }
-
-    const note = overrides?.find(
+    const note = program.overrides?.find(
       (o) =>
         o.noteKey &&
         o.origins.includes(origin.code) &&
