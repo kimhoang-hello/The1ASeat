@@ -4,6 +4,7 @@ import { t as translate } from "@/lib/t";
 import { getCreditCardOffers } from "@/lib/content";
 import { CardImage } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
+import { RebateBadge } from "@/components/credit-cards/rebate-badge";
 
 const t = translate("offers");
 
@@ -47,6 +48,7 @@ export async function OffersSection() {
                 image={offer.cardImage}
                 name={offer.name}
                 className="h-32 w-full shrink-0 rounded-xl sm:h-auto sm:w-40"
+                badge={offer.rebate && <RebateBadge amount={offer.rebate} label={t("rebate")} />}
               />
 
               <div className="flex-1">

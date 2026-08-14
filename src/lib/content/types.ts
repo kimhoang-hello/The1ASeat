@@ -38,6 +38,7 @@ export interface CreditCardOffer {
   elevatedBonus: boolean;
   expiresAt?: string;
   applyUrl: string;
+  rebate?: string;
 }
 
 export interface TransferBonus {

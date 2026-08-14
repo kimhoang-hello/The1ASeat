@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getCreditCardOfferBySlug, getCreditCardOffers } from "@/lib/content";
 import { CardImage } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
+import { RebateBadge } from "@/components/credit-cards/rebate-badge";
 import { JsonLd } from "@/components/seo/json-ld";
 import { creditCardJsonLd } from "@/lib/credit-card-schema";
 import { t as translate } from "@/lib/t";
@@ -67,7 +68,12 @@ export default async function CreditCardDetailPage({
         &larr; {offers("viewAll")}
       </Link>
 
-      <CardImage image={offer.cardImage} name={offer.name} className="mt-6 h-56 w-full rounded-2xl" />
+      <CardImage
+        image={offer.cardImage}
+        name={offer.name}
+        className="mt-6 h-56 w-full rounded-2xl"
+        badge={offer.rebate && <RebateBadge amount={offer.rebate} label={offers("rebate")} />}
+      />
 
       <div className="mt-6">
         <CardBadges

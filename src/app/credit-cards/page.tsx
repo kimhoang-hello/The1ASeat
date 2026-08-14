@@ -5,6 +5,7 @@ import { getCreditCardOffers } from "@/lib/content";
 import { PageHeader } from "@/components/layout/page-header";
 import { CardImage } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
+import { RebateBadge } from "@/components/credit-cards/rebate-badge";
 import { JsonLd } from "@/components/seo/json-ld";
 import { creditCardJsonLd } from "@/lib/credit-card-schema";
 import { t } from "@/lib/t";
@@ -68,6 +69,7 @@ export default async function CreditCardsPage() {
                 image={offer.cardImage}
                 name={offer.name}
                 className="h-32 w-full shrink-0 rounded-xl sm:h-auto sm:w-40"
+                badge={offer.rebate && <RebateBadge amount={offer.rebate} label={offers_t("rebate")} />}
               />
 
               <div className="flex-1">

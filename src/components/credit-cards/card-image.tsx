@@ -5,18 +5,23 @@ export function CardImage({
   image,
   name,
   className = "",
+  badge,
 }: {
   image: string;
   name: string;
   className?: string;
+  badge?: React.ReactNode;
 }) {
-  if (!image) {
-    return <MediaPlaceholder icon="credit-card" tone="tan" className={className} />;
-  }
-
   return (
-    <div className={`relative overflow-hidden bg-secondary ${className}`}>
-      <Image src={image} alt={name} fill sizes="320px" className="object-contain p-3" />
+    <div className={`relative ${className}`}>
+      {image ? (
+        <div className="absolute inset-0 overflow-hidden rounded-[inherit] bg-secondary">
+          <Image src={image} alt={name} fill sizes="320px" className="object-contain p-3" />
+        </div>
+      ) : (
+        <MediaPlaceholder icon="credit-card" tone="tan" className="absolute inset-0 rounded-[inherit]" />
+      )}
+      {badge}
     </div>
   );
 }

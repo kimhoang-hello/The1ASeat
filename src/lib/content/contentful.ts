@@ -63,6 +63,7 @@ interface CardSkeleton {
     elevatedBonus: EntryFieldTypes.Boolean;
     expiresAt?: EntryFieldTypes.Date;
     applyUrl: EntryFieldTypes.Symbol;
+    rebateVi?: EntryFieldTypes.Symbol;
   };
 }
 
@@ -126,6 +127,7 @@ function toCard(entry: Entry<CardSkeleton, undefined>): CreditCardOffer {
     elevatedBonus: f.elevatedBonus,
     expiresAt: f.expiresAt,
     applyUrl: f.applyUrl,
+    rebate: f.rebateVi,
   };
 }
 
