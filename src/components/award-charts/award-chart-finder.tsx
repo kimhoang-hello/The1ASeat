@@ -127,7 +127,9 @@ function OptionRow({ option, currency }: { option: RoutingOption; currency: stri
             // missing figure. Air Canada does publish a floor and a median of
             // what members paid, which is the most that can honestly be said.
             <div className="leading-tight">
-              {option.dynamicFrom !== undefined ? (
+              {option.dynamicFrom === undefined ? (
+                <p className="text-xs font-medium text-muted-foreground">{t("optionDynamic")}</p>
+              ) : (
                 <>
                   <p className="text-sm font-bold text-foreground">
                     <span className="font-normal">{t("fromPrefix")} </span>
@@ -138,12 +140,8 @@ function OptionRow({ option, currency }: { option: RoutingOption; currency: stri
                       {t("medianLabel", { points: formatPoints(option.dynamicMedian) })}
                     </p>
                   )}
+                  <p className="text-[10px] text-muted-foreground/70">{t("optionDynamic")}</p>
                 </>
-              ) : (
-                <p className="text-xs font-medium text-muted-foreground">{t("optionDynamic")}</p>
-              )}
-              {option.dynamicFrom !== undefined && (
-                <p className="text-[10px] text-muted-foreground/70">{t("optionDynamic")}</p>
               )}
             </div>
           ) : (
@@ -409,11 +407,13 @@ function Finder() {
         </div>
 
         <div className="mt-4">
-          <span className="text-sm font-medium text-foreground/80">{t("cabinLabel")}</span>
+          <span id="cabin-label" className="text-sm font-medium text-foreground/80">
+            {t("cabinLabel")}
+          </span>
           {/* Flex rather than a fixed column count: the grid was still set to
               four columns after First class was removed, leaving a gap on the
               right, and this stays correct whatever CABINS holds. */}
-          <div className="mt-1.5 flex flex-wrap gap-2">
+          <div role="group" aria-labelledby="cabin-label" className="mt-1.5 flex flex-wrap gap-2">
             {CABINS.map((c) => (
               <button
                 key={c.id}
@@ -433,7 +433,7 @@ function Finder() {
         </div>
       </div>
 
-      <div className="mt-8">
+      <div className="mt-8" aria-live="polite">
         <h2 className="flex flex-wrap items-baseline gap-x-2 font-display text-xl font-bold text-foreground">
           <span>{originAirport.city}</span>
           <ArrowRight size={18} weight="bold" className="text-primary" aria-hidden />

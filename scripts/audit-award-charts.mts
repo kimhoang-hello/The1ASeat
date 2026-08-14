@@ -11,6 +11,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { PROGRAMS, ORIGINS, DESTINATIONS, CABINS, quoteRoute } from "../src/lib/award-charts.ts";
+import { TRANSFER_PARTNERS } from "../src/lib/transfer-partners.ts";
 
 const ROOT = process.cwd();
 const msgs = JSON.parse(fs.readFileSync(path.join(ROOT, "messages/vi.json"), "utf8"));
@@ -48,6 +49,15 @@ const used = new Set([...literal, ...PROGRAMS.map(p => p.noteKey), ...PROGRAMS.f
   ...[...src.matchAll(/"(confidence[A-Z]\w+|surcharge[A-Z]\w+|transferNone)"/g)].map(m => m[1])]);
 const unused = Object.keys(ns).filter(k => !used.has(k));
 if (unused.length) fails.push(`unused message keys: ${unused.join(", ")}`);
+
+// 4b. a programme's transferPartnerKey must still match a row in
+// transfer-partners.ts. Renaming a programme there would otherwise make the
+// card's transfer ratios vanish with nothing failing.
+for (const p2 of PROGRAMS) {
+  if (p2.transferPartnerKey === null) continue;
+  if (!TRANSFER_PARTNERS.some(r => r.program === p2.transferPartnerKey))
+    fails.push(`${p2.id}: transferPartnerKey "${p2.transferPartnerKey}" matches no TRANSFER_PARTNERS row`);
+}
 
 // 5. every logo referenced exists on disk
 const logos = new Set<string>();
