@@ -505,7 +505,7 @@ export const PROGRAMS: Program[] = [
     confidence: "unquotable",
     surcharge: "medium",
     pricesWithFeeder: false,
-    transferPartnerKey: "British Airways® Avios",
+    transferPartnerKey: "British Airways® Club",
     noteKey: "noteBaAvios",
     sourceUrl: "https://www.britishairways.com/content/the-british-airways-club",
     verifiedOn: "2026-08-09",

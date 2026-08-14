@@ -45,7 +45,10 @@ export const TRANSFER_PARTNERS: TransferPartnerRow[] = [
     rbc: { ratio: "1,000 : 700", note: "Chỉ Avion Elite" },
   },
   {
-    program: "British Airways® Avios",
+    // Avios is the currency British Airways shares with Qatar, Iberia and Aer
+    // Lingus; the programme it belongs to is The British Airways Club, renamed
+    // from Executive Club in 2025.
+    program: "British Airways® Club",
     logo: "/images/logos/partners/british-airways.png",
     amex: { ratio: "1,000 : 1,000", note: "~30 phút" },
     rbc: { ratio: "1,000 : 1,000", note: "Chỉ Avion Elite" },
