@@ -35,7 +35,12 @@
     "editorsTake": "GHẾ 1A ĐÁNH GIÁ",
     "elevatedBonus": "Elevated offer",
     "expiresOn": "Hết hạn",
-    "rebate": "Rebate"
+    "rebate": "Rebate",
+    "tabElevated": "Offers nổi bật",
+    "tabOther": "Các offers khác",
+    "hotTip": "HOT TIP",
+    "emptyElevated": "Hiện chưa có elevated offer nào đang chạy.",
+    "emptyOther": "Hiện chưa có thẻ nào trong mục này."
   },
   "posts": {
     "eyebrow": "TỪ BLOG",

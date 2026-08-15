@@ -6,6 +6,7 @@ import { CardImage } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
 import { RebateBadge } from "@/components/credit-cards/rebate-badge";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
+import { EditorsTake } from "@/components/credit-cards/editors-take";
 import { ApplyButton } from "@/components/credit-cards/apply-button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { creditCardJsonLd } from "@/lib/credit-card-schema";
@@ -94,12 +95,7 @@ export default async function CreditCardDetailPage({
       </p>
       <p className="mt-4 text-lg leading-relaxed text-foreground/90">{offer.headline}</p>
 
-      <div className="mt-6 rounded-xl bg-secondary p-5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-          {offers("editorsTake")}
-        </p>
-        <p className="mt-2 leading-relaxed text-foreground/90">{offer.editorsTake}</p>
-      </div>
+      <EditorsTake editorsTake={offer.editorsTake} className="mt-6" />
 
       <h2 className="mt-8 font-display text-xl font-bold text-foreground">{offers("keyBenefits")}</h2>
       <ul className="mt-3 list-disc space-y-2 pl-5 text-foreground/90">

@@ -26,9 +26,25 @@ export const metadata: Metadata = pageMetadata({
 // only picks up new Contentful publishes on the next code deploy.
 export const revalidate = 60;
 
-export default async function CreditCardsPage() {
-  const offers = await getCreditCardOffers();
+const TABS = [
+  { value: "noi-bat", labelKey: "tabElevated" },
+  { value: "khac", labelKey: "tabOther" },
+] as const;
 
+export default async function CreditCardsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ type?: string }>;
+}) {
+  const [allOffers, { type }] = await Promise.all([getCreditCardOffers(), searchParams]);
+
+  const activeTab = type === "khac" ? "khac" : "noi-bat";
+  const offers = allOffers.filter((offer) =>
+    activeTab === "noi-bat" ? offer.elevatedBonus : !offer.elevatedBonus,
+  );
+
+  // The ?type= views are filtered slices of the same list and both canonicalise
+  // back to /credit-cards, so the ItemList describes every card, not the slice.
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -43,8 +59,8 @@ export default async function CreditCardsPage() {
         isPartOf: { "@id": `${absoluteUrl("/")}/#website` },
         mainEntity: {
           "@type": "ItemList",
-          numberOfItems: offers.length,
-          itemListElement: offers.map((offer, index) => ({
+          numberOfItems: allOffers.length,
+          itemListElement: allOffers.map((offer, index) => ({
             "@type": "ListItem",
             position: index + 1,
             url: absoluteUrl(`/credit-cards/${offer.slug}`),
@@ -61,6 +77,22 @@ export default async function CreditCardsPage() {
       <PageHeader eyebrow={offers_t("eyebrow")} title={offers_t("title")} />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto mb-6 flex max-w-page gap-2">
+          {TABS.map((tab) => (
+            <Link
+              key={tab.value}
+              href={tab.value === "noi-bat" ? "/credit-cards" : `/credit-cards?type=${tab.value}`}
+              className={`cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                activeTab === tab.value
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-foreground/70 hover:text-foreground"
+              }`}
+            >
+              {offers_t(tab.labelKey)}
+            </Link>
+          ))}
+        </div>
+
         {/* Two across once the page is wide enough, so the extra room goes into
             a second card rather than into 110-character lines of text. */}
         <div className="mx-auto grid max-w-page gap-5 2xl:grid-cols-2">
@@ -120,6 +152,12 @@ export default async function CreditCardsPage() {
               </div>
             </article>
           ))}
+
+          {offers.length === 0 && (
+            <p className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground 2xl:col-span-2">
+              {offers_t(activeTab === "noi-bat" ? "emptyElevated" : "emptyOther")}
+            </p>
+          )}
 
           <OfferDisclosure className="mt-3 2xl:col-span-2" />
         </div>

@@ -1,11 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cmaClient, field, listEntries, updateEntry, type CmaEntry, type CmaClient } from "@/lib/contentful-cma";
+import { fetchFinlyWealthRebate, finlyWealthRebateUrl } from "@/lib/finlywealth";
 
-// Called on a schedule (see .github/workflows/expire-offers.yml) to
-// unpublish (never delete) creditCardOffer/transferBonus entries whose
-// expiresAt has passed, so an elevated offer that comes back later can just
-// be republished instead of recreated from scratch.
-const LOCALE = "en-US";
-const EXPIRABLE_CONTENT_TYPES = ["creditCardOffer", "transferBonus"] as const;
+// Called on a schedule (see .github/workflows/expire-offers.yml) to deal with
+// entries whose expiresAt has passed.
+//
+// A transferBonus that has run out is simply over, so it gets unpublished
+// (never deleted) and can be republished if the bonus returns.
+//
+// A credit card is different: the card still exists once its elevated offer
+// ends, it just goes back to the issuer's standing offer. So instead of
+// pulling the card off the site, this clears the elevated flag and the expiry
+// date, which moves the card into the "Các offers khác" tab, and refreshes the
+// FinlyWealth rebate while it is there. The Vietnamese copy — headline, key
+// benefits, editor's take — still quotes the old welcome bonus and no job can
+// rewrite that responsibly, so every moved card is returned in `needsReview`.
+
+const CARD_TYPE = "creditCardOffer";
+const BONUS_TYPE = "transferBonus";
 
 export async function POST(request: NextRequest) {
   return handleExpire(request);
@@ -27,69 +39,68 @@ async function handleExpire(request: NextRequest) {
     return NextResponse.json({ message: "not_configured" }, { status: 501 });
   }
 
-  const cmaBase = `https://api.contentful.com/spaces/${spaceId}/environments/master`;
-  const authHeaders = { Authorization: `Bearer ${managementToken}` };
+  const client = cmaClient(spaceId, managementToken);
   const nowIso = new Date().toISOString();
+  const expiredQuery = `&fields.expiresAt[lte]=${encodeURIComponent(nowIso)}`;
 
+  const movedToOther: string[] = [];
+  const needsReview: string[] = [];
   const unpublished: string[] = [];
   const errors: { slug: string; message: string }[] = [];
-  let checked = 0;
 
-  for (const contentType of EXPIRABLE_CONTENT_TYPES) {
-    const expired = await fetchExpiredEntries(contentType, nowIso, cmaBase, authHeaders);
-    checked += expired.length;
+  const cards = await listEntries(client, CARD_TYPE, expiredQuery);
+  for (const card of cards) {
+    const slug = field<string>(card, "slug") ?? card.sys.id;
+    try {
+      const wasElevated = field<boolean>(card, "elevatedBonus") === true;
+      const changes: Record<string, unknown> = { elevatedBonus: false, expiresAt: undefined };
 
-    for (const entry of expired) {
-      const slug = String(entry.fields?.slug?.[LOCALE] ?? entry.sys.id);
-      try {
-        const res = await fetch(`${cmaBase}/entries/${entry.sys.id}/published`, {
-          method: "DELETE",
-          headers: authHeaders,
-        });
-        // Already unpublished (e.g. by a previous run) — not an error.
-        if (res.status === 404 || res.status === 400) continue;
-        if (!res.ok) throw new Error(await res.text());
-        unpublished.push(slug);
-      } catch (err) {
-        errors.push({ slug, message: err instanceof Error ? err.message : String(err) });
+      const rebateUrl = finlyWealthRebateUrl(field<string>(card, "applyUrl") ?? "");
+      if (rebateUrl) {
+        // Best effort: a card should still move out of the elevated tab even
+        // if FinlyWealth is unreachable this morning.
+        try {
+          changes.rebateVi = await fetchFinlyWealthRebate(rebateUrl);
+        } catch {
+          /* leave the stored rebate for the daily rebate check to correct */
+        }
       }
+
+      await updateEntry(client, card, CARD_TYPE, changes);
+      movedToOther.push(slug);
+      if (wasElevated) needsReview.push(slug);
+    } catch (err) {
+      errors.push({ slug, message: err instanceof Error ? err.message : String(err) });
     }
   }
 
-  return NextResponse.json({ checked, unpublished, errors });
-}
-
-interface ContentfulCmaEntry {
-  sys: { id: string; publishedVersion?: number };
-  fields: Record<string, Record<string, unknown>>;
-}
-
-async function fetchExpiredEntries(
-  contentType: string,
-  nowIso: string,
-  cmaBase: string,
-  authHeaders: Record<string, string>,
-): Promise<ContentfulCmaEntry[]> {
-  const expired: ContentfulCmaEntry[] = [];
-  let skip = 0;
-  const limit = 100;
-
-  for (;;) {
-    const res = await fetch(
-      `${cmaBase}/entries?content_type=${contentType}&fields.expiresAt[lte]=${encodeURIComponent(nowIso)}&skip=${skip}&limit=${limit}`,
-      { headers: authHeaders, cache: "no-store" },
-    );
-    // Without this a failed listing reads as an empty page, and the run
-    // reports "checked 0, nothing expired" as though it had succeeded.
-    if (!res.ok) throw new Error(`Listing ${contentType} failed: ${res.status} ${await res.text()}`);
-    const data = await res.json();
-    for (const item of (data.items ?? []) as ContentfulCmaEntry[]) {
-      // Only entries that currently have a live published version need unpublishing.
-      if (item.sys.publishedVersion) expired.push(item);
+  const bonuses = await listEntries(client, BONUS_TYPE, expiredQuery);
+  for (const bonus of bonuses) {
+    const slug = field<string>(bonus, "slug") ?? bonus.sys.id;
+    if (!bonus.sys.publishedVersion) continue;
+    try {
+      await unpublish(client, bonus);
+      unpublished.push(slug);
+    } catch (err) {
+      errors.push({ slug, message: err instanceof Error ? err.message : String(err) });
     }
-    skip += limit;
-    if (skip >= (data.total ?? 0)) break;
   }
 
-  return expired;
+  return NextResponse.json({
+    checked: cards.length + bonuses.length,
+    movedToOther,
+    needsReview,
+    unpublished,
+    errors,
+  });
+}
+
+async function unpublish(client: CmaClient, entry: CmaEntry): Promise<void> {
+  const res = await fetch(`${client.base}/entries/${entry.sys.id}/published`, {
+    method: "DELETE",
+    headers: client.headers,
+  });
+  // Already unpublished by an earlier run — not an error.
+  if (res.status === 404) return;
+  if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
 }

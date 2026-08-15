@@ -1,0 +1,19 @@
+name: Check FinlyWealth rebate amounts
+
+# Calls the deployed site's /api/check-rebates endpoint, which reads the
+# current rebate off each card's FinlyWealth page and writes it back to
+# Contentful when it has changed. FinlyWealth moves these figures without
+# notice, and a rebate on the card that no longer matches what the reader
+# actually gets is worse than showing none.
+on:
+  schedule:
+    - cron: "30 8 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call check-rebates endpoint
+        run: |
+          curl -sf -X POST "https://ghe1a.com/api/check-rebates?secret=${{ secrets.EXPIRE_OFFERS_SECRET }}"

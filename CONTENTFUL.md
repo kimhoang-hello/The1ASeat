@@ -226,15 +226,51 @@ Bài viết tự tạo chỉ có tiêu đề gốc + 1 câu mô tả ngắn chun
 Claude Code viết riêng cho từng video như trước) — vào Contentful chỉnh lại
 `excerptVi`/`bodyVi`/`categoryVi` nếu muốn, publish lại là xong.
 
-## Tự động ẩn thẻ tín dụng / transfer bonus hết hạn
+## Hai mục thẻ tín dụng: "Offers nổi bật" và "Các offers khác"
 
-Route [`/api/expire-offers`](src/app/api/expire-offers/route.ts) kiểm tra mọi
-`creditCardOffer` và `transferBonus` đang Published có `Expires At` đã qua, và
-tự **Unpublish** (không xoá) — ưu đãi vẫn còn nguyên trong Contentful, nếu sau
-này có lại (elevated offer quay lại) chỉ cần vào sửa `Expires At` rồi Publish
-lại là hiện lên web ngay, không cần tạo mới. GitHub Actions
-([`.github/workflows/expire-offers.yml`](.github/workflows/expire-offers.yml))
-gọi route này mỗi ngày 1 lần.
+Trang `/credit-cards` có 2 tab, và thẻ nằm ở tab nào là do **một ô duy nhất**
+quyết định — `Elevated Bonus`:
+
+| `Elevated Bonus` | Thẻ hiện ở tab |
+|------------------|----------------|
+| ✅ bật            | Offers nổi bật |
+| ⬜ tắt            | Các offers khác |
+
+Không cần làm gì thêm, không có trường nào khác phải điền.
+
+## Tự động xử lý thẻ tín dụng / transfer bonus hết hạn
+
+Route [`/api/expire-offers`](src/app/api/expire-offers/route.ts) chạy mỗi ngày
+1 lần qua GitHub Actions
+([`.github/workflows/expire-offers.yml`](.github/workflows/expire-offers.yml)),
+xử lý mọi entry có `Expires At` đã qua:
+
+- **Thẻ tín dụng** — thẻ vẫn còn tồn tại sau khi elevated offer kết thúc, chỉ
+  là quay về offer thường. Nên route **không ẩn thẻ đi**: nó tắt `Elevated
+  Bonus`, xoá `Expires At`, cập nhật lại rebate FinlyWealth, và thẻ tự chuyển
+  sang tab **Các offers khác**.
+- **Transfer bonus** — hết là hết, nên vẫn tự **Unpublish** (không xoá). Nếu
+  sau này bonus quay lại, chỉ cần sửa `Expires At` rồi Publish lại.
+
+> ⚠️ **Việc bạn cần làm sau khi một thẻ bị chuyển mục:** phần chữ tiếng Việt
+> (`Headline Vi`, `Key Benefits Vi`, `Editors Take Vi`) vẫn đang ghi con số
+> welcome bonus **cũ** — máy không tự viết lại được. Kết quả trả về của
+> workflow có danh sách `needsReview` liệt kê đúng những thẻ cần bạn vào sửa
+> lời văn. Vào tab **Actions** trên GitHub, mở lần chạy gần nhất là thấy.
+
+## Tự động kiểm tra rebate FinlyWealth
+
+FinlyWealth đổi số tiền rebate mà không báo trước (thẻ BMO® VIPorter® từng đổi
+từ $125 lên $200). Route
+[`/api/check-rebates`](src/app/api/check-rebates/route.ts) chạy mỗi ngày, mở
+trang FinlyWealth của từng thẻ, đọc số rebate hiện tại rồi ghi đè vào ô
+`Rebate Vi` nếu lệch — nên con số hiển thị trên web luôn khớp với số người đọc
+thực nhận. Chỉ những thẻ có `Apply Url` trỏ tới trang `/rebates/...` của
+FinlyWealth mới được kiểm tra; thẻ dùng link referral riêng của ngân hàng thì
+route bỏ qua.
+
+Workflow: [`.github/workflows/check-rebates.yml`](.github/workflows/check-rebates.yml).
+Dùng chung `EXPIRE_OFFERS_SECRET` bên dưới, không cần thêm biến mới.
 
 **1. Thêm 1 biến môi trường cho site live** — vào đúng chỗ bạn đã điền
 `CONTENTFUL_SPACE_ID` (hPanel → website → Environment variables), thêm:
@@ -252,7 +288,7 @@ and variables → Actions → New repository secret**:
 - Value: giống hệt giá trị bạn vừa điền ở bước 1
 
 **3. Kiểm tra** — vào tab **Actions** trên GitHub → chọn workflow **Unpublish
-expired credit card offers & transfer bonuses** → **Run workflow** để chạy thử
+expired credit card offers & transfer bonuses** (hoặc **Check FinlyWealth rebate amounts**) → **Run workflow** để chạy thử
 ngay thay vì chờ đến giờ chạy tự động.
 
 ## Email chào mừng cho subscriber mới

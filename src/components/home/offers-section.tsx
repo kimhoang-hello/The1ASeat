@@ -6,6 +6,7 @@ import { CardImage } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
 import { RebateBadge } from "@/components/credit-cards/rebate-badge";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
+import { EditorsTake } from "@/components/credit-cards/editors-take";
 import { ApplyButton } from "@/components/credit-cards/apply-button";
 
 const t = translate("offers");
@@ -74,14 +75,7 @@ export async function OffersSection() {
                   {t("annualFee")}: {offer.annualFee}
                 </p>
 
-                <div className="mt-3 rounded-lg bg-secondary p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                    {t("editorsTake")}
-                  </p>
-                  <p className="mt-1 text-sm leading-relaxed text-foreground/90">
-                    {offer.editorsTake}
-                  </p>
-                </div>
+                <EditorsTake editorsTake={offer.editorsTake} className="mt-3" compact />
 
                 <details className="group mt-3">
                   <summary className="flex cursor-pointer list-none items-center gap-1 text-sm font-semibold text-foreground/80 hover:text-primary">
