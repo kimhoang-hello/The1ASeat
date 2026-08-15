@@ -47,6 +47,11 @@ export function pageMetadata({
   absoluteTitle,
 }: PageMetadataInput): Metadata {
   const url = absoluteUrl(path);
+  // Every page sets its own `openGraph` object, which replaces (not merges
+  // with) the root layout's — including the site-wide opengraph-image file
+  // convention, which only applies to the segment it's defined in ("/").
+  // So pages need an explicit image or they render no og:image at all.
+  const resolvedImage = image || absoluteUrl("/opengraph-image");
 
   return {
     title: absoluteTitle ? { absolute: title } : title,
@@ -60,13 +65,13 @@ export function pageMetadata({
       ...(article?.publishedTime && { publishedTime: article.publishedTime }),
       ...(article?.modifiedTime && { modifiedTime: article.modifiedTime }),
       ...(article?.section && { section: article.section }),
-      ...(image && { images: [{ url: image }] }),
+      images: [{ url: resolvedImage }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      ...(image && { images: [image] }),
+      images: [resolvedImage],
     },
   };
 }
