@@ -52,7 +52,9 @@
     "videoBadge": "Video",
     "tabAll": "Tất cả",
     "tabPosts": "Bài viết",
-    "tabVideos": "Video"
+    "tabVideos": "Video",
+    "scrollPrev": "Xem các bài trước",
+    "scrollNext": "Xem các bài tiếp theo"
   },
   "bonuses": {
     "eyebrow": "CẬP NHẬT THƯỜNG XUYÊN",

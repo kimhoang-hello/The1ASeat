@@ -15,14 +15,14 @@ export async function TransferBonusesSection() {
       <div className="mx-auto max-w-page">
         <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold tracking-wide text-primary">{t("eyebrow")}</p>
-            <h2 className="mt-1 font-display text-2xl font-extrabold text-foreground sm:text-3xl">
+            <p className="text-xs font-semibold tracking-wide text-primary sm:text-sm">{t("eyebrow")}</p>
+            <h2 className="mt-1 font-display text-2xl font-extrabold text-foreground sm:text-3xl xl:text-4xl">
               {t("title")}
             </h2>
           </div>
           <Link
             href="/transfer-bonuses"
-            className="cursor-pointer text-sm font-semibold text-primary hover:underline"
+            className="cursor-pointer text-base font-semibold text-primary hover:underline"
           >
             {t("viewAll")} &rarr;
           </Link>
@@ -35,23 +35,23 @@ export async function TransferBonusesSection() {
               href={bonus.url}
               target="_blank"
               rel="noopener noreferrer"
-              className={`flex cursor-pointer flex-col gap-2 px-5 py-4 transition-colors hover:bg-secondary sm:flex-row sm:items-center sm:justify-between ${
+              className={`flex cursor-pointer flex-col gap-2 px-5 py-5 transition-colors hover:bg-secondary sm:flex-row sm:items-center sm:justify-between ${
                 i !== 0 ? "border-t border-border" : ""
               }`}
             >
               <div className="flex flex-col gap-1">
-                <div className="flex flex-wrap items-center gap-2 text-sm">
+                <div className="flex flex-wrap items-center gap-2 text-base">
                   <span className="font-semibold text-foreground">{bonus.fromProgram}</span>
-                  <ArrowRight size={14} className="text-muted-foreground" />
+                  <ArrowRight size={16} className="text-muted-foreground" />
                   <span className="font-semibold text-foreground">{bonus.toProgram}</span>
                 </div>
-                {bonus.note && <p className="text-xs text-muted-foreground">{bonus.note}</p>}
+                {bonus.note && <p className="text-sm text-muted-foreground">{bonus.note}</p>}
               </div>
-              <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-4 text-base">
                 <span className="font-medium text-amber-700">
                   {t("expires")} {formatDate(bonus.expiresAt)}
                 </span>
-                <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700">
+                <span className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-bold text-emerald-700">
                   +{bonus.bonusPercent}%
                 </span>
               </div>

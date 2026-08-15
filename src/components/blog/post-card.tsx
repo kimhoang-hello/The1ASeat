@@ -17,9 +17,11 @@ const common = t("common");
 export function PostCard({
   post,
   headingLevel = "h2",
+  className = "",
 }: {
   post: BlogPost;
   headingLevel?: "h2" | "h3";
+  className?: string;
 }) {
   const Heading = headingLevel;
   const thumbnail =
@@ -28,7 +30,7 @@ export function PostCard({
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md"
+      className={`group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md ${className}`}
     >
       {thumbnail ? (
         <div className="relative h-44 w-full overflow-hidden bg-primary">
