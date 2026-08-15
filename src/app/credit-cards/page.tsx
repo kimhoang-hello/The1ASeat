@@ -27,8 +27,9 @@ export const metadata: Metadata = pageMetadata({
 export const revalidate = 60;
 
 const TABS = [
-  { value: "noi-bat", labelKey: "tabElevated" },
-  { value: "khac", labelKey: "tabOther" },
+  { value: "all", labelKey: "tabAll", emptyKey: "emptyAll" },
+  { value: "noi-bat", labelKey: "tabElevated", emptyKey: "emptyElevated" },
+  { value: "khac", labelKey: "tabOther", emptyKey: "emptyOther" },
 ] as const;
 
 export default async function CreditCardsPage({
@@ -38,9 +39,11 @@ export default async function CreditCardsPage({
 }) {
   const [allOffers, { type }] = await Promise.all([getCreditCardOffers(), searchParams]);
 
-  const activeTab = type === "khac" ? "khac" : "noi-bat";
-  const offers = allOffers.filter((offer) =>
-    activeTab === "noi-bat" ? offer.elevatedBonus : !offer.elevatedBonus,
+  const activeTab = type === "khac" || type === "noi-bat" ? type : "all";
+  const offers = allOffers.filter(
+    (offer) =>
+      activeTab === "all" ||
+      (activeTab === "noi-bat" ? offer.elevatedBonus : !offer.elevatedBonus),
   );
 
   // The ?type= views are filtered slices of the same list and both canonicalise
@@ -81,7 +84,7 @@ export default async function CreditCardsPage({
           {TABS.map((tab) => (
             <Link
               key={tab.value}
-              href={tab.value === "noi-bat" ? "/credit-cards" : `/credit-cards?type=${tab.value}`}
+              href={tab.value === "all" ? "/credit-cards" : `/credit-cards?type=${tab.value}`}
               className={`cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
                 activeTab === tab.value
                   ? "bg-primary text-primary-foreground"
@@ -110,7 +113,10 @@ export default async function CreditCardsPage({
                 sizes="176px"
               />
 
-              <div className="flex-1">
+              {/* A column so the actions can sit on the bottom edge — side by
+                  side, cards whose copy runs to different lengths would
+                  otherwise put their Apply buttons at different heights. */}
+              <div className="flex flex-1 flex-col">
                 <CardBadges
                   offer={offer}
                   cardType={`${offer.cardType} · ${offer.issuer}`}
@@ -140,7 +146,7 @@ export default async function CreditCardsPage({
                   </ul>
                 </details>
 
-                <div className="mt-4 flex flex-wrap items-center gap-4">
+                <div className="mt-auto flex flex-wrap items-center gap-4 pt-4">
                   <Link
                     href={`/credit-cards/${offer.slug}`}
                     className="cursor-pointer text-sm font-semibold text-foreground/80 hover:text-primary hover:underline"
@@ -155,7 +161,7 @@ export default async function CreditCardsPage({
 
           {offers.length === 0 && (
             <p className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground xl:col-span-2">
-              {offers_t(activeTab === "noi-bat" ? "emptyElevated" : "emptyOther")}
+              {offers_t(TABS.find((tab) => tab.value === activeTab)!.emptyKey)}
             </p>
           )}
 

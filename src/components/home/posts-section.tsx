@@ -67,7 +67,7 @@ export async function PostsSection() {
                 <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
                   {post.excerpt}
                 </p>
-                <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="mt-auto flex items-center gap-2 pt-4 text-xs text-muted-foreground">
                   <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
                   <span aria-hidden>&middot;</span>
                   <span>

@@ -17,22 +17,22 @@ export function SiteFooter() {
         <div className="flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href="/"
-            className="flex items-center gap-2 font-display text-base font-extrabold text-white"
+            className="flex items-center gap-2 font-display text-lg font-extrabold text-white xl:text-xl"
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-background">
+            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-background xl:h-9 xl:w-9">
               <Image
                 src="/images/logo.png"
                 alt=""
                 width={477}
                 height={480}
-                sizes="20px"
-                className="h-5 w-5"
+                sizes="24px"
+                className="h-5 w-5 xl:h-6 xl:w-6"
               />
             </span>
             {site("name")}
           </Link>
 
-          <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+          <nav className="flex flex-wrap gap-x-6 gap-y-2 text-base">
             <Link href="/credit-cards" className="hover:text-white">
               {nav("creditCards")}
             </Link>
@@ -66,11 +66,11 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <p className="mt-8 max-w-4xl text-xs leading-relaxed text-white/45">
+        <p className="mt-8 max-w-4xl text-sm leading-relaxed text-white/50">
           {t("disclosure")}
         </p>
 
-        <div className="mt-6 flex flex-col gap-2 border-t border-white/10 pt-6 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-6 flex flex-col gap-2 border-t border-white/10 pt-6 text-sm text-white/50 sm:flex-row sm:items-center sm:justify-between">
           <span>
             © {year} {site("name")}. {t("rights")}
           </span>

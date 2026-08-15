@@ -36,11 +36,13 @@
     "elevatedBonus": "Elevated offer",
     "expiresOn": "Hết hạn",
     "rebate": "Rebate",
+    "tabAll": "Tất cả offers",
     "tabElevated": "Offers nổi bật",
     "tabOther": "Các offers khác",
     "hotTip": "HOT TIP",
     "emptyElevated": "Hiện chưa có elevated offer nào đang chạy.",
-    "emptyOther": "Hiện chưa có thẻ nào trong mục này."
+    "emptyOther": "Hiện chưa có thẻ nào trong mục này.",
+    "emptyAll": "Hiện chưa có thẻ nào."
   },
   "posts": {
     "eyebrow": "TỪ BLOG",

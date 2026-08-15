@@ -58,7 +58,9 @@ export async function OffersSection() {
                 sizes="176px"
               />
 
-              <div className="flex-1">
+              {/* A column so the apply button can sit on the bottom edge — see
+                  the note on the credit-cards list. */}
+              <div className="flex flex-1 flex-col">
                 <CardBadges
                   offer={offer}
                   cardType={offer.cardType}
@@ -89,7 +91,9 @@ export async function OffersSection() {
                   </ul>
                 </details>
 
-                <ApplyButton href={offer.applyUrl} className="mt-4" />
+                <div className="mt-auto pt-4">
+                  <ApplyButton href={offer.applyUrl} />
+                </div>
               </div>
             </article>
           ))}
