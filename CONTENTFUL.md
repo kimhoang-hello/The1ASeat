@@ -252,11 +252,24 @@ xử lý mọi entry có `Expires At` đã qua:
 - **Transfer bonus** — hết là hết, nên vẫn tự **Unpublish** (không xoá). Nếu
   sau này bonus quay lại, chỉ cần sửa `Expires At` rồi Publish lại.
 
-> ⚠️ **Việc bạn cần làm sau khi một thẻ bị chuyển mục:** phần chữ tiếng Việt
-> (`Headline Vi`, `Key Benefits Vi`, `Editors Take Vi`) vẫn đang ghi con số
-> welcome bonus **cũ** — máy không tự viết lại được. Kết quả trả về của
-> workflow có danh sách `needsReview` liệt kê đúng những thẻ cần bạn vào sửa
-> lời văn. Vào tab **Actions** trên GitHub, mở lần chạy gần nhất là thấy.
+  Phần chữ tiếng Việt (`Headline Vi`, `Key Benefits Vi`, `Editors Take Vi`)
+  cũng được **viết lại theo offer mới**: route đọc phần "How to earn the
+  welcome bonus" trên trang FinlyWealth của thẻ rồi nhờ Claude viết lại bằng
+  tiếng Việt, đúng quy ước của site (dấu phẩy ngăn cách hàng nghìn, $ là CAD,
+  giữ tiếng Anh các thuật ngữ, có ký hiệu ®/™, kết bằng dòng HOT TIP nếu thẻ
+  có rebate).
+
+**Cần thêm 1 biến môi trường cho phần viết lại bonus** — vào hPanel →
+website → Environment variables, thêm `ANTHROPIC_API_KEY` (lấy ở
+console.anthropic.com). Nếu chưa có biến này, mọi thứ khác vẫn chạy bình
+thường, chỉ riêng phần viết lại lời văn là bỏ qua.
+
+> ⚠️ **Vẫn nên soát lại:** thẻ nào không viết lại được (FinlyWealth đổi cấu
+> trúc trang, thiếu API key, mạng lỗi...) sẽ nằm trong danh sách `needsReview`
+> kèm lý do; thẻ viết lại thành công nằm trong `bonusRewritten`. Vào tab
+> **Actions** trên GitHub, mở lần chạy gần nhất là thấy cả hai danh sách. Máy
+> viết đúng số liệu FinlyWealth công bố, nhưng bạn nên đọc lại lời văn một
+> lượt trước khi yên tâm.
 
 ## Tự động kiểm tra rebate FinlyWealth
 
