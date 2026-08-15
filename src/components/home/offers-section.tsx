@@ -5,6 +5,7 @@ import { getCreditCardOffers } from "@/lib/content";
 import { CardImage } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
 import { RebateBadge } from "@/components/credit-cards/rebate-badge";
+import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 
 const t = translate("offers");
 
@@ -92,14 +93,16 @@ export async function OffersSection() {
                 <a
                   href={offer.applyUrl}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="sponsored nofollow noopener noreferrer"
                   className="mt-4 inline-block cursor-pointer text-sm font-bold text-primary underline decoration-2 underline-offset-4 hover:text-primary-hover"
                 >
-                  {t("viewOffer")} &rarr;
+                  {t("applyNow")} &rarr;
                 </a>
               </div>
             </article>
           ))}
+
+          <OfferDisclosure className="mt-3" />
         </div>
       </div>
     </section>

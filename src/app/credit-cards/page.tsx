@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { CardImage } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
 import { RebateBadge } from "@/components/credit-cards/rebate-badge";
+import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { JsonLd } from "@/components/seo/json-ld";
 import { creditCardJsonLd } from "@/lib/credit-card-schema";
 import { t } from "@/lib/t";
@@ -115,12 +116,14 @@ export default async function CreditCardsPage() {
                     rel="sponsored nofollow noopener noreferrer"
                     className="cursor-pointer text-sm font-bold text-primary underline decoration-2 underline-offset-4 hover:text-primary-hover"
                   >
-                    {offers_t("viewOffer")} &rarr;
+                    {offers_t("applyNow")} &rarr;
                   </a>
                 </div>
               </div>
             </article>
           ))}
+
+          <OfferDisclosure className="mt-3" />
         </div>
       </section>
     </>

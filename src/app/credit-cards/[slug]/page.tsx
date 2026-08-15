@@ -5,6 +5,7 @@ import { getCreditCardOfferBySlug, getCreditCardOffers } from "@/lib/content";
 import { CardImage } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
 import { RebateBadge } from "@/components/credit-cards/rebate-badge";
+import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { JsonLd } from "@/components/seo/json-ld";
 import { creditCardJsonLd } from "@/lib/credit-card-schema";
 import { t as translate } from "@/lib/t";
@@ -110,8 +111,10 @@ export default async function CreditCardDetailPage({
         rel="sponsored nofollow noopener noreferrer"
         className="mt-8 inline-block cursor-pointer rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
       >
-        {offers("viewOffer")} &rarr;
+        {offers("applyNow")} &rarr;
       </a>
+
+      <OfferDisclosure className="mt-8" />
 
       <p className="mt-10 border-t border-border pt-4 text-xs text-muted-foreground">
         <Link href="/" className="underline">
