@@ -33,6 +33,9 @@ export function SiteFooter() {
           </Link>
 
           <nav className="flex flex-wrap gap-x-6 gap-y-2 text-base">
+            <Link href="/" className="hover:text-white">
+              {nav("home")}
+            </Link>
             <Link href="/credit-cards" className="hover:text-white">
               {nav("creditCards")}
             </Link>

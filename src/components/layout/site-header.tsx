@@ -181,6 +181,17 @@ export function SiteHeader() {
         </Link>
 
         <nav ref={navRef} className="hidden items-center gap-7 lg:flex">
+          {/* The logo already goes home, but that is a convention rather than a
+              label — the nav says so in words. */}
+          <Link
+            href="/"
+            className={`text-base font-medium transition-colors hover:text-primary ${
+              pathname === "/" ? "text-primary" : "text-foreground/80"
+            }`}
+          >
+            {nav("home")}
+          </Link>
+
           <TypeDropdown
             label={nav("creditCards")}
             basePath="/credit-cards"
@@ -260,6 +271,14 @@ export function SiteHeader() {
       {open && (
         <div className="border-t border-border bg-background px-4 pb-6 pt-2 lg:hidden">
           <nav className="flex flex-col gap-1">
+            <Link
+              href="/"
+              onClick={() => setOpen(false)}
+              className="rounded-md px-2 py-3 text-base font-medium text-foreground/90 hover:bg-secondary"
+            >
+              {nav("home")}
+            </Link>
+
             <Link
               href="/credit-cards"
               onClick={() => setOpen(false)}
