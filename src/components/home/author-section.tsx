@@ -13,7 +13,7 @@ export async function AuthorSection() {
 
   return (
     <section className="border-t border-border bg-secondary px-4 py-16 sm:px-6 lg:px-8">
-      <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-[1fr_auto] md:items-center">
+      <div className="mx-auto grid max-w-page gap-10 md:grid-cols-[1fr_auto] md:items-center">
         <div>
           <p className="text-xs font-semibold tracking-wide text-primary">{t("eyebrow")}</p>
           <h2 className="mt-1 font-display text-2xl font-extrabold text-foreground sm:text-3xl">

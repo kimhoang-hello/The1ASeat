@@ -15,8 +15,8 @@ export async function PostsSection() {
 
   return (
     <section className="border-t border-border bg-secondary px-4 py-16 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-8 flex items-end justify-between">
+      <div className="mx-auto max-w-page">
+        <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-semibold tracking-wide text-primary">{t("eyebrow")}</p>
             <h2 className="mt-1 font-display text-2xl font-extrabold text-foreground sm:text-3xl">
@@ -28,7 +28,7 @@ export async function PostsSection() {
           </Link>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {posts.map((post) => {
             const thumbnail =
               post.coverPhoto ?? (post.type === "video" ? getYouTubeThumbnailUrl(post.videoUrl ?? "") : null);

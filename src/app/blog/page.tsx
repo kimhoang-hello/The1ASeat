@@ -73,7 +73,7 @@ export default async function BlogPage({
       <PageHeader eyebrow={posts_t("eyebrow")} title={posts_t("title")} />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-page">
           <div className="mb-6 flex gap-2">
             {TABS.map((tab) => (
               <Link
@@ -92,7 +92,7 @@ export default async function BlogPage({
 
           <CategoryLinks categories={categories} className="mb-8" />
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {posts.map((post) => (
               <PostCard key={post.slug} post={post} />
             ))}

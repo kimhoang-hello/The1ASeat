@@ -70,4 +70,18 @@ body {
   .font-display {
     font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
   }
+
+  /* The width every full-width section shares. It holds at 72rem, the
+     comfortable reading width, and only opens up past Tailwind's 2xl
+     breakpoint — on a 2560px display the old fixed cap left more than half
+     the screen empty. Article pages keep their own narrower cap. */
+  .max-w-page {
+    max-width: 72rem;
+  }
+
+  @media (width >= 96rem) {
+    .max-w-page {
+      max-width: 88rem;
+    }
+  }
 }

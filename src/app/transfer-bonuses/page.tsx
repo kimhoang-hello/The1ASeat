@@ -27,7 +27,7 @@ export default async function TransferBonusesPage() {
       <PageHeader eyebrow={bonuses_t("eyebrow")} title={bonuses_t("title")} />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl overflow-hidden rounded-2xl border border-border">
+        <div className="mx-auto max-w-page overflow-hidden rounded-2xl border border-border">
           {bonuses.map((bonus, i) => (
             <a
               key={bonus.slug}

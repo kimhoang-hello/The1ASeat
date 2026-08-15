@@ -98,10 +98,10 @@ export default async function BlogCategoryPage({
       />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-page">
           <CategoryLinks categories={categories} activeSlug={category.slug} className="mb-8" />
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {posts.map((post) => (
               <PostCard key={post.slug} post={post} />
             ))}

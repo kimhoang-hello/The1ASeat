@@ -6,13 +6,13 @@ const t = translate("hero");
 export function Hero() {
 
   return (
-    <section className="border-b border-border bg-background px-4 py-20 sm:px-6 lg:px-8">
-      <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
-        <h1 className="font-display text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">
+    <section className="border-b border-border bg-background px-4 py-20 sm:px-6 lg:px-8 2xl:py-28">
+      <div className="mx-auto flex max-w-3xl flex-col items-center text-center 2xl:max-w-4xl">
+        <h1 className="font-display text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl 2xl:text-6xl">
           {t("title1")}{" "}
           <span className="text-primary">{t("title2")}</span>
         </h1>
-        <p className="mt-5 max-w-xl text-balance text-base leading-relaxed text-muted-foreground sm:text-lg">
+        <p className="mt-5 max-w-xl text-balance text-base leading-relaxed text-muted-foreground sm:text-lg 2xl:max-w-2xl 2xl:text-xl">
           {t("subtitle")}
         </p>
 

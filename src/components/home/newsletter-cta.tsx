@@ -6,7 +6,7 @@ const t = translate("newsletterCta");
 export function NewsletterCta() {
   return (
     <section className="bg-navy-ink px-4 py-16 text-white sm:px-6 lg:px-8">
-      <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-8 md:flex-row md:items-center">
+      <div className="mx-auto flex max-w-page flex-col items-start justify-between gap-8 md:flex-row md:items-center">
         <div>
           <p className="text-xs font-semibold tracking-wide text-white/60">{t("eyebrow")}</p>
           <h2 className="mt-2 font-display text-2xl font-extrabold sm:text-3xl">

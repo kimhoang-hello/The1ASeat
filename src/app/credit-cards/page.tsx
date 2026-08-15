@@ -61,7 +61,9 @@ export default async function CreditCardsPage() {
       <PageHeader eyebrow={offers_t("eyebrow")} title={offers_t("title")} />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-6xl flex-col gap-5">
+        {/* Two across once the page is wide enough, so the extra room goes into
+            a second card rather than into 110-character lines of text. */}
+        <div className="mx-auto grid max-w-page gap-5 2xl:grid-cols-2">
           {offers.map((offer) => (
             <article
               key={offer.slug}
@@ -70,7 +72,7 @@ export default async function CreditCardsPage() {
               <CardImage
                 image={offer.cardImage}
                 name={offer.name}
-                className="h-32 w-full shrink-0 rounded-xl sm:h-auto sm:w-40"
+                className="h-32 w-full shrink-0 self-start rounded-xl sm:h-32 sm:w-40 2xl:h-36 2xl:w-44"
                 badge={offer.rebate && <RebateBadge amount={offer.rebate} label={offers_t("rebate")} />}
                 applyUrl={offer.applyUrl}
               />
@@ -118,7 +120,7 @@ export default async function CreditCardsPage() {
             </article>
           ))}
 
-          <OfferDisclosure className="mt-3" />
+          <OfferDisclosure className="mt-3 2xl:col-span-2" />
         </div>
       </section>
     </>
