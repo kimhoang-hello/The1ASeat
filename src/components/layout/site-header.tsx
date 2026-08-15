@@ -11,9 +11,34 @@ import { t } from "@/lib/t";
  *  null for the entry that lives at the bare path, with no param. */
 type TypeLink = { href: string; type: string | null; label: string };
 
+/**
+ * A top-level nav item. The active page marks itself three ways at once — navy,
+ * bolder, and underlined — because no single one of them carried on its own:
+ * navy against near-black text is two dark colours a reader cannot separate,
+ * and weight alone is easy to miss. The idle items are dimmed so the live one
+ * is the brightest thing in the row, and every item carries a transparent
+ * underline so nothing shifts when the highlight moves.
+ */
+function navItemClassName(active: boolean) {
+  return `border-b-2 pb-1 text-base transition-colors hover:text-primary ${
+    active
+      ? "border-primary font-bold text-primary"
+      : "border-transparent font-medium text-foreground/55"
+  }`;
+}
+
 function dropdownLinkClassName(active: boolean) {
   return `block rounded-lg px-3 py-2 text-base hover:bg-secondary ${
-    active ? "text-primary" : "text-foreground/90"
+    active ? "bg-secondary font-semibold text-primary" : "text-foreground/90"
+  }`;
+}
+
+/** The mobile menu has no room for an underline — it fills the row instead. */
+function mobileItemClassName(active: boolean, nested = false) {
+  const size = nested ? "px-4 py-2 text-sm" : "px-2 py-3 text-base";
+  const idle = nested ? "text-foreground/70" : "text-foreground/90";
+  return `rounded-md font-medium hover:bg-secondary ${size} ${
+    active ? "bg-secondary font-semibold text-primary" : idle
   }`;
 }
 
@@ -72,9 +97,9 @@ function TypeDropdown({
   return (
     <details name="nav-dropdown" className="group relative">
       <summary
-        className={`flex cursor-pointer list-none items-center gap-1 text-base font-medium transition-colors hover:text-primary [&::-webkit-details-marker]:hidden ${
-          active ? "text-primary" : "text-foreground/80"
-        }`}
+        className={`flex cursor-pointer list-none items-center gap-1 [&::-webkit-details-marker]:hidden ${navItemClassName(
+          active,
+        )}`}
       >
         {label}
         <CaretDown size={14} className="transition-transform group-open:rotate-180" />
@@ -183,12 +208,7 @@ export function SiteHeader() {
         <nav ref={navRef} className="hidden items-center gap-7 lg:flex">
           {/* The logo already goes home, but that is a convention rather than a
               label — the nav says so in words. */}
-          <Link
-            href="/"
-            className={`text-base font-medium transition-colors hover:text-primary ${
-              pathname === "/" ? "text-primary" : "text-foreground/80"
-            }`}
-          >
+          <Link href="/" className={navItemClassName(pathname === "/")}>
             {nav("home")}
           </Link>
 
@@ -214,9 +234,9 @@ export function SiteHeader() {
 
           <details name="nav-dropdown" className="group relative">
             <summary
-              className={`flex cursor-pointer list-none items-center gap-1 text-base font-medium transition-colors hover:text-primary [&::-webkit-details-marker]:hidden ${
-                toolsActive ? "text-primary" : "text-foreground/80"
-              }`}
+              className={`flex cursor-pointer list-none items-center gap-1 [&::-webkit-details-marker]:hidden ${navItemClassName(
+                toolsActive,
+              )}`}
             >
               {nav("pointsTools")}
               <CaretDown size={14} className="transition-transform group-open:rotate-180" />
@@ -227,9 +247,7 @@ export function SiteHeader() {
                   key={link.href}
                   href={link.href}
                   onClick={closeParentDropdown}
-                  className={`block rounded-lg px-3 py-2 text-base hover:bg-secondary ${
-                    pathname === link.href ? "text-primary" : "text-foreground/90"
-                  }`}
+                  className={dropdownLinkClassName(pathname === link.href)}
                 >
                   {link.label}
                 </Link>
@@ -237,12 +255,7 @@ export function SiteHeader() {
             </div>
           </details>
 
-          <Link
-            href="/about"
-            className={`text-base font-medium transition-colors hover:text-primary ${
-              pathname === "/about" ? "text-primary" : "text-foreground/80"
-            }`}
-          >
+          <Link href="/about" className={navItemClassName(pathname === "/about")}>
             {nav("about")}
           </Link>
         </nav>
@@ -274,7 +287,7 @@ export function SiteHeader() {
             <Link
               href="/"
               onClick={() => setOpen(false)}
-              className="rounded-md px-2 py-3 text-base font-medium text-foreground/90 hover:bg-secondary"
+              className={mobileItemClassName(pathname === "/")}
             >
               {nav("home")}
             </Link>
@@ -282,7 +295,7 @@ export function SiteHeader() {
             <Link
               href="/credit-cards"
               onClick={() => setOpen(false)}
-              className="rounded-md px-2 py-3 text-base font-medium text-foreground/90 hover:bg-secondary"
+              className={mobileItemClassName(cardsActive)}
             >
               {nav("creditCards")}
             </Link>
@@ -291,7 +304,7 @@ export function SiteHeader() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setOpen(false)}
-                className="rounded-md px-4 py-2 text-sm font-medium text-foreground/70 hover:bg-secondary"
+                className={mobileItemClassName(pathname === link.href, true)}
               >
                 {link.label}
               </Link>
@@ -300,7 +313,7 @@ export function SiteHeader() {
             <Link
               href="/blog"
               onClick={() => setOpen(false)}
-              className="rounded-md px-2 py-3 text-base font-medium text-foreground/90 hover:bg-secondary"
+              className={mobileItemClassName(blogActive)}
             >
               {nav("blog")}
             </Link>
@@ -309,7 +322,7 @@ export function SiteHeader() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setOpen(false)}
-                className="rounded-md px-4 py-2 text-sm font-medium text-foreground/70 hover:bg-secondary"
+                className={mobileItemClassName(pathname === link.href, true)}
               >
                 {link.label}
               </Link>
@@ -323,7 +336,7 @@ export function SiteHeader() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setOpen(false)}
-                className="rounded-md px-4 py-2 text-sm font-medium text-foreground/70 hover:bg-secondary"
+                className={mobileItemClassName(pathname === link.href, true)}
               >
                 {link.label}
               </Link>
@@ -332,7 +345,7 @@ export function SiteHeader() {
             <Link
               href="/about"
               onClick={() => setOpen(false)}
-              className="mt-2 rounded-md px-2 py-3 text-base font-medium text-foreground/90 hover:bg-secondary"
+              className={`mt-2 ${mobileItemClassName(pathname === "/about")}`}
             >
               {nav("about")}
             </Link>

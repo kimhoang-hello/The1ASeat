@@ -56,15 +56,18 @@ export function SiteFooter() {
             </Link>
           </nav>
 
-          <div className="flex gap-4 text-white/60">
+          {/* The channel is the whole reason most of this content exists, so the
+              icon is sized to be seen rather than tucked into the corner —
+              brighter than the links beside it, and a comfortable tap target. */}
+          <div className="flex gap-4 text-white/75">
             <a
               href="https://youtube.com/@hoangleca"
               aria-label="YouTube"
               target="_blank"
               rel="noopener noreferrer"
-              className="cursor-pointer hover:text-white"
+              className="-m-2 cursor-pointer p-2 transition-colors hover:text-white"
             >
-              <YoutubeLogo size={20} />
+              <YoutubeLogo size={32} weight="fill" className="xl:h-9 xl:w-9" />
             </a>
           </div>
         </div>
