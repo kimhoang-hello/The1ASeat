@@ -12,7 +12,8 @@ export function SiteFooter() {
 
   return (
     <footer className="border-t border-border bg-navy-ink text-white/70">
-      <div className="mx-auto max-w-page px-4 py-10 sm:px-6 lg:px-8">
+      {/* Full-bleed to match the header — see the note there. */}
+      <div className="px-4 py-10 sm:px-6 lg:px-10 2xl:px-16">
         <div className="flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href="/"

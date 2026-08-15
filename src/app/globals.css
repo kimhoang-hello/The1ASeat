@@ -72,16 +72,34 @@ body {
   }
 
   /* The width every full-width section shares. It holds at 72rem, the
-     comfortable reading width, and only opens up past Tailwind's 2xl
-     breakpoint — on a 2560px display the old fixed cap left more than half
-     the screen empty. Article pages keep their own narrower cap. */
+     comfortable reading width, then tracks the viewport on larger displays
+     instead of sitting in a fixed ribbon — the cap only stops a line of text
+     from running the full width of a 2560px screen. Article pages keep their
+     own narrower cap; the header and footer opt out entirely and go
+     full-bleed. */
   .max-w-page {
     max-width: 72rem;
   }
 
-  @media (width >= 96rem) {
+  @media (width >= 80rem) {
     .max-w-page {
-      max-width: 88rem;
+      max-width: min(94vw, 110rem);
     }
+  }
+}
+
+/* Everything is sized in rem, so lifting the root size scales type, spacing
+   and controls together. Without this the site renders at the same 16px on a
+   2560px display as on a laptop, which is what makes it read as "tiny" there
+   rather than merely wide. */
+@media (width >= 120rem) {
+  :root {
+    font-size: 17px;
+  }
+}
+
+@media (width >= 150rem) {
+  :root {
+    font-size: 18px;
   }
 }

@@ -92,7 +92,11 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-page items-center justify-between px-4 sm:px-6 lg:px-8">
+      {/* Full-bleed on purpose: the header is chrome, not reading matter, so it
+          runs the width of the window and only keeps a gutter. Capping it left
+          the logo and the newsletter button floating in the middle of a large
+          display with a third of the bar empty on either side. */}
+      <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-10 2xl:px-16">
         <Link
           href="/"
           className="flex items-center gap-2 font-display text-lg font-extrabold tracking-tight text-primary"

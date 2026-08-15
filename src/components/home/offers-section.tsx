@@ -43,7 +43,7 @@ export async function OffersSection() {
 
         {/* Two across once the section is wide enough, so the extra room goes
             into a second card rather than into 110-character lines of text. */}
-        <div className="grid gap-5 2xl:grid-cols-2">
+        <div className="grid gap-5 xl:grid-cols-2">
           {offers.map((offer) => (
             <article
               key={offer.slug}
@@ -52,7 +52,7 @@ export async function OffersSection() {
               <CardImage
                 image={offer.cardImage}
                 name={offer.name}
-                className="h-32 w-full shrink-0 self-start rounded-xl sm:h-32 sm:w-40 2xl:h-36 2xl:w-44"
+                className="h-32 w-full shrink-0 self-start rounded-xl sm:h-32 sm:w-40 xl:h-36 xl:w-44"
                 badge={offer.rebate && <RebateBadge amount={offer.rebate} label={t("rebate")} />}
                 applyUrl={offer.applyUrl}
                 sizes="176px"
@@ -94,7 +94,7 @@ export async function OffersSection() {
             </article>
           ))}
 
-          <OfferDisclosure className="mt-3 2xl:col-span-2" />
+          <OfferDisclosure className="mt-3 xl:col-span-2" />
         </div>
       </div>
     </section>
