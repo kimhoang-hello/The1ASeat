@@ -71,6 +71,18 @@ body {
     font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
   }
 
+  /* The offer strip above the header swaps cards on a timer. The fade is what
+     tells a reader the line changed, rather than that they misread it. */
+  .animate-offer-in {
+    animation: offer-in 450ms ease-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-offer-in {
+      animation: none;
+    }
+  }
+
   /* The width every full-width section shares. It holds at 72rem, the
      comfortable reading width, then tracks the viewport on larger displays
      instead of sitting in a fixed ribbon — the cap only stops a line of text
@@ -85,6 +97,17 @@ body {
     .max-w-page {
       max-width: min(94vw, 110rem);
     }
+  }
+}
+
+@keyframes offer-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 

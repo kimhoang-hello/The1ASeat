@@ -5,6 +5,7 @@ import { useSearchParams, usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { List, X, CaretDown, PaperPlaneTilt } from "@phosphor-icons/react";
+import { SiteSearch } from "@/components/layout/site-search";
 import { t } from "@/lib/t";
 
 /** A dropdown entry for a page that filters itself with `?type=`. `type` is
@@ -238,6 +239,9 @@ export function SiteHeader() {
   }
 
   return (
+    // `sticky` positions this element, which is what the search panel hangs
+    // off: it spans the full width under the bar rather than dangling from the
+    // icon that opened it.
     <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
       {/* Full-bleed on purpose: the header is chrome, not reading matter, so it
           runs the width of the window and only keeps a gutter. Capping it left
@@ -315,25 +319,30 @@ export function SiteHeader() {
           </Link>
         </nav>
 
-        <div className="hidden items-center gap-4 lg:flex">
+        {/* One cluster for both breakpoints so search keeps a single instance —
+            two copies behind `hidden` would each carry their own open state and
+            their own copy of the index. */}
+        <div className="flex items-center gap-1 lg:gap-3">
+          <SiteSearch onOpen={() => setOpen(false)} />
+
           <Link
             href="/#newsletter"
-            className="flex cursor-pointer items-center gap-2 rounded-full bg-primary px-4 py-2 text-base font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
+            className="hidden cursor-pointer items-center gap-2 rounded-full bg-primary px-4 py-2 text-base font-semibold text-primary-foreground transition-colors hover:bg-primary-hover lg:flex"
           >
             {nav("newsletter")}
             <PaperPlaneTilt size={16} weight="bold" />
           </Link>
-        </div>
 
-        <button
-          type="button"
-          aria-label="Menu"
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
-          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-md text-foreground lg:hidden"
-        >
-          {open ? <X size={22} /> : <List size={22} />}
-        </button>
+          <button
+            type="button"
+            aria-label="Menu"
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-md text-foreground lg:hidden"
+          >
+            {open ? <X size={22} /> : <List size={22} />}
+          </button>
+        </div>
       </div>
 
       {open && (

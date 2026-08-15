@@ -15,6 +15,23 @@
     "newsletter": "Đăng ký bản tin",
     "awardCharts": "Award Flight Finder"
   },
+  "banner": {
+    "eyebrow": "OFFER NỔI BẬT",
+    "cta": "Xem chi tiết",
+    "close": "Đóng thanh offer"
+  },
+  "search": {
+    "open": "Tìm kiếm",
+    "close": "Đóng tìm kiếm",
+    "placeholder": "Tìm thẻ tín dụng, bài viết, công cụ…",
+    "hint": "Nhập từ khoá để tìm thẻ tín dụng, bài viết và công cụ.",
+    "empty": "Không tìm thấy kết quả cho “{query}”.",
+    "loading": "Đang tải dữ liệu tìm kiếm…",
+    "error": "Không tải được dữ liệu tìm kiếm, vui lòng thử lại.",
+    "kindCard": "Thẻ tín dụng",
+    "kindPost": "Bài viết",
+    "kindPage": "Trang"
+  },
   "hero": {
     "title1": "Chào Mừng Bạn Đến Với",
     "title2": "Ghế 1A!",

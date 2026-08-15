@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import { FeaturedOfferBanner } from "@/components/layout/featured-offer-banner";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -94,6 +95,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           {t("common")("skipToContent")}
         </a>
+        {/* Above the header, not inside it: the strip scrolls away with the
+            page while the nav bar stays stuck to the top. */}
+        <FeaturedOfferBanner />
         <SiteHeader />
         <main id="main" className="flex-1">
           {children}
