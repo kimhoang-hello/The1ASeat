@@ -6,6 +6,7 @@ import { CardImage } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
 import { RebateBadge } from "@/components/credit-cards/rebate-badge";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
+import { ApplyButton } from "@/components/credit-cards/apply-button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { creditCardJsonLd } from "@/lib/credit-card-schema";
 import { t as translate } from "@/lib/t";
@@ -74,6 +75,7 @@ export default async function CreditCardDetailPage({
         name={offer.name}
         className="mt-6 h-56 w-full rounded-2xl"
         badge={offer.rebate && <RebateBadge amount={offer.rebate} label={offers("rebate")} />}
+        applyUrl={offer.applyUrl}
       />
 
       <div className="mt-6">
@@ -105,14 +107,7 @@ export default async function CreditCardDetailPage({
         ))}
       </ul>
 
-      <a
-        href={offer.applyUrl}
-        target="_blank"
-        rel="sponsored nofollow noopener noreferrer"
-        className="mt-8 inline-block cursor-pointer rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
-      >
-        {offers("applyNow")} &rarr;
-      </a>
+      <ApplyButton href={offer.applyUrl} className="mt-8" />
 
       <OfferDisclosure className="mt-8" />
 

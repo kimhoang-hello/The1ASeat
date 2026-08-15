@@ -6,6 +6,7 @@ import { CardImage } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
 import { RebateBadge } from "@/components/credit-cards/rebate-badge";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
+import { ApplyButton } from "@/components/credit-cards/apply-button";
 
 const t = translate("offers");
 
@@ -50,6 +51,7 @@ export async function OffersSection() {
                 name={offer.name}
                 className="h-32 w-full shrink-0 rounded-xl sm:h-auto sm:w-40"
                 badge={offer.rebate && <RebateBadge amount={offer.rebate} label={t("rebate")} />}
+                applyUrl={offer.applyUrl}
               />
 
               <div className="flex-1">
@@ -90,14 +92,7 @@ export async function OffersSection() {
                   </ul>
                 </details>
 
-                <a
-                  href={offer.applyUrl}
-                  target="_blank"
-                  rel="sponsored nofollow noopener noreferrer"
-                  className="mt-4 inline-block cursor-pointer text-sm font-bold text-primary underline decoration-2 underline-offset-4 hover:text-primary-hover"
-                >
-                  {t("applyNow")} &rarr;
-                </a>
+                <ApplyButton href={offer.applyUrl} className="mt-4" />
               </div>
             </article>
           ))}

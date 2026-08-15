@@ -7,6 +7,7 @@ import { CardImage } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
 import { RebateBadge } from "@/components/credit-cards/rebate-badge";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
+import { ApplyButton } from "@/components/credit-cards/apply-button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { creditCardJsonLd } from "@/lib/credit-card-schema";
 import { t } from "@/lib/t";
@@ -71,6 +72,7 @@ export default async function CreditCardsPage() {
                 name={offer.name}
                 className="h-32 w-full shrink-0 rounded-xl sm:h-auto sm:w-40"
                 badge={offer.rebate && <RebateBadge amount={offer.rebate} label={offers_t("rebate")} />}
+                applyUrl={offer.applyUrl}
               />
 
               <div className="flex-1">
@@ -110,14 +112,7 @@ export default async function CreditCardsPage() {
                   >
                     {offers_t("editorsTake")} &rarr;
                   </Link>
-                  <a
-                    href={offer.applyUrl}
-                    target="_blank"
-                    rel="sponsored nofollow noopener noreferrer"
-                    className="cursor-pointer text-sm font-bold text-primary underline decoration-2 underline-offset-4 hover:text-primary-hover"
-                  >
-                    {offers_t("applyNow")} &rarr;
-                  </a>
+                  <ApplyButton href={offer.applyUrl} />
                 </div>
               </div>
             </article>
