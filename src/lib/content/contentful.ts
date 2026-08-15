@@ -1,6 +1,7 @@
 import { createClient, EntryFieldTypes } from "contentful";
 import type { Asset, Entry } from "contentful";
 import { documentToHtmlString } from "@contentful/rich-text-html-renderer";
+import { keepBrandTogether } from "@/lib/t";
 import type { AuthorProfile, BlogPost, CreditCardOffer, TransferBonus } from "./types";
 
 const spaceId = process.env.CONTENTFUL_SPACE_ID;
@@ -95,9 +96,11 @@ function toPost(entry: Entry<PostSkeleton, undefined>): BlogPost {
     slug: f.slug,
     type: f.type,
     category: f.categoryVi,
-    title: f.titleVi,
-    excerpt: f.excerptVi,
-    body: documentToHtmlString(f.bodyVi),
+    // Keep the site name from splitting across a line wherever it appears in
+    // editor-written copy, the same way the UI strings are treated in lib/t.
+    title: keepBrandTogether(f.titleVi),
+    excerpt: keepBrandTogether(f.excerptVi),
+    body: keepBrandTogether(documentToHtmlString(f.bodyVi)),
     coverImage: f.coverImage,
     coverPhoto: f.coverPhoto ? assetUrl(f.coverPhoto) || undefined : undefined,
     videoUrl: f.videoUrl,
@@ -121,9 +124,9 @@ function toCard(entry: Entry<CardSkeleton, undefined>): CreditCardOffer {
     country: f.country,
     annualFee: f.annualFeeVi,
     cardType: f.cardTypeVi,
-    headline: f.headlineVi,
-    editorsTake: f.editorsTakeVi,
-    keyBenefits: f.keyBenefitsVi,
+    headline: keepBrandTogether(f.headlineVi),
+    editorsTake: keepBrandTogether(f.editorsTakeVi),
+    keyBenefits: f.keyBenefitsVi.map(keepBrandTogether),
     elevatedBonus: f.elevatedBonus,
     expiresAt: f.expiresAt,
     applyUrl: f.applyUrl,
@@ -149,7 +152,7 @@ function toAuthor(entry: Entry<AuthorSkeleton, undefined>): AuthorProfile {
   return {
     name: f.name,
     photo: assetUrl(f.photo),
-    bio: f.bioVi,
+    bio: keepBrandTogether(f.bioVi),
   };
 }
 

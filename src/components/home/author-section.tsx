@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { t as translate } from "@/lib/t";
+import { t as translate, BRAND_NO_BREAK, keepBrandTogether } from "@/lib/t";
 import { getAuthor } from "@/lib/content";
 import { AuthorPhoto } from "@/components/ui/author-photo";
 import { boldOccurrences } from "@/lib/bold-occurrences";
@@ -20,7 +20,7 @@ export async function AuthorSection() {
             {t("title", { name: author.name })}
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground xl:text-lg">
-            {boldOccurrences(firstParagraph, "Ghế 1A")}
+            {boldOccurrences(keepBrandTogether(firstParagraph), BRAND_NO_BREAK)}
           </p>
           <Link
             href="/about"
