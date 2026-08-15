@@ -75,6 +75,7 @@ export default async function CreditCardsPage() {
                 className="h-32 w-full shrink-0 self-start rounded-xl sm:h-32 sm:w-40 2xl:h-36 2xl:w-44"
                 badge={offer.rebate && <RebateBadge amount={offer.rebate} label={offers_t("rebate")} />}
                 applyUrl={offer.applyUrl}
+                sizes="176px"
               />
 
               <div className="flex-1">

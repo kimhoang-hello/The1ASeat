@@ -76,6 +76,7 @@ export default async function CreditCardDetailPage({
         className="mt-6 h-56 w-full rounded-2xl"
         badge={offer.rebate && <RebateBadge amount={offer.rebate} label={offers("rebate")} />}
         applyUrl={offer.applyUrl}
+        priority
       />
 
       <div className="mt-6">

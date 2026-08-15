@@ -79,6 +79,9 @@ async function fetchExpiredEntries(
       `${cmaBase}/entries?content_type=${contentType}&fields.expiresAt[lte]=${encodeURIComponent(nowIso)}&skip=${skip}&limit=${limit}`,
       { headers: authHeaders, cache: "no-store" },
     );
+    // Without this a failed listing reads as an empty page, and the run
+    // reports "checked 0, nothing expired" as though it had succeeded.
+    if (!res.ok) throw new Error(`Listing ${contentType} failed: ${res.status} ${await res.text()}`);
     const data = await res.json();
     for (const item of (data.items ?? []) as ContentfulCmaEntry[]) {
       // Only entries that currently have a live published version need unpublishing.

@@ -8,18 +8,33 @@ export function CardImage({
   className = "",
   badge,
   applyUrl,
+  // The artwork is object-contain, so it paints a shape narrower than the box
+  // it sits in — `sizes` has to describe the painted width, not the box, or
+  // the browser fetches a variant several times larger than it can show. The
+  // default is the width a card's own page paints.
+  sizes = "320px",
+  priority = false,
 }: {
   image: string;
   name: string;
   className?: string;
   badge?: React.ReactNode;
   applyUrl?: string;
+  sizes?: string;
+  priority?: boolean;
 }) {
   return (
     <div className={`relative ${className}`}>
       {image ? (
         <div className="absolute inset-0 overflow-hidden rounded-[inherit] bg-secondary">
-          <Image src={image} alt={name} fill sizes="320px" className="object-contain p-3" />
+          <Image
+            src={image}
+            alt={name}
+            fill
+            sizes={sizes}
+            priority={priority}
+            className="object-contain p-3"
+          />
         </div>
       ) : (
         <MediaPlaceholder icon="credit-card" tone="tan" className="absolute inset-0 rounded-[inherit]" />
