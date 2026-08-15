@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cmaClient, field, listEntries, updateEntry } from "@/lib/contentful-cma";
 import { fetchFinlyWealthRebate, finlyWealthRebateUrl } from "@/lib/finlywealth";
+import { jobSecretValid } from "@/lib/job-auth";
 
 // Called daily (see .github/workflows/check-rebates.yml). FinlyWealth changes
 // its rebate amounts without warning — the BMO card went $125 -> $200 — and a
@@ -25,8 +26,7 @@ interface Change {
 }
 
 async function handleCheck(request: NextRequest) {
-  const secret = request.nextUrl.searchParams.get("secret");
-  if (!process.env.EXPIRE_OFFERS_SECRET || secret !== process.env.EXPIRE_OFFERS_SECRET) {
+  if (!jobSecretValid(request, process.env.EXPIRE_OFFERS_SECRET)) {
     return NextResponse.json({ message: "Invalid secret" }, { status: 401 });
   }
 

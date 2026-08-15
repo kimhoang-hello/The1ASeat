@@ -410,17 +410,25 @@ function Finder() {
           <span id="cabin-label" className="text-sm font-medium text-foreground/80">
             {t("cabinLabel")}
           </span>
-          {/* Flex rather than a fixed column count: the grid was still set to
-              four columns after First class was removed, leaving a gap on the
-              right, and this stays correct whatever CABINS holds. */}
-          <div role="group" aria-labelledby="cabin-label" className="mt-1.5 flex flex-wrap gap-2">
+          {/* One equal column per cabin, at every width. The previous
+              flex-wrap + 50% basis put two on the first row and left the third
+              alone on a row of its own, stretched to full width and shorter
+              than the other two — a segmented control whose three segments were
+              three different sizes. A grid stays even whatever CABINS holds,
+              and items-stretch keeps the row heights equal when a longer label
+              like "Premium Economy" wraps to two lines. */}
+          <div
+            role="group"
+            aria-labelledby="cabin-label"
+            className="mt-1.5 grid auto-cols-fr grid-flow-col items-stretch gap-2"
+          >
             {CABINS.map((c) => (
               <button
                 key={c.id}
                 type="button"
                 aria-pressed={cabin === c.id}
                 onClick={() => update({ cabin: c.id })}
-                className={`flex-1 basis-[calc(50%-0.25rem)] cursor-pointer rounded-lg border px-3 py-2 text-sm font-medium transition-colors sm:basis-0 ${
+                className={`cursor-pointer rounded-lg border px-2 py-2 text-sm font-medium transition-colors sm:px-3 ${
                   cabin === c.id
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border bg-white text-foreground/80 hover:bg-secondary"

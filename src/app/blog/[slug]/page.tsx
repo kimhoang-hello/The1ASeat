@@ -133,6 +133,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           <iframe
             src={embedUrl}
             title={post.title}
+            loading="lazy"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
             className="h-full w-full"

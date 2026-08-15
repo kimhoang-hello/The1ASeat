@@ -16,4 +16,5 @@ jobs:
     steps:
       - name: Call check-rebates endpoint
         run: |
-          curl -sf -X POST "https://ghe1a.com/api/check-rebates?secret=${{ secrets.EXPIRE_OFFERS_SECRET }}"
+          curl -sf -X POST "https://ghe1a.com/api/check-rebates" \
+            -H "Authorization: Bearer ${{ secrets.EXPIRE_OFFERS_SECRET }}"

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cmaClient, field, listEntries, updateEntry, type CmaEntry, type CmaClient } from "@/lib/contentful-cma";
 import { fetchFinlyWealthOffer, finlyWealthRebateUrl } from "@/lib/finlywealth";
 import { isRewriteConfigured, rewriteOfferCopy } from "@/lib/rewrite-offer";
+import { jobSecretValid } from "@/lib/job-auth";
 
 // Called on a schedule (see .github/workflows/expire-offers.yml) to deal with
 // entries whose expiresAt has passed.
@@ -33,8 +34,7 @@ export async function GET(request: NextRequest) {
 }
 
 async function handleExpire(request: NextRequest) {
-  const secret = request.nextUrl.searchParams.get("secret");
-  if (!process.env.EXPIRE_OFFERS_SECRET || secret !== process.env.EXPIRE_OFFERS_SECRET) {
+  if (!jobSecretValid(request, process.env.EXPIRE_OFFERS_SECRET)) {
     return NextResponse.json({ message: "Invalid secret" }, { status: 401 });
   }
 

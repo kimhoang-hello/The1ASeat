@@ -42,20 +42,33 @@ function mobileItemClassName(active: boolean, nested = false) {
   }`;
 }
 
-// Reads the ?type= search param to highlight the active dropdown item. Isolated
-// in its own component so only this leaf needs a Suspense boundary
-// (useSearchParams() requires one during static prerendering) instead of the
-// whole header, avoiding a flash of unstyled header on first paint.
-function TypeDropdownLinks({
+/** The indented `?type=` rows under a mobile menu heading. */
+function nestedItemClassName(active: boolean) {
+  return mobileItemClassName(active, true);
+}
+
+// Reads the ?type= search param to highlight the active entry. Isolated in its
+// own component so only this leaf needs a Suspense boundary (useSearchParams()
+// requires one during static prerendering) instead of the whole header,
+// avoiding a flash of unstyled header on first paint.
+//
+// `pathname` alone cannot decide this: it never carries the query string, so
+// comparing it against a href like "/credit-cards?type=noi-bat" is false on the
+// very page that link points at, and the bare "/credit-cards" entry lights up
+// instead. Both the desktop dropdown and the mobile menu go through here so
+// they cannot drift apart again.
+function TypeLinks({
   links,
   basePath,
   pathname,
   onNavigate,
+  className,
 }: {
   links: TypeLink[];
   basePath: string;
   pathname: string;
   onNavigate: (event: React.MouseEvent<HTMLElement>) => void;
+  className: (active: boolean) => string;
 }) {
   const searchParams = useSearchParams();
   const activeType = searchParams.get("type");
@@ -67,8 +80,29 @@ function TypeDropdownLinks({
           key={link.href}
           href={link.href}
           onClick={onNavigate}
-          className={dropdownLinkClassName(pathname === basePath && activeType === link.type)}
+          className={className(pathname === basePath && activeType === link.type)}
         >
+          {link.label}
+        </Link>
+      ))}
+    </>
+  );
+}
+
+/** The same list with nothing marked active — the prerender/Suspense fallback. */
+function TypeLinksFallback({
+  links,
+  onNavigate,
+  className,
+}: {
+  links: TypeLink[];
+  onNavigate: (event: React.MouseEvent<HTMLElement>) => void;
+  className: (active: boolean) => string;
+}) {
+  return (
+    <>
+      {links.map((link) => (
+        <Link key={link.href} href={link.href} onClick={onNavigate} className={className(false)}>
           {link.label}
         </Link>
       ))}
@@ -108,22 +142,20 @@ function TypeDropdown({
         className={`absolute left-0 top-full z-10 mt-2 ${width} rounded-xl border border-border bg-card p-2 shadow-lg`}
       >
         <Suspense
-          fallback={links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={onNavigate}
-              className={dropdownLinkClassName(false)}
-            >
-              {link.label}
-            </Link>
-          ))}
+          fallback={
+            <TypeLinksFallback
+              links={links}
+              onNavigate={onNavigate}
+              className={dropdownLinkClassName}
+            />
+          }
         >
-          <TypeDropdownLinks
+          <TypeLinks
             links={links}
             basePath={basePath}
             pathname={pathname}
             onNavigate={onNavigate}
+            className={dropdownLinkClassName}
           />
         </Suspense>
       </div>
@@ -148,7 +180,11 @@ export function SiteHeader() {
     { href: "/credit-cards?type=khac", type: "khac", label: tOffers("tabOther") },
   ];
 
+  // "Blog" is a <summary>, not a link, so without this first entry the full
+  // archive at /blog had no route in from the desktop nav at all — only the
+  // footer reached it. Same shape as the card menu above.
   const blogLinks: TypeLink[] = [
+    { href: "/blog", type: null, label: tPosts("tabAll") },
     { href: "/blog?type=post", type: "post", label: tPosts("tabPosts") },
     { href: "/blog?type=video", type: "video", label: tPosts("tabVideos") },
   ];
@@ -167,19 +203,38 @@ export function SiteHeader() {
   const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    function closeOnOutsideClick(event: MouseEvent) {
-      if (!navRef.current?.contains(event.target as Node)) {
-        navRef.current
-          ?.querySelectorAll("details[open]")
-          .forEach((details) => details.removeAttribute("open"));
-      }
+    function closeDropdowns() {
+      navRef.current
+        ?.querySelectorAll("details[open]")
+        .forEach((details) => details.removeAttribute("open"));
     }
+
+    function closeOnOutsideClick(event: MouseEvent) {
+      if (!navRef.current?.contains(event.target as Node)) closeDropdowns();
+    }
+
+    // Escape is how every other menu on the web closes; <details> gives us the
+    // open/close and the outside-click above, but not this.
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      closeDropdowns();
+      setOpen(false);
+    }
+
     document.addEventListener("click", closeOnOutsideClick);
-    return () => document.removeEventListener("click", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("click", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
   }, []);
 
   function closeParentDropdown(event: React.MouseEvent<HTMLElement>) {
     event.currentTarget.closest("details")?.removeAttribute("open");
+  }
+
+  function closeMobileMenu() {
+    setOpen(false);
   }
 
   return (
@@ -299,16 +354,23 @@ export function SiteHeader() {
             >
               {nav("creditCards")}
             </Link>
-            {cardLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setOpen(false)}
-                className={mobileItemClassName(pathname === link.href, true)}
-              >
-                {link.label}
-              </Link>
-            ))}
+            <Suspense
+              fallback={
+                <TypeLinksFallback
+                  links={cardLinks}
+                  onNavigate={closeMobileMenu}
+                  className={nestedItemClassName}
+                />
+              }
+            >
+              <TypeLinks
+                links={cardLinks}
+                basePath="/credit-cards"
+                pathname={pathname}
+                onNavigate={closeMobileMenu}
+                className={nestedItemClassName}
+              />
+            </Suspense>
 
             <Link
               href="/blog"
@@ -317,16 +379,23 @@ export function SiteHeader() {
             >
               {nav("blog")}
             </Link>
-            {blogLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setOpen(false)}
-                className={mobileItemClassName(pathname === link.href, true)}
-              >
-                {link.label}
-              </Link>
-            ))}
+            <Suspense
+              fallback={
+                <TypeLinksFallback
+                  links={blogLinks}
+                  onNavigate={closeMobileMenu}
+                  className={nestedItemClassName}
+                />
+              }
+            >
+              <TypeLinks
+                links={blogLinks}
+                basePath="/blog"
+                pathname={pathname}
+                onNavigate={closeMobileMenu}
+                className={nestedItemClassName}
+              />
+            </Suspense>
 
             <span className="mt-2 rounded-md px-2 py-3 text-base font-medium text-foreground/90">
               {nav("pointsTools")}

@@ -1,8 +1,22 @@
 import { NextResponse } from "next/server";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { emailParagraphStyle, escapeHtml } from "@/lib/subscriber-email";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CONTACT_INBOX = "info@ghe1a.com";
+
+// Field caps, so one request cannot post a novel into the inbox.
+const MAX_NAME = 100;
+const MAX_EMAIL = 254; // RFC 5321
+const MAX_SUBJECT = 200;
+const MAX_MESSAGE = 5000;
+
+const LIMIT = 5;
+const WINDOW_MS = 60 * 60 * 1000;
+
+function isFilled(value: unknown, max: number): value is string {
+  return typeof value === "string" && value.trim().length > 0 && value.length <= max;
+}
 
 interface ContactBody {
   firstName: string;
@@ -16,20 +30,24 @@ function isValidBody(body: unknown): body is ContactBody {
   if (typeof body !== "object" || body === null) return false;
   const b = body as Record<string, unknown>;
   return (
-    typeof b.firstName === "string" &&
-    b.firstName.trim().length > 0 &&
-    typeof b.lastName === "string" &&
-    b.lastName.trim().length > 0 &&
-    typeof b.email === "string" &&
+    isFilled(b.firstName, MAX_NAME) &&
+    isFilled(b.lastName, MAX_NAME) &&
+    isFilled(b.email, MAX_EMAIL) &&
     EMAIL_RE.test(b.email) &&
-    typeof b.subject === "string" &&
-    b.subject.trim().length > 0 &&
-    typeof b.message === "string" &&
-    b.message.trim().length > 0
+    isFilled(b.subject, MAX_SUBJECT) &&
+    isFilled(b.message, MAX_MESSAGE)
   );
 }
 
 export async function POST(request: Request) {
+  const limit = rateLimit(`contact:${clientIp(request)}`, LIMIT, WINDOW_MS);
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: "rate_limited" },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } },
+    );
+  }
+
   let body: unknown;
   try {
     body = await request.json();

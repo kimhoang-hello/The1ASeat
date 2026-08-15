@@ -1,9 +1,25 @@
 import { NextResponse } from "next/server";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { SITE_URL, emailParagraphStyle, renderSubscriberEmailHtml } from "@/lib/subscriber-email";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_EMAIL_LENGTH = 254; // RFC 5321
+// A person subscribes once. Five an hour leaves room for a typo, a retry and a
+// second address for the family, and nothing beyond that.
+const LIMIT = 5;
+const WINDOW_MS = 60 * 60 * 1000;
 
 export async function POST(request: Request) {
+  // Ahead of parsing: this endpoint has someone else's inbox on the other end
+  // of it, so the cheapest possible rejection is the right one.
+  const limit = rateLimit(`subscribe:${clientIp(request)}`, LIMIT, WINDOW_MS);
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: "rate_limited" },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } },
+    );
+  }
+
   let email: unknown;
   try {
     ({ email } = await request.json());
@@ -11,7 +27,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid_body" }, { status: 400 });
   }
 
-  if (typeof email !== "string" || !EMAIL_RE.test(email)) {
+  if (typeof email !== "string" || email.length > MAX_EMAIL_LENGTH || !EMAIL_RE.test(email)) {
     return NextResponse.json({ error: "invalid_email" }, { status: 400 });
   }
 

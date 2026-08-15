@@ -85,8 +85,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="vi" className={`${fontHeading.variable} ${fontBody.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <JsonLd data={siteJsonLd} />
+        {/* Hidden until it is tabbed to. Without it a keyboard reader crosses
+            the logo, four nav items, three dropdowns and the newsletter button
+            before reaching the page itself — on every page. */}
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-full focus:bg-primary focus:px-5 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-primary-foreground"
+        >
+          {t("common")("skipToContent")}
+        </a>
         <SiteHeader />
-        <main className="flex-1">{children}</main>
+        <main id="main" className="flex-1">
+          {children}
+        </main>
         <SiteFooter />
         {gaId && <GoogleAnalytics gaId={gaId} />}
       </body>

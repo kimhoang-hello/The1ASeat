@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { YoutubeLogo } from "@phosphor-icons/react/ssr";
+import { DisclosureText } from "@/components/layout/disclosure-text";
 import { t as translate } from "@/lib/t";
 
 const t = translate("footer");
@@ -73,7 +74,7 @@ export function SiteFooter() {
         </div>
 
         <p className="mt-8 max-w-4xl text-sm leading-relaxed text-white/50">
-          {t("disclosure")}
+          <DisclosureText />
         </p>
 
         <div className="mt-6 flex flex-col gap-2 border-t border-white/10 pt-6 text-sm text-white/50 sm:flex-row sm:items-center sm:justify-between">

@@ -1,6 +1,19 @@
 import { documentToHtmlString } from "@contentful/rich-text-html-renderer";
 import { BLOCKS, MARKS, type Document } from "@contentful/rich-text-types";
 
+/**
+ * Base URL for canonicals, the sitemap, JSON-LD ids and email links.
+ *
+ * Deliberately a constant, not an environment variable. Everything it feeds is
+ * a permanent public identifier — a canonical, a sitemap entry, an @id in the
+ * JSON-LD graph — and one wrong value in a hosting panel would rewrite all of
+ * them at once, silently. There is exactly one production domain, so the
+ * safest place for it is here in the repo where a change is reviewable.
+ *
+ * (NEXT_PUBLIC_SITE_URL used to be documented as the way to set this and was
+ * never actually read; it has been dropped from .env.example and DEPLOY.md
+ * rather than wired up, for the reason above.)
+ */
 export const SITE_URL = "https://ghe1a.com";
 
 const FONT_HEADING = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif";

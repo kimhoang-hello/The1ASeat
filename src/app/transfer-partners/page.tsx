@@ -14,6 +14,15 @@ export const metadata: Metadata = pageMetadata({
 });
 export const revalidate = 60;
 
+/**
+ * The partner column pins to the left edge while the ratio columns scroll.
+ * The table is 560px wide inside a ~341px scroller on a phone, so without this
+ * the reader scrolls right to reach the RBC column and arrives at a ratio with
+ * no idea which airline it belongs to — on the page whose whole job is
+ * comparing the two issuers row by row.
+ */
+const STICKY_COL = "sticky left-0 z-10";
+
 const BADGE_STYLES = {
   amex: "bg-[#e7f2ea] text-[#1f6f43]",
   rbc: "bg-[#fdf1d8] text-[#8a5a10]",
@@ -48,7 +57,7 @@ export default function TransferPartnersPage() {
             <table className="w-full min-w-[560px] border-collapse text-sm">
               <thead>
                 <tr className="border-b border-border bg-card">
-                  <th className="px-4 py-3" />
+                  <th className={`${STICKY_COL} bg-card px-4 py-3`} />
                   <th className="px-2 py-3">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -67,7 +76,9 @@ export default function TransferPartnersPage() {
                   </th>
                 </tr>
                 <tr className="bg-primary text-primary-foreground">
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">
+                  <th
+                    className={`${STICKY_COL} bg-primary px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide`}
+                  >
                     {tp("columnProgram")}
                   </th>
                   <th className="px-2 py-3 text-center text-xs font-semibold uppercase tracking-wide">
@@ -84,7 +95,15 @@ export default function TransferPartnersPage() {
                     key={row.program}
                     className={i % 2 === 0 ? "bg-card" : "bg-background"}
                   >
-                    <td className="px-4 py-4 font-medium text-foreground">
+                    {/* The row stripe has to be repeated on the cell itself: a
+                        sticky cell is lifted out of the row's paint order, so
+                        without its own opaque background the ratio columns
+                        scroll visibly underneath it. */}
+                    <td
+                      className={`${STICKY_COL} px-4 py-4 font-medium text-foreground ${
+                        i % 2 === 0 ? "bg-card" : "bg-background"
+                      }`}
+                    >
                       <div className="flex items-center gap-3">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img

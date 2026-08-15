@@ -13,7 +13,9 @@ export function PageHeader({
         {eyebrow && (
           <p className="text-xs font-semibold tracking-wide text-primary">{eyebrow}</p>
         )}
-        <h1 className="mt-1 font-display text-3xl font-extrabold text-foreground sm:text-4xl">
+        {/* text-balance so a title like "Thẻ Tín Dụng Đáng Chú Ý" does not
+            wrap with its last character stranded alone on the second line. */}
+        <h1 className="mt-1 text-balance font-display text-3xl font-extrabold text-foreground sm:text-4xl">
           {title}
         </h1>
         {subtitle && (

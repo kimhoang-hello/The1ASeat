@@ -101,7 +101,8 @@
     "subtitle": "Tham gia cùng mọi người săn vé award cùng Ghế 1A."
   },
   "footer": {
-    "disclosure": "Ghế 1A có thể nhận hoa hồng hay referral từ các đối tác thẻ tín dụng khi bạn mở thẻ qua liên kết trên trang. Các ý kiến, đánh giá và phân tích hoàn toàn là quan điểm độc lập của chúng tôi, không được cung cấp, xét duyệt hay chấp thuận bởi bất kỳ tổ chức phát hành nào. Xem Điều khoản & Chính sách bảo mật.",
+    "disclosure": "Ghế 1A có thể nhận hoa hồng hay referral từ các đối tác thẻ tín dụng khi bạn mở thẻ qua liên kết trên trang. Các ý kiến, đánh giá và phân tích hoàn toàn là quan điểm độc lập của chúng tôi, không được cung cấp, xét duyệt hay chấp thuận bởi bất kỳ tổ chức phát hành nào.",
+    "disclosureSee": "Xem",
     "terms": "Điều khoản",
     "privacy": "Chính sách bảo mật",
     "rights": "All Rights Reserved.",
@@ -127,7 +128,8 @@
   "common": {
     "readMore": "Đọc thêm",
     "minRead": "phút đọc",
-    "backHome": "Về trang chủ"
+    "backHome": "Về trang chủ",
+    "skipToContent": "Bỏ qua, tới nội dung chính"
   },
   "notFound": {
     "eyebrow": "404",
@@ -190,13 +192,13 @@
     "noteBaAvios": "Ghế 1A không đưa số cho chương trình này, vì không có con số nào đủ tin cậy để đưa. British Airways đã bỏ công bố award chart, lại vừa devalue vé partner ngày 15/12/2025 khoảng 10%. Nặng hơn: giá đổi theo ngày cao điểm hay thấp điểm, và mỗi hãng partner giờ có biểu giá riêng, cộng thêm một biểu riêng cho hành trình ghép nhiều hãng. Avios tính giá từng chặng rồi cộng lại nên nối chuyến rất đắt. Hãy tra thẳng trên ba.com trước khi transfer.",
     "noteQatarAvios": "Privilege Club là chương trình của Qatar Airways, cũng dùng Avios. Với chuyến do partner khai thác thì không tra trước được, y hệt British Airways Club. Riêng chuyến do chính Qatar bay qua Doha thì có mức đã xác nhận thực tế và Ghế 1A hiển thị số. Không thẻ Canada nào chuyển thẳng sang Qatar: chuyển sang Avios của British Airways rồi dùng combine Avios để gộp sang.",
     "noteAsiaMiles": "Cathay có chart cố định nhưng cố tình không đăng công khai; số dưới đây là bản hiệu lực 1/5/2026, đã đối chiếu ba nguồn. Asia Miles tính theo tổng quãng đường thực bay, nên nối chuyến có thể đẩy bạn sang band cao hơn. Đây là mức bay bằng máy bay Cathay — đúng cho chặng Canada → Việt Nam vì Cathay bay cả hai chặng qua Hong Kong; bay partner sẽ đắt hơn vài nghìn miles.",
-    "noteFlyingBlue": "Flying Blue không có award chart, chạy dynamic pricing hoàn toàn — cùng một chuyến có thể 25,000 miles hôm nay và 60,000 miles hôm sau. Bù lại đầu mỗi tháng có Promo Rewards giảm 25–50% cho một số chặng. Surcharge của Air France thường 200–500$ nên phải nhìn tổng chi phí, không chỉ nhìn số miles. Đây cũng là chương trình duy nhất ở đây đổi được vé Vietnam Airlines.",
+    "noteFlyingBlue": "Flying Blue không có award chart, chạy dynamic pricing hoàn toàn — cùng một chuyến có thể 25,000 miles hôm nay và 60,000 miles hôm sau. Bù lại đầu mỗi tháng có Promo Rewards giảm 25–50% cho một số chặng. Surcharge của Air France thường $200–500 nên phải nhìn tổng chi phí, không chỉ nhìn số miles. Đây cũng là chương trình duy nhất ở đây đổi được vé Vietnam Airlines.",
     "verifiedOn": "Số liệu kiểm tra ngày {date}",
     "disclaimerHeading": "Đọc kỹ trước khi transfer",
     "disclaimer": "Award chart thay đổi liên tục và không hãng nào cam kết giữ giá. Điểm đã chuyển sang hãng bay gần như không lấy lại được, nên luôn kiểm tra còn chỗ award và giá thật trên trang của chương trình trước, rồi mới transfer.",
     "howHeading": "Đọc bảng này thế nào",
     "howStep1Title": "Số miles thấp nhất chưa chắc là rẻ nhất",
-    "howStep1Body": "Một chương trình đòi ít miles hơn nhưng thu surcharge 600$ có thể đắt hơn chương trình đòi nhiều miles mà chỉ thu 80$ thuế. Nhìn cả số điểm lẫn nhãn surcharge trên mỗi thẻ.",
+    "howStep1Body": "Một chương trình đòi ít miles hơn nhưng thu surcharge $600 có thể đắt hơn chương trình đòi nhiều miles mà chỉ thu $80 thuế. Nhìn cả số điểm lẫn nhãn surcharge trên mỗi thẻ.",
     "howStep2Title": "Không phải chương trình nào cũng tra trước được giá",
     "howStep2Body": "Aeroplan và AAdvantage công bố chart; Cathay có chart thật nhưng giấu. British Airways và Flying Blue thì không con số nào đáng tin, còn Qatar chỉ chắc chắn ở vài chặng bay bằng máy bay của chính họ. Ghế 1A để trống thay vì đoán bừa, vì điểm đã transfer là không lấy lại được.",
     "howStep3Title": "Kiểm tra chỗ trống trước, transfer sau",

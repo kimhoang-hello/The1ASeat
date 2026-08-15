@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import type { Document } from "@contentful/rich-text-types";
+import { jobSecretValid } from "@/lib/job-auth";
 import {
   SITE_URL,
   emailHeadlineStyle,
@@ -18,8 +19,7 @@ const LOCALE = "en-US";
 // newsletter broadcast the first time a "post"-type blogPost is published
 // (see maybeNotifyNewPost below).
 export async function POST(request: NextRequest) {
-  const secret = request.nextUrl.searchParams.get("secret");
-  if (!process.env.REVALIDATE_SECRET || secret !== process.env.REVALIDATE_SECRET) {
+  if (!jobSecretValid(request, process.env.REVALIDATE_SECRET)) {
     return NextResponse.json({ message: "Invalid secret" }, { status: 401 });
   }
 
