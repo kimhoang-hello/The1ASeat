@@ -73,7 +73,6 @@ export default async function CreditCardsPage() {
                 className="h-32 w-full shrink-0 rounded-xl sm:h-auto sm:w-40"
                 badge={offer.rebate && <RebateBadge amount={offer.rebate} label={offers_t("rebate")} />}
                 applyUrl={offer.applyUrl}
-                aspect={offer.cardImageAspect}
               />
 
               <div className="flex-1">
