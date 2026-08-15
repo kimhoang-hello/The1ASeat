@@ -31,15 +31,16 @@ export function finlyWealthRebateUrl(applyUrl: string): string | null {
   return `https://www.finlywealth.com${destination}`;
 }
 
-/** The dollar figure FinlyWealth currently advertises, formatted as "$120". */
-export async function fetchFinlyWealthRebate(url: string): Promise<string> {
+async function fetchPage(url: string): Promise<string> {
   const res = await fetch(url, {
     headers: { "User-Agent": "Ghe1A-RebateCheck/1.0 (+https://ghe1a.com)" },
     cache: "no-store",
   });
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.text();
+}
 
-  const html = await res.text();
+function rebateFromTitle(html: string): string {
   const title = html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1];
   if (!title) throw new Error("no <title> on the page");
 
@@ -47,4 +48,51 @@ export async function fetchFinlyWealthRebate(url: string): Promise<string> {
   if (!amount) throw new Error(`no rebate in title: ${title.trim().slice(0, 80)}`);
 
   return `$${amount}`;
+}
+
+/** The dollar figure FinlyWealth currently advertises, formatted as "$120". */
+export async function fetchFinlyWealthRebate(url: string): Promise<string> {
+  return rebateFromTitle(await fetchPage(url));
+}
+
+export interface FinlyWealthOffer {
+  rebate: string;
+  /** The page's own prose about the current welcome bonus, earn rates and fees. */
+  details: string;
+}
+
+/**
+ * Everything a card's offer copy is written from: the rebate plus the page's
+ * "How to earn the welcome bonus", "Earns rewards on" and "Fees & rates"
+ * sections. The markup wraps every figure in its own element, so a naive
+ * tag-strip shatters each sentence into fragments — join on spaces and let the
+ * whitespace collapse put them back together.
+ */
+export async function fetchFinlyWealthOffer(url: string): Promise<FinlyWealthOffer> {
+  const html = await fetchPage(url);
+  const text = htmlToText(html);
+
+  const start = text.search(/How to earn the welcome bonus/i);
+  const end = text.search(/Built-in perks|Ready when you are|Legal & disclosures/i);
+  const details = start === -1 ? "" : text.slice(start, end === -1 ? start + 4000 : end).trim();
+  if (!details) throw new Error("no welcome-bonus section on the page");
+
+  return { rebate: rebateFromTitle(html), details: details.slice(0, 4000) };
+}
+
+function htmlToText(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, " ")
+    // Block-level tags become newlines so sections stay apart; inline tags
+    // become spaces so a sentence split across <span>s rejoins as one.
+    .replace(/<\/(p|div|li|h[1-6]|section|tr)>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&#39;|&rsquo;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&[a-z]+;/gi, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n\s*\n+/g, "\n")
+    .trim();
 }
