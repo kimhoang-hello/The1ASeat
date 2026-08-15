@@ -20,6 +20,18 @@ function assetUrl(asset: unknown): string {
   return "";
 }
 
+/** Width ÷ height of an image asset, so a layout can reserve the shape it will paint. */
+function assetAspect(asset: unknown): number | undefined {
+  if (asset && typeof asset === "object" && "fields" in asset) {
+    const details = (asset as Asset).fields?.file?.details as
+      | { image?: { width?: number; height?: number } }
+      | undefined;
+    const { width, height } = details?.image ?? {};
+    if (width && height) return width / height;
+  }
+  return undefined;
+}
+
 // The Contentful content model still has "...Vi"/"...En" field pairs
 // (see CONTENTFUL.md) — the website only reads the Vi side now.
 interface PostSkeleton {
@@ -118,6 +130,7 @@ function toCard(entry: Entry<CardSkeleton, undefined>): CreditCardOffer {
     issuer: f.issuer,
     image: f.image,
     cardImage: assetUrl(f.cardImage),
+    cardImageAspect: assetAspect(f.cardImage),
     country: f.country,
     annualFee: f.annualFeeVi,
     cardType: f.cardTypeVi,

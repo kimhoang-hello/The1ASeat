@@ -29,6 +29,8 @@ export interface CreditCardOffer {
   issuer: string;
   image: string;
   cardImage: string;
+  /** Width ÷ height of `cardImage`, used to fit the apply link to the artwork. */
+  cardImageAspect?: number;
   country: CardCountry;
   annualFee: string;
   cardType: string;
