@@ -95,10 +95,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           {t("common")("skipToContent")}
         </a>
-        {/* Above the header, not inside it: the strip scrolls away with the
-            page while the nav bar stays stuck to the top. */}
-        <FeaturedOfferBanner />
-        <SiteHeader />
+        {/* The strip and the nav bar stick to the top as one block. Sticking
+            them separately would mean pinning the bar at a fixed offset, and
+            the strip is not a fixed height — it wraps onto a second line on a
+            phone, and disappears entirely once it is dismissed. */}
+        <div className="sticky top-0 z-50">
+          <FeaturedOfferBanner />
+          <SiteHeader />
+        </div>
         <main id="main" className="flex-1">
           {children}
         </main>

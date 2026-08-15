@@ -239,10 +239,11 @@ export function SiteHeader() {
   }
 
   return (
-    // `sticky` positions this element, which is what the search panel hangs
-    // off: it spans the full width under the bar rather than dangling from the
-    // icon that opened it.
-    <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
+    // Sticking is done by the wrapper in the root layout, which carries the
+    // offer strip along with it. `relative` stays behind because it is what
+    // the search panel hangs off — the panel spans the full width under the
+    // bar rather than dangling from the icon that opened it.
+    <header className="relative border-b border-border bg-background/95 backdrop-blur">
       {/* Full-bleed on purpose: the header is chrome, not reading matter, so it
           runs the width of the window and only keeps a gutter. Capping it left
           the logo and the newsletter button floating in the middle of a large

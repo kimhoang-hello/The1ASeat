@@ -64,8 +64,12 @@ export function FeaturedOfferRotator({ offers }: { offers: FeaturedOffer[] }) {
               <Image
                 src={offer.cardImage}
                 alt=""
+                // 56×32 is the box the classes below paint. Any other ratio
+                // here and next/image warns that one dimension was changed
+                // without the other — the artwork itself is letterboxed inside
+                // the box by object-contain, whatever shape it arrives in.
                 width={56}
-                height={36}
+                height={32}
                 sizes="56px"
                 className="h-8 w-14 shrink-0 rounded object-contain"
               />
