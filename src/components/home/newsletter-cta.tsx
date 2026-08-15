@@ -12,7 +12,13 @@ export function NewsletterCta() {
           <h2 className="mt-2 font-display text-2xl font-extrabold sm:text-3xl xl:text-4xl">
             {t("title1")} {t("title2")}
           </h2>
-          <p className="mt-3 max-w-md text-base text-white/70 xl:text-lg">{t("subtitle")}</p>
+          {/* Wide enough for the pitch to sit on one line at desktop — it was
+              missing by three pixels and dropping "Ghế 1A." onto a line of its
+              own. text-pretty keeps a stray last word off its own line at the
+              widths where it does still wrap. */}
+          <p className="mt-3 max-w-lg text-pretty text-base text-white/70 xl:text-lg">
+            {t("subtitle")}
+          </p>
         </div>
 
         <div className="flex w-full flex-col items-start gap-3 md:w-auto md:items-end">

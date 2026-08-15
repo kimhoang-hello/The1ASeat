@@ -55,7 +55,7 @@ export function PostCard({
             </span>
           )}
         </div>
-        <Heading className="mt-2 font-display text-base font-bold leading-snug text-foreground group-hover:text-primary">
+        <Heading className="mt-2 text-pretty font-display text-base font-bold leading-snug text-foreground group-hover:text-primary">
           {post.title}
         </Heading>
         <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{post.excerpt}</p>
