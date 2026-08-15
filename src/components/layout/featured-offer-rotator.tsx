@@ -72,12 +72,10 @@ export function FeaturedOfferRotator({ offers }: { offers: FeaturedOffer[] }) {
             )}
             <span className="min-w-0 text-xs leading-snug sm:truncate sm:text-sm">
               <span className="block font-bold sm:inline">{offer.name}</span>
-              <span className="hidden md:inline"> • </span>
-              {/* Its own line on a phone, part of the sentence from md up, and
-                  dropped in between where the line is too short to hold it. */}
-              <span className="block text-primary-foreground/75 sm:hidden md:inline">
-                {offer.teaser}
-              </span>
+              <span className="hidden sm:inline"> • </span>
+              {/* Its own line on a phone, part of the same sentence above that,
+                  where truncate takes care of a row that runs out of room. */}
+              <span className="block text-primary-foreground/75 sm:inline">{offer.teaser}</span>
             </span>
           </Link>
         </div>

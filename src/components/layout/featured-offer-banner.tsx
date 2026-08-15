@@ -1,28 +1,28 @@
 import { getCreditCardOffers } from "@/lib/content";
 import { FeaturedOfferRotator, type FeaturedOffer } from "./featured-offer-rotator";
 
-/**
- * A backstop, not the usual case — the clause split below is what does the
- * shortening. It is set past the longest clause any card currently has so a
- * phone, where the strip wraps and shows the line in full, is not left reading
- * an ellipsis; the one-line desktop strip trims its own overflow in CSS.
- */
-const MAX_TEASER = 100;
+/** A backstop only — the split below is what does the shortening. */
+const MAX_TEASER = 60;
 
 /**
- * The banner has a single line to work with and `headlineVi` is a whole
- * sentence: "Welcome bonus lên đến 70,000 điểm Avion® (giá trị du lịch tối đa
- * $1,500) — elevated offer đến 25/11/2026." Everything after the opening
- * clause is detail the card's own page already carries, so the strip keeps the
- * clause and stops at the first separator.
- *
- * The comma has to be followed by a space or "70,000" would be the cut, and
- * the plus needs a space on both sides so "Scene+™" survives intact.
+ * Where the offer stops being the offer. The first group is punctuation: the
+ * comma has to be followed by a space or "70,000" would be the cut, and the
+ * plus needs a space on both sides so "Scene+™" survives intact. The second is
+ * the Vietnamese words that open the conditions — "sau khi đạt hạn mức chi
+ * tiêu $6,000 trong 6 tháng đầu", "khi mở thẻ mới" — which are what the card's
+ * own page is for.
+ */
+const TEASER_END = /,\s|\s[—–-]\s|\s\(|\s\+\s|;\s|\s(?:sau|khi|nếu|kèm|cộng|trong)\s/;
+
+/**
+ * The strip gets the number and nothing else: "Welcome bonus lên đến 70,000
+ * điểm Avion®" out of "Welcome bonus lên đến 70,000 điểm Avion® (giá trị du
+ * lịch tối đa $1,500) — elevated offer đến 25/11/2026."
  */
 function offerTeaser(headline: string): string {
   const clause = headline
     .replace(/^elevated offer:\s*/i, "")
-    .split(/,\s|\s[—–-]\s|\s\(|\s\+\s|;\s/)[0]
+    .split(TEASER_END)[0]
     .trim()
     .replace(/\.$/, "");
   const teaser = clause.charAt(0).toUpperCase() + clause.slice(1);
