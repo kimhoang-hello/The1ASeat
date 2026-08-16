@@ -66,8 +66,8 @@ function readParams(params: URLSearchParams): Selection {
 function TransferLegs({ program }: { program: Program }) {
   const row = TRANSFER_PARTNERS.find((p) => p.program === program.transferPartnerKey);
   const legs = [
-    { issuer: "Amex MR", leg: row?.amex ?? null, tint: "bg-[#e7f2ea] text-[#1f6f43]" },
-    { issuer: "RBC Avion", leg: row?.rbc ?? null, tint: "bg-[#fdf1d8] text-[#8a5a10]" },
+    { issuer: "Amex® MR", leg: row?.amex ?? null, tint: "bg-[#e7f2ea] text-[#1f6f43]" },
+    { issuer: "RBC® Avion®", leg: row?.rbc ?? null, tint: "bg-[#fdf1d8] text-[#8a5a10]" },
   ].filter((entry) => entry.leg !== null);
 
   if (legs.length === 0) {

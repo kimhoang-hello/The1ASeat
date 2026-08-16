@@ -387,7 +387,7 @@ export const PROGRAMS: Program[] = [
   {
     id: "aeroplan",
     name: "Air Canada® Aeroplan®",
-    currency: "Aeroplan",
+    currency: "Aeroplan®",
     logo: "/images/logos/partners/aeroplan.jpg",
     pricing: {
       // Aeroplan bands on the CUMULATIVE distance of the segments flown, not

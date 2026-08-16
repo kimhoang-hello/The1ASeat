@@ -42,7 +42,7 @@ export const TRANSFER_PARTNERS: TransferPartnerRow[] = [
     program: "American Airlines® AAdvantage®",
     logo: "/images/logos/partners/american-airlines.png",
     amex: null,
-    rbc: { ratio: "1,000 : 700", note: "Chỉ Avion Elite" },
+    rbc: { ratio: "1,000 : 700", note: "Chỉ Avion® Elite" },
   },
   {
     // Avios is the currency British Airways shares with Qatar, Iberia and Aer
@@ -51,13 +51,13 @@ export const TRANSFER_PARTNERS: TransferPartnerRow[] = [
     program: "British Airways® Club",
     logo: "/images/logos/partners/british-airways.png",
     amex: { ratio: "1,000 : 1,000", note: "~30 phút" },
-    rbc: { ratio: "1,000 : 1,000", note: "Chỉ Avion Elite" },
+    rbc: { ratio: "1,000 : 1,000", note: "Chỉ Avion® Elite" },
   },
   {
     program: "Cathay Pacific® Asia Miles®",
     logo: "/images/logos/partners/cathay-pacific.png",
     amex: { ratio: "1,000 : 750", note: "5 ngày làm việc" },
-    rbc: { ratio: "1,000 : 1,000", note: "Chỉ Avion Elite" },
+    rbc: { ratio: "1,000 : 1,000", note: "Chỉ Avion® Elite" },
   },
   {
     program: "Delta® SkyMiles®",
@@ -81,6 +81,6 @@ export const TRANSFER_PARTNERS: TransferPartnerRow[] = [
     program: "WestJet® Rewards",
     logo: "/images/logos/partners/westjet.png",
     amex: null,
-    rbc: { ratio: "1,000 : 1,000", note: "Mọi hạng Avion" },
+    rbc: { ratio: "1,000 : 1,000", note: "Mọi hạng Avion®" },
   },
 ];
