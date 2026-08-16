@@ -1,8 +1,9 @@
-// Tài khoản ngân hàng Canada — bản demo hiện chỉ gồm Scotiabank®.
+// Tài khoản ngân hàng Canada — Scotiabank® và BMO®.
 //
-// BMO® đã có đủ dữ liệu và logo (`public/images/logos/banks/bmo.svg` vẫn nằm
-// đó) nhưng tạm gỡ khỏi danh sách theo yêu cầu, sẽ bổ sung lại sau. Xem lịch
-// sử git nếu cần lấy lại 9 tài khoản BMO® đã viết.
+// BMO® từng có 9 tài khoản, bị gỡ hết ngày 16/08/2026, rồi thêm lại 4 tài
+// khoản cùng ngày — đúng 4 cái tác giả có link affiliate. Số liệu viết lại từ
+// đầu theo trang FinlyWealth chứ không chép lại bản cũ: bản cũ lấy số từ trang
+// BMO® và đã lệch vài chỗ so với trang mà nút "Apply ngay" thật sự dẫn tới.
 //
 // NGUỒN: trang sản phẩm của FinlyWealth cho từng tài khoản (chính là đích của
 // `affiliateUrl` bên dưới), đọc trực tiếp ngày 2026-08-16. FinlyWealth đăng
@@ -21,7 +22,7 @@
 //
 // Lãi suất và welcome bonus ở Canada thay đổi liên tục. Chỗ nào ngân hàng
 // không công bố thì để trống và nói thẳng, không đoán.
-export type BankId = "scotiabank";
+export type BankId = "scotiabank" | "bmo";
 
 export type AccountKind = "chequing" | "savings";
 
@@ -41,6 +42,7 @@ export type Bank = {
 // bay và khách sạn ở Transfer Partners.
 export const BANKS: Bank[] = [
   { id: "scotiabank", name: "Scotiabank®", logo: "/images/logos/banks/scotiabank.svg" },
+  { id: "bmo", name: "BMO®", logo: "/images/logos/banks/bmo.svg" },
 ];
 
 export function bankById(id: BankId): Bank {
@@ -231,6 +233,122 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     affiliateUrl:
       "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fscotiabank-money-master-savings-account&utm_source=ghe-1a",
     rebate: "$50",
+  },
+
+  // --------------------------------------------------------------- BMO
+  // Cả ba tài khoản chequing thường ăn chung một offer $900 của BMO®: $700 cho
+  // chequing, $150 cho Savings Amplifier và $50 cho My Financial Progress —
+  // hai phần sau chỉ mở ra sau khi xong phần $700. Điều kiện viết theo đúng ba
+  // bước đó thay vì gộp thành một dòng "tối đa $900", vì gộp lại thì con số
+  // trông như tiền cho không.
+  {
+    slug: "bmo-newstart-performance",
+    bank: "bmo",
+    name: "BMO NewStart® program — Performance Account",
+    kind: "chequing",
+    tags: ["newcomer"],
+    monthlyFee: 17.95,
+    feeWaiverVi:
+      "Người mới định cư theo BMO NewStart® được miễn monthly fee trong 2 năm; ngoài ra giữ số dư tối thiểu $4,000 cũng được miễn.",
+    bonusValue: 900,
+    bonusLabelVi: "Tối đa $900",
+    bonusExpiresOn: "2026-11-02",
+    bonusConditionsVi: [
+      "Là thường trú nhân hoặc người có work permit đến Canada trong vòng 5 năm trở lại (BMO® yêu cầu PR Card, Confirmation of Permanent Residency hoặc IMM 1442).",
+      "Mở và nạp tiền tài khoản mới trước 02/11/2026.",
+      "Set up direct deposit từ $500/tháng (lương, chính phủ hoặc lương hưu), khoản đầu tiên về trước 31/12/2026.",
+      "Thanh toán 2 hoá đơn online từ $50 cho 2 nhà cung cấp khác nhau, hoặc set up 2 pre-authorized debit từ $50, trước 31/12/2026.",
+    ],
+    keyBenefitsVi: [
+      "Không cần credit history ở Canada để mở tài khoản",
+      "Giao dịch và Interac e-Transfer® không giới hạn",
+      "Kèm membership Walmart+ tới 12 tháng khi mở trước 02/11/2026",
+    ],
+    url: "https://www.bmo.com/en-ca/main/personal/newcomers-to-canada/",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fbmo-newstart-performance&utm_source=ghe-1a",
+    rebate: "$100",
+  },
+  {
+    slug: "bmo-premium-chequing",
+    bank: "bmo",
+    name: "BMO® Premium Chequing Account",
+    kind: "chequing",
+    tags: [],
+    monthlyFee: 30.95,
+    feeWaiverVi: "Miễn monthly fee nếu giữ số dư tối thiểu $6,000 trong tháng.",
+    bonusValue: 900,
+    bonusLabelVi: "Tối đa $900",
+    bonusExpiresOn: "2026-11-02",
+    bonusConditionsVi: [
+      "$700: mở và nạp tiền tài khoản Performance hoặc Premium mới trước 02/11/2026, set up direct deposit từ $500/tháng, và thanh toán 2 hoá đơn online từ $50 cho 2 nhà cung cấp khác nhau (hoặc 2 pre-authorized debit từ $50) — tất cả trước 31/12/2026.",
+      "$150 nữa: mở Savings Amplifier Account trước 02/11/2026, nạp từ $10,000 trong 30 ngày đầu và giữ mức đó thêm 120 + 90 ngày.",
+      "$50 nữa: tạo 1 Goal và áp dụng 1 Strategy trong My Financial Progress trước 31/12/2026.",
+      "Đã có tài khoản chequing BMO® trong khoảng 07/08/2025 – 02/11/2026 thì không đủ điều kiện; đóng tài khoản trước 02/11/2027 cũng mất bonus.",
+    ],
+    keyBenefitsVi: [
+      "Giao dịch và Interac e-Transfer® không giới hạn",
+      "Rút ATM ngoài mạng BMO® tại Canada không mất phí",
+      "Rebate phí thường niên thẻ tín dụng BMO® và tỷ giá USD ưu đãi",
+    ],
+    url: "https://www.bmo.com/en-ca/main/personal/bank-accounts/chequing-accounts/premium-plan/",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fbmo-premium-chequing-account&utm_source=ghe-1a",
+    rebate: "$75",
+  },
+  {
+    slug: "bmo-performance-chequing",
+    bank: "bmo",
+    name: "BMO® Performance Chequing Account",
+    kind: "chequing",
+    tags: [],
+    monthlyFee: 17.95,
+    feeWaiverVi: "Miễn monthly fee nếu giữ số dư tối thiểu $4,000 trong tháng.",
+    bonusValue: 900,
+    bonusLabelVi: "Tối đa $900",
+    bonusExpiresOn: "2026-11-02",
+    bonusConditionsVi: [
+      "$700: mở và nạp tiền tài khoản Performance hoặc Premium mới trước 02/11/2026, set up direct deposit từ $500/tháng, và thanh toán 2 hoá đơn online từ $50 cho 2 nhà cung cấp khác nhau (hoặc 2 pre-authorized debit từ $50) — tất cả trước 31/12/2026.",
+      "$150 nữa: mở Savings Amplifier Account trước 02/11/2026, nạp từ $10,000 trong 30 ngày đầu và giữ mức đó thêm 120 + 90 ngày.",
+      "$50 nữa: tạo 1 Goal và áp dụng 1 Strategy trong My Financial Progress trước 31/12/2026.",
+      "Đã có tài khoản chequing BMO® trong khoảng 07/08/2025 – 02/11/2026 thì không đủ điều kiện; đóng tài khoản trước 02/11/2027 cũng mất bonus.",
+    ],
+    keyBenefitsVi: [
+      "Giao dịch debit không giới hạn",
+      "Interac e-Transfer® miễn phí, không giới hạn số lần",
+      "Kèm membership Walmart+ tới 12 tháng khi mở trước 02/11/2026",
+    ],
+    url: "https://www.bmo.com/en-ca/main/personal/bank-accounts/chequing-accounts/performance-plan/",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fbmo-performance-chequing-account&utm_source=ghe-1a",
+    rebate: "$100",
+  },
+  {
+    slug: "bmo-student-chequing",
+    bank: "bmo",
+    name: "BMO® Student Chequing Account",
+    kind: "chequing",
+    tags: ["student"],
+    monthlyFee: 0,
+    // Bonus là voucher Best Buy chứ không phải tiền mặt — bonusValue chỉ để
+    // xếp hạng, nhãn mới là thứ người đọc thấy.
+    bonusValue: 200,
+    bonusLabelVi: "Tối đa $200 Tech Reward",
+    bonusExpiresOn: "2026-11-03",
+    bonusConditionsVi: [
+      "Mở tài khoản Student Chequing mới và đang học tại đại học, cao đẳng hoặc trường nghề.",
+      "Hoàn thành các bước BMO® yêu cầu để mở khoá phần thưởng.",
+      "Nhận email trong vòng 3 tuần để chọn phần thưởng Best Buy.",
+    ],
+    keyBenefitsVi: [
+      "Không mất monthly fee, không yêu cầu số dư tối thiểu",
+      "Giao dịch debit không giới hạn",
+      "Interac e-Transfer® miễn phí, không giới hạn số lần",
+    ],
+    url: "https://www.bmo.com/en-ca/main/personal/bank-accounts/chequing-accounts/student-banking/",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fbmo-student-chequing-account&utm_source=ghe-1a",
+    rebate: "$100",
   },
 ];
 

@@ -296,6 +296,40 @@ function Chip({
   );
 }
 
+/**
+ * Chip có số đếm, viền mảnh — hình dạng của hàng Điểm thưởng bên trang thẻ tín
+ * dụng. Khác `Chip` ở trên có chủ ý: hai hàng nằm sát nhau và lọc hai thứ khác
+ * nhau, cùng một hình dạng thì đọc như một nhóm chọn duy nhất bị vỡ dòng.
+ */
+function FilterChip({
+  active,
+  count,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  count: number;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={active}
+      onClick={onClick}
+      className={`cursor-pointer rounded-full border px-3 py-1 text-sm transition-colors ${
+        active
+          ? "border-primary bg-primary/10 font-semibold text-primary"
+          : "border-border text-foreground/70 hover:border-primary hover:text-primary"
+      }`}
+    >
+      {children}
+      <span className="ml-1 text-xs text-muted-foreground">{count}</span>
+    </button>
+  );
+}
+
 function Field({
   label,
   value,
@@ -338,10 +372,18 @@ function Finder() {
   // Không useMemo: danh sách chỉ mười mấy dòng, lọc lại mỗi lần render rẻ hơn
   // nhiều so với cái giá thật sự — React Compiler từ chối tối ưu cả component
   // khi thấy memo thủ công phụ thuộc vào giá trị nó nghĩ có thể đổi sau.
+  const inFilter = BANK_ACCOUNTS.filter((account) => matchesFilter(account, filter));
+  const availableBanks = BANKS.map((b) => ({
+    ...b,
+    count: inFilter.filter((account) => account.bank === b.id).length,
+  })).filter((b) => b.count > 0);
+
+  // Ngân hàng đang chọn có thể vừa biến mất khỏi hàng chip vì bộ lọc nhanh
+  // vừa đổi. Coi như "tất cả" thay vì hiện danh sách rỗng — cùng cách trang
+  // thẻ tín dụng xử lý một ?points= không còn tài khoản nào.
+  const activeBank = availableBanks.some((b) => b.id === bank) ? bank : "all";
   const accounts = sortAccounts(
-    BANK_ACCOUNTS.filter(
-      (account) => (bank === "all" || account.bank === bank) && matchesFilter(account, filter),
-    ),
+    inFilter.filter((account) => activeBank === "all" || account.bank === activeBank),
     sort,
   );
 
@@ -358,25 +400,43 @@ function Finder() {
         ))}
       </div>
 
-      {/* Danh sách chỉ có một ngân hàng thì ô chọn ngân hàng không lọc được
-          gì — nó biến mất, và ô sắp xếp chiếm trọn hàng thay vì đứng lẻ một
-          nửa. */}
-      <div className={`mt-4 grid gap-4 ${BANKS.length > 1 ? "sm:grid-cols-2" : ""}`}>
-        {BANKS.length > 1 && (
-          <Field
-            label={t("bankLabel")}
-            value={bank}
-            onChange={(value) => update({ bank: value as Selection["bank"] })}
-          >
-            <option value="all">{t("bankAll")}</option>
-            {BANKS.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
+      {/* Hàng ngân hàng đọc như hàng Điểm thưởng bên trang thẻ tín dụng: nhãn
+          nhỏ rồi tới chip có số đếm. Số đếm tính trong phạm vi bộ lọc nhanh
+          đang chọn, nên không chip nào hứa một con số mà bấm vào lại ra danh
+          sách rỗng — ngân hàng không còn tài khoản nào thì chip tự biến mất.
+          Một mình một ngân hàng thì cả hàng biến mất: lọc theo nó không đổi
+          được gì. */}
+      {availableBanks.length > 1 && (
+        <nav aria-label={t("bankLabel")} className="mt-4">
+          <ul className="flex flex-wrap items-center gap-2">
+            <li className="mr-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {t("bankLabel")}
+            </li>
+            <li>
+              <FilterChip
+                active={activeBank === "all"}
+                count={inFilter.length}
+                onClick={() => update({ bank: "all" })}
+              >
+                {t("bankAll")}
+              </FilterChip>
+            </li>
+            {availableBanks.map((b) => (
+              <li key={b.id}>
+                <FilterChip
+                  active={activeBank === b.id}
+                  count={b.count}
+                  onClick={() => update({ bank: b.id })}
+                >
+                  {b.name}
+                </FilterChip>
+              </li>
             ))}
-          </Field>
-        )}
+          </ul>
+        </nav>
+      )}
 
+      <div className="mt-4">
         <Field
           label={t("sortLabel")}
           value={sort}
