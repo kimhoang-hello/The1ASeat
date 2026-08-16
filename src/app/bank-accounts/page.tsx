@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { BankAccountFinder } from "@/components/bank-accounts/bank-account-finder";
 import { JsonLd } from "@/components/seo/json-ld";
-import { BANKS, BANK_ACCOUNTS, bankById } from "@/lib/bank-accounts";
+import { BANK_ACCOUNTS, bankById } from "@/lib/bank-accounts";
 import { t } from "@/lib/t";
 import { pageMetadata, absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
 
@@ -57,11 +57,7 @@ export default function BankAccountsPage() {
   return (
     <>
       <JsonLd data={jsonLd} />
-      <PageHeader
-        eyebrow={bank_t("eyebrow")}
-        title={bank_t("title")}
-        subtitle={bank_t("subtitle", { banks: BANKS.map((bank) => bank.name).join(" và ") })}
-      />
+      <PageHeader eyebrow={bank_t("eyebrow")} title={bank_t("title")} subtitle={bank_t("subtitle")} />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         <BankAccountFinder />

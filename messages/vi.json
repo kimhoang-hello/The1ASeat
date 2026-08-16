@@ -79,7 +79,7 @@
   "bankAccounts": {
     "eyebrow": "TÀI KHOẢN NGÂN HÀNG",
     "title": "Tài Khoản Ngân Hàng Ở Canada",
-    "subtitle": "So sánh tài khoản chi tiêu và tiết kiệm: welcome bonus đang chạy, phí tháng, cách được miễn phí và lãi suất. Bản demo hiện có {banks}.",
+    "subtitle": "So sánh tài khoản chi tiêu và tiết kiệm: welcome bonus đang chạy, phí tháng, cách được miễn phí và lãi suất.",
     "kindAll": "Tất cả",
     "kindChequing": "Chi tiêu",
     "kindSavings": "Tiết kiệm",
@@ -106,7 +106,7 @@
     "regularRate": "Lãi thường: {rate}.",
     "bonusConditions": "Điều kiện nhận bonus",
     "bonusExpires": "Offer đóng ngày {date}",
-    "openAccount": "Mở tài khoản",
+    "openAccount": "Mở tài khoản ngay",
     "officialLink": "Link tới trang chính thức của ngân hàng",
     "verifiedOn": "Số liệu kiểm tra ngày {date}.",
     "disclaimerHeading": "Đọc kỹ trước khi mở tài khoản",
