@@ -1,24 +1,24 @@
-// Tài khoản ngân hàng Canada — bản demo chỉ gồm BMO® và Scotiabank®.
+// Tài khoản ngân hàng Canada — bản demo hiện chỉ gồm Scotiabank®.
+//
+// BMO® đã có đủ dữ liệu và logo (`public/images/logos/banks/bmo.svg` vẫn nằm
+// đó) nhưng tạm gỡ khỏi danh sách theo yêu cầu, sẽ bổ sung lại sau. Xem lịch
+// sử git nếu cần lấy lại 9 tài khoản BMO® đã viết.
 //
 // Nguồn số liệu, kiểm tra ngày 2026-08-16:
 //  - Phí tháng, lãi suất và danh sách quyền lợi: bảng tổng hợp
 //    princeoftravel.com/bank-accounts (đọc trực tiếp ngày 16/08/2026).
-//  - Điều kiện welcome bonus đối chiếu lại với thông báo của chính ngân hàng:
-//    BMO® — offer tới $900, mở tài khoản trước 02/11/2026, direct deposit
-//    từ $500/tháng ghi nhận trước 31/12/2026 (bmo.com, trang "New bank account
-//    offers and promotions" + PDF điều khoản "edb-chequing-terms-and-conditions").
-//    Scotiabank® — Cash Bonus Bundle $700 chạy từ 03/07/2026 đến 29/10/2026,
-//    direct deposit trong 60 ngày và duy trì 6 tháng liên tiếp
-//    (scotiabank.com, trang "New bank account offers and promotions").
-//    Miễn phí tháng năm đầu cho người mới định cư theo Scotiabank StartRight®.
+//  - Điều kiện welcome bonus đối chiếu lại với công bố của chính ngân hàng:
+//    Cash Bonus Bundle $700 chạy từ 03/07/2026 đến 29/10/2026, direct deposit
+//    trong 60 ngày và duy trì 6 tháng liên tiếp (scotiabank.com, trang "New
+//    bank account offers and promotions"). Miễn phí tháng năm đầu cho người
+//    mới định cư theo Scotiabank StartRight®.
 //
 // Lãi suất khuyến mãi của tài khoản tiết kiệm thay đổi liên tục và các nguồn
-// tổng hợp thường lệch nhau (BMO® Savings Amplifier có nguồn ghi 4.65%, nguồn
-// khác 5.00% cho một đợt promo cũ). Vì vậy mỗi mức lãi khuyến mãi đều đi kèm
+// tổng hợp thường lệch nhau. Vì vậy mỗi mức lãi khuyến mãi đều đi kèm
 // `promoNoteVi` nói rõ điều kiện, và trang luôn hiện ngày kiểm tra — đúng
 // nguyên tắc "trung thực hơn là đầy đủ": chỗ nào ngân hàng không công bố thì
 // để trống và nói thẳng, không đoán.
-export type BankId = "bmo" | "scotiabank";
+export type BankId = "scotiabank";
 
 export type AccountKind = "chequing" | "savings";
 
@@ -37,7 +37,6 @@ export type Bank = {
 // nhận diện ngân hàng trong bài so sánh — cùng cách trang đang dùng logo hãng
 // bay và khách sạn ở Transfer Partners.
 export const BANKS: Bank[] = [
-  { id: "bmo", name: "BMO®", logo: "/images/logos/banks/bmo.svg" },
   { id: "scotiabank", name: "Scotiabank®", logo: "/images/logos/banks/scotiabank.svg" },
 ];
 
@@ -80,173 +79,6 @@ export type BankAccount = {
 };
 
 export const BANK_ACCOUNTS: BankAccount[] = [
-  // ---------------------------------------------------------------- BMO
-  {
-    slug: "bmo-performance-chequing",
-    bank: "bmo",
-    name: "BMO® Performance Chequing Account",
-    kind: "chequing",
-    tags: [],
-    monthlyFee: 17.95,
-    feeWaiverVi: "Miễn phí tháng nếu giữ số dư tối thiểu $4,000 trong suốt tháng.",
-    bonusValue: 900,
-    bonusLabelVi: "Tối đa $900",
-    bonusExpiresOn: "2026-11-02",
-    bonusConditionsVi: [
-      "Mở và nạp tiền tài khoản mới trước 02/11/2026.",
-      "Set up direct deposit từ $500/tháng (lương, chính phủ hoặc lương hưu), khoản đầu tiên về trước 31/12/2026.",
-      "Thanh toán 2 hoá đơn online từ $50 cho 2 nhà cung cấp khác nhau qua app hoặc online banking BMO®.",
-    ],
-    keyBenefitsVi: [
-      "Giao dịch debit không giới hạn",
-      "Interac e-Transfer® miễn phí, không giới hạn số lần",
-      "Dùng ATM BMO® toàn Canada không mất phí",
-    ],
-    url: "https://www.bmo.com/en-ca/main/personal/bank-accounts/chequing-accounts/performance-plan/",
-  },
-  {
-    slug: "bmo-newcomer-performance-chequing",
-    bank: "bmo",
-    name: "BMO® Newcomer Performance Chequing Account",
-    kind: "chequing",
-    tags: ["newcomer"],
-    monthlyFee: 17.95,
-    feeWaiverVi:
-      "Chương trình BMO NewStart® miễn phí tháng cho người mới định cư (các nguồn ghi 1–2 năm tuỳ đợt offer — hỏi rõ thời hạn khi mở tài khoản).",
-    bonusValue: 900,
-    bonusLabelVi: "Tối đa $900",
-    bonusExpiresOn: "2026-11-02",
-    bonusConditionsVi: [
-      "Là thường trú nhân hoặc người tạm trú mới tới Canada theo điều kiện của BMO NewStart®.",
-      "Mở và nạp tiền tài khoản mới trước 02/11/2026.",
-      "Set up direct deposit từ $500/tháng, khoản đầu tiên về trước 31/12/2026.",
-    ],
-    keyBenefitsVi: [
-      "Không cần credit history ở Canada để mở",
-      "Giao dịch và Interac e-Transfer® không giới hạn",
-      "Mở được thẻ tín dụng BMO® ngay cả khi chưa có hồ sơ tín dụng",
-    ],
-    url: "https://www.bmo.com/en-ca/main/personal/newcomers-to-canada/",
-  },
-  {
-    slug: "bmo-premium-chequing",
-    bank: "bmo",
-    name: "BMO® Premium Chequing Account",
-    kind: "chequing",
-    tags: [],
-    monthlyFee: 30.95,
-    feeWaiverVi: "Miễn phí tháng nếu giữ số dư tối thiểu $6,000 trong suốt tháng.",
-    bonusValue: 900,
-    bonusLabelVi: "Tối đa $900",
-    bonusExpiresOn: "2026-11-02",
-    bonusConditionsVi: [
-      "Mở và nạp tiền tài khoản mới trước 02/11/2026.",
-      "Set up direct deposit từ $500/tháng, khoản đầu tiên về trước 31/12/2026.",
-      "Thanh toán 2 hoá đơn online từ $50 cho 2 nhà cung cấp khác nhau.",
-    ],
-    keyBenefitsVi: [
-      "Giao dịch và Interac e-Transfer® không giới hạn",
-      "Rebate tới $150 phí thường niên thẻ tín dụng BMO®",
-      "Miễn phí rút tiền tại ATM ngoài mạng BMO®",
-    ],
-    url: "https://www.bmo.com/en-ca/main/personal/bank-accounts/chequing-accounts/premium-plan/",
-  },
-  {
-    slug: "bmo-plus-chequing",
-    bank: "bmo",
-    name: "BMO® Plus Plan Chequing Account",
-    kind: "chequing",
-    tags: [],
-    monthlyFee: 11.95,
-    feeWaiverVi: "Miễn phí tháng nếu giữ số dư tối thiểu $3,000 trong suốt tháng.",
-    keyBenefitsVi: [
-      "25 giao dịch mỗi tháng — Interac e-Transfer® tính trong 25 giao dịch này",
-      "Miễn phí thẻ debit dùng cho phương tiện công cộng",
-      "Nằm trong nhóm tài khoản đủ điều kiện nhận offer hè 2026 của BMO®",
-    ],
-    url: "https://www.bmo.com/en-ca/main/personal/bank-accounts/chequing-accounts/plus-plan/",
-  },
-  {
-    slug: "bmo-practical-chequing",
-    bank: "bmo",
-    name: "BMO® Practical Chequing Account",
-    kind: "chequing",
-    tags: [],
-    monthlyFee: 4,
-    keyBenefitsVi: [
-      "12 giao dịch debit mỗi tháng",
-      "Interac e-Transfer® miễn phí, không giới hạn số lần",
-      "Dùng ATM BMO® toàn Canada không mất phí",
-    ],
-    url: "https://www.bmo.com/en-ca/main/personal/bank-accounts/chequing-accounts/practical-plan/",
-  },
-  {
-    slug: "bmo-student-performance-chequing",
-    bank: "bmo",
-    name: "BMO® Student Performance Chequing Account",
-    kind: "chequing",
-    tags: ["student"],
-    monthlyFee: 0,
-    bonusValue: 200,
-    bonusLabelVi: "Tối đa $200 Tech Reward",
-    keyBenefitsVi: [
-      "Đầy đủ quyền lợi của Performance Plan nhưng không mất phí tháng",
-      "Giao dịch debit không giới hạn",
-      "Interac e-Transfer® miễn phí, không giới hạn số lần",
-    ],
-    url: "https://www.bmo.com/en-ca/main/personal/bank-accounts/chequing-accounts/student-banking/",
-  },
-  {
-    slug: "bmo-savings-amplifier",
-    bank: "bmo",
-    name: "BMO® Savings Amplifier Account",
-    kind: "savings",
-    tags: [],
-    monthlyFee: 0,
-    interestRate: 4.65,
-    regularRate: 0.5,
-    promoNoteVi:
-      "Lãi khuyến mãi chỉ áp dụng 120 ngày đầu, và phải mở kèm một tài khoản chequing BMO® đủ điều kiện.",
-    keyBenefitsVi: [
-      "Không phí tháng, không yêu cầu số dư tối thiểu",
-      "1 lần chuyển tiền miễn phí mỗi tháng sang tài khoản BMO® khác",
-      "Lãi tính theo ngày, trả hàng tháng",
-    ],
-    url: "https://www.bmo.com/en-ca/main/personal/bank-accounts/savings-accounts/savings-amplifier/",
-  },
-  {
-    slug: "bmo-premium-rate-savings",
-    bank: "bmo",
-    name: "BMO® Premium Rate Savings Account",
-    kind: "savings",
-    tags: [],
-    monthlyFee: 0,
-    noRateNoteVi:
-      "BMO® không công bố mức lãi cố định cho tài khoản này — lãi thả nổi, thay đổi theo thị trường.",
-    keyBenefitsVi: [
-      "Lãi thả nổi, tính theo ngày và trả hàng tháng",
-      "Không phí tháng",
-      "Không yêu cầu số dư tối thiểu",
-    ],
-    url: "https://www.bmo.com/en-ca/main/personal/bank-accounts/savings-accounts/premium-rate-savings/",
-  },
-  {
-    slug: "bmo-savings-builder",
-    bank: "bmo",
-    name: "BMO® Savings Builder Account",
-    kind: "savings",
-    tags: [],
-    monthlyFee: 0,
-    noRateNoteVi:
-      "Lãi gồm phần cơ bản rất thấp cộng lãi thưởng, nên không có một con số duy nhất để so sánh.",
-    keyBenefitsVi: [
-      "Có lãi thưởng khi số dư tăng thêm từ $200 trở lên trong tháng",
-      "Lãi thưởng áp dụng cho số dư tới $250,000",
-      "Không phí tháng",
-    ],
-    url: "https://www.bmo.com/en-ca/main/personal/bank-accounts/savings-accounts/savings-builder/",
-  },
-
   // --------------------------------------------------------- Scotiabank
   {
     slug: "scotiabank-preferred-package",
@@ -382,6 +214,15 @@ export const BANK_ACCOUNTS: BankAccount[] = [
 /** Ngày đối chiếu toàn bộ số liệu ở trên với nguồn. */
 export const BANK_ACCOUNTS_VERIFIED_ON = "2026-08-16";
 
+export function bankAccountBySlug(slug: string): BankAccount | undefined {
+  return BANK_ACCOUNTS.find((account) => account.slug === slug);
+}
+
+/** Đường dẫn trang riêng của một tài khoản. */
+export function bankAccountPath(slug: string): string {
+  return `/bank-accounts/${slug}`;
+}
+
 /**
  * Bộ lọc nhanh — mỗi cái là một câu hỏi người đọc thật sự hỏi, và **chỉ một
  * cái đúng tại một thời điểm**.
@@ -434,6 +275,16 @@ export function matchesFilter(account: BankAccount, filter: FilterId): boolean {
       return account.tags.includes(filter);
   }
 }
+
+/**
+ * Bộ lọc còn ý nghĩa với dữ liệu đang có. Khi danh sách chỉ còn Scotiabank®
+ * thì không tài khoản nào mang nhãn "người mới định cư" nữa, và một chip bấm
+ * vào ra danh sách rỗng là một lời hứa suông. Tính từ dữ liệu chứ không xoá
+ * tay, để chip tự quay lại đúng lúc dữ liệu quay lại.
+ */
+export const AVAILABLE_FILTERS = ACCOUNT_FILTERS.filter(
+  (filter) => filter.id === "all" || BANK_ACCOUNTS.some((a) => matchesFilter(a, filter.id)),
+);
 
 /**
  * Sắp xếp. Tài khoản không có số ở tiêu chí đang chọn (không bonus khi sắp

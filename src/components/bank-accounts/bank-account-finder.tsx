@@ -1,16 +1,18 @@
 "use client";
 
 import { Suspense } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CaretDown, Info } from "@phosphor-icons/react";
 import { ApplyButton } from "@/components/ui/apply-button";
 import { t as translate } from "@/lib/t";
 import {
-  ACCOUNT_FILTERS,
+  AVAILABLE_FILTERS,
   BANKS,
   BANK_ACCOUNTS,
   BANK_ACCOUNTS_VERIFIED_ON,
   SORT_OPTIONS,
+  bankAccountPath,
   bankById,
   formatIsoDate,
   formatMoney,
@@ -51,22 +53,22 @@ function readParams(params: URLSearchParams): Selection {
 
   return {
     bank: BANKS.some((b) => b.id === bank) ? (bank as BankId) : "all",
-    filter: ACCOUNT_FILTERS.some((f) => f.id === filter) ? (filter as FilterId) : "all",
+    filter: AVAILABLE_FILTERS.some((f) => f.id === filter) ? (filter as FilterId) : "all",
     sort: SORT_OPTIONS.some((s) => s.id === sort) ? (sort as SortId) : "bonus",
   };
 }
 
 /**
- * Logo ngân hàng, đặt trên nền trắng vì cả hai logo đều được thiết kế cho nền
- * trắng — nền kem của trang làm phần trắng trong logo BMO® lộ ra thành vệt.
+ * Logo ngân hàng, đặt trên nền trắng vì logo ngân hàng được thiết kế cho nền
+ * trắng — nền kem của trang làm phần trắng bên trong logo lộ ra thành vệt.
  *
  * `alt` để trống có chủ ý: tên ngân hàng đã nằm ngay trong tên tài khoản bên
- * dưới ("BMO® Performance Chequing"), nên logo là trang trí — mô tả nó nữa chỉ
- * làm người dùng screen reader nghe tên ngân hàng hai lần liên tiếp.
+ * dưới ("Scotiabank® Preferred Package"), nên logo là trang trí — mô tả nó nữa
+ * chỉ làm người dùng screen reader nghe tên ngân hàng hai lần liên tiếp.
  *
- * Ô rộng cố định và `object-contain` vì hai logo có tỷ lệ rất khác nhau:
- * wordmark Scotiabank® dài gần gấp đôi logo BMO®, nếu để ô co theo ảnh thì hai
- * thẻ cạnh nhau sẽ lệch hẳn nhau ở góc trên.
+ * Ô rộng cố định và `object-contain` vì logo mỗi ngân hàng một tỷ lệ: wordmark
+ * Scotiabank® dài gần gấp đôi logo BMO®. Nếu ô co theo ảnh thì khi có lại
+ * nhiều ngân hàng, hai thẻ cạnh nhau sẽ lệch hẳn nhau ở góc trên.
  */
 function BankMark({ bank }: { bank: BankId }) {
   const { logo } = bankById(bank);
@@ -150,8 +152,8 @@ function AccountCard({ account }: { account: BankAccount }) {
     <li className="flex flex-col rounded-2xl border border-border bg-card p-5">
       {/* Logo và nhãn phân loại chia nhau một hàng, tên tài khoản xuống hàng
           riêng chiếm trọn chiều ngang. Xếp tên bên cạnh logo thì trên điện
-          thoại nó chỉ còn khoảng 170px và những cái tên dài như "BMO®
-          Performance Chequing cho người mới định cư" vỡ thành năm dòng. */}
+          thoại nó chỉ còn khoảng 170px, và những cái tên dài như "Scotiabank®
+          Preferred Package for Students & Youth" vỡ thành năm dòng. */}
       <div className="flex items-start justify-between gap-3">
         <BankMark bank={account.bank} />
         <div className="flex flex-wrap justify-end gap-1.5">
@@ -170,7 +172,9 @@ function AccountCard({ account }: { account: BankAccount }) {
       </div>
 
       <h3 className="mt-3 font-display text-lg font-bold leading-snug text-foreground">
-        {account.name}
+        <Link href={bankAccountPath(account.slug)} className="cursor-pointer hover:text-primary">
+          {account.name}
+        </Link>
       </h3>
 
       {/* Con số lớn và phí tháng nằm cạnh nhau: gần như câu hỏi nào của người
@@ -237,7 +241,12 @@ function AccountCard({ account }: { account: BankAccount }) {
           `sponsored`, và dòng chữ bên cạnh nói thẳng điều đó. */}
       <div className="mt-auto flex flex-wrap items-center gap-4 pt-4">
         <ApplyButton href={account.url} affiliate={false} />
-        <span className="text-xs text-muted-foreground">{t("officialLink")}</span>
+        <Link
+          href={bankAccountPath(account.slug)}
+          className="cursor-pointer text-sm font-semibold text-foreground/80 hover:text-primary hover:underline"
+        >
+          {t("details")} &rarr;
+        </Link>
       </div>
     </li>
   );
@@ -324,26 +333,31 @@ function Finder() {
           "Tất cả" là đường quay ra — nên bấm lại chip đang bật không cần làm
           gì cả, khác với khi hàng này còn là hai nhóm chồng lên nhau. */}
       <div role="radiogroup" aria-label={t("filterLabel")} className="flex flex-wrap gap-2">
-        {ACCOUNT_FILTERS.map((f) => (
+        {AVAILABLE_FILTERS.map((f) => (
           <Chip key={f.id} active={filter === f.id} onClick={() => update({ filter: f.id })}>
             {t(f.labelKey)}
           </Chip>
         ))}
       </div>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <Field
-          label={t("bankLabel")}
-          value={bank}
-          onChange={(value) => update({ bank: value as Selection["bank"] })}
-        >
-          <option value="all">{t("bankAll")}</option>
-          {BANKS.map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.name}
-            </option>
-          ))}
-        </Field>
+      {/* Danh sách chỉ có một ngân hàng thì ô chọn ngân hàng không lọc được
+          gì — nó biến mất, và ô sắp xếp chiếm trọn hàng thay vì đứng lẻ một
+          nửa. */}
+      <div className={`mt-4 grid gap-4 ${BANKS.length > 1 ? "sm:grid-cols-2" : ""}`}>
+        {BANKS.length > 1 && (
+          <Field
+            label={t("bankLabel")}
+            value={bank}
+            onChange={(value) => update({ bank: value as Selection["bank"] })}
+          >
+            <option value="all">{t("bankAll")}</option>
+            {BANKS.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.name}
+              </option>
+            ))}
+          </Field>
+        )}
 
         <Field
           label={t("sortLabel")}
