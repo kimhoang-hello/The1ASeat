@@ -259,19 +259,6 @@ export default async function BankAccountDetailPage({
           href={account.affiliateUrl ?? account.url}
           affiliate={Boolean(account.affiliateUrl)}
         />
-        {/* Nút đi qua link affiliate, nên vẫn để sẵn đường tới trang gốc của
-            ngân hàng — người đọc phải tự đối chiếu được số liệu mà không bị
-            bắt buộc đi qua link có hoa hồng. */}
-        {account.affiliateUrl && (
-          <a
-            href={account.url}
-            target="_blank"
-            rel="nofollow noopener noreferrer"
-            className="cursor-pointer text-sm font-semibold text-foreground/80 hover:text-primary hover:underline"
-          >
-            {bank_t("officialLink")} &rarr;
-          </a>
-        )}
       </div>
 
       {/* Cùng thứ tự với trang danh sách: dặn dò trước, công bố affiliate sau. */}
