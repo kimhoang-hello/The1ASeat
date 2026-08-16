@@ -28,14 +28,27 @@ export function HotTip({ children, compact = false }: { children: React.ReactNod
 /**
  * Nhãn rebate, dùng chung cho thẻ tín dụng và tài khoản ngân hàng.
  *
- * Thay cho ribbon có khía từng treo ở góc ảnh thẻ. Ribbon chỉ sống được ở nơi
- * có ảnh để dán lên, nên trang tài khoản ngân hàng không dùng lại được, và hai
- * trang đi hai kiểu. Viên pill thì đứng được trong hàng badge ở bất cứ đâu —
- * cùng màu xanh lá, cùng chữ, một hình dáng cho cả site.
+ * Thay cho ribbon có khía từng treo ở góc ảnh thẻ: cùng chỗ đứng, nhưng hình
+ * pill dùng lại được ở nơi không có ảnh.
+ *
+ * Trang thẻ tín dụng treo nó ở mép dưới ảnh thẻ — chỗ nó nổi bật nhất và
+ * không chen vào hàng chữ. Trang tài khoản ngân hàng không có ảnh nào để treo
+ * nên đặt trong hàng badge. Khác chỗ đứng, nhưng cùng một viên: cùng màu, cùng
+ * chữ, người đọc nhận ra ngay ở cả hai trang.
  */
-export function RebateChip({ amount, label }: { amount: string; label: string }) {
+export function RebateChip({
+  amount,
+  label,
+  className = "",
+}: {
+  amount: string;
+  label: string;
+  className?: string;
+}) {
   return (
-    <span className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-extrabold uppercase tracking-wide text-emerald-700">
+    <span
+      className={`whitespace-nowrap rounded-full bg-emerald-100 px-3 py-1 text-sm font-extrabold uppercase tracking-wide text-emerald-700 ${className}`}
+    >
       +{amount} {label}
     </span>
   );

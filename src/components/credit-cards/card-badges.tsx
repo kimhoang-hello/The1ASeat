@@ -1,5 +1,4 @@
 import type { CreditCardOffer } from "@/lib/content";
-import { RebateChip } from "@/components/ui/hot-tip";
 import { formatDate } from "@/lib/format-date";
 
 export function CardBadges({
@@ -7,19 +6,14 @@ export function CardBadges({
   cardType,
   elevatedBonusLabel,
   expiresOnLabel,
-  rebateLabel,
 }: {
   offer: CreditCardOffer;
   cardType: string;
   elevatedBonusLabel: string;
   expiresOnLabel?: string;
-  rebateLabel?: string;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {/* Rebate đứng đầu hàng: nó là tiền mặt cộng thêm, thứ đáng nhìn nhất
-          trong hàng badge. */}
-      {offer.rebate && rebateLabel && <RebateChip amount={offer.rebate} label={rebateLabel} />}
       {offer.elevatedBonus && (
         <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
           + {elevatedBonusLabel}

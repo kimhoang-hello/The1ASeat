@@ -7,6 +7,7 @@ import { CardBadges } from "@/components/credit-cards/card-badges";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { EditorsTake } from "@/components/credit-cards/editors-take";
 import { OfferStats } from "@/components/credit-cards/offer-stats";
+import { RebateChip } from "@/components/ui/hot-tip";
 import { ApplyButton } from "@/components/ui/apply-button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { creditCardJsonLd } from "@/lib/credit-card-schema";
@@ -74,6 +75,15 @@ export default async function CreditCardDetailPage({
       <CardImage
         image={offer.cardImage}
         name={offer.name}
+        badge={
+          offer.rebate && (
+            <RebateChip
+              amount={offer.rebate}
+              label={offers("rebate")}
+              className="absolute -bottom-3 left-1/2 -translate-x-1/2 shadow-sm"
+            />
+          )
+        }
         className="mt-6 h-56 w-full rounded-2xl"
         applyUrl={offer.applyUrl}
         priority
@@ -85,7 +95,6 @@ export default async function CreditCardDetailPage({
           cardType={offer.cardType}
           elevatedBonusLabel={offers("elevatedBonus")}
           expiresOnLabel={offers("expiresOn")}
-          rebateLabel={offers("rebate")}
         />
       </div>
 

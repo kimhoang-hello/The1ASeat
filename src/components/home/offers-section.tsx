@@ -7,6 +7,7 @@ import { CardBadges } from "@/components/credit-cards/card-badges";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { EditorsTake } from "@/components/credit-cards/editors-take";
 import { OfferStats } from "@/components/credit-cards/offer-stats";
+import { RebateChip } from "@/components/ui/hot-tip";
 import { ApplyButton } from "@/components/ui/apply-button";
 
 const t = translate("offers");
@@ -52,6 +53,15 @@ export async function OffersSection() {
               <CardImage
                 image={offer.cardImage}
                 name={offer.name}
+                badge={
+                  offer.rebate && (
+                    <RebateChip
+                      amount={offer.rebate}
+                      label={t("rebate")}
+                      className="absolute -bottom-3 left-1/2 -translate-x-1/2 shadow-sm"
+                    />
+                  )
+                }
                 className="h-32 w-full shrink-0 self-start rounded-xl sm:h-32 sm:w-40 xl:h-36 xl:w-44"
                 applyUrl={offer.applyUrl}
                 sizes="176px"
@@ -65,7 +75,6 @@ export async function OffersSection() {
                   cardType={offer.cardType}
                   elevatedBonusLabel={t("elevatedBonus")}
                   expiresOnLabel={t("expiresOn")}
-          rebateLabel={t("rebate")}
                 />
 
                 <h3 className="mt-1.5 font-display text-lg font-bold text-foreground">
