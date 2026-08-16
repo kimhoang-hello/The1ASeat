@@ -39,6 +39,10 @@ export function generateStaticParams() {
   return BANK_ACCOUNTS.map((account) => ({ slug: account.slug }));
 }
 
+// Cùng lý do như trang danh sách: thiếu dòng này thì CDN giữ bản cũ tới một
+// năm, và một trang tài khoản in sai monthly fee lâu như vậy là chuyện thật.
+export const revalidate = 60;
+
 /**
  * Mô tả cho thẻ meta, ghép từ chính số liệu của tài khoản. Viết tay 16 đoạn
  * mô tả thì đoạn thứ mười bảy sẽ bị quên, và một mô tả chép lại của nhau còn

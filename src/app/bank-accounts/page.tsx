@@ -21,6 +21,11 @@ export const metadata: Metadata = {
   ...(BANK_ACCOUNTS_PUBLISHED ? {} : { robots: { index: false, follow: false } }),
 };
 
+// Không có dòng này thì Next trả `s-maxage=31536000` và CDN của Hostinger giữ
+// bản cũ tới một năm — đã bắt được đúng lỗi đó: sau khi thêm 4 tài khoản BMO®,
+// trang vẫn phục vụ bản HTML cũ chỉ có 6 tài khoản.
+export const revalidate = 60;
+
 export default function BankAccountsPage() {
   // Các bộ lọc chỉ đổi query string và đều canonical về /bank-accounts, nên
   // ItemList mô tả toàn bộ danh sách chứ không phải lát cắt đang hiển thị —
