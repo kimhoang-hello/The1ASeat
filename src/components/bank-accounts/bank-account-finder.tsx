@@ -150,32 +150,33 @@ function Headline({ account }: { account: BankAccount }) {
 function AccountCard({ account }: { account: BankAccount }) {
   return (
     <li className="flex flex-col rounded-2xl border border-border bg-card p-5">
-      {/* Logo và nhãn phân loại chia nhau một hàng, tên tài khoản xuống hàng
-          riêng chiếm trọn chiều ngang. Xếp tên bên cạnh logo thì trên điện
-          thoại nó chỉ còn khoảng 170px, và những cái tên dài như "Scotiabank®
-          Preferred Package for Students & Youth" vỡ thành năm dòng. */}
-      <div className="flex items-start justify-between gap-3">
-        <BankMark bank={account.bank} />
-        <div className="flex flex-wrap justify-end gap-1.5">
-          <span className="rounded bg-secondary px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-foreground/70">
-            {t(KIND_LABEL_KEYS[account.kind])}
+      {/* Nhãn phân loại làm dòng đầu, rồi logo và tên đứng cùng hàng — cùng
+          thứ tự và cùng lý do như trang riêng của tài khoản: logo và tên trả
+          lời chung một câu hỏi nên đi liền nhau.
+          Ở đây tên chỉ 18px chứ không phải 30px như trang riêng, nên nó đủ chỗ
+          nằm cạnh logo ngay cả trên điện thoại, không cần xuống dòng. */}
+      <div className="flex flex-wrap gap-1.5">
+        <span className="rounded bg-secondary px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-foreground/70">
+          {t(KIND_LABEL_KEYS[account.kind])}
+        </span>
+        {account.tags.map((tag) => (
+          <span
+            key={tag}
+            className="rounded bg-primary/10 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary"
+          >
+            {t(TAG_LABEL_KEYS[tag])}
           </span>
-          {account.tags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded bg-primary/10 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary"
-            >
-              {t(TAG_LABEL_KEYS[tag])}
-            </span>
-          ))}
-        </div>
+        ))}
       </div>
 
-      <h3 className="mt-3 font-display text-lg font-bold leading-snug text-foreground">
-        <Link href={bankAccountPath(account.slug)} className="cursor-pointer hover:text-primary">
-          {account.name}
-        </Link>
-      </h3>
+      <div className="mt-2 flex items-center gap-3">
+        <BankMark bank={account.bank} />
+        <h3 className="font-display text-lg font-bold leading-snug text-foreground">
+          <Link href={bankAccountPath(account.slug)} className="cursor-pointer hover:text-primary">
+            {account.name}
+          </Link>
+        </h3>
+      </div>
 
       {/* Con số lớn và phí tháng nằm cạnh nhau: gần như câu hỏi nào của người
           đọc cũng là "được bao nhiêu" trừ đi "mất bao nhiêu". */}
