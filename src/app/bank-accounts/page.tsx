@@ -21,6 +21,8 @@ export const metadata: Metadata = {
   ...(BANK_ACCOUNTS_PUBLISHED ? {} : { robots: { index: false, follow: false } }),
 };
 
+export const revalidate = 60;
+
 export default function BankAccountsPage() {
   // Các bộ lọc chỉ đổi query string và đều canonical về /bank-accounts, nên
   // ItemList mô tả toàn bộ danh sách chứ không phải lát cắt đang hiển thị —
