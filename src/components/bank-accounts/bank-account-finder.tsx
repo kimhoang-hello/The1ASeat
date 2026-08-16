@@ -6,7 +6,7 @@ import { CaretDown, Info } from "@phosphor-icons/react";
 import { ApplyButton } from "@/components/ui/apply-button";
 import { t as translate } from "@/lib/t";
 import {
-  ACCOUNT_FEATURES,
+  ACCOUNT_FILTERS,
   BANKS,
   BANK_ACCOUNTS,
   BANK_ACCOUNTS_VERIFIED_ON,
@@ -15,12 +15,12 @@ import {
   formatIsoDate,
   formatMoney,
   formatRate,
-  matchesFeature,
+  matchesFilter,
   sortAccounts,
   type AccountKind,
   type BankAccount,
   type BankId,
-  type FeatureId,
+  type FilterId,
   type SortId,
 } from "@/lib/bank-accounts";
 
@@ -28,13 +28,12 @@ const t = translate("bankAccounts");
 
 type Selection = {
   bank: BankId | "all";
-  kind: AccountKind | "all";
-  feature: FeatureId | "all";
+  filter: FilterId;
   sort: SortId;
 };
 
-const KINDS: (AccountKind | "all")[] = ["all", "chequing", "savings"];
-
+/** Nhãn phân loại in trên thẻ — khác với danh sách bộ lọc, ở đây không có
+ *  "Tất cả" vì mỗi tài khoản chỉ thuộc đúng một loại. */
 const KIND_LABEL_KEYS: Record<AccountKind, string> = {
   chequing: "kindChequing",
   savings: "kindSavings",
@@ -47,14 +46,12 @@ const TAG_LABEL_KEYS = {
 
 function readParams(params: URLSearchParams): Selection {
   const bank = params.get("bank");
-  const kind = params.get("kind");
-  const feature = params.get("feature");
+  const filter = params.get("filter");
   const sort = params.get("sort");
 
   return {
     bank: BANKS.some((b) => b.id === bank) ? (bank as BankId) : "all",
-    kind: kind === "chequing" || kind === "savings" ? kind : "all",
-    feature: ACCOUNT_FEATURES.some((f) => f.id === feature) ? (feature as FeatureId) : "all",
+    filter: ACCOUNT_FILTERS.some((f) => f.id === filter) ? (filter as FilterId) : "all",
     sort: SORT_OPTIONS.some((s) => s.id === sort) ? (sort as SortId) : "bonus",
   };
 }
@@ -258,7 +255,8 @@ function Chip({
   return (
     <button
       type="button"
-      aria-pressed={active}
+      role="radio"
+      aria-checked={active}
       onClick={onClick}
       className={`cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
         active
@@ -303,7 +301,7 @@ function Finder() {
   // đã ghi trong Award Flight Finder: trang được prerender nên seed state từ
   // search params sẽ đóng băng giá trị mặc định và làm hỏng link chia sẻ.
   const selection = readParams(searchParams);
-  const { bank, kind, feature, sort } = selection;
+  const { bank, filter, sort } = selection;
 
   function update(patch: Partial<Selection>) {
     const next = { ...selection, ...patch };
@@ -315,30 +313,19 @@ function Finder() {
   // khi thấy memo thủ công phụ thuộc vào giá trị nó nghĩ có thể đổi sau.
   const accounts = sortAccounts(
     BANK_ACCOUNTS.filter(
-      (account) =>
-        (bank === "all" || account.bank === bank) &&
-        (kind === "all" || account.kind === kind) &&
-        (feature === "all" || matchesFeature(account, feature)),
+      (account) => (bank === "all" || account.bank === bank) && matchesFilter(account, filter),
     ),
     sort,
   );
 
   return (
     <div className="mx-auto max-w-page">
-      <div className="flex flex-wrap gap-2">
-        {KINDS.map((value) => (
-          <Chip key={value} active={kind === value} onClick={() => update({ kind: value })}>
-            {value === "all" ? t("kindAll") : t(KIND_LABEL_KEYS[value])}
-          </Chip>
-        ))}
-        {ACCOUNT_FEATURES.map((f) => (
-          <Chip
-            key={f.id}
-            active={feature === f.id}
-            // Bấm lại chip đang bật thì tắt nó — nếu không, người đọc lọc vào
-            // "Sinh viên" rồi không có đường quay ra ngoài trừ khi tải lại trang.
-            onClick={() => update({ feature: feature === f.id ? "all" : f.id })}
-          >
+      {/* Một nhóm, một lựa chọn. `radiogroup` nói đúng điều mắt đã thấy, và
+          "Tất cả" là đường quay ra — nên bấm lại chip đang bật không cần làm
+          gì cả, khác với khi hàng này còn là hai nhóm chồng lên nhau. */}
+      <div role="radiogroup" aria-label={t("filterLabel")} className="flex flex-wrap gap-2">
+        {ACCOUNT_FILTERS.map((f) => (
+          <Chip key={f.id} active={filter === f.id} onClick={() => update({ filter: f.id })}>
             {t(f.labelKey)}
           </Chip>
         ))}

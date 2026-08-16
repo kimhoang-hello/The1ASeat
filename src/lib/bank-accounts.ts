@@ -382,15 +382,32 @@ export const BANK_ACCOUNTS: BankAccount[] = [
 /** Ngày đối chiếu toàn bộ số liệu ở trên với nguồn. */
 export const BANK_ACCOUNTS_VERIFIED_ON = "2026-08-16";
 
-/** Bộ lọc nhanh — mỗi cái là một câu hỏi người đọc thật sự hỏi. */
-export const ACCOUNT_FEATURES = [
+/**
+ * Bộ lọc nhanh — mỗi cái là một câu hỏi người đọc thật sự hỏi, và **chỉ một
+ * cái đúng tại một thời điểm**.
+ *
+ * Trước đây đây là hai danh sách: loại tài khoản (chi tiêu/tiết kiệm) và đặc
+ * điểm (không phí tháng, có bonus, người mới định cư, sinh viên). Về dữ liệu
+ * thì chúng độc lập nên chọn cùng lúc được, nhưng cả hai đều vẽ ra thành một
+ * hàng pill giống hệt nhau — nên "Tất cả" và "Người mới định cư" sáng cùng
+ * lúc, và một hàng nút chỉ có thể có một cái được chọn thì mới đọc được. Gộp
+ * lại thành một danh sách khiến quy tắc đó thành thật ở tầng dữ liệu, chứ
+ * không phải chỉ là quy ước bề mặt.
+ *
+ * `id` cố tình trùng với `AccountKind` và `AccountTag` để `matchesFilter` bên
+ * dưới so thẳng, không cần bảng ánh xạ.
+ */
+export const ACCOUNT_FILTERS = [
+  { id: "all", labelKey: "kindAll" },
+  { id: "chequing", labelKey: "kindChequing" },
+  { id: "savings", labelKey: "kindSavings" },
   { id: "no-fee", labelKey: "featureNoFee" },
   { id: "bonus", labelKey: "featureBonus" },
   { id: "newcomer", labelKey: "featureNewcomer" },
   { id: "student", labelKey: "featureStudent" },
 ] as const;
 
-export type FeatureId = (typeof ACCOUNT_FEATURES)[number]["id"];
+export type FilterId = (typeof ACCOUNT_FILTERS)[number]["id"];
 
 export const SORT_OPTIONS = [
   { id: "bonus", labelKey: "sortBonus" },
@@ -401,16 +418,20 @@ export const SORT_OPTIONS = [
 
 export type SortId = (typeof SORT_OPTIONS)[number]["id"];
 
-export function matchesFeature(account: BankAccount, feature: FeatureId): boolean {
-  switch (feature) {
+export function matchesFilter(account: BankAccount, filter: FilterId): boolean {
+  switch (filter) {
+    case "all":
+      return true;
+    case "chequing":
+    case "savings":
+      return account.kind === filter;
     case "no-fee":
       return account.monthlyFee === 0;
     case "bonus":
       return account.bonusLabelVi !== undefined;
     case "newcomer":
-      return account.tags.includes("newcomer");
     case "student":
-      return account.tags.includes("student");
+      return account.tags.includes(filter);
   }
 }
 
