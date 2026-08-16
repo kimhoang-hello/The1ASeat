@@ -60,22 +60,27 @@ function readParams(params: URLSearchParams): Selection {
 }
 
 /**
- * Ô logo ngân hàng. Trang chưa có file logo nào của BMO® hay Scotiabank®, nên
- * thay vì mượn ảnh ở đâu đó, ô này dùng chính màu thương hiệu và tên viết tắt —
- * vẫn phân biệt được hai ngân hàng ngay từ xa mà không đưa lên trang một tài
- * sản không rõ nguồn.
+ * Logo ngân hàng, đặt trên nền trắng vì cả hai logo đều được thiết kế cho nền
+ * trắng — nền kem của trang làm phần trắng trong logo BMO® lộ ra thành vệt.
+ *
+ * `alt` để trống có chủ ý: tên ngân hàng đã nằm ngay trong tên tài khoản bên
+ * dưới ("BMO® Performance Chequing"), nên logo là trang trí — mô tả nó nữa chỉ
+ * làm người dùng screen reader nghe tên ngân hàng hai lần liên tiếp.
+ *
+ * Ô rộng cố định và `object-contain` vì hai logo có tỷ lệ rất khác nhau:
+ * wordmark Scotiabank® dài gần gấp đôi logo BMO®, nếu để ô co theo ảnh thì hai
+ * thẻ cạnh nhau sẽ lệch hẳn nhau ở góc trên.
  */
 function BankMark({ bank }: { bank: BankId }) {
-  const { short, color } = bankById(bank);
+  const { logo } = bankById(bank);
 
   return (
-    <span
-      className="flex h-10 w-16 shrink-0 items-center justify-center rounded-lg text-xs font-extrabold uppercase tracking-wide text-white"
-      style={{ backgroundColor: color }}
-      aria-hidden
-    >
-      {short}
-    </span>
+    /* eslint-disable-next-line @next/next/no-img-element */
+    <img
+      src={logo}
+      alt=""
+      className="h-9 w-28 shrink-0 rounded-md border border-border bg-white object-contain p-1.5"
+    />
   );
 }
 
@@ -144,32 +149,32 @@ function Headline({ account }: { account: BankAccount }) {
 }
 
 function AccountCard({ account }: { account: BankAccount }) {
-  const bank = bankById(account.bank);
-
   return (
     <li className="flex flex-col rounded-2xl border border-border bg-card p-5">
-      <div className="flex items-start gap-3">
+      {/* Logo và nhãn phân loại chia nhau một hàng, tên tài khoản xuống hàng
+          riêng chiếm trọn chiều ngang. Xếp tên bên cạnh logo thì trên điện
+          thoại nó chỉ còn khoảng 170px và những cái tên dài như "BMO®
+          Performance Chequing cho người mới định cư" vỡ thành năm dòng. */}
+      <div className="flex items-start justify-between gap-3">
         <BankMark bank={account.bank} />
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="rounded bg-secondary px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-foreground/70">
-              {t(KIND_LABEL_KEYS[account.kind])}
+        <div className="flex flex-wrap justify-end gap-1.5">
+          <span className="rounded bg-secondary px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-foreground/70">
+            {t(KIND_LABEL_KEYS[account.kind])}
+          </span>
+          {account.tags.map((tag) => (
+            <span
+              key={tag}
+              className="rounded bg-primary/10 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary"
+            >
+              {t(TAG_LABEL_KEYS[tag])}
             </span>
-            {account.tags.map((tag) => (
-              <span
-                key={tag}
-                className="rounded bg-primary/10 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary"
-              >
-                {t(TAG_LABEL_KEYS[tag])}
-              </span>
-            ))}
-          </div>
-          <h3 className="mt-1.5 font-display text-lg font-bold leading-snug text-foreground">
-            {account.name}
-          </h3>
-          <p className="text-sm text-muted-foreground">{bank.name}</p>
+          ))}
         </div>
       </div>
+
+      <h3 className="mt-3 font-display text-lg font-bold leading-snug text-foreground">
+        {account.name}
+      </h3>
 
       {/* Con số lớn và phí tháng nằm cạnh nhau: gần như câu hỏi nào của người
           đọc cũng là "được bao nhiêu" trừ đi "mất bao nhiêu". */}

@@ -29,15 +29,16 @@ export type Bank = {
   id: BankId;
   /** Tên đầy đủ, có ® như quy ước nội dung của trang. */
   name: string;
-  /** Chữ viết tắt in trên ô logo. */
-  short: string;
-  /** Màu thương hiệu, dùng làm nền ô logo. */
-  color: string;
+  /** File logo trong `public/images/logos/banks`. */
+  logo: string;
 };
 
+// Logo lấy từ Wikimedia Commons (BMO_Logo.svg, Scotiabank_logo.svg), dùng để
+// nhận diện ngân hàng trong bài so sánh — cùng cách trang đang dùng logo hãng
+// bay và khách sạn ở Transfer Partners.
 export const BANKS: Bank[] = [
-  { id: "bmo", name: "BMO®", short: "BMO", color: "#0079c1" },
-  { id: "scotiabank", name: "Scotiabank®", short: "Scotia", color: "#c8102e" },
+  { id: "bmo", name: "BMO®", logo: "/images/logos/banks/bmo.svg" },
+  { id: "scotiabank", name: "Scotiabank®", logo: "/images/logos/banks/scotiabank.svg" },
 ];
 
 export function bankById(id: BankId): Bank {
@@ -83,7 +84,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
   {
     slug: "bmo-performance-chequing",
     bank: "bmo",
-    name: "BMO® Performance Chequing",
+    name: "BMO® Performance Chequing Account",
     kind: "chequing",
     tags: [],
     monthlyFee: 17.95,
@@ -106,7 +107,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
   {
     slug: "bmo-newcomer-performance-chequing",
     bank: "bmo",
-    name: "BMO® Performance Chequing cho người mới định cư",
+    name: "BMO® Newcomer Performance Chequing Account",
     kind: "chequing",
     tags: ["newcomer"],
     monthlyFee: 17.95,
@@ -130,7 +131,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
   {
     slug: "bmo-premium-chequing",
     bank: "bmo",
-    name: "BMO® Premium Chequing",
+    name: "BMO® Premium Chequing Account",
     kind: "chequing",
     tags: [],
     monthlyFee: 30.95,
@@ -153,7 +154,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
   {
     slug: "bmo-plus-chequing",
     bank: "bmo",
-    name: "BMO® Plus Plan Chequing",
+    name: "BMO® Plus Plan Chequing Account",
     kind: "chequing",
     tags: [],
     monthlyFee: 11.95,
@@ -168,7 +169,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
   {
     slug: "bmo-practical-chequing",
     bank: "bmo",
-    name: "BMO® Practical Chequing",
+    name: "BMO® Practical Chequing Account",
     kind: "chequing",
     tags: [],
     monthlyFee: 4,
@@ -182,7 +183,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
   {
     slug: "bmo-student-performance-chequing",
     bank: "bmo",
-    name: "BMO® Student Performance Chequing",
+    name: "BMO® Student Performance Chequing Account",
     kind: "chequing",
     tags: ["student"],
     monthlyFee: 0,
@@ -198,7 +199,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
   {
     slug: "bmo-savings-amplifier",
     bank: "bmo",
-    name: "BMO® Savings Amplifier",
+    name: "BMO® Savings Amplifier Account",
     kind: "savings",
     tags: [],
     monthlyFee: 0,
@@ -216,7 +217,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
   {
     slug: "bmo-premium-rate-savings",
     bank: "bmo",
-    name: "BMO® Premium Rate Savings",
+    name: "BMO® Premium Rate Savings Account",
     kind: "savings",
     tags: [],
     monthlyFee: 0,
@@ -232,7 +233,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
   {
     slug: "bmo-savings-builder",
     bank: "bmo",
-    name: "BMO® Savings Builder",
+    name: "BMO® Savings Builder Account",
     kind: "savings",
     tags: [],
     monthlyFee: 0,
@@ -312,7 +313,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
   {
     slug: "scotiabank-preferred-students",
     bank: "scotiabank",
-    name: "Scotiabank® Preferred Package cho sinh viên",
+    name: "Scotiabank® Preferred Package for Students & Youth",
     kind: "chequing",
     tags: ["student"],
     monthlyFee: 0,
@@ -328,7 +329,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
   {
     slug: "scotiabank-momentumplus-savings",
     bank: "scotiabank",
-    name: "Scotiabank® MomentumPLUS Savings",
+    name: "Scotiabank® MomentumPLUS Savings Account",
     kind: "savings",
     tags: [],
     monthlyFee: 0,
@@ -346,7 +347,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
   {
     slug: "scotiabank-money-master",
     bank: "scotiabank",
-    name: "Scotiabank® Money Master Savings",
+    name: "Scotiabank® Money Master Savings Account",
     kind: "savings",
     tags: [],
     monthlyFee: 0,
@@ -364,7 +365,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
   {
     slug: "scotiabank-savings-accelerator",
     bank: "scotiabank",
-    name: "Scotiabank® Savings Accelerator",
+    name: "Scotiabank® Savings Accelerator Account",
     kind: "savings",
     tags: [],
     monthlyFee: 0,
