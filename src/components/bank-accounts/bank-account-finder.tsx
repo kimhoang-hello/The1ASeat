@@ -2,7 +2,8 @@
 
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { ArrowSquareOut, CaretDown, Info } from "@phosphor-icons/react";
+import { CaretDown, Info } from "@phosphor-icons/react";
+import { ApplyButton } from "@/components/ui/apply-button";
 import { t as translate } from "@/lib/t";
 import {
   ACCOUNT_FEATURES,
@@ -229,16 +230,11 @@ function AccountCard({ account }: { account: BankAccount }) {
         </details>
       )}
 
+      {/* Cùng một nút với trang thẻ tín dụng — cùng chữ, cùng hình dáng. Chỉ
+          khác `rel`: link ngân hàng không có hoa hồng nên không gắn
+          `sponsored`, và dòng chữ bên cạnh nói thẳng điều đó. */}
       <div className="mt-auto flex flex-wrap items-center gap-4 pt-4">
-        <a
-          href={account.url}
-          target="_blank"
-          rel="noopener noreferrer nofollow"
-          className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
-        >
-          {t("openAccount")}
-          <ArrowSquareOut size={16} weight="bold" />
-        </a>
+        <ApplyButton href={account.url} affiliate={false} />
         <span className="text-xs text-muted-foreground">{t("officialLink")}</span>
       </div>
     </li>

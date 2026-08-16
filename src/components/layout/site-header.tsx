@@ -23,6 +23,7 @@ import {
   type Icon,
 } from "@phosphor-icons/react";
 import { SiteSearch } from "@/components/layout/site-search";
+import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
 import { t } from "@/lib/t";
 
 /** A menu entry: an icon, what it is, and what is behind it in one line. */
@@ -281,15 +282,18 @@ export function SiteHeader() {
 
   // Ngân hàng is not a slice of the card list — it is its own page, listed
   // here because a reader picking a card and a reader picking a chequing
-  // account are the same person on the same errand.
-  const bankLinks: NavLink[] = [
-    {
-      href: "/bank-accounts",
-      label: nav("bankAccounts"),
-      description: tMenu("bankAccounts"),
-      icon: Bank,
-    },
-  ];
+  // account are the same person on the same errand. Empty while the page is
+  // still a draft, which takes the row out of both menus at once.
+  const bankLinks: NavLink[] = BANK_ACCOUNTS_PUBLISHED
+    ? [
+        {
+          href: "/bank-accounts",
+          label: nav("bankAccounts"),
+          description: tMenu("bankAccounts"),
+          icon: Bank,
+        },
+      ]
+    : [];
 
   // "Blog" is a <summary>, not a link, so without this first entry the full
   // archive at /blog had no route in from the desktop nav at all — only the

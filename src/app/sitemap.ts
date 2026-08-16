@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { getCreditCardOffers, getPosts } from "@/lib/content";
 import { categoryPath, getCategories, lastModified } from "@/lib/blog-categories";
 import { absoluteUrl } from "@/lib/seo";
+import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
 
 // Keep the sitemap in step with the ISR window on the pages it lists.
 export const revalidate = 60;
@@ -18,7 +19,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: absoluteUrl("/"), lastModified: newestPost, changeFrequency: "daily", priority: 1 },
     { url: absoluteUrl("/credit-cards"), changeFrequency: "weekly", priority: 0.9 },
-    { url: absoluteUrl("/bank-accounts"), changeFrequency: "weekly", priority: 0.8 },
+    ...(BANK_ACCOUNTS_PUBLISHED
+      ? ([{ url: absoluteUrl("/bank-accounts"), changeFrequency: "weekly", priority: 0.8 }] as const)
+      : []),
     { url: absoluteUrl("/blog"), lastModified: newestPost, changeFrequency: "daily", priority: 0.9 },
     { url: absoluteUrl("/transfer-bonuses"), changeFrequency: "daily", priority: 0.8 },
     { url: absoluteUrl("/transfer-partners"), changeFrequency: "monthly", priority: 0.7 },

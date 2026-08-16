@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
-import { AFFILIATE_REL } from "@/components/credit-cards/apply-button";
+import { AFFILIATE_REL } from "@/components/ui/apply-button";
 
 export function CardImage({
   image,

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCreditCardOffers, getPosts } from "@/lib/content";
 import { t } from "@/lib/t";
 import type { SearchItem } from "@/lib/search";
+import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
 
 // The whole site is a few dozen cards and posts, so search ships the index
 // rather than a query endpoint: the header fetches this once, the first time
@@ -15,7 +16,9 @@ const footer = t("footer");
 
 const PAGES: SearchItem[] = [
   { title: nav("creditCards"), href: "/credit-cards", kind: "page" },
-  { title: nav("bankAccounts"), href: "/bank-accounts", kind: "page" },
+  ...(BANK_ACCOUNTS_PUBLISHED
+    ? [{ title: nav("bankAccounts"), href: "/bank-accounts", kind: "page" as const }]
+    : []),
   { title: nav("blog"), href: "/blog", kind: "page" },
   { title: nav("awardCharts"), href: "/award-flight-finder", kind: "page" },
   { title: nav("calculator"), href: "/calculator", kind: "page" },

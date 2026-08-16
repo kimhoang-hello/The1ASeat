@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { YoutubeLogo } from "@phosphor-icons/react/ssr";
 import { DisclosureText } from "@/components/layout/disclosure-text";
+import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
 import { t as translate } from "@/lib/t";
 
 const t = translate("footer");
@@ -40,9 +41,11 @@ export function SiteFooter() {
             <Link href="/credit-cards" className="hover:text-white">
               {nav("creditCards")}
             </Link>
-            <Link href="/bank-accounts" className="hover:text-white">
-              {nav("bankAccounts")}
-            </Link>
+            {BANK_ACCOUNTS_PUBLISHED && (
+              <Link href="/bank-accounts" className="hover:text-white">
+                {nav("bankAccounts")}
+              </Link>
+            )}
             <Link href="/blog" className="hover:text-white">
               {nav("blog")}
             </Link>
