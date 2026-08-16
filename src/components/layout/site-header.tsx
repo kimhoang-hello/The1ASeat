@@ -8,6 +8,7 @@ import {
   AirplaneTilt,
   ArrowsLeftRight,
   Article,
+  Bank,
   CaretDown,
   Calculator,
   CreditCard,
@@ -176,11 +177,19 @@ function TypeLinksFallback({
   );
 }
 
-/** The dropdown panel itself, so the Blog and credit-card menus stay identical. */
+/** The dropdown panel itself, so the Blog and credit-card menus stay identical.
+ *
+ *  `extraLinks` are entries that live on their own page rather than behind a
+ *  `?type=` on `basePath` — Ngân hàng sits in the credit-card menu but is a
+ *  route of its own, so it cannot go through TypeLinks (which decides "active"
+ *  by comparing the query string on one shared path). They hang below a rule
+ *  so the menu reads as "the card list, sliced three ways" and then "a
+ *  neighbouring page", not as six equal siblings. */
 function TypeDropdown({
   label,
   basePath,
   links,
+  extraLinks = [],
   active,
   width,
   pathname,
@@ -189,6 +198,7 @@ function TypeDropdown({
   label: string;
   basePath: string;
   links: TypeLink[];
+  extraLinks?: NavLink[];
   active: boolean;
   width: string;
   pathname: string;
@@ -215,6 +225,19 @@ function TypeDropdown({
             onNavigate={onNavigate}
           />
         </Suspense>
+
+        {extraLinks.length > 0 && (
+          <div className="mt-2 border-t border-border pt-2">
+            {extraLinks.map((link) => (
+              <MenuItem
+                key={link.href}
+                link={link}
+                active={pathname === link.href}
+                onNavigate={onNavigate}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </details>
   );
@@ -253,6 +276,18 @@ export function SiteHeader() {
       label: tOffers("tabOther"),
       description: tMenu("cardsOther"),
       icon: Stack,
+    },
+  ];
+
+  // Ngân hàng is not a slice of the card list — it is its own page, listed
+  // here because a reader picking a card and a reader picking a chequing
+  // account are the same person on the same errand.
+  const bankLinks: NavLink[] = [
+    {
+      href: "/bank-accounts",
+      label: nav("bankAccounts"),
+      description: tMenu("bankAccounts"),
+      icon: Bank,
     },
   ];
 
@@ -311,6 +346,11 @@ export function SiteHeader() {
   ];
 
   const cardsActive = pathname === "/credit-cards" || pathname.startsWith("/credit-cards/");
+  // The card *rows* and the card *menu* light up on different pages: the menu
+  // covers Ngân hàng too, but the "Thẻ tín dụng" row inside it must not, or
+  // the mobile menu marks two rows live at once on /bank-accounts.
+  const bankActive = bankLinks.some((link) => pathname === link.href);
+  const cardsMenuActive = cardsActive || bankActive;
   const blogActive = pathname === "/blog" || pathname.startsWith("/blog/");
   const toolsActive = toolsLinks.some((link) => pathname === link.href);
 
@@ -389,7 +429,8 @@ export function SiteHeader() {
             label={nav("creditCards")}
             basePath="/credit-cards"
             links={cardLinks}
-            active={cardsActive}
+            extraLinks={bankLinks}
+            active={cardsMenuActive}
             width="w-80"
             pathname={pathname}
             onNavigate={closeParentDropdown}
@@ -488,6 +529,15 @@ export function SiteHeader() {
                 compact
               />
             </Suspense>
+            {bankLinks.map((link) => (
+              <MenuItem
+                key={link.href}
+                link={link}
+                active={pathname === link.href}
+                onNavigate={closeMobileMenu}
+                compact
+              />
+            ))}
 
             <Link
               href="/blog"

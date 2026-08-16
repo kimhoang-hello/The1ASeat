@@ -13,7 +13,8 @@
     "transferPartners": "Transfer Partners",
     "about": "Giới thiệu",
     "newsletter": "Đăng ký bản tin",
-    "awardCharts": "Award Flight Finder"
+    "awardCharts": "Award Flight Finder",
+    "bankAccounts": "Ngân hàng"
   },
   "navMenu": {
     "cardsAll": "Toàn bộ thẻ đang theo dõi",
@@ -25,7 +26,8 @@
     "awardCharts": "Tìm chuyến bay đổi bằng điểm",
     "calculator": "Tính giá trị điểm bạn đang có",
     "transferBonuses": "Khuyến mãi chuyển điểm đang chạy",
-    "transferPartners": "Điểm của bạn chuyển được đi đâu"
+    "transferPartners": "Điểm của bạn chuyển được đi đâu",
+    "bankAccounts": "Tài khoản chi tiêu và tiết kiệm ở Canada"
   },
   "banner": {
     "eyebrow": "OFFER NỔI BẬT",
@@ -73,6 +75,42 @@
     "emptyElevated": "Hiện chưa có elevated offer nào đang chạy.",
     "emptyOther": "Hiện chưa có thẻ nào trong mục này.",
     "emptyAll": "Hiện chưa có thẻ nào."
+  },
+  "bankAccounts": {
+    "eyebrow": "TÀI KHOẢN NGÂN HÀNG",
+    "title": "Tài Khoản Ngân Hàng Ở Canada",
+    "subtitle": "So sánh tài khoản chi tiêu và tiết kiệm: welcome bonus đang chạy, phí tháng, cách được miễn phí và lãi suất. Bản demo hiện có {banks}.",
+    "kindAll": "Tất cả",
+    "kindChequing": "Chi tiêu",
+    "kindSavings": "Tiết kiệm",
+    "featureNoFee": "Không phí tháng",
+    "featureBonus": "Có welcome bonus",
+    "featureNewcomer": "Người mới định cư",
+    "featureStudent": "Sinh viên",
+    "tagNewcomer": "Người mới định cư",
+    "tagStudent": "Sinh viên",
+    "bankLabel": "Ngân hàng",
+    "bankAll": "Tất cả ngân hàng",
+    "sortLabel": "Sắp xếp theo",
+    "sortBonus": "Bonus cao nhất",
+    "sortInterest": "Lãi suất cao nhất",
+    "sortFee": "Phí tháng thấp nhất",
+    "sortAz": "Tên A–Z",
+    "resultCount": "{count} tài khoản",
+    "empty": "Không có tài khoản nào khớp với bộ lọc bạn chọn.",
+    "welcomeBonus": "Welcome bonus",
+    "interestRate": "Lãi suất",
+    "monthlyFee": "Phí tháng",
+    "free": "Miễn phí",
+    "noRate": "Không công bố",
+    "regularRate": "Lãi thường: {rate}.",
+    "bonusConditions": "Điều kiện nhận bonus",
+    "bonusExpires": "Offer đóng ngày {date}",
+    "openAccount": "Mở tài khoản",
+    "officialLink": "Link tới trang chính thức của ngân hàng",
+    "verifiedOn": "Số liệu kiểm tra ngày {date}.",
+    "disclaimerHeading": "Đọc kỹ trước khi mở tài khoản",
+    "disclaimer": "Welcome bonus và lãi suất khuyến mãi ở Canada thay đổi liên tục, và điều kiện nhận bonus (direct deposit, số dư tối thiểu, thời gian duy trì) mới là phần quyết định bạn có nhận được tiền hay không. Luôn kiểm tra lại trên trang chính thức của ngân hàng trước khi mở. Các liên kết tài khoản ngân hàng trên trang này không phải liên kết affiliate — Ghế 1A không nhận hoa hồng từ chúng."
   },
   "posts": {
     "eyebrow": "TỪ BLOG",
@@ -192,7 +230,10 @@
     "breadcrumbBlog": "Blog",
     "breadcrumbCreditCards": "Thẻ tín dụng",
     "awardChartsTitle": "Award Flight Finder: Canada đi Việt Nam",
-    "awardChartsDescription": "So sánh số miles mà Aeroplan, AAdvantage, Avios, Asia Miles và Flying Blue đòi cho chặng Canada đi Việt Nam, kèm tỷ lệ transfer từ Amex MR và RBC Avion."
+    "awardChartsDescription": "So sánh số miles mà Aeroplan, AAdvantage, Avios, Asia Miles và Flying Blue đòi cho chặng Canada đi Việt Nam, kèm tỷ lệ transfer từ Amex MR và RBC Avion.",
+    "bankAccountsTitle": "Tài khoản ngân hàng Canada: BMO® và Scotiabank®",
+    "bankAccountsDescription": "So sánh tài khoản chi tiêu và tiết kiệm của BMO® và Scotiabank® bằng tiếng Việt: welcome bonus đang chạy, phí tháng, cách được miễn phí và lãi suất tiết kiệm.",
+    "breadcrumbBankAccounts": "Ngân hàng"
   },
   "awardCharts": {
     "eyebrow": "CÔNG CỤ",

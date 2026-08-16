@@ -15,6 +15,7 @@ const footer = t("footer");
 
 const PAGES: SearchItem[] = [
   { title: nav("creditCards"), href: "/credit-cards", kind: "page" },
+  { title: nav("bankAccounts"), href: "/bank-accounts", kind: "page" },
   { title: nav("blog"), href: "/blog", kind: "page" },
   { title: nav("awardCharts"), href: "/award-flight-finder", kind: "page" },
   { title: nav("calculator"), href: "/calculator", kind: "page" },
