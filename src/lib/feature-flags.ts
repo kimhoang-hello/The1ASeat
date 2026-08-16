@@ -12,8 +12,8 @@
  */
 
 /**
- * Trang Ngân hàng (`/bank-accounts`). Tắt từ 16/08/2026 theo yêu cầu: dữ liệu
- * mới có BMO® và Scotiabank®, cần rà kỹ số liệu và bổ sung ngân hàng trước
- * khi cho người đọc thấy.
+ * Trang Ngân hàng (`/bank-accounts`). Tắt sáng 16/08/2026 để rà lại số liệu,
+ * bật lại chiều cùng ngày: 10 tài khoản của Scotiabank® và BMO®, số liệu đối
+ * chiếu từ chính trang FinlyWealth mà nút "Apply ngay" dẫn tới.
  */
-export const BANK_ACCOUNTS_PUBLISHED = false;
+export const BANK_ACCOUNTS_PUBLISHED = true;
