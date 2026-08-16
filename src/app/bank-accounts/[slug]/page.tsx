@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { JsonLd } from "@/components/seo/json-ld";
+import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
+import { HotTip, RebateChip } from "@/components/ui/hot-tip";
 import { ApplyButton } from "@/components/ui/apply-button";
 import {
   BANK_ACCOUNTS,
-  BANK_ACCOUNTS_VERIFIED_ON,
   bankAccountBySlug,
   bankAccountPath,
   bankById,
@@ -138,7 +139,7 @@ export default async function BankAccountDetailPage({
         &larr; {bank_t("viewAll")}
       </Link>
 
-      <div className="mt-6 flex flex-wrap items-center gap-1.5">
+      <div className="mt-6 flex flex-wrap items-center gap-x-1.5 gap-y-3">
         <span className="rounded bg-secondary px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-foreground/70">
           {bank_t(KIND_LABEL_KEYS[account.kind])}
         </span>
@@ -150,6 +151,7 @@ export default async function BankAccountDetailPage({
             {bank_t(TAG_LABEL_KEYS[tag])}
           </span>
         ))}
+        {account.rebate && <RebateChip amount={account.rebate} label={bank_t("rebate")} />}
       </div>
 
       {/* Logo và tên đứng cùng hàng: hai thứ này cùng trả lời một câu hỏi —
@@ -246,19 +248,39 @@ export default async function BankAccountDetailPage({
         </>
       )}
 
-      <div className="mt-8 flex flex-wrap items-center gap-4">
-        <ApplyButton href={account.url} affiliate={false} />
-        <span className="text-xs text-muted-foreground">{bank_t("officialLink")}</span>
+      {account.rebate && (
+        <div className="mt-8">
+          <HotTip>{bank_t("rebateHotTip", { amount: account.rebate })}</HotTip>
+        </div>
+      )}
+
+      <div className="mt-6 flex flex-wrap items-center gap-4">
+        <ApplyButton
+          href={account.affiliateUrl ?? account.url}
+          affiliate={Boolean(account.affiliateUrl)}
+        />
+        {/* Nút đi qua link affiliate, nên vẫn để sẵn đường tới trang gốc của
+            ngân hàng — người đọc phải tự đối chiếu được số liệu mà không bị
+            bắt buộc đi qua link có hoa hồng. */}
+        {account.affiliateUrl && (
+          <a
+            href={account.url}
+            target="_blank"
+            rel="nofollow noopener noreferrer"
+            className="cursor-pointer text-sm font-semibold text-foreground/80 hover:text-primary hover:underline"
+          >
+            {bank_t("officialLink")} &rarr;
+          </a>
+        )}
       </div>
 
-      <p className="mt-8 text-xs text-muted-foreground">
-        {bank_t("verifiedOn", { date: formatIsoDate(BANK_ACCOUNTS_VERIFIED_ON) })}
-      </p>
-
-      <div className="mt-4 rounded-xl border border-border bg-secondary p-4">
+      {/* Cùng thứ tự với trang danh sách: dặn dò trước, công bố affiliate sau. */}
+      <div className="mt-8 rounded-xl border border-border bg-secondary p-4">
         <p className="text-sm font-semibold text-foreground">{bank_t("disclaimerHeading")}</p>
         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{bank_t("disclaimer")}</p>
       </div>
+
+      <OfferDisclosure className="mt-4" />
 
       <p className="mt-10 flex flex-wrap gap-x-4 gap-y-2 border-t border-border pt-4 text-xs text-muted-foreground">
         <Link href={`/bank-accounts?bank=${account.bank}`} className="underline">

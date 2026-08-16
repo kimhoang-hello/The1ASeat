@@ -4,13 +4,14 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CaretDown, Info } from "@phosphor-icons/react";
+import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
+import { HotTip, RebateChip } from "@/components/ui/hot-tip";
 import { ApplyButton } from "@/components/ui/apply-button";
 import { t as translate } from "@/lib/t";
 import {
   AVAILABLE_FILTERS,
   BANKS,
   BANK_ACCOUNTS,
-  BANK_ACCOUNTS_VERIFIED_ON,
   SORT_OPTIONS,
   bankAccountPath,
   bankById,
@@ -158,7 +159,8 @@ function AccountCard({ account }: { account: BankAccount }) {
           lời chung một câu hỏi nên đi liền nhau.
           Ở đây tên chỉ 18px chứ không phải 30px như trang riêng, nên nó đủ chỗ
           nằm cạnh logo ngay cả trên điện thoại, không cần xuống dòng. */}
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap items-start justify-between gap-1.5">
+        <div className="flex flex-wrap gap-1.5">
         <span className="rounded bg-secondary px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-foreground/70">
           {t(KIND_LABEL_KEYS[account.kind])}
         </span>
@@ -170,6 +172,8 @@ function AccountCard({ account }: { account: BankAccount }) {
             {t(TAG_LABEL_KEYS[tag])}
           </span>
         ))}
+        </div>
+        {account.rebate && <RebateChip amount={account.rebate} label={t("rebate")} />}
       </div>
 
       <div className="mt-2 flex items-center gap-3">
@@ -240,11 +244,21 @@ function AccountCard({ account }: { account: BankAccount }) {
         </details>
       )}
 
-      {/* Cùng một nút với trang thẻ tín dụng — cùng chữ, cùng hình dáng. Chỉ
-          khác `rel`: link ngân hàng không có hoa hồng nên không gắn
-          `sponsored`, và dòng chữ bên cạnh nói thẳng điều đó. */}
+      {account.rebate && (
+        <div className="mt-3">
+          <HotTip compact>{t("rebateHotTip", { amount: account.rebate })}</HotTip>
+        </div>
+      )}
+
+      {/* Cùng một nút với trang thẻ tín dụng. `affiliate` bật theo dữ liệu chứ
+          không đặt cứng: tài khoản có link FinlyWealth thì nút mang
+          `rel="sponsored"`, tài khoản chưa có thì trỏ thẳng trang ngân hàng
+          với rel thường. */}
       <div className="mt-auto flex flex-wrap items-center gap-4 pt-4">
-        <ApplyButton href={account.url} affiliate={false} />
+        <ApplyButton
+          href={account.affiliateUrl ?? account.url}
+          affiliate={Boolean(account.affiliateUrl)}
+        />
         <Link
           href={bankAccountPath(account.slug)}
           className="cursor-pointer text-sm font-semibold text-foreground/80 hover:text-primary hover:underline"
@@ -392,10 +406,9 @@ function Finder() {
         )}
       </ul>
 
-      <p className="mt-4 text-xs text-muted-foreground">
-        {t("verifiedOn", { date: formatIsoDate(BANK_ACCOUNTS_VERIFIED_ON) })}
-      </p>
-
+      {/* Lời dặn đọc kỹ đứng trước: nó là điều người đọc cần làm tiếp. Đoạn
+          disclosure affiliate là nghĩa vụ công bố, đứng sau cùng như ở footer
+          và ở trang thẻ tín dụng. */}
       <div className="mt-6 flex gap-3 rounded-xl border border-border bg-secondary p-4">
         <Info size={20} weight="fill" className="mt-0.5 shrink-0 text-primary" aria-hidden />
         <div>
@@ -403,6 +416,8 @@ function Finder() {
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t("disclaimer")}</p>
         </div>
       </div>
+
+      <OfferDisclosure className="mt-4" />
     </div>
   );
 }

@@ -4,20 +4,23 @@
 // đó) nhưng tạm gỡ khỏi danh sách theo yêu cầu, sẽ bổ sung lại sau. Xem lịch
 // sử git nếu cần lấy lại 9 tài khoản BMO® đã viết.
 //
-// Nguồn số liệu, kiểm tra ngày 2026-08-16:
-//  - Phí tháng, lãi suất và danh sách quyền lợi: bảng tổng hợp
-//    princeoftravel.com/bank-accounts (đọc trực tiếp ngày 16/08/2026).
-//  - Điều kiện welcome bonus đối chiếu lại với công bố của chính ngân hàng:
-//    Cash Bonus Bundle $700 chạy từ 03/07/2026 đến 29/10/2026, direct deposit
-//    trong 60 ngày và duy trì 6 tháng liên tiếp (scotiabank.com, trang "New
-//    bank account offers and promotions"). Miễn phí tháng năm đầu cho người
-//    mới định cư theo Scotiabank StartRight®.
+// NGUỒN: trang sản phẩm của FinlyWealth cho từng tài khoản (chính là đích của
+// `affiliateUrl` bên dưới), đọc trực tiếp ngày 2026-08-16. FinlyWealth đăng
+// bảng "Fees & limits" và "Interest Rates" lấy thẳng từ ngân hàng, nên số ở
+// đây khớp với số người đọc sẽ thấy khi bấm nút.
 //
-// Lãi suất khuyến mãi của tài khoản tiết kiệm thay đổi liên tục và các nguồn
-// tổng hợp thường lệch nhau. Vì vậy mỗi mức lãi khuyến mãi đều đi kèm
-// `promoNoteVi` nói rõ điều kiện, và trang luôn hiện ngày kiểm tra — đúng
-// nguyên tắc "trung thực hơn là đầy đủ": chỗ nào ngân hàng không công bố thì
-// để trống và nói thẳng, không đoán.
+// Bản đầu của file này lấy số từ một trang tổng hợp khác và sai ở bốn chỗ,
+// đối chiếu lại mới phát hiện — giữ lại đây làm lời nhắc rằng bảng tổng hợp
+// của bên thứ ba không thay được trang gốc:
+//   · welcome bonus Preferred/Ultimate ghi $700, thật ra tới $1,000
+//     ($700 mở tài khoản + tối đa $300 khi bundle savings/thẻ tín dụng)
+//   · welcome bonus tài khoản sinh viên ghi $175, thật ra tới $200
+//   · MomentumPLUS ghi 4.05%, thật ra cao nhất 0.95% và chỉ khi có Ultimate
+//     Package kèm premium period 360 ngày — chênh hơn bốn lần
+//   · Money Master ghi 0.50%, thật ra 0.40%
+//
+// Lãi suất và welcome bonus ở Canada thay đổi liên tục. Chỗ nào ngân hàng
+// không công bố thì để trống và nói thẳng, không đoán.
 export type BankId = "scotiabank";
 
 export type AccountKind = "chequing" | "savings";
@@ -74,8 +77,20 @@ export type BankAccount = {
   /** Lý do không có con số, khi ngân hàng không công bố mức lãi cố định. */
   noRateNoteVi?: string;
   keyBenefitsVi: string[];
-  /** Trang chính thức của ngân hàng. Không phải liên kết affiliate. */
+  /** Trang chính thức của ngân hàng — để người đọc tự đối chiếu số liệu. */
   url: string;
+  /**
+   * Link affiliate FinlyWealth. Có thì nút "Apply ngay" đi qua đây và mang
+   * `rel="sponsored"`; không có thì nút trỏ thẳng `url` với `rel` thường.
+   */
+  affiliateUrl?: string;
+  /**
+   * Tiền rebate FinlyWealth trả thêm, đọc từ <title> của trang đích — cùng
+   * chỗ và cùng cách mà job check-rebates đang đọc cho thẻ tín dụng. Chỉ link
+   * `/rebates/...` mới có; link `/banking/...` là trang giới thiệu, không có
+   * rebate.
+   */
+  rebate?: string;
 };
 
 export const BANK_ACCOUNTS: BankAccount[] = [
@@ -89,13 +104,13 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     monthlyFee: 16.95,
     feeWaiverVi:
       "Miễn phí tháng nếu giữ số dư tối thiểu $4,000. Người mới định cư theo Scotiabank StartRight® được miễn phí tháng trong năm đầu.",
-    bonusValue: 700,
-    bonusLabelVi: "Tối đa $700",
+    bonusValue: 1000,
+    bonusLabelVi: "Tối đa $1,000",
     bonusExpiresOn: "2026-10-29",
     bonusConditionsVi: [
       "Mở tài khoản mới trong khoảng 03/07/2026 – 29/10/2026.",
-      "Set up direct deposit trong 60 ngày đầu và duy trì ít nhất 6 tháng liên tiếp.",
-      "Thêm một trong ba việc sau trong 60 ngày đầu: pre-authorized payment từ $50 duy trì 6 tháng, thanh toán hoá đơn từ $50, hoặc một giao dịch Visa Debit.",
+      "$700 khi mở Preferred Package hoặc Ultimate Package mới và hoàn thành các giao dịch yêu cầu.",
+      "Tối đa $300 nữa khi mở kèm Money Master Savings Account mới và/hoặc thẻ tín dụng Scotiabank® đủ điều kiện — chỉ tính khi bạn đã đạt phần $700.",
     ],
     keyBenefitsVi: [
       "Giao dịch debit không giới hạn",
@@ -103,6 +118,9 @@ export const BANK_ACCOUNTS: BankAccount[] = [
       "Rebate tới $150 phí thường niên thẻ tín dụng Scotiabank® năm đầu",
     ],
     url: "https://www.scotiabank.com/ca/en/personal/bank-accounts/chequing-accounts/preferred.html",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fscotiabank-preferred-package-chequing-account&utm_source=ghe-1a",
+    rebate: "$100",
   },
   {
     slug: "scotiabank-ultimate-package",
@@ -112,20 +130,24 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     tags: [],
     monthlyFee: 30.95,
     feeWaiverVi: "Miễn phí tháng nếu giữ số dư tối thiểu $6,000.",
-    bonusValue: 700,
-    bonusLabelVi: "Tối đa $700",
+    bonusValue: 1000,
+    bonusLabelVi: "Tối đa $1,000",
     bonusExpiresOn: "2026-10-29",
     bonusConditionsVi: [
       "Mở tài khoản mới trong khoảng 03/07/2026 – 29/10/2026.",
-      "Set up direct deposit trong 60 ngày đầu và duy trì ít nhất 6 tháng liên tiếp.",
-      "Thêm một trong ba việc: pre-authorized payment từ $50 duy trì 6 tháng, thanh toán hoá đơn từ $50, hoặc một giao dịch Visa Debit.",
+      "$700 khi mở Preferred Package hoặc Ultimate Package mới và hoàn thành các giao dịch yêu cầu.",
+      "Tối đa $300 nữa khi mở kèm Money Master Savings Account mới và/hoặc thẻ tín dụng Scotiabank® đủ điều kiện — chỉ tính khi bạn đã đạt phần $700.",
     ],
     keyBenefitsVi: [
       "Giao dịch debit và Interac e-Transfer® không giới hạn",
       "Rebate tới $150 phí thường niên thẻ tín dụng mỗi năm, không chỉ năm đầu",
       "Miễn phí sổ séc và bank draft không giới hạn",
+      "Giao dịch miễn phí ở Scotia iTRADE®",
     ],
     url: "https://www.scotiabank.com/ca/en/personal/bank-accounts/chequing-accounts/ultimate-package.html",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fscotiabank-ultimate-package-chequing&utm_source=ghe-1a",
+    rebate: "$100",
   },
   {
     slug: "scotiabank-basic-plus",
@@ -137,10 +159,13 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     feeWaiverVi: "Miễn phí tháng nếu giữ số dư tối thiểu $4,000.",
     keyBenefitsVi: [
       "25 giao dịch debit miễn phí mỗi tháng, sau đó $1.25 mỗi giao dịch",
-      "Interac e-Transfer® miễn phí",
-      "Giảm tới 3 cent mỗi lít xăng tại Shell",
+      "Interac e-Transfer® miễn phí không giới hạn",
+      "Chuyển tiền quốc tế $1.99 qua Scotia® International Money Transfer",
+      "Giảm 3 cent mỗi lít xăng tại Shell",
     ],
     url: "https://www.scotiabank.com/ca/en/personal/bank-accounts/chequing-accounts/basic-plus.html",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Fbanking%2Fchequing-accounts%2Fscotiabank-basic-plus-bank-account&utm_source=ghe-1a",
   },
   {
     slug: "scotiabank-preferred-students",
@@ -149,14 +174,22 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     kind: "chequing",
     tags: ["student"],
     monthlyFee: 0,
-    bonusValue: 175,
-    bonusLabelVi: "$175",
+    bonusValue: 200,
+    bonusLabelVi: "Tối đa $200",
+    bonusExpiresOn: "2026-11-01",
+    bonusConditionsVi: [
+      "Mở Preferred Package for Students and Youth mới trong khoảng 02/07/2026 – 01/11/2026.",
+      "Làm hai trong ba việc sau trong 60 ngày đầu: set up direct deposit định kỳ duy trì ít nhất 3 tháng liên tiếp; set up pre-authorized transaction định kỳ duy trì ít nhất 3 tháng; hoặc thực hiện 5 giao dịch Visa Debit online bằng ScotiaCard®.",
+    ],
     keyBenefitsVi: [
       "Giao dịch debit và Interac e-Transfer® không giới hạn",
       "Tích điểm Scene+® khi quẹt thẻ debit",
       "Rebate tới $150 phí thường niên thẻ tín dụng năm đầu",
     ],
     url: "https://www.scotiabank.com/ca/en/personal/bank-accounts/chequing-accounts/student-banking.html",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fscotiabank-preferred-package-student&utm_source=ghe-1a",
+    rebate: "$50",
   },
   {
     slug: "scotiabank-momentumplus-savings",
@@ -165,16 +198,18 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     kind: "savings",
     tags: [],
     monthlyFee: 0,
-    interestRate: 4.05,
+    interestRate: 0.95,
     regularRate: 0.4,
     promoNoteVi:
-      "Mức cao nhất gồm lãi thưởng của “premium period” — phải để tiền yên trong kỳ đã chọn, rút ra là mất phần thưởng. Cộng thêm 0.10% nếu có Ultimate Package, 0.05% với Preferred Package.",
+      "Đây là mức cao nhất và rất khó chạm: phải vừa có Ultimate Package, vừa chọn premium period 360 ngày và để tiền yên suốt kỳ đó. Không kèm gì thì chỉ 0.40%.",
     keyBenefitsVi: [
       "Chia được nhiều mục tiêu tiết kiệm trong cùng một tài khoản",
       "Không phí tháng, không yêu cầu số dư tối thiểu",
       "Lãi tính theo ngày, trả hàng tháng",
     ],
     url: "https://www.scotiabank.com/ca/en/personal/bank-accounts/savings-accounts/momentum-plus-savings-account.html",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Fbanking%2Fsavings-accounts%2Fscotiabank-momentum-plus-savings-account&utm_source=ghe-1a",
   },
   {
     slug: "scotiabank-money-master",
@@ -183,31 +218,19 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     kind: "savings",
     tags: [],
     monthlyFee: 0,
-    interestRate: 0.5,
+    interestRate: 0.4,
     regularRate: 0.01,
     promoNoteVi:
-      "Chỉ đạt mức này khi bật Smart Savings Tool và giữ được điều kiện tiết kiệm tự động.",
+      "Chỉ đạt 0.40% khi đăng ký Smart Savings tools của Scotiabank®; không đăng ký thì mọi số dư chỉ được 0.01%.",
     keyBenefitsVi: [
       "Không phí tháng, mở tài khoản chỉ với $1",
       "Chuyển tiền miễn phí giữa các tài khoản Scotiabank®",
       "Lãi tính theo ngày",
     ],
     url: "https://www.scotiabank.com/ca/en/personal/bank-accounts/savings-accounts/money-master-savings-account.html",
-  },
-  {
-    slug: "scotiabank-savings-accelerator",
-    bank: "scotiabank",
-    name: "Scotiabank® Savings Accelerator Account",
-    kind: "savings",
-    tags: [],
-    monthlyFee: 0,
-    interestRate: 0.1,
-    keyBenefitsVi: [
-      "Không phí tháng, không yêu cầu số dư tối thiểu",
-      "Chuyển tiền miễn phí không giới hạn sang tài khoản Scotiabank® khác",
-      "Mở được trong cả tài khoản đăng ký thuế (TFSA, RRSP) lẫn tài khoản thường",
-    ],
-    url: "https://www.scotiabank.com/ca/en/personal/bank-accounts/savings-accounts/savings-accelerator-account.html",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fscotiabank-money-master-savings-account&utm_source=ghe-1a",
+    rebate: "$50",
   },
 ];
 

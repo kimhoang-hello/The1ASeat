@@ -5,7 +5,6 @@ import { getCreditCardOffers } from "@/lib/content";
 import { PageHeader } from "@/components/layout/page-header";
 import { CardImage } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
-import { RebateBadge } from "@/components/credit-cards/rebate-badge";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { OfferStats } from "@/components/credit-cards/offer-stats";
 import { ApplyButton } from "@/components/ui/apply-button";
@@ -109,7 +108,6 @@ export default async function CreditCardsPage({
                 image={offer.cardImage}
                 name={offer.name}
                 className="h-32 w-full shrink-0 self-start rounded-xl sm:h-32 sm:w-40 xl:h-36 xl:w-44"
-                badge={offer.rebate && <RebateBadge amount={offer.rebate} label={offers_t("rebate")} />}
                 applyUrl={offer.applyUrl}
                 sizes="176px"
               />
@@ -123,6 +121,7 @@ export default async function CreditCardsPage({
                   cardType={offer.cardType}
                   elevatedBonusLabel={offers_t("elevatedBonus")}
                   expiresOnLabel={offers_t("expiresOn")}
+          rebateLabel={offers_t("rebate")}
                 />
 
                 <h2 className="mt-1.5 font-display text-lg font-bold text-foreground">

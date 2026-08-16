@@ -1,3 +1,4 @@
+import { HotTip } from "@/components/ui/hot-tip";
 import { t as translate } from "@/lib/t";
 
 const offers = translate("offers");
@@ -41,16 +42,9 @@ export function EditorsTake({
       </p>
 
       {hotTip && (
-        <p
-          className={`flex gap-2 rounded-md border-l-4 border-emerald-600 bg-emerald-50 px-3 py-2 leading-relaxed text-emerald-950 ${
-            compact ? "mt-3 text-sm" : "mt-4"
-          }`}
-        >
-          <span className="shrink-0 font-extrabold uppercase tracking-wide text-emerald-700">
-            {offers("hotTip")}
-          </span>
-          <span>{hotTip}</span>
-        </p>
+        <div className={compact ? "mt-3" : "mt-4"}>
+          <HotTip compact={compact}>{hotTip}</HotTip>
+        </div>
       )}
     </div>
   );

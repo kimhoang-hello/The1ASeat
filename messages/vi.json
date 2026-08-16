@@ -113,10 +113,11 @@
     "details": "Chi tiết",
     "feeWaiverHeading": "Cách được miễn monthly fee",
     "otherFromBank": "Xem các tài khoản khác của {bank}",
-    "officialLink": "Link tới trang chính thức của ngân hàng",
-    "verifiedOn": "Số liệu kiểm tra ngày {date}.",
+    "officialLink": "Trang chính thức của ngân hàng",
     "disclaimerHeading": "Đọc kỹ trước khi mở tài khoản",
-    "disclaimer": "Welcome bonus và lãi suất khuyến mãi ở Canada thay đổi liên tục, và điều kiện nhận bonus (direct deposit, số dư tối thiểu, thời gian duy trì) mới là phần quyết định bạn có nhận được tiền hay không. Luôn kiểm tra lại trên trang chính thức của ngân hàng trước khi mở. Các liên kết tài khoản ngân hàng trên trang này không phải liên kết affiliate — Ghế 1A không nhận hoa hồng từ chúng."
+    "disclaimer": "Welcome bonus và lãi suất khuyến mãi ở Canada thay đổi liên tục, và điều kiện nhận bonus (direct deposit, số dư tối thiểu, thời gian duy trì) mới là phần quyết định bạn có nhận được tiền hay không. Luôn kiểm tra lại trên trang chính thức của ngân hàng trước khi mở.",
+    "rebate": "Rebate",
+    "rebateHotTip": "Mở tài khoản qua FinlyWealth để nhận thêm {amount} rebate."
   },
   "posts": {
     "eyebrow": "TỪ BLOG",
@@ -174,7 +175,7 @@
     "subtitle": "Tham gia cùng mọi người săn vé award cùng Ghế 1A."
   },
   "footer": {
-    "disclosure": "Ghế 1A có thể nhận hoa hồng hay referral từ các đối tác thẻ tín dụng khi bạn mở thẻ qua liên kết trên trang. Các ý kiến, đánh giá và phân tích hoàn toàn là quan điểm độc lập của chúng tôi, không được cung cấp, xét duyệt hay chấp thuận bởi bất kỳ tổ chức phát hành nào.",
+    "disclosure": "Ghế 1A có thể nhận hoa hồng hay referral từ các đối tác thẻ tín dụng và ngân hàng khi bạn mở thẻ hoặc mở tài khoản qua liên kết trên trang. Các ý kiến, đánh giá và phân tích hoàn toàn là quan điểm độc lập của chúng tôi, không được cung cấp, xét duyệt hay chấp thuận bởi bất kỳ tổ chức phát hành nào.",
     "disclosureSee": "Xem",
     "terms": "Điều khoản",
     "privacy": "Chính sách bảo mật",
