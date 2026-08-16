@@ -10,6 +10,12 @@ import { OfferStats } from "@/components/credit-cards/offer-stats";
 import { RebateChip } from "@/components/ui/hot-tip";
 import { ApplyButton } from "@/components/ui/apply-button";
 import { JsonLd } from "@/components/seo/json-ld";
+import { PointsProgramLinks } from "@/components/credit-cards/points-program-links";
+import {
+  creditCardsPath,
+  getCardPointsPrograms,
+  programIdFor,
+} from "@/lib/card-points-programs";
 import { creditCardJsonLd } from "@/lib/credit-card-schema";
 import { t } from "@/lib/t";
 import { pageMetadata, absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
@@ -36,16 +42,24 @@ const TABS = [
 export default async function CreditCardsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string }>;
+  searchParams: Promise<{ type?: string; points?: string }>;
 }) {
-  const [allOffers, { type }] = await Promise.all([getCreditCardOffers(), searchParams]);
+  const [allOffers, { type, points }] = await Promise.all([getCreditCardOffers(), searchParams]);
 
   const activeTab = type === "khac" || type === "noi-bat" ? type : "all";
-  const offers = allOffers.filter(
+  const tabOffers = allOffers.filter(
     (offer) =>
       activeTab === "all" ||
       (activeTab === "noi-bat" ? offer.elevatedBonus : !offer.elevatedBonus),
   );
+
+  // Counted within the tab, so every chip leads somewhere — and an unknown
+  // ?points= value falls back to the unfiltered list rather than an empty one.
+  const programs = getCardPointsPrograms(tabOffers);
+  const activePoints = programs.some((program) => program.id === points) ? points : undefined;
+  const offers = activePoints
+    ? tabOffers.filter((offer) => programIdFor(offer) === activePoints)
+    : tabOffers;
 
   // The ?type= views are filtered slices of the same list and both canonicalise
   // back to /credit-cards, so the ItemList describes every card, not the slice.
@@ -85,7 +99,7 @@ export default async function CreditCardsPage({
           {TABS.map((tab) => (
             <Link
               key={tab.value}
-              href={tab.value === "all" ? "/credit-cards" : `/credit-cards?type=${tab.value}`}
+              href={creditCardsPath({ type: tab.value, points: activePoints })}
               className={`cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
                 activeTab === tab.value
                   ? "bg-primary text-primary-foreground"
@@ -96,6 +110,14 @@ export default async function CreditCardsPage({
             </Link>
           ))}
         </div>
+
+        <PointsProgramLinks
+          programs={programs}
+          activeId={activePoints}
+          activeType={activeTab}
+          totalCount={tabOffers.length}
+          className="mx-auto mb-8 max-w-page"
+        />
 
         {/* Two across once the page is wide enough, so the extra room goes into
             a second card rather than into 110-character lines of text. */}

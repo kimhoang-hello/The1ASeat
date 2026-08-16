@@ -1,0 +1,84 @@
+import type { CreditCardOffer } from "./content";
+
+/**
+ * Which reward currency a card earns — the credit card page's answer to the
+ * blog's categories. Contentful has no field for this, so it is read off the
+ * copy the card already carries; adding a field would mean the user had to
+ * remember to fill it in on every new card for the chip row to stay correct.
+ *
+ * Not to be confused with POINTS_PROGRAMS in points-programs.ts, which is the
+ * calculator's benchmark valuations (a different, much shorter list).
+ */
+interface ProgramRule {
+  id: string;
+  name: string;
+  pattern: RegExp;
+}
+
+/**
+ * Matched in the order below. "à la carte" has to come before the cash back
+ * rule because National Bank's benefits mention a travel credit in dollars.
+ */
+const PROGRAM_RULES: ProgramRule[] = [
+  { id: "aeroplan", name: "Aeroplan®", pattern: /aeroplan/i },
+  { id: "bonvoy", name: "Marriott Bonvoy®", pattern: /bonvoy/i },
+  { id: "amex-mr", name: "Amex Membership Rewards®", pattern: /membership rewards|amex mr\b/i },
+  { id: "avion", name: "RBC Avion®", pattern: /avion/i },
+  { id: "scene-plus", name: "Scene+™", pattern: /scene\s*\+/i },
+  { id: "td-rewards", name: "TD Rewards", pattern: /td rewards/i },
+  { id: "viporter", name: "VIPorter®", pattern: /viporter/i },
+  { id: "mileageplus", name: "United® MileagePlus®", pattern: /mileageplus/i },
+  { id: "a-la-carte", name: "À la carte Rewards™", pattern: /à la carte/i },
+  { id: "cash-back", name: "Cash back", pattern: /hoàn tiền|cash\s?back/i },
+];
+
+/**
+ * The card's own name and welcome bonus name the currency directly, so they are
+ * matched first and on their own. The benefit list is only a fallback: it
+ * mentions other programs in passing — an Aeroplan card's benefits talk about
+ * Air Canada lounges, a Scene+ card's about dollars back — and matching it
+ * first would file cards under the wrong chip.
+ */
+export function programIdFor(offer: CreditCardOffer): string | undefined {
+  const sources = [`${offer.name} ${offer.welcomeBonus ?? ""}`, offer.keyBenefits.join(" ")];
+
+  for (const source of sources) {
+    const hit = PROGRAM_RULES.find((rule) => rule.pattern.test(source));
+    if (hit) return hit.id;
+  }
+  return undefined;
+}
+
+export interface CardPointsProgram {
+  id: string;
+  name: string;
+  count: number;
+}
+
+/**
+ * Every program with at least one card in `offers`, most cards first. Callers
+ * pass the list the chips will actually filter, so a chip can never advertise a
+ * count that clicking it does not deliver.
+ */
+export function getCardPointsPrograms(offers: CreditCardOffer[]): CardPointsProgram[] {
+  const counts = new Map<string, number>();
+
+  for (const offer of offers) {
+    const id = programIdFor(offer);
+    if (id) counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+
+  return PROGRAM_RULES.filter((rule) => counts.has(rule.id))
+    .map((rule) => ({ id: rule.id, name: rule.name, count: counts.get(rule.id)! }))
+    .sort((a, b) => b.count - a.count);
+}
+
+/** The credit card page's URL for a given combination of its two filters. */
+export function creditCardsPath({ type, points }: { type?: string; points?: string }): string {
+  const params = new URLSearchParams();
+  if (type && type !== "all") params.set("type", type);
+  if (points) params.set("points", points);
+
+  const query = params.toString();
+  return query ? `/credit-cards?${query}` : "/credit-cards";
+}
