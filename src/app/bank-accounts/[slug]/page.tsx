@@ -19,6 +19,8 @@ import { t as translate } from "@/lib/t";
 import { pageMetadata, breadcrumbJsonLd } from "@/lib/seo";
 
 const bank_t = translate("bankAccounts");
+// Xem chú thích ở bank-account-finder.tsx: nhãn hết hạn dùng chung với thẻ.
+const offers = translate("offers");
 const common = translate("common");
 const seo = translate("seo");
 
@@ -171,7 +173,7 @@ export default async function BankAccountDetailPage({
             label={bank_t("welcomeBonus")}
             hint={
               account.bonusExpiresOn
-                ? bank_t("bonusExpires", { date: formatIsoDate(account.bonusExpiresOn) })
+                ? `${offers("expiresOn")} ${formatIsoDate(account.bonusExpiresOn)}`
                 : undefined
             }
           />
@@ -238,7 +240,7 @@ export default async function BankAccountDetailPage({
           </ul>
           {account.bonusExpiresOn && (
             <p className="mt-3 text-sm font-medium text-amber-700">
-              {bank_t("bonusExpires", { date: formatIsoDate(account.bonusExpiresOn) })}
+              {offers("expiresOn")} {formatIsoDate(account.bonusExpiresOn)}
             </p>
           )}
         </>

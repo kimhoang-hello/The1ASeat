@@ -27,6 +27,9 @@ import {
 } from "@/lib/bank-accounts";
 
 const t = translate("bankAccounts");
+// Nhãn hết hạn lấy chung với trang thẻ tín dụng — cùng một sự việc thì phải
+// gọi cùng một tên, và gọi từ cùng một chỗ thì không thể lệch nhau về sau.
+const offers = translate("offers");
 
 type Selection = {
   bank: BankId | "all";
@@ -231,7 +234,7 @@ function AccountCard({ account }: { account: BankAccount }) {
           </ul>
           {account.bonusExpiresOn && (
             <p className="mt-2 text-xs font-medium text-amber-700">
-              {t("bonusExpires", { date: formatIsoDate(account.bonusExpiresOn) })}
+              {offers("expiresOn")} {formatIsoDate(account.bonusExpiresOn)}
             </p>
           )}
         </details>
