@@ -40,3 +40,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# impeccable (design skill) — vendored copy, reinstall with `npx impeccable install`
+.claude/skills/
+.claude/settings.local.json
