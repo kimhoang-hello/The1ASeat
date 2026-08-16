@@ -55,9 +55,9 @@ export type BankAccount = {
   name: string;
   kind: AccountKind;
   tags: AccountTag[];
-  /** Phí tháng theo CAD. 0 nghĩa là không phí. */
+  /** Monthly fee theo CAD. 0 nghĩa là không mất phí. */
   monthlyFee: number;
-  /** Cách được miễn phí tháng, nếu có. */
+  /** Cách được miễn monthly fee, nếu có. */
   feeWaiverVi?: string;
   /**
    * Giá trị welcome bonus quy ra tiền, chỉ dùng để sắp xếp. Bonus không phải
@@ -105,7 +105,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     tags: [],
     monthlyFee: 16.95,
     feeWaiverVi:
-      "Miễn phí tháng nếu giữ số dư tối thiểu $4,000. Người mới định cư theo Scotiabank StartRight® được miễn phí tháng trong năm đầu.",
+      "Miễn monthly fee nếu giữ số dư tối thiểu $4,000. Người mới định cư theo Scotiabank StartRight® được miễn monthly fee trong năm đầu.",
     bonusValue: 1000,
     bonusLabelVi: "Tối đa $1,000",
     bonusExpiresOn: "2026-10-29",
@@ -131,7 +131,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     kind: "chequing",
     tags: [],
     monthlyFee: 30.95,
-    feeWaiverVi: "Miễn phí tháng nếu giữ số dư tối thiểu $6,000.",
+    feeWaiverVi: "Miễn monthly fee nếu giữ số dư tối thiểu $6,000.",
     bonusValue: 1000,
     bonusLabelVi: "Tối đa $1,000",
     bonusExpiresOn: "2026-10-29",
@@ -158,7 +158,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     kind: "chequing",
     tags: [],
     monthlyFee: 11.95,
-    feeWaiverVi: "Miễn phí tháng nếu giữ số dư tối thiểu $4,000.",
+    feeWaiverVi: "Miễn monthly fee nếu giữ số dư tối thiểu $4,000.",
     keyBenefitsVi: [
       "25 giao dịch debit miễn phí mỗi tháng, sau đó $1.25 mỗi giao dịch",
       "Interac e-Transfer® miễn phí không giới hạn",
@@ -206,7 +206,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
       "Đây là mức cao nhất và rất khó chạm: phải vừa có Ultimate Package, vừa chọn premium period 360 ngày và để tiền yên suốt kỳ đó. Không kèm gì thì chỉ 0.40%.",
     keyBenefitsVi: [
       "Chia được nhiều mục tiêu tiết kiệm trong cùng một tài khoản",
-      "Không phí tháng, không yêu cầu số dư tối thiểu",
+      "Không mất monthly fee, không yêu cầu số dư tối thiểu",
       "Lãi tính theo ngày, trả hàng tháng",
     ],
     url: "https://www.scotiabank.com/ca/en/personal/bank-accounts/savings-accounts/momentum-plus-savings-account.html",
@@ -225,7 +225,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     promoNoteVi:
       "Chỉ đạt 0.40% khi đăng ký Smart Savings tools của Scotiabank®; không đăng ký thì mọi số dư chỉ được 0.01%.",
     keyBenefitsVi: [
-      "Không phí tháng, mở tài khoản chỉ với $1",
+      "Không mất monthly fee, mở tài khoản chỉ với $1",
       "Chuyển tiền miễn phí giữa các tài khoản Scotiabank®",
       "Lãi tính theo ngày",
     ],
@@ -369,7 +369,7 @@ export function bankAccountPath(slug: string): string {
  * cái đúng tại một thời điểm**.
  *
  * Trước đây đây là hai danh sách: loại tài khoản (chi tiêu/tiết kiệm) và đặc
- * điểm (không phí tháng, có bonus, người mới định cư, sinh viên). Về dữ liệu
+ * điểm (miễn monthly fee, có bonus, người mới định cư, sinh viên). Về dữ liệu
  * thì chúng độc lập nên chọn cùng lúc được, nhưng cả hai đều vẽ ra thành một
  * hàng pill giống hệt nhau — nên "Tất cả" và "Người mới định cư" sáng cùng
  * lúc, và một hàng nút chỉ có thể có một cái được chọn thì mới đọc được. Gộp

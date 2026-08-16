@@ -88,8 +88,8 @@ function BankMark({ bank }: { bank: BankId }) {
 }
 
 /**
- * Tài khoản không có welcome bonus lẫn lãi suất công bố thì phí tháng chính
- * là con số đáng nhìn nhất — nó lên làm số lớn, và ô phí tháng bên phải bị bỏ
+ * Tài khoản không có welcome bonus lẫn lãi suất công bố thì monthly fee chính
+ * là con số đáng nhìn nhất — nó lên làm số lớn, và ô monthly fee bên phải bị bỏ
  * đi. Trang tham khảo không làm vậy nên thẻ của họ in "$4 / Monthly fee" hai
  * lần cạnh nhau, đọc như một lỗi hiển thị.
  */
@@ -103,7 +103,7 @@ function feeIsHeadline(account: BankAccount): boolean {
 
 /**
  * Con số lớn nhất trên mỗi thẻ. Tài khoản chi tiêu bán welcome bonus, tài
- * khoản tiết kiệm bán lãi suất, còn lại thì bán phí tháng — chỗ này đổi ý
+ * khoản tiết kiệm bán lãi suất, còn lại thì bán monthly fee — chỗ này đổi ý
  * nghĩa theo tài khoản thay vì để trống.
  */
 function Headline({ account }: { account: BankAccount }) {
@@ -185,7 +185,7 @@ function AccountCard({ account }: { account: BankAccount }) {
         </h3>
       </div>
 
-      {/* Con số lớn và phí tháng nằm cạnh nhau: gần như câu hỏi nào của người
+      {/* Con số lớn và monthly fee nằm cạnh nhau: gần như câu hỏi nào của người
           đọc cũng là "được bao nhiêu" trừ đi "mất bao nhiêu". */}
       <div className="mt-4 flex flex-wrap items-end justify-between gap-4 rounded-xl bg-secondary/70 px-4 py-3">
         <div>
