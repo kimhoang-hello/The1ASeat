@@ -15,6 +15,18 @@
     "newsletter": "Đăng ký bản tin",
     "awardCharts": "Award Flight Finder"
   },
+  "navMenu": {
+    "cardsAll": "Toàn bộ thẻ đang theo dõi",
+    "cardsElevated": "Elevated offer đang chạy",
+    "cardsOther": "Những thẻ còn lại",
+    "postsAll": "Toàn bộ bài viết và video",
+    "postsPosts": "Hướng dẫn, review và kinh nghiệm",
+    "postsVideos": "Video mới từ kênh YouTube",
+    "awardCharts": "Tìm chuyến bay đổi bằng điểm",
+    "calculator": "Tính giá trị điểm bạn đang có",
+    "transferBonuses": "Khuyến mãi chuyển điểm đang chạy",
+    "transferPartners": "Điểm của bạn chuyển được đi đâu"
+  },
   "banner": {
     "eyebrow": "OFFER NỔI BẬT",
     "cta": "Xem chi tiết",

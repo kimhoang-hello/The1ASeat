@@ -4,13 +4,32 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { List, X, CaretDown, PaperPlaneTilt } from "@phosphor-icons/react";
+import {
+  AirplaneTilt,
+  ArrowsLeftRight,
+  Article,
+  CaretDown,
+  Calculator,
+  CreditCard,
+  List,
+  Newspaper,
+  PaperPlaneTilt,
+  Percent,
+  Sparkle,
+  Stack,
+  X,
+  YoutubeLogo,
+  type Icon,
+} from "@phosphor-icons/react";
 import { SiteSearch } from "@/components/layout/site-search";
 import { t } from "@/lib/t";
 
-/** A dropdown entry for a page that filters itself with `?type=`. `type` is
- *  null for the entry that lives at the bare path, with no param. */
-type TypeLink = { href: string; type: string | null; label: string };
+/** A menu entry: an icon, what it is, and what is behind it in one line. */
+type NavLink = { href: string; label: string; description: string; icon: Icon };
+
+/** A menu entry for a page that filters itself with `?type=`. `type` is null
+ *  for the entry that lives at the bare path, with no param. */
+type TypeLink = NavLink & { type: string | null };
 
 /**
  * A top-level nav item. The active page marks itself three ways at once — navy,
@@ -28,24 +47,67 @@ function navItemClassName(active: boolean) {
   }`;
 }
 
-function dropdownLinkClassName(active: boolean) {
-  return `block rounded-lg px-3 py-2 text-base hover:bg-secondary ${
+/** The mobile menu has no room for an underline — it fills the row instead. */
+function mobileItemClassName(active: boolean) {
+  return `rounded-md px-2 py-3 text-base font-medium hover:bg-secondary ${
     active ? "bg-secondary font-semibold text-primary" : "text-foreground/90"
   }`;
 }
 
-/** The mobile menu has no room for an underline — it fills the row instead. */
-function mobileItemClassName(active: boolean, nested = false) {
-  const size = nested ? "px-4 py-2 text-sm" : "px-2 py-3 text-base";
-  const idle = nested ? "text-foreground/70" : "text-foreground/90";
-  return `rounded-md font-medium hover:bg-secondary ${size} ${
-    active ? "bg-secondary font-semibold text-primary" : idle
-  }`;
-}
+/**
+ * One row of a menu: an icon in its own tile, the label, and a line saying
+ * what is behind it — a menu of six words on their own asks the reader to
+ * guess what "Các offers khác" holds.
+ *
+ * The tile is a navy tint rather than the cream the row highlights with, so it
+ * stays visible against the row's own hover and active fills; on the active row
+ * it inverts to solid navy and becomes the brightest thing in the panel.
+ *
+ * `compact` is the mobile menu, where ten rows have to fit on a phone: the
+ * icons stay, the descriptions go.
+ */
+function MenuItem({
+  link,
+  active,
+  onNavigate,
+  compact = false,
+}: {
+  link: NavLink;
+  active: boolean;
+  onNavigate: (event: React.MouseEvent<HTMLElement>) => void;
+  compact?: boolean;
+}) {
+  const LinkIcon = link.icon;
 
-/** The indented `?type=` rows under a mobile menu heading. */
-function nestedItemClassName(active: boolean) {
-  return mobileItemClassName(active, true);
+  return (
+    <Link
+      href={link.href}
+      onClick={onNavigate}
+      className={`flex cursor-pointer items-center gap-3 rounded-lg transition-colors hover:bg-secondary ${
+        compact ? "px-2 py-1.5" : "px-2.5 py-2.5"
+      } ${active ? "bg-secondary" : ""}`}
+    >
+      <span
+        className={`flex shrink-0 items-center justify-center rounded-lg transition-colors ${
+          compact ? "h-8 w-8" : "h-9 w-9"
+        } ${active ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"}`}
+      >
+        <LinkIcon size={compact ? 16 : 18} weight="bold" />
+      </span>
+      <span className="min-w-0">
+        <span
+          className={`block font-semibold ${compact ? "text-sm" : "text-[0.9375rem]"} ${
+            active ? "text-primary" : "text-foreground"
+          }`}
+        >
+          {link.label}
+        </span>
+        {!compact && (
+          <span className="block text-xs text-muted-foreground">{link.description}</span>
+        )}
+      </span>
+    </Link>
+  );
 }
 
 // Reads the ?type= search param to highlight the active entry. Isolated in its
@@ -63,13 +125,13 @@ function TypeLinks({
   basePath,
   pathname,
   onNavigate,
-  className,
+  compact,
 }: {
   links: TypeLink[];
   basePath: string;
   pathname: string;
   onNavigate: (event: React.MouseEvent<HTMLElement>) => void;
-  className: (active: boolean) => string;
+  compact?: boolean;
 }) {
   const searchParams = useSearchParams();
   const activeType = searchParams.get("type");
@@ -77,14 +139,13 @@ function TypeLinks({
   return (
     <>
       {links.map((link) => (
-        <Link
+        <MenuItem
           key={link.href}
-          href={link.href}
-          onClick={onNavigate}
-          className={className(pathname === basePath && activeType === link.type)}
-        >
-          {link.label}
-        </Link>
+          link={link}
+          active={pathname === basePath && activeType === link.type}
+          onNavigate={onNavigate}
+          compact={compact}
+        />
       ))}
     </>
   );
@@ -94,18 +155,22 @@ function TypeLinks({
 function TypeLinksFallback({
   links,
   onNavigate,
-  className,
+  compact,
 }: {
   links: TypeLink[];
   onNavigate: (event: React.MouseEvent<HTMLElement>) => void;
-  className: (active: boolean) => string;
+  compact?: boolean;
 }) {
   return (
     <>
       {links.map((link) => (
-        <Link key={link.href} href={link.href} onClick={onNavigate} className={className(false)}>
-          {link.label}
-        </Link>
+        <MenuItem
+          key={link.href}
+          link={link}
+          active={false}
+          onNavigate={onNavigate}
+          compact={compact}
+        />
       ))}
     </>
   );
@@ -142,21 +207,12 @@ function TypeDropdown({
       <div
         className={`absolute left-0 top-full z-10 mt-2 ${width} rounded-xl border border-border bg-card p-2 shadow-lg`}
       >
-        <Suspense
-          fallback={
-            <TypeLinksFallback
-              links={links}
-              onNavigate={onNavigate}
-              className={dropdownLinkClassName}
-            />
-          }
-        >
+        <Suspense fallback={<TypeLinksFallback links={links} onNavigate={onNavigate} />}>
           <TypeLinks
             links={links}
             basePath={basePath}
             pathname={pathname}
             onNavigate={onNavigate}
-            className={dropdownLinkClassName}
           />
         </Suspense>
       </div>
@@ -165,6 +221,7 @@ function TypeDropdown({
 }
 
 const nav = t("nav");
+const tMenu = t("navMenu");
 const tPosts = t("posts");
 const tOffers = t("offers");
 const site = t("site");
@@ -176,25 +233,81 @@ export function SiteHeader() {
   // "Tất cả offers" is the bare path, so its type is null — same shape as the
   // blog's own all/post/video split.
   const cardLinks: TypeLink[] = [
-    { href: "/credit-cards", type: null, label: tOffers("tabAll") },
-    { href: "/credit-cards?type=noi-bat", type: "noi-bat", label: tOffers("tabElevated") },
-    { href: "/credit-cards?type=khac", type: "khac", label: tOffers("tabOther") },
+    {
+      href: "/credit-cards",
+      type: null,
+      label: tOffers("tabAll"),
+      description: tMenu("cardsAll"),
+      icon: CreditCard,
+    },
+    {
+      href: "/credit-cards?type=noi-bat",
+      type: "noi-bat",
+      label: tOffers("tabElevated"),
+      description: tMenu("cardsElevated"),
+      icon: Sparkle,
+    },
+    {
+      href: "/credit-cards?type=khac",
+      type: "khac",
+      label: tOffers("tabOther"),
+      description: tMenu("cardsOther"),
+      icon: Stack,
+    },
   ];
 
   // "Blog" is a <summary>, not a link, so without this first entry the full
   // archive at /blog had no route in from the desktop nav at all — only the
   // footer reached it. Same shape as the card menu above.
   const blogLinks: TypeLink[] = [
-    { href: "/blog", type: null, label: tPosts("tabAll") },
-    { href: "/blog?type=post", type: "post", label: tPosts("tabPosts") },
-    { href: "/blog?type=video", type: "video", label: tPosts("tabVideos") },
+    {
+      href: "/blog",
+      type: null,
+      label: tPosts("tabAll"),
+      description: tMenu("postsAll"),
+      icon: Newspaper,
+    },
+    {
+      href: "/blog?type=post",
+      type: "post",
+      label: tPosts("tabPosts"),
+      description: tMenu("postsPosts"),
+      icon: Article,
+    },
+    {
+      href: "/blog?type=video",
+      type: "video",
+      label: tPosts("tabVideos"),
+      description: tMenu("postsVideos"),
+      icon: YoutubeLogo,
+    },
   ];
 
-  const toolsLinks = [
-    { href: "/award-flight-finder", label: nav("awardCharts") },
-    { href: "/calculator", label: nav("calculator") },
-    { href: "/transfer-bonuses", label: nav("transferBonuses") },
-    { href: "/transfer-partners", label: nav("transferPartners") },
+  const toolsLinks: NavLink[] = [
+    {
+      href: "/award-flight-finder",
+      label: nav("awardCharts"),
+      description: tMenu("awardCharts"),
+      icon: AirplaneTilt,
+    },
+    {
+      href: "/calculator",
+      label: nav("calculator"),
+      description: tMenu("calculator"),
+      icon: Calculator,
+    },
+    {
+      href: "/transfer-bonuses",
+      label: nav("transferBonuses"),
+      description: tMenu("transferBonuses"),
+      icon: Percent,
+    },
+    {
+      href: "/transfer-partners",
+      label: nav("transferPartners"),
+      description: tMenu("transferPartners"),
+      icon: ArrowsLeftRight,
+    },
   ];
 
   const cardsActive = pathname === "/credit-cards" || pathname.startsWith("/credit-cards/");
@@ -277,7 +390,7 @@ export function SiteHeader() {
             basePath="/credit-cards"
             links={cardLinks}
             active={cardsActive}
-            width="w-52"
+            width="w-80"
             pathname={pathname}
             onNavigate={closeParentDropdown}
           />
@@ -287,7 +400,7 @@ export function SiteHeader() {
             basePath="/blog"
             links={blogLinks}
             active={blogActive}
-            width="w-44"
+            width="w-80"
             pathname={pathname}
             onNavigate={closeParentDropdown}
           />
@@ -301,16 +414,14 @@ export function SiteHeader() {
               {nav("pointsTools")}
               <CaretDown size={14} className="transition-transform group-open:rotate-180" />
             </summary>
-            <div className="absolute left-0 top-full z-10 mt-2 w-56 rounded-xl border border-border bg-card p-2 shadow-lg">
+            <div className="absolute left-0 top-full z-10 mt-2 w-80 rounded-xl border border-border bg-card p-2 shadow-lg">
               {toolsLinks.map((link) => (
-                <Link
+                <MenuItem
                   key={link.href}
-                  href={link.href}
-                  onClick={closeParentDropdown}
-                  className={dropdownLinkClassName(pathname === link.href)}
-                >
-                  {link.label}
-                </Link>
+                  link={link}
+                  active={pathname === link.href}
+                  onNavigate={closeParentDropdown}
+                />
               ))}
             </div>
           </details>
@@ -366,11 +477,7 @@ export function SiteHeader() {
             </Link>
             <Suspense
               fallback={
-                <TypeLinksFallback
-                  links={cardLinks}
-                  onNavigate={closeMobileMenu}
-                  className={nestedItemClassName}
-                />
+                <TypeLinksFallback links={cardLinks} onNavigate={closeMobileMenu} compact />
               }
             >
               <TypeLinks
@@ -378,7 +485,7 @@ export function SiteHeader() {
                 basePath="/credit-cards"
                 pathname={pathname}
                 onNavigate={closeMobileMenu}
-                className={nestedItemClassName}
+                compact
               />
             </Suspense>
 
@@ -391,11 +498,7 @@ export function SiteHeader() {
             </Link>
             <Suspense
               fallback={
-                <TypeLinksFallback
-                  links={blogLinks}
-                  onNavigate={closeMobileMenu}
-                  className={nestedItemClassName}
-                />
+                <TypeLinksFallback links={blogLinks} onNavigate={closeMobileMenu} compact />
               }
             >
               <TypeLinks
@@ -403,7 +506,7 @@ export function SiteHeader() {
                 basePath="/blog"
                 pathname={pathname}
                 onNavigate={closeMobileMenu}
-                className={nestedItemClassName}
+                compact
               />
             </Suspense>
 
@@ -411,14 +514,13 @@ export function SiteHeader() {
               {nav("pointsTools")}
             </span>
             {toolsLinks.map((link) => (
-              <Link
+              <MenuItem
                 key={link.href}
-                href={link.href}
-                onClick={() => setOpen(false)}
-                className={mobileItemClassName(pathname === link.href, true)}
-              >
-                {link.label}
-              </Link>
+                link={link}
+                active={pathname === link.href}
+                onNavigate={closeMobileMenu}
+                compact
+              />
             ))}
 
             <Link
