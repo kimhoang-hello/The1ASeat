@@ -62,6 +62,7 @@ Mẹo viết:
 | annualFeeEn    | Short text                    |
 | cardTypeVi     | Short text                    |
 | cardTypeEn     | Short text                    |
+| welcomeBonusVi | Short text (max 60), optional — chỉ con số welcome bonus, đủ ngắn để làm số lớn trên thẻ: "110,000 điểm Aeroplan®". Để trống ở thẻ không có welcome bonus (cashback, thẻ bán tỷ lệ tích điểm); thẻ đó hiển thị phí thường niên làm số lớn thay thế. |
 | headlineVi     | Long text                     |
 | headlineEn     | Long text                     |
 | editorsTakeVi  | Long text                     |
@@ -71,6 +72,7 @@ Mẹo viết:
 | elevatedBonus  | Boolean                       |
 | expiresAt      | Date & time, optional — offer/bonus expiry date, shown next to the badges when set |
 | applyUrl       | Short text                    |
+| rebateVi       | Short text, optional — số tiền rebate FinlyWealth, hiện thành badge trên ảnh thẻ |
 
 ## `transferBonus`
 

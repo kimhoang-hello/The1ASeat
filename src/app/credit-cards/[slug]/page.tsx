@@ -7,6 +7,7 @@ import { CardBadges } from "@/components/credit-cards/card-badges";
 import { RebateBadge } from "@/components/credit-cards/rebate-badge";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { EditorsTake } from "@/components/credit-cards/editors-take";
+import { OfferStats } from "@/components/credit-cards/offer-stats";
 import { ApplyButton } from "@/components/ui/apply-button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { creditCardJsonLd } from "@/lib/credit-card-schema";
@@ -83,16 +84,15 @@ export default async function CreditCardDetailPage({
       <div className="mt-6">
         <CardBadges
           offer={offer}
-          cardType={`${offer.cardType} · ${offer.issuer}`}
+          cardType={offer.cardType}
           elevatedBonusLabel={offers("elevatedBonus")}
           expiresOnLabel={offers("expiresOn")}
         />
       </div>
 
       <h1 className="mt-2 font-display text-3xl font-extrabold text-foreground">{offer.name}</h1>
-      <p className="mt-2 text-base text-muted-foreground">
-        {offers("annualFee")}: {offer.annualFee}
-      </p>
+      <OfferStats offer={offer} className="mt-4" />
+
       <p className="mt-4 text-lg leading-relaxed text-foreground/90">{offer.headline}</p>
 
       <EditorsTake editorsTake={offer.editorsTake} className="mt-6" />

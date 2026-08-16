@@ -7,6 +7,7 @@ import { CardBadges } from "@/components/credit-cards/card-badges";
 import { RebateBadge } from "@/components/credit-cards/rebate-badge";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { EditorsTake } from "@/components/credit-cards/editors-take";
+import { OfferStats } from "@/components/credit-cards/offer-stats";
 import { ApplyButton } from "@/components/ui/apply-button";
 
 const t = translate("offers");
@@ -73,9 +74,7 @@ export async function OffersSection() {
                     {offer.name}
                   </Link>
                 </h3>
-                <p className="text-sm text-muted-foreground">
-                  {t("annualFee")}: {offer.annualFee}
-                </p>
+                <OfferStats offer={offer} className="mt-3" />
 
                 <EditorsTake editorsTake={offer.editorsTake} className="mt-3" compact />
 

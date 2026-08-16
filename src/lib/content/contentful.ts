@@ -58,6 +58,7 @@ interface CardSkeleton {
     country: EntryFieldTypes.Symbol<"US" | "CA">;
     annualFeeVi: EntryFieldTypes.Symbol;
     cardTypeVi: EntryFieldTypes.Symbol;
+    welcomeBonusVi?: EntryFieldTypes.Symbol;
     headlineVi: EntryFieldTypes.Text;
     editorsTakeVi: EntryFieldTypes.Text;
     keyBenefitsVi: EntryFieldTypes.Array<EntryFieldTypes.Symbol>;
@@ -124,6 +125,7 @@ function toCard(entry: Entry<CardSkeleton, undefined>): CreditCardOffer {
     country: f.country,
     annualFee: f.annualFeeVi,
     cardType: f.cardTypeVi,
+    welcomeBonus: f.welcomeBonusVi,
     headline: keepBrandTogether(f.headlineVi),
     editorsTake: keepBrandTogether(f.editorsTakeVi),
     keyBenefits: f.keyBenefitsVi.map(keepBrandTogether),

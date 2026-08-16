@@ -19,9 +19,9 @@ export function CardBadges({
           + {elevatedBonusLabel}
         </span>
       )}
-      <span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground/70">
-        {offer.country}
-      </span>
+      {/* Không còn huy hiệu "CA": Ghế 1A chỉ viết về thẻ Canada, nên nó gắn
+          giống hệt nhau lên mọi thẻ và không phân biệt được gì. `offer.country`
+          vẫn nằm trong dữ liệu cho schema và cho lúc có thêm thị trường khác. */}
       <span className="text-xs font-medium text-muted-foreground">{cardType}</span>
       {offer.expiresAt && expiresOnLabel && (
         <span className="text-xs font-medium text-amber-700">

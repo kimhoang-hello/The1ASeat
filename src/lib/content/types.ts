@@ -32,6 +32,13 @@ export interface CreditCardOffer {
   country: CardCountry;
   annualFee: string;
   cardType: string;
+  /**
+   * Con số welcome bonus, đủ ngắn để làm số lớn trên thẻ ("110,000 điểm
+   * Aeroplan®"). Bỏ trống ở thẻ không có welcome bonus — thẻ cashback bán tỷ
+   * lệ hoàn tiền, không bán một khoản thưởng mở thẻ — và thẻ đó hiển thị phí
+   * thường niên làm số lớn thay thế.
+   */
+  welcomeBonus?: string;
   headline: string;
   editorsTake: string;
   keyBenefits: string[];

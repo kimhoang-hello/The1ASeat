@@ -7,6 +7,7 @@ import { CardImage } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
 import { RebateBadge } from "@/components/credit-cards/rebate-badge";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
+import { OfferStats } from "@/components/credit-cards/offer-stats";
 import { ApplyButton } from "@/components/ui/apply-button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { creditCardJsonLd } from "@/lib/credit-card-schema";
@@ -119,7 +120,7 @@ export default async function CreditCardsPage({
               <div className="flex flex-1 flex-col">
                 <CardBadges
                   offer={offer}
-                  cardType={`${offer.cardType} · ${offer.issuer}`}
+                  cardType={offer.cardType}
                   elevatedBonusLabel={offers_t("elevatedBonus")}
                   expiresOnLabel={offers_t("expiresOn")}
                 />
@@ -129,10 +130,12 @@ export default async function CreditCardsPage({
                     {offer.name}
                   </Link>
                 </h2>
-                <p className="text-sm text-muted-foreground">
-                  {offers_t("annualFee")}: {offer.annualFee}
-                </p>
-                <p className="mt-2 text-sm leading-relaxed text-foreground/90">{offer.headline}</p>
+                {/* Dòng "Phí thường niên: $120/năm (thẻ phụ...)" cũ nói đúng
+                    một nửa câu chuyện và nói nhỏ. Dải số liệu nói cả hai nửa:
+                    bonus nhận được và phí phải trả. */}
+                <OfferStats offer={offer} className="mt-3" />
+
+                <p className="mt-3 text-sm leading-relaxed text-foreground/90">{offer.headline}</p>
 
                 <details className="group mt-3">
                   <summary className="flex cursor-pointer list-none items-center gap-1 text-sm font-semibold text-foreground/80 hover:text-primary">
