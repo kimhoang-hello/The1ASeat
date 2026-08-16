@@ -28,7 +28,11 @@ const PROGRAM_RULES: ProgramRule[] = [
   { id: "td-rewards", name: "TD Rewards", pattern: /td rewards/i },
   { id: "viporter", name: "VIPorter®", pattern: /viporter/i },
   { id: "mileageplus", name: "United® MileagePlus®", pattern: /mileageplus/i },
-  { id: "a-la-carte", name: "À la carte Rewards™", pattern: /à la carte/i },
+  // "À la carte™" rather than the program's full "À la carte Rewards" name:
+  // the ®/™ audit learns brands by backing up from the symbol through capital
+  // words, so the longer form would teach it that a bare "Rewards" is a brand
+  // and flag every honest "TD Rewards"/"Promo Rewards" on the site.
+  { id: "a-la-carte", name: "À la carte™", pattern: /à la carte/i },
   { id: "cash-back", name: "Cash back", pattern: /hoàn tiền|cash\s?back/i },
 ];
 
