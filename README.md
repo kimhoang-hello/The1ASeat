@@ -18,6 +18,11 @@ Mở [http://localhost:3000](http://localhost:3000).
 Xem [CONTENT-GUIDE.md](CONTENT-GUIDE.md) — hướng dẫn sửa text giao diện và
 đăng bài blog mới, không cần biết code.
 
+## Giao diện
+
+Xem [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md) — token màu/chữ/khoảng cách, đặc tả
+từng thành phần UI, và checklist khi thêm giao diện mới.
+
 ## Cấu trúc chính
 
 | Đường dẫn                        | Nội dung                                           |
