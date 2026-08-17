@@ -6,7 +6,7 @@ import { boldOccurrences } from "@/lib/bold-occurrences";
 import { JsonLd } from "@/components/seo/json-ld";
 import { t } from "@/lib/t";
 import { pageMetadata, absoluteUrl } from "@/lib/seo";
-import { SOCIAL_LINKS, SOCIAL_SAME_AS } from "@/lib/social-links";
+import { SOCIAL_LINKS, PERSON_SAME_AS } from "@/lib/social-links";
 
 const author = t("author");
 const seo = t("seo");
@@ -42,7 +42,7 @@ export default async function AboutPage() {
       description: authorProfile.bio.split("\n\n")[0],
       url: absoluteUrl("/about"),
       ...(authorProfile.photo && { image: authorProfile.photo }),
-      sameAs: SOCIAL_SAME_AS,
+      sameAs: PERSON_SAME_AS,
       worksFor: { "@id": `${absoluteUrl("/")}/#organization` },
     },
   };
