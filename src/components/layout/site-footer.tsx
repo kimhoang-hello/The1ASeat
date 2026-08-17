@@ -3,6 +3,7 @@ import Link from "next/link";
 import { FacebookLogo, YoutubeLogo } from "@phosphor-icons/react/ssr";
 import { DisclosureText } from "@/components/layout/disclosure-text";
 import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
+import { SOCIAL_LINKS } from "@/lib/social-links";
 import { t as translate } from "@/lib/t";
 
 const t = translate("footer");
@@ -67,24 +68,21 @@ export function SiteFooter() {
               icon is sized to be seen rather than tucked into the corner —
               brighter than the links beside it, and a comfortable tap target. */}
           <div className="flex gap-4 text-white/75">
-            <a
-              href="https://youtube.com/@hoangleca"
-              aria-label="YouTube"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="-m-2 cursor-pointer p-2 transition-colors hover:text-white"
-            >
-              <YoutubeLogo size={32} weight="fill" className="xl:h-9 xl:w-9" />
-            </a>
-            <a
-              href="https://www.facebook.com/groups/2252639114946104"
-              aria-label="Facebook"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="-m-2 cursor-pointer p-2 transition-colors hover:text-white"
-            >
-              <FacebookLogo size={32} weight="fill" className="xl:h-9 xl:w-9" />
-            </a>
+            {SOCIAL_LINKS.map(({ name, url }) => {
+              const Logo = name === "YouTube" ? YoutubeLogo : FacebookLogo;
+              return (
+                <a
+                  key={name}
+                  href={url}
+                  aria-label={name}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="-m-2 cursor-pointer p-2 transition-colors hover:text-white"
+                >
+                  <Logo size={32} weight="fill" className="xl:h-9 xl:w-9" />
+                </a>
+              );
+            })}
           </div>
         </div>
 

@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { JsonLd } from "@/components/seo/json-ld";
 import { t } from "@/lib/t";
 import { SITE_URL } from "@/lib/subscriber-email";
+import { SOCIAL_SAME_AS } from "@/lib/social-links";
 import { alternatesWithFeed } from "@/lib/seo";
 import "./globals.css";
 
@@ -64,7 +65,7 @@ const siteJsonLd = {
         width: 477,
         height: 480,
       },
-      sameAs: ["https://youtube.com/@hoangleca"],
+      sameAs: SOCIAL_SAME_AS,
     },
     {
       "@type": "WebSite",

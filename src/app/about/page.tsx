@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { FacebookLogo, YoutubeLogo } from "@phosphor-icons/react/ssr";
 import { getAuthor } from "@/lib/content";
 import { AuthorPhoto } from "@/components/ui/author-photo";
 import { boldOccurrences } from "@/lib/bold-occurrences";
 import { JsonLd } from "@/components/seo/json-ld";
 import { t } from "@/lib/t";
 import { pageMetadata, absoluteUrl } from "@/lib/seo";
+import { SOCIAL_LINKS, SOCIAL_SAME_AS } from "@/lib/social-links";
 
 const author = t("author");
 const seo = t("seo");
@@ -40,7 +42,7 @@ export default async function AboutPage() {
       description: authorProfile.bio.split("\n\n")[0],
       url: absoluteUrl("/about"),
       ...(authorProfile.photo && { image: authorProfile.photo }),
-      sameAs: ["https://youtube.com/@hoangleca"],
+      sameAs: SOCIAL_SAME_AS,
       worksFor: { "@id": `${absoluteUrl("/")}/#organization` },
     },
   };
@@ -66,7 +68,31 @@ export default async function AboutPage() {
         ))}
       </div>
 
-      <p className="mt-8 border-t border-border pt-6 text-sm text-muted-foreground">
+      {/* The channel and the group are where readers actually follow along, so
+          they get named links here rather than bare icons — this page is the
+          one place someone lands specifically to find out who's behind Ghế 1A. */}
+      <div className="mt-10 border-t border-border pt-6">
+        <p className="text-sm font-semibold text-foreground">{author("connect")}</p>
+        <div className="mt-3 flex flex-wrap gap-3">
+          {SOCIAL_LINKS.map(({ name, url }) => {
+            const Logo = name === "YouTube" ? YoutubeLogo : FacebookLogo;
+            return (
+              <a
+                key={name}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+              >
+                <Logo size={20} weight="fill" />
+                {name}
+              </a>
+            );
+          })}
+        </div>
+      </div>
+
+      <p className="mt-8 text-sm text-muted-foreground">
         {site("name")} — {site("tagline")}
       </p>
     </section>

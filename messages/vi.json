@@ -167,7 +167,8 @@
   "author": {
     "eyebrow": "NGƯỜI ĐỨNG SAU GHẾ 1A",
     "title": "Xin chào, mình là {name}.",
-    "cta": "Câu chuyện của mình"
+    "cta": "Câu chuyện của mình",
+    "connect": "Kết nối với mình"
   },
   "newsletterCta": {
     "eyebrow": "BẢN TIN",
