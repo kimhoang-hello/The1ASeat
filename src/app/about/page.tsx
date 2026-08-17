@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { FacebookLogo, YoutubeLogo } from "@phosphor-icons/react/ssr";
+import { YoutubeLogo } from "@phosphor-icons/react/ssr";
+import { FacebookIcon } from "@/components/ui/brand-icons";
 import { getAuthor } from "@/lib/content";
 import { AuthorPhoto } from "@/components/ui/author-photo";
 import { boldOccurrences } from "@/lib/bold-occurrences";
@@ -74,21 +75,22 @@ export default async function AboutPage() {
       <div className="mt-10 border-t border-border pt-6">
         <p className="text-sm font-semibold text-foreground">{author("connect")}</p>
         <div className="mt-3 flex flex-wrap gap-3">
-          {SOCIAL_LINKS.map(({ name, url }) => {
-            const Logo = name === "YouTube" ? YoutubeLogo : FacebookLogo;
-            return (
-              <a
-                key={name}
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
-              >
-                <Logo size={20} weight="fill" />
-                {name}
-              </a>
-            );
-          })}
+          {SOCIAL_LINKS.map(({ name, url }) => (
+            <a
+              key={name}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+            >
+              {name === "YouTube" ? (
+                <YoutubeLogo size={20} weight="fill" />
+              ) : (
+                <FacebookIcon size={18} />
+              )}
+              {name}
+            </a>
+          ))}
         </div>
       </div>
 

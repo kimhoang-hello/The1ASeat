@@ -5,15 +5,11 @@
  *
  * `personal` marks a profile that identifies Hoàng himself rather than the
  * publication. schema.org reads `sameAs` on a Person as "these are the same
- * person", so a community group belongs on the Organization only.
+ * person", so the site's own Facebook Page belongs on the Organization only.
  */
 export const SOCIAL_LINKS = [
   { name: "YouTube", url: "https://youtube.com/@hoangleca", personal: true },
-  {
-    name: "Facebook",
-    url: "https://www.facebook.com/groups/2252639114946104",
-    personal: false,
-  },
+  { name: "Facebook", url: "https://www.facebook.com/Ghe1AA", personal: false },
 ] as const;
 
 /** `sameAs` for the Organization entity — every profile the site runs. */
