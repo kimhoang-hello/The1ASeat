@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { YoutubeLogo } from "@phosphor-icons/react/ssr";
+import { FacebookLogo, YoutubeLogo } from "@phosphor-icons/react/ssr";
 import { DisclosureText } from "@/components/layout/disclosure-text";
 import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
 import { t as translate } from "@/lib/t";
@@ -75,6 +75,15 @@ export function SiteFooter() {
               className="-m-2 cursor-pointer p-2 transition-colors hover:text-white"
             >
               <YoutubeLogo size={32} weight="fill" className="xl:h-9 xl:w-9" />
+            </a>
+            <a
+              href="https://www.facebook.com/groups/2252639114946104"
+              aria-label="Facebook"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="-m-2 cursor-pointer p-2 transition-colors hover:text-white"
+            >
+              <FacebookLogo size={32} weight="fill" className="xl:h-9 xl:w-9" />
             </a>
           </div>
         </div>
