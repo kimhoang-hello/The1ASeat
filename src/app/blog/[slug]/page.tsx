@@ -176,8 +176,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </span>
       </div>
 
+      {/* A link inside a heading would otherwise drop to the typography plugin's
+          font-weight:500 and read thinner than the words around it, so headings
+          keep their own weight and the underline does the work of saying "link". */}
       <div
-        className="prose prose-neutral mt-8 max-w-none prose-headings:font-display prose-a:text-primary"
+        className="prose prose-neutral mt-8 max-w-none prose-headings:font-display prose-a:text-primary [&_:is(h1,h2,h3,h4)_a]:[font-weight:inherit]"
         dangerouslySetInnerHTML={{ __html: post.body }}
       />
 

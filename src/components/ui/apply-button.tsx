@@ -1,13 +1,7 @@
+import { AFFILIATE_REL, PLAIN_REL } from "@/lib/affiliate-links";
 import { t as translate } from "@/lib/t";
 
 const offers = translate("offers");
-
-/** Marks the link as the affiliate link it is, wherever an apply link is rendered. */
-export const AFFILIATE_REL = "sponsored nofollow noopener noreferrer";
-
-/** The same link when there is no commission behind it — no `sponsored`, because
- *  claiming a paid relationship that does not exist is its own kind of lie. */
-export const PLAIN_REL = "nofollow noopener noreferrer";
 
 /**
  * The single place the apply link lives: every surface gets the same pill and

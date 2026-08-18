@@ -1,6 +1,8 @@
 import { createClient, EntryFieldTypes } from "contentful";
 import type { Asset, Entry } from "contentful";
-import { documentToHtmlString } from "@contentful/rich-text-html-renderer";
+import { documentToHtmlString, type Options } from "@contentful/rich-text-html-renderer";
+import { INLINES, type Document } from "@contentful/rich-text-types";
+import { relForUrl } from "@/lib/affiliate-links";
 import { keepBrandTogether } from "@/lib/t";
 import type { AuthorProfile, BlogPost, CreditCardOffer, TransferBonus } from "./types";
 
@@ -12,6 +14,35 @@ export const isContentfulConfigured = Boolean(spaceId && accessToken);
 const client = isContentfulConfigured
   ? createClient({ space: spaceId!, accessToken: accessToken! })
   : null;
+
+function escapeAttribute(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+/**
+ * Contentful's rich text has nowhere for an editor to set `rel` or `target`, so
+ * a link written in a post body would otherwise ship bare — including the
+ * referral links, which every other surface on the site marks as `sponsored`.
+ * The host decides; see lib/affiliate-links.
+ */
+const bodyOptions: Options = {
+  renderNode: {
+    [INLINES.HYPERLINK]: (node, next) => {
+      const uri = String((node.data as { uri?: unknown }).uri ?? "");
+      const rel = relForUrl(uri);
+      const attrs = rel ? ` target="_blank" rel="${rel}"` : "";
+      return `<a href="${escapeAttribute(uri)}"${attrs}>${next(node.content)}</a>`;
+    },
+  },
+};
+
+export function renderPostBody(document: Document): string {
+  return documentToHtmlString(document, bodyOptions);
+}
 
 function assetUrl(asset: unknown): string {
   if (asset && typeof asset === "object" && "fields" in asset) {
@@ -101,7 +132,7 @@ function toPost(entry: Entry<PostSkeleton, undefined>): BlogPost {
     // editor-written copy, the same way the UI strings are treated in lib/t.
     title: keepBrandTogether(f.titleVi),
     excerpt: keepBrandTogether(f.excerptVi),
-    body: keepBrandTogether(documentToHtmlString(f.bodyVi)),
+    body: keepBrandTogether(renderPostBody(f.bodyVi)),
     coverImage: f.coverImage,
     coverPhoto: f.coverPhoto ? assetUrl(f.coverPhoto) || undefined : undefined,
     videoUrl: f.videoUrl,

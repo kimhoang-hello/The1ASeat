@@ -1,5 +1,6 @@
 import { documentToHtmlString } from "@contentful/rich-text-html-renderer";
-import { BLOCKS, MARKS, type Document } from "@contentful/rich-text-types";
+import { BLOCKS, INLINES, MARKS, type Document } from "@contentful/rich-text-types";
+import { relForUrl } from "@/lib/affiliate-links";
 
 /**
  * Base URL for canonicals, the sitemap, JSON-LD ids and email links.
@@ -24,6 +25,7 @@ export const emailHeadlineStyle = `margin:0 0 18px; font-family:${FONT_HEADING};
 
 const emailListStyle = `margin:0 0 18px; padding-left:20px; font-family:${FONT_BODY}; font-size:15px; line-height:1.7; color:#1A1613;`;
 const emailSubheadingStyle = `margin:24px 0 12px; font-family:${FONT_HEADING}; font-size:17px; font-weight:800; letter-spacing:-0.01em; color:#0F2A4A;`;
+const emailLinkStyle = "color:#0F2A4A; text-decoration:underline;";
 
 export function escapeHtml(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -47,6 +49,13 @@ export function renderPostBodyForEmail(document: Document): string {
       [BLOCKS.UL_LIST]: (node, next) => `<ul style="${emailListStyle}">${next(node.content)}</ul>`,
       [BLOCKS.OL_LIST]: (node, next) => `<ol style="${emailListStyle}">${next(node.content)}</ol>`,
       [BLOCKS.LIST_ITEM]: (node, next) => `<li style="margin-bottom:8px;">${next(node.content)}</li>`,
+      // Same rule as the website body (lib/affiliate-links): a referral link
+      // says so in its `rel` here too, since this email is a public surface.
+      [INLINES.HYPERLINK]: (node, next) => {
+        const uri = String((node.data as { uri?: unknown }).uri ?? "");
+        const rel = relForUrl(uri);
+        return `<a href="${escapeHtml(uri).replace(/"/g, "&quot;")}"${rel ? ` rel="${rel}"` : ""} style="${emailLinkStyle}">${next(node.content)}</a>`;
+      },
     },
   });
 }
