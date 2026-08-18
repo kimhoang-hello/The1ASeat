@@ -6,6 +6,10 @@ import type { CreditCardOffer } from "./content";
  * copy the card already carries; adding a field would mean the user had to
  * remember to fill it in on every new card for the chip row to stay correct.
  *
+ * The trade-off is that a card earning a currency no rule below names gets no
+ * chip at all and drops out of every points filter, silently. Whenever a card
+ * on a new program is added, add its rule here too.
+ *
  * Not to be confused with POINTS_PROGRAMS in points-programs.ts, which is the
  * calculator's benchmark valuations (a different, much shorter list).
  */
@@ -28,6 +32,9 @@ const PROGRAM_RULES: ProgramRule[] = [
   { id: "td-rewards", name: "TD Rewards", pattern: /td rewards/i },
   { id: "viporter", name: "VIPorter®", pattern: /viporter/i },
   { id: "mileageplus", name: "United® MileagePlus®", pattern: /mileageplus/i },
+  // "WestJet®" rather than "WestJet Rewards®", for the same reason as À la
+  // carte™ below.
+  { id: "westjet", name: "WestJet®", pattern: /westjet/i },
   // "À la carte™" rather than the program's full "À la carte Rewards" name:
   // the ®/™ audit learns brands by backing up from the symbol through capital
   // words, so the longer form would teach it that a bare "Rewards" is a brand
