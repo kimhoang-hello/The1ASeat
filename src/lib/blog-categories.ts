@@ -55,6 +55,8 @@ const CATEGORY_DESCRIPTIONS: Record<string, string> = {
     "Kiến thức nền tảng về Miles & Points cho người mới: bắt đầu từ đâu, chọn thẻ nào, tích điểm ra sao và tránh các sai lầm phổ biến.",
   Deals:
     "Các deal điểm thưởng đang chạy: transfer bonus, khuyến mãi mua điểm và welcome offer được nâng — kèm hạn chót từng chương trình.",
+  Tips:
+    "Tips và kinh nghiệm thực tế khi chơi Miles & Points: apply và dùng thẻ tín dụng sao cho hiệu quả, cách săn award seat và các công cụ đáng dùng.",
 };
 
 export function categoryDescription(category: BlogCategory): string {
