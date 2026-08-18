@@ -1,14 +1,23 @@
-// Tài khoản ngân hàng Canada — Scotiabank® và BMO®.
+// Tài khoản ngân hàng Canada — Scotiabank®, BMO®, Wealthsimple®,
+// Neo Financial™, Tangerine® và EQ Bank™.
 //
 // BMO® từng có 9 tài khoản, bị gỡ hết ngày 16/08/2026, rồi thêm lại 4 tài
 // khoản cùng ngày — đúng 4 cái tác giả có link affiliate. Số liệu viết lại từ
 // đầu theo trang FinlyWealth chứ không chép lại bản cũ: bản cũ lấy số từ trang
 // BMO® và đã lệch vài chỗ so với trang mà nút "Apply ngay" thật sự dẫn tới.
 //
+// Bốn ngân hàng online thêm vào ngày 18/08/2026, cũng đúng những tài khoản
+// tác giả có link affiliate. Chúng đổi hẳn hình dạng của danh sách: trước đó
+// mọi tài khoản đều là ngân hàng lớn có chi nhánh, lãi tiết kiệm cao nhất là
+// 0.95%; giờ Tangerine® mở đầu bằng 4.50% khuyến mãi và Neo™/EQ Bank™ trả
+// 2.75% quanh năm. Nói cách khác, thứ hạng theo lãi suất trên trang danh sách
+// từ nay do nhóm này quyết định.
+//
 // NGUỒN: trang sản phẩm của FinlyWealth cho từng tài khoản (chính là đích của
-// `affiliateUrl` bên dưới), đọc trực tiếp ngày 2026-08-16. FinlyWealth đăng
-// bảng "Fees & limits" và "Interest Rates" lấy thẳng từ ngân hàng, nên số ở
-// đây khớp với số người đọc sẽ thấy khi bấm nút.
+// `affiliateUrl` bên dưới), đọc trực tiếp ngày 2026-08-16 (Scotiabank®, BMO®)
+// và 2026-08-18 (bốn ngân hàng còn lại). FinlyWealth đăng bảng "Fees & limits"
+// và "Interest Rates" lấy thẳng từ ngân hàng, nên số ở đây khớp với số người
+// đọc sẽ thấy khi bấm nút.
 //
 // Bản đầu của file này lấy số từ một trang tổng hợp khác và sai ở bốn chỗ,
 // đối chiếu lại mới phát hiện — giữ lại đây làm lời nhắc rằng bảng tổng hợp
@@ -22,7 +31,7 @@
 //
 // Lãi suất và welcome bonus ở Canada thay đổi liên tục. Chỗ nào ngân hàng
 // không công bố thì để trống và nói thẳng, không đoán.
-export type BankId = "scotiabank" | "bmo";
+export type BankId = "scotiabank" | "bmo" | "wealthsimple" | "neo" | "tangerine" | "eq-bank";
 
 export type AccountKind = "chequing" | "savings";
 
@@ -37,12 +46,26 @@ export type Bank = {
   logo: string;
 };
 
-// Logo lấy từ Wikimedia Commons (BMO_Logo.svg, Scotiabank_logo.svg), dùng để
-// nhận diện ngân hàng trong bài so sánh — cùng cách trang đang dùng logo hãng
-// bay và khách sạn ở Transfer Partners.
+// Logo lấy từ Wikimedia Commons, dùng để nhận diện ngân hàng trong bài so
+// sánh — cùng cách trang đang dùng logo hãng bay và khách sạn ở Transfer
+// Partners. Của Neo là PNG vì Commons không có bản SVG; đã cắt sát chữ trước
+// khi lưu, nếu không thì phần nền trong suốt thừa ra làm wordmark Neo trông
+// nhỏ hẳn so với các logo bên cạnh trong cùng một ô `object-contain`.
 export const BANKS: Bank[] = [
   { id: "scotiabank", name: "Scotiabank®", logo: "/images/logos/banks/scotiabank.svg" },
   { id: "bmo", name: "BMO®", logo: "/images/logos/banks/bmo.svg" },
+  { id: "wealthsimple", name: "Wealthsimple®", logo: "/images/logos/banks/wealthsimple.svg" },
+  // Neo tự viết "Neo Financial™" và "Neo Money™" trên trang của họ, EQ Bank ghi
+  // "™Trademark of Equitable Bank" ở chân trang — nên hai cái này là ™ chứ
+  // không phải ®, đúng theo dấu mà chính chủ dùng.
+  //
+  // Viết "Neo Financial™" trọn trên một dòng ở mọi chỗ: audit:trademarks học
+  // thương hiệu theo từng dòng, nên xuống dòng giữa hai chữ làm nó chỉ thấy
+  // chữ sau, học thành một thương hiệu một chữ, rồi báo lỗi ở "My Financial
+  // Progress" của BMO®.
+  { id: "neo", name: "Neo Financial™", logo: "/images/logos/banks/neo.png" },
+  { id: "tangerine", name: "Tangerine®", logo: "/images/logos/banks/tangerine.svg" },
+  { id: "eq-bank", name: "EQ Bank™", logo: "/images/logos/banks/eq-bank.svg" },
 ];
 
 export function bankById(id: BankId): Bank {
@@ -349,6 +372,220 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     affiliateUrl:
       "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fbmo-student-chequing-account&utm_source=ghe-1a",
     rebate: "$100",
+  },
+
+  // ------------------------------------------------------- Wealthsimple
+  // Wealthsimple không tách chi tiêu và tiết kiệm: cùng một tài khoản, cùng
+  // một mức lãi. FinlyWealth vẫn liệt kê hai trang riêng và cả hai trang đều
+  // dẫn về đúng sản phẩm đó, nên ở đây cũng là hai mục — người tìm "tài khoản
+  // tiết kiệm" vẫn thấy Wealthsimple — nhưng số liệu buộc phải giống hệt
+  // nhau, và chỗ nào cũng nói thẳng rằng đó là một tài khoản.
+  {
+    slug: "wealthsimple-chequing",
+    bank: "wealthsimple",
+    name: "Wealthsimple® Chequing",
+    kind: "chequing",
+    tags: [],
+    monthlyFee: 0,
+    bonusValue: 25,
+    bonusLabelVi: "$25",
+    bonusConditionsVi: [
+      "Chỉ dành cho khách hàng mới, chưa từng có tài khoản Wealthsimple® nào.",
+      "Mở tài khoản Wealthsimple® đầu tiên qua link ở trang này.",
+      "Nạp tối thiểu $1 trong vòng 30 ngày.",
+    ],
+    interestRate: 2.25,
+    regularRate: 1.25,
+    promoNoteVi:
+      "Lãi đi theo hạng khách hàng chứ không theo số dư: Core 1.25%, Premium 1.75%, Generation 2.25%. Core và Premium được cộng thêm 0.50% khi có direct deposit từ $2,000/tháng, nhưng trần vẫn là 2.25%.",
+    keyBenefitsVi: [
+      "Giao dịch debit, Interac e-Transfer® và thanh toán hoá đơn miễn phí không giới hạn",
+      "Không phí ATM và không phí chuyển đổi ngoại tệ, hoàn lại cả phí ATM của bên thứ ba, không giới hạn số lần",
+      "Lãi tính trên toàn bộ số dư, kể cả tiền đang chờ tiêu — không phải chuyển qua lại giữa hai tài khoản",
+      "Bảo hiểm CDIC tới $1,000,000 cho khoản tiền gửi CAD đủ điều kiện",
+    ],
+    url: "https://www.wealthsimple.com/en-ca/product/cash",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Fbanking%2Fchequing-accounts%2Fwealthsimple-chequing&utm_source=ghe-1a",
+  },
+  {
+    slug: "wealthsimple-savings",
+    bank: "wealthsimple",
+    name: "Wealthsimple® Savings",
+    kind: "savings",
+    tags: [],
+    monthlyFee: 0,
+    bonusValue: 25,
+    bonusLabelVi: "$25",
+    bonusConditionsVi: [
+      "Chỉ dành cho khách hàng mới, chưa từng có tài khoản Wealthsimple® nào.",
+      "Mở tài khoản Wealthsimple® đầu tiên qua link ở trang này.",
+      "Nạp tối thiểu $1 trong vòng 30 ngày.",
+    ],
+    interestRate: 2.25,
+    regularRate: 1.25,
+    promoNoteVi:
+      "Đây chính là tài khoản Wealthsimple® Chequing — Wealthsimple không có tài khoản tiết kiệm riêng, và $25 bonus chỉ tính một lần cho tài khoản đầu tiên. Lãi đi theo hạng khách hàng: Core 1.25%, Premium 1.75%, Generation 2.25%; Core và Premium cộng thêm 0.50% khi có direct deposit từ $2,000/tháng, trần vẫn 2.25%.",
+    keyBenefitsVi: [
+      "Không monthly fee, không yêu cầu số dư tối thiểu",
+      "Rút tiền lúc nào cũng được, không có kỳ hạn báo trước",
+      "Mở tới 8 tài khoản cá nhân và 8 tài khoản chung để tách mục tiêu tiết kiệm",
+      "Bảo hiểm CDIC tới $1,000,000 cho khoản tiền gửi CAD đủ điều kiện",
+    ],
+    url: "https://www.wealthsimple.com/en-ca/product/cash",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Fbanking%2Fsavings-accounts%2Fwealthsimple-savings&utm_source=ghe-1a",
+  },
+
+  // ----------------------------------------------------------------- Neo
+  {
+    slug: "neo-chequing",
+    bank: "neo",
+    name: "Neo™ Chequing Account",
+    kind: "chequing",
+    tags: [],
+    monthlyFee: 0,
+    bonusValue: 100,
+    bonusLabelVi: "$100",
+    bonusConditionsVi: [
+      "Chỉ dành cho khách hàng mới của Neo Financial™, mở sản phẩm Neo™ đầu tiên.",
+      "Chi tiêu tối thiểu $1,000 trong 3 tháng đầu bằng thẻ Neo Money™ hoặc bất kỳ thẻ tín dụng Neo™ nào.",
+      "Mỗi người một lần, không cộng dồn với mã khuyến mãi khác.",
+    ],
+    interestRate: 0.1,
+    promoNoteVi:
+      "0.10% chỉ áp dụng cho phần số dư tới $200,000; phần vượt quá không được tính lãi. Đây là tài khoản chi tiêu — muốn lãi thì để tiền ở Neo™ Savings Account.",
+    keyBenefitsVi: [
+      "Không monthly fee, không yêu cầu số dư tối thiểu",
+      "Giao dịch và Interac e-Transfer® không giới hạn",
+      "Cashback theo bậc cho xăng và tạp hoá khi quẹt thẻ Neo Money™",
+      "Rút ATM tại Canada $0, kể cả máy ngoài mạng lưới",
+    ],
+    url: "https://www.neofinancial.com/accounts",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fneo-chequing-account&utm_source=ghe-1a",
+    rebate: "$25",
+  },
+  {
+    slug: "neo-savings",
+    bank: "neo",
+    name: "Neo™ Savings Account",
+    kind: "savings",
+    tags: [],
+    monthlyFee: 0,
+    interestRate: 2.75,
+    // Không đặt `regularRate`: 2.00% không phải mức sau khuyến mãi mà là bậc
+    // thấp nhất của cùng một biểu lãi, và nhãn "Lãi thường" sẽ nói ngược lại.
+    promoNoteVi:
+      "Lãi theo bậc số dư, không phải khuyến mãi có hạn: dưới $5,000 được 2.00%, từ $5,000 được 2.50%, từ $20,000 trở lên được 2.75%. Để nhận rebate của FinlyWealth phải nạp tối thiểu $100.",
+    keyBenefitsVi: [
+      "Không monthly fee, không yêu cầu số dư tối thiểu",
+      "Giao dịch và Interac e-Transfer® không giới hạn",
+      "Lãi tăng theo số dư, không cần mã khuyến mãi hay đổi tài khoản",
+      "Rút tiền lúc nào cũng được, không có kỳ hạn báo trước",
+    ],
+    url: "https://www.neofinancial.com/accounts",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fneo-savings-account&utm_source=ghe-1a",
+    rebate: "$75",
+  },
+
+  // ----------------------------------------------------------- Tangerine
+  {
+    slug: "tangerine-savings",
+    bank: "tangerine",
+    name: "Tangerine® Savings Account",
+    kind: "savings",
+    tags: [],
+    monthlyFee: 0,
+    interestRate: 4.5,
+    regularRate: 0.3,
+    promoNoteVi:
+      "4.50% là lãi khuyến mãi cho tối đa 5 tháng đầu, dành cho khách hàng mới mở tài khoản tiết kiệm đủ điều kiện trong vài tháng đầu kể từ khi có Client Number. Offer chạy 28/07/2026 – 30/11/2026; hết kỳ khuyến mãi thì về mức thường 0.30%.",
+    keyBenefitsVi: [
+      "Không monthly fee, không yêu cầu số dư tối thiểu",
+      "Giao dịch và Interac e-Transfer® không giới hạn",
+      "Tách được nhiều mục tiêu tiết kiệm và hẹn chuyển tiền tự động",
+      "Rút tiền lúc nào cũng được, không có kỳ hạn báo trước",
+    ],
+    url: "https://www.tangerine.ca/en/personal/save/savings-account",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Ftangerine-savings&utm_source=ghe-1a",
+    rebate: "$50",
+  },
+  {
+    slug: "tangerine-no-fee-chequing",
+    bank: "tangerine",
+    name: "Tangerine® No Fee Daily Chequing Account",
+    kind: "chequing",
+    tags: [],
+    monthlyFee: 0,
+    bonusValue: 250,
+    bonusLabelVi: "$250",
+    bonusExpiresOn: "2026-10-31",
+    bonusConditionsVi: [
+      "Mở tài khoản No Fee Daily Chequing mới, chỉ dành cho khách hàng mới của Tangerine®.",
+      "Chuyển payroll deposit về tài khoản Tangerine® và duy trì 2 tháng liên tiếp.",
+      "Offer chạy 01/05/2024 – 31/10/2026.",
+    ],
+    interestRate: 0.1,
+    regularRate: 0.01,
+    promoNoteVi:
+      "Bậc lãi ở đây đi ngược trực giác: 0.01% cho số dư dưới $50,000, 0.05% từ $50,000, 0.10% từ $100,000 — rồi tụt lại 0.01% từ $500,000 trở lên. Số dư của một tài khoản chi tiêu bình thường rơi vào bậc thấp nhất.",
+    keyBenefitsVi: [
+      "Không monthly fee, không yêu cầu số dư tối thiểu",
+      "Giao dịch và Interac e-Transfer® không giới hạn, có thẻ Visa Debit",
+      "Rút ATM trong mạng lưới Scotiabank® và Tangerine® miễn phí; máy khác tại Canada $1.50",
+      "Phí chuyển đổi ngoại tệ 2.5%, phí NSF $10 — thấp hơn mức $45–$48 thường thấy ở ngân hàng lớn",
+    ],
+    url: "https://www.tangerine.ca/en/personal/spend/chequing-account",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Ftangerine-chequing&utm_source=ghe-1a",
+    rebate: "$50",
+  },
+
+  // ------------------------------------------------------------- EQ Bank
+  {
+    slug: "eq-bank-personal-account",
+    bank: "eq-bank",
+    name: "EQ Bank™ Personal Account",
+    kind: "chequing",
+    tags: [],
+    monthlyFee: 0,
+    interestRate: 2.75,
+    regularRate: 1,
+    promoNoteVi:
+      "2.75% chỉ khi có direct deposit định kỳ từ $2,000/tháng; không có thì 1.00%. Đây không phải lãi khuyến mãi có hạn — nó giữ nguyên chừng nào direct deposit còn về.",
+    keyBenefitsVi: [
+      "Không monthly fee, không yêu cầu số dư tối thiểu",
+      "Giao dịch, Interac e-Transfer® và thanh toán hoá đơn miễn phí không giới hạn",
+      "Kèm thẻ prepaid Mastercard® hoàn 0.5% cashback, không phí chuyển đổi ngoại tệ",
+      "Rút ATM tại Canada miễn phí, hoàn lại cả phí của máy bên thứ ba",
+    ],
+    url: "https://www.eqbank.ca/personal-banking/eq-bank-account",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Fbanking%2Fchequing-accounts%2Feq-bank-personal-account&utm_source=ghe-1a",
+  },
+  {
+    slug: "eq-bank-notice-savings",
+    bank: "eq-bank",
+    name: "EQ Bank™ Notice Savings Account",
+    kind: "savings",
+    tags: [],
+    monthlyFee: 0,
+    interestRate: 2.75,
+    // Cũng không đặt `regularRate`: 2.35% là loại báo trước 10 ngày, một lựa
+    // chọn khác chứ không phải mức tụt xuống sau khi hết khuyến mãi.
+    promoNoteVi:
+      "Đổi thanh khoản lấy lãi: loại báo trước 30 ngày được 2.75%, loại báo trước 10 ngày được 2.35%. Muốn rút thì phải báo trước đúng số ngày đó, nên đây không phải chỗ để tiền phòng thân cần lấy ngay.",
+    keyBenefitsVi: [
+      "Không monthly fee, không yêu cầu số dư tối thiểu",
+      "Nạp và rút không giới hạn số lần, miễn phí — chỉ cần báo trước",
+      "Đủ điều kiện bảo hiểm CDIC tới $100,000 mỗi hạng mục",
+    ],
+    url: "https://www.eqbank.ca/personal-banking/savings/notice-savings-account",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Fbanking%2Fsavings-accounts%2Feq-bank-notice-savings-account&utm_source=ghe-1a",
   },
 ];
 
