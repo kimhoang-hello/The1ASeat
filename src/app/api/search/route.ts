@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCreditCardOffers, getPosts } from "@/lib/content";
+import { BANK_ACCOUNTS, bankAccountPath, bankById } from "@/lib/bank-accounts";
 import { t } from "@/lib/t";
 import type { SearchItem } from "@/lib/search";
 import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
@@ -28,6 +29,25 @@ const PAGES: SearchItem[] = [
   { title: footer("contact"), href: "/contact", kind: "page" },
 ];
 
+/**
+ * Từng tài khoản ngân hàng, không phải chỉ trang danh sách. Trang danh sách đã
+ * nằm trong `PAGES` từ trước, nhưng nó chỉ tìm được bằng chữ "Ngân hàng" — gõ
+ * "KOHO", "Simplii" hay "RBC Advantage" thì không ra gì, dù cả 29 trang đều đã
+ * prerender và đã có trong sitemap.
+ *
+ * Cùng cái cờ với mục trang danh sách bên dưới: trang nháp thì không lộ ra ở
+ * bất cứ chỗ nào người đọc tình cờ bấm được, và ô tìm kiếm là một trong số đó
+ * (xem `feature-flags.ts`).
+ */
+const BANK_ACCOUNT_ITEMS: SearchItem[] = BANK_ACCOUNTS_PUBLISHED
+  ? BANK_ACCOUNTS.map((account) => ({
+      title: account.name,
+      href: bankAccountPath(account.slug),
+      kind: "account" as const,
+      meta: bankById(account.bank).name,
+    }))
+  : [];
+
 export async function GET() {
   const [posts, offers] = await Promise.all([getPosts(), getCreditCardOffers()]);
 
@@ -38,6 +58,7 @@ export async function GET() {
       kind: "card" as const,
       meta: `${offer.issuer} ${offer.cardType}`,
     })),
+    ...BANK_ACCOUNT_ITEMS,
     ...posts.map((post) => ({
       title: post.title,
       href: `/blog/${post.slug}`,

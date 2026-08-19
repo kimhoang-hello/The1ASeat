@@ -43,6 +43,7 @@
     "loading": "Đang tải dữ liệu tìm kiếm…",
     "error": "Không tải được dữ liệu tìm kiếm, vui lòng thử lại.",
     "kindCard": "Thẻ tín dụng",
+    "kindAccount": "Tài khoản",
     "kindPost": "Bài viết",
     "kindPage": "Trang"
   },

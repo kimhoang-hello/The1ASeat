@@ -1,6 +1,6 @@
 import { slugifyVi } from "./blog-categories";
 
-export type SearchKind = "card" | "post" | "page";
+export type SearchKind = "card" | "account" | "post" | "page";
 
 export interface SearchItem {
   title: string;

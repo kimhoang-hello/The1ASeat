@@ -11,6 +11,7 @@ const tSearch = t("search");
 
 const KIND_LABEL: Record<SearchItem["kind"], string> = {
   card: tSearch("kindCard"),
+  account: tSearch("kindAccount"),
   post: tSearch("kindPost"),
   page: tSearch("kindPage"),
 };
