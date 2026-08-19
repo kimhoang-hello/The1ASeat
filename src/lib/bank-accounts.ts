@@ -1,5 +1,6 @@
 // Tài khoản ngân hàng Canada — Scotiabank®, BMO®, Wealthsimple®,
-// Neo Financial™, Tangerine® và EQ Bank™.
+// Neo Financial™, Tangerine®, EQ Bank™, Simplii Financial™, KOHO,
+// National Bank® và RBC®.
 //
 // BMO® từng có 9 tài khoản, bị gỡ hết ngày 16/08/2026, rồi thêm lại 4 tài
 // khoản cùng ngày — đúng 4 cái tác giả có link affiliate. Số liệu viết lại từ
@@ -13,11 +14,25 @@
 // 2.75% quanh năm. Nói cách khác, thứ hạng theo lãi suất trên trang danh sách
 // từ nay do nhóm này quyết định.
 //
+// Bốn ngân hàng nữa thêm ngày 19/08/2026 — Simplii Financial™, KOHO,
+// National Bank® và RBC® — cũng đúng những tài khoản tác giả có link affiliate.
+// Nhóm này kéo danh sách về phía ngược lại với nhóm ngân hàng online: RBC® mang
+// vào năm tài khoản chequing của một ngân hàng lớn, trong đó ba cái không có
+// welcome bonus nào đang chạy. Đổi lại, Simplii Financial™ mở đầu bảng lãi suất
+// bằng 4.60% khuyến mãi, cao hơn cả Tangerine®.
+//
 // NGUỒN: trang sản phẩm của FinlyWealth cho từng tài khoản (chính là đích của
-// `affiliateUrl` bên dưới), đọc trực tiếp ngày 2026-08-16 (Scotiabank®, BMO®)
-// và 2026-08-18 (bốn ngân hàng còn lại). FinlyWealth đăng bảng "Fees & limits"
+// `affiliateUrl` bên dưới), đọc trực tiếp ngày 2026-08-16 (Scotiabank®, BMO®),
+// 2026-08-18 (Wealthsimple®, Neo Financial™, Tangerine®, EQ Bank™) và
+// 2026-08-19 (bốn ngân hàng còn lại). FinlyWealth đăng bảng "Fees & limits"
 // và "Interest Rates" lấy thẳng từ ngân hàng, nên số ở đây khớp với số người
 // đọc sẽ thấy khi bấm nút.
+//
+// Một chỗ phải đi ngược quy tắc đó: widget lãi suất của FinlyWealth ghi
+// Simplii Financial™ HISA là 4.50%, trong khi tiêu đề của chính trang đó, phần
+// điều khoản của Simplii Financial™ in ngay bên dưới, và trang chính thức của
+// Simplii Financial™ đều ghi 4.60%. Ba nguồn thắng một widget, nên ở đây là
+// 4.60% — nếu sau này thấy lệch nữa thì đọc điều khoản chứ đừng đọc widget.
 //
 // Bản đầu của file này lấy số từ một trang tổng hợp khác và sai ở bốn chỗ,
 // đối chiếu lại mới phát hiện — giữ lại đây làm lời nhắc rằng bảng tổng hợp
@@ -31,7 +46,17 @@
 //
 // Lãi suất và welcome bonus ở Canada thay đổi liên tục. Chỗ nào ngân hàng
 // không công bố thì để trống và nói thẳng, không đoán.
-export type BankId = "scotiabank" | "bmo" | "wealthsimple" | "neo" | "tangerine" | "eq-bank";
+export type BankId =
+  | "scotiabank"
+  | "bmo"
+  | "wealthsimple"
+  | "neo"
+  | "tangerine"
+  | "eq-bank"
+  | "simplii"
+  | "koho"
+  | "national-bank"
+  | "rbc";
 
 export type AccountKind = "chequing" | "savings";
 
@@ -66,6 +91,24 @@ export const BANKS: Bank[] = [
   { id: "neo", name: "Neo Financial™", logo: "/images/logos/banks/neo.png" },
   { id: "tangerine", name: "Tangerine®", logo: "/images/logos/banks/tangerine.svg" },
   { id: "eq-bank", name: "EQ Bank™", logo: "/images/logos/banks/eq-bank.svg" },
+  { id: "simplii", name: "Simplii Financial™", logo: "/images/logos/banks/simplii.svg" },
+  // KOHO là ngân hàng duy nhất ở đây không mang ký hiệu nào. Đọc hết trang chủ,
+  // ba trang gói và trang pháp lý của họ thì ® chỉ xuất hiện sau tên của bên
+  // khác (Mastercard®, Interac®), chưa một lần nào ngay sau chữ "KOHO". Để
+  // trống mới là viết đúng như chính chủ viết, cùng quy tắc đã cho
+  // Neo Financial™ và EQ Bank™ dấu ™ chứ không phải ®. Đừng "sửa" thành ® nếu
+  // chưa mở lại trang của họ mà xem.
+  //
+  // National Bank® thì ngược lại: trang của họ cũng viết trần, nhưng thẻ
+  // National Bank® World Elite® Mastercard® trên site này đã mang ® từ trước,
+  // nên giữ ® để cả trang nói cùng một kiểu — và để audit:trademarks không phải
+  // báo lỗi ở một trong hai chỗ.
+  { id: "koho", name: "KOHO", logo: "/images/logos/banks/koho.svg" },
+  { id: "national-bank", name: "National Bank®", logo: "/images/logos/banks/national-bank.svg" },
+  // Dùng lại đúng file logo mà bảng Transfer Partners đang dùng cho RBC® thay
+  // vì chép thêm một bản vào `banks/`: cùng một thương hiệu, cùng một mark, hai
+  // bản sao chỉ tạo cơ hội để chúng lệch nhau.
+  { id: "rbc", name: "RBC®", logo: "/images/logos/rbc.svg" },
 ];
 
 export function bankById(id: BankId): Bank {
@@ -586,6 +629,339 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     url: "https://www.eqbank.ca/personal-banking/savings/notice-savings-account",
     affiliateUrl:
       "https://www.finlywealth.com/r/pYQhcEuX?url=%2Fbanking%2Fsavings-accounts%2Feq-bank-notice-savings-account&utm_source=ghe-1a",
+  },
+
+  // ---------------------------------------------------- Simplii Financial
+  {
+    slug: "simplii-high-interest-savings",
+    bank: "simplii",
+    name: "Simplii Financial™ High Interest Savings Account",
+    kind: "savings",
+    tags: [],
+    monthlyFee: 0,
+    interestRate: 4.6,
+    regularRate: 0.3,
+    promoNoteVi:
+      "4.60% là lãi khuyến mãi 153 ngày (khoảng 5 tháng) kể từ ngày mở tài khoản, chỉ tính trên phần số dư tới $200,000. Phải là khách hàng mới hoàn toàn của Simplii Financial™ và mở HISA đầu tiên trong vòng 60 ngày kể từ khi có Client Number; offer chạy 01/08/2026 – 31/10/2026. Hết kỳ khuyến mãi thì về biểu lãi thường theo bậc số dư: 0.30% dưới $50,000, 0.50% từ $50,000, 0.60% từ $100,000, 0.70% từ $500,000 và 1.00% từ $1,000,000.",
+    keyBenefitsVi: [
+      "Không monthly fee, không yêu cầu số dư tối thiểu",
+      "Giao dịch và Interac e-Transfer® không giới hạn",
+      "Rút tiền lúc nào cũng được, không có kỳ hạn báo trước",
+      "Lãi tính theo ngày, trả hàng tháng",
+    ],
+    url: "https://www.simplii.com/en/bank-accounts/high-interest-savings.html",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fsimplii-high-interest-savings&utm_source=ghe-1a",
+    rebate: "$30",
+  },
+  {
+    slug: "simplii-no-fee-chequing",
+    bank: "simplii",
+    name: "Simplii Financial™ No Fee Chequing Account",
+    kind: "chequing",
+    tags: [],
+    monthlyFee: 0,
+    // Bonus là $300 tiền mặt cộng một gift card Skip $50 — hai offer riêng của
+    // Simplii Financial™, cùng điều kiện direct deposit và cùng ngày kết thúc.
+    // `bonusValue` gộp lại chỉ để sắp xếp; nhãn mới là thứ người đọc thấy, và
+    // nó nói rõ phần nào là tiền, phần nào là gift card.
+    bonusValue: 350,
+    bonusLabelVi: "$300 + gift card Skip $50",
+    bonusExpiresOn: "2026-09-30",
+    bonusConditionsVi: [
+      "Chỉ dành cho khách hàng mới, chưa từng đứng tên chính bất kỳ sản phẩm Simplii Financial™ nào trước 18/06/2024.",
+      "Mở No Fee Chequing Account mới trước 30/09/2026.",
+      "Trong vòng 120 ngày kể từ ngày mở, set up direct deposit định kỳ tổng từ $100/tháng.",
+      "Duy trì direct deposit đó đủ 3 tháng liên tiếp trong khung 120 ngày nói trên.",
+      "Không áp dụng cho người cư trú tại Quebec.",
+    ],
+    keyBenefitsVi: [
+      "Không monthly fee, không yêu cầu số dư tối thiểu",
+      "Giao dịch và Interac e-Transfer® không giới hạn, có thẻ Debit Mastercard®",
+      "Rút ATM trong mạng lưới miễn phí; máy khác tại Canada $1.50",
+      "Phí chuyển đổi ngoại tệ 2.5%, phí NSF $10 — thấp hơn mức $45–$48 thường thấy ở ngân hàng lớn",
+    ],
+    url: "https://www.simplii.com/en/special-offers/no-fee-chequing-account.html",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fsimplii-chequing&utm_source=ghe-1a",
+    rebate: "$50",
+  },
+
+  // ---------------------------------------------------------------- KOHO
+  // KOHO bán ba gói của cùng một tài khoản chứ không phải ba tài khoản khác
+  // nhau: trả phí tháng cao hơn thì được lãi cao hơn và cash back cao hơn, còn
+  // phần chi tiêu thì gói nào cũng như nhau. Vì vậy ba mục dưới đây chỉ khác
+  // nhau ở monthly fee, lãi suất và mức cash back — cố tình để giống nhau ở
+  // những dòng còn lại, để đặt cạnh nhau là thấy ngay mình trả thêm tiền để
+  // đổi lấy cái gì.
+  //
+  // Xếp vào "savings" theo đúng cách FinlyWealth phân loại cả ba (đích của
+  // `affiliateUrl` nằm dưới mục savings account). Trên thực tế đây vẫn là tài
+  // khoản tiêu hằng ngày có thẻ prepaid Mastercard® — `keyBenefitsVi` nói rõ
+  // phần đó, thay vì tách mỗi gói thành hai mục như đã làm với Wealthsimple®.
+  {
+    slug: "koho-everything",
+    bank: "koho",
+    name: "KOHO Everything Plan",
+    kind: "savings",
+    tags: [],
+    monthlyFee: 14.75,
+    bonusValue: 100,
+    bonusLabelVi: "Tối đa $100 cash back",
+    bonusConditionsVi: [
+      "Chỉ dành cho khách hàng mới, chưa từng có tài khoản KOHO.",
+      "Register bằng promo code FW10C26 khi mở tài khoản.",
+      "Nạp tiền trong vòng 30 ngày kể từ ngày mở và chi tối thiểu $20 trong 30 ngày đầu.",
+      "Được 10% cash back trên chi tiêu 3 tháng đầu, tối đa $1,000 chi tiêu — tức tối đa $100.",
+      "Không cộng dồn với khuyến mãi khác. Loại trừ cash advance, rút ATM, chuyển tiền, crypto, cờ bạc và gift card.",
+    ],
+    interestRate: 3.5,
+    promoNoteVi:
+      "3.50% áp dụng cho mọi mức số dư, không phải lãi khuyến mãi có hạn — nó đi kèm gói Everything và mất đi nếu bạn hạ gói. Tính ra $14.75/tháng tức $177/năm, nên phần lãi chênh so với gói Extra chỉ hoà vốn khi số dư đủ lớn.",
+    keyBenefitsVi: [
+      "Lãi 3.50% trên toàn bộ số dư, kể cả tiền đang chờ tiêu",
+      "2% cash back cho tạp hoá, đi lại, ăn uống; tới thêm 6.5% tại một số cửa hàng",
+      "Không phí chuyển đổi ngoại tệ, giao dịch và Interac e-Transfer® không giới hạn",
+      "Kèm 3GB eSIM dùng ở nước ngoài, theo dõi credit score miễn phí và giảm 50% phí xây credit",
+    ],
+    url: "https://www.koho.ca/everything/",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Fbanking%2Fsavings-accounts%2Fkoho-everything-plan&utm_source=ghe-1a",
+  },
+  {
+    slug: "koho-extra",
+    bank: "koho",
+    name: "KOHO Extra Plan",
+    kind: "savings",
+    tags: [],
+    monthlyFee: 12,
+    bonusValue: 100,
+    bonusLabelVi: "Tối đa $100 cash back",
+    bonusConditionsVi: [
+      "Chỉ dành cho khách hàng mới, chưa từng có tài khoản KOHO.",
+      "Register bằng promo code FW10C26 khi mở tài khoản.",
+      "Nạp tiền trong vòng 30 ngày kể từ ngày mở và chi tối thiểu $20 trong 30 ngày đầu.",
+      "Được 10% cash back trên chi tiêu 3 tháng đầu, tối đa $1,000 chi tiêu — tức tối đa $100.",
+      "Nạp tối thiểu $20 trong 30 ngày đầu cũng là điều kiện để nhận rebate của FinlyWealth.",
+    ],
+    interestRate: 2.5,
+    promoNoteVi:
+      "2.50% áp dụng cho mọi mức số dư và đi kèm gói Extra ($12/tháng). Chênh đúng $2.75/tháng so với gói Everything nhưng lãi thấp hơn 1.00% và cash back cơ bản thấp hơn 0.5%.",
+    keyBenefitsVi: [
+      "Lãi 2.50% trên toàn bộ số dư",
+      "1.5% cash back cho tạp hoá, đi lại, ăn uống; tới thêm 6.5% tại một số cửa hàng",
+      "Không phí chuyển đổi ngoại tệ, giao dịch và Interac e-Transfer® không giới hạn",
+      "Dùng thử miễn phí 30 ngày, theo dõi credit score miễn phí và giảm 30% phí xây credit",
+    ],
+    url: "https://www.koho.ca/extra/",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fkoho-extra-plan&utm_source=ghe-1a",
+    rebate: "$100",
+  },
+  {
+    slug: "koho-essential",
+    bank: "koho",
+    name: "KOHO Essential Plan",
+    kind: "savings",
+    tags: [],
+    monthlyFee: 4,
+    feeWaiverVi: "Miễn monthly fee nếu có khoản nạp định kỳ $1,000/tháng, nạp tay hay direct deposit đều được.",
+    bonusValue: 100,
+    bonusLabelVi: "Tối đa $100 cash back",
+    bonusConditionsVi: [
+      "Chỉ dành cho khách hàng mới, chưa từng có tài khoản KOHO.",
+      "Register bằng promo code FW10C26 khi mở tài khoản.",
+      "Nạp tiền trong vòng 30 ngày kể từ ngày mở và chi tối thiểu $20 trong 30 ngày đầu.",
+      "Được 10% cash back trên chi tiêu 3 tháng đầu, tối đa $1,000 chi tiêu — tức tối đa $100.",
+      "Nạp tối thiểu $20 trong 30 ngày đầu cũng là điều kiện để nhận rebate của FinlyWealth.",
+    ],
+    interestRate: 2,
+    promoNoteVi:
+      "2.00% áp dụng cho mọi mức số dư. Đây là gói duy nhất của KOHO có đường miễn phí hẳn monthly fee, nên nếu bạn vẫn nạp lương về đây thì nó là gói rẻ nhất — đổi lại lãi và cash back thấp nhất, và vẫn còn phí chuyển đổi ngoại tệ 1.5%.",
+    keyBenefitsVi: [
+      "Lãi 2.00% trên toàn bộ số dư",
+      "1% cash back cho tạp hoá, đi lại, ăn uống; tới thêm 6.5% tại một số cửa hàng",
+      "Giao dịch và Interac e-Transfer® không giới hạn, miễn phí",
+      "Chuyển tiền quốc tế tới hơn 190 nước, theo dõi credit score miễn phí",
+    ],
+    url: "https://www.koho.ca/essential/",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fkoho-essential-plan&utm_source=ghe-1a",
+    rebate: "$100",
+  },
+
+  // ------------------------------------------------------- National Bank
+  {
+    slug: "national-bank-newcomer",
+    bank: "national-bank",
+    name: "National Bank® — Bank Account for Newcomers",
+    kind: "chequing",
+    tags: ["newcomer"],
+    monthlyFee: 15.95,
+    feeWaiverVi:
+      "Miễn hoàn toàn monthly fee trong năm đầu. Năm 2 và năm 3 còn $7.98 rồi $11.96 mỗi tháng, và về $0 nếu giữ số dư tối thiểu $4,500 mỗi ngày hoặc có đủ ba thứ: thẻ tín dụng Mastercard® cá nhân, bank statement điện tử, và payroll deposit hằng tháng (hoặc thanh toán ít nhất 2 hoá đơn điện tử mỗi tháng). Hết năm 4 tài khoản tự chuyển sang gói The Connected®.",
+    // Đây là bốn khoản rời nhau, không phải một cục $600 cho không: chỉ khoản
+    // $300 đầu là mở tài khoản, ba khoản $100 còn lại đòi thêm một sản phẩm
+    // khác của National Bank. Viết tách ra vì gộp thành "tối đa $600" sẽ làm
+    // con số trông dễ với hơn thực tế.
+    bonusValue: 600,
+    bonusLabelVi: "Tối đa $600",
+    bonusConditionsVi: [
+      "Từ 18 tuổi, có thường trú hoặc work/study permit còn hiệu lực, và sắp sang Canada trong 90 ngày hoặc đã ở Canada từ 5 năm trở xuống.",
+      "$300 khi mở tài khoản chequing, register online banking, thực hiện 20 giao dịch đủ điều kiện và nhận 3 khoản automatic deposit từ $100 mỗi khoản.",
+      "$100 nữa khi mở thẻ tín dụng Mastercard® của National Bank®, được duyệt và quẹt đủ 20 giao dịch.",
+      "$100 nữa khi set up thanh toán định kỳ khoản vay mua nhà National Bank® từ chính tài khoản mới này.",
+      "$100 nữa khi mở High Interest Savings Account và nạp tối thiểu $5,000.",
+    ],
+    keyBenefitsVi: [
+      "Không cần credit history ở Canada để mở tài khoản",
+      "Giao dịch online và Interac e-Transfer® trong nước không giới hạn",
+      "Rút tiền và giao dịch tại quầy miễn phí năm đầu, hơn 360 chi nhánh trên toàn Canada",
+      "Kèm 12 tháng tư vấn pháp lý miễn phí qua đối tác FBA Solutions",
+    ],
+    url: "https://www.nbc.ca/personal/accounts/newcomers.html",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Fbanking%2Fchequing-accounts%2Fnbc-newcomer-account&utm_source=ghe-1a",
+  },
+
+  // ----------------------------------------------------------------- RBC
+  // Offer iPad chạy chung cho VIP Banking và Signature No Limit — cùng điều
+  // kiện, cùng ngày kết thúc, mỗi người chỉ nhận một lần dù mở mấy tài khoản.
+  // Phần thưởng là hiện vật nên `bonusValue` lấy đúng con số RBC® tự ghi trong
+  // điều khoản ($499 cho Apple 11-inch iPad Wi-Fi 128GB) — cùng cách đã làm với
+  // Tech Reward của BMO®. Ba tài khoản RBC® còn lại không có welcome bonus nào
+  // đang chạy; để trống chứ không mượn offer của tài khoản khác.
+  {
+    slug: "rbc-vip-banking",
+    bank: "rbc",
+    name: "RBC® VIP Banking Account",
+    kind: "chequing",
+    tags: [],
+    monthlyFee: 30,
+    feeWaiverVi:
+      "Giảm còn $17.05/tháng theo Value Program khi có thẻ tín dụng cá nhân RBC® cùng tài khoản đầu tư, kèm một khoản vay mua nhà hoặc một tài khoản doanh nghiệp nhỏ. Người từ 65 tuổi được giảm còn $22.50/tháng. Không có đường về $0.",
+    bonusValue: 499,
+    bonusLabelVi: "iPad (RBC® ghi $499)",
+    bonusExpiresOn: "2026-11-02",
+    bonusConditionsVi: [
+      "Mở tài khoản VIP Banking hoặc Signature No Limit Banking mới trước 02/11/2026.",
+      "Làm hai trong ba việc sau trong 90 ngày: chuyển trọn payroll hoặc lương hưu về đây bằng direct deposit (không chia nhỏ); set up 2 khoản thanh toán định kỳ; hoặc thanh toán 2 hoá đơn qua RBC® Online Banking, app, ATM hay điện thoại.",
+      "Phần thưởng là Apple 11-inch iPad Wi-Fi 128GB, chỉ khi còn hàng.",
+      "Mỗi người một phần thưởng, dù mở bao nhiêu tài khoản.",
+      "Phải giữ tài khoản và giữ nguyên các điều kiện trên tới ít nhất 02/11/2027, nếu không RBC® có quyền trừ lại $499 từ tài khoản của bạn.",
+    ],
+    keyBenefitsVi: [
+      "Giao dịch debit và Interac e-Transfer® không giới hạn, dùng được trên toàn thế giới",
+      "Rebate tới $120 phí thường niên thẻ tín dụng đủ điều kiện",
+      "Miễn monthly fee cho tối đa 2 tài khoản CAD và 1 tài khoản USD khác",
+      "Rút ATM trong mạng lưới RBC® miễn phí, bank draft $0, không yêu cầu số dư tối thiểu",
+      "Tích điểm Avion® khi quẹt thẻ debit",
+    ],
+    url: "https://www.rbcroyalbank.com/bank-accounts/chequing-accounts/vip-banking.html",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Fbanking%2Fchequing-accounts%2Frbc-vip-banking&utm_source=ghe-1a",
+  },
+  {
+    slug: "rbc-signature-no-limit",
+    bank: "rbc",
+    name: "RBC® Signature No Limit Banking Account",
+    kind: "chequing",
+    tags: [],
+    monthlyFee: 16.95,
+    feeWaiverVi:
+      "Giảm $6/tháng khi có thẻ tín dụng cá nhân RBC® cùng tài khoản đầu tư, và thêm $6.95/tháng nữa khi có khoản vay mua nhà hoặc tài khoản doanh nghiệp nhỏ — gộp lại còn $4/tháng. Không có đường về $0.",
+    bonusValue: 499,
+    bonusLabelVi: "iPad (RBC® ghi $499)",
+    bonusExpiresOn: "2026-11-02",
+    bonusConditionsVi: [
+      "Mở tài khoản VIP Banking hoặc Signature No Limit Banking mới trước 02/11/2026.",
+      "Làm hai trong ba việc sau trong 90 ngày: chuyển trọn payroll hoặc lương hưu về đây bằng direct deposit (không chia nhỏ); set up 2 khoản thanh toán định kỳ; hoặc thanh toán 2 hoá đơn qua RBC® Online Banking, app, ATM hay điện thoại.",
+      "Phần thưởng là Apple 11-inch iPad Wi-Fi 128GB, chỉ khi còn hàng.",
+      "Mỗi người một phần thưởng, dù mở bao nhiêu tài khoản.",
+      "Phải giữ tài khoản và giữ nguyên các điều kiện trên tới ít nhất 02/11/2027, nếu không RBC® có quyền trừ lại $499 từ tài khoản của bạn.",
+    ],
+    keyBenefitsVi: [
+      "Giao dịch debit và Interac e-Transfer® không giới hạn trong Canada",
+      "Rebate tới $48 phí thường niên thẻ tín dụng đủ điều kiện",
+      "Miễn phí 3 lần rút ATM ngoài mạng RBC® mỗi tháng, sau đó $2 mỗi lần",
+      "Không yêu cầu số dư tối thiểu; không hài lòng trong 4 tháng đầu thì được hoàn monthly fee tối đa 3 tháng",
+      "Tích điểm Avion® khi quẹt thẻ debit",
+    ],
+    url: "https://www.rbcroyalbank.com/bank-accounts/chequing-accounts/signature-no-limit-banking.html",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Fbanking%2Fchequing-accounts%2Frbc-signature-no-limit&utm_source=ghe-1a",
+  },
+  {
+    slug: "rbc-advantage-students",
+    bank: "rbc",
+    name: "RBC® Advantage Banking Account for Students",
+    kind: "chequing",
+    tags: ["student"],
+    monthlyFee: 0,
+    feeWaiverVi:
+      "Miễn monthly fee cho sinh viên toàn thời gian hoặc bất kỳ ai từ 24 tuổi trở xuống. RBC® có quyền yêu cầu giấy xác nhận đang học.",
+    // AirPods 4 (model MXP63AM/A) — RBC® không ghi giá trong điều khoản, khác
+    // với offer iPad. $179 ở đây là giá niêm yết của Apple Canada cho đúng model
+    // đó, và chỉ dùng để xếp hạng; nhãn hiển thị không nhắc tới con số nào.
+    bonusValue: 179,
+    bonusLabelVi: "AirPods 4",
+    bonusExpiresOn: "2026-11-02",
+    bonusConditionsVi: [
+      "Từ 13 tuổi trở lên và chưa từng có tài khoản cá nhân RBC® trong 3 năm trước 02/06/2026.",
+      "Mở tài khoản Advantage Banking for Students đầu tiên trước 21:00 EST ngày 02/11/2026.",
+      "Làm hai trong các việc sau trước 21:00 EST ngày 15/01/2027: register Interac Autodeposit và gửi/nhận 1 e-Transfer; lấy thẻ RBC® Virtual Visa Debit và quẹt ít nhất 1 lần; chuyển trọn payroll về tài khoản mới; set up 1 khoản thanh toán định kỳ; hoặc thanh toán 1 hoá đơn qua app/online banking.",
+      "Phần thưởng là AirPods 4, kèm 3 tháng Apple Music cho người đăng ký mới.",
+    ],
+    keyBenefitsVi: [
+      "Không monthly fee, giao dịch debit không giới hạn",
+      "Interac e-Transfer® miễn phí không giới hạn trong Canada",
+      "Rút ATM tại Canada $0, kể cả máy ngoài mạng lưới RBC®",
+      "Miễn phí chuyển tiền đi Mỹ và quốc tế",
+      "Tích điểm Avion® khi quẹt thẻ debit, kể cả Virtual Visa Debit",
+    ],
+    url: "https://www.rbcroyalbank.com/bank-accounts/students/offers/",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Fbanking%2Fchequing-accounts%2Frbc-advantage-students&utm_source=ghe-1a",
+  },
+  {
+    slug: "rbc-advantage",
+    bank: "rbc",
+    name: "RBC® Advantage Banking Account",
+    kind: "chequing",
+    tags: [],
+    monthlyFee: 12.95,
+    feeWaiverVi:
+      "Về tới $0/tháng theo Value Program của RBC® khi gom đủ sản phẩm đủ điều kiện. Người từ 65 tuổi được giảm $8.95/tháng.",
+    keyBenefitsVi: [
+      "Giao dịch debit không giới hạn trong Canada, không yêu cầu số dư tối thiểu",
+      "Interac e-Transfer® miễn phí không giới hạn",
+      "Rút tiền không giới hạn ở ATM ngoài mạng RBC® trên toàn Canada",
+      "Giảm 3 cent mỗi lít xăng tại Petro-Canada®, được hoàn 1 phí NSF mỗi năm",
+      "Tích điểm Avion® cho chi tiêu hằng ngày",
+    ],
+    url: "https://www.rbcroyalbank.com/bank-accounts/chequing-accounts/advantage-banking.html",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Fbanking%2Fchequing-accounts%2Frbc-advantage&utm_source=ghe-1a",
+  },
+  {
+    slug: "rbc-day-to-day",
+    bank: "rbc",
+    name: "RBC® Day to Day Banking Account",
+    kind: "chequing",
+    tags: [],
+    monthlyFee: 4,
+    feeWaiverVi:
+      "Về $0/tháng theo Value Program của RBC®. Miễn hẳn cho người cao tuổi, người bản địa và người thụ hưởng RDSP.",
+    keyBenefitsVi: [
+      "12 giao dịch debit mỗi tháng, sau đó $1.25 mỗi giao dịch",
+      "Interac e-Transfer® miễn phí không giới hạn, không tính vào 12 giao dịch",
+      "Chuyển khoản tự phục vụ, thanh toán vé phương tiện công cộng và giao dịch Virtual Visa Debit cũng không tính vào 12 giao dịch",
+      "Không yêu cầu số dư tối thiểu",
+      "Tích điểm Avion® khi quẹt thẻ debit",
+    ],
+    url: "https://www.rbcroyalbank.com/bank-accounts/chequing-accounts/day-to-day-banking.html",
+    affiliateUrl:
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Fbanking%2Fchequing-accounts%2Frbc-day-to-day&utm_source=ghe-1a",
   },
 ];
 
