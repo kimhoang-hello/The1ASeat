@@ -1006,6 +1006,7 @@ export type FilterId = (typeof ACCOUNT_FILTERS)[number]["id"];
 
 export const SORT_OPTIONS = [
   { id: "bonus", labelKey: "sortBonus" },
+  { id: "rebate", labelKey: "sortRebate" },
   { id: "interest", labelKey: "sortInterest" },
   { id: "fee", labelKey: "sortFee" },
   { id: "az", labelKey: "sortAz" },
@@ -1041,10 +1042,25 @@ export const AVAILABLE_FILTERS = ACCOUNT_FILTERS.filter(
 );
 
 /**
+ * `rebate` được lưu dưới dạng chuỗi hiển thị ("$100") chứ không phải số, vì
+ * nó đi thẳng lên nhãn và vì job check-rebates của thẻ tín dụng cũng đọc ra
+ * đúng dạng đó từ <title> của FinlyWealth. Muốn sắp xếp thì phải rút số ra —
+ * bỏ "$" và bỏ dấu phẩy ngăn nghìn, để "$1,000" không bị cắt còn 1.
+ *
+ * Trả `undefined` chứ không trả 0 khi không có rebate: xem chú thích của
+ * `sortAccounts` bên dưới về lý do "không có" phải khác "bằng 0".
+ */
+function rebateValue(account: BankAccount): number | undefined {
+  if (!account.rebate) return undefined;
+  const amount = Number(account.rebate.replace(/[^0-9.]/g, ""));
+  return Number.isFinite(amount) ? amount : undefined;
+}
+
+/**
  * Sắp xếp. Tài khoản không có số ở tiêu chí đang chọn (không bonus khi sắp
- * theo bonus, không công bố lãi khi sắp theo lãi) bị đẩy xuống cuối thay vì
- * coi như bằng 0 — nếu không, "không công bố" sẽ nằm lẫn với "0%", hai chuyện
- * khác hẳn nhau.
+ * theo bonus, không công bố lãi khi sắp theo lãi, không có rebate khi sắp
+ * theo rebate) bị đẩy xuống cuối thay vì coi như bằng 0 — nếu không, "không
+ * công bố" sẽ nằm lẫn với "0%", hai chuyện khác hẳn nhau.
  */
 export function sortAccounts(accounts: BankAccount[], sort: SortId): BankAccount[] {
   const byName = (a: BankAccount, b: BankAccount) => a.name.localeCompare(b.name, "vi");
@@ -1053,6 +1069,10 @@ export function sortAccounts(accounts: BankAccount[], sort: SortId): BankAccount
     switch (sort) {
       case "bonus": {
         const diff = (b.bonusValue ?? -1) - (a.bonusValue ?? -1);
+        return diff !== 0 ? diff : byName(a, b);
+      }
+      case "rebate": {
+        const diff = (rebateValue(b) ?? -1) - (rebateValue(a) ?? -1);
         return diff !== 0 ? diff : byName(a, b);
       }
       case "interest": {
