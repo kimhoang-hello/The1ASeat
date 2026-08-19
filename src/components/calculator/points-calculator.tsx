@@ -6,9 +6,20 @@ import { POINTS_PROGRAMS } from "@/lib/points-programs";
 
 const t = translate("calculator");
 
+/**
+ * Giữ lại dấu trừ ở đầu chuỗi. Bản cũ lọc `[^0-9.]` nên "-100" thành "100":
+ * số âm lặng lẽ đổi dấu, và câu chặn `p <= 0` bên dưới không bao giờ thấy được
+ * số âm nào cả — gõ "-100 point" ra kết quả y hệt gõ "100 point". Giờ số âm đi
+ * đúng qua chỗ chặn đó và ra 0, tức là "không tính được", đúng như khi bỏ trống.
+ *
+ * Phần còn lại vẫn lọc: người đọc dán "3,500" hay "60,000 điểm" vào ô này là
+ * chuyện thường, và bỏ dấu phẩy ngăn nghìn là đúng ý họ.
+ */
 function parseNumber(value: string): number {
+  const negative = value.trimStart().startsWith("-");
   const n = Number(value.replace(/[^0-9.]/g, ""));
-  return Number.isFinite(n) ? n : 0;
+  if (!Number.isFinite(n)) return 0;
+  return negative ? -n : n;
 }
 
 function formatCents(valuePerPointInDollars: number): string {
