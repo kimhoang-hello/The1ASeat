@@ -178,7 +178,14 @@ function AccountCard({ account }: { account: BankAccount }) {
 
       <div className="mt-2 flex items-center gap-3">
         <BankMark bank={account.bank} />
-        <h3 className="font-display text-lg font-bold leading-snug text-foreground">
+        {/* `wrap-anywhere` chứ không phải `break-words`: chỉ `overflow-wrap:
+            anywhere` mới tính vào min-content của thẻ. Cạnh một logo rộng cố
+            định 112px, một từ dài như "MomentumPLUS" hay "Wealthsimple®" đẩy
+            min-content của cả cột grid lên 312px trong khi cột chỉ có 288px,
+            và ở màn 320px cả trang bị trượt ngang 8px. `break-words` không
+            sửa được vì nó không đổi min-content — chỗ này đúng là cái bẫy mà
+            hai utility đó hay bị nhầm với nhau. */}
+        <h3 className="wrap-anywhere font-display text-lg font-bold leading-snug text-foreground">
           <Link href={bankAccountPath(account.slug)} className="cursor-pointer hover:text-primary">
             {account.name}
           </Link>

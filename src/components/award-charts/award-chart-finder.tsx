@@ -217,8 +217,13 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
   const isCheapest = points !== null && points === cheapest;
 
   return (
+    // `min-w-0` ở đây mới khép kín chuỗi: hàng bên trong đã có `min-w-0` và
+    // tên chương trình đã `truncate`, nhưng thẻ này là grid item nên mặc định
+    // `min-width: auto` vẫn kéo min-content của tên lên thành bề rộng cột.
+    // "American Airlines® AAdvantage®" vì thế đẩy cột lên 312px trong khi cột
+    // chỉ có 288px, làm trang trượt ngang 8px ở màn 320px.
     <li
-      className={`rounded-2xl border bg-card p-4 sm:p-5 ${
+      className={`min-w-0 rounded-2xl border bg-card p-4 sm:p-5 ${
         isCheapest ? "border-primary ring-1 ring-primary/30" : "border-border"
       }`}
     >
