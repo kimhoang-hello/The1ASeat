@@ -188,7 +188,11 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     url: "https://www.scotiabank.com/ca/en/personal/bank-accounts/chequing-accounts/preferred.html",
     affiliateUrl:
       "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fscotiabank-preferred-package-chequing-account&utm_source=ghe-1a",
-    rebate: "$100",
+    // $100 -> $75 khi đối chiếu lại ngày 19/08/2026. Rebate tài khoản ngân hàng
+    // nằm trong file này chứ không phải Contentful, nên job check-rebates hằng
+    // ngày (chỉ đọc creditCardOffer) không thấy và không sửa hộ — phải tự đối
+    // chiếu <title> của trang đích mỗi lần đụng vào danh sách này.
+    rebate: "$75",
   },
   {
     slug: "scotiabank-ultimate-package",
