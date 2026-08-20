@@ -105,47 +105,49 @@ if (errors.length) {
   console.log();
 }
 
-if (!findings.length) {
-  console.log("Mọi số rebate đều khớp với FinlyWealth.");
-  process.exit(errors.length ? 1 : 0);
+// Chỉ con số lệch mới là lỗi. Chuyện một tài khoản dùng link `/banking/`
+// trong khi bản `/rebates/` có tiền là lựa chọn của tác giả — đã cân nhắc và
+// giữ nguyên ngày 19/08/2026 — nên nó in ra để nhắc chứ không làm job đỏ. Nếu
+// nó tính là lỗi thì job đỏ mãi mãi, và một con số lệch thật sẽ chìm nghỉm
+// giữa mười dòng nhắc mà không ai còn đọc nữa.
+const drift = findings.filter((f) => f.kind === "stale" || f.kind === "gone");
+const linkNotes = findings.filter((f) => f.kind === "missing-link");
+
+for (const f of drift) {
+  if (f.kind === "stale") console.log(`  LỆCH  ${f.slug}: ${f.stored} -> ${f.live}`);
+  if (f.kind === "gone") console.log(`  LỆCH  ${f.slug}: đang ghi ${f.stored} nhưng trang rebate không còn`);
 }
 
-for (const f of findings) {
-  if (f.kind === "stale") console.log(`  ${f.slug}: ${f.stored} -> ${f.live}`);
-  if (f.kind === "gone") console.log(`  ${f.slug}: đang ghi ${f.stored} nhưng trang rebate không còn`);
-  if (f.kind === "missing-link")
-    console.log(
-      `  ${f.slug}: đang dùng link /banking/, bản /rebates/${f.rebateSlug} trả ${f.live}` +
-        ` — phải đổi tay, script không tự đổi link`,
-    );
-}
-
-// Chỉ sửa con số. Đổi link là quyết định của tác giả — nó đổi chỗ người đọc
-// bấm vào — nên chỗ đó chỉ báo, không tự động.
-const fixable = findings.filter((f) => f.kind === "stale" || f.kind === "gone");
-
-if (!fix) {
-  console.log(`\nchạy \`npm run audit:rebates -- --fix\` để sửa ${fixable.length} con số.`);
-  process.exit(1);
-}
-
-if (fixable.length) {
+if (drift.length && fix) {
   let source = fs.readFileSync(FILE, "utf8");
-  for (const f of fixable) {
+  for (const f of drift) {
     // Neo vào đúng khối của tài khoản đó qua `slug: "..."`, rồi sửa dòng
     // `rebate:` đầu tiên sau nó — bám theo slug chứ không bám theo con số, vì
     // nhiều tài khoản trùng số rebate.
     const anchor = new RegExp(`(slug: "${f.slug}",[\\s\\S]*?)rebate: "[^"]*",\\n`);
-    if (f.kind === "stale") {
-      source = source.replace(anchor, `$1rebate: "${f.live}",\n`);
-    } else {
-      source = source.replace(anchor, "$1");
-    }
+    source = source.replace(anchor, f.kind === "stale" ? `$1rebate: "${f.live}",\n` : "$1");
   }
   fs.writeFileSync(FILE, source);
-  console.log(`\nđã sửa ${fixable.length} con số trong src/lib/bank-accounts.ts`);
+  console.log(`\nđã sửa ${drift.length} con số trong src/lib/bank-accounts.ts`);
+} else if (drift.length) {
+  console.log(`\nchạy \`npm run audit:rebates -- --fix\` để sửa ${drift.length} con số.`);
+} else {
+  console.log("Mọi số rebate đều khớp với FinlyWealth.");
 }
 
-const manual = findings.length - fixable.length;
-if (manual) console.log(`còn ${manual} chỗ phải đổi link bằng tay.`);
-process.exit(manual || errors.length ? 1 : 0);
+if (linkNotes.length) {
+  console.log(
+    `\nNhắc (không phải lỗi): ${linkNotes.length} tài khoản đang dùng link /banking/` +
+      ` trong khi bản /rebates/ cùng slug có trả tiền. Đây là link tác giả chọn,` +
+      ` script không đổi. Muốn đổi thì sửa tay trong src/lib/bank-accounts.ts.`,
+  );
+  for (const f of linkNotes) console.log(`  ·  ${f.slug} — /rebates/${f.rebateSlug} trả ${f.live}`);
+}
+
+// Ở chế độ `--fix` thì lệch không phải là thất bại: nó vừa được sửa xong, và
+// commit mới là thứ báo cho người biết. Chỉ chế độ báo cáo mới coi lệch là lỗi,
+// để CI đỏ đúng lúc cần người nhìn vào.
+//
+// Không đọc được trang thì lúc nào cũng là lỗi: im lặng bỏ qua thì một trang
+// chết sẽ làm job xanh y như lúc mọi thứ đều đúng.
+process.exit((!fix && drift.length) || errors.length ? 1 : 0);

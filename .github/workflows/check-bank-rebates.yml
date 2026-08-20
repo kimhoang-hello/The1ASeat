@@ -1,0 +1,61 @@
+name: Check FinlyWealth rebate amounts (bank accounts)
+
+# Cùng việc như check-rebates.yml làm cho thẻ tín dụng, nhưng cho tài khoản
+# ngân hàng — và phải làm khác cách.
+#
+# Rebate thẻ tín dụng nằm trong Contentful, nên workflow kia chỉ cần gọi một
+# endpoint và route tự ghi lại. Rebate tài khoản ngân hàng nằm trong
+# src/lib/bank-accounts.ts, mà một route đang chạy thì không sửa được file
+# nguồn — nên job này phải checkout repo, chạy script, rồi commit nếu có đổi.
+#
+# Vì sao cần: FinlyWealth đổi số không báo trước. Scotiabank® Preferred Package
+# tụt $100 -> $75 và site vẫn hứa $100 suốt ba ngày, tới khi có người ngồi đối
+# chiếu tay mới thấy. Hứa dư tiền với người đọc còn tệ hơn không ghi số nào.
+#
+# Commit thẳng vào main, và điều đó kéo theo một lần deploy Hostinger — đúng
+# như mong muốn, vì số trên site chỉ đổi sau khi build lại.
+on:
+  schedule:
+    # 8:45 UTC, ngay sau check-rebates.yml (8:30) để hai job không tranh nhau
+    # gọi FinlyWealth cùng lúc.
+    - cron: "45 8 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      # Mặc định GITHUB_TOKEN chỉ đọc; job này phải đẩy commit lên main.
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # `npm ci` chứ không phải `npm install`: chỉ cần tsx và package-lock,
+      # không cần build cả site để chạy một script đọc dữ liệu.
+      - run: npm ci
+
+      - name: Đối chiếu rebate với FinlyWealth và sửa nếu lệch
+        run: npm run audit:rebates -- --fix
+
+      - name: Commit nếu có số nào đổi
+        run: |
+          if git diff --quiet -- src/lib/bank-accounts.ts; then
+            echo "Không có số nào đổi."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/lib/bank-accounts.ts
+          git commit -m "Cập nhật rebate tài khoản ngân hàng theo FinlyWealth
+
+          Tự động bởi .github/workflows/check-bank-rebates.yml. Số lấy từ
+          <title> của chính trang mà nút \"Apply ngay\" dẫn tới."
+          # Rebase phòng khi có commit khác vào main trong lúc job chạy —
+          # không bao giờ force-push đè lên việc của người khác.
+          git pull --rebase origin main
+          git push origin HEAD:main
