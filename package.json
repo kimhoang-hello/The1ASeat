@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "audit:awards": "tsx scripts/audit-award-charts.mts",
-    "audit:trademarks": "node scripts/audit-trademarks.mjs"
+    "audit:trademarks": "node scripts/audit-trademarks.mjs",
+    "audit:rebates": "tsx scripts/check-bank-rebates.mts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.117.1",
