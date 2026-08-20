@@ -8,9 +8,10 @@ const offers = translate("offers");
  * the same words, so the call to action reads the same on the home page, the
  * card list, a card's own page and the bank-account list.
  *
- * `affiliate` only decides the `rel`. The bank accounts are listed without any
- * referral arrangement, so their links go out as plain `nofollow` — but they
- * are the same button, because the reader is doing the same thing.
+ * `affiliate` only decides the `rel`. Most bank accounts now go through a
+ * FinlyWealth referral link too; the few that have none point straight at the
+ * bank and go out as plain `nofollow` — same button either way, because the
+ * reader is doing the same thing.
  */
 export function ApplyButton({
   href,

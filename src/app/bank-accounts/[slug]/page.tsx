@@ -13,8 +13,8 @@ import {
   formatIsoDate,
   formatMoney,
   formatRate,
-  type BankAccount,
 } from "@/lib/bank-accounts";
+import { bankAccountDescription, bankAccountJsonLd } from "@/lib/bank-account-schema";
 import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
 import { t as translate } from "@/lib/t";
 import { pageMetadata, breadcrumbJsonLd } from "@/lib/seo";
@@ -43,28 +43,6 @@ export function generateStaticParams() {
 // năm, và một trang tài khoản in sai monthly fee lâu như vậy là chuyện thật.
 export const revalidate = 60;
 
-/**
- * Mô tả cho thẻ meta, ghép từ chính số liệu của tài khoản. Viết tay 16 đoạn
- * mô tả thì đoạn thứ mười bảy sẽ bị quên, và một mô tả chép lại của nhau còn
- * tệ hơn là không có.
- */
-function description(account: BankAccount): string {
-  const parts = [account.name + ":"];
-  if (account.bonusLabelVi) parts.push(seo("bankAccountBonus", { bonus: account.bonusLabelVi }));
-  if (account.interestRate !== undefined) {
-    parts.push(seo("bankAccountRate", { rate: formatRate(account.interestRate) }));
-  }
-  // "Monthly fee miễn phí" đọc như một lỗi ghép chuỗi; không phí thì nói
-  // thẳng là không mất phí.
-  parts.push(
-    account.monthlyFee === 0
-      ? seo("bankAccountNoFee")
-      : seo("bankAccountFee", { fee: formatMoney(account.monthlyFee) }),
-  );
-  parts.push(seo("bankAccountTail"));
-  return parts.join(" ");
-}
-
 export async function generateMetadata({
   params,
 }: {
@@ -77,7 +55,7 @@ export async function generateMetadata({
   return {
     ...pageMetadata({
       title: account.name,
-      description: description(account),
+      description: bankAccountDescription(account),
       path: bankAccountPath(account.slug),
     }),
     // Cùng lý do với trang danh sách: bản nháp thì không cho Google index.
@@ -117,15 +95,7 @@ export default async function BankAccountDetailPage({
         { name: seo("breadcrumbBankAccounts"), path: "/bank-accounts" },
         { name: account.name, path },
       ]),
-      {
-        "@type": "BankAccount",
-        name: account.name,
-        description: description(account),
-        url: account.url,
-        provider: { "@type": "BankOrCreditUnion", name: bank.name },
-        ...(account.feeWaiverVi && { feesAndCommissionsSpecification: account.feeWaiverVi }),
-        ...(account.interestRate !== undefined && { interestRate: account.interestRate }),
-      },
+      bankAccountJsonLd(account),
     ],
   };
 

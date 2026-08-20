@@ -95,12 +95,18 @@ export default async function CreditCardsPage({
       <PageHeader eyebrow={offers_t("eyebrow")} title={offers_t("title")} />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mx-auto mb-6 flex max-w-page gap-2">
+        {/* `flex-wrap` + `whitespace-nowrap`: không có hai lớp này thì ba viên
+            pill bị ép nằm chung một dòng, chữ xuống dòng bên trong và
+            `rounded-full` biến chúng thành ba khối tròn cao 76px ở màn 320px
+            (56px ở 375px — tức gần như mọi điện thoại). Xuống dòng thành hai
+            hàng pill là đúng hình dạng của nó. */}
+        <div className="mx-auto mb-6 flex max-w-page flex-wrap gap-2">
           {TABS.map((tab) => (
             <Link
               key={tab.value}
               href={creditCardsPath({ type: tab.value, points: activePoints })}
-              className={`cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+              aria-current={activeTab === tab.value ? "true" : undefined}
+              className={`cursor-pointer whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
                 activeTab === tab.value
                   ? "bg-primary text-primary-foreground"
                   : "bg-secondary text-foreground/70 hover:text-foreground"

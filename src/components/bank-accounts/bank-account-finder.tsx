@@ -185,11 +185,14 @@ function AccountCard({ account }: { account: BankAccount }) {
             và ở màn 320px cả trang bị trượt ngang 8px. `break-words` không
             sửa được vì nó không đổi min-content — chỗ này đúng là cái bẫy mà
             hai utility đó hay bị nhầm với nhau. */}
-        <h3 className="wrap-anywhere font-display text-lg font-bold leading-snug text-foreground">
+        {/* h2 chứ không phải h3: trang chỉ có một h1 (tiêu đề trang) nên tên
+            tài khoản là cấp tiếp theo — h3 ở đây tạo ra một bậc nhảy cóc,
+            đúng thứ mà bản kiểm tra tiêu đề của site vẫn bắt lỗi. */}
+        <h2 className="wrap-anywhere font-display text-lg font-bold leading-snug text-foreground">
           <Link href={bankAccountPath(account.slug)} className="cursor-pointer hover:text-primary">
             {account.name}
           </Link>
-        </h3>
+        </h2>
       </div>
 
       {/* Con số lớn và monthly fee nằm cạnh nhau: gần như câu hỏi nào của người
@@ -362,19 +365,22 @@ function Field({
   );
 }
 
-function Finder() {
-  const searchParams = useSearchParams();
+/** Cái mà một người mở /bank-accounts không kèm tham số nào sẽ thấy. */
+const DEFAULT_SELECTION: Selection = { bank: "all", filter: "all", sort: "bonus" };
 
-  // URL là nguồn sự thật duy nhất, không phải bản sao của state — cùng lý do
-  // đã ghi trong Award Flight Finder: trang được prerender nên seed state từ
-  // search params sẽ đóng băng giá trị mặc định và làm hỏng link chia sẻ.
-  const selection = readParams(searchParams);
+/**
+ * Toàn bộ phần nhìn thấy được, tách khỏi chỗ đọc URL. Tách ra để nó render
+ * được cả ở server (xem `BankAccountFinder` bên dưới) chứ không chỉ sau khi
+ * JavaScript chạy xong.
+ */
+function FinderView({
+  selection,
+  update,
+}: {
+  selection: Selection;
+  update: (patch: Partial<Selection>) => void;
+}) {
   const { bank, filter, sort } = selection;
-
-  function update(patch: Partial<Selection>) {
-    const next = { ...selection, ...patch };
-    window.history.replaceState(null, "", `?${new URLSearchParams(next).toString()}`);
-  }
 
   // Không useMemo: danh sách chỉ mười mấy dòng, lọc lại mỗi lần render rẻ hơn
   // nhiều so với cái giá thật sự — React Compiler từ chối tối ưu cả component
@@ -412,35 +418,39 @@ function Finder() {
           đang chọn, nên không chip nào hứa một con số mà bấm vào lại ra danh
           sách rỗng — ngân hàng không còn tài khoản nào thì chip tự biến mất.
           Một mình một ngân hàng thì cả hàng biến mất: lọc theo nó không đổi
-          được gì. */}
+          được gì.
+
+          `radiogroup` chứ không phải `nav > ul`: đây là những nút chọn một
+          trong nhiều, không phải link điều hướng, và một `role="radio"` không
+          nằm trong `radiogroup` là ARIA nói dối — trình đọc màn hình đọc ra
+          một nhóm không có nhãn và không biết có mấy lựa chọn. */}
       {availableBanks.length > 1 && (
-        <nav aria-label={t("bankLabel")} className="mt-4">
-          <ul className="flex flex-wrap items-center gap-2">
-            <li className="mr-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("bankLabel")}
-            </li>
-            <li>
-              <FilterChip
-                active={activeBank === "all"}
-                count={inFilter.length}
-                onClick={() => update({ bank: "all" })}
-              >
-                {t("bankAll")}
-              </FilterChip>
-            </li>
-            {availableBanks.map((b) => (
-              <li key={b.id}>
-                <FilterChip
-                  active={activeBank === b.id}
-                  count={b.count}
-                  onClick={() => update({ bank: b.id })}
-                >
-                  {b.name}
-                </FilterChip>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <div
+          role="radiogroup"
+          aria-label={t("bankLabel")}
+          className="mt-4 flex flex-wrap items-center gap-2"
+        >
+          <span className="mr-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {t("bankLabel")}
+          </span>
+          <FilterChip
+            active={activeBank === "all"}
+            count={inFilter.length}
+            onClick={() => update({ bank: "all" })}
+          >
+            {t("bankAll")}
+          </FilterChip>
+          {availableBanks.map((b) => (
+            <FilterChip
+              key={b.id}
+              active={activeBank === b.id}
+              count={b.count}
+              onClick={() => update({ bank: b.id })}
+            >
+              {b.name}
+            </FilterChip>
+          ))}
+        </div>
       )}
 
       <div className="mt-4">
@@ -489,13 +499,36 @@ function Finder() {
   );
 }
 
+function Finder() {
+  const searchParams = useSearchParams();
+
+  // URL là nguồn sự thật duy nhất, không phải bản sao của state — cùng lý do
+  // đã ghi trong Award Flight Finder: trang được prerender nên seed state từ
+  // search params sẽ đóng băng giá trị mặc định và làm hỏng link chia sẻ.
+  const selection = readParams(searchParams);
+
+  function update(patch: Partial<Selection>) {
+    const next = { ...selection, ...patch };
+    window.history.replaceState(null, "", `?${new URLSearchParams(next).toString()}`);
+  }
+
+  return <FinderView selection={selection} update={update} />;
+}
+
 export function BankAccountFinder() {
-  // useSearchParams đẩy cả nhánh này sang client, nên boundary giữ phần còn
-  // lại của trang vẫn prerender được — giống hệt Award Flight Finder.
+  // useSearchParams đẩy `Finder` sang client, nên phần trong Suspense không
+  // nằm trong HTML dựng sẵn. Trước đây fallback là một ô xám, nghĩa là HTML
+  // của /bank-accounts không có lấy một tài khoản nào: người đọc thấy ô xám
+  // chớp một cái, còn crawler nào không chạy JavaScript thì thấy một trang so
+  // sánh rỗng — trong khi 29 trang con lại đầy đủ.
+  //
+  // Fallback bây giờ là chính danh sách đó ở trạng thái mặc định, dựng sẵn ở
+  // server. Ai vào bằng link có sẵn bộ lọc thì sau khi hydrate danh sách đổi
+  // lại cho đúng tham số; ai vào thẳng — gần như tất cả — thấy đúng cái sẽ
+  // hiện ra, ngay lập tức. Nút bấm chưa chạy trước lúc hydrate, nhưng trước
+  // đây cũng vậy.
   return (
-    <Suspense
-      fallback={<div className="mx-auto h-96 max-w-page animate-pulse rounded-2xl bg-secondary" />}
-    >
+    <Suspense fallback={<FinderView selection={DEFAULT_SELECTION} update={() => {}} />}>
       <Finder />
     </Suspense>
   );

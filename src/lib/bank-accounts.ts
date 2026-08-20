@@ -258,7 +258,9 @@ export const BANK_ACCOUNTS: BankAccount[] = [
       "Tích điểm Scene+® khi quẹt thẻ debit",
       "Rebate tới $150 phí thường niên thẻ tín dụng năm đầu",
     ],
-    url: "https://www.scotiabank.com/ca/en/personal/bank-accounts/chequing-accounts/student-banking.html",
+    // Trang cũ (.../chequing-accounts/student-banking.html) đã 404 — Scotiabank®
+    // đổi sang đường dẫn dưới đây. Kiểm lại 19/08/2026.
+    url: "https://www.scotiabank.com/ca/en/personal/bank-accounts/chequing-accounts/preferred-student-youth-bank-account.html",
     affiliateUrl:
       "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fscotiabank-preferred-package-student&utm_source=ghe-1a",
     rebate: "$50",
@@ -970,7 +972,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
 ];
 
 /** Ngày đối chiếu toàn bộ số liệu ở trên với nguồn. */
-export const BANK_ACCOUNTS_VERIFIED_ON = "2026-08-16";
+export const BANK_ACCOUNTS_VERIFIED_ON = "2026-08-19";
 
 export function bankAccountBySlug(slug: string): BankAccount | undefined {
   return BANK_ACCOUNTS.find((account) => account.slug === slug);
