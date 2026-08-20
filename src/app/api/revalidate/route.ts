@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import type { Document } from "@contentful/rich-text-types";
 import { jobSecretValid } from "@/lib/job-auth";
+import { CONTENTFUL_TAG } from "@/lib/content";
 import {
   SITE_URL,
   emailHeadlineStyle,
@@ -23,6 +24,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Invalid secret" }, { status: 401 });
   }
 
+  // Hai lớp, hai việc khác nhau. `revalidateTag` xoá bản Contentful đang được
+  // giữ trong `lib/content` — thiếu nó thì trang render lại nhưng vẫn đọc
+  // đúng dữ liệu cũ, tức là bấm Publish xong phải chờ tới một phút. Rồi
+  // `revalidatePath` mới xoá HTML đã dựng sẵn của các trang.
+  //
+  // `{ expire: 0 }` chứ không phải `"max"` mà tài liệu Next 16 khuyên dùng, vì
+  // hai cái làm hai chuyện khác nhau và đã đo tận nơi: sau `"max"`, lượt truy
+  // cập kế tiếp mất 14–28ms — tức là vẫn ăn bản cache cũ, đúng nghĩa
+  // stale-while-revalidate, nên người đầu tiên vào sau khi Publish (thường
+  // chính là tác giả đang mở trang ra xem) lại thấy nội dung cũ. Sau
+  // `{ expire: 0 }` thì lượt kế tiếp mất 135ms — nó thật sự gọi lại
+  // Contentful. Đây cũng đúng là việc `updateTag` làm, nhưng `updateTag` chỉ
+  // gọi được trong Server Action, không gọi được trong Route Handler như ở
+  // đây.
+  revalidateTag(CONTENTFUL_TAG, { expire: 0 });
   revalidatePath("/", "layout");
 
   const hostingerCachePurged = await purgeHostingerCache();
