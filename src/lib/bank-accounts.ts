@@ -548,7 +548,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     interestRate: 4.5,
     regularRate: 0.3,
     promoNoteVi:
-      "4.50% là lãi khuyến mãi cho tối đa 5 tháng đầu, chỉ tính trên phần số dư tới $1,000,000 cộng gộp mọi Eligible Savings Account. Dành cho khách hàng mới mở tài khoản tiết kiệm đủ điều kiện trong vài tháng đầu kể từ khi có Client Number; offer chạy 28/07/2026 – 30/11/2026. Hết kỳ khuyến mãi thì về mức thường 0.30%.",
+      "4.50% là lãi khuyến mãi cho tối đa 5 tháng đầu, chỉ tính trên phần số dư tới $1,000,000, cộng gộp mọi Eligible Savings Account cùng loại tiền tệ. Dành cho khách hàng mới mở tài khoản tiết kiệm đủ điều kiện trong vài tháng đầu kể từ khi có Client Number; offer chạy 28/07/2026 – 30/11/2026. Hết kỳ khuyến mãi thì về mức thường 0.30%.",
     keyBenefitsVi: [
       "Không monthly fee, không yêu cầu số dư tối thiểu",
       "Giao dịch và Interac e-Transfer® không giới hạn",
