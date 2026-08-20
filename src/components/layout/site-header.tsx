@@ -353,7 +353,14 @@ export function SiteHeader() {
   // The card *rows* and the card *menu* light up on different pages: the menu
   // covers Ngân hàng too, but the "Thẻ tín dụng" row inside it must not, or
   // the mobile menu marks two rows live at once on /bank-accounts.
-  const bankActive = bankLinks.some((link) => pathname === link.href);
+  // Prefix, not exact: a bank account's own page is inside this section the
+  // same way a card's own page is inside /credit-cards, and matching exactly
+  // left the whole menu unlit on all 29 of them. The rows *inside* the menu
+  // still compare exactly (see TypeDropdown), which is what keeps "Thẻ tín
+  // dụng" from lighting up next to "Ngân hàng" on /bank-accounts.
+  const bankActive = bankLinks.some(
+    (link) => pathname === link.href || pathname.startsWith(`${link.href}/`),
+  );
   const cardsMenuActive = cardsActive || bankActive;
   const blogActive = pathname === "/blog" || pathname.startsWith("/blog/");
   const toolsActive = toolsLinks.some((link) => pathname === link.href);

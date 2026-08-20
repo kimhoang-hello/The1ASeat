@@ -12,6 +12,7 @@ import {
   AVAILABLE_FILTERS,
   BANKS,
   BANK_ACCOUNTS,
+  BANK_ACCOUNTS_VERIFIED_ON,
   SORT_OPTIONS,
   bankAccountPath,
   bankById,
@@ -482,6 +483,15 @@ function FinderView({
           </li>
         )}
       </ul>
+
+      {/* Ngày đối chiếu số liệu. PRODUCT.md hứa "dữ liệu có ghi ngày kiểm
+          tra" và trang Award chart đã làm đúng vậy; ở đây hằng số vẫn được
+          cập nhật mỗi lần rà lại nhưng chưa bao giờ hiện ra, nên lời hứa chỉ
+          nằm trong code. Đặt ngay dưới danh sách, cùng chỗ trang Award chart
+          đặt nó. */}
+      <p className="mt-4 text-xs text-muted-foreground">
+        {t("verifiedOn", { date: formatIsoDate(BANK_ACCOUNTS_VERIFIED_ON) })}
+      </p>
 
       {/* Lời dặn đọc kỹ đứng trước: nó là điều người đọc cần làm tiếp. Đoạn
           disclosure affiliate là nghĩa vụ công bố, đứng sau cùng như ở footer

@@ -43,4 +43,6 @@ next-env.d.ts
 
 # impeccable (design skill) — vendored copy, reinstall with `npx impeccable install`
 .claude/skills/
+# ...and the critiques it writes: local working notes, not source
+.impeccable/
 .claude/settings.local.json

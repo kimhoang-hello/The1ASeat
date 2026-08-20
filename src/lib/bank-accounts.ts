@@ -46,6 +46,8 @@
 //
 // Lãi suất và welcome bonus ở Canada thay đổi liên tục. Chỗ nào ngân hàng
 // không công bố thì để trống và nói thẳng, không đoán.
+import { formatDate } from "./format-date";
+
 export type BankId =
   | "scotiabank"
   | "bmo"
@@ -342,7 +344,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     url: "https://www.bmo.com/en-ca/main/personal/bank-accounts/newcomers-banking/",
     affiliateUrl:
       "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fbmo-newstart-performance&utm_source=ghe-1a",
-    rebate: "$100",
+    rebate: "$50",
   },
   {
     slug: "bmo-premium-chequing",
@@ -427,7 +429,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     url: "https://www.bmo.com/main/personal/bank-accounts/student-banking/",
     affiliateUrl:
       "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fbmo-student-chequing-account&utm_source=ghe-1a",
-    rebate: "$100",
+    rebate: "$50",
   },
 
   // ------------------------------------------------------- Wealthsimple
@@ -557,7 +559,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     interestRate: 4.5,
     regularRate: 0.3,
     promoNoteVi:
-      "4.50% là lãi khuyến mãi cho tối đa 5 tháng đầu, chỉ tính trên phần số dư tới $1,000,000, cộng gộp mọi Eligible Savings Account cùng loại tiền tệ. Dành cho khách hàng mới mở tài khoản tiết kiệm đủ điều kiện trong vài tháng đầu kể từ khi có Client Number; offer chạy 28/07/2026 – 30/11/2026. Hết kỳ khuyến mãi thì về mức thường 0.30%.",
+      "4.50% là lãi khuyến mãi 153 ngày (khoảng 5 tháng) kể từ ngày bạn làm xong các điều kiện, chỉ tính trên phần số dư tới $1,000,000, cộng gộp mọi Eligible Savings Account cùng loại tiền tệ. Dành cho khách hàng mới mở tài khoản tiết kiệm đủ điều kiện trong vòng 60 ngày kể từ khi có Client Number; offer chạy 28/07/2026 – 30/11/2026. Hết kỳ khuyến mãi thì về mức thường 0.30%.",
     keyBenefitsVi: [
       "Không monthly fee, không yêu cầu số dư tối thiểu",
       "Giao dịch và Interac e-Transfer® không giới hạn",
@@ -1125,9 +1127,10 @@ export function formatRate(rate: number): string {
  * "2026-11-02" -> "02/11/2026". Cắt chuỗi chứ không đi qua `new Date()`:
  * ngày trần không có múi giờ được hiểu là UTC, nên ở Canada nó lùi lại một
  * ngày và offer hết hạn 02/11 sẽ hiện thành 01/11. Đây đúng là cái bẫy mà
- * `format-date.ts` đã ghi lại.
+ * `format-date.ts` đã ghi lại — và từ 20/08/2026 `format-date.ts` cắt chuỗi
+ * đúng như vậy, nên chỗ này gọi thẳng sang đó thay vì giữ bản sao thứ hai của
+ * cùng một phép cắt.
  */
 export function formatIsoDate(iso: string): string {
-  const [year, month, day] = iso.split("-");
-  return `${day}/${month}/${year}`;
+  return formatDate(iso);
 }
