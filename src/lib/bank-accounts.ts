@@ -336,7 +336,10 @@ export const BANK_ACCOUNTS: BankAccount[] = [
       "Giao dịch và Interac e-Transfer® không giới hạn",
       "Kèm membership Walmart+ tới 12 tháng khi mở trước 02/11/2026",
     ],
-    url: "https://www.bmo.com/en-ca/main/personal/newcomers-to-canada/",
+    // BMO® đã bỏ /en-ca/main/personal/newcomers-to-canada/ (404). Trang tài
+    // khoản cho người mới định cư — chỗ nói về chính NewStart® — là link dưới
+    // đây. Kiểm lại 20/08/2026.
+    url: "https://www.bmo.com/en-ca/main/personal/bank-accounts/newcomers-banking/",
     affiliateUrl:
       "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fbmo-newstart-performance&utm_source=ghe-1a",
     rebate: "$100",
@@ -363,7 +366,8 @@ export const BANK_ACCOUNTS: BankAccount[] = [
       "Rút ATM ngoài mạng BMO® tại Canada không mất phí",
       "Rebate phí thường niên thẻ tín dụng BMO® và tỷ giá USD ưu đãi",
     ],
-    url: "https://www.bmo.com/en-ca/main/personal/bank-accounts/chequing-accounts/premium-plan/",
+    // ".../premium-plan/" đã 404; BMO® rút gọn còn ".../premium/".
+    url: "https://www.bmo.com/en-ca/main/personal/bank-accounts/chequing-accounts/premium/",
     affiliateUrl:
       "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fbmo-premium-chequing-account&utm_source=ghe-1a",
     rebate: "$75",
@@ -390,7 +394,8 @@ export const BANK_ACCOUNTS: BankAccount[] = [
       "Interac e-Transfer® miễn phí, không giới hạn số lần",
       "Kèm membership Walmart+ tới 12 tháng khi mở trước 02/11/2026",
     ],
-    url: "https://www.bmo.com/en-ca/main/personal/bank-accounts/chequing-accounts/performance-plan/",
+    // ".../performance-plan/" đã 404; BMO® rút gọn còn ".../performance/".
+    url: "https://www.bmo.com/en-ca/main/personal/bank-accounts/chequing-accounts/performance/",
     affiliateUrl:
       "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fbmo-performance-chequing-account&utm_source=ghe-1a",
     rebate: "$100",
@@ -417,7 +422,9 @@ export const BANK_ACCOUNTS: BankAccount[] = [
       "Giao dịch debit không giới hạn",
       "Interac e-Transfer® miễn phí, không giới hạn số lần",
     ],
-    url: "https://www.bmo.com/en-ca/main/personal/bank-accounts/chequing-accounts/student-banking/",
+    // Trang cũ dưới /chequing-accounts/ đã 404; BMO® chuyển sang
+    // /bank-accounts/student-banking/.
+    url: "https://www.bmo.com/main/personal/bank-accounts/student-banking/",
     affiliateUrl:
       "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fbmo-student-chequing-account&utm_source=ghe-1a",
     rebate: "$100",
@@ -611,7 +618,9 @@ export const BANK_ACCOUNTS: BankAccount[] = [
       "Kèm thẻ prepaid Mastercard® hoàn 0.5% cashback, không phí chuyển đổi ngoại tệ",
       "Rút ATM tại Canada miễn phí, hoàn lại cả phí của máy bên thứ ba",
     ],
-    url: "https://www.eqbank.ca/personal-banking/eq-bank-account",
+    // Trang sản phẩm đúng của tài khoản này. Link cũ (/eq-bank-account) là
+    // trang giới thiệu chung, vẫn sống nhưng không phải trang nói về nó.
+    url: "https://www.eqbank.ca/personal-banking/personal-account",
     affiliateUrl:
       "https://www.finlywealth.com/r/pYQhcEuX?url=%2Fbanking%2Fchequing-accounts%2Feq-bank-personal-account&utm_source=ghe-1a",
   },
@@ -632,7 +641,10 @@ export const BANK_ACCOUNTS: BankAccount[] = [
       "Nạp và rút không giới hạn số lần, miễn phí — chỉ cần báo trước",
       "Đủ điều kiện bảo hiểm CDIC tới $100,000 mỗi hạng mục",
     ],
-    url: "https://www.eqbank.ca/personal-banking/savings/notice-savings-account",
+    // EQ Bank™ trả HTTP 200 kèm nội dung "404 Error" cho đường dẫn cũ
+    // (/savings/notice-savings-account) — kiểu 404 mềm mà curl không bắt được.
+    // Đường dẫn thật không có đoạn /savings/. Kiểm lại 20/08/2026.
+    url: "https://www.eqbank.ca/personal-banking/notice-savings-account",
     affiliateUrl:
       "https://www.finlywealth.com/r/pYQhcEuX?url=%2Fbanking%2Fsavings-accounts%2Feq-bank-notice-savings-account&utm_source=ghe-1a",
   },
