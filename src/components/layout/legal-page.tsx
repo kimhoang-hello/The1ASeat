@@ -9,7 +9,7 @@
  */
 
 /** Bump this whenever the wording on either legal page actually changes. */
-export const LEGAL_UPDATED = "15/08/2026";
+export const LEGAL_UPDATED = "20/08/2026";
 
 export function LegalPage({
   title,

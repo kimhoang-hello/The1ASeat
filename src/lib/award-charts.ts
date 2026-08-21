@@ -450,7 +450,7 @@ export const PROGRAMS: Program[] = [
   {
     id: "aadvantage",
     name: "American Airlines® AAdvantage®",
-    currency: "AAdvantage miles",
+    currency: "AAdvantage® miles",
     logo: "/images/logos/partners/american-airlines.png",
     pricing: {
       kind: "zone",

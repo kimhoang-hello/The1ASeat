@@ -72,7 +72,7 @@ function TransferLegs({ program }: { program: Program }) {
 
   if (legs.length === 0) {
     return (
-      <p className="text-xs leading-relaxed text-muted-foreground/80">
+      <p className="text-xs leading-relaxed text-muted-foreground">
         {t(program.transferNoteKey ?? "transferNone")}
       </p>
     );
@@ -140,12 +140,18 @@ function OptionRow({ option, currency }: { option: RoutingOption; currency: stri
                       {t("medianLabel", { points: formatPoints(option.dynamicMedian) })}
                     </p>
                   )}
-                  <p className="text-[10px] text-muted-foreground/70">{t("optionDynamic")}</p>
+                  <p className="text-[10px] text-muted-foreground">{t("optionDynamic")}</p>
                 </>
               )}
             </div>
           ) : (
-            <span className="text-sm text-muted-foreground/60">—</span>
+            // Same two problems as the dash in the Transfer Partners table:
+            // 2.49:1 at /60, and nothing but "dash" for a screen reader on a
+            // figure that is the whole reason the row is there.
+            <span className="text-sm text-muted-foreground">
+              <span aria-hidden>—</span>
+              <span className="sr-only">{t("optionNoPrice")}</span>
+            </span>
           )
         ) : (
           <>
@@ -291,7 +297,7 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
           <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
             {t("optionsHeading", { count: options.length })}
           </p>
-          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground/80">
+          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
             {t("optionsCaveat")}
           </p>
           <ul className="mt-2 grid gap-1.5">

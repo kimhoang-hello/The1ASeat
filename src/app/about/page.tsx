@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { EDITORIAL_REL } from "@/lib/affiliate-links";
 import { YoutubeLogo } from "@phosphor-icons/react/ssr";
 import { FacebookIcon } from "@/components/ui/brand-icons";
 import { getAuthor } from "@/lib/content";
@@ -80,7 +81,7 @@ export default async function AboutPage() {
               key={name}
               href={url}
               target="_blank"
-              rel="noopener noreferrer"
+              rel={EDITORIAL_REL}
               className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
             >
               {name === "YouTube" ? (

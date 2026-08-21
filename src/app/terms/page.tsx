@@ -58,13 +58,14 @@ export default function TermsPage() {
 
       <h2>Quan hệ affiliate và hoa hồng</h2>
       <p>
-        Ghế 1A có thể nhận hoa hồng hoặc referral từ các đối tác thẻ tín dụng khi bạn mở thẻ qua
-        liên kết trên trang. Điều này không làm bạn tốn thêm chi phí.
+        Ghế 1A có thể nhận hoa hồng hoặc referral từ các đối tác thẻ tín dụng và ngân hàng khi bạn
+        mở thẻ hoặc mở tài khoản qua liên kết trên trang. Điều này không làm bạn tốn thêm chi phí.
       </p>
       <p>
         Các ý kiến, đánh giá và phân tích hoàn toàn là quan điểm độc lập của chúng tôi, không được
-        cung cấp, xét duyệt hay chấp thuận bởi bất kỳ tổ chức phát hành nào. Việc một thẻ xuất hiện
-        trên trang, hay xuất hiện ở vị trí nào, không đảm bảo đó là lựa chọn tốt nhất cho bạn.
+        cung cấp, xét duyệt hay chấp thuận bởi bất kỳ tổ chức phát hành nào. Việc một thẻ hay một
+        tài khoản xuất hiện trên trang, hay xuất hiện ở vị trí nào, không đảm bảo đó là lựa chọn tốt
+        nhất cho bạn.
       </p>
 
       <h2>Liên kết và dịch vụ bên thứ ba</h2>

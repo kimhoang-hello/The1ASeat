@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { EDITORIAL_REL } from "@/lib/affiliate-links";
 import Link from "next/link";
 import { t } from "@/lib/t";
 import { pageMetadata } from "@/lib/seo";
@@ -96,7 +97,7 @@ export default function PrivacyPage() {
         <a
           href="https://tools.google.com/dlpage/gaoptout"
           target="_blank"
-          rel="noopener noreferrer"
+          rel={EDITORIAL_REL}
         >
           tiện ích từ chối của Google
         </a>{" "}

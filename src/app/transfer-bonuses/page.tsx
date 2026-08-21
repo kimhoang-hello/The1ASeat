@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ArrowRight } from "@phosphor-icons/react/ssr";
 import { getTransferBonuses } from "@/lib/content";
+import { EDITORIAL_REL, relForUrl } from "@/lib/affiliate-links";
 import { formatDate } from "@/lib/format-date";
 import { PageHeader } from "@/components/layout/page-header";
 import { t } from "@/lib/t";
@@ -33,7 +34,7 @@ export default async function TransferBonusesPage() {
               key={bonus.slug}
               href={bonus.url}
               target="_blank"
-              rel="noopener noreferrer"
+              rel={relForUrl(bonus.url) ?? EDITORIAL_REL}
               className={`flex cursor-pointer flex-col gap-2 px-5 py-4 transition-colors hover:bg-secondary sm:flex-row sm:items-center sm:justify-between ${
                 i !== 0 ? "border-t border-border" : ""
               }`}

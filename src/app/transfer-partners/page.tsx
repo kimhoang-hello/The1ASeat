@@ -30,7 +30,17 @@ const BADGE_STYLES = {
 
 function LegCell({ leg, tint }: { leg: TransferLeg; tint: keyof typeof BADGE_STYLES }) {
   if (!leg) {
-    return <td className="px-4 py-4 text-center text-muted-foreground/50">{tp("noData")}</td>;
+    // The dash was 2.08:1 at /50 and, being only a dash, said nothing at all
+    // to a screen reader — on the one table whose whole point is which issuer
+    // reaches which programme, where "no" is half the answer. Full
+    // `muted-foreground` is 5.53:1 and still the quietest thing in the row,
+    // and the sr-only line spells the dash out.
+    return (
+      <td className="px-4 py-4 text-center text-muted-foreground">
+        <span aria-hidden>{tp("noData")}</span>
+        <span className="sr-only">{tp("noDataLabel")}</span>
+      </td>
+    );
   }
   return (
     <td className="px-2 py-3">

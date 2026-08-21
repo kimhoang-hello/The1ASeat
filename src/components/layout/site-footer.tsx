@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { EDITORIAL_REL } from "@/lib/affiliate-links";
 import { YoutubeLogo } from "@phosphor-icons/react/ssr";
 import { FacebookIcon } from "@/components/ui/brand-icons";
 import { DisclosureText } from "@/components/layout/disclosure-text";
@@ -75,7 +76,7 @@ export function SiteFooter() {
                 href={url}
                 aria-label={name}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel={EDITORIAL_REL}
                 className="-m-2 cursor-pointer p-2 transition-colors hover:text-white"
               >
                 {name === "YouTube" ? (

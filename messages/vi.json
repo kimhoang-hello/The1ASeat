@@ -164,6 +164,7 @@
     "columnAmex": "Amex Membership Rewards®",
     "columnRbc": "RBC® Avion®",
     "noData": "—",
+    "noDataLabel": "Không transfer được",
     "aeroplanNote": "Lưu ý: RBC® Avion® không transfer được sang Aeroplan® — muốn tích điểm Aeroplan®, dùng thẻ American Express® Aeroplan® hoặc thẻ Aeroplan của TD/CIBC.",
     "scrollHint": "Vuốt ngang để xem đầy đủ bảng →"
   },
@@ -242,7 +243,7 @@
     "breadcrumbBlog": "Blog",
     "breadcrumbCreditCards": "Thẻ tín dụng",
     "awardChartsTitle": "Award Flight Finder: Canada đi Việt Nam",
-    "awardChartsDescription": "So sánh số miles mà Aeroplan®, AAdvantage, Avios, Asia Miles và Flying Blue đòi cho chặng Canada đi Việt Nam, kèm tỷ lệ transfer từ Amex® MR và RBC Avion®.",
+    "awardChartsDescription": "So sánh số miles mà Aeroplan®, AAdvantage®, Avios, Asia Miles và Flying Blue đòi cho chặng Canada đi Việt Nam, kèm tỷ lệ transfer từ Amex® MR và RBC Avion®.",
     "bankAccountsTitle": "Tài khoản ngân hàng Canada: chequing và savings",
     "bankAccountsDescription": "So sánh tài khoản chequing và savings ở Canada bằng tiếng Việt — Scotiabank®, BMO®, RBC®, Tangerine®, EQ Bank™, KOHO: welcome bonus, monthly fee và lãi suất.",
     "breadcrumbBankAccounts": "Ngân hàng",
@@ -287,7 +288,7 @@
     "howStep1Title": "Số miles thấp nhất chưa chắc là rẻ nhất",
     "howStep1Body": "Một chương trình đòi ít miles hơn nhưng thu surcharge $600 có thể đắt hơn chương trình đòi nhiều miles mà chỉ thu $80 thuế. Nhìn cả số điểm lẫn nhãn surcharge trên mỗi thẻ.",
     "howStep2Title": "Không phải chương trình nào cũng tra trước được giá",
-    "howStep2Body": "Aeroplan® và AAdvantage công bố chart; Cathay có chart thật nhưng giấu. British Airways® và Flying Blue thì không con số nào đáng tin, còn Qatar chỉ chắc chắn ở vài chặng bay bằng máy bay của chính họ. Ghế 1A để trống thay vì đoán bừa, vì điểm đã transfer là không lấy lại được.",
+    "howStep2Body": "Aeroplan® và AAdvantage® công bố chart; Cathay có chart thật nhưng giấu. British Airways® và Flying Blue thì không con số nào đáng tin, còn Qatar chỉ chắc chắn ở vài chặng bay bằng máy bay của chính họ. Ghế 1A để trống thay vì đoán bừa, vì điểm đã transfer là không lấy lại được.",
     "howStep3Title": "Kiểm tra chỗ trống trước, transfer sau",
     "howStep3Body": "Giá tốt trên chart không có nghĩa là có ghế. Tìm được chỗ award đúng ngày rồi mới chuyển điểm sang.",
     "howStep4Title": "Chọn hub nào cũng làm đổi giá",
@@ -307,6 +308,7 @@
     "feederNote": "Từ thành phố của bạn phải bay nội địa Air Canada® tới Toronto hoặc Vancouver trước. Khi hành trình có chặng nội địa, chart của chương trình này không còn mô tả đúng số điểm bị trừ, nên Ghế 1A không hiển thị số.",
     "noRoutingShort": "Không bay tới đây",
     "optionDynamic": "Dynamic Pricing",
+    "optionNoPrice": "Chương trình này không đưa giá cho hành trình đó",
     "medianLabel": "trung vị {points}",
     "feederOnlyShort": "Cần nối chuyến nội địa"
   }

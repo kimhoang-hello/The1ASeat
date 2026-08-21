@@ -3,6 +3,7 @@ import { ArrowRight } from "@phosphor-icons/react/ssr";
 import { t as translate } from "@/lib/t";
 import { getTransferBonuses } from "@/lib/content";
 import { formatDate } from "@/lib/format-date";
+import { EDITORIAL_REL, relForUrl } from "@/lib/affiliate-links";
 
 const t = translate("bonuses");
 
@@ -34,7 +35,7 @@ export async function TransferBonusesSection() {
               key={bonus.slug}
               href={bonus.url}
               target="_blank"
-              rel="noopener noreferrer"
+              rel={relForUrl(bonus.url) ?? EDITORIAL_REL}
               className={`flex cursor-pointer flex-col gap-2 px-5 py-5 transition-colors hover:bg-secondary sm:flex-row sm:items-center sm:justify-between ${
                 i !== 0 ? "border-t border-border" : ""
               }`}

@@ -45,7 +45,12 @@ function navItemClassName(active: boolean) {
   return `border-b-2 pb-1 text-base transition-colors hover:text-primary ${
     active
       ? "border-primary font-bold text-primary"
-      : "border-transparent font-medium text-foreground/55"
+      : // /65, not /55: at 55% this sat at 3.90:1 on the cream background —
+        // under the 4.5:1 WCAG AA needs for 16px text, on the one row of links
+        // that appears on all 101 pages. /65 is 5.45:1 and still reads as the
+        // quiet state, because what marks the active item is the navy, the
+        // bold and the underline, not this one step of opacity.
+        "border-transparent font-medium text-foreground/65"
   }`;
 }
 
