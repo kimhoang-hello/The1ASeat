@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored third-party copies, not this repo's source. Both are gitignored
+    // and reinstalled wholesale, so their lint warnings are noise nobody can
+    // act on — 152 of them, which buried anything real in `npm run lint`.
+    ".claude/skills/**",
+    ".impeccable/**",
   ]),
 ]);
 

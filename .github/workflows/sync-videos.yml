@@ -13,6 +13,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Call sync-videos endpoint
+        # -sfS chứ không phải -sf: -s một mình nuốt luôn lý do hỏng, nên hai
+        # lần thất bại 20/08 và 21/08 chỉ để lại đúng "exit code 28" trong log
+        # mà không nói vì sao. --retry vì cả hai lần đều là timeout ở phút thứ
+        # 4,5 — route này gọi ra ngoài (FinlyWealth, YouTube, Contentful) nên
+        # thỉnh thoảng chạm trần thời gian của Hostinger; gọi lại là xong. Gọi
+        # lại an toàn: route tự đối chiếu với Contentful trước khi ghi, chạy
+        # hai lần không tạo trùng.
         run: |
-          curl -sf -X POST "https://ghe1a.com/api/sync-videos" \
+          curl -sfS --retry 3 --retry-all-errors --retry-delay 30 --max-time 300 \
+            -X POST "https://ghe1a.com/api/sync-videos" \
             -H "Authorization: Bearer ${{ secrets.SYNC_VIDEOS_SECRET }}"
