@@ -127,11 +127,24 @@ local), thêm 4 biến:
 **3. Tạo webhook trong Contentful** — app.contentful.com → chọn Space **Ghe1A** →
 **Settings → Webhooks → Add Webhook**:
 - Name: `Refresh Ghế 1A site`
-- URL: `https://ghe1a.com/api/revalidate?secret=<giá trị REVALIDATE_SECRET ở bước 2>`
+- URL: `https://ghe1a.com/api/revalidate` — **không** kèm `?secret=...` vào đây
 - Giữ method mặc định (POST)
 - Triggers: chọn **Select specific triggering events** → tick ít nhất **Publish**
   (tick thêm Unpublish/Delete nếu muốn site cũng tự cập nhật khi bạn gỡ bài)
+- Kéo xuống mục **Headers** → **Add custom header**, tick ô **Secret**:
+  - Key: `Authorization`
+  - Value: `Bearer <giá trị REVALIDATE_SECRET ở bước 2>` (có chữ `Bearer` và
+    một dấu cách ở đầu)
 - Save
+
+> **Vì sao secret đi trong Header chứ không trong URL.** Webhook này trước đây
+> gọi `...?secret=abc123`, và mọi thứ nằm trong URL đều bị ghi lại nguyên văn:
+> access log của Hostinger, log của proxy, header referrer. Tức là mỗi lần bạn
+> bấm Publish là secret lại được chép thêm vào một file log nữa. Header thì
+> không bị ghi vào những chỗ đó, và tick ô **Secret** khiến Contentful cũng
+> giấu luôn giá trị đó trong giao diện của nó. Route vẫn nhận được cả hai
+> kiểu (xem [src/lib/job-auth.ts](src/lib/job-auth.ts)) nên webhook cũ không
+> gãy — nhưng cách đúng để tạo mới là Header.
 
 **4. Kiểm tra** — Publish thử 1 entry bất kỳ, đợi ~10 giây rồi mở lại `ghe1a.com`
 (F5 mạnh / Ctrl+Shift+R) — nội dung phải lên ngay, không cần vào Hostinger bấm
