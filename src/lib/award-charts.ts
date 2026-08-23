@@ -444,7 +444,7 @@ export const PROGRAMS: Program[] = [
     ],
     transferPartnerKey: "Air Canada® Aeroplan®",
     noteKey: "noteAeroplan",
-    sourceUrl: "https://www.aircanada.com/ca/en/aco/home/aeroplan/redeem/flight-rewards-chart.html",
+    sourceUrl: "https://www.aircanada.com/ca/en/aco/home/aeroplan/redeem/air-canada.html",
     verifiedOn: "2026-08-09",
   },
   {
@@ -465,7 +465,7 @@ export const PROGRAMS: Program[] = [
     pricesWithFeeder: false,
     transferPartnerKey: "American Airlines® AAdvantage®",
     noteKey: "noteAadvantage",
-    sourceUrl: "https://www.aa.com/i18n/aadvantage-program/miles/redeem/award-travel/partner-airline-award-chart.jsp",
+    sourceUrl: "https://www.aa.com/web/i18n/aadvantage-program/use-miles/partner-airline-flights.html",
     verifiedOn: "2026-08-09",
   },
   {
@@ -536,7 +536,7 @@ export const PROGRAMS: Program[] = [
     transferPartnerKey: null,
     transferNoteKey: "transferViaAvios",
     noteKey: "noteQatarAvios",
-    sourceUrl: "https://www.qatarairways.com/en/privilegeclub.html",
+    sourceUrl: "https://www.qatarairways.com/en/Privilege-Club/fly-with-avios.html",
     verifiedOn: "2026-08-09",
   },
   {
@@ -558,7 +558,7 @@ export const PROGRAMS: Program[] = [
     pricesWithFeeder: false,
     transferPartnerKey: "Air France KLM® Flying Blue®",
     noteKey: "noteFlyingBlue",
-    sourceUrl: "https://www.flyingblue.com/en/spend-miles/flight-awards",
+    sourceUrl: "https://www.flyingblue.com/en/spend/flights/rewards",
     verifiedOn: "2026-08-09",
   },
 ];

@@ -7,6 +7,9 @@
 // increase and end at Infinity, routings that start and end where they should
 // without repeating an airport, and a headline price that matches its own
 // best option. Exits non-zero on any failure.
+//
+// Add --links to also check that each programme's sourceUrl still resolves.
+// That one needs the network, so it is off by default:  npm run audit:awards -- --links
 
 import fs from "node:fs";
 import path from "node:path";
@@ -127,6 +130,28 @@ for (const o of ORIGINS) for (const d of DESTINATIONS) for (const c of CABINS) {
 }
 
 console.log(`swept ${quotes} quotes across ${ORIGINS.length}x${DESTINATIONS.length}x${CABINS.length} combos (${unpriced} unpriced)`);
+
+// 10. every sourceUrl still resolves — only with --links, because it is the one
+// check that needs the network and the rest of this file is meant to run in a
+// second. Airlines move these pages without redirecting: on 23/08/2026 four of
+// the six were 404s (Aeroplan, AAdvantage, Qatar and Flying Blue had all moved),
+// and nothing here noticed, so every reader clicking "nguồn" landed on an error
+// page. A 403 is not a failure — aa.com and bmo.com block scripted requests
+// while serving the page fine to a browser; only a 404/410 means the page is
+// really gone.
+if (process.argv.includes("--links")) {
+  const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36";
+  for (const p of PROGRAMS) {
+    try {
+      const res = await fetch(p.sourceUrl, { redirect: "follow", headers: { "User-Agent": UA } });
+      if (res.status === 404 || res.status === 410) fails.push(`${p.id}: sourceUrl is gone (${res.status}) ${p.sourceUrl}`);
+      else if (!res.ok) console.log(`  (${p.id}: ${res.status} — likely bot-blocking, check by hand: ${p.sourceUrl})`);
+    } catch (err) {
+      console.log(`  (${p.id}: could not be reached — ${err instanceof Error ? err.message : String(err)})`);
+    }
+  }
+  console.log(`checked ${PROGRAMS.length} source links`);
+}
 if (fails.length) {
   console.error("FAILURES:\n - " + [...new Set(fails)].join("\n - "));
   process.exit(1);
