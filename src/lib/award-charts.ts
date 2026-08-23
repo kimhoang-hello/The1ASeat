@@ -401,30 +401,38 @@ export const PROGRAMS: Program[] = [
       // and with no Premium Economy row at all. `startingAt` is the "Air Canada
       // and/or Select Partners" column, which is dynamic and only publishes a
       // floor — that is where Aeroplan's Premium Economy numbers actually live.
+      //
+      // All three columns below are the North America <-> Pacific table, which
+      // is the only one this tool's origins and destinations fall in. Air
+      // Canada recomputes the medians on a rolling window, so they drift on
+      // their own: on 23/08/2026 six of them had moved since they were last
+      // read, one of them a long way (business 5,001-7,500 was 120,000 and is
+      // now 158,200). `rates` and `startingAt` had not moved at all — those are
+      // the guaranteed numbers, the medians are the ones worth re-reading.
       bands: [
         {
           upTo: 5000,
           rates: { economy: 32500, business: 55000 },
           startingAt: { economy: 32500, premium: 45000, business: 55000 },
-          median: { economy: 49500, premium: 94200, business: 171600 },
+          median: { economy: 46800, premium: 94500, business: 170700 },
         },
         {
           upTo: 7500,
           rates: { economy: 50000, business: 85000 },
           startingAt: { economy: 45000, premium: 60000, business: 85000 },
-          median: { economy: 55000, premium: 100600, business: 120000 },
+          median: { economy: 55000, premium: 101600, business: 158200 },
         },
         {
           upTo: 11000,
           rates: { economy: 65000, business: 102500 },
           startingAt: { economy: 50000, premium: 85000, business: 85000 },
-          median: { economy: 60000, premium: 103100, business: 100000 },
+          median: { economy: 60000, premium: 104500, business: 100000 },
         },
         {
           upTo: Infinity,
           rates: { economy: 70000, business: 115000 },
           startingAt: { economy: 70000, premium: 95000, business: 105000 },
-          median: { economy: 75000, premium: 127100, business: 115000 },
+          median: { economy: 75000, premium: 128800, business: 115000 },
         },
       ],
     },
@@ -445,7 +453,7 @@ export const PROGRAMS: Program[] = [
     transferPartnerKey: "Air Canada® Aeroplan®",
     noteKey: "noteAeroplan",
     sourceUrl: "https://www.aircanada.com/ca/en/aco/home/aeroplan/redeem/air-canada.html",
-    verifiedOn: "2026-08-09",
+    verifiedOn: "2026-08-23",
   },
   {
     id: "aadvantage",
