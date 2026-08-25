@@ -165,12 +165,13 @@ chào mừng subscriber mới — cả 2 dùng chung 1 template ở
 [src/lib/subscriber-email.ts](src/lib/subscriber-email.ts). Sửa bài đã đăng
 và Publish lại sẽ **không** gửi lại email (chỉ gửi ở lần Publish đầu).
 
-**Ngoại lệ Deals:** nếu ô `Category Vi` của bài viết là `Deals` (transfer
-bonus, deal mua points, v.v.) thì email **sẽ không gửi**, kể cả khi đây là
-bài `post` và là lần Publish đầu tiên — những deal này thường ngắn hạn và hết
-hạn nhanh nên không đáng gửi broadcast riêng. Chỉ cần gõ đúng chữ `Deals` vào
-`Category Vi` (không phân biệt hoa/thường) là được, không cần cấu hình gì
-thêm.
+**Ngoại lệ `Deals` và `News`:** nếu ô `Category Vi` của bài viết là `Deals`
+(transfer bonus, deal mua points, v.v.) hoặc `News` (tin ngắn phản ứng lại
+thông báo của chương trình khác) thì email **sẽ không gửi**, kể cả khi đây là
+bài `post` và là lần Publish đầu tiên — deal thì ngắn hạn và hết hạn nhanh,
+còn tin thì lên site là đủ, không đáng gửi broadcast riêng cho từng cái. Chỉ
+cần gõ đúng một trong hai chữ đó vào `Category Vi` (không phân biệt hoa/thường)
+là được, không cần cấu hình gì thêm.
 
 Broadcast này (và mọi email khác gửi cho subscriber) giờ gửi từ địa chỉ
 **info@ghe1a.com** — Kit yêu cầu địa chỉ gửi phải được thêm + xác minh trong

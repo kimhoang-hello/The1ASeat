@@ -112,16 +112,21 @@ async function fetchManagementEntry(entryId: string): Promise<ManagementEntry | 
   return res.json();
 }
 
+// Categories whose posts never trigger a broadcast: Deals (transfer bonus /
+// points-buy promos age out fast) and News (short reaction pieces to someone
+// else's announcement — they land on the site, not in everyone's inbox).
+const NO_BROADCAST_CATEGORIES = new Set(["deals", "news"]);
+
 // Sends a Kit newsletter broadcast the first time a "post"-type blogPost
-// entry is published. Skips video posts and Deals posts (transfer bonus /
-// points-buy promos age out fast and aren't worth a broadcast), and skips
+// entry is published. Skips video posts and the categories above, and skips
 // edits/republishes of an already-published post.
 async function maybeNotifyNewPost(payload: unknown): Promise<boolean | string> {
   const entry = payload as ContentfulEntryPayload;
 
   if (entry?.sys?.contentType?.sys?.id !== "blogPost") return "not_blog_post";
   if (entry.fields?.type?.[LOCALE] !== "post") return "video_post";
-  if (entry.fields?.categoryVi?.[LOCALE]?.trim().toLowerCase() === "deals") return "deals_post";
+  const category = entry.fields?.categoryVi?.[LOCALE]?.trim().toLowerCase();
+  if (category && NO_BROADCAST_CATEGORIES.has(category)) return `${category}_post`;
 
   const entryId = entry.sys?.id;
   if (!entryId) return "missing_entry_id";
