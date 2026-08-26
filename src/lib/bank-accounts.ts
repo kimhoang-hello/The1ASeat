@@ -184,7 +184,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     ],
     keyBenefitsVi: [
       "Giao dịch debit không giới hạn",
-      "Tích điểm Scene+® ngay khi quẹt thẻ debit",
+      "Tích điểm Scene+™ ngay khi quẹt thẻ debit",
       "Rebate tới $150 phí thường niên thẻ tín dụng Scotiabank® năm đầu",
     ],
     url: "https://www.scotiabank.com/ca/en/personal/bank-accounts/chequing-accounts/preferred.html",
@@ -257,7 +257,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     ],
     keyBenefitsVi: [
       "Giao dịch debit và Interac e-Transfer® không giới hạn",
-      "Tích điểm Scene+® khi quẹt thẻ debit",
+      "Tích điểm Scene+™ khi quẹt thẻ debit",
       "Rebate tới $150 phí thường niên thẻ tín dụng năm đầu",
     ],
     // Trang cũ (.../chequing-accounts/student-banking.html) đã 404 — Scotiabank®

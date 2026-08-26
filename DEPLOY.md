@@ -22,13 +22,29 @@ website trên hPanel → bấm **Redeploy**.
 
 - `CONTENTFUL_SPACE_ID`, `CONTENTFUL_ACCESS_TOKEN` — bắt buộc để site đọc nội dung
   thật thay vì dữ liệu mẫu trong `content/sample/`
-- `NEXT_PUBLIC_SITE_URL=https://ghe1a.com`
-- `KIT_API_KEY`, `KIT_FORM_ID` — cho form đăng ký bản tin
+- `KIT_API_KEY`, `KIT_FORM_ID` — cho form đăng ký bản tin. Thiếu thì form trả về
+  lỗi `not_configured`.
+- `RESEND_API_KEY` — gửi email liên hệ từ `/contact` về info@ghe1a.com và email
+  chào mừng cho subscriber mới. Thiếu thì form liên hệ báo lỗi cho người gửi.
 - `REVALIDATE_SECRET`, `HOSTINGER_API_TOKEN`, `HOSTINGER_USERNAME`,
   `HOSTINGER_DOMAIN` — tuỳ chọn, xem [CONTENTFUL.md](CONTENTFUL.md#auto-refresh-site-khi-bấm-publish)
 - `NEXT_PUBLIC_GA_MEASUREMENT_ID` — tuỳ chọn, Measurement ID của Google
   Analytics 4 (dạng `G-XXXXXXXXXX`, lấy ở analytics.google.com → Admin → Data
   Streams). Không có thì site không gắn script analytics nào.
+- `NEXT_PUBLIC_CUSDIS_APP_ID` — tuỳ chọn, App ID của Cusdis. Không có thì khung
+  bình luận dưới bài viết không hiện.
+- `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` — tuỳ chọn, chỉ là thẻ xác minh Search
+  Console.
+
+Các job chạy theo lịch (GitHub Actions) gọi ngược vào site, nên server cũng cần
+đúng các biến này — mỗi cái đồng thời phải là repo secret cùng tên:
+`CONTENTFUL_MANAGEMENT_TOKEN`, `SYNC_VIDEOS_SECRET`, `EXPIRE_OFFERS_SECRET`,
+`ANTHROPIC_API_KEY`, `KIT_V4_API_KEY`. Xem chú thích từng biến trong
+[.env.example](.env.example).
+
+Site không đọc `NEXT_PUBLIC_SITE_URL`: base URL là hằng `SITE_URL` trong
+`src/lib/subscriber-email.ts`, cố ý để trong repo chứ không để trong hosting
+panel — xem chú thích ở đó.
 
 Đổi biến môi trường xong nhớ bấm **Redeploy** để áp dụng.
 
