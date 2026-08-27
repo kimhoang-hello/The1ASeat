@@ -8,6 +8,23 @@ export interface SearchItem {
   kind: SearchKind;
   /** The issuer or the category — shown under the title, and matched on too. */
   meta?: string;
+  /**
+   * Vietnamese words a reader would type for this entry that appear nowhere in
+   * its title. Four of the tools keep English names on purpose ("Points
+   * Calculator", "Transfer Bonus", "Transfer Partners", "Award Flight Finder"),
+   * so "tính điểm" and "chuyển điểm" used to find nothing at all.
+   *
+   * Not `meta`: meta is rendered under the title in the results list, and a
+   * line of search bait under "Points Calculator" would read as noise. This is
+   * matched and never shown.
+   *
+   * It belongs on the entry rather than in ALIASES below because every query
+   * word has to match, so a word-for-word alias over-constrains: "chuyển điểm"
+   * would demand an entry holding both "transfer" AND "points", which
+   * "Transfer Bonus" is not. Putting both Vietnamese words on the entry lets
+   * the plain matcher do the work.
+   */
+  keywords?: string;
 }
 
 /**
@@ -36,7 +53,8 @@ const ALIASES: Record<string, string[]> = {
  * Every word of the query has to turn up somewhere in the entry, in any order,
  * so "aeroplan amex" still finds "American Express® Aeroplan®* Reserve Card".
  * Entries whose title opens with the first word come first, then the ones that
- * merely contain it, then the ones that only matched on their issuer/category.
+ * merely contain it, then the ones that only matched on their issuer/category
+ * or their Vietnamese keywords — so a keyword match never outranks a title.
  */
 export function searchItems(items: SearchItem[], query: string, limit = 8): SearchItem[] {
   const terms = normalize(query)
@@ -49,7 +67,7 @@ export function searchItems(items: SearchItem[], query: string, limit = 8): Sear
 
   for (const item of items) {
     const title = normalize(item.title);
-    const haystack = `${title}-${normalize(item.meta ?? "")}`;
+    const haystack = `${title}-${normalize(item.meta ?? "")}-${normalize(item.keywords ?? "")}`;
     if (!terms.every((term) => haystack.includes(term))) continue;
     matches.push({
       item,
