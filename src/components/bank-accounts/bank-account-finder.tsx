@@ -387,10 +387,17 @@ function FinderView({
   // nhiều so với cái giá thật sự — React Compiler từ chối tối ưu cả component
   // khi thấy memo thủ công phụ thuộc vào giá trị nó nghĩ có thể đổi sau.
   const inFilter = BANK_ACCOUNTS.filter((account) => matchesFilter(account, filter));
+  // Nhiều tài khoản nhất đứng trước, giống hàng chip điểm thưởng ở trang thẻ
+  // (getCardPointsPrograms). Thứ tự khai báo trong BANKS đọc như thể đã sắp
+  // theo số lượng — Scotiabank® 6 rồi BMO® 4 — nên RBC® 5 nằm cuối, sau
+  // National Bank® 1, trông như sót chứ không như một thứ tự có chủ ý. Sort
+  // của JS ổn định, nên hai ngân hàng bằng điểm vẫn giữ nguyên thứ tự BANKS.
   const availableBanks = BANKS.map((b) => ({
     ...b,
     count: inFilter.filter((account) => account.bank === b.id).length,
-  })).filter((b) => b.count > 0);
+  }))
+    .filter((b) => b.count > 0)
+    .sort((a, b) => b.count - a.count);
 
   // Ngân hàng đang chọn có thể vừa biến mất khỏi hàng chip vì bộ lọc nhanh
   // vừa đổi. Coi như "tất cả" thay vì hiện danh sách rỗng — cùng cách trang
