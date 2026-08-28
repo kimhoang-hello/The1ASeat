@@ -37,6 +37,9 @@ mỗi lần, không nhớ gì giữa các phiên). Ghi lại để không phải
   135ms (gọi lại thật).
 - **CDN Hostinger giữ HTML tới một năm** nếu route không đặt `revalidate`. Đã
   cắn một lần: thêm 4 tài khoản BMO® mà trang vẫn hiện 6 cái.
+- **`bank-account-finder` ghi URL bằng cách sửa `URLSearchParams` hiện có**, không
+  dựng lại từ đầu — dựng lại sẽ xoá `utm_*` của chiến dịch dẫn người đọc tới đây,
+  mỗi lần họ bấm một cái chip.
 - **Thẻ mới không có rule trong `lib/card-points-programs.ts` sẽ mất filter chip
   trong im lặng.** Đây là đánh đổi có chủ ý (Contentful không có trường này),
   không phải lỗi cần báo lại mỗi lần.
@@ -51,8 +54,12 @@ mỗi lần, không nhớ gì giữa các phiên). Ghi lại để không phải
   `publishedCounter === 1`, mà số đó không đổi khi webhook được gọi lại — nên
   bất cứ đường retry nào sau khi đã gửi đều gửi bản tin lần hai tới toàn bộ
   subscriber. Bản tin gửi trùng không rút lại được; CDN bẩn thì tự hết hạn.
-- **Phân trang `getAllEntries` dùng `skip`** nên có thể lệch nếu dữ liệu đổi
-  giữa hai lượt lấy. Chấp nhận: 23 entry nghĩa là vòng lặp chạy đúng một lượt.
+- **Phân trang dùng `getEntriesWithCursor` (con trỏ mờ của Contentful).** Đừng
+  đề xuất quay lại `skip`, cũng đừng đề xuất con trỏ tự chế theo `sys.createdAt`
+  — đã thử cả hai và cả hai đều mất entry trong im lặng: `skip` lệch khi có
+  entry bị unpublish giữa hai lượt lấy, còn `sys.createdAt[lte]` thì kẹt cứng
+  khi 100 entry trùng mốc thời gian. Con trỏ mờ cũng cho phép trả `order` về
+  cho Contentful, nên không phải sắp lại thứ tự trong JS.
 - **Trang chưa công bố dùng cờ trong `lib/feature-flags.ts`** — vẫn build và vào
   được bằng URL trực tiếp, nhưng ẩn khỏi menu, footer, sitemap, search, kèm
   `noindex` và dải báo nháp. Cờ được áp ở cả 7 chỗ; đã kiểm.

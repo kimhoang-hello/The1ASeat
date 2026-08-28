@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CaretDown, Info } from "@phosphor-icons/react";
@@ -50,6 +50,23 @@ const TAG_LABEL_KEYS = {
   newcomer: "tagNewcomer",
   student: "tagStudent",
 } as const;
+
+/**
+ * Ngân hàng đang chọn có thể không còn tài khoản nào dưới bộ lọc nhanh hiện
+ * tại. Khi đó coi như "tất cả" — hiện danh sách rỗng thì người đọc không biết
+ * phải làm gì tiếp, còn "tất cả" luôn có đường đi tiếp.
+ *
+ * Một hàm dùng cho cả hai chỗ: lúc bấm chip, và lúc mở một URL có sẵn. Tách
+ * làm hai bản là mời gọi chúng lệch nhau.
+ */
+function normalize(selection: Selection): Selection {
+  if (selection.bank === "all") return selection;
+
+  const survives = BANK_ACCOUNTS.some(
+    (account) => account.bank === selection.bank && matchesFilter(account, selection.filter),
+  );
+  return survives ? selection : { ...selection, bank: "all" };
+}
 
 function readParams(params: URLSearchParams): Selection {
   const bank = params.get("bank");
@@ -483,10 +500,7 @@ function FinderView({
     // lúc đang chọn Scotiabank® sẽ ghi `bank=scotiabank&filter=newcomer` vào
     // URL trong khi màn hình hiện tất cả ngân hàng — link chia sẻ nói một
     // đằng, trang hiện một nẻo.
-    const survives = BANK_ACCOUNTS.some(
-      (account) => account.bank === merged.bank && matchesFilter(account, merged.filter),
-    );
-    update(survives ? merged : { ...merged, bank: "all" });
+    update(normalize(merged));
   };
   const accounts = sortAccounts(
     inFilter.filter((account) => activeBank === "all" || account.bank === activeBank),
@@ -613,10 +627,46 @@ function Finder() {
   // search params sẽ đóng băng giá trị mặc định và làm hỏng link chia sẻ.
   const selection = readParams(searchParams);
 
-  function update(patch: Partial<Selection>) {
-    const next = { ...selection, ...patch };
-    window.history.replaceState(null, "", `?${new URLSearchParams(next).toString()}`);
+  /**
+   * Ghi ba tham số của bộ lọc lên URL hiện có thay vì dựng lại query từ đầu:
+   * `new URLSearchParams(selection)` xoá sạch mọi thứ khác, nên chỉ cần bấm một
+   * cái chip là `utm_source` của chiến dịch dẫn người đọc tới đây biến mất khỏi
+   * thanh địa chỉ — và biến mất khỏi link họ copy đi.
+   */
+  function queryFor(next: Selection): string {
+    const params = new URLSearchParams(searchParams);
+    params.set("bank", next.bank);
+    params.set("filter", next.filter);
+    params.set("sort", next.sort);
+    return params.toString();
   }
+
+  function update(patch: Partial<Selection>) {
+    window.history.replaceState(null, "", `?${queryFor({ ...selection, ...patch })}`);
+  }
+
+  // Mở một link trỏ tới tổ hợp không còn tồn tại — `?bank=scotiabank&
+  // filter=newcomer`, mà Scotiabank® không có tài khoản newcomer nào — thì danh
+  // sách hiện đúng (đã chuẩn hoá) nhưng thanh địa chỉ vẫn nói khác. Ai copy link
+  // đó gửi đi là truyền tiếp một tham số nói dối. Áp dụng cho cả tham số rác
+  // (`?filter=rac`), vì `readParams` đã âm thầm bỏ qua nó rồi.
+  //
+  // Chỉ sửa tham số ĐANG CÓ MẶT mà sai: URL sạch không query thì để yên, không
+  // ai muốn vào trang xong tự dưng thấy `?bank=all&filter=all&sort=bonus` mọc ra.
+  // `replaceState` nên không thêm mục nào vào lịch sử back.
+  const canonical = normalize(selection);
+  const canonicalQuery = queryFor(canonical);
+  const needsRewrite = (["bank", "filter", "sort"] as const).some((key) => {
+    // `getAll` chứ không phải `get`: `?bank=bmo&bank=rác` thì `get` chỉ thấy
+    // giá trị đầu và tưởng URL đã sạch, trong khi cái thứ hai vẫn nằm đó.
+    const values = searchParams.getAll(key);
+    if (values.length === 0) return false;
+    return values.length > 1 || values[0] !== canonical[key];
+  });
+
+  useEffect(() => {
+    if (needsRewrite) window.history.replaceState(null, "", `?${canonicalQuery}`);
+  }, [needsRewrite, canonicalQuery]);
 
   return <FinderView selection={selection} update={update} />;
 }
