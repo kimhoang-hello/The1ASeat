@@ -62,8 +62,26 @@ mỗi lần, không nhớ gì giữa các phiên). Ghi lại để không phải
   `23:59` cuối ngày ở 1 entry); so theo ngày làm cả hai hành xử đúng như dòng
   chữ người đọc nhìn thấy. Đừng đổi lại thành `[lte]=now`.
 
+- **Cả 3 workflow job đều gọi bằng `curl -sfS --retry 3 --retry-all-errors`,
+  nên trả 500 KHÔNG đủ để một lỗi hiện ra.** curl chạy lại; nếu lượt sau trả
+  200 thì job xanh và lỗi biến mất. Vì vậy mọi lỗi ghi dở phải còn *nhận ra
+  được ở lượt chạy sau*, không chỉ đỏ đúng một lần. Đã cắn hai lần cùng kiểu:
+  `updateEntry` ghi draft xong mới publish, nên publish hỏng để lại draft đã
+  đổi trong khi CDA vẫn phục vụ bản cũ — và mọi truy vấn CMA sau đó (đọc
+  draft) thấy "xong rồi" nên bỏ qua vĩnh viễn. `check-rebates` sửa bằng cách so
+  với bản published; `expire-offers` nay cũng đối chiếu bản published
+  (`liveExpiredSlugs`) và BÁO những thẻ site còn treo hạn cũ mà draft đã sạch
+  hạn — báo chứ không tự sửa, vì hình dạng đó cũng đúng với một tác giả đang
+  viết dở, và `updateEntry` publish cả entry.
+
 ## Quyết định có chủ ý — đừng báo là lỗi
 
+- **`api/sync-videos` báo lỗi khi thấy entry video đã có nhưng chưa publish**,
+  và cố ý không tự publish nó. Trạng thái đó sinh ra từ một lượt tạo được entry
+  rồi publish hỏng — hoặc từ việc có người unpublish tay. Cả hai đều cần người
+  nhìn, nên job đỏ cho tới khi ai đó publish hoặc xoá entry. Đỏ dai là có chủ
+  ý, giống `check-rebates`: tự publish thì sẽ đẩy luôn bản nháp nằm trong entry
+  đó lên site.
 - **`api/check-rebates` trả 500 khi có bất kỳ thẻ nào lỗi**, kể cả một thẻ hỏng
   vĩnh viễn làm job đỏ mãi. Cố ý: im lặng chính là lỗi gốc, và số rebate là tiền
   hiện cho người đọc. Đừng đề xuất ngưỡng để giấu lại.

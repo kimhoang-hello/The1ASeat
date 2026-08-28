@@ -36,14 +36,50 @@ async function handleSync(request: NextRequest) {
   const cmaBase = `https://api.contentful.com/spaces/${spaceId}/environments/master`;
   const authHeaders = { Authorization: `Bearer ${managementToken}` };
 
-  const videos = await fetchLatestVideos();
-  const existingUrls = await fetchExistingVideoUrls(cmaBase, authHeaders);
+  // fetchLatestVideos / fetchExistingVideoUrls ném khi nguồn của chúng hỏng.
+  // Bắt ở đây để trả 500 kèm lý do đọc được trong runtime log, thay vì để
+  // Next dựng trang lỗi chung chung.
+  let videos: VideoEntry[];
+  let existing: { published: Set<string>; unpublished: Set<string> };
+  try {
+    videos = await fetchLatestVideos();
+    existing = await fetchVideoUrlsByState(cmaBase, authHeaders);
+  } catch (err) {
+    // Log trước khi trả: workflow gọi bằng `curl -f` nên body bị nuốt, và Next
+    // không log body mình tự trả. Không log ở đây thì người trực chỉ thấy đúng
+    // một dòng 500 trống trong runtime log.
+    console.error("[sync-videos] nguồn dữ liệu hỏng:", err);
+    return NextResponse.json(
+      {
+        checked: 0,
+        created: [],
+        errors: [],
+        message: err instanceof Error ? err.message : String(err),
+      },
+      { status: 500 },
+    );
+  }
 
   const created: string[] = [];
   const errors: { videoUrl: string; message: string }[] = [];
 
   for (const video of videos) {
-    if (existingUrls.has(video.videoUrl)) continue;
+    if (existing.published.has(video.videoUrl)) continue;
+
+    // Entry có nhưng chưa publish: lượt trước tạo được rồi publish hỏng, hoặc
+    // có người unpublish tay. Cả hai đều cần người nhìn, và cả hai đều phải
+    // giữ job đỏ ở những lượt sau — nếu không, `--retry` trong workflow chỉ
+    // cần chạy lại một lượt là biến lỗi thật thành xanh. Job cố ý KHÔNG tự
+    // publish: publish một entry là publish cả bản nháp trong đó.
+    if (existing.unpublished.has(video.videoUrl)) {
+      errors.push({
+        videoUrl: video.videoUrl,
+        message:
+          "entry đã có trong Contentful nhưng chưa publish — publish hoặc xoá tay, job không tự publish bản nháp",
+      });
+      continue;
+    }
+
     try {
       await createVideoPost(video, cmaBase, authHeaders);
       created.push(video.videoUrl);
@@ -52,13 +88,24 @@ async function handleSync(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ checked: videos.length, created, errors });
+  // 200 chỉ khi thật sự không có lỗi nào: workflow gọi route này bằng
+  // `curl -sfS`, nó chỉ đọc HTTP status. Trả 200 kèm errors[] là job xanh
+  // trong khi video mới ngừng lên site — đúng lỗi đã sửa ở check-rebates.
+  const status = errors.length > 0 ? 500 : 200;
+  if (errors.length > 0) console.error("[sync-videos] lỗi:", errors);
+  return NextResponse.json({ checked: videos.length, created, errors }, { status });
 }
 
 async function fetchLatestVideos(): Promise<VideoEntry[]> {
   const res = await fetch(`https://www.youtube.com/feeds/videos.xml?channel_id=${YOUTUBE_CHANNEL_ID}`, {
     cache: "no-store",
   });
+  // Feed hỏng phải nổ, không được đọc thành "không có video mới". Trang lỗi
+  // của Google là HTML không chứa <entry> nào, nên nếu không chặn ở đây thì
+  // một feed 404 sẽ đi tiếp thành `{checked: 0}` và job vẫn xanh.
+  if (!res.ok) {
+    throw new Error(`youtube feed failed: ${res.status} ${await res.text()}`);
+  }
   const xml = await res.text();
   const entries: VideoEntry[] = [];
 
@@ -89,11 +136,17 @@ function decodeXmlEntities(value: string): string {
     .replace(/&#39;/g, "'");
 }
 
-async function fetchExistingVideoUrls(
+// Tách theo trạng thái publish, không gộp làm một. `createVideoPost` tạo entry
+// xong mới publish; nếu nửa sau hỏng thì entry vẫn nằm trong CMA dưới dạng
+// draft. Coi draft đó là "đã có" thì lượt chạy sau bỏ qua nó và trả 200 —
+// video không bao giờ lên site mà job vẫn xanh. (CMA trả draft chứ không phải
+// bản đang phục vụ — xem AGENTS.md.)
+async function fetchVideoUrlsByState(
   cmaBase: string,
   authHeaders: Record<string, string>,
-): Promise<Set<string>> {
-  const urls = new Set<string>();
+): Promise<{ published: Set<string>; unpublished: Set<string> }> {
+  const published = new Set<string>();
+  const unpublished = new Set<string>();
   let skip = 0;
   const limit = 100;
 
@@ -102,16 +155,24 @@ async function fetchExistingVideoUrls(
       `${cmaBase}/entries?content_type=blogPost&fields.type=video&skip=${skip}&limit=${limit}`,
       { headers: authHeaders, cache: "no-store" },
     );
+    // Lượt gọi này hỏng mà nuốt đi thì set trả về rỗng, và `data.total ?? 0`
+    // cho 0 nên vòng lặp thoát ngay: mọi video thành "chưa có" và route đi
+    // tạo lại tất cả.
+    if (!res.ok) {
+      throw new Error(`contentful list failed: ${res.status} ${await res.text()}`);
+    }
     const data = await res.json();
     for (const item of data.items ?? []) {
       const url = item.fields?.videoUrl?.[LOCALE];
-      if (url) urls.add(url);
+      if (!url) continue;
+      if (item.sys?.publishedVersion) published.add(url);
+      else unpublished.add(url);
     }
     skip += limit;
     if (skip >= (data.total ?? 0)) break;
   }
 
-  return urls;
+  return { published, unpublished };
 }
 
 function slugify(title: string): string {

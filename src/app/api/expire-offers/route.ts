@@ -4,6 +4,7 @@ import { fetchFinlyWealthOffer, finlyWealthRebateUrl } from "@/lib/finlywealth";
 import { isRewriteConfigured, rewriteOfferCopy } from "@/lib/rewrite-offer";
 import { jobSecretValid } from "@/lib/job-auth";
 import { hasExpired } from "@/lib/format-date";
+import { fetchContentfulCreditCardOffers } from "@/lib/content/contentful";
 
 // Called on a schedule (see .github/workflows/expire-offers.yml) to deal with
 // entries whose expiresAt has passed.
@@ -56,6 +57,19 @@ async function handleExpire(request: NextRequest) {
   const nowIso = new Date().toISOString();
   const expiredQuery = `&fields.expiresAt[lte]=${encodeURIComponent(nowIso)}`;
 
+  // Truy vấn trên chỉ nhìn thấy DRAFT. `updateEntry` ghi draft xong mới publish,
+  // nên một lần publish hỏng để lại draft đã gỡ `expiresAt` trong khi site vẫn
+  // phục vụ offer hết hạn — và vì draft không còn khớp `expiresAt[lte]`, mọi
+  // lượt sau bỏ qua nó vĩnh viễn. Trả 500 không cứu được: `--retry` trong
+  // workflow chỉ cần chạy lại một lượt là lượt đó trả 200 và job xanh trong khi
+  // offer hết hạn vẫn nằm trên site. Nên mốc quyết định phải là bản ĐÃ PUBLISH,
+  // thứ người đọc thật sự nhìn thấy — cùng cách check-rebates đã phải sửa.
+  const liveExpiredSlugs = new Set(
+    (await fetchContentfulCreditCardOffers())
+      .filter((offer) => offer.expiresAt && hasExpired(offer.expiresAt))
+      .map((offer) => offer.slug),
+  );
+
   const movedToOther: string[] = [];
   const bonusRewritten: string[] = [];
   const needsReview: { slug: string; reason: string }[] = [];
@@ -63,10 +77,17 @@ async function handleExpire(request: NextRequest) {
   const errors: { slug: string; message: string }[] = [];
 
   const cards = await listEntries(client, CARD_TYPE, expiredQuery);
+  const consideredSlugs = new Set<string>();
   for (const card of cards) {
     const slug = field<string>(card, "slug") ?? card.sys.id;
     const expiresAt = field<string>(card, "expiresAt");
     if (expiresAt && !hasExpired(expiresAt)) continue;
+    // Đánh dấu SAU khi qua `hasExpired`, không phải lúc lấy ra khỏi truy vấn.
+    // Truy vấn so mốc thời gian còn `hasExpired` so theo ngày Toronto, nên một
+    // draft gia hạn tới `00:00` hôm nay vẫn lọt vào truy vấn rồi bị bỏ qua ở
+    // dòng trên. Đánh dấu sớm thì thẻ đó coi như đã xử lý và phần đối chiếu
+    // bên dưới im lặng, trong khi bản published vẫn treo offer hết hạn.
+    consideredSlugs.add(slug);
 
     try {
       const changes: Record<string, unknown> = { elevatedBonus: false, expiresAt: undefined };
@@ -114,6 +135,22 @@ async function handleExpire(request: NextRequest) {
     }
   }
 
+  // Thẻ mà bản published vẫn treo hạn đã qua, nhưng draft không còn `expiresAt`
+  // nên không lọt vào truy vấn ở trên. Hai nguyên nhân cho cùng một hình dạng:
+  // một lượt publish hỏng ở lần chạy trước, hoặc tác giả đang sửa dở và đã gỡ
+  // hạn trong bản nháp. Không phân biệt được hai cái, mà `updateEntry` publish
+  // CẢ entry — tự sửa ở đây là đẩy bản nháp người khác đang viết lên site. Nên
+  // chỉ báo. Vì mốc so là bản published, lỗi này còn nguyên ở mọi lượt sau cho
+  // tới khi có người xử lý: `--retry` của workflow không rửa nó thành xanh được.
+  for (const slug of liveExpiredSlugs) {
+    if (consideredSlugs.has(slug)) continue;
+    errors.push({
+      slug,
+      message:
+        "site vẫn phục vụ offer đã hết hạn nhưng draft không còn expiresAt — job không tự publish, kiểm rồi publish tay trong Contentful",
+    });
+  }
+
   const bonuses = await listEntries(client, BONUS_TYPE, expiredQuery);
   for (const bonus of bonuses) {
     const slug = field<string>(bonus, "slug") ?? bonus.sys.id;
@@ -130,14 +167,22 @@ async function handleExpire(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({
-    checked: cards.length + bonuses.length,
-    movedToOther,
-    bonusRewritten,
-    needsReview,
-    unpublished,
-    errors,
-  });
+  // Như check-rebates: workflow chỉ đọc HTTP status, nên một offer hết hạn gỡ
+  // không thành công phải làm job đỏ. Trả 200 kèm errors[] là để offer đã hết
+  // hạn nằm lại trên site mà không ai biết.
+  const status = errors.length > 0 ? 500 : 200;
+  if (errors.length > 0) console.error("[expire-offers] lỗi:", errors);
+  return NextResponse.json(
+    {
+      checked: cards.length + bonuses.length,
+      movedToOther,
+      bonusRewritten,
+      needsReview,
+      unpublished,
+      errors,
+    },
+    { status },
+  );
 }
 
 async function unpublish(client: CmaClient, entry: CmaEntry): Promise<void> {
