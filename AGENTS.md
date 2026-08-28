@@ -44,6 +44,24 @@ mỗi lần, không nhớ gì giữa các phiên). Ghi lại để không phải
   trong im lặng.** Đây là đánh đổi có chủ ý (Contentful không có trường này),
   không phải lỗi cần báo lại mỗi lần.
 
+- **Bảng Aeroplan có HAI cột không thay thế được cho nhau.** "All other
+  partners" là giá cố định và KHÔNG có dòng Premium Economy; "Air Canada and/or
+  Select Partners" (United, Emirates, Flydubai, Etihad, Canadian North, Calm
+  Air, Bearskin, PAL) mới là cột dynamic có sàn `startingAt`. `bandRate` chỉ đọc
+  sàn khi MỌI hãng trên hành trình nằm trong `pricing.startingAtCarriers`. EVA,
+  ANA, Air China, Asiana không nằm trong đó, nên Premium Economy của họ là "—"
+  chứ không phải "từ 60,000" — đừng "sửa" cái dấu gạch đó thành số.
+- **Override trong `award-charts.ts` phải mang `rates` nếu `tone: "highlight"`.**
+  Note khẳng định bảng công bố sai, nên thiếu `rates` là note nói một đằng giá
+  hiện một nẻo (YYZ→TPE từng in "chỉ 50,000" ngay trên một quote 65,000).
+  `audit:awards` giờ bắt ca này. Override cũng cần `hub` nếu lý do giảm giá gắn
+  với một hãng cụ thể, không thì nó đắp giá sang cả chặng nối của hãng khác.
+- **`expiresAt` được đọc là NGÀY CUỐI CÙNG còn hiệu lực**, so bằng
+  `hasExpired()` trong `lib/format-date.ts` theo ngày giờ Toronto — không so mốc
+  thời gian. Dữ liệu đang lẫn hai kiểu lưu (`00:00` đầu ngày ở 14/15 entry,
+  `23:59` cuối ngày ở 1 entry); so theo ngày làm cả hai hành xử đúng như dòng
+  chữ người đọc nhìn thấy. Đừng đổi lại thành `[lte]=now`.
+
 ## Quyết định có chủ ý — đừng báo là lỗi
 
 - **`api/check-rebates` trả 500 khi có bất kỳ thẻ nào lỗi**, kể cả một thẻ hỏng
@@ -60,6 +78,11 @@ mỗi lần, không nhớ gì giữa các phiên). Ghi lại để không phải
   entry bị unpublish giữa hai lượt lấy, còn `sys.createdAt[lte]` thì kẹt cứng
   khi 100 entry trùng mốc thời gian. Con trỏ mờ cũng cho phép trả `order` về
   cho Contentful, nên không phải sắp lại thứ tự trong JS.
+- **`/transfer-bonuses` lọc bonus hết hạn ngay lúc render**, dù job
+  `expire-offers` cũng gỡ chúng. Hai lớp là cố ý: job chạy ngày một lần, còn
+  trang là lưới an toàn cho khoảng giữa. Trang là ISR `revalidate = 60`, nên
+  ngay sau nửa đêm Toronto một lượt truy cập vẫn có thể nhận HTML của ngày hôm
+  trước — chấp nhận, đổi lấy việc trang vẫn tĩnh.
 - **Trang chưa công bố dùng cờ trong `lib/feature-flags.ts`** — vẫn build và vào
   được bằng URL trực tiếp, nhưng ẩn khỏi menu, footer, sitemap, search, kèm
   `noindex` và dải báo nháp. Cờ được áp ở cả 7 chỗ; đã kiểm.

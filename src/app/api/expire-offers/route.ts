@@ -3,6 +3,7 @@ import { cmaClient, field, listEntries, updateEntry, type CmaEntry, type CmaClie
 import { fetchFinlyWealthOffer, finlyWealthRebateUrl } from "@/lib/finlywealth";
 import { isRewriteConfigured, rewriteOfferCopy } from "@/lib/rewrite-offer";
 import { jobSecretValid } from "@/lib/job-auth";
+import { hasExpired } from "@/lib/format-date";
 
 // Called on a schedule (see .github/workflows/expire-offers.yml) to deal with
 // entries whose expiresAt has passed.
@@ -45,6 +46,13 @@ async function handleExpire(request: NextRequest) {
   }
 
   const client = cmaClient(spaceId, managementToken);
+
+  // Truy vấn thô lấy dư một chút; `hasExpired` mới là chỗ quyết định. Riêng
+  // `[lte]=now` là không đủ đúng: 14/15 entry lưu mốc `00:00` đầu ngày, nên
+  // ngay 00:00 của chính cái ngày mà trang bảo "còn hạn", entry đã lọt vào
+  // truy vấn và bị gỡ — người đọc mất trọn ngày cuối họ được hứa. `hasExpired`
+  // so theo NGÀY (giờ Toronto), nên cả mốc `00:00` lẫn `23:59` đều sống đúng
+  // hết ngày ghi trên màn hình.
   const nowIso = new Date().toISOString();
   const expiredQuery = `&fields.expiresAt[lte]=${encodeURIComponent(nowIso)}`;
 
@@ -57,6 +65,9 @@ async function handleExpire(request: NextRequest) {
   const cards = await listEntries(client, CARD_TYPE, expiredQuery);
   for (const card of cards) {
     const slug = field<string>(card, "slug") ?? card.sys.id;
+    const expiresAt = field<string>(card, "expiresAt");
+    if (expiresAt && !hasExpired(expiresAt)) continue;
+
     try {
       const changes: Record<string, unknown> = { elevatedBonus: false, expiresAt: undefined };
       let rewrote = false;
@@ -107,6 +118,10 @@ async function handleExpire(request: NextRequest) {
   for (const bonus of bonuses) {
     const slug = field<string>(bonus, "slug") ?? bonus.sys.id;
     if (!bonus.sys.publishedVersion) continue;
+
+    const bonusExpiresAt = field<string>(bonus, "expiresAt");
+    if (bonusExpiresAt && !hasExpired(bonusExpiresAt)) continue;
+
     try {
       await unpublish(client, bonus);
       unpublished.push(slug);

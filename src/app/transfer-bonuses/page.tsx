@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ArrowRight } from "@phosphor-icons/react/ssr";
 import { getTransferBonuses } from "@/lib/content";
 import { EDITORIAL_REL, relForUrl } from "@/lib/affiliate-links";
-import { formatDate } from "@/lib/format-date";
+import { formatDate, hasExpired } from "@/lib/format-date";
 import { PageHeader } from "@/components/layout/page-header";
 import { t } from "@/lib/t";
 import { pageMetadata } from "@/lib/seo";
@@ -21,7 +21,14 @@ export const metadata: Metadata = pageMetadata({
 export const revalidate = 60;
 
 export default async function TransferBonusesPage() {
-  const bonuses = await getTransferBonuses();
+  const published = await getTransferBonuses();
+
+  // Lưới an toàn cho job `expire-offers`: nó gỡ bonus hết hạn mỗi ngày một
+  // lần, nên giữa hai lần chạy — hoặc khi nó hỏng — bonus đã chết vẫn nằm
+  // trong Contentful. Danh sách sắp theo `expiresAt` tăng dần, nên cái chết
+  // trước lại đứng ĐẦU trang: không lọc thì thứ người đọc thấy trước tiên là
+  // một offer bấm vào không dùng được nữa.
+  const bonuses = published.filter((bonus) => !hasExpired(bonus.expiresAt));
 
   return (
     <>
@@ -29,6 +36,14 @@ export default async function TransferBonusesPage() {
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-page overflow-hidden rounded-2xl border border-border">
+          {/* Hết bonus thì trước đây trang vẽ một khung viền rỗng không chữ
+              nào — người đọc không biết là chưa có bonus hay trang hỏng. */}
+          {bonuses.length === 0 && (
+            <p className="px-5 py-8 text-center text-sm text-muted-foreground">
+              {bonuses_t("empty")}
+            </p>
+          )}
+
           {bonuses.map((bonus, i) => (
             <a
               key={bonus.slug}

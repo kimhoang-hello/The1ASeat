@@ -2,6 +2,7 @@
 
 import { Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
+import { formatDate } from "@/lib/format-date";
 import { ArrowRight, Info, WarningCircle } from "@phosphor-icons/react";
 import { t as translate } from "@/lib/t";
 import { TRANSFER_PARTNERS } from "@/lib/transfer-partners";
@@ -371,9 +372,16 @@ function Finder() {
 
   // replaceState is the documented way to shallow-route in the App Router; it
   // feeds back into useSearchParams, which is what re-renders this component.
+  // Sửa tham số trên URL hiện có thay vì dựng lại query từ đầu: dựng lại sẽ xoá
+  // `utm_*` của chiến dịch dẫn người đọc tới đây, ngay lần đầu họ đổi điểm đến.
+  // Cùng lý do và cùng cách làm như `bank-account-finder`.
   function update(patch: Partial<Selection>) {
     const next = { ...selection, ...patch };
-    window.history.replaceState(null, "", `?${new URLSearchParams(next).toString()}`);
+    const params = new URLSearchParams(searchParams);
+    params.set("origin", next.origin);
+    params.set("destination", next.destination);
+    params.set("cabin", next.cabin);
+    window.history.replaceState(null, "", `?${params.toString()}`);
   }
 
   const originAirport = ORIGINS.find((a) => a.code === origin)!;
@@ -386,7 +394,13 @@ function Finder() {
 
   const cheapest = quotes.find((q) => q.points !== null)?.points ?? null;
   const cabinLabel = t(CABINS.find((c) => c.id === cabin)!.labelKey);
-  const verifiedOn = PROGRAMS.map((p) => p.verifiedOn).sort().at(-1)!;
+  // Ngày CŨ NHẤT, không phải mới nhất. `.at(-1)` sau `.sort()` lấy ngày tươi
+  // nhất trong sáu chương trình, nên trang tuyên bố "Số liệu kiểm tra ngày
+  // 23/08" trong khi năm chương trình còn lại lần cuối kiểm là 09/08 — hai
+  // tuần trước. Trên một trang award chart thì dữ liệu cũ chính là kiểu hỏng
+  // đáng sợ nhất, nên con số trung thực là cái cũ nhất: nó đúng cho mọi dòng
+  // bên dưới, còn ngày mới nhất chỉ đúng cho một dòng.
+  const verifiedOn = PROGRAMS.map((p) => p.verifiedOn).sort()[0];
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -468,7 +482,7 @@ function Finder() {
           ))}
         </ul>
 
-        <p className="mt-4 text-xs text-muted-foreground">{t("verifiedOn", { date: verifiedOn })}</p>
+        <p className="mt-4 text-xs text-muted-foreground">{t("verifiedOn", { date: formatDate(verifiedOn) })}</p>
 
         <div className="mt-6 flex gap-3 rounded-xl border border-border bg-secondary p-4">
           <WarningCircle size={20} weight="fill" className="mt-0.5 shrink-0 text-[#a3352b]" aria-hidden />

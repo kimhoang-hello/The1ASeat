@@ -15,10 +15,29 @@ const t = translate("calculator");
  * Phần còn lại vẫn lọc: người đọc dán "3,500" hay "60,000 điểm" vào ô này là
  * chuyện thường, và bỏ dấu phẩy ngăn nghìn là đúng ý họ.
  */
-function parseNumber(value: string): number {
-  const negative = value.trimStart().startsWith("-");
-  const n = Number(value.replace(/[^0-9.]/g, ""));
-  if (!Number.isFinite(n)) return 0;
+/** "60.000" là sáu mươi nghìn theo cách viết quen thuộc ở Việt Nam, không phải
+ *  sáu mươi. Chỉ nhận dạng khi các dấu chấm chia chuỗi thành đúng từng nhóm ba
+ *  chữ số — "3.5" vẫn là ba phẩy năm, vì không ai viết giá $3.50 thành "3.500". */
+const VI_THOUSANDS = /^\d{1,3}(\.\d{3})+$/;
+
+/**
+ * `null` là "không đọc được", khác với 0. Ô trống vẫn là 0 — bỏ trống ô thuế
+ * nghĩa là không có thuế, đó là ý người dùng. Nhưng gõ "abc" mà trả 0 thì máy
+ * lặng lẽ tính như thể thuế bằng 0 và in ra 5.8¢: một con số trông hoàn toàn
+ * bình thường, dựng trên một ô người dùng biết là mình gõ sai.
+ */
+function parseNumber(value: string): number | null {
+  const trimmed = value.trim();
+  if (trimmed === "") return 0;
+
+  const negative = trimmed.startsWith("-");
+  let digits = trimmed.replace(/[^0-9.]/g, "");
+  if (VI_THOUSANDS.test(digits)) digits = digits.replace(/\./g, "");
+
+  if (!/\d/.test(digits)) return null;
+
+  const n = Number(digits);
+  if (!Number.isFinite(n)) return null;
   return negative ? -n : n;
 }
 
@@ -32,11 +51,20 @@ export function PointsCalculator() {
   const [cashPrice, setCashPrice] = useState("3500");
   const [taxes, setTaxes] = useState("300");
 
+  /**
+   * `null` nghĩa là không tính được, khác hẳn với 0. Trước đây mọi trạng thái
+   * không hợp lệ đều ra "0.0¢" — một con số trông như đã tính xong.
+   *
+   * Số âm ở hai ô tiền cũng bị chặn ở đây. Trước đó chỉ ô điểm được chặn, nên
+   * gõ thuế "-300" cho `3500 - (-300)` và ra 6.3¢ thay vì 5.3¢: một con số cao
+   * hơn sự thật, trông hoàn toàn bình thường.
+   */
   const valuePerPoint = useMemo(() => {
     const p = parseNumber(points);
     const cash = parseNumber(cashPrice);
     const fees = parseNumber(taxes);
-    if (p <= 0) return 0;
+    if (p === null || cash === null || fees === null) return null;
+    if (p <= 0 || cash < 0 || fees < 0) return null;
     return Math.max(cash - fees, 0) / p;
   }, [points, cashPrice, taxes]);
 
@@ -71,7 +99,7 @@ export function PointsCalculator() {
           {t("result")}
         </p>
         <p className="mt-1 font-display text-3xl font-extrabold text-primary">
-          {formatCents(valuePerPoint)}¢
+          {valuePerPoint === null ? t("resultUnavailable") : `${formatCents(valuePerPoint)}¢`}
         </p>
       </div>
 

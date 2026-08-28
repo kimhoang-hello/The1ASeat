@@ -308,7 +308,15 @@ type DistanceBand = {
 type PricingModel =
   /** One band lookup on the total distance actually flown, connections
    *  included — so a routing through a hub can tip you into a pricier band. */
-  | { kind: "distance-total"; bands: DistanceBand[]; hubs: HubRoute[] }
+  | {
+      kind: "distance-total";
+      bands: DistanceBand[];
+      hubs: HubRoute[];
+      /** Những hãng mà cột `startingAt` của bảng thật sự áp dụng. Bỏ trống
+       *  nghĩa là bảng chỉ có một cột giá cố định, và một hạng ghế thiếu trong
+       *  `rates` là thiếu thật — không được mượn số của cột khác đắp vào. */
+      startingAtCarriers?: string[];
+    }
   /** Points set by a fixed origin-region → destination-region table. The
    *  routing does not change the price, but it is still shown so the reader
    *  knows which itinerary the quote assumes. */
@@ -397,6 +405,10 @@ export const PROGRAMS: Program[] = [
       // the same trip via Tokyo at ~7,600.
       kind: "distance-total",
       hubs: STAR_ROUTES,
+      // Cột "Air Canada and/or Select Partners" — danh sách lấy từ chính chú
+      // thích đầu file. EVA, ANA, Air China, Asiana... KHÔNG nằm trong đây, nên
+      // họ chỉ được đọc cột cố định.
+      startingAtCarriers: ["AC", "UA", "EK", "FZ", "EY", "5T", "MO", "JV", "PB"],
       // `rates` is the official "All other partners" column: fixed, guaranteed,
       // and with no Premium Economy row at all. `startingAt` is the "Air Canada
       // and/or Select Partners" column, which is dynamic and only publishes a
@@ -448,7 +460,23 @@ export const PROGRAMS: Program[] = [
       // Aeroplan prices Toronto–Taipei well below what the distance band
       // implies; EVA sells it as a short-haul-style redemption in practice.
       // This one genuinely contradicts the published chart, so it is flagged.
-      { origins: ["YYZ"], destinations: ["TPE"], noteKey: "noteAeroplanYyzTpe", tone: "highlight" },
+      // `rates` phải khớp đúng con số trong `noteAeroplanYyzTpe`. Thiếu nó thì
+      // note nói 50,000/85,000 còn bảng giá bên cạnh vẫn hiện 65,000/102,500
+      // theo band khoảng cách — cùng một thẻ tự cãi nhau về tiền, ngay trước
+      // mắt người đọc. `premium` để trống có chủ ý: note không nêu con số nào
+      // cho hạng đó, và EVA không nằm trong cột "Select Partners" (xem dưới).
+      // `hub` bắt buộc: lý do giảm giá là đặc thù EVA bay thẳng, nên không có
+      // nó thì 50,000 đắp luôn sang chặng nối qua Seoul (Asiana) và qua
+      // Thượng Hải / Bắc Kinh (Air China) — ba con số bịa cho ba hành trình
+      // chẳng liên quan gì tới lý do được ghi ngay bên trên.
+      {
+        origins: ["YYZ"],
+        destinations: ["TPE"],
+        hub: "TPE",
+        rates: { economy: 50000, business: 85000 },
+        noteKey: "noteAeroplanYyzTpe",
+        tone: "highlight",
+      },
     ],
     transferPartnerKey: "Air Canada® Aeroplan®",
     noteKey: "noteAeroplan",
@@ -573,10 +601,28 @@ export const PROGRAMS: Program[] = [
 
 type Priced = { points: number | null; startingAt: boolean };
 
-function bandRate(bands: DistanceBand[], miles: number, cabin: Cabin): Priced {
+/**
+ * Hai cột của bảng Aeroplan không thay thế được cho nhau, và `startingAt` chỉ
+ * thuộc về cột "Air Canada and/or Select Partners" (danh sách ở đầu file).
+ * Không có điều kiện này thì mọi routing đều rơi xuống sàn của cột đó khi cột
+ * cố định thiếu hạng ghế: cụ thể là Premium Economy, hạng mà cột "All other
+ * partners" KHÔNG hề có dòng nào. Hậu quả đo được: 584 lựa chọn bay bằng EVA,
+ * ANA, Air China, Asiana... hiện "từ 60,000" — một con số của bảng giá khác,
+ * không áp cho chính chuyến bay đang đứng cạnh nó.
+ *
+ * Đúng cái lỗi mà chú thích đầu file nói việc tách hai cột sinh ra để chặn;
+ * chỉ là phép tách chưa bao giờ được nối với hãng khai thác.
+ */
+function bandRate(
+  bands: DistanceBand[],
+  miles: number,
+  cabin: Cabin,
+  allowStartingAt: boolean,
+): Priced {
   const band = bands.find((b) => miles <= b.upTo);
   const fixed = band?.rates[cabin];
   if (fixed !== undefined) return { points: fixed, startingAt: false };
+  if (!allowStartingAt) return { points: null, startingAt: false };
   const floor = band?.startingAt?.[cabin];
   if (floor !== undefined) return { points: floor, startingAt: true };
   return { points: null, startingAt: false };
@@ -629,7 +675,7 @@ type Policy = {
   cabin: Cabin;
   hubs: HubRoute[];
   /** What a set of segment distances costs. */
-  price: (segmentMiles: number[]) => Priced;
+  price: (segmentMiles: number[], carriers: Carrier[]) => Priced;
   /** What the airline publishes about its own dynamic price at a distance. */
   dynamicGuide: (miles: number) => { from?: number; median?: number };
   pricesWithFeeder: boolean;
@@ -648,8 +694,15 @@ function pricingFns(pricing: PricingModel, destination: Airport, cabin: Cabin) {
     }
     case "distance-total": {
       const { bands } = pricing;
+      const startingAtCarriers = pricing.startingAtCarriers ?? [];
       return {
-        price: (legs: number[]) => bandRate(bands, sum(legs), cabin),
+        price: (legs: number[], carriers: Carrier[]) =>
+          bandRate(
+            bands,
+            sum(legs),
+            cabin,
+            carriers.length > 0 && carriers.every((c) => startingAtCarriers.includes(c.code)),
+          ),
         dynamicGuide: (miles: number) => {
           const band = bands.find((b) => miles <= b.upTo);
           return { from: band?.startingAt?.[cabin], median: band?.median?.[cabin] };
@@ -757,7 +810,7 @@ function routingOptions(origin: Airport, destination: Airport, p: Policy): Routi
     );
     const priced = override?.rates
       ? { points: override.rates[p.cabin] ?? null, startingAt: false }
-      : p.price(legs);
+      : p.price(legs, carriers);
 
     // Two reasons a chart figure stops describing what you would be charged:
     // a domestic feeder in the ticket (everywhere but Aeroplan), or an

@@ -43,6 +43,14 @@ for (const c of CABINS) if (!(c.labelKey in ns)) fails.push(`missing cabin key $
 for (const p2 of PROGRAMS) for (const o of p2.overrides ?? [])
   if (o.noteKey && !(o.noteKey in ns)) fails.push(`${p2.id}: missing override noteKey ${o.noteKey}`);
 
+// 3b. an override flagged `highlight` is claiming the published chart is wrong,
+// so it has to carry the corrected `rates` too. Without them the note tells the
+// reader one number while the price beside it still shows the chart's — which
+// is exactly what YYZ-TPE did: "chỉ 50,000 điểm" printed above a 65,000 quote.
+for (const p2 of PROGRAMS) for (const o of p2.overrides ?? [])
+  if (o.tone === "highlight" && Object.keys(o.rates ?? {}).length === 0)
+    fails.push(`${p2.id}: override ${o.origins.join("/")}->${o.destinations.join("/")} is tone:"highlight" but has no rates, so the note contradicts the price shown`);
+
 // 4. unused message keys
 const used = new Set([...literal, ...PROGRAMS.map(p => p.noteKey), ...PROGRAMS.flatMap(p => p.transferNoteKey ? [p.transferNoteKey] : []),
   ...PROGRAMS.flatMap(p => p.pricing.kind === "unquotable" ? [p.pricing.labelKey, p.pricing.hintKey] : []),
