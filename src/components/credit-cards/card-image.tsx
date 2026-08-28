@@ -1,6 +1,6 @@
 import Image from "next/image";
-import { MediaPlaceholder } from "@/components/ui/media-placeholder";
-import { AFFILIATE_REL } from "@/lib/affiliate-links";
+import { MediaPlaceholder, isPlaceholderIcon } from "@/components/ui/media-placeholder";
+import { AFFILIATE_REL, PLAIN_REL, isReferralUrl } from "@/lib/affiliate-links";
 
 export function CardImage({
   image,
@@ -14,6 +14,10 @@ export function CardImage({
   // default is the width a card's own page paints.
   sizes = "320px",
   priority = false,
+  // Thẻ nào chưa có ảnh thật thì Contentful đã cho chọn sẵn một biểu tượng ở
+  // trường `image` — trước đây giá trị đó không được đọc tới, nên thẻ đặt
+  // "airplane" vẫn ra hình thẻ tín dụng như mọi thẻ khác.
+  placeholderIcon,
 }: {
   image: string;
   name: string;
@@ -22,6 +26,7 @@ export function CardImage({
   applyUrl?: string;
   sizes?: string;
   priority?: boolean;
+  placeholderIcon?: string;
 }) {
   return (
     <div className={`relative ${className}`}>
@@ -37,7 +42,11 @@ export function CardImage({
           />
         </div>
       ) : (
-        <MediaPlaceholder icon="credit-card" tone="tan" className="absolute inset-0 rounded-[inherit]" />
+        <MediaPlaceholder
+          icon={placeholderIcon && isPlaceholderIcon(placeholderIcon) ? placeholderIcon : "credit-card"}
+          tone="tan"
+          className="absolute inset-0 rounded-[inherit]"
+        />
       )}
       {badge}
       {applyUrl && (
@@ -48,7 +57,10 @@ export function CardImage({
         <a
           href={applyUrl}
           target="_blank"
-          rel={AFFILIATE_REL}
+          // Cùng luật với ApplyButton ngay bên cạnh: chỉ link thật sự có hoa
+          // hồng mới mang `sponsored`. Hai link phủ lên nhau mà công bố khác
+          // nhau thì ít nhất một cái đang nói sai.
+          rel={isReferralUrl(applyUrl) ? AFFILIATE_REL : PLAIN_REL}
           aria-hidden="true"
           tabIndex={-1}
           className="absolute inset-0 z-10 cursor-pointer rounded-[inherit]"

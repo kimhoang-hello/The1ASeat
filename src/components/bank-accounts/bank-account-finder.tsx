@@ -403,6 +403,24 @@ function FinderView({
   // vừa đổi. Coi như "tất cả" thay vì hiện danh sách rỗng — cùng cách trang
   // thẻ tín dụng xử lý một ?points= không còn tài khoản nào.
   const activeBank = availableBanks.some((b) => b.id === bank) ? bank : "all";
+
+  // `selection.bank` có thể trỏ tới một ngân hàng vừa rơi khỏi hàng chip vì bộ
+  // lọc nhanh; `activeBank` là cái người đọc đang thật sự thấy. Ghi cái họ
+  // thấy vào URL — nếu ghi giá trị thô thì chọn Scotiabank®, lọc "newcomer"
+  // (Scotiabank® không có tài khoản nào), rồi gạt bộ lọc về "tất cả" sẽ làm
+  // Scotiabank® sống lại sau lưng họ, dù giao diện vẫn hiện "tất cả ngân hàng".
+  const patch = (next: Partial<Selection>) => {
+    const merged = { ...selection, bank: activeBank, ...next };
+    // Chuẩn hoá theo BỘ LỌC MỚI, không phải bộ lọc cũ: `activeBank` ở trên
+    // tính theo `filter` hiện tại, nên nếu chỉ dựa vào nó thì bấm "newcomer"
+    // lúc đang chọn Scotiabank® sẽ ghi `bank=scotiabank&filter=newcomer` vào
+    // URL trong khi màn hình hiện tất cả ngân hàng — link chia sẻ nói một
+    // đằng, trang hiện một nẻo.
+    const survives = BANK_ACCOUNTS.some(
+      (account) => account.bank === merged.bank && matchesFilter(account, merged.filter),
+    );
+    update(survives ? merged : { ...merged, bank: "all" });
+  };
   const accounts = sortAccounts(
     inFilter.filter((account) => activeBank === "all" || account.bank === activeBank),
     sort,
@@ -415,7 +433,7 @@ function FinderView({
           gì cả, khác với khi hàng này còn là hai nhóm chồng lên nhau. */}
       <div role="radiogroup" aria-label={t("filterLabel")} className="flex flex-wrap gap-2">
         {AVAILABLE_FILTERS.map((f) => (
-          <Chip key={f.id} active={filter === f.id} onClick={() => update({ filter: f.id })}>
+          <Chip key={f.id} active={filter === f.id} onClick={() => patch({ filter: f.id })}>
             {t(f.labelKey)}
           </Chip>
         ))}
@@ -444,7 +462,7 @@ function FinderView({
           <FilterChip
             active={activeBank === "all"}
             count={inFilter.length}
-            onClick={() => update({ bank: "all" })}
+            onClick={() => patch({ bank: "all" })}
           >
             {t("bankAll")}
           </FilterChip>
@@ -453,7 +471,7 @@ function FinderView({
               key={b.id}
               active={activeBank === b.id}
               count={b.count}
-              onClick={() => update({ bank: b.id })}
+              onClick={() => patch({ bank: b.id })}
             >
               {b.name}
             </FilterChip>
@@ -465,7 +483,7 @@ function FinderView({
         <Field
           label={t("sortLabel")}
           value={sort}
-          onChange={(value) => update({ sort: value as SortId })}
+          onChange={(value) => patch({ sort: value as SortId })}
         >
           {SORT_OPTIONS.map((option) => (
             <option key={option.id} value={option.id}>

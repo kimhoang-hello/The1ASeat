@@ -9,6 +9,7 @@ import { EditorsTake } from "@/components/credit-cards/editors-take";
 import { OfferStats } from "@/components/credit-cards/offer-stats";
 import { RebateChip } from "@/components/ui/hot-tip";
 import { ApplyButton } from "@/components/ui/apply-button";
+import { isReferralUrl } from "@/lib/affiliate-links";
 
 const t = translate("offers");
 
@@ -53,6 +54,7 @@ export async function OffersSection() {
               <CardImage
                 image={offer.cardImage}
                 name={offer.name}
+                placeholderIcon={offer.image}
                 badge={
                   offer.rebate && (
                     <RebateChip
@@ -99,7 +101,7 @@ export async function OffersSection() {
                 </details>
 
                 <div className="mt-auto pt-4">
-                  <ApplyButton href={offer.applyUrl} />
+                  <ApplyButton href={offer.applyUrl} affiliate={isReferralUrl(offer.applyUrl)} />
                 </div>
               </div>
             </article>

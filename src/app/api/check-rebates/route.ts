@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cmaClient, field, listEntries, updateEntry } from "@/lib/contentful-cma";
+import { fetchContentfulCreditCardOffers } from "@/lib/content/contentful";
 import { fetchFinlyWealthRebate, finlyWealthRebateUrl } from "@/lib/finlywealth";
 import { jobSecretValid } from "@/lib/job-auth";
 
@@ -39,6 +40,15 @@ async function handleCheck(request: NextRequest) {
   const client = cmaClient(spaceId, managementToken);
   const entries = await listEntries(client, CONTENT_TYPE);
 
+  // Đối chiếu với bản ĐÃ PUBLISH, không phải draft trong CMA. `listEntries`
+  // trả draft, mà `updateEntry` ghi draft xong mới publish — nên một lần
+  // publish hỏng để lại draft mang số mới trong khi site vẫn phục vụ số cũ, và
+  // mọi lần chạy sau đó đều thấy "không đổi" rồi bỏ qua vĩnh viễn. Bản published
+  // là thứ người đọc thật sự nhìn thấy, nên nó mới là mốc so.
+  const published = new Map(
+    (await fetchContentfulCreditCardOffers()).map((offer) => [offer.slug, offer.rebate ?? null]),
+  );
+
   const updated: Change[] = [];
   const unchanged: string[] = [];
   const errors: { slug: string; message: string }[] = [];
@@ -54,22 +64,43 @@ async function handleCheck(request: NextRequest) {
     // own referral, have no rebate to keep in sync.
     if (!rebateUrl) continue;
 
+    // Thẻ chưa publish bao giờ thì không nằm trên site, không có gì để giữ cho
+    // khớp — và `updateEntry` cũng cố ý không publish giúp nó.
+    if (!published.has(slug)) continue;
+
     checked += 1;
     try {
       const current = await fetchFinlyWealthRebate(rebateUrl);
-      const stored = field<string>(entry, "rebateVi") ?? null;
+      const live = published.get(slug) ?? null;
 
-      if (stored === current) {
+      if (live === current) {
         unchanged.push(slug);
         continue;
       }
 
+      // Site đang lệch, nhưng entry có thay đổi chưa publish: có thể là bản
+      // nháp tác giả đang viết dở, và `updateEntry` publish cả entry chứ không
+      // publish riêng một trường. Báo để người sửa, tuyệt đối không tự đẩy bản
+      // nháp của người khác lên site.
+      if (entry.sys.publishedVersion && entry.sys.version > entry.sys.publishedVersion + 1) {
+        errors.push({
+          slug,
+          message: `site đang hiện ${live ?? "(trống)"} còn FinlyWealth trả ${current}, nhưng entry có thay đổi chưa publish — job không tự ghi, publish tay trong Contentful`,
+        });
+        continue;
+      }
+
       await updateEntry(client, entry, CONTENT_TYPE, { rebateVi: current });
-      updated.push({ slug, from: stored, to: current });
+      updated.push({ slug, from: live, to: current });
     } catch (err) {
       errors.push({ slug, message: err instanceof Error ? err.message : String(err) });
     }
   }
 
-  return NextResponse.json({ checked, updated, unchanged, errors });
+  // Gom lỗi vào body rồi vẫn trả 200 nghĩa là `curl -sfS` trong workflow thấy
+  // xanh: FinlyWealth đổi markup hay timeout thì con số rebate cũ nằm lại trên
+  // site vô thời hạn, không ai được báo. Gọi lại an toàn — route đối chiếu với
+  // Contentful trước khi ghi, và workflow đã có sẵn `--retry 3`.
+  const status = errors.length > 0 ? 500 : 200;
+  return NextResponse.json({ checked, updated, unchanged, errors }, { status });
 }

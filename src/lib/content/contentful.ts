@@ -1,5 +1,5 @@
 import { createClient, EntryFieldTypes } from "contentful";
-import type { Asset, Entry } from "contentful";
+import type { Asset, Entry, EntrySkeletonType } from "contentful";
 import { documentToHtmlString, type Options } from "@contentful/rich-text-html-renderer";
 import { INLINES, type Document } from "@contentful/rich-text-types";
 import { relForUrl } from "@/lib/affiliate-links";
@@ -189,19 +189,62 @@ function toAuthor(entry: Entry<AuthorSkeleton, undefined>): AuthorProfile {
   };
 }
 
-export async function fetchContentfulPosts(): Promise<BlogPost[]> {
-  const res = await client!.getEntries<PostSkeleton>({ content_type: "blogPost", order: ["-fields.publishedAt"] });
-  return res.items.map(toPost);
+/**
+ * Contentful trả tối đa 100 entry mỗi lần và không nói gì khi còn nữa: quá 100
+ * thẻ thì những thẻ sau đơn giản biến mất khỏi danh sách lẫn khỏi
+ * `generateStaticParams`, và trang riêng của chúng trả 404 — không lỗi, không
+ * cảnh báo. Lấy đủ mọi trang thay vì tin vào mặc định.
+ *
+ * Giới hạn đã biết, chấp nhận: phân trang theo `skip` nên bất cứ thay đổi nào
+ * xảy ra giữa hai lượt lấy — publish thêm, unpublish bớt, hay sửa chính trường
+ * dùng để sắp thứ tự — đều làm các entry dịch chỗ và một vài cái có thể bị
+ * nhảy qua hoặc lấy hai lần. Chỉ xảy ra khi vượt 100 entry một content
+ * type — hiện là 23 thẻ, tức vòng lặp chạy đúng một lượt — và lần chạy sau
+ * (hoặc webhook publish) tự sửa lại. Chữa triệt để phải dùng con trỏ theo
+ * `sys.createdAt`, không đáng đổi lấy độ phức tạp đó lúc này.
+ */
+const PAGE_SIZE = 100;
+
+async function getAllEntries<S extends EntrySkeletonType>(
+  query: Record<string, unknown>,
+): Promise<Entry<S, undefined, string>[]> {
+  const items: Entry<S, undefined, string>[] = [];
+
+  for (let skip = 0; ; skip += PAGE_SIZE) {
+    const res = await client!.getEntries<S>({ ...query, skip, limit: PAGE_SIZE });
+    items.push(...res.items);
+    if (items.length >= res.total || res.items.length === 0) return items;
+  }
 }
 
+export async function fetchContentfulPosts(): Promise<BlogPost[]> {
+  const items = await getAllEntries<PostSkeleton>({
+    content_type: "blogPost",
+    order: ["-fields.publishedAt"],
+  });
+  return items.map(toPost);
+}
+
+/**
+ * `order` chứ không để Contentful tự quyết: không có nó thì thứ tự thẻ đổi mỗi
+ * lần sửa một entry, kéo theo `position` trong ItemList JSON-LD xáo giữa các
+ * lần Google crawl trong khi nội dung không đổi. Thẻ mới nhất lên đầu — content
+ * model không có trường thứ tự nên đây là thứ gần nhất với ý định biên tập.
+ */
 export async function fetchContentfulCreditCardOffers(): Promise<CreditCardOffer[]> {
-  const res = await client!.getEntries<CardSkeleton>({ content_type: "creditCardOffer" });
-  return res.items.map(toCard);
+  const items = await getAllEntries<CardSkeleton>({
+    content_type: "creditCardOffer",
+    order: ["-sys.createdAt"],
+  });
+  return items.map(toCard);
 }
 
 export async function fetchContentfulTransferBonuses(): Promise<TransferBonus[]> {
-  const res = await client!.getEntries<BonusSkeleton>({ content_type: "transferBonus", order: ["fields.expiresAt"] });
-  return res.items.map(toBonus);
+  const items = await getAllEntries<BonusSkeleton>({
+    content_type: "transferBonus",
+    order: ["fields.expiresAt"],
+  });
+  return items.map(toBonus);
 }
 
 export async function fetchContentfulAuthor(): Promise<AuthorProfile | null> {

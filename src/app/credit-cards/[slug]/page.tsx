@@ -9,6 +9,7 @@ import { EditorsTake } from "@/components/credit-cards/editors-take";
 import { OfferStats } from "@/components/credit-cards/offer-stats";
 import { RebateChip } from "@/components/ui/hot-tip";
 import { ApplyButton } from "@/components/ui/apply-button";
+import { isReferralUrl } from "@/lib/affiliate-links";
 import { JsonLd } from "@/components/seo/json-ld";
 import { creditCardJsonLd } from "@/lib/credit-card-schema";
 import { t as translate } from "@/lib/t";
@@ -75,6 +76,7 @@ export default async function CreditCardDetailPage({
       <CardImage
         image={offer.cardImage}
         name={offer.name}
+        placeholderIcon={offer.image}
         badge={
           offer.rebate && (
             <RebateChip
@@ -112,7 +114,7 @@ export default async function CreditCardDetailPage({
         ))}
       </ul>
 
-      <ApplyButton href={offer.applyUrl} className="mt-8" />
+      <ApplyButton href={offer.applyUrl} affiliate={isReferralUrl(offer.applyUrl)} className="mt-8" />
 
       <OfferDisclosure className="mt-8" />
 

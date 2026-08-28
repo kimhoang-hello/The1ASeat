@@ -19,6 +19,17 @@ const icons = {
 
 export type PlaceholderIcon = keyof typeof icons;
 
+/**
+ * Trường `image` của Contentful là Symbol có validation ở phía Contentful, nên
+ * kiểu của nó lúc chạy vẫn chỉ là `string`. Kiểm tra ở đây để một giá trị lạ
+ * rơi về placeholder mặc định thay vì làm cả trang đổ.
+ */
+export function isPlaceholderIcon(value: string): value is PlaceholderIcon {
+  // `in` nhận cả tên kế thừa từ prototype: `icons["constructor"]` trả về một
+  // hàm, và React đem hàm đó đi render là cả trang đổ.
+  return Object.hasOwn(icons, value);
+}
+
 const tones = {
   navy: "bg-primary text-primary-foreground/40",
   tan: "bg-secondary text-foreground/25",

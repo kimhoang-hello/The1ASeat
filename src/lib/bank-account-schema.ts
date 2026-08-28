@@ -10,6 +10,7 @@ import { SITE_URL } from "./subscriber-email";
 import { t } from "./t";
 
 const seo = t("seo");
+const bank_t = t("bankAccounts");
 
 /**
  * Mô tả cho thẻ meta và cho JSON-LD, ghép từ chính số liệu của tài khoản.
@@ -44,6 +45,21 @@ export function bankAccountDescription(account: BankAccount): string {
  * mình. Link ra ngân hàng nằm ở `offers.url`, đúng chỗ mà trang thẻ tín dụng
  * đặt link apply.
  */
+/**
+ * Trang hiện phí hàng tháng làm số lớn, còn `feeWaiverVi` chỉ là điều kiện
+ * miễn bên dưới. Trước đây schema chỉ phát `feeWaiverVi`, nên tài khoản có phí
+ * mà không có điều kiện miễn (KOHO Everything, $14.75/tháng) không nói gì về
+ * phí cả, còn tài khoản có điều kiện miễn thì phát câu văn thay cho con số —
+ * hai kiểu lệch khác nhau giữa dữ liệu máy đọc và dữ liệu người đọc. Ghép cả
+ * hai, đúng thứ tự và đúng chữ mà trang đang hiện.
+ */
+function feesAndCommissions(account: BankAccount): string {
+  const fee =
+    account.monthlyFee === 0 ? bank_t("free") : formatMoney(account.monthlyFee);
+  const monthly = `${bank_t("monthlyFee")}: ${fee}`;
+  return account.feeWaiverVi ? `${monthly} — ${account.feeWaiverVi}` : monthly;
+}
+
 export function bankAccountJsonLd(account: BankAccount) {
   const url = absoluteUrl(bankAccountPath(account.slug));
   const bank = bankById(account.bank);
@@ -56,7 +72,7 @@ export function bankAccountJsonLd(account: BankAccount) {
     description: bankAccountDescription(account),
     url,
     provider: seller,
-    ...(account.feeWaiverVi && { feesAndCommissionsSpecification: account.feeWaiverVi }),
+    feesAndCommissionsSpecification: feesAndCommissions(account),
     ...(account.interestRate !== undefined && { interestRate: account.interestRate }),
     offers: {
       "@type": "Offer",

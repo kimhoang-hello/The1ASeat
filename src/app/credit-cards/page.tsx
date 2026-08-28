@@ -9,6 +9,7 @@ import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { OfferStats } from "@/components/credit-cards/offer-stats";
 import { RebateChip } from "@/components/ui/hot-tip";
 import { ApplyButton } from "@/components/ui/apply-button";
+import { isReferralUrl } from "@/lib/affiliate-links";
 import { JsonLd } from "@/components/seo/json-ld";
 import { PointsProgramLinks } from "@/components/credit-cards/points-program-links";
 import {
@@ -136,6 +137,7 @@ export default async function CreditCardsPage({
               <CardImage
                 image={offer.cardImage}
                 name={offer.name}
+                placeholderIcon={offer.image}
                 badge={
                   offer.rebate && (
                     <RebateChip
@@ -192,7 +194,7 @@ export default async function CreditCardsPage({
                   >
                     {offers_t("editorsTake")} &rarr;
                   </Link>
-                  <ApplyButton href={offer.applyUrl} />
+                  <ApplyButton href={offer.applyUrl} affiliate={isReferralUrl(offer.applyUrl)} />
                 </div>
               </div>
             </article>

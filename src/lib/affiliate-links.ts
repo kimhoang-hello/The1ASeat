@@ -23,16 +23,57 @@ export const EDITORIAL_REL = "noopener noreferrer";
  *
  * Add a host here whenever a new referral arrangement starts.
  */
-const REFERRAL_HOSTS = ["finlywealth.com", "chexy.co", "neobanc.com"];
+const REFERRAL_SOURCES: { host: string; path?: string }[] = [
+  { host: "finlywealth.com" },
+  { host: "chexy.co" },
+  { host: "neobanc.com" },
+  // Amex trả thưởng qua link referral riêng của tác giả, nằm ở nhánh
+  // `/referral/` — nhưng một link tới trang sản phẩm Amex mà biên tập viên dán
+  // vào bài viết thì không có hoa hồng nào. Khoá theo đường dẫn, vì đánh dấu
+  // nhầm cả host cũng sai y như bỏ sót.
+  { host: "americanexpress.com", path: "/referral/" },
+];
+
+/** `/referral` phải là một đoạn đường dẫn trọn vẹn, không phải chuỗi con:
+ *  `includes("/referral/")` vừa trượt `/en-ca/referral` (không có gạch cuối)
+ *  vừa nhận nhầm `/không-referral-gì-cả/`. */
+function matchesSegment(pathname: string, segment: string): boolean {
+  const name = segment.replace(/^\/|\/$/g, "");
+  return pathname.split("/").includes(name);
+}
 
 export function isReferralUrl(url: string): boolean {
-  let hostname: string;
+  let parsed: URL;
   try {
-    hostname = new URL(url).hostname.toLowerCase();
+    parsed = new URL(url);
   } catch {
     return false;
   }
-  return REFERRAL_HOSTS.some((host) => hostname === host || hostname.endsWith(`.${host}`));
+
+  // Bỏ dấu chấm cuối: "americanexpress.com." là cùng một host với
+  // "americanexpress.com" nhưng so chuỗi thẳng thì trượt.
+  const hostname = parsed.hostname.toLowerCase().replace(/\.$/, "");
+
+  // Giải mã TRƯỚC rồi mới hạ chữ thường — làm ngược lại thì `/%52eferral/`
+  // giải ra `/Referral/` và trượt phép so chữ thường, tức một link có hoa hồng
+  // thật mất dấu `sponsored`. Giải nhiều lượt vì mã hoá hai lần cũng trượt.
+  let pathname = parsed.pathname;
+  for (let i = 0; i < 3; i += 1) {
+    let next: string;
+    try {
+      next = decodeURIComponent(pathname);
+    } catch {
+      break; // Mã hoá hỏng — dùng bản đang có.
+    }
+    if (next === pathname) break;
+    pathname = next;
+  }
+  pathname = pathname.toLowerCase();
+
+  return REFERRAL_SOURCES.some(
+    ({ host, path }) =>
+      (hostname === host || hostname.endsWith(`.${host}`)) && (!path || matchesSegment(pathname, path)),
+  );
 }
 
 /** `null` for a same-site link, which needs neither a `rel` nor a new tab. */
