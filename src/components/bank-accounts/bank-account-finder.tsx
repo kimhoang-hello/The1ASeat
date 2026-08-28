@@ -281,6 +281,68 @@ function AccountCard({ account }: { account: BankAccount }) {
   );
 }
 
+/**
+ * `role="radiogroup"` là một lời hứa về bàn phím chứ không phải cái nhãn suông:
+ * chuẩn ARIA quy định cả nhóm là MỘT điểm dừng Tab, và phím mũi tên mới là thứ
+ * chuyển giữa các lựa chọn. Thiếu phần đó thì trình đọc màn hình vẫn đọc "nhóm
+ * chọn, mục 3 trên 7", người dùng bấm mũi tên theo phản xạ và không có gì xảy
+ * ra — tệ hơn là không gắn `role` nào, vì khi đó "một loạt nút bấm" ít nhất là
+ * mô tả đúng, và Tab từng cái là hành vi đúng của nút bấm.
+ *
+ * Bắt phím ở cấp nhóm rồi tự tìm các `role="radio"` con trong DOM, để hai loại
+ * chip bên dưới không phải biết gì về nhóm chứa chúng — chúng khác nhau về hình
+ * dạng có chủ ý, và sẽ còn khác nữa.
+ *
+ * ĐIỀU KIỆN bắt buộc khi dùng lại: nhóm phải LUÔN có đúng một chip `active`.
+ * Không chip nào active thì cả nhóm không có điểm dừng Tab nào và người dùng
+ * bàn phím không vào được; hai chip active thì nhóm có hai điểm dừng, tức mất
+ * đúng cái vừa sửa. Hai nhóm hiện tại thoả điều kiện: bộ lọc luôn rơi về
+ * `"all"`, còn ngân hàng đi qua `activeBank` cũng rơi về `"all"`.
+ */
+const RADIO_KEYS = ["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp", "Home", "End"];
+
+function RadioGroup({
+  label,
+  className,
+  children,
+}: {
+  label: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (!RADIO_KEYS.includes(event.key)) return;
+
+    const radios = Array.from(
+      event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="radio"]'),
+    );
+    const current = radios.indexOf(document.activeElement as HTMLButtonElement);
+    if (current === -1) return;
+
+    event.preventDefault();
+
+    const forward = event.key === "ArrowRight" || event.key === "ArrowDown";
+    const next =
+      event.key === "Home"
+        ? 0
+        : event.key === "End"
+          ? radios.length - 1
+          : (current + (forward ? 1 : -1) + radios.length) % radios.length;
+
+    // Chuẩn radio: di chuyển tới đâu là chọn luôn tới đó, không phải chuyển
+    // rồi chờ bấm Space. `focus` trước `click` để con trỏ ở đúng chip mới sau
+    // khi React render lại.
+    radios[next].focus();
+    radios[next].click();
+  }
+
+  return (
+    <div role="radiogroup" aria-label={label} className={className} onKeyDown={handleKeyDown}>
+      {children}
+    </div>
+  );
+}
+
 function Chip({
   active,
   onClick,
@@ -295,6 +357,10 @@ function Chip({
       type="button"
       role="radio"
       aria-checked={active}
+      // Chỉ chip đang chọn nằm trong luồng Tab: cả nhóm là một điểm dừng, đúng
+      // như `radiogroup` đã hứa. Trước đây 12 chip là 12 lần bấm Tab mới xuống
+      // được tới danh sách tài khoản.
+      tabIndex={active ? 0 : -1}
       onClick={onClick}
       className={`cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
         active
@@ -328,6 +394,7 @@ function FilterChip({
       type="button"
       role="radio"
       aria-checked={active}
+      tabIndex={active ? 0 : -1}
       onClick={onClick}
       className={`cursor-pointer rounded-full border px-3 py-1 text-sm transition-colors ${
         active
@@ -431,13 +498,13 @@ function FinderView({
       {/* Một nhóm, một lựa chọn. `radiogroup` nói đúng điều mắt đã thấy, và
           "Tất cả" là đường quay ra — nên bấm lại chip đang bật không cần làm
           gì cả, khác với khi hàng này còn là hai nhóm chồng lên nhau. */}
-      <div role="radiogroup" aria-label={t("filterLabel")} className="flex flex-wrap gap-2">
+      <RadioGroup label={t("filterLabel")} className="flex flex-wrap gap-2">
         {AVAILABLE_FILTERS.map((f) => (
           <Chip key={f.id} active={filter === f.id} onClick={() => patch({ filter: f.id })}>
             {t(f.labelKey)}
           </Chip>
         ))}
-      </div>
+      </RadioGroup>
 
       {/* Hàng ngân hàng đọc như hàng Điểm thưởng bên trang thẻ tín dụng: nhãn
           nhỏ rồi tới chip có số đếm. Số đếm tính trong phạm vi bộ lọc nhanh
@@ -451,12 +518,16 @@ function FinderView({
           nằm trong `radiogroup` là ARIA nói dối — trình đọc màn hình đọc ra
           một nhóm không có nhãn và không biết có mấy lựa chọn. */}
       {availableBanks.length > 1 && (
-        <div
-          role="radiogroup"
-          aria-label={t("bankLabel")}
+        <RadioGroup
+          label={t("bankLabel")}
           className="mt-4 flex flex-wrap items-center gap-2"
         >
-          <span className="mr-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {/* `aria-hidden`: chính chữ này đã là `aria-label` của nhóm, để lộ ra
+              thì trình đọc màn hình đọc "Ngân hàng" hai lần liên tiếp. */}
+          <span
+            aria-hidden="true"
+            className="mr-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+          >
             {t("bankLabel")}
           </span>
           <FilterChip
@@ -476,7 +547,7 @@ function FinderView({
               {b.name}
             </FilterChip>
           ))}
-        </div>
+        </RadioGroup>
       )}
 
       <div className="mt-4">
