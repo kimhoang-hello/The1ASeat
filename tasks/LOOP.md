@@ -3,6 +3,61 @@
 Nhật ký các phiên phát triển tự động. Ngắn gọn — chi tiết nằm trong từng file
 task ở [done/](done/) và [review/](review/).
 
+## 2026-08-29
+
+### Session
+
+Trigger: Scheduled
+
+### Completed
+
+Không có — backlog trống, không bịa task.
+
+### Blocked
+
+Không có.
+
+### Kiểm tra sức khoẻ repo
+
+Chạy đủ bộ gate trên `main` sạch tại commit `db308d1`, tất cả đều xanh:
+
+| Gate | Kết quả |
+|---|---|
+| `npm run lint` | PASS |
+| `npx tsc --noEmit` | PASS |
+| `npm run build` | PASS |
+| `npm run audit:trademarks` | PASS — 0 chỗ thiếu ®/™ |
+| `npm run audit:rebates` | PASS — 29/29 tài khoản khớp FinlyWealth |
+| `npm run audit:awards` | PASS — 2016 quote / 8×14×3 combo |
+| Production (ghe1a.com) | `/`, `/credit-cards`, `/blog`, `/bank-accounts`, `/transfer-bonuses`, `/calculator` đều 200 |
+
+### Ghi nhận
+
+- **`sync-videos` đỏ thêm hai lần nữa vì cùng một kiểu hỏng: `curl: (28)
+  Failed to connect to ghe1a.com port 443`.** Lượt 21:56 UTC 28/08 (chạy
+  33214687431) và lượt 06:05 UTC 29/08 (chạy 33237637114) — cả hai đều 4/4
+  lượt retry connect fail trong ~19 phút, không phải timeout giữa chừng. Cùng
+  dạng với lần 01:37 UTC 28/08 đã ghi trong log hôm qua. Ba lần trong vòng
+  chưa tới 30 giờ là hạ tầng Hostinger, không phải code — site kiểm lại lúc
+  viết log này đã 200 ở mọi route chính. Không tạo task; AGENTS.md đã ghi rõ
+  đây là uptime của hosting, không sửa được trong repo.
+- Không có phát hiện mới nào cần task. `audit:rebates` vẫn nhắc 10 tài khoản
+  dùng link `/banking/` thay vì `/rebates/` trả tiền cao hơn — đã ghi trong
+  log 28/08 là lựa chọn của tác giả, không lặp lại ở đây.
+
+### Codex
+
+Không chạy — không có thay đổi code nào trong phiên này.
+
+### Commits
+
+- Cập nhật file log này.
+
+### Trạng thái cuối phiên
+
+IDLE. Backlog trống, repo sạch, mọi gate xanh, production khoẻ. Chờ task mới
+trong [backlog/](backlog/) hoặc lần chạy theo lịch kế tiếp.
+
 ## 2026-08-28
 
 ### Session
