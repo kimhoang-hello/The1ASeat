@@ -119,12 +119,35 @@ nhất và không ai soi.
 ### Commits
 
 - `8b6874b` — Close the eight holes a full-repo cross-review found
+- `d05350a` — Send the security headers the site never had
+
+### Deploy
+
+**Hostinger BỎ QUA lượt push `d05350a` — auto-deploy không tự chạy.** Commit
+trước đó (`8b6874b`) lên sau 3 phút; lượt này chờ 45 phút vẫn là bản cũ. Đã
+loại trừ khả năng "CDN nuốt header" trước khi kết luận: trang chủ vẫn trả về
+các header do chính app đặt (`x-powered-by`, `x-nextjs-cache`, `etag`), nên
+edge không lọc header của app — đơn giản là bản mới chưa chạy. User bấm
+**Redeploy** tay trong hPanel thì lên ngay.
+
+Cách kiểm nhanh một thay đổi CHỈ nằm ở tầng server có lên hay chưa: đổi thứ gì
+đó quan sát được từ ngoài rồi so. Lần này dùng `GET /api/expire-offers` →
+405 (trước là 401) cho commit `8b6874b`, và chính header cho `d05350a`. Chunk
+JS/CSS thì KHÔNG dùng được: tên chúng băm theo nội dung client, mà thay đổi
+kiểu này không đụng tới bundle nên tên y hệt trước sau.
 
 ### Trạng thái cuối phiên
 
-Backlog trống. Site sạch, ba job đã chạy tay: `check-rebates` và
-`expire-offers` xanh, `sync-videos` đỏ vì lỗi mạng phía hosting, không liên
-quan tới thay đổi.
+Backlog trống. Ba job đã chạy tay: `check-rebates` và `expire-offers` xanh,
+`sync-videos` đỏ vì lỗi mạng phía hosting, không liên quan tới thay đổi.
+
+Kiểm lại sau khi cả hai commit đã lên production: 106 URL sitemap đều 200 và
+đều mang đủ 5 header mới; `GET` hai job route trả 405, `?secret=` trả 401;
+www→apex vẫn 308; title/description/canonical không trùng không thiếu; 106
+trang đủ JSON-LD + og:image; không ảnh nào thiếu `alt`; không lỗi console.
+Nhúng YouTube và widget bình luận Cusdis (iframe `srcdoc`) đều chạy — đã kiểm
+tận trong DOM của iframe, vì ảnh chụp màn hình lúc pane bị ẩn hay ra khung
+trắng và suýt làm mình báo nhầm là hỏng.
 
 ## 2026-08-28
 
