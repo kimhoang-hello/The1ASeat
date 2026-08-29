@@ -58,6 +58,74 @@ Không chạy — không có thay đổi code nào trong phiên này.
 IDLE. Backlog trống, repo sạch, mọi gate xanh, production khoẻ. Chờ task mới
 trong [backlog/](backlog/) hoặc lần chạy theo lịch kế tiếp.
 
+## 2026-08-29
+
+### Session
+
+Trigger: Manual — "Claude và Codex phối hợp kiểm tra toàn diện website".
+
+### Completed
+
+- Rà toàn repo trên `4d293ab` (Codex `gpt-5.6-sol`, effort high), 8 phát hiện,
+  vá cả 8 + 3 lỗi trong chính bản vá do hai vòng phản biện sau bắt được.
+  Commit `8b6874b`, đã deploy và xác minh trên site thật.
+
+### Blocked
+
+Không có.
+
+### Kiểm tra sức khoẻ repo
+
+`lint`, `tsc --noEmit`, `build` (8.9s), `audit:trademarks` (0), `audit:awards`
+(2016 quote, PASS), `audit:rebates` (29 tài khoản khớp) — sạch cả trước lẫn sau
+khi vá. Nội dung published: 23 thẻ / 2 transfer bonus / 36 bài, không thẻ nào
+hết hạn còn treo, không bonus nào hết hạn còn published, không thẻ nào thiếu
+trường, cả 23 thẻ đều có rule chip trong `card-points-programs`. Site: 106 URL
+trong sitemap + 163 link nội bộ đều 200; 62 link ngoài đều sống (Facebook trả
+400 với curl nhưng mở được trong browser — đúng như đã ghi trong bộ nhớ);
+title/description/canonical không trùng và không thiếu chỗ nào; 106 trang đều
+có JSON-LD + og:image; 643 ảnh đều có `alt`; không có lỗi console trên
+desktop lẫn mobile.
+
+### Ghi nhận
+
+- **Lần thứ tư `sync-videos` không connect được** (run `33256468875`, 14:02–14:21
+  UTC): `curl: (28) Failed to connect to ghe1a.com port 443` bốn lượt liền, mỗi
+  lượt ~269s. Lần này có thêm dữ kiện thu hẹp nguyên nhân: mình bấm tay ba
+  workflow liền nhau, `check-rebates` và `expire-offers` đi qua bình thường
+  ngay trước đó, còn `sync-videos` — lượt thứ ba — bị chặn ở tầng TCP suốt 20
+  phút. Site vẫn 200 từ máy ở nhà trong đúng khoảng đó. Nên đây KHÔNG phải
+  "Hostinger tắt hẳn 20 phút" như lần trước ghi: nhiều khả năng Hostinger chặn
+  hoặc giới hạn theo IP runner sau vài request dồn. Nếu còn lặp, hướng kiểm là
+  so IP runner giữa lượt xanh và lượt đỏ, chứ không phải uptime.
+- Không có thẻ nào thuộc diện `expire-offers` phải xử lý hôm nay (0 thẻ hết
+  hạn), nên lượt chạy tay chỉ xác minh được đường auth mới và hai vòng đối
+  chiếu mới — không xác minh được nhánh giữ `expiresAt`.
+
+### Codex
+
+3 vòng. Vòng 1 rà toàn repo: 8 phát hiện (4 High, 3 Medium, 1 Low), không phát
+hiện nào bị bác bỏ — kiểm lại từng cái trong source thì đều đúng. Vòng 2
+(`review --uncommitted`) tìm ra bản vá của mình mở một đường mất bản tin mới:
+claim được trả lại khi Kit lỗi nhưng route vẫn trả 200, nên Contentful không
+gọi lại và bài đầu tiên im lặng không có bản tin. Vòng 3 bác tiếp cách sửa của
+vòng 2: `!res.ok` gộp cả 5xx, mà 5xx KHÔNG chứng minh được là Kit chưa tạo
+broadcast — tách 4xx (trả chỗ, 502) khỏi 5xx (giữ chỗ, 200).
+
+Bài học đáng giữ: **hai vòng sau đắt giá hơn vòng đầu.** Vòng 1 tìm lỗi trong
+code có sẵn; vòng 2 và 3 tìm lỗi trong bản vá vừa viết — đúng chỗ mình tự tin
+nhất và không ai soi.
+
+### Commits
+
+- `8b6874b` — Close the eight holes a full-repo cross-review found
+
+### Trạng thái cuối phiên
+
+Backlog trống. Site sạch, ba job đã chạy tay: `check-rebates` và
+`expire-offers` xanh, `sync-videos` đỏ vì lỗi mạng phía hosting, không liên
+quan tới thay đổi.
+
 ## 2026-08-28
 
 ### Session
