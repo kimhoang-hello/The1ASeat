@@ -150,10 +150,17 @@ sau không kết luận ngược:
   site` trong Contentful cũng gửi header và URL không mang query. Đừng thêm lại
   `?secret=` hay handler GET "cho tiện gọi tay".
 
-Chưa làm, cố ý: site không có header bảo mật nào ngoài
-`content-security-policy: upgrade-insecure-requests` của Hostinger (không HSTS,
-không `X-Content-Type-Options`, không `Referrer-Policy`). Muốn thêm thì qua
-`headers()` trong `next.config.ts`.
+- **Header bảo mật đặt trong `headers()` của `next.config.ts`** (thêm
+  29/08/2026, trước đó site chỉ có `upgrade-insecure-requests` của Hostinger):
+  HSTS, `nosniff`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`.
+  HSTS CỐ Ý không có `includeSubDomains` và không có `preload` — cả hai rất khó
+  rút lại, xem chú thích trong file. Đừng "hoàn thiện" bằng cách thêm chúng vào
+  mà không hỏi. Cũng đừng thêm một `Content-Security-Policy` đầy đủ ở đây một
+  cách tiện tay: app có script inline của Next và GTM, làm dở là gãy trang —
+  đó là một việc riêng.
+
+Chưa làm: chưa có `Content-Security-Policy` thật (mới chỉ có
+`upgrade-insecure-requests` do Hostinger gắn).
 
 ## Chạy gì trước khi kết luận
 
