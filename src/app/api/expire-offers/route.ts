@@ -4,7 +4,10 @@ import { fetchFinlyWealthOffer, finlyWealthRebateUrl } from "@/lib/finlywealth";
 import { isRewriteConfigured, rewriteOfferCopy } from "@/lib/rewrite-offer";
 import { jobSecretValid } from "@/lib/job-auth";
 import { hasExpired } from "@/lib/format-date";
-import { fetchContentfulCreditCardOffers } from "@/lib/content/contentful";
+import {
+  fetchContentfulCreditCardOffers,
+  fetchContentfulTransferBonuses,
+} from "@/lib/content/contentful";
 
 // Called on a schedule (see .github/workflows/expire-offers.yml) to deal with
 // entries whose expiresAt has passed.
@@ -27,11 +30,10 @@ import { fetchContentfulCreditCardOffers } from "@/lib/content/contentful";
 const CARD_TYPE = "creditCardOffer";
 const BONUS_TYPE = "transferBonus";
 
+// POST only. Một job ghi vào Contentful không nên chạy được bằng cách dán URL
+// vào thanh địa chỉ: GET là thứ prefetch của browser, trình quét link và bot
+// tự bấm vào.
 export async function POST(request: NextRequest) {
-  return handleExpire(request);
-}
-
-export async function GET(request: NextRequest) {
   return handleExpire(request);
 }
 
@@ -89,16 +91,37 @@ async function handleExpire(request: NextRequest) {
     // bên dưới im lặng, trong khi bản published vẫn treo offer hết hạn.
     consideredSlugs.add(slug);
 
+    // Cùng cửa chặn mà `check-rebates` đã có, vì cùng một `updateEntry`:
+    // nó PUT lại toàn bộ `fields` của bản draft rồi publish CẢ ENTRY. Thẻ
+    // đang có thay đổi chưa publish nghĩa là tác giả viết dở ở đâu đó trong
+    // entry — ghi hai trường của job vào đấy là đẩy luôn phần viết dở lên
+    // site. Báo để người xử lý. Lỗi này tự nhận ra được ở mọi lượt sau: bản
+    // published vẫn treo `expiresAt` đã qua nên điều kiện còn nguyên, `--retry`
+    // của workflow không rửa nó thành xanh.
+    if (card.sys.publishedVersion && card.sys.version > card.sys.publishedVersion + 1) {
+      errors.push({
+        slug,
+        message:
+          "offer đã hết hạn nhưng entry có thay đổi chưa publish — job không tự ghi (updateEntry publish cả entry), xử lý tay trong Contentful",
+      });
+      continue;
+    }
+
     try {
       const changes: Record<string, unknown> = { elevatedBonus: false, expiresAt: undefined };
       let rewrote = false;
       let reason = "";
+      // Lỗi tạm thời (FinlyWealth hỏng, rewrite ném, thiếu API key) khác lỗi
+      // cấu trúc (thẻ không có trang FinlyWealth nào để đọc): cái đầu lượt sau
+      // chạy lại được, cái sau thì không bao giờ.
+      let retryable = false;
 
       const rebateUrl = finlyWealthRebateUrl(field<string>(card, "applyUrl") ?? "");
       if (!rebateUrl) {
         reason = "no FinlyWealth page to read the new offer from";
       } else if (!isRewriteConfigured) {
         reason = "ANTHROPIC_API_KEY is not set";
+        retryable = true;
       } else {
         // Best effort throughout: a card must still leave the elevated tab even
         // if FinlyWealth is unreachable or the rewrite fails this morning.
@@ -123,13 +146,28 @@ async function handleExpire(request: NextRequest) {
           rewrote = true;
         } catch (err) {
           reason = `rewrite failed: ${err instanceof Error ? err.message : String(err)}`;
+          retryable = true;
         }
       }
+
+      // GIỮ `expiresAt` khi lỗi còn chạy lại được. Xoá nó là xoá luôn thứ duy
+      // nhất khiến lượt sau tìm thấy thẻ này: truy vấn CMA lọc theo
+      // `expiresAt[lte]`, nên thẻ không còn hạn thì biến mất khỏi mọi lượt sau
+      // và trang thẻ nằm lại với welcome offer đã chết vĩnh viễn. Trả 500 một
+      // lần không cứu được — workflow gọi bằng `curl --retry`, lượt sau trả
+      // 200 là job xanh. Ngày mai chạy lại vẫn thấy thẻ, vẫn đỏ, cho tới khi
+      // rewrite thành công.
+      //
+      // `elevatedBonus: false` thì vẫn ghi ngay: thẻ nằm sai tab tệ hơn thẻ có
+      // copy cũ. Người đọc không thấy cái hạn còn treo lại — `CardBadges` chỉ
+      // in ngày hết hạn khi nó chưa qua.
+      if (retryable) delete changes.expiresAt;
 
       await updateEntry(client, card, CARD_TYPE, changes);
       movedToOther.push(slug);
       if (rewrote) bonusRewritten.push(slug);
       else needsReview.push({ slug, reason });
+      if (retryable) errors.push({ slug, message: `${reason} — giữ expiresAt để lượt sau thử lại` });
     } catch (err) {
       errors.push({ slug, message: err instanceof Error ? err.message : String(err) });
     }
@@ -151,20 +189,46 @@ async function handleExpire(request: NextRequest) {
     });
   }
 
+  // Cùng lý do với thẻ: `listEntries` trả DRAFT, mà gỡ một bonus khỏi site là
+  // việc không hoàn tác được bằng cách chạy lại. Mốc quyết định phải là bản
+  // ĐANG PHỤC VỤ — nếu không, một tác giả sửa `expiresAt` trong bản nháp (lùi
+  // ngày lại để tính toán gì đó, hoặc đang gõ dở) là đủ để job gỡ mất một
+  // bonus vẫn còn hạn trên site.
+  const liveBonusExpiry = new Map(
+    (await fetchContentfulTransferBonuses()).map((bonus) => [bonus.slug, bonus.expiresAt]),
+  );
+
   const bonuses = await listEntries(client, BONUS_TYPE, expiredQuery);
+  const consideredBonusSlugs = new Set<string>();
   for (const bonus of bonuses) {
     const slug = field<string>(bonus, "slug") ?? bonus.sys.id;
     if (!bonus.sys.publishedVersion) continue;
 
-    const bonusExpiresAt = field<string>(bonus, "expiresAt");
-    if (bonusExpiresAt && !hasExpired(bonusExpiresAt)) continue;
+    const liveExpiresAt = liveBonusExpiry.get(slug);
+    // Không có trong CDA: entry đã publish nhưng bản đang phục vụ không thấy —
+    // slug bị đổi trong draft, hoặc CDN chưa kịp. Dừng lại, đừng gỡ mò.
+    if (!liveExpiresAt) continue;
+    if (!hasExpired(liveExpiresAt)) continue;
 
+    consideredBonusSlugs.add(slug);
     try {
       await unpublish(client, bonus);
       unpublished.push(slug);
     } catch (err) {
       errors.push({ slug, message: err instanceof Error ? err.message : String(err) });
     }
+  }
+
+  // Mặt còn lại của cùng một chuyện, giống hệt phần thẻ ở trên: bản published
+  // đã hết hạn nhưng draft mang ngày khác nên không lọt vào truy vấn CMA. Site
+  // vẫn treo bonus chết, và không lượt nào tự tìm ra nếu không đối chiếu ở đây.
+  for (const [slug, expiresAt] of liveBonusExpiry) {
+    if (consideredBonusSlugs.has(slug) || !hasExpired(expiresAt)) continue;
+    errors.push({
+      slug,
+      message:
+        "site vẫn phục vụ transfer bonus đã hết hạn nhưng draft mang expiresAt khác — kiểm rồi unpublish tay trong Contentful",
+    });
   }
 
   // Như check-rebates: workflow chỉ đọc HTTP status, nên một offer hết hạn gỡ
@@ -185,10 +249,14 @@ async function handleExpire(request: NextRequest) {
   );
 }
 
+// `X-Contentful-Version` biến DELETE này thành optimistic concurrency: giữa
+// lúc `listEntries` đọc entry và lúc gỡ, tác giả có thể vừa gia hạn và publish
+// lại. Không gửi version thì Contentful gỡ luôn bản mới đó; gửi rồi thì nó trả
+// 409 và job đỏ — đúng thứ mình muốn thấy.
 async function unpublish(client: CmaClient, entry: CmaEntry): Promise<void> {
   const res = await fetch(`${client.base}/entries/${entry.sys.id}/published`, {
     method: "DELETE",
-    headers: client.headers,
+    headers: { ...client.headers, "X-Contentful-Version": String(entry.sys.version) },
   });
   // Already unpublished by an earlier run — not an error.
   if (res.status === 404) return;

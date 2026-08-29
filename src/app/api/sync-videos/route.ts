@@ -14,11 +14,9 @@ interface VideoEntry {
   publishedAt: string;
 }
 
+// POST only, cùng lý do với hai job kia: đây là route tạo entry trong
+// Contentful, không phải thứ để mở bằng browser.
 export async function POST(request: NextRequest) {
-  return handleSync(request);
-}
-
-export async function GET(request: NextRequest) {
   return handleSync(request);
 }
 

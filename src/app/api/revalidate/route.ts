@@ -94,7 +94,16 @@ export async function POST(request: NextRequest) {
   //
   // `"not-configured"` vẫn trả 200: gọi lại bao nhiêu lần cũng không làm biến
   // ra một token Hostinger.
-  return NextResponse.json({ revalidated: true, hostingerCachePurged, newPostNotified });
+  //
+  // NGOẠI LỆ `false`: Kit trả 4xx, tức là CHẮC CHẮN chưa có broadcast nào được
+  // tạo và `claimBroadcast` đã trả chỗ lại. Trả 200 ở đây là bài đầu tiên của
+  // một entry im lặng không có bản tin nào — mà `publishedCounter` không bao
+  // giờ về 1 nữa, nên publish lại cũng không cứu được. Xin webhook gọi lại là
+  // an toàn đúng ở nhánh này và chỉ ở nhánh này. Hai nhánh không chắc chắn —
+  // `"notify_uncertain"` (Kit 5xx) và `"notify_failed"` (fetch ném) — vẫn trả
+  // 200 và vẫn giữ chỗ: lúc đó không biết Kit đã nhận hay chưa.
+  const status = newPostNotified === false ? 502 : 200;
+  return NextResponse.json({ revalidated: true, hostingerCachePurged, newPostNotified }, { status });
 }
 
 async function purgeHostingerCache(): Promise<boolean | "not-configured"> {
@@ -138,7 +147,7 @@ interface ContentfulEntryPayload {
 }
 
 interface ManagementEntry {
-  sys?: { publishedCounter?: number };
+  sys?: { publishedCounter?: number; version?: number; publishedVersion?: number };
   fields?: { bodyVi?: Record<string, Document> };
 }
 
@@ -162,6 +171,38 @@ async function fetchManagementEntry(entryId: string): Promise<ManagementEntry | 
   );
   if (!res.ok) return null;
   return res.json();
+}
+
+/**
+ * Những entry đã gửi bản tin trong tiến trình này, và lúc nào thì quên.
+ *
+ * `publishedCounter === 1` KHÔNG phải chốt chống trùng: nó là thuộc tính của
+ * entry, không phải của lượt giao webhook, nên hai lượt giao cùng một sự kiện
+ * publish đều đọc ra 1 và đều gửi. Contentful giao ít nhất một lần, nên chuyện
+ * đó xảy ra được — và bản tin gửi trùng thì không rút lại được.
+ *
+ * Chốt thật nằm ở đây: giành chỗ TRƯỚC khi gọi Kit, nên lượt giao thứ hai
+ * (dù đến sau hay chạy song song) thấy chỗ đã có người và bỏ qua.
+ *
+ * GIỚI HẠN, ghi ra để không ai tưởng nó mạnh hơn thực tế: state nằm trong bộ
+ * nhớ của tiến trình. App chạy một tiến trình Node duy nhất trên Hostinger
+ * (cùng giả định `lib/rate-limit` đang dùng), nhưng deploy hoặc restart giữa
+ * hai lượt giao là mất. Nó thu hẹp cửa sổ trùng từ "mọi lượt giao lại" xuống
+ * "lượt giao lại vắt qua một lần restart", chứ không đóng hẳn. Đóng hẳn thì
+ * cần một chỗ lưu bền — mà site này chưa có cái nào.
+ */
+const broadcastClaims = new Map<string, number>();
+const CLAIM_TTL_MS = 30 * 60 * 1000;
+
+/** `true` nếu lượt này giành được quyền gửi; `false` nghĩa là đã có người gửi. */
+function claimBroadcast(entryId: string): boolean {
+  const now = Date.now();
+  for (const [id, at] of broadcastClaims) {
+    if (now - at > CLAIM_TTL_MS) broadcastClaims.delete(id);
+  }
+  if (broadcastClaims.has(entryId)) return false;
+  broadcastClaims.set(entryId, now);
+  return true;
 }
 
 // Categories whose posts never trigger a broadcast: Deals (transfer bonus /
@@ -188,6 +229,13 @@ async function maybeNotifyNewPost(payload: unknown): Promise<boolean | string> {
   if (!managementEntry) return "fetch_failed";
   if (managementEntry.sys?.publishedCounter !== 1) return "not_first_publish";
 
+  // Payload webhook là ảnh chụp lúc Publish, còn lượt gọi CMA ở trên đọc TRẠNG
+  // THÁI BÂY GIỜ — hai mốc thời gian khác nhau, và giữa chúng có ba lần thử
+  // purge CDN. Bài bị unpublish trong khoảng đó thì bản tin sẽ giới thiệu một
+  // trang 404, mà bản tin gửi rồi không rút lại được.
+  const { version, publishedVersion } = managementEntry.sys;
+  if (!publishedVersion) return "no_longer_published";
+
   const apiKey = process.env.KIT_V4_API_KEY;
   if (!apiKey) return "not-configured";
 
@@ -196,7 +244,14 @@ async function maybeNotifyNewPost(payload: unknown): Promise<boolean | string> {
   const slug = entry.fields?.slug?.[LOCALE];
   if (!title || !slug) return "missing_fields";
 
-  const bodyDocument = managementEntry.fields?.bodyVi?.[LOCALE];
+  // `listEntries`/`entries/:id` của CMA trả bản DRAFT. Sau một lần publish
+  // sạch, draft trùng bản đang phục vụ (`version === publishedVersion + 1`) nên
+  // đọc `bodyVi` ở đó là an toàn. Nhưng nếu tác giả đã lưu thêm một bản nháp
+  // trong lúc webhook còn đang chạy, `bodyVi` này là chữ CHƯA publish — gửi đi
+  // là phát tán bản nháp của họ cho toàn bộ subscriber. Thà gửi bản tin chỉ có
+  // tiêu đề và link: link trỏ về bài đang thật sự nằm trên site.
+  const draftAhead = typeof version === "number" && version > publishedVersion + 1;
+  const bodyDocument = draftAhead ? undefined : managementEntry.fields?.bodyVi?.[LOCALE];
   const now = new Date();
 
   const bodyHtml = `
@@ -211,6 +266,10 @@ async function maybeNotifyNewPost(payload: unknown): Promise<boolean | string> {
     ctaHref: `${SITE_URL}/blog`,
     ctaLabel: "Đọc các bài viết khác tại Ghế 1A →",
   });
+
+  // Giành chỗ ngay trước lời gọi, sau khi mọi kiểm tra đã qua — giành sớm hơn
+  // thì một payload bị loại vì lý do khác cũng chiếm mất chỗ của bài thật.
+  if (!claimBroadcast(entryId)) return "already_broadcast";
 
   const res = await fetch("https://api.kit.com/v4/broadcasts", {
     method: "POST",
@@ -230,6 +289,18 @@ async function maybeNotifyNewPost(payload: unknown): Promise<boolean | string> {
 
   if (!res.ok) {
     console.error("Kit broadcast failed", res.status, await res.text());
+
+    // 5xx KHÔNG phải bằng chứng là chưa gửi: Kit có thể đã tạo broadcast rồi
+    // mới hỏng ở đường trả lời. Giữ chỗ, và báo về như một lượt không chắc
+    // chắn — cùng đối xử với `fetch` ném. Chấp nhận mất bản tin ở ca hiếm này,
+    // vì bản tin gửi trùng thì không rút lại được.
+    if (res.status >= 500) return "notify_uncertain";
+
+    // 4xx là Kit từ chối chính request này: chắc chắn chưa có broadcast nào
+    // được tạo, nên trả chỗ lại an toàn. Lượt giao lại sẽ thử lại — 429 thì
+    // lần sau qua được, còn 401/422 thì webhook đỏ trong Contentful, đúng thứ
+    // tác giả cần nhìn thấy.
+    broadcastClaims.delete(entryId);
     return false;
   }
 

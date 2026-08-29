@@ -142,9 +142,11 @@ local), thêm 4 biến:
 > access log của Hostinger, log của proxy, header referrer. Tức là mỗi lần bạn
 > bấm Publish là secret lại được chép thêm vào một file log nữa. Header thì
 > không bị ghi vào những chỗ đó, và tick ô **Secret** khiến Contentful cũng
-> giấu luôn giá trị đó trong giao diện của nó. Route vẫn nhận được cả hai
-> kiểu (xem [src/lib/job-auth.ts](src/lib/job-auth.ts)) nên webhook cũ không
-> gãy — nhưng cách đúng để tạo mới là Header.
+> giấu luôn giá trị đó trong giao diện của nó. Từ 29/08/2026 route CHỈ còn
+> nhận Header (xem [src/lib/job-auth.ts](src/lib/job-auth.ts)): webhook hay
+> caller nào còn gọi `?secret=...` sẽ nhận 401. Ba job route
+> (`expire-offers`, `check-rebates`, `sync-videos`) cũng chỉ còn nhận **POST**,
+> không mở được bằng cách dán URL vào browser.
 
 **4. Kiểm tra** — Publish thử 1 entry bất kỳ, đợi ~10 giây rồi mở lại `ghe1a.com`
 (F5 mạnh / Ctrl+Shift+R) — nội dung phải lên ngay, không cần vào Hostinger bấm

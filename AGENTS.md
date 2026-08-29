@@ -96,14 +96,64 @@ mỗi lần, không nhớ gì giữa các phiên). Ghi lại để không phải
   entry bị unpublish giữa hai lượt lấy, còn `sys.createdAt[lte]` thì kẹt cứng
   khi 100 entry trùng mốc thời gian. Con trỏ mờ cũng cho phép trả `order` về
   cho Contentful, nên không phải sắp lại thứ tự trong JS.
-- **`/transfer-bonuses` lọc bonus hết hạn ngay lúc render**, dù job
-  `expire-offers` cũng gỡ chúng. Hai lớp là cố ý: job chạy ngày một lần, còn
-  trang là lưới an toàn cho khoảng giữa. Trang là ISR `revalidate = 60`, nên
+- **`/transfer-bonuses` VÀ khối transfer bonus trên trang chủ đều lọc bonus hết
+  hạn ngay lúc render**, dù job `expire-offers` cũng gỡ chúng. Hai lớp là cố ý:
+  job chạy ngày một lần, còn trang là lưới an toàn cho khoảng giữa. Trang chủ
+  từng thiếu lớp này (`slice(0, 3)` trần) — mà danh sách sắp theo `expiresAt`
+  tăng dần nên đúng ba ô trang chủ là ba bonus sắp chết hoặc đã chết. Sửa
+  29/08/2026. Trang là ISR `revalidate = 60`, nên
   ngay sau nửa đêm Toronto một lượt truy cập vẫn có thể nhận HTML của ngày hôm
   trước — chấp nhận, đổi lấy việc trang vẫn tĩnh.
 - **Trang chưa công bố dùng cờ trong `lib/feature-flags.ts`** — vẫn build và vào
   được bằng URL trực tiếp, nhưng ẩn khỏi menu, footer, sitemap, search, kèm
   `noindex` và dải báo nháp. Cờ được áp ở cả 7 chỗ; đã kiểm.
+
+## Vòng review 29/08/2026 — đừng đề xuất lại
+
+Codex rà toàn repo trên `4d293ab`; tám phát hiện, cả tám đã vá. Ghi lại để lần
+sau không kết luận ngược:
+
+- **`expire-offers` GIỮ `expiresAt` khi lỗi còn chạy lại được** (FinlyWealth
+  hỏng, rewrite ném, thiếu `ANTHROPIC_API_KEY`) và trả 500. Xoá nó là xoá thứ
+  duy nhất khiến lượt sau tìm lại được thẻ — truy vấn CMA lọc theo
+  `expiresAt[lte]`. Lỗi cấu trúc (thẻ không có trang FinlyWealth) thì vẫn xoá:
+  lượt sau cũng không làm gì hơn được. Đừng "dọn" nhánh này thành xoá hết.
+- **`CardBadges` không in ngày hết hạn đã qua.** Đó là lưới an toàn đi kèm điều
+  trên, không phải chỗ quên `formatDate`.
+- **Cả `expire-offers` (nhánh thẻ) lẫn `check-rebates` chặn entry có thay đổi
+  chưa publish** bằng `version > publishedVersion + 1`, vì `updateEntry` publish
+  cả entry. Hai chỗ phải giống nhau; trước 29/08/2026 chỉ `check-rebates` có.
+- **Phạm vi kiểm của `check-rebates` lấy `applyUrl` từ bản PUBLISHED**, không
+  phải draft: đọc từ draft thì một tác giả sửa dở link là đủ để thẻ rơi khỏi
+  vòng lặp trong im lặng. Kèm vòng đối chiếu báo thẻ published có link
+  FinlyWealth mà không entry nào khớp slug.
+- **Transfer bonus chỉ bị unpublish khi bản PUBLISHED đã hết hạn**, và lệnh
+  DELETE mang `X-Contentful-Version`. Draft mang ngày cũ từng đủ để gỡ một
+  bonus còn hạn khỏi site.
+- **`api/revalidate` giành chỗ trong `broadcastClaims` trước khi gọi Kit.**
+  `publishedCounter === 1` là thuộc tính của entry, không phải của lượt giao
+  webhook, nên nó KHÔNG chống được hai lượt giao cùng một sự kiện. Claim nằm
+  trong bộ nhớ tiến trình: thu hẹp cửa sổ, không đóng hẳn (restart là mất) —
+  ghi rõ trong code, đừng báo lại như phát hiện mới.
+- **`api/revalidate` trả 502 khi Kit trả 4xx** (`newPostNotified === false`), và
+  CHỈ ở nhánh đó. 4xx là Kit từ chối chính request đó nên chắc chắn chưa có bản
+  tin nào, claim đã được trả lại, xin webhook gọi lại là an toàn — còn
+  `publishedCounter` thì không bao giờ về 1 nữa, publish lại cũng không cứu.
+  **Kit 5xx thì KHÔNG**: nó có thể đã tạo broadcast rồi mới hỏng ở đường trả
+  lời, nên giữ claim và trả 200 (`"notify_uncertain"`), cùng cách với
+  `"notify_failed"` khi `fetch` ném. Đừng gộp `!res.ok` làm một.
+- **Bản tin không lấy body từ draft đi trước bản published**, và không gửi khi
+  entry đã bị unpublish giữa lúc publish và lúc webhook chạy. Thiếu body thì
+  vẫn gửi tiêu đề + link, thà thế còn hơn phát tán bản nháp.
+- **`job-auth` chỉ nhận `Authorization: Bearer`, và ba job route chỉ còn POST.**
+  Đã kiểm ngày 29/08/2026: cả ba workflow gửi header, webhook `Refresh Ghế 1A
+  site` trong Contentful cũng gửi header và URL không mang query. Đừng thêm lại
+  `?secret=` hay handler GET "cho tiện gọi tay".
+
+Chưa làm, cố ý: site không có header bảo mật nào ngoài
+`content-security-policy: upgrade-insecure-requests` của Hostinger (không HSTS,
+không `X-Content-Type-Options`, không `Referrer-Policy`). Muốn thêm thì qua
+`headers()` trong `next.config.ts`.
 
 ## Chạy gì trước khi kết luận
 

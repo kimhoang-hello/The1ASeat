@@ -12,11 +12,10 @@ import { jobSecretValid } from "@/lib/job-auth";
 
 const CONTENT_TYPE = "creditCardOffer";
 
+// POST only. Một job ghi vào Contentful không nên chạy được bằng cách dán URL
+// vào thanh địa chỉ: GET là thứ prefetch của browser, trình quét link và bot
+// tự bấm vào.
 export async function POST(request: NextRequest) {
-  return handleCheck(request);
-}
-
-export async function GET(request: NextRequest) {
   return handleCheck(request);
 }
 
@@ -45,8 +44,16 @@ async function handleCheck(request: NextRequest) {
   // publish hỏng để lại draft mang số mới trong khi site vẫn phục vụ số cũ, và
   // mọi lần chạy sau đó đều thấy "không đổi" rồi bỏ qua vĩnh viễn. Bản published
   // là thứ người đọc thật sự nhìn thấy, nên nó mới là mốc so.
+  //
+  // `applyUrl` cũng lấy từ đây chứ không lấy từ draft, vì nó quyết định PHẠM VI
+  // kiểm: đọc từ draft thì một tác giả đang sửa dở link (hoặc vừa đổi sang
+  // link chưa publish) là đủ để thẻ rơi ra khỏi vòng lặp trong im lặng, job
+  // trả 200, còn số rebate trên site thì lệch mãi.
   const published = new Map(
-    (await fetchContentfulCreditCardOffers()).map((offer) => [offer.slug, offer.rebate ?? null]),
+    (await fetchContentfulCreditCardOffers()).map((offer) => [
+      offer.slug,
+      { rebate: offer.rebate ?? null, applyUrl: offer.applyUrl },
+    ]),
   );
 
   const updated: Change[] = [];
@@ -54,24 +61,25 @@ async function handleCheck(request: NextRequest) {
   const errors: { slug: string; message: string }[] = [];
   let checked = 0;
 
+  const checkedSlugs = new Set<string>();
   for (const entry of entries) {
     const slug = field<string>(entry, "slug") ?? entry.sys.id;
-    const applyUrl = field<string>(entry, "applyUrl");
-    if (!applyUrl) continue;
 
-    const rebateUrl = finlyWealthRebateUrl(applyUrl);
+    // Thẻ chưa publish bao giờ thì không nằm trên site, không có gì để giữ cho
+    // khớp — và `updateEntry` cũng cố ý không publish giúp nó.
+    const liveCard = published.get(slug);
+    if (!liveCard) continue;
+
+    const rebateUrl = finlyWealthRebateUrl(liveCard.applyUrl);
     // Cards linked to a non-rebate FinlyWealth page, or straight to an issuer's
     // own referral, have no rebate to keep in sync.
     if (!rebateUrl) continue;
 
-    // Thẻ chưa publish bao giờ thì không nằm trên site, không có gì để giữ cho
-    // khớp — và `updateEntry` cũng cố ý không publish giúp nó.
-    if (!published.has(slug)) continue;
-
     checked += 1;
+    checkedSlugs.add(slug);
     try {
       const current = await fetchFinlyWealthRebate(rebateUrl);
-      const live = published.get(slug) ?? null;
+      const live = liveCard.rebate;
 
       if (live === current) {
         unchanged.push(slug);
@@ -95,6 +103,19 @@ async function handleCheck(request: NextRequest) {
     } catch (err) {
       errors.push({ slug, message: err instanceof Error ? err.message : String(err) });
     }
+  }
+
+  // Thẻ trên site có link FinlyWealth nhưng vòng lặp không chạm tới: draft đã
+  // đổi `slug` nên không join được với bản published. Không báo thì rebate của
+  // thẻ đó ngừng được canh mà chẳng ai hay. Đối chiếu với bản published nên
+  // lỗi còn nguyên ở mọi lượt sau, `--retry` không rửa thành xanh.
+  for (const [slug, liveCard] of published) {
+    if (checkedSlugs.has(slug) || !finlyWealthRebateUrl(liveCard.applyUrl)) continue;
+    errors.push({
+      slug,
+      message:
+        "thẻ trên site dùng link FinlyWealth nhưng không có entry nào khớp slug để kiểm — nhiều khả năng slug bị đổi trong bản nháp",
+    });
   }
 
   // Gom lỗi vào body rồi vẫn trả 200 nghĩa là `curl -sfS` trong workflow thấy
