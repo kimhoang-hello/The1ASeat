@@ -317,13 +317,19 @@ không phải sửa chỗ nào khác.
   duyệt**, rồi chỉ hai chỗ có cơ sở: 2 tài khoản ngân hàng gắn tag `newcomer`
   và phần nền tảng. Thiếu dữ liệu KHÔNG đồng nghĩa không được dẫn họ đi đâu —
   nói rõ giới hạn rồi dẫn tới thứ mình có đủ cơ sở mới là trung thực.
-- **Chỗ đặt ở hero là MỘT DÒNG, không phải cụm ngã ba.** Hero có đúng một
-  nhiệm vụ (đăng ký bản tin) và bê bốn ô lên đó là đặt hai lời kêu gọi ngang
-  sức cạnh nhau — trên mobile cái sau ăn mất cái trước. Nhưng trước dòng này,
-  người lần đầu ghé site chỉ có đúng một việc làm được là để lại email; ai chưa
-  biết gì thì không có đường nào ngoài tự bơi xuống danh sách thẻ. Dòng này
-  cũng nằm sau `START_HERE_PUBLISHED`, nên bật cờ là công bố cả trang lẫn cửa
-  vào của nó cùng lúc.
+- **Chỗ đặt ở hero là MỘT NÚT VIỀN, đứng TRÊN form bản tin.** Không phải cụm
+  bốn ô (hero bê bốn ô lên là hai lời kêu gọi ngang sức cạnh nhau, mobile thì
+  cái sau ăn mất cái trước), và cũng không phải một dòng chữ — bản dòng chữ đo
+  được vùng chạm 37px (dưới chuẩn 44px, mà PRODUCT.md ghi có độc giả lớn tuổi),
+  chữ 14px nhỏ nhất hero, nằm ở 659px tức sát mép màn hình khi có thanh trình
+  duyệt. Nút viền 343×56px ở 453px giải cả ba.
+  Đứng TRÊN form là có chủ ý và có cái giá của nó: bản tin có BA cửa (form
+  hero, nút trên header, khối CTA cuối trang) còn trang Bắt đầu chỉ có MỘT.
+  Nút nền đặc vẫn hút mắt hơn nút viền nên bản tin giữ ưu thế thị giác dù đứng
+  sau. Cái giá: người định đăng ký từ hero phải nhìn thấp hơn ~170px — theo dõi
+  bằng GA4 chứ đừng đảo lại theo cảm giác.
+  Nút nằm sau cùng cờ `START_HERE_PUBLISHED` với trang, nên bật cờ là mở cả
+  trang lẫn cửa vào của nó cùng lúc.
 - **KHÔNG bê cụm ngã ba này ra cuối bài.** Hero đã có một
   nhiệm vụ (đăng ký bản tin, một trong hai thước đo thành công); cuối bài thì
   đã biết ngữ cảnh nên CTA phải theo loại bài. Dùng chung component không có
