@@ -185,7 +185,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     keyBenefitsVi: [
       "Giao dịch debit không giới hạn",
       "Tích điểm Scene+™ ngay khi quẹt thẻ debit",
-      "Rebate tới $150 phí thường niên thẻ tín dụng Scotiabank® năm đầu",
+      "Rebate tới $150 annual fee thẻ tín dụng Scotiabank® năm đầu",
     ],
     url: "https://www.scotiabank.com/ca/en/personal/bank-accounts/chequing-accounts/preferred.html",
     affiliateUrl:
@@ -214,7 +214,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     ],
     keyBenefitsVi: [
       "Giao dịch debit và Interac e-Transfer® không giới hạn",
-      "Rebate tới $150 phí thường niên thẻ tín dụng mỗi năm, không chỉ năm đầu",
+      "Rebate tới $150 annual fee thẻ tín dụng mỗi năm, không chỉ năm đầu",
       "Miễn phí sổ séc và bank draft không giới hạn",
       "Giao dịch miễn phí ở Scotia iTRADE®",
     ],
@@ -258,7 +258,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     keyBenefitsVi: [
       "Giao dịch debit và Interac e-Transfer® không giới hạn",
       "Tích điểm Scene+™ khi quẹt thẻ debit",
-      "Rebate tới $150 phí thường niên thẻ tín dụng năm đầu",
+      "Rebate tới $150 annual fee thẻ tín dụng năm đầu",
     ],
     // Trang cũ (.../chequing-accounts/student-banking.html) đã 404 — Scotiabank®
     // đổi sang đường dẫn dưới đây. Kiểm lại 19/08/2026.
@@ -366,7 +366,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     keyBenefitsVi: [
       "Giao dịch và Interac e-Transfer® không giới hạn",
       "Rút ATM ngoài mạng BMO® tại Canada không mất phí",
-      "Rebate phí thường niên thẻ tín dụng BMO® và tỷ giá USD ưu đãi",
+      "Rebate annual fee thẻ tín dụng BMO® và tỷ giá USD ưu đãi",
     ],
     // ".../premium-plan/" đã 404; BMO® rút gọn còn ".../premium/".
     url: "https://www.bmo.com/en-ca/main/personal/bank-accounts/chequing-accounts/premium/",
@@ -872,7 +872,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     ],
     keyBenefitsVi: [
       "Giao dịch debit và Interac e-Transfer® không giới hạn, dùng được trên toàn thế giới",
-      "Rebate tới $120 phí thường niên thẻ tín dụng đủ điều kiện",
+      "Rebate tới $120 annual fee thẻ tín dụng đủ điều kiện",
       "Miễn monthly fee cho tối đa 2 tài khoản CAD và 1 tài khoản USD khác",
       "Rút ATM trong mạng lưới RBC® miễn phí, bank draft $0, không yêu cầu số dư tối thiểu",
       "Tích điểm Avion® khi quẹt thẻ debit",
@@ -902,7 +902,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     ],
     keyBenefitsVi: [
       "Giao dịch debit và Interac e-Transfer® không giới hạn trong Canada",
-      "Rebate tới $48 phí thường niên thẻ tín dụng đủ điều kiện",
+      "Rebate tới $48 annual fee thẻ tín dụng đủ điều kiện",
       "Miễn phí 3 lần rút ATM ngoài mạng RBC® mỗi tháng, sau đó $2 mỗi lần",
       "Không yêu cầu số dư tối thiểu; không hài lòng trong 4 tháng đầu thì được hoàn monthly fee tối đa 3 tháng",
       "Tích điểm Avion® khi quẹt thẻ debit",

@@ -42,7 +42,7 @@ export default function TermsPage() {
 
       <h2>Thông tin thẻ và ưu đãi có thể thay đổi bất cứ lúc nào</h2>
       <p>
-        Welcome bonus, phí thường niên, tỷ lệ tích điểm, điều kiện chi tiêu, tỷ lệ transfer và ngày
+        Welcome bonus, annual fee, tỷ lệ tích điểm, điều kiện chi tiêu, tỷ lệ transfer và ngày
         hết hạn của các ưu đãi <strong>do ngân hàng phát hành quyết định và có thể thay đổi, rút
         lại hoặc gia hạn bất cứ lúc nào mà không báo trước</strong>. Chúng tôi cố gắng cập nhật
         thường xuyên, nhưng không cam kết mọi con số trên trang luôn khớp với ưu đãi đang chạy.
@@ -105,7 +105,7 @@ export default function TermsPage() {
         Nội dung được cung cấp &ldquo;nguyên trạng&rdquo;, không kèm bảo đảm nào về tính chính xác,
         đầy đủ hay phù hợp với mục đích của bạn. Trong phạm vi pháp luật cho phép, Ghế 1A không chịu
         trách nhiệm cho bất kỳ thiệt hại nào phát sinh từ việc bạn sử dụng trang hoặc dựa vào nội
-        dung trên trang — bao gồm nhưng không giới hạn ở tổn thất về điểm thưởng, phí thường niên,
+        dung trên trang — bao gồm nhưng không giới hạn ở tổn thất về điểm thưởng, annual fee,
         lãi suất, hay ưu đãi không nhận được.
       </p>
 

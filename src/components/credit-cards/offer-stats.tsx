@@ -63,7 +63,7 @@ export function OfferStats({
           </>
         ) : (
           // Thẻ không có welcome bonus (cashback, hoặc thẻ bán tỷ lệ tích điểm)
-          // thì phí thường niên lên làm số lớn. Để trống nửa bên trái sẽ tạo
+          // thì annual fee lên làm số lớn. Để trống nửa bên trái sẽ tạo
           // một khoảng lặng ngay chỗ mắt tìm con số, còn nhét tỷ lệ tích điểm
           // vào ô "welcome bonus" thì đơn giản là nói sai.
           <Figure value={fee.amount} label={offers("annualFee")} muted />
