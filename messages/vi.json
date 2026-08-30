@@ -391,7 +391,20 @@
     "step4Body": "Welcome bonus và transfer bonus lên xuống theo đợt, và đợt cao thường chỉ kéo dài vài tuần. Đây là hai chỗ để không phải ngồi canh.",
     "step4LinkBonuses": "Transfer Bonus đang chạy",
     "step4Newsletter": "Hoặc để bản tin báo giúp bạn:",
-    "readingTime": "{minutes} phút đọc"
+    "readingTime": "{minutes} phút đọc",
+    "routerTitle": "Bạn đang muốn gì?",
+    "routerCards": "Tôi đang chọn thẻ",
+    "routerCardsNote": "Xem {cards} thẻ Canada đang theo dõi, {elevated} thẻ đang chạy elevated offer",
+    "routerAward": "Tôi muốn bay Canada–Việt Nam bằng điểm",
+    "routerAwardNote": "Tra số điểm cần cho từng chặng, theo {programs} chương trình",
+    "routerBasics": "Tôi chưa hiểu Miles & Points là gì",
+    "routerNewcomer": "Tôi mới sang Canada",
+    "newcomerTitle": "Nếu bạn mới sang Canada",
+    "newcomerBody": "Nói thẳng: Ghế 1A chưa có đủ dữ liệu để xếp thẻ tín dụng theo khả năng được duyệt cho người chưa có credit history, nên trang này không xếp — và bạn nên nghi ngờ bất cứ trang nào xếp mà không nói dựa vào đâu. Thứ mình có đủ cơ sở để chỉ là hai chỗ dưới đây.",
+    "newcomerAccounts": "{count} tài khoản ngân hàng dành cho newcomer",
+    "newcomerAccountsNote": "Ngân hàng tự công bố là dành cho người mới định cư — mở tài khoản không cần credit history",
+    "newcomerBasics": "Đọc phần nền tảng trước",
+    "newcomerBasicsNote": "Hiểu điểm thưởng hoạt động thế nào trước khi mở thẻ đầu tiên"
   },
   "bankCompare": {
     "eyebrow": "CÔNG CỤ",

@@ -3,13 +3,17 @@ import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react/ssr";
 import { getCreditCardOffers, getPosts, type BlogPost } from "@/lib/content";
 import { PROGRAMS } from "@/lib/award-charts";
+import { BANK_ACCOUNTS } from "@/lib/bank-accounts";
+import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
 import { isElevatedLive } from "@/lib/credit-card-state";
 import { categoryPath, getCategories, postsInCategory } from "@/lib/blog-categories";
 import { COMPARE_PATH } from "@/lib/card-compare";
 import { creditCardsPath } from "@/lib/card-points-programs";
 import { START_HERE_PUBLISHED } from "@/lib/feature-flags";
+
 import { PageHeader } from "@/components/layout/page-header";
 import { NewsletterForm } from "@/components/home/newsletter-form";
+import { StartHereRouter } from "@/components/home/start-here-router";
 import { JsonLd } from "@/components/seo/json-ld";
 import { pageMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import { t as translate } from "@/lib/t";
@@ -45,17 +49,22 @@ export const metadata: Metadata = {
 
 function Step({
   n,
+  id,
   title,
   body,
   children,
 }: {
   n: number;
+  id?: string;
   title: string;
   body: string;
   children: React.ReactNode;
 }) {
   return (
-    <li className="relative rounded-2xl border border-border bg-card p-5 sm:p-7">
+    <li
+      id={id}
+      className="relative scroll-mt-28 rounded-2xl border border-border bg-card p-5 sm:p-7"
+    >
       <p className="text-xs font-semibold uppercase tracking-wide text-primary">
         {t("stepLabel", { n })}
       </p>
@@ -111,6 +120,11 @@ export default async function StartHerePage() {
   const foundation = category ? [...postsInCategory(posts, category)].reverse() : [];
 
   const elevated = offers.filter(isElevatedLive).length;
+  // Chỉ những tài khoản mà chính ngân hàng công bố là dành cho người mới định
+  // cư. Mục Ngân hàng còn là bản nháp thì khối này biến mất cùng nó.
+  const newcomerAccounts = BANK_ACCOUNTS_PUBLISHED
+    ? BANK_ACCOUNTS.filter((account) => account.tags.includes("newcomer"))
+    : [];
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -131,8 +145,61 @@ export default async function StartHerePage() {
       <PageHeader eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
-        <ol className="mx-auto flex max-w-3xl flex-col gap-5">
-          <Step n={1} title={t("step1Title")} body={t("step1Body", { count: foundation.length })}>
+        <div className="mx-auto max-w-3xl space-y-5">
+          <StartHereRouter
+            title={t("routerTitle")}
+            cards={{
+              // Danh sách, KHÔNG phải trang so sánh: người chưa biết chọn gì
+              // thì chưa có hai ứng viên để đặt cạnh nhau.
+              href: "/credit-cards",
+              label: t("routerCards"),
+              note: t("routerCardsNote", { cards: offers.length, elevated }),
+            }}
+            award={{
+              href: "/award-flight-finder",
+              label: t("routerAward"),
+              note: t("routerAwardNote", { programs: PROGRAMS.length }),
+            }}
+            basics={{ href: "#co-ban", label: t("routerBasics") }}
+            newcomer={
+              // Chỉ khi khối bên dưới thật sự được render — xem chú thích ở
+              // `StartHereRouter`.
+              newcomerAccounts.length > 0
+                ? { href: "#moi-sang-canada", label: t("routerNewcomer") }
+                : undefined
+            }
+          />
+
+          {/* Ngay dưới ngã ba, không phải cuối trang: nhóm mới định cư là một
+              trong hai nhóm độc giả cốt lõi, và câu quan trọng nhất với họ là
+              câu nói thẳng site này chưa biết gì. */}
+          {newcomerAccounts.length > 0 && (
+            <section
+              id="moi-sang-canada"
+              className="scroll-mt-28 rounded-2xl border border-border bg-card p-5 sm:p-6"
+            >
+              <h2 className="font-display text-lg font-bold text-foreground">
+                {t("newcomerTitle")}
+              </h2>
+              <p className="mt-2 text-base leading-relaxed text-foreground/90">
+                {t("newcomerBody")}
+              </p>
+              <ul className="mt-4 space-y-2">
+                <StepLink href="/bank-accounts?filter=newcomer">
+                  {t("newcomerAccounts", { count: newcomerAccounts.length })}
+                </StepLink>
+                <StepLink href="#co-ban">{t("newcomerBasics")}</StepLink>
+              </ul>
+            </section>
+          )}
+
+        <ol className="flex flex-col gap-5">
+          <Step
+            n={1}
+            id="co-ban"
+            title={t("step1Title")}
+            body={t("step1Body", { count: foundation.length })}
+          >
             <ul className="space-y-2">
               {foundation.map((post, index) => (
                 <PostStep key={post.slug} post={post} order={index + 1} />
@@ -182,6 +249,7 @@ export default async function StartHerePage() {
             </div>
           </Step>
         </ol>
+        </div>
       </section>
     </>
   );

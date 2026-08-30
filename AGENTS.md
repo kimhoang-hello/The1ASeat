@@ -295,6 +295,28 @@ chip lọc và tụt xuống cuối danh sách sắp theo bonus.
 kiếm, và `robots: noindex` + dải báo nháp trên chính trang. Bật cờ là công bố,
 không phải sửa chỗ nào khác.
 
+- **Đầu trang là NGÃ BA, không phải wizard.** Đã cân nhắc một luồng onboarding
+  3 câu hỏi (mục tiêu / kinh nghiệm / bối cảnh) rồi bỏ sau một vòng phản biện
+  product với Codex. Lý do bỏ KHÔNG phải "ít đầu ra nên cá nhân hoá giả" — lý
+  do đó sai, ba câu hỏi vẫn hợp lệ nếu đổi một câu trả lời làm đổi đề xuất. Lý
+  do thật: nó thêm hai bậc chuyển đổi trước khi trả được giá trị nào, trên một
+  trang chưa có traffic để biện minh. Đừng dựng lại wizard khi chưa có số.
+- **Ngã ba có THỨ BẬC**: hai nút lớn (chọn thẻ / bay về Việt Nam) là hai việc
+  hay cần nhất; hai lối còn lại là link nhỏ hơn. Bốn nút ngang hàng ngầm nói
+  bốn nhu cầu phổ biến như nhau, mà không phải vậy.
+- **"Tôi đang chọn thẻ" dẫn về `/credit-cards`, KHÔNG phải trang so sánh** —
+  người chưa biết chọn gì thì chưa có hai ứng viên để đặt cạnh nhau.
+- **Khối newcomer nói thẳng site chưa có dữ liệu xếp thẻ theo khả năng được
+  duyệt**, rồi chỉ hai chỗ có cơ sở: 2 tài khoản ngân hàng gắn tag `newcomer`
+  và phần nền tảng. Thiếu dữ liệu KHÔNG đồng nghĩa không được dẫn họ đi đâu —
+  nói rõ giới hạn rồi dẫn tới thứ mình có đủ cơ sở mới là trung thực.
+- **KHÔNG bê cụm ngã ba này ra hero trang chủ hay cuối bài.** Hero đã có một
+  nhiệm vụ (đăng ký bản tin, một trong hai thước đo thành công); cuối bài thì
+  đã biết ngữ cảnh nên CTA phải theo loại bài. Dùng chung component không có
+  nghĩa dùng chung một quyết định UX.
+- **Mỗi lựa chọn bắn GA4 event `start_here_goal` kèm `goal`.** Không có số thì
+  cả trang này lẫn câu hỏi "có cần wizard không" đều không kiểm chứng được.
+  Quyết theo số phiên đủ lớn, không theo lịch.
 - **Bài trong bước 1 sắp CŨ NHẤT TRƯỚC**, ngược với mọi chỗ khác trên site. Đây
   là lộ trình đọc chứ không phải dòng thời gian: bài viết sớm nhất là bài vỡ
   lòng và các bài sau xây trên nó. Đừng "sửa" thành mới nhất trước.
