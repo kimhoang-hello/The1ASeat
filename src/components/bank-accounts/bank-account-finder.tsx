@@ -10,6 +10,7 @@ import { ApplyButton } from "@/components/ui/apply-button";
 import { t as translate } from "@/lib/t";
 import {
   AVAILABLE_FILTERS,
+  hasLiveBonus,
   BANKS,
   BANK_ACCOUNTS,
   BANK_ACCOUNTS_VERIFIED_ON,
@@ -113,7 +114,7 @@ function BankMark({ bank }: { bank: BankId }) {
  */
 function feeIsHeadline(account: BankAccount): boolean {
   return (
-    account.bonusLabelVi === undefined &&
+    !hasLiveBonus(account) &&
     account.interestRate === undefined &&
     account.noRateNoteVi === undefined
   );
@@ -125,7 +126,10 @@ function feeIsHeadline(account: BankAccount): boolean {
  * nghĩa theo tài khoản thay vì để trống.
  */
 function Headline({ account }: { account: BankAccount }) {
-  if (account.bonusLabelVi) {
+  // `hasLiveBonus` chứ không phải `bonusLabelVi`: bonus hết hạn thì thẻ rơi
+  // xuống nói về lãi suất hoặc phí, chứ không quảng cáo một con số không lấy
+  // được nữa.
+  if (hasLiveBonus(account)) {
     return (
       <>
         <p className="font-display text-2xl font-extrabold leading-tight text-primary">

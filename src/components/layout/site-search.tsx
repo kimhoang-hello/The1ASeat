@@ -29,7 +29,14 @@ export function SiteSearch({ onOpen }: { onOpen?: () => void }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [items, setItems] = useState<SearchItem[] | null>(cachedItems);
+  // Lấy từ module cache lúc RENDER, không phải chỉ lúc khởi tạo state. Bản cũ
+  // đọc `cachedItems` đúng một lần ở `useState`, nên có một đường kẹt vĩnh
+  // viễn: mở ô tìm kiếm rồi đóng TRƯỚC khi `/api/search` trả về thì `cancelled`
+  // chặn `setItems`, trong khi `cachedItems` vẫn được gán. Lần mở sau, effect
+  // thoát sớm vì đã có cache mà state thì vẫn `null` — panel đứng ở "đang tải"
+  // cho tới khi tải lại trang. Mạng chậm là đủ để dựng lại.
+  const [fetched, setFetched] = useState<SearchItem[] | null>(null);
+  const items = fetched ?? cachedItems;
   const [failed, setFailed] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -42,7 +49,13 @@ export function SiteSearch({ onOpen }: { onOpen?: () => void }) {
       .then((res) => res.json())
       .then((data: { items: SearchItem[] }) => {
         cachedItems = data.items;
-        if (!cancelled) setItems(data.items);
+        if (!cancelled) {
+          setFetched(data.items);
+          // Một lượt hỏng trước đó không được phép dán nhãn lỗi lên lượt vừa
+          // thành công: `failed` là trạng thái của LẦN TẢI, không phải của
+          // component.
+          setFailed(false);
+        }
       })
       .catch(() => {
         if (!cancelled) setFailed(true);
@@ -131,7 +144,7 @@ export function SiteSearch({ onOpen }: { onOpen?: () => void }) {
             </form>
 
             <div className="mt-3">
-              {failed ? (
+              {failed && !items ? (
                 <p className="px-2 py-3 text-sm text-muted-foreground">{tSearch("error")}</p>
               ) : !query.trim() ? (
                 <p className="px-2 py-3 text-sm text-muted-foreground">

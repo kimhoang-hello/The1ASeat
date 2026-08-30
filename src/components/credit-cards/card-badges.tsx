@@ -1,5 +1,6 @@
 import type { CreditCardOffer } from "@/lib/content";
 import { formatDate, hasExpired } from "@/lib/format-date";
+import { isElevatedLive } from "@/lib/credit-card-state";
 
 export function CardBadges({
   offer,
@@ -14,7 +15,7 @@ export function CardBadges({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {offer.elevatedBonus && (
+      {isElevatedLive(offer) && (
         <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
           + {elevatedBonusLabel}
         </span>

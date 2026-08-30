@@ -162,6 +162,53 @@ sau không kết luận ngược:
 Chưa làm: chưa có `Content-Security-Policy` thật (mới chỉ có
 `upgrade-insecure-requests` do Hostinger gắn).
 
+## Vòng review 29/08/2026 (lần hai — tầng render) — đừng đề xuất lại
+
+Lượt đầu soi route/job/lib; lượt này soi trang, component, dữ liệu tĩnh, hai
+công cụ tính, search, SEO/schema và accessibility. Tám phát hiện, đã vá cả tám:
+
+- **`isElevatedLive()` trong `lib/credit-card-state.ts` là chốt duy nhất quyết
+  định một thẻ có đang chạy elevated offer hay không** — cờ `elevatedBonus`
+  MỘT MÌNH thì không. Bản đang phục vụ có thể mang cờ bật + `expiresAt` đã qua
+  (publish hỏng giữa chừng). Năm chỗ phải dùng chung nó: tab "Offers nổi bật",
+  chia nổi bật/còn lại ở trang chủ, `CardBadges`, banner đầu trang,
+  `creditCardPriority`. Đừng đọc thẳng `offer.elevatedBonus` ở tầng render nữa.
+- **`hasLiveBonus()` trong `lib/bank-accounts.ts`** cũng vậy với welcome bonus
+  của tài khoản ngân hàng: bonus nằm trong file TypeScript nên không job nào gỡ
+  chúng khi hết hạn, phải có người sửa rồi deploy. Chip lọc, thứ tự sắp xếp,
+  headline trên thẻ và trang riêng đều đi qua hàm này.
+- **`parseNumber` của calculator chỉ bỏ những chữ trang trí đã liệt kê**
+  (`$`, `CAD`, `điểm`, `points`, `miles`…), gặp chữ lạ thì trả `null`. Bản cũ
+  lọc `[^0-9.]` nên `1e6` thành `16` và `$-3500` thành `+3500` — sai số nhưng
+  in ra vẫn trông hoàn chỉnh. Đừng "đơn giản hoá" lại thành lọc theo lớp ký tự.
+- **JSON-LD thẻ tín dụng KHÔNG có `availabilityEnds`.** `Offer` ở đó là việc
+  mở thẻ, còn `expiresAt` chỉ là hạn welcome bonus; gán vào nhau là báo với
+  crawler rằng thẻ ngừng nhận application. Đừng thêm lại.
+- **`lastmod` của `/blog` và trang chủ lấy max `lastModified` toàn bộ bài**,
+  không phải `posts[0]` (bài mới nhất theo `publishedAt`). Dùng
+  `latestModified()`, so bằng `Date` — SO CHUỖI LÀ SAI: `sys.updatedAt` kết
+  thúc bằng `Z` còn `publishedAt` mang offset `-04:00`, nên
+  `2026-08-02T23:00-04:00` (xảy ra SAU) thua `2026-08-03T02:00Z` khi so chuỗi.
+  Vòng phản biện thứ hai bắt được đúng lỗi này trong bản vá đầu tiên, vòng thứ
+  ba bắt tiếp một ca nữa: ngày không đọc được phải bị BỎ QUA, vì `NaN > NaN` là
+  false nên một ngày hỏng lọt vào làm mốc đầu tiên sẽ chặn mọi ngày hợp lệ sau
+  nó. (`getCategories` ngay bên trên vẫn còn đúng cái bẫy `NaN` này ở phép so
+  của nó — chưa sửa vì nó chỉ ảnh hưởng `lastmod` của một trang chuyên mục,
+  nhưng biết là có.)
+- **`SiteSearch` lấy `items` từ module cache lúc RENDER** (`fetched ?? cachedItems`),
+  không phải chỉ ở giá trị khởi tạo `useState`. Bản cũ kẹt vĩnh viễn ở "đang
+  tải" nếu người dùng đóng ô tìm kiếm trước khi `/api/search` trả về. `failed`
+  được xoá khi có lượt tải thành công sau đó.
+- **Tên chương trình trong bảng `/transfer-partners` là `<th scope="row">`**,
+  không phải `<td>`.
+- **Form newsletter và contact: kết quả gửi có `role="status"` và được đưa
+  focus tới.** Cả form bị thay bằng một dòng chữ khi gửi xong, nên không có hai
+  thứ đó thì người dùng screen reader mất focus và không biết đã gửi được chưa.
+
+Kiểm chứng bản vá bằng dữ liệu dựng sẵn (script tạm, đã xoá): năm hình dạng của
+`isElevatedLive`, và một Simplii giả với hạn lùi về quá khứ để xem nó rơi khỏi
+chip lọc và tụt xuống cuối danh sách sắp theo bonus.
+
 ## Chạy gì trước khi kết luận
 
 ```

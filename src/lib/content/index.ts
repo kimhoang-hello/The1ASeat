@@ -12,6 +12,7 @@ import {
   getSamplePosts,
   getSampleTransferBonuses,
 } from "./sample";
+import { isElevatedLive } from "../credit-card-state";
 import type { AuthorProfile, BlogPost, CreditCardOffer, TransferBonus } from "./types";
 
 /**
@@ -61,7 +62,7 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | undefined>
 }
 
 function creditCardPriority(offer: CreditCardOffer): number {
-  if (offer.elevatedBonus) return 0;
+  if (isElevatedLive(offer)) return 0;
   if (offer.issuer.includes("American Express")) return 1;
   return 2;
 }

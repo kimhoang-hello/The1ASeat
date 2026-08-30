@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { PaperPlaneTilt, CheckCircle, CircleNotch } from "@phosphor-icons/react";
 import { t as translate } from "@/lib/t";
 
@@ -16,6 +16,20 @@ export function ContactForm() {
   const [email, setEmail] = useState("");
   const [subject, setSubject] = useState(t("subjectGeneral"));
   const [message, setMessage] = useState("");
+  const doneRef = useRef<HTMLDivElement>(null);
+
+/**
+ * Khi gửi xong, cả form lẫn cái nút người dùng vừa bấm bị thay bằng một dòng
+ * chữ. Với người dùng screen reader thì phần tử đang focus biến mất giữa
+ * chừng: focus rơi về `<body>`, và dòng chữ mới không được đọc lên vì nó chỉ
+ * là một `<div>` thường. Họ bấm Gửi rồi không biết đã gửi được hay chưa.
+ *
+ * `role="status"` để nó được đọc lên, `tabIndex={-1}` + `focus()` để con trỏ
+ * đi theo tới đúng chỗ nội dung vừa đổi.
+ */
+  useEffect(() => {
+    if (status === "submitted") doneRef.current?.focus();
+  }, [status]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -35,7 +49,12 @@ export function ContactForm() {
 
   if (status === "submitted") {
     return (
-      <div className="flex items-center gap-2 rounded-xl bg-secondary px-5 py-4 text-sm font-medium text-foreground">
+      <div
+        ref={doneRef}
+        role="status"
+        tabIndex={-1}
+        className="flex items-center gap-2 rounded-xl bg-secondary px-5 py-4 text-sm font-medium text-foreground outline-none"
+      >
         <CheckCircle size={20} weight="fill" className="shrink-0 text-emerald-500" />
         {t("sent")}
       </div>
@@ -128,7 +147,11 @@ export function ContactForm() {
             </>
           )}
         </button>
-        {status === "error" && <p className="mt-2 text-xs text-destructive">{t("error")}</p>}
+        {status === "error" && (
+          <p role="status" className="mt-2 text-xs text-destructive">
+            {t("error")}
+          </p>
+        )}
       </div>
     </form>
   );

@@ -46,7 +46,7 @@
 //
 // Lãi suất và welcome bonus ở Canada thay đổi liên tục. Chỗ nào ngân hàng
 // không công bố thì để trống và nói thẳng, không đoán.
-import { formatDate } from "./format-date";
+import { formatDate, hasExpired } from "./format-date";
 
 export type BankId =
   | "scotiabank"
@@ -1034,6 +1034,22 @@ export const SORT_OPTIONS = [
 
 export type SortId = (typeof SORT_OPTIONS)[number]["id"];
 
+/**
+ * Tài khoản này có welcome bonus CÒN NHẬN ĐƯỢC không.
+ *
+ * `bonusLabelVi` một mình là không đủ. Bonus tài khoản ngân hàng nằm trong file
+ * này chứ không nằm trong Contentful, nên không có job nào gỡ chúng khi tới hạn
+ * — phải có người sửa file rồi deploy. Giữa hai lần đó, chỉ kiểm nhãn thôi thì
+ * chip "Có welcome bonus" vẫn lọc ra nó, thứ tự "sắp theo bonus" vẫn xếp nó lên
+ * đầu bằng $350 không còn tồn tại, và cả trang danh sách lẫn trang riêng vẫn in
+ * con số đó làm số lớn nhất trên thẻ. Ngày đã qua thì nằm im trong phần điều
+ * kiện thu gọn, gần như không ai mở.
+ */
+export function hasLiveBonus(account: BankAccount): boolean {
+  if (account.bonusLabelVi === undefined) return false;
+  return !(account.bonusExpiresOn && hasExpired(account.bonusExpiresOn));
+}
+
 export function matchesFilter(account: BankAccount, filter: FilterId): boolean {
   switch (filter) {
     case "all":
@@ -1044,7 +1060,7 @@ export function matchesFilter(account: BankAccount, filter: FilterId): boolean {
     case "no-fee":
       return account.monthlyFee === 0;
     case "bonus":
-      return account.bonusLabelVi !== undefined;
+      return hasLiveBonus(account);
     case "newcomer":
     case "student":
       return account.tags.includes(filter);
@@ -1088,7 +1104,11 @@ export function sortAccounts(accounts: BankAccount[], sort: SortId): BankAccount
   return [...accounts].sort((a, b) => {
     switch (sort) {
       case "bonus": {
-        const diff = (b.bonusValue ?? -1) - (a.bonusValue ?? -1);
+        // Bonus đã hết hạn xếp như "không có bonus", không phải như số tiền của
+        // nó — nếu không, tài khoản chết vẫn đứng đầu danh sách.
+        const value = (account: BankAccount) =>
+          hasLiveBonus(account) ? (account.bonusValue ?? -1) : -1;
+        const diff = value(b) - value(a);
         return diff !== 0 ? diff : byName(a, b);
       }
       case "rebate": {

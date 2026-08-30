@@ -26,15 +26,39 @@ const VI_THOUSANDS = /^\d{1,3}(\.\d{3})+$/;
  * lặng lẽ tính như thể thuế bằng 0 và in ra 5.8¢: một con số trông hoàn toàn
  * bình thường, dựng trên một ô người dùng biết là mình gõ sai.
  */
+/**
+ * Những chữ người ta hay gõ kèm con số. Chỉ đúng những chữ này được phép bỏ đi
+ * trong im lặng.
+ *
+ * Bản cũ lọc thẳng `[^0-9.]`, tức là bỏ MỌI ký tự lạ. Hai ca hỏng thật ra từ
+ * đó: `1e6` biến thành `16` (bỏ chữ "e", dính hai chữ số lại), nên gõ một
+ * triệu điểm ra `20,000.0¢` thay vì `0.3¢`; và `$-3500` mất dấu trừ vì
+ * `startsWith("-")` chỉ nhìn ký tự đầu, ra `+3500`. Cả hai đều in ra một con số
+ * trông hoàn chỉnh, không có dấu hiệu nào cho biết máy đã đọc khác điều người
+ * ta gõ.
+ */
+const DECORATION = /^(?:\$|₫|đ|cad|usd|điểm|diem|points?|pts?|miles?|dặm)+$/i;
+
 function parseNumber(value: string): number | null {
   const trimmed = value.trim();
   if (trimmed === "") return 0;
 
-  const negative = trimmed.startsWith("-");
-  let digits = trimmed.replace(/[^0-9.]/g, "");
+  // Thứ còn lại sau khi bỏ chữ số và các ký tự ngăn cách phải là chữ trang trí
+  // quen thuộc — không thì coi như không đọc được, y như gõ "abc".
+  const leftover = trimmed.replace(/[0-9.,\-\s\u00a0]/g, "");
+  if (leftover !== "" && !DECORATION.test(leftover)) return null;
+
+  const normalized = trimmed.replace(/[^0-9.,\-]/g, "");
+  // Dấu trừ chỉ được đứng trước mọi chữ số. "3-500" hay "3500-" là gõ nhầm,
+  // không phải số âm.
+  if (!/^-?[\d.,]+$/.test(normalized)) return null;
+
+  const negative = normalized.startsWith("-");
+  let digits = (negative ? normalized.slice(1) : normalized).replace(/,/g, "");
   if (VI_THOUSANDS.test(digits)) digits = digits.replace(/\./g, "");
 
-  if (!/\d/.test(digits)) return null;
+  // Tới đây chỉ còn chữ số và tối đa một dấu chấm thập phân. "3.5.7" rơi ở đây.
+  if (!/^\d+(\.\d+)?$/.test(digits)) return null;
 
   const n = Number(digits);
   if (!Number.isFinite(n)) return null;

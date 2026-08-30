@@ -30,7 +30,13 @@ export function creditCardJsonLd(offer: CreditCardOffer) {
       category: offer.cardType,
       availability: "https://schema.org/InStock",
       seller: { "@type": "Organization", name: offer.issuer },
-      ...(offer.expiresAt && { availabilityEnds: offer.expiresAt }),
+      // KHÔNG có `availabilityEnds`. `Offer` ở đây là việc mở thẻ (`url` là
+      // apply URL, `seller` là ngân hàng), còn `offer.expiresAt` chỉ là hạn của
+      // welcome bonus. Gán vào nhau là báo với crawler rằng thẻ ngừng nhận
+      // application từ ngày đó, trong khi trang vẫn liệt kê và vẫn cho apply —
+      // và với các entry lưu mốc `00:00`, schema còn kết thúc ngay đầu cái ngày
+      // mà giao diện tính là còn hiệu lực. Hạn welcome offer đã hiện trên trang;
+      // schema.org không có chỗ đúng cho nó trong `CreditCard`.
     },
     ...(offer.keyBenefits.length > 0 && {
       // Benefits render as a bulleted list on the page; expose the same list as

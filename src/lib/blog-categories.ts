@@ -32,6 +32,34 @@ export function lastModified(post: BlogPost): string {
   return new Date(post.updatedAt) > new Date(post.publishedAt) ? post.updatedAt : post.publishedAt;
 }
 
+/**
+ * Ngày sửa gần nhất trong cả danh sách. So bằng `Date`, không so chuỗi: hai
+ * trường nguồn có hình dạng ISO khác nhau ("2026-06-28T00:00-04:00" và
+ * "2026-08-02T16:55:43.826Z"), nên so chuỗi thì `2026-08-02T23:00-04:00` (tức
+ * 03:00Z ngày 03) thua `2026-08-03T02:00Z` dù nó xảy ra sau. Trả về đúng chuỗi
+ * gốc đã chọn, không trả chuỗi đã chuẩn hoá — `lastmod` nên giữ nguyên dạng mà
+ * các chỗ khác cũng đang phát ra.
+ */
+export function latestModified(posts: BlogPost[]): string | undefined {
+  let best: string | undefined;
+  let bestAt = -Infinity;
+
+  for (const post of posts) {
+    const touched = lastModified(post);
+    const at = new Date(touched).getTime();
+    // Ngày không đọc được thì BỎ QUA, không cho nó vào cuộc so. `NaN > NaN` là
+    // false, nên một `publishedAt` hỏng lọt vào làm mốc đầu tiên sẽ chặn mọi
+    // ngày hợp lệ đứng sau nó, và cả site nhận `lastmod` là chuỗi hỏng đó.
+    if (Number.isNaN(at)) continue;
+    if (at > bestAt) {
+      best = touched;
+      bestAt = at;
+    }
+  }
+
+  return best;
+}
+
 export interface BlogCategory {
   /** The category exactly as written in Contentful, e.g. "Khách sạn". */
   name: string;

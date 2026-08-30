@@ -13,6 +13,7 @@ import {
   formatIsoDate,
   formatMoney,
   formatRate,
+  hasLiveBonus,
 } from "@/lib/bank-accounts";
 import { bankAccountDescription, bankAccountJsonLd } from "@/lib/bank-account-schema";
 import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
@@ -143,7 +144,7 @@ export default async function BankAccountDetailPage({
       </div>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
-        {account.bonusLabelVi && (
+        {hasLiveBonus(account) && account.bonusLabelVi && (
           <Stat
             value={account.bonusLabelVi}
             label={bank_t("welcomeBonus")}

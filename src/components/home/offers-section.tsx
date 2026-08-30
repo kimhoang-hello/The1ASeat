@@ -10,6 +10,7 @@ import { OfferStats } from "@/components/credit-cards/offer-stats";
 import { RebateChip } from "@/components/ui/hot-tip";
 import { ApplyButton } from "@/components/ui/apply-button";
 import { isReferralUrl } from "@/lib/affiliate-links";
+import { isElevatedLive } from "@/lib/credit-card-state";
 
 const t = translate("offers");
 
@@ -24,8 +25,8 @@ function shuffle<T>(items: T[]): T[] {
 
 export async function OffersSection() {
   const offersAll = await getCreditCardOffers();
-  const notable = offersAll.filter((offer) => offer.elevatedBonus);
-  const rest = offersAll.filter((offer) => !offer.elevatedBonus);
+  const notable = offersAll.filter(isElevatedLive);
+  const rest = offersAll.filter((offer) => !isElevatedLive(offer));
   const offers = [...shuffle(notable), ...shuffle(rest)].slice(0, 4);
 
   return (

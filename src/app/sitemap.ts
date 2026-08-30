@@ -1,6 +1,11 @@
 import type { MetadataRoute } from "next";
 import { getCreditCardOffers, getPosts } from "@/lib/content";
-import { categoryPath, getCategories, lastModified } from "@/lib/blog-categories";
+import {
+  categoryPath,
+  getCategories,
+  lastModified,
+  latestModified,
+} from "@/lib/blog-categories";
 import { absoluteUrl } from "@/lib/seo";
 import { BANK_ACCOUNTS, bankAccountPath } from "@/lib/bank-accounts";
 import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
@@ -12,7 +17,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [posts, offers] = await Promise.all([getPosts(), getCreditCardOffers()]);
 
   const categories = getCategories(posts);
-  const newestPost = posts[0] ? lastModified(posts[0]) : new Date().toISOString();
+  // Lần SỬA gần nhất, không phải bài ĐĂNG gần nhất. `posts[0]` là bài có
+  // `publishedAt` mới nhất; sửa một bài cũ sau khi đã đăng bài mới thì nội dung
+  // của `/blog` đổi mà `lastmod` vẫn đứng yên, và crawler không có lý do quay
+  // lại. `latestModified` so bằng `Date` — so chuỗi ở đây là sai, hai trường
+  // nguồn mang hai dạng ISO khác nhau (xem chú thích của nó).
+  const newestPost = latestModified(posts) ?? new Date().toISOString();
 
   // Previously every entry claimed lastmod = "now" on each rebuild, which tells
   // a crawler the whole site changed every time and makes lastmod worthless.

@@ -109,8 +109,15 @@ export default function TransferPartnersPage() {
                         sticky cell is lifted out of the row's paint order, so
                         without its own opaque background the ratio columns
                         scroll visibly underneath it. */}
-                    <td
-                      className={`${STICKY_COL} px-4 py-4 font-medium text-foreground ${
+                    {/* `th scope="row"`, không phải `td`: người dùng screen
+                        reader nhảy thẳng giữa hai ô tỷ lệ Amex/RBC, và nếu tên
+                        chương trình không được khai là header của hàng thì họ
+                        nghe được "1,000 : 1,000" mà không biết nó thuộc chương
+                        trình nào — trên đúng cái bảng mà cả nội dung là "hệ nào
+                        chuyển sang chương trình nào". */}
+                    <th
+                      scope="row"
+                      className={`${STICKY_COL} px-4 py-4 text-left font-medium text-foreground ${
                         i % 2 === 0 ? "bg-card" : "bg-background"
                       }`}
                     >
@@ -123,7 +130,7 @@ export default function TransferPartnersPage() {
                         />
                         <span>{row.program}</span>
                       </div>
-                    </td>
+                    </th>
                     <LegCell leg={row.amex} tint="amex" />
                     <LegCell leg={row.rbc} tint="rbc" />
                   </tr>

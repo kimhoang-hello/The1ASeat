@@ -1,4 +1,5 @@
 import { getCreditCardOffers } from "@/lib/content";
+import { isElevatedLive } from "@/lib/credit-card-state";
 import { FeaturedOfferRotator, type FeaturedOffer } from "./featured-offer-rotator";
 
 /** A backstop only — the split below is what does the shortening. */
@@ -54,7 +55,7 @@ function shuffle<T>(items: T[]): T[] {
 export async function FeaturedOfferBanner() {
   const offers = await getCreditCardOffers();
 
-  const featured: FeaturedOffer[] = shuffle(offers.filter((offer) => offer.elevatedBonus))
+  const featured: FeaturedOffer[] = shuffle(offers.filter(isElevatedLive))
     .map((offer) => ({
       slug: offer.slug,
       name: offer.name,

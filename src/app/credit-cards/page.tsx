@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CaretDown } from "@phosphor-icons/react/ssr";
 import { getCreditCardOffers } from "@/lib/content";
+import { isElevatedLive } from "@/lib/credit-card-state";
 import { PageHeader } from "@/components/layout/page-header";
 import { CardImage } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
@@ -51,7 +52,7 @@ export default async function CreditCardsPage({
   const tabOffers = allOffers.filter(
     (offer) =>
       activeTab === "all" ||
-      (activeTab === "noi-bat" ? offer.elevatedBonus : !offer.elevatedBonus),
+      (activeTab === "noi-bat" ? isElevatedLive(offer) : !isElevatedLive(offer)),
   );
 
   // Counted within the tab, so every chip leads somewhere — and an unknown
