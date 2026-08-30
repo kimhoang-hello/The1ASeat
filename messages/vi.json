@@ -154,7 +154,8 @@
     "viewAll": "Xem tất cả transfer",
     "partner": "Đối tác",
     "expires": "Hết hạn",
-    "browsing": "Đang xem {shown}/{total} offer"
+    "browsing": "Đang xem {shown}/{total} offer",
+    "emptyCta": "Xem tỷ lệ transfer thường ngày"
   },
   "calculator": {
     "eyebrow": "CÔNG CỤ",
@@ -181,7 +182,9 @@
     "noData": "—",
     "noDataLabel": "Không transfer được",
     "aeroplanNote": "Lưu ý: RBC® Avion® không transfer được sang Aeroplan® — muốn tích điểm Aeroplan®, dùng thẻ American Express® Aeroplan® hoặc thẻ Aeroplan của TD/CIBC.",
-    "scrollHint": "Vuốt ngang để xem đầy đủ bảng →"
+    "scrollHint": "Vuốt ngang để xem đầy đủ bảng →",
+    "amexCardsAria": "Xem thẻ tích Amex Membership Rewards",
+    "rbcCardsAria": "Xem thẻ tích RBC Avion"
   },
   "author": {
     "eyebrow": "NGƯỜI ĐỨNG SAU GHẾ 1A",
@@ -219,7 +222,9 @@
     "message": "Nội dung",
     "send": "Gửi Tin Nhắn",
     "sent": "Đã gửi! Cảm ơn bạn đã liên hệ, chúng tôi sẽ phản hồi sớm nhất.",
-    "error": "Có lỗi xảy ra, vui lòng thử lại hoặc gửi email trực tiếp đến info@ghe1a.com."
+    "error": "Có lỗi xảy ra, vui lòng thử lại hoặc gửi email trực tiếp đến info@ghe1a.com.",
+    "nextStepsTitle": "Câu trả lời có thể đã có sẵn",
+    "sentNextTitle": "Trong lúc chờ phản hồi"
   },
   "common": {
     "readMore": "Đọc thêm",
@@ -328,7 +333,8 @@
     "optionDynamic": "Dynamic Pricing",
     "optionNoPrice": "Chương trình này không đưa giá cho hành trình đó",
     "medianLabel": "trung vị {points}",
-    "feederOnlyShort": "Cần nối chuyến nội địa"
+    "feederOnlyShort": "Cần nối chuyến nội địa",
+    "transferChipAria": "Xem thẻ tích {issuer}"
   },
   "compare": {
     "eyebrow": "CÔNG CỤ",
@@ -354,7 +360,9 @@
     "rowApply": "Mở thẻ",
     "removeCard": "Bỏ {name} khỏi bảng so sánh",
     "addAnother": "Thêm một thẻ nữa",
-    "viewCard": "Xem chi tiết"
+    "viewCard": "Xem chi tiết",
+    "needMoreCta": "Xem tất cả thẻ",
+    "suggestTitle": "Hoặc mở sẵn một cặp:"
   },
   "cardNextSteps": {
     "title": "Đi tiếp từ đây",
@@ -435,6 +443,31 @@
     "rowBenefits": "Quyền lợi chính",
     "rowApply": "Mở tài khoản",
     "viewAccount": "Xem chi tiết",
-    "compareCta": "So sánh tài khoản này với tài khoản khác"
+    "compareCta": "So sánh tài khoản này với tài khoản khác",
+    "needMoreCta": "Xem tất cả tài khoản",
+    "suggestTitle": "Hoặc mở sẵn một cặp:"
+  },
+  "nextSteps": {
+    "title": "Đi tiếp từ đây",
+    "cardsLabel": "Xem thẻ tín dụng đang theo dõi",
+    "cardsDescription": "Welcome bonus, annual fee và rebate của từng thẻ, cập nhật thường xuyên",
+    "cardsForProgramLabel": "Thẻ nào tích {program}?",
+    "cardsForProgramDescription": "Lọc danh sách thẻ theo đúng loại điểm này",
+    "awardLabel": "Điểm này bay được những đâu?",
+    "awardDescription": "Tra số điểm cần cho từng chặng trong Award Flight Finder",
+    "transferLabel": "Điểm này chuyển đi đâu được?",
+    "transferDescription": "Xem tỷ lệ chuyển sang các chương trình hàng không và khách sạn",
+    "calculatorLabel": "Điểm của bạn đáng bao nhiêu tiền?",
+    "calculatorDescription": "Tính giá trị mỗi điểm cho một vé award cụ thể",
+    "bonusesLabel": "Đang có transfer bonus nào?",
+    "bonusesDescription": "Các đợt bonus đang chạy và ngày hết hạn",
+    "startHereLabel": "Chưa biết bắt đầu từ đâu?",
+    "startHereDescription": "Bốn bước từ con số không tới tấm vé award đầu tiên",
+    "blogLabel": "Đọc bài viết mới nhất",
+    "blogDescription": "Kinh nghiệm, đánh giá thẻ và tin deal từ Ghế 1A",
+    "bankAccountsLabel": "Xem tài khoản ngân hàng",
+    "bankAccountsDescription": "Welcome bonus và cách được miễn phí duy trì hằng tháng",
+    "aboutLabel": "Ghế 1A là ai?",
+    "aboutDescription": "Người viết, cách site kiếm tiền và vì sao bạn nên tin"
   }
 }

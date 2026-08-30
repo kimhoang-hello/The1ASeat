@@ -2,9 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { t as translate } from "@/lib/t";
-import { POINTS_PROGRAMS } from "@/lib/points-programs";
+import { POINTS_PROGRAMS, type PointsProgram } from "@/lib/points-programs";
+import { creditCardsPath } from "@/lib/card-points-programs";
+import { NextSteps, StepLink } from "@/components/ui/next-steps";
 
 const t = translate("calculator");
+const next = translate("nextSteps");
 
 /**
  * Giữ lại dấu trừ ở đầu chuỗi. Bản cũ lọc `[^0-9.]` nên "-100" thành "100":
@@ -69,7 +72,76 @@ function formatCents(valuePerPointInDollars: number): string {
   return (valuePerPointInDollars * 100).toFixed(1);
 }
 
-export function PointsCalculator() {
+/**
+ * Người dùng vừa biết điểm của mình đáng bao nhiêu tiền, và trước khối này
+ * trang calculator không có một đường nội bộ nào — câu hỏi ngay sau đó ("thẻ
+ * nào tích loại điểm này", "bay được đâu") site trả lời được nhưng không có
+ * đường dẫn tới.
+ *
+ * Chưa chọn chương trình thì khối vẫn hiện, chỉ là bản chung: ô chương trình
+ * vốn ghi rõ "(tuỳ chọn)" nên bỏ trống là chuyện thường, không phải lý do để
+ * trang quay lại thành ngõ cụt.
+ *
+ * Award Flight Finder KHÔNG nhận tham số chương trình — nó chỉ đọc
+ * `origin`/`destination`/`cabin` rồi báo giá tất cả chương trình cùng lúc. Nên
+ * link ở đây là đường trần, không phải `?program=`: một tham số bịa ra sẽ bị
+ * bỏ qua trong im lặng và người đọc tưởng mình đã lọc sẵn.
+ */
+function CalculatorNextSteps({
+  program,
+  cardProgramIds,
+}: {
+  program?: PointsProgram;
+  cardProgramIds: string[];
+}) {
+  // Lọc theo hệ điểm chỉ khi hệ đó có thẻ thật. Hiện `amex-mr` KHÔNG có thẻ nào
+  // (thẻ Amex trên site đều tích Aeroplan®/Bonvoy®), nên chọn "Amex Membership
+  // Rewards®" sẽ rơi về link chung thay vì một bộ lọc trả về nguyên 23 thẻ.
+  const canFilter = program !== undefined && cardProgramIds.includes(program.cardProgramId);
+
+  return (
+    <NextSteps title={next("title")} headingLevel="h3" className="mt-8">
+      {canFilter ? (
+        <StepLink
+          href={creditCardsPath({ points: program!.cardProgramId })}
+          label={next("cardsForProgramLabel", { program: program!.name })}
+          description={next("cardsForProgramDescription")}
+        />
+      ) : (
+        <StepLink
+          href="/credit-cards"
+          label={next("cardsLabel")}
+          description={next("cardsDescription")}
+        />
+      )}
+
+      {/* Chương trình có bảng giá trong Award Flight Finder thì câu hỏi kế tiếp
+          là "bay được đâu"; chương trình chỉ chuyển sang chỗ khác (Amex MR,
+          Avion) thì câu hỏi đúng là "chuyển đi đâu được". */}
+      {program && !program.awardProgramId ? (
+        <StepLink
+          href="/transfer-partners"
+          label={next("transferLabel")}
+          description={next("transferDescription")}
+        />
+      ) : (
+        <StepLink
+          href="/award-flight-finder"
+          label={next("awardLabel")}
+          description={next("awardDescription")}
+        />
+      )}
+
+      <StepLink
+        href="/transfer-bonuses"
+        label={next("bonusesLabel")}
+        description={next("bonusesDescription")}
+      />
+    </NextSteps>
+  );
+}
+
+export function PointsCalculator({ cardProgramIds }: { cardProgramIds: string[] }) {
   const [programId, setProgramId] = useState("");
   const [points, setPoints] = useState("60000");
   const [cashPrice, setCashPrice] = useState("3500");
@@ -95,45 +167,49 @@ export function PointsCalculator() {
   const selectedProgram = POINTS_PROGRAMS.find((p) => p.id === programId);
 
   return (
-    <div className="mx-auto max-w-xl rounded-2xl border border-border bg-card p-6 sm:p-8">
-      <div className="grid gap-5">
-        <label className="block">
-          <span className="text-sm font-medium text-foreground/80">{t("programLabel")}</span>
-          <select
-            value={programId}
-            onChange={(e) => setProgramId(e.target.value)}
-            className="mt-1.5 w-full cursor-pointer rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="">{t("programPlaceholder")}</option>
-            {POINTS_PROGRAMS.map((program) => (
-              <option key={program.id} value={program.id}>
-                {program.name}
-              </option>
-            ))}
-          </select>
-        </label>
+    <div className="mx-auto max-w-xl">
+      <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
+        <div className="grid gap-5">
+          <label className="block">
+            <span className="text-sm font-medium text-foreground/80">{t("programLabel")}</span>
+            <select
+              value={programId}
+              onChange={(e) => setProgramId(e.target.value)}
+              className="mt-1.5 w-full cursor-pointer rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="">{t("programPlaceholder")}</option>
+              {POINTS_PROGRAMS.map((program) => (
+                <option key={program.id} value={program.id}>
+                  {program.name}
+                </option>
+              ))}
+            </select>
+          </label>
 
-        <Field label={t("pointsLabel")} value={points} onChange={setPoints} />
-        <Field label={t("cashPriceLabel")} value={cashPrice} onChange={setCashPrice} suffix="$" />
-        <Field label={t("taxesLabel")} value={taxes} onChange={setTaxes} suffix="$" />
+          <Field label={t("pointsLabel")} value={points} onChange={setPoints} />
+          <Field label={t("cashPriceLabel")} value={cashPrice} onChange={setCashPrice} suffix="$" />
+          <Field label={t("taxesLabel")} value={taxes} onChange={setTaxes} suffix="$" />
+        </div>
+
+        <div className="mt-6 rounded-xl bg-secondary p-5 text-center">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {t("result")}
+          </p>
+          <p className="mt-1 font-display text-3xl font-extrabold text-primary">
+            {valuePerPoint === null ? t("resultUnavailable") : `${formatCents(valuePerPoint)}¢`}
+          </p>
+        </div>
+
+        {selectedProgram && (
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            {t("benchmark", { program: selectedProgram.name, value: selectedProgram.centsPerPoint })}
+          </p>
+        )}
+
+        <p className="mt-4 text-xs leading-relaxed text-muted-foreground">{t("resultHint")}</p>
       </div>
 
-      <div className="mt-6 rounded-xl bg-secondary p-5 text-center">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          {t("result")}
-        </p>
-        <p className="mt-1 font-display text-3xl font-extrabold text-primary">
-          {valuePerPoint === null ? t("resultUnavailable") : `${formatCents(valuePerPoint)}¢`}
-        </p>
-      </div>
-
-      {selectedProgram && (
-        <p className="mt-3 text-center text-xs text-muted-foreground">
-          {t("benchmark", { program: selectedProgram.name, value: selectedProgram.centsPerPoint })}
-        </p>
-      )}
-
-      <p className="mt-4 text-xs leading-relaxed text-muted-foreground">{t("resultHint")}</p>
+      <CalculatorNextSteps program={selectedProgram} cardProgramIds={cardProgramIds} />
     </div>
   );
 }

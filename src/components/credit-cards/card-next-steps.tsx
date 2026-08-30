@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react/ssr";
+import { NextSteps, StepLink } from "@/components/ui/next-steps";
 import type { BlogPost, CreditCardOffer } from "@/lib/content";
 import { comparePath } from "@/lib/card-compare";
 import { pointsToolFor, relatedPostsForCard, samePointsProgramLink } from "@/lib/card-next-steps";
@@ -7,31 +8,6 @@ import { formatDate } from "@/lib/format-date";
 import { t as translate } from "@/lib/t";
 
 const t = translate("cardNextSteps");
-
-function StepLink({
-  href,
-  label,
-  description,
-}: {
-  href: string;
-  label: string;
-  description: string;
-}) {
-  return (
-    <li>
-      <Link
-        href={href}
-        className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3.5 transition-colors hover:border-primary"
-      >
-        <span>
-          <span className="block font-semibold text-foreground">{label}</span>
-          <span className="mt-0.5 block text-sm text-muted-foreground">{description}</span>
-        </span>
-        <ArrowRight size={18} className="shrink-0 text-primary" />
-      </Link>
-    </li>
-  );
-}
 
 /**
  * Câu hỏi kế tiếp của người vừa đọc xong một trang thẻ.
@@ -69,9 +45,7 @@ export function CardNextSteps({
 
   return (
     <section className={className}>
-      <h2 className="font-display text-xl font-bold text-foreground">{t("title")}</h2>
-
-      <ul className="mt-3 space-y-2">
+      <NextSteps title={t("title")}>
         <StepLink
           href={comparePath([offer.slug])}
           label={t("compareLabel")}
@@ -87,7 +61,7 @@ export function CardNextSteps({
             description={t("sameProgramDescription", { count: sameProgram.count })}
           />
         )}
-      </ul>
+      </NextSteps>
 
       {related.length > 0 && (
         <>

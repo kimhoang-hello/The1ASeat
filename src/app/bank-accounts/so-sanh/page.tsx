@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { BANK_ACCOUNTS } from "@/lib/bank-accounts";
 import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
 import {
@@ -6,6 +7,7 @@ import {
   BANK_COMPARE_PATH,
   MAX_COMPARE,
   MIN_COMPARE,
+  bankComparePath,
   parseBankCompareSlugs,
 } from "@/lib/bank-compare";
 import { PageHeader } from "@/components/layout/page-header";
@@ -13,12 +15,33 @@ import { ComparePicker } from "@/components/ui/compare-picker";
 import { BankCompareTable } from "@/components/bank-accounts/bank-compare-table";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { JsonLd } from "@/components/seo/json-ld";
+import { NextSteps, StepLink } from "@/components/ui/next-steps";
 import { pageMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import { t as translate } from "@/lib/t";
 
 const t = translate("bankCompare");
 const bank_t = translate("bankAccounts");
+const next = translate("nextSteps");
 const seo = translate("seo");
+
+/**
+ * Cặp gợi ý sẵn cho trạng thái chưa chọn gì.
+ *
+ * Lấy một tài khoản đầu tiên của MỖI ngân hàng rồi mới ghép cặp, chứ không cắt
+ * thẳng `slice(0, 2)`: `BANK_ACCOUNTS` xếp theo ngân hàng, nên cắt thẳng ra hai
+ * tài khoản Scotiabank® đặt cạnh nhau — đúng cú pháp nhưng là một so sánh gần
+ * như vô nghĩa, và đó lại là thứ đầu tiên người đọc nhìn thấy trên trang.
+ *
+ * Suy từ dữ liệu nên thêm hoặc bớt một ngân hàng là gợi ý tự đổi theo, không
+ * có slug nào chép tay để mà chết lặng.
+ */
+const ONE_PER_BANK = BANK_ACCOUNTS.filter(
+  (account, i, all) => all.findIndex((other) => other.bank === account.bank) === i,
+);
+
+const SUGGESTED_PAIRS = [ONE_PER_BANK.slice(0, 2), ONE_PER_BANK.slice(2, 4)].filter(
+  (pair) => pair.length === MIN_COMPARE,
+);
 
 // Dữ liệu tài khoản nằm trong repo chứ không trong Contentful, nên trang này
 // chỉ đổi khi có deploy. Vẫn đặt `revalidate` cho khớp phần còn lại của mục
@@ -100,11 +123,55 @@ export default async function CompareBankAccountsPage({
                 </p>
               </div>
               <OfferDisclosure />
+
+              <NextSteps title={next("title")} className="pt-4">
+                <StepLink
+                  href="/bank-accounts"
+                  label={next("bankAccountsLabel")}
+                  description={next("bankAccountsDescription")}
+                />
+                <StepLink
+                  href="/credit-cards"
+                  label={next("cardsLabel")}
+                  description={next("cardsDescription")}
+                />
+              </NextSteps>
             </>
           ) : (
-            <p className="rounded-2xl border border-border bg-card px-5 py-8 text-center text-sm text-muted-foreground">
-              {t("needMore")}
-            </p>
+            /* Cùng lý do với trang so sánh thẻ: picker là form client-side chứ
+               không phải link, nên trạng thái mặc định của trang này không có
+               một đường nội bộ nào cho người đọc lẫn crawler. */
+            <div className="rounded-2xl border border-border bg-card px-5 py-8 text-center">
+              <p className="text-sm text-muted-foreground">{t("needMore")}</p>
+
+              {SUGGESTED_PAIRS.length > 0 && (
+                <>
+                  <p className="mt-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t("suggestTitle")}
+                  </p>
+                  <div className="mt-2 flex flex-wrap justify-center gap-2">
+                    {SUGGESTED_PAIRS.map((pair) => (
+                      <Link
+                        key={pair.map((account) => account.slug).join("-")}
+                        href={bankComparePath(pair.map((account) => account.slug))}
+                        className="rounded-full border border-border px-3.5 py-1.5 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+                      >
+                        {pair.map((account) => account.name).join(" vs ")}
+                      </Link>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              <p className="mt-6">
+                <Link
+                  href="/bank-accounts"
+                  className="text-sm font-semibold text-primary hover:underline"
+                >
+                  &larr; {t("needMoreCta")}
+                </Link>
+              </p>
+            </div>
           )}
         </div>
       </section>

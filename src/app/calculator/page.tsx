@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { PointsCalculator } from "@/components/calculator/points-calculator";
+import { getCreditCardOffers } from "@/lib/content";
+import { getCardPointsPrograms } from "@/lib/card-points-programs";
 import { t } from "@/lib/t";
 import { pageMetadata } from "@/lib/seo";
 
@@ -19,12 +21,19 @@ export const metadata: Metadata = pageMetadata({
 // deploy. An explicit window caps the CDN TTL so a deploy lands on its own.
 export const revalidate = 3600;
 
-export default function CalculatorPage() {
+export default async function CalculatorPage() {
+  // Hệ điểm nào thật sự lọc ra được thẻ. Khối "đi tiếp" trong calculator là
+  // client component nên không với tới Contentful; truyền xuống từ đây để nó
+  // không bao giờ hứa một bộ lọc rỗng — `/credit-cards` cố ý cho `?points=` lạ
+  // rơi về danh sách KHÔNG lọc, nên một link sai sẽ hỏng lặng chứ không báo.
+  const offers = await getCreditCardOffers();
+  const cardProgramIds = getCardPointsPrograms(offers).map((program) => program.id);
+
   return (
     <>
       <PageHeader eyebrow={calc("eyebrow")} title={calc("title")} subtitle={calc("subtitle")} />
       <section className="px-4 py-12 sm:px-6 lg:px-8">
-        <PointsCalculator />
+        <PointsCalculator cardProgramIds={cardProgramIds} />
       </section>
     </>
   );

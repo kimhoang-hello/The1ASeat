@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { PaperPlaneTilt, CheckCircle, CircleNotch } from "@phosphor-icons/react";
+import { NextSteps, StepLink } from "@/components/ui/next-steps";
 import { t as translate } from "@/lib/t";
 
 const t = translate("contactPage");
+const next = translate("nextSteps");
 
 const inputClass =
   "mt-1.5 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary";
@@ -49,15 +51,33 @@ export function ContactForm() {
 
   if (status === "submitted") {
     return (
-      <div
-        ref={doneRef}
-        role="status"
-        tabIndex={-1}
-        className="flex items-center gap-2 rounded-xl bg-secondary px-5 py-4 text-sm font-medium text-foreground outline-none"
-      >
-        <CheckCircle size={20} weight="fill" className="shrink-0 text-emerald-500" />
-        {t("sent")}
-      </div>
+      <>
+        <div
+          ref={doneRef}
+          role="status"
+          tabIndex={-1}
+          className="flex items-center gap-2 rounded-xl bg-secondary px-5 py-4 text-sm font-medium text-foreground outline-none"
+        >
+          <CheckCircle size={20} weight="fill" className="shrink-0 text-emerald-500" />
+          {t("sent")}
+        </div>
+
+        {/* Gửi xong là lúc cụt nhất của cả trang: form biến mất, còn lại đúng
+            một dòng chữ. Khối này nằm NGOÀI vùng `role="status"` để screen
+            reader chỉ đọc lên lời xác nhận, không đọc kèm ba cái link. */}
+        <NextSteps title={t("sentNextTitle")} headingLevel="h3" className="mt-6">
+          <StepLink
+            href="/blog"
+            label={next("blogLabel")}
+            description={next("blogDescription")}
+          />
+          <StepLink
+            href="/credit-cards"
+            label={next("cardsLabel")}
+            description={next("cardsDescription")}
+          />
+        </NextSteps>
+      </>
     );
   }
 

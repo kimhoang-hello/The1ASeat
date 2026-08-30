@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react/ssr";
 import { getTransferBonuses } from "@/lib/content";
 import { EDITORIAL_REL, relForUrl } from "@/lib/affiliate-links";
 import { formatDate, hasExpired } from "@/lib/format-date";
 import { PageHeader } from "@/components/layout/page-header";
+import { NextSteps, StepLink } from "@/components/ui/next-steps";
 import { t } from "@/lib/t";
 import { pageMetadata } from "@/lib/seo";
 
 const bonuses_t = t("bonuses");
+const next = t("nextSteps");
 const seo = t("seo");
 
 export const metadata: Metadata = pageMetadata({
@@ -39,9 +42,18 @@ export default async function TransferBonusesPage() {
           {/* Hết bonus thì trước đây trang vẽ một khung viền rỗng không chữ
               nào — người đọc không biết là chưa có bonus hay trang hỏng. */}
           {bonuses.length === 0 && (
-            <p className="px-5 py-8 text-center text-sm text-muted-foreground">
-              {bonuses_t("empty")}
-            </p>
+            <div className="px-5 py-8 text-center">
+              <p className="text-sm text-muted-foreground">{bonuses_t("empty")}</p>
+              {/* Hết bonus là lúc trang này cụt nhất: không còn một hàng nào,
+                  mà mọi hàng vốn cũng chỉ dẫn ra ngoài site. Bảng tỷ lệ transfer
+                  thường ngày là câu trả lời gần nhất cho người vừa tới đây. */}
+              <Link
+                href="/transfer-partners"
+                className="mt-3 inline-block text-sm font-semibold text-primary hover:underline"
+              >
+                {bonuses_t("emptyCta")} &rarr;
+              </Link>
+            </div>
           )}
 
           {bonuses.map((bonus, i) => (
@@ -72,6 +84,31 @@ export default async function TransferBonusesPage() {
               </div>
             </a>
           ))}
+        </div>
+
+        {/* Mọi hàng trong bảng trên là link ra ngoài site — trước khối này trang
+            không có một đường nội bộ nào, nên người đọc hoặc rời site hoặc bấm
+            back. Ba đường dưới đây là ba câu hỏi thật sự đứng ngay sau một
+            transfer bonus: chuyển từ đâu sang đâu, có đáng chuyển không, và lấy
+            điểm để chuyển ở đâu. */}
+        <div className="mx-auto mt-10 max-w-page">
+          <NextSteps title={next("title")}>
+            <StepLink
+              href="/transfer-partners"
+              label={next("transferLabel")}
+              description={next("transferDescription")}
+            />
+            <StepLink
+              href="/calculator"
+              label={next("calculatorLabel")}
+              description={next("calculatorDescription")}
+            />
+            <StepLink
+              href="/credit-cards"
+              label={next("cardsLabel")}
+              description={next("cardsDescription")}
+            />
+          </NextSteps>
         </div>
       </section>
     </>

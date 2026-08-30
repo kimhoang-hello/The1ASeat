@@ -1,21 +1,25 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getCreditCardOffers } from "@/lib/content";
 import { PageHeader } from "@/components/layout/page-header";
 import { ComparePicker } from "@/components/ui/compare-picker";
 import { CompareTable } from "@/components/credit-cards/compare-table";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { JsonLd } from "@/components/seo/json-ld";
+import { NextSteps, StepLink } from "@/components/ui/next-steps";
 import {
   COMPARE_PARAM,
   COMPARE_PATH,
   MAX_COMPARE,
   MIN_COMPARE,
+  comparePath,
   parseCompareSlugs,
 } from "@/lib/card-compare";
 import { pageMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import { t as translate } from "@/lib/t";
 
 const t = translate("compare");
+const next = translate("nextSteps");
 const seo = translate("seo");
 
 // Cùng cửa sổ ISR với các trang thẻ khác: bảng này đọc thẳng từ Contentful,
@@ -39,6 +43,18 @@ export default async function CompareCardsPage({
   const [offers, params] = await Promise.all([getCreditCardOffers(), searchParams]);
 
   const selected = parseCompareSlugs(params[COMPARE_PARAM], offers);
+
+  // Một thẻ đầu tiên của MỖI nhà phát hành rồi mới ghép cặp — cùng lý do với
+  // trang so sánh tài khoản: đặt hai thẻ cùng ngân hàng cạnh nhau là một so
+  // sánh nhạt, mà đây lại là thứ đầu tiên người chưa biết chọn gì nhìn thấy.
+  // Cắt theo dữ liệu thật chứ không gán slug tay: thẻ trong Contentful bị gỡ
+  // hoặc đổi slug thì link gợi ý sẽ chết mà không ai biết.
+  const onePerIssuer = offers.filter(
+    (offer, i, all) => all.findIndex((other) => other.issuer === offer.issuer) === i,
+  );
+  const suggestedPairs = [onePerIssuer.slice(0, 2), onePerIssuer.slice(2, 4)].filter(
+    (pair) => pair.length === MIN_COMPARE,
+  );
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -78,11 +94,59 @@ export default async function CompareCardsPage({
                   đứng cùng trang — cùng luật với trang danh sách và trang chi
                   tiết thẻ. */}
               <OfferDisclosure />
+
+              {/* So xong mà vẫn chưa quyết được là kết cục thường gặp nhất của
+                  trang này, và trước khối này nó không dẫn đi đâu. */}
+              <NextSteps title={next("title")} className="pt-4">
+                <StepLink
+                  href="/bat-dau"
+                  label={next("startHereLabel")}
+                  description={next("startHereDescription")}
+                />
+                <StepLink
+                  href="/credit-cards"
+                  label={next("cardsLabel")}
+                  description={next("cardsDescription")}
+                />
+              </NextSteps>
             </>
           ) : (
-            <p className="rounded-2xl border border-border bg-card px-5 py-8 text-center text-sm text-muted-foreground">
-              {t("needMore")}
-            </p>
+            /* Vào trang này từ menu là thấy picker rỗng cộng đúng một dòng chữ.
+               Picker là form client-side chứ không phải link, nên với người
+               chưa biết chọn gì — và với crawler — trang trắng đường hoàn toàn.
+               Cặp gợi ý dựng từ chính `offers` nên không bao giờ trỏ vào thẻ đã
+               bị gỡ khỏi Contentful. */
+            <div className="rounded-2xl border border-border bg-card px-5 py-8 text-center">
+              <p className="text-sm text-muted-foreground">{t("needMore")}</p>
+
+              {suggestedPairs.length > 0 && (
+                <>
+                  <p className="mt-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t("suggestTitle")}
+                  </p>
+                  <div className="mt-2 flex flex-wrap justify-center gap-2">
+                    {suggestedPairs.map((pair) => (
+                      <Link
+                        key={pair.map((card) => card.slug).join("-")}
+                        href={comparePath(pair.map((card) => card.slug))}
+                        className="rounded-full border border-border px-3.5 py-1.5 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+                      >
+                        {pair.map((card) => card.name).join(" vs ")}
+                      </Link>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              <p className="mt-6">
+                <Link
+                  href="/credit-cards"
+                  className="text-sm font-semibold text-primary hover:underline"
+                >
+                  &larr; {t("needMoreCta")}
+                </Link>
+              </p>
+            </div>
           )}
         </div>
       </section>

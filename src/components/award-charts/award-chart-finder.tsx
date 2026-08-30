@@ -63,7 +63,16 @@ function readParams(params: URLSearchParams): Selection {
 }
 
 /** The transfer legs from transfer-partners.ts for one program, so a reader
- *  can see whether the points they hold reach this chart at all. */
+ *  can see whether the points they hold reach this chart at all.
+ *
+ *  Các chip này CỐ Ý không phải link. Biến chúng thành link sang
+ *  `/credit-cards?points=…` thì phải biết hệ điểm đó có thẻ nào không — mà
+ *  danh sách thẻ nằm ở Contentful, component này lại là client nên không với
+ *  tới. Link thẳng mà không kiểm sẽ hỏng lặng: `?points=amex-mr` hiện KHÔNG
+ *  khớp thẻ nào trên site (thẻ Amex ở đây đều tích Aeroplan®/Bonvoy®), và
+ *  `/credit-cards` cố ý cho id lạ rơi về danh sách KHÔNG lọc — người đọc bấm
+ *  "Amex® MR" rồi nhận nguyên 23 thẻ, tưởng đó là kết quả lọc.
+ *  Đường đi tiếp của trang này nằm ở khối cuối `award-flight-finder/page.tsx`. */
 function TransferLegs({ program }: { program: Program }) {
   const row = TRANSFER_PARTNERS.find((p) => p.program === program.transferPartnerKey);
   const legs = [
