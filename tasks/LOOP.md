@@ -3,6 +3,66 @@
 Nhật ký các phiên phát triển tự động. Ngắn gọn — chi tiết nằm trong từng file
 task ở [done/](done/) và [review/](review/).
 
+## 2026-08-29 (phiên 2)
+
+### Session
+
+Trigger: Manual — "kiểm tra toàn diện và sửa lỗi một lần nữa, kèm ý tưởng bổ sung".
+
+### Completed
+
+- Rà lượt hai, đổi chỗ soi sang tầng render/dữ liệu tĩnh/công cụ/SEO/a11y.
+  8 phát hiện + 2 lỗi trong chính bản vá do vòng phản biện bắt. Commit `ec5558e`.
+- Thêm 5 header bảo mật (`d05350a`), deploy tay vì Hostinger bỏ qua push.
+
+### Blocked
+
+Không có.
+
+### Kiểm tra sức khoẻ repo
+
+`lint`, `tsc`, `build`, ba audit đều sạch trước và sau khi vá. Sau deploy: 106
+URL 200, 5 header đủ trên mọi trang, hai tab `/credit-cards` chia đúng 11 + 12
+= 23 thẻ (đếm bằng số nút apply, vì đếm theo link bị banner rotator cộng thêm).
+
+### Ghi nhận
+
+- **Bản vá hôm trước sinh ra lỗi nặng hơn thứ nó sửa.** `CardBadges` giấu ngày
+  hết hạn đã qua, nhưng bốn chỗ khác vẫn quảng bá thẻ đó là "Elevated offer" —
+  offer chết vẫn nổi bật, mà dấu hiệu duy nhất cho biết nó chết thì vừa bị
+  giấu. Bài học: khi giấu một tín hiệu, phải hỏi ai khác đang dựa vào chính
+  tín hiệu đó. Sửa bằng một hàm chung (`isElevatedLive`) thay vì vá thêm chỗ.
+- **Hostinger deploy lượt này chỉ mất ~30 giây**, so với lượt trước bị bỏ qua
+  hoàn toàn. Không có quy luật; cứ kiểm bằng một dấu hiệu quan sát được.
+- Codex báo: stack trace của Contentful SDK trong sandbox của nó đã in
+  `CONTENTFUL_ACCESS_TOKEN` ra log phiên (`~/.codex/sessions`). Token Delivery
+  là read-only và chỉ dùng phía server, log nằm trên máy — rủi ro thấp, nhưng
+  đã báo user để tự quyết có xoay token không.
+
+### Codex
+
+3 vòng. Vòng 1 (rà mới): 8 phát hiện, không cái nào bị bác — kiểm lại trong
+source đều đúng. Vòng 2 (`review --uncommitted`): bắt bản vá `lastmod` của
+mình so chuỗi ISO trong khi hai trường nguồn khác offset — chính cái bẫy mà
+`blog-categories.ts` đã ghi chú ngay phía trên. Vòng 3: bắt tiếp `NaN > NaN`
+là false, nên một ngày hỏng đứng đầu chặn mọi ngày hợp lệ sau nó.
+
+Lặp lại y hệt bài học phiên trước, giờ đã đủ để coi là quy luật: **vòng phản
+biện trên BẢN VÁ đáng giá hơn vòng rà ban đầu.** Cả hai phiên, lỗi tệ nhất đều
+nằm trong đoạn code mình vừa viết xong và tin là đúng.
+
+### Commits
+
+- `d05350a` — Send the security headers the site never had
+- `ec5558e` — Stop the render layer from vouching for offers that already ended
+
+### Trạng thái cuối phiên
+
+Backlog trống. Đã đề xuất 8 hướng bổ sung cho site (so sánh thẻ, nối trang thẻ
+vào phần còn lại, trang route "bao nhiêu điểm về Việt Nam", bộ lọc phí/người
+mới, mở rộng calculator, lịch sử offer, cảnh báo deal qua email, trang "bắt đầu
+ở đây") — chờ user chọn.
+
 ## 2026-08-29
 
 ### Session
