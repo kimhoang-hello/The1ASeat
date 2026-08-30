@@ -291,14 +291,28 @@ chip lọc và tụt xuống cuối danh sách sắp theo bonus.
 ## Trang "Bắt đầu ở đây" (30/08/2026) — ĐÃ CÔNG BỐ
 
 `/bat-dau`, sau cờ `START_HERE_PUBLISHED` trong `lib/feature-flags.ts`, hiện
-`true` (bật cùng ngày, commit `fed904f`). Cờ được áp ở **bốn** bề mặt: dải
-"Chưa biết bắt đầu từ đâu?" trên trang chủ, `sitemap.ts`, chỉ mục ô tìm kiếm
-(`api/search/route.ts`), và `robots: noindex` + dải báo nháp trên chính trang.
+`true` (bật cùng ngày, commit `fed904f`). **Trước khi sửa gì, hãy grep
+`START_HERE_PUBLISHED` để đếm lại** — danh sách bề mặt đã đổi hai lần trong
+một ngày và mục này đã lỗi thời hai lần theo. Tính tới cuối 30/08/2026 có
+**mười** chỗ: dải "Chưa biết bắt đầu từ đâu?" trên trang chủ (`page.tsx` +
+`hero.tsx` cho khoảng đệm), `sitemap.ts`, chỉ mục ô tìm kiếm
+(`api/search/route.ts`), `robots: noindex` + dải báo nháp trên chính trang, nút
+ở `about`, `contact`, `privacy`, `terms`, `credit-cards/so-sanh`, và CTA của
+email chào mừng trong `api/subscribe/route.ts`.
+
+**Mọi cửa vào PHẢI gate.** Cửa email là cửa duy nhất nằm ngoài site và là cửa
+duy nhất không thu hồi được — link trên trang thì tắt cờ là biến mất, link đã
+gửi vào hộp thư thì nằm đó mãi. Nó từng KHÔNG được gate (thêm ở `29db2b1`, vá
+cùng ngày); tắt cờ lúc đó là mọi subscriber mới nhận email trỏ vào trang
+`noindex` đang đeo dải "Trang nháp". Cờ tắt thì email quay về `/blog`, không bỏ
+trống CTA.
+
 KHÔNG có ở menu trên cùng và KHÔNG có ở footer — đó là quyết định chủ ý của tác
 giả, không phải chỗ bị bỏ sót: hai chỗ điều hướng cố định kia dành cho mục
 người ta quay lại nhiều lần, mà "Bắt đầu ở đây" theo định nghĩa là trang đọc
 một lần. (Bản trước của mục này ghi cờ `false` và "6 chỗ, có menu + footer" —
-sai cả hai, đã sửa sau vòng rà 30/08/2026.)
+sai cả hai; bản sau ghi "bốn bề mặt" — cũng sai trong vòng vài giờ. Đó là lý do
+có câu "grep lại" ở trên.)
 
 - **Đầu trang là NGÃ BA, không phải wizard.** Đã cân nhắc một luồng onboarding
   3 câu hỏi (mục tiêu / kinh nghiệm / bối cảnh) rồi bỏ sau một vòng phản biện
@@ -373,6 +387,12 @@ sai cả hai, đã sửa sau vòng rà 30/08/2026.)
   nav có mục "Video"). Cách kiểm đúng là hỏi thẳng Contentful Delivery API
   trường `fields.type`. Toàn site 30/08/2026: 36 blogPost = 25 video + 11 post,
   và cả 6 bài chuyên mục "Kiến thức" đều là post.
+- **Khối `PostNextSteps` cuối bài blog CHƯA dẫn tới `/bat-dau`** (nó chỉ dẫn
+  sang thẻ tín dụng và hệ điểm). Đây là khoảng trống duy nhất còn lại trong
+  bức tranh cửa vào, và là cửa quan trọng nhất chưa có: lưu lượng organic đổ
+  vào bài blog chứ không đổ vào trang chủ. CỐ Ý để mở, chờ số từ
+  `start_here_step` — thêm một dòng nữa vào khối đó là cạnh tranh trực tiếp
+  với CTA Apply ngay bên cạnh. Quyết theo số, đừng theo cảm giác.
 - **Cạnh đã biết, CỐ Ý không sửa (30/08/2026):** nếu một bài có `publishedAt`
   hỏng nhưng `updatedAt` hợp lệ thì `lastModified()` trả về chuỗi hỏng, và
   `latestModified()` bỏ luôn bài đó thay vì dùng `updatedAt`. Codex nêu ở vòng

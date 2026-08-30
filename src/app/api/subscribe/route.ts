@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { SITE_URL, emailParagraphStyle, renderSubscriberEmailHtml } from "@/lib/subscriber-email";
+import { START_HERE_PUBLISHED } from "@/lib/feature-flags";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_EMAIL_LENGTH = 254; // RFC 5321
@@ -65,12 +66,32 @@ const WELCOME_BODY_HTML = `
   <p style="${emailParagraphStyle}" class="email-text">Hẹn gặp bạn ở ghế 1A.</p>
 `;
 
+/**
+ * CTA của email chào mừng, GATE theo `START_HERE_PUBLISHED` như mọi cửa vào
+ * khác của `/bat-dau`.
+ *
+ * Đây là cửa duy nhất nằm ngoài site, và là cửa duy nhất KHÔNG THU HỒI ĐƯỢC.
+ * Một link trên trang thì tắt cờ là biến mất; một link đã gửi vào hộp thư thì
+ * nằm đó mãi. Không gate thì tắt cờ lại là mọi subscriber mới nhận email trỏ
+ * thẳng vào một trang `noindex` đang đeo dải "Trang nháp, chưa công bố" —
+ * đúng cái mà docstring của cờ hứa là không xảy ra.
+ *
+ * Cờ tắt thì quay về đích cũ (`/blog`), không phải bỏ trống CTA: người vừa
+ * đăng ký bản tin vẫn cần một chỗ để đi.
+ */
 const WELCOME_HTML = renderSubscriberEmailHtml({
   title: WELCOME_SUBJECT,
   preheader: "Cảm ơn bạn đã đăng ký nhận bản tin từ Ghế 1A",
   bodyHtml: WELCOME_BODY_HTML,
-  ctaHref: `${SITE_URL}/bat-dau`,
-  ctaLabel: "Xem lộ trình mới bắt đầu ở đây →",
+  ...(START_HERE_PUBLISHED
+    ? {
+        ctaHref: `${SITE_URL}/bat-dau`,
+        ctaLabel: "Xem lộ trình mới bắt đầu ở đây →",
+      }
+    : {
+        ctaHref: `${SITE_URL}/blog`,
+        ctaLabel: "Khám phá bài viết mới nhất →",
+      }),
 });
 
 // Sends a one-off welcome email to the new subscriber via Resend, from
