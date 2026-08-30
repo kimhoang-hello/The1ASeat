@@ -340,6 +340,12 @@ npm run audit:awards        # bảng award
 Bốn cái audit này bắt sẵn nhiều lớp lỗi lặp lại. Đừng báo lại thứ chúng đã bắt
 được.
 
+**Chạy `audit:trademarks` SAU khi sửa xong, không phải trước.** Ngày 30/08/2026
+nó bắt được hai chỗ thiếu ® nằm trong một comment JSX mới viết, ở lượt chạy sau
+khi commit — vì lượt chạy trước đó diễn ra trước khi comment kia tồn tại. Nó
+không phân biệt được comment JSX (`{/* … */}`) với chữ hiện trên trang, nên
+trong comment JSX cũng phải viết `Amex®`, `RBC®` như mọi chỗ khác.
+
 ## Đâu là chỗ đáng soi nhất
 
 Xếp theo hậu quả khi sai, không theo độ khó của code:

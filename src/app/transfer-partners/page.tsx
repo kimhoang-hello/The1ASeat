@@ -110,7 +110,7 @@ export default function TransferPartnersPage() {
                         without its own opaque background the ratio columns
                         scroll visibly underneath it. */}
                     {/* `th scope="row"`, không phải `td`: người dùng screen
-                        reader nhảy thẳng giữa hai ô tỷ lệ Amex/RBC, và nếu tên
+                        reader nhảy thẳng giữa hai ô tỷ lệ Amex®/RBC®, và nếu tên
                         chương trình không được khai là header của hàng thì họ
                         nghe được "1,000 : 1,000" mà không biết nó thuộc chương
                         trình nào — trên đúng cái bảng mà cả nội dung là "hệ nào
