@@ -17,6 +17,10 @@ Trigger: Manual — user chọn xây idea 1, 2 và 6 từ danh sách đề xuấ
 - Lịch sử welcome bonus/rebate: `data/offer-history.json`,
   `/api/offer-snapshot`, `scripts/record-offer-history.mts`,
   `.github/workflows/offer-history.yml` (`41db72a`).
+- `/bat-dau` — trang "Bắt đầu ở đây", ĐANG LÀ BẢN NHÁP sau cờ
+  `START_HERE_PUBLISHED = false`, chờ user duyệt (`6b1a286`).
+- `/bank-accounts/so-sanh` — so sánh tài khoản ngân hàng, cùng khuôn với bảng
+  thẻ; phần dùng chung rút vào `lib/compare.ts` (`2645d08`).
 
 ### Blocked
 
@@ -43,9 +47,21 @@ thấy không có số nào đổi và không commit gì — đúng hành vi mon
 - Lịch sử offer ngày đầu không hiện gì trên bất kỳ thẻ nào — đúng thiết kế,
   không phải lỗi. Nó chỉ nói khi đã thấy hai con số khác nhau.
 
+### Ghi nhận (bổ sung, cuối phiên)
+
+- **`tsc` xanh + `next build` xanh vẫn có thể là trang 500.** Lúc tách
+  `ComparePicker` ra dùng chung, mình truyền `slot: (i) => …` xuống nó — nó là
+  Client Component, mà RSC không cho function đi qua ranh giới server→client.
+  Cả hai trang so sánh trả 500 và không lệnh kiểm tra tĩnh nào thấy. Chỉ lượt
+  `next start` + curl tại chỗ mới bắt được. Đừng bỏ bước chạy thử.
+- **`audit:trademarks` phải chạy SAU khi sửa xong, không phải trước.** Nó bắt
+  hai chỗ "Amex/RBC" trần trong một comment JSX viết hôm nay — lượt chạy trước
+  đó diễn ra trước khi comment kia tồn tại.
+
 ### Codex
 
-3 vòng cho hai tính năng đầu, 2 vòng cho lịch sử offer. Bảy phát hiện, không
+3 vòng cho hai tính năng đầu, 2 vòng cho lịch sử offer, 1 vòng sạch cho trang
+"Bắt đầu", 1 vòng sạch cho so sánh tài khoản. Bảy phát hiện, không
 cái nào bị bác. Đáng chú ý: cả bảy đều KHÔNG nằm trong logic tính năng mà nằm ở
 chỗ nối vào phần còn lại của site (cửa canh không chạy, thiếu trong ô tìm kiếm,
 menu mobile sáng hai dòng, sắp xếp ngày sai kiểu, thiếu retry) hoặc ở chỗ tính
@@ -56,13 +72,16 @@ thẻ). Viết đúng phần lõi là phần dễ.
 
 - `4211681` — Give the card pages somewhere to lead, and a way to be compared
 - `41db72a` — Start keeping the numbers the jobs have been overwriting
+- `6b1a286` — Draft a path for readers who do not know where to start
+- `2645d08` — Compare bank accounts the same way, one row at a time
+- `2d85a2a` — Put the ® back into a comment the audit reads as page text
 
 ### Trạng thái cuối phiên
 
-Backlog trống. Còn 5 hướng đã đề xuất chưa làm: trang route "bao nhiêu điểm về
-Việt Nam" (idea 3), bộ lọc phí/người mới (idea 4, user đã bỏ), mở rộng
-calculator từ 3 lên 10 chương trình (idea 5), cảnh báo deal qua email (idea 7),
-trang "bắt đầu ở đây" (idea 8).
+Backlog trống. 108 URL trong sitemap, tất cả 200. Đang chờ user duyệt
+`/bat-dau` để bật cờ. Còn 3 hướng đã đề xuất chưa làm: trang route "bao nhiêu
+điểm về Việt Nam" (idea 3), mở rộng calculator từ 3 lên 10 chương trình
+(idea 5), cảnh báo deal qua email (idea 7). Idea 4 user đã bỏ.
 
 ## 2026-08-29 (phiên 2)
 
