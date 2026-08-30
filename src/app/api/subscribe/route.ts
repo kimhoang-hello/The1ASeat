@@ -69,8 +69,8 @@ const WELCOME_HTML = renderSubscriberEmailHtml({
   title: WELCOME_SUBJECT,
   preheader: "Cảm ơn bạn đã đăng ký nhận bản tin từ Ghế 1A",
   bodyHtml: WELCOME_BODY_HTML,
-  ctaHref: `${SITE_URL}/blog`,
-  ctaLabel: "Khám phá bài viết mới nhất →",
+  ctaHref: `${SITE_URL}/bat-dau`,
+  ctaLabel: "Xem lộ trình mới bắt đầu ở đây →",
 });
 
 // Sends a one-off welcome email to the new subscriber via Resend, from
