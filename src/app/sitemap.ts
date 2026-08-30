@@ -8,6 +8,7 @@ import {
 } from "@/lib/blog-categories";
 import { absoluteUrl } from "@/lib/seo";
 import { COMPARE_PATH } from "@/lib/card-compare";
+import { BANK_COMPARE_PATH } from "@/lib/bank-compare";
 import { BANK_ACCOUNTS, bankAccountPath } from "@/lib/bank-accounts";
 import { BANK_ACCOUNTS_PUBLISHED, START_HERE_PUBLISHED } from "@/lib/feature-flags";
 
@@ -43,6 +44,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...(BANK_ACCOUNTS_PUBLISHED
       ? ([
           { url: absoluteUrl("/bank-accounts"), changeFrequency: "weekly", priority: 0.8 },
+          // Chỉ trang trần, cùng lý do với trang so sánh thẻ: mọi tổ hợp
+          // `?accounts=` canonical về đây.
+          { url: absoluteUrl(BANK_COMPARE_PATH), changeFrequency: "weekly", priority: 0.6 },
           ...BANK_ACCOUNTS.map((account) => ({
             url: absoluteUrl(bankAccountPath(account.slug)),
             changeFrequency: "weekly" as const,

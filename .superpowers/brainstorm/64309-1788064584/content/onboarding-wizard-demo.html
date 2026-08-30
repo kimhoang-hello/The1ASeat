@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ghế 1A — Demo bắt đầu</title>
+  <style>
+    :root { --ink:#11233a; --navy:#102b4a; --cream:#f8f4ec; --gold:#e6a435; --muted:#67788b; --line:#dce5eb; --sky:#e9f3f7; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--cream); color:var(--ink); font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    .nav { height:68px; padding:0 7vw; display:flex; align-items:center; justify-content:space-between; background:#fffdf8; border-bottom:1px solid #eee7dc; }
+    .brand { font-size:22px; font-weight:800; letter-spacing:-.8px; } .brand small { font-weight:600; color:var(--gold); font-size:11px; display:block; letter-spacing:1.4px; margin-top:-3px; }
+    .nav-link { color:#4d6276; font-size:14px; }
+    main { min-height:calc(100vh - 68px); display:grid; place-items:center; padding:42px 20px 64px; }
+    .shell { width:min(820px,100%); }
+    .eyebrow { color:#b97813; font-size:12px; letter-spacing:1.35px; font-weight:800; margin:0 0 14px; }
+    h1 { font-family:Georgia,serif; font-size:clamp(34px,5vw,56px); line-height:1.04; letter-spacing:-2.2px; margin:0; max-width:690px; }
+    .lead { color:var(--muted); font-size:17px; line-height:1.55; max-width:650px; margin:16px 0 29px; }
+    .progress { display:flex; gap:8px; margin:0 0 26px; } .dot { height:5px; flex:1; border-radius:8px; background:#dae1e6; } .dot.active { background:var(--gold); }
+    .panel { background:#fff; border:1px solid #e3e8ea; border-radius:22px; padding:clamp(24px,5vw,44px); box-shadow:0 14px 42px rgba(17,35,58,.08); }
+    .step { display:none; } .step.active { display:block; animation:in .22s ease-out; } @keyframes in { from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none} }
+    h2 { font-size:22px; letter-spacing:-.5px; margin:0 0 8px; } .hint { color:var(--muted); margin:0 0 21px; }
+    .choices { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; } .choices.two { grid-template-columns:repeat(2,1fr); }
+    .choice { text-align:left; min-height:164px; padding:20px; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:15px; cursor:pointer; transition:.18s ease; font:inherit; }
+    .choice:hover,.choice:focus { border-color:var(--gold); box-shadow:0 8px 20px rgba(228,160,51,.14); transform:translateY(-2px); outline:none; } .choice.selected { border:2px solid var(--gold); background:#fffaf0; }
+    .icon { display:grid; place-items:center; width:35px; height:35px; border-radius:10px; background:var(--sky); font-size:20px; margin-bottom:16px; } .choice strong { display:block; font-size:16px; margin-bottom:7px; } .choice span { color:var(--muted); line-height:1.4; font-size:13px; }
+    .footer { display:flex; align-items:center; justify-content:space-between; margin-top:25px; } .back { border:0; background:none; color:#4e6475; padding:8px 0; font:inherit; cursor:pointer; } .privacy { color:#8594a2; font-size:12px; }
+    .result { display:none; } .result.active { display:block; animation:in .25s ease-out; } .route-label { font-size:12px; font-weight:800; color:#a96b0b; letter-spacing:1px; } .result h2 { font-family:Georgia,serif; font-size:31px; line-height:1.12; margin:10px 0 10px; }
+    .route { border-left:2px solid var(--gold); margin:27px 0 23px; padding-left:22px; } .route-item { position:relative; padding:0 0 23px; } .route-item:last-child { padding:0; } .number { position:absolute; left:-38px; top:-1px; width:28px; height:28px; border-radius:50%; display:grid; place-items:center; background:#fdf0d7; color:#9b6008; font-weight:800; font-size:13px; } .route-item strong { display:block; font-size:16px; } .route-item p { margin:5px 0 0; color:var(--muted); line-height:1.46; font-size:14px; }
+    .cta { display:flex; gap:11px; flex-wrap:wrap; } .primary,.secondary { border-radius:9px; padding:13px 17px; font-weight:750; font-size:14px; cursor:pointer; text-decoration:none; } .primary { background:var(--navy); border:1px solid var(--navy); color:white; } .secondary { background:white; border:1px solid var(--line); color:var(--ink); } .notice { margin:22px 0 0; color:#6f8190; font-size:12px; }
+    @media(max-width:630px){.nav{padding:0 24px}.nav-link{display:none}.choices,.choices.two{grid-template-columns:1fr}.choice{min-height:112px}.icon{float:left;margin:0 13px 40px 0}.panel{padding:24px}.lead{font-size:16px}}
+  </style>
+</head>
+<body>
+  <header class="nav"><div class="brand">Ghế 1A<small>MILES &amp; POINTS CHO NGƯỜI VIỆT</small></div><div class="nav-link">Demo onboarding · 3 câu hỏi</div></header>
+  <main><div class="shell">
+    <p class="eyebrow">BẮT ĐẦU CÙNG GHẾ 1A</p>
+    <h1>Đừng bắt đầu bằng một chiếc thẻ.</h1>
+    <p class="lead">Trả lời 3 câu ngắn để nhận lộ trình phù hợp với mục tiêu của bạn — không cần tạo tài khoản, không cần để lại email.</p>
+    <div class="progress" aria-label="Tiến trình"><i class="dot active"></i><i class="dot"></i><i class="dot"></i></div>
+    <section class="panel" aria-live="polite">
+      <div class="step active" data-step="0">
+        <h2>Hôm nay bạn muốn làm gì nhất?</h2><p class="hint">Chọn mục tiêu gần nhất của bạn.</p>
+        <div class="choices">
+          <button class="choice" data-value="fly"><span class="icon">✈</span><strong>Bay bằng điểm</strong><span>Tìm cách dùng points cho chuyến đi sắp tới.</span></button>
+          <button class="choice" data-value="card"><span class="icon">◫</span><strong>Tìm thẻ phù hợp</strong><span>Chọn thẻ có lợi cho chi tiêu và kế hoạch của mình.</span></button>
+          <button class="choice" data-value="points"><span class="icon">✦</span><strong>Tối ưu điểm đang có</strong><span>Biết nên giữ, chuyển hay dùng số points hiện tại.</span></button>
+        </div>
+      </div>
+      <div class="step" data-step="1">
+        <h2>Bạn đang ở đâu trên hành trình?</h2><p class="hint">Điều này giúp mình không đưa quá nhiều thông tin cùng lúc.</p>
+        <div class="choices two">
+          <button class="choice" data-value="new"><span class="icon">○</span><strong>Mới bắt đầu</strong><span>Chưa rõ các chương trình và chưa có chiến lược points.</span></button>
+          <button class="choice" data-value="some"><span class="icon">◐</span><strong>Đã có thẻ hoặc points</strong><span>Muốn chọn bước tiếp theo tốt hơn.</span></button>
+        </div><div class="footer"><button class="back">← Quay lại</button><span class="privacy">Bạn luôn có thể đổi lựa chọn.</span></div>
+      </div>
+      <div class="step" data-step="2">
+        <h2>Ngữ cảnh nào gần bạn nhất?</h2><p class="hint">Ghế 1A tập trung vào người Việt đang sống và chi tiêu tại Canada.</p>
+        <div class="choices">
+          <button class="choice" data-value="newcomer"><span class="icon">⌂</span><strong>Mới đến Canada</strong><span>Muốn xây nền tảng tài chính và tín dụng.</span></button>
+          <button class="choice" data-value="vn"><span class="icon">↗</span><strong>Bay Canada – Việt Nam</strong><span>Ưu tiên một chuyến về thăm nhà hoặc du lịch châu Á.</span></button>
+          <button class="choice" data-value="everyday"><span class="icon">◎</span><strong>Chi tiêu hằng ngày</strong><span>Muốn tối ưu groceries, ăn uống và các hoá đơn.</span></button>
+        </div><div class="footer"><button class="back">← Quay lại</button><span class="privacy">Không thu thập thông tin cá nhân.</span></div>
+      </div>
+      <div class="result" data-step="3">
+        <p class="route-label">LỘ TRÌNH CỦA BẠN</p><h2 id="result-title">Bắt đầu đúng chỗ, rồi mới chọn thẻ.</h2><p class="hint" id="result-lead"></p>
+        <div class="route" id="route"></div>
+        <div class="cta"><a class="primary" id="primary-cta" href="#">Xem bước đầu tiên →</a><button class="secondary" id="restart">Làm lại</button></div>
+        <p class="notice">Demo: ở production, nút chính sẽ dẫn thẳng đến nội dung/công cụ phù hợp; email chỉ xuất hiện sau khi người dùng đã nhận giá trị.</p>
+      </div>
+    </section>
+  </div></main>
+  <script>
+    const answers={}, steps=[...document.querySelectorAll('[data-step]')], dots=[...document.querySelectorAll('.dot')]; let index=0;
+    const routes={
+      vn:{title:'Đặt mục tiêu bay về Việt Nam trước.',lead:'Bạn không cần biết mọi loại points. Hãy bắt đầu bằng chuyến đi thực tế để biết nên tích gì.',items:[['Ước lượng số điểm cần','Dùng Award Flight Finder cho Canada – Việt Nam và chọn hạng ghế bạn quan tâm.'],['Chọn hệ points phù hợp','Xem Aeroplan, Amex MR và RBC Avion chuyển được đi đâu.'],['Chỉ sau đó mới xem thẻ','So sánh các thẻ giúp bạn đạt mục tiêu nhanh hơn, dựa trên chi tiêu và điều kiện của bạn.']],cta:'Mở Award Flight Finder →'},
+      newcomer:{title:'Xây nền tảng, không chạy theo offer.',lead:'Với người mới đến Canada, lịch sử tín dụng và tính phù hợp quan trọng hơn welcome bonus lớn.',items:[['Hiểu 3 khái niệm cốt lõi','Tín dụng, annual fee và điểm khác cashback như thế nào.'],['Chọn điểm xuất phát an toàn','Xem các lựa chọn thẻ/tài khoản phù hợp với người mới.'],['Đặt mục tiêu đầu tiên','Chọn một mục tiêu nhỏ để bắt đầu tích điểm có chủ đích.']],cta:'Xem lộ trình người mới →'},
+      everyday:{title:'Tối ưu chi tiêu trước, rồi đến chuyến bay.',lead:'Bạn sẽ có một chiến lược bền hơn khi phần lớn points đến từ những khoản chi hằng ngày.',items:[['Ghi nhận nhóm chi tiêu','Groceries, ăn uống, xăng và hoá đơn thường xuyên.'],['So sánh các thẻ phù hợp','Lọc theo mức thu nhập, annual fee và nhóm chi tiêu.'],['Kiểm tra giá trị thực','Dùng Points Calculator trước khi đổi points.']],cta:'Tìm thẻ phù hợp →'}
+    };
+    function show(next){index=next;steps.forEach((s,i)=>s.classList.toggle('active',i===next));dots.forEach((d,i)=>d.classList.toggle('active',i<=Math.min(next,2)));}
+    function render(){const r=routes[answers.context]||routes.everyday;document.querySelector('#result-title').textContent=r.title;document.querySelector('#result-lead').textContent=r.lead;document.querySelector('#route').innerHTML=r.items.map((x,i)=>`<div class="route-item"><span class="number">${i+1}</span><strong>${x[0]}</strong><p>${x[1]}</p></div>`).join('');document.querySelector('#primary-cta').textContent=r.cta;show(3);}
+    document.querySelectorAll('.choice').forEach(button=>button.addEventListener('click',()=>{const step=button.closest('.step');step.querySelectorAll('.choice').forEach(x=>x.classList.remove('selected'));button.classList.add('selected');const key=index===0?'goal':index===1?'experience':'context';answers[key]=button.dataset.value;setTimeout(()=>index===2?render():show(index+1),190)}));
+    document.querySelectorAll('.back').forEach(b=>b.addEventListener('click',()=>show(index-1)));
+    document.querySelector('#restart').addEventListener('click',()=>{Object.keys(answers).forEach(k=>delete answers[k]);document.querySelectorAll('.choice').forEach(x=>x.classList.remove('selected'));show(0)});
+    document.querySelector('#primary-cta').addEventListener('click',e=>e.preventDefault());
+  </script>
+</body>
+</html>

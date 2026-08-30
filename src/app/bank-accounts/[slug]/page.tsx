@@ -17,10 +17,12 @@ import {
 } from "@/lib/bank-accounts";
 import { bankAccountDescription, bankAccountJsonLd } from "@/lib/bank-account-schema";
 import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
+import { assertNoBankSlugClash, bankComparePath } from "@/lib/bank-compare";
 import { t as translate } from "@/lib/t";
 import { pageMetadata, breadcrumbJsonLd } from "@/lib/seo";
 
 const bank_t = translate("bankAccounts");
+const bankCompare_t = translate("bankCompare");
 // Xem chú thích ở bank-account-finder.tsx: nhãn hết hạn dùng chung với thẻ.
 const offers = translate("offers");
 const common = translate("common");
@@ -37,6 +39,11 @@ const TAG_LABEL_KEYS = {
 } as const;
 
 export function generateStaticParams() {
+  // Chạy lúc `next build`, nên tài khoản nào mang slug trùng đoạn tĩnh của
+  // trang so sánh sẽ làm deploy đỏ ngay. Khác thẻ tín dụng, ở đây thế là ĐỦ:
+  // tài khoản nằm trong repo, không có đường nào thêm một cái vào site mà
+  // không đi qua build.
+  assertNoBankSlugClash();
   return BANK_ACCOUNTS.map((account) => ({ slug: account.slug }));
 }
 
@@ -234,6 +241,14 @@ export default async function BankAccountDetailPage({
           href={account.affiliateUrl ?? account.url}
           affiliate={Boolean(account.affiliateUrl)}
         />
+        {/* Đứng cạnh nút apply chứ không chen trước nó: người chưa quyết thì
+            đi so sánh, người quyết rồi thì bấm. */}
+        <Link
+          href={bankComparePath([account.slug])}
+          className="text-sm font-semibold text-primary hover:underline"
+        >
+          {bankCompare_t("compareCta")} &rarr;
+        </Link>
       </div>
 
       {/* Cùng thứ tự với trang danh sách: dặn dò trước, công bố affiliate sau. */}

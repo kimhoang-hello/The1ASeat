@@ -11,6 +11,7 @@ import { t } from "@/lib/t";
 import type { SearchItem } from "@/lib/search";
 import { BANK_ACCOUNTS_PUBLISHED, START_HERE_PUBLISHED } from "@/lib/feature-flags";
 import { COMPARE_PATH } from "@/lib/card-compare";
+import { BANK_COMPARE_PATH } from "@/lib/bank-compare";
 
 // The whole site is a few dozen cards and posts, so search ships the index
 // rather than a query endpoint: the header fetches this once, the first time
@@ -23,6 +24,7 @@ const nav = t("nav");
 const footer = t("footer");
 const offers = t("offers");
 const startHere = t("startHere");
+const bankCompare = t("bankCompare");
 
 /**
  * `keywords` là các chữ tiếng Việt người đọc gõ nhưng không có trong tên trang.
@@ -58,6 +60,12 @@ const PAGES: SearchItem[] = [
           href: "/bank-accounts",
           kind: "page" as const,
           keywords: "tài khoản chequing savings tiết kiệm chi tiêu bank account",
+        },
+        {
+          title: bankCompare("navLabel"),
+          href: BANK_COMPARE_PATH,
+          kind: "page" as const,
+          keywords: "so sánh đối chiếu cạnh nhau compare tài khoản nào tốt hơn",
         },
       ]
     : []),

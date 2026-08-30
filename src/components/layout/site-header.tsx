@@ -25,6 +25,7 @@ import {
 } from "@phosphor-icons/react";
 import { SiteSearch } from "@/components/layout/site-search";
 import { COMPARE_PATH } from "@/lib/card-compare";
+import { BANK_COMPARE_PATH } from "@/lib/bank-compare";
 import { BANK_ACCOUNTS_PUBLISHED, START_HERE_PUBLISHED } from "@/lib/feature-flags";
 import { t } from "@/lib/t";
 
@@ -272,6 +273,7 @@ const nav = t("nav");
 const tMenu = t("navMenu");
 const tPosts = t("posts");
 const tOffers = t("offers");
+const tBankCompare = t("bankCompare");
 const site = t("site");
 
 export function SiteHeader() {
@@ -324,6 +326,16 @@ export function SiteHeader() {
           label: nav("bankAccounts"),
           description: tMenu("bankAccounts"),
           icon: Bank,
+        },
+        // Ngay dưới trang Ngân hàng, cùng phía dưới đường kẻ: nó thuộc về khu
+        // vực đó, không phải về danh sách thẻ ở nửa trên. Cùng cờ với trang
+        // Ngân hàng — mục còn là bản nháp thì trang so sánh của nó cũng không
+        // được lộ ra.
+        {
+          href: BANK_COMPARE_PATH,
+          label: tBankCompare("navLabel"),
+          description: tBankCompare("navDescription"),
+          icon: Scales,
         },
       ]
     : [];

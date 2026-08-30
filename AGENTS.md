@@ -303,9 +303,28 @@ không phải sửa chỗ nào khác.
   trong `PROGRAMS`). Không có câu nào có thể cũ đi mà không ai biết — đừng thay
   bằng số viết cứng.
 - **Trong dropdown thẻ, "So sánh thẻ" nằm TRÊN đường kẻ** (`groupLinks`) vì nó
-  là một cách nhìn khác của cùng danh sách thẻ; "Ngân hàng" nằm DƯỚI
-  (`extraLinks`) vì đó là khu vực khác của site. Menu mobile là danh sách phẳng
-  nên hai nhóm nối làm một, giữ đúng thứ tự đó.
+  là một cách nhìn khác của cùng danh sách thẻ; "Ngân hàng" và "So sánh tài
+  khoản" nằm DƯỚI (`extraLinks`) vì đó là khu vực khác của site. Menu mobile là
+  danh sách phẳng nên hai nhóm nối làm một, giữ đúng thứ tự đó.
+
+## Hai trang so sánh dùng chung gì (30/08/2026)
+
+`lib/compare.ts` giữ đúng phần thật sự giống nhau: trần ba cột, `pickBySlugs`,
+`compareHref`, `assertNoSlugClash`. Đường dẫn, tên tham số và bảng thì mỗi bên
+một module (`card-compare.ts` / `bank-compare.ts`) — gộp nốt chúng vào chỗ
+chung chỉ tạo ra một hàm nhận năm tham số để tránh viết hai dòng.
+
+- **`ComparePicker` (ở `components/ui/`) nhận `labels.slots` là MẢNG CHUỖI, không
+  phải hàm.** Nó là Client Component, mà RSC không cho truyền function qua ranh
+  giới server→client: `tsc` và `next build` đều xanh, chỉ runtime mới nổ 500.
+  Đã vấp đúng một lần khi tách component này ra dùng chung.
+- **`/bank-accounts/so-sanh` chỉ cần cửa canh slug lúc build**, khác
+  `/credit-cards/so-sanh`. Tài khoản nằm trong `lib/bank-accounts.ts` chứ không
+  trong Contentful, nên không có đường nào thêm một tài khoản vào site mà không
+  đi qua `next build` — không cần lượt canh hằng ngày như bên thẻ.
+- **Trang so sánh tài khoản dùng chung cờ `BANK_ACCOUNTS_PUBLISHED`** với mục
+  Ngân hàng. Hai thứ này không được lệch: một trang so sánh index được trong khi
+  trang nó trỏ tới thì không là chuyện vô lý với cả Google lẫn người đọc.
 
 ## Chạy gì trước khi kết luận
 

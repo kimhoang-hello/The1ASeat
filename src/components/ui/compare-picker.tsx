@@ -1,12 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { COMPARE_PARAM, COMPARE_PATH, MAX_COMPARE } from "@/lib/card-compare";
-import { t as translate } from "@/lib/t";
-
-const t = translate("compare");
-
-export interface PickableCard {
+import { MAX_COMPARE } from "@/lib/compare";
+export interface PickableItem {
   slug: string;
   name: string;
 }
@@ -25,11 +21,23 @@ export interface PickableCard {
  * này: dựng URL mới từ đầu sẽ xoá chúng mỗi lần ai đó đổi một ô chọn.
  */
 export function ComparePicker({
-  cards,
+  path,
+  param,
+  items,
   selected,
+  labels,
 }: {
-  cards: PickableCard[];
+  /** Đường dẫn trang so sánh và tên tham số — hai trang so sánh (thẻ tín dụng
+   *  và tài khoản ngân hàng) dùng chung component này, chỉ khác hai chuỗi đó. */
+  path: string;
+  param: string;
+  items: PickableItem[];
   selected: string[];
+  /** Chuỗi đã dựng sẵn, KHÔNG phải hàm: đây là Client Component, mà React
+   *  Server Components không cho truyền function qua ranh giới đó — build và
+   *  `tsc` vẫn xanh, chỉ có runtime mới nổ. `slots` phải đủ `MAX_COMPARE` phần
+   *  tử. */
+  labels: { title: string; slots: string[]; empty: string };
 }) {
   const router = useRouter();
 
@@ -44,16 +52,16 @@ export function ComparePicker({
 
     const params = new URLSearchParams(window.location.search);
     const value = next.filter(Boolean).join(",");
-    if (value) params.set(COMPARE_PARAM, value);
-    else params.delete(COMPARE_PARAM);
+    if (value) params.set(param, value);
+    else params.delete(param);
 
     const query = params.toString();
-    router.replace(query ? `${COMPARE_PATH}?${query}` : COMPARE_PATH, { scroll: false });
+    router.replace(query ? `${path}?${query}` : path, { scroll: false });
   }
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4 sm:p-5">
-      <h2 className="font-display text-base font-bold text-foreground">{t("pickerTitle")}</h2>
+      <h2 className="font-display text-base font-bold text-foreground">{labels.title}</h2>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: slotCount }, (_, index) => {
@@ -61,21 +69,21 @@ export function ComparePicker({
           return (
             <label key={index} className="block">
               <span className="text-sm font-medium text-foreground/80">
-                {t("pickerCard", { index: index + 1 })}
+                {labels.slots[index]}
               </span>
               <select
                 value={value}
                 onChange={(event) => choose(index, event.target.value)}
                 className="mt-1.5 w-full cursor-pointer rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
               >
-                <option value="">{t("pickerEmpty")}</option>
-                {cards
+                <option value="">{labels.empty}</option>
+                {items
                   // Thẻ đang nằm ở ô khác bị ẩn khỏi ô này: so một thẻ với chính
                   // nó là hai cột giống hệt nhau, không nói lên điều gì.
-                  .filter((card) => card.slug === value || !selected.includes(card.slug))
-                  .map((card) => (
-                    <option key={card.slug} value={card.slug}>
-                      {card.name}
+                  .filter((item) => item.slug === value || !selected.includes(item.slug))
+                  .map((item) => (
+                    <option key={item.slug} value={item.slug}>
+                      {item.name}
                     </option>
                   ))}
               </select>

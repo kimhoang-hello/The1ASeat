@@ -262,7 +262,8 @@
     "bankAccountFee": "Monthly fee {fee}.",
     "bankAccountNoFee": "Không mất monthly fee.",
     "bankAccountTail": "Điều kiện, cách được miễn phí và quyền lợi chính — bằng tiếng Việt.",
-    "breadcrumbCompare": "So sánh thẻ"
+    "breadcrumbCompare": "So sánh thẻ",
+    "breadcrumbBankCompare": "So sánh tài khoản"
   },
   "awardCharts": {
     "eyebrow": "CÔNG CỤ",
@@ -391,5 +392,27 @@
     "step4LinkBonuses": "Transfer Bonus đang chạy",
     "step4Newsletter": "Hoặc để bản tin báo giúp bạn:",
     "readingTime": "{minutes} phút đọc"
+  },
+  "bankCompare": {
+    "eyebrow": "CÔNG CỤ",
+    "title": "So Sánh Tài Khoản",
+    "subtitle": "Chọn hai hoặc ba tài khoản để đặt cạnh nhau: welcome bonus, monthly fee và cách được miễn, lãi suất, rebate và quyền lợi.",
+    "metaTitle": "So sánh tài khoản ngân hàng Canada cạnh nhau",
+    "metaDescription": "Đặt hai hoặc ba tài khoản chequing và savings ở Canada cạnh nhau: welcome bonus, monthly fee, cách được miễn phí, lãi suất và rebate.",
+    "navLabel": "So sánh tài khoản",
+    "navDescription": "Đặt hai, ba tài khoản cạnh nhau và xem chúng khác nhau ở đâu",
+    "pickerTitle": "Chọn tài khoản để so sánh",
+    "pickerSlot": "Tài khoản {index}",
+    "pickerEmpty": "— chưa chọn —",
+    "needMore": "Chọn ít nhất hai tài khoản để bắt đầu so sánh.",
+    "swipeHint": "Vuốt ngang để xem đầy đủ bảng →",
+    "rowAttribute": "Hạng mục",
+    "rowKind": "Loại tài khoản",
+    "rowFeeWaiver": "Cách được miễn phí",
+    "rowPromo": "Điều kiện lãi suất",
+    "rowBenefits": "Quyền lợi chính",
+    "rowApply": "Mở tài khoản",
+    "viewAccount": "Xem chi tiết",
+    "compareCta": "So sánh tài khoản này với tài khoản khác"
   }
 }

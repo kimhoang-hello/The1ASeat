@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { getCreditCardOffers } from "@/lib/content";
 import { PageHeader } from "@/components/layout/page-header";
-import { ComparePicker } from "@/components/credit-cards/compare-picker";
+import { ComparePicker } from "@/components/ui/compare-picker";
 import { CompareTable } from "@/components/credit-cards/compare-table";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { JsonLd } from "@/components/seo/json-ld";
 import {
   COMPARE_PARAM,
   COMPARE_PATH,
+  MAX_COMPARE,
   MIN_COMPARE,
   parseCompareSlugs,
 } from "@/lib/card-compare";
@@ -57,8 +58,17 @@ export default async function CompareCardsPage({
       <section className="px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-page space-y-6">
           <ComparePicker
-            cards={offers.map((offer) => ({ slug: offer.slug, name: offer.name }))}
+            path={COMPARE_PATH}
+            param={COMPARE_PARAM}
+            items={offers.map((offer) => ({ slug: offer.slug, name: offer.name }))}
             selected={selected.map((offer) => offer.slug)}
+            labels={{
+              title: t("pickerTitle"),
+              slots: Array.from({ length: MAX_COMPARE }, (_, i) =>
+                t("pickerCard", { index: i + 1 }),
+              ),
+              empty: t("pickerEmpty"),
+            }}
           />
 
           {selected.length >= MIN_COMPARE ? (
