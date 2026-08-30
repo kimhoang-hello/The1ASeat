@@ -387,12 +387,22 @@ có câu "grep lại" ở trên.)
   nav có mục "Video"). Cách kiểm đúng là hỏi thẳng Contentful Delivery API
   trường `fields.type`. Toàn site 30/08/2026: 36 blogPost = 25 video + 11 post,
   và cả 6 bài chuyên mục "Kiến thức" đều là post.
-- **Khối `PostNextSteps` cuối bài blog CHƯA dẫn tới `/bat-dau`** (nó chỉ dẫn
-  sang thẻ tín dụng và hệ điểm). Đây là khoảng trống duy nhất còn lại trong
-  bức tranh cửa vào, và là cửa quan trọng nhất chưa có: lưu lượng organic đổ
-  vào bài blog chứ không đổ vào trang chủ. CỐ Ý để mở, chờ số từ
-  `start_here_step` — thêm một dòng nữa vào khối đó là cạnh tranh trực tiếp
-  với CTA Apply ngay bên cạnh. Quyết theo số, đừng theo cảm giác.
+- **`PostNextSteps` cuối bài blog dẫn tới `/bat-dau`, nhưng CHỈ trên bài nằm
+  trong lộ trình** (6 bài, xây từ `foundationPosts(posts)`). Ba luật, đừng nới:
+  (1) **chỉ bài trong lộ trình** — câu "bài này nằm trong lộ trình cho người
+  mới" là câu THẬT về đúng bài đang đọc; dán lên cả 30 bài thì thành banner
+  chung chung, đúng thứ luật "thà không có link còn hơn link sai chỗ" của
+  `card-next-steps.ts` sinh ra để chặn. Muốn mở phạm vi sau này thì phải viết
+  một CTA khác, không tái dùng câu này. (2) **luôn đứng SAU đường tới thẻ** ở
+  cả hai nhánh — click Apply là một trong hai thước đo thành công, cửa mới
+  không được chắn trước nó. (3) **ở nhánh "Thẻ nhắc trong bài" nó tách thành
+  khối riêng bên dưới**, vì một lộ trình đọc không phải một cái thẻ; hai heading
+  khác nhau nên không lặp, và giữ heading chung "Đi tiếp từ đây" của `NextSteps`
+  (8 trang dùng) thay vì đặt heading một-lần-dùng.
+  **Số bài đọc từ lộ trình ĐANG RENDER, không phải `FOUNDATION_SLUGS.length`** —
+  một bài bị unpublish thì `/bat-dau` hiện 5 còn link ở đây vẫn hứa 6, đúng loại
+  câu cũ đi được mà cả trang Bắt đầu sinh ra để tránh. `FOUNDATION_SLUGS.length`
+  giờ chỉ còn dùng cho `console.warn` ở `/bat-dau`.
 - **Cạnh đã biết, CỐ Ý không sửa (30/08/2026):** nếu một bài có `publishedAt`
   hỏng nhưng `updatedAt` hợp lệ thì `lastModified()` trả về chuỗi hỏng, và
   `latestModified()` bỏ luôn bài đó thay vì dùng `updatedAt`. Codex nêu ở vòng

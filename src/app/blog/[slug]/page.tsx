@@ -187,6 +187,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
       <PostNextSteps
         post={post}
+        posts={allPosts}
         offers={offers}
         className="mt-12 border-t border-border pt-8"
       />

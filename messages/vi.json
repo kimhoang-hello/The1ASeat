@@ -479,7 +479,9 @@
   "postNextSteps": {
     "mentionedTitle": "Thẻ nhắc trong bài",
     "programLabel": "Thẻ nào tích {program}?",
-    "programDescription": "Lọc danh sách thẻ theo đúng loại điểm bài này nói tới"
+    "programDescription": "Lọc danh sách thẻ theo đúng loại điểm bài này nói tới",
+    "routeLabel": "Bài này nằm trong lộ trình cho người mới",
+    "routeDescription": "{count} bài, đọc theo thứ tự — rồi tiếp tục với các bước chọn thẻ và dùng điểm"
   },
   "bankNextSteps": {
     "otherAccountsLabel": "Tài khoản khác của {bank}",
