@@ -29,4 +29,4 @@ export const BANK_ACCOUNTS_PUBLISHED = true;
  * tin. Hai chỗ điều hướng cố định kia dành cho những mục người ta quay lại
  * nhiều lần, mà "Bắt đầu ở đây" theo định nghĩa là trang đọc một lần.
  */
-export const START_HERE_PUBLISHED = false;
+export const START_HERE_PUBLISHED = true;
