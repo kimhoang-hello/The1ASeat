@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { EDITORIAL_REL } from "@/lib/affiliate-links";
-import { YoutubeLogo } from "@phosphor-icons/react/ssr";
+import { ArrowRight, YoutubeLogo } from "@phosphor-icons/react/ssr";
 import { FacebookIcon } from "@/components/ui/brand-icons";
 import { getAuthor } from "@/lib/content";
 import { AuthorPhoto } from "@/components/ui/author-photo";
@@ -9,6 +10,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { t } from "@/lib/t";
 import { pageMetadata, absoluteUrl } from "@/lib/seo";
 import { SOCIAL_LINKS, PERSON_SAME_AS } from "@/lib/social-links";
+import { START_HERE_PUBLISHED } from "@/lib/feature-flags";
 
 const author = t("author");
 const seo = t("seo");
@@ -69,6 +71,29 @@ export default async function AboutPage() {
           <p key={paragraph.slice(0, 24)}>{boldOccurrences(paragraph, "Ghế 1A")}</p>
         ))}
       </div>
+
+      {/* Bio khép lại bằng "Hẹn gặp bạn ở ghế 1A" — một lời mời, nhưng không
+          nói đi đâu. Nút này là chỗ duy nhất trên trang trả lời câu đó, nên nó
+          đứng ngay sau bio chứ không xuống dưới khối mạng xã hội: người đọc
+          xong phần giới thiệu mà thấy hợp thì bước tiếp luôn, còn ai muốn theo
+          dõi thì vẫn gặp link kênh ở ngay dưới.
+
+          Cùng nhãn với nút trong email chào mừng (api/subscribe/route.ts), vì
+          hai chỗ này nối vào cùng một trang từ cùng một đoạn văn — người đã
+          đọc email rồi ghé trang này nên thấy đúng một lối, không phải hai tên
+          gọi khác nhau cho cùng một thứ.
+
+          Gác sau cờ như mọi lối vào /bat-dau khác (trang chủ, sitemap, search):
+          tắt cờ thì trang này cũng thôi mời, không dẫn vào trang nháp. */}
+      {START_HERE_PUBLISHED && (
+        <Link
+          href="/bat-dau"
+          className="mt-8 inline-flex cursor-pointer items-center gap-2 rounded-full bg-primary px-6 py-3 text-base font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
+        >
+          {author("startHereCta")}
+          <ArrowRight size={18} weight="bold" />
+        </Link>
+      )}
 
       {/* The channel and the group are where readers actually follow along, so
           they get named links here rather than bare icons — this page is the
