@@ -7,12 +7,13 @@ import { CompareTable } from "@/components/credit-cards/compare-table";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { JsonLd } from "@/components/seo/json-ld";
 import { NextSteps, StepLink } from "@/components/ui/next-steps";
+import { START_HERE_PUBLISHED } from "@/lib/feature-flags";
 import {
   COMPARE_PARAM,
   COMPARE_PATH,
   MAX_COMPARE,
   MIN_COMPARE,
-  comparePath,
+  comparePathWithParams,
   parseCompareSlugs,
 } from "@/lib/card-compare";
 import { pageMetadata, breadcrumbJsonLd } from "@/lib/seo";
@@ -38,7 +39,9 @@ export const metadata: Metadata = pageMetadata({
 export default async function CompareCardsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ [COMPARE_PARAM]?: string | string[] }>;
+  // Không chỉ `cards`: cặp gợi ý phải dựng lại URL kèm mọi tham số đang có,
+  // nên trang cần thấy hết — `utm_*` của chiến dịch là lý do.
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const [offers, params] = await Promise.all([getCreditCardOffers(), searchParams]);
 
@@ -98,11 +101,15 @@ export default async function CompareCardsPage({
               {/* So xong mà vẫn chưa quyết được là kết cục thường gặp nhất của
                   trang này, và trước khối này nó không dẫn đi đâu. */}
               <NextSteps title={next("title")} className="pt-4">
-                <StepLink
-                  href="/bat-dau"
-                  label={next("startHereLabel")}
-                  description={next("startHereDescription")}
-                />
+                {/* Gác sau cờ như mọi lối vào /bat-dau khác (trang chủ, about,
+                    sitemap, search): tắt cờ thì trang này cũng thôi mời. */}
+                {START_HERE_PUBLISHED && (
+                  <StepLink
+                    href="/bat-dau"
+                    label={next("startHereLabel")}
+                    description={next("startHereDescription")}
+                  />
+                )}
                 <StepLink
                   href="/credit-cards"
                   label={next("cardsLabel")}
@@ -128,7 +135,10 @@ export default async function CompareCardsPage({
                     {suggestedPairs.map((pair) => (
                       <Link
                         key={pair.map((card) => card.slug).join("-")}
-                        href={comparePath(pair.map((card) => card.slug))}
+                        href={comparePathWithParams(
+                          pair.map((card) => card.slug),
+                          params,
+                        )}
                         className="rounded-full border border-border px-3.5 py-1.5 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
                       >
                         {pair.map((card) => card.name).join(" vs ")}

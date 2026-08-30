@@ -58,6 +58,41 @@ export function compareHref(path: string, param: string, slugs: string[]): strin
 }
 
 /**
+ * Như `compareHref`, nhưng GIỮ LẠI các tham số khác đang có trên URL.
+ *
+ * Dùng cho link dựng ở server (cặp gợi ý ở trạng thái chưa chọn gì), nơi không
+ * có `window.location` để đọc. Cùng một luật với `ComparePicker` và
+ * `bank-account-finder`: `utm_*` của chiến dịch dẫn người đọc tới đây phải sống
+ * sót qua cú bấm, nếu không thì mọi lượt truy cập từ quảng cáo sẽ mất nguồn
+ * ngay ở bước đầu tiên trên trang.
+ *
+ * Tham số so sánh cũ bị ghi đè chứ không cộng dồn — người đọc đang chọn một cặp
+ * MỚI, không phải thêm vào cặp cũ.
+ */
+export function compareHrefWithParams(
+  path: string,
+  param: string,
+  slugs: string[],
+  current: Record<string, string | string[] | undefined>,
+): string {
+  const params = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(current)) {
+    if (key === param || value === undefined) continue;
+    if (Array.isArray(value)) {
+      for (const item of value) params.append(key, item);
+    } else {
+      params.set(key, value);
+    }
+  }
+
+  if (slugs.length > 0) params.set(param, slugs.slice(0, MAX_COMPARE).join(","));
+
+  const query = params.toString();
+  return query ? `${path}?${query}` : path;
+}
+
+/**
  * Ném nếu có mục nào mang slug trùng đoạn đường dẫn tĩnh của trang so sánh.
  *
  * Gọi từ `generateStaticParams` của trang chi tiết, tức là chạy lúc

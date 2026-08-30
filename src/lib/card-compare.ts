@@ -1,5 +1,10 @@
 import type { CreditCardOffer } from "./content/types";
-import { assertNoSlugClash as assertNoClash, compareHref, pickBySlugs } from "./compare";
+import {
+  assertNoSlugClash as assertNoClash,
+  compareHref,
+  compareHrefWithParams,
+  pickBySlugs,
+} from "./compare";
 
 export { MAX_COMPARE, MIN_COMPARE } from "./compare";
 
@@ -24,6 +29,15 @@ export function parseCompareSlugs(
 
 export function comparePath(slugs: string[]): string {
   return compareHref(COMPARE_PATH, COMPARE_PARAM, slugs);
+}
+
+/** `comparePath` giữ nguyên các tham số khác đang có trên URL — xem
+ *  `compareHrefWithParams`. */
+export function comparePathWithParams(
+  slugs: string[],
+  current: Record<string, string | string[] | undefined>,
+): string {
+  return compareHrefWithParams(COMPARE_PATH, COMPARE_PARAM, slugs, current);
 }
 
 export function slugClashMessage(): string {

@@ -7,7 +7,7 @@ import {
   BANK_COMPARE_PATH,
   MAX_COMPARE,
   MIN_COMPARE,
-  bankComparePath,
+  bankComparePathWithParams,
   parseBankCompareSlugs,
 } from "@/lib/bank-compare";
 import { PageHeader } from "@/components/layout/page-header";
@@ -64,7 +64,9 @@ export const metadata: Metadata = {
 export default async function CompareBankAccountsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ [BANK_COMPARE_PARAM]?: string | string[] }>;
+  // Cùng lý do với trang so sánh thẻ: cặp gợi ý dựng lại URL nên phải thấy
+  // mọi tham số đang có, không riêng `accounts`.
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
   const selected = parseBankCompareSlugs(params[BANK_COMPARE_PARAM]);
@@ -153,7 +155,10 @@ export default async function CompareBankAccountsPage({
                     {SUGGESTED_PAIRS.map((pair) => (
                       <Link
                         key={pair.map((account) => account.slug).join("-")}
-                        href={bankComparePath(pair.map((account) => account.slug))}
+                        href={bankComparePathWithParams(
+                          pair.map((account) => account.slug),
+                          params,
+                        )}
                         className="rounded-full border border-border px-3.5 py-1.5 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
                       >
                         {pair.map((account) => account.name).join(" vs ")}

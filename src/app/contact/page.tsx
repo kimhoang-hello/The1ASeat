@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { ContactForm } from "@/components/contact/contact-form";
 import { NextSteps, StepLink } from "@/components/ui/next-steps";
+import { START_HERE_PUBLISHED } from "@/lib/feature-flags";
 import { t } from "@/lib/t";
 import { pageMetadata } from "@/lib/seo";
 
@@ -36,11 +37,14 @@ export default function ContactPage() {
               muốn gửi thư — và trước khối này gửi xong là hết đường đi. Ba
               đường dưới đây trả lời trước những câu hay được hỏi nhất. */}
           <NextSteps title={contact("nextStepsTitle")} className="mt-10">
-            <StepLink
-              href="/bat-dau"
-              label={next("startHereLabel")}
-              description={next("startHereDescription")}
-            />
+            {/* Gác sau cờ như mọi lối vào /bat-dau khác. */}
+            {START_HERE_PUBLISHED && (
+              <StepLink
+                href="/bat-dau"
+                label={next("startHereLabel")}
+                description={next("startHereDescription")}
+              />
+            )}
             <StepLink
               href="/blog"
               label={next("blogLabel")}

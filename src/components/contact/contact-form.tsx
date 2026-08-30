@@ -65,7 +65,7 @@ export function ContactForm() {
         {/* Gửi xong là lúc cụt nhất của cả trang: form biến mất, còn lại đúng
             một dòng chữ. Khối này nằm NGOÀI vùng `role="status"` để screen
             reader chỉ đọc lên lời xác nhận, không đọc kèm ba cái link. */}
-        <NextSteps title={t("sentNextTitle")} headingLevel="h3" className="mt-6">
+        <NextSteps title={t("sentNextTitle")} compact className="mt-6">
           <StepLink
             href="/blog"
             label={next("blogLabel")}

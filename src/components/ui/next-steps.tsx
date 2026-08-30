@@ -42,19 +42,28 @@ export function StepLink({
 }
 
 /**
- * `headingLevel` vì khối này xuất hiện ở những độ sâu khác nhau: trên trang chi
- * tiết thẻ nó là mục ngang hàng với "Quyền lợi chính" (h2), còn trong hộp kết
- * quả của calculator nó nằm dưới một h2 đã có nên phải là h3. Để cứng h2 sẽ
- * làm gãy thứ tự heading ở đúng những trang vừa được sửa cho hết cụt.
+ * `headingLevel` và `compact` là HAI thứ khác nhau, cố ý tách rời.
+ *
+ * Bản đầu buộc cỡ chữ vào cấp heading, nên chỗ nào muốn tiêu đề nhỏ là phải
+ * khai h3 — và trên `/calculator` điều đó tạo ra outline h1 → h3, nhảy cóc
+ * một cấp ngay trên trang vừa sửa cho hết cụt (trang đó không có h2 nào khác:
+ * `PageHeader` cho h1, còn hộp calculator không có tiêu đề). Người dùng screen
+ * reader nhảy theo cấp heading sẽ hụt đúng khối điều hướng này.
+ *
+ * Giờ cấp heading đi theo cấu trúc thật của trang, còn `compact` chỉ đổi cỡ
+ * chữ. Mặc định h2 là đúng cho mọi chỗ đang dùng: ở đâu khối này cũng là một
+ * mục ngang hàng nằm thẳng dưới h1 của trang.
  */
 export function NextSteps({
   title,
   headingLevel = "h2",
+  compact = false,
   className = "",
   children,
 }: {
   title: string;
   headingLevel?: "h2" | "h3";
+  compact?: boolean;
   className?: string;
   children: React.ReactNode;
 }) {
@@ -63,9 +72,7 @@ export function NextSteps({
   return (
     <section className={className}>
       <Heading
-        className={`font-display font-bold text-foreground ${
-          headingLevel === "h2" ? "text-xl" : "text-base"
-        }`}
+        className={`font-display font-bold text-foreground ${compact ? "text-base" : "text-xl"}`}
       >
         {title}
       </Heading>

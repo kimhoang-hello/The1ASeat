@@ -1,5 +1,10 @@
 import { BANK_ACCOUNTS, type BankAccount } from "./bank-accounts";
-import { assertNoSlugClash as assertNoClash, compareHref, pickBySlugs } from "./compare";
+import {
+  assertNoSlugClash as assertNoClash,
+  compareHref,
+  compareHrefWithParams,
+  pickBySlugs,
+} from "./compare";
 
 export { MAX_COMPARE, MIN_COMPARE } from "./compare";
 
@@ -19,6 +24,14 @@ export function parseBankCompareSlugs(raw: string | string[] | undefined): BankA
 
 export function bankComparePath(slugs: string[]): string {
   return compareHref(BANK_COMPARE_PATH, BANK_COMPARE_PARAM, slugs);
+}
+
+/** `bankComparePath` giữ nguyên các tham số khác đang có trên URL. */
+export function bankComparePathWithParams(
+  slugs: string[],
+  current: Record<string, string | string[] | undefined>,
+): string {
+  return compareHrefWithParams(BANK_COMPARE_PATH, BANK_COMPARE_PARAM, slugs, current);
 }
 
 /**

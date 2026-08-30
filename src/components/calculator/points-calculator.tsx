@@ -100,7 +100,7 @@ function CalculatorNextSteps({
   const canFilter = program !== undefined && cardProgramIds.includes(program.cardProgramId);
 
   return (
-    <NextSteps title={next("title")} headingLevel="h3" className="mt-8">
+    <NextSteps title={next("title")} compact className="mt-8">
       {canFilter ? (
         <StepLink
           href={creditCardsPath({ points: program!.cardProgramId })}
