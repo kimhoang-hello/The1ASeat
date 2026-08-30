@@ -709,9 +709,9 @@ export const BANK_ACCOUNTS: BankAccount[] = [
 
   // ---------------------------------------------------------------- KOHO
   // KOHO bán ba gói của cùng một tài khoản chứ không phải ba tài khoản khác
-  // nhau: trả phí tháng cao hơn thì được lãi cao hơn và cash back cao hơn, còn
+  // nhau: trả phí tháng cao hơn thì được lãi cao hơn và cashback cao hơn, còn
   // phần chi tiêu thì gói nào cũng như nhau. Vì vậy ba mục dưới đây chỉ khác
-  // nhau ở monthly fee, lãi suất và mức cash back — cố tình để giống nhau ở
+  // nhau ở monthly fee, lãi suất và mức cashback — cố tình để giống nhau ở
   // những dòng còn lại, để đặt cạnh nhau là thấy ngay mình trả thêm tiền để
   // đổi lấy cái gì.
   //
@@ -727,12 +727,12 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     tags: [],
     monthlyFee: 14.75,
     bonusValue: 100,
-    bonusLabelVi: "Tối đa $100 cash back",
+    bonusLabelVi: "Tối đa $100 cashback",
     bonusConditionsVi: [
       "Chỉ dành cho khách hàng mới, chưa từng có tài khoản KOHO.",
-      "Register bằng promo code FW10C26 khi mở tài khoản.",
+      "Đăng ký bằng promo code FW10C26 khi mở tài khoản.",
       "Nạp tiền trong vòng 30 ngày kể từ ngày mở và chi tối thiểu $20 trong 30 ngày đầu.",
-      "Được 10% cash back trên chi tiêu 3 tháng đầu, tối đa $1,000 chi tiêu — tức tối đa $100.",
+      "Được 10% cashback trên chi tiêu 3 tháng đầu, tối đa $1,000 chi tiêu — tức tối đa $100.",
       "Không cộng dồn với khuyến mãi khác. Loại trừ cash advance, rút ATM, chuyển tiền, crypto, cờ bạc và gift card.",
     ],
     interestRate: 3.5,
@@ -740,7 +740,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
       "3.50% áp dụng cho mọi mức số dư, không phải lãi khuyến mãi có hạn — nó đi kèm gói Everything và mất đi nếu bạn hạ gói. Tính ra $14.75/tháng tức $177/năm, nên phần lãi chênh so với gói Extra chỉ hoà vốn khi số dư đủ lớn.",
     keyBenefitsVi: [
       "Lãi 3.50% trên toàn bộ số dư, kể cả tiền đang chờ tiêu",
-      "2% cash back cho tạp hoá, đi lại, ăn uống; tới thêm 6.5% tại một số cửa hàng",
+      "2% cashback cho tạp hoá, đi lại, ăn uống; tới thêm 6.5% tại một số cửa hàng",
       "Không phí chuyển đổi ngoại tệ, giao dịch và Interac e-Transfer® không giới hạn",
       "Kèm 3GB eSIM dùng ở nước ngoài, theo dõi credit score miễn phí và giảm 50% phí xây credit",
     ],
@@ -756,20 +756,20 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     tags: [],
     monthlyFee: 12,
     bonusValue: 100,
-    bonusLabelVi: "Tối đa $100 cash back",
+    bonusLabelVi: "Tối đa $100 cashback",
     bonusConditionsVi: [
       "Chỉ dành cho khách hàng mới, chưa từng có tài khoản KOHO.",
-      "Register bằng promo code FW10C26 khi mở tài khoản.",
+      "Đăng ký bằng promo code FW10C26 khi mở tài khoản.",
       "Nạp tiền trong vòng 30 ngày kể từ ngày mở và chi tối thiểu $20 trong 30 ngày đầu.",
-      "Được 10% cash back trên chi tiêu 3 tháng đầu, tối đa $1,000 chi tiêu — tức tối đa $100.",
+      "Được 10% cashback trên chi tiêu 3 tháng đầu, tối đa $1,000 chi tiêu — tức tối đa $100.",
       "Nạp tối thiểu $20 trong 30 ngày đầu cũng là điều kiện để nhận rebate của FinlyWealth.",
     ],
     interestRate: 2.5,
     promoNoteVi:
-      "2.50% áp dụng cho mọi mức số dư và đi kèm gói Extra ($12/tháng). Chênh đúng $2.75/tháng so với gói Everything nhưng lãi thấp hơn 1.00% và cash back cơ bản thấp hơn 0.5%.",
+      "2.50% áp dụng cho mọi mức số dư và đi kèm gói Extra ($12/tháng). Chênh đúng $2.75/tháng so với gói Everything nhưng lãi thấp hơn 1.00% và cashback cơ bản thấp hơn 0.5%.",
     keyBenefitsVi: [
       "Lãi 2.50% trên toàn bộ số dư",
-      "1.5% cash back cho tạp hoá, đi lại, ăn uống; tới thêm 6.5% tại một số cửa hàng",
+      "1.5% cashback cho tạp hoá, đi lại, ăn uống; tới thêm 6.5% tại một số cửa hàng",
       "Không phí chuyển đổi ngoại tệ, giao dịch và Interac e-Transfer® không giới hạn",
       "Dùng thử miễn phí 30 ngày, theo dõi credit score miễn phí và giảm 30% phí xây credit",
     ],
@@ -787,20 +787,20 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     monthlyFee: 4,
     feeWaiverVi: "Miễn monthly fee nếu có khoản nạp định kỳ $1,000/tháng, nạp tay hay direct deposit đều được.",
     bonusValue: 100,
-    bonusLabelVi: "Tối đa $100 cash back",
+    bonusLabelVi: "Tối đa $100 cashback",
     bonusConditionsVi: [
       "Chỉ dành cho khách hàng mới, chưa từng có tài khoản KOHO.",
-      "Register bằng promo code FW10C26 khi mở tài khoản.",
+      "Đăng ký bằng promo code FW10C26 khi mở tài khoản.",
       "Nạp tiền trong vòng 30 ngày kể từ ngày mở và chi tối thiểu $20 trong 30 ngày đầu.",
-      "Được 10% cash back trên chi tiêu 3 tháng đầu, tối đa $1,000 chi tiêu — tức tối đa $100.",
+      "Được 10% cashback trên chi tiêu 3 tháng đầu, tối đa $1,000 chi tiêu — tức tối đa $100.",
       "Nạp tối thiểu $20 trong 30 ngày đầu cũng là điều kiện để nhận rebate của FinlyWealth.",
     ],
     interestRate: 2,
     promoNoteVi:
-      "2.00% áp dụng cho mọi mức số dư. Đây là gói duy nhất của KOHO có đường miễn phí hẳn monthly fee, nên nếu bạn vẫn nạp lương về đây thì nó là gói rẻ nhất — đổi lại lãi và cash back thấp nhất, và vẫn còn phí chuyển đổi ngoại tệ 1.5%.",
+      "2.00% áp dụng cho mọi mức số dư. Đây là gói duy nhất của KOHO có đường miễn phí hẳn monthly fee, nên nếu bạn vẫn nạp lương về đây thì nó là gói rẻ nhất — đổi lại lãi và cashback thấp nhất, và vẫn còn phí chuyển đổi ngoại tệ 1.5%.",
     keyBenefitsVi: [
       "Lãi 2.00% trên toàn bộ số dư",
-      "1% cash back cho tạp hoá, đi lại, ăn uống; tới thêm 6.5% tại một số cửa hàng",
+      "1% cashback cho tạp hoá, đi lại, ăn uống; tới thêm 6.5% tại một số cửa hàng",
       "Giao dịch và Interac e-Transfer® không giới hạn, miễn phí",
       "Chuyển tiền quốc tế tới hơn 190 nước, theo dõi credit score miễn phí",
     ],
@@ -828,7 +828,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     bonusLabelVi: "Tối đa $600",
     bonusConditionsVi: [
       "Từ 18 tuổi, có thường trú hoặc work/study permit còn hiệu lực, và sắp sang Canada trong 90 ngày hoặc đã ở Canada từ 5 năm trở xuống.",
-      "$300 khi mở tài khoản chequing, register online banking, thực hiện 20 giao dịch đủ điều kiện và nhận 3 khoản automatic deposit từ $100 mỗi khoản.",
+      "$300 khi mở tài khoản chequing, đăng ký online banking, thực hiện 20 giao dịch đủ điều kiện và nhận 3 khoản automatic deposit từ $100 mỗi khoản.",
       "$100 nữa khi mở thẻ tín dụng Mastercard® của National Bank®, được duyệt và quẹt đủ 20 giao dịch.",
       "$100 nữa khi set up thanh toán định kỳ khoản vay mua nhà National Bank® từ chính tài khoản mới này.",
       "$100 nữa khi mở High Interest Savings Account và nạp tối thiểu $5,000.",
@@ -929,7 +929,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     bonusConditionsVi: [
       "Từ 13 tuổi trở lên và chưa từng có tài khoản cá nhân RBC® trong 3 năm trước 02/06/2026.",
       "Mở tài khoản Advantage Banking for Students đầu tiên trước 21:00 EST ngày 02/11/2026.",
-      "Làm hai trong các việc sau trước 21:00 EST ngày 15/01/2027: register Interac Autodeposit và gửi/nhận 1 e-Transfer; lấy thẻ RBC® Virtual Visa Debit và quẹt ít nhất 1 lần; chuyển trọn payroll về tài khoản mới; set up 1 khoản thanh toán định kỳ; hoặc thanh toán 1 hoá đơn qua app/online banking.",
+      "Làm hai trong các việc sau trước 21:00 EST ngày 15/01/2027: đăng ký Interac Autodeposit và gửi/nhận 1 e-Transfer; lấy thẻ RBC® Virtual Visa Debit và quẹt ít nhất 1 lần; chuyển trọn payroll về tài khoản mới; set up 1 khoản thanh toán định kỳ; hoặc thanh toán 1 hoá đơn qua app/online banking.",
       "Phần thưởng là AirPods 4, kèm 3 tháng Apple Music cho người đăng ký mới.",
     ],
     keyBenefitsVi: [
