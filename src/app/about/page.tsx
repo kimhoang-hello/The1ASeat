@@ -88,7 +88,7 @@ export default async function AboutPage() {
       {START_HERE_PUBLISHED && (
         <Link
           href="/bat-dau"
-          className="mt-8 inline-flex cursor-pointer items-center gap-2 rounded-full bg-primary px-6 py-3 text-base font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
+          className="mt-8 inline-flex cursor-pointer items-center gap-2 rounded-full bg-primary px-6 py-3 text-base font-semibold text-primary-foreground transition-colors hover:bg-primary-hover max-[359px]:text-sm"
         >
           {author("startHereCta")}
           <ArrowRight size={18} weight="bold" />

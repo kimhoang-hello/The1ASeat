@@ -43,10 +43,22 @@ export function StartHereBand() {
           {t("body")}
         </p>
         {/* Nút đặc, cùng kiểu với nút "Đăng ký bản tin" trên header: trong một
-            dải chỉ có chữ, nền đặc là thứ duy nhất nói đây là chỗ để bấm. */}
+            dải chỉ có chữ, nền đặc là thứ duy nhất nói đây là chỗ để bấm.
+
+            NHÃN DÙNG CHUNG: cùng một câu ở cả ba lối vào /bat-dau — dải này,
+            nút cuối bio trang Giới thiệu, và nút trong email chào mừng
+            (api/subscribe/route.ts). Sửa một chỗ thì sửa cả ba, nếu không một
+            trang đích lại mang ba tên gọi. Nhãn cũ "Xem lộ trình 4 bước" bỏ đi
+            vì con số đã nằm sẵn trong câu ngay trên nó.
+
+            DƯỚI 360px: nhãn mới dài hơn nhãn cũ đúng một chút quá sức chứa. Ở
+            320px, chữ 16px cần 315px mà khung chỉ có 288px, nên "đây" rớt lẻ
+            xuống dòng hai — nút duy nhất trên trang chủ bị vậy. Rút padding
+            không đủ (vẫn cần 291px), nên hạ một bậc cỡ chữ, và chỉ hạ ở dưới
+            360px để máy 375/390/414 giữ nguyên nút 16px như cũ. */}
         <Link
           href="/bat-dau"
-          className="mt-7 inline-flex cursor-pointer items-center gap-2 rounded-full bg-primary px-7 py-3.5 text-base font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
+          className="mt-7 inline-flex cursor-pointer items-center gap-2 rounded-full bg-primary px-7 py-3.5 text-base font-semibold text-primary-foreground transition-colors hover:bg-primary-hover max-[359px]:px-6 max-[359px]:text-sm"
         >
           {t("cta")}
           <ArrowRight size={18} weight="bold" />
