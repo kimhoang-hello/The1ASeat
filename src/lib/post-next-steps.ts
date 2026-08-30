@@ -1,5 +1,5 @@
 import { slugifyVi } from "./blog-categories";
-import { creditCardsPath, getCardPointsPrograms, programIdInText } from "./card-points-programs";
+import { creditCardsPath, getCardPointsPrograms, programIdsInText } from "./card-points-programs";
 import type { BlogPost, CreditCardOffer } from "./content/types";
 
 /**
@@ -68,14 +68,16 @@ export function pointsProgramForPost(
   post: BlogPost,
   offers: CreditCardOffer[],
 ): { href: string; name: string } | null {
-  const id = programIdInText(`${post.title} ${post.excerpt}`);
-  if (!id) return null;
+  const ids = programIdsInText(`${post.title} ${post.excerpt}`);
+  if (ids.length === 0) return null;
 
-  // Vẫn phải lọc qua `getCardPointsPrograms`: nó chỉ trả về hệ THẬT SỰ có thẻ,
-  // nên link không bao giờ rơi vào bẫy `?points=` hỏng lặng — `/credit-cards`
-  // cố ý cho id lạ trả về danh sách không lọc, và người đọc sẽ tưởng nguyên cả
-  // danh sách là kết quả lọc.
-  const hit = getCardPointsPrograms(offers).find((program) => program.id === id);
+  // Hệ ĐẦU TIÊN vừa được bài gọi tên vừa thật sự có thẻ — không phải hệ đầu
+  // tiên được gọi tên. `getCardPointsPrograms` chỉ trả về hệ có thẻ, nên phép
+  // lọc này vừa giữ link khỏi bẫy `?points=` hỏng lặng (`/credit-cards` cố ý
+  // cho id lạ trả về danh sách KHÔNG lọc, người đọc tưởng là kết quả lọc), vừa
+  // cứu được bài gọi tên nhiều hệ mà hệ đứng trước lại không có thẻ nào.
+  const available = getCardPointsPrograms(offers);
+  const hit = ids.map((id) => available.find((program) => program.id === id)).find(Boolean);
 
   return hit ? { href: creditCardsPath({ points: hit.id }), name: hit.name } : null;
 }

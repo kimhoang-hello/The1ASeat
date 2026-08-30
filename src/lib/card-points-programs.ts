@@ -61,20 +61,34 @@ export function programIdFor(offer: CreditCardOffer): string | undefined {
 }
 
 /**
- * Hệ điểm được gọi tên trong một đoạn chữ bất kỳ (tiêu đề bài viết, mô tả
- * ngắn…), hoặc `undefined` nếu không có.
+ * MỌI hệ điểm được gọi tên trong một đoạn chữ bất kỳ (tiêu đề bài viết, mô tả
+ * ngắn…), theo thứ tự khai báo của `PROGRAM_RULES`.
  *
- * Dùng chính `PROGRAM_RULES` ở trên chứ không so trên chuỗi đã `slugifyVi`.
- * Slug hoá xoá mất ký hiệu, mà với vài chương trình thì ký hiệu CHÍNH LÀ tên:
- * `slugifyVi("Scene+™")` ra đúng chữ `scene`, nên một bài tựa đề có chữ
- * "scene" hay "scenery" sẽ bị gán nhầm cho Scene+™. Regex `/scene\s*\+/i` đòi
+ * Trả về cả danh sách chứ không phải khớp đầu tiên, vì người gọi còn phải lọc
+ * tiếp theo tồn kho thẻ. Bài "Amex Membership Rewards vs RBC Avion" (đã nằm
+ * trong kế hoạch nội dung ở SEO.md) gọi tên hai hệ; `amex-mr` đứng trước nhưng
+ * hiện KHÔNG có thẻ nào trên site, nên nếu chỉ trả khớp đầu tiên thì bài đó
+ * rơi về link chung, dù Avion có thẻ và dẫn được.
+ *
+ * Dùng chính `PROGRAM_RULES` chứ không so trên chuỗi đã `slugifyVi`. Slug hoá
+ * xoá mất ký hiệu, mà với vài chương trình thì ký hiệu CHÍNH LÀ tên:
+ * `slugifyVi("Scene+™")` ra đúng chữ `scene`, nên một bài tựa đề "Behind the
+ * scenes" hay "Scenery…" bị gán nhầm cho Scene+™. Regex `/scene\s*\+/i` đòi
  * dấu cộng nên không dính.
  *
- * Đây cũng là lý do không dựng bảng tên riêng cho việc này: thêm một bộ từ
- * vựng thứ hai là thêm một chỗ để nó lệch với bảng gốc.
+ * Ký hiệu ™/®/* được thay bằng khoảng trắng TRƯỚC khi khớp: nội dung trên site
+ * viết "TD® Rewards", còn rule là `/td rewards/i` đòi đúng một dấu cách nên sẽ
+ * trượt. Thay bằng khoảng trắng chứ không xoá hẳn — xoá hẳn thì "TD®Rewards"
+ * dính thành "TDRewards" và cũng trượt. Việc này KHÔNG nới lỏng bẫy Scene+ ở
+ * trên: "Scene+™" thành "Scene+ ", vẫn còn dấu cộng để regex đòi.
+ *
+ * `programIdFor` cố ý KHÔNG dùng chuẩn hoá này: đầu vào của nó là các trường
+ * của thẻ, và chip lọc dựng từ đó là mặt đã rà kỹ — nới rộng phép khớp ở đó có
+ * thể xếp lại chip của những thẻ đang đúng, đổi lấy một ca chưa xảy ra.
  */
-export function programIdInText(text: string): string | undefined {
-  return PROGRAM_RULES.find((rule) => rule.pattern.test(text))?.id;
+export function programIdsInText(text: string): string[] {
+  const cleaned = text.replace(/[®™*]/g, " ").replace(/\s+/g, " ");
+  return PROGRAM_RULES.filter((rule) => rule.pattern.test(cleaned)).map((rule) => rule.id);
 }
 
 export interface CardPointsProgram {
