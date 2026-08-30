@@ -60,6 +60,23 @@ export function programIdFor(offer: CreditCardOffer): string | undefined {
   return undefined;
 }
 
+/**
+ * Hệ điểm được gọi tên trong một đoạn chữ bất kỳ (tiêu đề bài viết, mô tả
+ * ngắn…), hoặc `undefined` nếu không có.
+ *
+ * Dùng chính `PROGRAM_RULES` ở trên chứ không so trên chuỗi đã `slugifyVi`.
+ * Slug hoá xoá mất ký hiệu, mà với vài chương trình thì ký hiệu CHÍNH LÀ tên:
+ * `slugifyVi("Scene+™")` ra đúng chữ `scene`, nên một bài tựa đề có chữ
+ * "scene" hay "scenery" sẽ bị gán nhầm cho Scene+™. Regex `/scene\s*\+/i` đòi
+ * dấu cộng nên không dính.
+ *
+ * Đây cũng là lý do không dựng bảng tên riêng cho việc này: thêm một bộ từ
+ * vựng thứ hai là thêm một chỗ để nó lệch với bảng gốc.
+ */
+export function programIdInText(text: string): string | undefined {
+  return PROGRAM_RULES.find((rule) => rule.pattern.test(text))?.id;
+}
+
 export interface CardPointsProgram {
   id: string;
   name: string;

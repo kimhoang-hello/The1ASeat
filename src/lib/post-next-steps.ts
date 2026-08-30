@@ -1,5 +1,5 @@
 import { slugifyVi } from "./blog-categories";
-import { creditCardsPath, getCardPointsPrograms } from "./card-points-programs";
+import { creditCardsPath, getCardPointsPrograms, programIdInText } from "./card-points-programs";
 import type { BlogPost, CreditCardOffer } from "./content/types";
 
 /**
@@ -63,22 +63,19 @@ export function cardsMentionedInPost(
  * Hệ điểm bài này nói tới, nếu có — chỉ soi TIÊU ĐỀ và mô tả ngắn, không soi
  * thân bài: gần như bài nào cũng nhắc "Aeroplan®" đâu đó ở giữa, còn tiêu đề
  * gọi tên hệ điểm thì bài thật sự viết về hệ đó.
- *
- * Danh sách chương trình lấy từ `getCardPointsPrograms(offers)`, tức là chỉ
- * gồm hệ THẬT SỰ có thẻ trên site. Nhờ vậy link ở đây không bao giờ rơi vào
- * cái bẫy `?points=` hỏng lặng: `/credit-cards` cố ý cho id lạ trả về danh
- * sách không lọc, nên một hệ không có thẻ nào sẽ trả về nguyên cả danh sách mà
- * người đọc tưởng là kết quả lọc.
  */
 export function pointsProgramForPost(
   post: BlogPost,
   offers: CreditCardOffer[],
 ): { href: string; name: string } | null {
-  const haystack = slugifyVi(`${post.title} ${post.excerpt}`);
+  const id = programIdInText(`${post.title} ${post.excerpt}`);
+  if (!id) return null;
 
-  const hit = getCardPointsPrograms(offers).find((program) =>
-    haystack.includes(slugifyVi(program.name)),
-  );
+  // Vẫn phải lọc qua `getCardPointsPrograms`: nó chỉ trả về hệ THẬT SỰ có thẻ,
+  // nên link không bao giờ rơi vào bẫy `?points=` hỏng lặng — `/credit-cards`
+  // cố ý cho id lạ trả về danh sách không lọc, và người đọc sẽ tưởng nguyên cả
+  // danh sách là kết quả lọc.
+  const hit = getCardPointsPrograms(offers).find((program) => program.id === id);
 
   return hit ? { href: creditCardsPath({ points: hit.id }), name: hit.name } : null;
 }

@@ -101,19 +101,17 @@ export default async function BlogCategoryPage({
         <div className="mx-auto max-w-page">
           <CategoryLinks categories={categories} activeSlug={category.slug} className="mb-8" />
 
-          {/* Cùng lý do với /blog: chuyên mục cạn bài thì trước đây ra lưới
-              trắng không chữ nào. */}
-          {posts.length === 0 ? (
-            <div className="rounded-2xl border border-border bg-card px-5 py-12 text-center">
-              <p className="text-sm text-muted-foreground">{posts_t("emptyCategory")}</p>
-            </div>
-          ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-              {posts.map((post) => (
-                <PostCard key={post.slug} post={post} />
-              ))}
-            </div>
-          )}
+          {/* KHÔNG có nhánh cho danh sách rỗng ở đây, khác với /blog: nhánh đó
+              không bao giờ chạy tới được. `getCategories(allPosts)` dựng danh
+              mục TỪ bài, nên mọi mục trong danh sách đều có sẵn ít nhất một
+              bài; mục không còn bài thì biến mất khỏi danh sách và `notFound()`
+              ở trên bắt trước. Từng thêm một empty state ở đây rồi gỡ — nó là
+              code chết kèm một chuỗi dịch chẳng ai đọc. */}
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+            {posts.map((post) => (
+              <PostCard key={post.slug} post={post} />
+            ))}
+          </div>
 
           <p className="mt-10 text-sm">
             <Link href="/blog" className="font-semibold text-primary hover:underline">
