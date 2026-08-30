@@ -7,11 +7,24 @@ import { ArrowRight } from "@phosphor-icons/react";
 /**
  * Ngã ba đầu trang "Bắt đầu ở đây".
  *
- * CÓ THỨ BẬC, không phải bốn nút ngang hàng: bốn lựa chọn cùng cỡ ngầm nói bốn
- * nhu cầu phổ biến như nhau, mà không phải vậy. Hai việc người đọc tới đây hay
- * cần nhất đứng thành nút lớn; hai lối còn lại là link, nhỏ hơn nhưng vẫn nhìn
- * thấy được — nhóm mới định cư là một trong hai nhóm độc giả cốt lõi, không
- * phải thứ để chôn xuống cuối trang.
+ * BỐN Ô BẰNG NHAU, cố ý.
+ *
+ * Bản đầu chia hai tầng: "chọn thẻ" và "bay về Việt Nam" là nút lớn, "chưa
+ * hiểu gì" và "mới sang Canada" là link nhỏ. Bỏ, vì thứ bậc đó ngược trên đúng
+ * trang này. Trang tên là "Bắt đầu ở đây" nên người tới đây theo định nghĩa là
+ * người chưa biết bắt đầu từ đâu — "tôi chưa hiểu Miles & Points là gì" nhiều
+ * khả năng là nhu cầu phổ biến NHẤT ở đây, mà nó lại là thứ nhỏ nhất. Ai đã
+ * biết mình muốn chọn thẻ thì bấm thẳng "Thẻ tín dụng" trên nav. Và người mới
+ * định cư là một trong hai nhóm độc giả cốt lõi trong PRODUCT.md.
+ *
+ * Sâu hơn: thứ bậc mã hoá một phỏng đoán về nhu cầu nào phổ biến hơn — đúng
+ * câu hỏi mà `start_here_goal` được gắn vào để trả lời. Trước khi có số, bốn ô
+ * bằng nhau là mặc định trung thực. Có số rồi thì nâng cái thắng lên, và lúc
+ * đó là quyết định dựa trên dữ liệu chứ không phải trực giác.
+ *
+ * Ô bằng nhau cũng cho cả bốn một vùng chạm thật — PRODUCT.md ghi rõ có độc
+ * giả lớn tuổi và mobile là mặt trận chính, mà link `text-sm` là kiểu phần tử
+ * tệ nhất cho cả hai ràng buộc đó.
  *
  * KHÔNG phải wizard. Đã cân nhắc một luồng ba câu hỏi rồi bỏ: nó thêm hai bậc
  * chuyển đổi trước khi trả được giá trị nào, trên một trang chưa có traffic để
@@ -24,7 +37,7 @@ function track(goal: string) {
   sendGAEvent("event", "start_here_goal", { goal });
 }
 
-function Primary({
+function Choice({
   href,
   goal,
   label,
@@ -33,7 +46,8 @@ function Primary({
   href: string;
   goal: string;
   label: string;
-  note: string;
+  /** Bỏ trống ở hai lối không có con số nào đáng nói kèm. Ô vẫn cùng cỡ. */
+  note?: string;
 }) {
   return (
     <Link
@@ -45,7 +59,7 @@ function Primary({
         <span className="block font-display text-base font-bold text-foreground sm:text-lg">
           {label}
         </span>
-        <span className="mt-1 block text-sm text-muted-foreground">{note}</span>
+        {note && <span className="mt-1 block text-sm text-muted-foreground">{note}</span>}
       </span>
       <ArrowRight size={20} weight="bold" className="shrink-0 text-primary" />
     </Link>
@@ -62,37 +76,32 @@ export function StartHereRouter({
   title: string;
   cards: { href: string; label: string; note: string };
   award: { href: string; label: string; note: string };
-  basics: { href: string; label: string };
+  basics: { href: string; label: string; note: string };
   /** Bỏ trống khi khối newcomer không được render (mục Ngân hàng còn là nháp,
    *  hoặc không tài khoản nào gắn tag `newcomer`). Lối đi mà đích của nó không
    *  tồn tại thì bấm vào không xảy ra gì — tệ hơn là không có lối đó. */
-  newcomer?: { href: string; label: string };
+  newcomer?: { href: string; label: string; note: string };
 }) {
   return (
     <section className="rounded-2xl border border-border bg-secondary p-5 sm:p-6">
       <h2 className="font-display text-lg font-bold text-foreground sm:text-xl">{title}</h2>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <Primary href={cards.href} goal="cards" label={cards.label} note={cards.note} />
-        <Primary href={award.href} goal="award" label={award.label} note={award.note} />
-      </div>
-
-      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:gap-6">
-        <Link
-          href={basics.href}
-          onClick={() => track("basics")}
-          className="text-sm font-semibold text-primary hover:underline"
-        >
-          {basics.label} &rarr;
-        </Link>
+      {/* `auto-rows-fr` chứ không phải `items-stretch`. Cái sau chỉ kéo ô cho
+          bằng nhau TRONG một hàng, không kéo giữa các hàng — mà trên mobile
+          bốn ô nằm bốn hàng riêng, nên nhãn dài hai dòng cho ra ô cao hơn và
+          bốn ô lại lệch. Bốn ô lệch cao đọc ra là bốn mức quan trọng khác
+          nhau, đúng thứ vừa bỏ đi. */}
+      <div className="mt-4 grid auto-rows-fr gap-3 sm:grid-cols-2">
+        <Choice href={cards.href} goal="cards" label={cards.label} note={cards.note} />
+        <Choice href={award.href} goal="award" label={award.label} note={award.note} />
+        <Choice href={basics.href} goal="basics" label={basics.label} note={basics.note} />
         {newcomer && (
-          <Link
+          <Choice
             href={newcomer.href}
-            onClick={() => track("newcomer")}
-            className="text-sm font-semibold text-primary hover:underline"
-          >
-            {newcomer.label} &rarr;
-          </Link>
+            goal="newcomer"
+            label={newcomer.label}
+            note={newcomer.note}
+          />
         )}
       </div>
     </section>

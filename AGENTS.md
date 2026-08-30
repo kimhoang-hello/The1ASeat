@@ -301,16 +301,30 @@ không phải sửa chỗ nào khác.
   do đó sai, ba câu hỏi vẫn hợp lệ nếu đổi một câu trả lời làm đổi đề xuất. Lý
   do thật: nó thêm hai bậc chuyển đổi trước khi trả được giá trị nào, trên một
   trang chưa có traffic để biện minh. Đừng dựng lại wizard khi chưa có số.
-- **Ngã ba có THỨ BẬC**: hai nút lớn (chọn thẻ / bay về Việt Nam) là hai việc
-  hay cần nhất; hai lối còn lại là link nhỏ hơn. Bốn nút ngang hàng ngầm nói
-  bốn nhu cầu phổ biến như nhau, mà không phải vậy.
+- **Ngã ba là BỐN Ô BẰNG NHAU.** Bản đầu chia hai tầng (chọn thẻ / bay về Việt
+  Nam là nút lớn; chưa hiểu gì / mới sang Canada là link nhỏ) và đã bỏ: trên
+  đúng trang tên "Bắt đầu ở đây", "tôi chưa hiểu gì" nhiều khả năng là nhu cầu
+  phổ biến NHẤT, mà nó lại nhỏ nhất — ai đã biết mình muốn chọn thẻ thì bấm
+  thẳng nav. Người mới định cư cũng là nhóm độc giả cốt lõi trong PRODUCT.md.
+  Sâu hơn: thứ bậc mã hoá một phỏng đoán về nhu cầu nào phổ biến hơn, đúng câu
+  hỏi mà `start_here_goal` được gắn để trả lời — trước khi có số, bằng nhau là
+  mặc định trung thực. Có số rồi mới nâng cái thắng lên. Ô bằng nhau cũng cho
+  cả bốn vùng chạm thật (đo được ≥100px trên 375px), đúng ràng buộc "độc giả
+  lớn tuổi, mobile là mặt trận chính".
 - **"Tôi đang chọn thẻ" dẫn về `/credit-cards`, KHÔNG phải trang so sánh** —
   người chưa biết chọn gì thì chưa có hai ứng viên để đặt cạnh nhau.
 - **Khối newcomer nói thẳng site chưa có dữ liệu xếp thẻ theo khả năng được
   duyệt**, rồi chỉ hai chỗ có cơ sở: 2 tài khoản ngân hàng gắn tag `newcomer`
   và phần nền tảng. Thiếu dữ liệu KHÔNG đồng nghĩa không được dẫn họ đi đâu —
   nói rõ giới hạn rồi dẫn tới thứ mình có đủ cơ sở mới là trung thực.
-- **KHÔNG bê cụm ngã ba này ra hero trang chủ hay cuối bài.** Hero đã có một
+- **Chỗ đặt ở hero là MỘT DÒNG, không phải cụm ngã ba.** Hero có đúng một
+  nhiệm vụ (đăng ký bản tin) và bê bốn ô lên đó là đặt hai lời kêu gọi ngang
+  sức cạnh nhau — trên mobile cái sau ăn mất cái trước. Nhưng trước dòng này,
+  người lần đầu ghé site chỉ có đúng một việc làm được là để lại email; ai chưa
+  biết gì thì không có đường nào ngoài tự bơi xuống danh sách thẻ. Dòng này
+  cũng nằm sau `START_HERE_PUBLISHED`, nên bật cờ là công bố cả trang lẫn cửa
+  vào của nó cùng lúc.
+- **KHÔNG bê cụm ngã ba này ra cuối bài.** Hero đã có một
   nhiệm vụ (đăng ký bản tin, một trong hai thước đo thành công); cuối bài thì
   đã biết ngữ cảnh nên CTA phải theo loại bài. Dùng chung component không có
   nghĩa dùng chung một quyết định UX.

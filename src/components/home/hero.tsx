@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { t as translate } from "@/lib/t";
 import { NewsletterForm } from "./newsletter-form";
+import { START_HERE_PUBLISHED } from "@/lib/feature-flags";
 
 const t = translate("hero");
 
@@ -26,6 +28,25 @@ export function Hero() {
           <NewsletterForm id="hero-newsletter" size="hero" />
           <span className="text-xs text-muted-foreground xl:text-sm">{t("disclaimer")}</span>
         </div>
+
+        {/* MỘT DÒNG, không phải cụm bốn nút của `/bat-dau`.
+            Hero đã có đúng một nhiệm vụ — đăng ký bản tin, một trong hai thước
+            đo thành công của site — nên bê nguyên bộ chọn mục tiêu lên đây là
+            đặt hai lời kêu gọi ngang sức cạnh nhau, và trên mobile thì cái sau
+            ăn mất cái trước.
+            Nhưng hero cũng là khoảnh khắc duy nhất người lần đầu ghé site có
+            đủ chú ý, và trước dòng này họ chỉ có đúng một việc làm được: để lại
+            email. Ai chưa biết gì thì không có đường nào ngoài tự bơi xuống
+            danh sách thẻ. Một dòng phụ, nhỏ hơn hẳn form, không tranh chỗ —
+            chỉ mở thêm một cửa. */}
+        {START_HERE_PUBLISHED && (
+          <p className="mt-8 text-sm text-muted-foreground xl:text-base">
+            {t("startHerePrompt")}{" "}
+            <Link href="/bat-dau" className="font-semibold text-primary hover:underline">
+              {t("startHereLink")} &rarr;
+            </Link>
+          </p>
+        )}
       </div>
     </section>
   );

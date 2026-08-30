@@ -160,12 +160,20 @@ export default async function StartHerePage() {
               label: t("routerAward"),
               note: t("routerAwardNote", { programs: PROGRAMS.length }),
             }}
-            basics={{ href: "#co-ban", label: t("routerBasics") }}
+            basics={{
+              href: "#co-ban",
+              label: t("routerBasics"),
+              note: t("routerBasicsNote", { count: foundation.length }),
+            }}
             newcomer={
               // Chỉ khi khối bên dưới thật sự được render — xem chú thích ở
               // `StartHereRouter`.
               newcomerAccounts.length > 0
-                ? { href: "#moi-sang-canada", label: t("routerNewcomer") }
+                ? {
+                    href: "#moi-sang-canada",
+                    label: t("routerNewcomer"),
+                    note: t("routerNewcomerNote"),
+                  }
                 : undefined
             }
           />

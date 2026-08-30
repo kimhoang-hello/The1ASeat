@@ -58,7 +58,9 @@
     "subscribe": "Đăng ký bản tin",
     "subscribed": "Đã đăng ký!",
     "disclaimer": "Không spam. Huỷ đăng ký bất cứ lúc nào.",
-    "error": "Có lỗi xảy ra, vui lòng thử lại."
+    "error": "Có lỗi xảy ra, vui lòng thử lại.",
+    "startHerePrompt": "Chưa biết bắt đầu từ đâu?",
+    "startHereLink": "Xem lộ trình 4 bước cho người mới"
   },
   "offers": {
     "eyebrow": "OFFERS NỔI BẬT",
@@ -404,7 +406,9 @@
     "newcomerAccounts": "{count} tài khoản ngân hàng dành cho newcomer",
     "newcomerAccountsNote": "Ngân hàng tự công bố là dành cho người mới định cư — mở tài khoản không cần credit history",
     "newcomerBasics": "Đọc phần nền tảng trước",
-    "newcomerBasicsNote": "Hiểu điểm thưởng hoạt động thế nào trước khi mở thẻ đầu tiên"
+    "newcomerBasicsNote": "Hiểu điểm thưởng hoạt động thế nào trước khi mở thẻ đầu tiên",
+    "routerBasicsNote": "Lộ trình {count} bài, đọc theo thứ tự — mỗi bài năm tới mười phút",
+    "routerNewcomerNote": "Chưa có credit history thì bắt đầu từ đâu, và Ghế 1A chưa biết gì"
   },
   "bankCompare": {
     "eyebrow": "CÔNG CỤ",
