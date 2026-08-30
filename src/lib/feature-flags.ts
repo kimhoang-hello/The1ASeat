@@ -17,3 +17,11 @@
  * chiếu từ chính trang FinlyWealth mà nút "Apply ngay" dẫn tới.
  */
 export const BANK_ACCOUNTS_PUBLISHED = true;
+
+/**
+ * Trang "Bắt đầu ở đây" (`/bat-dau`). Dựng 30/08/2026 làm bản demo để duyệt —
+ * nội dung và thứ tự bốn bước còn chờ tác giả xem. Bật cờ là công bố: nó vào
+ * menu, vào footer, vào sitemap, vào ô tìm kiếm, bỏ `noindex` và bỏ dải báo
+ * nháp cùng một lúc.
+ */
+export const START_HERE_PUBLISHED = false;

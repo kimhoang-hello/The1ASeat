@@ -25,7 +25,7 @@ import {
 } from "@phosphor-icons/react";
 import { SiteSearch } from "@/components/layout/site-search";
 import { COMPARE_PATH } from "@/lib/card-compare";
-import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
+import { BANK_ACCOUNTS_PUBLISHED, START_HERE_PUBLISHED } from "@/lib/feature-flags";
 import { t } from "@/lib/t";
 
 /** A menu entry: an icon, what it is, and what is behind it in one line. */
@@ -187,16 +187,23 @@ function TypeLinksFallback({
 
 /** The dropdown panel itself, so the Blog and credit-card menus stay identical.
  *
- *  `extraLinks` are entries that live on their own page rather than behind a
- *  `?type=` on `basePath` — Ngân hàng sits in the credit-card menu but is a
- *  route of its own, so it cannot go through TypeLinks (which decides "active"
- *  by comparing the query string on one shared path). They hang below a rule
- *  so the menu reads as "the card list, sliced three ways" and then "a
- *  neighbouring page", not as six equal siblings. */
+ *  Hai loại entry không đi qua TypeLinks được (nó quyết định "active" bằng
+ *  cách so query string trên một đường dẫn chung), và chúng nằm ở hai phía
+ *  khác nhau của đường kẻ vì chúng là hai thứ khác nhau:
+ *
+ *  `groupLinks` vẫn nói về chính thứ menu này nói — So sánh thẻ là một cách
+ *  nhìn khác của cùng danh sách thẻ — nên nó đứng TRÊN đường kẻ, cùng nhóm với
+ *  ba lát cắt `?type=`.
+ *
+ *  `extraLinks` là trang lân cận: Ngân hàng nằm trong menu thẻ vì người chọn
+ *  thẻ và người chọn tài khoản chequing là cùng một người trong cùng một việc,
+ *  nhưng nó là một khu vực khác của site. Nó hang DƯỚI đường kẻ, để menu đọc
+ *  ra là "danh sách thẻ, cắt mấy kiểu" rồi mới tới "một trang bên cạnh". */
 function TypeDropdown({
   label,
   basePath,
   links,
+  groupLinks = [],
   extraLinks = [],
   active,
   width,
@@ -206,6 +213,7 @@ function TypeDropdown({
   label: string;
   basePath: string;
   links: TypeLink[];
+  groupLinks?: NavLink[];
   extraLinks?: NavLink[];
   active: boolean;
   width: string;
@@ -233,6 +241,15 @@ function TypeDropdown({
             onNavigate={onNavigate}
           />
         </Suspense>
+
+        {groupLinks.map((link) => (
+          <MenuItem
+            key={link.href}
+            link={link}
+            active={pathname === link.href}
+            onNavigate={onNavigate}
+          />
+        ))}
 
         {extraLinks.length > 0 && (
           <div className="mt-2 border-t border-border pt-2">
@@ -374,8 +391,9 @@ export function SiteHeader() {
   // left the whole menu unlit on all 29 of them. The rows *inside* the menu
   // still compare exactly (see TypeDropdown), which is what keeps "Thẻ tín
   // dụng" from lighting up next to "Ngân hàng" on /bank-accounts.
-  // Một mảng cho cả menu desktop lẫn menu mobile. Hai bản riêng là mời gọi
-  // chúng lệch nhau — đúng lý do TypeLinks được tách ra ở trên.
+  // Menu mobile là một danh sách phẳng, không có đường kẻ nào để chia hai phía
+  // như dropdown desktop — nên ở đây hai nhóm nối làm một, và thứ tự (So sánh
+  // trước, Ngân hàng sau) là thứ giữ cho hai menu đọc ra cùng một trình tự.
   const cardExtraLinks: NavLink[] = [compareLink, ...bankLinks];
 
   const bankActive = bankLinks.some(
@@ -464,11 +482,18 @@ export function SiteHeader() {
             {nav("home")}
           </Link>
 
+          {START_HERE_PUBLISHED && (
+            <Link href="/bat-dau" className={navItemClassName(pathname === "/bat-dau")}>
+              {nav("startHere")}
+            </Link>
+          )}
+
           <TypeDropdown
             label={nav("creditCards")}
             basePath="/credit-cards"
             links={cardLinks}
-            extraLinks={cardExtraLinks}
+            groupLinks={[compareLink]}
+            extraLinks={bankLinks}
             active={cardsMenuActive}
             width="w-80"
             pathname={pathname}
@@ -547,6 +572,16 @@ export function SiteHeader() {
             >
               {nav("home")}
             </Link>
+
+            {START_HERE_PUBLISHED && (
+              <Link
+                href="/bat-dau"
+                onClick={() => setOpen(false)}
+                className={mobileItemClassName(pathname === "/bat-dau")}
+              >
+                {nav("startHere")}
+              </Link>
+            )}
 
             <Link
               href="/credit-cards"

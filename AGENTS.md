@@ -288,6 +288,25 @@ chip lọc và tụt xuống cuối danh sách sắp theo bonus.
   (`peak.trackedSince`), không lấy `since` của cả file: thẻ thêm vào tháng sau
   mà nói theo `since` là nói quá thời gian đã quan sát nó.
 
+## Trang "Bắt đầu ở đây" (30/08/2026) — đang là BẢN NHÁP
+
+`/bat-dau`, sau cờ `START_HERE_PUBLISHED` trong `lib/feature-flags.ts`, hiện
+`false`. Cờ được áp ở 6 chỗ: menu desktop, menu mobile, footer, sitemap, ô tìm
+kiếm, và `robots: noindex` + dải báo nháp trên chính trang. Bật cờ là công bố,
+không phải sửa chỗ nào khác.
+
+- **Bài trong bước 1 sắp CŨ NHẤT TRƯỚC**, ngược với mọi chỗ khác trên site. Đây
+  là lộ trình đọc chứ không phải dòng thời gian: bài viết sớm nhất là bài vỡ
+  lòng và các bài sau xây trên nó. Đừng "sửa" thành mới nhất trước.
+- **Mọi con số trên trang tính lúc render** từ dữ liệu thật (số bài Kiến thức,
+  số thẻ, số thẻ đang chạy elevated offer qua `isElevatedLive`, số chương trình
+  trong `PROGRAMS`). Không có câu nào có thể cũ đi mà không ai biết — đừng thay
+  bằng số viết cứng.
+- **Trong dropdown thẻ, "So sánh thẻ" nằm TRÊN đường kẻ** (`groupLinks`) vì nó
+  là một cách nhìn khác của cùng danh sách thẻ; "Ngân hàng" nằm DƯỚI
+  (`extraLinks`) vì đó là khu vực khác của site. Menu mobile là danh sách phẳng
+  nên hai nhóm nối làm một, giữ đúng thứ tự đó.
+
 ## Chạy gì trước khi kết luận
 
 ```

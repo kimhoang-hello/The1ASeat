@@ -9,7 +9,7 @@ import {
 } from "@/lib/bank-accounts";
 import { t } from "@/lib/t";
 import type { SearchItem } from "@/lib/search";
-import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
+import { BANK_ACCOUNTS_PUBLISHED, START_HERE_PUBLISHED } from "@/lib/feature-flags";
 import { COMPARE_PATH } from "@/lib/card-compare";
 
 // The whole site is a few dozen cards and posts, so search ships the index
@@ -22,6 +22,7 @@ export const revalidate = 60;
 const nav = t("nav");
 const footer = t("footer");
 const offers = t("offers");
+const startHere = t("startHere");
 
 /**
  * `keywords` là các chữ tiếng Việt người đọc gõ nhưng không có trong tên trang.
@@ -34,6 +35,16 @@ const offers = t("offers");
  * khi so, nên "tính điểm" ở đây đã tự khớp với "tinh diem" người ta gõ.
  */
 const PAGES: SearchItem[] = [
+  ...(START_HERE_PUBLISHED
+    ? [
+        {
+          title: startHere("title"),
+          href: "/bat-dau",
+          kind: "page" as const,
+          keywords: "bắt đầu người mới nhập môn cơ bản mới sang canada hướng dẫn",
+        },
+      ]
+    : []),
   {
     title: nav("creditCards"),
     href: "/credit-cards",

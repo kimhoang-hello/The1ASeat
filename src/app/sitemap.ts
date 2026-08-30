@@ -9,7 +9,7 @@ import {
 import { absoluteUrl } from "@/lib/seo";
 import { COMPARE_PATH } from "@/lib/card-compare";
 import { BANK_ACCOUNTS, bankAccountPath } from "@/lib/bank-accounts";
-import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
+import { BANK_ACCOUNTS_PUBLISHED, START_HERE_PUBLISHED } from "@/lib/feature-flags";
 
 // Keep the sitemap in step with the ISR window on the pages it lists.
 export const revalidate = 60;
@@ -30,6 +30,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Content-backed URLs now carry the date of the content behind them.
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: absoluteUrl("/"), lastModified: newestPost, changeFrequency: "daily", priority: 1 },
+    ...(START_HERE_PUBLISHED
+      ? ([
+          { url: absoluteUrl("/bat-dau"), changeFrequency: "monthly" as const, priority: 0.8 },
+        ] satisfies MetadataRoute.Sitemap)
+      : []),
     { url: absoluteUrl("/credit-cards"), changeFrequency: "weekly", priority: 0.9 },
     // Chỉ trang trần. Mọi tổ hợp `?cards=` là cùng một công cụ và đều canonical
     // về đây, nên liệt kê từng tổ hợp là tự nộp cho Google hàng trăm URL trùng

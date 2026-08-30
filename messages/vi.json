@@ -14,7 +14,8 @@
     "about": "Giới thiệu",
     "newsletter": "Đăng ký bản tin",
     "awardCharts": "Award Flight Finder",
-    "bankAccounts": "Ngân hàng"
+    "bankAccounts": "Ngân hàng",
+    "startHere": "Bắt đầu"
   },
   "navMenu": {
     "cardsAll": "Toàn bộ thẻ đang theo dõi",
@@ -363,5 +364,32 @@
   "offerHistory": {
     "peakIsCurrent": "Mức hiện tại là mức cao nhất kể từ khi Ghế 1A bắt đầu theo dõi thẻ này ({since}).",
     "peakHigher": "Welcome bonus của thẻ này từng lên tới {label} ({at}) — cao hơn mức đang chạy."
+  },
+  "startHere": {
+    "draftNotice": "Trang nháp — chưa công bố. Đang chờ duyệt nội dung và thứ tự các bước.",
+    "eyebrow": "BẮT ĐẦU",
+    "title": "Bắt Đầu Ở Đây",
+    "subtitle": "Bốn bước, theo đúng thứ tự. Nếu bạn mới nghe tới Miles & Points, hoặc mới sang Canada và chưa biết nên mở thẻ nào trước, đây là đường ngắn nhất đi qua những gì Ghế 1A đã viết.",
+    "metaTitle": "Bắt đầu với Miles & Points ở Canada",
+    "metaDescription": "Bốn bước cho người mới: hiểu cơ bản, chọn thẻ đầu tiên, biết điểm đổi được gì, và theo dõi deal. Bằng tiếng Việt, cho thẻ mở được ở Canada.",
+    "stepLabel": "Bước {n}",
+    "step1Title": "Hiểu cái đã, đừng mở thẻ vội",
+    "step1Body": "Điểm thưởng không phải tiền, và một welcome bonus lớn chưa chắc là một offer tốt. {count} bài dưới đây viết theo đúng thứ tự nên đọc — mỗi bài khoảng năm tới mười phút.",
+    "step1Cta": "Xem cả chuyên mục Kiến thức",
+    "step2Title": "Chọn thẻ đầu tiên",
+    "step2Body": "Ghế 1A đang theo dõi {cards} thẻ Canada, trong đó {elevated} thẻ đang chạy elevated offer — tức là mức bonus cao hơn mức thường của chính nó. Nếu chưa biết chọn gì, bắt đầu ở tab đó, rồi đặt hai thẻ cạnh nhau để so.",
+    "step2LinkCards": "Xem tất cả thẻ đang theo dõi",
+    "step2LinkElevated": "Chỉ xem offers nổi bật",
+    "step2LinkCompare": "So sánh hai thẻ cạnh nhau",
+    "step3Title": "Biết trước điểm đổi được gì",
+    "step3Body": "Đây là bước hay bị bỏ qua nhất, và là bước tốn tiền nhất nếu bỏ qua: điểm đã chuyển sang hãng bay thì không lấy lại được. Tra trước xem chặng bạn định bay tốn bao nhiêu, và điểm của bạn chuyển được đi đâu.",
+    "step3LinkAward": "Award Flight Finder — {programs} chương trình, chặng Canada đi châu Á",
+    "step3LinkPartners": "Transfer Partners — điểm chuyển được đi đâu, tỷ lệ bao nhiêu",
+    "step3LinkCalculator": "Points Calculator — một điểm của bạn đáng bao nhiêu",
+    "step4Title": "Đừng bỏ lỡ lúc offer lên cao",
+    "step4Body": "Welcome bonus và transfer bonus lên xuống theo đợt, và đợt cao thường chỉ kéo dài vài tuần. Đây là hai chỗ để không phải ngồi canh.",
+    "step4LinkBonuses": "Transfer Bonus đang chạy",
+    "step4Newsletter": "Hoặc để bản tin báo giúp bạn:",
+    "readingTime": "{minutes} phút đọc"
   }
 }
