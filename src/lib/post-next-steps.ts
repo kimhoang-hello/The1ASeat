@@ -28,7 +28,7 @@ function stripTags(html: string): string {
  *
  * Thực tế mức này bắt được ÍT: đo ngày 30/08/2026 trên 36 bài thì đúng 1 bài
  * viết trọn tên một tấm thẻ. Người viết gọi thẻ bằng tên rút gọn ("Amex MR"),
- * còn Contentful lưu tên đầy đủ kèm ® và đuôi "Card". Đã thử chuẩn hoá hai vế
+ * còn Contentful lưu nguyên tên dài kèm ® và đuôi "Card". Đã thử chuẩn hoá hai vế
  * ("american express" → "amex", bỏ đuôi "-card") và đo lại: THÊM ĐÚNG 0 BÀI —
  * nên đừng thêm lại lớp đó. Chính vì mức này thưa mà `PostNextSteps` có mức 3.
  *

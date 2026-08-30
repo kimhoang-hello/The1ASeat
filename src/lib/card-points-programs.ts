@@ -20,6 +20,22 @@ interface ProgramRule {
 }
 
 /**
+ * Bỏ ký hiệu thương hiệu trước khi đem đi khớp rule.
+ *
+ * Thay bằng KHOẢNG TRẮNG chứ không xoá hẳn: nội dung trên site viết
+ * "TD® Rewards", còn rule là `/td rewards/i` đòi đúng một dấu cách — xoá hẳn
+ * thì thành "TDRewards" và cũng trượt y như cũ. Gộp nhiều khoảng trắng lại để
+ * "TD® Rewards" và "TD Rewards" cho ra cùng một chuỗi.
+ *
+ * KHÔNG nới lỏng những rule dựa vào ký hiệu để phân biệt: "Scene+™" thành
+ * "Scene+ ", vẫn còn dấu cộng cho `/scene\s*\+/i` đòi, nên "scenery" vẫn không
+ * dính.
+ */
+function withoutTrademarkMarks(text: string): string {
+  return text.replace(/[®™*]/g, " ").replace(/\s+/g, " ");
+}
+
+/**
  * Matched in the order below. "à la carte" has to come before the cash back
  * rule because National Bank's benefits mention a travel credit in dollars.
  */
@@ -54,7 +70,14 @@ export function programIdFor(offer: CreditCardOffer): string | undefined {
   const sources = [`${offer.name} ${offer.welcomeBonus ?? ""}`, offer.keyBenefits.join(" ")];
 
   for (const source of sources) {
-    const hit = PROGRAM_RULES.find((rule) => rule.pattern.test(source));
+    // Cùng phép chuẩn hoá với `programIdsInText`. Tên thẻ và quyền lợi trong
+    // Contentful chứa rất nhiều ký hiệu ®/™/*, nên trước đây một thẻ ghi
+    // "TD® Rewards" sẽ trượt rule `/td rewards/i` rồi rơi xuống rule sau —
+    // mất chip, hoặc tệ hơn là nhận nhầm chip của hệ khác, mà không có gì báo.
+    //
+    // Áp lên tồn kho hiện tại KHÔNG đổi phân loại của thẻ nào (đã so 23/23
+    // trước và sau); đây là lưới an toàn cho nội dung viết sau.
+    const hit = PROGRAM_RULES.find((rule) => rule.pattern.test(withoutTrademarkMarks(source)));
     if (hit) return hit.id;
   }
   return undefined;
@@ -87,7 +110,7 @@ export function programIdFor(offer: CreditCardOffer): string | undefined {
  * thể xếp lại chip của những thẻ đang đúng, đổi lấy một ca chưa xảy ra.
  */
 export function programIdsInText(text: string): string[] {
-  const cleaned = text.replace(/[®™*]/g, " ").replace(/\s+/g, " ");
+  const cleaned = withoutTrademarkMarks(text);
   return PROGRAM_RULES.filter((rule) => rule.pattern.test(cleaned)).map((rule) => rule.id);
 }
 

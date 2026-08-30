@@ -131,7 +131,7 @@ export default async function TransferPartnersPage() {
                       ý cho `?points=` lạ rơi về danh sách KHÔNG lọc, nên một
                       link tới hệ không có thẻ nào sẽ trả về nguyên 23 thẻ mà
                       người đọc tưởng là kết quả lọc. Hiện `amex-mr` đúng vào ca
-                      đó: thẻ Amex trên site đều tích Aeroplan®/Bonvoy®, không
+                      đó: thẻ Amex® trên site đều tích Aeroplan®/Bonvoy®, không
                       thẻ nào tích Membership Rewards®. */}
                   <th className="px-2 py-3">
                     <IssuerHeader

@@ -116,8 +116,8 @@ function CalculatorNextSteps({
       )}
 
       {/* Chương trình có bảng giá trong Award Flight Finder thì câu hỏi kế tiếp
-          là "bay được đâu"; chương trình chỉ chuyển sang chỗ khác (Amex MR,
-          Avion) thì câu hỏi đúng là "chuyển đi đâu được". */}
+          là "bay được đâu"; chương trình chỉ chuyển sang chỗ khác (Amex® MR,
+          Avion®) thì câu hỏi đúng là "chuyển đi đâu được". */}
       {program && !program.awardProgramId ? (
         <StepLink
           href="/transfer-partners"
