@@ -54,6 +54,17 @@ thấy không có số nào đổi và không commit gì — đúng hành vi mon
   Client Component, mà RSC không cho function đi qua ranh giới server→client.
   Cả hai trang so sánh trả 500 và không lệnh kiểm tra tĩnh nào thấy. Chỉ lượt
   `next start` + curl tại chỗ mới bắt được. Đừng bỏ bước chạy thử.
+- **Một vòng phản biện PRODUCT với Codex, không phải review code — và mình
+  thua bốn điểm.** Đề xuất onboarding 3 câu hỏi ở `/bat-dau`. Mình bác bằng
+  phép tính "27 tổ hợp mà chỉ 4 đích nên cá nhân hoá là giả". Codex bác lại
+  đúng: tiêu chuẩn không phải số đầu ra, mà là *đổi một câu trả lời có làm đổi
+  đề xuất không*. Ba chỗ nữa mình cũng quá tay: "thiếu dữ liệu newcomer" ≠ "vi
+  phạm nguyên tắc không hứa được duyệt"; né trang thẻ vì nó có affiliate là UX
+  tệ; và "bốn nút dùng chung ở mọi nơi" là đơn giản hoá sai tầng. Kết quả:
+  vẫn bỏ wizard (cả hai đồng ý) nhưng vì lý do đúng, và hình dạng cuối tốt hơn
+  cả hai bản đầu.
+  Bài học: **kết luận đúng vì lý do sai vẫn là lý do sai** — và nó sẽ dẫn sai ở
+  quyết định kế tiếp. Đáng gọi Codex cả cho việc không phải code.
 - **`audit:trademarks` phải chạy SAU khi sửa xong, không phải trước.** Nó bắt
   hai chỗ "Amex/RBC" trần trong một comment JSX viết hôm nay — lượt chạy trước
   đó diễn ra trước khi comment kia tồn tại.
@@ -75,6 +86,7 @@ thẻ). Viết đúng phần lõi là phần dễ.
 - `6b1a286` — Draft a path for readers who do not know where to start
 - `2645d08` — Compare bank accounts the same way, one row at a time
 - `2d85a2a` — Put the ® back into a comment the audit reads as page text
+- `c4e2140` — Put a fork at the top of the draft, not a quiz
 
 ### Trạng thái cuối phiên
 
