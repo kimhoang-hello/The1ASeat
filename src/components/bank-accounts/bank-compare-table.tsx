@@ -55,7 +55,14 @@ export function BankCompareTable({ accounts }: { accounts: BankAccount[] }) {
       <p className="mb-2 text-sm text-muted-foreground lg:hidden">{t("swipeHint")}</p>
 
       <div className="overflow-x-auto rounded-2xl border border-border bg-card">
-        <table className="w-full border-collapse text-sm">
+        {/* `table-fixed` và bề rộng tối thiểu đặt ở cấp bảng — cùng lý do như
+            bảng so sánh thẻ: cột nào có dòng quyền lợi dài hơn sẽ tự giành
+            phần rộng hơn nếu để bảng co theo nội dung. */}
+        <table
+          className={`w-full table-fixed border-collapse text-sm ${
+            accounts.length > 2 ? "min-w-[790px]" : "min-w-[570px]"
+          }`}
+        >
           <caption className="sr-only">{accounts.map((a) => a.name).join(" · ")}</caption>
           <thead>
             <tr>
@@ -66,11 +73,7 @@ export function BankCompareTable({ accounts }: { accounts: BankAccount[] }) {
                 {t("rowAttribute")}
               </th>
               {accounts.map((account) => (
-                <th
-                  key={account.slug}
-                  scope="col"
-                  className="min-w-[220px] px-4 py-4 text-left align-top"
-                >
+                <th key={account.slug} scope="col" className="px-4 py-4 text-left align-top">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={bankById(account.bank).logo}

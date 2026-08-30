@@ -66,7 +66,17 @@ export function CompareTable({ cards }: { cards: CreditCardOffer[] }) {
       <p className="mb-2 text-sm text-muted-foreground lg:hidden">{t("swipeHint")}</p>
 
       <div className="overflow-x-auto rounded-2xl border border-border bg-card">
-        <table className="w-full border-collapse text-sm">
+        {/* `table-fixed` để các cột thẻ rộng đúng bằng nhau. Để bảng tự co theo
+            nội dung thì thẻ nào có dòng quyền lợi dài hơn sẽ giành cột rộng
+            hơn — trang so sánh mà cột này to gấp rưỡi cột kia thì mắt đọc ra
+            là thẻ này "hơn", trước cả khi kịp đọc con số. Bề rộng tối thiểu
+            phải chuyển lên cấp bảng, vì thuật toán fixed lấy bề rộng cột từ
+            hàng đầu và không đọc `min-width` của từng ô nữa. */}
+        <table
+          className={`w-full table-fixed border-collapse text-sm ${
+            cards.length > 2 ? "min-w-[790px]" : "min-w-[570px]"
+          }`}
+        >
           <caption className="sr-only">
             {cards.map((card) => card.name).join(" · ")}
           </caption>
@@ -79,16 +89,17 @@ export function CompareTable({ cards }: { cards: CreditCardOffer[] }) {
                 {t("rowAttribute")}
               </th>
               {cards.map((card) => (
-                <th
-                  key={card.slug}
-                  scope="col"
-                  className="min-w-[220px] px-4 py-4 text-left align-top"
-                >
+                <th key={card.slug} scope="col" className="px-4 py-4 text-left align-top">
+                  {/* Ô ảnh cỡ cố định, cùng kích thước với ô ảnh ở danh sách
+                      thẻ. `w-full` thì ô ảnh dài ra theo cột và một tấm hình
+                      thẻ 160px nằm giữa một vệt nền 320px — bản thân ảnh vẫn
+                      bằng nhau, nhưng cái nền quanh nó thì không. */}
                   <CardImage
                     image={card.cardImage}
                     name={card.name}
                     placeholderIcon={card.image}
-                    className="h-24 w-full rounded-lg"
+                    className="h-32 w-40 rounded-xl"
+                    sizes="160px"
                     applyUrl={card.applyUrl}
                   />
                   <Link

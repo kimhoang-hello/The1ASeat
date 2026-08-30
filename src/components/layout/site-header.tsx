@@ -65,6 +65,54 @@ function mobileItemClassName(active: boolean) {
 }
 
 /**
+ * Một nhóm trong menu mobile: tiêu đề bấm được, các trang con nằm bên trong.
+ *
+ * Danh sách phẳng trước đây dài mười bốn dòng — muốn tới "Giới thiệu" phải
+ * cuộn qua cả menu, và người đọc không nhìn ra site có mấy khu vực. Gom lại
+ * thì năm mục cấp một nằm gọn trong một màn hình điện thoại.
+ *
+ * Tiêu đề nhóm không còn là link: mỗi nhóm đã có sẵn một dòng dẫn về trang gốc
+ * ("Tất cả offers" → /credit-cards, "Tất cả" → /blog), nên bấm vào tiêu đề chỉ
+ * còn một nghĩa là mở ra — không phải đoán giữa mở và đi.
+ *
+ * `name` để trình duyệt tự đóng nhóm kia khi mở một nhóm, nên menu không dài
+ * thêm dù bấm bao nhiêu lần; trình duyệt chưa hiểu `name` thì mở được nhiều
+ * nhóm cùng lúc, vẫn dùng được, chỉ dài hơn.
+ *
+ * Nhóm chứa trang đang xem thì mở sẵn. Panel mobile bị unmount mỗi lần đóng
+ * menu, nên `open` được tính lại từ đầu ở mỗi lần mở lại.
+ */
+function MobileSection({
+  label,
+  active,
+  children,
+}: {
+  label: string;
+  active: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <details name="mobile-nav" open={active} className="group">
+      <summary
+        className={`flex cursor-pointer list-none items-center justify-between [&::-webkit-details-marker]:hidden ${mobileItemClassName(
+          active,
+        )}`}
+      >
+        {label}
+        <CaretDown
+          size={16}
+          weight="bold"
+          className="shrink-0 text-foreground/60 transition-transform group-open:rotate-180"
+        />
+      </summary>
+      {/* Thụt vào một chút để trang con đọc ra là thuộc nhóm ngay trên, chứ
+          không phải một mục cấp một nữa. */}
+      <div className="flex flex-col gap-1 pb-1 pl-2">{children}</div>
+    </details>
+  );
+}
+
+/**
  * One row of a menu: an icon in its own tile, the label, and a line saying
  * what is behind it — a menu of six words on their own asks the reader to
  * guess what "Các offers khác" holds.
@@ -403,7 +451,7 @@ export function SiteHeader() {
   // left the whole menu unlit on all 29 of them. The rows *inside* the menu
   // still compare exactly (see TypeDropdown), which is what keeps "Thẻ tín
   // dụng" from lighting up next to "Ngân hàng" on /bank-accounts.
-  // Menu mobile là một danh sách phẳng, không có đường kẻ nào để chia hai phía
+  // Nhóm "Thẻ tín dụng" trong menu mobile không có đường kẻ để chia hai phía
   // như dropdown desktop — nên ở đây hai nhóm nối làm một, và thứ tự (So sánh
   // trước, Ngân hàng sau) là thứ giữ cho hai menu đọc ra cùng một trình tự.
   const cardExtraLinks: NavLink[] = [compareLink, ...bankLinks];
@@ -411,14 +459,6 @@ export function SiteHeader() {
   const bankActive = bankLinks.some(
     (link) => pathname === link.href || pathname.startsWith(`${link.href}/`),
   );
-  // Dòng "Thẻ tín dụng" trong menu mobile phải TẮT khi đang ở trang so sánh,
-  // dù `cardsActive` bật vì khớp tiền tố `/credit-cards/`. Không loại ra thì
-  // menu mobile sáng hai dòng cùng lúc — đúng lỗi mà chú thích ngay trên đã
-  // ghi là đã vấp một lần với /bank-accounts, chỉ khác chỗ: Ngân hàng nằm ở
-  // tiền tố khác nên tự tránh được, còn trang so sánh thì nằm trong chính
-  // tiền tố này.
-  const cardsRowActive = cardsActive && pathname !== COMPARE_PATH;
-  // Cái tiêu đề menu thì vẫn sáng: người đọc ĐANG ở trong khu vực thẻ.
   const cardsMenuActive = cardsActive || bankActive;
   const blogActive = pathname === "/blog" || pathname.startsWith("/blog/");
   const toolsActive = toolsLinks.some((link) => pathname === link.href);
@@ -579,74 +619,63 @@ export function SiteHeader() {
               {nav("home")}
             </Link>
 
-            <Link
-              href="/credit-cards"
-              onClick={() => setOpen(false)}
-              className={mobileItemClassName(cardsRowActive)}
-            >
-              {nav("creditCards")}
-            </Link>
-            <Suspense
-              fallback={
-                <TypeLinksFallback links={cardLinks} onNavigate={closeMobileMenu} compact />
-              }
-            >
-              <TypeLinks
-                links={cardLinks}
-                basePath="/credit-cards"
-                pathname={pathname}
-                onNavigate={closeMobileMenu}
-                compact
-              />
-            </Suspense>
-            {cardExtraLinks.map((link) => (
-              <MenuItem
-                key={link.href}
-                link={link}
-                active={pathname === link.href}
-                onNavigate={closeMobileMenu}
-                compact
-              />
-            ))}
+            <MobileSection label={nav("creditCards")} active={cardsMenuActive}>
+              <Suspense
+                fallback={
+                  <TypeLinksFallback links={cardLinks} onNavigate={closeMobileMenu} compact />
+                }
+              >
+                <TypeLinks
+                  links={cardLinks}
+                  basePath="/credit-cards"
+                  pathname={pathname}
+                  onNavigate={closeMobileMenu}
+                  compact
+                />
+              </Suspense>
+              {cardExtraLinks.map((link) => (
+                <MenuItem
+                  key={link.href}
+                  link={link}
+                  active={pathname === link.href}
+                  onNavigate={closeMobileMenu}
+                  compact
+                />
+              ))}
+            </MobileSection>
 
-            <Link
-              href="/blog"
-              onClick={() => setOpen(false)}
-              className={mobileItemClassName(blogActive)}
-            >
-              {nav("blog")}
-            </Link>
-            <Suspense
-              fallback={
-                <TypeLinksFallback links={blogLinks} onNavigate={closeMobileMenu} compact />
-              }
-            >
-              <TypeLinks
-                links={blogLinks}
-                basePath="/blog"
-                pathname={pathname}
-                onNavigate={closeMobileMenu}
-                compact
-              />
-            </Suspense>
+            <MobileSection label={nav("blog")} active={blogActive}>
+              <Suspense
+                fallback={
+                  <TypeLinksFallback links={blogLinks} onNavigate={closeMobileMenu} compact />
+                }
+              >
+                <TypeLinks
+                  links={blogLinks}
+                  basePath="/blog"
+                  pathname={pathname}
+                  onNavigate={closeMobileMenu}
+                  compact
+                />
+              </Suspense>
+            </MobileSection>
 
-            <span className="mt-2 rounded-md px-2 py-3 text-base font-medium text-foreground/90">
-              {nav("pointsTools")}
-            </span>
-            {toolsLinks.map((link) => (
-              <MenuItem
-                key={link.href}
-                link={link}
-                active={pathname === link.href}
-                onNavigate={closeMobileMenu}
-                compact
-              />
-            ))}
+            <MobileSection label={nav("pointsTools")} active={toolsActive}>
+              {toolsLinks.map((link) => (
+                <MenuItem
+                  key={link.href}
+                  link={link}
+                  active={pathname === link.href}
+                  onNavigate={closeMobileMenu}
+                  compact
+                />
+              ))}
+            </MobileSection>
 
             <Link
               href="/about"
               onClick={() => setOpen(false)}
-              className={`mt-2 ${mobileItemClassName(pathname === "/about")}`}
+              className={mobileItemClassName(pathname === "/about")}
             >
               {nav("about")}
             </Link>
