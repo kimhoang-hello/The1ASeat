@@ -22,7 +22,7 @@ export function NewsletterCta() {
         </div>
 
         <div className="flex w-full flex-col items-start gap-3 md:w-auto md:items-end">
-          <NewsletterForm variant="dark" id="cta-newsletter" />
+          <NewsletterForm variant="dark" id="cta-newsletter" source="page_cta" />
         </div>
       </div>
     </section>

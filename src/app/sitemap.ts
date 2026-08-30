@@ -11,6 +11,7 @@ import { COMPARE_PATH } from "@/lib/card-compare";
 import { BANK_COMPARE_PATH } from "@/lib/bank-compare";
 import { BANK_ACCOUNTS, bankAccountPath } from "@/lib/bank-accounts";
 import { BANK_ACCOUNTS_PUBLISHED, START_HERE_PUBLISHED } from "@/lib/feature-flags";
+import { foundationLastModified } from "@/lib/start-here";
 
 // Keep the sitemap in step with the ISR window on the pages it lists.
 export const revalidate = 60;
@@ -33,7 +34,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: absoluteUrl("/"), lastModified: newestPost, changeFrequency: "daily", priority: 1 },
     ...(START_HERE_PUBLISHED
       ? ([
-          { url: absoluteUrl("/bat-dau"), changeFrequency: "monthly" as const, priority: 0.8 },
+          {
+            url: absoluteUrl("/bat-dau"),
+            // Ngày của SÁU BÀI trong lộ trình, không phải bài mới nhất của cả
+            // site: nội dung đứng sau trang này là sáu bài đó, nên một bài
+            // Deals đăng hôm nay không làm trang Bắt đầu mới đi.
+            lastModified: foundationLastModified(posts),
+            changeFrequency: "monthly" as const,
+            priority: 0.8,
+          },
         ] satisfies MetadataRoute.Sitemap)
       : []),
     { url: absoluteUrl("/credit-cards"), changeFrequency: "weekly", priority: 0.9 },

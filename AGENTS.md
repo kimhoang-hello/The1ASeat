@@ -288,12 +288,17 @@ chip lọc và tụt xuống cuối danh sách sắp theo bonus.
   (`peak.trackedSince`), không lấy `since` của cả file: thẻ thêm vào tháng sau
   mà nói theo `since` là nói quá thời gian đã quan sát nó.
 
-## Trang "Bắt đầu ở đây" (30/08/2026) — đang là BẢN NHÁP
+## Trang "Bắt đầu ở đây" (30/08/2026) — ĐÃ CÔNG BỐ
 
 `/bat-dau`, sau cờ `START_HERE_PUBLISHED` trong `lib/feature-flags.ts`, hiện
-`false`. Cờ được áp ở 6 chỗ: menu desktop, menu mobile, footer, sitemap, ô tìm
-kiếm, và `robots: noindex` + dải báo nháp trên chính trang. Bật cờ là công bố,
-không phải sửa chỗ nào khác.
+`true` (bật cùng ngày, commit `fed904f`). Cờ được áp ở **bốn** bề mặt: dải
+"Chưa biết bắt đầu từ đâu?" trên trang chủ, `sitemap.ts`, chỉ mục ô tìm kiếm
+(`api/search/route.ts`), và `robots: noindex` + dải báo nháp trên chính trang.
+KHÔNG có ở menu trên cùng và KHÔNG có ở footer — đó là quyết định chủ ý của tác
+giả, không phải chỗ bị bỏ sót: hai chỗ điều hướng cố định kia dành cho mục
+người ta quay lại nhiều lần, mà "Bắt đầu ở đây" theo định nghĩa là trang đọc
+một lần. (Bản trước của mục này ghi cờ `false` và "6 chỗ, có menu + footer" —
+sai cả hai, đã sửa sau vòng rà 30/08/2026.)
 
 - **Đầu trang là NGÃ BA, không phải wizard.** Đã cân nhắc một luồng onboarding
   3 câu hỏi (mục tiêu / kinh nghiệm / bối cảnh) rồi bỏ sau một vòng phản biện
@@ -334,12 +339,52 @@ không phải sửa chỗ nào khác.
   nhiệm vụ (đăng ký bản tin, một trong hai thước đo thành công); cuối bài thì
   đã biết ngữ cảnh nên CTA phải theo loại bài. Dùng chung component không có
   nghĩa dùng chung một quyết định UX.
-- **Mỗi lựa chọn bắn GA4 event `start_here_goal` kèm `goal`.** Không có số thì
-  cả trang này lẫn câu hỏi "có cần wizard không" đều không kiểm chứng được.
-  Quyết theo số phiên đủ lớn, không theo lịch.
-- **Bài trong bước 1 sắp CŨ NHẤT TRƯỚC**, ngược với mọi chỗ khác trên site. Đây
-  là lộ trình đọc chứ không phải dòng thời gian: bài viết sớm nhất là bài vỡ
-  lòng và các bài sau xây trên nó. Đừng "sửa" thành mới nhất trước.
+- **Ba tầng đo, đừng bỏ tầng nào.** Ngã ba bắn `start_here_goal` kèm `goal`;
+  mọi link trong bốn bước bắn `start_here_step` kèm `step` + `target`
+  (`components/home/start-here-link.tsx`); `NewsletterForm` bắn
+  `newsletter_subscribed` kèm `source` SAU khi `res.ok`. Không có số thì cả
+  trang này lẫn câu hỏi "có cần wizard không" đều không kiểm chứng được. Quyết
+  theo số phiên đủ lớn, không theo lịch.
+- **`NewsletterForm` có prop `source` BẮT BUỘC, không mặc định.** Form đứng ở
+  ba chỗ (`hero`, `page_cta`, `start_here`) và Kit chỉ đếm được tổng subscriber.
+  Truyền tường minh, đừng suy từ `id` — `id` tồn tại để nối `<label for>`, đổi
+  nó vì lý do accessibility mà làm gãy số đo là loại lỗi không ai nhận ra.
+- **`ApplyButton` vẫn CHƯA có event.** Click "Apply ngay" là thước đo thành công
+  còn lại trong PRODUCT.md và hiện không đo được ở đâu cả. Cố ý để ngoài vòng
+  30/08/2026 vì nó nằm trên mọi trang thẻ và đáng có vòng review riêng — việc
+  còn nợ, không phải việc đã cân nhắc rồi bỏ.
+- **Lộ trình bước 1 là DANH SÁCH SLUG VIẾT CỨNG** trong `lib/start-here.ts`
+  (`FOUNDATION_SLUGS`), không còn lấy cả chuyên mục "Kiến thức" rồi đảo ngược.
+  Cách cũ có hai lỗ: mọi bài Kiến thức đăng về sau tự động thành bước kế tiếp
+  của lộ trình cho người mới kể cả khi là bài nâng cao, và không có trần; đổi
+  tên chuyên mục trong Contentful là lộ trình rỗng mà không build nào đỏ.
+  Thứ tự hiện tại GIỮ NGUYÊN thứ tự xuất bản cũ (cũ nhất trước) — tác giả chốt
+  30/08/2026 rằng sắp lại là quyết định biên tập của chính ông ấy, không phải
+  thứ suy ra từ tiêu đề. Đừng "sửa" thành mới nhất trước, và đừng tự sắp lại.
+  Slug thiếu thì bị bỏ qua và `console.warn` trên server; lộ trình rỗng thì ẩn
+  luôn lối "Tôi chưa hiểu Miles & Points là gì" ở ngã ba và Bước 1 đổi sang
+  `step1BodyEmpty` (vẫn render, nếu không thì còn Bước 2, 3, 4 mà không có
+  Bước 1).
+- **Sáu bài trong lộ trình là BÀI VIẾT (`type: "post"`), không phải video** —
+  nhãn "phút đọc" là đúng, đừng "sửa" thành badge Video. Ghi ra đây vì vòng rà
+  30/08/2026 kết luận nhầm là video và suýt sửa hỏng. Hai phép kiểm đã dẫn tới
+  kết luận sai, ĐỪNG DÙNG LẠI: grep `youtube` trong HTML (JSON-LD Organization
+  của MỌI trang đều có `sameAs` youtube.com/@hoangleca) và grep `>Video<` (menu
+  nav có mục "Video"). Cách kiểm đúng là hỏi thẳng Contentful Delivery API
+  trường `fields.type`. Toàn site 30/08/2026: 36 blogPost = 25 video + 11 post,
+  và cả 6 bài chuyên mục "Kiến thức" đều là post.
+- **Cạnh đã biết, CỐ Ý không sửa (30/08/2026):** nếu một bài có `publishedAt`
+  hỏng nhưng `updatedAt` hợp lệ thì `lastModified()` trả về chuỗi hỏng, và
+  `latestModified()` bỏ luôn bài đó thay vì dùng `updatedAt`. Codex nêu ở vòng
+  gate; không sửa vì đó là code dùng chung, đổi nó là đổi `dateModified` trong
+  JSON-LD của MỌI bài blog — bán kính lớn hơn cả việc đang làm — và `publishedAt`
+  là field Date có validate trong Contentful nên gần như không thể hỏng. Nếu
+  sau này thật sự gặp, sửa trong `lib/blog-categories.ts` chứ đừng vá riêng ở
+  `start-here.ts`.
+- **Mỗi mục trong lộ trình hiện `excerpt`**, không chỉ tiêu đề. Lý do cụ thể:
+  bài "Know Your Minimum" có tiêu đề tiếng Anh không phụ đề, người mới sang
+  Canada không đoán được "minimum" là minimum spend hay mức điểm tối thiểu để
+  đổi. `excerptVi` của cả sáu bài đều do người viết nên nó là ngữ cảnh thật.
 - **Mọi con số trên trang tính lúc render** từ dữ liệu thật (số bài Kiến thức,
   số thẻ, số thẻ đang chạy elevated offer qua `isElevatedLive`, số chương trình
   trong `PROGRAMS`). Không có câu nào có thể cũ đi mà không ai biết — đừng thay

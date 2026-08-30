@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { PaperPlaneTilt, CheckCircle, CircleNotch } from "@phosphor-icons/react";
+import { sendGAEvent } from "@next/third-parties/google";
 import { t as translate } from "@/lib/t";
 
 const t = translate("hero");
@@ -11,15 +12,24 @@ const t = translate("hero");
  * where the default width reads as a small element marooned in a lot of space.
  * The footer CTA keeps the default — it sits beside a heading in a row and
  * would crowd it at hero size.
+ *
+ * `source` là BẮT BUỘC, không có mặc định. Form này đứng ở ba chỗ khác nhau và
+ * Kit chỉ đếm được tổng subscriber, nên nếu không khai nguồn thì không bao giờ
+ * biết chỗ nào thật sự lấy được email — mà đăng ký bản tin là một trong hai
+ * thước đo thành công của site. Truyền tường minh chứ đừng suy từ `id`: `id`
+ * tồn tại để nối `<label for>`, đổi nó vì lý do accessibility mà làm gãy số đo
+ * là đúng loại lỗi không ai nhận ra.
  */
 export function NewsletterForm({
   variant = "light",
   size = "default",
   id,
+  source,
 }: {
   variant?: "light" | "dark";
   size?: "default" | "hero";
   id?: string;
+  source: string;
 }) {
   const hero = size === "hero";
   const wrapWidth = hero ? "max-w-md sm:max-w-xl xl:max-w-2xl" : "max-w-md";
@@ -53,6 +63,9 @@ export function NewsletterForm({
         body: JSON.stringify({ email }),
       });
       if (!res.ok) throw new Error("subscribe failed");
+      // Chỉ bắn sau khi server nhận thật. Bắn lúc submit thì đếm cả lần gõ sai
+      // email lẫn lần rate-limit bị chặn, và con số đó không dùng được.
+      sendGAEvent("event", "newsletter_subscribed", { source });
       setStatus("submitted");
     } catch {
       setStatus("error");

@@ -76,7 +76,8 @@ export function StartHereRouter({
   title: string;
   cards: { href: string; label: string; note: string };
   award: { href: string; label: string; note: string };
-  basics: { href: string; label: string; note: string };
+  /** Bỏ trống khi lộ trình Bước 1 rỗng — cùng lý do với `newcomer` bên dưới. */
+  basics?: { href: string; label: string; note: string };
   /** Bỏ trống khi khối newcomer không được render (mục Ngân hàng còn là nháp,
    *  hoặc không tài khoản nào gắn tag `newcomer`). Lối đi mà đích của nó không
    *  tồn tại thì bấm vào không xảy ra gì — tệ hơn là không có lối đó. */
@@ -94,7 +95,9 @@ export function StartHereRouter({
       <div className="mt-4 grid auto-rows-fr gap-3 sm:grid-cols-2">
         <Choice href={cards.href} goal="cards" label={cards.label} note={cards.note} />
         <Choice href={award.href} goal="award" label={award.label} note={award.note} />
-        <Choice href={basics.href} goal="basics" label={basics.label} note={basics.note} />
+        {basics && (
+          <Choice href={basics.href} goal="basics" label={basics.label} note={basics.note} />
+        )}
         {newcomer && (
           <Choice
             href={newcomer.href}

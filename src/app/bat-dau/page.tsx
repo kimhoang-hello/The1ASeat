@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react/ssr";
 import { getCreditCardOffers, getPosts, type BlogPost } from "@/lib/content";
 import { PROGRAMS } from "@/lib/award-charts";
 import { BANK_ACCOUNTS } from "@/lib/bank-accounts";
 import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
 import { isElevatedLive } from "@/lib/credit-card-state";
-import { categoryPath, getCategories, postsInCategory } from "@/lib/blog-categories";
+import { categoryPath, getCategories } from "@/lib/blog-categories";
 import { COMPARE_PATH } from "@/lib/card-compare";
 import { creditCardsPath } from "@/lib/card-points-programs";
 import { START_HERE_PUBLISHED } from "@/lib/feature-flags";
+import { FOUNDATION_SLUGS, foundationPosts, missingFoundationSlugs } from "@/lib/start-here";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { NewsletterForm } from "@/components/home/newsletter-form";
 import { StartHereRouter } from "@/components/home/start-here-router";
+import { StartHereLink } from "@/components/home/start-here-link";
 import { JsonLd } from "@/components/seo/json-ld";
 import { pageMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import { t as translate } from "@/lib/t";
@@ -33,7 +34,8 @@ const t = translate("startHere");
  */
 export const revalidate = 60;
 
-/** Chuyên mục chứa các bài nền tảng. Khớp đúng tên trong Contentful. */
+/** Chuyên mục chứa các bài nền tảng. Khớp đúng tên trong Contentful. Chỉ dùng
+ *  cho link "Xem cả chuyên mục" ở cuối Bước 1 — lộ trình đọc KHÔNG lấy từ đây. */
 const FOUNDATION_CATEGORY = "Kiến thức";
 
 export const metadata: Metadata = {
@@ -75,25 +77,57 @@ function Step({
   );
 }
 
-function StepLink({ href, children }: { href: string; children: React.ReactNode }) {
+/**
+ * `note` là dòng phụ nói link này dẫn tới cái gì, cùng vai trò với dòng phụ ở
+ * bốn ô ngã ba. Hai link trong khối newcomer cần nó nhất: đó là chỗ duy nhất
+ * trên trang nói ra *căn cứ* của hai lựa chọn mà site dám đưa cho người chưa
+ * có credit history.
+ */
+function StepLink({
+  href,
+  step,
+  target,
+  note,
+  children,
+}: {
+  href: string;
+  step: number;
+  target: string;
+  note?: string;
+  children: React.ReactNode;
+}) {
   return (
     <li>
-      <Link
+      <StartHereLink
         href={href}
-        className="flex items-center justify-between gap-3 rounded-xl border border-border px-4 py-3.5 text-base font-semibold text-foreground transition-colors hover:border-primary hover:text-primary"
+        step={step}
+        target={target}
+        className="flex items-center justify-between gap-3 rounded-xl border border-border px-4 py-3.5 text-foreground transition-colors hover:border-primary hover:text-primary"
       >
-        <span>{children}</span>
+        <span>
+          <span className="block text-base font-semibold">{children}</span>
+          {note && <span className="mt-0.5 block text-sm text-muted-foreground">{note}</span>}
+        </span>
         <ArrowRight size={18} className="shrink-0 text-primary" />
-      </Link>
+      </StartHereLink>
     </li>
   );
 }
 
+/**
+ * Có `excerpt` chứ không chỉ tiêu đề: một bài trong lộ trình tên "Know Your
+ * Minimum" — tiếng Anh, không phụ đề — thì người mới sang Canada không đoán
+ * được "minimum" là minimum spend, mức điểm tối thiểu để đổi, hay nguyên tắc
+ * chi tiêu. `excerptVi` của cả sáu bài đều do người viết, không phải chuỗi tự
+ * sinh, nên nó là ngữ cảnh thật chứ không phải chữ lấp chỗ.
+ */
 function PostStep({ post, order }: { post: BlogPost; order: number }) {
   return (
     <li>
-      <Link
+      <StartHereLink
         href={`/blog/${post.slug}`}
+        step={1}
+        target={post.slug}
         className="flex items-start gap-4 rounded-xl border border-border px-4 py-3.5 transition-colors hover:border-primary"
       >
         <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-bold text-primary">
@@ -101,11 +135,14 @@ function PostStep({ post, order }: { post: BlogPost; order: number }) {
         </span>
         <span>
           <span className="block font-semibold text-foreground">{post.title}</span>
-          <span className="mt-0.5 block text-sm text-muted-foreground">
+          <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
+            {post.excerpt}
+          </span>
+          <span className="mt-1 block text-xs text-muted-foreground">
             {t("readingTime", { minutes: post.minutesRead })}
           </span>
         </span>
-      </Link>
+      </StartHereLink>
     </li>
   );
 }
@@ -114,10 +151,18 @@ export default async function StartHerePage() {
   const [posts, offers] = await Promise.all([getPosts(), getCreditCardOffers()]);
 
   const category = getCategories(posts).find((c) => c.name === FOUNDATION_CATEGORY);
-  // CŨ NHẤT TRƯỚC, ngược với mọi chỗ khác trên site. Đây là một lộ trình đọc,
-  // không phải một dòng thời gian: bài viết sớm nhất là bài vỡ lòng, và các
-  // bài sau xây trên nó. Thứ tự tác giả viết ra chính là thứ tự nên đọc.
-  const foundation = category ? [...postsInCategory(posts, category)].reverse() : [];
+
+  const foundation = foundationPosts(posts);
+
+  // Một slug biến mất khỏi Contentful (đổi slug, unpublish, xoá) thì bài đó
+  // lặng lẽ rơi khỏi lộ trình và không chỗ nào đỏ lên. Ghi ra log server để
+  // lượt deploy sau còn nhìn thấy; trang vẫn render với những bài còn lại,
+  // vì một lộ trình thiếu một bài vẫn tốt hơn một trang gãy.
+  if (foundation.length !== FOUNDATION_SLUGS.length) {
+    console.warn(
+      `[bat-dau] Thiếu bài trong lộ trình Bước 1: ${missingFoundationSlugs(posts).join(", ")}`,
+    );
+  }
 
   const elevated = offers.filter(isElevatedLive).length;
   // Chỉ những tài khoản mà chính ngân hàng công bố là dành cho người mới định
@@ -160,11 +205,17 @@ export default async function StartHerePage() {
               label: t("routerAward"),
               note: t("routerAwardNote", { programs: PROGRAMS.length }),
             }}
-            basics={{
-              href: "#co-ban",
-              label: t("routerBasics"),
-              note: t("routerBasicsNote", { count: foundation.length }),
-            }}
+            basics={
+              // Lộ trình rỗng thì lối này dẫn tới một khối trống — bỏ hẳn lối
+              // đi còn hơn để nó dẫn vào chỗ không có gì.
+              foundation.length > 0
+                ? {
+                    href: "#co-ban",
+                    label: t("routerBasics"),
+                    note: t("routerBasicsNote", { count: foundation.length }),
+                  }
+                : undefined
+            }
             newcomer={
               // Chỉ khi khối bên dưới thật sự được render — xem chú thích ở
               // `StartHereRouter`.
@@ -193,10 +244,24 @@ export default async function StartHerePage() {
                 {t("newcomerBody")}
               </p>
               <ul className="mt-4 space-y-2">
-                <StepLink href="/bank-accounts?filter=newcomer">
+                <StepLink
+                  href="/bank-accounts?filter=newcomer"
+                  step={0}
+                  target="bank-accounts"
+                  note={t("newcomerAccountsNote")}
+                >
                   {t("newcomerAccounts", { count: newcomerAccounts.length })}
                 </StepLink>
-                <StepLink href="#co-ban">{t("newcomerBasics")}</StepLink>
+                {foundation.length > 0 && (
+                  <StepLink
+                    href="#co-ban"
+                    step={0}
+                    target="basics"
+                    note={t("newcomerBasicsNote")}
+                  >
+                    {t("newcomerBasics")}
+                  </StepLink>
+                )}
               </ul>
             </section>
           )}
@@ -206,20 +271,31 @@ export default async function StartHerePage() {
             n={1}
             id="co-ban"
             title={t("step1Title")}
-            body={t("step1Body", { count: foundation.length })}
+            body={
+              // Không bao giờ in "0 bài dưới đây xếp theo đúng thứ tự nên đọc".
+              // Bước 1 vẫn phải render kể cả khi rỗng, nếu không thì còn lại
+              // Bước 2, 3, 4 mà không có Bước 1.
+              foundation.length > 0
+                ? t("step1Body", { count: foundation.length })
+                : t("step1BodyEmpty")
+            }
           >
-            <ul className="space-y-2">
-              {foundation.map((post, index) => (
-                <PostStep key={post.slug} post={post} order={index + 1} />
-              ))}
-            </ul>
+            {foundation.length > 0 && (
+              <ul className="space-y-2">
+                {foundation.map((post, index) => (
+                  <PostStep key={post.slug} post={post} order={index + 1} />
+                ))}
+              </ul>
+            )}
             {category && (
-              <Link
+              <StartHereLink
                 href={categoryPath(category.slug)}
+                step={1}
+                target="category"
                 className="mt-4 inline-block text-sm font-semibold text-primary hover:underline"
               >
                 {t("step1Cta")} &rarr;
-              </Link>
+              </StartHereLink>
             )}
           </Step>
 
@@ -229,31 +305,41 @@ export default async function StartHerePage() {
             body={t("step2Body", { cards: offers.length, elevated })}
           >
             <ul className="space-y-2">
-              <StepLink href="/credit-cards">{t("step2LinkCards")}</StepLink>
-              <StepLink href={creditCardsPath({ type: "noi-bat" })}>
+              <StepLink href="/credit-cards" step={2} target="credit-cards">
+                {t("step2LinkCards")}
+              </StepLink>
+              <StepLink href={creditCardsPath({ type: "noi-bat" })} step={2} target="elevated">
                 {t("step2LinkElevated")}
               </StepLink>
-              <StepLink href={COMPARE_PATH}>{t("step2LinkCompare")}</StepLink>
+              <StepLink href={COMPARE_PATH} step={2} target="compare">
+                {t("step2LinkCompare")}
+              </StepLink>
             </ul>
           </Step>
 
           <Step n={3} title={t("step3Title")} body={t("step3Body")}>
             <ul className="space-y-2">
-              <StepLink href="/award-flight-finder">
+              <StepLink href="/award-flight-finder" step={3} target="award-finder">
                 {t("step3LinkAward", { programs: PROGRAMS.length })}
               </StepLink>
-              <StepLink href="/transfer-partners">{t("step3LinkPartners")}</StepLink>
-              <StepLink href="/calculator">{t("step3LinkCalculator")}</StepLink>
+              <StepLink href="/transfer-partners" step={3} target="transfer-partners">
+                {t("step3LinkPartners")}
+              </StepLink>
+              <StepLink href="/calculator" step={3} target="calculator">
+                {t("step3LinkCalculator")}
+              </StepLink>
             </ul>
           </Step>
 
           <Step n={4} title={t("step4Title")} body={t("step4Body")}>
             <ul className="space-y-2">
-              <StepLink href="/transfer-bonuses">{t("step4LinkBonuses")}</StepLink>
+              <StepLink href="/transfer-bonuses" step={4} target="transfer-bonuses">
+                {t("step4LinkBonuses")}
+              </StepLink>
             </ul>
             <p className="mt-5 text-base text-foreground/90">{t("step4Newsletter")}</p>
             <div className="mt-3">
-              <NewsletterForm id="start-here-newsletter" />
+              <NewsletterForm id="start-here-newsletter" source="start_here" />
             </div>
           </Step>
         </ol>

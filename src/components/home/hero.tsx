@@ -38,7 +38,7 @@ export function Hero() {
           <span className="text-xs font-semibold tracking-wide text-muted-foreground xl:text-sm">
             {t("formLabel")}
           </span>
-          <NewsletterForm id="hero-newsletter" size="hero" />
+          <NewsletterForm id="hero-newsletter" size="hero" source="hero" />
           <span className="text-xs text-muted-foreground xl:text-sm">{t("disclaimer")}</span>
         </div>
       </div>
