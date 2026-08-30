@@ -4,7 +4,7 @@ import { EDITORIAL_REL } from "@/lib/affiliate-links";
 import { YoutubeLogo } from "@phosphor-icons/react/ssr";
 import { FacebookIcon } from "@/components/ui/brand-icons";
 import { DisclosureText } from "@/components/layout/disclosure-text";
-import { BANK_ACCOUNTS_PUBLISHED, START_HERE_PUBLISHED } from "@/lib/feature-flags";
+import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
 import { SOCIAL_LINKS } from "@/lib/social-links";
 import { t as translate } from "@/lib/t";
 
@@ -41,11 +41,6 @@ export function SiteFooter() {
             <Link href="/" className="hover:text-white">
               {nav("home")}
             </Link>
-            {START_HERE_PUBLISHED && (
-              <Link href="/bat-dau" className="hover:text-white">
-                {nav("startHere")}
-              </Link>
-            )}
             <Link href="/credit-cards" className="hover:text-white">
               {nav("creditCards")}
             </Link>

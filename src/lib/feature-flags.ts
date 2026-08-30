@@ -21,10 +21,12 @@ export const BANK_ACCOUNTS_PUBLISHED = true;
 /**
  * Trang "Bắt đầu ở đây" (`/bat-dau`). Dựng 30/08/2026 làm bản demo để duyệt —
  * nội dung và thứ tự bốn bước còn chờ tác giả xem. Bật cờ là công bố: nó hiện
- * dải "Chưa biết bắt đầu từ đâu?" trên trang chủ, vào footer, vào sitemap, vào
- * ô tìm kiếm, bỏ `noindex` và bỏ dải báo nháp cùng một lúc.
+ * dải "Chưa biết bắt đầu từ đâu?" trên trang chủ, vào sitemap, vào ô tìm kiếm,
+ * bỏ `noindex` và bỏ dải báo nháp cùng một lúc.
  *
- * KHÔNG vào menu trên cùng: tác giả chốt 30/08/2026 rằng header không cần mục
- * này — cửa vào nằm trên trang chủ, ngay dưới ô đăng ký bản tin.
+ * KHÔNG vào menu trên cùng và KHÔNG vào footer: tác giả chốt 30/08/2026 rằng
+ * trang này chỉ cần đúng một cửa — dải trên trang chủ, ngay dưới ô đăng ký bản
+ * tin. Hai chỗ điều hướng cố định kia dành cho những mục người ta quay lại
+ * nhiều lần, mà "Bắt đầu ở đây" theo định nghĩa là trang đọc một lần.
  */
 export const START_HERE_PUBLISHED = false;
