@@ -95,8 +95,15 @@ function CalculatorNextSteps({
   cardProgramIds: string[];
 }) {
   // Lọc theo hệ điểm chỉ khi hệ đó có thẻ thật. Hiện `amex-mr` KHÔNG có thẻ nào
-  // (thẻ Amex trên site đều tích Aeroplan®/Bonvoy®), nên chọn "Amex Membership
-  // Rewards®" sẽ rơi về link chung thay vì một bộ lọc trả về nguyên 23 thẻ.
+  // (thẻ Amex® trên site đều tích Aeroplan®/Bonvoy®), nên chọn hệ Membership
+  // Rewards sẽ rơi về link chung thay vì một bộ lọc trả về nguyên 23 thẻ.
+  //
+  // Tên hệ ở đây cố ý viết trần, không kèm ký hiệu thương hiệu. audit:trademarks
+  // học thương hiệu theo từng DÒNG: một ký hiệu bị xuống dòng, tách khỏi tên
+  // đứng trước nó, sẽ dạy checker rằng chữ còn lại mới là thương hiệu. Bản đầu
+  // của comment này để chữ Rewards đứng đầu dòng ngay trước ký hiệu, và checker
+  // học đúng chữ đó thành thương hiệu rồi báo lỗi ở 8 chỗ hoàn toàn đúng — tên
+  // chương trình của TD và của WestJet, cùng một dòng rule trong lib.
   const canFilter = program !== undefined && cardProgramIds.includes(program.cardProgramId);
 
   return (
