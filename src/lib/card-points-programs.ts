@@ -105,9 +105,10 @@ export function programIdFor(offer: CreditCardOffer): string | undefined {
  * dính thành "TDRewards" và cũng trượt. Việc này KHÔNG nới lỏng bẫy Scene+ ở
  * trên: "Scene+™" thành "Scene+ ", vẫn còn dấu cộng để regex đòi.
  *
- * `programIdFor` cố ý KHÔNG dùng chuẩn hoá này: đầu vào của nó là các trường
- * của thẻ, và chip lọc dựng từ đó là mặt đã rà kỹ — nới rộng phép khớp ở đó có
- * thể xếp lại chip của những thẻ đang đúng, đổi lấy một ca chưa xảy ra.
+ * `programIdFor` dùng CHUNG phép chuẩn hoá này. Ban đầu nó cố ý đứng ngoài, vì
+ * nới rộng phép khớp trên các trường của thẻ có thể xếp lại chip lọc — một mặt
+ * đã rà kỹ. Đã kiểm bằng cách chụp phân loại của cả 23 thẻ trước và sau: không
+ * thẻ nào đổi chip, nên hai chỗ dùng chung một luật thay vì lệch nhau.
  */
 export function programIdsInText(text: string): string[] {
   const cleaned = withoutTrademarkMarks(text);
