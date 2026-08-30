@@ -3,6 +3,67 @@
 Nhật ký các phiên phát triển tự động. Ngắn gọn — chi tiết nằm trong từng file
 task ở [done/](done/) và [review/](review/).
 
+## 2026-08-30
+
+### Session
+
+Trigger: Manual — user chọn xây idea 1, 2 và 6 từ danh sách đề xuất phiên trước
+(idea 4 đã bỏ giữa chừng).
+
+### Completed
+
+- `/credit-cards/so-sanh` — so sánh 2–3 thẻ cạnh nhau (`4211681`).
+- Khối "Đi tiếp từ đây" trên trang chi tiết thẻ (`4211681`).
+- Lịch sử welcome bonus/rebate: `data/offer-history.json`,
+  `/api/offer-snapshot`, `scripts/record-offer-history.mts`,
+  `.github/workflows/offer-history.yml` (`41db72a`).
+
+### Blocked
+
+Không có.
+
+### Kiểm tra sức khoẻ repo
+
+`lint`, `tsc`, `build` sạch ở mọi bước. Sau deploy: 107 URL sitemap (thêm trang
+so sánh) đều 200 và đều đủ 5 header bảo mật. Workflow `offer-history.yml` đã
+chạy tay một lượt trên CI: runner gọi được `/api/offer-snapshot`, đọc 23 thẻ,
+thấy không có số nào đổi và không commit gì — đúng hành vi mong muốn.
+
+### Ghi nhận
+
+- **Chỗ đặt cửa canh mới là phần khó, không phải tính năng.** `assertNoSlugClash`
+  đặt trong trang so sánh thì KHÔNG BAO GIỜ chạy: trang đó `await searchParams`
+  nên là route động, thân nó không chạy lúc `next build`. Chuyển vào
+  `generateStaticParams`, rồi vòng review sau chỉ ra vẫn hở với thẻ publish SAU
+  khi deploy (webhook chỉ revalidate, không chạy lại hàm đó) — nên thêm lượt
+  canh hằng ngày trong `check-rebates`. Hai cửa, hai loại thời điểm.
+- **Deploy Hostinger lần này chậm ~45 phút** cho `4211681` (mình đã tưởng nó bỏ
+  qua như lần trước), rồi `41db72a` lên sau ~1 phút. Không có quy luật: cứ kiểm
+  bằng một dấu hiệu quan sát được và kiên nhẫn trước khi kết luận là nó bỏ qua.
+- Lịch sử offer ngày đầu không hiện gì trên bất kỳ thẻ nào — đúng thiết kế,
+  không phải lỗi. Nó chỉ nói khi đã thấy hai con số khác nhau.
+
+### Codex
+
+3 vòng cho hai tính năng đầu, 2 vòng cho lịch sử offer. Bảy phát hiện, không
+cái nào bị bác. Đáng chú ý: cả bảy đều KHÔNG nằm trong logic tính năng mà nằm ở
+chỗ nối vào phần còn lại của site (cửa canh không chạy, thiếu trong ô tìm kiếm,
+menu mobile sáng hai dòng, sắp xếp ngày sai kiểu, thiếu retry) hoặc ở chỗ tính
+năng nói quá (đếm nhãn thay vì đếm số, ngày theo dõi của cả file thay vì của
+thẻ). Viết đúng phần lõi là phần dễ.
+
+### Commits
+
+- `4211681` — Give the card pages somewhere to lead, and a way to be compared
+- `41db72a` — Start keeping the numbers the jobs have been overwriting
+
+### Trạng thái cuối phiên
+
+Backlog trống. Còn 5 hướng đã đề xuất chưa làm: trang route "bao nhiêu điểm về
+Việt Nam" (idea 3), bộ lọc phí/người mới (idea 4, user đã bỏ), mở rộng
+calculator từ 3 lên 10 chương trình (idea 5), cảnh báo deal qua email (idea 7),
+trang "bắt đầu ở đây" (idea 8).
+
 ## 2026-08-29 (phiên 2)
 
 ### Session
