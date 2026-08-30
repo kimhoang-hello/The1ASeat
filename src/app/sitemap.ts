@@ -7,6 +7,7 @@ import {
   latestModified,
 } from "@/lib/blog-categories";
 import { absoluteUrl } from "@/lib/seo";
+import { COMPARE_PATH } from "@/lib/card-compare";
 import { BANK_ACCOUNTS, bankAccountPath } from "@/lib/bank-accounts";
 import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
 
@@ -30,6 +31,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: absoluteUrl("/"), lastModified: newestPost, changeFrequency: "daily", priority: 1 },
     { url: absoluteUrl("/credit-cards"), changeFrequency: "weekly", priority: 0.9 },
+    // Chỉ trang trần. Mọi tổ hợp `?cards=` là cùng một công cụ và đều canonical
+    // về đây, nên liệt kê từng tổ hợp là tự nộp cho Google hàng trăm URL trùng
+    // nội dung.
+    { url: absoluteUrl(COMPARE_PATH), changeFrequency: "weekly", priority: 0.6 },
     ...(BANK_ACCOUNTS_PUBLISHED
       ? ([
           { url: absoluteUrl("/bank-accounts"), changeFrequency: "weekly", priority: 0.8 },

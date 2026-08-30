@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getCreditCardOfferBySlug, getCreditCardOffers } from "@/lib/content";
+import { getCreditCardOfferBySlug, getCreditCardOffers, getPosts } from "@/lib/content";
 import { CardImage } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
+import { CardNextSteps } from "@/components/credit-cards/card-next-steps";
+import { assertNoSlugClash } from "@/lib/card-compare";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { EditorsTake } from "@/components/credit-cards/editors-take";
 import { OfferStats } from "@/components/credit-cards/offer-stats";
@@ -25,6 +27,13 @@ export const revalidate = 60;
 
 export async function generateStaticParams() {
   const offers = await getCreditCardOffers();
+  // Cửa canh phải nằm ở ĐÂY, không nằm trong trang so sánh: trang đó `await
+  // searchParams` nên là route động, thân nó không chạy lúc `next build` và
+  // một `throw` trong đó không bao giờ làm build đỏ. `generateStaticParams`
+  // thì chạy lúc build, nên thẻ mang slug trùng đoạn tĩnh của trang so sánh
+  // làm hỏng deploy ngay — đúng lúc còn sửa được, thay vì im lặng mất trang
+  // chi tiết của thẻ đó trên production.
+  assertNoSlugClash(offers);
   return offers.map((offer) => ({ slug: offer.slug }));
 }
 
@@ -51,7 +60,13 @@ export default async function CreditCardDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const offer = await getCreditCardOfferBySlug(slug);
+  // `allOffers`, không phải `offers`: tên đó đã là hàm dịch namespace "offers"
+  // ở đầu file.
+  const [offer, allOffers, posts] = await Promise.all([
+    getCreditCardOfferBySlug(slug),
+    getCreditCardOffers(),
+    getPosts(),
+  ]);
 
   if (!offer) notFound();
 
@@ -117,6 +132,10 @@ export default async function CreditCardDetailPage({
       <ApplyButton href={offer.applyUrl} affiliate={isReferralUrl(offer.applyUrl)} className="mt-8" />
 
       <OfferDisclosure className="mt-8" />
+
+      {/* Đặt SAU nút apply và phần công bố: khối này là đường đi tiếp cho người
+          chưa quyết, không phải thứ chen ngang giữa họ và nút bấm. */}
+      <CardNextSteps offer={offer} offers={allOffers} posts={posts} className="mt-12" />
 
       <p className="mt-10 border-t border-border pt-4 text-xs text-muted-foreground">
         <Link href="/" className="underline">

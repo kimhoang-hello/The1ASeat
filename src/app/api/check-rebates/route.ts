@@ -3,6 +3,7 @@ import { cmaClient, field, listEntries, updateEntry } from "@/lib/contentful-cma
 import { fetchContentfulCreditCardOffers } from "@/lib/content/contentful";
 import { fetchFinlyWealthRebate, finlyWealthRebateUrl } from "@/lib/finlywealth";
 import { jobSecretValid } from "@/lib/job-auth";
+import { RESERVED_SLUG, slugClashMessage } from "@/lib/card-compare";
 
 // Called daily (see .github/workflows/check-rebates.yml). FinlyWealth changes
 // its rebate amounts without warning — the BMO card went $125 -> $200 — and a
@@ -56,10 +57,21 @@ async function handleCheck(request: NextRequest) {
     ]),
   );
 
+  // Lượt canh thứ hai cho đường dẫn của trang so sánh. `generateStaticParams`
+  // bắt được thẻ đã có lúc build, nhưng thẻ publish sau đó thì webhook chỉ
+  // revalidate chứ không chạy lại hàm đó — và trang chi tiết của nó sẽ bị
+  // trang so sánh che mất trong im lặng, trong khi danh sách, ô tìm kiếm và
+  // sitemap vẫn trỏ tới đúng đường dẫn đó. Job này đọc bản published mỗi ngày,
+  // nên nó thấy; và vì điều kiện còn nguyên ở mọi lượt sau, `--retry` của
+  // workflow không rửa nó thành xanh.
   const updated: Change[] = [];
   const unchanged: string[] = [];
   const errors: { slug: string; message: string }[] = [];
   let checked = 0;
+
+  if (published.has(RESERVED_SLUG)) {
+    errors.push({ slug: RESERVED_SLUG, message: slugClashMessage() });
+  }
 
   const checkedSlugs = new Set<string>();
   for (const entry of entries) {

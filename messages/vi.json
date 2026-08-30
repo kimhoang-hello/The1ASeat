@@ -27,7 +27,8 @@
     "calculator": "Tính giá trị điểm bạn đang có",
     "transferBonuses": "Khuyến mãi chuyển điểm đang chạy",
     "transferPartners": "Điểm của bạn chuyển được đi đâu",
-    "bankAccounts": "Tài khoản chi tiêu và tiết kiệm ở Canada"
+    "bankAccounts": "Tài khoản chi tiêu và tiết kiệm ở Canada",
+    "compare": "Đặt hai, ba thẻ cạnh nhau và xem chúng khác nhau ở đâu"
   },
   "banner": {
     "eyebrow": "OFFER NỔI BẬT",
@@ -78,7 +79,13 @@
     "hotTip": "HOT TIP",
     "emptyElevated": "Hiện chưa có elevated offer nào đang chạy.",
     "emptyOther": "Hiện chưa có thẻ nào trong mục này.",
-    "emptyAll": "Hiện chưa có thẻ nào."
+    "emptyAll": "Hiện chưa có thẻ nào.",
+    "compare": "So sánh thẻ",
+    "compareWith": "So sánh thẻ này với thẻ khác",
+    "noValue": "—",
+    "noValueLabel": "Không có",
+    "yes": "Có",
+    "no": "Không"
   },
   "bankAccounts": {
     "eyebrow": "TÀI KHOẢN NGÂN HÀNG",
@@ -253,7 +260,8 @@
     "bankAccountRate": "Lãi suất {rate}.",
     "bankAccountFee": "Monthly fee {fee}.",
     "bankAccountNoFee": "Không mất monthly fee.",
-    "bankAccountTail": "Điều kiện, cách được miễn phí và quyền lợi chính — bằng tiếng Việt."
+    "bankAccountTail": "Điều kiện, cách được miễn phí và quyền lợi chính — bằng tiếng Việt.",
+    "breadcrumbCompare": "So sánh thẻ"
   },
   "awardCharts": {
     "eyebrow": "CÔNG CỤ",
@@ -313,5 +321,43 @@
     "optionNoPrice": "Chương trình này không đưa giá cho hành trình đó",
     "medianLabel": "trung vị {points}",
     "feederOnlyShort": "Cần nối chuyến nội địa"
+  },
+  "compare": {
+    "eyebrow": "CÔNG CỤ",
+    "title": "So Sánh Thẻ",
+    "subtitle": "Chọn hai hoặc ba thẻ để đặt cạnh nhau: welcome bonus, phí thường niên, rebate và quyền lợi, cùng một hàng cho dễ so.",
+    "metaTitle": "So sánh thẻ tín dụng Canada cạnh nhau",
+    "metaDescription": "Đặt hai hoặc ba thẻ tín dụng Canada cạnh nhau: welcome bonus, phí thường niên, rebate, loại điểm và quyền lợi chính.",
+    "pickerTitle": "Chọn thẻ để so sánh",
+    "pickerCard": "Thẻ {index}",
+    "pickerEmpty": "— chưa chọn —",
+    "needMore": "Chọn ít nhất hai thẻ để bắt đầu so sánh.",
+    "swipeHint": "Vuốt ngang để xem đầy đủ bảng →",
+    "rowAttribute": "Hạng mục",
+    "rowWelcomeBonus": "Welcome bonus",
+    "rowAnnualFee": "Annual fee",
+    "rowRebate": "Rebate",
+    "rowCardType": "Loại thẻ",
+    "rowPointsProgram": "Điểm thưởng",
+    "rowElevated": "Elevated offer",
+    "rowExpires": "Hết hạn",
+    "rowBenefits": "Quyền lợi chính",
+    "rowEditorsTake": "Ghế 1A đánh giá",
+    "rowApply": "Mở thẻ",
+    "removeCard": "Bỏ {name} khỏi bảng so sánh",
+    "addAnother": "Thêm một thẻ nữa",
+    "viewCard": "Xem chi tiết"
+  },
+  "cardNextSteps": {
+    "title": "Đi tiếp từ đây",
+    "compareLabel": "So sánh thẻ này với thẻ khác",
+    "compareDescription": "Đặt cạnh một, hai thẻ nữa để thấy chúng chênh nhau chỗ nào",
+    "awardLabel": "Điểm này bay được những đâu?",
+    "awardDescription": "Tra số điểm cần cho từng chặng trong Award Flight Finder",
+    "transferLabel": "Điểm này chuyển đi đâu được?",
+    "transferDescription": "Xem tỷ lệ chuyển sang các chương trình hàng không và khách sạn",
+    "sameProgramLabel": "Thẻ khác cũng tích {program}",
+    "sameProgramDescription": "Còn {count} thẻ nữa cùng loại điểm",
+    "relatedTitle": "Bài viết liên quan"
   }
 }

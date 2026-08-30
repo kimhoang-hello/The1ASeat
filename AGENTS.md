@@ -209,6 +209,51 @@ Kiểm chứng bản vá bằng dữ liệu dựng sẵn (script tạm, đã xo�
 `isElevatedLive`, và một Simplii giả với hạn lùi về quá khứ để xem nó rơi khỏi
 chip lọc và tụt xuống cuối danh sách sắp theo bonus.
 
+## Trang so sánh thẻ và khối "Đi tiếp từ đây" (29/08/2026)
+
+- **`/credit-cards/so-sanh` là ROUTE TĨNH nằm cạnh `/credit-cards/[slug]`.** Next
+  ưu tiên đoạn tĩnh, nên một thẻ mang slug `so-sanh` sẽ mất trang chi tiết trong
+  im lặng. `assertNoSlugClash()` chạy lúc dựng trang so sánh để build đỏ ngay
+  thay vì trông chờ ai nhớ — đừng gỡ nó đi vì "chuyện đó không xảy ra đâu".
+- **Bảng so sánh dựng ở SERVER, ô chọn chỉ điều hướng.** Không lọc tại chỗ:
+  URL luôn nói đúng thứ đang hiện (gửi được cho người khác), và trình duyệt
+  không phải tải dữ liệu của cả 23 thẻ để hiện hai. `ComparePicker` đọc
+  `window.location.search` ngay lúc bấm thay vì `useSearchParams()` — hook đó
+  bắt phải bọc `<Suspense>` lúc prerender mà ở đây không cần gì tới nó.
+- **Ô chọn GIỮ NGUYÊN các tham số khác trên URL**, vì `utm_*` của chiến dịch
+  dẫn người đọc tới đây — cùng lý do `bank-account-finder` sửa
+  `URLSearchParams` hiện có thay vì dựng URL mới.
+- **Trần ba thẻ** (`MAX_COMPARE`): mỗi cột cần ~220px để đọc được tên thẻ và
+  con số bonus, cột thứ tư đẩy bảng qua mức người ta còn chịu vuốt trên điện
+  thoại. Đo tại chỗ: ba thẻ là bảng 790px trong khung cuộn 341px, trang không
+  cuộn ngang.
+- **Mọi tổ hợp `?cards=` canonical về `/credit-cards/so-sanh` trần**, và
+  sitemap chỉ liệt kê trang trần. Liệt kê từng tổ hợp là tự nộp cho Google hàng
+  trăm URL gần như trùng nội dung.
+- **Khối "Đi tiếp từ đây" chỉ hiện đường nào THẬT SỰ có.** Công cụ suy ra từ
+  `PROGRAMS` của award-charts (chương trình nào có bảng giá thì có link), cộng
+  đúng hai hệ điểm mà `/transfer-partners` có cột (`amex-mr`, `avion` — đó là
+  hình dạng của `TransferPartnerRow`, không phải lựa chọn biên tập). Thẻ
+  WestJet® vì vậy chỉ thấy ô so sánh, không thấy công cụ nào — đúng ý đồ, đừng
+  "sửa" thành trỏ đại tới Award Flight Finder.
+- **Đường dẫn của trang so sánh được canh ở HAI chỗ, và cần cả hai.**
+  `generateStaticParams` của `[slug]` chạy lúc `next build` → bắt thẻ đã có
+  trong Contentful lúc deploy. Nhưng thẻ publish SAU đó thì webhook chỉ
+  revalidate chứ không chạy lại hàm đó, nên `check-rebates` (chạy hằng ngày,
+  đọc bản published) canh lượt thứ hai và đỏ dai cho tới khi có người đổi slug.
+  KHÔNG đặt cửa canh trong chính trang so sánh: nó `await searchParams` nên là
+  route động, thân nó không chạy lúc build và `throw` ở đó không bao giờ làm
+  deploy đỏ. Hai vòng review liên tiếp mới ra được hình dạng này.
+- **Trang so sánh phải có mặt trong `PAGES` của `api/search`.** Bốn công cụ kia
+  đều có; thiếu nó thì gõ đúng tên cũng không ra gì.
+- **Dòng "Thẻ tín dụng" trong menu mobile dùng `cardsRowActive`, không dùng
+  `cardsActive`** — trang so sánh nằm trong tiền tố `/credit-cards/` nên không
+  loại ra thì menu sáng hai dòng cùng lúc.
+- **Bài viết liên quan chỉ so trên tiêu đề + mô tả ngắn + chuyên mục, KHÔNG so
+  trên thân bài.** Thân bài nhắc tên ngân hàng khắp nơi, so ở đó thì mỗi thẻ
+  TD® kéo về cùng một mớ bài không liên quan. Mình tên ngân hàng khớp thì chưa
+  đủ để hiện ra (điểm 1); phải khớp tên thẻ (3) hoặc tên chương trình điểm (2).
+
 ## Chạy gì trước khi kết luận
 
 ```

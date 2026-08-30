@@ -10,6 +10,7 @@ import {
 import { t } from "@/lib/t";
 import type { SearchItem } from "@/lib/search";
 import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
+import { COMPARE_PATH } from "@/lib/card-compare";
 
 // The whole site is a few dozen cards and posts, so search ships the index
 // rather than a query endpoint: the header fetches this once, the first time
@@ -20,6 +21,7 @@ export const revalidate = 60;
 
 const nav = t("nav");
 const footer = t("footer");
+const offers = t("offers");
 
 /**
  * `keywords` là các chữ tiếng Việt người đọc gõ nhưng không có trong tên trang.
@@ -72,6 +74,14 @@ const PAGES: SearchItem[] = [
     href: "/transfer-partners",
     kind: "page",
     keywords: "chuyển điểm tỷ lệ đối tác hãng bay khách sạn",
+  },
+  {
+    // Công cụ thứ năm của site. Bốn cái kia đều nằm trong ô tìm kiếm, nên
+    // thiếu cái này là gõ đúng tên nó cũng không ra gì.
+    title: offers("compare"),
+    href: COMPARE_PATH,
+    kind: "page",
+    keywords: "so sánh đối chiếu cạnh nhau compare vs thẻ nào tốt hơn",
   },
   { title: nav("about"), href: "/about", kind: "page", keywords: "về chúng tôi tác giả" },
   {

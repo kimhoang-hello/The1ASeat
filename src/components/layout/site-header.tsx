@@ -16,6 +16,7 @@ import {
   Newspaper,
   PaperPlaneTilt,
   Percent,
+  Scales,
   Sparkle,
   Stack,
   X,
@@ -23,6 +24,7 @@ import {
   type Icon,
 } from "@phosphor-icons/react";
 import { SiteSearch } from "@/components/layout/site-search";
+import { COMPARE_PATH } from "@/lib/card-compare";
 import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
 import { t } from "@/lib/t";
 
@@ -289,6 +291,15 @@ export function SiteHeader() {
   // here because a reader picking a card and a reader picking a chequing
   // account are the same person on the same errand. Empty while the page is
   // still a draft, which takes the row out of both menus at once.
+  // Trang riêng nằm trong menu thẻ, không phải một lát cắt `?type=` của danh
+  // sách — nên đi qua `extraLinks` như Ngân hàng, không qua TypeLinks.
+  const compareLink: NavLink = {
+    href: COMPARE_PATH,
+    label: tOffers("compare"),
+    description: tMenu("compare"),
+    icon: Scales,
+  };
+
   const bankLinks: NavLink[] = BANK_ACCOUNTS_PUBLISHED
     ? [
         {
@@ -363,9 +374,21 @@ export function SiteHeader() {
   // left the whole menu unlit on all 29 of them. The rows *inside* the menu
   // still compare exactly (see TypeDropdown), which is what keeps "Thẻ tín
   // dụng" from lighting up next to "Ngân hàng" on /bank-accounts.
+  // Một mảng cho cả menu desktop lẫn menu mobile. Hai bản riêng là mời gọi
+  // chúng lệch nhau — đúng lý do TypeLinks được tách ra ở trên.
+  const cardExtraLinks: NavLink[] = [compareLink, ...bankLinks];
+
   const bankActive = bankLinks.some(
     (link) => pathname === link.href || pathname.startsWith(`${link.href}/`),
   );
+  // Dòng "Thẻ tín dụng" trong menu mobile phải TẮT khi đang ở trang so sánh,
+  // dù `cardsActive` bật vì khớp tiền tố `/credit-cards/`. Không loại ra thì
+  // menu mobile sáng hai dòng cùng lúc — đúng lỗi mà chú thích ngay trên đã
+  // ghi là đã vấp một lần với /bank-accounts, chỉ khác chỗ: Ngân hàng nằm ở
+  // tiền tố khác nên tự tránh được, còn trang so sánh thì nằm trong chính
+  // tiền tố này.
+  const cardsRowActive = cardsActive && pathname !== COMPARE_PATH;
+  // Cái tiêu đề menu thì vẫn sáng: người đọc ĐANG ở trong khu vực thẻ.
   const cardsMenuActive = cardsActive || bankActive;
   const blogActive = pathname === "/blog" || pathname.startsWith("/blog/");
   const toolsActive = toolsLinks.some((link) => pathname === link.href);
@@ -445,7 +468,7 @@ export function SiteHeader() {
             label={nav("creditCards")}
             basePath="/credit-cards"
             links={cardLinks}
-            extraLinks={bankLinks}
+            extraLinks={cardExtraLinks}
             active={cardsMenuActive}
             width="w-80"
             pathname={pathname}
@@ -528,7 +551,7 @@ export function SiteHeader() {
             <Link
               href="/credit-cards"
               onClick={() => setOpen(false)}
-              className={mobileItemClassName(cardsActive)}
+              className={mobileItemClassName(cardsRowActive)}
             >
               {nav("creditCards")}
             </Link>
@@ -545,7 +568,7 @@ export function SiteHeader() {
                 compact
               />
             </Suspense>
-            {bankLinks.map((link) => (
+            {cardExtraLinks.map((link) => (
               <MenuItem
                 key={link.href}
                 link={link}
