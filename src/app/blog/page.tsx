@@ -92,11 +92,28 @@ export default async function BlogPage({
 
           <CategoryLinks categories={categories} className="mb-8" />
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-            {posts.map((post) => (
-              <PostCard key={post.slug} post={post} />
-            ))}
-          </div>
+          {/* Trước đây chỉ có `posts.map(...)`, không có nhánh nào cho danh
+              sách rỗng: tab `?type=video` mà cạn bài là người đọc nhận một
+              vùng lưới trắng, không biết là chưa có bài hay trang hỏng — và
+              không có đường nào đi tiếp. Cùng bài học đã ghi ở
+              /transfer-bonuses. */}
+          {posts.length === 0 ? (
+            <div className="rounded-2xl border border-border bg-card px-5 py-12 text-center">
+              <p className="text-sm text-muted-foreground">{posts_t("emptyTab")}</p>
+              <Link
+                href="/blog"
+                className="mt-3 inline-block text-sm font-semibold text-primary hover:underline"
+              >
+                {posts_t("emptyCta")} &rarr;
+              </Link>
+            </div>
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+              {posts.map((post) => (
+                <PostCard key={post.slug} post={post} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </>

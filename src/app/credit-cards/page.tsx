@@ -202,9 +202,19 @@ export default async function CreditCardsPage({
           ))}
 
           {offers.length === 0 && (
-            <p className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground xl:col-span-2">
-              {offers_t(TABS.find((tab) => tab.value === activeTab)!.emptyKey)}
-            </p>
+            /* Có chữ nhưng trước đây không có đường thoát: người lọc tới một
+               tổ hợp rỗng phải tự nghĩ ra cách quay lại danh sách đầy đủ. */
+            <div className="rounded-2xl border border-border bg-card p-8 text-center xl:col-span-2">
+              <p className="text-sm text-muted-foreground">
+                {offers_t(TABS.find((tab) => tab.value === activeTab)!.emptyKey)}
+              </p>
+              <Link
+                href="/credit-cards"
+                className="mt-3 inline-block text-sm font-semibold text-primary hover:underline"
+              >
+                {offers_t("emptyCta")} &rarr;
+              </Link>
+            </div>
           )}
 
           <OfferDisclosure className="mt-3 xl:col-span-2" />

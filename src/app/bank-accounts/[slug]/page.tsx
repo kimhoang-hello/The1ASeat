@@ -5,6 +5,8 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { HotTip, RebateChip } from "@/components/ui/hot-tip";
 import { ApplyButton } from "@/components/ui/apply-button";
+import { BankNextSteps } from "@/components/bank-accounts/bank-next-steps";
+import { getCreditCardOffers, getPosts } from "@/lib/content";
 import {
   BANK_ACCOUNTS,
   bankAccountBySlug,
@@ -17,12 +19,11 @@ import {
 } from "@/lib/bank-accounts";
 import { bankAccountDescription, bankAccountJsonLd } from "@/lib/bank-account-schema";
 import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
-import { assertNoBankSlugClash, bankComparePath } from "@/lib/bank-compare";
+import { assertNoBankSlugClash } from "@/lib/bank-compare";
 import { t as translate } from "@/lib/t";
 import { pageMetadata, breadcrumbJsonLd } from "@/lib/seo";
 
 const bank_t = translate("bankAccounts");
-const bankCompare_t = translate("bankCompare");
 // Xem chú thích ở bank-account-finder.tsx: nhãn hết hạn dùng chung với thẻ.
 const offers = translate("offers");
 const common = translate("common");
@@ -95,6 +96,10 @@ export default async function BankAccountDetailPage({
 
   const bank = bankById(account.bank);
   const path = bankAccountPath(account.slug);
+
+  // `offers` ở file này đã là hàm dịch namespace "offers", nên danh sách thẻ
+  // phải mang tên khác.
+  const [cardOffers, posts] = await Promise.all([getCreditCardOffers(), getPosts()]);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -236,19 +241,11 @@ export default async function BankAccountDetailPage({
         </div>
       )}
 
-      <div className="mt-6 flex flex-wrap items-center gap-4">
+      <div className="mt-6">
         <ApplyButton
           href={account.affiliateUrl ?? account.url}
           affiliate={Boolean(account.affiliateUrl)}
         />
-        {/* Đứng cạnh nút apply chứ không chen trước nó: người chưa quyết thì
-            đi so sánh, người quyết rồi thì bấm. */}
-        <Link
-          href={bankComparePath([account.slug])}
-          className="text-sm font-semibold text-primary hover:underline"
-        >
-          {bankCompare_t("compareCta")} &rarr;
-        </Link>
       </div>
 
       {/* Cùng thứ tự với trang danh sách: dặn dò trước, công bố affiliate sau. */}
@@ -259,10 +256,19 @@ export default async function BankAccountDetailPage({
 
       <OfferDisclosure className="mt-4" />
 
-      <p className="mt-10 flex flex-wrap gap-x-4 gap-y-2 border-t border-border pt-4 text-xs text-muted-foreground">
-        <Link href={`/bank-accounts?bank=${account.bank}`} className="underline">
-          {bank_t("otherFromBank", { bank: bank.name })}
-        </Link>
+      <BankNextSteps
+        account={account}
+        accounts={BANK_ACCOUNTS}
+        bank={bank}
+        offers={cardOffers}
+        posts={posts}
+        className="mt-10 border-t border-border pt-8"
+      />
+
+      {/* Dải này giờ chỉ còn đường về trang chủ: "tài khoản khác cùng ngân
+          hàng" đã lên khối trên, ở đó nó kèm số lượng và không còn là chữ
+          `text-xs` nép ở chân trang. */}
+      <p className="mt-10 border-t border-border pt-4 text-xs text-muted-foreground">
         <Link href="/" className="underline">
           {common("backHome")}
         </Link>

@@ -7,12 +7,14 @@ import { getAuthor } from "@/lib/content";
 import { AuthorPhoto } from "@/components/ui/author-photo";
 import { boldOccurrences } from "@/lib/bold-occurrences";
 import { JsonLd } from "@/components/seo/json-ld";
+import { NextSteps, StepLink } from "@/components/ui/next-steps";
 import { t } from "@/lib/t";
 import { pageMetadata, absoluteUrl } from "@/lib/seo";
 import { SOCIAL_LINKS, PERSON_SAME_AS } from "@/lib/social-links";
 import { START_HERE_PUBLISHED } from "@/lib/feature-flags";
 
 const author = t("author");
+const next = t("nextSteps");
 const seo = t("seo");
 
 export const metadata: Metadata = pageMetadata({
@@ -94,6 +96,24 @@ export default async function AboutPage() {
           <ArrowRight size={18} weight="bold" />
         </Link>
       )}
+
+      {/* Trang này trước đây chỉ có đúng MỘT link nội bộ (nút /bat-dau ở trên),
+          và nút đó lại nằm sau cờ — tắt cờ là trang không còn đường nào dẫn
+          vào phần nội dung của site. Hai đường dưới đây là thứ người vừa đọc
+          xong phần giới thiệu muốn xem tiếp: bài anh viết, và thẻ anh theo
+          dõi. */}
+      <NextSteps title={author("exploreTitle")} className="mt-12">
+        <StepLink
+          href="/blog"
+          label={next("blogLabel")}
+          description={next("blogDescription")}
+        />
+        <StepLink
+          href="/credit-cards"
+          label={next("cardsLabel")}
+          description={next("cardsDescription")}
+        />
+      </NextSteps>
 
       {/* The channel and the group are where readers actually follow along, so
           they get named links here rather than bare icons — this page is the

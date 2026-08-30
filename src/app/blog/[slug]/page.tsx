@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { getPostBySlug, getPosts } from "@/lib/content";
+import { getCreditCardOffers, getPostBySlug, getPosts } from "@/lib/content";
 import type { BlogPost } from "@/lib/content";
 import { formatDate } from "@/lib/format-date";
 import { MediaPlaceholder, type PlaceholderIcon } from "@/components/ui/media-placeholder";
 import { getVideoEmbedUrl, getYouTubeThumbnailUrl, getYouTubeWatchUrl } from "@/lib/video-embed";
 import { CommentSection } from "@/components/blog/comment-section";
 import { PostCard } from "@/components/blog/post-card";
+import { PostNextSteps } from "@/components/blog/post-next-steps";
 import { JsonLd } from "@/components/seo/json-ld";
 import { categoryPath, getRelatedPosts, lastModified, slugifyVi } from "@/lib/blog-categories";
 import { SITE_URL } from "@/lib/subscriber-email";
@@ -62,7 +63,7 @@ export async function generateMetadata({
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const allPosts = await getPosts();
+  const [allPosts, offers] = await Promise.all([getPosts(), getCreditCardOffers()]);
   const post = allPosts.find((item) => item.slug === slug);
 
   if (!post) notFound();
@@ -182,6 +183,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       <div
         className="prose prose-neutral mt-8 max-w-none prose-headings:font-display prose-a:text-primary [&_:is(h1,h2,h3,h4)_a]:[font-weight:inherit]"
         dangerouslySetInnerHTML={{ __html: post.body }}
+      />
+
+      <PostNextSteps
+        post={post}
+        offers={offers}
+        className="mt-12 border-t border-border pt-8"
       />
 
       {related.length > 0 && (

@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { START_HERE_PUBLISHED } from "@/lib/feature-flags";
 import { t } from "@/lib/t";
 import { pageMetadata } from "@/lib/seo";
 import { LEGAL_UPDATED, LegalPage } from "@/components/layout/legal-page";
 
 const footer = t("footer");
+const common = t("common");
+const next = t("nextSteps");
 const seo = t("seo");
 
 export const metadata: Metadata = pageMetadata({
@@ -127,6 +130,19 @@ export default function TermsPage() {
         Có câu hỏi về điều khoản này, bạn gửi tin nhắn qua <Link href="/contact">trang Liên hệ</Link>{" "}
         hoặc email tới <a href="mailto:info@ghe1a.com">info@ghe1a.com</a>. Xem thêm{" "}
         <Link href="/privacy">Chính sách bảo mật</Link>.
+      </p>
+      {/* Đọc xong trang pháp lý thì đường ra duy nhất trước đây là trang pháp
+          lý kia. Một dòng dẫn trở lại nội dung, gác sau cờ như mọi lối vào
+          /bat-dau khác. */}
+      <p className="not-prose mt-10 flex flex-wrap gap-x-5 gap-y-2 border-t border-border pt-5 text-sm">
+        {START_HERE_PUBLISHED && (
+          <Link href="/bat-dau" className="font-semibold text-primary hover:underline">
+            {common("backStartHere")}
+          </Link>
+        )}
+        <Link href="/blog" className="font-semibold text-primary hover:underline">
+          {next("blogLabel")}
+        </Link>
       </p>
     </LegalPage>
   );

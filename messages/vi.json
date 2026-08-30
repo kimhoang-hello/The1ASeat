@@ -91,7 +91,8 @@
     "noValue": "—",
     "noValueLabel": "Không có",
     "yes": "Có",
-    "no": "Không"
+    "no": "Không",
+    "emptyCta": "Xem tất cả thẻ"
   },
   "bankAccounts": {
     "eyebrow": "TÀI KHOẢN NGÂN HÀNG",
@@ -134,7 +135,8 @@
     "disclaimerHeading": "Đọc kỹ trước khi mở tài khoản",
     "disclaimer": "Welcome bonus và lãi suất khuyến mãi ở Canada thay đổi liên tục, và điều kiện nhận bonus (direct deposit, số dư tối thiểu, thời gian duy trì) mới là phần quyết định bạn có nhận được tiền hay không. Luôn kiểm tra lại trên trang chính thức của ngân hàng trước khi mở.",
     "rebate": "Rebate",
-    "rebateHotTip": "Mở tài khoản qua FinlyWealth để nhận thêm {amount} rebate."
+    "rebateHotTip": "Mở tài khoản qua FinlyWealth để nhận thêm {amount} rebate.",
+    "emptyCta": "Xoá bộ lọc, xem tất cả tài khoản"
   },
   "posts": {
     "eyebrow": "TỪ BLOG",
@@ -145,7 +147,10 @@
     "tabPosts": "Bài viết",
     "tabVideos": "Video",
     "scrollPrev": "Xem các bài trước",
-    "scrollNext": "Xem các bài tiếp theo"
+    "scrollNext": "Xem các bài tiếp theo",
+    "emptyTab": "Chưa có bài nào trong mục này.",
+    "emptyCategory": "Chuyên mục này chưa có bài nào.",
+    "emptyCta": "Xem tất cả bài viết"
   },
   "bonuses": {
     "eyebrow": "CẬP NHẬT THƯỜNG XUYÊN",
@@ -191,7 +196,8 @@
     "title": "Xin chào, mình là {name}.",
     "cta": "Câu chuyện của mình",
     "startHereCta": "Xem lộ trình mới bắt đầu ở đây",
-    "connect": "Kết nối với mình"
+    "connect": "Kết nối với mình",
+    "exploreTitle": "Xem thêm ở Ghế 1A"
   },
   "newsletterCta": {
     "eyebrow": "BẢN TIN",
@@ -230,7 +236,8 @@
     "readMore": "Đọc thêm",
     "minRead": "phút đọc",
     "backHome": "Về trang chủ",
-    "skipToContent": "Bỏ qua, tới nội dung chính"
+    "skipToContent": "Bỏ qua, tới nội dung chính",
+    "backStartHere": "Bắt đầu từ đâu?"
   },
   "notFound": {
     "eyebrow": "404",
@@ -469,5 +476,18 @@
     "bankAccountsDescription": "Welcome bonus và cách được miễn phí duy trì hằng tháng",
     "aboutLabel": "Ghế 1A là ai?",
     "aboutDescription": "Người viết, cách site kiếm tiền và vì sao bạn nên tin"
+  },
+  "postNextSteps": {
+    "mentionedTitle": "Thẻ nhắc trong bài",
+    "programLabel": "Thẻ nào tích {program}?",
+    "programDescription": "Lọc danh sách thẻ theo đúng loại điểm bài này nói tới"
+  },
+  "bankNextSteps": {
+    "otherAccountsLabel": "Tài khoản khác của {bank}",
+    "otherAccountsDescription": "Còn {count} tài khoản nữa cùng ngân hàng",
+    "compareLabel": "So sánh tài khoản này với tài khoản khác",
+    "compareDescription": "Đặt cạnh một, hai tài khoản nữa để thấy chúng chênh nhau chỗ nào",
+    "cardsTitle": "Thẻ tín dụng của {bank}",
+    "relatedTitle": "Bài viết liên quan"
   }
 }

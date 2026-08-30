@@ -592,8 +592,18 @@ function FinderView({
         ))}
 
         {accounts.length === 0 && (
-          <li className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground xl:col-span-2">
-            {t("empty")}
+          /* Có chữ nhưng trước đây không có đường thoát. Nút xoá bộ lọc chứ
+             không phải link: đây là công cụ lọc tại chỗ, một link `/bank-accounts`
+             sẽ vứt luôn cả `sort` người dùng đang chọn lẫn `utm_*` trên URL. */
+          <li className="rounded-2xl border border-border bg-card p-8 text-center xl:col-span-2">
+            <p className="text-sm text-muted-foreground">{t("empty")}</p>
+            <button
+              type="button"
+              onClick={() => update({ bank: "all", filter: "all" })}
+              className="mt-3 cursor-pointer text-sm font-semibold text-primary hover:underline"
+            >
+              {t("emptyCta")}
+            </button>
           </li>
         )}
       </ul>
