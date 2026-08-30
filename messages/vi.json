@@ -58,9 +58,13 @@
     "subscribe": "Đăng ký bản tin",
     "subscribed": "Đã đăng ký!",
     "disclaimer": "Không spam. Huỷ đăng ký bất cứ lúc nào.",
-    "error": "Có lỗi xảy ra, vui lòng thử lại.",
-    "startHerePrompt": "Chưa biết bắt đầu từ đâu?",
-    "startHereLink": "Xem lộ trình 4 bước cho người mới"
+    "error": "Có lỗi xảy ra, vui lòng thử lại."
+  },
+  "startHereBand": {
+    "eyebrow": "MỚI BẮT ĐẦU?",
+    "title": "Chưa biết bắt đầu từ đâu?",
+    "body": "Bốn bước, theo đúng thứ tự: hiểu cơ bản trước, chọn thẻ đầu tiên, biết trước điểm đổi được gì, rồi không bỏ lỡ lúc offer lên cao.",
+    "cta": "Xem lộ trình 4 bước"
   },
   "offers": {
     "eyebrow": "OFFERS NỔI BẬT",

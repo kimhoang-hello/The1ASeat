@@ -26,7 +26,7 @@ import {
 import { SiteSearch } from "@/components/layout/site-search";
 import { COMPARE_PATH } from "@/lib/card-compare";
 import { BANK_COMPARE_PATH } from "@/lib/bank-compare";
-import { BANK_ACCOUNTS_PUBLISHED, START_HERE_PUBLISHED } from "@/lib/feature-flags";
+import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
 import { t } from "@/lib/t";
 
 /** A menu entry: an icon, what it is, and what is behind it in one line. */
@@ -494,12 +494,6 @@ export function SiteHeader() {
             {nav("home")}
           </Link>
 
-          {START_HERE_PUBLISHED && (
-            <Link href="/bat-dau" className={navItemClassName(pathname === "/bat-dau")}>
-              {nav("startHere")}
-            </Link>
-          )}
-
           <TypeDropdown
             label={nav("creditCards")}
             basePath="/credit-cards"
@@ -584,16 +578,6 @@ export function SiteHeader() {
             >
               {nav("home")}
             </Link>
-
-            {START_HERE_PUBLISHED && (
-              <Link
-                href="/bat-dau"
-                onClick={() => setOpen(false)}
-                className={mobileItemClassName(pathname === "/bat-dau")}
-              >
-                {nav("startHere")}
-              </Link>
-            )}
 
             <Link
               href="/credit-cards"

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Hero } from "@/components/home/hero";
+import { StartHereBand } from "@/components/home/start-here-band";
 import { OffersSection } from "@/components/home/offers-section";
 import { PostsSection } from "@/components/home/posts-section";
 import { TransferBonusesSection } from "@/components/home/transfer-bonuses-section";
@@ -7,6 +8,7 @@ import { AuthorSection } from "@/components/home/author-section";
 import { NewsletterCta } from "@/components/home/newsletter-cta";
 import { pageMetadata } from "@/lib/seo";
 import { t } from "@/lib/t";
+import { START_HERE_PUBLISHED } from "@/lib/feature-flags";
 
 const site = t("site");
 const seo = t("seo");
@@ -26,6 +28,7 @@ export default function HomePage() {
   return (
     <>
       <Hero />
+      {START_HERE_PUBLISHED && <StartHereBand />}
       <OffersSection />
       <PostsSection />
       <TransferBonusesSection />
