@@ -5,7 +5,7 @@ const t = translate("hero");
 
 export function Hero() {
   return (
-    <section className="border-b border-border bg-background px-4 py-20 sm:px-6 lg:px-8 2xl:py-28">
+    <section className="border-b border-border bg-background px-4 pb-14 pt-20 sm:px-6 lg:px-8 2xl:pb-16 2xl:pt-28">
       <div className="mx-auto flex max-w-3xl flex-col items-center text-center 2xl:max-w-4xl">
         <h1 className="font-display text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl 2xl:text-6xl">
           {t("title1")}{" "}

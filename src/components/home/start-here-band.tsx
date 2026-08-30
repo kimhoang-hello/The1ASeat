@@ -20,6 +20,12 @@ const t = translate("startHereBand");
  * đổi nền một bậc là mắt đọc ra ba khối chứ không phải một dải dài. Viền trên
  * dưới để mép dải sắc ở chỗ hai màu gần nhau.
  *
+ * KHOẢNG TRẮNG: `pb` của hero rút từ 80px xuống 56px cho bằng `pt` của dải này.
+ * Hai khối đứng liền nhau thì khoảng trắng của chúng cộng dồn, không phải cái
+ * lớn hơn nuốt cái nhỏ hơn — 80+56 cho ra 136px trống giữa dòng "Không spam"
+ * và chữ đầu của dải, trong khi phía dưới chỉ có 56+64=120px. Dải trông như bị
+ * đẩy xuống. Nay hai bên là 112 và 120, và ở 2xl thì đúng 128 cả hai.
+ *
  * CỬA, KHÔNG PHẢI ĐÍCH: chỉ tiêu đề, một câu, một nút. Bốn ô lựa chọn của
  * `StartHereRouter` ở lại trên chính `/bat-dau` — bê lên đây thì trang chủ có
  * hai ngã ba chồng nhau (bốn ô này và bốn thẻ offers ngay dưới), và cái đích
@@ -27,7 +33,7 @@ const t = translate("startHereBand");
  */
 export function StartHereBand() {
   return (
-    <section className="border-y border-border bg-secondary px-4 py-14 sm:px-6 lg:px-8">
+    <section className="border-y border-border bg-secondary px-4 py-14 sm:px-6 lg:px-8 2xl:py-16">
       <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
         <p className="text-xs font-semibold tracking-wide text-primary">{t("eyebrow")}</p>
         <h2 className="mt-1 font-display text-2xl font-extrabold text-foreground sm:text-3xl">
