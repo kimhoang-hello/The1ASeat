@@ -85,17 +85,28 @@ function mobileItemClassName(active: boolean) {
 function MobileSection({
   label,
   active,
+  highlight = active,
   children,
 }: {
   label: string;
+  /** Nhóm có mở sẵn không. */
   active: boolean;
+  /**
+   * Dòng tiêu đề nhóm có được tô sáng không. Mặc định bằng `active`, và HAI
+   * việc này phải tách được ra vì chúng không luôn trùng nhau: ở
+   * `/credit-cards/so-sanh` thì nhóm "Thẻ tín dụng" phải mở — trang con nằm
+   * trong đó — nhưng dòng "So sánh" bên trong mới là dòng đang đứng, nên tô
+   * sáng cả dòng cha nữa là menu sáng hai chỗ cùng lúc và người đọc không biết
+   * mình đang ở đâu. `AGENTS.md` đã ghi đúng cái bẫy này.
+   */
+  highlight?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <details name="mobile-nav" open={active} className="group">
       <summary
         className={`flex cursor-pointer list-none items-center justify-between [&::-webkit-details-marker]:hidden ${mobileItemClassName(
-          active,
+          highlight,
         )}`}
       >
         {label}
@@ -460,6 +471,10 @@ export function SiteHeader() {
     (link) => pathname === link.href || pathname.startsWith(`${link.href}/`),
   );
   const cardsMenuActive = cardsActive || bankActive;
+  // Mở nhóm và tô sáng dòng cha là hai câu hỏi khác nhau — xem `MobileSection`.
+  // Trừ trang So sánh ra vì nó có dòng riêng bên trong nhóm, và trừ luôn các
+  // trang Ngân hàng vì `cardsActive` vốn đã không tính chúng.
+  const cardsRowActive = cardsActive && pathname !== COMPARE_PATH;
   const blogActive = pathname === "/blog" || pathname.startsWith("/blog/");
   const toolsActive = toolsLinks.some((link) => pathname === link.href);
 
@@ -619,7 +634,11 @@ export function SiteHeader() {
               {nav("home")}
             </Link>
 
-            <MobileSection label={nav("creditCards")} active={cardsMenuActive}>
+            <MobileSection
+              label={nav("creditCards")}
+              active={cardsMenuActive}
+              highlight={cardsRowActive}
+            >
               <Suspense
                 fallback={
                   <TypeLinksFallback links={cardLinks} onNavigate={closeMobileMenu} compact />
