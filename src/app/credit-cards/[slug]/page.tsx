@@ -9,6 +9,7 @@ import { assertNoSlugClash } from "@/lib/card-compare";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { EditorsTake } from "@/components/credit-cards/editors-take";
 import { OfferStats } from "@/components/credit-cards/offer-stats";
+import { OfferHistoryNote } from "@/components/credit-cards/offer-history-note";
 import { RebateChip } from "@/components/ui/hot-tip";
 import { ApplyButton } from "@/components/ui/apply-button";
 import { isReferralUrl } from "@/lib/affiliate-links";
@@ -117,6 +118,10 @@ export default async function CreditCardDetailPage({
 
       <h1 className="mt-2 font-display text-3xl font-extrabold text-foreground">{offer.name}</h1>
       <OfferStats offer={offer} className="mt-4" />
+
+      {/* Ngay dưới con số, vì nó nói về chính con số đó. Không hiện gì khi
+          chưa đủ lịch sử để nói. */}
+      <OfferHistoryNote offer={offer} className="mt-4" />
 
       <p className="mt-4 text-lg leading-relaxed text-foreground/90">{offer.headline}</p>
 

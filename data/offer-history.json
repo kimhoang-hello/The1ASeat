@@ -1,0 +1,150 @@
+{
+  "since": "2026-08-29",
+  "cards": {
+    "amex-aeroplan": [
+      {
+        "at": "2026-08-29",
+        "welcomeBonus": "45,000 điểm Aeroplan®"
+      }
+    ],
+    "amex-aeroplan-business-reserve": [
+      {
+        "at": "2026-08-29",
+        "welcomeBonus": "90,000 điểm Aeroplan®"
+      }
+    ],
+    "amex-aeroplan-reserve": [
+      {
+        "at": "2026-08-29",
+        "welcomeBonus": "110,000 điểm Aeroplan®"
+      }
+    ],
+    "amex-marriott-bonvoy": [
+      {
+        "at": "2026-08-29",
+        "welcomeBonus": "110,000 điểm Bonvoy®"
+      }
+    ],
+    "amex-marriott-bonvoy-business": [
+      {
+        "at": "2026-08-29",
+        "welcomeBonus": "110,000 điểm Bonvoy®"
+      }
+    ],
+    "bmo-viporter-world-elite-mastercard": [
+      {
+        "at": "2026-08-29",
+        "welcomeBonus": "70,000 điểm VIPorter®",
+        "rebate": "$200"
+      }
+    ],
+    "national-bank-world-elite-mastercard": [
+      {
+        "at": "2026-08-29",
+        "rebate": "$100"
+      }
+    ],
+    "rbc-avion-visa-infinite": [
+      {
+        "at": "2026-08-29",
+        "welcomeBonus": "70,000 điểm Avion®"
+      }
+    ],
+    "rbc-avion-visa-infinite-privilege": [
+      {
+        "at": "2026-08-29",
+        "welcomeBonus": "100,000 điểm Avion®"
+      }
+    ],
+    "rbc-avion-visa-platinum": [
+      {
+        "at": "2026-08-29",
+        "welcomeBonus": "70,000 điểm Avion®"
+      }
+    ],
+    "scotiabank-gold-amex": [
+      {
+        "at": "2026-08-29",
+        "welcomeBonus": "50,000 điểm Scene+™",
+        "rebate": "$150"
+      }
+    ],
+    "scotiabank-momentum-visa-infinite-plus": [
+      {
+        "at": "2026-08-29",
+        "welcomeBonus": "Hoàn tiền 15% (tối đa $300)",
+        "rebate": "$150"
+      }
+    ],
+    "scotiabank-passport-visa-infinite": [
+      {
+        "at": "2026-08-29",
+        "welcomeBonus": "35,000 điểm Scene+™",
+        "rebate": "$120"
+      }
+    ],
+    "scotiabank-scene-plus-visa-students": [
+      {
+        "at": "2026-08-29",
+        "welcomeBonus": "5,000 điểm Scene+™",
+        "rebate": "$125"
+      }
+    ],
+    "td-aeroplan-visa-infinite": [
+      {
+        "at": "2026-08-29",
+        "welcomeBonus": "40,000 điểm Aeroplan®"
+      }
+    ],
+    "td-aeroplan-visa-infinite-privilege": [
+      {
+        "at": "2026-08-29",
+        "welcomeBonus": "85,000 điểm Aeroplan®"
+      }
+    ],
+    "td-aeroplan-visa-platinum": [
+      {
+        "at": "2026-08-29",
+        "welcomeBonus": "20,000 điểm Aeroplan®"
+      }
+    ],
+    "td-cash-back-visa-infinite": [
+      {
+        "at": "2026-08-29",
+        "welcomeBonus": "Đến $600 giá trị + miễn annual fee năm đầu",
+        "rebate": "$140"
+      }
+    ],
+    "td-first-class-travel-visa-infinite": [
+      {
+        "at": "2026-08-29",
+        "welcomeBonus": "146,000 điểm TD Rewards",
+        "rebate": "$140"
+      }
+    ],
+    "united-mileageplus-neo-world-elite-mastercard": [
+      {
+        "at": "2026-08-29",
+        "welcomeBonus": "25,000 miles MileagePlus®",
+        "rebate": "$100"
+      }
+    ],
+    "wealthsimple-visa-infinite-plus": [
+      {
+        "at": "2026-08-29"
+      }
+    ],
+    "wealthsimple-visa-infinite-privilege": [
+      {
+        "at": "2026-08-29"
+      }
+    ],
+    "westjet-rbc-world-elite-mastercard": [
+      {
+        "at": "2026-08-29",
+        "welcomeBonus": "70,000 điểm WestJet®",
+        "rebate": "$50"
+      }
+    ]
+  }
+}

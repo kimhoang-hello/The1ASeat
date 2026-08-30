@@ -359,5 +359,9 @@
     "sameProgramLabel": "Thẻ khác cũng tích {program}",
     "sameProgramDescription": "Còn {count} thẻ nữa cùng loại điểm",
     "relatedTitle": "Bài viết liên quan"
+  },
+  "offerHistory": {
+    "peakIsCurrent": "Mức hiện tại là mức cao nhất kể từ khi Ghế 1A bắt đầu theo dõi thẻ này ({since}).",
+    "peakHigher": "Welcome bonus của thẻ này từng lên tới {label} ({at}) — cao hơn mức đang chạy."
   }
 }

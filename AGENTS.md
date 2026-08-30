@@ -254,6 +254,40 @@ chip lọc và tụt xuống cuối danh sách sắp theo bonus.
   TD® kéo về cùng một mớ bài không liên quan. Mình tên ngân hàng khớp thì chưa
   đủ để hiện ra (điểm 1); phải khớp tên thẻ (3) hoặc tên chương trình điểm (2).
 
+## Lịch sử offer (29/08/2026)
+
+- **`data/offer-history.json` là nhật ký THAY ĐỔI, không phải bản chép hằng
+  ngày.** `scripts/record-offer-history.mts` chỉ ghi thêm khi con số khác lần
+  trước; hai lần đổi cùng một ngày thì ghi đè dòng của ngày đó, vì mốc của lịch
+  sử này là NGÀY và hai dòng trùng ngày làm mọi phép "đổi lần gần nhất" ra hai
+  kết quả.
+- **Chiều dữ liệu đi NGƯỢC so với ba job kia.** Runner GitHub Actions không có
+  token Contentful (chỉ có `EXPIRE_OFFERS_SECRET`), nên nó gọi
+  `/api/offer-snapshot` để server đọc hộ rồi trả về. Lịch sử phải nằm trong
+  repo: route chạy trên Hostinger không sửa được file nguồn, và ổ đĩa của nó
+  dựng lại mỗi lần deploy. Đừng đề xuất "cho job tự ghi file".
+- **`/api/offer-snapshot` đọc qua CDA, không phải CMA**, và trả 500 khi danh
+  sách rỗng: rỗng gần như chắc chắn là Contentful lỗi, ghi nó vào lịch sử là
+  đè một ngày trống lên dữ liệu thật.
+- **`record-offer-history.mts` tự thử lại 3 lượt** (giãn 30s, timeout 60s mỗi
+  lượt), trừ 401. Job chạy ngày một lần và là chỗ DUY NHẤT ghi lịch sử: một
+  lượt hỏng thoáng qua mà con số kịp đổi lần nữa trước hôm sau là mất hẳn mức ở
+  giữa, không dựng lại được. Cùng lý do ba workflow kia gọi bằng `curl --retry`.
+- **Thẻ biến mất khỏi site KHÔNG bị xoá khỏi lịch sử** (có thể chỉ unpublish
+  tạm; lịch sử đã xoá thì không dựng lại được).
+- **`welcomeBonusPeak` im lặng nhiều hơn là nói.** Đòi ít nhất hai CON SỐ khác
+  nhau — đếm theo số chứ không theo nhãn, vì "70,000 điểm" sửa thành "Tối đa
+  70,000 điểm" là một dòng mới trong lịch sử nhưng vẫn đúng một mức, và đếm
+  theo nhãn thì một lần biên tập câu chữ đủ để trang bắt đầu tuyên bố "cao nhất
+  từng thấy" mà chưa từng thấy hai mức. Chỉ so những mốc CÙNG ĐƠN VỊ với mức
+  hiện tại (% / $ / điểm) — thẻ
+  cashback đổi từ "Hoàn tiền 15%" sang "$250" mà so thẳng 15 với 250 là một câu
+  về tiền nói sai. Ngày đầu bật tính năng, mọi thẻ chỉ có một mức nên KHÔNG thẻ
+  nào hiện dòng nào — đúng ý đồ, đừng "sửa" thành luôn hiện.
+- **Câu "từ khi theo dõi" lấy ngày ghi nhận ĐẦU TIÊN CỦA THẺ ĐÓ**
+  (`peak.trackedSince`), không lấy `since` của cả file: thẻ thêm vào tháng sau
+  mà nói theo `since` là nói quá thời gian đã quan sát nó.
+
 ## Chạy gì trước khi kết luận
 
 ```

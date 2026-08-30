@@ -1,0 +1,59 @@
+name: Ghi lịch sử welcome bonus và rebate
+
+# Giữ lại con số của từng thẻ mỗi lần nó đổi, để trang thẻ trả lời được câu
+# "70,000 điểm là mức cao hay mức thường?" — thứ mà cho tới giờ không chỗ nào
+# trên site trả lời được, vì `check-rebates` ghi đè số mới lên số cũ và
+# `expire-offers` viết lại copy.
+#
+# Cùng hình dạng với check-bank-rebates.yml: checkout repo, chạy script, commit
+# nếu file đổi. Lịch sử phải nằm trong repo — một route đang chạy trên Hostinger
+# không sửa được file nguồn, và ổ đĩa của nó dựng lại mỗi lần deploy.
+#
+# Chiều dữ liệu đi ngược so với ba job kia: runner KHÔNG có token Contentful
+# (chỉ có EXPIRE_OFFERS_SECRET), nên nó gọi `/api/offer-snapshot` để server đọc
+# hộ rồi trả về.
+on:
+  schedule:
+    # 9:00 UTC — sau check-rebates (8:30) và check-bank-rebates (8:45), để ảnh
+    # chụp hôm nay đã bao gồm mọi số mà hai job kia vừa cập nhật.
+    - cron: "0 9 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    permissions:
+      # Mặc định GITHUB_TOKEN chỉ đọc; job này phải đẩy commit lên main.
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Ghi lại số nào vừa đổi
+        env:
+          EXPIRE_OFFERS_SECRET: ${{ secrets.EXPIRE_OFFERS_SECRET }}
+        run: npm run record:offer-history
+
+      - name: Commit nếu lịch sử có dòng mới
+        run: |
+          if git diff --quiet -- data/offer-history.json; then
+            echo "Không có số nào đổi."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/offer-history.json
+          git commit -m "Ghi lịch sử offer: có số vừa đổi
+
+          Tự động bởi .github/workflows/offer-history.yml. Số lấy từ bản đang
+          phục vụ người đọc (CDA), không phải bản nháp trong Contentful."
+          # Rebase phòng khi có commit khác vào main trong lúc job chạy —
+          # không bao giờ force-push đè lên việc của người khác.
+          git pull --rebase origin main
+          git push origin HEAD:main
