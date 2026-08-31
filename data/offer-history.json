@@ -74,6 +74,11 @@
         "at": "2026-08-29",
         "welcomeBonus": "Hoàn tiền 15% (tối đa $300)",
         "rebate": "$150"
+      },
+      {
+        "at": "2026-08-31",
+        "welcomeBonus": "Cashback 15% (tối đa $300)",
+        "rebate": "$150"
       }
     ],
     "scotiabank-passport-visa-infinite": [
@@ -88,6 +93,11 @@
         "at": "2026-08-29",
         "welcomeBonus": "5,000 điểm Scene+™",
         "rebate": "$125"
+      },
+      {
+        "at": "2026-08-31",
+        "welcomeBonus": "5,000 điểm Scene+™",
+        "rebate": "$50"
       }
     ],
     "td-aeroplan-visa-infinite": [
