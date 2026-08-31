@@ -46,8 +46,17 @@ export function SiteSearch({ onOpen }: { onOpen?: () => void }) {
 
     let cancelled = false;
     fetch("/api/search")
-      .then((res) => res.json())
+      .then((res) => {
+        // `fetch` chỉ reject khi mạng hỏng — 500 hay 502 vẫn resolve bình
+        // thường. Không chặn ở đây thì `res.json()` trả một body lỗi,
+        // `data.items` là `undefined`, và `cachedItems` được gán `undefined`:
+        // ô tìm kiếm đứng mãi ở "đang tải" thay vì báo lỗi, mà nhánh `.catch`
+        // thì không bao giờ chạy nên `failed` cũng không bao giờ bật.
+        if (!res.ok) throw new Error(`search index: ${res.status}`);
+        return res.json();
+      })
       .then((data: { items: SearchItem[] }) => {
+        if (!Array.isArray(data?.items)) throw new Error("search index: thiếu items");
         cachedItems = data.items;
         if (!cancelled) {
           setFetched(data.items);
@@ -91,6 +100,27 @@ export function SiteSearch({ onOpen }: { onOpen?: () => void }) {
   }, [open]);
 
   const results = items ? searchItems(items, query) : [];
+
+  /**
+   * Câu đọc lên cho screen reader, TRỄ so với danh sách hiển thị.
+   *
+   * Vùng `aria-live` đổi theo từng ký tự thì mỗi phím gõ là một lượt đọc, và
+   * người dùng nghe "1 kết quả, 4 kết quả, 12 kết quả…" chồng lên nhau thay vì
+   * nghe câu trả lời. Chỉ TRÌ HOÃN phần thông báo — danh sách bên dưới vẫn lọc
+   * tức thì ở mỗi lần gõ, vì đó là thứ người nhìn cần.
+   */
+  const [announced, setAnnounced] = useState("");
+  const summary = !items
+    ? tSearch("loading")
+    : !query.trim()
+      ? ""
+      : tSearch("resultCount", { count: String(results.length) });
+
+  useEffect(() => {
+    if (!open) return;
+    const timer = window.setTimeout(() => setAnnounced(summary), 400);
+    return () => window.clearTimeout(timer);
+  }, [summary, open]);
 
   function toggle() {
     setOpen((wasOpen) => {
@@ -142,6 +172,15 @@ export function SiteSearch({ onOpen }: { onOpen?: () => void }) {
                 className="w-full bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground"
               />
             </form>
+
+            {/* Gõ xong thì danh sách bên dưới đổi, nhưng với người dùng screen
+                reader thì không có gì được đọc lên — họ gõ vào khoảng không.
+                Một dòng `role="status"` nói số kết quả là đủ; nó `sr-only` vì
+                người nhìn thấy đã có ngay danh sách. Cùng luật với kết quả gửi
+                form ở `NewsletterForm` và `ContactForm`. */}
+            <p className="sr-only" role="status" aria-live="polite">
+              {announced}
+            </p>
 
             <div className="mt-3">
               {failed && !items ? (

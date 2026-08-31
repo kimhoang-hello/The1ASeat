@@ -46,6 +46,10 @@ export interface CreditCardOffer {
   expiresAt?: string;
   applyUrl: string;
   rebate?: string;
+  /** `sys.updatedAt` của Contentful — dùng cho `lastmod` trong sitemap. Thẻ
+   *  không có `publishedAt` như bài viết, nên đây là ngày duy nhất nói được
+   *  trang này đổi lúc nào; welcome offer đổi thường xuyên hơn bài viết nhiều. */
+  updatedAt?: string;
 }
 
 export interface TransferBonus {

@@ -67,6 +67,8 @@ export async function OffersSection() {
                 }
                 className="h-32 w-full shrink-0 self-start rounded-xl sm:h-32 sm:w-40 xl:h-36 xl:w-44"
                 applyUrl={offer.applyUrl}
+                placement="home_offers"
+                product={offer.slug}
                 sizes="176px"
               />
 
@@ -102,7 +104,12 @@ export async function OffersSection() {
                 </details>
 
                 <div className="mt-auto pt-4">
-                  <ApplyButton href={offer.applyUrl} affiliate={isReferralUrl(offer.applyUrl)} />
+                  <ApplyButton
+                    href={offer.applyUrl}
+                    affiliate={isReferralUrl(offer.applyUrl)}
+                    placement="home_offers"
+                    product={offer.slug}
+                  />
                 </div>
               </div>
             </article>

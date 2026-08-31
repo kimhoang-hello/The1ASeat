@@ -68,8 +68,16 @@ function parseNumber(value: string): number | null {
   return negative ? -n : n;
 }
 
-function formatCents(valuePerPointInDollars: number): string {
-  return (valuePerPointInDollars * 100).toFixed(1);
+/** `null` khi con số không in ra được. Chốt `Number.isFinite` phải nằm SAU
+ *  phép nhân, không chỉ sau phép chia ở `valuePerPoint`: `1e308` là hữu hạn và
+ *  qua được chốt trên, nhưng `1e308 * 100` là `Infinity` và ô kết quả in
+ *  "Infinity¢" — đúng loại "con số trông như đã tính xong" mà cả hàm này lẫn
+ *  `parseNumber` sinh ra để chặn. Kiểm ở đây vì đây là chỗ cuối cùng con số
+ *  còn là số trước khi thành chữ. */
+function formatCents(valuePerPointInDollars: number): string | null {
+  const cents = valuePerPointInDollars * 100;
+  if (!Number.isFinite(cents)) return null;
+  return cents.toFixed(1);
 }
 
 /**
@@ -168,8 +176,16 @@ export function PointsCalculator({ cardProgramIds }: { cardProgramIds: string[] 
     const fees = parseNumber(taxes);
     if (p === null || cash === null || fees === null) return null;
     if (p <= 0 || cash < 0 || fees < 0) return null;
-    return Math.max(cash - fees, 0) / p;
+    const value = Math.max(cash - fees, 0) / p;
+    // `p > 0` chưa đủ: `p` nhỏ tới mức dưới ngưỡng biểu diễn của số thực làm
+    // phép chia tràn thành `Infinity`, và ô kết quả in ra "Infinity¢" — đúng
+    // loại "con số trông như đã tính xong" mà `null` ở trên sinh ra để chặn.
+    // Cùng luật với `parseNumber`: không tính được thì nói không tính được.
+    if (!Number.isFinite(value)) return null;
+    return value;
   }, [points, cashPrice, taxes]);
+
+  const cents = valuePerPoint === null ? null : formatCents(valuePerPoint);
 
   const selectedProgram = POINTS_PROGRAMS.find((p) => p.id === programId);
 
@@ -203,7 +219,12 @@ export function PointsCalculator({ cardProgramIds }: { cardProgramIds: string[] 
             {t("result")}
           </p>
           <p className="mt-1 font-display text-3xl font-extrabold text-primary">
-            {valuePerPoint === null ? t("resultUnavailable") : `${formatCents(valuePerPoint)}¢`}
+            {/* `cents` là null ở HAI ca khác nhau — không tính được, và tính
+                được nhưng không in ra được (tràn số ở phép nhân trong
+                `formatCents`). Cả hai đều phải ra cùng một dòng "không tính
+                được"; ghép chuỗi thẳng ở đây sẽ in ra "null¢", mà `tsc` không
+                bắt vì template literal nhận cả `null`. */}
+            {cents === null ? t("resultUnavailable") : `${cents}¢`}
           </p>
         </div>
 

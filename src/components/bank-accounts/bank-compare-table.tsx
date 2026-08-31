@@ -203,10 +203,17 @@ export function BankCompareTable({ accounts }: { accounts: BankAccount[] }) {
                     href={account.affiliateUrl ?? account.url}
                     affiliate={Boolean(account.affiliateUrl)}
                     className="w-full text-center"
+                    placement="account_compare"
+                    product={account.slug}
                   />
                   <Link
                     href={bankAccountPath(account.slug)}
-                    className="mt-2 block text-center text-sm font-semibold text-primary hover:underline"
+                    // `py-2.5` cho vùng chạm ~40px thay vì đúng một dòng chữ
+                    // 20px. Trong bảng cuộn ngang trên điện thoại, đây là
+                    // đường DUY NHẤT sang trang chi tiết mà không đi thẳng ra
+                    // link affiliate — hụt tay ở đây là bấm nhầm vào nút Apply
+                    // ngay bên trên.
+                    className="mt-1 block py-2.5 text-center text-sm font-semibold text-primary hover:underline"
                   >
                     {t("viewAccount")}
                   </Link>

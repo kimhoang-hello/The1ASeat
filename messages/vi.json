@@ -43,6 +43,7 @@
     "empty": "Không tìm thấy kết quả cho “{query}”.",
     "loading": "Đang tải dữ liệu tìm kiếm…",
     "error": "Không tải được dữ liệu tìm kiếm, vui lòng thử lại.",
+    "resultCount": "{count} kết quả",
     "kindCard": "Thẻ tín dụng",
     "kindAccount": "Tài khoản",
     "kindPost": "Bài viết",
@@ -339,8 +340,7 @@
     "optionDynamic": "Dynamic Pricing",
     "optionNoPrice": "Chương trình này không đưa giá cho hành trình đó",
     "medianLabel": "trung vị {points}",
-    "feederOnlyShort": "Cần nối chuyến nội địa",
-    "transferChipAria": "Xem thẻ tích {issuer}"
+    "feederOnlyShort": "Cần nối chuyến nội địa"
   },
   "compare": {
     "eyebrow": "CÔNG CỤ",

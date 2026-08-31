@@ -82,6 +82,16 @@ export function renderSubscriberEmailHtml({
   ctaHref,
   ctaLabel,
 }: SubscriberEmailOptions): string {
+  // `title` và `preheader` là chữ THƯỜNG, không phải markup — chúng đi thẳng
+  // từ `titleVi`/`excerptVi` của Contentful vào đây. `bodyHtml` thì ngược lại:
+  // nơi gọi đã tự dựng thẻ (và đã escape phần chữ của nó), nên không đụng tới.
+  //
+  // Không escape thì một dấu `<` hay `&` hợp lệ trong câu tiếng Việt ("gói dưới
+  // $100 & phí thấp") là đủ làm hỏng markup của email — mà email đã gửi thì
+  // không sửa lại được. `<title>` và khối preheader là hai chỗ duy nhất còn
+  // chèn thô; `escapeHtml` ngay bên trên đã dùng cho mọi chỗ khác.
+  const titleText = escapeHtml(title);
+  const preheaderText = escapeHtml(preheader);
   return `<!doctype html>
 <html lang="vi">
   <head>
@@ -89,7 +99,7 @@ export function renderSubscriberEmailHtml({
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light only" />
     <meta name="supported-color-schemes" content="light only" />
-    <title>${title}</title>
+    <title>${titleText}</title>
     <style>
       :root { color-scheme: light only; supported-color-schemes: light only; }
       [data-ogsc] .email-bg { background-color: #FAF6EC !important; }
@@ -101,7 +111,7 @@ export function renderSubscriberEmailHtml({
   </head>
   <body style="margin:0; padding:0; background-color:#FAF6EC;" class="email-bg">
     <div style="display:none; max-height:0; overflow:hidden; opacity:0;">
-      ${preheader}
+      ${preheaderText}
     </div>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#FAF6EC;" class="email-bg">
       <tr>

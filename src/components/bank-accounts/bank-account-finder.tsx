@@ -290,6 +290,8 @@ function AccountCard({ account }: { account: BankAccount }) {
         <ApplyButton
           href={account.affiliateUrl ?? account.url}
           affiliate={Boolean(account.affiliateUrl)}
+          placement="account_list"
+          product={account.slug}
         />
         <Link
           href={bankAccountPath(account.slug)}

@@ -150,6 +150,8 @@ export default async function CreditCardsPage({
                 }
                 className="h-32 w-full shrink-0 self-start rounded-xl sm:h-32 sm:w-40 xl:h-36 xl:w-44"
                 applyUrl={offer.applyUrl}
+                placement="card_list"
+                product={offer.slug}
                 sizes="176px"
               />
 
@@ -195,7 +197,12 @@ export default async function CreditCardsPage({
                   >
                     {offers_t("editorsTake")} &rarr;
                   </Link>
-                  <ApplyButton href={offer.applyUrl} affiliate={isReferralUrl(offer.applyUrl)} />
+                  <ApplyButton
+                    href={offer.applyUrl}
+                    affiliate={isReferralUrl(offer.applyUrl)}
+                    placement="card_list"
+                    product={offer.slug}
+                  />
                 </div>
               </div>
             </article>

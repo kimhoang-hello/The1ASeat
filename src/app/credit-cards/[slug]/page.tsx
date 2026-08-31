@@ -104,7 +104,9 @@ export default async function CreditCardDetailPage({
         }
         className="mt-6 h-56 w-full rounded-2xl"
         applyUrl={offer.applyUrl}
-        priority
+        placement="card_detail"
+        product={offer.slug}
+        preload
       />
 
       <div className="mt-6">
@@ -134,7 +136,13 @@ export default async function CreditCardDetailPage({
         ))}
       </ul>
 
-      <ApplyButton href={offer.applyUrl} affiliate={isReferralUrl(offer.applyUrl)} className="mt-8" />
+      <ApplyButton
+        href={offer.applyUrl}
+        affiliate={isReferralUrl(offer.applyUrl)}
+        className="mt-8"
+        placement="card_detail"
+        product={offer.slug}
+      />
 
       <OfferDisclosure className="mt-8" />
 

@@ -173,15 +173,47 @@ async function fetchVideoUrlsByState(
   return { published, unpublished };
 }
 
-function slugify(title: string): string {
+/**
+ * Contentful giới hạn `sys.id` ở 64 ký tự, và id ở đây là `post-` + slug.
+ * Slug cũ cắt ở 80 nên `post-` + 80 = 85: một video có tiêu đề dài là
+ * Contentful trả 422 và job đỏ cho video đó MÃI MÃI — không lượt chạy lại nào
+ * làm tiêu đề ngắn đi. Bài dài nhất đang có trên site là `post-…` 62 ký tự,
+ * tức là chỗ trống chỉ còn 2 — không phải một ca lý thuyết.
+ */
+const MAX_ENTRY_ID = 64;
+const ENTRY_ID_PREFIX = "post-";
+const MAX_SLUG = MAX_ENTRY_ID - ENTRY_ID_PREFIX.length;
+
+function slugify(title: string, maxLength = MAX_SLUG): string {
   return title
     .normalize("NFKD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
-    .slice(0, 80)
+    .slice(0, maxLength)
     .replace(/-+$/g, "");
+}
+
+/**
+ * Id đó đã có ai đó dùng chưa.
+ *
+ * Vòng lọc trùng ở trên so theo `videoUrl`, nên nó KHÔNG thấy những entry
+ * không có trường đó — tức là mọi bài viết chữ. Một video tên "Know Your
+ * Minimum" trùng slug với bài viết cùng tên là đủ để `PUT` trả 409 và video
+ * ấy không bao giờ lên được site, dù job có chạy lại bao nhiêu lần. Hỏi trước
+ * một lượt (chỉ tốn thêm một request, và chỉ khi thật sự sắp tạo entry mới)
+ * rồi đổi sang id mang videoId thì lượt sau tự đi tiếp.
+ */
+async function entryExists(
+  entryId: string,
+  cmaBase: string,
+  authHeaders: Record<string, string>,
+): Promise<boolean> {
+  const res = await fetch(`${cmaBase}/entries/${entryId}`, { headers: authHeaders });
+  if (res.status === 404) return false;
+  if (!res.ok) throw new Error(`check entry failed: ${res.status} ${await res.text()}`);
+  return true;
 }
 
 const HOTEL_KEYWORDS = [
@@ -208,12 +240,41 @@ function categorize(title: string): { categoryVi: string; categoryEn: string; ic
   return { categoryVi: "Đánh giá", categoryEn: "Review", icon: "airplane" };
 }
 
+/** Slug của video, đã tránh id đang có. Chỉ thêm videoId khi thật sự trùng —
+ *  URL công khai của bài nên đọc được, đuôi 11 ký tự chỉ là cái giá của ca
+ *  hiếm. Cắt phần chữ ngắn lại đúng bằng chỗ cái đuôi chiếm, để id vẫn nằm
+ *  trong 64 ký tự. */
+async function uniqueSlug(
+  video: VideoEntry,
+  cmaBase: string,
+  authHeaders: Record<string, string>,
+): Promise<string> {
+  const base = slugify(video.title);
+  if (!(await entryExists(`${ENTRY_ID_PREFIX}${base}`, cmaBase, authHeaders))) return base;
+
+  const suffix = `-${video.videoId}`;
+  const stem = base.slice(0, MAX_SLUG - suffix.length).replace(/-+$/g, "");
+  const fallback = `${stem}${suffix}`;
+  // Phải hỏi cả id dự phòng, không chỉ id gốc. `videoId` là duy nhất theo
+  // video nên id này gần như chắc chắn trống — nhưng "gần như" mà không kiểm
+  // thì lượt PUT vẫn 409 và job đỏ mãi, đúng cái vòng lặp mà hàm này sinh ra
+  // để cắt. Nếu nó cũng bận thì không còn tên nào tự nghĩ ra được: ném kèm
+  // đúng hai id đã thử, để người trực biết phải xoá hoặc đổi cái nào.
+  if (await entryExists(`${ENTRY_ID_PREFIX}${fallback}`, cmaBase, authHeaders)) {
+    throw new Error(
+      `cả hai id đều đã có trong Contentful: "${ENTRY_ID_PREFIX}${base}" và ` +
+        `"${ENTRY_ID_PREFIX}${fallback}" — xoá hoặc đổi slug entry đang chiếm chỗ`,
+    );
+  }
+  return fallback;
+}
+
 async function createVideoPost(
   video: VideoEntry,
   cmaBase: string,
   authHeaders: Record<string, string>,
 ): Promise<void> {
-  const slug = slugify(video.title);
+  const slug = await uniqueSlug(video, cmaBase, authHeaders);
   const { categoryVi, categoryEn, icon } = categorize(video.title);
   const excerpt = `Video mới từ Ghế 1A: ${video.title}.`;
   const body = {
@@ -242,7 +303,7 @@ async function createVideoPost(
     author: { [LOCALE]: "Hoàng" },
   };
 
-  const entryId = `post-${slug}`;
+  const entryId = `${ENTRY_ID_PREFIX}${slug}`;
   const createRes = await fetch(`${cmaBase}/entries/${entryId}`, {
     method: "PUT",
     headers: {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { clientIp, emailKey, rateLimit } from "@/lib/rate-limit";
 import { SITE_URL, emailParagraphStyle, renderSubscriberEmailHtml } from "@/lib/subscriber-email";
 import { START_HERE_PUBLISHED } from "@/lib/feature-flags";
 
@@ -9,6 +9,25 @@ const MAX_EMAIL_LENGTH = 254; // RFC 5321
 // second address for the family, and nothing beyond that.
 const LIMIT = 5;
 const WINDOW_MS = 60 * 60 * 1000;
+
+/**
+ * Xô thứ hai, khoá theo ĐỊA CHỈ ĐÍCH thay vì theo IP.
+ *
+ * Xô theo IP dựa vào `X-Forwarded-For`, mà không ai ở đây kiểm chứng được
+ * proxy Hostinger ghi đè hay nối thêm header đó — nếu nó nối thêm thì phần tử
+ * đầu do client tự đặt, và xoay header là vượt được xô kia. Xô này không có
+ * cửa đó: khoá là địa chỉ email nằm trong body, tức là chính hộp thư sẽ nhận
+ * mail.
+ *
+ * NÓI ĐÚNG NÓ LÀM GÌ: đây là giới hạn THIỆT HẠI CHO MỘT NẠN NHÂN — dội bom
+ * một hộp thư cụ thể từ nhiều IP. Nó KHÔNG chặn được list-bombing (mỗi lần
+ * một địa chỉ khác nhau); việc đó cần thứ khác. Đừng ghi vào đâu là đã chống
+ * spam.
+ *
+ * Hai lượt cho mỗi địa chỉ: một lần đăng ký, cộng một lần nữa cho người bấm
+ * lại vì tưởng lần đầu hỏng.
+ */
+const EMAIL_LIMIT = 2;
 
 export async function POST(request: Request) {
   // Ahead of parsing: this endpoint has someone else's inbox on the other end
@@ -30,6 +49,18 @@ export async function POST(request: Request) {
 
   if (typeof email !== "string" || email.length > MAX_EMAIL_LENGTH || !EMAIL_RE.test(email)) {
     return NextResponse.json({ error: "invalid_email" }, { status: 400 });
+  }
+
+  // Sau khi validate, không phải trước: khoá xô bằng một chuỗi tuỳ ý chưa
+  // kiểm thì mọi rác gửi lên đều thành một khoá. `emailKey` băm địa chỉ nên nó
+  // không còn đọc được trực tiếp trong bộ nhớ, và `rate-limit` có trần số khoá
+  // — xem chú thích ở cả hai chỗ đó, kể cả phần nói rõ chúng KHÔNG làm được gì.
+  const emailLimit = rateLimit(`subscribe:email:${emailKey(email)}`, EMAIL_LIMIT, WINDOW_MS);
+  if (!emailLimit.ok) {
+    return NextResponse.json(
+      { error: "rate_limited" },
+      { status: 429, headers: { "Retry-After": String(emailLimit.retryAfter) } },
+    );
   }
 
   const apiKey = process.env.KIT_API_KEY;
@@ -97,6 +128,14 @@ const WELCOME_HTML = renderSubscriberEmailHtml({
 // Sends a one-off welcome email to the new subscriber via Resend, from
 // info@ghe1a.com. Best-effort: a failure here never fails the subscribe
 // request itself, since the Kit subscription above already succeeded.
+//
+// "Best effort" phải đúng cho CẢ lượt `fetch` NÉM, không chỉ lượt trả `!ok`.
+// Trước đây chỉ nhánh `!res.ok` được bắt, nên DNS hỏng hay đứt kết nối giữa
+// chừng là exception thoát khỏi route và người vừa đăng ký THÀNH CÔNG ở Kit
+// lại nhận màn hình lỗi. Họ gửi lại: Kit đã có họ nên không thêm gì, còn
+// Resend thì có thể đã nhận request đầu và mất đường trả lời — tức là email
+// chào mừng thứ hai. Nuốt lỗi ở đây và ghi log là cách duy nhất giữ đúng lời
+// hứa trong chính câu trên.
 async function sendWelcomeEmail(email: string): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -104,18 +143,22 @@ async function sendWelcomeEmail(email: string): Promise<void> {
     return;
   }
 
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      from: "Ghế 1A <info@ghe1a.com>",
-      to: email,
-      subject: WELCOME_SUBJECT,
-      html: WELCOME_HTML,
-    }),
-  });
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        from: "Ghế 1A <info@ghe1a.com>",
+        to: email,
+        subject: WELCOME_SUBJECT,
+        html: WELCOME_HTML,
+      }),
+    });
 
-  if (!res.ok) {
-    console.error("Welcome email failed", res.status, await res.text());
+    if (!res.ok) {
+      console.error("Welcome email failed", res.status, await res.text());
+    }
+  } catch (error) {
+    console.error("Welcome email threw", error);
   }
 }

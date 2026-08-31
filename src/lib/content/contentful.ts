@@ -33,12 +33,38 @@ const bodyOptions: Options = {
   renderNode: {
     [INLINES.HYPERLINK]: (node, next) => {
       const uri = String((node.data as { uri?: unknown }).uri ?? "");
+      const text = next(node.content);
+      // Ô nhập link của Contentful nhận chuỗi tự do, nên `javascript:` gõ vào
+      // đó sẽ chạy dưới origin ghe1a.com khi người đọc bấm — thân bài đi qua
+      // `dangerouslySetInnerHTML` ở `blog/[slug]`. Escape thuộc tính giữ được
+      // dấu nháy, KHÔNG giữ được scheme. Chỉ nhận scheme đọc được là link, còn
+      // lại trả về chữ trần: mất một cái link thì thấy ngay, còn giữ nó lại
+      // thì hỏng thầm lặng.
+      if (!isSafeHref(uri)) return text;
       const rel = relForUrl(uri);
       const attrs = rel ? ` target="_blank" rel="${rel}"` : "";
-      return `<a href="${escapeAttribute(uri)}"${attrs}>${next(node.content)}</a>`;
+      return `<a href="${escapeAttribute(uri)}"${attrs}>${text}</a>`;
     },
   },
 };
+
+/** `http(s)`, `mailto`, `tel`, và link nội bộ (`/…`, `#…`, `?…`). Mọi thứ khác
+ *  — kể cả `javascript:` và `data:` — không phải thứ một bài viết cần tới. */
+function isSafeHref(uri: string): boolean {
+  const trimmed = uri.trim();
+  if (!trimmed) return false;
+  // `//host/path` bắt đầu bằng `/` nhưng KHÔNG phải link nội bộ — nó là link
+  // ra ngoài mượn scheme của trang. Cho nó lọt qua nhánh "nội bộ" thì
+  // `relForUrl` (chỉ khớp `^https?://`) trả `null`, nên một link referral viết
+  // kiểu đó ra site mà không có `sponsored` — đúng thứ `affiliate-links` sinh
+  // ra để không bao giờ xảy ra.
+  if (trimmed.startsWith("//")) return false;
+  if (/^[/#?]/.test(trimmed)) return true;
+  // Ký tự điều khiển nhét giữa scheme (`java\0script:`) là cách cũ để lách
+  // phép so scheme, nên bỏ chúng TRƯỚC khi so, không phải sau.
+  const cleaned = trimmed.replace(/[\u0000-\u001F\u007F]/g, "");
+  return /^(https?|mailto|tel):/i.test(cleaned);
+}
 
 export function renderPostBody(document: Document): string {
   return documentToHtmlString(document, bodyOptions);
@@ -164,6 +190,7 @@ function toCard(entry: Entry<CardSkeleton, undefined>): CreditCardOffer {
     expiresAt: f.expiresAt,
     applyUrl: f.applyUrl,
     rebate: f.rebateVi,
+    updatedAt: entry.sys.updatedAt,
   };
 }
 

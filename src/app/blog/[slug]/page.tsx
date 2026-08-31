@@ -9,6 +9,7 @@ import { MediaPlaceholder, type PlaceholderIcon } from "@/components/ui/media-pl
 import { getVideoEmbedUrl, getYouTubeThumbnailUrl, getYouTubeWatchUrl } from "@/lib/video-embed";
 import { CommentSection } from "@/components/blog/comment-section";
 import { PostCard } from "@/components/blog/post-card";
+import { AffiliateClickTracker } from "@/components/blog/affiliate-click-tracker";
 import { PostNextSteps } from "@/components/blog/post-next-steps";
 import { JsonLd } from "@/components/seo/json-ld";
 import { categoryPath, getRelatedPosts, lastModified, slugifyVi } from "@/lib/blog-categories";
@@ -142,7 +143,24 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </div>
       ) : post.coverPhoto ? (
         <div className="relative mt-6 h-56 w-full overflow-hidden rounded-2xl bg-primary sm:h-80">
-          <Image src={post.coverPhoto} alt={post.title} fill sizes="672px" className="object-cover" />
+          {/* `sizes` phải tả BỀ RỘNG ẢNH ĐƯỢC VẼ, không phải bề rộng tối đa
+              của bài. Khung là `max-w-2xl` (672px) TRỪ padding: 100vw−2rem
+              trên điện thoại, 608px từ `lg` trở lên. Bốn mốc là bốn khoảng
+              padding thật: `px-4` dưới 640, `px-6` từ 640, khung chạm trần
+              672px ở đúng 672px màn hình (100vw−48 = 624 từ đó trở đi), rồi
+              `px-8` từ 1024. Khai 672px trần thì máy 375px ở DPR 2 đi lấy
+              biến thể cho 1344px thay vì cho 686px — vài trăm KB cho một tấm
+              ảnh cao 224px.
+              `preload` vì đây là thứ lớn nhất trong màn hình đầu của một bài
+              viết chữ; trang thẻ đã làm đúng như vậy với ảnh thẻ. */}
+          <Image
+            src={post.coverPhoto}
+            alt={post.title}
+            fill
+            sizes="(min-width: 1024px) 608px, (min-width: 672px) 624px, (min-width: 640px) calc(100vw - 3rem), calc(100vw - 2rem)"
+            preload
+            className="object-cover"
+          />
         </div>
       ) : (
         <MediaPlaceholder
@@ -180,10 +198,16 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       {/* A link inside a heading would otherwise drop to the typography plugin's
           font-weight:500 and read thinner than the words around it, so headings
           keep their own weight and the underline does the work of saying "link". */}
+      {/* Thân bài GIỮ NGUYÊN là Server Component; `AffiliateClickTracker` đứng
+          riêng và chỉ nhận chuỗi slug. Lý do là ranh giới client, KHÔNG phải
+          số byte — xem chú thích trong chính component đó, chỗ đo được rằng
+          chuỗi thân bài nằm hai lần trong trang dù đi đường nào. */}
       <div
+        data-affiliate-scope="post-body"
         className="prose prose-neutral mt-8 max-w-none prose-headings:font-display prose-a:text-primary [&_:is(h1,h2,h3,h4)_a]:[font-weight:inherit]"
         dangerouslySetInnerHTML={{ __html: post.body }}
       />
+      <AffiliateClickTracker scope="post-body" slug={post.slug} />
 
       <PostNextSteps
         post={post}

@@ -245,6 +245,8 @@ export default async function BankAccountDetailPage({
         <ApplyButton
           href={account.affiliateUrl ?? account.url}
           affiliate={Boolean(account.affiliateUrl)}
+          placement="account_detail"
+          product={account.slug}
         />
       </div>
 

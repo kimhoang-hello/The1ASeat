@@ -25,7 +25,10 @@ import {
 } from "@phosphor-icons/react";
 import { SiteSearch } from "@/components/layout/site-search";
 import { COMPARE_PATH } from "@/lib/card-compare";
-import { BANK_COMPARE_PATH } from "@/lib/bank-compare";
+// Từ `bank-compare-path`, KHÔNG phải `bank-compare`: header là Client
+// Component trong layout gốc, mà `bank-compare` import cả `BANK_ACCOUNTS` —
+// đi đường đó là mọi trang tải thêm ~19 KB gzip dữ liệu ngân hàng.
+import { BANK_COMPARE_PATH } from "@/lib/bank-compare-path";
 import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
 import { t } from "@/lib/t";
 
@@ -537,7 +540,7 @@ export function SiteHeader() {
             height={480}
             sizes="40px"
             className="h-9 w-9 xl:h-10 xl:w-10"
-            priority
+            preload
           />
           {site("name")}
         </Link>
@@ -616,7 +619,11 @@ export function SiteHeader() {
             aria-label="Menu"
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
-            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-md text-foreground lg:hidden"
+            // 44px, không phải 40: đây là cửa DUY NHẤT vào điều hướng trên
+            // điện thoại, và PRODUCT.md ghi rõ có độc giả lớn tuổi. Nền chỉ
+            // hiện khi hover nên vùng chạm to ra mà trông không đổi; cỡ icon
+            // giữ nguyên.
+            className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-md text-foreground lg:hidden"
           >
             {open ? <X size={22} /> : <List size={22} />}
           </button>

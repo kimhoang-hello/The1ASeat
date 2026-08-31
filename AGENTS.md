@@ -363,10 +363,9 @@ có câu "grep lại" ở trên.)
   ba chỗ (`hero`, `page_cta`, `start_here`) và Kit chỉ đếm được tổng subscriber.
   Truyền tường minh, đừng suy từ `id` — `id` tồn tại để nối `<label for>`, đổi
   nó vì lý do accessibility mà làm gãy số đo là loại lỗi không ai nhận ra.
-- **`ApplyButton` vẫn CHƯA có event.** Click "Apply ngay" là thước đo thành công
-  còn lại trong PRODUCT.md và hiện không đo được ở đâu cả. Cố ý để ngoài vòng
-  30/08/2026 vì nó nằm trên mọi trang thẻ và đáng có vòng review riêng — việc
-  còn nợ, không phải việc đã cân nhắc rồi bỏ.
+- **`ApplyButton` ĐÃ có event** kể từ vòng 30/08/2026 bên dưới (`ApplyLink`,
+  `apply_clicked`). Mục này trước đây ghi "chưa có, việc còn nợ" — nợ đã trả,
+  xem mục "Đo click affiliate" ở phần vòng review 30/08/2026.
 - **Lộ trình bước 1 là DANH SÁCH SLUG VIẾT CỨNG** trong `lib/start-here.ts`
   (`FOUNDATION_SLUGS`), không còn lấy cả chuyên mục "Kiến thức" rồi đảo ngược.
   Cách cũ có hai lỗ: mọi bài Kiến thức đăng về sau tự động thành bước kế tiếp
@@ -442,6 +441,199 @@ chung chỉ tạo ra một hàm nhận năm tham số để tránh viết hai d�
 - **Trang so sánh tài khoản dùng chung cờ `BANK_ACCOUNTS_PUBLISHED`** với mục
   Ngân hàng. Hai thứ này không được lệch: một trang so sánh index được trong khi
   trang nó trỏ tới thì không là chuyện vô lý với cả Google lẫn người đọc.
+
+## Vòng review 30/08/2026 (toàn repo, 7 vòng Codex) — đừng đề xuất lại
+
+Vòng này khác các vòng trước ở chỗ Codex được dùng để BÁC BỎ chính bản vá của
+Claude, và nó bắt được 3/9 bản vá HỎNG ở vòng đầu, 3 lỗ nữa ở vòng sau. Không
+có mấy vòng đó thì cả sáu đã được push.
+
+**Đo click affiliate — `ApplyLink` (`components/ui/apply-link.tsx`).** Món nợ
+mà mục "`ApplyButton` vẫn CHƯA có event" ở trên nói tới, nay đã trả.
+- **`placement` và `product` là BẮT BUỘC ở cả `ApplyButton` lẫn `CardImage`**,
+  cùng luật với `source` của `NewsletterForm`. `CardImage` dùng
+  **discriminated union**, không phải hai prop optional có mặc định
+  `"unknown"`: prop optional cộng mặc định thì chỗ gọi mới quên truyền vẫn
+  build xanh và chỉ có số liệu âm thầm sai. Có `applyUrl` là buộc có hai prop
+  kia; không có `applyUrl` thì cấm truyền chúng.
+- **Vùng ảnh thẻ là ĐƯỜNG CLICK THỨ HAI** và phải đo bằng
+  `${placement}_image`. Bốn chỗ dùng `CardImage` với `applyUrl` đều thế.
+- **`onAuxClick` là bắt buộc, không phải chi tiết thừa.** Bấm nút giữa mở tab
+  mới phát `auxclick` chứ KHÔNG phát `click`: link vẫn mở, hoa hồng vẫn tính,
+  số đo mất. Chỉ nhận `button === 1` — chuột phải cũng là `auxclick` nhưng mở
+  menu ngữ cảnh thì chưa ai đi đâu cả.
+- **Thân bài blog là đường ra affiliate THỨ BA**, và là đường không có
+  component React nào để treo `onClick`: HTML dựng ở server rồi chèn bằng
+  `dangerouslySetInnerHTML`. `components/blog/affiliate-click-tracker.tsx` là
+  một component RENDER RA `null`, tìm phần tử qua `data-affiliate-scope` rồi uỷ
+  quyền sự kiện trên đó — nhờ vậy thân bài vẫn nằm trọn trong Server Component.
+  Nhận diện bằng **`a[rel~='sponsored']`**, KHÔNG bằng một danh sách host chép
+  lại: `relForUrl` trong `lib/affiliate-links.ts` là chốt duy nhất, bản sao thứ
+  hai sẽ lệch vào ngày thêm đối tác mới. Kiểm tại nguồn 30/08/2026: cả **5**
+  link trong thân bài của 36 bài đều có hoa hồng (FinlyWealth ×3, Chexy,
+  Neobanc) — doanh thu thật, không phải ca lý thuyết.
+  **ĐỪNG viết lại lý do thành "để khỏi gửi HTML hai lần" — đã đo và SAI:** trang
+  blog dựng sẵn chứa chuỗi thân bài đúng hai lần dù đi đường nào, vì RSC payload
+  phải mô tả cả prop `dangerouslySetInnerHTML` của Server Component. Cái được là
+  ranh giới client nhỏ hơn, không phải ít byte hơn.
+- Chưa làm: `placement`/`product` phải được đăng ký thành **event-scoped custom
+  dimension** trong GA4 Console thì báo cáo mới tách/gộp được. Việc đó nằm
+  ngoài repo.
+
+**`api/revalidate`: `"fetch_failed"` trả 502, KHÔNG phải 200.** Cùng nhánh với
+`false` và vì cùng lý do — lượt gọi CMA nằm trước `claimBroadcast` và trước mọi
+lời gọi Kit, nên chắc chắn chưa gửi gì và chưa giành chỗ; nó lại là lỗi thoáng
+qua (CMA 429/503) nên gọi lại là qua được. Trả 200 ở đây là bài viết đó mất
+bản tin VĨNH VIỄN: Contentful không gọi lại, còn `publishedCounter` sang lần
+publish sau đã là 2. Đúng một lần CMA nấc là một bài ra đời im lặng.
+
+**`api/subscribe` có HAI xô rate-limit.** Xô theo IP như cũ, cộng
+`subscribe:email:<email hạ chữ thường>` 2 lần/giờ, đặt SAU khi validate email
+(khoá bằng chuỗi chưa kiểm là cho người gọi tự sinh khoá bơm phình cái Map).
+Xô thứ hai là **giới hạn thiệt hại cho MỘT nạn nhân** — dội bom một hộp thư từ
+nhiều IP — và nó KHÔNG chặn list-bombing. Đừng ghi ở đâu là đã chống spam.
+`sendWelcomeEmail` nay bọc try/catch: "best effort" phải đúng cho cả lượt
+`fetch` NÉM, không chỉ lượt trả `!ok`.
+
+**`clientIp()` trong `lib/rate-limit.ts` VẪN lấy phần tử ĐẦU của
+`X-Forwarded-For`, và đây là việc CÒN TREO, không phải việc đã xong.** Nếu
+proxy Hostinger nối thêm thay vì ghi đè thì phần tử đầu do client tự đặt được,
+tức xoay header là vượt xô IP. Đã cân nhắc đổi sang phần tử CUỐI và **bác**:
+ca `người đọc → proxy công ty → Hostinger` cho ra `XFF: IP-người-đọc,
+IP-proxy-công-ty`, nên "cuối" chỉ thấy proxy và gộp cả CGNAT/VPN vào một xô —
+request thứ sáu của một người hợp lệ nhận 429. Cả hai lựa chọn đều có giá, và
+**không quyết được nếu chưa biết Hostinger làm gì**. Cách biết: xem raw header
+ở origin, hoặc hỏi Hostinger. (Có một phép thử gửi POST body hỏng tới
+`/api/contact` kèm XFF giả — route rate-limit TRƯỚC khi parse nên chỉ trả 400
+rồi 429, không gọi Resend — nhưng nó là POST vào production, phải hỏi tác giả
+trước.)
+
+**`lib/content/contentful.ts` lọc scheme của link rich text (`isSafeHref`).**
+Ô nhập link của Contentful nhận chuỗi tự do, mà thân bài đi qua
+`dangerouslySetInnerHTML`. Scheme lạ thì render CHỮ TRẦN, không phải `<a>`.
+**`//host/path` bị TỪ CHỐI dù nó bắt đầu bằng `/`** — nó là link ra ngoài mượn
+scheme của trang, và `relForUrl` (chỉ khớp `^https?://`) sẽ trả `null`, nên
+một link referral viết kiểu đó ra site mà không có `sponsored`. Kiểm tại nguồn:
+cả 5 link đang có đều `https:`, bản vá không làm mất link nào.
+
+**`api/sync-videos`: `sys.id` của Contentful tối đa 64 ký tự.** `post-` + slug
+cắt ở 80 ra 85 — một video tiêu đề dài là 422 và job đỏ cho video đó mãi mãi
+(bài dài nhất đang có là `post-…` 62 ký tự, chỗ trống còn 2). Slug nay cắt ở
+`64 - "post-".length`. `uniqueSlug()` hỏi trước rồi gắn `videoId` khi trùng, và
+**phải hỏi CẢ id dự phòng nó sắp trả về**, không chỉ id gốc. Vòng lọc trùng ở
+trên so theo `videoUrl` nên nó không thấy entry nào KHÔNG có trường đó — tức là
+mọi bài viết chữ; một video trùng tên với một bài viết là đủ để 409 mãi.
+
+**`lib/subscriber-email.ts` escape `title` và `preheader`.** Hai chỗ đó nhận
+chữ THƯỜNG (từ `titleVi`/`excerptVi`); `bodyHtml` thì ngược lại, nơi gọi đã tự
+dựng thẻ nên KHÔNG đụng tới. Một dấu `<` hay `&` hợp lệ trong câu tiếng Việt
+là đủ làm hỏng markup của email — mà email gửi rồi thì không sửa lại được.
+
+**`lib/bank-compare-path.ts` là module KHÔNG ĐƯỢC import gì.** `SiteHeader` là
+Client Component trong layout gốc nên có mặt trên mọi trang; nó chỉ cần một
+chuỗi, nhưng `bank-compare.ts` import `BANK_ACCOUNTS`, nên `/about`,
+`/terms`, `/calculator` đều tải **~19 KB gzip** dữ liệu tài khoản ngân hàng.
+Đo lại sau khi tách: chunk đó biến mất khỏi `/about`. Thêm một import vào file
+kia là mở lại đúng đường rò, và **sẽ không đỏ ở đâu cả**.
+
+**`priority` của `next/image` đã DEPRECATED ở Next 16 — dùng `preload`.**
+Truyền cả hai là ném lỗi. Đã đổi ở 4 chỗ.
+**`sizes` phải tả bề rộng ẢNH ĐƯỢC VẼ, không phải bề rộng tối đa của khung.**
+Ảnh cover bài blog khai `"672px"` trần trong khi khung là `max-w-2xl px-4
+sm:px-6 lg:px-8`, nên máy 375px ở DPR 2 đi lấy biến thể cho 1344px. Bốn mốc
+hiện tại là bốn khoảng padding thật (`px-4` <640, `px-6` ≥640, khung chạm trần
+672px ở đúng 672px màn hình, `px-8` ≥1024) — đừng rút gọn thành một con số.
+
+**`sitemap.ts`: trang thẻ có `lastmod` từ `sys.updatedAt`.** Trước đây 23 trang
+đổi nội dung thường xuyên nhất site lại là 23 trang duy nhất không nói được với
+crawler rằng chúng vừa đổi. Kiểm trước khi tin: `updatedAt` trải trên 4 ngày,
+revision 1–23 — là ngày thật, không phải job nào chạm mỗi ngày. Ngày không đọc
+được thì trả `undefined`, **không phải "bây giờ"**: khai một `lastmod` bịa còn
+tệ hơn không khai. **29 trang tài khoản ngân hàng vẫn KHÔNG có `lastmod`** —
+dữ liệu nằm trong file TS nên không có ngày nào để lấy; việc còn treo.
+
+**`site-search.tsx` kiểm `res.ok` trước `.json()`.** `fetch` chỉ reject khi
+mạng hỏng; 500 vẫn resolve, nên `data.items` là `undefined`, `cachedItems`
+được gán `undefined`, ô tìm kiếm đứng mãi ở "đang tải" mà nhánh `.catch` không
+bao giờ chạy. Thêm một `<p role="status" aria-live="polite" class="sr-only">`
+báo số kết quả — cùng luật với kết quả gửi form. Câu đó **trễ 400ms sau khi
+ngừng gõ**; danh sách hiển thị vẫn lọc tức thì. Không trễ thì mỗi phím gõ là
+một lượt đọc và người dùng nghe "1 kết quả, 4 kết quả, 12 kết quả…" chồng lên
+nhau thay vì nghe câu trả lời.
+
+**`points-calculator`: `Number.isFinite` phải kiểm ở HAI chỗ.** `p > 0` chưa
+đủ — `p` nhỏ dưới ngưỡng biểu diễn làm phép chia tràn thành `Infinity`. Nhưng
+chốt sau phép chia cũng chưa đủ: `1e308` là HỮU HẠN và qua được nó, rồi
+`formatCents` nhân 100 mới thành `Infinity`. Chốt thứ hai nằm trong
+`formatCents` (chỗ cuối cùng con số còn là số), và nó trả `null` — nơi gọi phải
+đổi ra dòng "không tính được", vì ghép chuỗi thẳng in ra "null¢" mà `tsc` không
+bắt (template literal nhận cả `null`).
+
+**Trần số khoá trong `lib/rate-limit.ts` (`MAX_WINDOWS`), và khi đầy thì dùng
+XÔ CHUNG — KHÔNG đuổi khoá nào.** Quét định kỳ chỉ dọn khoá ĐÃ hết hạn, mà khoá
+do người gọi tự sinh (IP trong `X-Forwarded-For`, địa chỉ email khác nhau) thì
+còn hạn suốt cửa sổ một giờ. Chạm trần thì khoá MỚI rơi vào `OVERFLOW_KEY` với
+ngân sách riêng; khoá ĐÃ CÓ vẫn đi đường bình thường.
+
+**Đã thử ĐUỔI khoá (FIFO) và BỎ — nó tệ hơn cả bản không có trần.** Đừng dựng
+lại. Với một botnet có 10,001 IP THẬT (không cần giả header), chúng bơm cho Map
+đầy rồi quay vòng đúng những IP vừa bị đuổi: mỗi lần bị đuổi là một cửa sổ mới,
+tức là mình tự reset giới hạn hộ chúng. Bản không trần giữ nguyên xô đó và chặn
+tới hết giờ. Mọi chính sách đuổi đều có tính chất này — ngẫu nhiên chỉ làm nó
+khó đoán hơn. (Lập luận "ai tạo được khoá tuỳ ý thì đã vượt được giới hạn rồi,
+đuổi không làm tệ hơn" ĐÚNG cho ca XFF giả được, nhưng SAI cho ca botnet IP
+thật. Đã tranh luận hai vòng mới ra.)
+Bản FIFO đầu tiên còn `sort` cả 10,000 phần tử mỗi lần chèn khi đầy — đo được
+~2.5ms/request, tức tự dựng một đường DoS mới ngay trong lớp chống lạm dụng.
+Cách hiện tại không đuổi, không sắp, không quét gì thêm.
+
+**Cái giá của xô chung, nói thẳng:** trong lúc bị bơm, một người đọc THẬT vừa
+tới cũng rơi vào xô chung và có thể bị chặn. Chấp nhận, vì hai lựa chọn kia
+tệ hơn: không trần thì bộ nhớ tăng tới OOM mà tiến trình này phục vụ CẢ SITE
+(mất form đăng ký còn hơn mất mọi trang), còn đuổi khoá thì như trên.
+
+**Khoá xô email là BĂM, không phải địa chỉ (`emailKey`).** Map sống trong bộ nhớ
+cả tiếng; thứ xô cần chỉ là "hai lần gửi này có cùng đích không", và một chuỗi
+băm trả lời y hệt mà không giữ lại dữ liệu cá nhân. Muối ngẫu nhiên mỗi lần khởi
+động, cố ý — nó không cần bền (restart là mất cả Map), và muối ngẫu nhiên thì
+không dò ngược được bằng cách băm thử một danh sách.
+Muối chỉ chặn dò ngược khi lộ chuỗi băm mà KHÔNG lộ muối (log, dump một phần);
+ai đọc được cả bộ nhớ tiến trình thì đọc được luôn `EMAIL_SALT`. Và đừng ghi
+rằng băm rồi là "hết dữ liệu cá nhân" — chuỗi băm vẫn là định danh giả danh ổn
+định suốt vòng đời tiến trình.
+`emailKey` HẠ CHỮ THƯỜNG TOÀN BỘ, kể cả local-part. RFC 5321 nói local-part CÓ
+THỂ phân biệt hoa/thường, nên đây là ĐÁNH ĐỔI chứ không phải một sự thật —
+đừng "sửa" thành chỉ hạ chữ thường phần domain: làm thế là đổi hoa/thường một
+chữ cái đã vượt được xô, đúng thứ nó sinh ra để chặn. Cái giá là trên một máy
+chủ thư hiếm hoi thật sự phân biệt hoa/thường, hai hộp thư dùng chung một xô và
+người thứ hai nhận 429 kèm `Retry-After`.
+
+**Vùng chạm (PRODUCT.md: độc giả lớn tuổi, mobile là mặt trận chính).** Nút
+menu mobile 40→44px (header cao 64px nên nới thẳng được). Link "xem chi tiết"
+trong hai bảng so sánh 20→40px: trên bảng cuộn ngang, đó là đường DUY NHẤT sang
+trang chi tiết mà không đi thẳng ra affiliate, hụt tay là bấm nhầm nút Apply
+ngay trên nó.
+
+**Trong dải offer, vùng chạm nới bằng `::before`, KHÔNG bằng `h-11 w-11`.** Dải
+cao `min-h-12` + `py-2`, nên một nút 44px THẬT đẩy chiều cao tối thiểu trên
+điện thoại từ 48px lên 60px — sửa một lỗi chạm bằng cách chiếm thêm một phần tư
+màn hình đầu. Pseudo-element nằm ngoài luồng bố cục: vùng chạm 44px, dải không
+cao thêm pixel nào. Nút "Xem offer" nới CHỈ THEO CHIỀU DỌC (`inset-x-0`, không
+phải `w-11`) để không chồm sang nút đóng bên cạnh.
+Từng lập luận "pill 28px không cần nới vì cụm bên trái đã là target lớn" —
+**SAI, đã bị bác**: cụm đó chỉ cao 32px (ảnh `h-8`), và một target khác cùng
+đích không làm cái pill này bấm trúng hơn.
+
+**`lib/finlywealth.ts`: so host chính xác, không `endsWith` trần.**
+`endsWith("finlywealth.com")` nhận cả `notfinlywealth.com` — đúng cái bẫy
+`isReferralUrl` đã vá. Host lạ lọt qua là `check-rebates` báo một con số rebate
+sai, mà rebate là tiền hiện cho người đọc.
+
+**`audit:trademarks` báo nhầm tên KIỂU TypeScript.** Nó học được cụm "Element"
+từ khách sạn Element® của Marriott®, và nó không phân biệt được
+`event.target as Element` với chữ hiện trên trang (nó chỉ tha `//` comment).
+Lookbehind của nó chặn khi có chữ cái đứng ngay trước, nên `HTMLElement` đi
+lọt. Gặp lại ca này thì đổi tên kiểu, đừng nới luật của audit.
 
 ## Chạy gì trước khi kết luận
 

@@ -23,7 +23,12 @@ export function finlyWealthRebateUrl(applyUrl: string): string | null {
     return null;
   }
 
-  if (!parsed.hostname.endsWith("finlywealth.com")) return null;
+  // `endsWith` trần cũng nhận "notfinlywealth.com" — cùng cái bẫy mà
+  // `isReferralUrl` trong `lib/affiliate-links` đã vá. Một host lạ lọt qua đây
+  // thì `check-rebates` đi đọc trang FinlyWealth của một đường dẫn không thuộc
+  // về nó và báo một con số rebate sai, mà rebate là tiền hiện cho người đọc.
+  const hostname = parsed.hostname.toLowerCase().replace(/\.$/, "");
+  if (hostname !== "finlywealth.com" && !hostname.endsWith(".finlywealth.com")) return null;
 
   const destination = parsed.searchParams.get("url");
   if (!destination || !destination.startsWith("/rebates/")) return null;

@@ -102,7 +102,18 @@ export async function POST(request: NextRequest) {
   // an toàn đúng ở nhánh này và chỉ ở nhánh này. Hai nhánh không chắc chắn —
   // `"notify_uncertain"` (Kit 5xx) và `"notify_failed"` (fetch ném) — vẫn trả
   // 200 và vẫn giữ chỗ: lúc đó không biết Kit đã nhận hay chưa.
-  const status = newPostNotified === false ? 502 : 200;
+  //
+  // `"fetch_failed"` đi CÙNG nhánh với `false`, và vì đúng cùng một lý do:
+  // lượt gọi CMA nằm TRƯỚC `claimBroadcast` và trước mọi lời gọi Kit, nên khi
+  // nó hỏng thì chắc chắn chưa có bản tin nào được tạo và chưa có chỗ nào bị
+  // giành. Nó cũng là lỗi THOÁNG QUA (CMA 429/503), khác hẳn
+  // `"not-configured"` hay `"missing_fields"` — gọi lại là qua được. Trả 200 ở
+  // đây là mất hẳn bản tin của bài đó: Contentful không gọi lại, còn
+  // `publishedCounter` thì sang lần publish sau đã là 2 nên `maybeNotifyNewPost`
+  // không bao giờ chạm tới Kit nữa. Đúng một lần CMA nấc là một bài viết ra
+  // đời im lặng.
+  const retrySafe = newPostNotified === false || newPostNotified === "fetch_failed";
+  const status = retrySafe ? 502 : 200;
   return NextResponse.json({ revalidated: true, hostingerCachePurged, newPostNotified }, { status });
 }
 

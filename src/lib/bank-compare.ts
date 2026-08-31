@@ -1,4 +1,5 @@
 import { BANK_ACCOUNTS, type BankAccount } from "./bank-accounts";
+import { BANK_COMPARE_PATH, BANK_COMPARE_PARAM, BANK_RESERVED_SLUG } from "./bank-compare-path";
 import {
   assertNoSlugClash as assertNoClash,
   compareHref,
@@ -8,15 +9,15 @@ import {
 
 export { MAX_COMPARE, MIN_COMPARE } from "./compare";
 
-/** Trang so sánh tài khoản. Route tĩnh nằm cạnh `/bank-accounts/[slug]`. */
-export const BANK_COMPARE_PATH = "/bank-accounts/so-sanh";
-
-/** Tên tham số trên URL, khớp với `?bank=`/`?filter=`/`?sort=` của trang danh
- *  sách: tiếng Anh, số nhiều. */
-export const BANK_COMPARE_PARAM = "accounts";
-
-/** Đoạn đường dẫn mà không tài khoản nào được phép mang làm slug. */
-export const BANK_RESERVED_SLUG = BANK_COMPARE_PATH.slice("/bank-accounts/".length);
+// Ba hằng số này sống ở `bank-compare-path.ts`, một module KHÔNG import gì —
+// xem chú thích ở đó. Chúng vẫn được re-export ở đây để mọi nơi đang đọc
+// chúng từ `bank-compare` không phải đổi; chỗ nào chỉ cần đường dẫn (menu,
+// sitemap) thì import thẳng module kia để khỏi kéo theo `BANK_ACCOUNTS`.
+export {
+  BANK_COMPARE_PATH,
+  BANK_COMPARE_PARAM,
+  BANK_RESERVED_SLUG,
+} from "./bank-compare-path";
 
 export function parseBankCompareSlugs(raw: string | string[] | undefined): BankAccount[] {
   return pickBySlugs(raw, BANK_ACCOUNTS);

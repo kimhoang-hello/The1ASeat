@@ -101,6 +101,8 @@ export function CompareTable({ cards }: { cards: CreditCardOffer[] }) {
                     className="h-32 w-40 rounded-xl"
                     sizes="160px"
                     applyUrl={card.applyUrl}
+                    placement="card_compare"
+                    product={card.slug}
                   />
                   <Link
                     href={`/credit-cards/${card.slug}`}
@@ -222,10 +224,17 @@ export function CompareTable({ cards }: { cards: CreditCardOffer[] }) {
                     href={card.applyUrl}
                     affiliate={isReferralUrl(card.applyUrl)}
                     className="w-full text-center"
+                    placement="card_compare"
+                    product={card.slug}
                   />
                   <Link
                     href={`/credit-cards/${card.slug}`}
-                    className="mt-2 block text-center text-sm font-semibold text-primary hover:underline"
+                    // `py-2.5` cho vùng chạm ~40px thay vì đúng một dòng chữ
+                    // 20px. Trong bảng cuộn ngang trên điện thoại, đây là
+                    // đường DUY NHẤT sang trang chi tiết mà không đi thẳng ra
+                    // link affiliate — hụt tay ở đây là bấm nhầm vào nút Apply
+                    // ngay bên trên.
+                    className="mt-1 block py-2.5 text-center text-sm font-semibold text-primary hover:underline"
                   >
                     {t("viewCard")}
                   </Link>

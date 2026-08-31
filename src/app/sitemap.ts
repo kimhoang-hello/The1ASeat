@@ -16,10 +16,37 @@ import { foundationLastModified } from "@/lib/start-here";
 // Keep the sitemap in step with the ISR window on the pages it lists.
 export const revalidate = 60;
 
+/** Chuỗi ngày nếu đọc được, `undefined` nếu không. `new Date("rác")` không ném,
+ *  nó trả `Invalid Date`, và một `lastmod` hỏng lọt vào sitemap thì không có
+ *  build nào đỏ — chỉ có Search Console báo lỗi vài ngày sau. */
+function validDate(iso: string | undefined): string | undefined {
+  if (!iso || Number.isNaN(new Date(iso).getTime())) return undefined;
+  return iso;
+}
+
+/** Ngày mới nhất trong danh sách, bỏ qua mọi ngày không đọc được — cùng lý do
+ *  `latestModified` phải bỏ qua `NaN`: `NaN > NaN` là false, nên một ngày hỏng
+ *  đứng đầu sẽ chặn mọi ngày hợp lệ đứng sau nó. */
+function latestDate(dates: (string | undefined)[]): string | undefined {
+  let best: string | undefined;
+  let bestAt = -Infinity;
+  for (const iso of dates) {
+    const valid = validDate(iso);
+    if (!valid) continue;
+    const at = new Date(valid).getTime();
+    if (at > bestAt) {
+      best = valid;
+      bestAt = at;
+    }
+  }
+  return best;
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [posts, offers] = await Promise.all([getPosts(), getCreditCardOffers()]);
 
   const categories = getCategories(posts);
+  const newestOffer = latestDate(offers.map((offer) => offer.updatedAt));
   // Lần SỬA gần nhất, không phải bài ĐĂNG gần nhất. `posts[0]` là bài có
   // `publishedAt` mới nhất; sửa một bài cũ sau khi đã đăng bài mới thì nội dung
   // của `/blog` đổi mà `lastmod` vẫn đứng yên, và crawler không có lý do quay
@@ -45,7 +72,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           },
         ] satisfies MetadataRoute.Sitemap)
       : []),
-    { url: absoluteUrl("/credit-cards"), changeFrequency: "weekly", priority: 0.9 },
+    {
+      url: absoluteUrl("/credit-cards"),
+      lastModified: newestOffer,
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
     // Chỉ trang trần. Mọi tổ hợp `?cards=` là cùng một công cụ và đều canonical
     // về đây, nên liệt kê từng tổ hợp là tự nộp cho Google hàng trăm URL trùng
     // nội dung.
@@ -88,8 +120,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  // `lastmod` của thẻ lấy `sys.updatedAt` của chính entry đó. Trước đây bỏ
+  // trống, nên 23 trang có nội dung đổi thường xuyên nhất trên site — welcome
+  // offer, ngày hết hạn, rebate — là 23 trang duy nhất không nói được với
+  // crawler rằng chúng vừa đổi.
+  //
+  // `undefined` khi ngày không đọc được, KHÔNG phải "bây giờ": khai một
+  // `lastmod` bịa còn tệ hơn không khai, vì crawler sẽ tin nó. Cùng luật với
+  // `latestModified` bên bài viết (`NaN` thì bỏ qua, đừng để lọt vào).
   const offerRoutes: MetadataRoute.Sitemap = offers.map((offer) => ({
     url: absoluteUrl(`/credit-cards/${offer.slug}`),
+    lastModified: validDate(offer.updatedAt),
     changeFrequency: "weekly",
     priority: 0.8,
   }));

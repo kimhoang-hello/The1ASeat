@@ -86,7 +86,14 @@ export function FeaturedOfferRotator({ offers }: { offers: FeaturedOffer[] }) {
 
         <Link
           href={href}
-          className="hidden shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-primary-foreground px-4 py-1.5 text-xs font-bold text-primary transition-opacity hover:opacity-90 sm:inline-flex"
+          // Cùng cách với nút đóng: pill vẫn cao 28px, vùng chạm 44px do
+          // `::before` phủ lên. Chỉ nới theo CHIỀU DỌC (`w-full`, không phải
+          // `w-11`) để không chồm sang nút đóng bên cạnh.
+          //
+          // Lập luận cũ "cụm bên trái đã là target lớn nên pill không cần" đã
+          // BỊ BÁC: cụm đó chỉ cao 32px (ảnh `h-8`), và một target khác cùng
+          // đích không làm cái pill này bấm trúng hơn.
+          className="relative hidden shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-primary-foreground px-4 py-1.5 text-xs font-bold text-primary transition-opacity before:absolute before:inset-x-0 before:top-1/2 before:h-11 before:-translate-y-1/2 before:content-[''] hover:opacity-90 sm:inline-flex"
         >
           {tBanner("cta")}
           <ArrowRight size={12} weight="bold" />
@@ -96,7 +103,14 @@ export function FeaturedOfferRotator({ offers }: { offers: FeaturedOffer[] }) {
           type="button"
           aria-label={tBanner("close")}
           onClick={() => setDismissed(true)}
-          className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-primary-foreground/70 transition-colors hover:bg-white/10 hover:text-primary-foreground"
+          // Vùng chạm 44px bằng PSEUDO-ELEMENT, không phải bằng `h-11 w-11`.
+          //
+          // Dải này cao `min-h-12` + `py-2`, nên một nút 44px thật đẩy chiều
+          // cao tối thiểu trên điện thoại từ 48px lên 60px — sửa một lỗi chạm
+          // bằng cách làm dải chiếm thêm một phần tư màn hình đầu. `::before`
+          // nằm ngoài luồng bố cục nên vùng chạm to ra mà dải không cao thêm
+          // một pixel nào. Nền tròn vẫn 32px và chỉ hiện khi hover.
+          className="relative flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-primary-foreground/70 transition-colors before:absolute before:left-1/2 before:top-1/2 before:h-11 before:w-11 before:-translate-x-1/2 before:-translate-y-1/2 before:content-[''] hover:bg-white/10 hover:text-primary-foreground"
         >
           <X size={16} weight="bold" />
         </button>
