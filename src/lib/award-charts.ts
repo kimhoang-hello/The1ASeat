@@ -578,7 +578,7 @@ export const PROGRAMS: Program[] = [
   {
     id: "flying-blue",
     name: "Air France KLM® Flying Blue®",
-    currency: "Flying Blue miles",
+    currency: "Flying Blue® miles",
     logo: "/images/logos/partners/flying-blue.jpg",
     pricing: {
       kind: "unquotable",
