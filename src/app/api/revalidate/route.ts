@@ -14,12 +14,51 @@ import {
 
 const LOCALE = "en-US";
 
+/**
+ * NGÂN SÁCH THỜI GIAN CHO CẢ ROUTE, không phải timeout cho từng lượt gọi.
+ *
+ * Contentful bỏ cuộc ở 30 giây, và một webhook bị TIMEOUT thì nó **không gọi
+ * lại** — khác hẳn 5xx, thứ nó thử lại hai lần nữa. Chính vì thế route này cố
+ * ý trả 502 khi purge hỏng: 502 thì được gọi lại, còn quá 30 giây thì không.
+ *
+ * Nhưng trước 31/08/2026 không lượt `fetch` nào ở đây có hạn giờ, mà `fetch`
+ * của Node không có timeout mặc định — nên ba lượt purge tuần tự cộng lượt đọc
+ * CMA cộng lượt gọi Kit có thể vượt 30 giây và cả webhook đó biến mất trong im
+ * lặng. Hậu quả không hồi lại được: CDN giữ HTML cũ, VÀ bài đầu tiên không có
+ * bản tin nào — `publishedCounter` sang 2 nên publish lại cũng không cứu, đúng
+ * như phần chú thích ở `maybeNotifyNewPost` đã ghi.
+ *
+ * Hạn CỨNG tính từ lúc nhận request, không phải tổng các timeout con: cộng
+ * timeout lại thì mỗi lần thêm một lượt gọi là phải ngồi tính lại tổng, và
+ * ngày ai đó quên là quay về đúng chỗ này. Mỗi `fetch` nhận phần thời gian nhỏ
+ * hơn giữa "hạn mức riêng của nó" và "còn lại bao nhiêu tới hạn chung".
+ *
+ * 25 giây chừa 5 giây cho phần Next tự làm và cho đường truyền về.
+ *
+ * CẮT NGANG LƯỢT GỌI KIT LÀ AN TOÀN: `fetch` bị abort thì ném, rơi vào
+ * `catch` ở POST và thành `"notify_failed"` — nhánh GIỮ chỗ đã giành và trả
+ * 200, tức là không có bản tin thứ hai. Đó đúng là cách route đối xử với mọi
+ * lượt không chắc chắn.
+ */
+const WEBHOOK_BUDGET_MS = 25_000;
+const PURGE_ATTEMPT_MS = 4_000;
+const CMA_MS = 5_000;
+const KIT_MS = 8_000;
+
+/** Hạn giờ cho một lượt gọi: nhỏ hơn giữa hạn riêng và phần còn lại của ngân sách. */
+function budgeted(deadline: number, want: number): AbortSignal {
+  return AbortSignal.timeout(Math.max(0, Math.min(want, deadline - Date.now())));
+}
+
 // Called by a Contentful webhook on publish/unpublish/delete so the site
 // updates immediately instead of waiting for the next code deploy or a
 // manual "Clear cache" click in the Hostinger dashboard. Also sends a Kit
 // newsletter broadcast the first time a "post"-type blogPost is published
 // (see maybeNotifyNewPost below).
 export async function POST(request: NextRequest) {
+  // Đặt mốc TRƯỚC mọi việc có thể chậm. Xem `WEBHOOK_BUDGET_MS`.
+  const deadline = Date.now() + WEBHOOK_BUDGET_MS;
+
   if (!jobSecretValid(request, process.env.REVALIDATE_SECRET)) {
     return NextResponse.json({ message: "Invalid secret" }, { status: 401 });
   }
@@ -41,7 +80,7 @@ export async function POST(request: NextRequest) {
   revalidateTag(CONTENTFUL_TAG, { expire: 0 });
   revalidatePath("/", "layout");
 
-  const hostingerCachePurged = await purgeHostingerCache();
+  const hostingerCachePurged = await purgeHostingerCache(deadline);
 
   // Kiểm tra purge TRƯỚC khi gọi Kit, không phải sau. Nếu để broadcast chạy
   // trước rồi mới phát hiện CDN bẩn thì route kẹt giữa hai đường: xin webhook
@@ -71,7 +110,7 @@ export async function POST(request: NextRequest) {
 
   if (hasPayload) {
     try {
-      newPostNotified = await maybeNotifyNewPost(payload);
+      newPostNotified = await maybeNotifyNewPost(payload, deadline);
     } catch {
       // Ném ra ở đâu thì không biết được: có thể Kit đã nhận broadcast rồi mới
       // mất response. Ghi thành trạng thái riêng chứ không để nguyên
@@ -117,7 +156,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ revalidated: true, hostingerCachePurged, newPostNotified }, { status });
 }
 
-async function purgeHostingerCache(): Promise<boolean | "not-configured"> {
+async function purgeHostingerCache(deadline: number): Promise<boolean | "not-configured"> {
   const token = process.env.HOSTINGER_API_TOKEN;
   const username = process.env.HOSTINGER_USERNAME;
   const domain = process.env.HOSTINGER_DOMAIN;
@@ -132,7 +171,11 @@ async function purgeHostingerCache(): Promise<boolean | "not-configured"> {
     try {
       const res = await fetch(
         `https://developers.hostinger.com/api/hosting/v1/accounts/${encodeURIComponent(username)}/websites/${encodeURIComponent(domain)}/cache/clear`,
-        { method: "DELETE", headers: { Authorization: `Bearer ${token}` } },
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+          signal: budgeted(deadline, PURGE_ATTEMPT_MS),
+        },
       );
       if (res.ok) return true;
     } catch {
@@ -171,17 +214,48 @@ interface ManagementEntry {
 // payload's `fields` are read straight off the trimmed request body above,
 // but the body text is long enough that fetching it fresh here is simpler
 // than trusting it survived the trimming too.
-async function fetchManagementEntry(entryId: string): Promise<ManagementEntry | "not-configured" | null> {
+async function fetchManagementEntry(
+  entryId: string,
+  deadline: number,
+): Promise<ManagementEntry | "not-configured" | null> {
   const spaceId = process.env.CONTENTFUL_SPACE_ID;
   const managementToken = process.env.CONTENTFUL_MANAGEMENT_TOKEN;
   if (!spaceId || !managementToken) return "not-configured";
 
-  const res = await fetch(
-    `https://api.contentful.com/spaces/${spaceId}/environments/master/entries/${entryId}`,
-    { headers: { Authorization: `Bearer ${managementToken}` }, cache: "no-store" },
-  );
-  if (!res.ok) return null;
-  return res.json();
+  // `null` cả khi `fetch` NÉM, không chỉ khi nó trả `!ok`.
+  //
+  // Người gọi ánh xạ `null` thành `"fetch_failed"`, và POST coi đó là nhánh
+  // XIN GỌI LẠI (502) — đúng, vì lượt gọi này nằm trước `claimBroadcast` nên
+  // chắc chắn chưa có bản tin nào được tạo. Không bắt ở đây thì exception bay
+  // lên `catch` của POST và thành `"notify_failed"`, tức là nhánh "không chắc
+  // chắn": trả 200, giữ chỗ, Contentful không gọi lại — và bài đó vĩnh viễn
+  // không có bản tin, vì `publishedCounter` sang lần publish sau đã là 2.
+  //
+  // Chuyện này quan trọng hơn hẳn từ khi lượt gọi có `AbortSignal`: hết giờ
+  // giờ là một exception THẬT SỰ XẢY RA, không còn là ca lý thuyết.
+  //
+  // `res.json()` PHẢI nằm trong cùng `try`. `await fetch` chỉ resolve khi
+  // headers về, còn body thì đọc sau — nên một entry có `bodyVi` dài, headers
+  // 200 ở giây thứ nhất rồi body chưa xong ở giây thứ năm, sẽ abort NGAY TẠI
+  // `res.json()`. Để nó ngoài `try` thì exception bay lên `catch` của POST và
+  // thành `"notify_failed"`: trả 200, Contentful không gọi lại, và bài đó mất
+  // bản tin vĩnh viễn — trong khi `claimBroadcast` còn chưa chạy và Kit còn
+  // chưa được gọi, tức là lượt này thừa an toàn để xin gọi lại. Đúng cái lỗi
+  // mà cả ngân sách thời gian này sinh ra để chặn.
+  try {
+    const res = await fetch(
+      `https://api.contentful.com/spaces/${spaceId}/environments/master/entries/${entryId}`,
+      {
+        headers: { Authorization: `Bearer ${managementToken}` },
+        cache: "no-store",
+        signal: budgeted(deadline, CMA_MS),
+      },
+    );
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -224,7 +298,7 @@ const NO_BROADCAST_CATEGORIES = new Set(["deals", "news"]);
 // Sends a Kit newsletter broadcast the first time a "post"-type blogPost
 // entry is published. Skips video posts and the categories above, and skips
 // edits/republishes of an already-published post.
-async function maybeNotifyNewPost(payload: unknown): Promise<boolean | string> {
+async function maybeNotifyNewPost(payload: unknown, deadline: number): Promise<boolean | string> {
   const entry = payload as ContentfulEntryPayload;
 
   if (entry?.sys?.contentType?.sys?.id !== "blogPost") return "not_blog_post";
@@ -235,7 +309,7 @@ async function maybeNotifyNewPost(payload: unknown): Promise<boolean | string> {
   const entryId = entry.sys?.id;
   if (!entryId) return "missing_entry_id";
 
-  const managementEntry = await fetchManagementEntry(entryId);
+  const managementEntry = await fetchManagementEntry(entryId, deadline);
   if (managementEntry === "not-configured") return "not-configured";
   if (!managementEntry) return "fetch_failed";
   if (managementEntry.sys?.publishedCounter !== 1) return "not_first_publish";
@@ -285,6 +359,7 @@ async function maybeNotifyNewPost(payload: unknown): Promise<boolean | string> {
   const res = await fetch("https://api.kit.com/v4/broadcasts", {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Kit-Api-Key": apiKey },
+    signal: budgeted(deadline, KIT_MS),
     body: JSON.stringify({
       email_address: "info@ghe1a.com",
       subject: title,

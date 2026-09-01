@@ -684,6 +684,34 @@ Contentful có khoảng trắng đầu lọt qua đó rồi trượt `^https?://
 feed thật của @HoangLeCA ngày 31/08/2026: **3/15 entry có
 `href="https://www.youtube.com/shorts/…"`**. Guard chạy đúng, giữ nguyên.
 
+## Ngân sách thời gian và phân trang (31/08/2026, đợt hai)
+
+**`api/revalidate` có HẠN CỨNG 25 giây cho cả route** (`WEBHOOK_BUDGET_MS`),
+mỗi `fetch` nhận phần nhỏ hơn giữa hạn riêng và phần còn lại. Contentful bỏ
+cuộc ở 30 giây và **không gọi lại webhook bị timeout** — khác 5xx (thử lại hai
+lần), nên đường "quá giờ" là đường mất bản tin vĩnh viễn. Đừng gỡ hạn này, và
+đừng cộng các timeout con lại thay cho hạn chung.
+
+**`res.json()` phải nằm TRONG cùng `try` với `fetch`.** `await fetch` chỉ
+resolve khi headers về; body đọc sau. Một entry `bodyVi` dài có thể abort ngay
+tại `res.json()`, và nếu chỗ đó nằm ngoài `try` thì exception thành
+`"notify_failed"` → 200 → Contentful không gọi lại → bài mất bản tin. Trong
+khi `claimBroadcast` còn chưa chạy, tức lượt đó thừa an toàn để xin gọi lại.
+
+**Không phân trang bằng `skip` ở `sync-videos` nữa.** Đã thử một cửa kiểm đếm
+số (`seen !== total` thì ném) và **nó không đủ**: đếm không kiểm được danh
+tính — xoá `A1` rồi thêm `B` giữa hai trang thì tổng vẫn khớp trong khi `A101`
+chưa từng được đọc. Đếm phần tử phân biệt cũng thế. Giờ là MỘT lượt gọi
+`limit=100`, và `total > 100` thì ném kèm hướng dẫn chuyển sang con trỏ mờ.
+
+**Draft video theo `sys.id`, KHÔNG theo `videoUrl`.** `videoUrl` là trường tuỳ
+chọn, nên một entry `type: video` chưa publish và chưa điền link là hợp lệ —
+lọc theo URL thì đúng những entry đó biến mất khỏi báo cáo. Và khi có draft
+thiếu URL thì job **bỏ hẳn vòng tạo entry** ở lượt đó: không đối chiếu được
+với feed nên `uniqueSlug` sẽ lùi sang id có `videoId` và publish một bài
+TRÙNG — báo lỗi sau đó không cứu được, vì thứ tự thực thi mới là thứ quyết
+định, không phải thứ tự trong báo cáo.
+
 ## Chạy gì trước khi kết luận
 
 ```

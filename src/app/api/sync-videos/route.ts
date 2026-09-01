@@ -14,6 +14,23 @@ interface VideoEntry {
   publishedAt: string;
 }
 
+/** Một entry video chưa publish, nhận diện theo `sys.id` chứ không theo URL —
+ *  xem lý do ở `fetchVideoUrlsByState`. */
+interface UnpublishedEntry {
+  id: string;
+  videoUrl?: string;
+}
+
+interface VideoEntryState {
+  /** URL đã có bài trên site — dùng để bỏ qua khi duyệt feed. */
+  published: Set<string>;
+  /** URL đã có entry nhưng chưa publish — dùng để KHÔNG tạo trùng. */
+  unpublished: Set<string>;
+  /** Mọi entry chưa publish, kể cả entry chưa điền `videoUrl`. Đây là thứ
+   *  vòng báo lỗi ở `handleSync` duyệt. */
+  unpublishedEntries: UnpublishedEntry[];
+}
+
 // POST only, cùng lý do với hai job kia: đây là route tạo entry trong
 // Contentful, không phải thứ để mở bằng browser.
 export async function POST(request: NextRequest) {
@@ -38,7 +55,7 @@ async function handleSync(request: NextRequest) {
   // Bắt ở đây để trả 500 kèm lý do đọc được trong runtime log, thay vì để
   // Next dựng trang lỗi chung chung.
   let videos: VideoEntry[];
-  let existing: { published: Set<string>; unpublished: Set<string> };
+  let existing: VideoEntryState;
   try {
     videos = await fetchLatestVideos();
     existing = await fetchVideoUrlsByState(cmaBase, authHeaders);
@@ -61,29 +78,76 @@ async function handleSync(request: NextRequest) {
   const created: string[] = [];
   const errors: { videoUrl: string; message: string }[] = [];
 
-  for (const video of videos) {
-    if (existing.published.has(video.videoUrl)) continue;
+  /**
+   * Draft video CHƯA ĐIỀN `videoUrl` thì khoá luôn vòng tạo entry.
+   *
+   * Draft như vậy không đối chiếu được với video nào trong feed — nó không có
+   * URL để so. Cứ tạo tiếp thì có đường ra một entry TRÙNG: draft đang chiếm
+   * id `post-<slug-theo-tiêu-đề>`, `uniqueSlug` thấy id đó bận nên lùi sang
+   * `post-<slug>-<videoId>`, rồi tạo và publish một bài thứ hai cho đúng video
+   * mà draft kia định nói tới. Báo lỗi ở vòng dưới KHÔNG cứu được, vì lúc đó
+   * entry trùng đã nằm trong Contentful rồi — thứ tự thực thi quyết định, chứ
+   * không phải thứ tự trong báo cáo.
+   *
+   * Giá phải trả: một draft bỏ quên làm video mới ngừng tự lên site cho tới
+   * khi có người dọn. Chấp nhận, vì đúng luật đã ghi trong AGENTS.md — mọi
+   * entry video chưa publish đều là trạng thái cần người nhìn, và job vốn đã
+   * đỏ trong trạng thái đó. Bài trùng đã publish thì phải gỡ tay ở cả
+   * Contentful lẫn site; một hôm không có video mới thì chỉ là chậm một hôm.
+   */
+  const draftsWithoutUrl = existing.unpublishedEntries.filter((draft) => !draft.videoUrl);
 
-    // Entry có nhưng chưa publish: lượt trước tạo được rồi publish hỏng, hoặc
-    // có người unpublish tay. Cả hai đều cần người nhìn, và cả hai đều phải
-    // giữ job đỏ ở những lượt sau — nếu không, `--retry` trong workflow chỉ
-    // cần chạy lại một lượt là biến lỗi thật thành xanh. Job cố ý KHÔNG tự
-    // publish: publish một entry là publish cả bản nháp trong đó.
-    if (existing.unpublished.has(video.videoUrl)) {
-      errors.push({
-        videoUrl: video.videoUrl,
-        message:
-          "entry đã có trong Contentful nhưng chưa publish — publish hoặc xoá tay, job không tự publish bản nháp",
-      });
-      continue;
-    }
+  if (draftsWithoutUrl.length === 0) {
+    for (const video of videos) {
+      if (existing.published.has(video.videoUrl)) continue;
 
-    try {
-      await createVideoPost(video, cmaBase, authHeaders);
-      created.push(video.videoUrl);
-    } catch (err) {
-      errors.push({ videoUrl: video.videoUrl, message: err instanceof Error ? err.message : String(err) });
+      // Entry đã có dưới dạng draft: đừng tạo lại. Việc BÁO nằm ở vòng riêng
+      // bên dưới — xem lý do ở đó.
+      if (existing.unpublished.has(video.videoUrl)) continue;
+
+      try {
+        await createVideoPost(video, cmaBase, authHeaders);
+        created.push(video.videoUrl);
+      } catch (err) {
+        errors.push({ videoUrl: video.videoUrl, message: err instanceof Error ? err.message : String(err) });
+      }
     }
+  } else {
+    errors.push({
+      videoUrl: "(không tạo entry nào ở lượt này)",
+      message:
+        `có ${draftsWithoutUrl.length} entry video chưa publish và chưa điền videoUrl` +
+        " — không đối chiếu được với feed nên job dừng tạo entry để khỏi sinh bài trùng;" +
+        " xử lý những entry bên dưới rồi chạy lại",
+    });
+  }
+
+  // MỌI entry video chưa publish, không chỉ những cái còn nằm trong feed.
+  //
+  // Trạng thái này sinh ra từ một lượt tạo được entry rồi publish hỏng, hoặc
+  // từ việc có người unpublish tay. AGENTS.md ghi rằng cả hai đều cần người
+  // nhìn nên job phải đỏ cho tới khi ai đó publish hoặc xoá — nhưng lời hứa đó
+  // trước 31/08/2026 chỉ đúng một nửa: phần báo lỗi nằm TRONG vòng lặp duyệt
+  // feed, mà feed YouTube chỉ trả 15 entry gần nhất. Một entry cũ bị unpublish
+  // tay, hoặc một entry publish hỏng rồi video trôi khỏi cửa sổ 15 cái đó, thì
+  // không lượt chạy nào duyệt tới nữa: `errors` rỗng, job trả 200, và video ấy
+  // vĩnh viễn không lên site mà không ai được báo. Đúng kiểu lỗi tự rửa mình
+  // mà `--retry` của workflow biến thành xanh.
+  //
+  // Duyệt thẳng `existing.unpublished` thì điều kiện không còn phụ thuộc vào
+  // feed, nên nó còn nguyên ở mọi lượt sau — đúng nguyên tắc "lỗi phải tự nhận
+  // ra được ở lượt chạy sau".
+  //
+  // Entry vừa tạo trong lượt này không bị đếm hai lần: `existing` được chụp
+  // TRƯỚC vòng lặp, còn một lượt `createVideoPost` publish hỏng thì đã tự đẩy
+  // lỗi của nó vào `errors` ở `catch` bên trên.
+  for (const draft of existing.unpublishedEntries) {
+    errors.push({
+      videoUrl: draft.videoUrl ?? "(entry chưa điền videoUrl)",
+      message:
+        `entry ${draft.id} đã có trong Contentful nhưng chưa publish` +
+        " — publish hoặc xoá tay, job không tự publish bản nháp",
+    });
   }
 
   // 200 chỉ khi thật sự không có lỗi nào: workflow gọi route này bằng
@@ -184,6 +248,34 @@ function decodeXmlEntities(value: string): string {
     .replace(/&#39;/g, "'");
 }
 
+/**
+ * MỘT lượt gọi, KHÔNG phân trang — và ném thẳng nếu một trang không đủ chứa.
+ *
+ * Bản trước phân trang bằng `skip`, và `skip` không khoá được vị trí khi tập
+ * dữ liệu đổi giữa hai lượt gọi: xoá một entry ở trang đầu là mọi entry sau
+ * dồn lên một chỗ, và cái nằm ngay ranh giới trang không bao giờ được đọc.
+ * Với vòng báo "mọi draft chưa publish" ở `handleSync`, một entry bị sót nghĩa
+ * là job trả 200 trong khi vẫn còn draft kẹt — đúng cái im lặng mà vòng ấy
+ * sinh ra để chấm dứt. Tệ hơn: nếu entry bị sót thuộc một video CÒN trong
+ * feed, route tưởng video chưa có entry và tạo thêm một bản trùng trong
+ * Contentful.
+ *
+ * ĐÃ THỬ VÀ ĐÃ BỎ một cửa kiểm đếm số (`seen !== total` thì ném). Nó không
+ * đủ, vì đếm không kiểm được DANH TÍNH: xoá `A1` rồi thêm `B` giữa hai trang
+ * thì tổng vẫn khớp trong khi `A101` chưa từng được đọc. Đếm phần tử phân
+ * biệt cũng không cứu — con số vẫn khớp. Mọi cửa kiểm dựa trên số lượng đều
+ * có tính chất này.
+ *
+ * Nên bỏ hẳn phân trang. Một trang 100 entry là ngưỡng ĐÃ KIỂM của CMA, và
+ * hiện có 25 entry video, nên lượt gọi này là một ảnh chụp nguyên tử — không
+ * còn khe hở nào giữa hai trang để mất entry. Ngày nào vượt 100 thì nó NÉM
+ * kèm hướng dẫn, chứ không âm thầm đọc thiếu: thà job đỏ và có người chuyển
+ * sang con trỏ mờ, còn hơn tự tin sai. (Chưa chuyển sẵn vì token quản trị
+ * trong `.env.local` đang hỏng nên không kiểm chứng được API con trỏ của CMA —
+ * đừng đoán mò một API mà không chạy thử được.)
+ */
+const LIST_LIMIT = 100;
+
 // Tách theo trạng thái publish, không gộp làm một. `createVideoPost` tạo entry
 // xong mới publish; nếu nửa sau hỏng thì entry vẫn nằm trong CMA dưới dạng
 // draft. Coi draft đó là "đã có" thì lượt chạy sau bỏ qua nó và trả 200 —
@@ -192,38 +284,56 @@ function decodeXmlEntities(value: string): string {
 async function fetchVideoUrlsByState(
   cmaBase: string,
   authHeaders: Record<string, string>,
-): Promise<{ published: Set<string>; unpublished: Set<string> }> {
+): Promise<VideoEntryState> {
   const published = new Set<string>();
   const unpublished = new Set<string>();
-  let skip = 0;
-  const limit = 100;
+  const unpublishedEntries: UnpublishedEntry[] = [];
 
-  for (;;) {
-    // Cùng lý do với feed YouTube: đây là lượt gọi ra ngoài thứ hai của job, và
-    // một cú 429/503 của Contentful cũng làm cả lượt chạy đỏ y như vậy.
-    const res = await fetchWithRetry(
-      `${cmaBase}/entries?content_type=blogPost&fields.type=video&skip=${skip}&limit=${limit}`,
-      { headers: authHeaders, cache: "no-store" },
-      "contentful list",
-    );
-    // Lượt gọi này hỏng mà nuốt đi thì set trả về rỗng, và `data.total ?? 0`
-    // cho 0 nên vòng lặp thoát ngay: mọi video thành "chưa có" và route đi
-    // tạo lại tất cả.
-    if (!res.ok) {
-      throw new Error(`contentful list failed: ${res.status} ${await res.text()}`);
-    }
-    const data = await res.json();
-    for (const item of data.items ?? []) {
-      const url = item.fields?.videoUrl?.[LOCALE];
-      if (!url) continue;
-      if (item.sys?.publishedVersion) published.add(url);
-      else unpublished.add(url);
-    }
-    skip += limit;
-    if (skip >= (data.total ?? 0)) break;
+  // Cùng lý do với feed YouTube: đây là lượt gọi ra ngoài thứ hai của job, và
+  // một cú 429/503 của Contentful cũng làm cả lượt chạy đỏ y như vậy.
+  const res = await fetchWithRetry(
+    `${cmaBase}/entries?content_type=blogPost&fields.type=video&limit=${LIST_LIMIT}`,
+    { headers: authHeaders, cache: "no-store" },
+    "contentful list",
+  );
+  // Lượt gọi này hỏng mà nuốt đi thì set trả về rỗng, và mọi video thành
+  // "chưa có" — route đi tạo lại tất cả.
+  if (!res.ok) {
+    throw new Error(`contentful list failed: ${res.status} ${await res.text()}`);
   }
 
-  return { published, unpublished };
+  const data = await res.json();
+  const total: number = data.total ?? 0;
+  if (total > LIST_LIMIT) {
+    throw new Error(
+      `contentful list: có ${total} entry video nhưng một lượt gọi chỉ lấy được ${LIST_LIMIT}` +
+        ` — phân trang bằng skip làm mất entry trong im lặng, phải chuyển sang con trỏ mờ của CMA`,
+    );
+  }
+
+  for (const item of data.items ?? []) {
+    const url: string | undefined = item.fields?.videoUrl?.[LOCALE];
+
+    // Chưa publish thì ghi lại theo `sys.id`, KHÔNG theo URL — và ghi cả khi
+    // chưa có `videoUrl`. `videoUrl` là trường TUỲ CHỌN trong content model
+    // (xem CONTENTFUL.md), nên một entry `type: video` còn dở, chưa điền link,
+    // là trạng thái hoàn toàn hợp lệ. Lọc theo URL như trước thì đúng những
+    // entry đó biến mất khỏi danh sách, `errors` rỗng và job trả 200 — trong
+    // khi vòng báo ở `handleSync` hứa là báo MỌI draft. Khoá theo `sys.id`
+    // cũng chữa luôn ca hai draft trùng `videoUrl`: `Set` gộp chúng làm một,
+    // còn danh sách theo id thì giữ đủ cả hai.
+    if (!item.sys?.publishedVersion) {
+      unpublishedEntries.push({ id: item.sys?.id ?? "(không có id)", videoUrl: url });
+    }
+
+    // Hai `Set` theo URL chỉ để đối chiếu với feed YouTube, nên entry không có
+    // URL thì không có gì để đối chiếu.
+    if (!url) continue;
+    if (item.sys?.publishedVersion) published.add(url);
+    else unpublished.add(url);
+  }
+
+  return { published, unpublished, unpublishedEntries };
 }
 
 /**
