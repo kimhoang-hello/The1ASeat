@@ -40,6 +40,31 @@ mà không giữ lại commit đó, `remove` không cứu được nó.
 Quyền tự commit + push ở dưới chỉ áp cho `main`. Trên nhánh `wt/*` thì commit
 bình thường, còn merge vào `main` là việc phải hỏi.
 
+# Đụng vào thẻ tín dụng thì chạy hai audit này
+
+Thêm thẻ mới, sửa offer, đổi link apply, sửa rebate — xong việc là chạy:
+
+    npm run audit:trademarks     # thiếu ®/™
+    npm run audit:rebate-prose   # badge rebate lệch số viết tay trong editor's take
+
+Cả hai bắt loại lỗi mà `lint`, `tsc` và `build` đều không thấy, vì lỗi nằm
+trong **nội dung Contentful** chứ không nằm trong code.
+
+`audit:rebate-prose` tồn tại vì con số rebate nằm ở HAI chỗ trên cùng một
+entry: field `rebateVi` (badge trên ảnh thẻ) và cùng con số đó viết tay trong
+câu "HOT TIP: … nhận thêm $140 rebate." của `editorsTakeVi`. Job hằng ngày
+`/api/check-rebates` giữ hai chỗ khớp nhau, nhưng chỉ vào lúc FinlyWealth đổi
+số — người gõ nhầm tay thì phải audit mới thấy. Rà tay 01/09/2026: 3 trong 10
+thẻ có rebate đang lệch, tệ nhất hứa dư $75 cho người đọc.
+
+`audit:trademarks` phải chạy **sau** khi sửa xong, không phải trước: nó tự học
+thương hiệu từ chính nội dung, nên một thẻ mới mang tên hãng mới vào site sẽ
+làm lộ ra mọi chỗ cũ đang viết trần. Thêm 2 thẻ CIBC® ngày 01/09/2026 làm nó
+báo 15 chỗ, trong đó 11 chỗ là hệ quả trực tiếp.
+
+Chi tiết và các audit còn lại: xem mục "Chạy gì trước khi kết luận" trong
+[AGENTS.md](AGENTS.md).
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

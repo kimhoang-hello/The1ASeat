@@ -763,12 +763,26 @@ npm run lint
 npx tsc --noEmit
 npm run build
 npm run audit:trademarks    # thiếu ®/™
-npm run audit:rebates       # số rebate lệch FinlyWealth
+npm run audit:rebates       # số rebate lệch FinlyWealth (tài khoản ngân hàng)
+npm run audit:rebate-prose  # badge rebate lệch số viết tay trong editor's take
 npm run audit:awards        # bảng award
 ```
 
 Bốn cái audit này bắt sẵn nhiều lớp lỗi lặp lại. Đừng báo lại thứ chúng đã bắt
 được.
+
+**`audit:rebate-prose` là bắt buộc mỗi khi đụng vào thẻ tín dụng**, kể cả khi
+chỉ thêm một thẻ mới. Con số rebate nằm ở HAI chỗ trên cùng một entry — field
+`rebateVi` (badge trên ảnh thẻ) và câu "HOT TIP: … nhận thêm $140 rebate."
+viết tay trong `editorsTakeVi` — và tới 01/09/2026 mới có thứ canh chỗ thứ
+hai. Rà tay hôm đó: 3 trong 10 thẻ có rebate đang lệch, tệ nhất là Scotiabank®
+Scene+™ Visa for Students hiện badge $50 trong khi editor's take hứa $125.
+Đây là tiền hứa với người đọc, và không lượt `lint`/`build` nào thấy được.
+
+Thêm `-- --fix` để sửa thẳng vào Contentful. Script cố ý KHÔNG tự sửa hai ca:
+thẻ không có `rebateVi` (không biết sửa thành số nào — nhiều khả năng link
+apply vừa đổi sang thẳng ngân hàng mà câu HOT TIP nằm lại) và entry đang có
+bản nháp chưa publish. Cả hai đều để lại exit 1 vì cần người nhìn.
 
 **Chạy `audit:trademarks` SAU khi sửa xong, không phải trước.** Ngày 30/08/2026
 nó bắt được hai chỗ thiếu ® nằm trong một comment JSX mới viết, ở lượt chạy sau
