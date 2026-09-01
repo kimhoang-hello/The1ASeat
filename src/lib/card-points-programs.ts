@@ -44,6 +44,9 @@ const PROGRAM_RULES: ProgramRule[] = [
   { id: "bonvoy", name: "Marriott Bonvoy®", pattern: /bonvoy/i },
   { id: "amex-mr", name: "Amex Membership Rewards®", pattern: /membership rewards|amex mr\b/i },
   { id: "avion", name: "RBC Avion®", pattern: /avion/i },
+  // Sau `avion` cho dễ đọc chứ không vì tranh chấp: "avion" và "aventura" chỉ
+  // chung ba chữ cái đầu, không chuỗi nào chứa chuỗi kia.
+  { id: "aventura", name: "CIBC Aventura®", pattern: /aventura/i },
   { id: "scene-plus", name: "Scene+™", pattern: /scene\s*\+/i },
   { id: "td-rewards", name: "TD Rewards", pattern: /td rewards/i },
   { id: "viporter", name: "VIPorter®", pattern: /viporter/i },
