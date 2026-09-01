@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cmaClient, field, listEntries, updateEntry } from "@/lib/contentful-cma";
+import { cmaClient, field, listEntries, LOCALE, updateEntry } from "@/lib/contentful-cma";
 import { fetchContentfulCreditCardOffers } from "@/lib/content/contentful";
 import { fetchFinlyWealthRebate, finlyWealthRebateUrl } from "@/lib/finlywealth";
 import { jobSecretValid } from "@/lib/job-auth";
 import { RESERVED_SLUG, slugClashMessage } from "@/lib/card-compare";
+import { rebateProseMismatches, rebateProsePatch } from "@/lib/rebate-prose";
 
 // Called daily (see .github/workflows/check-rebates.yml). FinlyWealth changes
 // its rebate amounts without warning — the BMO card went $125 -> $200 — and a
@@ -24,6 +25,8 @@ interface Change {
   slug: string;
   from: string | null;
   to: string;
+  /** Tên các trường chữ được sửa kèm, rỗng khi phần chữ vốn đã đúng. */
+  prose: string[];
 }
 
 async function handleCheck(request: NextRequest) {
@@ -53,7 +56,18 @@ async function handleCheck(request: NextRequest) {
   const published = new Map(
     (await fetchContentfulCreditCardOffers()).map((offer) => [
       offer.slug,
-      { rebate: offer.rebate ?? null, applyUrl: offer.applyUrl },
+      {
+        rebate: offer.rebate ?? null,
+        applyUrl: offer.applyUrl,
+        // Chữ hiển thị, để đối chiếu con số rebate viết tay trong câu HOT TIP.
+        // Lấy từ bản published vì đó là thứ người đọc đang nhìn thấy — bản
+        // draft có thể là câu tác giả đang viết dở, báo lỗi vào đó là báo sai.
+        prose: {
+          headlineVi: offer.headline,
+          editorsTakeVi: offer.editorsTake,
+          keyBenefitsVi: offer.keyBenefits,
+        } as Record<string, unknown>,
+      },
     ]),
   );
 
@@ -110,8 +124,15 @@ async function handleCheck(request: NextRequest) {
         continue;
       }
 
-      await updateEntry(client, entry, CONTENT_TYPE, { rebateVi: current });
-      updated.push({ slug, from: live, to: current });
+      // Sửa luôn con số viết tay trong phần chữ, TRONG CÙNG một lần ghi.
+      //
+      // Không tách thành lượt ghi thứ hai: `updateEntry` publish cả entry, nên
+      // hai lần ghi là hai lần publish, và nếu lần thứ hai hỏng thì site nằm
+      // lại ở đúng trạng thái mà chỗ này sinh ra để chặn — badge một số, câu
+      // HOT TIP một số khác. Gộp lại thì hai con số không bao giờ rời nhau.
+      const prose = rebateProsePatch(entry.fields, LOCALE, current);
+      await updateEntry(client, entry, CONTENT_TYPE, { ...prose, rebateVi: current });
+      updated.push({ slug, from: live, to: current, prose: Object.keys(prose) });
     } catch (err) {
       errors.push({ slug, message: err instanceof Error ? err.message : String(err) });
     }
@@ -154,6 +175,32 @@ async function handleCheck(request: NextRequest) {
       message:
         "thẻ trên site dùng link FinlyWealth nhưng không có entry nào khớp slug để kiểm — nhiều khả năng slug bị đổi trong bản nháp",
     });
+  }
+
+  // Lượt canh cuối: con số rebate viết tay trong phần chữ có khớp badge không.
+  //
+  // Nhánh tự sửa ở trên chỉ chạy khi FinlyWealth ĐỔI SỐ. Một thẻ giữ nguyên
+  // $50 suốt nửa năm mà có người gõ nhầm "$125 rebate" vào editor's take thì
+  // không lượt nào chạm tới — đúng chuyện đã xảy ra với Scotiabank® Scene+™
+  // Visa for Students, phát hiện ngày 01/09/2026 bằng cách rà tay.
+  //
+  // BÁO chứ không tự sửa, cùng lý do với hai nhánh trên: `updateEntry` publish
+  // cả entry. Ở đây còn thêm một lẽ nữa — khi hai con số đá nhau mà FinlyWealth
+  // không đổi gì, không suy ra được cái nào mới là cái đúng: có thể badge cũ,
+  // có thể câu chữ gõ nhầm. Đoán hộ là ghi đè lên chữ của tác giả.
+  //
+  // Bỏ qua thẻ vừa được sửa ở vòng trên: `published` là ảnh chụp TRƯỚC lần ghi
+  // đó, nên đọc nó sẽ báo lại đúng cái vừa vá xong.
+  for (const [slug, liveCard] of published) {
+    if (!liveCard.rebate) continue;
+    if (updated.some((change) => change.slug === slug)) continue;
+
+    for (const { field: name, found } of rebateProseMismatches(liveCard.prose, liveCard.rebate)) {
+      errors.push({
+        slug,
+        message: `badge hiện ${liveCard.rebate} nhưng ${name} viết "${found} rebate" — sửa cho khớp`,
+      });
+    }
   }
 
   // Gom lỗi vào body rồi vẫn trả 200 nghĩa là `curl -sfS` trong workflow thấy

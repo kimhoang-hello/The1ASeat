@@ -10,6 +10,7 @@
     "audit:awards": "tsx scripts/audit-award-charts.mts",
     "audit:trademarks": "node scripts/audit-trademarks.mjs",
     "audit:rebates": "tsx scripts/check-bank-rebates.mts",
+    "audit:rebate-prose": "tsx scripts/audit-rebate-prose.mts",
     "record:offer-history": "tsx scripts/record-offer-history.mts"
   },
   "dependencies": {

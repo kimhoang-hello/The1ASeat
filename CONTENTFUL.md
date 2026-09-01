@@ -74,6 +74,14 @@ Mẹo viết:
 | applyUrl       | Short text                    |
 | rebateVi       | Short text, optional — số tiền rebate FinlyWealth, hiện thành badge trên ảnh thẻ |
 
+> **`rebateVi` và câu HOT TIP phải khớp nhau.** Cùng con số rebate thường được
+> viết lại trong `editorsTakeVi` ("HOT TIP: Apply thẻ qua FinlyWealth để nhận
+> thêm $140 rebate."). Job hằng ngày `/api/check-rebates` giữ hai chỗ đó khớp
+> nhau và báo lỗi nếu bạn sửa tay một chỗ mà quên chỗ kia — kiểm ngay bằng
+> `npm run audit:rebate-prose` (thêm `-- --fix` để sửa luôn). Trước khi có
+> lượt canh này, thẻ Scotiabank® Scene+™ Visa for Students hiện badge $50 mà
+> editor's take vẫn hứa $125.
+
 ## `transferBonus`
 
 | Field ID     | Type                |

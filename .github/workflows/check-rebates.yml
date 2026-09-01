@@ -5,6 +5,16 @@ name: Check FinlyWealth rebate amounts
 # Contentful when it has changed. FinlyWealth moves these figures without
 # notice, and a rebate on the card that no longer matches what the reader
 # actually gets is worse than showing none.
+#
+# Route này canh HAI chỗ, vì con số rebate nằm ở hai chỗ: field `rebateVi`
+# (badge trên ảnh thẻ) và câu "HOT TIP: ... nhận thêm $140 rebate." viết tay
+# trong `editorsTakeVi`. Trước 01/09/2026 nó chỉ canh chỗ đầu, và chỗ thứ hai
+# trôi trong im lặng — đo hôm đó: 3/10 thẻ có rebate đang lệch, tệ nhất hứa dư
+# $75. Nay route vá phần chữ trong cùng lần ghi, và báo ra `errors` khi hai số
+# đá nhau mà FinlyWealth không đổi gì (ca gõ nhầm tay trong Contentful).
+#
+# Không cần thêm step nào ở đây: runner không có token Contentful, còn server
+# thì có. Bản chạy tay của cùng phép so là `npm run audit:rebate-prose`.
 on:
   schedule:
     - cron: "30 8 * * *"
