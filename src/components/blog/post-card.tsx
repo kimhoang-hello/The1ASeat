@@ -2,7 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import type { BlogPost } from "@/lib/content";
 import { formatDate } from "@/lib/format-date";
-import { getYouTubeThumbnailUrl } from "@/lib/video-embed";
+import { getYouTubeThumbnailFallbackUrl, getYouTubeThumbnailUrl } from "@/lib/video-embed";
+import { VideoThumbnail } from "@/components/blog/video-thumbnail";
 import { MediaPlaceholder, type PlaceholderIcon } from "@/components/ui/media-placeholder";
 import { t } from "@/lib/t";
 
@@ -24,8 +25,11 @@ export function PostCard({
   className?: string;
 }) {
   const Heading = headingLevel;
-  const thumbnail =
-    post.coverPhoto ?? (post.type === "video" ? getYouTubeThumbnailUrl(post.videoUrl ?? "") : null);
+  // Ảnh video có đường lùi riêng khi `maxresdefault` không tồn tại; ảnh do tác
+  // giả tải lên thì không cần, nó luôn có thật.
+  const videoThumbnail =
+    post.coverPhoto || post.type !== "video" ? null : getYouTubeThumbnailUrl(post.videoUrl ?? "");
+  const thumbnail = post.coverPhoto ?? videoThumbnail;
 
   return (
     <Link
@@ -34,7 +38,17 @@ export function PostCard({
     >
       {thumbnail ? (
         <div className="relative h-44 w-full overflow-hidden bg-primary">
-          <Image src={thumbnail} alt={post.title} fill sizes="384px" className="object-cover" />
+          {videoThumbnail ? (
+            <VideoThumbnail
+              src={videoThumbnail}
+              fallbackSrc={getYouTubeThumbnailFallbackUrl(post.videoUrl ?? "")}
+              alt={post.title}
+              sizes="384px"
+              className="object-cover"
+            />
+          ) : (
+            <Image src={thumbnail} alt={post.title} fill sizes="384px" className="object-cover" />
+          )}
         </div>
       ) : (
         <MediaPlaceholder

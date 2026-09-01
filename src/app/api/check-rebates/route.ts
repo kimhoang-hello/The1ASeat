@@ -122,7 +122,33 @@ async function handleCheck(request: NextRequest) {
   // thẻ đó ngừng được canh mà chẳng ai hay. Đối chiếu với bản published nên
   // lỗi còn nguyên ở mọi lượt sau, `--retry` không rửa thành xanh.
   for (const [slug, liveCard] of published) {
-    if (checkedSlugs.has(slug) || !finlyWealthRebateUrl(liveCard.applyUrl)) continue;
+    const onRebatePage = Boolean(finlyWealthRebateUrl(liveCard.applyUrl));
+
+    // Thẻ ĐANG HIỆN một con số rebate nhưng link apply không còn trỏ tới trang
+    // rebate nào — đổi sang link thẳng ngân hàng, hoặc sang một trang
+    // FinlyWealth không thuộc `/rebates/`.
+    //
+    // Trước 01/09/2026 trạng thái này rơi vào đúng hai khe hở cùng lúc: vòng
+    // lặp chính `continue` ngay khi `finlyWealthRebateUrl` trả `null`, và vòng
+    // đối chiếu này cũng bỏ qua vì cùng điều kiện. Không chỗ nào kiểm, job trả
+    // 200, còn trang thẻ thì vẫn in "+$200 REBATE" cho một con đường không còn
+    // trả đồng nào. Đó là tiền hứa với người đọc, đúng thứ cả route này sinh ra
+    // để canh.
+    //
+    // BÁO chứ không tự gỡ: `updateEntry` publish CẢ entry, nên tự xoá
+    // `rebateVi` là đẩy luôn phần tác giả đang viết dở lên site. Và không đoán
+    // được ý định — có thể link mới là nhầm, có thể con số mới là thứ quên xoá.
+    // Điều kiện này đọc từ bản ĐÃ PUBLISH nên còn nguyên ở mọi lượt sau,
+    // `--retry` của workflow không rửa được thành xanh.
+    if (!onRebatePage && liveCard.rebate) {
+      errors.push({
+        slug,
+        message: `site đang hiện rebate ${liveCard.rebate} nhưng link apply không trỏ tới trang /rebates/ nào — gỡ rebateVi hoặc sửa lại link`,
+      });
+      continue;
+    }
+
+    if (checkedSlugs.has(slug) || !onRebatePage) continue;
     errors.push({
       slug,
       message:

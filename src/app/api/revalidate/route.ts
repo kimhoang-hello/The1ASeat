@@ -99,6 +99,8 @@ export async function POST(request: NextRequest) {
   }
 
   let newPostNotified: boolean | string = "no_payload";
+  /** Slug của bài, chỉ để đưa vào dòng log `missed_first_publish` bên dưới. */
+  let missedPostLabel: string | undefined;
   let payload: unknown;
   let hasPayload = true;
   try {
@@ -109,6 +111,9 @@ export async function POST(request: NextRequest) {
   }
 
   if (hasPayload) {
+    const entry = payload as ContentfulEntryPayload;
+    missedPostLabel =
+      entry?.fields?.slug?.[LOCALE] ?? entry?.fields?.titleVi?.[LOCALE] ?? entry?.sys?.id;
     try {
       newPostNotified = await maybeNotifyNewPost(payload, deadline);
     } catch {
@@ -151,6 +156,23 @@ export async function POST(request: NextRequest) {
   // `publishedCounter` thì sang lần publish sau đã là 2 nên `maybeNotifyNewPost`
   // không bao giờ chạm tới Kit nữa. Đúng một lần CMA nấc là một bài viết ra
   // đời im lặng.
+  // Bài mới mà bản tin của nó đã rơi mất — xem `missedFirstPublish`. Không tự
+  // gửi bù, nhưng phải LOG: đây là thứ duy nhất báo cho người biết rằng có một
+  // bài ra đời im lặng, và việc cần làm (vào Kit gửi tay) là việc của người.
+  // `curl -f` trong workflow nuốt body, còn Contentful thì chỉ hiện status —
+  // nên runtime log của Hostinger là chỗ duy nhất đọc được.
+  if (newPostNotified === "missed_first_publish") {
+    // PHẢI nêu đích danh bài nào. Hai bài publish gần nhau sinh hai dòng log
+    // giống hệt nhau thì người trực không biết vào Kit tìm cái gì — mà đây là
+    // dòng duy nhất báo cho họ.
+    console.error(
+      `[revalidate] bài "${missedPostLabel ?? "(không đọc được slug)"}" có thể đã mất bản tin:` +
+        " entry vừa publish lần đầu trong 30 phút qua, publishedCounter đã > 1, và tiến trình này" +
+        " chưa gửi gì. KIỂM TRONG KIT TRƯỚC — nếu bản tin đã gửi rồi thì đây là báo thừa" +
+        " (tiến trình restart làm mất dấu); chưa có thì gửi tay.",
+    );
+  }
+
   const retrySafe = newPostNotified === false || newPostNotified === "fetch_failed";
   const status = retrySafe ? 502 : 200;
   return NextResponse.json({ revalidated: true, hostingerCachePurged, newPostNotified }, { status });
@@ -201,7 +223,13 @@ interface ContentfulEntryPayload {
 }
 
 interface ManagementEntry {
-  sys?: { publishedCounter?: number; version?: number; publishedVersion?: number };
+  sys?: {
+    publishedCounter?: number;
+    version?: number;
+    publishedVersion?: number;
+    /** Lần publish ĐẦU TIÊN của entry. Xem `missedFirstPublish`. */
+    firstPublishedAt?: string;
+  };
   fields?: { bodyVi?: Record<string, Document> };
 }
 
@@ -279,6 +307,13 @@ async function fetchManagementEntry(
 const broadcastClaims = new Map<string, number>();
 const CLAIM_TTL_MS = 30 * 60 * 1000;
 
+/** Chỗ này đã có người giành chưa — KHÔNG giành hộ. Dùng để phân biệt "mình
+ *  vừa gửi" với "chưa ai gửi", ở `missedFirstPublish`. */
+function hasBroadcastClaim(entryId: string): boolean {
+  const at = broadcastClaims.get(entryId);
+  return at !== undefined && Date.now() - at <= CLAIM_TTL_MS;
+}
+
 /** `true` nếu lượt này giành được quyền gửi; `false` nghĩa là đã có người gửi. */
 function claimBroadcast(entryId: string): boolean {
   const now = Date.now();
@@ -294,6 +329,58 @@ function claimBroadcast(entryId: string): boolean {
 // points-buy promos age out fast) and News (short reaction pieces to someone
 // else's announcement — they land on the site, not in everyone's inbox).
 const NO_BROADCAST_CATEGORIES = new Set(["deals", "news"]);
+
+/**
+ * Lượt này gần như chắc chắn là một bài MỚI mà bản tin của nó đã bị mất.
+ *
+ * CÁCH LỖI XẢY RA: chống trùng dựa vào `publishedCounter === 1`, mà con số đó
+ * là thuộc tính của ENTRY chứ không phải của lượt giao webhook. Tác giả bấm
+ * Publish, webhook thứ nhất bắt đầu chạy (purge CDN tới ba lượt, rồi mới đọc
+ * CMA); tác giả sửa một lỗi chính tả và Publish lần nữa TRƯỚC khi lượt đọc CMA
+ * kia diễn ra. Lúc đó cả hai webhook đều đọc ra `publishedCounter = 2`, cả hai
+ * cùng trả `not_first_publish`, và bài đó ra đời im lặng — không bản tin nào.
+ *
+ * VÌ SAO KHÔNG TỰ GỬI Ở ĐÂY, dù nghe hợp lý: mọi cách nới điều kiện gửi đều
+ * đổi một lỗi HỒI LẠI ĐƯỢC lấy một lỗi KHÔNG hồi lại được. Bản tin bị mất thì
+ * tác giả vào Kit bấm gửi tay; bản tin gửi trùng tới toàn bộ subscriber thì
+ * không rút lại được. Chốt chống trùng duy nhất đang có (`broadcastClaims`)
+ * nằm trong bộ nhớ tiến trình, nên nó không sống qua một lần restart — mà
+ * "restart giữa hai lượt giao" chính là ca này. Nới điều kiện ở đây là mở đúng
+ * cửa đó.
+ *
+ * Cách sửa THẬT cần một chỗ lưu bền để hỏi "bài này đã gửi bản tin chưa" —
+ * hoặc một trường trong Contentful, hoặc tra ngược danh sách broadcast của
+ * Kit. Cả hai đều ngoài phạm vi một bản vá không chạy thử được API.
+ *
+ * Nên ở đây chỉ LÀM CHO NÓ NHÌN THẤY ĐƯỢC. Ba dấu hiệu cùng lúc mới báo, để
+ * không kêu ở mọi lượt sửa bài bình thường:
+ * - `publishedCounter > 1` (đã ở nhánh `not_first_publish`),
+ * - `firstPublishedAt` mới trong vòng 30 phút — bài vừa ra đời, chứ không phải
+ *   bài cũ đang được biên tập lại,
+ * - tiến trình này KHÔNG giữ chỗ nào cho entry đó, tức là chính nó chưa gửi.
+ *
+ * Trả 200 chứ không 502: gọi lại bao nhiêu lần cũng không kéo `publishedCounter`
+ * về 1. Việc cần làm là một người vào Kit gửi tay, và dòng log dưới đây nói rõ
+ * bài nào.
+ */
+const FRESH_PUBLISH_MS = 30 * 60 * 1000;
+
+function missedFirstPublish(entry: ManagementEntry, entryId: string): boolean {
+  // `> 1`, không phải "khác 1". Người gọi vào đây từ nhánh
+  // `publishedCounter !== 1`, mà `undefined !== 1` cũng đúng — nên một response
+  // CMA thiếu trường sẽ đi thẳng vào cảnh báo dù không biết gì về entry.
+  const counter = entry.sys?.publishedCounter;
+  if (typeof counter !== "number" || counter <= 1) return false;
+
+  const firstPublishedAt = entry.sys?.firstPublishedAt;
+  if (!firstPublishedAt) return false;
+
+  const firstAt = new Date(firstPublishedAt).getTime();
+  if (!Number.isFinite(firstAt)) return false;
+  if (Date.now() - firstAt > FRESH_PUBLISH_MS) return false;
+
+  return !hasBroadcastClaim(entryId);
+}
 
 // Sends a Kit newsletter broadcast the first time a "post"-type blogPost
 // entry is published. Skips video posts and the categories above, and skips
@@ -312,7 +399,9 @@ async function maybeNotifyNewPost(payload: unknown, deadline: number): Promise<b
   const managementEntry = await fetchManagementEntry(entryId, deadline);
   if (managementEntry === "not-configured") return "not-configured";
   if (!managementEntry) return "fetch_failed";
-  if (managementEntry.sys?.publishedCounter !== 1) return "not_first_publish";
+  if (managementEntry.sys?.publishedCounter !== 1) {
+    return missedFirstPublish(managementEntry, entryId) ? "missed_first_publish" : "not_first_publish";
+  }
 
   // Payload webhook là ảnh chụp lúc Publish, còn lượt gọi CMA ở trên đọc TRẠNG
   // THÁI BÂY GIỜ — hai mốc thời gian khác nhau, và giữa chúng có ba lần thử

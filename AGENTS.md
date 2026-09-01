@@ -712,6 +712,50 @@ với feed nên `uniqueSlug` sẽ lùi sang id có `videoId` và publish một b
 TRÙNG — báo lỗi sau đó không cứu được, vì thứ tự thực thi mới là thứ quyết
 định, không phải thứ tự trong báo cáo.
 
+## Nội dung LLM, thumbnail, rebate mồ côi (01/09/2026)
+
+**`rewriteOfferCopy` có cửa kiểm con số, đừng gỡ.** `expire-offers` publish
+thẳng kết quả, không có người xem giữa hai bước — nên "ba trường không rỗng"
+là không đủ. `assertFiguresAreSourced` bắt mọi số tiền `$` và mọi số ≥1000
+trong bản viết phải khớp TRỌN VẸN một con số có thật trong `offerDetails` /
+`annualFee` / `rebate` / `name`, cộng ba cửa riêng cho câu HOT TIP. Ném thì
+thẻ vẫn rời tab elevated nhưng GIỮ `expiresAt` để lượt sau thử lại.
+
+Bốn cái bẫy đã vấp khi dựng cửa này, đừng dựng lại:
+- so bằng CHUỖI chữ số (`replace(/\D/g,"")`) làm `$1.25` bằng `$125`, và làm
+  `$1,000.00` khác `$1,000` — nhận nhầm một chiều, từ chối oan chiều kia. So
+  bằng GIÁ TRỊ SỐ.
+- so bằng một chuỗi nguồn GHÉP rồi `.includes()` — "50,000 … $3,000" thành
+  "500003000" nên số bịa "5000" khớp vắt qua ranh giới. So theo TẬP.
+- `if (hotTip && …)` — câu "HOT TIP - … $150" không đọc ra số nên phép so biến
+  mất, mà $150 lại là annual fee có thật. Có rebate thì BẮT BUỘC đọc ra được
+  số rồi mới so.
+- lookahead chặn phần dư phải là `(?!\d|[,.]\d)`, không phải `(?![\d,]|\.\d)`.
+  Bản sau chặn cả dấu phẩy CÂU VĂN, nên "Earn US$1,000, when…" biến mất khỏi
+  cả tập nguồn lẫn tập kiểm — hỏng cả hai chiều cùng lúc.
+
+Cửa này CỐ Ý không bắt: số viết bằng chữ, `70K`, `200 CAD`, `%`, `x`. Mỗi lần
+từ chối oan là một thẻ đỏ dai với copy đúng, nên nó là lưới bắt BỊA THÔ chứ
+không phải bằng chứng mọi số đều đúng.
+
+**Thumbnail YouTube: `maxresdefault` ở mọi nơi, `hqdefault` CHỈ làm đường lùi
+`onError` trên thẻ bài.** Đã thử hạ OG/JSON-LD/RSS xuống `hqdefault` cho chắc
+và ĐÃ ĐẢO LẠI: đó là 1280×720 → 480×360 cho mọi lượt chia sẻ của mọi video, để
+phòng một ca đang xảy ra ở 0/15 video. Video thật sự thiếu `maxres` thì lối
+thoát đã có sẵn — `coverPhoto` được ưu tiên ở cả bốn bề mặt.
+
+**`check-rebates` báo thẻ có `rebateVi` mà `applyUrl` không trỏ `/rebates/`.**
+Trạng thái đó trước đây rơi vào hai khe hở cùng lúc (vòng chính `continue`,
+vòng đối chiếu cũng `continue`), nên trang in "+$200 REBATE" cho một đường
+không còn trả đồng nào.
+
+**`api/revalidate` KHÔNG tự gửi bù bản tin đã mất.** Chỉ phát hiện
+(`publishedCounter > 1` + `firstPublishedAt` trong 30 phút + chưa giữ claim)
+rồi log kèm slug. Mọi cách nới điều kiện gửi đều đổi một lỗi hồi lại được
+(vào Kit gửi tay) lấy một lỗi không hồi lại được (gửi trùng toàn bộ
+subscriber), vì chốt chống trùng duy nhất nằm trong bộ nhớ tiến trình và
+không sống qua restart. Sửa thật cần một chỗ lưu bền.
+
 ## Chạy gì trước khi kết luận
 
 ```
