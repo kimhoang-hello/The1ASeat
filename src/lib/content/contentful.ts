@@ -41,9 +41,14 @@ const bodyOptions: Options = {
       // lại trả về chữ trần: mất một cái link thì thấy ngay, còn giữ nó lại
       // thì hỏng thầm lặng.
       if (!isSafeHref(uri)) return text;
-      const rel = relForUrl(uri);
+      // Một chuỗi duy nhất đi tiếp, đã trim. `isSafeHref` vốn đã trim trước khi
+      // duyệt, nên trước đây cửa an toàn phán trên chuỗi đã cắt còn `href` và
+      // `relForUrl` lại nhận chuỗi thô — ba cách đọc khác nhau cho cùng một
+      // link. Chốt lại ở đây để chúng không thể lệch nhau nữa.
+      const href = uri.trim();
+      const rel = relForUrl(href);
       const attrs = rel ? ` target="_blank" rel="${rel}"` : "";
-      return `<a href="${escapeAttribute(uri)}"${attrs}>${text}</a>`;
+      return `<a href="${escapeAttribute(href)}"${attrs}>${text}</a>`;
     },
   },
 };

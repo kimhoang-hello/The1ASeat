@@ -3,6 +3,7 @@ import {
   bankById,
   formatMoney,
   formatRate,
+  hasLiveBonus,
   type BankAccount,
 } from "./bank-accounts";
 import { absoluteUrl } from "./seo";
@@ -19,7 +20,22 @@ const bank_t = t("bankAccounts");
  */
 export function bankAccountDescription(account: BankAccount): string {
   const parts = [account.name + ":"];
-  if (account.bonusLabelVi) parts.push(seo("bankAccountBonus", { bonus: account.bonusLabelVi }));
+  // `hasLiveBonus` chứ không phải `bonusLabelVi` trần — cùng luật với `Headline`
+  // trong `bank-account-finder`, hero của trang riêng và bảng so sánh.
+  //
+  // Chuỗi này đi thẳng vào `<meta name="description">` VÀ vào `description` của
+  // JSON-LD BankAccount ngay bên dưới, tức là hai chỗ máy đọc. Chỉ kiểm nhãn
+  // thôi thì sau ngày hết hạn, trang giấu con số đi đúng như phải làm nhưng
+  // snippet trên Google và structured data vẫn hứa nó — chỗ duy nhất còn quảng
+  // cáo một khoản tiền không lấy được nữa, và cũng là chỗ khó thấy nhất vì
+  // không ai mở trang ra mà đọc thẻ meta. Cùng loại lỗi mà `isElevatedLive`
+  // đã đóng bên thẻ tín dụng.
+  //
+  // Mốc gần nhất: Simplii hết hạn 30/09/2026, rồi 11 tài khoản nữa trong
+  // tháng 10 và 11.
+  if (hasLiveBonus(account) && account.bonusLabelVi) {
+    parts.push(seo("bankAccountBonus", { bonus: account.bonusLabelVi }));
+  }
   if (account.interestRate !== undefined) {
     parts.push(seo("bankAccountRate", { rate: formatRate(account.interestRate) }));
   }

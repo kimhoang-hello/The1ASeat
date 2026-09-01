@@ -24,6 +24,59 @@ const next = translate("nextSteps");
 const VI_THOUSANDS = /^\d{1,3}(\.\d{3})+$/;
 
 /**
+ * Vế đối xứng của `VI_THOUSANDS`, cho DẤU PHẨY.
+ *
+ * Site viết số theo quy ước Anh — "110,000" là một trăm mười nghìn — nên dấu
+ * phẩy được bỏ đi để đọc số. Nhưng "bỏ MỌI dấu phẩy" thì "3,5" (ba phẩy năm,
+ * cách viết mặc định của người Việt) thành 35: sai đúng mười lần, và in ra
+ * "35.0¢" trông hoàn chỉnh y như một kết quả đúng. Đo trên trình duyệt
+ * 31/08/2026: `100 điểm / $3,5` ra 35.0¢ thay vì 3.5¢.
+ *
+ * Chỗ này đã có luật cho dấu chấm ("60.000" = sáu mươi nghìn) nhưng chưa có
+ * luật cho dấu phẩy, nên hai cách viết Việt Nam được đối xử khác nhau mà
+ * không vì lý do gì.
+ *
+ * Cách phân biệt: dấu phẩy ngăn nghìn LUÔN chia số thành từng nhóm ba chữ số.
+ * "110,000" và "1,000,000" khớp mẫu này; "3,5" và "12,45" thì không — chúng
+ * chỉ có thể là dấu thập phân.
+ *
+ * PHẦN THẬP PHÂN NẰM TRONG MẪU, không phải kiểm riêng. Bản đầu của bản vá này
+ * viết `^\d{1,3}(,\d{3})+$` rồi coi mọi thứ còn lại có dấu phẩy là số kiểu
+ * Việt Nam — và thế là "1,234.56", cách viết Anh hoàn toàn bình thường có CẢ
+ * nhóm nghìn LẪN phần thập phân, rơi thẳng vào `null`. Trước bản vá nó đọc
+ * đúng thành 1234.56. Codex bắt được ở vòng phản biện; đã tái hiện.
+ *
+ * NHÓM ĐẦU KHÔNG ĐƯỢC BẮT ĐẦU BẰNG 0. Không ai viết "0,001" để nói số 1, nên
+ * chuỗi đó không phải số nhóm nghìn kiểu Anh — mà bản trước lại khớp nó (`0` +
+ * `,001`) và đọc thành 1. Loại số 0 ở đầu ra thì nó rơi xuống hết các nhánh và
+ * thành `null`, tức "không đọc được": câu trả lời đúng cho một chuỗi mà cả hai
+ * cách hiểu đều không hợp lý.
+ */
+const EN_THOUSANDS = /^[1-9]\d{0,2}(,\d{3})+(\.\d+)?$/;
+
+/**
+ * Cách viết Việt Nam ĐẦY ĐỦ: dấu chấm ngăn nghìn VÀ dấu phẩy thập phân —
+ * "1.234,56", "60.000,5".
+ *
+ * Thiếu nhánh này thì hai quy ước bị đối xử lệch nhau: bản Anh có cả nhóm
+ * nghìn lẫn phần lẻ ("1,234.56") thì đọc được, còn bản Việt tương đương thì
+ * không. Trước mọi bản vá, "1.234,56" ra 1.23456 — một con số bịa hoàn toàn,
+ * in ra trông vẫn bình thường.
+ */
+const VN_FULL = /^\d{1,3}(\.\d{3})+,\d{1,2}$/;
+
+/**
+ * Dấu phẩy thập phân kiểu Việt Nam, KHÔNG kèm nhóm nghìn: "3,5", "12,45".
+ *
+ * Giới hạn 1–2 chữ số sau dấu phẩy là cố ý — đó là hình dạng của tiền.
+ * "1234,567" không phải nhóm nghìn hợp lệ (nhóm đầu phải ≤3 chữ số) mà cũng
+ * không giống phần lẻ của một khoản tiền, nên trả `null`. Đúng luật của cả
+ * hàm này: `null` nghĩa là "không đọc được", và im lặng đoán bừa một con số
+ * tiền mới là thứ phải tránh.
+ */
+const VI_DECIMAL = /^\d+,\d{1,2}$/;
+
+/**
  * `null` là "không đọc được", khác với 0. Ô trống vẫn là 0 — bỏ trống ô thuế
  * nghĩa là không có thuế, đó là ý người dùng. Nhưng gõ "abc" mà trả 0 thì máy
  * lặng lẽ tính như thể thuế bằng 0 và in ra 5.8¢: một con số trông hoàn toàn
@@ -57,7 +110,22 @@ function parseNumber(value: string): number | null {
   if (!/^-?[\d.,]+$/.test(normalized)) return null;
 
   const negative = normalized.startsWith("-");
-  let digits = (negative ? normalized.slice(1) : normalized).replace(/,/g, "");
+  let digits = negative ? normalized.slice(1) : normalized;
+
+  // Dấu phẩy: bỏ đi CHỈ KHI nó thật sự ngăn nghìn. Không khớp mẫu ba chữ số
+  // thì nó là dấu thập phân kiểu Việt Nam — đổi thành dấu chấm rồi để phần
+  // kiểm bên dưới xử lý như mọi số thập phân khác. Còn lại (nhiều dấu phẩy
+  // đặt lung tung, "1,2,3") là gõ nhầm, và `null` ở đây nghĩa là "không đọc
+  // được" chứ không phải một con số bịa ra — đúng luật của cả hàm này.
+  if (EN_THOUSANDS.test(digits)) {
+    digits = digits.replace(/,/g, "");
+  } else if (VN_FULL.test(digits)) {
+    digits = digits.replace(/\./g, "").replace(",", ".");
+  } else if (digits.includes(",")) {
+    if (!VI_DECIMAL.test(digits)) return null;
+    digits = digits.replace(",", ".");
+  }
+
   if (VI_THOUSANDS.test(digits)) digits = digits.replace(/\./g, "");
 
   // Tới đây chỉ còn chữ số và tối đa một dấu chấm thập phân. "3.5.7" rơi ở đây.

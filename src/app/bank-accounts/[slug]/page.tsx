@@ -216,7 +216,19 @@ export default async function BankAccountDetailPage({
       </ul>
 
       {/* Ở danh sách phần này phải bấm mới mở ra; ở đây nó là lý do người đọc
-          bấm vào, nên mở sẵn. */}
+          bấm vào, nên mở sẵn.
+
+          CỐ Ý KHÔNG gate theo `hasLiveBonus`, dù hero bên trên có. Đã thử và
+          đã bỏ ngày 31/08/2026: "bonus đóng với người mở mới" KHÔNG đồng nghĩa
+          "điều kiện hết tác dụng". Người mở Simplii trước 30/09 còn 120 ngày
+          để thiết lập direct deposit rồi duy trì tiếp ba tháng; người mở BMO®
+          trước 02/11 còn phải hoàn thành các bước tới 31/12. Giấu khối này đi
+          là cắt đúng hướng dẫn mà nhóm VẪN đủ điều kiện đang cần, và họ không
+          có chỗ nào khác để đọc nó. Dòng "Hết hạn <ngày>" ngay dưới đã nói rõ
+          offer không còn mở mới — đó mới là việc của nó.
+
+          Chỗ PHẢI gate là `bankAccountDescription` (meta + JSON-LD): thứ đó
+          nói với người CHƯA mở, qua kết quả tìm kiếm. */}
       {account.bonusConditionsVi && (
         <>
           <h2 className="mt-8 font-display text-xl font-bold text-foreground">

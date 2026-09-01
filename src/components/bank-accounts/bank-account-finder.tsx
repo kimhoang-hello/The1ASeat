@@ -257,6 +257,10 @@ function AccountCard({ account }: { account: BankAccount }) {
         ))}
       </ul>
 
+      {/* CỐ Ý không gate theo `hasLiveBonus` như `Headline` ở trên — xem lý do
+          đầy đủ ở khối cùng loại trong `bank-accounts/[slug]/page.tsx`: người
+          đã mở tài khoản trước hạn vẫn phải hoàn thành điều kiện sau hạn, và
+          đây là chỗ duy nhất họ đọc được các bước đó. */}
       {account.bonusConditionsVi && (
         <details className="group mt-3">
           <summary className="flex cursor-pointer list-none items-center gap-1 text-sm font-semibold text-foreground/80 hover:text-primary">

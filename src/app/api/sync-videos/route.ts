@@ -94,10 +94,60 @@ async function handleSync(request: NextRequest) {
   return NextResponse.json({ checked: videos.length, created, errors }, { status });
 }
 
+/**
+ * Một lượt GET có hạn giờ và có thử lại — cho nguồn NGOÀI tầm kiểm soát.
+ *
+ * VÌ SAO: job này đỏ ngắt quãng suốt 28–31/08/2026 (6 lượt fail xen giữa các
+ * lượt xanh, xem Actions). Đối chiếu feed với site thì cả 12 video thường
+ * trong feed đều đã publish — tức KHÔNG phải trạng thái "draft kẹt" mà route
+ * cố ý giữ đỏ, mà là một cú nấc thoáng qua của nguồn. Hai chữ ký khác nhau:
+ * 4 lượt fail nhanh (~0.5s, HTTP lỗi) và 3 lượt fail sau 19–21 phút (treo tới
+ * hết `--max-time 300` của curl, bốn lần).
+ *
+ * Hai chữ ký ứng với hai lỗ hổng ở đây, và cả hai đều được vá bằng một hàm:
+ * `fetch` của Node KHÔNG có timeout mặc định — một kết nối treo thì treo mãi
+ * — và route thì ném ngay ở lần hỏng đầu tiên, không thử lại lần nào. So với
+ * `purgeHostingerCache` trong `api/revalidate` (thử 3 lần) thì đây là chỗ
+ * đáng thử lại HƠN, vì nó gọi ra Google chứ không gọi vào hạ tầng của mình.
+ *
+ * KHÔNG che lỗi thật: hết lượt thử vẫn ném, kèm lý do của lượt cuối. Một
+ * nguồn hỏng dai vẫn làm job đỏ đúng như trước — chỉ khác là một cú nấc lẻ
+ * thì không.
+ *
+ * Ngân sách: 3 lượt × 10s + backoff 0.5s + 1s ≈ 31.5s tối đa, thừa chỗ trong
+ * `--max-time 300` của workflow.
+ */
+const FETCH_TIMEOUT_MS = 10_000;
+const FETCH_ATTEMPTS = 3;
+
+async function fetchWithRetry(url: string, init: RequestInit, label: string): Promise<Response> {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < FETCH_ATTEMPTS; attempt += 1) {
+    if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
+
+    try {
+      const res = await fetch(url, { ...init, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+      // 4xx là câu trả lời dứt khoát của máy chủ về chính request này — thử
+      // lại y hệt thì cũng chừng ấy. Chỉ 429 và 5xx mới đáng thử lại.
+      if (res.ok || (res.status < 500 && res.status !== 429)) return res;
+      lastError = new Error(`${label}: ${res.status} ${(await res.text()).slice(0, 200)}`);
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  throw lastError instanceof Error
+    ? new Error(`${label} hỏng sau ${FETCH_ATTEMPTS} lượt: ${lastError.message}`)
+    : new Error(`${label} hỏng sau ${FETCH_ATTEMPTS} lượt: ${String(lastError)}`);
+}
+
 async function fetchLatestVideos(): Promise<VideoEntry[]> {
-  const res = await fetch(`https://www.youtube.com/feeds/videos.xml?channel_id=${YOUTUBE_CHANNEL_ID}`, {
-    cache: "no-store",
-  });
+  const res = await fetchWithRetry(
+    `https://www.youtube.com/feeds/videos.xml?channel_id=${YOUTUBE_CHANNEL_ID}`,
+    { cache: "no-store" },
+    "youtube feed",
+  );
   // Feed hỏng phải nổ, không được đọc thành "không có video mới". Trang lỗi
   // của Google là HTML không chứa <entry> nào, nên nếu không chặn ở đây thì
   // một feed 404 sẽ đi tiếp thành `{checked: 0}` và job vẫn xanh.
@@ -149,9 +199,12 @@ async function fetchVideoUrlsByState(
   const limit = 100;
 
   for (;;) {
-    const res = await fetch(
+    // Cùng lý do với feed YouTube: đây là lượt gọi ra ngoài thứ hai của job, và
+    // một cú 429/503 của Contentful cũng làm cả lượt chạy đỏ y như vậy.
+    const res = await fetchWithRetry(
       `${cmaBase}/entries?content_type=blogPost&fields.type=video&skip=${skip}&limit=${limit}`,
       { headers: authHeaders, cache: "no-store" },
+      "contentful list",
     );
     // Lượt gọi này hỏng mà nuốt đi thì set trả về rỗng, và `data.total ?? 0`
     // cho 0 nên vòng lặp thoát ngay: mọi video thành "chưa có" và route đi

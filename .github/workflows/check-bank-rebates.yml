@@ -42,7 +42,30 @@ jobs:
       - name: Đối chiếu rebate với FinlyWealth và sửa nếu lệch
         run: npm run audit:rebates -- --fix
 
+      # Chạy cả khi bước trên FAIL, vì hai việc ở đây độc lập với nhau và gộp
+      # chúng làm một thì hỏng theo hướng tệ nhất.
+      #
+      # Script exit 1 khi có BẤT KỲ trang nào không đọc được — và từ 31/08/2026
+      # nó ném ở nhiều nhánh hơn hẳn (5xx, <title> rỗng, tiêu đề lạ), đúng như
+      # phải thế: một lượt đọc hỏng không được phép biến thành lệnh xoá một con
+      # số tiền đang đúng. Nhưng nếu bước commit chỉ chạy khi bước trên xanh
+      # thì một trang FinlyWealth chập chờn trong 29 trang sẽ vứt luôn những
+      # con số ĐÃ sửa đúng của 28 trang kia — và nếu trang đó hỏng dai thì
+      # rebate không bao giờ được cập nhật nữa. Đó là đổi một lỗi hiếm lấy một
+      # lỗi thường trực.
+      #
+      # Tách ra: commit những gì sửa được, VÀ vẫn để job đỏ vì bước trên đã
+      # fail. Người trực thấy đỏ, mở log ra thấy trang nào không đọc được, còn
+      # phần đúng thì đã lên site. Trạng thái hỏng vẫn tự nhận ra được ở lượt
+      # sau vì tài khoản đó còn lệch — đúng nguyên tắc trong AGENTS.md.
+      #
+      # `!cancelled()` chứ KHÔNG phải `always()`: `always()` chạy cả khi
+      # workflow bị huỷ tay, nên một lượt cancel giữa chừng vẫn có thể đẩy
+      # commit lên main sau khi người ta đã bấm dừng — thứ tuyệt đối không nên
+      # xảy ra với một job tự push. `!cancelled()` chạy khi thành công hoặc khi
+      # thất bại, và im lặng khi bị huỷ.
       - name: Commit nếu có số nào đổi
+        if: ${{ !cancelled() }}
         run: |
           if git diff --quiet -- src/lib/bank-accounts.ts; then
             echo "Không có số nào đổi."

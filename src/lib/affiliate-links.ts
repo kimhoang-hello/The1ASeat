@@ -76,8 +76,23 @@ export function isReferralUrl(url: string): boolean {
   );
 }
 
-/** `null` for a same-site link, which needs neither a `rel` nor a new tab. */
+/**
+ * `null` for a same-site link, which needs neither a `rel` nor a new tab.
+ *
+ * TRIM TRƯỚC KHI KIỂM, vì phía gọi đã trim và ở đây thì chưa. `isSafeHref`
+ * trong `lib/content/contentful.ts` cắt khoảng trắng rồi mới duyệt scheme, nên
+ * một link biên tập viên dán vào Contentful kèm khoảng trắng đầu —
+ * `" https://finlywealth.com/…"` — đi qua được cửa đó. Rồi `^https?://` ở đây
+ * so trên chuỗi THÔ nên trượt, trả `null`, và link ra site không có
+ * `sponsored nofollow`, không `target="_blank"`, và `AffiliateClickTracker`
+ * (nhận diện bằng `rel~="sponsored"`) không đếm được cú bấm.
+ *
+ * Trình duyệt vẫn cắt khoảng trắng trong `href` nên người đọc vẫn tới đúng
+ * FinlyWealth — nghĩa là hỏng hoàn toàn im lặng: đúng thứ file này sinh ra để
+ * không bao giờ xảy ra. Cùng lỗi đó cũng có trong HTML bản tin.
+ */
 export function relForUrl(url: string): string | null {
-  if (!/^https?:\/\//i.test(url)) return null;
-  return isReferralUrl(url) ? AFFILIATE_REL : EDITORIAL_REL;
+  const trimmed = url.trim();
+  if (!/^https?:\/\//i.test(trimmed)) return null;
+  return isReferralUrl(trimmed) ? AFFILIATE_REL : EDITORIAL_REL;
 }

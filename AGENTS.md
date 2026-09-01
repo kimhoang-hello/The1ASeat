@@ -635,6 +635,55 @@ từ khách sạn Element® của Marriott®, và nó không phân biệt đư�
 Lookbehind của nó chặn khi có chữ cái đứng ngay trước, nên `HTMLElement` đi
 lọt. Gặp lại ca này thì đổi tên kiểu, đừng nới luật của audit.
 
+## Vòng debug toàn diện 31/08/2026 — đừng đề xuất lại
+
+Nền: `lint`, `tsc`, `build`, cả ba audit, crawl 114 route, 139 link nội bộ, 930
+URL `/_next/image`, console 16 trang, tràn ngang ở 375/768/1280 — **tất cả đều
+xanh, và site vẫn có 6 lỗi thật**. Đừng coi bộ kiểm đó là bằng chứng sạch.
+
+**`String.replace` với chuỗi thay thế chứa `$` — đã cắn.** Trong
+`check-bank-rebates.mts`, `source.replace(re, \`$1rebate: "${live}",\`)` với
+`live = "$100"` được đọc là: nhóm 1, chữ `rebate: "`, rồi `$10` (không có nhóm
+10 nên lùi về) → NHÓM 1 MỘT LẦN NỮA, rồi `00`. File thành TypeScript hỏng và
+workflow commit nó vào main. `$100` là số đang chạy của KOHO Everything Plan.
+**Luật:** ở mọi chỗ ghép con số tiền vào `replace`, dùng DẠNG HÀM.
+
+**Regex không được dùng làm ranh giới object trong `bank-accounts.ts`.** Bản
+`[\s\S]*?` trần đi xuyên qua `},` và sửa tài khoản kế tiếp; bản có rào
+`(?:(?!\n  \},)[\s\S])*?` chạy đúng nhưng chết ngay khi ai đó đổi thụt lề. Cách
+đang dùng là cắt chuỗi bằng `indexOf` với ranh giới là `slug: "` của tài khoản
+sau — kiểm 31/08/2026: cả 29 lần xuất hiện của `slug: "` đều là đầu một khối,
+không có trong comment hay chuỗi lồng.
+
+**FinlyWealth trả 200 kèm `<title>` RỖNG một cách ngẫu nhiên.** Đo được: 1
+trong 7 lượt gọi liên tiếp `koho-everything-plan`. Vì vậy `fetchRebate` NÉM ở
+mọi thứ không nhận ra được, và chỉ trả tín hiệu xoá khi tiêu đề đúng là "Not
+Found". Đừng gộp "không đọc được" với "rebate đã gỡ".
+
+**Bước commit của một job tự push dùng `if: ${{ !cancelled() }}`, KHÔNG phải
+`always()`.** `always()` chạy cả khi workflow bị huỷ tay, nên một lượt cancel
+giữa chừng vẫn đẩy được commit lên main. Và đừng gộp nó trở lại làm điều kiện
+mặc định: một trang FinlyWealth chập chờn không được phép vứt những con số đã
+sửa đúng của 28 tài khoản kia.
+
+**Bonus tài khoản ngân hàng: gate ở meta/JSON-LD, KHÔNG gate ở khối điều
+kiện.** `bankAccountDescription` phải qua `hasLiveBonus` — nó nói với người
+CHƯA mở, qua snippet Google. Nhưng khối "Điều kiện nhận bonus" trên trang thì
+KHÔNG được giấu: người mở Simplii trước 30/09 còn 120 ngày để thiết lập direct
+deposit, người mở BMO® trước 02/11 còn phải hoàn thành các bước tới 31/12. Đã
+thử giấu và đã revert 31/08/2026.
+
+**`relForUrl` phải trim.** `isSafeHref` trim rồi mới duyệt scheme, nên link
+Contentful có khoảng trắng đầu lọt qua đó rồi trượt `^https?://` ở
+`relForUrl` — ra site không có `sponsored`, không `target="_blank"`, và
+`AffiliateClickTracker` không đếm. Trình duyệt vẫn cắt khoảng trắng nên người
+đọc không thấy gì bất thường.
+
+**Codex sai ở đâu (đừng nghe lại):** nó báo `block.includes("/shorts/")` trong
+`sync-videos` không nhận ra Shorts vì payload Atom "chỉ dùng `watch?v=`". Tải
+feed thật của @HoangLeCA ngày 31/08/2026: **3/15 entry có
+`href="https://www.youtube.com/shorts/…"`**. Guard chạy đúng, giữ nguyên.
+
 ## Chạy gì trước khi kết luận
 
 ```
