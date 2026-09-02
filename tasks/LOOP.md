@@ -3,6 +3,56 @@
 Nhật ký các phiên phát triển tự động. Ngắn gọn — chi tiết nằm trong từng file
 task ở [done/](done/) và [review/](review/).
 
+## 2026-09-02
+
+### Session
+
+Trigger: Scheduled
+
+### Completed
+
+Không có — backlog trống, không bịa task.
+
+### Blocked
+
+Không có.
+
+### Kiểm tra sức khoẻ repo
+
+Chạy đủ bộ gate trên `main` sạch tại commit `90b2dda`, tất cả đều xanh:
+
+| Gate | Kết quả |
+|---|---|
+| `npm run lint` | PASS |
+| `npx tsc --noEmit` | PASS |
+| `npm run build` | PASS |
+| `npm run audit:trademarks` | PASS — 0 chỗ thiếu ®/™ (140 cụm thương hiệu đã học) |
+| `npm run audit:rebates` | PASS — 29/29 tài khoản khớp FinlyWealth |
+| `npm run audit:awards` | PASS — 2016 quote / 8×14×3 combo |
+| Production (ghe1a.com) | `/`, `/credit-cards`, `/blog`, `/bank-accounts`, `/transfer-bonuses`, `/calculator`, `/credit-cards/so-sanh`, `/bank-accounts/so-sanh`, `/bat-dau` đều 200 |
+
+### Ghi nhận
+
+- `gh run list` 10 lượt gần nhất: chỉ một `sync-videos` đỏ (01/09 11:04 UTC),
+  các lượt trước và sau đều xanh — khớp mẫu lỗi mạng thoáng qua đã ghi nhiều
+  lần trong log, không phải lỗi code, không tạo task.
+- `audit:rebates` vẫn nhắc 10 tài khoản dùng link `/banking/` thay vì
+  `/rebates/` trả tiền cao hơn — đã ghi là lựa chọn của tác giả từ các phiên
+  trước, không lặp lại thành task.
+
+### Codex
+
+Không chạy — không có thay đổi code nào trong phiên này.
+
+### Commits
+
+- Cập nhật file log này.
+
+### Trạng thái cuối phiên
+
+IDLE. Backlog trống, repo sạch, mọi gate xanh, production khoẻ. Chờ task mới
+trong [backlog/](backlog/) hoặc lần chạy theo lịch kế tiếp.
+
 ## 2026-08-30
 
 ### Session
