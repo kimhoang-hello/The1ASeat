@@ -829,10 +829,20 @@ npm run audit:trademarks    # thiếu ®/™
 npm run audit:rebates       # số rebate lệch FinlyWealth (tài khoản ngân hàng)
 npm run audit:rebate-prose  # badge rebate lệch số viết tay trong editor's take
 npm run audit:awards        # bảng award
+npm run audit:health        # nội dung ĐANG PHỤC VỤ: offer chết còn treo, thẻ mất chip, sắp hết hạn
 ```
 
-Bốn cái audit này bắt sẵn nhiều lớp lỗi lặp lại. Đừng báo lại thứ chúng đã bắt
+Năm cái audit này bắt sẵn nhiều lớp lỗi lặp lại. Đừng báo lại thứ chúng đã bắt
 được.
+
+**`audit:health` soi trục khác hẳn bốn cái kia.** Bốn cái trên mỗi cái kiểm một
+thuộc tính hẹp của nội dung (ký hiệu ®/™, bảng giá, con số rebate). `audit:health`
+hỏi "hôm nay người đọc đang thấy gì": offer nào đã hết hạn mà job chưa gỡ, thẻ
+nào vừa thêm mà rơi khỏi mọi filter chip, bonus nào sắp chết, entry nào có draft
+lệch nên đang lặng lẽ rơi khỏi mọi job. Nó đọc qua CDA (bản đang phục vụ) chứ
+không phải CMA, nên một tác giả đang viết dở không làm nó đỏ. Sắp hết hạn và
+thiếu mô tả SEO chỉ in ra chứ KHÔNG exit 1 — đó là việc biên tập, và một job đỏ
+dai vì lý do đó thì chẳng mấy chốc không ai đọc nữa.
 
 **`audit:rebate-prose` là bắt buộc mỗi khi đụng vào thẻ tín dụng**, kể cả khi
 chỉ thêm một thẻ mới. Con số rebate nằm ở HAI chỗ trên cùng một entry — field
