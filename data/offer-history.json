@@ -17,6 +17,10 @@
       {
         "at": "2026-08-29",
         "welcomeBonus": "110,000 điểm Aeroplan®"
+      },
+      {
+        "at": "2026-09-02",
+        "welcomeBonus": "85,000 điểm Aeroplan®"
       }
     ],
     "amex-marriott-bonvoy": [
@@ -79,6 +83,11 @@
         "at": "2026-08-31",
         "welcomeBonus": "Cashback 15% (tối đa $300)",
         "rebate": "$150"
+      },
+      {
+        "at": "2026-09-02",
+        "welcomeBonus": "Cashback 15% (tối đa $300)",
+        "rebate": "$100"
       }
     ],
     "scotiabank-passport-visa-infinite": [
@@ -104,12 +113,20 @@
       {
         "at": "2026-08-29",
         "welcomeBonus": "40,000 điểm Aeroplan®"
+      },
+      {
+        "at": "2026-09-02",
+        "welcomeBonus": "50,000 điểm Aeroplan®"
       }
     ],
     "td-aeroplan-visa-infinite-privilege": [
       {
         "at": "2026-08-29",
         "welcomeBonus": "85,000 điểm Aeroplan®"
+      },
+      {
+        "at": "2026-09-02",
+        "welcomeBonus": "100,000 điểm Aeroplan®"
       }
     ],
     "td-aeroplan-visa-platinum": [
@@ -129,6 +146,11 @@
       {
         "at": "2026-08-29",
         "welcomeBonus": "146,000 điểm TD Rewards",
+        "rebate": "$140"
+      },
+      {
+        "at": "2026-09-02",
+        "welcomeBonus": "160,000 điểm TD Rewards",
         "rebate": "$140"
       }
     ],
@@ -154,6 +176,23 @@
         "at": "2026-08-29",
         "welcomeBonus": "70,000 điểm WestJet®",
         "rebate": "$50"
+      },
+      {
+        "at": "2026-09-02",
+        "welcomeBonus": "70,000 điểm WestJet®",
+        "rebate": "$140"
+      }
+    ],
+    "cibc-aventura-gold-visa": [
+      {
+        "at": "2026-09-02",
+        "welcomeBonus": "60,000 điểm Aventura®"
+      }
+    ],
+    "cibc-aventura-visa-infinite": [
+      {
+        "at": "2026-09-02",
+        "welcomeBonus": "60,000 điểm Aventura®"
       }
     ]
   }
