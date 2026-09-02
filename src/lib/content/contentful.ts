@@ -58,13 +58,27 @@ const bodyOptions: Options = {
 function isSafeHref(uri: string): boolean {
   const trimmed = uri.trim();
   if (!trimmed) return false;
-  // `//host/path` bắt đầu bằng `/` nhưng KHÔNG phải link nội bộ — nó là link
-  // ra ngoài mượn scheme của trang. Cho nó lọt qua nhánh "nội bộ" thì
-  // `relForUrl` (chỉ khớp `^https?://`) trả `null`, nên một link referral viết
-  // kiểu đó ra site mà không có `sponsored` — đúng thứ `affiliate-links` sinh
-  // ra để không bao giờ xảy ra.
-  if (trimmed.startsWith("//")) return false;
-  if (/^[/#?]/.test(trimmed)) return true;
+  // Link nội bộ được XÁC NHẬN BẰNG CÁCH GIẢI RA, không bằng cách nhìn ký tự
+  // đầu. `//host/path` bắt đầu bằng `/` nhưng là link ra ngoài mượn scheme của
+  // trang, và chuẩn URL của WHATWG còn coi `\` ngang hàng `/` ở chỗ này — nên
+  // `/\finlywealth.com/r/x` cũng đi thẳng ra ngoài (đo được: giải với gốc
+  // `https://ghe1a.com/blog/x` ra `https://finlywealth.com/r/x`). Lọt qua
+  // nhánh "nội bộ" thì `relForUrl` (chỉ khớp `^https?://`) trả `null`, nên
+  // link referral viết kiểu đó ra site mà không có `sponsored` — đúng thứ
+  // `affiliate-links` sinh ra để không bao giờ xảy ra.
+  //
+  // Chặn bằng regex đếm hai ký tự đầu thì mỗi lần chuẩn URL có thêm một ký tự
+  // tương đương lại hở tiếp. Để chính bộ giải URL trả lời: giải trên một gốc
+  // KHÔNG THỂ TỒN TẠI thật (`.invalid` là TLD dành riêng, RFC 2606), rồi đòi
+  // host phải không đổi. Đường dẫn thật giữ nguyên host; mọi hình dạng lén đổi
+  // host — dù viết bằng `/`, `\` hay thứ chuẩn thêm vào sau này — đều lộ ra.
+  if (/^[/#?\\]/.test(trimmed)) {
+    try {
+      return new URL(trimmed, "https://internal.invalid/").hostname === "internal.invalid";
+    } catch {
+      return false;
+    }
+  }
   // Ký tự điều khiển nhét giữa scheme (`java\0script:`) là cách cũ để lách
   // phép so scheme, nên bỏ chúng TRƯỚC khi so, không phải sau.
   const cleaned = trimmed.replace(/[\u0000-\u001F\u007F]/g, "");

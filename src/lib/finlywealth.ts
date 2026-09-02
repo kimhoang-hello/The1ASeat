@@ -36,10 +36,23 @@ export function finlyWealthRebateUrl(applyUrl: string): string | null {
   return `https://www.finlywealth.com${destination}`;
 }
 
+/**
+ * Hạn giờ cho một lượt đọc FinlyWealth.
+ *
+ * `check-rebates` duyệt thẻ TUẦN TỰ, nên một trang mở kết nối rồi im giữ luôn
+ * cả vòng lặp: mọi thẻ đứng sau nó không được đối chiếu. Job gọi bằng
+ * `curl --max-time 300 --retry 3 --retry-all-errors`, nên chuyện đó không đỏ
+ * một lần rồi thôi — curl cắt, chạy lại, và ba lượt như vậy là 15 phút không
+ * kiểm được gì. Hết giờ thì ném, và `check-rebates` đã có sẵn đường ghi lỗi
+ * theo từng thẻ để lượt sau tìm lại được nó.
+ */
+const FETCH_TIMEOUT_MS = 15_000;
+
 async function fetchPage(url: string): Promise<string> {
   const res = await fetch(url, {
     headers: { "User-Agent": "Ghe1A-RebateCheck/1.0 (+https://ghe1a.com)" },
     cache: "no-store",
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
   return res.text();

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cmaClient, field, listEntries, updateEntry, type CmaEntry, type CmaClient } from "@/lib/contentful-cma";
+import { cmaClient, cmaInit, field, listEntries, updateEntry, type CmaEntry, type CmaClient } from "@/lib/contentful-cma";
 import { fetchFinlyWealthOffer, finlyWealthRebateUrl } from "@/lib/finlywealth";
 import { isRewriteConfigured, rewriteOfferCopy } from "@/lib/rewrite-offer";
 import { jobSecretValid } from "@/lib/job-auth";
@@ -254,10 +254,13 @@ async function handleExpire(request: NextRequest) {
 // lại. Không gửi version thì Contentful gỡ luôn bản mới đó; gửi rồi thì nó trả
 // 409 và job đỏ — đúng thứ mình muốn thấy.
 async function unpublish(client: CmaClient, entry: CmaEntry): Promise<void> {
-  const res = await fetch(`${client.base}/entries/${entry.sys.id}/published`, {
-    method: "DELETE",
-    headers: { ...client.headers, "X-Contentful-Version": String(entry.sys.version) },
-  });
+  const res = await fetch(
+    `${client.base}/entries/${entry.sys.id}/published`,
+    cmaInit({
+      method: "DELETE",
+      headers: { ...client.headers, "X-Contentful-Version": String(entry.sys.version) },
+    }),
+  );
   // Already unpublished by an earlier run — not an error.
   if (res.status === 404) return;
   if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);

@@ -756,6 +756,69 @@ rồi log kèm slug. Mọi cách nới điều kiện gửi đều đổi một 
 subscriber), vì chốt chống trùng duy nhất nằm trong bộ nhớ tiến trình và
 không sống qua restart. Sửa thật cần một chỗ lưu bền.
 
+## Vòng kiểm toàn diện 02/09/2026 — đừng đề xuất lại
+
+Mọi gate xanh trước khi bắt đầu (lint, tsc, build, 4 audit, `npm audit` 0 lỗ
+hổng), nên vòng này soi những chỗ gate KHÔNG với tới. Ba phát hiện, đã vá cả
+ba; hai cái đầu do vòng phản biện của Codex bác lại bản vá đầu tiên mới ra được
+hình dạng cuối.
+
+- **`listEntries` (CMA) dùng CON TRỎ MỜ, không dùng `skip`.** Phía CDA đã bỏ
+  `skip` từ lâu vì entry rơi khỏi tập kết quả giữa hai lượt lấy làm những entry
+  sau dồn lên và vài cái bị nhảy qua — nhưng phía CMA vẫn còn `skip` đúng cái
+  hình dạng đó. Ở đây hậu quả nặng hơn: entry bị nhảy qua là một offer hết hạn
+  không được gỡ hoặc một thẻ không được đối chiếu rebate, mà job vẫn trả 200.
+  Đã đo trên chính space này với `limit=2` và đúng filter
+  `fields.expiresAt[lte]` của `expire-offers`: `pages.next` khoá sẵn filter ban
+  đầu trong token nên trang 2 không mất filter, và tập kết quả trùng khít với
+  `skip`. Chế độ cursor KHÔNG trả `total` — điều kiện dừng là `pages.next` vắng
+  mặt, đừng thay lại bằng phép đếm. Chưa loại nội dung nào chạm 100 entry
+  (25 thẻ / 38 bài / 4 bonus), nên đây là vá trước khi cháy.
+
+- **Mọi lượt gọi CMA đi qua `cmaInit`, kể cả lượt nằm ngoài `contentful-cma.ts`.**
+  `unpublish` trong `expire-offers` gọi `fetch` trần và đã bị bỏ sót ở bản vá
+  đầu — vòng phản biện bắt được. Bỏ sót đúng một lượt là đủ để job treo tới lúc
+  `curl --max-time 300` cắt, mà `--retry 3 --retry-all-errors` nghĩa là 15 phút
+  không xử lý được gì. Cùng lý do `fetchPage` trong `lib/finlywealth.ts` có
+  `AbortSignal.timeout`: `check-rebates` duyệt thẻ TUẦN TỰ, nên một trang mở
+  kết nối rồi im giữ luôn cả vòng lặp và mọi thẻ sau nó không được kiểm.
+  Timeout ném `DOMException` tên `TimeoutError` — vẫn là `Error`, nên các nhánh
+  `catch` sẵn có xử lý đúng, và `expire-offers` vẫn GIỮ `expiresAt` vì timeout
+  rơi vào nhánh `retryable`.
+
+- **`isSafeHref` xác nhận link nội bộ BẰNG CÁCH GIẢI URL, không bằng ký tự đầu.**
+  Chuẩn WHATWG coi `\` ngang hàng `/` ở vị trí này, nên `/\finlywealth.com/r/x`
+  qua được cửa `^[/#?]` cũ rồi đi thẳng ra ngoài — `relForUrl` chỉ khớp
+  `^https?://` nên trả `null`, tức link referral ra site không `sponsored`,
+  không `target="_blank"`, tracker không đếm. Bản vá đầu là regex
+  `^[/\\]{2}`; vòng phản biện chỉ ra nó chỉ bịt thêm một ký tự và lần sau chuẩn
+  thêm ký tự tương đương là hở tiếp. Bản cuối giải trên gốc `.invalid`
+  (TLD dành riêng, RFC 2606) rồi đòi host không đổi — mọi hình dạng lén đổi
+  host đều lộ, không cần biết viết bằng ký tự nào. `/\ghe1a.com/noi-bo` bị coi
+  là NGOÀI và biến thành chữ trần: đúng ý đồ, nó chỉ nội bộ do trùng host, và
+  mất một cái link thì thấy ngay còn giữ lại thì hỏng thầm lặng.
+
+### Đã kiểm và KHÔNG phải lỗi (đừng báo lại)
+
+- **2 thẻ CIBC® trỏ thẳng `cibc.com`, không qua FinlyWealth** — không phải chỗ
+  quên gắn affiliate. Sitemap FinlyWealth có 58 trang `/rebates/credit-cards/`
+  và KHÔNG có trang nào cho Aventura®, Aeroplan®, Avion® hay Wealthsimple; 11
+  thẻ đang trỏ `/credit-cards/rewards-calculator/` cũng vì lý do đó. Chúng nhận
+  `PLAIN_REL` (không `sponsored`) là đúng — công bố quan hệ trả tiền không tồn
+  tại cũng là một kiểu nói dối. Click vẫn đo được: `ApplyLink` bắn
+  `apply_clicked` bất kể `rel`; chỉ `AffiliateClickTracker` (link trong thân
+  bài) mới lọc theo `rel~="sponsored"`.
+- **`sync-videos` chỉ thấy 15 video gần nhất của RSS.** Job ngừng chạy đủ lâu
+  để kênh đăng quá 15 video thì những cái cũ hơn không bao giờ được tạo entry,
+  và lượt sau vẫn xanh. Biết là có; kênh đăng vài video một tháng còn job chạy
+  6 tiếng một lượt, nên chưa đáng dựng đường lấy bù.
+- **Ngày 01/09/2026 ba job trả 500 suốt ~12 tiếng** (sync-videos 03:31 và 11:04
+  UTC, expire-offers 08:03, check-rebates 08:44) rồi tự khỏi ở lượt deploy kế
+  tiếp. KHÔNG phải hang: 500 trả về trong ~0.5s. `/api/offer-snapshot` (đọc
+  CDA) chạy tốt lúc 09:04 giữa cửa sổ đó, nên site không sập — chỉ ba route đi
+  qua CMA hỏng. Token CMA hiện đọc được bình thường, không entry nào lệch
+  draft. Nếu tái diễn: so nhánh CDA với nhánh CMA trước, đừng đoán site sập.
+
 ## Chạy gì trước khi kết luận
 
 ```
