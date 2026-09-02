@@ -4,7 +4,7 @@ import { getCardPointsPrograms, programIdFor } from "@/lib/card-points-programs"
 import { isElevatedLive } from "@/lib/credit-card-state";
 import { isReferralUrl } from "@/lib/affiliate-links";
 import { formatDate, hasExpired } from "@/lib/format-date";
-import { CardImage } from "@/components/credit-cards/card-image";
+import { CardImage, applyOverlay } from "@/components/credit-cards/card-image";
 import { ApplyButton } from "@/components/ui/apply-button";
 import { t as translate } from "@/lib/t";
 
@@ -100,9 +100,7 @@ export function CompareTable({ cards }: { cards: CreditCardOffer[] }) {
                     placeholderIcon={card.image}
                     className="h-32 w-40 rounded-xl"
                     sizes="160px"
-                    applyUrl={card.applyUrl}
-                    placement="card_compare"
-                    product={card.slug}
+                    {...applyOverlay(card.applyUrl, "card_compare", card.slug)}
                   />
                   <Link
                     href={`/credit-cards/${card.slug}`}
@@ -220,13 +218,15 @@ export function CompareTable({ cards }: { cards: CreditCardOffer[] }) {
             <Row label={t("rowApply")}>
               {cards.map((card) => (
                 <td key={card.slug} className="px-4 py-4">
-                  <ApplyButton
-                    href={card.applyUrl}
-                    affiliate={isReferralUrl(card.applyUrl)}
-                    className="w-full text-center"
-                    placement="card_compare"
-                    product={card.slug}
-                  />
+                  {card.applyUrl && (
+                    <ApplyButton
+                      href={card.applyUrl}
+                      affiliate={isReferralUrl(card.applyUrl)}
+                      className="w-full text-center"
+                      placement="card_compare"
+                      product={card.slug}
+                    />
+                  )}
                   <Link
                     href={`/credit-cards/${card.slug}`}
                     // `py-2.5` cho vùng chạm ~40px thay vì đúng một dòng chữ

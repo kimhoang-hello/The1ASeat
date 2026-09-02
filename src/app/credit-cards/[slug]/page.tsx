@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getCreditCardOfferBySlug, getCreditCardOffers, getPosts } from "@/lib/content";
-import { CardImage } from "@/components/credit-cards/card-image";
+import { CardImage, applyOverlay } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
 import { CardNextSteps } from "@/components/credit-cards/card-next-steps";
 import { assertNoSlugClash } from "@/lib/card-compare";
@@ -103,9 +103,7 @@ export default async function CreditCardDetailPage({
           )
         }
         className="mt-6 h-56 w-full rounded-2xl"
-        applyUrl={offer.applyUrl}
-        placement="card_detail"
-        product={offer.slug}
+        {...applyOverlay(offer.applyUrl, "card_detail", offer.slug)}
         preload
       />
 
@@ -136,13 +134,18 @@ export default async function CreditCardDetailPage({
         ))}
       </ul>
 
-      <ApplyButton
-        href={offer.applyUrl}
-        affiliate={isReferralUrl(offer.applyUrl)}
-        className="mt-8"
-        placement="card_detail"
-        product={offer.slug}
-      />
+      {/* Không render nút khi `applyUrl` bị loại vì không phải http(s) — xem
+          `safeApplyUrl`. Nút trỏ `href=""` sẽ mở lại chính trang này ở tab mới
+          VÀ vẫn bắn `apply_clicked`, tức vừa hỏng vừa làm sai số đo doanh thu. */}
+      {offer.applyUrl && (
+        <ApplyButton
+          href={offer.applyUrl}
+          affiliate={isReferralUrl(offer.applyUrl)}
+          className="mt-8"
+          placement="card_detail"
+          product={offer.slug}
+        />
+      )}
 
       <OfferDisclosure className="mt-8" />
 

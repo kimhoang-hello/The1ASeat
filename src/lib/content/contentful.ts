@@ -190,6 +190,35 @@ function toPost(entry: Entry<PostSkeleton, undefined>): BlogPost {
   };
 }
 
+/**
+ * `applyUrl` phải là `http(s)`, kiểm NGAY LÚC MAP chứ không đợi audit.
+ *
+ * Ô nhập của Contentful là chuỗi tự do, và khác với link trong thân bài (đã có
+ * `isSafeHref` gác), giá trị này đi thẳng vào `href` của nút Apply và vào
+ * JSON-LD, không qua cửa nào — `javascript:…` gõ vào đó sẽ chạy dưới origin
+ * ghe1a.com khi người đọc bấm. `npm run audit:health` cũng bắt ca này, nhưng
+ * audit là hậu kiểm: một entry publish lúc 10 giờ sáng vẫn sống trên site cho
+ * tới lượt audit kế tiếp.
+ *
+ * Trả `undefined` chứ không ném, và TUYỆT ĐỐI KHÔNG trả chuỗi rỗng: `href=""`
+ * giải ra chính URL của trang đang đứng, nên với `target="_blank"` người đọc
+ * bấm Apply sẽ mở lại đúng trang đó ở tab mới — và `apply_clicked` vẫn bắn,
+ * tức số đo doanh thu nói có một cú bấm đi đâu đó. Đó là hỏng THẦM LẶNG, đúng
+ * thứ cửa này sinh ra để chặn. `undefined` buộc mọi chỗ render phải xử lý.
+ *
+ * Không ném vì một link hỏng không đáng làm sập cả trang thẻ.
+ */
+function safeApplyUrl(url: string, slug: string): string | undefined {
+  try {
+    const scheme = new URL(url.trim()).protocol;
+    if (scheme === "https:" || scheme === "http:") return url.trim();
+  } catch {
+    // Rơi xuống dưới.
+  }
+  console.warn(`[content] thẻ "${slug}" có applyUrl không phải http(s), đã bỏ: ${url}`);
+  return undefined;
+}
+
 function toCard(entry: Entry<CardSkeleton, undefined>): CreditCardOffer {
   const f = entry.fields;
   return {
@@ -207,7 +236,7 @@ function toCard(entry: Entry<CardSkeleton, undefined>): CreditCardOffer {
     keyBenefits: f.keyBenefitsVi.map(keepBrandTogether),
     elevatedBonus: f.elevatedBonus,
     expiresAt: f.expiresAt,
-    applyUrl: f.applyUrl,
+    applyUrl: safeApplyUrl(f.applyUrl, f.slug),
     rebate: f.rebateVi,
     updatedAt: entry.sys.updatedAt,
   };

@@ -44,7 +44,9 @@ export interface CreditCardOffer {
   keyBenefits: string[];
   elevatedBonus: boolean;
   expiresAt?: string;
-  applyUrl: string;
+  /** Vắng khi giá trị trong Contentful không phải `http(s)` — xem `safeApplyUrl`.
+   *  Chỗ nào render nút Apply thì phải xử lý trường hợp vắng, đừng ép kiểu. */
+  applyUrl?: string;
   rebate?: string;
   /** `sys.updatedAt` của Contentful — dùng cho `lastmod` trong sitemap. Thẻ
    *  không có `publishedAt` như bài viết, nên đây là ngày duy nhất nói được

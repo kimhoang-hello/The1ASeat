@@ -373,7 +373,12 @@ async function entryExists(
   cmaBase: string,
   authHeaders: Record<string, string>,
 ): Promise<boolean> {
-  const res = await fetch(`${cmaBase}/entries/${entryId}`, { headers: authHeaders });
+  // `fetchWithRetry` chứ không phải `fetch` trần, VÌ ĐÂY LÀ GET. Nó không ghi
+  // gì nên chạy lại là vô hại, và ba lượt thử vốn đã có sẵn đúng cho loại lỗi
+  // thoáng qua: một cái 429/503 hoặc một lượt hết giờ đủ làm cả job đỏ trong
+  // khi lượt sau đã trả 200. Khác hẳn hai lượt PUT ở `createEntry` — xem chú
+  // thích ở đó, chúng CỐ Ý chỉ chạy một lượt.
+  const res = await fetchWithRetry(`${cmaBase}/entries/${entryId}`, { headers: authHeaders }, "check entry");
   if (res.status === 404) return false;
   if (!res.ok) throw new Error(`check entry failed: ${res.status} ${await res.text()}`);
   return true;
@@ -467,6 +472,12 @@ async function createVideoPost(
   };
 
   const entryId = `${ENTRY_ID_PREFIX}${slug}`;
+  // Có `signal` nhưng KHÔNG dùng `fetchWithRetry`. Hai lượt PUT dưới đây là
+  // ghi, và thử lại một lượt ghi không giống thử lại một lượt đọc: publish
+  // mang `X-Contentful-Version`, nên lượt sau một lần publish thành công mà
+  // hỏng ở đường trả lời sẽ nhận 409 — mà 409 thì `fetchWithRetry` không thử
+  // lại nữa và ném ra, đúng ý (cần người nhìn). Thêm timeout chỉ bịt đường
+  // treo, không đổi cách job xử lý lỗi.
   const createRes = await fetch(`${cmaBase}/entries/${entryId}`, {
     method: "PUT",
     headers: {
@@ -475,6 +486,7 @@ async function createVideoPost(
       "X-Contentful-Content-Type": "blogPost",
     },
     body: JSON.stringify({ fields }),
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   if (!createRes.ok) throw new Error(`create entry failed: ${await createRes.text()}`);
   const created = await createRes.json();
@@ -482,6 +494,7 @@ async function createVideoPost(
   const publishRes = await fetch(`${cmaBase}/entries/${entryId}/published`, {
     method: "PUT",
     headers: { ...authHeaders, "X-Contentful-Version": String(created.sys.version) },
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   if (!publishRes.ok) throw new Error(`publish entry failed: ${await publishRes.text()}`);
 }

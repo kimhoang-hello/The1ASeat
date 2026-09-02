@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CaretDown } from "@phosphor-icons/react/ssr";
 import { t as translate } from "@/lib/t";
 import { getCreditCardOffers } from "@/lib/content";
-import { CardImage } from "@/components/credit-cards/card-image";
+import { CardImage, applyOverlay } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { EditorsTake } from "@/components/credit-cards/editors-take";
@@ -66,9 +66,7 @@ export async function OffersSection() {
                   )
                 }
                 className="h-32 w-full shrink-0 self-start rounded-xl sm:h-32 sm:w-40 xl:h-36 xl:w-44"
-                applyUrl={offer.applyUrl}
-                placement="home_offers"
-                product={offer.slug}
+                {...applyOverlay(offer.applyUrl, "home_offers", offer.slug)}
                 sizes="176px"
               />
 
@@ -104,12 +102,14 @@ export async function OffersSection() {
                 </details>
 
                 <div className="mt-auto pt-4">
-                  <ApplyButton
-                    href={offer.applyUrl}
-                    affiliate={isReferralUrl(offer.applyUrl)}
-                    placement="home_offers"
-                    product={offer.slug}
-                  />
+                  {offer.applyUrl && (
+                    <ApplyButton
+                      href={offer.applyUrl}
+                      affiliate={isReferralUrl(offer.applyUrl)}
+                      placement="home_offers"
+                      product={offer.slug}
+                    />
+                  )}
                 </div>
               </div>
             </article>

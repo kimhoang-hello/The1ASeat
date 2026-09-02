@@ -13,9 +13,26 @@ import { ApplyLink } from "@/components/ui/apply-link";
  * liệu âm thầm sai. Ở đây có `applyUrl` là BUỘC phải có `placement` và
  * `product`; không có `applyUrl` thì CẤM truyền chúng.
  */
-type ApplyOverlay =
+export type ApplyOverlay =
   | { applyUrl: string; placement: string; product: string }
   | { applyUrl?: undefined; placement?: never; product?: never };
+
+/**
+ * Dựng bộ ba overlay, hoặc không dựng gì.
+ *
+ * Tồn tại vì JSX làm phẳng một spread có điều kiện thành ba prop optional rời
+ * nhau, đúng thứ union trên sinh ra để cấm — chỗ gọi viết
+ * `{...(url ? {…} : {})}` thì TypeScript không còn nhận ra nó khớp nhánh nào.
+ * Hàm này khai báo kiểu trả về là chính union đó nên chỗ gọi khỏi phải ép kiểu,
+ * và luật "có link thì bắt buộc có placement + product" vẫn được giữ ở một chỗ.
+ */
+export function applyOverlay(
+  applyUrl: string | undefined,
+  placement: string,
+  product: string,
+): ApplyOverlay {
+  return applyUrl ? { applyUrl, placement, product } : {};
+}
 
 export function CardImage({
   image,

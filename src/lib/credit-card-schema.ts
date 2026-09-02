@@ -26,7 +26,10 @@ export function creditCardJsonLd(offer: CreditCardOffer) {
     areaServed: offer.country === "CA" ? "CA" : "US",
     offers: {
       "@type": "Offer",
-      url: offer.applyUrl,
+      // BỎ HẲN `url` khi thẻ không có applyUrl hợp lệ (xem `safeApplyUrl`).
+      // In `url: ""` là nói với crawler rằng offer này mở ở chính trang đang
+      // đứng — sai, và sai một cách trông như thật.
+      ...(offer.applyUrl && { url: offer.applyUrl }),
       category: offer.cardType,
       availability: "https://schema.org/InStock",
       seller: { "@type": "Organization", name: offer.issuer },

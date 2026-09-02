@@ -4,7 +4,7 @@ import { CaretDown } from "@phosphor-icons/react/ssr";
 import { getCreditCardOffers } from "@/lib/content";
 import { isElevatedLive } from "@/lib/credit-card-state";
 import { PageHeader } from "@/components/layout/page-header";
-import { CardImage } from "@/components/credit-cards/card-image";
+import { CardImage, applyOverlay } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { OfferStats } from "@/components/credit-cards/offer-stats";
@@ -149,9 +149,7 @@ export default async function CreditCardsPage({
                   )
                 }
                 className="h-32 w-full shrink-0 self-start rounded-xl sm:h-32 sm:w-40 xl:h-36 xl:w-44"
-                applyUrl={offer.applyUrl}
-                placement="card_list"
-                product={offer.slug}
+                {...applyOverlay(offer.applyUrl, "card_list", offer.slug)}
                 sizes="176px"
               />
 
@@ -197,12 +195,14 @@ export default async function CreditCardsPage({
                   >
                     {offers_t("editorsTake")} &rarr;
                   </Link>
-                  <ApplyButton
-                    href={offer.applyUrl}
-                    affiliate={isReferralUrl(offer.applyUrl)}
-                    placement="card_list"
-                    product={offer.slug}
-                  />
+                  {offer.applyUrl && (
+                    <ApplyButton
+                      href={offer.applyUrl}
+                      affiliate={isReferralUrl(offer.applyUrl)}
+                      placement="card_list"
+                      product={offer.slug}
+                    />
+                  )}
                 </div>
               </div>
             </article>

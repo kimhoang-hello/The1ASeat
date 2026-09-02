@@ -819,6 +819,70 @@ hình dạng cuối.
   qua CMA hỏng. Token CMA hiện đọc được bình thường, không entry nào lệch
   draft. Nếu tái diễn: so nhánh CDA với nhánh CMA trước, đừng đoán site sập.
 
+## Lượt audit định kỳ 02/09/2026 (chạy tay lần đầu) — đừng đề xuất lại
+
+- **`qs` bị ghim `6.16.0` trong `overrides`.** Nó vào qua `contentful` →
+  `contentful-sdk-core`; bản `6.15.3` nằm trong dải dính hai advisory. Sáng
+  cùng ngày `npm audit` còn sạch, chiều đã đỏ — nên đừng ngạc nhiên khi một
+  lượt audit đỏ mà code không đổi gì. Ghim bằng `overrides` chứ không nâng
+  `contentful`, cùng cách đã làm với `postcss`/`sharp`/`nanoid`.
+
+- **`entryExists` trong `sync-videos` dùng `fetchWithRetry`, hai lượt PUT thì
+  KHÔNG.** Khác biệt là đọc với ghi, không phải quên. GET không ghi gì nên chạy
+  lại vô hại, và một cái 429/503 thoáng qua mà làm đỏ cả job là lãng phí đúng
+  ba lượt thử đã có sẵn. Hai lượt PUT tạo/publish chỉ chạy một lượt và chỉ được
+  thêm `AbortSignal`: publish mang `X-Contentful-Version`, nên chạy lại sau một
+  lượt publish thành công mà hỏng ở đường trả lời sẽ nhận 409 — job đỏ và cần
+  người nhìn, đúng ý. Đừng "thống nhất" ba chỗ này thành một.
+
+- **`applyUrl` được gác NGAY LÚC MAP ENTRY (`safeApplyUrl`), trả `undefined`.**
+  Ô nhập Contentful là chuỗi tự do và giá trị này đi thẳng vào `href` nút Apply
+  cùng JSON-LD, không qua cửa nào — khác link thân bài vốn đã có `isSafeHref`.
+  `audit:health` cũng bắt ca này nhưng là hậu kiểm: entry publish lúc 10 giờ
+  sáng vẫn sống trên site tới lượt audit sau.
+  **TUYỆT ĐỐI KHÔNG trả chuỗi rỗng.** Bản vá đầu làm thế và vòng phản biện bác:
+  `href=""` giải ra chính URL trang đang đứng, nên với `target="_blank"` người
+  đọc bấm Apply là mở lại đúng trang đó ở tab mới, `apply_clicked` vẫn bắn (số
+  đo doanh thu đếm một cú bấm không có thật), và JSON-LD in `"url": ""`. Đó là
+  hỏng thầm lặng — đúng thứ cửa này sinh ra để chặn. `undefined` bắt trình biên
+  dịch chỉ ra đủ 5 chỗ render, và cả 5 nay đều không vẽ nút khi thiếu link.
+  Kiểu `CreditCardOffer.applyUrl` vì vậy là OPTIONAL; đừng ép lại thành `string`.
+- **`applyOverlay()` trong `card-image.tsx` tồn tại vì JSX, không vì thẩm mỹ.**
+  Union `ApplyOverlay` bắt "có link thì bắt buộc có `placement` + `product`",
+  nhưng viết `{...(url ? {…} : {})}` thẳng trong JSX thì TypeScript làm phẳng
+  thành ba prop optional rời nhau và không còn khớp nhánh nào. Helper khai báo
+  kiểu trả về là chính union đó nên chỗ gọi khỏi ép kiểu. Đừng thay lại bằng
+  spread có điều kiện, cũng đừng nới union thành ba prop optional.
+
+- **`plusDays` trong `audit:health` cộng trên NGÀY TORONTO, neo giữa trưa UTC.**
+  Bản đầu cộng vào `new Date()`, mà sau 20:00 giờ Toronto thì UTC đã sang hôm
+  sau — cửa sổ "sắp hết hạn trong 7 ngày" âm thầm rộng thành 8. Audit chạy 9
+  giờ sáng nên chưa dính, nhưng một cái audit nói sai về ngày thì hỏng đúng thứ
+  nó đo. Neo giữa trưa để phép cộng không rơi trúng mốc đổi giờ.
+
+### Việc còn nợ: `request.json()` trong `api/revalidate` không có hạn giờ
+
+Đây là lượt chờ DUY NHẤT trong route không chịu ngân sách 25s. Chuỗi mất bản
+tin: bài `post` publish lần đầu → purge CDN xong → body webhook tới chậm nên
+route kẹt ở `request.json()` → Contentful bỏ cuộc vì hết giờ → Kit chưa từng
+được gọi → `publishedCounter` đã qua 1 vĩnh viễn nên publish lại cũng không
+cứu. Trả 502 ở nhánh đó AN TOÀN — tới điểm ấy chưa giành `broadcastClaims`,
+chưa gọi Kit lần nào, nên webhook gọi lại không thể sinh bản tin thứ hai
+(purge chạy lần hai là idempotent).
+
+**Đã thử vá bằng `Promise.race` và ĐÃ GỠ RA.** `Promise.race` không huỷ lượt
+đọc thua cuộc: body vẫn tiếp tục được buffer, vẫn giữ kết nối, và một lượt
+`JSON.parse` lớn chặn event loop có thể làm timer chưa kịp chạy. Đổi một lỗi
+hiếm lấy một đường rò tài nguyên trên chính route gửi email thật là lỗ vốn.
+
+Hình dạng đúng: đọc `request.body` bằng reader có trần byte và trần thời gian,
+**gọi `reader.cancel()` khi hết giờ**, phân biệt `payload_timeout` với
+`no_payload` rồi trả 502. Hoặc rẻ hơn: cấu hình transformation ở chính
+Contentful để webhook chỉ gửi những field route dùng (`sys.id`, content type,
+`type`, `categoryVi`, `titleVi`, `excerptVi`, `slug`), lúc đó body nhỏ tới mức
+câu hỏi biến mất. Chưa chốt `PAYLOAD_MS` bao nhiêu là an toàn vì chưa đo body
+thật. Việc này cần một phiên riêng, không làm kèm.
+
 ## Chạy gì trước khi kết luận
 
 ```

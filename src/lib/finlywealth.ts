@@ -15,7 +15,8 @@
  */
 
 /** The FinlyWealth page an apply link points at, or null if it is not one. */
-export function finlyWealthRebateUrl(applyUrl: string): string | null {
+export function finlyWealthRebateUrl(applyUrl: string | undefined): string | null {
+  if (!applyUrl) return null; // Thẻ có applyUrl bị loại — không có trang rebate nào để đọc.
   let parsed: URL;
   try {
     parsed = new URL(applyUrl);

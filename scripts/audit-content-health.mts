@@ -111,10 +111,22 @@ function todayInSiteZone(): string {
 
 const TODAY = todayInSiteZone();
 
+/**
+ * Cộng ngày TRÊN NGÀY TORONTO, không phải trên `new Date()`.
+ *
+ * Bản đầu cộng vào mốc UTC hiện tại, mà sau 20:00 giờ Toronto thì UTC đã sang
+ * hôm sau — nên `plusDays(7)` ra ngày cách TODAY tận 8 hôm và cửa sổ "sắp hết
+ * hạn trong 7 ngày" âm thầm rộng thêm một ngày. Đo được: chạy lúc 20:30 EDT
+ * ngày 02/09 cho ra 10/09 thay vì 09/09. Audit chạy 9 giờ sáng nên chưa bao
+ * giờ dính, nhưng một cái audit nói sai về ngày thì hỏng đúng thứ nó đo.
+ *
+ * Neo vào giữa trưa UTC để phép cộng không bao giờ rơi trúng mốc đổi giờ.
+ */
 function plusDays(days: number): string {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
+  const [year, month, day] = TODAY.split("-").map(Number);
+  const at = new Date(Date.UTC(year, month - 1, day, 12));
+  at.setUTCDate(at.getUTCDate() + days);
+  return at.toISOString().slice(0, 10);
 }
 
 /**
@@ -216,13 +228,25 @@ for (const c of cards) {
 }
 
 // ---- 5. Link apply hỏng dạng ------------------------------------------
-// Chỉ kiểm dạng URL, KHÔNG gọi ra ngoài: link affiliate là link có đếm click,
-// gọi thử mỗi lượt audit là tự bơm số cho chính mình.
+// Chỉ kiểm DẠNG, KHÔNG gọi ra ngoài: link affiliate là link có đếm click, gọi
+// thử mỗi lượt audit là tự bơm số cho chính mình.
+//
+// ĐÒI ĐÚNG `http(s)`, không chỉ đòi `new URL()` chạy được. `new URL()` nhận cả
+// `javascript:alert(1)` — mà khác với link trong thân bài (đã có `isSafeHref`
+// gác), `applyUrl` đi thẳng vào `href` của nút Apply và vào JSON-LD, không qua
+// cửa nào. Ô nhập trong Contentful là chuỗi tự do nên đây là chỗ duy nhất nói
+// được câu đó.
 for (const c of cards) {
+  const raw = str(c, "applyUrl") ?? "";
+  let scheme = "";
   try {
-    new URL(String(str(c, "applyUrl")));
+    scheme = new URL(raw).protocol;
   } catch {
-    problems.push(`thẻ "${str(c, "slug")}" có applyUrl không phải URL hợp lệ: ${str(c, "applyUrl")}`);
+    problems.push(`thẻ "${str(c, "slug")}" có applyUrl không phải URL hợp lệ: ${raw}`);
+    continue;
+  }
+  if (scheme !== "https:" && scheme !== "http:") {
+    problems.push(`thẻ "${str(c, "slug")}" có applyUrl dùng scheme "${scheme}" thay vì http(s): ${raw}`);
   }
 }
 
