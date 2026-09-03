@@ -1,6 +1,33 @@
 import { slugifyVi } from "./blog-categories";
-import type { Bank, BankAccount } from "./bank-accounts";
+import { ringAfter } from "./card-next-steps";
+import { formatMoney, type Bank, type BankAccount } from "./bank-accounts";
+import { t as translate } from "./t";
 import type { BlogPost, CreditCardOffer } from "./content/types";
+
+const bank_t = translate("bankAccounts");
+
+const KIND_LABEL_KEYS = {
+  chequing: "kindChequing",
+  savings: "kindSavings",
+} as const;
+
+/**
+ * Dòng phụ của một tài khoản trong danh sách link: loại tài khoản + monthly
+ * fee — đúng hai thứ mà bảng danh sách cũng dùng để phân biệt hai tài khoản
+ * cùng một ngân hàng.
+ *
+ * Không phí thì nói thẳng "Miễn monthly fee": ghép "Monthly fee" với nhãn
+ * "Miễn phí" ra "Monthly fee Miễn phí", đọc như một lỗi nối chuỗi — cùng lý do
+ * `bankAccountDescription` không viết "Monthly fee miễn phí".
+ */
+export function accountMetaLine(account: BankAccount): string {
+  const kind = bank_t(KIND_LABEL_KEYS[account.kind]);
+  const fee =
+    account.monthlyFee === 0
+      ? bank_t("featureNoFee")
+      : `${bank_t("monthlyFee")} ${formatMoney(account.monthlyFee)}`;
+  return `${kind} · ${fee}`;
+}
 
 /**
  * Bản song song của `card-next-steps.ts` cho trang chi tiết tài khoản ngân
@@ -52,6 +79,29 @@ export function otherAccountsFromBank(
   if (count < 2) return null;
 
   return { href: `/bank-accounts?bank=${account.bank}`, count: count - 1 };
+}
+
+/**
+ * Các tài khoản khác của cùng ngân hàng, dưới dạng tài khoản thật chứ không
+ * phải một link lọc.
+ *
+ * Cùng lý do với `siblingCardsInProgram` bên thẻ, và ở đây nặng hơn hẳn:
+ * `otherAccountsFromBank` trả về `/bank-accounts?bank=rbc`, và đó là đường duy
+ * nhất giữa các trang tài khoản với nhau — nên đo ngày 03/09/2026, cả 29 trang
+ * tài khoản chỉ có đúng MỘT link nội bộ trỏ vào, đều từ trang danh sách. Ba
+ * mươi trang có nội dung riêng mà crawler chỉ tới được qua một cửa duy nhất.
+ *
+ * Lấy theo VÒNG, cùng `ringAfter` mà bên thẻ dùng và cùng lý do: RBC® có 5 tài
+ * khoản, nên "ba cái đầu danh sách" bỏ lại hai cái cuối đúng như cũ. Vòng thì
+ * mỗi tài khoản của một ngân hàng được đúng `limit` trang anh em trỏ vào.
+ */
+export function siblingAccountsAtBank(
+  account: BankAccount,
+  accounts: BankAccount[],
+  limit = 3,
+): BankAccount[] {
+  const family = accounts.filter((other) => other.bank === account.bank);
+  return ringAfter(family, (other) => other.slug === account.slug, limit);
 }
 
 /**

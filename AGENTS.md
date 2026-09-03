@@ -894,10 +894,24 @@ npm run audit:rebates       # số rebate lệch FinlyWealth (tài khoản ngân
 npm run audit:rebate-prose  # badge rebate lệch số viết tay trong editor's take
 npm run audit:awards        # bảng award
 npm run audit:health        # nội dung ĐANG PHỤC VỤ: offer chết còn treo, thẻ mất chip, sắp hết hạn
+npm run audit:links         # mạng link nội bộ: trang nào không ai trỏ vào (crawl site đang chạy)
 ```
 
-Năm cái audit này bắt sẵn nhiều lớp lỗi lặp lại. Đừng báo lại thứ chúng đã bắt
+Sáu cái audit này bắt sẵn nhiều lớp lỗi lặp lại. Đừng báo lại thứ chúng đã bắt
 được.
+
+**`audit:links` là cái duy nhất nhìn 113 trang CÙNG MỘT LÚC.** Mọi audit khác,
+và cả báo cáo SEO hằng tuần, soi từng trang một — mã trạng thái, canonical,
+tiêu đề, dữ liệu có cấu trúc — nên không cái nào thấy được thứ chỉ hiện ra khi
+đặt cả site cạnh nhau: trang nào chỉ có đúng một đường dẫn vào. Đo ngày
+03/09/2026, trước khi các trang bắt đầu trỏ sang anh em của mình, 37 trang ở
+tình trạng đó, gồm cả bốn thẻ Aeroplan® và toàn bộ 29 trang tài khoản ngân
+hàng — mỗi trang chỉ được đúng trang danh sách của mục nó trỏ vào. Nó crawl
+site ĐANG CHẠY (mặc định `ghe1a.com`; truyền `-- http://localhost:3000` để soi
+bản chưa deploy), nên chạy được cả khi không có credential Contentful.
+
+Exit 1 chỉ khi có trang KHÔNG ai trỏ vào. Trang chỉ có một đường vào thì in ra
+mà không làm đỏ — cùng luật với `audit:health`.
 
 **`audit:health` soi trục khác hẳn bốn cái kia.** Bốn cái trên mỗi cái kiểm một
 thuộc tính hẹp của nội dung (ký hiệu ®/™, bảng giá, con số rebate). `audit:health`

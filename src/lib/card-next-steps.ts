@@ -1,6 +1,7 @@
 import { slugifyVi } from "./blog-categories";
 import { PROGRAMS } from "./award-charts";
 import { getCardPointsPrograms, programIdFor, creditCardsPath } from "./card-points-programs";
+import { BANKS, type Bank, type BankAccount } from "./bank-accounts";
 import type { BlogPost, CreditCardOffer } from "./content/types";
 
 /**
@@ -83,6 +84,100 @@ export function samePointsProgramLink(
     programName: program.name,
     count: program.count - 1,
   };
+}
+
+/**
+ * `limit` phần tử đứng ngay sau `self` trong `items`, vòng lại đầu khi hết —
+ * và không bao giờ trả về chính `self`.
+ *
+ * Dùng chung cho thẻ và cho tài khoản ngân hàng (`bank-next-steps.ts` gọi lại
+ * hàm này). Tính chất cần ở cả hai chỗ: với `n` phần tử và `limit >= 1`, mỗi
+ * phần tử được đúng `min(limit, n - 1)` phần tử khác trỏ vào — không có phần
+ * tử nào bị bỏ lại, đó chính là điều mà cách "lấy `limit` phần tử đầu danh
+ * sách" không bảo đảm được.
+ */
+export function ringAfter<T>(items: T[], isSelf: (item: T) => boolean, limit: number): T[] {
+  const index = items.findIndex(isSelf);
+  if (index < 0) return items.slice(0, limit);
+
+  const out: T[] = [];
+  for (let step = 1; step < items.length && out.length < limit; step++) {
+    out.push(items[(index + step) % items.length]);
+  }
+  return out;
+}
+
+/**
+ * Các thẻ khác cùng hệ điểm, dưới dạng thẻ thật chứ không phải một link lọc.
+ *
+ * `samePointsProgramLink` ở trên dẫn tới `/credit-cards?points=aeroplan`, và
+ * chừng nào đó là đường DUY NHẤT thì bốn trang thẻ Aeroplan® trên site chỉ có
+ * đúng một link nội bộ trỏ vào mỗi trang — từ trang danh sách. Đo ngày
+ * 03/09/2026: 8 trong 26 trang thẻ ở tình trạng đó, gồm cả bốn thẻ Aeroplan®,
+ * là cụm từ khoá đáng giá nhất của site. Trang bài viết đã trỏ thẳng sang ba
+ * bài liên quan và trang tài khoản đã trỏ thẳng sang thẻ cùng ngân hàng; chỉ
+ * trang thẻ là không trỏ sang thẻ nào.
+ *
+ * Lấy theo VÒNG chứ không phải ba thẻ đầu bảng: đứng ở thẻ nào thì lấy các thẻ
+ * ĐỨNG SAU nó trong thứ tự của site, hết danh sách thì vòng lại đầu. Lý do là
+ * số học chứ không phải thẩm mỹ — nếu mọi trang đều liệt kê ba thẻ đầu, thì
+ * trong một hệ điểm có sáu thẻ, ba thẻ xếp cuối vẫn không có một link nội bộ
+ * nào trỏ vào và bài toán ban đầu vẫn còn nguyên với chúng (đã đo: hai thẻ TD®
+ * Aeroplan® rơi đúng vào cảnh đó ở bản vá đầu). Vòng thì mỗi thẻ trong hệ được
+ * đúng `limit` trang khác trỏ vào, không thẻ nào lọt.
+ *
+ * Thứ tự nguồn vẫn là thứ tự của `offers`, tức thứ tự `getCreditCardOffers()`
+ * đã xếp (elevated trước, rồi Amex, rồi phần còn lại) — nên đứng ở thẻ cuối
+ * danh sách, vòng lại chính là ba thẻ site đang muốn đẩy nhất.
+ */
+export function siblingCardsInProgram(
+  offer: CreditCardOffer,
+  offers: CreditCardOffer[],
+  limit = 3,
+): CreditCardOffer[] {
+  const programId = programIdFor(offer);
+  if (!programId) return [];
+
+  const family = offers.filter((other) => programIdFor(other) === programId);
+  return ringAfter(family, (other) => other.slug === offer.slug, limit);
+}
+
+/**
+ * Tài khoản ngân hàng do chính ngân hàng phát hành thẻ này mở — chiều ngược
+ * của `cardsFromBank` bên `bank-next-steps.ts`.
+ *
+ * Bên tài khoản đã có khối "thẻ tín dụng của ngân hàng này" từ đầu, còn bên
+ * thẻ thì không có đường nào sang mục tài khoản — nên hai mục lớn nhất của
+ * site nối với nhau bằng đúng một chiều. Đây là chiều còn thiếu, và nó cũng là
+ * đường duy nhất có thật dẫn tới trang tài khoản của National Bank®: ngân hàng
+ * đó có đúng một tài khoản trên site, nên không có "tài khoản anh em" nào trỏ
+ * vào nó được.
+ *
+ * So `issuer` bằng `slugifyVi` chứ không so chuỗi thẳng, cùng lý do đã ghi ở
+ * `cardsFromBank`: `issuer` là chữ tự do trong Contentful, sửa "RBC®" thành
+ * "RBC" ở đó là một phép so chính xác sẽ đứt lặng.
+ *
+ * Trả về cả `bank` chứ không chỉ danh sách tài khoản, và người gọi PHẢI lấy
+ * nhãn từ `bank.name` — đừng in `offer.issuer` ra tiêu đề. `slugifyVi` xoá dấu
+ * câu và ký hiệu, nên một `issuer` gõ thành "RBC®!" hay "rbc " vẫn khớp đúng
+ * ngân hàng (điều mình muốn) nhưng in ra tiêu đề thì thành chuỗi hỏng.
+ * `BANKS[].name` là dạng chuẩn của site, đã mang sẵn ®/™ đúng như
+ * `audit:trademarks` đòi. Khối tương ứng bên trang tài khoản cũng lấy nhãn từ
+ * `bank.name`, nên hai chiều gọi tên ngân hàng giống hệt nhau.
+ */
+export function bankAccountsFromIssuer(
+  offer: CreditCardOffer,
+  accounts: BankAccount[],
+  limit = 3,
+): { bank: Bank; accounts: BankAccount[] } | null {
+  const issuerKey = slugifyVi(offer.issuer);
+  if (!issuerKey) return null;
+
+  const bank = BANKS.find((candidate) => slugifyVi(candidate.name) === issuerKey);
+  if (!bank) return null;
+
+  const matches = accounts.filter((account) => account.bank === bank.id).slice(0, limit);
+  return matches.length ? { bank, accounts: matches } : null;
 }
 
 /**

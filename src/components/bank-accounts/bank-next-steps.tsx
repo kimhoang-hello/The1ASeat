@@ -2,9 +2,15 @@ import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react/ssr";
 import { NextSteps, StepLink } from "@/components/ui/next-steps";
 import { bankComparePath } from "@/lib/bank-compare";
-import { cardsFromBank, otherAccountsFromBank, relatedPostsForAccount } from "@/lib/bank-next-steps";
+import {
+  accountMetaLine,
+  cardsFromBank,
+  otherAccountsFromBank,
+  relatedPostsForAccount,
+  siblingAccountsAtBank,
+} from "@/lib/bank-next-steps";
 import { formatDate } from "@/lib/format-date";
-import type { Bank, BankAccount } from "@/lib/bank-accounts";
+import { bankAccountPath, type Bank, type BankAccount } from "@/lib/bank-accounts";
 import type { BlogPost, CreditCardOffer } from "@/lib/content";
 import { t as translate } from "@/lib/t";
 
@@ -61,6 +67,7 @@ export function BankNextSteps({
   className?: string;
 }) {
   const others = otherAccountsFromBank(account, accounts);
+  const siblings = siblingAccountsAtBank(account, accounts);
   const cards = cardsFromBank(bank, offers);
   const related = relatedPostsForAccount(account, bank, posts);
 
@@ -73,14 +80,39 @@ export function BankNextSteps({
           description={t("compareDescription")}
         />
 
-        {others && (
+        {/* Cùng luật với trang thẻ: chỉ giữ cửa "xem tất cả" khi còn tài
+            khoản không lọt vào danh sách ngay bên dưới. */}
+        {others && others.count > siblings.length && (
           <StepLink
             href={others.href}
-            label={t("otherAccountsLabel", { bank: bank.name })}
-            description={t("otherAccountsDescription", { count: others.count })}
+            label={t("moreAccountsLabel", { bank: bank.name })}
+            description={t("moreAccountsDescription", {
+              count: others.count - siblings.length,
+            })}
           />
         )}
       </NextSteps>
+
+      {/* Link THẲNG sang từng tài khoản cùng ngân hàng. Xem chú thích của
+          `siblingAccountsAtBank`: chừng nào chỉ có link lọc thì cả 29 trang
+          tài khoản chỉ có đúng một đường nội bộ dẫn vào, từ trang danh sách. */}
+      {siblings.length > 0 && (
+        <>
+          <h3 className="mt-8 font-display text-base font-bold text-foreground">
+            {t("otherAccountsTitle", { bank: bank.name })}
+          </h3>
+          <ul className="mt-3 space-y-2">
+            {siblings.map((sibling) => (
+              <LinkRow
+                key={sibling.slug}
+                href={bankAccountPath(sibling.slug)}
+                title={sibling.name}
+                meta={accountMetaLine(sibling)}
+              />
+            ))}
+          </ul>
+        </>
+      )}
 
       {/* Người vừa mở tài khoản ở một ngân hàng là người dễ mở thẻ của chính
           ngân hàng đó nhất — và trước khối này trang không có đường nào sang

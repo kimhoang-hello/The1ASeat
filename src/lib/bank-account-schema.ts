@@ -18,6 +18,14 @@ const bank_t = t("bankAccounts");
  * Viết tay 29 đoạn mô tả thì đoạn thứ ba mươi sẽ bị quên, và một mô tả chép
  * lại của nhau còn tệ hơn là không có.
  */
+/**
+ * Ngưỡng cắt của `<meta name="description">`. Google không công bố con số theo
+ * ký tự — nó đo theo chiều rộng pixel — nhưng 160 là mốc an toàn quen dùng, và
+ * chữ tiếng Việt có dấu không rộng hơn chữ Latin thường nên mốc đó dùng được
+ * nguyên.
+ */
+const META_DESCRIPTION_MAX = 160;
+
 export function bankAccountDescription(account: BankAccount): string {
   const parts = [account.name + ":"];
   // `hasLiveBonus` chứ không phải `bonusLabelVi` trần — cùng luật với `Headline`
@@ -46,8 +54,20 @@ export function bankAccountDescription(account: BankAccount): string {
       ? seo("bankAccountNoFee")
       : seo("bankAccountFee", { fee: formatMoney(account.monthlyFee) }),
   );
-  parts.push(seo("bankAccountTail"));
-  return parts.join(" ");
+  // Câu đuôi là chữ mẫu, giống hệt nhau trên cả 30 trang tài khoản — nên nó là
+  // thứ đầu tiên phải bỏ khi mô tả dài quá chỗ Google cho. Trước đây nó luôn
+  // được nối vào, và 8 trang (đo 03/09/2026) vượt 160 ký tự: Google cắt ở
+  // khoảng đó, nên chỗ bị cắt luôn rơi đúng vào câu mẫu — nghĩa là snippet kết
+  // thúc giữa chừng bằng dấu "…" mà không mất thông tin nào. Bỏ hẳn đọc gọn
+  // hơn và không ai mất gì.
+  //
+  // Số liệu (tên, bonus, lãi suất, phí) KHÔNG bao giờ bị cắt: chúng là lý do
+  // trang này tồn tại. Tài khoản nào tên dài tới mức chỉ riêng phần số liệu đã
+  // vượt 160 thì cứ để dài — thà Google cắt một con số thật còn hơn mình tự
+  // giấu nó đi.
+  const core = parts.join(" ");
+  const tail = seo("bankAccountTail");
+  return core.length + 1 + tail.length <= META_DESCRIPTION_MAX ? `${core} ${tail}` : core;
 }
 
 /**

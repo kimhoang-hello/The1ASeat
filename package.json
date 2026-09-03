@@ -9,6 +9,7 @@
     "lint": "eslint",
     "audit:awards": "tsx scripts/audit-award-charts.mts",
     "audit:health": "tsx scripts/audit-content-health.mts",
+    "audit:links": "tsx scripts/audit-internal-links.mts",
     "audit:trademarks": "node scripts/audit-trademarks.mjs",
     "audit:rebates": "tsx scripts/check-bank-rebates.mts",
     "audit:rebate-prose": "tsx scripts/audit-rebate-prose.mts",

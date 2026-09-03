@@ -3,7 +3,16 @@ import { ArrowRight } from "@phosphor-icons/react/ssr";
 import { NextSteps, StepLink } from "@/components/ui/next-steps";
 import type { BlogPost, CreditCardOffer } from "@/lib/content";
 import { comparePath } from "@/lib/card-compare";
-import { pointsToolFor, relatedPostsForCard, samePointsProgramLink } from "@/lib/card-next-steps";
+import {
+  bankAccountsFromIssuer,
+  pointsToolFor,
+  relatedPostsForCard,
+  samePointsProgramLink,
+  siblingCardsInProgram,
+} from "@/lib/card-next-steps";
+import { accountMetaLine } from "@/lib/bank-next-steps";
+import { BANK_ACCOUNTS, bankAccountPath } from "@/lib/bank-accounts";
+import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
 import { formatDate } from "@/lib/format-date";
 import { t as translate } from "@/lib/t";
 
@@ -41,6 +50,17 @@ export function CardNextSteps({
     transferDescription: t("transferDescription"),
   });
   const sameProgram = samePointsProgramLink(offer, offers);
+  const siblings = siblingCardsInProgram(offer, offers);
+  // Hai chứ không phải ba như bên trang tài khoản: trang thẻ đã có ba khối
+  // link ở đuôi (đi tiếp, thẻ cùng hệ điểm, bài viết liên quan), và đây là
+  // khối họ hàng xa nhất trong bốn khối.
+  //
+  // Cờ `BANK_ACCOUNTS_PUBLISHED` phải kiểm ở đây: mục tài khoản khi tắt cờ vẫn
+  // build và vẫn vào được bằng URL trực tiếp, nhưng không được xuất hiện ở bất
+  // cứ chỗ nào người đọc bấm nhầm vào — xem chú thích của chính cờ đó.
+  const issuerBank = BANK_ACCOUNTS_PUBLISHED
+    ? bankAccountsFromIssuer(offer, BANK_ACCOUNTS, 2)
+    : null;
   const related = relatedPostsForCard(offer, posts, offers);
 
   return (
@@ -54,14 +74,62 @@ export function CardNextSteps({
 
         {tool && <StepLink href={tool.href} label={tool.label} description={tool.description} />}
 
-        {sameProgram && (
+        {/* Chỉ là cửa "xem tất cả" khi còn thẻ không lọt vào danh sách ngay
+            bên dưới. Còn dưới ngưỡng đó thì ba link thẳng đã nói đủ, và thêm
+            một link lọc ra đúng ba thẻ ấy chỉ tổ làm loãng. */}
+        {sameProgram && sameProgram.count > siblings.length && (
           <StepLink
             href={sameProgram.href}
-            label={t("sameProgramLabel", { program: sameProgram.programName })}
-            description={t("sameProgramDescription", { count: sameProgram.count })}
+            label={t("moreProgramLabel", { program: sameProgram.programName })}
+            description={t("moreProgramDescription", {
+              count: sameProgram.count - siblings.length,
+            })}
           />
         )}
       </NextSteps>
+
+      {/* Link THẲNG sang từng thẻ cùng hệ điểm, không phải một link lọc.
+          Xem chú thích của `siblingCardsInProgram`: chừng nào chỉ có link lọc
+          thì tám trang thẻ — trong đó cả bốn thẻ Aeroplan® — chỉ có đúng một
+          đường nội bộ dẫn vào, từ trang danh sách. */}
+      {sameProgram && siblings.length > 0 && (
+        <NextSteps
+          title={t("siblingsTitle", { program: sameProgram.programName })}
+          headingLevel="h3"
+          compact
+          className="mt-8"
+        >
+          {siblings.map((sibling) => (
+            <StepLink
+              key={sibling.slug}
+              href={`/credit-cards/${sibling.slug}`}
+              label={sibling.name}
+              description={`${sibling.cardType} · ${sibling.annualFee}`}
+            />
+          ))}
+        </NextSteps>
+      )}
+
+      {/* Chiều còn thiếu giữa hai mục lớn nhất của site: trang tài khoản đã
+          trỏ sang thẻ cùng ngân hàng từ đầu, trang thẻ thì chưa trỏ ngược
+          lại. Xem chú thích của `bankAccountsFromIssuer`. */}
+      {issuerBank && (
+        <NextSteps
+          title={t("bankAccountsTitle", { bank: issuerBank.bank.name })}
+          headingLevel="h3"
+          compact
+          className="mt-8"
+        >
+          {issuerBank.accounts.map((account) => (
+            <StepLink
+              key={account.slug}
+              href={bankAccountPath(account.slug)}
+              label={account.name}
+              description={accountMetaLine(account)}
+            />
+          ))}
+        </NextSteps>
+      )}
 
       {related.length > 0 && (
         <>

@@ -378,8 +378,10 @@
     "awardDescription": "Tra số điểm cần cho từng chặng trong Award Flight Finder",
     "transferLabel": "Điểm này chuyển đi đâu được?",
     "transferDescription": "Xem tỷ lệ chuyển sang các chương trình hàng không và khách sạn",
-    "sameProgramLabel": "Thẻ khác cũng tích {program}",
-    "sameProgramDescription": "Còn {count} thẻ nữa cùng loại điểm",
+    "moreProgramLabel": "Xem tất cả thẻ tích {program}",
+    "moreProgramDescription": "Còn {count} thẻ nữa ngoài danh sách bên dưới",
+    "siblingsTitle": "Thẻ khác cũng tích {program}",
+    "bankAccountsTitle": "Tài khoản ngân hàng của {bank}",
     "relatedTitle": "Bài viết liên quan"
   },
   "offerHistory": {
@@ -484,8 +486,9 @@
     "routeDescription": "{count} bài, đọc theo thứ tự — rồi tiếp tục với các bước chọn thẻ và dùng điểm"
   },
   "bankNextSteps": {
-    "otherAccountsLabel": "Tài khoản khác của {bank}",
-    "otherAccountsDescription": "Còn {count} tài khoản nữa cùng ngân hàng",
+    "moreAccountsLabel": "Xem tất cả tài khoản của {bank}",
+    "moreAccountsDescription": "Còn {count} tài khoản nữa ngoài danh sách bên dưới",
+    "otherAccountsTitle": "Tài khoản khác của {bank}",
     "compareLabel": "So sánh tài khoản này với tài khoản khác",
     "compareDescription": "Đặt cạnh một, hai tài khoản nữa để thấy chúng chênh nhau chỗ nào",
     "cardsTitle": "Thẻ tín dụng của {bank}",
