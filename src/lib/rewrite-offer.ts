@@ -41,6 +41,10 @@ Giọng văn: thẳng thắn, đánh giá thật. Nếu offer mới yếu hơn o
 
 Yêu cầu từng trường:
 - headlineVi: MỘT câu, nêu welcome bonus hiện hành và 1–2 quyền lợi nổi bật nhất.
+  BẮT BUỘC mở đầu bằng đúng chữ "Welcome bonus" nếu thẻ có welcome bonus — đây là
+  luật của site: trang /credit-cards xếp các headline thành một cột, mở đầu giống
+  nhau để người đọc quét nhanh xuống tìm con số. Thẻ KHÔNG có welcome bonus thì mở
+  đầu bằng quyền lợi chính; tuyệt đối không bịa ra bonus để cho khớp khuôn.
 - keyBenefitsVi: 4–5 gạch đầu dòng. Dòng đầu là welcome bonus kèm cách đạt được (mức chi tiêu, thời hạn). Các dòng sau là tỷ lệ tích điểm, phí ngoại tệ, phòng chờ, bảo hiểm — chỉ những gì có trong dữ liệu.
 - editorsTakeVi: 2–4 câu đánh giá. Nếu thẻ có rebate, kết thúc bằng đúng câu: "HOT TIP: Apply thẻ qua FinlyWealth để nhận thêm $X rebate." (X là số rebate được cho).`;
 
