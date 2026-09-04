@@ -252,14 +252,14 @@ Bài viết tự tạo chỉ có tiêu đề gốc + 1 câu mô tả ngắn chun
 Claude Code viết riêng cho từng video như trước) — vào Contentful chỉnh lại
 `excerptVi`/`bodyVi`/`categoryVi` nếu muốn, publish lại là xong.
 
-## Hai mục thẻ tín dụng: "Offers nổi bật" và "Các offers khác"
+## Hai mục thẻ tín dụng: "Elevated offers" và "Các offers khác"
 
 Trang `/credit-cards` có 2 tab, và thẻ nằm ở tab nào là do **một ô duy nhất**
 quyết định — `Elevated Bonus`:
 
 | `Elevated Bonus` | Thẻ hiện ở tab |
 |------------------|----------------|
-| ✅ bật            | Offers nổi bật |
+| ✅ bật            | Elevated offers |
 | ⬜ tắt            | Các offers khác |
 
 Không cần làm gì thêm, không có trường nào khác phải điền.

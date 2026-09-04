@@ -170,7 +170,7 @@ công cụ tính, search, SEO/schema và accessibility. Tám phát hiện, đã 
 - **`isElevatedLive()` trong `lib/credit-card-state.ts` là chốt duy nhất quyết
   định một thẻ có đang chạy elevated offer hay không** — cờ `elevatedBonus`
   MỘT MÌNH thì không. Bản đang phục vụ có thể mang cờ bật + `expiresAt` đã qua
-  (publish hỏng giữa chừng). Năm chỗ phải dùng chung nó: tab "Offers nổi bật",
+  (publish hỏng giữa chừng). Năm chỗ phải dùng chung nó: tab "Elevated offers",
   chia nổi bật/còn lại ở trang chủ, `CardBadges`, banner đầu trang,
   `creditCardPriority`. Đừng đọc thẳng `offer.elevatedBonus` ở tầng render nữa.
 - **`hasLiveBonus()` trong `lib/bank-accounts.ts`** cũng vậy với welcome bonus

@@ -11,7 +11,7 @@ import { hasExpired } from "./format-date";
  * của job, còn trang vẫn đang vẽ trong lúc chờ người xử lý).
  *
  * Trước đây `CardBadges` giấu ngày hết hạn đã qua, nhưng huy hiệu "Elevated
- * offer", tab "Offers nổi bật", thứ tự ưu tiên trang chủ và banner chạy trên
+ * offer", tab "Elevated offers", thứ tự ưu tiên trang chủ và banner chạy trên
  * đầu mọi trang đều vẫn tin mỗi cái cờ — nên kết quả tệ hơn: offer chết vẫn
  * được quảng bá, mà dấu hiệu duy nhất cho biết nó chết thì đã bị giấu đi.
  *
