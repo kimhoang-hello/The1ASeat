@@ -96,8 +96,9 @@ const FINLY_TITLE = /Rebate from FinlyWealth/i;
  * Thử lại cho TỪNG trang, vì một lượt chạy quét 29 URL tuần tự vào cùng một
  * host. Từ khi `fetchRebate` ném ở nhiều nhánh hơn, chỉ cần MỘT trang chạm
  * rate-limit là cả lượt chạy đỏ — và nếu Finly siết quota xuống dưới 29 thì nó
- * đỏ mỗi ngày. Thử lại đúng vào chỗ hỏng thì rẻ hơn nhiều so với nới lỏng cửa
- * an toàn, vì hết lượt thử vẫn ném và một trang hỏng dai vẫn hiện ra.
+ * đỏ mọi lượt, mà từ 04/09/2026 mỗi ngày có hai lượt chứ không còn một, tức
+ * gấp đôi áp lực quota. Thử lại đúng vào chỗ hỏng thì rẻ hơn nhiều so với nới
+ * lỏng cửa an toàn, vì hết lượt thử vẫn ném và một trang hỏng dai vẫn hiện ra.
  */
 const ATTEMPTS = 3;
 

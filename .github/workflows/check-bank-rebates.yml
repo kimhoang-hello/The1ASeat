@@ -16,9 +16,20 @@ name: Check FinlyWealth rebate amounts (bank accounts)
 # như mong muốn, vì số trên site chỉ đổi sau khi build lại.
 on:
   schedule:
-    # 8:45 UTC, ngay sau check-rebates.yml (8:30) để hai job không tranh nhau
-    # gọi FinlyWealth cùng lúc.
+    # Hai lượt mỗi ngày, mỗi lượt đứng sau check-rebates.yml (8:30 / 20:30) 15
+    # phút để hai job không tranh nhau gọi FinlyWealth cùng lúc.
+    #
+    # Lên hai lượt cùng lý do với bên thẻ: 04/09/2026 FinlyWealth đổi số SAU
+    # lượt trong ngày, và site hứa sai suốt phần còn lại của ngày. Giờ ghi ở
+    # đây là giờ SỚM NHẤT chứ không phải giờ chạy — cron của GitHub xếp hàng,
+    # ba lượt 02-04/09/2026 bên thẻ đều nổ trễ ~4 tiếng.
+    #
+    # Đắt hơn bên thẻ (checkout + `npm ci` + đọc 29 trang) nhưng vẫn rẻ, và
+    # lượt không có gì đổi KHÔNG deploy: bước commit tự thoát khi
+    # `src/lib/bank-accounts.ts` không đổi, nên không có commit rỗng nào kéo
+    # theo một lần build Hostinger.
     - cron: "45 8 * * *"
+    - cron: "45 20 * * *"
   workflow_dispatch: {}
 
 jobs:

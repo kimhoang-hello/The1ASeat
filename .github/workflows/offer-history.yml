@@ -14,8 +14,15 @@ name: Ghi lịch sử welcome bonus và rebate
 # hộ rồi trả về.
 on:
   schedule:
-    # 9:00 UTC — sau check-rebates (8:30) và check-bank-rebates (8:45), để ảnh
-    # chụp hôm nay đã bao gồm mọi số mà hai job kia vừa cập nhật.
+    # 9:00 UTC — sau lượt sáng của check-rebates (8:30) và check-bank-rebates
+    # (8:45), để ảnh chụp hôm nay đã bao gồm mọi số mà hai job kia vừa cập nhật.
+    #
+    # Hai job đó còn một lượt tối (20:30 / 20:45) mà ảnh chụp này KHÔNG đợi —
+    # có chủ ý: một số đổi buổi tối được ghi vào ảnh chụp sáng hôm sau, lệch
+    # ngày ghi nhận chứ không mất. Thêm lượt chụp buổi tối cũng không sửa được
+    # chuyện đó: mốc của lịch sử này là NGÀY, và `record-offer-history` ghi đè
+    # dòng cùng ngày thay vì thêm dòng mới, nên lượt thứ hai chỉ viết lại đúng
+    # ô ấy.
     - cron: "0 9 * * *"
   workflow_dispatch: {}
 
