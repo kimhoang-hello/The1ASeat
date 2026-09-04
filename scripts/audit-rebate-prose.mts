@@ -23,6 +23,8 @@ import { PROSE_FIELDS, rebateFiguresIn, withRebateFigure } from "../src/lib/reba
 
 const REPO = fileURLToPath(new URL("..", import.meta.url));
 const LOCALE = "en-US";
+/** Hạn giờ cho mỗi lượt gọi Contentful. Xem `cmaInit` trong lib/contentful-cma.ts. */
+const REQUEST_TIMEOUT_MS = 20_000;
 const fix = process.argv.includes("--fix");
 
 const env = Object.fromEntries(
@@ -65,23 +67,31 @@ async function listEntries(): Promise<CmaEntry[]> {
     : `https://cdn.contentful.com/spaces/${SPACE}/environments/master`;
 
   const out: CmaEntry[] = [];
-  const limit = 100;
+  const host = CMA ? "https://api.contentful.com" : "https://cdn.contentful.com";
+  // CON TRỎ MỜ, không phải `skip` — cùng lý do `lib/content` và
+  // `lib/contentful-cma` đã bỏ `skip`: một entry rơi khỏi tập kết quả giữa hai
+  // lượt lấy làm những entry sau dồn lên và vài cái bị nhảy qua trong im lặng.
+  // Script này có `--fix` ghi thẳng vào Contentful, nên một thẻ bị nhảy qua là
+  // một con số rebate sai nằm lại trên site mà lượt chạy nào cũng báo sạch.
+  let url = `${base}/entries?content_type=creditCardOffer&limit=100&cursor=true`;
 
-  for (let skip = 0; ; skip += limit) {
-    const res = await fetch(
-      `${base}/entries?content_type=creditCardOffer&skip=${skip}&limit=${limit}`,
-      { headers: { Authorization: `Bearer ${token}` } },
-    );
+  for (;;) {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+      // Hạn giờ, cùng lý do `cmaInit` trong `lib/contentful-cma.ts`: không có
+      // nó thì một kết nối mở rồi im giữ script lại vô hạn.
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
     // Ném chứ không coi là danh sách rỗng: một lượt đọc hỏng mà im lặng sẽ in
     // ra "không có chỗ nào lệch" và người đọc tin là sạch.
     if (!res.ok) throw new Error(`Đọc entries hỏng: ${res.status} ${await res.text()}`);
 
     const data = await res.json();
     out.push(...((data.items ?? []) as CmaEntry[]));
-    if (skip + limit >= (data.total ?? 0)) break;
+    const next = data.pages?.next;
+    if (typeof next !== "string" || !next) return out;
+    url = new URL(next, host).toString();
   }
-
-  return out;
 }
 
 function valueOf(entry: CmaEntry, name: string): unknown {
@@ -162,6 +172,7 @@ for (const entry of entries) {
       "Content-Type": "application/vnd.contentful.management.v1+json",
     },
     body: JSON.stringify({ fields }),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
   if (!put.ok) throw new Error(`Ghi ${slug} hỏng: ${put.status} ${await put.text()}`);
 
@@ -175,6 +186,7 @@ for (const entry of entries) {
         "X-Contentful-Version": String(updated.sys.version),
         "X-Contentful-Content-Type": "creditCardOffer",
       },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
     if (!pub.ok) throw new Error(`Publish ${slug} hỏng: ${pub.status} ${await pub.text()}`);
   }

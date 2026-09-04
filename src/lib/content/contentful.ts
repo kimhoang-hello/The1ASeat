@@ -40,12 +40,11 @@ const bodyOptions: Options = {
       // dấu nháy, KHÔNG giữ được scheme. Chỉ nhận scheme đọc được là link, còn
       // lại trả về chữ trần: mất một cái link thì thấy ngay, còn giữ nó lại
       // thì hỏng thầm lặng.
-      if (!isSafeHref(uri)) return text;
-      // Một chuỗi duy nhất đi tiếp, đã trim. `isSafeHref` vốn đã trim trước khi
-      // duyệt, nên trước đây cửa an toàn phán trên chuỗi đã cắt còn `href` và
-      // `relForUrl` lại nhận chuỗi thô — ba cách đọc khác nhau cho cùng một
-      // link. Chốt lại ở đây để chúng không thể lệch nhau nữa.
-      const href = uri.trim();
+      // `safeHref` trả về ĐÚNG chuỗi được phép in — đã trim và đã bỏ ký tự
+      // điều khiển. Dùng lại chính nó cho `href` và cho `relForUrl` là cách duy
+      // nhất giữ ba cách đọc không lệch nhau; đừng quay lại dùng `uri` ở đây.
+      const href = safeHref(uri);
+      if (href === null) return text;
       const rel = relForUrl(href);
       const attrs = rel ? ` target="_blank" rel="${rel}"` : "";
       return `<a href="${escapeAttribute(href)}"${attrs}>${text}</a>`;
@@ -53,11 +52,28 @@ const bodyOptions: Options = {
   },
 };
 
-/** `http(s)`, `mailto`, `tel`, và link nội bộ (`/…`, `#…`, `?…`). Mọi thứ khác
- *  — kể cả `javascript:` và `data:` — không phải thứ một bài viết cần tới. */
-function isSafeHref(uri: string): boolean {
+/**
+ * Chuỗi href ĐƯỢC PHÉP IN RA, hoặc `null` nếu không phải link đọc được.
+ *
+ * Trả về CHUỖI chứ không trả `boolean`, vì đây là chỗ ba cách đọc từng lệch
+ * nhau. `href`, `relForUrl` và chính cửa an toàn này BẮT BUỘC nhìn cùng một
+ * chuỗi: bản cũ lọc ký tự điều khiển để duyệt scheme rồi lại in chuỗi THÔ ra
+ * `href`, nên `"http\ns://finlywealth.com/r/x"` qua được cửa, mà `relForUrl`
+ * (khớp `^https?://` trên chuỗi thô) trả `null` — link referral ra site không
+ * `sponsored`, không `target="_blank"`, `AffiliateClickTracker` không đếm, còn
+ * trình duyệt thì vẫn cắt ký tự điều khiển và đi thẳng tới FinlyWealth. Đo
+ * được cả ba hình dạng: xuống dòng, tab, và CR chèn giữa scheme.
+ *
+ * Đây là lần thứ ba cùng một lớp lỗi ở đúng chỗ này (khoảng trắng đầu chuỗi,
+ * rồi `/\host`, giờ tới ký tự điều khiển). Nên cửa không còn trả lời "có/không"
+ * nữa — nó trả về đúng chuỗi phải dùng, và mọi chỗ phía sau dùng lại chuỗi đó.
+ *
+ * `http(s)`, `mailto`, `tel`, và link nội bộ (`/…`, `#…`, `?…`). Mọi thứ khác
+ * — kể cả `javascript:` và `data:` — không phải thứ một bài viết cần tới.
+ */
+function safeHref(uri: string): string | null {
   const trimmed = uri.trim();
-  if (!trimmed) return false;
+  if (!trimmed) return null;
   // Link nội bộ được XÁC NHẬN BẰNG CÁCH GIẢI RA, không bằng cách nhìn ký tự
   // đầu. `//host/path` bắt đầu bằng `/` nhưng là link ra ngoài mượn scheme của
   // trang, và chuẩn URL của WHATWG còn coi `\` ngang hàng `/` ở chỗ này — nên
@@ -74,15 +90,17 @@ function isSafeHref(uri: string): boolean {
   // host — dù viết bằng `/`, `\` hay thứ chuẩn thêm vào sau này — đều lộ ra.
   if (/^[/#?\\]/.test(trimmed)) {
     try {
-      return new URL(trimmed, "https://internal.invalid/").hostname === "internal.invalid";
+      const stays = new URL(trimmed, "https://internal.invalid/").hostname === "internal.invalid";
+      return stays ? trimmed : null;
     } catch {
-      return false;
+      return null;
     }
   }
   // Ký tự điều khiển nhét giữa scheme (`java\0script:`) là cách cũ để lách
-  // phép so scheme, nên bỏ chúng TRƯỚC khi so, không phải sau.
+  // phép so scheme, nên bỏ chúng TRƯỚC khi so, không phải sau — VÀ trả về đúng
+  // chuỗi đã bỏ, để không chỗ nào phía sau còn nhìn thấy bản thô.
   const cleaned = trimmed.replace(/[\u0000-\u001F\u007F]/g, "");
-  return /^(https?|mailto|tel):/i.test(cleaned);
+  return /^(https?|mailto|tel):/i.test(cleaned) ? cleaned : null;
 }
 
 export function renderPostBody(document: Document): string {

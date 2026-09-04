@@ -884,6 +884,36 @@ Contentful để webhook chỉ gửi những field route dùng (`sys.id`, conten
 câu hỏi biến mất. Chưa chốt `PAYLOAD_MS` bao nhiêu là an toàn vì chưa đo body
 thật. Việc này cần một phiên riêng, không làm kèm.
 
+## Vòng review phiên 04/09/2026 — đừng đề xuất lại
+
+Codex rà lại 3 commit của phiên trước (`3109820`, `e1b1f21`, `c39b07c`) trên
+HEAD đã có thêm 6 commit của phiên khác. Nó xác nhận phần lớn đứng vững —
+cursor CMA, 5 bề mặt render `applyUrl`, ngữ nghĩa retry của `sync-videos`, biên
+ngày của `audit:health` — và tìm ra hai chỗ còn hở. Cả hai đã vá.
+
+- **`safeHref` trả CHUỖI, không trả `boolean`** (`lib/content/contentful.ts`).
+  Đây là lần thứ BA cùng một lớp lỗi ở đúng chỗ này: khoảng trắng đầu chuỗi,
+  rồi `/\host`, giờ tới ký tự điều khiển. Bản cũ lọc ký tự điều khiển để duyệt
+  scheme rồi in chuỗi THÔ ra `href`, nên `"http\ns://finlywealth.com/r/x"` qua
+  được cửa, mà `relForUrl` (khớp `^https?://` trên chuỗi thô) trả `null` — link
+  referral ra site không `sponsored`, không `target="_blank"`,
+  `AffiliateClickTracker` không đếm, còn trình duyệt vẫn cắt ký tự điều khiển
+  và đi thẳng tới FinlyWealth. Đo được ba hình dạng: `\n`, `\t`, `\r` chèn giữa
+  scheme.
+  Vì lặp ba lần nên cửa không còn trả lời "có/không" nữa — nó trả về ĐÚNG chuỗi
+  phải in, và `href` lẫn `relForUrl` dùng lại chính chuỗi đó. Đừng đổi ngược về
+  `boolean`, và đừng dùng lại biến `uri` thô sau khi đã gọi nó.
+  Lưu ý khi tự viết phép kiểm: `mailto:`/`tel:` KHÔNG cần `rel` — chúng mở ứng
+  dụng khác chứ không phải trang web ra ngoài. Một bài kiểm chỉ so
+  "có bắt đầu bằng https://ghe1a.com không" sẽ báo nhầm chúng là rò.
+
+- **`scripts/audit-rebate-prose.mts` là đường CMA cuối cùng còn dùng `skip` và
+  chưa có hạn giờ.** Vòng trước đã vá `lib/contentful-cma.ts` nhưng script này
+  mang plumbing riêng nên lọt. Nó có `--fix` GHI THẲNG vào Contentful, nên một
+  thẻ bị nhảy qua là con số rebate sai nằm lại trên site mà lượt chạy nào cũng
+  báo sạch. Nay dùng con trỏ mờ và `AbortSignal` cho cả lượt đọc lẫn hai lượt
+  ghi. Đã đối chiếu: vẫn ra đúng 25 thẻ như bản `skip`.
+
 ## Chạy gì trước khi kết luận
 
 ```
