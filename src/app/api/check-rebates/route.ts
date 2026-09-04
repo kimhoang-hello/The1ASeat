@@ -6,10 +6,10 @@ import { jobSecretValid } from "@/lib/job-auth";
 import { RESERVED_SLUG, slugClashMessage } from "@/lib/card-compare";
 import { rebateProseMismatches, rebateProsePatch } from "@/lib/rebate-prose";
 
-// Called daily (see .github/workflows/check-rebates.yml). FinlyWealth changes
-// its rebate amounts without warning — the BMO card went $125 -> $200 — and a
-// figure on the card that no longer matches what the reader actually gets is
-// worse than no figure at all. This walks every card whose apply link is a
+// Called twice a day (see .github/workflows/check-rebates.yml). FinlyWealth
+// changes its rebate amounts without warning — the BMO card went $125 -> $200 —
+// and a figure on the card that no longer matches what the reader actually gets
+// is worse than no figure at all. This walks every card whose apply link is a
 // FinlyWealth rebate product and writes the current amount back.
 
 const CONTENT_TYPE = "creditCardOffer";
@@ -75,9 +75,9 @@ async function handleCheck(request: NextRequest) {
   // bắt được thẻ đã có lúc build, nhưng thẻ publish sau đó thì webhook chỉ
   // revalidate chứ không chạy lại hàm đó — và trang chi tiết của nó sẽ bị
   // trang so sánh che mất trong im lặng, trong khi danh sách, ô tìm kiếm và
-  // sitemap vẫn trỏ tới đúng đường dẫn đó. Job này đọc bản published mỗi ngày,
-  // nên nó thấy; và vì điều kiện còn nguyên ở mọi lượt sau, `--retry` của
-  // workflow không rửa nó thành xanh.
+  // sitemap vẫn trỏ tới đúng đường dẫn đó. Job này đọc bản published hai lượt
+  // mỗi ngày, nên nó thấy; và vì điều kiện còn nguyên ở mọi lượt sau, `--retry`
+  // của workflow không rửa nó thành xanh.
   const updated: Change[] = [];
   const unchanged: string[] = [];
   const errors: { slug: string; message: string }[] = [];

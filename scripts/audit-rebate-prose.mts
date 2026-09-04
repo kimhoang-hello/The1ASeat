@@ -8,7 +8,7 @@
 // có người gõ "$125 rebate" vào editor's take trong giao diện Contentful thì
 // route không có việc gì để làm — nó thấy số cũ bằng số mới rồi đi tiếp. Route
 // nay có thêm một lượt canh báo trạng thái đó ra `errors`, nhưng báo thì phải
-// đợi tới 8:30 UTC hôm sau và phải mở log GitHub Actions ra đọc.
+// đợi tới lượt kế (8:30 hoặc 20:30 UTC) và phải mở log GitHub Actions ra đọc.
 //
 // Script này là bản chạy tay của cùng phép so, cho lúc đang ngồi sửa nội dung:
 // biết ngay, và sửa được ngay bằng `--fix`.

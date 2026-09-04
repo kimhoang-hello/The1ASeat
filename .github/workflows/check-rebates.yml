@@ -17,7 +17,21 @@ name: Check FinlyWealth rebate amounts
 # thì có. Bản chạy tay của cùng phép so là `npm run audit:rebate-prose`.
 on:
   schedule:
+    # Hai lượt mỗi ngày, cách nhau 12 tiếng. Một lượt là không đủ: 04/09/2026
+    # FinlyWealth nâng rebate thẻ Scotiabank® Gold American Express® từ $150
+    # lên $200 SAU khi lượt trong ngày đã chạy, nên site hứa thiếu $50 cho
+    # người đọc suốt phần còn lại của ngày, và phải chạy tay mới thấy.
+    #
+    # Giờ ghi ở đây là giờ SỚM NHẤT, không phải giờ chạy: cron của GitHub
+    # Actions xếp hàng chứ không đúng phút, và ba lượt 02-04/09/2026 đều nổ
+    # lúc ~12:55 UTC dù đặt 8:30. Đó là thêm một lý do chạy hai lượt — lượt
+    # nào bị đẩy trễ thì lượt kia vẫn còn.
+    #
+    # Chạy lại an toàn và rẻ: route tự đối chiếu với bản đã publish trước khi
+    # ghi, nên lượt thứ hai của một ngày không đổi gì sẽ chỉ đọc rồi thôi
+    # (~15 giây, 10 thẻ).
     - cron: "30 8 * * *"
+    - cron: "30 20 * * *"
   workflow_dispatch: {}
 
 jobs:

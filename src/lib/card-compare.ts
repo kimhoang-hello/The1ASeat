@@ -50,7 +50,8 @@ export function slugClashMessage(): string {
 /**
  * Cửa canh lúc build. Chỉ bắt được thẻ đã có trong Contentful lúc đó; thẻ
  * publish SAU khi deploy thì webhook chỉ revalidate chứ không chạy lại
- * `generateStaticParams`, nên `check-rebates` canh thêm lượt nữa mỗi ngày.
+ * `generateStaticParams`, nên `check-rebates` canh thêm lượt nữa, hai lượt
+ * mỗi ngày.
  */
 export function assertNoSlugClash(offers: CreditCardOffer[]): void {
   assertNoClash(offers, RESERVED_SLUG, slugClashMessage());

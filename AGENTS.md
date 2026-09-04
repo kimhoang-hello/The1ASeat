@@ -239,8 +239,9 @@ chip lọc và tụt xuống cuối danh sách sắp theo bonus.
 - **Đường dẫn của trang so sánh được canh ở HAI chỗ, và cần cả hai.**
   `generateStaticParams` của `[slug]` chạy lúc `next build` → bắt thẻ đã có
   trong Contentful lúc deploy. Nhưng thẻ publish SAU đó thì webhook chỉ
-  revalidate chứ không chạy lại hàm đó, nên `check-rebates` (chạy hằng ngày,
-  đọc bản published) canh lượt thứ hai và đỏ dai cho tới khi có người đổi slug.
+  revalidate chứ không chạy lại hàm đó, nên `check-rebates` (chạy hai lượt mỗi
+  ngày, đọc bản published) canh lượt thứ hai và đỏ dai cho tới khi có người đổi
+  slug.
   KHÔNG đặt cửa canh trong chính trang so sánh: nó `await searchParams` nên là
   route động, thân nó không chạy lúc build và `throw` ở đó không bao giờ làm
   deploy đỏ. Hai vòng review liên tiếp mới ra được hình dạng này.

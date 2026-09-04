@@ -4,12 +4,13 @@
 //   npm run audit:rebates -- --fix   sửa thẳng vào src/lib/bank-accounts.ts
 //
 // VÌ SAO CẦN RIÊNG MỘT SCRIPT: thẻ tín dụng đã có `/api/check-rebates` chạy
-// hằng ngày, nhưng route đó chỉ đi qua `creditCardOffer` trong Contentful.
-// Rebate tài khoản ngân hàng nằm trong một file TypeScript trong repo, mà một
-// route đang chạy thì không sửa được file nguồn — nên suốt thời gian qua chưa
-// có gì canh chừng chúng cả. Ngày 19/08/2026 phát hiện Scotiabank® Preferred
-// Package vẫn ghi $100 trong khi FinlyWealth đã hạ xuống $75 từ lúc nào không
-// biết; hứa dư $25 với người đọc còn tệ hơn là không ghi số nào.
+// hai lượt mỗi ngày, nhưng route đó chỉ đi qua `creditCardOffer` trong
+// Contentful. Rebate tài khoản ngân hàng nằm trong một file TypeScript trong
+// repo, mà một route đang chạy thì không sửa được file nguồn — nên suốt thời
+// gian qua chưa có gì canh chừng chúng cả. Ngày 19/08/2026 phát hiện
+// Scotiabank® Preferred Package vẫn ghi $100 trong khi FinlyWealth đã hạ xuống
+// $75 từ lúc nào không biết; hứa dư $25 với người đọc còn tệ hơn là không ghi
+// số nào.
 //
 // Script cũng kiểm luôn chuyện thứ hai, chuyện đã làm mất tiền thật: một tài
 // khoản trỏ vào trang `/banking/...` trong khi bản `/rebates/bank-accounts/`

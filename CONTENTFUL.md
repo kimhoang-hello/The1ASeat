@@ -76,9 +76,10 @@ Mẹo viết:
 
 > **`rebateVi` và câu HOT TIP phải khớp nhau.** Cùng con số rebate thường được
 > viết lại trong `editorsTakeVi` ("HOT TIP: Apply thẻ qua FinlyWealth để nhận
-> thêm $140 rebate."). Job hằng ngày `/api/check-rebates` giữ hai chỗ đó khớp
-> nhau và báo lỗi nếu bạn sửa tay một chỗ mà quên chỗ kia — kiểm ngay bằng
-> `npm run audit:rebate-prose` (thêm `-- --fix` để sửa luôn). Trước khi có
+> thêm $140 rebate."). Job `/api/check-rebates` chạy hai lượt mỗi ngày, giữ hai
+> chỗ đó khớp nhau và báo lỗi nếu bạn sửa tay một chỗ mà quên chỗ kia — kiểm
+> ngay bằng `npm run audit:rebate-prose` (thêm `-- --fix` để sửa luôn). Trước
+> khi có
 > lượt canh này, thẻ Scotiabank® Scene+™ Visa for Students hiện badge $50 mà
 > editor's take vẫn hứa $125.
 
@@ -301,10 +302,10 @@ thường, chỉ riêng phần viết lại lời văn là bỏ qua.
 
 FinlyWealth đổi số tiền rebate mà không báo trước (thẻ BMO® VIPorter® từng đổi
 từ $125 lên $200). Route
-[`/api/check-rebates`](src/app/api/check-rebates/route.ts) chạy mỗi ngày, mở
-trang FinlyWealth của từng thẻ, đọc số rebate hiện tại rồi ghi đè vào ô
-`Rebate Vi` nếu lệch — nên con số hiển thị trên web luôn khớp với số người đọc
-thực nhận. Chỉ những thẻ có `Apply Url` trỏ tới trang `/rebates/...` của
+[`/api/check-rebates`](src/app/api/check-rebates/route.ts) chạy hai lượt mỗi
+ngày, mở trang FinlyWealth của từng thẻ, đọc số rebate hiện tại rồi ghi đè vào
+ô `Rebate Vi` nếu lệch — nên con số hiển thị trên web luôn khớp với số người
+đọc thực nhận. Chỉ những thẻ có `Apply Url` trỏ tới trang `/rebates/...` của
 FinlyWealth mới được kiểm tra; thẻ dùng link referral riêng của ngân hàng thì
 route bỏ qua.
 

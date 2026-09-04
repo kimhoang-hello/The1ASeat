@@ -52,10 +52,11 @@ trong **nội dung Contentful** chứ không nằm trong code.
 
 `audit:rebate-prose` tồn tại vì con số rebate nằm ở HAI chỗ trên cùng một
 entry: field `rebateVi` (badge trên ảnh thẻ) và cùng con số đó viết tay trong
-câu "HOT TIP: … nhận thêm $140 rebate." của `editorsTakeVi`. Job hằng ngày
-`/api/check-rebates` giữ hai chỗ khớp nhau, nhưng chỉ vào lúc FinlyWealth đổi
-số — người gõ nhầm tay thì phải audit mới thấy. Rà tay 01/09/2026: 3 trong 10
-thẻ có rebate đang lệch, tệ nhất hứa dư $75 cho người đọc.
+câu "HOT TIP: … nhận thêm $140 rebate." của `editorsTakeVi`. Job
+`/api/check-rebates` chạy hai lượt mỗi ngày, giữ hai chỗ khớp nhau, nhưng chỉ
+vào lúc FinlyWealth đổi số — người gõ nhầm tay thì phải audit mới thấy. Rà tay
+01/09/2026: 3 trong 10 thẻ có rebate đang lệch, tệ nhất hứa dư $75 cho người
+đọc.
 
 `audit:trademarks` phải chạy **sau** khi sửa xong, không phải trước: nó tự học
 thương hiệu từ chính nội dung, nên một thẻ mới mang tên hãng mới vào site sẽ

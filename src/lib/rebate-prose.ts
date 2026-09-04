@@ -2,9 +2,10 @@
  * Con số rebate xuất hiện ở HAI chỗ trên một thẻ, và chỉ một chỗ được canh.
  *
  * `rebateVi` là con số vẽ thành badge trên ảnh thẻ, và `/api/check-rebates`
- * đồng bộ nó với FinlyWealth mỗi ngày. Nhưng cùng con số đó còn được viết tay
- * vào phần chữ — "HOT TIP: Apply thẻ qua FinlyWealth để nhận thêm $140 rebate."
- * trong `editorsTakeVi` — và trước 01/09/2026 không có gì đụng tới chỗ ấy.
+ * đồng bộ nó với FinlyWealth hai lượt mỗi ngày. Nhưng cùng con số đó còn được
+ * viết tay vào phần chữ — "HOT TIP: Apply thẻ qua FinlyWealth để nhận thêm $140
+ * rebate." trong `editorsTakeVi` — và trước 01/09/2026 không có gì đụng tới
+ * chỗ ấy.
  *
  * Hậu quả không phải giả thuyết. Rà tay ngày 01/09/2026: Scotiabank® Scene+™
  * Visa for Students hiện badge $50 trong khi editor's take vẫn hứa $125. Lệch
@@ -59,7 +60,7 @@ export interface ProseMismatch {
  *
  * `fields` nhận thẳng hình dạng của Contentful (chuỗi, hoặc mảng chuỗi cho
  * `keyBenefits*`); thứ gì khác bị bỏ qua chứ không ném, vì người gọi là một
- * job chạy hằng ngày và một trường có kiểu lạ không đáng làm hỏng cả lượt.
+ * job chạy theo lịch và một trường có kiểu lạ không đáng làm hỏng cả lượt.
  */
 export function rebateProseMismatches(
   fields: Record<string, unknown>,
