@@ -41,3 +41,21 @@ chỉnh thông số; đọc bảng trên để biết file thật nằm đâu.
 
 Không đụng vào gameplay, scoring, `recommendation-config.js` hay bất kỳ quyết
 định giao diện nào đã duyệt.
+
+## Bảng kỷ lục chung (thêm 05/09/2026)
+
+`src/leaderboard.js` là **thứ duy nhất trong game gọi ra mạng** — README gốc nói
+game không có request nào, câu đó nay chỉ còn đúng với phần còn lại. Nó gọi
+`/api/game-record` của chính website:
+
+- `GET` trả kỷ lục hiện tại + một token cho lượt sắp chơi. Game gọi lúc mở trang
+  và lúc bấm "Bắt đầu chơi" — token mang mốc thời gian nên phải phát đúng lúc bấm
+  nút, không phải lúc mở trang.
+- `POST` gửi điểm mới. Chỉ ghi khi thật sự vượt kỷ lục đang có.
+
+Hỏng mạng, hỏng endpoint, hay mở game ở một origin không có API — tất cả rơi về
+`available = false`, dòng kỷ lục ẩn đi và game chạy y như trước. Một lượt chơi
+không bao giờ được hỏng vì bảng kỷ lục.
+
+Chỗ lưu và luật chống gian lận: xem mục `gameHighScore` trong
+[CONTENTFUL.md](../../CONTENTFUL.md).

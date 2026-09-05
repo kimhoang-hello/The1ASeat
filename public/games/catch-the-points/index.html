@@ -118,7 +118,8 @@
                   >45 GIÂY</span
                 ><span>MỘT CHIẾC VALI</span>
               </div>
-              <p id="start-best" class="start-best">KỶ LỤC: 0</p>
+              <p id="world-record" class="world-record" hidden></p>
+              <p id="start-best" class="start-best">Cao nhất của bạn: 0</p>
               <div id="challenge-intro" class="challenge-intro" hidden><span>VƯỢT QUA ĐIỂM NÀY</span><strong id="challenge-target"></strong></div>
               <button id="start" class="primary-button">
                 <span id="start-label">Bắt đầu chơi</span>
@@ -216,6 +217,7 @@
             <div class="result-score" id="result-score">0</div>
             <div class="rank-stamp"><span>HẠNG MILES & POINTS CỦA BẠN</span><strong id="rank">Dân bay vé award</strong></div>
             <p id="new-best" class="new-best" hidden>🏆 KỶ LỤC CÁ NHÂN MỚI!</p>
+            <p id="result-record" class="world-record" hidden></p>
             <p id="challenge-result" class="challenge-result" hidden></p>
             <div id="achievements" class="achievements" hidden></div>
             <dl class="stats compact-stats">
@@ -257,6 +259,37 @@
             </p>
           </section>
         </div>
+
+        <dialog id="record-dialog" class="record-dialog">
+          <form id="record-form" novalidate>
+            <p class="eyebrow">🏆 KỶ LỤC MỚI CỦA CẢ NHÀ</p>
+            <strong id="record-dialog-score">0</strong>
+            <p class="record-dialog-note">
+              Bạn vừa vượt kỷ lục cao nhất từ trước tới giờ. Điền tên để nó
+              đứng trên game cho tới khi có người phá được.
+            </p>
+            <label for="record-name">Tên của bạn</label>
+            <input
+              id="record-name"
+              name="name"
+              type="text"
+              maxlength="24"
+              autocomplete="off"
+              autocapitalize="words"
+              spellcheck="false"
+              placeholder="Ví dụ: Hoàng"
+            />
+            <p id="record-error" class="record-error" role="alert" hidden></p>
+            <div class="record-actions">
+              <button type="button" id="record-skip" class="ghost-button">
+                Bỏ qua
+              </button>
+              <button type="submit" id="record-save" class="primary-button">
+                Lưu kỷ lục
+              </button>
+            </div>
+          </form>
+        </dialog>
 
         <div class="game-footer" id="game-footer">
           <span><span class="legend-dot good-dot"></span> HỨNG ĐIỂM THƯỞNG</span

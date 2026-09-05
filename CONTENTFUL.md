@@ -1,6 +1,6 @@
 # Contentful content model
 
-Khi bạn tạo Contentful Space, tạo 4 Content Type sau với đúng Field ID (chữ thường,
+Khi bạn tạo Contentful Space, tạo 4 Content Type đầu tiên sau đây với đúng Field ID (chữ thường,
 camelCase) để khớp với code trong `src/lib/content/contentful.ts`. Sau khi có
 **Space ID** và một **Content Delivery API access token**, điền vào `.env.local`
 (copy từ `.env.example`) — site sẽ tự chuyển từ nội dung mẫu sang Contentful.
@@ -107,6 +107,38 @@ Mẹo viết:
 Cho tới khi bạn cấu hình xong, site chạy với nội dung mẫu ở `content/sample/*.json`
 — chỉnh sửa trực tiếp các file này để thay nội dung demo bằng nội dung thật nhanh
 hơn nếu bạn muốn bắt đầu với Markdown/JSON thay vì Contentful.
+
+## `gameHighScore`
+
+Kỷ lục của mini-game Catch The Points (`/catch-the-points`). Content type này do
+code tạo ra ngày 05/09/2026, **không phải gõ tay** — nhưng ghi lại đây để biết nó
+từ đâu ra.
+
+| Field ID   | Type                          |
+|------------|-------------------------------|
+| playerName | Short text (1–24 ký tự)       |
+| score      | Integer (1 – 10.000.000)      |
+| setAt      | Date & time                   |
+
+**Mỗi lần có người phá kỷ lục là MỘT entry mới**, không phải ghi đè một entry duy
+nhất. Game luôn hiển thị entry có `score` cao nhất. Nhờ vậy:
+
+- Bạn có nguyên cuốn sổ để xem ai từng giữ kỷ lục và từ lúc nào.
+- **Gặp tên bậy hay điểm bịa thì chỉ cần xoá dòng đó** — kỷ lục trước đó tự sống
+  lại, không phải gõ tay lại con số cũ. Đây là tuyến phòng thủ cuối cùng, và nó
+  là lý do content type này được chọn thay vì một database.
+
+Website tự ghi vào đây qua `CONTENTFUL_MANAGEMENT_TOKEN` mỗi khi có người phá kỷ
+lục, và tự publish entry (draft thì CDA không thấy). Không cần bấm gì trong
+Contentful.
+
+### Về chuyện gian lận
+
+Điểm được tính trong trình duyệt người chơi, nên **không có cách nào chặn tuyệt
+đối**. Server đã chặn sẵn: token ký cho từng lượt, lượt chơi phải kéo dài ít nhất
+40 giây thật, điểm phải dưới 500.000, tên phải sạch và không chứa đường link, và
+mỗi IP chỉ ghi được 8 lần một giờ. Người quyết tâm vẫn qua được — khi đó bạn xoá
+dòng đó trong Contentful.
 
 ## Auto-refresh site khi bấm Publish
 

@@ -9,6 +9,7 @@ import { buildRecommendationStats } from './recommendations.js';
 import { setupRecommendation } from './recommendation-view.js';
 import { earnedAchievements, renderAchievements } from './achievements.js';
 import { createAnalytics } from './analytics.js';
+import { createLeaderboard } from './leaderboard.js';
 
 const $ = (id) => document.getElementById(id);
 const dom = Object.fromEntries(
@@ -33,13 +34,14 @@ const dom = Object.fromEntries(
 );
 const sound = new Sound();
 const profile = createProfile();
-$('start-best').textContent = `KỶ LỤC: ${profile.best.toLocaleString()}`;
+$('start-best').textContent = `Cao nhất của bạn: ${profile.best.toLocaleString('en-US')}`;
 // Trong iframe thì query `?challenge=` nằm trên URL của TRANG chứ không phải
 // của game; `embed.js` chép nó sang đây. Chạy độc lập thì `location.search`
 // vẫn là chỗ đúng.
 const challengeTarget = parseChallenge(window.GHE1A_EMBED_SEARCH || location.search);
 const game = new Game({ emit: onGameEvent, challengeTarget });
 const track = createAnalytics();
+const leaderboard = createLeaderboard();
 const renderRecommendation = setupRecommendation(track);
 let hasPlayed = false;
 if (challengeTarget !== null) {
@@ -79,6 +81,30 @@ function scrollToTop() {
   }
   window.scrollTo(0, 0);
 }
+/**
+ * Vẽ dòng kỷ lục chung ở cả màn hình bắt đầu lẫn màn kết quả.
+ *
+ * Chưa ai lập kỷ lục, hoặc không hỏi được server, thì giấu hẳn dòng này —
+ * một dòng "KỶ LỤC: 0" trống trơn chỉ làm người đọc tưởng game hỏng.
+ */
+function renderWorldRecord() {
+  const record = leaderboard.record;
+  for (const id of ['world-record', 'result-record']) {
+    const node = $(id);
+    node.hidden = !record;
+    if (!record) continue;
+    node.replaceChildren(
+      'KỶ LỤC: ',
+      Object.assign(document.createElement('b'), {
+        textContent: record.score.toLocaleString('en-US'),
+      }),
+      ' điểm — ',
+      // `textContent`, không phải HTML: tên do người chơi tự gõ.
+      Object.assign(document.createElement('span'), { textContent: record.name }),
+    );
+  }
+}
+
 function banner(title, detail, danger = false, duration = 2.6, priority = 1) {
   if (game.elapsed < bannerUntil && priority < bannerPriority) return;
   dom["event-banner"].hidden = false;
@@ -199,7 +225,11 @@ function render() {
   dom.time.textContent = Math.ceil(game.remaining);
   $('combo-badge').hidden = game.comboMultiplier === 1;
   $('combo-badge').textContent = `🔥 ×${game.comboMultiplier} COMBO`;
-  $('hud-best').textContent = `KỶ LỤC: ${profile.best.toLocaleString()}`;
+  // Đích cần vượt trong lúc chơi là kỷ lục CHUNG. Chưa ai lập thì đích là
+  // chính điểm cao nhất của người này. Nhãn để trần một chữ "KỶ LỤC" ở cả hai
+  // trường hợp — trên HUD không có chỗ cho chữ nào thừa.
+  const target = leaderboard.record?.score ?? profile.best;
+  $('hud-best').textContent = `KỶ LỤC: ${target.toLocaleString('en-US')}`;
   dom["time-progress"].style.transform =
     `scaleX(${game.remaining / CONFIG.duration})`;
   dom["round-label"].textContent = game.chaos
@@ -284,6 +314,11 @@ function start() {
   dom.playfield.focus({ preventScroll: true });
   lastTime = performance.now();
   frame = requestAnimationFrame(loop);
+  // Token của lượt này phải phát ĐÚNG LÚC bấm nút: server dựa vào mốc thời
+  // gian trong đó để biết lượt chơi có kéo dài 45 giây thật hay không. Lấy
+  // dịp này làm mới luôn kỷ lục đang hiển thị. Không `await` — bảng kỷ lục
+  // không được phép làm chậm một nhịp nào của lượt chơi.
+  leaderboard.refresh().then(renderWorldRecord);
 }
 function finish() {
   cancelAnimationFrame(frame);
@@ -322,8 +357,67 @@ function finish() {
   for (const [key, value] of Object.entries(game.stats))
     if ($(`stat-${key}`)) $(`stat-${key}`).textContent = value;
   renderBreakdown(game.programStats, game.bonusStats);
+  renderWorldRecord();
   scrollToTop();
   $("result-title").focus({ preventScroll: true });
+  // Chỉ hỏi tên khi thật sự vượt kỷ lục, và chỉ khi lượt chơi kết thúc bình
+  // thường: người ôm nợ thẻ thì lượt đó không tính.
+  if (game.reason === "time" && leaderboard.beats(game.score)) askForName(game.score);
+}
+
+/** Hộp xin tên sau khi phá kỷ lục. */
+function askForName(score) {
+  const dialog = $("record-dialog");
+  const input = $("record-name");
+  const error = $("record-error");
+  if (typeof dialog.showModal !== "function") return; // Trình duyệt quá cũ.
+
+  $("record-dialog-score").textContent = score.toLocaleString("en-US");
+  error.hidden = true;
+  input.value = "";
+  dialog.removeAttribute("data-saving");
+  dialog.showModal();
+  input.focus();
+
+  async function save(event) {
+    event.preventDefault();
+    const name = input.value.trim();
+    if (!name) {
+      error.textContent = "Điền tên đã nhé.";
+      error.hidden = false;
+      input.focus();
+      return;
+    }
+    dialog.setAttribute("data-saving", "");
+    error.hidden = true;
+    const result = await leaderboard.submit(name, score);
+    dialog.removeAttribute("data-saving");
+    renderWorldRecord();
+    if (result.ok) {
+      close();
+      return;
+    }
+    // "not_a_record" nghĩa là trong lúc gõ tên đã có người khác vượt lên —
+    // không phải lỗi của người này, nên nói cho đúng chuyện đó.
+    error.textContent =
+      result.reason === "not_a_record"
+        ? "Vừa có người khác vượt lên mất rồi. Chơi lại nhé!"
+        : result.reason === "bad_name"
+          ? "Tên này không dùng được. Thử tên khác xem."
+          : result.reason === "rate_limited"
+            ? "Bạn vừa gửi hơi nhiều lần. Nghỉ một lát rồi thử lại nhé."
+            : "Chưa lưu được. Kiểm tra mạng rồi thử lại giúp mình.";
+    error.hidden = false;
+  }
+
+  function close() {
+    $("record-form").removeEventListener("submit", save);
+    $("record-skip").removeEventListener("click", close);
+    dialog.close();
+  }
+
+  $("record-form").addEventListener("submit", save);
+  $("record-skip").addEventListener("click", close);
 }
 
 $("start").addEventListener("click", start);
@@ -395,6 +489,8 @@ document.addEventListener("visibilitychange", () => {
     frame = requestAnimationFrame(loop);
   }
 });
+leaderboard.refresh().then(renderWorldRecord);
+
 new ResizeObserver(() => {
   if (game.running)
     game.resize(dom.playfield.clientWidth, dom.playfield.clientHeight);
