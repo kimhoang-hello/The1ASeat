@@ -34,7 +34,6 @@ const dom = Object.fromEntries(
 );
 const sound = new Sound();
 const profile = createProfile();
-$('start-best').textContent = `Cao nhất của bạn: ${profile.best.toLocaleString('en-US')}`;
 // Trong iframe thì query `?challenge=` nằm trên URL của TRANG chứ không phải
 // của game; `embed.js` chép nó sang đây. Chạy độc lập thì `location.search`
 // vẫn là chỗ đúng.
@@ -225,11 +224,12 @@ function render() {
   dom.time.textContent = Math.ceil(game.remaining);
   $('combo-badge').hidden = game.comboMultiplier === 1;
   $('combo-badge').textContent = `🔥 ×${game.comboMultiplier} COMBO`;
-  // Đích cần vượt trong lúc chơi là kỷ lục CHUNG. Chưa ai lập thì đích là
-  // chính điểm cao nhất của người này. Nhãn để trần một chữ "KỶ LỤC" ở cả hai
-  // trường hợp — trên HUD không có chỗ cho chữ nào thừa.
-  const target = leaderboard.record?.score ?? profile.best;
-  $('hud-best').textContent = `KỶ LỤC: ${target.toLocaleString('en-US')}`;
+  // Chỉ còn MỘT con số kỷ lục trong game này, là kỷ lục chung. Chưa ai lập thì
+  // giấu hẳn dòng, không lùi về điểm cao nhất của người chơi.
+  $('hud-best').hidden = !leaderboard.record;
+  if (leaderboard.record) {
+    $('hud-best').textContent = `KỶ LỤC: ${leaderboard.record.score.toLocaleString('en-US')}`;
+  }
   dom["time-progress"].style.transform =
     `scaleX(${game.remaining / CONFIG.duration})`;
   dom["round-label"].textContent = game.chaos
@@ -336,11 +336,13 @@ function finish() {
   const fatal = game.reason === "balance";
   const baseResult = { score: game.score, rank: rankFor(game.score), stats: {...game.stats}, reason: game.reason };
   const record = profile.record(game.score, earnedAchievements(baseResult));
-  $('new-best').hidden = !record.newBest;
   renderAchievements(record.unlocked);
   track(fatal ? 'game_over_balance' : 'game_completed', {score:game.score,rank:baseResult.rank,elapsed:Math.round(game.elapsed),longestCombo:game.stats.longestCombo});
   track('rank_achieved', {rank:baseResult.rank,score:game.score});
-  if(record.newBest) { track('personal_best', {score:game.score}); sound.play('record'); }
+  // `personal_best` vẫn gửi đi để đo, nhưng KHÔNG còn hiện gì trên màn hình:
+  // game chỉ nói về một con số duy nhất là kỷ lục chung. Tiếng chuông ăn mừng
+  // chuyển sang lúc mở hộp xin tên, tức là lúc thật sự đáng ăn mừng.
+  if(record.newBest) track('personal_best', {score:game.score});
   if(challengeTarget !== null) track('challenge_completed', {target:challengeTarget,score:game.score,won:!fatal && game.score>challengeTarget});
   renderRecommendation(buildRecommendationStats(game, profile.best));
   $('challenge-result').hidden = challengeTarget === null;
@@ -362,7 +364,10 @@ function finish() {
   $("result-title").focus({ preventScroll: true });
   // Chỉ hỏi tên khi thật sự vượt kỷ lục, và chỉ khi lượt chơi kết thúc bình
   // thường: người ôm nợ thẻ thì lượt đó không tính.
-  if (game.reason === "time" && leaderboard.beats(game.score)) askForName(game.score);
+  if (game.reason === "time" && leaderboard.beats(game.score)) {
+    sound.play("record");
+    askForName(game.score);
+  }
 }
 
 /** Hộp xin tên sau khi phá kỷ lục. */
