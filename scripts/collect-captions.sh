@@ -49,9 +49,24 @@ while read -r id slug; do
     continue
   fi
   echo "[$i/$total] $slug ($id)…"
-  bash scripts/burned-captions.sh "$id" >/dev/null 2>&1 || { echo "  ✗ hỏng, bỏ qua"; continue; }
+
+  # Giữ lại stderr thay vì đổ vào /dev/null. Lượt đầu có sáu video hỏng và log
+  # chỉ nói "hỏng, bỏ qua" — không đủ để biết là YouTube chặn hay OCR chết.
+  log="${CAPTIONS_OUT:-/tmp/caps}/$slug.log"
+  ok=""
+  for attempt in 1 2; do
+    # `< /dev/null` là lớp chắn thứ hai cho cùng cái bẫy mà `-nostdin` bịt bên
+    # burned-captions.sh: bất cứ thứ gì bên trong lỡ đọc stdin sẽ ăn mất các
+    # dòng còn lại của "$MAP" đang được vòng lặp này đọc dở.
+    if bash scripts/burned-captions.sh -- "$id" > "$log" 2>&1 < /dev/null; then ok=1; break; fi
+    echo "  … lượt $attempt hỏng, nghỉ rồi thử lại"
+    tail -2 "$log" | sed 's/^/    /'
+    sleep 60
+  done
+  [ -n "$ok" ] || { echo "  ✗ bỏ qua — xem $log"; continue; }
+
   src="${CAPTIONS_OUT:-/tmp/caps}/$id/captions.txt"
-  [ -s "$src" ] || { echo "  ✗ không rút được câu nào"; continue; }
+  [ -s "$src" ] || { echo "  ✗ không rút được câu nào — xem $log"; continue; }
   {
     echo "# $slug"
     echo "# video: https://www.youtube.com/watch?v=$id"
@@ -65,4 +80,8 @@ while read -r id slug; do
     cat "$src"
   } > "$dest"
   echo "  ✓ $(grep -cve '^#' -e '^\s*$' "$dest") câu → $dest"
+
+  # Tải hai mươi video liên tiếp là đủ để YouTube trả 429. Nghỉ giữa các lượt
+  # rẻ hơn nhiều so với việc phải chạy lại cả mẻ.
+  sleep 20
 done < "$MAP"

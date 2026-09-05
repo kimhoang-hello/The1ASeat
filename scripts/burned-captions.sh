@@ -27,7 +27,8 @@ OUT_ROOT="${CAPTIONS_OUT:-/tmp/caps}"
 command -v yt-dlp    >/dev/null || { echo "thiếu yt-dlp — brew install yt-dlp"; exit 1; }
 command -v ffmpeg    >/dev/null || { echo "thiếu ffmpeg — brew install ffmpeg"; exit 1; }
 command -v tesseract >/dev/null || { echo "thiếu tesseract — brew install tesseract"; exit 1; }
-[ $# -gt 0 ] || { echo "dùng: $0 <videoId> [<videoId>…]"; exit 1; }
+[ "${1:-}" = "--" ] && shift    # cho phép id bắt đầu bằng dấu gạch, vd -EWvZG4OHk8
+[ $# -gt 0 ] || { echo "dùng: $0 [--] <videoId> [<videoId>…]"; exit 1; }
 
 for ID in "$@"; do
   OUT="$OUT_ROOT/$ID"; mkdir -p "$OUT"; ( cd "$OUT"
@@ -45,8 +46,16 @@ for ID in "$@"; do
   # trắng, còn nền mờ lẫn cảnh vật đều tối hơn, nên nhị phân hoá ở ngưỡng 185
   # rồi đảo thành chữ đen trên nền trắng — dạng tesseract đọc chuẩn nhất — làm
   # rác biến mất gần hết.
+  #
+  # `-nostdin` KHÔNG phải trang trí. Mặc định ffmpeg đọc stdin để nhận phím
+  # điều khiển, và khi script này được gọi từ một vòng `while read … < file`
+  # thì nó ăn thẳng các byte của CHÍNH file danh sách đó. Triệu chứng đo được
+  # ngày 05/09/2026: sáu video "hỏng" với id cụt đầu —
+  # `hyatt-regency-paris-etoile-review` bị nuốt thành `tt-regency-`, rồi
+  # YouTube trả "This video is unavailable" cho một id không tồn tại. Bỏ dòng
+  # này ra là lỗi quay lại, và nó trông giống hệt lỗi mạng.
   rm -rf frames; mkdir -p frames
-  ffmpeg -v error -i "$ID.mp4" \
+  ffmpeg -nostdin -v error -i "$ID.mp4" \
     -vf "fps=2,crop=in_w:in_h*0.18:0:in_h*0.80,scale=1280:-1,format=gray,lut=y='if(gt(val,185),0,255)'" \
     frames/%05d.png -y
 
