@@ -13,11 +13,13 @@ import { ApplyButton } from "@/components/ui/apply-button";
 import { isReferralUrl } from "@/lib/affiliate-links";
 import { JsonLd } from "@/components/seo/json-ld";
 import { PointsProgramLinks } from "@/components/credit-cards/points-program-links";
+import { CardSortSelect } from "@/components/credit-cards/sort-select";
 import {
   creditCardsPath,
   getCardPointsPrograms,
   programIdFor,
 } from "@/lib/card-points-programs";
+import { CARD_SORT_OPTIONS, cardSortId, sortOffers, type CardSortId } from "@/lib/credit-card-sort";
 import { creditCardJsonLd } from "@/lib/credit-card-schema";
 import { t } from "@/lib/t";
 import { pageMetadata, absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
@@ -44,9 +46,12 @@ const TABS = [
 export default async function CreditCardsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string; points?: string }>;
+  searchParams: Promise<{ type?: string; points?: string; sort?: string }>;
 }) {
-  const [allOffers, { type, points }] = await Promise.all([getCreditCardOffers(), searchParams]);
+  const [allOffers, { type, points, sort }] = await Promise.all([
+    getCreditCardOffers(),
+    searchParams,
+  ]);
 
   const activeTab = type === "khac" || type === "noi-bat" ? type : "all";
   const tabOffers = allOffers.filter(
@@ -59,9 +64,17 @@ export default async function CreditCardsPage({
   // ?points= value falls back to the unfiltered list rather than an empty one.
   const programs = getCardPointsPrograms(tabOffers);
   const activePoints = programs.some((program) => program.id === points) ? points : undefined;
-  const offers = activePoints
-    ? tabOffers.filter((offer) => programIdFor(offer) === activePoints)
-    : tabOffers;
+  const activeSort = cardSortId(sort);
+  const offers = sortOffers(
+    activePoints ? tabOffers.filter((offer) => programIdFor(offer) === activePoints) : tabOffers,
+    activeSort,
+  );
+
+  // Nhãn dựng sẵn ở server: `CardSortSelect` là Client Component, không nhận
+  // được hàm `t` qua ranh giới RSC.
+  const sortLabels = Object.fromEntries(
+    CARD_SORT_OPTIONS.map((option) => [option.id, offers_t(option.labelKey)]),
+  ) as Record<CardSortId, string>;
 
   // The ?type= views are filtered slices of the same list and both canonicalise
   // back to /credit-cards, so the ItemList describes every card, not the slice.
@@ -106,7 +119,7 @@ export default async function CreditCardsPage({
           {TABS.map((tab) => (
             <Link
               key={tab.value}
-              href={creditCardsPath({ type: tab.value, points: activePoints })}
+              href={creditCardsPath({ type: tab.value, points: activePoints, sort: activeSort })}
               aria-current={activeTab === tab.value ? "true" : undefined}
               className={`cursor-pointer whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
                 activeTab === tab.value
@@ -123,7 +136,18 @@ export default async function CreditCardsPage({
           programs={programs}
           activeId={activePoints}
           activeType={activeTab}
+          activeSort={activeSort}
           totalCount={tabOffers.length}
+          className="mx-auto mb-4 max-w-page"
+        />
+
+        {/* Dưới hai hàng lọc và trên danh sách — cùng chỗ trang tài khoản ngân
+            hàng đặt nó, nên ai đã dùng một trang thì không phải đi tìm ở trang
+            kia. */}
+        <CardSortSelect
+          value={activeSort}
+          label={offers_t("sortLabel")}
+          optionLabels={sortLabels}
           className="mx-auto mb-8 max-w-page"
         />
 
@@ -215,8 +239,10 @@ export default async function CreditCardsPage({
               <p className="text-sm text-muted-foreground">
                 {offers_t(TABS.find((tab) => tab.value === activeTab)!.emptyKey)}
               </p>
+              {/* Xoá bộ lọc chứ không xoá tất cả: `/credit-cards` trần sẽ vứt
+                  luôn thứ tự người đọc đang chọn — và cả `utm_*` trên URL. */}
               <Link
-                href="/credit-cards"
+                href={creditCardsPath({ sort: activeSort })}
                 className="mt-3 inline-block text-sm font-semibold text-primary hover:underline"
               >
                 {offers_t("emptyCta")} &rarr;

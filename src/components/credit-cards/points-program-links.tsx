@@ -13,12 +13,15 @@ export function PointsProgramLinks({
   programs,
   activeId,
   activeType,
+  activeSort,
   totalCount,
   className = "",
 }: {
   programs: CardPointsProgram[];
   activeId?: string;
   activeType: string;
+  /** Đổi bộ lọc không được đổi thứ tự người đọc đang chọn. */
+  activeSort?: string;
   totalCount: number;
   className?: string;
 }) {
@@ -40,7 +43,7 @@ export function PointsProgramLinks({
 
         <li>
           <Link
-            href={creditCardsPath({ type: activeType })}
+            href={creditCardsPath({ type: activeType, sort: activeSort })}
             aria-current={activeId ? undefined : "true"}
             className={chip(!activeId)}
           >
@@ -52,7 +55,7 @@ export function PointsProgramLinks({
         {programs.map((program) => (
           <li key={program.id}>
             <Link
-              href={creditCardsPath({ type: activeType, points: program.id })}
+              href={creditCardsPath({ type: activeType, points: program.id, sort: activeSort })}
               aria-current={program.id === activeId ? "true" : undefined}
               className={chip(program.id === activeId)}
             >

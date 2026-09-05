@@ -1,4 +1,5 @@
 import type { CreditCardOffer } from "./content";
+import { DEFAULT_CARD_SORT } from "./credit-card-sort";
 
 /**
  * Which reward currency a card earns — the credit card page's answer to the
@@ -142,11 +143,25 @@ export function getCardPointsPrograms(offers: CreditCardOffer[]): CardPointsProg
     .sort((a, b) => b.count - a.count);
 }
 
-/** The credit card page's URL for a given combination of its two filters. */
-export function creditCardsPath({ type, points }: { type?: string; points?: string }): string {
+/**
+ * The credit card page's URL for a given combination of its two filters and its
+ * sort order. Every argument is optional and the default value of each is left
+ * out of the query, so a link from elsewhere on the site — the calculator, a
+ * blog post's next steps — still lands on the plain `/credit-cards`.
+ */
+export function creditCardsPath({
+  type,
+  points,
+  sort,
+}: {
+  type?: string;
+  points?: string;
+  sort?: string;
+}): string {
   const params = new URLSearchParams();
   if (type && type !== "all") params.set("type", type);
   if (points) params.set("points", points);
+  if (sort && sort !== DEFAULT_CARD_SORT) params.set("sort", sort);
 
   const query = params.toString();
   return query ? `/credit-cards?${query}` : "/credit-cards";
