@@ -507,7 +507,7 @@ export const PROGRAMS: Program[] = [
   {
     id: "asia-miles",
     name: "Cathay Pacific® Asia Miles®",
-    currency: "Asia Miles",
+    currency: "Asia Miles®",
     logo: "/images/logos/partners/cathay-pacific.png",
     pricing: {
       // Bands 2 and 3 are the 751–2,750 "Type 1"/"Type 2" split, where Type 2
@@ -535,7 +535,7 @@ export const PROGRAMS: Program[] = [
   {
     id: "ba-avios",
     name: "British Airways® Club",
-    currency: "Avios",
+    currency: "Avios®",
     logo: "/images/logos/partners/british-airways.png",
     pricing: AVIOS_PRICING,
     confidence: "unquotable",
@@ -549,7 +549,7 @@ export const PROGRAMS: Program[] = [
   {
     id: "qatar-avios",
     name: "Qatar Airways® Privilege Club",
-    currency: "Avios",
+    currency: "Avios®",
     logo: "/images/logos/partners/qatar-airways.svg",
     pricing: AVIOS_PRICING,
     confidence: "unquotable",

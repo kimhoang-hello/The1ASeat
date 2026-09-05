@@ -15,6 +15,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { PROGRAMS, ORIGINS, DESTINATIONS, CABINS, quoteRoute } from "../src/lib/award-charts.ts";
 import { TRANSFER_PARTNERS } from "../src/lib/transfer-partners.ts";
+import { VIETNAM_ROUTES, assertNoPointsInProse } from "../src/lib/award-routes.ts";
 
 const ROOT = process.cwd();
 const msgs = JSON.parse(fs.readFileSync(path.join(ROOT, "messages/vi.json"), "utf8"));
@@ -136,6 +137,38 @@ for (const o of ORIGINS) for (const d of DESTINATIONS) for (const c of CABINS) {
     }
   }
 }
+
+// 9b. the twelve /bay-ve-viet-nam pages: their hand-written prose must not
+// carry a points figure. Those pages print a table computed by quoteRoute() at
+// render time, so a number typed into the prose beside it goes stale silently
+// the day a programme devalues — the same failure that made audit:rebate-prose
+// necessary on the bank side. `generateStaticParams` asserts this too, so a bad
+// paragraph also reddens the build; running it here means `npm run audit:awards`
+// catches it without a full build.
+try {
+  assertNoPointsInProse();
+} catch (err) {
+  fails.push(err instanceof Error ? err.message : String(err));
+}
+
+// Every message key those pages reach for, same check as the finder above.
+const routeNs = msgs.awardRoutes as Record<string, string>;
+const routeSrc = [
+  "src/app/bay-ve-viet-nam/page.tsx",
+  "src/app/bay-ve-viet-nam/[route]/page.tsx",
+  "src/components/award-charts/route-award-table.tsx",
+]
+  .map((file) => fs.readFileSync(path.join(ROOT, file), "utf8"))
+  .join("\n");
+for (const key of new Set([...routeSrc.matchAll(/\br\(\s*"([a-zA-Z0-9_]+)"/g)].map((m) => m[1])))
+  if (!(key in routeNs)) fails.push(`missing awardRoutes key: ${key}`);
+
+// Slug đôi một khác nhau: hai chặng trùng slug thì một trang biến mất khỏi
+// site mà build vẫn xanh — `generateStaticParams` chỉ sinh trùng, không đỏ.
+const slugs = VIETNAM_ROUTES.map((r) => r.slug);
+for (const slug of new Set(slugs))
+  if (slugs.filter((s2) => s2 === slug).length > 1) fails.push(`duplicate route slug: ${slug}`);
+console.log(`checked ${VIETNAM_ROUTES.length} Vietnam route pages`);
 
 console.log(`swept ${quotes} quotes across ${ORIGINS.length}x${DESTINATIONS.length}x${CABINS.length} combos (${unpriced} unpriced)`);
 

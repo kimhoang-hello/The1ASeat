@@ -276,10 +276,20 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
             <NoPrice title={t("noRoutingShort")} detail={t("noRouting")} />
           ) : program.pricing.kind === "unquotable" ? (
             <NoPrice title={t(program.pricing.labelKey)} detail={t(program.pricing.hintKey)} />
-          ) : options.every((o) => o.needsFeeder) ? (
+          ) : !program.pricesWithFeeder && options.every((o) => o.needsFeeder) ? (
             // The chart is fine; it stops applying once a domestic hop is in
             // the ticket. Blaming a missing cabin rate sent every non-gateway
             // city the wrong explanation.
+            //
+            // `pricesWithFeeder` phải nằm trong điều kiện, nếu không thì lời
+            // giải thích lại sai theo chiều ngược lại. Aeroplan® TÍNH được vé
+            // có chặng nội địa, nên ở Calgary → Đà Nẵng nó ra giá cho Phổ
+            // thông và Thương gia mà vẫn báo "cần nối chuyến nội địa" cho
+            // Phổ thông đặc biệt — trong khi lý do thật là bảng partner của
+            // Aeroplan® không in hạng đó. Bảng ở trang chặng
+            // (`route-award-table.tsx`) làm lộ mâu thuẫn này vì nó in cả ba
+            // hạng cạnh nhau; công cụ hỏi từng hạng một nên giấu được, nhưng
+            // vẫn sai. Cùng một luật ở hai chỗ.
             <NoPrice title={t("feederOnlyShort")} detail={t("feederNote")} />
           ) : (
             <NoPrice title={t("notPublished")} />

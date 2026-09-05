@@ -12,6 +12,7 @@ import { BANK_COMPARE_PATH } from "@/lib/bank-compare";
 import { BANK_ACCOUNTS, bankAccountPath } from "@/lib/bank-accounts";
 import { BANK_ACCOUNTS_PUBLISHED, START_HERE_PUBLISHED } from "@/lib/feature-flags";
 import { foundationLastModified } from "@/lib/start-here";
+import { VIETNAM_ROUTES, VIETNAM_ROUTES_BASE, vietnamRoutePath } from "@/lib/award-routes";
 
 // Keep the sitemap in step with the ISR window on the pages it lists.
 export const revalidate = 60;
@@ -99,6 +100,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: absoluteUrl("/transfer-bonuses"), changeFrequency: "daily", priority: 0.8 },
     { url: absoluteUrl("/transfer-partners"), changeFrequency: "monthly", priority: 0.7 },
     { url: absoluteUrl("/award-flight-finder"), changeFrequency: "weekly", priority: 0.8 },
+    // Mười hai trang chặng + trang tổng. Không có `lastModified`: dữ liệu đứng
+    // sau chúng nằm trong repo, nên nó chỉ đổi lúc deploy — mà một `lastmod`
+    // bằng "lúc build" là đúng cái lời khai vô nghĩa đã bị gỡ khỏi file này.
+    { url: absoluteUrl(VIETNAM_ROUTES_BASE), changeFrequency: "monthly", priority: 0.8 },
+    ...VIETNAM_ROUTES.map((route) => ({
+      url: absoluteUrl(vietnamRoutePath(route.slug)),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    })),
     { url: absoluteUrl("/calculator"), changeFrequency: "monthly", priority: 0.7 },
     { url: absoluteUrl("/about"), changeFrequency: "monthly", priority: 0.5 },
     { url: absoluteUrl("/contact"), changeFrequency: "yearly", priority: 0.3 },
