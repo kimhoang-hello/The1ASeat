@@ -462,13 +462,26 @@ async function maybeNotifyNewPost(payload: unknown, deadline: number): Promise<b
   });
 
   if (!res.ok) {
-    console.error("Kit broadcast failed", res.status, await res.text());
+    // Đọc `status` ra biến TRƯỚC khi đọc body. `res.text()` có thể ném (kết
+    // nối đứt giữa chừng, dù header 4xx đã về đủ) — nếu nó nằm trong nhánh rẽ
+    // thì một lượt đọc body hỏng trên một Kit 4xx (chắc chắn chưa gửi gì) lại
+    // bay lên `catch` ngoài và thành `"notify_failed"`, tức bị xử lý như ca
+    // KHÔNG CHẮC CHẮN: giữ chỗ, trả 200, Contentful không gọi lại — đúng cách
+    // xử lý dành cho 5xx/timeout, sai cho đúng nhánh 4xx này.
+    const status = res.status;
+    let bodyText = "(không đọc được body)";
+    try {
+      bodyText = await res.text();
+    } catch {
+      // Đọc body hỏng không đổi ý nghĩa của `status` đã có sẵn từ header.
+    }
+    console.error("Kit broadcast failed", status, bodyText);
 
     // 5xx KHÔNG phải bằng chứng là chưa gửi: Kit có thể đã tạo broadcast rồi
     // mới hỏng ở đường trả lời. Giữ chỗ, và báo về như một lượt không chắc
     // chắn — cùng đối xử với `fetch` ném. Chấp nhận mất bản tin ở ca hiếm này,
     // vì bản tin gửi trùng thì không rút lại được.
-    if (res.status >= 500) return "notify_uncertain";
+    if (status >= 500) return "notify_uncertain";
 
     // 4xx là Kit từ chối chính request này: chắc chắn chưa có broadcast nào
     // được tạo, nên trả chỗ lại an toàn. Lượt giao lại sẽ thử lại — 429 thì

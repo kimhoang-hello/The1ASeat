@@ -71,7 +71,7 @@ const bodyOptions: Options = {
  * `http(s)`, `mailto`, `tel`, và link nội bộ (`/…`, `#…`, `?…`). Mọi thứ khác
  * — kể cả `javascript:` và `data:` — không phải thứ một bài viết cần tới.
  */
-function safeHref(uri: string): string | null {
+export function safeHref(uri: string): string | null {
   const trimmed = uri.trim();
   if (!trimmed) return null;
   // Link nội bộ được XÁC NHẬN BẰNG CÁCH GIẢI RA, không bằng cách nhìn ký tự

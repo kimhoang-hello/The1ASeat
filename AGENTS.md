@@ -914,6 +914,72 @@ ngày của `audit:health` — và tìm ra hai chỗ còn hở. Cả hai đã v�
   báo sạch. Nay dùng con trỏ mờ và `AbortSignal` cho cả lượt đọc lẫn hai lượt
   ghi. Đã đối chiếu: vẫn ra đúng 25 thẻ như bản `skip`.
 
+## Vòng kiểm toàn diện 05/09/2026 — đừng đề xuất lại
+
+Mọi gate xanh trước khi bắt đầu. Codex rà 6 nhóm file rủi ro cao nhất, ra 7
+phát hiện; 3 phát hiện High đã vá, vòng phản biện thứ hai xác nhận cả ba ĐÚNG
+và không hồi quy. 4 phát hiện Medium còn lại CHƯA vá — ghi ở đây để lần sau
+không tìm lại từ đầu.
+
+**Đã vá:**
+
+- **Newsletter chèn thẳng `uri` từ rich text, không qua `safeHref`**
+  (`lib/subscriber-email.ts`). Thân bài trên web đã được hardened ba lần
+  (`javascript:`, khoảng trắng đầu, `/\host`, ký tự điều khiển — xem các mục
+  29/08 và 04/09 ở trên), nhưng `renderPostBodyForEmail` là một
+  `documentToHtmlString` RIÊNG, không đi qua cùng cửa — chỉ escape HTML entity.
+  Một link `javascript:…` trong thân bài sẽ được gửi nguyên vẹn tới toàn bộ
+  subscriber qua Kit, không rút lại được. Vá bằng cách **export `safeHref`**
+  từ `lib/content/contentful.ts` và dùng lại chính nó (cùng chuỗi cho `href`
+  lẫn `relForUrl`, đúng nguyên tắc "ba cách đọc không được lệch nhau" đã ghi
+  ở trên) thay vì viết một bản kiểm riêng ở `subscriber-email.ts`.
+
+- **`expire-offers`: vòng thẻ tín dụng thiếu cửa chặn "chưa từng publish"**
+  mà vòng transfer bonus NGAY BÊN DƯỚI trong cùng file đã có
+  (`if (!bonus.sys.publishedVersion) continue;`). Một thẻ ở dạng draft chưa
+  từng publish, mang `expiresAt` trong quá khứ (ví dụ tác giả nhân bản một
+  thẻ cũ làm mẫu rồi chưa kịp sửa hạn), lọt qua truy vấn CMA và bị
+  `updateEntry` PUT đè `headlineVi`/`keyBenefitsVi`/`editorsTakeVi`/`rebateVi`
+  — không publish (vì `updateEntry` tự biết không publish entry chưa từng
+  publish), nhưng vẫn phá nội dung tác giả đang viết dở. Vá bằng cách thêm
+  đúng cửa chặn mà vòng bonus đã có, đặt trước cửa "draft ahead" hiện tại.
+
+- **`revalidate`: `res.text()` đọc TRƯỚC khi rẽ nhánh theo `res.status`**
+  khi Kit trả `!res.ok`. Nếu đọc body ném (kết nối đứt sau khi header 4xx đã
+  về), toàn bộ hàm ném, rơi vào `catch` ngoài cùng thành `"notify_failed"` —
+  bị xử lý như ca KHÔNG CHẮC CHẮN (giữ claim, trả 200, Contentful không gọi
+  lại), trong khi 4xx đúng ra là CHẮC CHẮN CHƯA GỬI (nên phải trả claim, cho
+  retry). Vá bằng cách đọc `res.status` ra biến trước, bọc riêng `res.text()`
+  trong try/catch để lỗi đọc body không đổi nhánh rẽ.
+
+**Chưa vá — biết là có, để dành vòng sau (không phải hôm nay bịa ra):**
+
+- `sync-videos` so trùng video bằng SO CHUỖI URL thô
+  (`route.ts` quanh dòng dedup) — `https://youtu.be/x` và
+  `https://www.youtube.com/watch?v=x` cùng một video nhưng khác chuỗi, nên có
+  thể publish trùng nếu slug sinh ra khác nhau.
+- `sync-videos` coi feed 200 nhưng rỗng/hỏng cấu trúc là "không có video mới"
+  (`checked: 0`) chứ không phải lỗi — một feed RSS đổi schema sẽ làm mọi video
+  mới bị bỏ qua vĩnh viễn mà job luôn xanh.
+- `relForUrl` đòi đúng `^https?://` (hai gạch chéo), nên link đã qua được
+  `safeHref` nhưng viết dạng `https:\host/...` (gạch chéo ngược, trình duyệt
+  vẫn giải đúng ra host thật) mất `sponsored` và không được `AffiliateClickTracker`
+  đếm — cùng lớp lỗi normalization đã vá ba lần ở `safeHref`, nhưng lần này
+  nằm ở phía `relForUrl`.
+- URL transfer bonus trong Contentful là Short text, ra thẳng `href` không
+  qua `isSafeHref`/`safeHref` nào — thiếu scheme (`aircanada.com/promo` thay vì
+  `https://aircanada.com/promo`) sẽ thành link nội bộ 404 trên `ghe1a.com`, và
+  `audit:health` hiện chỉ kiểm `applyUrl` của thẻ chứ không kiểm trường này.
+
+**Hostinger đỏ dai lặp lại (không phải lỗi code, đã xảy ra nhiều lần):**
+sáng 05/09/2026, `expire-offers`/`check-rebates`/`offer-snapshot` nhận 403 kèm
+trang thách thức bot "Checking your browser…" của Hostinger, và một lượt
+`sync-videos` mất kết nối cổng 443 gần 25 phút — cả hai tự khỏi ở lượt chạy
+kế tiếp, site healthy ngay sau đó (200 mọi trang, header bảo mật đủ). Cùng
+hình dạng đã ghi ở mục "Đã kiểm và KHÔNG phải lỗi" ngày 02/09 (500 suốt
+12 tiếng) — đây là lần thứ ba, tần suất khoảng 1-3 ngày một lần. Không có gì
+để vá phía code; các job đã tự retry và tự nhận ra được ở lượt sau.
+
 ## Chạy gì trước khi kết luận
 
 ```

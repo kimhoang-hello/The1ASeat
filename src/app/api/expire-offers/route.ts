@@ -90,6 +90,15 @@ async function handleExpire(request: NextRequest) {
     // bên dưới im lặng, trong khi bản published vẫn treo offer hết hạn.
     consideredSlugs.add(slug);
 
+    // Entry CHƯA TỪNG publish không phải offer đang chạy trên site — nó không
+    // nằm trong `liveExpiredSlugs` (đọc qua CDA) nên không ai cần gỡ gì cả.
+    // `updateEntry` tự nó không publish một entry chưa từng publish (xem
+    // `contentful-cma.ts`), nhưng vẫn PUT đè `fields`, tức vẫn ghi lên bản
+    // nháp tác giả đang viết. Vòng bonus bên dưới đã có đúng cửa này
+    // (`if (!bonus.sys.publishedVersion) continue;`); vòng thẻ thiếu nó là kẽ
+    // hở duy nhất trong file này còn động vào một entry chưa từng lên site.
+    if (!card.sys.publishedVersion) continue;
+
     // Cùng cửa chặn mà `check-rebates` đã có, vì cùng một `updateEntry`:
     // nó PUT lại toàn bộ `fields` của bản draft rồi publish CẢ ENTRY. Thẻ
     // đang có thay đổi chưa publish nghĩa là tác giả viết dở ở đâu đó trong
@@ -97,7 +106,7 @@ async function handleExpire(request: NextRequest) {
     // site. Báo để người xử lý. Lỗi này tự nhận ra được ở mọi lượt sau: bản
     // published vẫn treo `expiresAt` đã qua nên điều kiện còn nguyên, `--retry`
     // của workflow không rửa nó thành xanh.
-    if (card.sys.publishedVersion && card.sys.version > card.sys.publishedVersion + 1) {
+    if (card.sys.version > card.sys.publishedVersion + 1) {
       errors.push({
         slug,
         message:

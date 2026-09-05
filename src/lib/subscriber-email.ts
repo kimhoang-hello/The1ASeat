@@ -1,6 +1,7 @@
 import { documentToHtmlString } from "@contentful/rich-text-html-renderer";
 import { BLOCKS, INLINES, MARKS, type Document } from "@contentful/rich-text-types";
 import { relForUrl } from "@/lib/affiliate-links";
+import { safeHref } from "@/lib/content/contentful";
 
 /**
  * Base URL for canonicals, the sitemap, JSON-LD ids and email links.
@@ -49,12 +50,19 @@ export function renderPostBodyForEmail(document: Document): string {
       [BLOCKS.UL_LIST]: (node, next) => `<ul style="${emailListStyle}">${next(node.content)}</ul>`,
       [BLOCKS.OL_LIST]: (node, next) => `<ol style="${emailListStyle}">${next(node.content)}</ol>`,
       [BLOCKS.LIST_ITEM]: (node, next) => `<li style="margin-bottom:8px;">${next(node.content)}</li>`,
-      // Same rule as the website body (lib/affiliate-links): a referral link
-      // says so in its `rel` here too, since this email is a public surface.
+      // Cùng cửa `safeHref` mà thân bài trên site đã dùng (lib/content/contentful),
+      // không phải bản riêng ở đây — email này lấy `uri` thẳng từ rich text
+      // giống hệt thân bài, nên cùng chịu đúng những dạng lách scheme đã vá ba
+      // lần ở đó (`javascript:`, khoảng trắng đầu, `/\host`, ký tự điều khiển).
+      // Trang web chặn được những dạng đó; email thì trước đây không — và một
+      // bản tin gửi rồi thì không rút lại được.
       [INLINES.HYPERLINK]: (node, next) => {
         const uri = String((node.data as { uri?: unknown }).uri ?? "");
-        const rel = relForUrl(uri);
-        return `<a href="${escapeHtml(uri).replace(/"/g, "&quot;")}"${rel ? ` rel="${rel}"` : ""} style="${emailLinkStyle}">${next(node.content)}</a>`;
+        const text = next(node.content);
+        const href = safeHref(uri);
+        if (href === null) return text;
+        const rel = relForUrl(href);
+        return `<a href="${escapeHtml(href).replace(/"/g, "&quot;")}"${rel ? ` rel="${rel}"` : ""} style="${emailLinkStyle}">${text}</a>`;
       },
     },
   });
