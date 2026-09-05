@@ -1,3 +1,12 @@
+html {
+  /* iOS Safari tự phóng to chữ trong khối văn bản ("text autosizing") khi
+     trang không nói gì. Website đã tắt qua preflight của Tailwind, nhưng game
+     là một document RIÊNG với CSS riêng, nên bên trong iframe chữ nở ra và
+     layout cao hơn hẳn so với mọi trình duyệt khác — mà khung game thì bị cấm
+     cuộn, nên phần chân khung bị cắt mất. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
 :root {
   color-scheme: light;
   --paper: #faf6ec;
