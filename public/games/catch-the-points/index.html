@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#faf6ec" />
+    <meta
+      name="description"
+      content="45 seconds. One carry-on. Catch points, dodge fees, and fly your way to Seat 1A. A tiny arcade game by Ghế 1A."
+    />
+    <title>Catch The Points — Ghế 1A</title>
+    <link rel="icon" href="assets/ghe1a-logo.png" type="image/png" />
+    <link rel="stylesheet" href="assets/fonts/fonts.css" />
+    <link rel="stylesheet" href="src/style.css" />
+    <script src="src/embed.js"></script>
+  </head>
+  <body>
+    <!-- Bộ icon nhúng thẳng vào trang, KHÔNG để ở file .svg riêng rồi
+         <use href="assets/icons.svg#...">: WebKit không đọc tham chiếu
+         <use> trỏ sang file ngoài, nên trên Safari iPhone mọi icon mũi tên,
+         nút Chơi lại và icon máy bay đều biến mất — không báo lỗi gì. -->
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon-sprite" aria-hidden="true"
+        style="position: absolute; width: 0; height: 0; overflow: hidden" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <symbol id="arrow-right" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
+        <symbol id="external" viewBox="0 0 24 24"><path d="M14 4h6v6m0-6L10 14m0-10H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></symbol>
+        <symbol id="restart" viewBox="0 0 24 24"><path d="M3 10a9 9 0 1 1 2 8M3 4v6h6"/></symbol>
+        <symbol id="plane" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13"/></symbol>
+        <symbol id="transfer" viewBox="0 0 24 24"><path d="M4 7h16m-4-4 4 4-4 4M20 17H4m4-4-4 4 4 4"/></symbol>
+        <symbol id="gift" viewBox="0 0 24 24"><path d="M4 10h16v11H4zM3 6h18v4H3zM12 6v15M12 6H8a2.5 2.5 0 1 1 2.5-2.5L12 6Zm0 0h4a2.5 2.5 0 1 0-2.5-2.5L12 6Z"/></symbol>
+        <symbol id="fee" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h5"/></symbol>
+        <symbol id="trend-up" viewBox="0 0 24 24"><path d="m3 17 6-6 4 4 8-10m-7 0h7v7"/></symbol>
+        <symbol id="trend-down" viewBox="0 0 24 24"><path d="m3 7 6 6 4-4 8 10m-7 0h7v-7"/></symbol>
+        <symbol id="percent" viewBox="0 0 24 24"><path d="m5 19 14-14"/><circle cx="7" cy="7" r="3"/><circle cx="17" cy="17" r="3"/></symbol>
+        <symbol id="warning" viewBox="0 0 24 24"><path d="M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0ZM12 9v4m0 4h.01"/></symbol>
+      </svg>
+    <div class="page">
+      <header class="site-header">
+        <a
+          class="brand"
+          href="https://ghe1a.com"
+          target="_blank"
+          rel="noopener"
+          aria-label="Về trang chủ Ghế 1A"
+          ><img
+            src="assets/ghe1a-logo.png"
+            alt=""
+            width="40"
+            height="40"
+          />Ghế&nbsp;1A</a
+        >
+        <span class="header-caption">CHƠI MỘT CHÚT. TÍCH THẬT NHIỀU.</span>
+        <button
+          id="sound"
+          class="sound-button"
+          aria-label="Tắt âm thanh"
+          aria-pressed="true"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M4 9v6h4l5 4V5L8 9H4Zm12-1c3 2 3 6 0 8m3-11c5 4 5 10 0 14"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            /></svg
+          ><span id="sound-label">ÂM THANH BẬT</span>
+        </button>
+      </header>
+
+      <main class="game-shell" id="game-shell">
+        <div class="flight-bar">
+          <span><span class="live-dot"></span> GHẾ 1A ARCADE</span
+          ><span
+            >TÍCH ĐIỂM. NÂNG HẠNG. LÊN ĐƯỜNG.
+            <svg class="icon" aria-hidden="true">
+              <use href="#plane"></use></svg
+          ></span>
+        </div>
+        <div class="hud" id="hud" hidden>
+          <div class="score-block">
+            <span class="eyebrow">ĐIỂM</span><strong id="score">0</strong>
+            <span id="combo-badge" class="combo-badge" hidden></span>
+          </div>
+          <span class="round-label" id="round-label"
+            >HỨNG. NÉ. LẶP LẠI.</span
+          >
+          <div class="time-block">
+            <span class="eyebrow">THỜI GIAN</span
+            ><strong><span id="time">45</span><small>s</small></strong>
+          </div>
+          <div class="time-track"><div id="time-progress"></div></div>
+          <span id="hud-best" class="hud-best">KỶ LỤC: 0</span><span id="hud-target" class="hud-target" hidden></span>
+        </div>
+
+        <div class="stage" id="stage">
+          <section
+            id="start-screen"
+            class="start-screen"
+            aria-labelledby="game-title"
+          >
+            <div class="intro-copy">
+              <p class="eyebrow intro-eyebrow">
+                MINI-GAME CHO HỘI MÊ MILES & POINTS
+              </p>
+              <h1 id="game-title">
+                Catch The<br /><em>Points.</em
+                ><span class="title-spark">✳</span>
+              </h1>
+              <p class="intro-description">
+                Hứng điểm. Né vật xấu.<br />Đừng mang nợ thẻ.
+              </p>
+              <div class="round-details">
+                <span
+                  ><svg viewBox="0 0 20 20" aria-hidden="true">
+                    <circle cx="10" cy="11" r="6.5" />
+                    <path d="M8 1h4m-2 4v6l3 2" /></svg
+                  >45 GIÂY</span
+                ><span>MỘT CHIẾC VALI</span>
+              </div>
+              <p id="start-best" class="start-best">KỶ LỤC: 0</p>
+              <div id="challenge-intro" class="challenge-intro" hidden><span>VƯỢT QUA ĐIỂM NÀY</span><strong id="challenge-target"></strong></div>
+              <button id="start" class="primary-button">
+                <span id="start-label">Bắt đầu chơi</span>
+                <svg class="icon" aria-hidden="true">
+                  <use href="#arrow-right"></use>
+                </svg>
+              </button>
+              <p class="control-hint">
+                <span class="desktop-hint"
+                  >← → &nbsp; hoặc A / D để di chuyển · có thể kéo chuột</span
+                ><span class="touch-hint"
+                  >Kéo vali sang trái, phải để hứng điểm thưởng</span
+                >
+              </p>
+            </div>
+            <div class="intro-art" aria-hidden="true">
+              <div class="orbit orbit-one"></div>
+              <div class="orbit orbit-two"></div>
+              <svg class="flight-path" viewBox="0 0 360 350">
+                <path d="M35 265C-10 185 185 265 255 128S218 32 192 67" />
+                <path d="m182 55 12 9 5 14" class="path-arrow" />
+              </svg>
+              <div class="decor-token token-a">
+                <img
+                  class="program-logo logo-aeroplan"
+                  src="assets/programs/aeroplan.jpg"
+                  alt=""
+                /><span>Aeroplan</span><i>+100</i>
+              </div>
+              <div class="decor-token token-mr">
+                <img
+                  class="program-logo logo-bonvoy"
+                  src="assets/programs/bonvoy.jpg"
+                  alt=""
+                /><span>Bonvoy</span><i>+100</i>
+              </div>
+              <div class="decor-token token-av">
+                <img
+                  class="program-logo logo-flying-blue"
+                  src="assets/programs/flying-blue.jpg"
+                  alt=""
+                /><span>Flying Blue</span>
+              </div>
+              <div class="bonus-ticket">
+                <span>✦ WELCOME BONUS</span><b>+500</b>
+              </div>
+              <span class="art-spark spark-one">✦</span
+              ><span class="art-spark spark-two">✧</span>
+              <img class="hero-suitcase" src="assets/suitcase.svg" alt="" />
+              <div class="luggage-caption">HÀNH LÝ NHẸ. ĐIỂM THƯỞNG ĐẦY.</div>
+            </div>
+          </section>
+
+          <div
+            id="playfield"
+            class="playfield"
+            role="application"
+            tabindex="0"
+            aria-label="Trò chơi Catch The Points. Dùng phím mũi tên trái phải, A và D hoặc kéo ngang để di chuyển."
+            hidden
+          >
+            <div class="runway-lines" aria-hidden="true"></div>
+            <div class="play-watermark" aria-hidden="true">
+              1A<span>TỪNG ĐIỂM ĐỀU ĐÁNG GIÁ.</span>
+            </div>
+            <div id="items"></div>
+            <div id="player" class="player">
+              <img src="assets/suitcase.svg" alt="Vali của bạn" />
+            </div>
+            <div id="feedback"></div>
+            <div id="event-banner" class="event-banner" role="status" hidden>
+              <strong></strong><span></span>
+            </div>
+            <div class="active-effects">
+              <div id="multiplier-badge" class="multiplier-badge" hidden></div>
+              <div id="partner-badge" class="effect-badge" hidden></div>
+              <div id="award-badge" class="effect-badge" hidden></div>
+            </div>
+            <div id="move-hint" class="move-hint">
+              ← &nbsp; DI CHUYỂN ĐỂ HỨNG &nbsp; →
+            </div>
+          </div>
+
+          <section
+            id="result-screen"
+            class="result-screen"
+            aria-labelledby="result-title"
+            hidden
+          >
+            <div class="result-topline"><span>GHẾ 1A · GA ĐẾN</span><span id="result-flight">CHUYẾN BAY HOÀN TẤT</span></div>
+            <h2 class="result-game-title">CATCH THE POINTS</h2>
+            <p class="eyebrow" id="result-title" tabindex="-1">HẾT GIỜ!</p>
+            <p id="fatal-message" class="fatal-message" hidden>BẠN CÒN NỢ THẺ.<span>Quy tắc số 1 bị phá vỡ.</span></p>
+            <p class="result-score-label">TỔNG ĐIỂM</p>
+            <div class="result-score" id="result-score">0</div>
+            <div class="rank-stamp"><span>HẠNG MILES & POINTS CỦA BẠN</span><strong id="rank">Dân bay vé award</strong></div>
+            <p id="new-best" class="new-best" hidden>🏆 KỶ LỤC CÁ NHÂN MỚI!</p>
+            <p id="challenge-result" class="challenge-result" hidden></p>
+            <div id="achievements" class="achievements" hidden></div>
+            <dl class="stats compact-stats">
+              <div><dt>Lượt hứng điểm</dt><dd id="stat-points">0</dd></div>
+              <div><dt>Combo dài nhất</dt><dd id="stat-longestCombo">0</dd></div>
+              <div><dt>Welcome Bonus</dt><dd id="stat-welcome">0</dd></div>
+              <div><dt>Golden Bonus</dt><dd id="stat-golden">0</dd></div>
+              <div><dt>Vật xấu đã trúng</dt><dd id="stat-bad">0</dd></div>
+              <div><dt>Devaluation</dt><dd id="stat-devaluations">0</dd></div>
+              <div><dt>Lần trúng lãi suất</dt><dd id="stat-interest">0</dd></div>
+            </dl>
+            <section id="recommendation" class="recommendation" aria-labelledby="recommendation-title" hidden>
+              <p id="recommendation-eyebrow" class="recommendation-eyebrow"></p>
+              <h3 id="recommendation-title"></h3>
+              <p id="recommendation-message"></p>
+              <a id="recommendation-link" target="_blank" rel="noopener" hidden><span id="recommendation-cta"></span><svg class="icon" aria-hidden="true"><use href="#arrow-right"></use></svg></a>
+            </section>
+            <button id="restart" class="primary-button">Chơi lại<svg class="icon" aria-hidden="true"><use href="#restart"></use></svg></button>
+            <details class="breakdown-details"><summary>Xem điểm theo chương trình</summary>
+            <div class="points-breakdown">
+              <table>
+                <caption>
+                  Điểm đã hứng theo chương trình
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Chương trình</th>
+                    <th scope="col">Lượt</th>
+                    <th scope="col">Điểm</th>
+                  </tr>
+                </thead>
+                <tbody id="program-breakdown"></tbody>
+              </table>
+              <p>Điểm nhận đã gồm hệ số nhân, chưa trừ phí và devaluation.</p>
+            </div>
+            </details>
+            <p class="share-line">
+              Bạn có phá được kỷ lục này? <strong>ghe1a.com</strong>
+            </p>
+          </section>
+        </div>
+
+        <div class="game-footer" id="game-footer">
+          <span><span class="legend-dot good-dot"></span> HỨNG ĐIỂM THƯỞNG</span
+          ><span><span class="legend-dot bad-dot"></span> NÉ CÁC KHOẢN PHÍ</span
+          ><span class="footer-bonus">✦ SĂN ĐIỂM BONUS</span>
+        </div>
+      </main>
+
+      <footer class="page-footer">
+        <p>
+          <span class="rule-number">QUY TẮC SỐ 1</span> Đừng bao giờ mang nợ thẻ.
+        </p>
+        <a href="https://ghe1a.com" target="_blank" rel="noopener"
+          >Dành cho hội mê Miles &amp; Points.
+          <span
+            >ghe1a.com
+            <svg class="icon" aria-hidden="true">
+              <use href="#external"></use></svg></span
+        ></a>
+      </footer>
+    </div>
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>

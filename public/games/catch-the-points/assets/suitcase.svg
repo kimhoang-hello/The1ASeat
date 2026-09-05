@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 230" fill="none">
+  <ellipse cx="91" cy="216" rx="69" ry="9" fill="#0F2A4A" opacity=".1"/>
+  <path d="M65 43V14Q65 7 73 7H109Q117 7 117 14V43" stroke="#172E48" stroke-width="8"/>
+  <path d="M75 12H107" stroke="#71879B" stroke-width="3" stroke-linecap="round"/>
+  <rect x="47" y="203" width="16" height="17" rx="6" fill="#102238"/>
+  <rect x="119" y="203" width="16" height="17" rx="6" fill="#102238"/>
+  <rect x="27" y="40" width="127" height="166" rx="21" fill="#183454"/>
+  <rect x="27" y="40" width="113" height="166" rx="20" fill="#355777"/>
+  <rect x="31" y="43" width="107" height="159" rx="18" stroke="#8A9BA8" stroke-opacity=".65" stroke-width="2"/>
+  <path d="M50 64V183M69 64V183M89 64V183M109 64V183" stroke="#244563" stroke-width="5" stroke-linecap="round"/>
+  <path d="M52 65V181M71 65V181M91 65V181M111 65V181" stroke="#69849C" stroke-opacity=".6" stroke-width="2" stroke-linecap="round"/>
+  <path d="M142 64V181" stroke="#B2B39A" stroke-width="2"/>
+  <rect x="149" y="97" width="10" height="35" rx="4" fill="#132E4B"/>
+  <g transform="rotate(-12 63 115)"><rect x="34" y="95" width="58" height="39" rx="3" fill="#F5EEDB"/><path d="M40 101H86V128H40Z" stroke="#D6CBB3"/><text x="63" y="119" font-family="Georgia,serif" font-size="19" font-weight="bold" text-anchor="middle" fill="#0F2A4A">1A</text></g>
+  <g transform="rotate(12 119 73)"><path d="M116 49V63" stroke="#D8C796" stroke-width="2"/><rect x="104" y="60" width="27" height="44" rx="3" fill="#DBB96F"/><circle cx="117" cy="66" r="2" fill="#6D6141"/><path d="M111 78H124M111 82H124M111 86H120M111 93H124" stroke="#796642" stroke-width="1.5"/></g>
+</svg>

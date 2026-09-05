@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:game": "node --test games/catch-the-points/tests/*.js",
     "audit:awards": "tsx scripts/audit-award-charts.mts",
     "audit:health": "tsx scripts/audit-content-health.mts",
     "audit:links": "tsx scripts/audit-internal-links.mts",

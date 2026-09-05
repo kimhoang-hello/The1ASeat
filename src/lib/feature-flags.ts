@@ -43,3 +43,16 @@ export const START_HERE_PUBLISHED = true;
  * một lúc, không cần sửa chỗ nào khác.
  */
 export const VIETNAM_ROUTES_PUBLISHED = true;
+
+/**
+ * Trang "Game: Catch The Points" (`/catch-the-points`). Nhận bàn giao và tích
+ * hợp 05/09/2026 — game là bản V2.1 dựng sẵn, đưa vào site dưới dạng trang
+ * tĩnh trong `public/games/catch-the-points/` và nhúng bằng iframe cùng
+ * domain. Tắt cờ theo yêu cầu của tác giả: còn muốn chỉnh thêm trước khi công
+ * bố.
+ *
+ * Bật cờ là công bố: mục hiện trong menu Công cụ điểm thưởng (cả desktop lẫn
+ * mobile), vào sitemap, vào ô tìm kiếm, `noindex` được gỡ và dải báo nháp biến
+ * mất — tất cả cùng một lúc, không cần sửa chỗ nào khác.
+ */
+export const CATCH_THE_POINTS_PUBLISHED = false;

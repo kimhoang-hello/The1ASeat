@@ -13,6 +13,7 @@ import {
   CaretDown,
   Calculator,
   CreditCard,
+  GameController,
   List,
   Newspaper,
   PaperPlaneTilt,
@@ -30,7 +31,11 @@ import { COMPARE_PATH } from "@/lib/card-compare";
 // Component trong layout gốc, mà `bank-compare` import cả `BANK_ACCOUNTS` —
 // đi đường đó là mọi trang tải thêm ~19 KB gzip dữ liệu ngân hàng.
 import { BANK_COMPARE_PATH } from "@/lib/bank-compare-path";
-import { BANK_ACCOUNTS_PUBLISHED, VIETNAM_ROUTES_PUBLISHED } from "@/lib/feature-flags";
+import {
+  BANK_ACCOUNTS_PUBLISHED,
+  CATCH_THE_POINTS_PUBLISHED,
+  VIETNAM_ROUTES_PUBLISHED,
+} from "@/lib/feature-flags";
 import { t } from "@/lib/t";
 
 /** A menu entry: an icon, what it is, and what is behind it in one line. */
@@ -474,6 +479,19 @@ export function SiteHeader() {
       description: tMenu("transferPartners"),
       icon: ArrowsLeftRight,
     },
+    // Đứng CUỐI nhóm, sau bốn công cụ tra cứu: nó là thứ duy nhất ở đây không
+    // trả lời một câu hỏi nào cả. Đường dẫn viết thẳng, cùng lý do với các mục
+    // trên — xem ghi chú `bank-compare-path` ở đầu file.
+    ...(CATCH_THE_POINTS_PUBLISHED
+      ? [
+          {
+            href: "/catch-the-points",
+            label: nav("catchThePoints"),
+            description: tMenu("catchThePoints"),
+            icon: GameController,
+          },
+        ]
+      : []),
   ];
 
   const cardsActive = pathname === "/credit-cards" || pathname.startsWith("/credit-cards/");

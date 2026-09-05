@@ -11,10 +11,12 @@ import { t } from "@/lib/t";
 import type { SearchItem } from "@/lib/search";
 import {
   BANK_ACCOUNTS_PUBLISHED,
+  CATCH_THE_POINTS_PUBLISHED,
   START_HERE_PUBLISHED,
   VIETNAM_ROUTES_PUBLISHED,
 } from "@/lib/feature-flags";
 import { COMPARE_PATH } from "@/lib/card-compare";
+import { CATCH_THE_POINTS_PATH } from "@/lib/catch-the-points-path";
 import { BANK_COMPARE_PATH } from "@/lib/bank-compare";
 import { categoryPath, getCategories } from "@/lib/blog-categories";
 import {
@@ -125,6 +127,16 @@ const PAGES: SearchItem[] = [
     kind: "page",
     keywords: "so sánh đối chiếu cạnh nhau compare vs thẻ nào tốt hơn",
   },
+  ...(CATCH_THE_POINTS_PUBLISHED
+    ? [
+        {
+          title: nav("catchThePoints"),
+          href: CATCH_THE_POINTS_PATH,
+          kind: "page" as const,
+          keywords: "game trò chơi mini game chơi giải trí catch the points arcade",
+        },
+      ]
+    : []),
   { title: nav("about"), href: "/about", kind: "page", keywords: "về chúng tôi tác giả" },
   {
     title: footer("contact"),

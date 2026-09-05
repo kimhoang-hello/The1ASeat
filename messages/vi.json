@@ -15,7 +15,8 @@
     "newsletter": "Đăng ký bản tin",
     "awardCharts": "Award Flight Finder",
     "bankAccounts": "Ngân hàng",
-    "vietnamRoutes": "Bay về Việt Nam"
+    "vietnamRoutes": "Bay về Việt Nam",
+    "catchThePoints": "Game: Catch The Points"
   },
   "navMenu": {
     "cardsAll": "Toàn bộ thẻ đang theo dõi",
@@ -30,7 +31,8 @@
     "transferPartners": "Điểm của bạn chuyển được đi đâu",
     "bankAccounts": "Tài khoản chi tiêu và tiết kiệm ở Canada",
     "compare": "Đặt hai, ba thẻ cạnh nhau và xem chúng khác nhau ở đâu",
-    "vietnamRoutes": "Về Sài Gòn, Hà Nội, Đà Nẵng tốn bao nhiêu điểm"
+    "vietnamRoutes": "Về Sài Gòn, Hà Nội, Đà Nẵng tốn bao nhiêu điểm",
+    "catchThePoints": "Mini-game 45 giây: hứng điểm, né phí"
   },
   "banner": {
     "eyebrow": "ELEVATED OFFER",
@@ -299,7 +301,10 @@
     "breadcrumbBankCompare": "So sánh tài khoản",
     "vietnamRoutesTitle": "Bay từ Canada về Việt Nam bằng điểm",
     "vietnamRoutesDescription": "Mười hai chặng từ Toronto, Vancouver, Montréal và Calgary về Sài Gòn, Hà Nội và Đà Nẵng — số điểm thật của sáu chương trình, đường bay và cách chuyển điểm.",
-    "breadcrumbVietnamRoutes": "Bay về Việt Nam bằng điểm"
+    "breadcrumbVietnamRoutes": "Bay về Việt Nam bằng điểm",
+    "catchThePointsTitle": "Game: Catch The Points",
+    "catchThePointsDescription": "Mini-game 45 giây của Ghế 1A: hứng điểm Aeroplan®, Amex® MR, Avios®, Bonvoy®, né annual fee, devaluation và lãi suất thẻ. Chơi ngay trên trình duyệt, không cần cài gì.",
+    "breadcrumbCatchThePoints": "Game: Catch The Points"
   },
   "awardCharts": {
     "eyebrow": "CÔNG CỤ",
@@ -556,5 +561,19 @@
     "tableName": "Số điểm sáu chương trình cho chặng {origin} → {destination}",
     "hubTableName": "Số điểm rẻ nhất của mười hai chặng Canada → Việt Nam",
     "draftNotice": "Bản nháp — trang này chưa công bố. Số liệu đã đúng nhưng phần trình bày còn đang sửa."
+  },
+  "game": {
+    "eyebrow": "Công cụ điểm thưởng",
+    "title": "Game: Catch The Points",
+    "subtitle": "Một lượt 45 giây. Kéo vali hứng điểm thưởng, né annual fee và devaluation, và tuyệt đối đừng ôm nợ thẻ. Hết giờ, game nói bạn nên đọc gì tiếp.",
+    "frameTitle": "Catch The Points — mini-game của Ghế 1A",
+    "draftNotice": "Bản nháp: trang này chưa công bố. Nó chưa có trong menu, sitemap hay ô tìm kiếm, và Google được yêu cầu không index.",
+    "howToTitle": "Chơi thế nào",
+    "howToDesktop": "Máy tính: phím ← →, hoặc A / D. Kéo chuột ngang trong khung game cũng được.",
+    "howToMobile": "Điện thoại: kéo ngón tay sang trái, phải ngay trong khung game.",
+    "howToRule": "Trúng CARRYING A BALANCE là hết lượt ngay — đúng quy tắc số 1 ngoài đời.",
+    "noteTitle": "Vài điều nên biết",
+    "noteScore": "Kỷ lục cá nhân và achievements lưu ngay trong trình duyệt của bạn, không gửi đi đâu cả. Đổi máy hoặc xoá dữ liệu duyệt web là mất.",
+    "noteFiction": "Tên chương trình, phí và devaluation trong game chỉ để chơi cho vui. Số liệu thật nằm ở các công cụ bên dưới."
   }
 }

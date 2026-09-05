@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { FeaturedOfferBanner } from "@/components/layout/featured-offer-banner";
 import { SiteHeader } from "@/components/layout/site-header";
+import { StickyChrome } from "@/components/layout/sticky-chrome";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { JsonLd } from "@/components/seo/json-ld";
 import { t } from "@/lib/t";
@@ -99,11 +100,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* The strip and the nav bar stick to the top as one block. Sticking
             them separately would mean pinning the bar at a fixed offset, and
             the strip is not a fixed height — it wraps onto a second line on a
-            phone, and disappears entirely once it is dismissed. */}
-        <div className="sticky top-0 z-50">
+            phone, and disappears entirely once it is dismissed.
+            `StickyChrome` là chỗ quyết định trang nào KHÔNG dính. */}
+        <StickyChrome>
           <FeaturedOfferBanner />
           <SiteHeader />
-        </div>
+        </StickyChrome>
         <main id="main" className="flex-1">
           {children}
         </main>
