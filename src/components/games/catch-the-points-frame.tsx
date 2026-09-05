@@ -125,13 +125,14 @@ export function CatchThePointsFrame() {
       ref={frameRef}
       src={CATCH_THE_POINTS_GAME_SRC}
       title={game("frameTitle")}
-      // `scroll-mt-4` chừa một chút mép trên khi game xin cuộn về đầu. Trang
-      // này không có thanh header dính để phải tránh.
+      // `scroll-mt-2` chừa 8px mép trên khi game xin cuộn về đầu — nửa còn lại
+      // của 1rem mà `PLAYING_HEIGHT` trong `embed.js` đã trừ ra. Trang này không
+      // có thanh header dính để phải tránh.
       // Chiều cao khởi tạo là CLASS chứ không phải `style`: game ghi chiều
       // cao thật vào `style.height` của chính phần tử này, và inline style
       // luôn thắng class — nếu để React giữ `style.height` thì mỗi lần render
       // lại là nó đạp lên con số game vừa đặt.
-      className={`w-full scroll-mt-4 border-0 ${INITIAL_HEIGHT}`}
+      className={`w-full scroll-mt-2 border-0 ${INITIAL_HEIGHT}`}
       // Lớp chặn cuối cùng để iframe không thành vùng cuộn thứ hai — xem
       // `[data-embedded]` trong style.css của game.
       scrolling="no"

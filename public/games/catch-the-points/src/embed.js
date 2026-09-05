@@ -54,9 +54,10 @@
   var origin = window.location.origin;
   /* `svh` chứ không phải `dvh`: trên điện thoại thanh địa chỉ thò ra thụt vào
      liên tục, mà mỗi lần `dvh` đổi là sân chơi nhảy một cái giữa lượt. Trang
-     game cố ý không có thanh header dính, nên game lấy được gần trọn màn hình;
-     2rem chừa lại để khung không dán sát mép. */
-  var PLAYING_HEIGHT = "clamp(30rem, calc(100svh - 2rem), 54rem)";
+     game cố ý không có thanh header dính, nên game lấy được gần trọn màn hình.
+     1rem chừa lại đúng bằng `scroll-mt-2` bên trang cha: cuộn xong thì khung
+     nằm gọn trong màn hình, chừa 8px trên và 8px dưới. */
+  var PLAYING_HEIGHT = "clamp(30rem, calc(100svh - 1rem), 54rem)";
 
   function frameElement() {
     try {

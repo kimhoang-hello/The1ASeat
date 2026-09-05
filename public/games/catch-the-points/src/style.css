@@ -1976,7 +1976,17 @@ button:disabled { opacity: .45; cursor: default; }
    va chạm. */
 @media (max-width: 620px) {
   [data-embedded].game-playing .game-footer,
-  [data-embedded].game-playing .page-footer {
+  [data-embedded].game-playing .page-footer,
+  /* Dải "GHẾ 1A ARCADE · TÍCH ĐIỂM. NÂNG HẠNG. LÊN ĐƯỜNG." là nhận diện, không
+     mang tin gì trong lúc chơi — mà nó cao 45px, gần một phần mười sân chơi
+     trên điện thoại. Nó vẫn có mặt suốt màn bắt đầu và màn kết quả, tức là
+     đúng những lúc người ta thật sự nhìn khung game. */
+  [data-embedded].game-playing .flight-bar {
     display: none;
+  }
+  [data-embedded].game-playing .site-header {
+    /* Lúc chơi hàng này chỉ còn nút âm thanh — giữ lại vì đó là điều khiển duy
+       nhất ngoài bàn phím, nhưng không cần đệm dưới nữa. */
+    padding-bottom: 0;
   }
 }
