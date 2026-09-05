@@ -80,25 +80,82 @@ export function CatchThePointsFrame() {
       ? `${CATCH_THE_POINTS_GAME_SRC}?challenge=${challenge}`
       : CATCH_THE_POINTS_GAME_SRC;
 
+  // Đo thẳng trong document của iframe. Iframe cùng origin nên trang này với
+  // tới được, và đo trực tiếp thì không có gì để lệch: không phụ thuộc việc
+  // tin nhắn có tới không, cũng không phụ thuộc `embed.js` có nhận ra kích
+  // thước vừa đổi hay không. Chuyện đó đã trả giá một lần — trên Safari
+  // iPhone nội dung cao hơn con số game báo sang, khung thiếu vài trăm pixel,
+  // và iframe biến thành một vùng cuộn thứ hai ngay giữa trang.
   useEffect(() => {
     const frame = frameRef.current;
-    let answered = false;
+    if (!frame) return;
 
-    /**
-     * Xin game báo lại trạng thái.
-     *
-     * Bắt tay bằng ping là CẦN, không phải cho chắc: iframe tĩnh này load
-     * xong trước cả bundle React của trang, nên bản báo đầu tiên của game có
-     * thể bay đi trước khi listener bên dưới kịp gắn — và `embed.js` bỏ qua
-     * giá trị trùng nên sẽ không tự báo lần hai. Khung khi đó đứng nguyên ở
-     * chiều cao tạm và màn kết quả bị cắt cụt.
-     */
-    function ping() {
-      frame?.contentWindow?.postMessage(
-        { source: "ghe1a-page", type: "ping" },
-        window.location.origin,
+    let resize: ResizeObserver | undefined;
+    let mutation: MutationObserver | undefined;
+
+    function measure() {
+      const doc = frame?.contentDocument;
+      if (!doc?.body) return;
+      const shell = doc.getElementById("game-shell");
+      const isPlaying = shell?.classList.contains("is-playing") === true;
+      setPlaying(isPlaying);
+      // Box của <body>, không phải `documentElement.scrollHeight`: số kia không
+      // bao giờ nhỏ hơn khung nhìn, nên khung đã nới ra cho màn kết quả thì
+      // không co lại được khi người chơi bấm "Chơi lại".
+      if (isPlaying) return;
+      const height = Math.ceil(
+        Math.max(doc.body.getBoundingClientRect().height, doc.body.scrollHeight),
       );
+      if (height > 0) setHeight(height);
     }
+
+    function attach() {
+      const doc = frame?.contentDocument;
+      if (!doc?.body) return;
+      resize?.disconnect();
+      mutation?.disconnect();
+      resize = new ResizeObserver(measure);
+      // Cả <body> lẫn <html>: game đặt `overflow: hidden` lên cả hai khi được
+      // nhúng, và tuỳ trình duyệt, cái đổi kích thước trước có thể là cái kia.
+      resize.observe(doc.body);
+      resize.observe(doc.documentElement);
+      // Vào/ra lượt chơi không đổi kích thước body ngay, nên phải nghe thẳng
+      // class `is-playing`.
+      const shell = doc.getElementById("game-shell");
+      if (shell) {
+        mutation = new MutationObserver(measure);
+        mutation.observe(shell, { attributeFilter: ["class"] });
+      }
+      // Font tiếng Việt và ảnh logo về sau, layout mới ra đúng chiều cao.
+      doc.fonts?.ready.then(measure).catch(() => {});
+      doc.addEventListener("readystatechange", measure);
+      measure();
+    }
+
+    frame.addEventListener("load", attach);
+    // Đo lại vài nhịp trong mấy giây đầu. Trên điện thoại chậm, ảnh và font
+    // của game về sau khi trang này đã đo xong, mà game lại bị cấm cuộn bên
+    // trong khung — nên một lần đo hụt là mất hẳn phần chân khung, không có
+    // thanh cuộn nào cứu. Rẻ và chỉ chạy lúc mới vào trang.
+    const warmup = [100, 400, 900, 1800, 3000].map((delay) => setTimeout(attach, delay));
+    // Xoay ngang máy hoặc đổi cỡ cửa sổ là layout trong game đổi theo.
+    window.addEventListener("resize", measure);
+    attach();
+    return () => {
+      frame.removeEventListener("load", attach);
+      window.removeEventListener("resize", measure);
+      warmup.forEach(clearTimeout);
+      frame.contentDocument?.removeEventListener("readystatechange", measure);
+      resize?.disconnect();
+      mutation?.disconnect();
+    };
+  }, []);
+
+  // Kênh tin nhắn lo hai việc mà đo đạc không làm được — chuyển tiếp analytics
+  // và nhận yêu cầu cuộn — đồng thời là đường dự phòng cho chiều cao nếu vì lý
+  // do nào đó `contentDocument` không với tới được.
+  useEffect(() => {
+    const frame = frameRef.current;
 
     function onMessage(event: MessageEvent) {
       // Cùng origin và đúng iframe này — không nhận lệnh từ frame nào khác.
@@ -107,7 +164,7 @@ export function CatchThePointsFrame() {
       if (!isGameMessage(event.data)) return;
 
       if (event.data.type === "state") {
-        answered = true;
+        if (frame?.contentDocument) return; // Đã có đường đo trực tiếp.
         setPlaying(event.data.playing);
         if (!event.data.playing && event.data.height > 0) setHeight(event.data.height);
       } else if (event.data.type === "analytics") {
@@ -120,23 +177,7 @@ export function CatchThePointsFrame() {
     }
 
     window.addEventListener("message", onMessage);
-    frame?.addEventListener("load", ping);
-    ping();
-    // Hỏi lại vài nhịp cho tới khi có tiếng trả lời, rồi thôi: `load` có thể
-    // đã bắn xong trước khi listener trên gắn vào, mà iframe cũng có thể chưa
-    // dựng xong document lúc ping đầu tiên.
-    const retry = setInterval(() => {
-      if (answered) clearInterval(retry);
-      else ping();
-    }, 300);
-    const giveUp = setTimeout(() => clearInterval(retry), 5000);
-
-    return () => {
-      window.removeEventListener("message", onMessage);
-      frame?.removeEventListener("load", ping);
-      clearInterval(retry);
-      clearTimeout(giveUp);
-    };
+    return () => window.removeEventListener("message", onMessage);
   }, []);
 
   return (
@@ -147,6 +188,10 @@ export function CatchThePointsFrame() {
       // Chừa một chút mép trên khi game xin cuộn về đầu. Không cần nhiều: trang
       // này không có thanh header dính để tránh.
       className="w-full scroll-mt-4 border-0"
+      // Thuộc tính cũ nhưng Safari vẫn nghe, và nó là lớp chặn cuối cùng để
+      // iframe không bao giờ thành vùng cuộn thứ hai — xem `[data-embedded]`
+      // trong style.css của game.
+      scrolling="no"
       style={{ height: playing ? PLAYING_HEIGHT : height }}
       // Game không có backend, không gọi mạng, chỉ đọc ghi localStorage của
       // chính nó — không cần cấp quyền gì.

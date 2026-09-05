@@ -1933,6 +1933,16 @@ button:disabled { opacity: .45; cursor: default; }
   /* Nền trùng `--background` của website, nên khung iframe không lộ mép. */
   background: transparent;
 }
+[data-embedded],
+[data-embedded] body {
+  /* Trang cha đặt chiều cao khung theo đúng nội dung, nên ở đây KHÔNG được
+     có thanh cuộn thứ hai. Lệch một hai pixel là đủ để iOS Safari coi iframe
+     là một vùng cuộn riêng: vuốt trong khung thì game trôi lên trong khi
+     trang đứng yên, và người đọc thấy hai thanh trượt chồng nhau. Thà cắt
+     một pixel còn hơn tạo ra vùng cuộn lồng nhau. */
+  overflow: hidden;
+  overscroll-behavior: none;
+}
 
 /* Lúc ĐANG CHƠI trong iframe, chiều cao khung do trang cha đặt theo màn hình.
    Sân chơi vì thế phải giãn cho vừa phần còn lại của khung, KHÔNG tự tính

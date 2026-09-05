@@ -42,9 +42,13 @@
     var lastPlaying = null;
 
     function report(force) {
-      // `scrollHeight` của <html>, không phải của <body>: margin của phần tử
-      // cuối cùng nằm ngoài body và sẽ bị bỏ sót.
-      var height = Math.ceil(document.documentElement.scrollHeight);
+      // Đo bằng box của <body>, KHÔNG bằng `documentElement.scrollHeight`:
+      // scrollHeight của phần tử gốc không bao giờ nhỏ hơn khung nhìn, nên
+      // sau khi trang cha nới khung ra cho màn kết quả, bấm "Chơi lại" là con
+      // số đó kẹt luôn ở mức cao và khung không co lại được nữa.
+      var height = Math.ceil(
+        Math.max(document.body.getBoundingClientRect().height, document.body.scrollHeight),
+      );
       var playing = !!shell && shell.classList.contains("is-playing");
       // Gắn class lên <html> để CSS biết đang chơi: lúc đó khung game do trang
       // cha đặt chiều cao, nên bên trong phải giãn cho vừa khung thay vì tự
