@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { jobSecretValid } from "@/lib/job-auth";
+import { jobAuthResponse } from "@/lib/job-auth";
 import { fetchContentfulCreditCardOffers } from "@/lib/content/contentful";
 import type { OfferSnapshot } from "@/lib/offer-history";
 
@@ -23,9 +23,8 @@ export async function POST(request: NextRequest) {
 }
 
 async function handle(request: NextRequest) {
-  if (!jobSecretValid(request, process.env.EXPIRE_OFFERS_SECRET)) {
-    return NextResponse.json({ message: "Invalid secret" }, { status: 401 });
-  }
+  const denied = jobAuthResponse(request, process.env.EXPIRE_OFFERS_SECRET, "EXPIRE_OFFERS_SECRET");
+  if (denied) return denied;
 
   // Chỉ đọc, không ghi gì — nên khác ba job kia, ở đây GET là đúng nghĩa.
   const offers = await fetchContentfulCreditCardOffers();

@@ -30,7 +30,7 @@ import { COMPARE_PATH } from "@/lib/card-compare";
 // Component trong layout gốc, mà `bank-compare` import cả `BANK_ACCOUNTS` —
 // đi đường đó là mọi trang tải thêm ~19 KB gzip dữ liệu ngân hàng.
 import { BANK_COMPARE_PATH } from "@/lib/bank-compare-path";
-import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
+import { BANK_ACCOUNTS_PUBLISHED, VIETNAM_ROUTES_PUBLISHED } from "@/lib/feature-flags";
 import { t } from "@/lib/t";
 
 /** A menu entry: an icon, what it is, and what is behind it in one line. */
@@ -437,21 +437,25 @@ export function SiteHeader() {
       description: tMenu("awardCharts"),
       icon: AirplaneTilt,
     },
-    {
-      // Đứng ngay sau công cụ: mười hai trang chặng là bản trả lời sẵn của
-      // chính công cụ đó cho câu hỏi được hỏi nhiều nhất trên nó.
-      //
-      // Đường dẫn viết thẳng chứ KHÔNG import hằng số từ `award-routes.ts`:
-      // file này là Client Component, nên một import như vậy kéo cả
-      // `award-charts.ts` lẫn mười hai đoạn văn của các trang chặng vào bundle
-      // của MỌI trang trên site, chỉ để lấy đúng một chuỗi. Mọi href khác
-      // trong menu này cũng viết thẳng, cùng lý do — xem thêm ghi chú
-      // `bank-compare-path` ở đầu file.
-      href: "/bay-ve-viet-nam",
-      label: nav("vietnamRoutes"),
-      description: tMenu("vietnamRoutes"),
-      icon: AirplaneTakeoff,
-    },
+    ...(VIETNAM_ROUTES_PUBLISHED
+      ? [
+          {
+            // Đứng ngay sau công cụ: mười hai trang chặng là bản trả lời sẵn
+            // của chính công cụ đó cho câu hỏi được hỏi nhiều nhất trên nó.
+            //
+            // Đường dẫn viết thẳng chứ KHÔNG import hằng số từ
+            // `award-routes.ts`: file này là Client Component, nên một import
+            // như vậy kéo cả `award-charts.ts` lẫn mười hai đoạn văn của các
+            // trang chặng vào bundle của MỌI trang trên site, chỉ để lấy đúng
+            // một chuỗi. Mọi href khác trong menu này cũng viết thẳng, cùng lý
+            // do — xem thêm ghi chú `bank-compare-path` ở đầu file.
+            href: "/bay-ve-viet-nam",
+            label: nav("vietnamRoutes"),
+            description: tMenu("vietnamRoutes"),
+            icon: AirplaneTakeoff,
+          },
+        ]
+      : []),
     {
       href: "/calculator",
       label: nav("calculator"),

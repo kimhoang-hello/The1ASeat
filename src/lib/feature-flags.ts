@@ -30,3 +30,17 @@ export const BANK_ACCOUNTS_PUBLISHED = true;
  * nhiều lần, mà "Bắt đầu ở đây" theo định nghĩa là trang đọc một lần.
  */
 export const START_HERE_PUBLISHED = true;
+
+/**
+ * Mười hai trang chặng "Bay về Việt Nam" (`/bay-ve-viet-nam`). Dựng và công bố
+ * 04/09/2026, rồi TẮT LẠI cùng ngày theo yêu cầu của tác giả để sửa tiếp —
+ * trang vẫn vào được bằng URL trực tiếp để xem trên chính bản deploy thật,
+ * nhưng biến khỏi menu, sitemap, ô tìm kiếm và khối "đi tiếp" của Award Flight
+ * Finder, tự gắn `noindex`, và hiện dải báo bản nháp.
+ *
+ * Bật lại là công bố — không cần sửa chỗ nào khác. Lưu ý một điều mà hai cờ
+ * trên không gặp: 13 URL này ĐÃ nằm trong sitemap công bố hôm 04/09 và Google
+ * có thể đã đọc. Gỡ khỏi sitemap không gỡ khỏi index; `noindex` mới làm việc
+ * đó, và nó cần Google ghé lại mới có tác dụng.
+ */
+export const VIETNAM_ROUTES_PUBLISHED = false;

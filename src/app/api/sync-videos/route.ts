@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { jobSecretValid } from "@/lib/job-auth";
+import { jobAuthResponse } from "@/lib/job-auth";
 
 // Called on a schedule (see .github/workflows/sync-videos.yml) to auto-post
 // new @HoangLeCA videos as `blogPost` (type: "video") entries — no manual
@@ -38,9 +38,8 @@ export async function POST(request: NextRequest) {
 }
 
 async function handleSync(request: NextRequest) {
-  if (!jobSecretValid(request, process.env.SYNC_VIDEOS_SECRET)) {
-    return NextResponse.json({ message: "Invalid secret" }, { status: 401 });
-  }
+  const denied = jobAuthResponse(request, process.env.SYNC_VIDEOS_SECRET, "SYNC_VIDEOS_SECRET");
+  if (denied) return denied;
 
   const spaceId = process.env.CONTENTFUL_SPACE_ID;
   const managementToken = process.env.CONTENTFUL_MANAGEMENT_TOKEN;

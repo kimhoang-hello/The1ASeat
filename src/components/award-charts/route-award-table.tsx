@@ -101,9 +101,22 @@ export function CheapestTiles({ rows }: { rows: CheapestByCabin[] }) {
                 {row.startingAt && <span className="mr-1 text-base font-semibold">{t("fromPrefix")}</span>}
                 {formatPoints(row.points)}
               </p>
-              <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-                {r("cheapestVia", { program: row.programName ?? "" })}
-              </p>
+              {/* Logo đứng cạnh tên chương trình, không thay cho nó: logo giúp
+                  mắt quét nhanh, còn tên mới là thứ đọc được với độc giả chưa
+                  quen mặt logo. `alt=""` vì tên nằm ngay bên phải. */}
+              <div className="mt-1 flex items-center gap-1.5">
+                {row.programLogo && (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={row.programLogo}
+                    alt=""
+                    className="h-5 w-5 shrink-0 rounded border border-border bg-white object-contain p-px"
+                  />
+                )}
+                <p className="text-xs leading-snug text-muted-foreground">
+                  {r("cheapestVia", { program: row.programName ?? "" })}
+                </p>
+              </div>
             </>
           )}
         </div>

@@ -42,7 +42,15 @@ async function fetchSnapshot(): Promise<OfferSnapshot> {
 
     try {
       const res = await fetch(`${SITE}/api/offer-snapshot`, {
-        headers: { Authorization: `Bearer ${SECRET}` },
+        headers: {
+          Authorization: `Bearer ${SECRET}`,
+          // Cùng lý do với `.github/actions/call-site-endpoint`: mặc định của
+          // runtime là thứ WAF của Hostinger chặn trước nhất, và một cú 403 từ
+          // edge đọc giống hệt lỗi token nếu không ai nói ra. UA này nói thật
+          // mình là ai thay vì giả làm trình duyệt.
+          "User-Agent": "Ghe1A-Job/1.0 (+https://ghe1a.com; GitHub Actions)",
+          Accept: "application/json",
+        },
         signal: AbortSignal.timeout(60_000),
       });
 

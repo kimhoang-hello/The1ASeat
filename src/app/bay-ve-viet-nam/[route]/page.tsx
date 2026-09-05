@@ -28,6 +28,7 @@ import {
   vietnamRoutePath,
   type VietnamRoute,
 } from "@/lib/award-routes";
+import { VIETNAM_ROUTES_PUBLISHED } from "@/lib/feature-flags";
 import { pageMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import { t as translate } from "@/lib/t";
 
@@ -75,11 +76,15 @@ export async function generateMetadata({
   const route = vietnamRouteBySlug(slug);
   if (!route) return {};
 
-  return pageMetadata({
-    title: r("metaTitle", { origin: route.originName, destination: route.destinationName }),
-    description: routeDescription(route),
-    path: vietnamRoutePath(route.slug),
-  });
+  return {
+    ...pageMetadata({
+      title: r("metaTitle", { origin: route.originName, destination: route.destinationName }),
+      description: routeDescription(route),
+      path: vietnamRoutePath(route.slug),
+    }),
+    // Cùng luật với trang Ngân hàng và trang Bắt đầu.
+    ...(VIETNAM_ROUTES_PUBLISHED ? {} : { robots: { index: false, follow: false } }),
+  };
 }
 
 export default async function VietnamRoutePage({
@@ -141,6 +146,12 @@ export default async function VietnamRoutePage({
       />
 
       <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+        {!VIETNAM_ROUTES_PUBLISHED && (
+          <p className="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+            {r("draftNotice")}
+          </p>
+        )}
+
         <Link
           href={VIETNAM_ROUTES_BASE}
           className="text-sm font-semibold text-primary hover:underline"

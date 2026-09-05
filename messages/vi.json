@@ -504,7 +504,7 @@
     "hubTitle": "Bay từ Canada về Việt Nam bằng điểm",
     "hubSubtitle": "Mười hai chặng, sáu chương trình, số điểm thật — tra trước khi chuyển điểm đi đâu.",
     "hubIntro1": "Câu hỏi hầu như ai cũng hỏi trước tiên là \"về Việt Nam tốn bao nhiêu điểm\". Câu trả lời thật thì phụ thuộc ba thứ: bạn bay từ thành phố nào ở Canada, về sân bay nào, và bạn đang giữ loại điểm gì. Mỗi trang dưới đây trả lời trọn cả ba cho đúng một chặng.",
-    "hubIntro2": "Số điểm trên các trang này lấy từ bảng giá thật của từng chương trình, đối chiếu nhiều nguồn và có ghi ngày kiểm tra. Chỗ nào chương trình không công bố bảng giá, trang nói thẳng là không tra trước được thay vì đoán một con số — vì điểm đã chuyển đi thì không lấy lại được.",
+    "hubIntro2": "Số điểm trên các trang này lấy từ bảng giá thật của từng chương trình, đối chiếu nhiều nguồn và có ghi ngày kiểm tra.",
     "hubTableHeading": "Rẻ nhất cho từng chặng",
     "hubTableCaption": "Số điểm thấp nhất trong sáu chương trình, cho một chiều một người. Vuốt ngang để xem đầy đủ bảng →",
     "hubRouteColumn": "Chặng",
@@ -541,6 +541,7 @@
     "siblingDescriptionNone": "Xem số điểm cho chặng này",
     "verifiedNote": "Số điểm kiểm tra ngày {date}. Award chart thay đổi không báo trước — luôn kiểm lại trên trang của chương trình trước khi chuyển điểm.",
     "tableName": "Số điểm sáu chương trình cho chặng {origin} → {destination}",
-    "hubTableName": "Số điểm rẻ nhất của mười hai chặng Canada → Việt Nam"
+    "hubTableName": "Số điểm rẻ nhất của mười hai chặng Canada → Việt Nam",
+    "draftNotice": "Bản nháp — trang này chưa công bố. Số liệu đã đúng nhưng phần trình bày còn đang sửa."
   }
 }

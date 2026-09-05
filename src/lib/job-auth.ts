@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 /**
  * Shared secret check for the scheduled-job routes.
@@ -15,14 +15,44 @@ import { NextRequest } from "next/server";
  * Comparison is length-checked first and then constant-time, so a caller cannot
  * learn the secret one character at a time from response timing.
  */
-export function jobSecretValid(request: NextRequest, expected: string | undefined): boolean {
-  if (!expected) return false;
+
+/**
+ * `null` khi được phép đi tiếp, hoặc câu trả lời từ chối kèm đúng mã lỗi.
+ *
+ * Hai lý do từ chối, HAI mã khác nhau, và đó là toàn bộ điểm của hàm này:
+ *
+ *  - **500** — server không có biến môi trường nào để so. Đây là lỗi cấu hình
+ *    của server, không phải lỗi của người gọi, và nó phải đọc ra như vậy.
+ *  - **401** — người gọi đưa sai hoặc không đưa token.
+ *
+ * Bản trước gộp cả hai thành 401 "Invalid secret". Hậu quả đo được ngày
+ * 04/09/2026: một job đỏ với 401 và cả buổi đi tìm secret sai, trong khi thứ
+ * đáng nghi là biến môi trường chưa nạp lúc PM2 vừa restart. Một mã lỗi nói
+ * dối về tầng hỏng thì đắt hơn hẳn thời gian viết thêm nhánh này.
+ *
+ * `envName` đi vào phần thân của câu trả lời 500 — tên biến, KHÔNG phải giá
+ * trị. Log của Hostinger giữ body, nên đưa giá trị vào đây là dựng lại đúng
+ * đường rò mà việc bỏ `?secret=` đã bịt.
+ */
+export function jobAuthResponse(
+  request: NextRequest,
+  expected: string | undefined,
+  envName: string,
+): NextResponse | null {
+  if (!expected) {
+    return NextResponse.json(
+      { message: `Server chưa cấu hình ${envName}` },
+      { status: 500 },
+    );
+  }
 
   const header = request.headers.get("authorization");
   const provided = header?.startsWith("Bearer ") ? header.slice(7).trim() : null;
-  if (!provided) return false;
+  if (!provided || !timingSafeEqual(provided, expected)) {
+    return NextResponse.json({ message: "Invalid secret" }, { status: 401 });
+  }
 
-  return timingSafeEqual(provided, expected);
+  return null;
 }
 
 function timingSafeEqual(a: string, b: string): boolean {

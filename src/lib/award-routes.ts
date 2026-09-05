@@ -231,6 +231,18 @@ export type CheapestByCabin = {
   points: number | null;
   startingAt: boolean;
   programName: string | null;
+  programLogo: string | null;
+  /**
+   * Tên LOẠI ĐIỂM, không phải tên chương trình: "Aeroplan®" chứ không phải
+   * "Air Canada® Aeroplan®".
+   *
+   * Con số đứng một mình không nói nó là điểm của ai — 37,500 AAdvantage® và
+   * 37,500 Aeroplan® không đổi được cho nhau, mà bảng thì xếp chúng cùng một
+   * cột. Dùng `currency` chứ không dùng `name` vì đây đúng là đơn vị của con
+   * số ngay trên nó, và vì `name` dài gấp đôi — trong một ô bảng bốn cột trên
+   * điện thoại thì đó là khác biệt giữa đọc được và không.
+   */
+  programCurrency: string | null;
 };
 
 export function cheapestByCabin(route: VietnamRoute): CheapestByCabin[] {
@@ -242,6 +254,8 @@ export function cheapestByCabin(route: VietnamRoute): CheapestByCabin[] {
       points: best?.points ?? null,
       startingAt: best?.startingAt ?? false,
       programName: best?.program.name ?? null,
+      programLogo: best?.program.logo ?? null,
+      programCurrency: best?.program.currency ?? null,
     };
   });
 }

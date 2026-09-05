@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import type { Document } from "@contentful/rich-text-types";
-import { jobSecretValid } from "@/lib/job-auth";
+import { jobAuthResponse } from "@/lib/job-auth";
 import { CONTENTFUL_TAG } from "@/lib/content";
 import {
   SITE_URL,
@@ -59,9 +59,8 @@ export async function POST(request: NextRequest) {
   // Đặt mốc TRƯỚC mọi việc có thể chậm. Xem `WEBHOOK_BUDGET_MS`.
   const deadline = Date.now() + WEBHOOK_BUDGET_MS;
 
-  if (!jobSecretValid(request, process.env.REVALIDATE_SECRET)) {
-    return NextResponse.json({ message: "Invalid secret" }, { status: 401 });
-  }
+  const denied = jobAuthResponse(request, process.env.REVALIDATE_SECRET, "REVALIDATE_SECRET");
+  if (denied) return denied;
 
   // Hai lớp, hai việc khác nhau. `revalidateTag` xoá bản Contentful đang được
   // giữ trong `lib/content` — thiếu nó thì trang render lại nhưng vẫn đọc

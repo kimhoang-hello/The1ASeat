@@ -14,6 +14,7 @@ import {
   routeLabel,
   vietnamRoutePath,
 } from "@/lib/award-routes";
+import { VIETNAM_ROUTES_PUBLISHED } from "@/lib/feature-flags";
 import { absoluteUrl, pageMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import { t as translate } from "@/lib/t";
 
@@ -22,11 +23,16 @@ const chart = translate("awardCharts");
 const seo = translate("seo");
 const next = translate("nextSteps");
 
-export const metadata: Metadata = pageMetadata({
-  title: seo("vietnamRoutesTitle"),
-  description: seo("vietnamRoutesDescription"),
-  path: VIETNAM_ROUTES_BASE,
-});
+export const metadata: Metadata = {
+  ...pageMetadata({
+    title: seo("vietnamRoutesTitle"),
+    description: seo("vietnamRoutesDescription"),
+    path: VIETNAM_ROUTES_BASE,
+  }),
+  // Cùng luật với trang Ngân hàng và trang Bắt đầu: chưa công bố thì không cho
+  // Google index.
+  ...(VIETNAM_ROUTES_PUBLISHED ? {} : { robots: { index: false, follow: false } }),
+};
 
 // Cùng lý do với `/award-flight-finder`: trang không đọc dữ liệu ngoài nên
 // Next sẽ giao cho CDN một `s-maxage` một năm, mà deploy không xoá cache đó.
@@ -59,6 +65,12 @@ export default function VietnamRoutesHubPage() {
       <PageHeader eyebrow={r("eyebrow")} title={r("hubTitle")} subtitle={r("hubSubtitle")} />
 
       <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+        {!VIETNAM_ROUTES_PUBLISHED && (
+          <p className="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+            {r("draftNotice")}
+          </p>
+        )}
+
         <div className="space-y-4 leading-relaxed text-foreground/90">
           <p>{r("hubIntro1")}</p>
           <p>{r("hubIntro2")}</p>
@@ -130,14 +142,40 @@ export default function VietnamRoutesHubPage() {
                           <span className="sr-only">{chart("notPublished")}</span>
                         </span>
                       ) : (
-                        <span className="font-display font-bold">
-                          {cell.startingAt && (
-                            <span className="font-normal text-muted-foreground">
-                              {chart("fromPrefix")}{" "}
+                        <>
+                          <span className="block font-display font-bold">
+                            {cell.startingAt && (
+                              <span className="font-normal text-muted-foreground">
+                                {chart("fromPrefix")}{" "}
+                              </span>
+                            )}
+                            {formatPoints(cell.points)}
+                          </span>
+                          {/* Con số đứng một mình không nói nó là điểm của ai,
+                              mà ba cột này xếp cạnh nhau như thể đổi được cho
+                              nhau. Logo cho mắt quét nhanh, tên loại điểm cho
+                              người đọc chưa quen logo — site có độc giả lớn
+                              tuổi, nên chỉ logo là chưa đủ.
+
+                              Logo `alt=""` vì tên đã nằm ngay cạnh dưới dạng
+                              chữ; để `alt` mang tên nữa là screen reader đọc
+                              đúng một thứ hai lần. */}
+                          {cell.programCurrency && (
+                            <span className="mt-1 flex items-center justify-end gap-1.5">
+                              {cell.programLogo && (
+                                /* eslint-disable-next-line @next/next/no-img-element */
+                                <img
+                                  src={cell.programLogo}
+                                  alt=""
+                                  className="h-4 w-4 shrink-0 rounded border border-border bg-white object-contain p-px"
+                                />
+                              )}
+                              <span className="text-[11px] font-medium leading-tight text-muted-foreground">
+                                {cell.programCurrency}
+                              </span>
                             </span>
                           )}
-                          {formatPoints(cell.points)}
-                        </span>
+                        </>
                       )}
                     </td>
                   ))}

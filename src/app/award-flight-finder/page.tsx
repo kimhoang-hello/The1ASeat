@@ -4,6 +4,7 @@ import { AwardChartFinder } from "@/components/award-charts/award-chart-finder";
 import { NextSteps, StepLink } from "@/components/ui/next-steps";
 import { t } from "@/lib/t";
 import { VIETNAM_ROUTES_BASE } from "@/lib/award-routes";
+import { VIETNAM_ROUTES_PUBLISHED } from "@/lib/feature-flags";
 import { pageMetadata } from "@/lib/seo";
 
 const ac = t("awardCharts");
@@ -38,11 +39,13 @@ export default function AwardChartsPage() {
             {/* Đứng đầu: "Canada đi Việt Nam" là tổ hợp được tra nhiều nhất
                 trên chính công cụ này, và mười hai trang chặng trả lời sẵn câu
                 đó — kèm phần chữ mà công cụ không có chỗ để nói. */}
-            <StepLink
-              href={VIETNAM_ROUTES_BASE}
-              label={routes("hubLabel")}
-              description={routes("hubDescription")}
-            />
+            {VIETNAM_ROUTES_PUBLISHED && (
+              <StepLink
+                href={VIETNAM_ROUTES_BASE}
+                label={routes("hubLabel")}
+                description={routes("hubDescription")}
+              />
+            )}
             <StepLink
               href="/credit-cards"
               label={next("cardsLabel")}

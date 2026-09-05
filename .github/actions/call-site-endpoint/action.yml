@@ -1,0 +1,82 @@
+name: Gọi một endpoint job trên site
+description: >
+  POST tới một route job của ghe1a.com, thử lại khi hỏng, và in ra mã trạng
+  thái cùng phần thân của MỌI lượt — kể cả lượt thành công.
+
+inputs:
+  path:
+    description: Đường dẫn của route, ví dụ /api/check-rebates
+    required: true
+  secret:
+    description: Giá trị Bearer token
+    required: true
+  attempts:
+    description: Số lượt tối đa
+    required: false
+    default: "5"
+  delay:
+    description: Số giây nghỉ giữa hai lượt
+    required: false
+    default: "30"
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        JOB_PATH: ${{ inputs.path }}
+        JOB_SECRET: ${{ inputs.secret }}
+        JOB_ATTEMPTS: ${{ inputs.attempts }}
+        JOB_DELAY: ${{ inputs.delay }}
+      run: |
+        set -uo pipefail
+
+        # Vì sao không còn `curl -sfS ... --retry`:
+        #
+        # `-f` bảo curl im lặng nuốt phần thân khi máy chủ trả mã lỗi, nên ngày
+        # 04/09/2026 một lượt đỏ chỉ để lại đúng dòng "curl: (22) The requested
+        # URL returned error: 403" — không cho biết TẦNG NÀO từ chối. Hoá ra
+        # app trả 401 chứ không bao giờ trả 403; 403 là của edge Hostinger
+        # (`server: hcdn`) chặn thẳng runner, và cả buổi đi tìm secret sai là
+        # đi tìm nhầm chỗ. Vòng lặp dưới đây in mã và phần thân của từng lượt,
+        # nên lần đỏ sau tự nói ra nó là 401 (token), 500 (server thiếu biến
+        # môi trường) hay 403 (edge chặn).
+        #
+        # `-A` cũng là chuyện của lần đó: mặc định curl gửi User-Agent
+        # "curl/8.x", và đó là thứ WAF chặn trước nhất. UA dưới đây nói thật
+        # mình là ai thay vì giả làm trình duyệt — nếu vẫn bị chặn thì log sẽ
+        # cho thấy, và lúc đó mới biết là chặn theo IP chứ không theo UA.
+        #
+        # Gọi lại an toàn với cả bốn route: chúng đều tự đối chiếu với
+        # Contentful trước khi ghi, nên một lượt chạy hai lần không tạo trùng.
+        body="$RUNNER_TEMP/job-response.txt"
+
+        for attempt in $(seq 1 "$JOB_ATTEMPTS"); do
+          code=$(curl -sS -o "$body" -w '%{http_code}' --max-time 300 \
+            -X POST "https://ghe1a.com${JOB_PATH}" \
+            -A 'Ghe1A-Job/1.0 (+https://ghe1a.com; GitHub Actions)' \
+            -H 'Accept: application/json' \
+            -H "Authorization: Bearer ${JOB_SECRET}") || code=000
+
+          echo "Lượt $attempt: HTTP $code"
+          head -c 800 "$body" 2>/dev/null || true
+          echo
+
+          if [ "$code" = "200" ]; then
+            exit 0
+          fi
+
+          # 401 thì gọi thêm mười lượt cũng vậy — cùng lý do đã ghi trong
+          # `record-offer-history.mts`. Đỏ ngay là tín hiệu đúng.
+          if [ "$code" = "401" ]; then
+            echo "::error::Token sai — không thử lại."
+            exit 1
+          fi
+
+          if [ "$attempt" -lt "$JOB_ATTEMPTS" ]; then
+            sleep "$JOB_DELAY"
+          fi
+        done
+
+        echo "::error::${JOB_PATH} không gọi được sau ${JOB_ATTEMPTS} lượt (mã cuối: $code)."
+        exit 1

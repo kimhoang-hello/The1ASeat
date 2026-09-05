@@ -12,15 +12,14 @@ jobs:
   expire:
     runs-on: ubuntu-latest
     steps:
-      - name: Call expire-offers endpoint
-        # -sfS chứ không phải -sf: -s một mình nuốt luôn lý do hỏng, nên hai
-        # lần thất bại 20/08 và 21/08 chỉ để lại đúng "exit code 28" trong log
-        # mà không nói vì sao. --retry vì cả hai lần đều là timeout ở phút thứ
-        # 4,5 — route này gọi ra ngoài (FinlyWealth, YouTube, Contentful) nên
-        # thỉnh thoảng chạm trần thời gian của Hostinger; gọi lại là xong. Gọi
-        # lại an toàn: route tự đối chiếu với Contentful trước khi ghi, chạy
-        # hai lần không tạo trùng.
-        run: |
-          curl -sfS --retry 3 --retry-all-errors --retry-delay 30 --max-time 300 \
-            -X POST "https://ghe1a.com/api/expire-offers" \
-            -H "Authorization: Bearer ${{ secrets.EXPIRE_OFFERS_SECRET }}"
+      - uses: actions/checkout@v4
+
+      - name: Gọi expire-offers
+        # Toàn bộ phần curl, thử lại và ghi log nằm trong action dùng
+        # chung — ba workflow này trước đây chép lại cùng một khối, và
+        # khối đó còn mang nguyên cùng một comment nói về FinlyWealth kể
+        # cả ở job không đụng gì tới FinlyWealth.
+        uses: ./.github/actions/call-site-endpoint
+        with:
+          path: /api/expire-offers
+          secret: ${{ secrets.EXPIRE_OFFERS_SECRET }}

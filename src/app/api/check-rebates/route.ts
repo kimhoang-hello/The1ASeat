@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cmaClient, field, listEntries, LOCALE, updateEntry } from "@/lib/contentful-cma";
 import { fetchContentfulCreditCardOffers } from "@/lib/content/contentful";
 import { fetchFinlyWealthRebate, finlyWealthRebateUrl } from "@/lib/finlywealth";
-import { jobSecretValid } from "@/lib/job-auth";
+import { jobAuthResponse } from "@/lib/job-auth";
 import { RESERVED_SLUG, slugClashMessage } from "@/lib/card-compare";
 import { rebateProseMismatches, rebateProsePatch } from "@/lib/rebate-prose";
 
@@ -30,9 +30,8 @@ interface Change {
 }
 
 async function handleCheck(request: NextRequest) {
-  if (!jobSecretValid(request, process.env.EXPIRE_OFFERS_SECRET)) {
-    return NextResponse.json({ message: "Invalid secret" }, { status: 401 });
-  }
+  const denied = jobAuthResponse(request, process.env.EXPIRE_OFFERS_SECRET, "EXPIRE_OFFERS_SECRET");
+  if (denied) return denied;
 
   const spaceId = process.env.CONTENTFUL_SPACE_ID;
   const managementToken = process.env.CONTENTFUL_MANAGEMENT_TOKEN;
