@@ -32,15 +32,14 @@ export const BANK_ACCOUNTS_PUBLISHED = true;
 export const START_HERE_PUBLISHED = true;
 
 /**
- * Mười hai trang chặng "Bay về Việt Nam" (`/bay-ve-viet-nam`). Dựng và công bố
- * 04/09/2026, rồi TẮT LẠI cùng ngày theo yêu cầu của tác giả để sửa tiếp —
- * trang vẫn vào được bằng URL trực tiếp để xem trên chính bản deploy thật,
- * nhưng biến khỏi menu, sitemap, ô tìm kiếm và khối "đi tiếp" của Award Flight
- * Finder, tự gắn `noindex`, và hiện dải báo bản nháp.
+ * Mười hai trang chặng "Bay về Việt Nam" (`/bay-ve-viet-nam`) cùng trang tổng
+ * của chúng. Dựng và công bố 04/09/2026, tắt lại cùng ngày để sửa phần trình
+ * bày (thêm logo hệ điểm dưới từng con số), rồi **bật lại sau khi tác giả xem
+ * và duyệt bản preview** — cùng ngày.
  *
- * Bật lại là công bố — không cần sửa chỗ nào khác. Lưu ý một điều mà hai cờ
- * trên không gặp: 13 URL này ĐÃ nằm trong sitemap công bố hôm 04/09 và Google
- * có thể đã đọc. Gỡ khỏi sitemap không gỡ khỏi index; `noindex` mới làm việc
- * đó, và nó cần Google ghé lại mới có tác dụng.
+ * Bật cờ là công bố: 13 URL vào lại sitemap, mục "Bay về Việt Nam" hiện lại
+ * trong menu Công cụ điểm thưởng, khối "đi tiếp" của Award Flight Finder có
+ * lại đường sang, `noindex` được gỡ và dải báo nháp biến mất — tất cả cùng
+ * một lúc, không cần sửa chỗ nào khác.
  */
-export const VIETNAM_ROUTES_PUBLISHED = false;
+export const VIETNAM_ROUTES_PUBLISHED = true;
