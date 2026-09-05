@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { useSearchParams } from "next/navigation";
 import { CATCH_THE_POINTS_GAME_SRC } from "@/lib/catch-the-points-path";
 import { t } from "@/lib/t";
@@ -65,6 +65,24 @@ function forwardToAnalytics(detail: Record<string, unknown>) {
 export function CatchThePointsFrame() {
   const frameRef = useRef<HTMLIFrameElement>(null);
 
+  /**
+   * Chỉ dựng iframe sau khi component đã mount, tức là chỉ ở phía client.
+   *
+   * Game ghi `style.height` vào chính phần tử iframe, và nó kịp làm việc đó
+   * trước khi React hydrate xong — nên HTML server trả về và DOM lúc hydrate
+   * khác nhau đúng ở thuộc tính đó, và React kêu một lỗi hydration ở mọi lượt
+   * vào trang. `suppressHydrationWarning` không dập được cảnh báo mức cây này.
+   * Không dựng ở server thì không có gì để so, và cũng không mất gì: bản build
+   * thật vốn đã render khối chờ của `<Suspense>` rồi mới dựng iframe ở client
+   * (trang đọc `useSearchParams`).
+   */
+  const mounted = useSyncExternalStore(
+    // Không bao giờ đổi sau lần đầu, nên `subscribe` không cần làm gì.
+    () => () => {},
+    () => true, // client
+    () => false, // server
+  );
+
   // Query `?challenge=` của trang được chuyển tiếp vào iframe: chế độ thách
   // đấu của game đọc nó từ query string của chính nó.
   const challenge = useSearchParams().get("challenge");
@@ -115,6 +133,9 @@ export function CatchThePointsFrame() {
       frame?.removeEventListener("load", ping);
     };
   }, []);
+
+  // Giữ đúng chỗ để trang không giật một nhịp khi iframe hiện ra.
+  if (!mounted) return <div className={`w-full ${INITIAL_HEIGHT}`} aria-hidden />;
 
   return (
     <iframe

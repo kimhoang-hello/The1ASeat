@@ -1979,3 +1979,21 @@ button:disabled { opacity: .45; cursor: default; }
   height: auto;
   min-height: 0;
 }
+
+/* Trên điện thoại, lúc ĐANG CHƠI thì trả hết chỗ thừa cho sân chơi.
+   Khung game cao gần hết màn hình rồi, không xin thêm được nữa, nên chỗ duy
+   nhất còn lấy được là mấy dải chữ quanh sân: dải legend "HỨNG ĐIỂM THƯỞNG ·
+   NÉ CÁC KHOẢN PHÍ · SĂN ĐIỂM BONUS" (trên màn hẹp nó xuống hai dòng, ngốn
+   ~62px) và dòng QUY TẮC SỐ 1 ở chân (~72px). Cả hai là lời dặn ĐỌC TRƯỚC khi
+   chơi — giữa một lượt 45 giây không ai đọc chúng, mà chúng đang lấy hơn một
+   phần tư chiều cao sân chơi. Hết lượt là hiện lại ngay.
+   Chỉ áp cho bản NHÚNG và chỉ ở màn hẹp: bản chạy độc lập và bản desktop giữ
+   nguyên bố cục đã duyệt. `.stage` là `flex: 1` nên chỗ dôi ra chảy thẳng vào
+   sân chơi, và `main.js` đã có ResizeObserver trên `.stage` để tính lại vùng
+   va chạm. */
+@media (max-width: 620px) {
+  [data-embedded].game-playing .game-footer,
+  [data-embedded].game-playing .page-footer {
+    display: none;
+  }
+}
