@@ -49,7 +49,8 @@
     "kindCard": "Thẻ tín dụng",
     "kindAccount": "Tài khoản",
     "kindPost": "Bài viết",
-    "kindPage": "Trang"
+    "kindPage": "Trang",
+    "metaCategory": "Chuyên mục"
   },
   "hero": {
     "title1": "Chào Mừng Bạn Đến Với",
@@ -158,7 +159,13 @@
     "scrollPrev": "Xem các bài trước",
     "scrollNext": "Xem các bài tiếp theo",
     "emptyTab": "Chưa có bài nào trong mục này.",
-    "emptyCta": "Xem tất cả bài viết"
+    "emptyCta": "Xem tất cả bài viết",
+    "offerLive": "Ưu đãi trong bài còn hiệu lực đến hết {date}.",
+    "offerEnded": "Ưu đãi trong bài đã kết thúc ngày {date}.",
+    "offerCtaTransferBonuses": "Xem Transfer Bonus đang chạy",
+    "offerCtaTransferPartners": "Xem tỷ lệ chuyển điểm hiện tại",
+    "offerCtaCreditCards": "Xem elevated offer đang chạy",
+    "offerCtaBankAccounts": "Xem tài khoản ngân hàng đang có bonus"
   },
   "bonuses": {
     "eyebrow": "CẬP NHẬT THƯỜNG XUYÊN",

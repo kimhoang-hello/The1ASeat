@@ -77,7 +77,10 @@ function liveExpiry(offer: CreditCardOffer): string | undefined {
  * quyết định (elevated offer trước, rồi Amex, rồi phần còn lại).
  */
 export function sortOffers(offers: CreditCardOffer[], sort: CardSortId): CreditCardOffer[] {
-  if (sort === "featured") return offers;
+  // Copy cả ở nhánh này: `sortAccounts` bên tài khoản ngân hàng không bao giờ
+  // trả về chính mảng nhận vào, và một hàm cùng tên gọi mà lúc trả bản sao lúc
+  // trả bản gốc là cái bẫy chỉ lộ ra khi có người sắp xếp tại chỗ ở đâu đó.
+  if (sort === "featured") return [...offers];
 
   const byName = (a: CreditCardOffer, b: CreditCardOffer) => a.name.localeCompare(b.name, "vi");
 

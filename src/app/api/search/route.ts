@@ -9,9 +9,21 @@ import {
 } from "@/lib/bank-accounts";
 import { t } from "@/lib/t";
 import type { SearchItem } from "@/lib/search";
-import { BANK_ACCOUNTS_PUBLISHED, START_HERE_PUBLISHED } from "@/lib/feature-flags";
+import {
+  BANK_ACCOUNTS_PUBLISHED,
+  START_HERE_PUBLISHED,
+  VIETNAM_ROUTES_PUBLISHED,
+} from "@/lib/feature-flags";
 import { COMPARE_PATH } from "@/lib/card-compare";
 import { BANK_COMPARE_PATH } from "@/lib/bank-compare";
+import { categoryPath, getCategories } from "@/lib/blog-categories";
+import {
+  VIETNAM_ROUTES,
+  VIETNAM_ROUTES_BASE,
+  routeLabel,
+  routeSearchKeywords,
+  vietnamRoutePath,
+} from "@/lib/award-routes";
 
 // The whole site is a few dozen cards and posts, so search ships the index
 // rather than a query endpoint: the header fetches this once, the first time
@@ -22,6 +34,7 @@ export const revalidate = 60;
 
 const nav = t("nav");
 const footer = t("footer");
+const search = t("search");
 const offers = t("offers");
 const startHere = t("startHere");
 const bankCompare = t("bankCompare");
@@ -76,6 +89,16 @@ const PAGES: SearchItem[] = [
     kind: "page",
     keywords: "tìm chuyến bay đổi điểm vé thưởng bao nhiêu miles award chart",
   },
+  ...(VIETNAM_ROUTES_PUBLISHED
+    ? [
+        {
+          title: nav("vietnamRoutes"),
+          href: VIETNAM_ROUTES_BASE,
+          kind: "page" as const,
+          keywords: "canada việt nam vé máy bay đổi điểm về quê tết",
+        },
+      ]
+    : []),
   {
     title: nav("calculator"),
     href: "/calculator",
@@ -152,6 +175,24 @@ const BANK_ACCOUNT_ITEMS: SearchItem[] = BANK_ACCOUNTS_PUBLISHED
     }))
   : [];
 
+/**
+ * Mười hai trang chặng, không phải chỉ trang tổng. Cùng lỗ hổng đã vá cho tài
+ * khoản ngân hàng: cả mười hai trang đã công bố, đã nằm trong sitemap, mà gõ
+ * "bay về Việt Nam" thì ô tìm kiếm trả 0 kết quả — không một mục nào trong chỉ
+ * mục chứa đủ bốn chữ đó, kể cả Award Flight Finder.
+ */
+const VIETNAM_ROUTE_ITEMS: SearchItem[] = VIETNAM_ROUTES_PUBLISHED
+  ? VIETNAM_ROUTES.map((route) => ({
+      title: routeLabel(route),
+      href: vietnamRoutePath(route.slug),
+      kind: "page" as const,
+      // Vừa hiện dưới tiêu đề vừa được đem đi khớp, nên đây cũng là chỗ chữ
+      // "bay về Việt Nam" gắn vào từng chặng.
+      meta: nav("vietnamRoutes"),
+      keywords: routeSearchKeywords(route),
+    }))
+  : [];
+
 export async function GET() {
   const [posts, offers] = await Promise.all([getPosts(), getCreditCardOffers()]);
 
@@ -160,6 +201,16 @@ export async function GET() {
   // khoản" hay "tiết kiệm" chỉ khớp `keywords`, tức cả 29 trang con lẫn trang
   // danh sách đều cùng hạng cuối; để PAGES sau thì trang danh sách rơi khỏi 8
   // kết quả hiển thị, dù nó mới là chỗ người đọc muốn tới.
+  // Chuyên mục blog: trang lưu trữ thật, có trong sitemap và có trong hàng chip
+  // trên /blog, nhưng gõ đúng tên nó ("Khách sạn") thì trước đây chỉ ra các bài
+  // trong đó — không có đường tới chính chuyên mục.
+  const categoryItems: SearchItem[] = getCategories(posts).map((category) => ({
+    title: category.name,
+    href: categoryPath(category.slug),
+    kind: "page" as const,
+    meta: search("metaCategory"),
+  }));
+
   const items: SearchItem[] = [
     ...PAGES,
     ...offers.map((offer) => ({
@@ -168,6 +219,8 @@ export async function GET() {
       kind: "card" as const,
       meta: `${offer.issuer} ${offer.cardType}`,
     })),
+    ...VIETNAM_ROUTE_ITEMS,
+    ...categoryItems,
     ...BANK_ACCOUNT_ITEMS,
     ...posts.map((post) => ({
       title: post.title,

@@ -2,17 +2,19 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { getCreditCardOffers, getPostBySlug, getPosts } from "@/lib/content";
+import { getCreditCardOffers, getPostBySlug, getPosts, getTransferBonuses } from "@/lib/content";
 import type { BlogPost } from "@/lib/content";
-import { formatDate } from "@/lib/format-date";
+import { formatDate, hasExpired } from "@/lib/format-date";
 import { MediaPlaceholder, type PlaceholderIcon } from "@/components/ui/media-placeholder";
 import { getVideoEmbedUrl, getYouTubeThumbnailUrl, getYouTubeWatchUrl } from "@/lib/video-embed";
 import { CommentSection } from "@/components/blog/comment-section";
 import { PostCard } from "@/components/blog/post-card";
 import { AffiliateClickTracker } from "@/components/blog/affiliate-click-tracker";
 import { PostNextSteps } from "@/components/blog/post-next-steps";
+import { OfferStatusNotice } from "@/components/blog/offer-status-notice";
 import { JsonLd } from "@/components/seo/json-ld";
 import { categoryPath, getRelatedPosts, lastModified, slugifyVi } from "@/lib/blog-categories";
+import { postOfferStatus } from "@/lib/post-offer-status";
 import { SITE_URL } from "@/lib/subscriber-email";
 import { t } from "@/lib/t";
 import { pageMetadata, absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
@@ -64,7 +66,11 @@ export async function generateMetadata({
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const [allPosts, offers] = await Promise.all([getPosts(), getCreditCardOffers()]);
+  const [allPosts, offers, transferBonuses] = await Promise.all([
+    getPosts(),
+    getCreditCardOffers(),
+    getTransferBonuses(),
+  ]);
   const post = allPosts.find((item) => item.slug === slug);
 
   if (!post) notFound();
@@ -74,6 +80,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const url = absoluteUrl(`/blog/${post.slug}`);
   const related = getRelatedPosts(allPosts, post);
   const categoryHref = categoryPath(slugifyVi(post.category));
+  const offerStatus = postOfferStatus(post);
+  // Cùng phép lọc mà chính trang /transfer-bonuses dùng — nút "đi tiếp" không
+  // được hứa một danh sách mà trang kia đã lọc sạch.
+  const hasLiveTransferBonus = transferBonuses.some((bonus) => !hasExpired(bonus.expiresAt));
 
   // Video posts get a nested VideoObject so they can qualify for video results
   // as well as article results — without it these pages are just an iframe and
@@ -194,6 +204,15 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           {post.minutesRead} {common("minRead")}
         </span>
       </div>
+
+      {/* Bài viết về một ưu đãi có hạn nói trạng thái của ưu đãi đó NGAY ĐẦU
+          BÀI. Trước đây hạn chót chỉ nằm trong một câu giữa thân bài, nên qua
+          ngày đó trang vẫn nguyên như hôm đăng — người đọc tới từ Google đọc
+          hết bài rồi mới biết ưu đãi đã đóng, và không có đường nào sang thứ
+          đang chạy. */}
+      {offerStatus && (
+        <OfferStatusNotice status={offerStatus} hasLiveTransferBonus={hasLiveTransferBonus} />
+      )}
 
       {/* A link inside a heading would otherwise drop to the typography plugin's
           font-weight:500 and read thinner than the words around it, so headings

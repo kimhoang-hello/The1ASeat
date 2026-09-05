@@ -21,6 +21,11 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { programIdFor } from "../src/lib/card-points-programs.ts";
+import {
+  POSTS_WITHOUT_DEADLINE,
+  POST_OFFER_DEADLINES,
+  isOfferDeadline,
+} from "../src/lib/post-offer-status.ts";
 import type { CreditCardOffer } from "../src/lib/content/types.ts";
 
 const REPO = fileURLToPath(new URL("..", import.meta.url));
@@ -296,6 +301,67 @@ if (CMA) {
   }
 } else {
   notes.push("(bỏ qua kiểm draft lệch: không có CONTENTFUL_MANAGEMENT_TOKEN)");
+}
+
+// ---- 9. Bài ưu đãi có hạn chưa khai hạn chót --------------------------
+// Bài viết về một ưu đãi có hạn hiện nhãn trạng thái ở đầu bài, lấy ngày từ
+// `POST_OFFER_DEADLINES` trong code — Contentful không có trường nào cho việc
+// này. Nghĩa là một bài mới đăng mà không ai thêm vào bảng đó sẽ đứng im như
+// hôm đăng, kể cả sau khi ưu đãi đóng: đúng con bug mà bảng đó sinh ra để vá.
+// Đòi bài phải có tên trong đúng MỘT trong hai bảng, nên quên là job đỏ chứ
+// không phải trang lặng lẽ sai.
+//
+// HAI dấu hiệu, không phải một. Chuyên mục "Deals" là quy ước của site cho bài
+// ưu đãi — nhưng chỉ soi nó thì một bài News/Tips nói về ưu đãi có hạn vẫn lọt
+// (Codex bắt đúng chỗ này ngày 05/09/2026). Dấu hiệu thứ hai đọc THÂN BÀI: một
+// ngày viết đủ dạng dd/mm/yyyy gần như luôn là hạn chót — đo trên 38 bài đang
+// phục vụ thì đúng 1 bài có, và đó chính là bài Marriott Bonvoy®. Bài nào dính
+// dấu hiệu mà không phải ưu đãi thì khai vào `POSTS_WITHOUT_DEADLINE` kèm lý
+// do, một lần cho mãi mãi.
+const FULL_DATE = /\b\d{1,2}\/\d{1,2}\/\d{4}\b/;
+
+/** Chữ trong rich text của Contentful, gộp phẳng — chỉ để dò dấu hiệu. */
+function richTextToPlain(node: unknown): string {
+  if (!node || typeof node !== "object") return "";
+  const n = node as { nodeType?: string; value?: string; content?: unknown[] };
+  if (n.nodeType === "text") return n.value ?? "";
+  return (n.content ?? []).map(richTextToPlain).join(" ");
+}
+
+const offerPostSlugs = new Set(
+  posts
+    .filter((p) => str(p, "categoryVi") === "Deals" || FULL_DATE.test(richTextToPlain(p.fields.bodyVi)))
+    .map((p) => str(p, "slug") ?? p.sys.id),
+);
+for (const slug of offerPostSlugs) {
+  const declared = slug in POST_OFFER_DEADLINES;
+  const exempt = slug in POSTS_WITHOUT_DEADLINE;
+  if (declared && exempt) {
+    problems.push(`bài "${slug}" nằm trong CẢ hai bảng của lib/post-offer-status.ts`);
+  } else if (!declared && !exempt) {
+    problems.push(
+      `bài "${slug}" trông như bài ưu đãi có hạn nhưng chưa khai trong lib/post-offer-status.ts — thêm ngày hết hạn vào POST_OFFER_DEADLINES, hoặc lý do vào POSTS_WITHOUT_DEADLINE`,
+    );
+  }
+}
+// Ngày gõ sai dạng thì `postOfferStatus` bỏ qua cả mục đó, nên nhãn trạng thái
+// biến mất trong im lặng — đúng cái nó sinh ra để chặn. Kiểm bằng chính hàm mà
+// trang dùng, không phải một regex chép lại.
+for (const [slug, offer] of Object.entries(POST_OFFER_DEADLINES)) {
+  if (!isOfferDeadline(offer.endsOn)) {
+    problems.push(
+      `bài "${slug}" khai endsOn "${offer.endsOn}" không phải ngày YYYY-MM-DD có thật — nhãn trạng thái sẽ không hiện`,
+    );
+  }
+}
+
+// Bảng trỏ tới bài không còn tồn tại (đổi slug, xoá bài) thì nhãn trạng thái
+// biến mất trong im lặng — chỉ nhắc, vì trang vẫn đúng.
+const postSlugs = new Set(posts.map((p) => str(p, "slug") ?? p.sys.id));
+for (const slug of [...Object.keys(POST_OFFER_DEADLINES), ...Object.keys(POSTS_WITHOUT_DEADLINE)]) {
+  if (!postSlugs.has(slug)) {
+    notes.push(`lib/post-offer-status.ts khai bài "${slug}" nhưng không có bài nào mang slug đó`);
+  }
 }
 
 // ---- Kết quả -----------------------------------------------------------

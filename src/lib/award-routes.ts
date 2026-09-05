@@ -39,15 +39,27 @@ import {
  *    Việt đó. Công cụ vẫn in tên hành chính, và mã sân bay (SGN) đứng cạnh ở
  *    cả hai chỗ nên không ai lạc giữa hai cách gọi.
  */
-const CITY_LABELS: Record<string, { name: string; slug: string }> = {
+const CITY_LABELS: Record<string, { name: string; slug: string; aliases?: string }> = {
   YYZ: { name: "Toronto", slug: "toronto" },
   YVR: { name: "Vancouver", slug: "vancouver" },
   YUL: { name: "Montréal", slug: "montreal" },
   YYC: { name: "Calgary", slug: "calgary" },
-  SGN: { name: "Sài Gòn", slug: "sai-gon" },
-  HAN: { name: "Hà Nội", slug: "ha-noi" },
-  DAD: { name: "Đà Nẵng", slug: "da-nang" },
+  SGN: { name: "Sài Gòn", slug: "sai-gon", aliases: "Saigon TPHCM Hồ Chí Minh Ho Chi Minh City" },
+  HAN: { name: "Hà Nội", slug: "ha-noi", aliases: "Hanoi" },
+  DAD: { name: "Đà Nẵng", slug: "da-nang", aliases: "Danang Da Nang" },
 };
+
+/**
+ * Cách gọi khác mà người đọc gõ vào ô tìm kiếm nhưng KHÔNG có trong tên chặng.
+ *
+ * Chỉ những cách viết mà phép so không tự bắc cầu được. `slugifyVi` bỏ dấu ở
+ * cả hai vế nên "Montréal" đã tự khớp với "montreal", nhưng nó cũng biến
+ * "Hà Nội" thành hai chữ `ha-noi`, mà "hanoi" viết liền thì không nằm trong đó
+ * — nên "Hanoi" phải ghi ra. Cùng lý do với "Saigon" và "Danang".
+ *
+ * Mã sân bay không nằm ở đây: chúng đã có sẵn trên `route.origin.code` /
+ * `route.destination.code`, xem `routeSearchKeywords`.
+ */
 
 export const VIETNAM_ROUTES_BASE = "/bay-ve-viet-nam";
 
@@ -221,6 +233,27 @@ export const vietnamRouteBySlug = (slug: string) =>
 
 /** Nhãn hiển thị của một chặng: "Toronto → Sài Gòn". */
 export const routeLabel = (r: VietnamRoute) => `${r.originName} → ${r.destinationName}`;
+
+/**
+ * Chuỗi để ô tìm kiếm khớp một chặng: mã sân bay hai đầu và những cách gọi
+ * khác của hai thành phố. Chỉ khớp, không hiện ra — xem `SearchItem.keywords`.
+ *
+ * Tên thành phố và tên chặng đã nằm trong tiêu đề của mục tìm kiếm, còn "bay
+ * về Việt Nam" nằm ở `meta`, nên chỗ này chỉ chứa phần hai nơi đó không có:
+ * gõ "YYZ SGN" hay "sai gon" là ra đúng trang chặng.
+ */
+export function routeSearchKeywords(r: VietnamRoute): string {
+  const aliases = (code: string) => CITY_LABELS[code]?.aliases ?? "";
+  return [
+    r.origin.code,
+    r.destination.code,
+    aliases(r.origin.code),
+    aliases(r.destination.code),
+    "vé máy bay đổi điểm",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
 
 /** Giá rẻ nhất của mỗi hạng ghế, dùng cho ô số liệu đầu trang và cho trang
  *  tổng. `null` khi không chương trình nào báo giá được hạng đó — chuyện có

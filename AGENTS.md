@@ -980,6 +980,70 @@ hình dạng đã ghi ở mục "Đã kiểm và KHÔNG phải lỗi" ngày 02/0
 12 tiếng) — đây là lần thứ ba, tần suất khoảng 1-3 ngày một lần. Không có gì
 để vá phía code; các job đã tự retry và tự nhận ra được ở lượt sau.
 
+## Phiên 05/09/2026 (lần hai) — ba việc mới, đừng đề xuất lại
+
+**1. `/credit-cards` có "Sắp xếp theo".** Trang tài khoản ngân hàng có từ đầu,
+trang thẻ thì không — cùng câu hỏi mà hai bộ điều khiển khác nhau. Nay cùng
+hình dạng: nhãn + một ô chọn, đặt dưới hai hàng lọc.
+
+- **KHÔNG có "Welcome bonus cao nhất", và đó là quyết định có chủ ý.** Bonus
+  tài khoản ngân hàng đều là đô la nên so được; bonus thẻ thì không — tồn kho
+  đang có "110,000 điểm Bonvoy®", "25,000 miles MileagePlus®", "Cashback 15%
+  (tối đa $300)", "Đến $600 giá trị". Xếp 110,000 Bonvoy® trên 100,000
+  Aeroplan® là nói cái trước lớn hơn, trong khi giá trị thật ngược lại. Muốn có
+  tiêu chí này thì phải quy đổi qua bảng định giá — một quyết định nội dung,
+  không phải một phép sắp xếp.
+- **`moneyAtStart` đọc số đô ĐẦU chuỗi `annualFee`, cố ý không dùng
+  `splitAnnualFee`.** Hàm kia nhận dạng hẹp để quyết định có tách phần ghi chú
+  hay không, nên năm thẻ dạng `"$139/năm — miễn năm đầu (thẻ phụ: $50/năm)"`
+  rơi ra ngoài và sẽ mất số. Neo `^` là bắt buộc: quét cả câu thì thẻ $139 bị
+  xếp như thẻ $50 của thẻ phụ.
+- `creditCardsPath` nhận thêm `sort`, nên tab và chip điểm thưởng giữ được thứ
+  tự đang chọn; `?sort=rác` rơi về mặc định. `sortOffers` luôn trả BẢN SAO, kể
+  cả nhánh `featured` — cùng hợp đồng với `sortAccounts`.
+
+**2. Ô tìm kiếm biết `/bay-ve-viet-nam` và biết chuyên mục blog.** Gõ "bay về
+Việt Nam" trước đây trả **0 kết quả** dù trang tổng và cả 12 trang chặng đã
+công bố và đã nằm trong sitemap — không mục nào trong chỉ mục chứa đủ bốn chữ
+đó, kể cả Award Flight Finder. Cùng lỗ hổng đã vá cho 29 trang tài khoản ngân
+hàng hồi trước.
+
+- Mã sân bay lấy thẳng từ `route.origin.code`; alias thành phố
+  (`Saigon`, `Hanoi`, `Danang`, `TPHCM`) nằm trong `CITY_LABELS` vì
+  `slugifyVi("Hà Nội")` ra `ha-noi`, mà "hanoi" viết liền không nằm trong chuỗi
+  đó. Đừng "dọn" chúng đi.
+- Chuyên mục blog mang `meta` = "Chuyên mục": vừa hiện dưới tiêu đề vừa được
+  đem đi khớp, nên gõ "chuyên mục khách sạn" ra đúng trang lưu trữ.
+
+**3. Bài viết về ưu đãi có hạn nói trạng thái NGAY ĐẦU BÀI.** Bài transfer
+bonus Marriott Bonvoy® hết hạn 03/09/2026 vẫn nguyên như hôm đăng: không chữ
+nào nói ưu đãi đã đóng, không đường nào sang thứ đang chạy.
+
+- Ngày nằm ở `lib/post-offer-status.ts` (bảng viết tay theo slug) vì content
+  model `blogPost` KHÔNG có trường ngày hết hạn. Đã thử thêm trường qua CMA
+  ngày 05/09/2026 và bị chặn ở tầng quyền; nếu sau này thêm được thì
+  `postOfferStatus` đọc trường đó trước và bảng này rỗng dần.
+- Bảng viết tay thì mục — nên `audit:health` mục 9 đòi mọi bài **trông như bài
+  ưu đãi có hạn** phải có tên trong đúng MỘT trong hai bảng
+  (`POST_OFFER_DEADLINES` hoặc `POSTS_WITHOUT_DEADLINE` kèm lý do). Quên là job
+  đỏ, chứ không phải trang lặng lẽ sai. Đã kiểm cả hai nhánh.
+- **Dấu hiệu nhận bài ưu đãi là HAI, không phải một.** Chuyên mục "Deals" là
+  quy ước của site, nhưng chỉ soi nó thì bài News/Tips nói về ưu đãi có hạn vẫn
+  lọt — Codex bắt đúng chỗ này trong vòng bắt nó bác bản vá của mình. Dấu hiệu
+  thứ hai đọc thân bài: một ngày viết đủ dạng dd/mm/yyyy. Đo trên 38 bài đang
+  phục vụ: đúng 1 bài dính, và đó chính là bài Marriott Bonvoy® — nên dấu hiệu
+  này im chứ không ồn. Đừng thu hẹp lại còn mỗi chuyên mục Deals.
+- Ngày gõ hỏng thì `postOfferStatus` ẩn nhãn và audit đỏ, chứ không in
+  "còn hiệu lực đến hết 2026-99-99" — `hasExpired` trả `false` cho chuỗi không
+  khớp, nên nhãn sai sẽ đứng ngay đầu bài. Cửa canh dùng CHÍNH hàm mà trang
+  dùng (`isOfferDeadline`), không phải một regex chép lại.
+- **Nút "đi tiếp" của nhãn hết hạn rẽ theo dữ liệu thật.** Transfer bonus có
+  lúc không còn cái nào (05/09/2026: đúng 0 cái đang chạy), mà câu "Xem
+  Transfer Bonus đang chạy" thì hứa là có — người vừa đọc một ưu đãi đã đóng
+  bấm tiếp vào một trang rỗng là đóng hai lần liên tiếp. Hết bonus thì nút dẫn
+  thẳng sang `/transfer-partners`, dùng CHÍNH phép lọc `hasExpired` mà trang
+  `/transfer-bonuses` dùng. Đừng đổi ngược về một href cố định.
+
 ## Chạy gì trước khi kết luận
 
 ```
