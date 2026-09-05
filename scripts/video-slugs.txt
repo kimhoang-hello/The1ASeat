@@ -1,0 +1,33 @@
+# videoId → slug bài viết trên site. 26 video của @HoangLeCA.
+# Thêm dòng mới khi kênh có video mới, rồi chạy: npm run captions:all
+#
+# Slug phải khớp ĐÚNG bài đang chạy (`/blog/<slug>`), không phải tên rút gọn:
+# vài bài mang tiêu đề video nguyên văn nên slug dài và không kết thúc bằng
+# "-review". `npm run captions:all` đối chiếu lại với sitemap trước khi chạy.
+
+0UDgwRw4-SI i-finally-understand-why-park-hyatt-kyoto-is-so-hyped
+lfockzqToYA park-hyatt-tokyo-king-suite-review
+JBu0n15OOA4 i-stayed-at-the-ritz-carlton-kyoto-the-incredible-kamogawa
+i28H5y44uqs ac-hotel-tokyo-ginza-review
+RJ8_-c1odbg courtyard-tokyo-ginza-review
+-lFFlcvKwGY caption-by-hyatt-namba-osaka-review
+W5TJUqQIJI4 grand-hyatt-seoul-review
+Ys0mEZRqp7o andaz-seoul-gangnam-review
+u4yBynV9p5Y hyatt-regency-hong-kong-tst-review
+OhLYjX_sbgY kimpton-da-an-taipei-review
+EUZw94ZNAMg hyatt-regency-paris-etoile-review
+jy6s1-xlT9k courtyard-paris-porte-de-versailles-review
+AgQZ2XJ4cYM element-amsterdam-review
+9sa0ATpMLt0 moxy-frankfurt-city-center-review
+WHRcgJacDSA moxy-frankfurt-airport-hotel-review
+-EWvZG4OHk8 qatar-airways-a380-first-class-review
+Rf-vo_UwqEw qatar-airways-qsuite-review
+O-bfKs6uWVk eva-air-16-hour-business-class-review
+KHsqobdZn6E eva-air-business-class-taipei-hongkong-review
+nawB6y-6FbY cathay-pacific-business-class-review
+2xuiq24p9zU air-france-business-class-review
+Or4EiTWiEDQ jal-a350-business-class-review
+mLfCFgARb4c jal-sky-suite-business-class-review
+ia6xfQpkdvY jal-first-class-a350-tokyo-newyork-review
+g6049IECmVM ana-the-room-business-class-review
+R31FabbVuCw singapore-airlines-business-class-review
