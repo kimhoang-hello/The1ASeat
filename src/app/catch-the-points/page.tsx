@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 
 import { CatchThePointsFrame } from "@/components/games/catch-the-points-frame";
 import { PageHeader } from "@/components/layout/page-header";
@@ -47,12 +46,7 @@ export default function CatchThePointsPage() {
             </p>
           )}
 
-          {/* `useSearchParams` bên trong khung game cần một ranh giới Suspense
-              lúc prerender. Fallback giữ đúng khoảng chỗ để trang không nhảy
-              một nhịp khi game hiện ra. */}
-          <Suspense fallback={<div className="h-[45rem] w-full" aria-hidden />}>
-            <CatchThePointsFrame />
-          </Suspense>
+          <CatchThePointsFrame />
 
           <div className="mt-10 grid gap-8 sm:grid-cols-2">
             <section>

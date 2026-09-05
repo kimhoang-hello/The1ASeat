@@ -188,11 +188,6 @@ button {
   letter-spacing: 1.7px;
   font-weight: 600;
 }
-.intro-eyebrow {
-  font-size: 12px;
-  letter-spacing: 1.9px;
-  margin: 0 0 12px;
-}
 h1 {
   font-family: var(--serif);
   font-size: clamp(54px, 5.8vw, 73px);
@@ -1081,11 +1076,6 @@ h1 em {
   .intro-copy {
     display: contents;
   }
-  .intro-eyebrow {
-    font-size: 12px;
-    letter-spacing: 1.5px;
-    margin-bottom: 10px;
-  }
   h1 {
     font-size: 58px;
     text-align: center;
@@ -1398,11 +1388,6 @@ h1 em {
   font-size: var(--text-label);
   letter-spacing: 0.4px;
 }
-.intro-eyebrow {
-  font-size: var(--text-label);
-  line-height: 1.5;
-  letter-spacing: 0.8px;
-}
 .intro-description {
   font-size: var(--text-body);
   line-height: 1.7;
@@ -1693,11 +1678,6 @@ h1 em {
   .start-screen {
     padding: 24px 20px;
   }
-  .intro-eyebrow {
-    text-align: center;
-    max-width: 280px;
-    font-size: 12px;
-  }
   .intro-description {
     font-size: var(--text-body);
   }
@@ -1942,13 +1922,16 @@ button:disabled { opacity: .45; cursor: default; }
   /* Nền trùng `--background` của website, nên khung iframe không lộ mép. */
   background: transparent;
 }
-[data-embedded],
-[data-embedded] body {
+[data-height-managed],
+[data-height-managed] body {
   /* Trang cha đặt chiều cao khung theo đúng nội dung, nên ở đây KHÔNG được
      có thanh cuộn thứ hai. Lệch một hai pixel là đủ để iOS Safari coi iframe
      là một vùng cuộn riêng: vuốt trong khung thì game trôi lên trong khi
      trang đứng yên, và người đọc thấy hai thanh trượt chồng nhau. Thà cắt
-     một pixel còn hơn tạo ra vùng cuộn lồng nhau. */
+     một pixel còn hơn tạo ra vùng cuộn lồng nhau.
+     `data-height-managed` chứ không phải `data-embedded`: chỉ cấm cuộn TỪ LÚC
+     game thật sự cầm chiều cao khung. Trước đó khung còn ở chiều cao tạm, cấm
+     cuộn khi ấy là cắt cụt game. */
   overflow: hidden;
   overscroll-behavior: none;
 }

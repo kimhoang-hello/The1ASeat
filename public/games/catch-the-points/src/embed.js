@@ -33,6 +33,24 @@
 
   document.documentElement.setAttribute("data-embedded", "");
 
+  /**
+   * Query string của TRANG CHA, cho chế độ thách đấu (`?challenge=14280`).
+   *
+   * Trang cha KHÔNG được đọc query rồi nhét vào `src` của iframe: đọc query
+   * trong React (`useSearchParams`) làm Next bỏ prerender cả khối đó, và bản
+   * build thật khi ấy trả về một ô TRỐNG thay cho game — ai vào mà JavaScript
+   * chậm hoặc hỏng thì thấy một mảng trắng. Lấy từ đây thì `src` của iframe
+   * đứng yên, khối game nằm sẵn trong HTML, mà chế độ thách đấu vẫn chạy.
+   *
+   * `main.js` đọc biến này (xem `challengeSearch` ở đó). Cùng origin nên với
+   * tới được; khác origin thì thôi, game về chế độ thường.
+   */
+  try {
+    window.GHE1A_EMBED_SEARCH = window.parent.location.search;
+  } catch {
+    /* Khác origin — bỏ qua. */
+  }
+
   var origin = window.location.origin;
   /* `svh` chứ không phải `dvh`: trên điện thoại thanh địa chỉ thò ra thụt vào
      liên tục, mà mỗi lần `dvh` đổi là sân chơi nhảy một cái giữa lượt. Trang
@@ -59,6 +77,18 @@
   function watch() {
     var shell = document.getElementById("game-shell");
     var frame = frameElement();
+    /**
+     * Đã được phép ghi chiều cao vào phần tử iframe chưa.
+     *
+     * Chờ trang cha gọi một tiếng rồi mới ghi. Trang cha gọi trong `useEffect`,
+     * tức là sau khi React hydrate xong — ghi trước lúc đó thì HTML server trả
+     * về và DOM lúc hydrate lệch nhau đúng ở thuộc tính `style`, và React kêu
+     * lỗi hydration ở mọi lượt vào trang.
+     *
+     * Có hẹn giờ dự phòng: trang cha có thể không phải React, hoặc JavaScript
+     * của nó hỏng. Thà ghi muộn còn hơn không bao giờ ghi.
+     */
+    var allowed = false;
 
     function sync() {
       var playing = !!shell && shell.classList.contains("is-playing");
@@ -73,9 +103,13 @@
         Math.max(document.body.getBoundingClientRect().height, document.body.scrollHeight),
       );
 
-      if (frame) {
+      if (frame && allowed) {
         try {
           frame.style.height = playing ? PLAYING_HEIGHT : height + "px";
+          // Từ lúc này chiều cao khung mới bám sát nội dung, nên mới được phép
+          // cấm cuộn bên trong. Cấm sớm hơn là cắt cụt game trong lúc còn đang
+          // đứng ở chiều cao tạm — xem `[data-height-managed]` trong style.css.
+          document.documentElement.setAttribute("data-height-managed", "");
         } catch {
           /* Không ghi được thì vẫn còn tin nhắn bên dưới. */
         }
@@ -83,7 +117,14 @@
       post({ source: "ghe1a-game", type: "state", playing: playing, height: height });
     }
 
+    function allow() {
+      if (allowed) return;
+      allowed = true;
+      sync();
+    }
+
     sync();
+    setTimeout(allow, 1200);
     new ResizeObserver(sync).observe(document.body);
     // Vào/ra lượt chơi không đổi kích thước body ngay lập tức, nên phải nghe
     // thẳng class `is-playing`.
@@ -100,7 +141,7 @@
     window.addEventListener("message", function (event) {
       if (event.origin !== origin) return;
       var data = event.data;
-      if (data && data.source === "ghe1a-page" && data.type === "ping") sync();
+      if (data && data.source === "ghe1a-page" && data.type === "ping") allow();
     });
 
     window.addEventListener("ghe1a:analytics", function (event) {

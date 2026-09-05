@@ -34,7 +34,10 @@ const dom = Object.fromEntries(
 const sound = new Sound();
 const profile = createProfile();
 $('start-best').textContent = `KỶ LỤC: ${profile.best.toLocaleString()}`;
-const challengeTarget = parseChallenge(location.search);
+// Trong iframe thì query `?challenge=` nằm trên URL của TRANG chứ không phải
+// của game; `embed.js` chép nó sang đây. Chạy độc lập thì `location.search`
+// vẫn là chỗ đúng.
+const challengeTarget = parseChallenge(window.GHE1A_EMBED_SEARCH || location.search);
 const game = new Game({ emit: onGameEvent, challengeTarget });
 const track = createAnalytics();
 const renderRecommendation = setupRecommendation(track);

@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useSyncExternalStore } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { CATCH_THE_POINTS_GAME_SRC } from "@/lib/catch-the-points-path";
 import { t } from "@/lib/t";
 
@@ -14,6 +13,13 @@ const game = t("game");
  * Chỉ là điểm xuất phát: từ lúc `embed.js` chạy, chính game ghi chiều cao vào
  * `style` của phần tử này (xem chú thích ở đó), nên trang này KHÔNG đặt chiều
  * cao nữa — hai bên cùng ghi một thuộc tính là có lúc giẫm chân nhau.
+ *
+ * Và iframe LUÔN nằm trong HTML mà server trả về, không đợi JavaScript của
+ * trang chạy xong mới dựng. Bản trước có dựng kiểu đợi, để dập một cảnh báo
+ * hydration — đổi lại là nếu bundle React chậm, hỏng hay bị chặn thì chỗ của
+ * game là một ô TRẮNG TINH. Cảnh báo trong console rẻ hơn nhiều so với một
+ * trang trắng, nên đổi ngược lại; cảnh báo đó nay cũng hết, vì game chờ trang
+ * cha gọi rồi mới ghi chiều cao.
  */
 const INITIAL_HEIGHT = "h-[45rem]";
 
@@ -61,35 +67,15 @@ function forwardToAnalytics(detail: Record<string, unknown>) {
  * Chiều cao khung do CHÍNH GAME đặt, không phải component này: xem chú thích
  * dài trong `embed.js`. Ở đây chỉ còn hai việc iframe không tự làm được —
  * chuyển tiếp analytics sang GA4 của website, và cuộn trang khi game xin.
+ *
+ * Component này CỐ Ý không đọc `useSearchParams`. Chế độ thách đấu vẫn dùng
+ * `?challenge=` trên URL của trang, nhưng `embed.js` tự lấy query đó từ trang
+ * cha. Đọc query ở đây làm Next bỏ prerender cả khối, và bản build thật trả
+ * về một ô TRỐNG thay cho game cho tới khi React chạy xong — ai có mạng chậm
+ * hay JavaScript hỏng thì thấy một mảng trắng ngay giữa trang.
  */
 export function CatchThePointsFrame() {
   const frameRef = useRef<HTMLIFrameElement>(null);
-
-  /**
-   * Chỉ dựng iframe sau khi component đã mount, tức là chỉ ở phía client.
-   *
-   * Game ghi `style.height` vào chính phần tử iframe, và nó kịp làm việc đó
-   * trước khi React hydrate xong — nên HTML server trả về và DOM lúc hydrate
-   * khác nhau đúng ở thuộc tính đó, và React kêu một lỗi hydration ở mọi lượt
-   * vào trang. `suppressHydrationWarning` không dập được cảnh báo mức cây này.
-   * Không dựng ở server thì không có gì để so, và cũng không mất gì: bản build
-   * thật vốn đã render khối chờ của `<Suspense>` rồi mới dựng iframe ở client
-   * (trang đọc `useSearchParams`).
-   */
-  const mounted = useSyncExternalStore(
-    // Không bao giờ đổi sau lần đầu, nên `subscribe` không cần làm gì.
-    () => () => {},
-    () => true, // client
-    () => false, // server
-  );
-
-  // Query `?challenge=` của trang được chuyển tiếp vào iframe: chế độ thách
-  // đấu của game đọc nó từ query string của chính nó.
-  const challenge = useSearchParams().get("challenge");
-  const src =
-    challenge && /^\d{1,16}$/.test(challenge)
-      ? `${CATCH_THE_POINTS_GAME_SRC}?challenge=${challenge}`
-      : CATCH_THE_POINTS_GAME_SRC;
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -134,13 +120,10 @@ export function CatchThePointsFrame() {
     };
   }, []);
 
-  // Giữ đúng chỗ để trang không giật một nhịp khi iframe hiện ra.
-  if (!mounted) return <div className={`w-full ${INITIAL_HEIGHT}`} aria-hidden />;
-
   return (
     <iframe
       ref={frameRef}
-      src={src}
+      src={CATCH_THE_POINTS_GAME_SRC}
       title={game("frameTitle")}
       // `scroll-mt-4` chừa một chút mép trên khi game xin cuộn về đầu. Trang
       // này không có thanh header dính để phải tránh.
