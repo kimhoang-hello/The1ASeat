@@ -1236,9 +1236,21 @@ Xếp theo hậu quả khi sai, không theo độ khó của code:
   đầu một phiên mới thì phiên ấy mang nguồn `catch-the-points / game` thay cho
   nguồn thật — `game` lại không khớp channel mặc định nào nên rơi vào
   Unassigned. Đường đi game → thẻ đo bằng `post_game_recommendation_clicked`
-  kèm `recommendation_category` và `tracking_id`, không bằng UTM.
+  kèm `recommendation_category` và `recommendation_id`, không bằng UTM.
   Lưu ý ngược lại: `target="_blank"` KHÔNG tự mở phiên GA4 mới (tab mới dùng
   chung cookie), đừng lập luận theo hướng đó.
+- **`tracking_id` là tên tham số DÀNH RIÊNG của gtag — đừng bao giờ dùng.**
+  Đây là nguyên nhân THẬT khiến `post_game_recommendation_shown` /
+  `_clicked` bằng 0 trong GA4 suốt tuần 30/08–05/09 (khoảng 120 lần lẽ ra phải
+  có). Gặp `tracking_id` trong tham số event, gtag lấy giá trị đó làm
+  measurement ID: hit bay tới `tid=balance_beginner_guide` thay vì
+  `tid=G-5EJS75L7SK`. `game_completed` vẫn về đủ vì nó không mang tham số này.
+  Đã đổi sang `recommendation_id`. Kiểm chứng bằng cách đọc thẳng request
+  `google-analytics.com/g/collect` trong trình duyệt, KHÔNG phải bằng cách suy
+  luận từ code — cả Claude lẫn Codex đều đoán sai nguyên nhân (đổ cho object
+  lồng và cho processing delay) cho tới khi nhìn URL thật.
+  Test nay chặn cả họ tên dành riêng: `tracking_id`, `send_to`,
+  `page_location`, `user_id`, `client_id`.
 - **Tham số event GA4 phải là giá trị đơn.** `recommendationTracking` từng gửi
   `primary_gameplay_signal: {name, value}` — object lồng. Đã tách thành
   `primary_gameplay_signal_name` + `primary_gameplay_signal_value`. Boolean thì

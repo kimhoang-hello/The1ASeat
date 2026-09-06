@@ -70,6 +70,11 @@ test('one recommendation impression per render; replay replaces click payload wi
   assert.equal(balance.primary_gameplay_signal_value,true);
   assert.equal('primary_gameplay_signal' in balance,false);
   for(const value of Object.values(balance)) assert.notEqual(typeof value,'object');
+  // `tracking_id` là tên DÀNH RIÊNG của gtag — nó ghi đè measurement ID và làm
+  // event bay tới property không tồn tại. Xem chú thích ở `recommendationTracking`.
+  assert.equal(balance.recommendation_id,'balance_beginner_guide');
+  for(const reserved of ['tracking_id','send_to','page_location','user_id','client_id'])
+    assert.equal(reserved in balance,false,`tham số "${reserved}" là tên dành riêng của gtag`);
   render({...baseline,welcomeBonusCaught:8});link.handlers[0]();
   assert.equal(link.handlers.length,1);assert.equal(events.at(-1).payload.recommendation_category,'welcome_bonus');
   const renderNoArticle=setupRecommendation((event,payload)=>events.push({event,payload}),root,{annualFees:null});

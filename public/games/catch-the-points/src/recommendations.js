@@ -68,11 +68,26 @@ export function getPostGameRecommendation(input = {}, links = contentLinks) {
   return {type:selected.type,category,eyebrow:selected.eyebrow,title:selected.title,message:selected.message(s),ctaText:selected.ctaText,url:recommendationURL(links[selected.destination]),trackingId:selected.trackingId,primaryGameplaySignal:signal};
 }
 /**
- * Tham số của một event GA4 phải là giá trị đơn, không phải object lồng —
- * `primary_gameplay_signal:{name,value}` của bản trước không đọc được ở đầu
- * kia, nên tách thành hai tham số phẳng.
+ * TUYỆT ĐỐI KHÔNG đặt tên tham số là `tracking_id`.
+ *
+ * `tracking_id` là tên DÀNH RIÊNG của gtag: gặp nó trong tham số event, gtag
+ * lấy giá trị đó làm measurement ID thay cho `G-...` của site. Bản trước gửi
+ * `tracking_id: 'balance_beginner_guide'`, nên mọi hit
+ * `post_game_recommendation_shown` / `_clicked` bay tới một property không tồn
+ * tại và KHÔNG BAO GIỜ tới GA4 của Ghế 1A — trong tuần 30/08–05/09 là 0 event
+ * trên khoảng 120 lần lẽ ra phải có, trong khi `game_completed` (không mang
+ * tham số này) vẫn về đủ. Kiểm chứng ngày 06/09/2026 bằng cách đọc thẳng
+ * request `google-analytics.com/g/collect`: có `tracking_id` thì
+ * `tid=balance_beginner_guide`, bỏ đi thì `tid=G-5EJS75L7SK`.
+ *
+ * Tên đang dùng là `recommendation_id`. Nếu cần thêm tham số mới, tránh mọi
+ * tên gtag hiểu theo nghĩa cấu hình (`tracking_id`, `send_to`, `page_location`,
+ * `user_id`, `client_id`…).
+ *
+ * Tham số event GA4 cũng phải là giá trị đơn, không phải object lồng — vì thế
+ * `primaryGameplaySignal` được tách thành hai tham số phẳng.
  */
 export function recommendationTracking(recommendation, stats) {
   const signal = recommendation.primaryGameplaySignal ?? {};
-  return {recommendation_type:recommendation.type,recommendation_category:recommendation.category,tracking_id:recommendation.trackingId,final_score:stats.finalScore,rank:stats.rank,primary_gameplay_signal_name:signal.name,primary_gameplay_signal_value:signal.value};
+  return {recommendation_type:recommendation.type,recommendation_category:recommendation.category,recommendation_id:recommendation.trackingId,final_score:stats.finalScore,rank:stats.rank,primary_gameplay_signal_name:signal.name,primary_gameplay_signal_value:signal.value};
 }
