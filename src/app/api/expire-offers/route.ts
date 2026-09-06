@@ -135,7 +135,6 @@ async function handleExpire(request: NextRequest) {
         // if FinlyWealth is unreachable or the rewrite fails this morning.
         try {
           const offer = await fetchFinlyWealthOffer(rebateUrl);
-          changes.rebateVi = offer.rebate;
 
           const copy = await rewriteOfferCopy({
             name: field<string>(card, "name") ?? slug,
@@ -150,6 +149,18 @@ async function handleExpire(request: NextRequest) {
             },
           });
 
+          // `rebateVi` và phần chữ (đặc biệt câu HOT TIP trong `editorsTakeVi`)
+          // phải đi cùng một chuyến ghi — cùng lý do `check-rebates` gộp
+          // `rebateProsePatch` với `rebateVi` trong một lệnh `updateEntry` duy
+          // nhất. Trước đây dòng này chạy NGAY sau khi đọc FinlyWealth, tức
+          // trước `rewriteOfferCopy` — nếu rewrite ném (timeout, bị từ chối,
+          // vướng `assertFiguresAreSourced`), `changes.rebateVi` vẫn mang số
+          // MỚI trong khi `changes` không có phần chữ mới, và `updateEntry`
+          // bên dưới publish luôn: badge hiện số mới, HOT TIP vẫn nói số cũ —
+          // đúng lỗi mà `audit:rebate-prose` sinh ra để bắt, tự tay đưa lên
+          // site. Gộp chung một khối try thì rewrite ném là `changes` không
+          // đổi gì cả, thẻ giữ nguyên copy cũ và chờ lượt sau.
+          changes.rebateVi = offer.rebate;
           Object.assign(changes, copy);
           rewrote = true;
         } catch (err) {

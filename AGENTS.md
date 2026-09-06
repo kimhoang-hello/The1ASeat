@@ -1102,6 +1102,81 @@ khi commit — vì lượt chạy trước đó diễn ra trước khi comment k
 không phân biệt được comment JSX (`{/* … */}`) với chữ hiện trên trang, nên
 trong comment JSX cũng phải viết `Amex®`, `RBC®` như mọi chỗ khác.
 
+## Vòng kiểm toàn diện 06/09/2026 — đừng đề xuất lại
+
+Mọi gate xanh trước khi bắt đầu. Codex rà theo thứ tự hậu quả (revalidate >
+expire-offers > check-rebates/sync-videos/contentful-cma > ...), ra 4 phát
+hiện; 3 đã vá qua HAI vòng phản biện (vòng đầu bắt bản vá của 2/3 cái HỎNG,
+vòng hai xác nhận bản sửa lại đã đóng đúng lỗ hổng). Cái thứ tư cố ý KHÔNG vá.
+
+**Đã vá — `expire-offers`: `rebateVi` và phần chữ rewrite phải cùng một khối
+try, không tách rời.** Trước đây `changes.rebateVi = offer.rebate` chạy NGAY
+sau khi đọc FinlyWealth, tức TRƯỚC `rewriteOfferCopy`. Nếu rewrite ném (timeout,
+bị `assertFiguresAreSourced` từ chối, …), `catch` vẫn đi tới `updateEntry` với
+`changes` mang `rebateVi` MỚI nhưng `headlineVi`/`keyBenefitsVi`/`editorsTakeVi`
+CŨ — publish thẳng một thẻ có badge một số, HOT TIP một số khác, đúng lỗi mà
+`audit:rebate-prose` sinh ra để bắt, nhưng tự tay đưa lên site trước khi audit
+kịp chạy. Cùng nguyên tắc `check-rebates` đã áp dụng (gộp `rebateProsePatch`
+với `rebateVi` trong một `updateEntry`) — `expire-offers` thiếu nó vì đường ghi
+`rebateVi` với đường ghi phần chữ nằm cách nhau bởi một `await` có thể ném ở
+giữa. Vá bằng cách gán `changes.rebateVi` NGAY SAU khi `rewriteOfferCopy` trả
+về, cùng khối với `Object.assign(changes, copy)` — rewrite ném thì `changes`
+không đổi gì cả.
+
+**Đã vá — `sync-videos`: `total` phải là số nguyên KHÔNG ÂM thật sự đọc được từ
+response, không phải `data.total ?? 0`.** Bản vá VÒNG ĐẦU (thêm cửa
+`Array.isArray(data.items) && data.items.length === total`) bị Codex bác vì
+BẢN VÁ HỎNG: một response hỏng thiếu hẳn field `total` (ví dụ `{"items":[]}`)
+bị `?? 0` mặc định thành 0, khớp khít với `items.length === 0`, lọt qua cửa vừa
+thêm mà không hề hấn gì. Sửa lại: kiểm `typeof data.total !== "number" ||
+!Number.isInteger(data.total) || data.total < 0` và ném TRƯỚC khi gán `total`,
+để một response thật sự "không có video nào" (`total: 0` là SỐ có thật) vẫn qua
+được, chỉ chặn ca field bị thiếu/kiểu sai. Vòng phản biện thứ hai của Codex về
+điểm này bị treo (xem mục ngay dưới) nên KHÔNG có xác nhận bằng lời — chỉ tự
+kiểm bằng cách đọc lại logic: `typeof undefined !== "number"` đúng, nên response
+thiếu `total` giờ ném thay vì lọt qua.
+
+**Đã vá — `catch-the-points/leaderboard.js`: `confirmLanded()` sau khi ghi thất
+bại, nhưng CHỈ với 502, không phải mọi 5xx.** Bản vá VÒNG ĐẦU dùng `res.status
+>= 500` cũng bị Codex bác: `503 ("unverifiable")` ở `api/game-record` xảy ra ở
+`readGameRecord()` — TRƯỚC khi có bất kỳ lượt ghi nào — nên xác nhận ở nhánh đó
+là vô nghĩa, và nếu đúng lúc ấy có người khác vừa lập TRÙNG điểm số thì
+`confirmLanded` so điểm sẽ báo NHẦM là lượt của mình đã thành công. Chỉ `502
+("write_failed")` — sinh ra từ `createGameRecord` (create + publish, hai lượt
+gọi Contentful nối tiếp) ném — mới là ca ghi có thể đã thành công dù response
+mất, đáng xác nhận. Giới hạn VỐN ĐÃ CÓ (không phải hồi quy mới): `confirmLanded`
+gọi `refresh()` làm mất token cũ, và một lượt đọc CDA ngay sau publish có thể
+vẫn dính cache — cùng rủi ro với nhánh `catch` (network exception) đã tồn tại
+từ trước, chấp nhận vì đây là mini-game, không phải tiền.
+
+**Codex bị TREO cả hai lần chạy vòng phản biện thứ hai (`codex exec`, ~1h40 và
+~50 phút, CPU time gần như 0 suốt thời gian đó) — không phải lỗi logic, là lỗi
+môi trường/tiến trình.** Cả hai lần đều phải `TaskStop` tay. Hai bản vá cuối
+(sync-videos, leaderboard) vì vậy KHÔNG có xác nhận bằng lời của Codex ở vòng
+hai — chỉ tự kiểm bằng cách đọc lại code (xem hai mục trên). Nếu gặp lại
+`codex exec` treo kiểu này: kiểm `ps -o pid,etime,time -p <pid>`, CPU time gần
+như đứng yên trong khi ELAPSED tăng đều là dấu hiệu treo, không phải đang suy
+luận lâu.
+
+**Cố ý KHÔNG vá — `api/revalidate`: `request.json()` ném vì body không hợp lệ
+bị coi như "manual test ping" (`hasPayload = false` → 200), dù về lý thuyết một
+publish event THẬT có thể tới với body bị hỏng giữa đường (khác hẳn lỗi TIMEOUT
+đã ghi ở mục "Việc còn nợ" phía trên — đây là body ĐỌC XONG nhưng không parse
+được, không phải đọc mãi không xong).** Không vá vì hai lý do: (1) khả năng xảy
+ra thấp trong cấu hình HIỆN TẠI — chưa cấu hình "transformation" ở Contentful
+(xem mục "Việc còn nợ"), nên với một publish event thật, body luôn là JSON hợp
+lệ do chính Contentful sinh ra; kịch bản duy nhất còn lại là mạng đứt giữa
+chừng, và trường hợp đó nhiều khả năng làm `request.json()` ném lỗi STREAM chứ
+không trả về một chuỗi "đọc xong nhưng sai cú pháp" — chưa kiểm chứng được
+hành vi thật của Node/undici trong ca này; (2) route này đã được ghi rõ là
+"cần một phiên riêng, không làm kèm" cho đúng loại vấn đề liền kề (đọc body
+không có hạn giờ) — vá thêm một nhánh khác của cùng đoạn code trong một audit
+định kỳ, không đo được body thật, rủi ro cao hơn lợi ích với một ca chưa chắc
+xảy ra được. Nếu muốn đóng hẳn: phân biệt "body rỗng thật" (Content-Length 0 —
+ping tay) với "body có nội dung nhưng không parse được" (bất thường, an toàn để
+xin retry vì `claimBroadcast` chưa chạy tới) bằng cách đọc `request.text()`
+trước rồi mới `JSON.parse`, thay vì để `request.json()` gộp cả hai ca làm một.
+
 ## Đâu là chỗ đáng soi nhất
 
 Xếp theo hậu quả khi sai, không theo độ khó của code:

@@ -302,7 +302,19 @@ async function fetchVideoUrlsByState(
   }
 
   const data = await res.json();
-  const total: number = data.total ?? 0;
+  // `?? 0` từng là chỗ hở: một response hỏng thiếu hẳn trường `total`
+  // (`{"items":[]}`) bị mặc định thành 0, và `items.length !== total` bên
+  // dưới thành `0 !== 0` — TRÙNG KHỚP, cửa kiểm gật đầu cho một response méo.
+  // Đòi `total` phải là số nguyên KHÔNG ÂM thật sự có trong response — 0
+  // thật (Contentful trả đúng "không có entry video nào") vẫn qua được, chỉ
+  // chặn ca trường bị thiếu/kiểu sai.
+  if (typeof data.total !== "number" || !Number.isInteger(data.total) || data.total < 0) {
+    throw new Error(
+      `contentful list: total không phải số nguyên hợp lệ (${JSON.stringify(data.total)})` +
+        ` — coi là response hỏng, không tin để khỏi tạo entry trùng`,
+    );
+  }
+  const total: number = data.total;
   if (total > LIST_LIMIT) {
     throw new Error(
       `contentful list: có ${total} entry video nhưng một lượt gọi chỉ lấy được ${LIST_LIMIT}` +
@@ -310,7 +322,23 @@ async function fetchVideoUrlsByState(
     );
   }
 
-  for (const item of data.items ?? []) {
+  // `items` phải là mảng VÀ dài đúng bằng `total`. Đây là một lượt gọi DUY
+  // NHẤT (không phân trang, xem lý do ở trên), nên không có chuyện entry bị
+  // xoá/thêm giữa hai trang làm số đếm khớp mà danh tính lệch — đúng cái bẫy
+  // khiến kiểm đếm bị bỏ ở kịch bản phân trang. Ở đây một response 200 với
+  // `items` thiếu hoặc rỗng trong khi `total` khác 0 là dữ liệu HỎNG, không
+  // phải "không có video nào": nuốt nó bằng `?? []` làm `published`/`unpublished`
+  // rỗng, mọi video trong feed bị coi là mới, và route đi PUBLISH TRÙNG những
+  // bài đã có — đúng loại lỗi ghi vào Contentful mà file này dựng nhiều cửa để
+  // chặn. Thà job đỏ.
+  if (!Array.isArray(data.items) || data.items.length !== total) {
+    throw new Error(
+      `contentful list: total=${total} nhưng items ${Array.isArray(data.items) ? `chỉ có ${data.items.length}` : "không phải mảng"}` +
+        ` — coi là response hỏng, không tin để khỏi tạo entry trùng`,
+    );
+  }
+
+  for (const item of data.items) {
     const url: string | undefined = item.fields?.videoUrl?.[LOCALE];
 
     // Chưa publish thì ghi lại theo `sys.id`, KHÔNG theo URL — và ghi cả khi

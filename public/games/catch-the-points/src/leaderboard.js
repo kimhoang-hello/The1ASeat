@@ -113,7 +113,25 @@ export function createLeaderboard(fetcher = fetch) {
           return { ok: true, record };
         }
         // 409: trong lúc người này gõ tên thì đã có người khác vượt lên.
-        if (res.status === 409) record = parseRecord(data.record) ?? record;
+        if (res.status === 409) {
+          record = parseRecord(data.record) ?? record;
+          return { ok: false, reason: data.message || String(res.status), record };
+        }
+        // CHỈ 502 ("write_failed"), không phải mọi 5xx: server trả 502 đúng
+        // khi `createGameRecord` (create + publish, hai lượt gọi Contentful
+        // nối tiếp) ném — lúc đó có thể server đã ghi xong rồi mới mất
+        // response trên đường về, cùng sự mập mờ như khi `fetch` tự ném ở
+        // nhánh `catch` dưới đây. 503 ("unverifiable") thì KHÁC HẲN: nó xảy ra
+        // ở `readGameRecord()`, TRƯỚC khi có bất kỳ lượt ghi nào — xác nhận ở
+        // đây là vô nghĩa, và nếu đúng lúc đó có người khác vừa lập cùng một
+        // điểm số thì `confirmLanded` so trùng điểm sẽ báo NHẦM là lượt của
+        // mình đã thành công. 4xx (bad_round/bad_score/bad_name/rate_limited)
+        // cũng không: bị từ chối trước khi chạm Contentful.
+        if (res.status === 502) {
+          const outcome = await confirmLanded();
+          if (outcome === "landed") return { ok: true, record };
+          if (outcome === "beaten") return { ok: false, reason: "not_a_record", record };
+        }
         return { ok: false, reason: data.message || String(res.status), record };
       } catch {
         const outcome = await confirmLanded();
