@@ -8,7 +8,21 @@
  * chơi không bao giờ được hỏng vì bảng kỷ lục.
  */
 const ENDPOINT = "/api/game-record";
-const TIMEOUT_MS = 8000;
+/** Đọc thì bỏ cuộc sớm — mất dòng kỷ lục không sao. */
+const READ_TIMEOUT_MS = 8000;
+/**
+ * Ghi thì chờ lâu hơn hẳn — nhưng con số này KHÔNG phải thứ giữ cho đúng.
+ *
+ * Một lượt ghi ở server là ba việc nối nhau: đọc Contentful, tạo entry, publish
+ * entry — cộng lại tối đa còn dài hơn 25 giây. Trình duyệt bỏ cuộc KHÔNG dừng
+ * được server, nên có kéo timeout tới đâu thì vẫn còn khe: người chơi thấy
+ * "Chưa lưu được" trong khi kỷ lục vừa ghi xong sau đó, bấm thử lại thì nhận
+ * 409 và bị báo "có người khác vượt lên" — mà người đó chính là họ.
+ *
+ * Nên chỗ thật sự giữ cho đúng là `confirmLanded()` bên dưới: hỏng đường nào
+ * cũng đi hỏi lại bảng kỷ lục xem điểm mình có nằm đó không, rồi mới kết luận.
+ */
+const WRITE_TIMEOUT_MS = 25000;
 
 function parseRecord(value) {
   if (!value || typeof value !== "object") return null;
@@ -22,11 +36,11 @@ export function createLeaderboard(fetcher = fetch) {
   let token = null;
   let available = true;
 
-  async function call(init) {
-    return fetcher(ENDPOINT, { ...init, signal: AbortSignal.timeout(TIMEOUT_MS) });
+  async function call(init, timeout) {
+    return fetcher(ENDPOINT, { ...init, signal: AbortSignal.timeout(timeout) });
   }
 
-  return {
+  const api = {
     get record() {
       return record;
     },
@@ -47,7 +61,7 @@ export function createLeaderboard(fetcher = fetch) {
      */
     async refresh() {
       try {
-        const res = await call({ method: "GET", cache: "no-store" });
+        const res = await call({ method: "GET", cache: "no-store" }, READ_TIMEOUT_MS);
         if (!res.ok) throw new Error(String(res.status));
         const data = await res.json();
         record = parseRecord(data.record);
@@ -66,12 +80,33 @@ export function createLeaderboard(fetcher = fetch) {
      */
     async submit(name, score) {
       if (!token) return { ok: false, reason: "no_token" };
+
+      /**
+       * Hỏi lại bảng kỷ lục xem lượt ghi vừa rồi có tới nơi không.
+       *
+       * Dùng khi client bỏ cuộc giữa chừng hoặc mạng đứt: server có thể đã ghi
+       * xong sau lưng. Nếu kỷ lục hiện tại đúng bằng điểm vừa gửi thì lượt ghi
+       * đã thành công, đừng báo hỏng và đừng bắt người chơi gửi lại — gửi lại
+       * là tạo thêm một dòng trùng.
+       */
+      async function confirmLanded() {
+        await api.refresh();
+        if (api.record === null) return "unknown";
+        if (api.record.score === score) return "landed";
+        // Điểm mình gửi có thể đã tới nơi rồi bị người khác vượt qua ngay sau
+        // đó — khi ấy nói đúng chuyện đó, đừng đổ cho mạng.
+        return api.record.score > score ? "beaten" : "unknown";
+      }
+
       try {
-        const res = await call({
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token, score, name }),
-        });
+        const res = await call(
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token, score, name }),
+          },
+          WRITE_TIMEOUT_MS,
+        );
         const data = await res.json().catch(() => ({}));
         if (res.ok) {
           record = parseRecord(data.record) ?? record;
@@ -81,8 +116,12 @@ export function createLeaderboard(fetcher = fetch) {
         if (res.status === 409) record = parseRecord(data.record) ?? record;
         return { ok: false, reason: data.message || String(res.status), record };
       } catch {
+        const outcome = await confirmLanded();
+        if (outcome === "landed") return { ok: true, record };
+        if (outcome === "beaten") return { ok: false, reason: "not_a_record", record };
         return { ok: false, reason: "network" };
       }
     },
   };
+  return api;
 }

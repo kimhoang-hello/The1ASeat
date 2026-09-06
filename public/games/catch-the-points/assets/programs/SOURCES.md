@@ -15,5 +15,6 @@ Downloaded 5 September 2026. Logos identify the points programs represented in t
 | cibc.svg        | https://en.wikipedia.org/wiki/File:CIBC_logo_2021.svg (public domain)                                                                                |
 | westjet.png     | https://ghe1a.com/images/logos/partners/westjet.png                                                                                                  |
 | porter.svg      | https://commons.wikimedia.org/wiki/File:Porter_Airlines_Logo.svg (public domain)                                                                     |
+| cathay.jpg      | https://ghe1a.com/images/logos/partners/cathay-pacific.png                                                                                           |
 
-TD Rewards, CIBC Aventura, WestJet Rewards and VIPorter were added on 5 September 2026; the provider logo is paired with the program name on the label. The RBC and Amex provider logos are paired with explicit Avion and MR labels. All logos are served locally. CSS frames the artwork without modifying the source images.
+TD Rewards, CIBC Aventura, WestJet Rewards, VIPorter and Asia Miles were added on 5 September 2026; the provider logo is paired with the program name on the label. The RBC and Amex provider logos are paired with explicit Avion and MR labels. All logos are served locally. CSS frames the artwork without modifying the source images.

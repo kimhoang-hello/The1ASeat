@@ -147,6 +147,17 @@ export const PROGRAMS = [
     asset: `${ASSET_BASE}programs/flying-blue.jpg`,
   },
   {
+    id: "asia-miles",
+    // Website gọi hệ này là "Cathay Pacific® Asia Miles®" (xem
+    // `src/lib/award-charts.ts`); trong game bỏ ký hiệu ® cho đồng bộ với sáu
+    // chương trình có sẵn, và dùng tên ngắn vì nhãn vật rơi chỉ rộng 84px.
+    name: "Asia Miles",
+    mark: "AM",
+    color: "#00645f",
+    background: "#e1edec",
+    asset: `${ASSET_BASE}programs/cathay.jpg`,
+  },
+  {
     id: "td-rewards",
     name: "TD Rewards",
     mark: "TD",

@@ -94,6 +94,20 @@ export function isPlausibleRound(token: unknown, now = Date.now()): boolean {
 }
 
 /**
+ * Mốc token hết hiệu lực, đọc thẳng từ phần payload — KHÔNG kiểm chữ ký.
+ *
+ * Chỉ dùng để dọn bảng đếm, và cố ý không ký lại: bảng đó chỉ chứa token ĐÃ
+ * được `isPlausibleRound` xác minh trước khi ghi vào, nên chữ ký đã kiểm rồi.
+ * Ký lại mỗi khoá ở mỗi lần dọn biến việc dọn thành O(n) phép HMAC, và cả vòng
+ * dọn chạy trên mọi request thành O(n²) — tức là chính bảng chống spam trở
+ * thành đường làm nghẽn CPU.
+ */
+export function roundTokenExpiresAt(token: string): number {
+  const issuedAt = Number(token.split(".")[0]);
+  return Number.isFinite(issuedAt) ? issuedAt + MAX_ROUND_MS : 0;
+}
+
+/**
  * Tên người chơi sau khi dọn.
  *
  * Trả `null` nếu không còn gì để hiển thị. Cắt ký tự điều khiển (kể cả ký tự
@@ -102,11 +116,14 @@ export function isPlausibleRound(token: unknown, now = Date.now()): boolean {
  */
 export function cleanPlayerName(input: unknown): string | null {
   if (typeof input !== "string") return null;
-  const cleaned = input
+  const collapsed = input
     .replace(/[\p{C}\p{Zl}\p{Zp}]/gu, " ")
     .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, MAX_NAME_LENGTH);
+    .trim();
+  // Cắt theo ĐIỂM MÃ chứ không phải `.slice()`: `.slice()` đếm đơn vị UTF-16,
+  // nên một tên có emoji bị cắt đúng giữa cặp surrogate sẽ để lại nửa ký tự
+  // hỏng — và nửa đó đi thẳng vào Contentful rồi lên màn hình mọi người.
+  const cleaned = Array.from(collapsed).slice(0, MAX_NAME_LENGTH).join("").trim();
   if (!cleaned) return null;
   if (/https?:\/\/|www\.|\.(com|net|org|vn|io|co)\b/i.test(cleaned)) return null;
   return cleaned;
@@ -132,9 +149,26 @@ export const GAME_RECORD_TAG = "game-record";
  * một bảng kỷ lục, và lượt ghi tự xoá tag nên người vừa lập kỷ lục thấy ngay.
  */
 export async function fetchGameRecord(): Promise<GameRecord | null> {
+  try {
+    return await readGameRecord();
+  } catch {
+    // Người đọc chỉ mất dòng kỷ lục trong một phút; không đáng để hỏng trang.
+    return null;
+  }
+}
+
+/**
+ * Như trên, nhưng NÉM khi không đọc được.
+ *
+ * Hai trạng thái "chưa ai lập kỷ lục" và "không hỏi được Contentful" bắt buộc
+ * phải phân biệt ở đường GHI: gộp cả hai thành `null` nghĩa là đúng lúc CDA
+ * trả 503, một điểm 1.000 cũng được ghi đè lên kỷ lục 100.000 đang có — kiểm
+ * tra fail-open. Đường ĐỌC thì ngược lại, `null` là đủ.
+ */
+export async function readGameRecord(): Promise<GameRecord | null> {
   const spaceId = process.env.CONTENTFUL_SPACE_ID;
   const accessToken = process.env.CONTENTFUL_ACCESS_TOKEN;
-  if (!spaceId || !accessToken) return null;
+  if (!spaceId || !accessToken) throw new Error("Contentful delivery not configured");
 
   const url =
     `https://cdn.contentful.com/spaces/${spaceId}/environments/master/entries` +
@@ -144,14 +178,20 @@ export async function fetchGameRecord(): Promise<GameRecord | null> {
     next: { revalidate: 60, tags: [GAME_RECORD_TAG] },
     signal: AbortSignal.timeout(10_000),
   });
-  if (!res.ok) return null;
+  if (!res.ok) throw new Error(`Read failed: ${res.status}`);
 
   const data = (await res.json()) as {
     items?: { fields?: { playerName?: string; score?: number; setAt?: string } }[];
   };
-  const fields = data.items?.[0]?.fields;
+  // CHỈ một mảng rỗng đúng kiểu mới có nghĩa "chưa ai lập kỷ lục". Response
+  // 200 nhưng thiếu `items`, hoặc item đầu không có `fields`, là dữ liệu hỏng —
+  // gộp nó vào `null` thì đường ghi lại hiểu thành "bảng trống" và cho một
+  // điểm thấp đè lên kỷ lục đang có. Ném để đường ghi fail closed.
+  if (!Array.isArray(data.items)) throw new Error("Malformed record listing");
+  if (data.items.length === 0) return null;
+  const fields = data.items[0]?.fields;
   if (!fields || typeof fields.score !== "number" || typeof fields.playerName !== "string") {
-    return null;
+    throw new Error("Malformed record entry");
   }
   return {
     name: fields.playerName,

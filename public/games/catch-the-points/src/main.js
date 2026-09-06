@@ -370,63 +370,93 @@ function finish() {
   }
 }
 
-/** Hộp xin tên sau khi phá kỷ lục. */
+/**
+ * Hộp xin tên sau khi phá kỷ lục.
+ *
+ * Listener gắn ĐÚNG MỘT LẦN ở cuối file, không gắn lại mỗi lần mở hộp. Bản
+ * trước gắn trong hàm và chỉ gỡ trong `close()`, mà `<dialog>` đóng bằng phím
+ * Escape thì không đi qua đó — nên cứ mỗi lần người chơi phá kỷ lục rồi nhấn
+ * Escape là còn lại một cặp listener; tới lần sau, một cú bấm "Lưu" gửi đi
+ * ngần ấy request, mỗi cái mang điểm của một lượt khác nhau.
+ */
+let pendingScore = null;
+let saving = false;
+
 function askForName(score) {
   const dialog = $("record-dialog");
-  const input = $("record-name");
-  const error = $("record-error");
   if (typeof dialog.showModal !== "function") return; // Trình duyệt quá cũ.
 
+  pendingScore = score;
+  saving = false;
   $("record-dialog-score").textContent = score.toLocaleString("en-US");
-  error.hidden = true;
-  input.value = "";
+  $("record-error").hidden = true;
+  $("record-name").value = "";
   dialog.removeAttribute("data-saving");
   dialog.showModal();
-  input.focus();
+  $("record-name").focus();
+}
 
-  async function save(event) {
-    event.preventDefault();
-    const name = input.value.trim();
-    if (!name) {
-      error.textContent = "Điền tên đã nhé.";
-      error.hidden = false;
-      input.focus();
-      return;
-    }
-    dialog.setAttribute("data-saving", "");
-    error.hidden = true;
-    const result = await leaderboard.submit(name, score);
-    dialog.removeAttribute("data-saving");
-    renderWorldRecord();
-    if (result.ok) {
-      close();
-      return;
-    }
-    // "not_a_record" nghĩa là trong lúc gõ tên đã có người khác vượt lên —
-    // không phải lỗi của người này, nên nói cho đúng chuyện đó.
-    error.textContent =
-      result.reason === "not_a_record"
-        ? "Vừa có người khác vượt lên mất rồi. Chơi lại nhé!"
-        : result.reason === "bad_name"
-          ? "Tên này không dùng được. Thử tên khác xem."
-          : result.reason === "rate_limited"
-            ? "Bạn vừa gửi hơi nhiều lần. Nghỉ một lát rồi thử lại nhé."
-            : "Chưa lưu được. Kiểm tra mạng rồi thử lại giúp mình.";
-    error.hidden = false;
+function showRecordError(message) {
+  $("record-error").textContent = message;
+  $("record-error").hidden = false;
+}
+
+async function saveRecord(event) {
+  event.preventDefault();
+  // `saving` chặn lần gửi thứ hai. `data-saving` chỉ tắt `pointer-events` của
+  // hai cái nút, mà bấm Enter trong ô tên vẫn submit được form — lần gửi thừa
+  // đó sẽ nhận 409 và báo "có người khác vượt lên", tức là đổ lỗi sai chỗ.
+  if (saving || pendingScore === null) return;
+
+  const name = $("record-name").value.trim();
+  if (!name) {
+    showRecordError("Điền tên đã nhé.");
+    $("record-name").focus();
+    return;
   }
 
-  function close() {
-    $("record-form").removeEventListener("submit", save);
-    $("record-skip").removeEventListener("click", close);
-    dialog.close();
-  }
+  saving = true;
+  $("record-dialog").setAttribute("data-saving", "");
+  $("record-error").hidden = true;
+  const result = await leaderboard.submit(name, pendingScore);
+  saving = false;
+  $("record-dialog").removeAttribute("data-saving");
+  renderWorldRecord();
 
-  $("record-form").addEventListener("submit", save);
-  $("record-skip").addEventListener("click", close);
+  if (result.ok) {
+    closeRecordDialog();
+    return;
+  }
+  // "not_a_record" nghĩa là trong lúc gõ tên đã có người khác vượt lên — không
+  // phải lỗi của người này, nên nói cho đúng chuyện đó.
+  showRecordError(
+    result.reason === "not_a_record"
+      ? "Vừa có người khác vượt lên mất rồi. Chơi lại nhé!"
+      : result.reason === "bad_name"
+        ? "Tên này không dùng được. Thử tên khác xem."
+        : result.reason === "rate_limited"
+          ? "Bạn vừa gửi hơi nhiều lần. Nghỉ một lát rồi thử lại nhé."
+          : result.reason === "unverifiable"
+            ? "Chưa kiểm được kỷ lục hiện tại. Thử lại sau một lát nhé."
+            : "Chưa lưu được. Kiểm tra mạng rồi thử lại giúp mình.",
+  );
+}
+
+function closeRecordDialog() {
+  pendingScore = null;
+  $("record-dialog").close();
 }
 
 $("start").addEventListener("click", start);
 $("restart").addEventListener("click", start);
+$("record-form").addEventListener("submit", saveRecord);
+$("record-skip").addEventListener("click", closeRecordDialog);
+// Đóng bằng Escape cũng phải dọn `pendingScore`, nếu không lượt sau còn giữ
+// điểm cũ. `close` bắn cho mọi kiểu đóng, kể cả Escape.
+$("record-dialog").addEventListener("close", () => {
+  pendingScore = null;
+  saving = false;
+});
 $("sound").addEventListener("click", () => {
   sound.enabled = !sound.enabled;
   if (sound.enabled) sound.unlock();
