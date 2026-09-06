@@ -325,14 +325,15 @@ function claimBroadcast(entryId: string): boolean {
 }
 
 // The ONLY categories whose posts trigger a broadcast — an allowlist, not a
-// blocklist. Chốt 06/09/2026: chỉ Kiến thức, Tips và News đáng vào hộp thư của
-// subscriber. Mọi chủ đề khác (Đánh giá, Deals, Khách sạn, và bất kỳ chủ đề
-// nào đặt ra sau này) chỉ lên site.
+// blocklist. Chốt 06/09/2026: chỉ Kiến thức và Tips đáng vào hộp thư của
+// subscriber. Mọi chủ đề khác (Đánh giá, Deals, News, Khách sạn, và bất kỳ chủ
+// đề nào đặt ra sau này) chỉ lên site — News là tin ngắn phản ứng lại thông báo
+// của chương trình khác, lên site là đủ.
 //
 // Danh sách này cố tình là allowlist: bài mang một `categoryVi` mới mà chưa ai
 // nghĩ tới sẽ IM LẶNG thay vì tự gửi mail cho toàn bộ danh sách. Gửi thiếu thì
 // vào Kit bấm gửi tay được; gửi thừa thì không rút lại được.
-const BROADCAST_CATEGORIES = new Set(["kiến thức", "tips", "news"]);
+const BROADCAST_CATEGORIES = new Set(["kiến thức", "tips"]);
 
 /**
  * Lượt này gần như chắc chắn là một bài MỚI mà bản tin của nó đã bị mất.
