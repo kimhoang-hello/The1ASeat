@@ -32,6 +32,12 @@ const REFERRAL_SOURCES: { host: string; path?: string }[] = [
   // vào bài viết thì không có hoa hồng nào. Khoá theo đường dẫn, vì đánh dấu
   // nhầm cả host cũng sai y như bỏ sót.
   { host: "americanexpress.com", path: "/referral/" },
+  // Link mời của Airalo sống trên domain rút gọn riêng (`airalo.go.link`), nên
+  // khoá cả host — mọi link tới đó đều là link mời, không có link biên tập.
+  { host: "airalo.go.link" },
+  // Wise thì ngược lại: `wise.com` là trang sản phẩm bình thường, chỉ nhánh
+  // `/invite/` mới có thưởng giới thiệu. Khoá theo đường dẫn như Amex.
+  { host: "wise.com", path: "/invite/" },
 ];
 
 /** `/referral` phải là một đoạn đường dẫn trọn vẹn, không phải chuỗi con:
