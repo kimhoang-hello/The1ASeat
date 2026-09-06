@@ -324,10 +324,15 @@ function claimBroadcast(entryId: string): boolean {
   return true;
 }
 
-// Categories whose posts never trigger a broadcast: Deals (transfer bonus /
-// points-buy promos age out fast) and News (short reaction pieces to someone
-// else's announcement — they land on the site, not in everyone's inbox).
-const NO_BROADCAST_CATEGORIES = new Set(["deals", "news"]);
+// The ONLY categories whose posts trigger a broadcast — an allowlist, not a
+// blocklist. Chốt 06/09/2026: chỉ Kiến thức, Tips và News đáng vào hộp thư của
+// subscriber. Mọi chủ đề khác (Đánh giá, Deals, Khách sạn, và bất kỳ chủ đề
+// nào đặt ra sau này) chỉ lên site.
+//
+// Danh sách này cố tình là allowlist: bài mang một `categoryVi` mới mà chưa ai
+// nghĩ tới sẽ IM LẶNG thay vì tự gửi mail cho toàn bộ danh sách. Gửi thiếu thì
+// vào Kit bấm gửi tay được; gửi thừa thì không rút lại được.
+const BROADCAST_CATEGORIES = new Set(["kiến thức", "tips", "news"]);
 
 /**
  * Lượt này gần như chắc chắn là một bài MỚI mà bản tin của nó đã bị mất.
@@ -382,15 +387,17 @@ function missedFirstPublish(entry: ManagementEntry, entryId: string): boolean {
 }
 
 // Sends a Kit newsletter broadcast the first time a "post"-type blogPost
-// entry is published. Skips video posts and the categories above, and skips
-// edits/republishes of an already-published post.
+// entry is published. Skips video posts and every category outside the
+// allowlist above, and skips edits/republishes of an already-published post.
 async function maybeNotifyNewPost(payload: unknown, deadline: number): Promise<boolean | string> {
   const entry = payload as ContentfulEntryPayload;
 
   if (entry?.sys?.contentType?.sys?.id !== "blogPost") return "not_blog_post";
   if (entry.fields?.type?.[LOCALE] !== "post") return "video_post";
   const category = entry.fields?.categoryVi?.[LOCALE]?.trim().toLowerCase();
-  if (category && NO_BROADCAST_CATEGORIES.has(category)) return `${category}_post`;
+  if (!category || !BROADCAST_CATEGORIES.has(category)) {
+    return `${category || "no"}_category_post`;
+  }
 
   const entryId = entry.sys?.id;
   if (!entryId) return "missing_entry_id";

@@ -197,7 +197,7 @@ Nếu 4 biến môi trường trên chưa được điền, route vẫn chạy b
 nhưng chỉ làm mới cache của Next.js chứ không xoá được cache CDN Hostinger — bạn
 vẫn cần bấm Clear cache thủ công như trước.
 
-## Tự động gửi email cho subscriber khi có bài viết mới (không gồm video và Deals)
+## Tự động gửi email cho subscriber khi có bài viết mới (chỉ 3 chủ đề)
 
 Route `/api/revalidate` ở trên giờ làm thêm 1 việc: mỗi khi 1 `blogPost` với
 `type = "post"` (bài viết thường, **không phải video**) được Publish **lần
@@ -208,13 +208,17 @@ chào mừng subscriber mới — cả 2 dùng chung 1 template ở
 [src/lib/subscriber-email.ts](src/lib/subscriber-email.ts). Sửa bài đã đăng
 và Publish lại sẽ **không** gửi lại email (chỉ gửi ở lần Publish đầu).
 
-**Ngoại lệ `Deals` và `News`:** nếu ô `Category Vi` của bài viết là `Deals`
-(transfer bonus, deal mua points, v.v.) hoặc `News` (tin ngắn phản ứng lại
-thông báo của chương trình khác) thì email **sẽ không gửi**, kể cả khi đây là
-bài `post` và là lần Publish đầu tiên — deal thì ngắn hạn và hết hạn nhanh,
-còn tin thì lên site là đủ, không đáng gửi broadcast riêng cho từng cái. Chỉ
-cần gõ đúng một trong hai chữ đó vào `Category Vi` (không phân biệt hoa/thường)
-là được, không cần cấu hình gì thêm.
+**Chỉ 3 chủ đề được gửi email (chốt 06/09/2026):** email chỉ gửi khi ô
+`Category Vi` là **`Kiến thức`**, **`Tips`** hoặc **`News`** (không phân biệt
+hoa/thường). Mọi chủ đề khác — `Đánh giá`, `Deals`, `Khách sạn`, và bất kỳ chủ
+đề nào bạn đặt ra sau này — chỉ lên site, **không** vào hộp thư subscriber, kể
+cả khi đây là bài `post` và là lần Publish đầu tiên.
+
+Đây là **danh sách cho phép**, không phải danh sách cấm: gõ một chủ đề mới lạ
+vào `Category Vi` thì bài đó im lặng chứ không tự gửi mail. Gửi thiếu thì vào
+Kit bấm gửi tay được; gửi thừa cho toàn bộ danh sách thì không rút lại được.
+Muốn thêm chủ đề vào danh sách này thì sửa `BROADCAST_CATEGORIES` trong
+[src/app/api/revalidate/route.ts](src/app/api/revalidate/route.ts).
 
 Broadcast này (và mọi email khác gửi cho subscriber) giờ gửi từ địa chỉ
 **info@ghe1a.com** — Kit yêu cầu địa chỉ gửi phải được thêm + xác minh trong
