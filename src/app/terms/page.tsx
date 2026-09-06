@@ -61,7 +61,7 @@ export default function TermsPage() {
 
       <h2>Quan hệ affiliate và hoa hồng</h2>
       <p>
-        Ghế 1A có thể nhận hoa hồng hoặc referral từ các đối tác thẻ tín dụng và ngân hàng khi bạn
+        Ghế 1A có thể nhận hoa hồng affiliate từ các đối tác thẻ tín dụng và ngân hàng khi bạn
         mở thẻ hoặc mở tài khoản qua liên kết trên trang. Điều này không làm bạn tốn thêm chi phí.
       </p>
       <p>
