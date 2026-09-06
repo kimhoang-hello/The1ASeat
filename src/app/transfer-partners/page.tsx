@@ -5,7 +5,7 @@ import { NextSteps, StepLink } from "@/components/ui/next-steps";
 import { t } from "@/lib/t";
 import { pageMetadata } from "@/lib/seo";
 import { getCreditCardOffers } from "@/lib/content";
-import { creditCardsPath, getCardPointsPrograms } from "@/lib/card-points-programs";
+import { cardsInProgram, creditCardsPath, getCardPointsPrograms } from "@/lib/card-points-programs";
 import { PROGRAMS } from "@/lib/award-charts";
 import { TRANSFER_PARTNERS, type TransferLeg } from "@/lib/transfer-partners";
 
@@ -49,6 +49,41 @@ const BADGE_STYLES = {
   amex: "bg-[#e7f2ea] text-[#1f6f43]",
   rbc: "bg-[#fdf1d8] text-[#8a5a10]",
 } as const;
+
+/**
+ * Hai cột của bảng, khai đúng một lần — và mảng này là NGUỒN DUY NHẤT quyết
+ * định thứ tự cột: hàng logo, hàng tên cột, ô tỷ lệ trong từng hàng, và khối
+ * "thẻ tích hệ này" ở cuối trang đều `map` qua nó.
+ *
+ * Đó là điều kiện để đảo thứ tự ở đây là đảo cả bảng. Bản đầu chỉ gom hàng
+ * logo, còn hàng tên cột và `row.amex`/`row.rbc` vẫn gõ tay theo đúng thứ tự
+ * cũ — nên đảo mảng sẽ cho logo Amex® đứng trên cột tỷ lệ của RBC®, sai lặng
+ * lẽ trên đúng cái bảng mà cả nội dung là "hệ nào chuyển sang chương trình
+ * nào". `legKey` vừa là tên trường trong `TransferPartnerRow` vừa là khoá màu
+ * trong `BADGE_STYLES`, nên hai thứ đó cũng không lệch nhau được — `as const`
+ * giữ nó ở kiểu chuỗi hẹp, và `row[column.legKey]` với `tint={column.legKey}`
+ * là hai cửa kiểm của `tsc`: gõ sai một chữ là build đỏ, không phải cột trống.
+ */
+const ISSUER_COLUMNS = [
+  {
+    programId: "amex-mr",
+    legKey: "amex",
+    logo: "/images/logos/amex.svg",
+    alt: "American Express®",
+    logoClass: "mx-auto h-6 w-auto",
+    ariaKey: "amexCardsAria",
+    nameKey: "columnAmex",
+  },
+  {
+    programId: "avion",
+    legKey: "rbc",
+    logo: "/images/logos/rbc.svg",
+    alt: "RBC®",
+    logoClass: "mx-auto h-8 w-auto",
+    ariaKey: "rbcCardsAria",
+    nameKey: "columnRbc",
+  },
+] as const;
 
 function LegCell({ leg, tint }: { leg: TransferLeg; tint: keyof typeof BADGE_STYLES }) {
   if (!leg) {
@@ -113,6 +148,14 @@ export default async function TransferPartnersPage() {
   // chạy trên đó, nên một link ở đây không bao giờ hứa một bộ lọc rỗng.
   const offers = await getCreditCardOffers();
   const linkablePrograms = new Set(getCardPointsPrograms(offers).map((p) => p.id));
+
+  // Cột nào không có thẻ nào thì biến mất hẳn thay vì hiện một tiêu đề trống —
+  // cùng luật với `CardNextSteps`: đường nào không có thật thì không hiện.
+  const cardColumns = ISSUER_COLUMNS.map((column) => ({
+    column,
+    cards: cardsInProgram(offers, column.programId),
+  })).filter(({ cards }) => cards.length > 0);
+
   return (
     <>
       <PageHeader eyebrow={tp("eyebrow")} title={tp("title")} subtitle={tp("subtitle")} />
@@ -129,30 +172,24 @@ export default async function TransferPartnersPage() {
                   {/* Logo hệ điểm dẫn tới danh sách thẻ tích hệ đó — nhưng
                       CHỈ khi hệ đó thật sự có thẻ trên site. `/credit-cards` cố
                       ý cho `?points=` lạ rơi về danh sách KHÔNG lọc, nên một
-                      link tới hệ không có thẻ nào sẽ trả về nguyên 23 thẻ mà
-                      người đọc tưởng là kết quả lọc. Hiện `amex-mr` đúng vào ca
-                      đó: thẻ Amex® trên site đều tích Aeroplan®/Bonvoy®, không
-                      thẻ nào tích Membership Rewards®. */}
-                  <th className="px-2 py-3">
-                    <IssuerHeader
-                      src="/images/logos/amex.svg"
-                      alt="American Express"
-                      className="mx-auto h-6 w-auto"
-                      programId="amex-mr"
-                      ariaLabel={tp("amexCardsAria")}
-                      linkable={linkablePrograms.has("amex-mr")}
-                    />
-                  </th>
-                  <th className="px-2 py-3">
-                    <IssuerHeader
-                      src="/images/logos/rbc.svg"
-                      alt="RBC"
-                      className="mx-auto h-8 w-auto"
-                      programId="avion"
-                      ariaLabel={tp("rbcCardsAria")}
-                      linkable={linkablePrograms.has("avion")}
-                    />
-                  </th>
+                      link tới hệ không có thẻ nào sẽ trả về nguyên 26 thẻ mà
+                      người đọc tưởng là kết quả lọc. `amex-mr` từng đúng vào ca
+                      đó cho tới 06/09/2026, khi American Express Cobalt® Card
+                      thành thẻ Membership Rewards® đầu tiên trên site — cửa
+                      kiểm vẫn giữ, vì nó canh tồn kho chứ không canh một ngày
+                      cụ thể. */}
+                  {ISSUER_COLUMNS.map((column) => (
+                    <th key={column.programId} className="px-2 py-3">
+                      <IssuerHeader
+                        src={column.logo}
+                        alt={column.alt}
+                        className={column.logoClass}
+                        programId={column.programId}
+                        ariaLabel={tp(column.ariaKey)}
+                        linkable={linkablePrograms.has(column.programId)}
+                      />
+                    </th>
+                  ))}
                 </tr>
                 <tr className="bg-primary text-primary-foreground">
                   <th
@@ -160,12 +197,14 @@ export default async function TransferPartnersPage() {
                   >
                     {tp("columnProgram")}
                   </th>
-                  <th className="px-2 py-3 text-center text-xs font-semibold uppercase tracking-wide">
-                    {tp("columnAmex")}
-                  </th>
-                  <th className="px-2 py-3 text-center text-xs font-semibold uppercase tracking-wide">
-                    {tp("columnRbc")}
-                  </th>
+                  {ISSUER_COLUMNS.map((column) => (
+                    <th
+                      key={column.programId}
+                      className="px-2 py-3 text-center text-xs font-semibold uppercase tracking-wide"
+                    >
+                      {tp(column.nameKey)}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -209,14 +248,57 @@ export default async function TransferPartnersPage() {
                         )}
                       </div>
                     </th>
-                    <LegCell leg={row.amex} tint="amex" />
-                    <LegCell leg={row.rbc} tint="rbc" />
+                    {ISSUER_COLUMNS.map((column) => (
+                      <LegCell
+                        key={column.programId}
+                        leg={row[column.legKey]}
+                        tint={column.legKey}
+                      />
+                    ))}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
           <p className="mt-4 text-xs leading-relaxed text-muted-foreground">{tp("aeroplanNote")}</p>
+
+          {/* Bảng trên nói điểm chuyển đi đâu; khối này nói lấy điểm đó từ thẻ
+              nào — câu hỏi ngay tiếp theo, và trước 06/09/2026 trang này không
+              trả lời được bằng đường nào ngoài logo đầu cột.
+
+              Link THẲNG tới từng trang thẻ, không phải `?points=`. Link lọc
+              canonical về `/credit-cards` nên với crawler nó không phải một
+              đường mới, và các trang thẻ nó kể tên không nhận được gì —
+              `npm run audit:links` đo đúng chuyện đó (xem chú thích của
+              `siblingCardsInProgram`). Thẻ Membership Rewards® đầu tiên trên
+              site vấp ngay: nó là thẻ duy nhất của hệ mình nên không có thẻ anh
+              em nào trỏ sang, và trang danh sách là đường vào duy nhất.
+
+              `sm:grid-cols-2` chỉ bật khi thật sự có hai cột: cố định nó thì
+              một cột đơn độc bị dồn vào nửa trái và bỏ trống nửa phải — ca đó
+              có thật, hệ nào chưa có thẻ nào thì bị lọc khỏi `cardColumns`. */}
+          {cardColumns.length > 0 && (
+            <div
+              className={`mt-10 grid gap-8 ${cardColumns.length > 1 ? "sm:grid-cols-2" : ""}`}
+            >
+              {cardColumns.map(({ column, cards }) => (
+                <NextSteps
+                  key={column.programId}
+                  title={tp("cardsTitle", { program: tp(column.nameKey) })}
+                  compact
+                >
+                  {cards.map((card) => (
+                    <StepLink
+                      key={card.slug}
+                      href={`/credit-cards/${card.slug}`}
+                      label={card.name}
+                      description={`${card.cardType} · ${card.annualFee}`}
+                    />
+                  ))}
+                </NextSteps>
+              ))}
+            </div>
+          )}
 
           <NextSteps title={next("title")} className="mt-10">
             <StepLink

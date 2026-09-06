@@ -93,9 +93,11 @@ export function programIdFor(offer: CreditCardOffer): string | undefined {
  *
  * Trả về cả danh sách chứ không phải khớp đầu tiên, vì người gọi còn phải lọc
  * tiếp theo tồn kho thẻ. Bài "Amex Membership Rewards vs RBC Avion" (đã nằm
- * trong kế hoạch nội dung ở SEO.md) gọi tên hai hệ; `amex-mr` đứng trước nhưng
- * hiện KHÔNG có thẻ nào trên site, nên nếu chỉ trả khớp đầu tiên thì bài đó
- * rơi về link chung, dù Avion có thẻ và dẫn được.
+ * trong kế hoạch nội dung ở SEO.md) gọi tên hai hệ; nếu chỉ trả khớp đầu tiên
+ * thì hệ đứng sau không bao giờ dẫn được, kể cả khi nó mới là hệ có thẻ. Lúc
+ * viết chú thích này `amex-mr` chưa có thẻ nào trên site và Avion thì có — nay
+ * cả hai đều có (American Express Cobalt® Card, 06/09/2026), nhưng luật vẫn
+ * vậy: người gọi lọc theo tồn kho, không phải hàm này.
  *
  * Dùng chính `PROGRAM_RULES` chứ không so trên chuỗi đã `slugifyVi`. Slug hoá
  * xoá mất ký hiệu, mà với vài chương trình thì ký hiệu CHÍNH LÀ tên:
@@ -141,6 +143,29 @@ export function getCardPointsPrograms(offers: CreditCardOffer[]): CardPointsProg
   return PROGRAM_RULES.filter((rule) => counts.has(rule.id))
     .map((rule) => ({ id: rule.id, name: rule.name, count: counts.get(rule.id)! }))
     .sort((a, b) => b.count - a.count);
+}
+
+/**
+ * Every card in `offers` that earns `programId`, in the order `offers` already
+ * carries (elevated first, then Amex®, then the rest).
+ *
+ * `getCardPointsPrograms` above answers "how many", which is all a filter chip
+ * needs. `/transfer-partners` needs the cards themselves: a link to
+ * `/credit-cards?points=amex-mr` canonicals back to the plain list, so for a
+ * crawler it is not a new path and the card pages it names get nothing from it
+ * — the exact trap `siblingCardsInProgram` was written for.
+ *
+ * Deliberately unbounded. A `limit` here would hand the earliest cards in a
+ * program every inbound link and leave the ones at the bottom with none, which
+ * is the failure `ringAfter` exists to avoid; that trick needs a "self" to
+ * rotate around and this page has none. The two columns of the transfer table
+ * hold four cards between them today, so the honest fix is to name them all.
+ */
+export function cardsInProgram(
+  offers: CreditCardOffer[],
+  programId: string,
+): CreditCardOffer[] {
+  return offers.filter((offer) => programIdFor(offer) === programId);
 }
 
 /**
