@@ -19,9 +19,15 @@ const offers = translate("offers");
  * cặp ngoặc. Không khớp thì trả nguyên câu và không bịa ra phần ghi chú —
  * đoán sai một con số phí trên trang tạo doanh thu tệ hơn nhiều so với một ô
  * hơi dài. (Đã kiểm: cả 20 thẻ hiện tại đều khớp.)
+ *
+ * Phần thập phân được nhận từ 06/09/2026. American Express Cobalt® Card là thẻ
+ * đầu tiên trên site có phí lẻ ($191.88/năm), và `[\d,]+` trần dừng ở "191" rồi
+ * trượt — cả câu 44 ký tự rơi vào ô số nhỏ bên phải, xuống hai dòng. Cùng dạng
+ * số mà `moneyAtStart` bên `credit-card-sort.ts` vẫn luôn đọc được, nên trước
+ * bản vá này hai hàm hiểu cùng một chuỗi theo hai kiểu khác nhau.
  */
 export function splitAnnualFee(annualFee: string): { amount: string; note?: string } {
-  const match = /^(\$[\d,]+\/năm|Miễn phí)\s*(?:\((.+)\))?$/.exec(annualFee.trim());
+  const match = /^(\$[\d,]+(?:\.\d+)?\/năm|Miễn phí)\s*(?:\((.+)\))?$/.exec(annualFee.trim());
   if (!match) return { amount: annualFee };
   return { amount: match[1], note: match[2] };
 }
