@@ -1225,3 +1225,33 @@ Xếp theo hậu quả khi sai, không theo độ khó của code:
    làm gãy build.
 5. `lib/content/*` — cache và revalidate.
 6. `lib/job-auth`, `lib/rate-limit` — lớp bảo vệ duy nhất của route công khai.
+
+## Đo đạc GA4 (06/09/2026) — đừng đề xuất lại
+
+- **Link nội bộ KHÔNG BAO GIỜ gắn `utm_*`.** `recommendationURL` trong
+  `public/games/catch-the-points/src/recommendations.js` từng gắn
+  `utm_source=catch-the-points&utm_medium=game` lên CTA hậu game, dù hàm đó chỉ
+  cho phép đích đến là ghe1a.com. Đã bỏ. UTM là để đánh dấu người đi từ site
+  KHÁC về; trên link nội bộ nó bẩn attribution ở cấp event, và nếu URL đó mở
+  đầu một phiên mới thì phiên ấy mang nguồn `catch-the-points / game` thay cho
+  nguồn thật — `game` lại không khớp channel mặc định nào nên rơi vào
+  Unassigned. Đường đi game → thẻ đo bằng `post_game_recommendation_clicked`
+  kèm `recommendation_category` và `tracking_id`, không bằng UTM.
+  Lưu ý ngược lại: `target="_blank"` KHÔNG tự mở phiên GA4 mới (tab mới dùng
+  chung cookie), đừng lập luận theo hướng đó.
+- **Tham số event GA4 phải là giá trị đơn.** `recommendationTracking` từng gửi
+  `primary_gameplay_signal: {name, value}` — object lồng. Đã tách thành
+  `primary_gameplay_signal_name` + `primary_gameplay_signal_value`. Boolean thì
+  hợp lệ (`carrying_balance` gửi `true`), chỉ đừng đăng ký field ấy làm custom
+  **metric** vì metric cần số.
+- **Test schema phải khoá được schema.** `assert.deepEqual(payload,
+  recommendationTracking(...))` là tautology — lấy chính hàm đang kiểm làm giá
+  trị kỳ vọng, nên quay về object lồng vẫn xanh. Codex bắt được chỗ này. Nay có
+  assert trực tiếp tên field, giá trị, và `assert.notEqual(typeof value,
+  'object')` cho mọi field; đã xác minh bằng cách cố ý gửi lại object lồng →
+  test đỏ 1/43.
+- **Custom dimension đã đăng ký (06/09/2026):** `Product`→`product`,
+  `Placement`→`placement`, `Newsletter source`→`source`, đều scope Event. GA4
+  KHÔNG tính ngược, nên dữ liệu chỉ có từ 06/09 trở đi. `apply_clicked` bắn từ
+  HAI chỗ: `ui/apply-link.tsx` và `blog/affiliate-click-tracker.tsx`
+  (`placement: "post_body"`).

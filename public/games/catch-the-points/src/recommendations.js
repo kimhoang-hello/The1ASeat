@@ -18,12 +18,26 @@ export function buildRecommendationStats(game, personalBest) {
     gameEndedByCarryingBalance:game.reason==='balance', totalPositivePointsEarned:game.earnings.total,
   };
 }
-export function recommendationURL(destination, category) {
+/**
+ * CTA hậu game trỏ VỀ CHÍNH GHE1A.COM, nên KHÔNG gắn `utm_*`.
+ *
+ * Bản trước gắn `utm_source=catch-the-points&utm_medium=game`. UTM là để đánh
+ * dấu người đi từ site KHÁC về; gắn lên link nội bộ thì nó bẩn attribution ở
+ * cấp event, và nếu URL đó tình cờ mở đầu một phiên mới (phiên cũ hết hạn 30
+ * phút, hoặc người khác mở lại link) thì phiên ấy mang nguồn
+ * `catch-the-points / game` thay vì nguồn thật đã dẫn người đọc tới site.
+ * `game` cũng không khớp channel mặc định nào của GA4 nên rơi vào Unassigned.
+ * Đo đường đi từ game sang trang thẻ thì dùng `post_game_recommendation_clicked`
+ * kèm `recommendation_category`, không dùng UTM.
+ *
+ * Phần kiểm tra an toàn giữ nguyên: chỉ https, chỉ hostname của site, không
+ * cho userinfo hay port lạ. Tham số sẵn có trên URL đích được giữ nguyên.
+ */
+export function recommendationURL(destination) {
   if (!destination) return null;
   try {
     const url = new URL(destination);
     if (url.protocol !== 'https:' || !['ghe1a.com','www.ghe1a.com'].includes(url.hostname) || url.username || url.password || url.port) return null;
-    for (const [key,value] of Object.entries({source:'catch-the-points',medium:'game',campaign:'post-game',content:category.replaceAll('_','-')})) url.searchParams.set(`utm_${key}`, value);
     return url.href;
   } catch { return null; }
 }
@@ -51,8 +65,14 @@ export function getPostGameRecommendation(input = {}, links = contentLinks) {
     }
   }
   const selected = content[category];
-  return {type:selected.type,category,eyebrow:selected.eyebrow,title:selected.title,message:selected.message(s),ctaText:selected.ctaText,url:recommendationURL(links[selected.destination],category),trackingId:selected.trackingId,primaryGameplaySignal:signal};
+  return {type:selected.type,category,eyebrow:selected.eyebrow,title:selected.title,message:selected.message(s),ctaText:selected.ctaText,url:recommendationURL(links[selected.destination]),trackingId:selected.trackingId,primaryGameplaySignal:signal};
 }
+/**
+ * Tham số của một event GA4 phải là giá trị đơn, không phải object lồng —
+ * `primary_gameplay_signal:{name,value}` của bản trước không đọc được ở đầu
+ * kia, nên tách thành hai tham số phẳng.
+ */
 export function recommendationTracking(recommendation, stats) {
-  return {recommendation_type:recommendation.type,recommendation_category:recommendation.category,tracking_id:recommendation.trackingId,final_score:stats.finalScore,rank:stats.rank,primary_gameplay_signal:recommendation.primaryGameplaySignal};
+  const signal = recommendation.primaryGameplaySignal ?? {};
+  return {recommendation_type:recommendation.type,recommendation_category:recommendation.category,tracking_id:recommendation.trackingId,final_score:stats.finalScore,rank:stats.rank,primary_gameplay_signal_name:signal.name,primary_gameplay_signal_value:signal.value};
 }

@@ -27,16 +27,14 @@ test('recommendations are deterministic and CTA destinations are safe and preser
   assert.deepEqual(recommend(s),recommend(s));
   const url=new URL(recommend(s).url);
   assert.equal(url.searchParams.get('type'),'noi-bat');
-  assert.equal(url.searchParams.get('utm_source'),'catch-the-points');
-  assert.equal(url.searchParams.get('utm_medium'),'game');
-  assert.equal(url.searchParams.get('utm_campaign'),'post-game');
-  assert.equal(url.searchParams.get('utm_content'),'welcome-bonus');
+  // Link nội bộ KHÔNG được gắn utm_*: xem chú thích ở `recommendationURL`.
+  for(const key of ['utm_source','utm_medium','utm_campaign','utm_content']) assert.equal(url.searchParams.get(key),null);
   const fees=new URL(recommend({...baseline,annualFeeDamage:1000}).url);
   assert.equal(fees.pathname,'/blog/3-dieu-uoc-gi-biet-truoc-mile-points');
-  assert.equal(fees.searchParams.get('utm_content'),'annual-fees');
+  assert.equal(fees.search,'');
   // Destination chưa có bài thì insight vẫn hiện, chỉ CTA là ẩn.
   assert.equal(recommend({...baseline,annualFeeDamage:1000},{annualFees:null}).url,null);
-  for(const value of [null,'','/bad','javascript:alert(1)','https://affiliate.test','https://ghe1a.com.evil.test','http://ghe1a.com','https://user:pass@ghe1a.com']) assert.equal(recommendationURL(value,'general'),null);
+  for(const value of [null,'','/bad','javascript:alert(1)','https://affiliate.test','https://ghe1a.com.evil.test','http://ghe1a.com','https://user:pass@ghe1a.com','https://ghe1a.com:8443/x']) assert.equal(recommendationURL(value),null);
   assert.equal(category({interestDamage:NaN,annualFeeDamage:Infinity}), 'general');
 });
 const caught=(g,type,program=0)=>g.catch({type,program,x:g.x});
@@ -65,6 +63,13 @@ test('one recommendation impression per render; replay replaces click payload wi
   render(baseline);const link=nodes.get('recommendation-link');link.handlers[0]();
   assert.equal(events[0].event,'post_game_recommendation_shown');assert.equal(events[1].event,'post_game_recommendation_clicked');
   assert.deepEqual(events[0].payload,recommendationTracking(recommend(baseline),baseline));
+  // Khoá SCHEMA gửi sang GA4, không chỉ so với chính hàm đang kiểm: tham số
+  // event GA4 phải phẳng, nên `primary_gameplay_signal` lồng object là hỏng.
+  const balance=recommendationTracking(recommend({...baseline,gameEndedByCarryingBalance:true}),baseline);
+  assert.equal(balance.primary_gameplay_signal_name,'carrying_balance');
+  assert.equal(balance.primary_gameplay_signal_value,true);
+  assert.equal('primary_gameplay_signal' in balance,false);
+  for(const value of Object.values(balance)) assert.notEqual(typeof value,'object');
   render({...baseline,welcomeBonusCaught:8});link.handlers[0]();
   assert.equal(link.handlers.length,1);assert.equal(events.at(-1).payload.recommendation_category,'welcome_bonus');
   const renderNoArticle=setupRecommendation((event,payload)=>events.push({event,payload}),root,{annualFees:null});
