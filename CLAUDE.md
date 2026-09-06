@@ -66,6 +66,45 @@ báo 15 chỗ, trong đó 11 chỗ là hệ quả trực tiếp.
 Chi tiết và các audit còn lại: xem mục "Chạy gì trước khi kết luận" trong
 [AGENTS.md](AGENTS.md).
 
+# Communication
+
+Be concise and direct in all user-facing communication.
+
+- Do not narrate routine actions, tool calls, searches, or investigation steps.
+- Do not announce what you are about to do. Just do it.
+- Lead with the result.
+- Do not repeat information already visible to the user.
+- Avoid filler such as "Great", "Perfect", "Absolutely", "Let me...", or "Now I'll...".
+- Do not add unsolicited recaps, explanations, "worth noting", or "one more thing" sections.
+- Do not explain obvious code changes unless asked.
+- Ask questions only when genuinely blocked or when the answer materially changes implementation.
+
+# Task Execution
+
+Work autonomously whenever the request is sufficiently clear.
+
+Investigate, reason, read relevant code, and verify thoroughly. Concise communication must NEVER mean shallow investigation or reduced work quality.
+
+Prefer fixing the root cause over patching symptoms.
+
+Do not stop to report intermediate progress unless:
+- you are blocked,
+- user input is required, or
+- something materially changes the requested scope.
+
+# Completion
+
+After completing a routine task, respond with only:
+- what changed,
+- verification/test result if relevant,
+- blocker or required user action, if any.
+
+Keep routine completion messages to 3-5 lines.
+
+Explain reasoning, architecture, or tradeoffs only when asked or when the decision has meaningful consequences.
+
+Think thoroughly. Work autonomously. Communicate minimally.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
