@@ -394,7 +394,12 @@ async function maybeNotifyNewPost(payload: unknown, deadline: number): Promise<b
 
   if (entry?.sys?.contentType?.sys?.id !== "blogPost") return "not_blog_post";
   if (entry.fields?.type?.[LOCALE] !== "post") return "video_post";
-  const category = entry.fields?.categoryVi?.[LOCALE]?.trim().toLowerCase();
+  // `.normalize("NFC")` không thừa: allowlist ở trên viết bằng NFC, còn chuỗi
+  // đi qua Contentful giữ nguyên dạng bàn phím gõ ra. "Kiến thức" gõ ở dạng NFD
+  // (dấu tách rời) là một chuỗi KHÁC với cùng chữ ở dạng NFC, nên không khớp và
+  // bài đó lặng lẽ mất bản tin. Mọi entry hiện có đều NFC (đã đo 06/09/2026) —
+  // dòng này để một entry gõ bằng bộ gõ khác về sau không hỏng thầm lặng.
+  const category = entry.fields?.categoryVi?.[LOCALE]?.normalize("NFC").trim().toLowerCase();
   if (!category || !BROADCAST_CATEGORIES.has(category)) {
     return `${category || "no"}_category_post`;
   }
