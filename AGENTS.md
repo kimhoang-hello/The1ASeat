@@ -1177,6 +1177,42 @@ ping tay) với "body có nội dung nhưng không parse được" (bất thư�
 xin retry vì `claimBroadcast` chưa chạy tới) bằng cách đọc `request.text()`
 trước rồi mới `JSON.parse`, thay vì để `request.json()` gộp cả hai ca làm một.
 
+## Viết `seoDescriptionVi` cho 28 bài đang phục vụ (06/09/2026)
+
+`audit:health` từng nhắc 28/38 bài thiếu `seoDescriptionVi` (2 bài viết + 26
+video), 1 video thiếu cả `seoTitleVi` — đây là việc biên tập nên chỉ IN RA,
+không exit 1. Đã viết và publish qua CMA cho toàn bộ 28 bài, sau khi người
+dùng duyệt mẫu 3 bài đầu (2 post + 1 video) để chốt giọng văn.
+
+- **Bài viết (`type: post`) dựa vào `titleVi`/`excerptVi`/`bodyVi` thật.** Hai
+  bài này có nội dung đầy đủ nên mô tả bám sát nội dung, không phải chỉ diễn
+  lại tiêu đề.
+- **Video (`type: video`) CHƯA có transcript/phụ đề trong hệ thống** — `bodyVi`
+  của chúng chỉ là placeholder do `sync-videos` tự sinh ("Video mới từ Ghế 1A:
+  …"), không phải nội dung thật (xem project note "Phụ đề cháy trong video
+  kênh" — OCR phụ đề vẫn là việc chưa làm). Nên mô tả SEO của cả 26 video CHỈ
+  dựa vào `titleVi`/`seoTitleVi` có sẵn — dịch/diễn lại hook của tiêu đề tiếng
+  Anh sang tiếng Việt, KHÔNG bịa chi tiết phòng ốc, giá phòng, hay đánh giá
+  dịch vụ không có trong dữ liệu. Cùng nguyên tắc "chỉ dùng số liệu có trong dữ
+  liệu được cung cấp" mà `assertFiguresAreSourced` áp cho `rewriteOfferCopy`.
+- **Bài về ưu đãi đã hết hạn viết theo giọng phân tích, không giọng "đang diễn
+  ra".** Bài Marriott Bonvoy transfer bonus 30% (hết hạn 03/09/2026, đã qua lúc
+  viết mô tả 06/09/2026) được viết tập trung vào phần phân tích "có nên
+  chuyển hay không" — phần này vẫn đúng bất kể ưu đãi còn sống hay không — thay
+  vì mô tả kiểu khẳng định ưu đãi đang chạy, để không hứa hẹn sai với người tìm
+  thấy bài qua Google sau khi ưu đãi đã đóng.
+- **Contentful giới hạn `seoDescriptionVi` tối đa 170 ký tự** (validation
+  `size`, đo bằng độ dài chuỗi JS chứ không phải byte UTF-8). Một bài (Park
+  Hyatt Kyoto) bị từ chối 422 ở lần ghi đầu vì 221 ký tự — rút ngắn còn 125 ký
+  tự mới qua. Viết mô tả SEO hàng loạt sau này nên kiểm độ dài trước khi gọi
+  CMA, đừng đợi 422 rồi mới sửa từng bài.
+- **Script viết là tạm thời, không nằm trong repo** (chạy một lần từ
+  scratchpad, dùng lại `cmaClient`/`listEntries`/`updateEntry`/`field` của
+  `lib/contentful-cma.ts`). Có kiểm cửa draft-ahead (`version > publishedVersion
+  + 1`) trước khi ghi từng bài, cùng luật với `expire-offers`/`check-rebates` —
+  không có bài nào bị chặn ở lượt này (cả 28 đều publish sạch, không có draft
+  dở dang).
+
 ## Đâu là chỗ đáng soi nhất
 
 Xếp theo hậu quả khi sai, không theo độ khó của code:
