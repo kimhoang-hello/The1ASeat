@@ -96,9 +96,14 @@ test("mất rồi có lại welcome bonus là HAI đợt, không phải một", 
     noBonus("2026-09-01"),
     level("2026-09-06", 70000, "points"),
   ]);
+  // Kiểm CẢ `until`: chỉ kiểm `at` thì một bản dựng cho đợt đầu chạy tới tận
+  // 06/09 — đúng cái lỗi vạch ngăn sinh ra để chặn — vẫn qua được test này.
   assert.deepEqual(
-    kept.map((p) => p.at),
-    ["2026-08-29", "2026-09-06"],
+    kept.map((p) => [p.at, p.until]),
+    [
+      ["2026-08-29", "2026-09-01"],
+      ["2026-09-06", null],
+    ],
   );
 });
 
@@ -110,10 +115,51 @@ test("nhiều lần liên tiếp KHÔNG có bonus chỉ tính là một trạng 
     noBonus("2026-09-03"),
     level("2026-09-06", 70000, "points"),
   ]);
-  assert.equal(kept.length, 2);
+  // Ba lần liên tiếp không có bonus là MỘT trạng thái, nên đợt đầu kết thúc ở
+  // ngày đầu tiên của chuỗi đó chứ không phải ngày cuối.
+  assert.deepEqual(
+    kept.map((p) => [p.at, p.until]),
+    [
+      ["2026-08-29", "2026-09-01"],
+      ["2026-09-06", null],
+    ],
+  );
 });
 
 test("dòng thời gian mở đầu bằng không-có-bonus vẫn giữ mức đầu tiên", () => {
   const kept = dedupeHistory([noBonus("2026-09-01"), level("2026-09-06", 70000, "points")]);
   assert.deepEqual(kept.map((p) => p.amount), [70000]);
+});
+
+test("đợt đầu tiên bị cắt đầu — `at` chỉ là lần đầu NHÌN THẤY", () => {
+  // Nhật ký chỉ ghi thêm khi số đổi, nên mức đang chạy lúc bắt đầu theo dõi đã
+  // chạy từ trước đó không biết bao lâu. Tính thời lượng đợt này như một con
+  // số chắc chắn là luôn ước lượng THIẾU.
+  const kept = dedupeHistory([
+    level("2026-08-29", 70000, "points"),
+    level("2026-09-06", 50000, "points"),
+  ]);
+  assert.deepEqual(kept.map((p) => p.startCensored), [true, false]);
+});
+
+test("có lần ghi 'chưa có offer' trước thì ngày bắt đầu là ngày QUAN SÁT ĐƯỢC", () => {
+  // Khác ca trên: ở đây có một lần ghi xác nhận lúc ấy thẻ chưa có bonus nào,
+  // nên ngày offer bắt đầu là dữ kiện thật, không phải suy đoán.
+  const kept = dedupeHistory([
+    noBonus("2026-08-29"),
+    level("2026-09-06", 70000, "points"),
+  ]);
+  assert.deepEqual(kept.map((p) => p.startCensored), [false]);
+});
+
+test("hết nhật ký KHÔNG có nghĩa là offer còn chạy", () => {
+  // Thẻ bị gỡ khỏi Contentful thì nhật ký đơn giản là không có dòng nào nữa —
+  // không có bia mộ. Đợt cuối của một thẻ đã chết trông y hệt đợt đang chạy
+  // của một thẻ còn sống; chỉ `Product.isActive` phân biệt được.
+  const kept = dedupeHistory([
+    level("2026-08-29", 70000, "points"),
+    level("2026-09-06", 50000, "points"),
+  ]);
+  assert.deepEqual(kept.map((p) => p.endCensored), [false, true]);
+  assert.equal(kept[1].until, null, "until null đi kèm endCensored, không phải 'đang chạy'");
 });

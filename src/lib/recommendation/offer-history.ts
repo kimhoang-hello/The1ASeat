@@ -42,7 +42,9 @@ export interface OfferHistoryPoint {
   /** Ngày mức này BẮT ĐẦU hiện trên site. `YYYY-MM-DD`. */
   at: string;
   /**
-   * Ngày mức này THÔI hiện, hoặc `null` nếu nó vẫn đang chạy.
+   * Ngày mức này THÔI hiện, hoặc `null` khi CHƯA QUAN SÁT THẤY nó kết thúc.
+   *
+   * `null` KHÔNG có nghĩa "chắc chắn đang chạy" — xem `endCensored`.
    *
    * Phải nằm trên chính điểm dữ liệu chứ không để người dùng API tự suy từ
    * `at` của điểm kế tiếp — cách suy đó sai đúng lúc nó quan trọng nhất. Thẻ
@@ -53,6 +55,27 @@ export interface OfferHistoryPoint {
    * trị nhất trong đoạn đó.
    */
   until: string | null;
+  /**
+   * `at` chỉ là lần ĐẦU TIÊN quan sát thấy mức này, không phải ngày nó bắt
+   * đầu — mức đã chạy từ trước khi nhật ký bắt đầu ghi.
+   *
+   * Luôn đúng với đợt đầu tiên của mọi thẻ: nhật ký chỉ ghi thêm khi số ĐỔI,
+   * nên lần ghi đầu là lần đầu nhìn thấy, không phải lần đầu tồn tại. Phase 3
+   * phải nói "từ khi theo dõi" chứ không được tính thời lượng đợt này như một
+   * con số chắc chắn — làm vậy là luôn ước lượng THIẾU, và thiếu đúng ở đợt
+   * dài nhất.
+   */
+  startCensored: boolean;
+  /**
+   * Chưa quan sát thấy mức này kết thúc.
+   *
+   * KHÔNG được đọc là "đang chạy". Thẻ bị gỡ khỏi Contentful hoặc ngừng phát
+   * hành thì nhật ký đơn giản là không có dòng nào nữa — không có bia mộ. Đợt
+   * cuối của một thẻ đã chết trông y hệt đợt đang chạy của một thẻ còn sống,
+   * và chỉ vòng đời sản phẩm (`Product.isActive`, `effectiveTo`) mới phân biệt
+   * được. Phase 3 phải tra chỗ đó trước khi nói bất cứ điều gì ở thì hiện tại.
+   */
+  endCensored: boolean;
   /** Nhãn đúng như nó từng hiện trên site. */
   label: string;
   amount: number | undefined;
@@ -104,6 +127,17 @@ export function dedupeHistory(timeline: readonly OfferHistoryState[]): OfferHist
     points.push({
       at: state.at,
       until: next === undefined ? null : next.at,
+      // Chỉ trạng thái ĐẦU TIÊN của cả dòng thời gian mới bị cắt đầu: nhật ký
+      // chỉ ghi khi số đổi, nên lần ghi đầu là lần đầu NHÌN THẤY, không phải
+      // lần đầu tồn tại.
+      //
+      // Tính theo `i` chứ KHÔNG theo `points.length`: thẻ mở đầu bằng một lần
+      // ghi "không có welcome bonus" rồi mới có offer thì ngày bắt đầu của
+      // offer đó là ngày ĐÃ QUAN SÁT ĐƯỢC — có một lần ghi trước nó xác nhận
+      // lúc ấy chưa có gì. Đánh dấu censored ở đó là vứt đi một dữ kiện mình
+      // thật sự có.
+      startCensored: i === 0,
+      endCensored: next === undefined,
       label: state.bonus.label,
       amount: state.bonus.amount,
       unit: state.bonus.unit,

@@ -108,10 +108,19 @@ so hai điểm cùng đơn vị**. Thẻ cashback đổi từ "Hoàn tiền 15%"
 mặt" là đổi đơn vị: so thẳng 15 với 250 rồi nói "từng lên tới $250" là một câu
 về tiền, nói sai thì người đọc mở nhầm thẻ.
 
-Mỗi đợt mang `at` (bắt đầu) và `until` (kết thúc, `null` = đang chạy). `until`
-nằm trên chính điểm dữ liệu chứ không để người dùng suy từ `at` của điểm kế
-tiếp — thẻ chạy 70,000 từ 01/08, bỏ bonus ngày 10/08, chạy lại 70,000 từ 01/09
-thì cách suy đó kết luận đợt đầu kéo dài suốt tháng 8.
+Mỗi đợt mang `at`, `until`, và hai cờ nói ra chỗ dữ liệu KHÔNG biết:
+
+- `until` nằm trên chính điểm dữ liệu chứ không để người dùng suy từ `at` của
+  điểm kế tiếp — thẻ chạy 70,000 từ 01/08, bỏ bonus ngày 10/08, chạy lại
+  70,000 từ 01/09 thì cách suy đó kết luận đợt đầu kéo dài suốt tháng 8.
+- `startCensored` — `at` chỉ là lần ĐẦU TIÊN nhìn thấy mức này, không phải
+  ngày nó bắt đầu. Đúng với đợt đầu của mọi thẻ, vì nhật ký chỉ ghi khi số
+  ĐỔI. Tính thời lượng đợt đó như con số chắc chắn là luôn ước lượng thiếu.
+- `endCensored` — `until: null` nghĩa là **chưa quan sát thấy kết thúc**, KHÔNG
+  phải "đang chạy". Thẻ bị gỡ khỏi Contentful thì nhật ký chỉ đơn giản dừng
+  lại, không có bia mộ. Chỉ `Product.isActive` / `effectiveTo` mới phân biệt
+  được thẻ chết với thẻ còn sống — tra chỗ đó trước khi nói bất cứ điều gì ở
+  thì hiện tại.
 
 Những lần ghi mà mức bonus KHÔNG đổi đã bị bỏ trước khi trả về — file gốc ghi
 thêm một dòng khi welcome bonus HOẶC rebate đổi, nên không lọc thì Scotiabank®
