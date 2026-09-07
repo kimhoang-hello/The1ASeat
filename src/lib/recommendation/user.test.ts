@@ -39,7 +39,7 @@ import {
   compareToThreshold,
   everHeldProductIds,
   heldProductIds,
-  lastClosedDate,
+  lastClosed,
   primaryGoal,
   resolveTripGoal,
   sortedGoals,
@@ -148,12 +148,31 @@ test("phép so status === 'previously_held' bỏ sót thẻ closed", () => {
 });
 
 test("ngày đóng biết thì tra được, không biết thì thành chỗ trống", () => {
-  assert.equal(
-    lastClosedDate(flexiblePointsSufficient, productIdFor("amex-gold-rewards")),
-    "2024-08-15",
-  );
-  assert.equal(lastClosedDate(nearlyEmpty, productIdFor("amex-green")), null);
+  assert.deepEqual(lastClosed(flexiblePointsSufficient, productIdFor("amex-gold-rewards")), {
+    kind: "closed",
+    date: "2024-08-15",
+  });
+  assert.deepEqual(lastClosed(nearlyEmpty, productIdFor("amex-green")), { kind: "unknown" });
+  assert.deepEqual(lastClosed(beginnerNoCards, productIdFor("amex-green")), { kind: "never_closed" });
   assert.ok(gapKinds(nearlyEmpty).includes("card_closed_date_unknown"));
+});
+
+test("một quãng không rõ ngày làm cả câu trả lời thành CHƯA BIẾT", () => {
+  // Hai lần giữ cùng một thẻ: một lần biết ngày đóng, một lần không. Trả về
+  // ngày đã biết là trình bày một ngày CŨ như thể nó là lần đóng gần nhất —
+  // và luật "không có bonus nếu từng giữ trong N tháng qua" sẽ kết luận đã hết
+  // hạn chờ.
+  const state = broken(flexiblePointsSufficient, (s) => {
+    s.cards.push({
+      ...structuredClone(s.cards[1]),
+      id: id<UserCardId>(`${s.cards[1].id}_lan_truoc`),
+      status: "previously_held",
+      openedDate: null,
+      closedDate: null,
+    });
+  });
+  assert.deepEqual(errorsIn(state), []);
+  assert.deepEqual(lastClosed(state, productIdFor("amex-gold-rewards")), { kind: "unknown" });
 });
 
 test("mở lại sau khi đóng là hợp lệ; hai dòng đang-giữ thì không", () => {
@@ -369,15 +388,49 @@ test("so khoảng với ngưỡng cho BA kết quả", () => {
   assert.equal(compareToThreshold(amountRange(30_000, 60_000), 80_000), "below");
   // Vế quyết định: "60–80K" so với ngưỡng $80,000 là CÓ THỂ. Trả về "không
   // đạt" ở đây là loại oan đúng những người mà khoảng đó bao trùm.
-  assert.equal(compareToThreshold(amountRange(60_000, 80_001), 80_000), "straddles");
+  assert.equal(compareToThreshold(amountRange(60_000, 80_000), 80_000), "straddles");
   assert.equal(compareToThreshold(amountRange(150_000, null), 200_000), "straddles");
 });
 
 test("cận trên nhỏ hơn cận dưới là lỗi", () => {
   const state = broken(beginnerNoCards, (s) => {
-    s.profile.annualIncome = { low: 90_000, high: 60_000 };
+    s.profile.annualPersonalIncome = { low: 90_000, high: 60_000 };
   });
   assert.ok(errorsIn(state).some((message) => message.includes("nhỏ hơn cận dưới")));
+});
+
+test("vế HOẶC của điều kiện thu nhập biểu diễn được", () => {
+  // Phase 1 dựng "$60,000 cá nhân HOẶC $100,000 hộ gia đình" thành hai dòng
+  // cùng `ruleGroup`. Vế hộ gia đình sinh ra để nhận người có thu nhập cá nhân
+  // DƯỚI ngưỡng — nên một trường thu nhập duy nhất làm nó vô dụng.
+  const profile = lowSpendCapacity.profile;
+  assert.equal(compareToThreshold(profile.annualPersonalIncome!, 60_000), "below");
+  assert.equal(compareToThreshold(profile.annualHouseholdIncome!, 100_000), "at_or_above");
+});
+
+test("thu nhập hộ gia đình thấp hơn thu nhập cá nhân là lỗi", () => {
+  const state = broken(lowSpendCapacity, (s) => {
+    s.profile.annualHouseholdIncome = amountRange(10_000, 20_000);
+  });
+  assert.ok(errorsIn(state).some((message) => message.includes("hộ gia đình")));
+});
+
+test("status gõ sai bị bắt, thay vì làm thẻ biến mất im lặng", () => {
+  const state = broken(aeroplanHeavy, (s) => {
+    s.cards[0].status = "actve" as never;
+  });
+  // Không có phép kiểm này thì `holdsNow` và `everHeld` cùng trả false: thẻ
+  // rơi khỏi cả danh mục lẫn lịch sử, và welcome bonus của nó được hứa lại.
+  assert.equal(heldProductIds(state).size, 1);
+  assert.equal(everHeldProductIds(state).size, 1);
+  assert.ok(errorsIn(state).some((message) => message.includes("status không tồn tại")));
+});
+
+test("sinh viên là một trường riêng, không suy từ đâu được", () => {
+  assert.equal(beginnerNoCards.profile.isStudent, false);
+  assert.equal(nearlyEmpty.profile.isStudent, null);
+  assert.ok(gapKinds(nearlyEmpty).includes("student_status_unknown"));
+  assert.ok(!gapKinds(beginnerNoCards).includes("student_status_unknown"));
 });
 
 /* ------------------------------------------------------------------ *
@@ -398,12 +451,43 @@ test("mục tiêu sắp tất định: priority nhỏ trước, chưa xếp xu�
   assert.deepEqual(order.slice(1), ["goal_a", "goal_u_sparse_next_card"]);
 });
 
-test("không mục tiêu nào thì primaryGoal là null và có chỗ trống", () => {
+test("không mục tiêu nào thì primaryGoal nói 'none' và có chỗ trống", () => {
   const state = broken(beginnerNoCards, (s) => {
     s.goals = [];
   });
-  assert.equal(primaryGoal(state), null);
+  assert.deepEqual(primaryGoal(state), { kind: "none" });
   assert.ok(gapKinds(state).includes("goal_missing"));
+});
+
+test("nhiều mục tiêu cùng mức ưu tiên là AMBIGUOUS, không phải chọn theo id", () => {
+  // Tất định không phải là đúng: lấy id nhỏ nhất nghĩa là một chuỗi sinh lúc
+  // lưu quyết định hàm chấm điểm nào chạy (§10 dùng hàm khác nhau cho từng
+  // loại mục tiêu), trong khi người dùng chưa hề xếp thứ tự.
+  const state = broken(nearlyEmpty, (s) => {
+    s.goals.push({ ...structuredClone(s.goals[0]), id: "goal_a", type: "diversify" } as never);
+  });
+  const primary = primaryGoal(state);
+  assert.equal(primary.kind, "ambiguous");
+  assert.ok(gapKinds(state).includes("goal_priority_ambiguous"));
+
+  const ranked = broken(state, (s) => {
+    s.goals[0].priority = 1;
+    s.goals[1].priority = 2;
+  });
+  assert.equal(primaryGoal(ranked).kind, "resolved");
+  assert.ok(!gapKinds(ranked).includes("goal_priority_ambiguous"));
+});
+
+test("chỗ trống không đổi khi database trả về các dòng theo thứ tự khác", () => {
+  // `userGaps` hứa thứ tự cố định. Nếu nó duyệt theo thứ tự mảng thì lời hứa
+  // đó chỉ đúng khi truy vấn tình cờ trả về cùng một thứ tự — và Phase 4 sẽ
+  // báo có thay đổi ở nơi không có gì thay đổi.
+  const shuffled = broken(flexiblePointsSufficient, (s) => {
+    s.cards.reverse();
+    s.balances.reverse();
+    s.goals.reverse();
+  });
+  assert.deepEqual(userGaps(shuffled), userGaps(flexiblePointsSufficient));
 });
 
 /* ------------------------------------------------------------------ *

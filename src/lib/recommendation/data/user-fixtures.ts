@@ -47,9 +47,11 @@ function profileOf(slug: string, overrides: Partial<UserProfile> = {}): UserProf
     id: id<UserId>(slug),
     country: "CA",
     province: "ON",
-    annualIncome: null,
+    annualPersonalIncome: null,
+    annualHouseholdIncome: null,
     annualFeeTolerancePerCard: null,
     businessCardsAllowed: null,
+    isStudent: null,
     createdAt: TODAY,
     updatedAt: TODAY,
     ...overrides,
@@ -127,9 +129,10 @@ function goalOf(userSlug: string, goal: GoalDraft): Goal {
  */
 export const beginnerNoCards: UserState = {
   profile: profileOf("u_beginner", {
-    annualIncome: amountRange(60_000, 80_000),
+    annualPersonalIncome: amountRange(60_000, 80_000),
     annualFeeTolerancePerCard: 120,
     businessCardsAllowed: false,
+    isStudent: false,
   }),
   spend: spendOf("u_beginner", {
     monthlyTotal: exactAmount(2_000),
@@ -172,7 +175,7 @@ export const beginnerUndeclared: UserState = {
 /** 300K Aeroplan®, 50K MR, hai thẻ Aeroplan® đang giữ, hỏi thẻ tiếp theo. */
 export const aeroplanHeavy: UserState = {
   profile: profileOf("u_aeroplan_heavy", {
-    annualIncome: amountRange(150_000, null),
+    annualPersonalIncome: amountRange(150_000, null),
     annualFeeTolerancePerCard: 700,
     businessCardsAllowed: true,
   }),
@@ -212,7 +215,7 @@ export const aeroplanHeavy: UserState = {
  */
 export const japanTripFunded: UserState = {
   profile: profileOf("u_japan_funded", {
-    annualIncome: amountRange(80_000, 150_000),
+    annualPersonalIncome: amountRange(80_000, 150_000),
     annualFeeTolerancePerCard: 250,
     businessCardsAllowed: false,
   }),
@@ -246,7 +249,7 @@ export const japanTripFunded: UserState = {
  */
 export const japanTripShortfall: UserState = {
   profile: profileOf("u_japan_gap", {
-    annualIncome: amountRange(80_000, 150_000),
+    annualPersonalIncome: amountRange(80_000, 150_000),
     annualFeeTolerancePerCard: 400,
     businessCardsAllowed: true,
   }),
@@ -290,7 +293,11 @@ export const japanTripShortfall: UserState = {
  */
 export const lowSpendCapacity: UserState = {
   profile: profileOf("u_low_capacity", {
-    annualIncome: amountRange(60_000, 80_000),
+    // Cá nhân DƯỚI ngưỡng $60,000 của Scotiabank® Momentum, hộ gia đình thì
+    // vượt $100,000. Đây chính là ca vế HOẶC của `income()` sinh ra để cứu, và
+    // một trường thu nhập duy nhất không kể nổi.
+    annualPersonalIncome: amountRange(45_000, 55_000),
+    annualHouseholdIncome: amountRange(110_000, 130_000),
     annualFeeTolerancePerCard: 200,
     businessCardsAllowed: false,
   }),
@@ -322,7 +329,7 @@ export const lowSpendCapacity: UserState = {
  */
 export const duplicateBagBenefit: UserState = {
   profile: profileOf("u_dup_benefit", {
-    annualIncome: amountRange(80_000, 150_000),
+    annualPersonalIncome: amountRange(80_000, 150_000),
     annualFeeTolerancePerCard: 150,
     businessCardsAllowed: false,
   }),
@@ -354,7 +361,7 @@ export const duplicateBagBenefit: UserState = {
  */
 export const flexiblePointsSufficient: UserState = {
   profile: profileOf("u_flexible", {
-    annualIncome: amountRange(150_000, null),
+    annualPersonalIncome: amountRange(150_000, null),
     annualFeeTolerancePerCard: 800,
     businessCardsAllowed: true,
   }),

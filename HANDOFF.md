@@ -1,6 +1,6 @@
-# Bàn giao: Recommendation Engine — Phase 1
+# Bàn giao: Recommendation Engine — Phase 1 + 2
 
-Trạng thái tính đến **08/09/2026**, commit `60ee963` trên `origin/main`.
+Trạng thái tính đến **08/09/2026**. Phase 1 xong; **Phase 2 xong**.
 Đọc file này là đủ để làm tiếp, không cần lịch sử chat.
 
 ---
@@ -29,7 +29,7 @@ thích được**; LLM chỉ diễn đạt kết quả cuối, không bao giờ 
 | Phase | Nội dung | Trạng thái |
 | --- | --- | --- |
 | 1 | Lớp dữ liệu nền | ✅ **XONG** |
-| 2 | Hồ sơ người dùng, danh mục thẻ, số dư điểm, goals | ⛔ Chưa bắt đầu |
+| 2 | Hồ sơ người dùng, danh mục thẻ, số dư điểm, goals | ✅ **XONG** |
 | 3 | Engine (Portfolio Analyzer → Ranking) | ⛔ Chưa bắt đầu |
 | 4 | Debugger + recommendation_runs | ⛔ Chưa bắt đầu |
 | 5 | Frontend | ⛔ Chưa bắt đầu |
@@ -285,57 +285,123 @@ migrate cái nào — đó là phép thử đúng.
 
 ---
 
-## 8. Việc còn lại — bắt đầu Phase 2
+## 8. Phase 2 — đã xong
 
-Spec §35 Phase 2. **Đừng nhảy sang Phase 3 trước khi Phase 2 xong.**
+Mô hình trạng thái người dùng nằm ở `src/lib/recommendation/user-*.ts` +
+`data/user-fixtures.ts`. Tài liệu đầy đủ trong mục "Phase 2" của
+[`src/lib/recommendation/README.md`](src/lib/recommendation/README.md) —
+**đọc nó trước khi sửa**.
 
-### 8.1 Câu hỏi phải hỏi user TRƯỚC
+### 8.1 Câu hỏi database: CỐ Ý chưa trả lời, và không chặn Phase 3
 
-**Dùng database gì cho dữ liệu người dùng?** Phase 1 cố ý không quyết định thay.
-Repo chưa có DB nào; site deploy lên Hostinger Node.js auto-deploy từ `main`.
-Đây là quyết định về hạ tầng và chi phí, không phải quyết định kỹ thuật thuần.
+§8.1 của bản bàn giao trước hỏi "dùng database gì cho dữ liệu người dùng".
+Câu trả lời của Phase 2: **chưa cần trả lời**. Việc Phase 2 thật sự phải làm
+là MÔ HÌNH, và mô hình không đổi theo chỗ lưu.
 
-### 8.2 Thực thể Phase 2 (spec §4, §5)
+`UserDataSource` (`user-source.ts`) chỉ có **đọc** — Phase 3 chỉ đọc, còn phần
+ghi dính chặt vào transaction/migration/quyền truy cập của một backend cụ thể.
+`inMemoryUserStore` trả về **bản sao**, vì database nào cũng trả bản sao.
 
-`user_profiles`, `user_spend_profiles`, `user_cards`, `user_point_balances`,
-`goals`.
+**Câu hỏi này phải trả lời trước Phase 5** (frontend lưu hồ sơ thật). Không
+trước đó.
 
-Lưu ý từ spec:
-- `minimum_spend_capacity_3m` quan trọng hơn `monthly_total` — so với
-  `Offer.spendPerNinetyDays` đã có sẵn
-- `user_cards.status` phân biệt `active` / `closed` / `previously_held` —
-  `previously_held` cần cho luật Amex® "once in a lifetime"
-  (`EligibilityRule.scope === "welcome_offer"`)
-- **Không lưu số tài khoản loyalty**, chỉ số dư
-- Trip goal dùng **vùng** (`TripRegion`) chứ không dùng sân bay
+### 8.2 Những gì mô hình cố ý giữ tách nhau
 
-### 8.3 Tiêu chí nghiệm thu Phase 2 (spec §35)
+Mỗi gạch đầu dòng dưới đây là một chỗ mà gộp lại sẽ làm engine sai **âm thầm**:
 
-- Hồ sơ chịu được dữ liệu thiếu
-- Phân biệt được thẻ đang giữ với thẻ từng giữ
-- Số dư điểm không cần số tài khoản
-- Trip goal biểu diễn được bằng vùng
+- **Trống ≠ bằng không ở BA mức.** Trường (`0` là câu trả lời, `null` là chưa
+  hỏi) · bộ sưu tập (`UserState.declared` tách "tôi chưa có thẻ nào" — Test A —
+  khỏi "tôi bấm bỏ qua") · dòng (`balance: null` = có tài khoản, không nhớ số
+  dư, khác cả "không có dòng" lẫn "0 điểm").
+- **`closed` và `previously_held` CÙNG nghĩa TỪNG GIỮ.** Viết luật Amex®
+  once-in-a-lifetime bằng `status === "previously_held"` sẽ để thẻ `closed`
+  lọt qua, và hậu quả không phải một lỗi — là một khuyến nghị hứa khoản bonus
+  ngân hàng sẽ từ chối. **Dùng `everHeld` / `everHeldProductIds`, đừng so
+  `status` trực tiếp.**
+- **Tiền là KHOẢNG**, nên `compareToThreshold` cho **ba** kết quả. Thu nhập
+  "60–80K" so với thẻ đòi $80,000 là `straddles`, không phải "không đạt" —
+  §14 tách eligibility khỏi suitability đúng vì thế.
+- **Thu nhập cá nhân và hộ gia đình là HAI trường.** Điều kiện của ngân hàng
+  Canada nối bằng HOẶC, và vế hộ gia đình sinh ra để nhận người có thu nhập cá
+  nhân DƯỚI ngưỡng — một trường duy nhất làm vế đó vô dụng. `isStudent` cùng
+  lý do, cho `student_status_required`. Cả hai mặc định `null` và chỉ hỏi khi
+  chúng quyết định điều gì đó (§30).
+- **`lastClosed` có BA trạng thái**, và chuyển sang `unknown` khi chỉ một quãng
+  giữ thẻ thiếu ngày đóng. Trả về ngày đã biết ở đó là trình bày một ngày cũ
+  như thể nó là lần đóng gần nhất.
+- **`primaryGoal` trả về `none` / `resolved` / `ambiguous`.** Nhiều mục tiêu
+  cùng mức ưu tiên thì để `GoalId` quyết định là để một chuỗi sinh lúc lưu
+  chọn hàm chấm điểm nào chạy.
+- **`minimumSpendCapacity3m` KHÔNG suy từ `monthlyTotal`** (spec gọi nó
+  "especially important"), và **số người bay KHÔNG mặc định là 1** — mặc định
+  1 chia nhỏ số điểm cần cho một gia đình rồi để `NO_NEW_CARD` thắng nhờ một
+  giả định. Ngược lại `originRegion` thì suy từ `profile.country`, vì nó đã
+  nằm sẵn trong hồ sơ. Ranh giới là "đã biết ở chỗ khác", không phải "đoán
+  được".
 
-### 8.4 Việc dọn dẹp có thể làm bất cứ lúc nào
+### 8.3 Không có chỗ nào nhét được dữ liệu nhạy cảm
 
-- Phép kiểm phủ sóng cho `product_benefits` (hiện thiếu quyền lợi không báo gì)
-- `record-offer-history.mts` ghi thêm dòng "không thấy thẻ này" khi thẻ vắng
-  khỏi snapshot (xem §7)
-- Cấu trúc hoá bảo hiểm trong `textValue` nếu Phase 3 cần chấm điểm bảo hiểm
+Spec §4.4 cấm lưu số tài khoản loyalty. Cưỡng chế bằng cấu trúc: **cả mô hình
+không có một trường chuỗi tự do nào** (mã sân bay ràng buộc `^[A-Z]{3}$`).
+Không tên, không email, không ngày sinh; thu nhập là khoảng. Hai test chốt
+việc này, và một test thứ ba chặn mô hình mã hoá kết quả — thêm
+`preferredProductId` vào hồ sơ sẽ làm nó đỏ.
+
+### 8.4 Kết quả kiểm thử Phase 2
+
+```bash
+npx tsc --noEmit        # sạch
+npm run lint            # sạch
+npm run build           # Compiled successfully
+npm run test:reco       # 138/138 pass (91 của Phase 1 + 47 mới)
+npm run test:game       # 43/43 pass
+npm run audit:reco-data # 0 lỗi, 9 cảnh báo (y như trước, đều là chỗ trống có chủ ý)
+```
+
+### 8.5 Đã biết trước, để Phase 3 khỏi ngạc nhiên
+
+- **Test C/D của spec §32 là chuyến Nhật, mà Phase 1 chưa dựng award strategy
+  cho JAPAN** — chỉ `CANADA_US → SEA_VIETNAM` có dữ liệu. Đây KHÔNG phải lỗi
+  Phase 2: chỗ trống được khai đúng (`award_route_uncovered`) và có test chốt
+  rằng nó được nói ra chứ không im lặng. Nhưng muốn chạy Test C/D thật thì
+  phải bổ sung award strategy cho JAPAN trước.
+- `UserDataSource` vẫn **chưa từng chạy với một database thật**. Rủi ro lớn
+  nhất của Phase 1 (§7) chưa được giải toả; `inMemoryUserStore` chỉ thu hẹp
+  nó một phần bằng việc trả bản sao.
+- `banking_relationship_required` là một `EligibilityRuleType` của Phase 1
+  **chưa có dòng nào trong seed**, nên hồ sơ người dùng cũng chưa có trường
+  tương ứng. Thêm luật đó vào một thẻ nào đó thì phải thêm trường cùng lúc,
+  nếu không nó sẽ không đánh giá được.
+- Mô hình **không có** khái niệm thẻ phụ / authorized user. Người giữ thẻ phụ
+  hưởng quyền lợi nhưng thường không mất quyền welcome bonus — hiện chưa biểu
+  diễn được. Ngoài phạm vi V1 nhưng sẽ va vào ở V2.
 
 ---
 
-## 9. Bước tiếp theo cụ thể
+## 9. Việc còn lại — bắt đầu Phase 3
 
-1. Đọc `src/lib/recommendation/README.md` — nó là tài liệu chuẩn của module.
-2. Chạy `npm run test:reco` và `npm run audit:reco-data` để xác nhận điểm xuất
-   phát sạch.
-3. Hỏi user câu ở §8.1 (database cho Phase 2).
-4. Làm Phase 2 theo spec §35. **Không bắt đầu Phase 3.**
-5. Cross-check với Codex sau mỗi thay đổi:
-   ```bash
-   cd "/Users/hoangle/Developer/Claude Code/ghe-1a" && codex exec review --commit HEAD -m gpt-5.6-sol -c model_reasoning_effort="high" < /dev/null 2>&1 | tail -40
-   ```
+Spec §35 Phase 3. Xây theo `normalize.ts` → `portfolio.ts` → `strategies.ts` →
+`needs.ts` → `eligibility.ts` / `suitability.ts` → `scoring/*` → `rules.ts` →
+`rank.ts` (spec §26 nói thẳng: đừng gộp thành một `recommendation.ts` khổng lồ).
+
+Bốn luật không được phá, giờ là năm:
+
+1. Affiliate không bao giờ ảnh hưởng thứ hạng (§16 Rule 7).
+2. Điểm tín dụng không phải điều kiện cứng (§3.10).
+3. Không đếm trùng điểm chuyển được (§7).
+4. `NO_NEW_CARD` là ứng viên trong **mọi** lượt chạy (§16 Rule 8).
+5. Mô hình người dùng không mã hoá thẻ nào nên được khuyên — nếu Phase 3 thấy
+   thiếu một trường, thêm một **ràng buộc** hoặc một **dữ kiện**, đừng thêm
+   một sở thích về sản phẩm.
+
+### Việc dọn dẹp có thể làm bất cứ lúc nào
+
+- Award strategy cho JAPAN, EUROPE, EAST_ASIA (xem §8.5)
+- Phép kiểm phủ sóng cho `product_benefits`
+- `record-offer-history.mts` ghi dòng "không thấy thẻ này" khi thẻ vắng khỏi
+  snapshot (xem §7)
+- Cấu trúc hoá bảo hiểm trong `textValue` nếu Phase 3 cần chấm điểm bảo hiểm
+- `editorial_rules` (spec §15) — thêm một entity, không migrate cái nào
 
 ### Quy ước của repo cần biết
 
@@ -346,5 +412,9 @@ Lưu ý từ spec:
   thích **vì sao** chứ không phải **làm gì**.
 - Đụng vào thẻ tín dụng thì chạy `audit:trademarks`, `audit:rebate-prose`,
   `audit:reco-data`.
+- Cross-check với Codex sau mỗi thay đổi:
+  ```bash
+  cd "/Users/hoangle/Developer/Claude Code/ghe-1a" && codex exec review --commit HEAD -m gpt-5.6-sol -c model_reasoning_effort="high" < /dev/null 2>&1 | tail -40
+  ```
 - ⚠️ **Đừng dùng `git checkout -- <file>` để hoàn tác thử nghiệm** khi file đó
   còn thay đổi chưa commit — đã mất việc hai lần trong Phase 1. Dùng bản sao.

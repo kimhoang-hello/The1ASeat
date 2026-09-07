@@ -361,8 +361,11 @@ mất mức nào cũng dẫn tới một khuyến nghị sai mà không có lỗ
    điểm vẫn dùng được, chỉ con số là chưa biết. Khác cả "không có dòng nào" lẫn
    "0 điểm".
 
-`userGaps(state)` gom mọi chỗ chưa biết thành `UserDataGap` máy đọc được, thứ
-tự cố định — §29 (hạ độ tin cậy) và §30 (chọn câu hỏi tiếp theo) đều đọc nó.
+`userGaps(state)` gom mọi chỗ chưa biết thành `UserDataGap` máy đọc được. Thứ
+tự cố định đòi hỏi **sắp xếp** `cards`/`balances`/`goals` trước khi duyệt, không
+chỉ viết các khối theo thứ tự cố định: chúng đến từ một truy vấn database, và
+truy vấn không hứa thứ tự nào — hai trạng thái giống hệt nhau sẽ sinh hai danh
+sách khác nhau. Danh sách này — §29 (hạ độ tin cậy) và §30 (chọn câu hỏi tiếp theo) đều đọc nó.
 Chỗ trống **không phải lỗi**: hồ sơ thiếu dữ liệu là ca bình thường nhất của
 Phase 2, nên `validateUserState` không nói gì về chúng.
 
@@ -376,7 +379,35 @@ chối. Dùng `holdsNow` / `everHeld` / `everHeldProductIds`.
 
 Thẻ đã đóng mà không rõ ngày đóng sinh `card_closed_date_unknown`: luật "không có
 bonus nếu từng giữ trong N tháng qua" không đánh giá được, và mặc định là đủ điều
-kiện lại hứa một khoản bonus không có thật.
+kiện lại hứa một khoản bonus không có thật. `lastClosed` trả về **ba** trạng thái
+(`never_closed` / `closed` / `unknown`) và chuyển sang `unknown` khi CHỈ MỘT quãng
+thiếu ngày — trả về ngày đã biết ở đó là trình bày một ngày cũ như thể nó là lần
+đóng gần nhất.
+
+Và `validateUserState` kiểm `status` thuộc đúng ba giá trị: một status gõ sai làm
+`holdsNow` và `everHeld` **cùng** trả false, tức thẻ biến mất khỏi cả danh mục lẫn
+lịch sử mà không phép kiểm nào khác nhận ra.
+
+### Thu nhập cá nhân và hộ gia đình là HAI trường
+
+Ngân hàng Canada công bố điều kiện theo cặp nối bằng HOẶC ("$60,000 cá nhân
+HOẶC $100,000 hộ gia đình"), và `income()` trong `data/eligibility-rules.ts` đã
+dựng đúng cấu trúc đó. Vế hộ gia đình sinh ra để nhận những người có thu nhập
+cá nhân **dưới** ngưỡng — nên một trường thu nhập duy nhất làm nó vô dụng:
+engine hoặc so cùng một con số với cả hai ngưỡng (chỉ giúp người vốn đã đạt),
+hoặc loại thẳng đúng những người vế kia sinh ra để cứu.
+
+`isStudent` cũng vậy, ở quy mô nhỏ hơn: `student_status_required` là luật
+`hard` có thật trong bộ dữ liệu. Không có trường thì hoặc loại thẻ sinh viên
+khỏi cả sinh viên, hoặc khuyên nó cho người bốn mươi lăm tuổi.
+
+Cả hai đều mặc định `null` và **không cần hỏi trước**: chúng chỉ đổi kết quả
+trong những ca cụ thể, nên chúng là câu hỏi §30 điển hình — hỏi lúc câu trả
+lời quyết định điều gì đó.
+
+`business_required` thì KHÔNG có trường riêng: spec §31 hỏi đúng một câu
+"business cards allowed: yes/no", và `businessCardsAllowed` là câu trả lời cho
+cả điều kiện lẫn sở thích.
 
 ### Tiền là KHOẢNG
 
@@ -398,6 +429,15 @@ khác nhau NHIỀU NHẤT — không có chỗ nào để khai.
 phần chưa phân bổ; coi nó bằng không là kết luận người ta không đi du lịch từ một
 câu chưa ai hỏi. `minimumSpendCapacity3m` cũng KHÔNG suy từ `monthlyTotal` — spec
 gọi nó "especially important" đúng vì phần lớn chi tiêu đã nằm trên thẻ khác.
+
+### `primaryGoal` nói thẳng khi không xác định được
+
+Trả về `{ kind: "none" | "resolved" | "ambiguous" }`, không trả về
+`sortedGoals(state)[0]`. Phép sắp xếp đó tất định, nhưng **tất định không phải
+là đúng**: nhiều mục tiêu cùng `priority: null` thì thứ quyết định người thắng
+là `GoalId` — một chuỗi sinh lúc lưu — và §10 dùng hàm chấm điểm KHÁC NHAU cho
+từng loại mục tiêu, nên id đó đổi luôn cả khuyến nghị. `ambiguous` để Phase 3
+hỏi người dùng xếp thứ tự, hoặc chạy cả hai rồi trình bày song song.
 
 ### Chuyến đi dùng VÙNG
 
@@ -421,7 +461,7 @@ dòng số dư, một test kiểm không trường nào ngoài `cards` nhắc t�
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # 131 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng
+npm run test:reco         # 138 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng
 ```
 
 `audit:reco-data` bắt ba lớp lỗi:

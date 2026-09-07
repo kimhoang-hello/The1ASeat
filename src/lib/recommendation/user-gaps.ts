@@ -9,24 +9,36 @@
  * SUY RA, không viết tay. Một danh sách chỗ trống duy trì tay chạy song song
  * với dữ liệu là một danh sách sẽ lệch ngay lần sửa thứ hai.
  *
- * Danh sách trả về có THỨ TỰ CỐ ĐỊNH. Phase 4 chụp lại trạng thái đầu vào của
- * mỗi lượt chạy (§20) và so hai lượt với nhau; một thứ tự đổi theo thứ tự khoá
- * của object sẽ làm hai lượt giống hệt nhau trông như đã khác đi.
+ * Danh sách trả về có THỨ TỰ CỐ ĐỊNH — và điều đó đòi hỏi phải SẮP XẾP các bộ
+ * sưu tập trước khi duyệt, không chỉ viết các khối theo thứ tự cố định. `cards`,
+ * `balances` và `goals` đến từ một truy vấn database, và truy vấn không hứa thứ
+ * tự nào. Duyệt theo thứ tự đó thì hai trạng thái GIỐNG HỆT nhau sinh ra hai
+ * danh sách chỗ trống khác nhau — Phase 4 chụp lại đầu vào mỗi lượt chạy (§20)
+ * và so hai lượt, nên nó sẽ báo có thay đổi ở nơi không có gì thay đổi, và câu
+ * hỏi tiếp theo của §30 cũng đổi theo.
  */
 
 import { SPEND_CATEGORIES } from "./types.ts";
-import { holdsNow } from "./user.ts";
+import { holdsNow, primaryGoal } from "./user.ts";
 import type { UserDataGap, UserState } from "./user-types.ts";
 
 export function userGaps(state: UserState): UserDataGap[] {
   const gaps: UserDataGap[] = [];
   const { profile, spend } = state;
 
-  if (state.goals.length === 0) {
+  const primary = primaryGoal(state);
+  if (primary.kind === "none") {
     gaps.push({
       kind: "goal_missing",
       subject: profile.id,
       reason: "Chưa biết người này muốn gì. Không mục tiêu thì không có hàm chấm điểm nào áp được (§10).",
+    });
+  } else if (primary.kind === "ambiguous") {
+    gaps.push({
+      kind: "goal_priority_ambiguous",
+      subject: primary.candidates.map((goal) => goal.id).join(","),
+      reason:
+        "Nhiều mục tiêu cùng mức ưu tiên. §10 dùng hàm chấm điểm khác nhau cho từng loại, nên chọn bừa một cái là để id quyết định khuyến nghị.",
     });
   }
 
@@ -40,12 +52,28 @@ export function userGaps(state: UserState): UserDataGap[] {
     });
   }
 
-  if (profile.annualIncome === null) {
+  if (profile.annualPersonalIncome === null) {
     gaps.push({
-      kind: "income_unknown",
+      kind: "personal_income_unknown",
       subject: profile.id,
       reason:
-        "Chưa biết khoảng thu nhập. Không đánh giá được điều kiện thu nhập, nên phải coi là CHƯA BIẾT chứ không được coi là đạt.",
+        "Chưa biết khoảng thu nhập cá nhân. Không đánh giá được điều kiện thu nhập, nên phải coi là CHƯA BIẾT chứ không được coi là đạt.",
+    });
+  }
+  if (profile.annualHouseholdIncome === null) {
+    gaps.push({
+      kind: "household_income_unknown",
+      subject: profile.id,
+      reason:
+        "Chưa biết thu nhập hộ gia đình. Chỉ đổi kết quả khi thu nhập cá nhân không đủ — vế HOẶC của điều kiện sinh ra để cứu đúng những ca đó.",
+    });
+  }
+  if (profile.isStudent === null) {
+    gaps.push({
+      kind: "student_status_unknown",
+      subject: profile.id,
+      reason:
+        "Chưa biết có phải sinh viên không. Thẻ sinh viên có điều kiện `hard`; không biết thì không loại mà cũng không khuyên được.",
     });
   }
 
@@ -116,7 +144,7 @@ export function userGaps(state: UserState): UserDataGap[] {
     });
   }
 
-  for (const card of state.cards) {
+  for (const card of [...state.cards].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))) {
     if (!holdsNow(card) && card.closedDate === null) {
       gaps.push({
         kind: "card_closed_date_unknown",
@@ -138,7 +166,9 @@ export function userGaps(state: UserState): UserDataGap[] {
     });
   }
 
-  for (const row of state.balances) {
+  for (const row of [...state.balances].sort((a, b) =>
+    a.programId < b.programId ? -1 : a.programId > b.programId ? 1 : 0,
+  )) {
     if (row.balance === null) {
       gaps.push({
         kind: "point_balance_amount_unknown",
@@ -151,7 +181,7 @@ export function userGaps(state: UserState): UserDataGap[] {
 
   /* --- Chuyến đi --- */
 
-  for (const goal of state.goals) {
+  for (const goal of [...state.goals].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))) {
     if (goal.type !== "trip") continue;
     if (goal.cabin === null) {
       gaps.push({

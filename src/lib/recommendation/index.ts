@@ -25,13 +25,15 @@ export {
   everHeldProductIds,
   heldProductIds,
   holdsNow,
-  lastClosedDate,
+  lastClosed,
   primaryGoal,
   resolveTripGoal,
   sortedGoals,
   spendFor,
   statedCategories,
   unallocatedMonthly,
+  type ClosureLookup,
+  type PrimaryGoal,
   type ResolvedTripGoal,
 } from "./user.ts";
 export { userGaps } from "./user-gaps.ts";

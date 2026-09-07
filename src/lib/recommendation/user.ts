@@ -56,20 +56,34 @@ export function everHeldProductIds(state: UserState): Set<ProductId> {
 }
 
 /**
- * Lần gần nhất người dùng THÔI giữ sản phẩm này, nếu biết.
+ * Lần gần nhất người dùng THÔI giữ sản phẩm này.
  *
- * `null` có hai nghĩa và người gọi phải phân biệt: chưa từng giữ (kiểm bằng
- * `everHeldProductIds`), hoặc từng giữ mà không rõ ngày đóng. Vế thứ hai sinh
- * ra `card_closed_date_unknown` — luật "không có bonus nếu từng giữ trong N
- * tháng qua" không đánh giá được, và mặc định là đủ điều kiện thì lại hứa một
- * khoản bonus không có thật.
+ * `never_closed` — chưa từng đóng thẻ này. Gồm cả chưa từng giữ (tra bằng
+ *                  `everHeldProductIds`) lẫn đang giữ liên tục từ đầu.
+ * `closed`       — biết ngày đóng gần nhất.
+ * `unknown`      — từng đóng, không biết khi nào.
+ *
+ * BA trạng thái chứ không phải `string | null`, và đây là chỗ một `null` gộp
+ * hai nghĩa sẽ trả giá: người dùng có hai lần giữ thẻ này, một lần biết ngày
+ * đóng và một lần không, thì trả về ngày đã biết là trình bày một ngày CŨ như
+ * thể nó là lần đóng gần nhất. Luật "không có bonus nếu từng giữ trong N tháng
+ * qua" đọc vào đó sẽ kết luận đã hết hạn chờ — và hứa một khoản bonus ngân
+ * hàng sẽ từ chối. Chỉ cần MỘT quãng không rõ ngày là cả câu trả lời không
+ * chắc chắn nữa.
  */
-export function lastClosedDate(state: UserState, productId: ProductId): string | null {
-  const dates = state.cards
-    .filter((card) => card.productId === productId && card.closedDate !== null)
-    .map((card) => card.closedDate as string);
-  if (dates.length === 0) return null;
-  return dates.reduce((latest, day) => (day > latest ? day : latest));
+export type ClosureLookup =
+  | { kind: "never_closed" }
+  | { kind: "closed"; date: string }
+  | { kind: "unknown" };
+
+export function lastClosed(state: UserState, productId: ProductId): ClosureLookup {
+  const past = state.cards.filter((card) => card.productId === productId && !holdsNow(card));
+  if (past.length === 0) return { kind: "never_closed" };
+  if (past.some((card) => card.closedDate === null)) return { kind: "unknown" };
+  const latest = past
+    .map((card) => card.closedDate as string)
+    .reduce((newest, day) => (day > newest ? day : newest));
+  return { kind: "closed", date: latest };
 }
 
 /* ------------------------------------------------------------------ *
@@ -152,9 +166,33 @@ export function sortedGoals(state: UserState): Goal[] {
   });
 }
 
-/** `null` = người dùng chưa nói họ muốn gì. Engine phải hỏi, không được đoán. */
-export function primaryGoal(state: UserState): Goal | null {
-  return sortedGoals(state)[0] ?? null;
+/**
+ * Mục tiêu dẫn dắt lượt chạy — hoặc lời thú nhận rằng chưa xác định được.
+ *
+ * KHÔNG trả về `sortedGoals(state)[0]`. Phép sắp xếp đó tất định, nhưng tất
+ * định không phải là đúng: khi nhiều mục tiêu cùng `priority: null` thì thứ
+ * quyết định người thắng là `GoalId` — một chuỗi sinh ra lúc lưu, không phải
+ * điều gì người dùng nói. Và §10 dùng HÀM CHẤM ĐIỂM KHÁC NHAU cho từng loại
+ * mục tiêu, nên id đó đổi luôn cả khuyến nghị.
+ *
+ * `ambiguous` để Phase 3 xử lý đúng cách: hỏi người dùng xếp thứ tự (§30),
+ * hoặc chạy cả hai rồi trình bày song song. Cả hai đều tốt hơn việc bí mật
+ * chọn một cái.
+ */
+export type PrimaryGoal =
+  | { kind: "none" }
+  | { kind: "resolved"; goal: Goal }
+  | { kind: "ambiguous"; candidates: Goal[] };
+
+export function primaryGoal(state: UserState): PrimaryGoal {
+  const ordered = sortedGoals(state);
+  if (ordered.length === 0) return { kind: "none" };
+  const top = ordered[0];
+  const tied = ordered.filter(
+    (goal) => (goal.priority ?? null) === (top.priority ?? null),
+  );
+  if (tied.length > 1) return { kind: "ambiguous", candidates: tied };
+  return { kind: "resolved", goal: top };
 }
 
 /* ------------------------------------------------------------------ *

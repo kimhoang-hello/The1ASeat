@@ -128,8 +128,8 @@ export interface UserProfile {
   country: CountryCode;
   province: CanadianProvince | null;
   /**
-   * Khoảng thu nhập năm, CAD. `null` = chưa hỏi hoặc người dùng từ chối nói —
-   * spec §4.1 liệt kê "Prefer not to say" là một lựa chọn thật.
+   * Thu nhập CÁ NHÂN năm, CAD. `null` = chưa hỏi hoặc từ chối nói — spec §4.1
+   * liệt kê "Prefer not to say" là một lựa chọn thật.
    *
    * Là khoảng nên phép so với `minimum_personal_income` ra BA kết quả chứ
    * không phải hai: chắc chắn đạt (`low >= ngưỡng`), chắc chắn không đạt
@@ -137,7 +137,24 @@ export interface UserProfile {
    * và suitability phải tách nhau, và loại thẳng một người có thu nhập
    * "60–80K" khỏi thẻ đòi $80K là loại oan đúng nửa số người trong khoảng đó.
    */
-  annualIncome: EstimatedAmount | null;
+  annualPersonalIncome: EstimatedAmount | null;
+  /**
+   * Thu nhập HỘ GIA ĐÌNH năm, CAD — một con số RIÊNG, không phải cách diễn
+   * đạt khác của thu nhập cá nhân.
+   *
+   * Ngân hàng Canada công bố điều kiện theo cặp nối bằng HOẶC: "$60,000 cá
+   * nhân HOẶC $100,000 hộ gia đình", và Phase 1 đã dựng đúng cấu trúc đó
+   * (`income()` trong `data/eligibility-rules.ts`, hai dòng cùng `ruleGroup`).
+   * Vế hộ gia đình sinh ra để nhận những người có thu nhập cá nhân DƯỚI ngưỡng
+   * — nên một trường thu nhập duy nhất làm vế đó thành vô dụng: hoặc engine so
+   * cùng một con số với cả hai ngưỡng (giúp đúng những người vốn đã đạt), hoặc
+   * nó loại thẳng đúng những người vế kia sinh ra để cứu.
+   *
+   * `null` = chưa hỏi. Và thường KHÔNG cần hỏi: chỉ khi thu nhập cá nhân không
+   * đủ thì vế này mới đổi kết quả, nên nó là một câu hỏi §30 điển hình — hỏi
+   * lúc nó quyết định điều gì đó, không hỏi trước.
+   */
+  annualHouseholdIncome: EstimatedAmount | null;
   /**
    * Phí thường niên tối đa chấp nhận được CHO MỘT THẺ, CAD.
    *
@@ -164,6 +181,25 @@ export interface UserProfile {
    * kết quả.
    */
   businessCardsAllowed: boolean | null;
+  /**
+   * Đang là sinh viên.
+   *
+   * `EligibilityRule.student_status_required` là luật `hard` và có thật trong
+   * bộ dữ liệu (Scotiabank® Scene+™ Visa cho sinh viên). Không có trường này
+   * thì engine chỉ còn hai lựa chọn, cả hai đều sai: loại thẻ đó khỏi mọi
+   * người (kể cả sinh viên, đúng đối tượng của nó), hoặc khuyên nó cho một
+   * người bốn mươi lăm tuổi.
+   *
+   * `null` = chưa hỏi, và phần lớn thời gian KHÔNG cần hỏi — chỉ khi thẻ sinh
+   * viên còn là ứng viên thì câu trả lời mới đổi kết quả. Đúng hình dạng câu
+   * hỏi thích ứng của §30.
+   *
+   * Lưu ý `business_required` KHÔNG có trường riêng: spec §31 hỏi đúng một câu
+   * "business cards allowed: yes/no", và `businessCardsAllowed` là câu trả lời
+   * cho cả điều kiện lẫn sở thích. Tách ra là thêm một câu hỏi cho một phân
+   * biệt V1 chưa dùng tới.
+   */
+  isStudent: boolean | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -408,8 +444,11 @@ export interface UserDataGap {
     | "minimum_spend_capacity_unknown"
     | "annual_fee_tolerance_unknown"
     | "business_cards_preference_unknown"
-    | "income_unknown"
+    | "personal_income_unknown"
+    | "household_income_unknown"
+    | "student_status_unknown"
     | "province_unknown"
+    | "goal_priority_ambiguous"
     | "cards_undeclared"
     | "balances_undeclared"
     | "point_balance_amount_unknown"

@@ -87,7 +87,20 @@ export function validateUserState(
   if (isRealDate(profile.createdAt) && isRealDate(profile.updatedAt) && profile.updatedAt < profile.createdAt) {
     issues.push({ level: "error", entity: P, message: "updatedAt nằm trước createdAt" });
   }
-  checkAmount(profile.annualIncome, "annualIncome", P, issues);
+  checkAmount(profile.annualPersonalIncome, "annualPersonalIncome", P, issues);
+  checkAmount(profile.annualHouseholdIncome, "annualHouseholdIncome", P, issues);
+  const personal = profile.annualPersonalIncome;
+  const household = profile.annualHouseholdIncome;
+  if (personal !== null && household !== null && household.high !== null && household.high < personal.low) {
+    // Hộ gia đình bao gồm chính người đó, nên thu nhập hộ KHÔNG thể thấp hơn
+    // thu nhập cá nhân. Chỉ báo khi chắc chắn — hai khoảng chồng lấn là bình
+    // thường và không nói lên điều gì.
+    issues.push({
+      level: "error",
+      entity: P,
+      message: `Thu nhập hộ gia đình (≤${household.high}) thấp hơn thu nhập cá nhân (≥${personal.low})`,
+    });
+  }
   if (profile.annualFeeTolerancePerCard !== null) {
     const fee = profile.annualFeeTolerancePerCard;
     if (!Number.isFinite(fee) || fee < 0) {
@@ -143,6 +156,7 @@ export function validateUserState(
   /* ---------------- user_cards ---------------- */
 
   const C = "user_cards";
+  const CARD_STATUSES = ["active", "closed", "previously_held"];
   const productIds = new Set(data.products.map((row) => row.id as string));
   const seenCardIds = new Set<string>();
   const activeByProduct = new Map<string, number>();
@@ -156,6 +170,12 @@ export function validateUserState(
     }
     if (!productIds.has(card.productId)) {
       issues.push({ level: "error", entity: C, message: `${card.id}: productId "${card.productId}" không tồn tại` });
+    }
+    if (!CARD_STATUSES.includes(card.status)) {
+      // Một status gõ sai làm `holdsNow` VÀ `everHeld` cùng trả false: thẻ biến
+      // mất khỏi cả danh mục hiện tại lẫn lịch sử sở hữu, không một phép kiểm
+      // nào khác nhận ra, và welcome bonus của thẻ đó được hứa lại.
+      issues.push({ level: "error", entity: C, message: `${card.id}: status không tồn tại "${card.status}"` });
     }
     checkDate(card.openedDate, `${card.id}.openedDate`, C, issues);
     checkDate(card.closedDate, `${card.id}.closedDate`, C, issues);
@@ -276,6 +296,9 @@ export function validateUserState(
       if (code !== null && !/^[A-Z]{3}$/.test(code)) {
         issues.push({ level: "error", entity: G, message: `${goal.id}: ${label} phải là mã IATA 3 chữ hoa ("${code}")` });
       }
+    }
+    if (goal.flexibility !== null && !["low", "medium", "high"].includes(goal.flexibility)) {
+      issues.push({ level: "error", entity: G, message: `${goal.id}: flexibility không hợp lệ "${goal.flexibility}"` });
     }
     if (goal.passengers !== null && (!Number.isInteger(goal.passengers) || goal.passengers < 1)) {
       issues.push({ level: "error", entity: G, message: `${goal.id}: passengers phải là số nguyên ≥ 1` });
