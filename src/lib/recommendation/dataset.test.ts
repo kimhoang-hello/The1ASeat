@@ -102,7 +102,7 @@ test("thẻ hết khả dụng mà offer vẫn mở là LỖI", () => {
     ),
   };
   const errors = validateDataset(halfClosed, "2027-03-01").filter((i) => i.level === "error");
-  assert.ok(errors.some((e) => e.message.includes("offer vẫn chưa đóng")));
+  assert.ok(errors.some((e) => e.message.includes("không nằm trọn trong quãng")));
 });
 
 test("hai quãng khả dụng chồng nhau là LỖI", () => {

@@ -210,7 +210,7 @@ test("7. thẻ ngừng phát hành: offer phải đóng, nhưng tỷ lệ và qu
     ),
   };
   // Offer còn mở → engine sẽ khuyên người đọc mở một thẻ không còn nhận đơn.
-  assert.ok(errorsIn(offersStillOpen, LATER).some((e) => e.includes("offer vẫn chưa đóng")));
+  assert.ok(errorsIn(offersStillOpen, LATER).some((e) => e.includes("không nằm trọn trong quãng")));
 
   const properly = {
     ...offersStillOpen,
@@ -1117,4 +1117,66 @@ test("sản phẩm còn hiệu lực phải có ít nhất một quãng khả d�
   // Không dòng nào = chưa ai nói thẻ này từng mở bao giờ, khác hẳn "đã đóng".
   const orphan = { ...BASE, productAvailability: BASE.productAvailability.slice(1) };
   assert.ok(errorsIn(orphan).some((e) => e.includes("không có quãng khả dụng nào")));
+});
+
+test("offer không được kéo dài xuyên qua quãng thẻ ngừng nhận đơn", () => {
+  // Thẻ mở tháng 9–11 rồi mở lại từ tháng 3. Một offer chạy từ tháng 9 tới vô
+  // hạn sẽ "còn hiệu lực" suốt cả quãng đóng — engine khuyên mở một thẻ không
+  // nhận đơn. Phép so tại MỘT thời điểm bỏ lọt: chạy sau tháng 3 thì thấy thẻ
+  // đang mở và offer đang mở, cả hai đều đúng tại thời điểm đó.
+  const product = BASE.products[0];
+  const window = BASE.productAvailability.find((a) => a.productId === product.id)!;
+  const gapped = {
+    ...BASE,
+    productAvailability: [
+      { ...window, effectiveTo: "2026-11-30" },
+      {
+        ...window,
+        id: `${window.id}_re` as typeof window.id,
+        effectiveFrom: "2027-03-01",
+        effectiveTo: null,
+      },
+      ...BASE.productAvailability.filter((a) => a.id !== window.id),
+    ],
+  };
+  // Offer mở từ đầu và chưa đóng → xuyên qua quãng đóng.
+  assert.ok(
+    errorsIn(gapped, "2027-06-01").some((e) => e.includes("không nằm trọn trong quãng")),
+  );
+
+  // Đóng offer đúng lúc thẻ đóng thì hợp lệ.
+  const fixed = {
+    ...gapped,
+    offers: BASE.offers.map((o) =>
+      o.productId === product.id ? { ...o, effectiveTo: "2026-11-30" } : o,
+    ),
+  };
+  assert.deepEqual(errorsIn(fixed, "2027-06-01"), []);
+});
+
+test("quãng mở lại trong TƯƠNG LAI không lọt vào bản dựng lại quá khứ", () => {
+  const product = BASE.products[0];
+  const window = BASE.productAvailability.find((a) => a.productId === product.id)!;
+  const planned = {
+    ...BASE,
+    productAvailability: [
+      { ...window, effectiveTo: "2026-11-30" },
+      {
+        ...window,
+        id: `${window.id}_future` as typeof window.id,
+        effectiveFrom: "2027-03-01",
+        effectiveTo: null,
+      },
+      ...BASE.productAvailability.filter((a) => a.id !== window.id),
+    ],
+  };
+  const past = datasetAt(planned, "2026-10-01").productAvailability.filter(
+    (a) => a.productId === product.id,
+  );
+  assert.equal(past.length, 1, "chỉ thấy quãng đã bắt đầu");
+  // Nhưng quãng ĐÃ ĐÓNG thì vẫn phải thấy — "đã đóng" khác "không có thông tin".
+  const later = datasetAt(planned, "2027-06-01").productAvailability.filter(
+    (a) => a.productId === product.id,
+  );
+  assert.equal(later.length, 2);
 });

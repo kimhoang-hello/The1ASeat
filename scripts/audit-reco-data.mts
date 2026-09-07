@@ -336,8 +336,9 @@ if (cards === null) {
     // không giải thích nổi một khuyến nghị cũ từng chọn thẻ nào.
     errors.push(
       `[contentful] ${product.slug}: có trong seed nhưng không còn entry Contentful. ` +
-        `Nếu thẻ đã ngừng thì ĐÓNG nó — đặt availableTo, ` +
-        `contentfulLinked: false — ĐỪNG xoá dòng sản phẩm.`,
+        `Nếu thẻ đã ngừng thì ĐÓNG nó — đóng quãng product_availability đang mở ` +
+        `(đặt effectiveTo + closedReason) và contentfulLinked: false. ` +
+        `ĐỪNG xoá dòng sản phẩm.`,
     );
   }
   for (const card of cards) {

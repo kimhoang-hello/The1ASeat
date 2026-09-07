@@ -192,7 +192,12 @@ const OFFER_SEEDS: OfferSeed[] = [
     name: "Đến 5,000 điểm Scene+™",
     headline: 5000,
     currency: "scene-plus",
+    // `startDate` là ngày NHÀ PHÁT HÀNH công bố; `recordedFrom` là ngày BẢN GHI
+    // của mình bắt đầu. Chúng tách nhau ở đây vì offer chạy trước khi kho này
+    // tồn tại — nói `effectiveFrom: 2026-07-02` là khai rằng mình đã biết offer
+    // này từ tháng 7, trong khi seed dựng ngày 07/09.
     startDate: "2026-07-02",
+    recordedFrom: "2026-09-07",
     endDate: "2026-11-01",
     rebate: 50,
     components: [
@@ -269,7 +274,10 @@ const OFFER_SEEDS: OfferSeed[] = [
     name: "160,000 điểm TD Rewards",
     headline: 160000,
     currency: "td-rewards",
+    // Cùng lý do với Scotiabank® Scene+™ ở trên: TD® nâng mức này từ 01/09,
+    // nhưng bản ghi của mình bắt đầu từ 07/09.
     startDate: "2026-09-01",
+    recordedFrom: "2026-09-07",
     feeFirstYear: 0,
     rebate: 140,
     components: [

@@ -120,11 +120,17 @@ export function datasetAt(
     productFees: activeAt(known(data.productFees), asOf).filter((fee) =>
       liveProductIds.has(fee.productId),
     ),
-    // KHÔNG lọc theo `asOf`: Phase 3 cần thấy CẢ lịch sử khả dụng để nói "thẻ
-    // này đã ngừng từ tháng 3" hay "mở lại từ tháng 9". Lọc còn-hiệu-lực ở đây
-    // sẽ biến "đã đóng" thành "không có thông tin".
-    productAvailability: data.productAvailability.filter((row) =>
-      liveProductIds.has(row.productId),
+    // Giữ quãng ĐÃ ĐÓNG, bỏ quãng CHƯA MỞ.
+    //
+    // Không lọc `isActiveAt` như các quan hệ khác: Phase 3 cần thấy quãng đã
+    // đóng để nói "thẻ này ngừng từ tháng 3", và lọc còn-hiệu-lực sẽ biến "đã
+    // đóng" thành "không có thông tin".
+    //
+    // Nhưng quãng bắt đầu SAU `asOf` thì phải bỏ: một lần mở lại đã lên lịch
+    // cho 2027 mà lọt vào bản dựng lại của 2026 là rò rỉ tương lai vào quá
+    // khứ, đúng thứ `asOf` sinh ra để chặn.
+    productAvailability: data.productAvailability.filter(
+      (row) => liveProductIds.has(row.productId) && row.effectiveFrom <= asOf,
     ),
     offers,
     // `offer_components` KHÔNG có `Temporal` riêng: một offer là một gói điều

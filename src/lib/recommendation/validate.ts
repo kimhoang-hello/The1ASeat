@@ -733,21 +733,31 @@ export function validateDataset(
   // thẻ, nên đòi chúng đóng theo là buộc dữ liệu nói dối: nó sẽ khai rằng một
   // thẻ trong ví người dùng không kiếm được điểm nào. Đây là chỗ bản trước gộp
   // "ngừng phát hành" với "hết tồn tại" và làm sai cả hai.
-  const unavailable = new Map(
-    data.products
-      .filter((p) => !isAvailableAt(availabilityByProduct.get(p.id) ?? [], asOf))
-      .map((p) => [p.id as string, p]),
-  );
+  // Offer chỉ được mở trong lúc thẻ CÒN NHẬN ĐƠN.
+  //
+  // So từng KHOẢNG với từng KHOẢNG, không so trạng thái tại `asOf`. Với thẻ mở
+  // tháng 9–11 rồi mở lại từ tháng 3, phép so tại một thời điểm hoặc chấp nhận
+  // một offer kéo dài xuyên qua cả quãng đóng (khi chạy sau tháng 3), hoặc từ
+  // chối một offer hợp lệ bắt đầu từ tháng 3 (khi chạy trong quãng đóng). Cả
+  // hai đều sai, và sai theo hướng khuyên người đọc mở một thẻ không nhận đơn.
+  const OPEN_END = "\uffff";
   for (const offer of data.offers) {
-    const product = unavailable.get(offer.productId);
-    if (product === undefined) continue;
-    if (offer.effectiveTo === null) {
+    const windows = availabilityByProduct.get(offer.productId) ?? [];
+    if (windows.length === 0) continue;
+    const product = productById.get(offer.productId);
+    const offerTo = offer.effectiveTo ?? OPEN_END;
+    // Có quãng nào PHỦ TRỌN khoảng của offer không?
+    const covered = windows.some(
+      (window) =>
+        window.effectiveFrom <= offer.effectiveFrom && (window.effectiveTo ?? OPEN_END) >= offerTo,
+    );
+    if (!covered) {
       issues.push({
         level: "error",
         entity: "offers",
         message:
-          `${offer.id}: thẻ ${product.slug} không còn mở cho người nộp đơn mới ` +
-          `nhưng offer vẫn chưa đóng`,
+          `${offer.id}: khoảng offer (${offer.effectiveFrom} → ${offer.effectiveTo ?? "mở"}) ` +
+          `không nằm trọn trong quãng thẻ ${product?.slug ?? offer.productId} còn nhận đơn`,
       });
     }
   }
