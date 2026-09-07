@@ -231,15 +231,23 @@ for (const [programId, partnerKey] of Object.entries(PARTNER_KEY_BY_PROGRAM)) {
     ["avion", row.rbc],
   ] as const) {
     if (!leg) continue;
+    // Phải có chặng ĐANG CÒN HIỆU LỰC, không chỉ "có một dòng nào đó".
+    // `Temporal` là hợp đồng chỉ-thêm, nên một chặng đã đóng bằng `effectiveTo`
+    // vẫn nằm lại trong file mãi mãi. Chỉ kiểm sự tồn tại thì một chặng đóng
+    // hôm qua mà chưa ai thêm bản thay thế vẫn cho audit xanh — trong khi engine
+    // hỏi "hôm nay chuyển được đi đâu" thì không thấy đường nào.
     const seeded = TRANSFER_PATHS.some(
       (path) =>
         (path.sourceProgramId as string) === source &&
-        (path.destinationProgramId as string) === programId,
+        (path.destinationProgramId as string) === programId &&
+        path.effectiveFrom <= TODAY &&
+        (path.effectiveTo === null || path.effectiveTo >= TODAY),
     );
     if (!seeded) {
       errors.push(
         `[transfer-paths] ${source} → ${programId}: có trong lib/transfer-partners.ts ` +
-          `("${leg.ratio}") nhưng chưa có trong seed — engine không thấy chặng này`,
+          `("${leg.ratio}") nhưng seed không có chặng nào còn hiệu lực hôm nay — ` +
+          `engine không thấy đường chuyển này`,
       );
     }
   }

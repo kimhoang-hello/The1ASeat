@@ -533,15 +533,34 @@ function requiredSpendOf(c: ComponentSeed): number | null {
 }
 
 function totalSpendOf(components: ComponentSeed[]): number | null {
-  const byWindowStart = new Map<number, number>();
-  for (const c of components) {
-    const needed = requiredSpendOf(c);
-    if (needed === null) continue;
-    const start = c.startsAfterDays ?? 0;
-    byWindowStart.set(start, Math.max(byWindowStart.get(start) ?? 0, needed));
-  }
+  const windows = components
+    .map((c) => {
+      const needed = requiredSpendOf(c);
+      if (needed === null) return null;
+      const from = c.startsAfterDays ?? 0;
+      return { from, to: from + (c.windowDays ?? 90), needed };
+    })
+    .filter((w): w is { from: number; to: number; needed: number } => w !== null)
+    .sort((a, b) => a.from - b.from);
+
+  // Gom theo CHỒNG LẤN THẬT, không theo ngày mở bằng nhau. Hai cửa sổ mở khác
+  // ngày nhưng còn giao nhau — ngày 0–180 và ngày 30–395 — vẫn dùng chung
+  // được tiền, nên cộng chúng lại là bịa ra một yêu cầu không tồn tại. So ngày
+  // mở là đúng với mọi thẻ trong bộ dữ liệu hiện tại (mọi cửa sổ hoặc mở ở
+  // ngày 0, hoặc mở ở ngày 365 và không giao), nhưng nó đúng do may chứ không
+  // do phép tính, và cái bẫy đó im lặng.
   let total = 0;
-  for (const amount of byWindowStart.values()) total += amount;
+  let cluster: { to: number; max: number } | null = null;
+  for (const window of windows) {
+    if (cluster !== null && window.from < cluster.to) {
+      cluster.to = Math.max(cluster.to, window.to);
+      cluster.max = Math.max(cluster.max, window.needed);
+      continue;
+    }
+    if (cluster !== null) total += cluster.max;
+    cluster = { to: window.to, max: window.needed };
+  }
+  if (cluster !== null) total += cluster.max;
   return total > 0 ? total : null;
 }
 
@@ -566,11 +585,16 @@ function spendPerNinetyDaysOf(components: ComponentSeed[]): number | null {
 }
 
 function longestWindowMonths(components: ComponentSeed[]): number | null {
-  const days = components
-    .map((c) => c.windowDays)
-    .filter((d): d is number => d !== undefined);
-  if (days.length === 0) return null;
-  return Math.round((Math.max(...days) / 365) * 12);
+  // Tính tới NGÀY CUỐI CÙNG còn phải chi, tức `startsAfterDays + windowDays`.
+  // Chỉ nhìn `windowDays` thì Amex® Aeroplan®* Reserve — $7,500 trong 90 ngày
+  // rồi $2,500 ở tháng thứ 13 — hiện ra "3 tháng", trong khi người đọc phải
+  // giữ thẻ qua mốc kỷ niệm mới lấy hết bonus. Đó là câu về việc họ bị buộc
+  // trả annual fee năm thứ hai hay không.
+  const ends = components
+    .filter((c) => c.windowDays !== undefined)
+    .map((c) => (c.startsAfterDays ?? 0) + c.windowDays!);
+  if (ends.length === 0) return null;
+  return Math.round((Math.max(...ends) / 365) * 12);
 }
 
 /**
