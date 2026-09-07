@@ -255,11 +255,24 @@ export interface Offer extends Temporal, Sourced {
    * trong 180 ngày là hai câu chuyện khác nhau với người chỉ chi được $2,000.
    */
   headlineBonus: number | null;
-  /** Tổng mức chi bắt buộc để lấy hết bonus, và cửa sổ thời gian dài nhất.
-   *  Suy ra được từ components, nhưng lưu sẵn để lọc nhanh mà không phải gộp
-   *  mọi lần. `validate.ts` bắt khi hai bên không khớp. */
+  /**
+   * Tổng mức chi bắt buộc để lấy HẾT bonus, và cửa sổ thời gian dài nhất.
+   *
+   * KHÔNG viết tay: cả hai được cộng ra từ `offer_components` (xem
+   * `totalSpendOf`). Viết tay là có hai con số cho cùng một sự thật, và repo
+   * này đã trả giá đúng một lần cho kiểu đó.
+   */
   minimumSpend: number | null;
   minimumSpendMonths: number | null;
+  /**
+   * Mức chi phải đạt trong GIAI ĐOẠN ĐẦU, tức trước mốc kỷ niệm.
+   *
+   * Đây mới là con số §13 đem so với `minimum_spend_capacity_3m` của người
+   * dùng. `minimumSpend` gộp cả phần chi ở tháng thứ 13 — dùng nhầm nó để lọc
+   * sẽ loại thẻ Amex® Aeroplan®* Reserve khỏi tay người thừa sức lấy $7,500
+   * đầu tiên, chỉ vì họ chưa hứa gì về năm sau.
+   */
+  initialSpend: number | null;
   annualFeeFirstYear: number | null;
   /** Rebate của bên thứ ba (FinlyWealth). Nối với `rebateVi` trên Contentful;
    *  `audit:reco-data` bắt lệch, cùng lý do `audit:rebate-prose` tồn tại. */
@@ -451,6 +464,30 @@ export interface EligibilityRule extends Temporal, Sourced {
   operator: "gte" | "lte" | "eq" | "in" | "not_in";
   value: number | string | string[] | boolean;
   severity: "hard" | "soft" | "unknown";
+  /**
+   * Luật này chặn CÁI GÌ.
+   *
+   * `application`   — không đủ thì ngân hàng từ chối đơn. Loại thẻ khỏi danh sách.
+   * `welcome_offer` — vẫn mở được thẻ, chỉ KHÔNG nhận welcome bonus.
+   *
+   * Phân biệt này quyết định: luật "từng giữ thẻ Amex® này rồi" là
+   * `welcome_offer`. Coi nó là `application` thì engine vứt bỏ cả thẻ, kể cả
+   * khi giá trị dài hạn của nó (5x ăn uống trên Cobalt) vẫn là câu trả lời
+   * đúng cho người đang hỏi. Người chơi điểm vài năm đã giữ qua hầu hết thẻ
+   * Amex®, nên nhầm chỗ này là im lặng gạch gần hết danh mục của họ.
+   */
+  scope: "application" | "welcome_offer";
+  /**
+   * Các luật CÙNG nhóm được nối bằng HOẶC, không phải VÀ.
+   *
+   * Ngân hàng Canada công bố điều kiện thu nhập theo cặp: "$60,000 cá nhân
+   * HOẶC $100,000 hộ gia đình". Hai dòng `hard` riêng lẻ nghĩa là VÀ, tức
+   * engine đòi người dùng đạt cả hai — loại oan đúng những người mà vế hộ gia
+   * đình sinh ra để phục vụ.
+   *
+   * `null` = luật đứng một mình, phải đạt.
+   */
+  ruleGroup: string | null;
 }
 
 /* ------------------------------------------------------------------ *
@@ -486,6 +523,20 @@ export interface AwardStrategy extends Temporal, Sourced {
   cabin: AwardCabin;
   programId: PointsProgramId;
   strategyName: string;
+  /**
+   * Chương trình bán chặng này theo bảng cố định hay theo giá động.
+   *
+   * `fixed`         — có bảng giá, số nào ra số đó. `pointsTypical` và
+   *                   `pointsHigh` có nghĩa.
+   * `dynamic_floor` — chương trình chỉ công bố MỨC SÀN, giá thật thay đổi
+   *                   theo chuyến. Chỉ `pointsLow` có nghĩa; hai số kia BẮT
+   *                   BUỘC `null` (`validate.ts` cưỡng chế).
+   *
+   * Không có trường này thì mức sàn "từ 85,000" nằm cạnh một mức cố định
+   * 102,500 trông y hệt nhau, và lời giải thích sẽ hứa với người đọc một cái
+   * giá mà chương trình chưa bao giờ cam kết.
+   */
+  pricingModel: "fixed" | "dynamic_floor";
   /** Một chiều, một người. Nhân lên ở engine, không nhân sẵn ở dữ liệu. */
   pointsLow: number | null;
   pointsTypical: number | null;

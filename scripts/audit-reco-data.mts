@@ -27,6 +27,12 @@ import { fileURLToPath } from "node:url";
 import { offlineDataset } from "../src/lib/recommendation/source.ts";
 import { validateDataset } from "../src/lib/recommendation/validate.ts";
 import { OFFERS } from "../src/lib/recommendation/data/offers.ts";
+import { POINTS_PROGRAMS as RECO_PROGRAMS } from "../src/lib/recommendation/data/points-programs.ts";
+import { TRANSFER_PATHS } from "../src/lib/recommendation/data/transfer-paths.ts";
+import { AWARD_STRATEGIES } from "../src/lib/recommendation/data/award-strategies.ts";
+import { POINTS_PROGRAMS as CALCULATOR_PROGRAMS } from "../src/lib/points-programs.ts";
+import { TRANSFER_PARTNERS } from "../src/lib/transfer-partners.ts";
+import { PROGRAMS as AWARD_CHART_PROGRAMS } from "../src/lib/award-charts.ts";
 
 const REPO = fileURLToPath(new URL("..", import.meta.url));
 const REQUEST_TIMEOUT_MS = 20_000;
@@ -90,10 +96,128 @@ function rebateIn(text: string | undefined): number | undefined {
 const errors: string[] = [];
 const warnings: string[] = [];
 
+const TODAY = new Date().toISOString().slice(0, 10);
+
+/** Offer đang có hiệu lực hôm nay của một sản phẩm. `validateDataset` đã chặn
+ *  trường hợp có hơn một, nên ở đây chỉ cần lấy cái đầu. */
+function liveOfferFor(productId: string) {
+  return OFFERS.find(
+    (row) =>
+      (row.productId as string) === productId &&
+      row.effectiveFrom <= TODAY &&
+      (row.effectiveTo === null || row.effectiveTo >= TODAY),
+  );
+}
+
 const dataset = offlineDataset();
 for (const issue of validateDataset(dataset)) {
   const line = `[${issue.entity}] ${issue.message}`;
   (issue.level === "error" ? errors : warnings).push(line);
+}
+
+// ---------------------------------------------------------------------------
+// Đối chiếu với các nguồn CÙNG REPO mà bộ seed chép lại.
+//
+// Ba module dưới đây đã tồn tại trước engine và vẫn là nguồn của chính chúng:
+// `points-programs.ts` (định giá của calculator), `transfer-partners.ts` (tỷ lệ
+// chuyển của trang Transfer Partners) và `award-charts.ts` (bảng giá của Award
+// Flight Finder). Bộ seed chép số từ đó — và một bản chép không ai canh thì
+// đứng yên trong khi bản gốc đi tiếp. Hậu quả không phải là engine đỏ, mà là
+// engine XANH trong khi nói một con số mà chính trang bên cạnh đã sửa.
+// ---------------------------------------------------------------------------
+
+for (const program of RECO_PROGRAMS) {
+  if (!program.calculatorProgramId) continue;
+  const upstream = CALCULATOR_PROGRAMS.find((row) => row.id === program.calculatorProgramId);
+  if (!upstream) {
+    errors.push(
+      `[points-programs] ${program.slug}: calculatorProgramId "${program.calculatorProgramId}" ` +
+        `không có trong lib/points-programs.ts`,
+    );
+    continue;
+  }
+  if (upstream.centsPerPoint !== program.defaultCurrencyValue) {
+    errors.push(
+      `[points-programs] ${program.slug}: defaultCurrencyValue ${program.defaultCurrencyValue} ` +
+        `lệch centsPerPoint ${upstream.centsPerPoint} trong lib/points-programs.ts`,
+    );
+  }
+}
+
+for (const program of RECO_PROGRAMS) {
+  if (!program.awardChartProgramId) continue;
+  if (!AWARD_CHART_PROGRAMS.some((row) => row.id === program.awardChartProgramId)) {
+    errors.push(
+      `[points-programs] ${program.slug}: awardChartProgramId "${program.awardChartProgramId}" ` +
+        `không có trong lib/award-charts.ts`,
+    );
+  }
+}
+
+// Tỷ lệ chuyển: `transfer-partners.ts` viết dạng "1,000 : 750" cho từng cột
+// Amex/RBC. Đọc ra hai số rồi so với chặng tương ứng.
+function ratioOf(text: string): [number, number] | null {
+  const match = text.replace(/,/g, "").match(/^(\d+)\s*:\s*(\d+)$/);
+  return match ? [Number(match[1]), Number(match[2])] : null;
+}
+
+const PARTNER_KEY_BY_PROGRAM: Record<string, string> = {
+  aeroplan: "Air Canada® Aeroplan®",
+  avios: "British Airways® Club",
+  "flying-blue": "Air France KLM® Flying Blue®",
+  "asia-miles": "Cathay Pacific® Asia Miles®",
+  bonvoy: "Marriott Bonvoy®",
+  aadvantage: "American Airlines® AAdvantage®",
+  westjet: "WestJet® Rewards",
+};
+
+for (const path of TRANSFER_PATHS) {
+  const source = path.sourceProgramId as string;
+  const partnerKey = PARTNER_KEY_BY_PROGRAM[path.destinationProgramId as string];
+  if (!partnerKey) {
+    warnings.push(
+      `[transfer-paths] ${path.id}: đích không có trong bảng tra sang transfer-partners.ts, không đối chiếu được`,
+    );
+    continue;
+  }
+  const row = TRANSFER_PARTNERS.find((partner) => partner.program === partnerKey);
+  const leg = source === "amex-mr" ? row?.amex : source === "avion" ? row?.rbc : undefined;
+  if (!row || !leg) {
+    errors.push(
+      `[transfer-paths] ${path.id}: lib/transfer-partners.ts không có chặng này — ` +
+        `một trong hai chỗ đã đổi mà chỗ kia chưa`,
+    );
+    continue;
+  }
+  const ratio = ratioOf(leg.ratio);
+  if (!ratio) {
+    warnings.push(`[transfer-paths] ${path.id}: không đọc được tỷ lệ "${leg.ratio}"`);
+    continue;
+  }
+  if (ratio[0] !== path.ratioFrom || ratio[1] !== path.ratioTo) {
+    errors.push(
+      `[transfer-paths] ${path.id}: tỷ lệ ${path.ratioFrom}:${path.ratioTo} lệch ` +
+        `"${leg.ratio}" trong lib/transfer-partners.ts`,
+    );
+  }
+}
+
+// Award strategy chép số từ `award-charts.ts`. Không so từng ô — bảng giá ở
+// đó chia theo band khoảng cách và vùng, còn ở đây là khoảng cho cả một vùng,
+// nên hai bên KHÔNG cùng hình dạng. Cái so được, và cũng là cái thật sự nói
+// lên vấn đề, là NGÀY KIỂM: nguồn được kiểm lại mà bản chép thì không nghĩa là
+// bản chép đã cũ.
+for (const strategy of AWARD_STRATEGIES) {
+  const chartId = RECO_PROGRAMS.find((row) => row.id === strategy.programId)?.awardChartProgramId;
+  if (!chartId) continue;
+  const upstream = AWARD_CHART_PROGRAMS.find((row) => row.id === chartId);
+  if (!upstream) continue;
+  if (upstream.verifiedOn > strategy.verifiedAt) {
+    warnings.push(
+      `[award-strategies] ${strategy.id}: lib/award-charts.ts kiểm lại ngày ${upstream.verifiedOn}, ` +
+        `bản chép này vẫn ghi ${strategy.verifiedAt} — kiểm lại khoảng điểm`,
+    );
+  }
 }
 
 let cards: ContentfulCard[] | null = null;
@@ -145,7 +269,13 @@ if (cards === null) {
 
     // Rebate nằm trên OFFER, không nằm trên sản phẩm — nó đổi khi FinlyWealth
     // đổi, còn thẻ thì không.
-    const offer = OFFERS.find((row) => (row.productId as string) === product.id);
+    //
+    // Phải lấy offer ĐANG CHẠY, không phải offer đầu tiên tìm thấy. `OFFERS`
+    // là nhật ký chỉ-thêm: khi thẻ này có offer thứ hai, `find` sẽ trả về bản
+    // CŨ (khai trước trong file) và audit đem số rebate đã hết hạn ra so với
+    // Contentful — đỏ mãi trong khi dữ liệu hiện tại đúng, tức một audit dạy
+    // người đọc nó bỏ qua chính nó.
+    const offer = liveOfferFor(product.id);
     const seedRebate = offer?.annualFeeRebate ?? undefined;
     const liveRebate = rebateIn(card.rebateVi);
     if (seedRebate !== liveRebate) {

@@ -445,23 +445,93 @@ const OFFER_SEEDS: OfferSeed[] = [
       { type: "anniversary", points: 15000, windowDays: 365, note: "Thưởng khi gia hạn thẻ" },
     ],
   },
+  {
+    slug: "cibc-aeroplan-visa",
+    name: "10,000 điểm Aeroplan®",
+    headline: 10000,
+    currency: "aeroplan",
+    startDate: "2026-09-07",
+    components: [
+      { type: "first_purchase", points: 2500 },
+      { type: "spend_threshold", points: 2500, spend: 1500, windowDays: 120 },
+      { type: "anniversary", points: 5000, spend: 10000, windowDays: 365 },
+    ],
+  },
+  {
+    slug: "cibc-aeroplan-visa-infinite",
+    name: "50,000 điểm Aeroplan®",
+    headline: 50000,
+    currency: "aeroplan",
+    startDate: "2026-09-07",
+    feeFirstYear: 0,
+    components: [
+      { type: "first_purchase", points: 10000 },
+      { type: "spend_threshold", points: 15000, spend: 6000, windowDays: 180 },
+      { type: "anniversary", points: 25000, spend: 12000, windowDays: 365 },
+      { type: "fee_waiver", cash: 189, note: "Thẻ chính $139 và tối đa 3 thẻ phụ $50/thẻ" },
+    ],
+  },
+  {
+    slug: "cibc-aeroplan-visa-infinite-privilege",
+    name: "100,000 điểm Aeroplan®",
+    headline: 100000,
+    currency: "aeroplan",
+    startDate: "2026-09-07",
+    components: [
+      { type: "spend_threshold", points: 10000, spend: 1000, windowDays: 60 },
+      { type: "spend_threshold", points: 40000, spend: 5000, windowDays: 120 },
+      { type: "anniversary", points: 50000, spend: 25000, windowDays: 365 },
+    ],
+  },
 ];
 
 /**
- * Tổng mức chi phải đạt để lấy HẾT bonus, và cửa sổ dài nhất trong offer.
+ * Tổng mức chi phải đạt để lấy HẾT bonus.
  *
- * Các mốc chi trong một offer là mốc TÍCH LUỸ chứ không cộng dồn: TD® First
- * Class đòi $7,500 trong 180 ngày, không phải $7,500 cộng thêm gì nữa. Nên
- * lấy MAX chứ không phải SUM — cộng lại là dựng ra một yêu cầu chi tiêu không
- * tồn tại, rồi engine loại oan những thẻ dễ đạt nhất.
+ * Phép cộng ở đây tinh tế hơn "MAX" hay "SUM", và cả hai cách đơn giản đều
+ * cho ra con số sai theo hai hướng ngược nhau:
  *
- * `monthly_spend` là ngoại lệ thật sự: Cobalt đòi $750 MỖI chu kỳ trong 12
- * chu kỳ, tức $9,000 thật. Ở đó mới nhân lên.
+ *   SUM sai vì các mốc trong CÙNG một giai đoạn là mốc TÍCH LUỸ. CIBC®
+ *   Aventura® trả 30,000 điểm ở mốc $3,000 rồi 15,000 nữa ở mốc $5,000, cả
+ *   hai trong 4 kỳ sao kê đầu — tổng phải chi là $5,000, không phải $8,000.
+ *   Cộng lại là dựng ra một yêu cầu không tồn tại rồi loại oan thẻ.
+ *
+ *   MAX sai vì các giai đoạn RỜI NHAU thì chi tiêu KHÔNG dùng lại được. Amex®
+ *   Aeroplan®* Reserve đòi $7,500 trong 90 ngày đầu VÀ $2,500 nữa trong tháng
+ *   thứ 13. Lấy MAX ra $7,500, tức nói với người đọc rằng phần thưởng 25,000
+ *   điểm ở mốc kỷ niệm là miễn phí.
+ *
+ * Nên: MAX trong từng giai đoạn, rồi CỘNG các giai đoạn lại. Giai đoạn phân
+ * theo `anniversary` — đó là ranh giới thật, vì mốc kỷ niệm mở ra sau khi cửa
+ * sổ ban đầu đã đóng.
+ *
+ * `monthly_spend` là ngoại lệ trong ngoại lệ: Cobalt đòi $750 MỖI chu kỳ
+ * trong 12 chu kỳ, tức $9,000 thật. Ở đó nhân lên trước khi so.
  */
 function totalSpendOf(components: ComponentSeed[]): number | null {
-  let max = 0;
+  const phases: Record<"initial" | "anniversary", number> = { initial: 0, anniversary: 0 };
   for (const c of components) {
     if (c.spend === undefined) continue;
+    const needed = c.type === "monthly_spend" ? c.spend * (c.repeat ?? 1) : c.spend;
+    const phase = c.type === "anniversary" ? "anniversary" : "initial";
+    if (needed > phases[phase]) phases[phase] = needed;
+  }
+  const total = phases.initial + phases.anniversary;
+  return total > 0 ? total : null;
+}
+
+/**
+ * Mức chi phải đạt trong GIAI ĐOẠN ĐẦU — thứ §13 thật sự đem so với sức chi
+ * 3 tháng người dùng khai.
+ *
+ * Tách khỏi `minimumSpend` vì hai con số trả lời hai câu hỏi khác nhau: "cả
+ * offer này đòi bao nhiêu" và "mình có với tới được phần đầu không". Người có
+ * $8,000 sức chi vẫn lấy được $7,500 của Reserve, dù cả offer đòi $10,000.
+ */
+function initialSpendOf(components: ComponentSeed[]): number | null {
+  let max = 0;
+  for (const c of components) {
+    if (c.spend === undefined || c.type === "anniversary") continue;
     const needed = c.type === "monthly_spend" ? c.spend * (c.repeat ?? 1) : c.spend;
     if (needed > max) max = needed;
   }
@@ -476,8 +546,22 @@ function longestWindowMonths(components: ComponentSeed[]): number | null {
   return Math.round((Math.max(...days) / 365) * 12);
 }
 
+/**
+ * Id của offer PHẢI mang ngày bắt đầu của chính nó.
+ *
+ * `Temporal` là hợp đồng chỉ-thêm: offer đổi thì đóng bản cũ bằng `effectiveTo`
+ * rồi thêm bản mới, không ghi đè. Với một hằng "2026-09" trong id, offer thứ
+ * hai của cùng một thẻ sinh ra ĐÚNG id cũ — và component của nó cũng trỏ vào
+ * đó. Kết quả là hoặc validator đỏ vì trùng id, hoặc người sửa lặng lẽ đè lên
+ * offer cũ và mất luôn lịch sử, tức mất luôn khả năng trả lời "70,000 là mức
+ * cao hay mức thường" mà `offer-history.json` sinh ra để trả lời.
+ */
+function offerIdFor(seed: OfferSeed): string {
+  return `${seed.slug}-${seed.startDate}`;
+}
+
 export const OFFERS: Offer[] = OFFER_SEEDS.map((seed) => ({
-  id: id<OfferId>(`${seed.slug}-2026-09`),
+  id: id<OfferId>(offerIdFor(seed)),
   productId: seed.slug as ProductId,
   name: seed.name,
   startDate: seed.startDate,
@@ -486,6 +570,7 @@ export const OFFERS: Offer[] = OFFER_SEEDS.map((seed) => ({
   headlineBonus: seed.headline,
   minimumSpend: totalSpendOf(seed.components),
   minimumSpendMonths: longestWindowMonths(seed.components),
+  initialSpend: initialSpendOf(seed.components),
   annualFeeFirstYear: seed.feeFirstYear ?? null,
   annualFeeRebate: seed.rebate ?? null,
   // V1 chỉ có offer công khai. Offer targeted (link riêng, thư mời) tồn tại
@@ -502,8 +587,8 @@ export const OFFERS: Offer[] = OFFER_SEEDS.map((seed) => ({
 
 export const OFFER_COMPONENTS: OfferComponent[] = OFFER_SEEDS.flatMap((seed) =>
   seed.components.map((c, index) => ({
-    id: id<OfferComponentId>(`${seed.slug}-2026-09-${index + 1}`),
-    offerId: `${seed.slug}-2026-09` as OfferId,
+    id: id<OfferComponentId>(`${offerIdFor(seed)}-${index + 1}`),
+    offerId: offerIdFor(seed) as OfferId,
     sequence: index + 1,
     componentType: c.type,
     pointsAmount: c.points ?? null,
@@ -519,4 +604,4 @@ export const OFFER_COMPONENTS: OfferComponent[] = OFFER_SEEDS.flatMap((seed) =>
  *  để báo ra thay vì để nó chìm. */
 export const INCOMPLETE_OFFERS: { offerId: string; reason: string }[] = OFFER_SEEDS.filter(
   (seed) => seed.incomplete,
-).map((seed) => ({ offerId: `${seed.slug}-2026-09`, reason: seed.incomplete! }));
+).map((seed) => ({ offerId: offerIdFor(seed), reason: seed.incomplete! }));

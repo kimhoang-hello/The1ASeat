@@ -320,6 +320,46 @@ const RATES: Record<string, { program: string; rates: RateSeed[] }> = {
   },
 
   "rbc-avion-visa-platinum": { program: "avion", rates: [["everything_else", 1]] },
+
+  "cibc-aeroplan-visa": {
+    program: "aeroplan",
+    rates: [
+      ["gas", 1],
+      ["ev_charging", 1],
+      ["grocery", 1],
+      ["airline_direct", 1],
+      // "1 điểm cho mỗi $1.50" — giữ dạng phân số, xem TD® Platinum ở trên.
+      ["everything_else", 1 / 1.5],
+    ],
+  },
+
+  "cibc-aeroplan-visa-infinite": {
+    program: "aeroplan",
+    rates: [
+      ["gas", 1.5],
+      ["ev_charging", 1.5],
+      ["grocery", 1.5],
+      ["airline_direct", 1.5],
+      ["hotel", 1.5, { restrictedTo: "Khách sạn Hyatt®" }],
+      ["hotel", 1],
+      ["everything_else", 1],
+    ],
+  },
+
+  "cibc-aeroplan-visa-infinite-privilege": {
+    program: "aeroplan",
+    rates: [
+      ["airline_direct", 2],
+      ["hotel", 2, { restrictedTo: "Khách sạn Hyatt®" }],
+      ["hotel", 1.25],
+      ["gas", 1.5],
+      ["ev_charging", 1.5],
+      ["grocery", 1.5],
+      ["travel", 1.5],
+      ["dining", 1.5],
+      ["everything_else", 1.25],
+    ],
+  },
 };
 
 export const EARNING_RATES: EarningRate[] = Object.entries(RATES).flatMap(

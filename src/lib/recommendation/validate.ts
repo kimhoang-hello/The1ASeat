@@ -198,6 +198,83 @@ export function validateDataset(data: RecommendationDataset): ValidationIssue[] 
     }
   }
 
+  // `dynamic_floor` chỉ được có mức sàn. Có `pointsTypical`/`pointsHigh` nghĩa
+  // là ai đó đã điền một con số chương trình không cam kết — đúng lỗi mà cột
+  // "Select Partners" của Aeroplan® từng dụ vào.
+  for (const strategy of data.awardStrategies) {
+    if (strategy.pricingModel !== "dynamic_floor") continue;
+    if (strategy.pointsTypical !== null || strategy.pointsHigh !== null) {
+      issues.push({
+        level: "error",
+        entity: "award_strategies",
+        message: `${strategy.id}: pricingModel là dynamic_floor nhưng vẫn có pointsTypical/pointsHigh`,
+      });
+    }
+    if (strategy.pointsLow === null) {
+      issues.push({
+        level: "error",
+        entity: "award_strategies",
+        message: `${strategy.id}: dynamic_floor mà không có pointsLow thì không nói được gì`,
+      });
+    }
+  }
+
+  // low ≤ typical ≤ high. Ngược thứ tự là một khoảng không đọc được, và engine
+  // so số dư với nó sẽ ra kết luận ngẫu nhiên.
+  for (const strategy of data.awardStrategies) {
+    const { pointsLow: low, pointsTypical: mid, pointsHigh: high } = strategy;
+    const ordered = [low, mid, high].filter((v): v is number => v !== null);
+    for (let i = 1; i < ordered.length; i += 1) {
+      if (ordered[i] < ordered[i - 1]) {
+        issues.push({
+          level: "error",
+          entity: "award_strategies",
+          message: `${strategy.id}: khoảng điểm không tăng dần (${ordered.join(" / ")})`,
+        });
+        break;
+      }
+    }
+  }
+
+  // Luật `hard` cùng một `ruleGroup` được nối bằng HOẶC. Một nhóm chỉ có ĐÚNG
+  // MỘT luật là một nhóm vô nghĩa — và tệ hơn, nó gợi ý sai rằng có một vế
+  // thay thế mà thực ra không có.
+  const groupSizes = new Map<string, number>();
+  for (const rule of data.eligibilityRules) {
+    if (rule.ruleGroup === null) continue;
+    groupSizes.set(rule.ruleGroup, (groupSizes.get(rule.ruleGroup) ?? 0) + 1);
+  }
+  for (const [group, size] of groupSizes) {
+    if (size < 2) {
+      issues.push({
+        level: "error",
+        entity: "eligibility_rules",
+        message: `${group}: nhóm HOẶC chỉ có ${size} luật`,
+      });
+    }
+  }
+
+  // Mỗi sản phẩm chỉ được có MỘT offer đang chạy tại một thời điểm. Hai cái
+  // cùng lúc thì mọi phép tra "offer hiện tại" trả về cái nào tuỳ thứ tự khai.
+  const today = new Date().toISOString().slice(0, 10);
+  const liveByProduct = new Map<string, string[]>();
+  for (const offer of data.offers) {
+    if (offer.effectiveFrom > today) continue;
+    if (offer.effectiveTo !== null && offer.effectiveTo < today) continue;
+    const list = liveByProduct.get(offer.productId) ?? [];
+    list.push(offer.id);
+    liveByProduct.set(offer.productId, list);
+  }
+  for (const [productId, ids] of liveByProduct) {
+    if (ids.length > 1) {
+      issues.push({
+        level: "error",
+        entity: "offers",
+        message: `${productId}: ${ids.length} offer cùng đang chạy (${ids.join(", ")})`,
+      });
+    }
+  }
+
   // Trần phải đủ ba mảnh mới dùng được.
   for (const rate of data.earningRates) {
     const parts = [rate.capKind, rate.capAmount, rate.capPeriod].filter((p) => p !== null).length;

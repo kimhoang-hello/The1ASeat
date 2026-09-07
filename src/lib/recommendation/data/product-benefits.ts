@@ -217,6 +217,31 @@ const BY_PRODUCT: Record<string, BenefitSeed[]> = {
   // RBC® Avion® Visa Platinum: site không nêu quyền lợi nào ngoài cách đổi
   // điểm và điều kiện thu nhập.
   "rbc-avion-visa-platinum": [],
+
+  "cibc-aeroplan-visa": [["rental-car-insurance"]],
+
+  "cibc-aeroplan-visa-infinite": [
+    ["free-checked-bag", 8, { text: "Chủ thẻ, thẻ phụ và tối đa 8 người đi cùng" }],
+    ["airline-status-credits", 25000, { text: "1,000 SQC cho mỗi $20,000 chi tiêu, tối đa 25,000/năm" }],
+    ["travel-medical-insurance", null, { text: "Y tế khẩn cấp ngoài tỉnh" }],
+    ["trip-cancellation-insurance"],
+    ["rental-car-insurance"],
+    ["mobile-device-insurance"],
+  ],
+
+  "cibc-aeroplan-visa-infinite-privilege": [
+    ["maple-leaf-lounge", 1, { text: "Kèm 1 khách, đến hết 31/12/2026" }],
+    ["airport-lounge-passes", 6, { text: "Visa Airport Companion Program, mỗi chủ thẻ" }],
+    ["free-checked-bag", 8, { text: "Kèm Priority Check-in, Boarding và Baggage" }],
+    ["companion-pass", 99, { text: "Toàn cầu, từ $99 đến tối đa $599 chưa gồm thuế phí", minimumAnnualSpend: 25000 }],
+    ["nexus-credit", 160, { text: "Mỗi 4 năm" }],
+    ["hotel-status", null, { text: "World of Hyatt® Discoverist, kèm 5 đêm tính hạng mỗi năm" }],
+    ["airline-status-credits", 25000, { text: "1,000 SQC cho mỗi $5,000 chi tiêu, tối đa 25,000/năm" }],
+    ["travel-medical-insurance", null, { text: "Y tế khẩn cấp ngoài tỉnh" }],
+    ["trip-cancellation-insurance"],
+    ["rental-car-insurance"],
+    ["mobile-device-insurance"],
+  ],
 };
 
 export const PRODUCT_BENEFITS: ProductBenefit[] = Object.entries(BY_PRODUCT).flatMap(

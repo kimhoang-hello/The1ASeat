@@ -29,84 +29,134 @@ import {
 
 const VERIFIED_ON = "2026-09-07";
 
-type RuleSeed = [
-  type: EligibilityRuleType,
-  value: number | string | boolean,
-  severity?: "hard" | "soft" | "unknown",
-];
+type RuleSeed = {
+  type: EligibilityRuleType;
+  value: number | string | boolean;
+  severity?: "hard" | "soft" | "unknown";
+  scope?: "application" | "welcome_offer";
+  /** Cùng `group` thì nối bằng HOẶC. Xem `EligibilityRule.ruleGroup`. */
+  group?: string;
+};
 
-/** Cặp thu nhập cá nhân / hộ gia đình, dạng nhà phát hành Canada luôn công bố. */
+/**
+ * Cặp thu nhập cá nhân / hộ gia đình, dạng nhà phát hành Canada luôn công bố.
+ *
+ * Hai dòng CÙNG một `group`, nên engine đọc chúng là "đạt MỘT trong hai".
+ * Trước khi có `group`, hai dòng `hard` riêng lẻ nghĩa là phải đạt CẢ HAI —
+ * và vế hộ gia đình sinh ra chính là để cứu người không đạt vế cá nhân, nên
+ * cách đọc kia loại oan đúng nhóm nó phục vụ.
+ */
 function income(personal: number, household: number): RuleSeed[] {
   return [
-    ["minimum_personal_income", personal, "hard"],
-    ["minimum_household_income", household, "hard"],
+    { type: "minimum_personal_income", value: personal, severity: "hard", group: "income" },
+    { type: "minimum_household_income", value: household, severity: "hard", group: "income" },
   ];
 }
+
+/** Amex® "once in a lifetime": vẫn mở được thẻ, chỉ không có welcome bonus.
+ *  `scope: "welcome_offer"` là chỗ nói ra điều đó — xem `EligibilityRule.scope`. */
+const AMEX_ONCE_IN_A_LIFETIME: RuleSeed = {
+  type: "previous_cardholder_excluded",
+  value: true,
+  severity: "hard",
+  scope: "welcome_offer",
+};
 
 const BY_PRODUCT: Record<string, RuleSeed[]> = {
   // Amex® ghi rõ người ĐANG hoặc TỪNG giữ thẻ không đủ điều kiện nhận welcome
   // bonus. Đây là luật quyết định nhất trong cả file với người đã chơi điểm
   // vài năm — nó loại thẳng những thẻ trông hấp dẫn nhất.
-  "amex-green": [["previous_cardholder_excluded", true, "hard"]],
-  "amex-gold-rewards": [["previous_cardholder_excluded", true, "hard"]],
-  "amex-cobalt": [["previous_cardholder_excluded", true, "hard"]],
+  "amex-green": [AMEX_ONCE_IN_A_LIFETIME],
+  "amex-gold-rewards": [AMEX_ONCE_IN_A_LIFETIME],
+  "amex-cobalt": [AMEX_ONCE_IN_A_LIFETIME],
 
   "scotiabank-momentum-visa-infinite-plus": income(60000, 100000),
-  "cibc-aventura-gold-visa": [["minimum_household_income", 15000, "hard"]],
+  "cibc-aventura-gold-visa": [
+    { type: "minimum_household_income", value: 15000, severity: "hard" },
+  ],
   "scotiabank-scene-plus-visa-students": [
-    ["minimum_personal_income", 0, "hard"],
-    ["student_status_required", true, "hard"],
+    { type: "minimum_personal_income", value: 0, severity: "hard" },
+    { type: "student_status_required", value: true, severity: "hard" },
   ],
   "westjet-rbc-world-elite-mastercard": income(80000, 150000),
   "td-aeroplan-visa-infinite-privilege": income(150000, 200000),
   "td-aeroplan-visa-infinite": income(60000, 100000),
   "td-first-class-travel-visa-infinite": income(60000, 100000),
   "cibc-aventura-visa-infinite": income(60000, 100000),
-  "amex-aeroplan-business-reserve": [["business_required", true, "hard"]],
-  "amex-marriott-bonvoy-business": [["business_required", true, "hard"]],
+  "amex-aeroplan-business-reserve": [
+    { type: "business_required", value: true, severity: "hard" },
+  ],
+  "amex-marriott-bonvoy-business": [
+    { type: "business_required", value: true, severity: "hard" },
+  ],
   "national-bank-world-elite-mastercard": income(80000, 150000),
   "td-cash-back-visa-infinite": income(60000, 100000),
   "wealthsimple-visa-infinite-privilege": income(150000, 200000),
   "rbc-avion-visa-infinite-privilege": income(200000, 200000),
-  "td-aeroplan-visa-platinum": [["minimum_personal_income", 0, "hard"]],
+  "td-aeroplan-visa-platinum": [
+    { type: "minimum_personal_income", value: 0, severity: "hard" },
+  ],
   "amex-aeroplan": [
-    ["minimum_personal_income", 0, "hard"],
-    ["previous_cardholder_excluded", true, "hard"],
+    { type: "minimum_personal_income", value: 0, severity: "hard" },
+    AMEX_ONCE_IN_A_LIFETIME,
   ],
   "bmo-viporter-world-elite-mastercard": income(80000, 150000),
   "scotiabank-gold-amex": [
-    ["banking_relationship_required", "Gói ngân hàng phù hợp để được miễn annual fee", "soft"],
+    {
+      type: "banking_relationship_required",
+      value: "Gói ngân hàng phù hợp để được miễn annual fee",
+      severity: "soft",
+    },
   ],
   "rbc-avion-visa-infinite": income(60000, 100000),
-  "rbc-avion-visa-platinum": [["minimum_personal_income", 0, "hard"]],
-  "amex-marriott-bonvoy": [["previous_cardholder_excluded", true, "hard"]],
-  "amex-aeroplan-reserve": [["previous_cardholder_excluded", true, "hard"]],
+  "rbc-avion-visa-platinum": [
+    { type: "minimum_personal_income", value: 0, severity: "hard" },
+  ],
+  "amex-marriott-bonvoy": [AMEX_ONCE_IN_A_LIFETIME],
+  "amex-aeroplan-reserve": [AMEX_ONCE_IN_A_LIFETIME],
   "wealthsimple-visa-infinite-plus": [
-    ["banking_relationship_required", "Tài khoản Wealthsimple® để được miễn annual fee", "soft"],
+    {
+      type: "banking_relationship_required",
+      value: "Tài khoản Wealthsimple® để được miễn annual fee",
+      severity: "soft",
+    },
   ],
 
   // Nội dung site chưa nói gì về điều kiện của hai thẻ dưới. Để trống — xem
   // chú thích đầu file: trống nghĩa là chưa biết, không phải không yêu cầu.
   "united-mileageplus-neo-world-elite-mastercard": [],
   "scotiabank-passport-visa-infinite": [],
+
+  "cibc-aeroplan-visa": [
+    { type: "minimum_household_income", value: 15000, severity: "hard" },
+  ],
+  // Bản Visa Infinite: nội dung site chưa nêu điều kiện thu nhập. Để trống —
+  // trống nghĩa là chưa biết, không phải không yêu cầu.
+  "cibc-aeroplan-visa-infinite": [],
+  "cibc-aeroplan-visa-infinite-privilege": income(150000, 200000),
 };
 
 /** Ai cũng phải cư trú tại Canada. Không thẻ nào trong danh sách là ngoại lệ,
  *  nên viết một lần rồi rải ra thay vì lặp 28 dòng giống hệt nhau. */
-const CANADIAN_RESIDENCY: RuleSeed = ["residency", "CA", "hard"];
+const CANADIAN_RESIDENCY: RuleSeed = { type: "residency", value: "CA", severity: "hard" };
 
 export const ELIGIBILITY_RULES: EligibilityRule[] = Object.entries(BY_PRODUCT).flatMap(
   ([slug, seeds]) =>
-    [CANADIAN_RESIDENCY, ...seeds].map(([ruleType, value, severity], index) => ({
-      id: id<EligibilityRuleId>(`${slug}-${ruleType}-${index + 1}`),
+    [CANADIAN_RESIDENCY, ...seeds].map((seed, index) => ({
+      id: id<EligibilityRuleId>(`${slug}-${seed.type}-${index + 1}`),
       productId: slug as ProductId,
-      ruleType,
+      ruleType: seed.type,
       operator:
-        ruleType === "minimum_personal_income" || ruleType === "minimum_household_income"
+        seed.type === "minimum_personal_income" || seed.type === "minimum_household_income"
           ? ("gte" as const)
           : ("eq" as const),
-      value,
-      severity: severity ?? "unknown",
+      value: seed.value,
+      severity: seed.severity ?? "unknown",
+      scope: seed.scope ?? "application",
+      // Nhóm phải bao gồm slug: hai thẻ cùng dùng nhóm "income" mà không tách
+      // ra thì mọi luật thu nhập của cả site rơi vào một nhóm HOẶC khổng lồ,
+      // và đạt điều kiện của một thẻ bất kỳ thành đạt điều kiện của tất cả.
+      ruleGroup: seed.group ? `${slug}-${seed.group}` : null,
       effectiveFrom: VERIFIED_ON,
       effectiveTo: null,
       sourceUrl: `https://ghe1a.com/credit-cards/${slug}`,

@@ -48,6 +48,7 @@ type StrategySeed = {
   surcharge: "low" | "medium" | "high";
   availability: "easy" | "medium" | "hard";
   complexity: "simple" | "moderate" | "complex";
+  pricing: "fixed" | "dynamic_floor";
   confidence: "verified" | "estimated";
   verifiedAt: string;
   sourceUrl: string;
@@ -65,21 +66,55 @@ const SEEDS: StrategySeed[] = [
     // hành trình Canada → Đông Nam Á rơi vào band 7,501–11,000 hoặc 11,001+,
     // nên khoảng chạy từ cận dưới của band đầu tới cận trên của band sau.
     economy: [65000, 65000, 70000],
-    // Premium Economy KHÔNG có trong cột đối tác cố định — nó chỉ tồn tại ở
-    // cột "Air Canada and/or Select Partners", vốn là giá động và chỉ công bố
-    // mức sàn. Vì thế `confidence` của cả nhóm này là `estimated`, và
-    // `pointsLow` ở đây là SÀN chứ không phải giá.
-    premium: [85000, 90000, 95000],
+    // Premium Economy KHÔNG có trong cột này, và đó không phải thiếu sót của
+    // seed: bảng "All other partners" của Air Canada® chỉ in Economy,
+    // Business và First. Nó nằm ở strategy riêng ngay bên dưới, vì nó thuộc
+    // một cột khác với một cách định giá khác.
+    premium: null,
     business: [102500, 102500, 115000],
     surcharge: "low",
     availability: "medium",
     complexity: "moderate",
+    pricing: "fixed",
     confidence: "verified",
     verifiedAt: "2026-08-23",
     sourceUrl: "https://www.aircanada.com/ca/en/aco/home/aeroplan/redeem/air-canada.html",
     note:
       "Số của cột đối tác cố định. Hành trình bay toàn bằng Air Canada® được " +
       "định giá động, không theo bảng này. Có chặng đối tác thì thu thêm phí đặt vé.",
+  },
+  {
+    // Cột THỨ HAI của Aeroplan®: "Air Canada and/or Select Partners". Đây là
+    // chỗ DUY NHẤT có Premium Economy, và nó được định giá ĐỘNG — Air Canada®
+    // chỉ công bố mức sàn "starting at", còn giá thật đổi theo chuyến.
+    //
+    // Tách thành strategy riêng thay vì nhét chung vào bảng cố định ở trên, vì
+    // hai cột không thay thế được cho nhau: cột trên là số bảo đảm, cột này
+    // là mức sàn của một khoảng không ai biết trần. Trộn lại thì "từ 85,000"
+    // nằm cạnh 102,500 và trông y hệt một cái giá — rồi engine hứa với người
+    // đọc một con số Air Canada® chưa bao giờ cam kết.
+    //
+    // `pointsTypical` và `pointsHigh` để `null` là bắt buộc, không phải thiếu:
+    // `validate.ts` chặn mọi strategy `dynamic_floor` có hai số đó.
+    key: "aeroplan-select-ca-sea",
+    origin: "CANADA_US",
+    destination: "SEA_VIETNAM",
+    program: "aeroplan",
+    name: "Aeroplan® trên Air Canada® và Select Partners — giá động",
+    economy: null,
+    premium: [85000, 0, 0],
+    business: null,
+    surcharge: "low",
+    availability: "medium",
+    complexity: "simple",
+    pricing: "dynamic_floor",
+    confidence: "estimated",
+    verifiedAt: "2026-08-23",
+    sourceUrl: "https://www.aircanada.com/ca/en/aco/home/aeroplan/redeem/air-canada.html",
+    note:
+      "Mức SÀN, không phải giá. Chỉ áp cho Air Canada® và nhóm Select Partners " +
+      "(United®, Emirates®, Flydubai®, Etihad®, Canadian North®, Calm Air®, " +
+      "Bearskin®, PAL®). Giá thật đổi theo từng chuyến.",
   },
   {
     key: "aadvantage-ca-sea",
@@ -96,6 +131,7 @@ const SEEDS: StrategySeed[] = [
     surcharge: "low",
     availability: "hard",
     complexity: "complex",
+    pricing: "fixed",
     confidence: "verified",
     verifiedAt: "2026-08-09",
     sourceUrl:
@@ -118,6 +154,7 @@ const SEEDS: StrategySeed[] = [
     surcharge: "medium",
     availability: "medium",
     complexity: "moderate",
+    pricing: "fixed",
     // Cathay đã RÚT bảng giá khỏi trang chính thức. Số này dựng lại từ ba
     // nguồn thứ cấp đồng thuận — thật và kiểm chứng được, nhưng không phải là
     // thứ hãng đứng sau, nên `estimated`.
@@ -165,6 +202,7 @@ export const AWARD_STRATEGIES: AwardStrategy[] = SEEDS.flatMap((seed) =>
     .filter(([, range]) => range !== null)
     .map(([cabin, range]) => {
       const [low, typical, high] = range!;
+      const floorOnly = seed.pricing === "dynamic_floor";
       return {
         id: id<AwardStrategyId>(`${seed.key}-${cabin}`),
         originRegion: seed.origin,
@@ -172,9 +210,10 @@ export const AWARD_STRATEGIES: AwardStrategy[] = SEEDS.flatMap((seed) =>
         cabin,
         programId: seed.program as PointsProgramId,
         strategyName: seed.name,
+        pricingModel: seed.pricing,
         pointsLow: low,
-        pointsTypical: typical,
-        pointsHigh: high,
+        pointsTypical: floorOnly ? null : typical,
+        pointsHigh: floorOnly ? null : high,
         cashSurchargeLevel: seed.surcharge,
         availabilityDifficulty: seed.availability,
         bookingComplexity: seed.complexity,
