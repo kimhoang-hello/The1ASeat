@@ -88,8 +88,13 @@ export function ContactForm() {
           <span className="text-sm font-medium text-foreground/80">
             {t("firstName")} <span className="text-destructive">*</span>
           </span>
+          {/* Cùng lý do với ô email của NewsletterForm: `autoComplete` là thứ
+              duy nhất nói cho trình duyệt biết ô này chứa gì (WCAG 2.1 AA
+              1.3.5). Tên "given-name"/"family-name" theo đúng thứ tự phương
+              Tây mà form đang hỏi, không phải thứ tự tiếng Việt. */}
           <input
             type="text"
+            autoComplete="given-name"
             required
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
@@ -102,6 +107,7 @@ export function ContactForm() {
           </span>
           <input
             type="text"
+            autoComplete="family-name"
             required
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
@@ -116,6 +122,7 @@ export function ContactForm() {
         </span>
         <input
           type="email"
+          autoComplete="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}

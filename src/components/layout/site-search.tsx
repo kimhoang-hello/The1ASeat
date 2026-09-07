@@ -40,6 +40,8 @@ export function SiteSearch({ onOpen }: { onOpen?: () => void }) {
   const [failed, setFailed] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
     if (!open || cachedItems) return;
@@ -144,6 +146,55 @@ export function SiteSearch({ onOpen }: { onOpen?: () => void }) {
     router.push(first.href);
   }
 
+  /**
+   * Mũi tên đi trong danh sách bằng FOCUS THẬT, không phải combobox ARIA.
+   *
+   * Hai cách làm, và cách này cố ý không phải cách kia:
+   *
+   * - Combobox APG (`role="combobox"` + `role="listbox"`/`option` +
+   *   `aria-activedescendant`) giữ focus ở ô nhập và chỉ DI CHUYỂN MỘT THUỘC
+   *   TÍNH. Đổi sang nó thì phải gán `role="option"` cho từng `<a>`, tức là
+   *   xoá vai trò "link" mà screen reader đang đọc đúng, và bỏ luôn đường Tab
+   *   đi qua từng kết quả — đánh đổi hai thứ ĐANG chạy tốt lấy một thứ chưa
+   *   có.
+   * - Cách ở đây: mũi tên gọi thẳng `.focus()` lên chính thẻ `<a>`. Không cần
+   *   thêm một `role` nào, không cần `aria-activedescendant`, và screen reader
+   *   đọc lên đúng link đang focus vì focus là thật. Tab, Shift+Tab, Enter và
+   *   Escape giữ nguyên hành vi cũ.
+   *
+   * KHÔNG chuyển tiếp phím chữ về ô nhập khi đang focus ở link: người Việt gõ
+   * bằng IME (Telex/VNI), mà tự nối `event.key` vào query sẽ phá bộ gõ dấu.
+   * Không có bẫy focus ở đây — Tab, Shift+Tab và Escape đều thoát được.
+   */
+  function moveFocus(event: React.KeyboardEvent, delta: 1 | -1) {
+    const links = listRef.current
+      ? [...listRef.current.querySelectorAll<HTMLAnchorElement>("a")]
+      : [];
+    if (links.length === 0) return;
+    event.preventDefault();
+
+    const current = links.indexOf(document.activeElement as HTMLAnchorElement);
+    // Đang ở ô nhập: xuống là kết quả đầu, lên là kết quả cuối.
+    if (current === -1) {
+      (delta === 1 ? links[0] : links[links.length - 1]).focus();
+      return;
+    }
+
+    const next = current + delta;
+    // Đi quá hai đầu thì về ô nhập, không cuộn vòng: cuộn vòng làm người dùng
+    // bàn phím mất dấu mình đang ở đâu trong danh sách dài.
+    if (next < 0 || next >= links.length) {
+      inputRef.current?.focus();
+      return;
+    }
+    links[next].focus();
+  }
+
+  function onArrowKeys(event: React.KeyboardEvent) {
+    if (event.key === "ArrowDown") moveFocus(event, 1);
+    else if (event.key === "ArrowUp") moveFocus(event, -1);
+  }
+
   return (
     <div ref={rootRef}>
       <button
@@ -163,10 +214,12 @@ export function SiteSearch({ onOpen }: { onOpen?: () => void }) {
             <form onSubmit={submit} className="flex items-center gap-3 rounded-full border border-border bg-card px-4 py-2.5">
               <MagnifyingGlass size={18} className="shrink-0 text-muted-foreground" />
               <input
+                ref={inputRef}
                 type="search"
                 autoFocus
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
+                onKeyDown={onArrowKeys}
                 placeholder={tSearch("placeholder")}
                 aria-label={tSearch("open")}
                 className="w-full bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground"
@@ -194,13 +247,25 @@ export function SiteSearch({ onOpen }: { onOpen?: () => void }) {
                   {tSearch("empty", { query: query.trim() })}
                 </p>
               ) : (
-                <ul className="max-h-[60vh] overflow-y-auto">
+                <ul
+                  ref={listRef}
+                  // Đặt trên `<ul>`, không trên từng link: sự kiện bàn phím nổi
+                  // bọt lên đây, nên một handler đủ cho cả danh sách và không
+                  // phải gắn lại mỗi lần kết quả đổi.
+                  onKeyDown={onArrowKeys}
+                  className="max-h-[60vh] overflow-y-auto"
+                >
                   {results.map((item) => (
                     <li key={item.href}>
                       <Link
                         href={item.href}
                         onClick={close}
-                        className="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-2 py-2.5 hover:bg-secondary"
+                        // `focus:bg-secondary` chứ không chỉ `focus-visible:`:
+                        // mũi tên di chuyển focus thật, và người dùng PHẢI thấy
+                        // mình đang ở đâu kể cả khi trình duyệt cho rằng lượt
+                        // focus này không "visible". Viền mặc định của trình
+                        // duyệt vẫn giữ nguyên, đây chỉ là lớp nền thêm vào.
+                        className="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-2 py-2.5 hover:bg-secondary focus:bg-secondary"
                       >
                         <span className="min-w-0">
                           <span className="block truncate text-sm font-semibold text-foreground">

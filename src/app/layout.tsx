@@ -12,15 +12,35 @@ import { ORGANIZATION_SAME_AS } from "@/lib/social-links";
 import { alternatesWithFeed } from "@/lib/seo";
 import "./globals.css";
 
+/**
+ * `subsets` là danh sách PRELOAD, không phải danh sách glyph được phát hành.
+ * Next chỉ dùng nó để quyết định chèn `<link rel=preload>` nào vào `<head>`;
+ * mọi @font-face vẫn được sinh ra đủ, và trình duyệt vẫn tự tải file còn lại
+ * theo `unicode-range` khi thật sự gặp ký tự thuộc về nó — xem
+ * `node_modules/next/dist/docs/01-app/03-api-reference/02-components/font.md`,
+ * mục `subsets`.
+ *
+ * VÌ SAO BỎ "latin-ext": đo ngày 07/09/2026, hai file latin-ext chiếm
+ * 104.5/196.5 KB — 53% toàn bộ font payload — mà cả sáu file đều được preload
+ * ở mức ưu tiên cao nhất trên MỌI trang, tranh băng thông với CSS và JS ngay
+ * từ byte đầu. Riêng Inter latin-ext nặng 83.3 KB, là file font lớn nhất trên
+ * critical path.
+ *
+ * Site này viết tiếng Việt, mà tiếng Việt nằm trong subset `vietnamese`;
+ * tiếng Pháp/Đức thông dụng nằm trong latin cơ bản. Chữ Séc/Ba Lan/Đông Âu
+ * chỉ xuất hiện lác đác trong tên khách sạn ở vài bài review — những trang đó
+ * vẫn nhận đúng font, chỉ là tải file latin-ext theo nhu cầu thay vì bắt cả
+ * site trả trước.
+ */
 const fontHeading = Plus_Jakarta_Sans({
   variable: "--font-heading",
-  subsets: ["latin", "latin-ext", "vietnamese"],
+  subsets: ["latin", "vietnamese"],
   weight: ["600", "700", "800"],
 });
 
 const fontBody = Inter({
   variable: "--font-body",
-  subsets: ["latin", "latin-ext", "vietnamese"],
+  subsets: ["latin", "vietnamese"],
   weight: ["400", "500", "600", "700"],
 });
 

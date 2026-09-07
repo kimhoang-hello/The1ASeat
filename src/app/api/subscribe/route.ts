@@ -29,6 +29,24 @@ const WINDOW_MS = 60 * 60 * 1000;
  */
 const EMAIL_LIMIT = 2;
 
+/**
+ * Hạn giờ cho MỌI lượt gọi ra ngoài của route này.
+ *
+ * `fetch` không có timeout mặc định. Trước đây cả lượt gọi Kit lẫn lượt gọi
+ * Resend đều `await` trần, nên upstream treo là request treo theo: phía trình
+ * duyệt, `NewsletterForm` giữ nguyên `status === "submitting"` và disable nút
+ * Gửi trong suốt thời gian đó (xem `handleSubmit` trong
+ * `components/home/newsletter-form.tsx`). Người đăng ký không thấy lỗi, không
+ * bấm lại được, và bỏ đi — mất hẳn một subscriber vì một sự cố của bên thứ ba.
+ *
+ * 10 giây: Kit và Resend bình thường trả trong dưới một giây, nên ngưỡng này
+ * chỉ chạm tới khi thật sự có sự cố, không cắt nhầm một lượt chậm.
+ *
+ * Cùng loại lỗ với "đọc body không có hạn giờ" của `api/revalidate` ghi trong
+ * AGENTS.md — khác chỗ ở đây là chiều GỬI ĐI, không phải chiều nhận vào.
+ */
+const UPSTREAM_TIMEOUT_MS = 10_000;
+
 export async function POST(request: Request) {
   // Ahead of parsing: this endpoint has someone else's inbox on the other end
   // of it, so the cheapest possible rejection is the right one.
@@ -71,11 +89,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "not_configured" }, { status: 500 });
   }
 
-  const res = await fetch(`https://api.convertkit.com/v3/forms/${formId}/subscribe`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ api_key: apiKey, email }),
-  });
+  // `catch` bọc cả lượt gọi, không chỉ hạn giờ: trước đây một exception mạng
+  // (DNS hỏng, đứt kết nối) thoát thẳng khỏi route và Next trả 500 rỗng.
+  // `NewsletterForm` coi mọi `!res.ok` là lỗi nên 502/504 đều hiện đúng màn
+  // hình "thử lại" — điều nó KHÔNG làm được là chờ mãi không có phản hồi.
+  let res: Response;
+  try {
+    res = await fetch(`https://api.convertkit.com/v3/forms/${formId}/subscribe`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ api_key: apiKey, email }),
+      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+    });
+  } catch (error) {
+    const timedOut = error instanceof DOMException && error.name === "TimeoutError";
+    console.error(timedOut ? "Kit subscribe timed out" : "Kit subscribe threw", error);
+    return NextResponse.json(
+      { error: timedOut ? "upstream_timeout" : "subscribe_failed" },
+      { status: timedOut ? 504 : 502 },
+    );
+  }
 
   if (!res.ok) {
     const body = await res.text();
@@ -153,6 +186,11 @@ async function sendWelcomeEmail(email: string): Promise<void> {
         subject: WELCOME_SUBJECT,
         html: WELCOME_HTML,
       }),
+      // Không có hạn giờ ở đây là ca tệ nhất của cả route: Kit ĐÃ nhận người
+      // đăng ký rồi, nên người dùng đang chờ một thứ đã xong. `catch` bên dưới
+      // nuốt lỗi và trả `{ ok: true }` như thường — chỉ thiếu email chào mừng,
+      // đúng nghĩa "best effort" mà chú thích trên hứa.
+      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     });
 
     if (!res.ok) {

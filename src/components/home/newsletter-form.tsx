@@ -98,6 +98,11 @@ export function NewsletterForm({
         <input
           id={`${id}-email`}
           type="email"
+          // Trình duyệt và password manager điền được một phát. `type="email"`
+          // KHÔNG thay được thuộc tính này: nó nói bàn phím nào hiện ra, còn
+          // `autoComplete` mới nói ô này chứa cái gì. Đây cũng là tiêu chí
+          // WCAG 2.1 AA 1.3.5 (Identify Input Purpose).
+          autoComplete="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
