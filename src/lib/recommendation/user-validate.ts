@@ -155,12 +155,23 @@ const _nextCardGoalKeys: AssertAllKeys<NextCardGoal, typeof GOAL_BASE_KEYS> = tr
 const _diversifyGoalKeys: AssertAllKeys<DiversifyGoal, typeof GOAL_BASE_KEYS> = true;
 void [_stateKeys, _declaredKeys, _profileKeys, _spendKeys, _cardKeys, _balanceKeys, _tripGoalKeys, _earnGoalKeys, _nextCardGoalKeys, _diversifyGoalKeys];
 
+/** Object thật, không phải mảng, không phải `null`. */
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 function checkKeys(
-  row: object,
+  row: unknown,
   keys: readonly string[],
   entity: string,
   issues: ValidationIssue[],
 ): void {
+  if (!isObject(row)) {
+    // `key in row` ném khi `row` là chuỗi, số hay `false`. Hàm này chạy trên
+    // JSON chưa đáng tin, nên nó phải tự chịu được thứ nó được sinh ra để kiểm.
+    issues.push({ level: "error", entity, message: `Không phải object: ${JSON.stringify(row) ?? String(row)}` });
+    return;
+  }
   const record = row as Record<string, unknown>;
   for (const key of keys) {
     if (!(key in row) || record[key] === undefined) {
@@ -205,15 +216,56 @@ export function validateUserState(
   data: RecommendationDataset,
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
-  const { profile, spend } = state;
+  const ST = "user_state";
+
+  // HÌNH DẠNG trước NỘI DUNG. `checkKeys` chỉ nói bộ khoá đúng hay sai; nó
+  // không nói `cards` có phải mảng hay không. Và hai hướng hỏng khác nhau:
+  //
+  //   `cards: null`  — khoá CÓ MẶT nên không phải "thiếu trường", rồi `?? []`
+  //                    lặng lẽ đọc thành "không có thẻ nào". Đúng cái luật
+  //                    trống-≠-bằng-không mà cả mô hình dựng lên để giữ, thủng
+  //                    ở tầng vật chứa.
+  //   `declared: false` — `key in false` NÉM, phá hợp đồng "không bao giờ ném".
+  //
+  // Nên kiểm hình dạng trước, báo lỗi, rồi mới đọc tiếp trên bản đã biết là an
+  // toàn.
+  if (!isObject(state)) {
+    return [{ level: "error", entity: ST, message: "UserState không phải object" }];
+  }
+  if (!isObject(state.profile)) {
+    // Không có hồ sơ thì không phép kiểm nào còn nghĩa: mọi thứ khác đối chiếu
+    // với `profile.id`.
+    return [{ level: "error", entity: ST, message: "profile không phải object" }];
+  }
+  const cards = Array.isArray(state.cards) ? state.cards : [];
+  const balances = Array.isArray(state.balances) ? state.balances : [];
+  const goals = Array.isArray(state.goals) ? state.goals : [];
+  for (const [label, value] of [
+    ["cards", state.cards],
+    ["balances", state.balances],
+    ["goals", state.goals],
+  ] as const) {
+    if (!Array.isArray(value)) {
+      issues.push({ level: "error", entity: ST, message: `${label} phải là mảng (nhận ${String(value)})` });
+    }
+  }
+  if (!isObject(state.declared)) {
+    issues.push({ level: "error", entity: ST, message: `declared phải là object (nhận ${String(state.declared)})` });
+  }
+  if (state.spend !== null && !isObject(state.spend)) {
+    issues.push({ level: "error", entity: ST, message: `spend phải là object hoặc null (nhận ${String(state.spend)})` });
+  }
+
+  const profile = state.profile;
+  const spend = isObject(state.spend) ? state.spend : null;
   const userId = profile.id;
 
   // Cả VẬT CHỨA cũng phải khớp bộ khoá, không chỉ các dòng bên trong. Một
   // `loyaltyAccountNumber` gắn thẳng vào gốc `UserState` hay vào `declared`
   // không đi qua vòng lặp nào của các thực thể con, nên lời hứa "không có chỗ
   // nào nhét được" thủng đúng ở chỗ dễ nhét nhất.
-  checkKeys(state, STATE_KEYS, "user_state", issues);
-  checkKeys(state.declared ?? {}, DECLARED_KEYS, "user_state", issues);
+  checkKeys(state, STATE_KEYS, ST, issues);
+  checkKeys(state.declared, DECLARED_KEYS, ST, issues);
 
   /* ---------------- user_profiles ---------------- */
 
@@ -329,7 +381,11 @@ export function validateUserState(
   const productIds = new Set(data.products.map((row) => row.id as string));
   const seenCardIds = new Set<string>();
   const activeByProduct = new Map<string, number>();
-  for (const card of state.cards ?? []) {
+  for (const card of cards) {
+    if (!isObject(card)) {
+      issues.push({ level: "error", entity: C, message: `Dòng thẻ không phải object: ${String(card)}` });
+      continue;
+    }
     if (seenCardIds.has(card.id)) {
       issues.push({ level: "error", entity: C, message: `Id trùng: ${card.id}` });
     }
@@ -377,7 +433,7 @@ export function validateUserState(
     // "đã khai" — đúng phân biệt mà cả mô hình dựng lên để giữ.
     issues.push({ level: "error", entity: C, message: "declared.cards và declared.balances phải là boolean" });
   }
-  if ((state.cards ?? []).length > 0 && !state.declared?.cards) {
+  if (cards.length > 0 && !state.declared?.cards) {
     issues.push({
       level: "error",
       entity: C,
@@ -390,7 +446,11 @@ export function validateUserState(
   const B = "user_point_balances";
   const programIds = new Set(data.pointsPrograms.map((row) => row.id as string));
   const seenPrograms = new Set<string>();
-  for (const row of state.balances ?? []) {
+  for (const row of balances) {
+    if (!isObject(row)) {
+      issues.push({ level: "error", entity: B, message: `Dòng số dư không phải object: ${String(row)}` });
+      continue;
+    }
     if (row.userId !== userId) {
       issues.push({ level: "error", entity: B, message: `${row.programId}: userId không khớp hồ sơ` });
     }
@@ -409,7 +469,7 @@ export function validateUserState(
     }
     checkRequiredDate(row.updatedAt, `${row.programId}.updatedAt`, B, issues);
   }
-  if ((state.balances ?? []).length > 0 && !state.declared?.balances) {
+  if (balances.length > 0 && !state.declared?.balances) {
     issues.push({
       level: "error",
       entity: B,
@@ -422,7 +482,11 @@ export function validateUserState(
   const G = "goals";
   const seenGoalIds = new Set<string>();
   const seenPriorities = new Set<number>();
-  for (const goal of state.goals ?? []) {
+  for (const goal of goals) {
+    if (!isObject(goal)) {
+      issues.push({ level: "error", entity: G, message: `Dòng mục tiêu không phải object: ${String(goal)}` });
+      continue;
+    }
     if (seenGoalIds.has(goal.id)) {
       issues.push({ level: "error", entity: G, message: `Id trùng: ${goal.id}` });
     }

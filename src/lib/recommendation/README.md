@@ -555,11 +555,24 @@ bên trong. Bản vá đầu chỉ kiểm profile/spend/card/balance/goal, nên 
 gắn thẳng vào gốc không đi qua vòng lặp nào: lời hứa thủng đúng ở chỗ dễ nhét
 nhất. Test thử nhét vào cả bảy tầng.
 
+**HÌNH DẠNG trước NỘI DUNG.** `checkKeys` nói bộ khoá đúng hay sai; nó không nói
+`cards` có phải mảng không. Hai hướng hỏng, và `?? []` chỉ đỡ được một:
+
+| Dữ liệu vào | Không kiểm hình dạng thì |
+| --- | --- |
+| `cards: null` | Khoá CÓ MẶT nên không phải "thiếu trường", rồi `?? []` đọc thành "không có thẻ nào" — luật trống-≠-bằng-không thủng ở tầng vật chứa |
+| `declared: false` | `key in false` **NÉM**, phá hợp đồng "không bao giờ ném" |
+| `goals: [null]` | `a.priority` ném ở một phép sắp xếp trông vô hại |
+
+Nên: kiểm hình dạng trước và báo thành lỗi, rồi mới đọc tiếp. `asArray` trong
+`user.ts` là nửa còn lại — nó đòi mảng VÀ lọc bỏ dòng không phải object, để các
+hàm đọc coi rác là KHÔNG CÓ DỮ LIỆU thay vì đoán hay ném.
+
 ## Chạy gì
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # 162 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng
+npm run test:reco         # 164 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng
 ```
 
 `audit:reco-data` bắt ba lớp lỗi:

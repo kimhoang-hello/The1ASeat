@@ -22,13 +22,30 @@ import type {
   UserState,
 } from "./user-types.ts";
 
+/**
+ * Đọc một bộ sưu tập cho an toàn: phải là mảng, và chỉ giữ những DÒNG là object.
+ *
+ * `?? []` chỉ đỡ được `null`/`undefined`. Dữ liệu tới từ database hay JSON còn
+ * hỏng theo hai cách nữa: cả bộ sưu tập không phải mảng (`cards` là một chuỗi
+ * thì spread ra thành từng ký tự, và mọi phép đọc phía sau vẫn "chạy", chỉ là
+ * trên rác), hoặc một DÒNG bên trong là `null` — thứ làm `a.priority` ném ở một
+ * phép sắp xếp trông vô hại.
+ *
+ * `validateUserState` là chỗ BÁO những thứ đó thành lỗi. Các hàm đọc ở đây thì
+ * đơn giản coi rác là KHÔNG CÓ DỮ LIỆU, chứ không đoán và không ném.
+ */
+export function asArray<T>(value: T[] | undefined): T[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((row): row is T => typeof row === "object" && row !== null);
+}
+
 /* ------------------------------------------------------------------ *
  * Thẻ đang giữ và thẻ từng giữ
  * ------------------------------------------------------------------ */
 
 /** Đang giữ thẻ này. Dùng cho danh mục, tích điểm, và trùng quyền lợi. */
 export function holdsNow(card: UserCard): boolean {
-  return card.status === "active";
+  return card?.status === "active";
 }
 
 /**
@@ -44,15 +61,16 @@ export function holdsNow(card: UserCard): boolean {
  * Bao gồm cả thẻ đang giữ vì "once in a lifetime" tính cả lần này.
  */
 export function everHeld(card: UserCard): boolean {
-  return card.status === "active" || card.status === "closed" || card.status === "previously_held";
+  const status = card?.status;
+  return status === "active" || status === "closed" || status === "previously_held";
 }
 
 export function heldProductIds(state: UserState): Set<ProductId> {
-  return new Set((state.cards ?? []).filter(holdsNow).map((card) => card.productId));
+  return new Set(asArray(state.cards).filter(holdsNow).map((card) => card.productId));
 }
 
 export function everHeldProductIds(state: UserState): Set<ProductId> {
-  return new Set((state.cards ?? []).filter(everHeld).map((card) => card.productId));
+  return new Set(asArray(state.cards).filter(everHeld).map((card) => card.productId));
 }
 
 /**
@@ -77,7 +95,7 @@ export type ClosureLookup =
   | { kind: "unknown" };
 
 export function lastClosed(state: UserState, productId: ProductId): ClosureLookup {
-  const past = (state.cards ?? []).filter((card) => card.productId === productId && !holdsNow(card));
+  const past = asArray(state.cards).filter((card) => card.productId === productId && !holdsNow(card));
   if (past.length === 0) return { kind: "never_closed" };
   if (past.some((card) => card.closedDate == null)) return { kind: "unknown" };
   const latest = past
@@ -142,7 +160,7 @@ export function balanceRowFor(
   state: UserState,
   programId: PointsProgramId,
 ): UserPointBalance | null {
-  return (state.balances ?? []).find((row) => row.programId === programId) ?? null;
+  return asArray(state.balances).find((row) => row.programId === programId) ?? null;
 }
 
 /* ------------------------------------------------------------------ *
@@ -158,7 +176,7 @@ export function balanceRowFor(
  * sắp xếp không tất định ở đây là chỗ rò rỉ tính tất định sớm nhất có thể.
  */
 export function sortedGoals(state: UserState): Goal[] {
-  return [...(state.goals ?? [])].sort((a, b) => {
+  return [...asArray(state.goals)].sort((a, b) => {
     const pa = a.priority ?? Number.POSITIVE_INFINITY;
     const pb = b.priority ?? Number.POSITIVE_INFINITY;
     if (pa !== pb) return pa - pb;

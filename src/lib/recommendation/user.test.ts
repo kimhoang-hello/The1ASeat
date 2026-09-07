@@ -269,6 +269,57 @@ test("trường lạ bị chặn LÚC CHẠY, ở mọi tầng — kể cả v�
   }
 });
 
+test("vật chứa SAI HÌNH DẠNG: báo lỗi, không ném, và không đọc thành rỗng", () => {
+  // Hai hướng hỏng khác nhau, và bản vá `?? []` chỉ đỡ được một:
+  //   `cards: null`     — khoá có mặt nên không phải "thiếu trường", rồi `?? []`
+  //                       lặng lẽ đọc thành "không có thẻ nào". Đúng luật
+  //                       trống-≠-bằng-không, thủng ở tầng vật chứa.
+  //   `declared: false` — `key in false` NÉM, phá hợp đồng "không bao giờ ném".
+  const shapes: [string, unknown, string][] = [
+    ["cards", null, "cards phải là mảng"],
+    ["cards", "abc", "cards phải là mảng"],
+    ["balances", 0, "balances phải là mảng"],
+    ["goals", { a: 1 }, "goals phải là mảng"],
+    ["declared", false, "declared phải là object"],
+    ["declared", "x", "declared phải là object"],
+    ["spend", 5, "spend phải là object hoặc null"],
+  ];
+  for (const [key, value, expected] of shapes) {
+    const state = broken(advancedCollector, (s) => {
+      (s as unknown as Record<string, unknown>)[key] = value;
+    });
+    assert.doesNotThrow(() => validateUserState(state, data), `${key}=${String(value)} làm validator ném`);
+    assert.doesNotThrow(() => userGaps(state), `${key}=${String(value)} làm userGaps ném`);
+    assert.doesNotThrow(() => heldProductIds(state), `${key}=${String(value)} làm heldProductIds ném`);
+    assert.ok(
+      errorsIn(state).some((message) => message.includes(expected)),
+      `${key}=${String(value)} không báo "${expected}"`,
+    );
+  }
+
+  // Và phần tử rác trong mảng cũng không được làm sập.
+  const junkRow = broken(advancedCollector, (s) => {
+    (s.cards as unknown[]).push(null, "x");
+    (s.balances as unknown[]).push(null);
+    (s.goals as unknown[]).push(null);
+  });
+  assert.doesNotThrow(() => validateUserState(junkRow, data));
+  assert.doesNotThrow(() => userGaps(junkRow));
+  assert.ok(errorsIn(junkRow).some((message) => message.includes("không phải object")));
+});
+
+test("gốc UserState không phải object thì trả lỗi chứ không ném", () => {
+  for (const junk of [null, "x", 5, []]) {
+    assert.doesNotThrow(() => validateUserState(junk as never, data));
+    assert.ok(validateUserState(junk as never, data).length > 0);
+  }
+  assert.ok(
+    validateUserState({ profile: "x" } as never, data).some((issue) =>
+      issue.message.includes("profile không phải object"),
+    ),
+  );
+});
+
 test("vật chứa vắng mặt không làm hàm nào ném", () => {
   for (const key of ["cards", "balances", "goals", "declared", "spend"]) {
     const state = broken(advancedCollector, (s) => {
