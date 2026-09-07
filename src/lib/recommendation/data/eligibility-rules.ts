@@ -6,6 +6,7 @@ import {
   type EligibilityRuleType,
   type ProductId,
 } from "../types.ts";
+import { productIdFor } from "./products.ts";
 
 /**
  * Điều kiện mở thẻ.
@@ -162,8 +163,8 @@ export const ELIGIBILITY_RULES: EligibilityRule[] = Object.entries(BY_PRODUCT).f
       // phẩm có thể có hai luật cùng `type` (thu nhập cá nhân và hộ gia đình
       // là hai `type` khác nhau, nhưng `residency` thì chỉ một) — validator
       // bắt nếu hai luật rút về cùng một id.
-      id: makeId<EligibilityRuleId>("elig", `prd_${slug}`, seed.type, seed.from ?? VERIFIED_ON),
-      productId: id<ProductId>(`prd_${slug}`),
+      id: makeId<EligibilityRuleId>("elig", productIdFor(slug), seed.type, seed.from ?? VERIFIED_ON),
+      productId: productIdFor(slug),
       ruleType: seed.type,
       operator:
         seed.type === "minimum_personal_income" || seed.type === "minimum_household_income"

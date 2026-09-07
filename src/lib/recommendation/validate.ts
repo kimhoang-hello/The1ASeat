@@ -327,9 +327,12 @@ export function validateDataset(
   // Luật `hard` cùng một `ruleGroup` được nối bằng HOẶC. Một nhóm chỉ có ĐÚNG
   // MỘT luật là một nhóm vô nghĩa — và tệ hơn, nó gợi ý sai rằng có một vế
   // thay thế mà thực ra không có.
+  // Đếm theo dòng CÒN HIỆU LỰC TẠI `asOf`. Đếm cả lịch sử thì một nhánh đã hết
+  // hạn che mất một nhóm hiện chỉ còn một nhánh — tức engine tưởng có phương án
+  // thay thế trong khi không còn.
   const groupSizes = new Map<string, number>();
   for (const rule of data.eligibilityRules) {
-    if (rule.ruleGroup === null) continue;
+    if (rule.ruleGroup === null || !isActiveAt(rule, asOf)) continue;
     groupSizes.set(rule.ruleGroup, (groupSizes.get(rule.ruleGroup) ?? 0) + 1);
   }
   for (const [group, size] of groupSizes) {
@@ -351,7 +354,17 @@ export function validateDataset(
       issues.push({ level: "error", entity: "earning_caps", message: `${cap.id}: trần phải dương` });
     }
   }
+  const capOwner = new Map(data.earningCaps.map((cap) => [cap.id as string, cap.productId as string]));
   for (const rate of data.earningRates) {
+    // Trần của sản phẩm KHÁC: tồn tại nên phép kiểm khoá ngoại im lặng, nhưng
+    // engine sẽ áp trần $450 của thẻ TD® lên tỷ lệ của một thẻ Amex®.
+    if (rate.capId !== null && capOwner.get(rate.capId) !== undefined && capOwner.get(rate.capId) !== rate.productId) {
+      issues.push({
+        level: "error",
+        entity: "earning_rates",
+        message: `${rate.id}: dùng trần của sản phẩm khác (${capOwner.get(rate.capId)})`,
+      });
+    }
     if (rate.capId !== null && !capIds.has(rate.capId)) {
       issues.push({
         level: "error",
@@ -770,8 +783,16 @@ export function validateDataset(
     ["transfer_paths", data.transferPaths],
     ["award_strategies", data.awardStrategies],
     ["program_valuations", data.programValuations],
+    ["earning_caps", data.earningCaps],
   ] as const) {
     for (const row of rows) {
+      if (!isRealDate(row.verifiedAt)) {
+        issues.push({
+          level: "error",
+          entity,
+          message: `${row.id}: verifiedAt "${row.verifiedAt}" không phải một ngày có thật`,
+        });
+      }
       if (!isRealDate(row.recordedAt)) {
         issues.push({
           level: "error",
@@ -844,6 +865,7 @@ export function validateDataset(
     ["offers", data.offers, 120],
     ["product_fees", data.productFees, 365],
     ["earning_rates", data.earningRates, 365],
+    ["earning_caps", data.earningCaps, 365],
     ["product_benefits", data.productBenefits, 365],
     ["eligibility_rules", data.eligibilityRules, 365],
     ["transfer_paths", data.transferPaths, 180],
@@ -1070,7 +1092,11 @@ export function validateDataset(
 
   // Sản phẩm chưa có offer nào: không nhất thiết sai (thẻ không có welcome
   // bonus là chuyện có thật), nhưng phải thấy được.
-  const productsWithOffer = new Set(data.offers.map((o) => o.productId as string));
+  // Xét dòng CÒN HIỆU LỰC: một thẻ chỉ còn offer đã hết hạn thì thực tế là
+  // không có offer nào, dù lịch sử của nó đầy.
+  const productsWithOffer = new Set(
+    data.offers.filter((o) => isActiveAt(o, asOf)).map((o) => o.productId as string),
+  );
   for (const product of data.products) {
     if (!isActiveAt(product, asOf)) continue;
     if (!productsWithOffer.has(product.id)) {
@@ -1084,7 +1110,9 @@ export function validateDataset(
 
   // Chương trình bay không có bảng giá và cũng không khai là không quote được:
   // Phase 3 sẽ im lặng bỏ qua nó, và người đọc không bao giờ biết vì sao.
-  const withStrategy = new Set(data.awardStrategies.map((s) => s.programId as string));
+  const withStrategy = new Set(
+    data.awardStrategies.filter((s) => isActiveAt(s, asOf)).map((s) => s.programId as string),
+  );
   const declaredUnquotable = new Set(UNQUOTABLE_AWARD_PROGRAMS.map((p) => p.programId));
   for (const program of data.pointsPrograms) {
     if (program.programType !== "airline") continue;
@@ -1097,7 +1125,9 @@ export function validateDataset(
   }
 
   // Sản phẩm chưa có điều kiện mở thẻ nào.
-  const withEligibility = new Set(data.eligibilityRules.map((r) => r.productId as string));
+  const withEligibility = new Set(
+    data.eligibilityRules.filter((r) => isActiveAt(r, asOf)).map((r) => r.productId as string),
+  );
   for (const product of data.products) {
     if (!isActiveAt(product, asOf)) continue;
     if (!withEligibility.has(product.id)) {

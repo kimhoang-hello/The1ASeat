@@ -8,6 +8,7 @@ import {
   type PointsProgramId,
   type ProductId,
 } from "../types.ts";
+import { productIdFor } from "./products.ts";
 import { longestWindowMonths, spendPerNinetyDays, totalSpend, type SpendWindow } from "../spend.ts";
 
 /**
@@ -596,7 +597,7 @@ function offerIdFor(seed: OfferSeed): string {
 
 export const OFFERS: Offer[] = OFFER_SEEDS.map((seed) => ({
   id: id<OfferId>(offerIdFor(seed)),
-  productId: id<ProductId>(`prd_${seed.slug}`),
+  productId: productIdFor(seed.slug),
   name: seed.name,
   startDate: seed.startDate,
   endDate: seed.endDate ?? null,

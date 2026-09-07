@@ -969,3 +969,93 @@ test("id trùng bị bắt ở MỌI thực thể, kể cả earning_caps", () =
     );
   }
 });
+
+/* --------------------------------------------------------------- *
+ * Quy mô production: những gì chỉ hỏng khi đã có nhiều năm lịch sử
+ * --------------------------------------------------------------- */
+
+test("phép kiểm phủ sóng xét dòng CÒN HIỆU LỰC, không xét cả lịch sử", () => {
+  // Thẻ chỉ còn offer đã hết hạn thì thực tế là không có offer nào — dù lịch
+  // sử của nó đầy. Đếm cả lịch sử làm phép kiểm im lặng đúng lúc nó cần nói.
+  const product = BASE.products[0];
+  const expired = {
+    ...BASE,
+    offers: BASE.offers.map((o) =>
+      o.productId === product.id ? { ...o, effectiveTo: "2026-01-31" } : o,
+    ),
+  };
+  const warnings = validateDataset(expired, "2027-01-01").filter((i) => i.level === "warning");
+  assert.ok(warnings.some((w) => w.message.includes(`${product.slug}: chưa có offer`)));
+});
+
+test("nhóm HOẶC đếm theo nhánh còn hiệu lực", () => {
+  // Một nhánh đã hết hạn che mất một nhóm hiện chỉ còn một nhánh — engine
+  // tưởng còn phương án thay thế trong khi không còn.
+  const group = BASE.eligibilityRules.filter((r) => r.ruleGroup !== null);
+  const [first, second] = group;
+  const halfExpired = {
+    ...BASE,
+    eligibilityRules: BASE.eligibilityRules.map((r) =>
+      r.id === second.id ? { ...r, effectiveTo: "2026-09-30" } : r,
+    ),
+  };
+  void first;
+  assert.ok(
+    validateDataset(halfExpired, "2027-01-01")
+      .filter((i) => i.level === "error")
+      .some((e) => e.message.includes("nhóm HOẶC chỉ có")),
+  );
+});
+
+test("tỷ lệ không được mượn trần của sản phẩm khác", () => {
+  // Trần TỒN TẠI nên phép kiểm khoá ngoại im lặng — nhưng engine sẽ áp trần
+  // $450 của thẻ TD® lên tỷ lệ của một thẻ Amex®.
+  const cap = BASE.earningCaps[0];
+  const alien = BASE.earningRates.find((r) => r.productId !== cap.productId && r.capId === null)!;
+  const broken = {
+    ...BASE,
+    earningRates: BASE.earningRates.map((r) =>
+      r.id === alien.id ? { ...r, capId: cap.id, rateAfterCap: 1 } : r,
+    ),
+  };
+  assert.ok(errorsIn(broken).some((e) => e.includes("trần của sản phẩm khác")));
+});
+
+test("verifiedAt hỏng bị bắt, không âm thầm thành NaN", () => {
+  // Phép so độ tươi dùng `Date.parse`; ngày hỏng cho ra NaN, mọi so sánh với
+  // NaN đều false, nên cảnh báo "quá hạn kiểm" im lặng biến mất.
+  const offer = BASE.offers[0];
+  const broken = {
+    ...BASE,
+    offers: [{ ...offer, verifiedAt: "2026-13-45" }, ...BASE.offers.slice(1)],
+  };
+  assert.ok(errorsIn(broken).some((e) => e.includes("verifiedAt")));
+});
+
+test("mọi file con quy về MỘT chỗ tra ProductId", () => {
+  // Trước đây mỗi file tự dựng `prd_${slug}` — lời hứa "id không suy từ slug"
+  // bị phá ở bốn chỗ, và một sản phẩm có id khác quy ước sinh ra bốn nhóm bản
+  // ghi mồ côi. Kiểm bằng cách đòi mọi khoá ngoại đều tra ra sản phẩm thật.
+  const ids = new Set(BASE.products.map((p) => p.id as string));
+  for (const [name, rows] of [
+    ["offers", BASE.offers],
+    ["earningRates", BASE.earningRates],
+    ["productBenefits", BASE.productBenefits],
+    ["eligibilityRules", BASE.eligibilityRules],
+    ["productFees", BASE.productFees],
+    ["earningCaps", BASE.earningCaps],
+  ] as const) {
+    for (const row of rows) {
+      assert.ok(ids.has(row.productId), `${name}/${row.id}: productId mồ côi`);
+    }
+  }
+});
+
+test("index có đủ đường truy cập Phase 3 sẽ dùng", () => {
+  const ix = indexDataset(BASE);
+  const cap = BASE.earningCaps[0];
+  assert.ok(ix.capById.get(cap.id as string), "capId phải tra được, không phải quét");
+  assert.ok((ix.capsByProduct.get(cap.productId) ?? []).length > 0);
+  assert.ok((ix.productsByProgram.get("aeroplan") ?? []).length >= 9);
+  assert.ok((ix.productsByIssuer.get("amex") ?? []).length > 0);
+});

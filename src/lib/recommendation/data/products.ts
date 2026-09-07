@@ -480,6 +480,26 @@ const SEEDS: Seed[] = [
   },
 ];
 
+/**
+ * Tra `slug` → `ProductId`, và NÉM khi không có.
+ *
+ * Mọi file con (offer, tỷ lệ, quyền lợi, điều kiện) đánh khoá theo slug cho dễ
+ * đọc, nhưng phải quy về `ProductId` để lưu. Trước đây mỗi file tự dựng
+ * `prd_${slug}` — nghĩa là lời hứa "id không suy từ slug" bị phá ở BỐN chỗ, và
+ * một sản phẩm có id không theo quy ước đó sẽ sinh ra bốn nhóm bản ghi mồ côi.
+ *
+ * Ném thay vì trả `undefined`: gõ nhầm slug trong một file con phải nổ ngay
+ * lúc nạp module, không phải biến thành một dòng trỏ vào hư không rồi chờ
+ * validator nhặt.
+ */
+export function productIdFor(slug: string): ProductId {
+  const seed = SEEDS.find((row) => row.slug === slug);
+  if (seed === undefined) {
+    throw new Error(`Không có sản phẩm nào mang slug "${slug}" trong data/products.ts`);
+  }
+  return id<ProductId>(seed.id);
+}
+
 export const PRODUCTS: ProductSeed[] = SEEDS.map((seed) => ({
   id: id<ProductId>(seed.id),
   slug: seed.slug,

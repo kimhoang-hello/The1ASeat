@@ -10,6 +10,7 @@ import {
   type ProductId,
   type SpendCategory,
 } from "../types.ts";
+import { productIdFor } from "./products.ts";
 
 /**
  * Tỷ lệ tích điểm theo hạng mục.
@@ -441,7 +442,7 @@ function capIdFor(slug: string, cap: string): EarningCapId {
 export const EARNING_CAPS: EarningCap[] = Object.entries(CAPS).flatMap(([slug, caps]) =>
   Object.entries(caps).map(([key, cap]) => ({
     id: capIdFor(slug, key),
-    productId: id<ProductId>(`prd_${slug}`),
+    productId: productIdFor(slug),
     name: cap.name,
     kind: cap.kind,
     amount: cap.amount,
@@ -467,12 +468,12 @@ export const EARNING_RATES: EarningRate[] = Object.entries(RATES).flatMap(
       // phiên bản của cùng một tỷ lệ phải ra hai id khác nhau.
       id: makeId<EarningRateId>(
         "er",
-        `prd_${slug}`,
+        productIdFor(slug),
         category,
         idPart(opts?.restrictedTo ?? null),
         opts?.from ?? VERIFIED_ON,
       ),
-      productId: id<ProductId>(`prd_${slug}`),
+      productId: productIdFor(slug),
       category,
       multiplier,
       pointsProgramId: program as PointsProgramId,

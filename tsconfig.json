@@ -37,8 +37,13 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  // scripts/ runs standalone under tsx, outside the bundler's module
-  // resolution, so its explicit ".ts" import specifiers fail Next's type
-  // check even though the script itself is fine.
-  "exclude": ["node_modules", "scripts"]
+  // `scripts/` NAY ĐƯỢC KIỂM KIỂU. Trước đây nó bị loại vì các import mang
+  // đuôi ".ts" tường minh không qua được type check — nhưng
+  // `allowImportingTsExtensions` ở trên đã gỡ đúng lý do đó.
+  //
+  // Đổi lại vì một lỗi thật: `audit-reco-data.mts` đọc `product.isActive` sau
+  // khi trường đó bị đổi tên, `undefined` là falsy nên MỌI thẻ bị bỏ qua, và
+  // cả 31 phép so phí/rebate chết lặng trong khi audit vẫn in "✓ Không lỗi".
+  // Không trình biên dịch nào thấy, vì thư mục này nằm ngoài tầm nó.
+  "exclude": ["node_modules"]
 }

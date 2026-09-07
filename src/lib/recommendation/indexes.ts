@@ -1,6 +1,7 @@
 import type {
   AwardStrategy,
   Benefit,
+  EarningCap,
   EarningRate,
   EligibilityRule,
   Issuer,
@@ -55,6 +56,14 @@ export interface DatasetIndex {
   ratesByProduct: ReadonlyMap<string, EarningRate[]>;
   benefitsByProduct: ReadonlyMap<string, ProductBenefit[]>;
   rulesByProduct: ReadonlyMap<string, EligibilityRule[]>;
+  /** `EarningRate.capId` trỏ vào đây. Không có map này thì Phase 3 phải quét
+   *  toàn bộ trần cho MỖI tỷ lệ — và tỷ lệ là thứ nó duyệt nhiều nhất. */
+  capById: ReadonlyMap<string, EarningCap>;
+  capsByProduct: ReadonlyMap<string, EarningCap[]>;
+  /** Hai đường lọc ứng viên mà mọi hàm chấm điểm sẽ bắt đầu bằng: "thẻ nào
+   *  kiếm đồng tiền này" và "thẻ nào của ngân hàng này". */
+  productsByProgram: ReadonlyMap<string, Product[]>;
+  productsByIssuer: ReadonlyMap<string, Product[]>;
 
   /** Chặng chuyển ĐI từ một chương trình. Đây là đường Portfolio Analyzer đi
    *  để tính "số dư tiếp cận được" mà không đếm trùng (spec §7). */
@@ -103,6 +112,13 @@ export function indexDataset(data: RecommendationDataset): DatasetIndex {
     ratesByProduct: groupBy(data.earningRates, (row) => row.productId),
     benefitsByProduct: groupBy(data.productBenefits, (row) => row.productId),
     rulesByProduct: groupBy(data.eligibilityRules, (row) => row.productId),
+    capById: new Map(data.earningCaps.map((row) => [row.id as string, row])),
+    capsByProduct: groupBy(data.earningCaps, (row) => row.productId),
+    productsByProgram: groupBy(
+      data.products.filter((row) => row.pointsProgramId !== null),
+      (row) => row.pointsProgramId as string,
+    ),
+    productsByIssuer: groupBy(data.products, (row) => row.issuerId),
 
     pathsBySource: groupBy(data.transferPaths, (row) => row.sourceProgramId),
     strategiesByRoute: groupBy(data.awardStrategies, (row) =>

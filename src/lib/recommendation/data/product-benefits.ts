@@ -6,6 +6,7 @@ import {
   type ProductBenefitId,
   type ProductId,
 } from "../types.ts";
+import { productIdFor } from "./products.ts";
 
 /**
  * Quyền lợi của từng thẻ, ở dạng có cấu trúc.
@@ -331,8 +332,8 @@ export const PRODUCT_BENEFITS: ProductBenefit[] = Object.entries(BY_PRODUCT).fla
       // Id mang NGÀY HIỆU LỰC: quyền lợi đổi thì bản mới nằm cạnh bản cũ, và
       // không có ngày trong id thì hai bản trùng id — hoặc validator đỏ, hoặc
       // người sửa lặng lẽ đè lên bản cũ. Xem "LUẬT VỀ ID" trong types.ts.
-      id: makeId<ProductBenefitId>("pb", `prd_${slug}`, benefit, opts?.from ?? VERIFIED_ON),
-      productId: id<ProductId>(`prd_${slug}`),
+      id: makeId<ProductBenefitId>("pb", productIdFor(slug), benefit, opts?.from ?? VERIFIED_ON),
+      productId: productIdFor(slug),
       benefitId: benefit as BenefitId,
       numericValue: numericValue ?? null,
       textValue: opts?.text ?? null,

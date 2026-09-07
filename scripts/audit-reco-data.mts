@@ -72,14 +72,24 @@ async function fetchContentfulCards(): Promise<ContentfulCard[] | null> {
   const token = env.CONTENTFUL_ACCESS_TOKEN;
   if (!space || !token) return null;
 
-  const res = await fetch(
-    `https://cdn.contentful.com/spaces/${space}/environments/master/entries` +
-      `?content_type=creditCardOffer&limit=200`,
-    { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) },
-  );
-  if (!res.ok) throw new Error(`Contentful trả ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  const body = (await res.json()) as { items: { fields: ContentfulCard }[] };
-  return body.items.map((item) => item.fields);
+  // PHÂN TRANG. Contentful trả tối đa 1000 mỗi lượt và mặc định 100; bản trước
+  // xin `limit=200` rồi coi đó là toàn bộ. Ở 31 thẻ thì đúng, ở 100+ thẻ thì
+  // audit lặng lẽ chỉ soi 200 thẻ đầu và báo mọi thẻ còn lại là "có trong seed
+  // nhưng không có entry Contentful" — hoặc tệ hơn, bỏ qua chúng.
+  const cards: ContentfulCard[] = [];
+  const pageSize = 200;
+  for (let skip = 0; ; skip += pageSize) {
+    const res = await fetch(
+      `https://cdn.contentful.com/spaces/${space}/environments/master/entries` +
+        `?content_type=creditCardOffer&limit=${pageSize}&skip=${skip}&order=sys.id`,
+      { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) },
+    );
+    if (!res.ok) throw new Error(`Contentful trả ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    const body = (await res.json()) as { items: { fields: ContentfulCard }[]; total: number };
+    cards.push(...body.items.map((item) => item.fields));
+    if (cards.length >= body.total || body.items.length === 0) break;
+  }
+  return cards;
 }
 
 /** Con số phí THƯỜNG NIÊN mở đầu chuỗi `annualFeeVi` ("$139/năm — miễn năm
@@ -326,7 +336,7 @@ if (cards === null) {
     // không giải thích nổi một khuyến nghị cũ từng chọn thẻ nào.
     errors.push(
       `[contentful] ${product.slug}: có trong seed nhưng không còn entry Contentful. ` +
-        `Nếu thẻ đã ngừng thì ĐÓNG nó — isActive: false, đặt effectiveTo, ` +
+        `Nếu thẻ đã ngừng thì ĐÓNG nó — đặt availableTo, ` +
         `contentfulLinked: false — ĐỪNG xoá dòng sản phẩm.`,
     );
   }
@@ -345,7 +355,15 @@ if (cards === null) {
     // Thẻ đã đóng: Contentful có thể vẫn còn entry một thời gian, nhưng số
     // trong seed đã đông cứng ở ngày đóng. So tiếp là đòi bản ghi lịch sử phải
     // đuổi theo hiện tại — đúng thứ `effectiveTo` sinh ra để khỏi phải làm.
-    if (!product.isActive) continue;
+    // Thẻ đã ngừng nhận đơn: số trong seed đông cứng ở ngày đóng, so tiếp là
+    // đòi bản ghi lịch sử phải đuổi theo hiện tại.
+    //
+    // ĐÂY TỪNG LÀ `product.isActive` — một trường KHÔNG CÒN TỒN TẠI sau khi
+    // tách `availableFrom/To`. `undefined` là falsy nên `!undefined` luôn đúng
+    // và MỌI thẻ bị bỏ qua: cả 31 phép so phí và rebate chết lặng suốt, trong
+    // khi audit vẫn in "✓ Không lỗi". `scripts/` bị loại khỏi tsconfig nên
+    // trình biên dịch không thấy. Đó là lý do `include` bên dưới nay có nó.
+    if (product.availableTo !== null && product.availableTo < TODAY) continue;
 
     const fee = feeIn(card.annualFeeVi);
     const seedFee = liveFeeFor(product.id);
