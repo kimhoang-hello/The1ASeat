@@ -67,6 +67,29 @@ const PROVIDER_BY_PRODUCT: Record<string, string> = {
   "amex-marriott-bonvoy-business": "Marriott Bonvoy®",
 };
 
+/**
+ * Quyền lợi gắn với một hãng cụ thể. Ngoài danh sách này thì `provider` là
+ * `null` — bảo hiểm, travel credit, miễn phí thẻ phụ không thuộc về hãng nào,
+ * và gán hãng cho chúng sẽ làm hai thẻ khác hãng trông như có hai quyền lợi
+ * khác nhau.
+ */
+const PROVIDER_SCOPED = new Set([
+  "free-checked-bag",
+  "maple-leaf-lounge",
+  "priority-boarding",
+  "preferred-aeroplan-pricing",
+  "companion-pass",
+  "airline-status-credits",
+  "hotel-status",
+  "free-night-award",
+  "elite-night-credits",
+]);
+
+function providerFor(slug: string, benefit: string): string | null {
+  if (!PROVIDER_SCOPED.has(benefit)) return null;
+  return PROVIDER_BY_PRODUCT[slug] ?? null;
+}
+
 const BY_PRODUCT: Record<string, BenefitSeed[]> = {
   "amex-green": [["free-supplementary-card"]],
 
@@ -300,7 +323,12 @@ export const PRODUCT_BENEFITS: ProductBenefit[] = Object.entries(BY_PRODUCT).fla
           : { minimumAnnualSpend: opts.minimumAnnualSpend },
       // Hãng cấp quyền lợi. Hai thẻ cùng cho "miễn hành lý ký gửi" nhưng khác
       // hãng thì KHÔNG trùng nhau — xem chú thích `ProductBenefit.provider`.
-      provider: opts?.provider ?? PROVIDER_BY_PRODUCT[slug] ?? null,
+      // CHỈ gán cho quyền lợi thật sự gắn với một hãng. Bản trước rải
+      // `PROVIDER_BY_PRODUCT[slug]` lên MỌI quyền lợi của thẻ, nên bảo hiểm y
+      // tế du lịch của thẻ TD® Aeroplan® mang provider "Air Canada®" — vô
+      // nghĩa, và tệ hơn: hai thẻ khác hãng có cùng bảo hiểm sẽ trông như hai
+      // quyền lợi KHÁC nhau, nên engine cộng cả hai vào giá trị gia tăng.
+      provider: opts?.provider ?? providerFor(slug, benefit),
       effectiveFrom: VERIFIED_ON,
       effectiveTo: opts?.endsOn ?? null,
       sourceUrl: `https://ghe1a.com/credit-cards/${slug}`,

@@ -36,6 +36,21 @@ const SEEDED_ON = "2026-09-07";
  * `affiliateAvailable` cố tình vắng (xem `ProductSeed`): nó do `source.ts` tính
  * từ `applyUrl` bằng chính `isReferralUrl` mà bộ render link dùng.
  */
+/**
+ * KHÔNG phải cứ cùng ngân hàng và cùng đồng điểm là cùng MỘT HỌ.
+ *
+ * Amex® Green, Cobalt® và Gold Rewards đều kiếm Membership Rewards® nhưng là
+ * BA SẢN PHẨM ĐỘC LẬP với cấu trúc tích điểm khác hẳn nhau — Cobalt 5x ăn
+ * uống, Gold 2x du lịch/siêu thị, Green 1x tất cả. Gom chúng thành một họ có
+ * thứ hạng sẽ khiến Phase 3 coi hai trong ba là "hạng thấp hơn" của cái còn
+ * lại rồi loại bỏ, trong khi với một người ăn ngoài nhiều thì Cobalt mới là
+ * câu trả lời đúng chứ không phải Gold.
+ *
+ * HỌ = các hạng của CÙNG MỘT thẻ, nơi hạng cao là bản đắt hơn của hạng thấp
+ * (CIBC® Aeroplan® Visa / Infinite / Infinite Privilege). Nghi ngờ thì đừng
+ * gom: bỏ sót một họ chỉ làm engine khuyên hơi thừa, còn gom nhầm thì nó im
+ * lặng giấu đi lựa chọn đúng.
+ */
 type Seed = {
   /**
    * Khoá chính, BẤT BIẾN, viết tay.
@@ -53,6 +68,8 @@ type Seed = {
   network: "amex" | "visa" | "mastercard" | "other";
   personalOrBusiness: "personal" | "business" | "student";
   program: string | null;
+  /** Slug cũ, khi thẻ từng đổi tên. Xem `Product.previousSlugs`. */
+  previousSlugs?: string[];
   /** Họ sản phẩm + thứ hạng trong họ. Bỏ trống khi thẻ đứng một mình. */
   family?: string;
   tier?: number;
@@ -98,8 +115,6 @@ const SEEDS: Seed[] = [
     network: "amex",
     personalOrBusiness: "personal",
     program: "amex-mr",
-    family: "amex-mr-personal",
-    tier: 1,
     fees: [{ annualFee: 0, from: SEEDED_ON }],
     officialUrl: null,
   },
@@ -111,8 +126,6 @@ const SEEDS: Seed[] = [
     network: "amex",
     personalOrBusiness: "personal",
     program: "amex-mr",
-    family: "amex-mr-personal",
-    tier: 3,
     fees: [{ annualFee: 250, from: SEEDED_ON }],
     officialUrl: null,
   },
@@ -124,8 +137,6 @@ const SEEDS: Seed[] = [
     network: "amex",
     personalOrBusiness: "personal",
     program: "amex-mr",
-    family: "amex-mr-personal",
-    tier: 2,
     fees: [{ annualFee: 191.88, from: SEEDED_ON }],
     officialUrl: null,
   },
@@ -479,6 +490,7 @@ export const PRODUCTS: ProductSeed[] = SEEDS.map((seed) => ({
   network: seed.network,
   personalOrBusiness: seed.personalOrBusiness,
   pointsProgramId: seed.program === null ? null : (seed.program as PointsProgramId),
+  previousSlugs: seed.previousSlugs ?? [],
   familyId: seed.family === undefined ? null : id<ProductFamilyId>(`fam_${seed.family}`),
   tierRank: seed.tier ?? null,
   availableFrom: SEEDED_ON,
@@ -509,7 +521,6 @@ const FAMILY_NAMES: Record<string, string> = {
   "cibc-aventura": "CIBC® Aventura®",
   "td-aeroplan": "TD® Aeroplan®",
   "rbc-avion": "RBC® Avion®",
-  "amex-mr-personal": "American Express® Membership Rewards® (thẻ cá nhân)",
   "amex-aeroplan": "American Express® Aeroplan®",
   wealthsimple: "Wealthsimple® Visa Infinite",
 };

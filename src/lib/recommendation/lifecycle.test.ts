@@ -703,3 +703,90 @@ test("quyền lợi có hạn thì hết hạn thật, không chỉ hết trong 
     "sang 2027 thì engine không được cộng quyền lợi này vào giá trị thẻ nữa",
   );
 });
+
+test("chỗ trống dữ liệu là DỮ LIỆU, không phải chuỗi cảnh báo phải đọc", () => {
+  // Phase 3 hạ độ tin cậy khi chạm vào chỗ trống (spec §29). Nếu chỗ trống chỉ
+  // tồn tại dưới dạng cảnh báo tiếng Việt của audit thì engine phải parse chữ.
+  const kinds = new Set(BASE.gaps.map((g) => g.kind));
+  assert.ok(kinds.has("no_award_chart"));
+  assert.ok(kinds.has("award_route_uncovered"), "4 vùng của spec §33 chưa có bảng giá");
+  assert.ok(kinds.has("base_earn_rate_unknown"));
+  assert.ok(kinds.has("eligibility_unknown"));
+
+  // "Chỉ có luật cư trú" KHÔNG được đọc là "đã biết điều kiện".
+  const passport = BASE.products.find((p) => p.slug === "scotiabank-passport-visa-infinite")!;
+  assert.ok(
+    BASE.gaps.some((g) => g.kind === "eligibility_unknown" && g.subjectId === passport.id),
+  );
+});
+
+test("chỗ trống được tính LẠI cho từng thời điểm", () => {
+  // Thẻ hồi đó chưa có tỷ lệ nền mà nay đã có: bản dựng lại phải nói đúng cái
+  // engine thiếu LÚC ẤY, không phải cái nó thiếu hôm nay.
+  const missing = BASE.gaps.find((g) => g.kind === "base_earn_rate_unknown")!;
+  const fixed = {
+    ...BASE,
+    earningRates: [
+      ...BASE.earningRates,
+      {
+        ...BASE.earningRates[0],
+        id: "er_backfill" as (typeof BASE.earningRates)[number]["id"],
+        productId: missing.subjectId as (typeof BASE.earningRates)[number]["productId"],
+        category: "everything_else" as const,
+        restrictedTo: null,
+        effectiveFrom: "2027-01-01",
+        recordedAt: "2027-01-01",
+      },
+    ],
+  };
+  const before = datasetAt(fixed, "2026-10-01");
+  const after = datasetAt(fixed, LATER);
+  assert.ok(before.gaps.some((g) => g.subjectId === missing.subjectId && g.kind === "base_earn_rate_unknown"));
+  assert.ok(!after.gaps.some((g) => g.subjectId === missing.subjectId && g.kind === "base_earn_rate_unknown"));
+});
+
+test("Amex® Green/Cobalt/Gold KHÔNG phải các hạng của một họ", () => {
+  // Ba thẻ cùng kiếm Membership Rewards® nhưng cấu trúc tích điểm khác hẳn —
+  // Cobalt 5x ăn uống, Gold 2x du lịch/siêu thị, Green 1x. Gom thành họ có thứ
+  // hạng sẽ khiến engine im lặng giấu đi hai trong ba.
+  for (const slug of ["amex-green", "amex-cobalt", "amex-gold-rewards"]) {
+    const p = BASE.products.find((x) => x.slug === slug)!;
+    assert.equal(p.familyId, null, `${slug} không được thuộc họ nào`);
+  }
+});
+
+test("provider chỉ gắn với quyền lợi thật sự thuộc về một hãng", () => {
+  // Bảo hiểm mang provider "Air Canada®" là vô nghĩa, và làm hai thẻ khác hãng
+  // trông như có hai quyền lợi khác nhau → cộng gấp đôi giá trị gia tăng.
+  const insurance = BASE.productBenefits.filter((b) =>
+    String(b.benefitId).includes("insurance"),
+  );
+  assert.ok(insurance.length > 0);
+  assert.ok(insurance.every((b) => b.provider === null));
+
+  const bags = BASE.productBenefits.filter((b) => String(b.benefitId) === "free-checked-bag");
+  assert.ok(bags.every((b) => b.provider !== null), "hành lý thì PHẢI có hãng");
+});
+
+test("họ thẻ không được trải trên hai nhà phát hành", () => {
+  const family = BASE.productFamilies[0];
+  const alien = BASE.products.find((p) => p.issuerId !== family.issuerId)!;
+  const broken = {
+    ...BASE,
+    products: BASE.products.map((p) =>
+      p.id === alien.id ? { ...p, familyId: family.id, tierRank: 9 } : p,
+    ),
+  };
+  assert.ok(errorsIn(broken).some((e) => e.includes("thuộc nhà phát hành khác")));
+});
+
+test("tierRank phải là số nguyên dương", () => {
+  const member = BASE.products.find((p) => p.familyId !== null)!;
+  for (const bad of [0, -1, 1.5, Number.NaN]) {
+    const broken = {
+      ...BASE,
+      products: BASE.products.map((p) => (p.id === member.id ? { ...p, tierRank: bad } : p)),
+    };
+    assert.ok(errorsIn(broken).some((e) => e.includes("tierRank")), `phải chặn ${bad}`);
+  }
+});

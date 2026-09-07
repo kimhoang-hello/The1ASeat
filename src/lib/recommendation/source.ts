@@ -106,15 +106,21 @@ export const OFFER_HISTORY_SINCE = TRACKING_SINCE;
 
 export const repoDataSource: RecommendationDataSource = {
   async getOfferHistory(productId: string): Promise<OfferHistoryPoint[]> {
-    const productSlug = PRODUCTS.find((product) => product.id === productId)?.slug;
-    if (productSlug === undefined) return [];
+    const product = PRODUCTS.find((row) => row.id === productId);
+    if (product === undefined) return [];
+    // Gộp lịch sử dưới MỌI slug thẻ này từng mang. Nhật ký gốc đánh khoá bằng
+    // slug đang dùng lúc ghi, nên sau một lần đổi tên nó nằm ở hai chỗ.
+    const slugs = [...product.previousSlugs, product.slug];
     // Đưa CẢ dòng thời gian thô vào, kể cả những lần thẻ không có welcome
     // bonus — chúng là vạch ngăn giữa hai đợt offer, và chúng mang ngày. Lọc
     // chúng ra trước khi gộp sẽ nhập hai đợt 70,000 rời nhau thành một, và
     // vứt ngày của chúng đi sẽ làm `until` của đợt trước nhảy qua cả khoảng
     // trống. Xem `dedupeHistory`.
     return dedupeHistory(
-      historyFor(productSlug).map((entry) => ({
+      slugs
+        .flatMap((slug) => historyFor(slug))
+        .sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0))
+        .map((entry) => ({
         at: entry.at,
         bonus:
           entry.welcomeBonus === undefined
@@ -124,7 +130,7 @@ export const repoDataSource: RecommendationDataSource = {
                 amount: amountIn(entry.welcomeBonus),
                 unit: unitOf(entry.welcomeBonus),
               },
-      })),
+        })),
     );
   },
 

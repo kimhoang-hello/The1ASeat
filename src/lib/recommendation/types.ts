@@ -348,6 +348,16 @@ export interface Product extends Temporal {
   /** Đồng tiền thưởng CHÍNH của thẻ. `null` cho thẻ cashback thuần không
    *  thuộc chương trình điểm nào. */
   pointsProgramId: PointsProgramId | null;
+  /**
+   * Những slug thẻ này TỪNG mang, cũ nhất trước.
+   *
+   * Nhật ký lịch sử offer (`data/offer-history.json`) do một job khác ghi và
+   * đánh khoá bằng slug Contentful ĐANG DÙNG. Đổi tên thẻ thì các dòng mới nằm
+   * dưới slug mới còn dòng cũ ở lại dưới slug cũ — tra bằng một slug là mất
+   * hẳn một nửa lịch sử, và mất đúng nửa cũ, tức nửa duy nhất trả lời được
+   * "mức này cao hay thường".
+   */
+  previousSlugs: string[];
   /** Họ sản phẩm, khi thẻ này là một hạng của một họ. `null` = thẻ đứng một
    *  mình. Xem `ProductFamily`. */
   familyId: ProductFamilyId | null;
@@ -907,6 +917,33 @@ export interface AwardStrategy extends Temporal, Sourced {
  * Bộ dữ liệu
  * ------------------------------------------------------------------ */
 
+/**
+ * Một chỗ dữ liệu KHÔNG BIẾT, khai báo tường minh và máy đọc được.
+ *
+ * Đây là "trống ≠ bằng không" nâng lên thành kiểu dữ liệu. Trước đó những chỗ
+ * trống chỉ tồn tại dưới dạng cảnh báo bằng CHỮ của `audit:reco-data` và một
+ * hằng nằm ngoài dataset (`UNQUOTABLE_AWARD_PROGRAMS`) — nghĩa là Phase 3 muốn
+ * biết mình đang thiếu gì thì phải đọc chuỗi tiếng Việt, đúng thứ lớp dữ liệu
+ * này sinh ra để khỏi phải làm.
+ *
+ * Có nó thì engine hạ độ tin cậy đúng chỗ (spec §29) và nói được "chưa có dữ
+ * liệu cho chặng này" thay vì im lặng trả về không có phương án nào — hai câu
+ * rất khác nhau với người đọc.
+ */
+export interface DataGap {
+  kind:
+    | "no_award_chart" // chương trình không công bố bảng giá, đã tra và kết luận
+    | "award_route_uncovered" // cặp vùng chưa ai dựng dữ liệu
+    | "offer_terms_unknown" // offer có headline nhưng không rõ mốc chi
+    | "base_earn_rate_unknown" // thẻ chưa có tỷ lệ cho chi tiêu thông thường
+    | "eligibility_unknown" // chưa biết điều kiện riêng của thẻ này
+    | "transfer_paths_unmodelled"; // chương trình chuyển được nhưng chưa dựng chặng
+  /** Id của thực thể liên quan — sản phẩm, chương trình, offer. */
+  subjectId: string;
+  /** Vì sao còn trống. Dành cho NGƯỜI đọc; engine dùng `kind`. */
+  reason: string;
+}
+
 export interface RecommendationDataset {
   issuers: Issuer[];
   productFamilies: ProductFamily[];
@@ -923,4 +960,6 @@ export interface RecommendationDataset {
   productBenefits: ProductBenefit[];
   eligibilityRules: EligibilityRule[];
   awardStrategies: AwardStrategy[];
+  /** Những chỗ dữ liệu không biết, khai tường minh — xem `DataGap`. */
+  gaps: DataGap[];
 }

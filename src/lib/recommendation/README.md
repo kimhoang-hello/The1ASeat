@@ -90,6 +90,12 @@ mà không chung tiền tố nào đủ đặc trưng.
 
 `indexDataset(...).productsByFamily` trả về các hạng **đã sắp từ thấp tới cao**.
 
+**Nghi ngờ thì đừng gom.** HỌ = các hạng của *cùng một thẻ*, nơi hạng cao là bản
+đắt hơn của hạng thấp. Amex® Green / Cobalt® / Gold Rewards cùng kiếm Membership
+Rewards® nhưng là **ba sản phẩm độc lập** với cấu trúc tích điểm khác hẳn — gom
+chúng lại sẽ khiến engine im lặng giấu đi hai trong ba. Bỏ sót một họ chỉ làm
+engine khuyên hơi thừa; gom nhầm thì nó giấu mất lựa chọn đúng.
+
 ## Định giá điểm cũng có phiên bản
 
 `program_valuations`, không phải một trường trên `PointsProgram`. Đây là con số
@@ -186,7 +192,19 @@ lưu `input_snapshot` + `derived_state` của chính lượt chạy đó, và m�
 đã lưu luôn đúng hơn mọi phép dựng lại. `datasetAt` là lưới thứ hai cho những
 lượt chạy không có bản chụp.
 
-## Trống ≠ bằng không
+## Trống ≠ bằng không, và trống là DỮ LIỆU
+
+`dataset.gaps` là danh sách chỗ trống **máy đọc được** (`DataGap`), suy ra từ
+chính dữ liệu bởi [`gaps.ts`](gaps.ts) — không phải một danh sách viết tay chạy
+song song sẽ lệch, và không phải chuỗi cảnh báo của audit mà Phase 3 phải parse.
+Sáu loại: `no_award_chart`, `award_route_uncovered`, `offer_terms_unknown`,
+`base_earn_rate_unknown`, `eligibility_unknown`, `transfer_paths_unmodelled`.
+
+`datasetAt` tính LẠI `gaps` cho từng thời điểm: thẻ hồi đó chưa có tỷ lệ nền mà
+nay đã có thì bản dựng lại phải nói đúng cái engine thiếu **lúc ấy**.
+
+Lưu ý `eligibility_unknown`: luật cư trú áp cho mọi thẻ, nên "có luật" không có
+nghĩa là "đã biết điều kiện". Chỉ luật đặc thù mới tính.
 
 Bộ dữ liệu nói ra chỗ nó không biết thay vì lấp bằng phỏng đoán:
 

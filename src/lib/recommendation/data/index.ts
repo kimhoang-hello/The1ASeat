@@ -23,6 +23,7 @@ import { BENEFITS } from "./benefits.ts";
 import { PRODUCT_BENEFITS } from "./product-benefits.ts";
 import { ELIGIBILITY_RULES } from "./eligibility-rules.ts";
 import { AWARD_STRATEGIES } from "./award-strategies.ts";
+import { deriveGaps } from "../gaps.ts";
 import type { RecommendationDataset } from "../types.ts";
 
 /**
@@ -39,7 +40,7 @@ import type { RecommendationDataset } from "../types.ts";
  * Contentful lại là thứ không chạy nổi.
  */
 export function offlineDataset(): RecommendationDataset {
-  return {
+  const base: RecommendationDataset = {
     issuers: ISSUERS,
     productFees: PRODUCT_FEES,
     productFamilies: PRODUCT_FAMILIES,
@@ -55,5 +56,9 @@ export function offlineDataset(): RecommendationDataset {
     productBenefits: PRODUCT_BENEFITS,
     eligibilityRules: ELIGIBILITY_RULES,
     awardStrategies: AWARD_STRATEGIES,
+    gaps: [],
   };
+  // Chỗ trống được SUY RA từ chính dữ liệu, không phải một danh sách viết tay
+  // chạy song song — xem `deriveGaps`.
+  return { ...base, gaps: deriveGaps(base) };
 }

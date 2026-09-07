@@ -211,38 +211,53 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
  * định giá của trang calculator) để hai chỗ không nói hai giá khác nhau về
  * cùng một đồng điểm; `audit:reco-data` bắt khi chúng lệch.
  */
-const VALUATIONS: [programId: string, centsPerPoint: number][] = [
-  ["amex-mr", 1.8],
-  ["avion", 1.6],
-  ["aeroplan", 1.9],
-  ["avios", 1.7],
-  ["flying-blue", 1.5],
-  ["asia-miles", 1.6],
-  ["aadvantage", 1.7],
-  ["bonvoy", 0.9],
-  ["scene-plus", 1.0],
-  ["td-rewards", 0.5],
-  ["aventura", 1.0],
-  ["westjet", 1.0],
-  ["viporter", 1.0],
-  ["mileageplus", 1.4],
-  ["a-la-carte", 1.0],
-  ["cash-back", 1],
+type Valuation = {
+  programId: string;
+  centsPerPoint: number;
+  /**
+   * `verified` cho điểm GIÁ CỐ ĐỊNH: TD Rewards đổi 200 điểm ăn $1 tiền vé là
+   * tỷ lệ nhà phát hành công bố, không phải ước lượng của ai. `editorial` cho
+   * điểm hàng không, nơi giá trị phụ thuộc vào chuyến bay đổi được.
+   *
+   * Đánh tất cả thành `editorial` sẽ làm engine hạ độ tin cậy cho những thẻ mà
+   * giá trị điểm là thứ chắc chắn nhất về chúng.
+   */
+  confidence: "verified" | "editorial";
+  sourceUrl?: string;
+};
+
+const VALUATIONS: Valuation[] = [
+  { programId: "amex-mr", centsPerPoint: 1.8, confidence: "editorial" },
+  { programId: "avion", centsPerPoint: 1.6, confidence: "editorial" },
+  { programId: "aeroplan", centsPerPoint: 1.9, confidence: "editorial" },
+  { programId: "avios", centsPerPoint: 1.7, confidence: "editorial" },
+  { programId: "flying-blue", centsPerPoint: 1.5, confidence: "editorial" },
+  { programId: "asia-miles", centsPerPoint: 1.6, confidence: "editorial" },
+  { programId: "aadvantage", centsPerPoint: 1.7, confidence: "editorial" },
+  { programId: "bonvoy", centsPerPoint: 0.9, confidence: "editorial" },
+  { programId: "scene-plus", centsPerPoint: 1.0, confidence: "verified" },
+  { programId: "td-rewards", centsPerPoint: 0.5, confidence: "verified" },
+  { programId: "aventura", centsPerPoint: 1.0, confidence: "verified" },
+  { programId: "westjet", centsPerPoint: 1.0, confidence: "verified" },
+  { programId: "viporter", centsPerPoint: 1.0, confidence: "verified" },
+  { programId: "mileageplus", centsPerPoint: 1.4, confidence: "editorial" },
+  { programId: "a-la-carte", centsPerPoint: 1.0, confidence: "verified" },
+  { programId: "cash-back", centsPerPoint: 1, confidence: "verified" },
 ];
 
-export const PROGRAM_VALUATIONS: ProgramValuation[] = VALUATIONS.map(([programId, cents]) => ({
+export const PROGRAM_VALUATIONS: ProgramValuation[] = VALUATIONS.map((v) => ({
   // Khoá bằng `id` của chương trình, KHÔNG bằng `slug`: hai thứ đó khác nhau
   // ở ít nhất một chương trình (`bonvoy` vs `marriott-bonvoy`), và dùng nhầm
   // slug làm khoá ngoại thì dòng định giá trỏ vào hư không — validator bắt
   // được ngay, nhưng chỉ vì phép kiểm khoá ngoại tồn tại.
-  id: makeId<ProgramValuationId>("val", programId, VALUED_ON),
-  programId: id<PointsProgramId>(programId),
-  centsPerPoint: cents,
+  id: makeId<ProgramValuationId>("val", v.programId, VALUED_ON),
+  programId: id<PointsProgramId>(v.programId),
+  centsPerPoint: v.centsPerPoint,
   effectiveFrom: VALUED_ON,
   effectiveTo: null,
-  sourceUrl: null,
-  sourceKind: "ghe1a",
+  sourceUrl: v.sourceUrl ?? null,
+  sourceKind: v.confidence === "verified" ? "issuer" : "ghe1a",
   verifiedAt: VALUED_ON,
   recordedAt: VALUED_ON,
-  confidence: "editorial",
+  confidence: v.confidence,
 }));

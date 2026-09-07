@@ -1,3 +1,4 @@
+import { deriveGaps } from "./gaps.ts";
 import type { RecommendationDataset, Temporal } from "./types.ts";
 
 /**
@@ -93,7 +94,7 @@ export function datasetAt(
   );
   const liveOfferIds = new Set(offers.map((offer) => offer.id as string));
 
-  return {
+  const snapshot: RecommendationDataset = {
     issuers: data.issuers,
     pointsPrograms: data.pointsPrograms,
     benefits: data.benefits,
@@ -127,5 +128,10 @@ export function datasetAt(
     ),
     transferPaths: activeAt(known(data.transferPaths), asOf),
     awardStrategies: activeAt(known(data.awardStrategies), asOf),
+    // Tính LẠI, không chép từ bộ đầy đủ: chỗ trống của hôm nay khác chỗ trống
+    // của sáu tháng trước. Một thẻ hồi đó chưa có tỷ lệ nền mà nay đã có thì
+    // bản dựng lại phải nói đúng cái engine thiếu LÚC ẤY.
+    gaps: [],
   };
+  return { ...snapshot, gaps: deriveGaps(snapshot) };
 }

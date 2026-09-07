@@ -573,11 +573,22 @@ export function validateDataset(
   const familyIds = new Set(data.productFamilies.map((row) => row.id as string));
   checkRef(data.products, "familyId", (r: { familyId: string | null }) => r.familyId, familyIds, "products", issues);
   checkRef(data.productFamilies, "issuerId", (r: { issuerId: string }) => r.issuerId, issuerIds, "product_families", issues);
+  checkRef(data.productFamilies, "pointsProgramId", (r: { pointsProgramId: string | null }) => r.pointsProgramId, programIds, "product_families", issues);
 
   for (const product of data.products) {
     // `familyId` và `tierRank` đi cùng nhau: có họ mà không có hạng thì engine
     // biết hai thẻ là anh em nhưng không biết cái nào trên cái nào — tức không
     // nói được "đây là nâng hạng" hay "đây là hạ xuống cho vừa điều kiện".
+    if (
+      product.tierRank !== null &&
+      (!Number.isInteger(product.tierRank) || product.tierRank < 1)
+    ) {
+      issues.push({
+        level: "error",
+        entity: "products",
+        message: `${product.slug}: tierRank phải là số nguyên ≥ 1, đang là ${product.tierRank}`,
+      });
+    }
     if ((product.familyId === null) !== (product.tierRank === null)) {
       issues.push({
         level: "error",
@@ -603,6 +614,18 @@ export function validateDataset(
   }
   for (const family of data.productFamilies) {
     const members = data.products.filter((p) => p.familyId === family.id);
+    // Một họ trải trên hai nhà phát hành là dấu hiệu ai đó dùng lại nhãn họ
+    // cho một thẻ khác — và hậu quả im lặng: `productsByFamily` gom chúng lại
+    // như các hạng thay thế nhau, rồi engine giấu đi một lựa chọn hợp lệ.
+    for (const member of members) {
+      if (member.issuerId !== family.issuerId) {
+        issues.push({
+          level: "error",
+          entity: "product_families",
+          message: `${family.id}: ${member.slug} thuộc nhà phát hành khác với họ`,
+        });
+      }
+    }
     // Một họ chỉ có một thành viên là một họ vô nghĩa — và nó gợi ý sai rằng
     // có hạng khác để tụt xuống.
     if (members.length < 2) {
@@ -714,6 +737,7 @@ export function validateDataset(
     ["eligibility_rules", data.eligibilityRules],
     ["transfer_paths", data.transferPaths],
     ["award_strategies", data.awardStrategies],
+    ["program_valuations", data.programValuations],
   ] as const) {
     for (const row of rows) {
       if (!isRealDate(row.recordedAt)) {
@@ -733,7 +757,12 @@ export function validateDataset(
   // cận được" hay không (spec §7). Khai `true` mà không có chặng nào nghĩa là
   // nó đi tìm rồi về tay không — và không có gì nói cho người đọc code biết đó
   // là CỐ Ý (chưa mô hình hoá) hay là dữ liệu thiếu.
-  const sourcesWithPaths = new Set(data.transferPaths.map((row) => row.sourceProgramId as string));
+  // Lọc theo `asOf`: chặng đã đóng hoặc chưa mở KHÔNG tính là "có đường đi".
+  // Không lọc thì một chương trình chỉ còn chặng hết hạn vẫn im lặng qua được,
+  // trong khi `datasetAt` không đưa cho Portfolio Analyzer đích nào.
+  const sourcesWithPaths = new Set(
+    data.transferPaths.filter((row) => isActiveAt(row, asOf)).map((row) => row.sourceProgramId as string),
+  );
   for (const program of data.pointsPrograms) {
     if (!program.transferable || sourcesWithPaths.has(program.id)) continue;
     issues.push({
@@ -787,6 +816,9 @@ export function validateDataset(
     ["eligibility_rules", data.eligibilityRules, 365],
     ["transfer_paths", data.transferPaths, 180],
     ["award_strategies", data.awardStrategies, 180],
+    // Định giá điểm mục chậm nhưng mục THẬT — mỗi lần devalue là một lần nó
+    // sai, và nó nhân vào mọi điểm số.
+    ["program_valuations", data.programValuations, 365],
   ] as const) {
     for (const row of rows) {
       // Chỉ soi bản ghi CÒN HIỆU LỰC TẠI `asOf`. Bản trước bỏ qua mọi dòng có
