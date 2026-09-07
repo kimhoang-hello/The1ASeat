@@ -917,7 +917,33 @@ export function validateDataset(
       });
       continue;
     }
-    if (typeof rule.value !== shape.value) {
+    // Dạng giá trị phụ thuộc TOÁN TỬ, không chỉ loại luật. `in`/`not_in` là
+    // phép so với một TẬP, nên giá trị phải là mảng — `operator: "in"` với
+    // `value: "CA"` là một phép so tập với một phần tử đơn, không có nghĩa.
+    // Ngược lại `value: ["CA", "US"]` với `eq` cũng vô nghĩa.
+    const membership = rule.operator === "in" || rule.operator === "not_in";
+    if (membership) {
+      const list = Array.isArray(rule.value) ? rule.value : null;
+      if (list === null) {
+        issues.push({
+          level: "error",
+          entity: "eligibility_rules",
+          message: `${rule.id}: toán tử "${rule.operator}" đòi giá trị là MẢNG`,
+        });
+      } else if (list.length === 0) {
+        issues.push({
+          level: "error",
+          entity: "eligibility_rules",
+          message: `${rule.id}: tập rỗng — luật không bao giờ đúng`,
+        });
+      } else if (list.some((item) => typeof item !== shape.value)) {
+        issues.push({
+          level: "error",
+          entity: "eligibility_rules",
+          message: `${rule.id}: mọi phần tử phải là ${shape.value}`,
+        });
+      }
+    } else if (typeof rule.value !== shape.value) {
       issues.push({
         level: "error",
         entity: "eligibility_rules",

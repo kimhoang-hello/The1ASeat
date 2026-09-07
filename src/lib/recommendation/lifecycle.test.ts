@@ -912,6 +912,10 @@ test("trạng thái bất khả thi bị chặn, không đi được vào engine
   const residency = BASE.eligibilityRules.find((r) => r.ruleType === "residency")!;
   bad("eligibilityRules", { ...residency, value: true }, "phải mang giá trị string");
   bad("eligibilityRules", { ...residency, operator: "gte" }, 'không dùng được toán tử "gte"');
+  // `in`/`not_in` là phép so với một TẬP, nên giá trị phải là mảng.
+  bad("eligibilityRules", { ...residency, operator: "in", value: "CA" }, "đòi giá trị là MẢNG");
+  bad("eligibilityRules", { ...residency, operator: "in", value: [] }, "tập rỗng");
+  bad("eligibilityRules", { ...residency, operator: "in", value: [1, 2] }, "mọi phần tử phải là string");
 
   // Quyền lợi mang số nhưng loại của nó không có đơn vị → con số không so được.
   const noUnit = BASE.benefits.find((b) => b.unit === null)!;
@@ -927,6 +931,16 @@ test("trạng thái bất khả thi bị chặn, không đi được vào engine
     { ...strategy, pointsLow: null, pointsTypical: null, pointsHigh: null },
     "không có con số nào",
   );
+});
+
+test("luật cư trú nhiều quốc gia dùng được toán tử tập hợp", () => {
+  const residency = BASE.eligibilityRules.find((r) => r.ruleType === "residency")!;
+  const multi = { ...residency, operator: "in" as const, value: ["CA", "US"] };
+  const next = {
+    ...BASE,
+    eligibilityRules: [multi, ...BASE.eligibilityRules.slice(1)],
+  };
+  assert.deepEqual(errorsIn(next), [], "mảng hợp lệ phải được chấp nhận");
 });
 
 test("id trùng bị bắt ở MỌI thực thể, kể cả earning_caps", () => {
