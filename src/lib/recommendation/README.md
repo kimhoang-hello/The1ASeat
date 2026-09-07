@@ -108,6 +108,11 @@ so hai điểm cùng đơn vị**. Thẻ cashback đổi từ "Hoàn tiền 15%"
 mặt" là đổi đơn vị: so thẳng 15 với 250 rồi nói "từng lên tới $250" là một câu
 về tiền, nói sai thì người đọc mở nhầm thẻ.
 
+Mỗi đợt mang `at` (bắt đầu) và `until` (kết thúc, `null` = đang chạy). `until`
+nằm trên chính điểm dữ liệu chứ không để người dùng suy từ `at` của điểm kế
+tiếp — thẻ chạy 70,000 từ 01/08, bỏ bonus ngày 10/08, chạy lại 70,000 từ 01/09
+thì cách suy đó kết luận đợt đầu kéo dài suốt tháng 8.
+
 Những lần ghi mà mức bonus KHÔNG đổi đã bị bỏ trước khi trả về — file gốc ghi
 thêm một dòng khi welcome bonus HOẶC rebate đổi, nên không lọc thì Scotiabank®
 Gold trả về 50,000 điểm hai lần chỉ vì rebate đi từ $150 lên $200. So bằng

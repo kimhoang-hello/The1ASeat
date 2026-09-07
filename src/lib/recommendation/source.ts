@@ -66,20 +66,22 @@ export const OFFER_HISTORY_SINCE = TRACKING_SINCE;
 export const repoDataSource: RecommendationDataSource = {
   async getOfferHistory(productSlug: string): Promise<OfferHistoryPoint[]> {
     // Đưa CẢ dòng thời gian thô vào, kể cả những lần thẻ không có welcome
-    // bonus (`null`) — chúng là vạch ngăn giữa hai đợt offer. Lọc chúng ra
-    // trước khi gộp sẽ nhập hai đợt 70,000 rời nhau thành một; xem
-    // `dedupeHistory`.
+    // bonus — chúng là vạch ngăn giữa hai đợt offer, và chúng mang ngày. Lọc
+    // chúng ra trước khi gộp sẽ nhập hai đợt 70,000 rời nhau thành một, và
+    // vứt ngày của chúng đi sẽ làm `until` của đợt trước nhảy qua cả khoảng
+    // trống. Xem `dedupeHistory`.
     return dedupeHistory(
-      historyFor(productSlug).map((entry) =>
-        entry.welcomeBonus === undefined
-          ? null
-          : {
-              at: entry.at,
-              label: entry.welcomeBonus,
-              amount: amountIn(entry.welcomeBonus),
-              unit: unitOf(entry.welcomeBonus),
-            },
-      ),
+      historyFor(productSlug).map((entry) => ({
+        at: entry.at,
+        bonus:
+          entry.welcomeBonus === undefined
+            ? null
+            : {
+                label: entry.welcomeBonus,
+                amount: amountIn(entry.welcomeBonus),
+                unit: unitOf(entry.welcomeBonus),
+              },
+      })),
     );
   },
 
