@@ -109,26 +109,20 @@ const BY_PRODUCT: Record<string, RuleSeed[]> = {
     AMEX_ONCE_IN_A_LIFETIME,
   ],
   "bmo-viporter-world-elite-mastercard": income(80000, 150000),
-  "scotiabank-gold-amex": [
-    {
-      type: "banking_relationship_required",
-      value: "Gói ngân hàng phù hợp để được miễn annual fee",
-      severity: "soft",
-    },
-  ],
+  // Scotiabank® Gold: gói ngân hàng làm MIỄN PHÍ thường niên, nó KHÔNG phải
+  // điều kiện để được duyệt thẻ. Trước đây nó nằm ở đây dưới dạng một câu
+  // tiếng Việt trong `value` — vừa sai chỗ (đây là bảng điều kiện mở thẻ),
+  // vừa buộc engine phải đọc chữ để hiểu. Sự thật đó đã có chỗ đúng của nó:
+  // quyền lợi `annual_fee_waiver_conditional` trong `product-benefits.ts`.
+  "scotiabank-gold-amex": [],
   "rbc-avion-visa-infinite": income(60000, 100000),
   "rbc-avion-visa-platinum": [
     { type: "minimum_personal_income", value: 0, severity: "hard" },
   ],
   "amex-marriott-bonvoy": [AMEX_ONCE_IN_A_LIFETIME],
   "amex-aeroplan-reserve": [AMEX_ONCE_IN_A_LIFETIME],
-  "wealthsimple-visa-infinite-plus": [
-    {
-      type: "banking_relationship_required",
-      value: "Tài khoản Wealthsimple® để được miễn annual fee",
-      severity: "soft",
-    },
-  ],
+  // Cùng lý do với Scotiabank® Gold ngay trên.
+  "wealthsimple-visa-infinite-plus": [],
 
   // Nội dung site chưa nói gì về điều kiện của hai thẻ dưới. Để trống — xem
   // chú thích đầu file: trống nghĩa là chưa biết, không phải không yêu cầu.

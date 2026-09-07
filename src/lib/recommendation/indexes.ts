@@ -9,6 +9,8 @@ import type {
   PointsProgram,
   Product,
   ProductBenefit,
+  ProductFamily,
+  ProgramValuation,
   ProductFee,
   RecommendationDataset,
   TransferPath,
@@ -40,6 +42,12 @@ export interface DatasetIndex {
   issuerById: ReadonlyMap<string, Issuer>;
   programById: ReadonlyMap<string, PointsProgram>;
   benefitById: ReadonlyMap<string, Benefit>;
+  familyById: ReadonlyMap<string, ProductFamily>;
+  /** Các hạng của một họ, đã sắp từ thấp tới cao. Engine dùng nó để không
+   *  khuyên hai hạng cùng lúc, và để tụt xuống hạng thấp hơn khi người dùng
+   *  không đủ điều kiện hạng cao. */
+  productsByFamily: ReadonlyMap<string, Product[]>;
+  valuationsByProgram: ReadonlyMap<string, ProgramValuation[]>;
 
   feesByProduct: ReadonlyMap<string, ProductFee[]>;
   offersByProduct: ReadonlyMap<string, Offer[]>;
@@ -80,6 +88,14 @@ export function indexDataset(data: RecommendationDataset): DatasetIndex {
     issuerById: new Map(data.issuers.map((row) => [row.id as string, row])),
     programById: new Map(data.pointsPrograms.map((row) => [row.id as string, row])),
     benefitById: new Map(data.benefits.map((row) => [row.id as string, row])),
+    familyById: new Map(data.productFamilies.map((row) => [row.id as string, row])),
+    productsByFamily: new Map(
+      [...groupBy(
+        data.products.filter((row) => row.familyId !== null),
+        (row) => row.familyId as string,
+      )].map(([key, rows]) => [key, [...rows].sort((a, b) => (a.tierRank ?? 0) - (b.tierRank ?? 0))]),
+    ),
+    valuationsByProgram: groupBy(data.programValuations, (row) => row.programId),
 
     feesByProduct: groupBy(data.productFees, (row) => row.productId),
     offersByProduct: groupBy(data.offers, (row) => row.productId),

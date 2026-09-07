@@ -76,6 +76,30 @@ Miễn phí năm đầu là ưu đãi của một OFFER (`Offer.annualFeeFirstYe
 theo điều kiện là một QUYỀN LỢI (`annual_fee_waiver_conditional`). Ba thứ khác
 nhau, ba chỗ khác nhau.
 
+## Họ thẻ và thứ hạng
+
+`ProductFamily` + `Product.familyId` / `tierRank`. Ba thẻ CIBC® Aeroplan® là ba
+**hạng** của một thẻ, không phải ba lựa chọn độc lập — Phase 3 cần biết để
+không khuyên cả ba cùng lúc, để nói "bạn đang giữ hạng Infinite, cái này là nâng
+hạng", và để tụt xuống hạng thấp hơn khi người dùng không đủ điều kiện hạng cao.
+
+Không có nó thì cách duy nhất là `slug.startsWith("cibc-aeroplan")` — hard-code
+tên sản phẩm vào logic, và sai cả hai chiều: `amex-aeroplan` cùng chứa
+"aeroplan" mà khác họ, còn RBC® Avion® Visa Infinite và Visa Platinum cùng họ
+mà không chung tiền tố nào đủ đặc trưng.
+
+`indexDataset(...).productsByFamily` trả về các hạng **đã sắp từ thấp tới cao**.
+
+## Định giá điểm cũng có phiên bản
+
+`program_valuations`, không phải một trường trên `PointsProgram`. Đây là con số
+**mọi hàm chấm điểm nhân vào**, và nó đổi mỗi lần một chương trình devalue. Ghi
+đè nó là làm mọi khuyến nghị cũ không giải thích lại được — chúng sẽ được giải
+thích bằng một định giá chưa tồn tại lúc chúng được đưa ra.
+
+Cùng lý do phí thường niên phải ra khỏi `Product`; khác ở chỗ định giá ảnh
+hưởng tới điểm số của **mọi** sản phẩm, không chỉ một.
+
 ## Trần tích điểm dùng chung
 
 `earning_caps` là entity riêng, và `EarningRate.capId` **trỏ** vào nó. Không

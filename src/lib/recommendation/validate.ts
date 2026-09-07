@@ -143,6 +143,8 @@ export function validateDataset(
   checkUniqueIds(data.transferPaths, "transfer_paths", issues);
   checkUniqueIds(data.awardStrategies, "award_strategies", issues);
   checkUniqueIds(data.productFees, "product_fees", issues);
+  checkUniqueIds(data.productFamilies, "product_families", issues);
+  checkUniqueIds(data.programValuations, "program_valuations", issues);
 
   checkRef(data.products, "issuerId", (r: { issuerId: string }) => r.issuerId, issuerIds, "products", issues);
   checkRef(data.products, "pointsProgramId", (r: { pointsProgramId: string | null }) => r.pointsProgramId, programIds, "products", issues);
@@ -168,6 +170,7 @@ export function validateDataset(
   checkTemporal(data.transferPaths, "transfer_paths", issues);
   checkTemporal(data.awardStrategies, "award_strategies", issues);
   checkTemporal(data.productFees, "product_fees", issues);
+  checkTemporal(data.programValuations, "program_valuations", issues);
 
   // Slug phải là duy nhất: nó là khoá nối sang Contentful, và hai sản phẩm
   // cùng slug nghĩa là một trong hai sẽ im lặng bị bỏ qua ở mọi phép tra.
@@ -482,6 +485,7 @@ export function validateDataset(
     "offers",
   );
   checkNoOverlap(data.productFees, (row) => row.productId, "product_fees");
+  checkNoOverlap(data.programValuations, (row) => row.programId, "program_valuations");
   checkNoOverlap(data.transferPaths, (row) => `${row.sourceProgramId}->${row.destinationProgramId}`, "transfer_paths");
   checkNoOverlap(data.productBenefits, (row) => `${row.productId}|${row.benefitId}`, "product_benefits");
   // Tỷ lệ tích điểm: khoá gồm cả nhóm merchant, vì hai dòng cùng hạng mục khác
@@ -533,6 +537,79 @@ export function validateDataset(
         level: "error",
         entity: "product_fees",
         message: `${product.slug}: bản ghi còn hiệu lực ${asOf} nhưng không có dòng phí nào còn hiệu lực`,
+      });
+    }
+  }
+
+  // ---- Định giá điểm ------------------------------------------------------
+  //
+  // Con số này nhân vào MỌI điểm số. Thiếu nó thì engine hoặc coi đồng điểm đó
+  // đáng 0 — im lặng loại mọi thẻ kiếm nó — hoặc phải tự bịa một giá trị, tức
+  // logic nghiệp vụ rơi ra khỏi dữ liệu vào code.
+  const programIdsWithValuation = new Set(
+    data.programValuations.filter((row) => isActiveAt(row, asOf)).map((row) => row.programId as string),
+  );
+  for (const valuation of data.programValuations) {
+    if (valuation.centsPerPoint <= 0) {
+      issues.push({
+        level: "error",
+        entity: "program_valuations",
+        message: `${valuation.id}: định giá phải dương`,
+      });
+    }
+  }
+  for (const program of data.pointsPrograms) {
+    if (!programIdsWithValuation.has(program.id)) {
+      issues.push({
+        level: "error",
+        entity: "program_valuations",
+        message: `${program.slug}: không có định giá nào còn hiệu lực ${asOf}`,
+      });
+    }
+  }
+  checkRef(data.programValuations, "programId", (r: { programId: string }) => r.programId, programIds, "program_valuations", issues);
+
+  // ---- Họ sản phẩm và thứ hạng -------------------------------------------
+  const familyIds = new Set(data.productFamilies.map((row) => row.id as string));
+  checkRef(data.products, "familyId", (r: { familyId: string | null }) => r.familyId, familyIds, "products", issues);
+  checkRef(data.productFamilies, "issuerId", (r: { issuerId: string }) => r.issuerId, issuerIds, "product_families", issues);
+
+  for (const product of data.products) {
+    // `familyId` và `tierRank` đi cùng nhau: có họ mà không có hạng thì engine
+    // biết hai thẻ là anh em nhưng không biết cái nào trên cái nào — tức không
+    // nói được "đây là nâng hạng" hay "đây là hạ xuống cho vừa điều kiện".
+    if ((product.familyId === null) !== (product.tierRank === null)) {
+      issues.push({
+        level: "error",
+        entity: "products",
+        message: `${product.slug}: familyId và tierRank phải cùng có hoặc cùng vắng`,
+      });
+    }
+  }
+  const tiersByFamily = new Map<string, Map<number, string>>();
+  for (const product of data.products) {
+    if (product.familyId === null || product.tierRank === null) continue;
+    const seen = tiersByFamily.get(product.familyId) ?? new Map<number, string>();
+    const clash = seen.get(product.tierRank);
+    if (clash !== undefined) {
+      issues.push({
+        level: "error",
+        entity: "products",
+        message: `${product.slug}: trùng tierRank ${product.tierRank} với ${clash} trong cùng họ`,
+      });
+    }
+    seen.set(product.tierRank, product.slug);
+    tiersByFamily.set(product.familyId, seen);
+  }
+  for (const family of data.productFamilies) {
+    const members = data.products.filter((p) => p.familyId === family.id);
+    // Một họ chỉ có một thành viên là một họ vô nghĩa — và nó gợi ý sai rằng
+    // có hạng khác để tụt xuống.
+    if (members.length < 2) {
+      issues.push({
+        level: "warning",
+        entity: "product_families",
+        message: `${family.id}: chỉ có ${members.length} thành viên`,
       });
     }
   }
@@ -648,6 +725,24 @@ export function validateDataset(
         continue;
       }
     }
+  }
+
+  // ---- Chương trình khai chuyển được nhưng không có chặng nào -------------
+  //
+  // Portfolio Analyzer đọc `transferable` để quyết định có đi tìm "số dư tiếp
+  // cận được" hay không (spec §7). Khai `true` mà không có chặng nào nghĩa là
+  // nó đi tìm rồi về tay không — và không có gì nói cho người đọc code biết đó
+  // là CỐ Ý (chưa mô hình hoá) hay là dữ liệu thiếu.
+  const sourcesWithPaths = new Set(data.transferPaths.map((row) => row.sourceProgramId as string));
+  for (const program of data.pointsPrograms) {
+    if (!program.transferable || sourcesWithPaths.has(program.id)) continue;
+    issues.push({
+      level: "warning",
+      entity: "points_programs",
+      message:
+        `${program.slug}: transferable=true nhưng chưa có chặng chuyển nào — ` +
+        `Portfolio Analyzer sẽ coi số dư này không với tới đâu`,
+    });
   }
 
   // ---- Chặng chuyển: hạng yêu cầu phải máy đọc được ----------------------

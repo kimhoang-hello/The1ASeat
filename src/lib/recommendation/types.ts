@@ -74,6 +74,8 @@ export type EligibilityRuleId = Branded<"EligibilityRuleId">;
 export type AwardStrategyId = Branded<"AwardStrategyId">;
 export type ProductFeeId = Branded<"ProductFeeId">;
 export type EarningCapId = Branded<"EarningCapId">;
+export type ProgramValuationId = Branded<"ProgramValuationId">;
+export type ProductFamilyId = Branded<"ProductFamilyId">;
 
 /** Ép một chuỗi viết tay trong file seed thành id có brand. Chỉ dùng trong
  *  `data/`; không có kiểm tra nào ở đây, `validate.ts` mới là chỗ kiểm. */
@@ -227,13 +229,17 @@ export interface PointsProgram {
   programType: PointsProgramType;
   transferable: boolean;
   /**
-   * Định giá tương đối (cent CAD mỗi điểm) để so các phương án với nhau.
+   * KHÔNG có định giá ở đây — xem `program_valuations`.
    *
-   * KHÔNG được đem ra trước mặt người đọc như một sự thật về CPP — spec §3.3
-   * nói thẳng, và trang calculator của site đã có bộ định giá riêng cho việc
-   * đó (`points-programs.ts`). Con số ở đây chỉ để engine xếp hạng nội bộ.
+   * Định giá điểm là con số MỌI hàm chấm điểm nhân vào, và nó ĐỔI: mỗi lần một
+   * chương trình devalue là một lần mọi thứ hạng đổi theo. Để nó là một trường
+   * trần trên chương trình thì sửa nó là ghi đè lịch sử — và một khuyến nghị
+   * sáu tháng trước sẽ được "giải thích" bằng định giá hôm nay, tức bằng một
+   * con số chưa tồn tại lúc nó được đưa ra.
+   *
+   * Cùng lý do phí thường niên phải ra khỏi `Product`. Khác ở chỗ định giá ảnh
+   * hưởng tới ĐIỂM SỐ CỦA MỌI SẢN PHẨM, không chỉ một.
    */
-  defaultCurrencyValue: number | null;
   /** Nối sang `POINTS_PROGRAMS` trong `lib/points-programs.ts` (calculator) và
    *  `PROGRAM_RULES` trong `lib/card-points-programs.ts` (chip lọc). Ba danh
    *  sách này KHÔNG dùng chung id — xem chú thích đầu `points-programs.ts` —
@@ -244,6 +250,45 @@ export interface PointsProgram {
   /** Nối sang `PROGRAMS` trong `lib/award-charts.ts`. Chỉ chương trình hàng
    *  không có bảng giá mới có. */
   awardChartProgramId: string | null;
+}
+
+/**
+ * Định giá một đồng điểm, có hiệu lực theo thời gian.
+ *
+ * `centsPerPoint` là định giá TƯƠNG ĐỐI, chỉ để engine so phương án này với
+ * phương án kia. KHÔNG được đem ra trước mặt người đọc như một sự thật về CPP
+ * (spec §3.3); trang calculator của site đã có bộ định giá riêng cho việc đó
+ * trong `lib/points-programs.ts`, và `audit:reco-data` giữ hai bên khớp nhau.
+ */
+export interface ProgramValuation extends Temporal, Sourced {
+  id: ProgramValuationId;
+  programId: PointsProgramId;
+  centsPerPoint: number;
+}
+
+/**
+ * Một HỌ sản phẩm: các hạng của cùng một thẻ.
+ *
+ * Ba thẻ CIBC® Aeroplan® (Visa / Visa Infinite / Visa Infinite Privilege) là
+ * BA HẠNG của một thẻ, không phải ba lựa chọn độc lập. Không có thực thể này
+ * thì Phase 3 chỉ còn cách đoán bằng slug — `slug.startsWith("cibc-aeroplan")`
+ * — tức hard-code tên sản phẩm vào logic, đúng thứ lớp dữ liệu này sinh ra để
+ * khỏi phải làm. Và đoán bằng slug thì sai cả hai chiều: `amex-aeroplan` và
+ * `amex-aeroplan-reserve` cùng tiền tố nhưng khác họ với `cibc-aeroplan-visa`,
+ * còn RBC® Avion® Visa Infinite và Visa Platinum thì cùng họ mà slug không
+ * chung tiền tố nào đủ đặc trưng.
+ *
+ * Engine cần nó cho ít nhất ba việc: không khuyên hai hạng của cùng một thẻ
+ * cùng lúc; nói được "bạn đang giữ hạng Infinite, cái này là nâng hạng chứ
+ * không phải thẻ thứ hai"; và khi người dùng không đủ điều kiện hạng cao thì
+ * đề xuất hạng thấp hơn TRONG CÙNG HỌ thay vì bỏ qua.
+ */
+export interface ProductFamily {
+  id: ProductFamilyId;
+  name: string;
+  issuerId: IssuerId;
+  /** Đồng tiền chung của cả họ. `null` khi các hạng kiếm khác nhau. */
+  pointsProgramId: PointsProgramId | null;
 }
 
 /* ------------------------------------------------------------------ *
@@ -303,6 +348,17 @@ export interface Product extends Temporal {
   /** Đồng tiền thưởng CHÍNH của thẻ. `null` cho thẻ cashback thuần không
    *  thuộc chương trình điểm nào. */
   pointsProgramId: PointsProgramId | null;
+  /** Họ sản phẩm, khi thẻ này là một hạng của một họ. `null` = thẻ đứng một
+   *  mình. Xem `ProductFamily`. */
+  familyId: ProductFamilyId | null;
+  /**
+   * Thứ hạng TRONG HỌ, 1 là thấp nhất. `null` khi không thuộc họ nào.
+   *
+   * Số chứ không phải tên hạng ("Infinite", "Privilege"): tên hạng là chuỗi
+   * marketing khác nhau giữa các ngân hàng, còn engine chỉ cần biết cái nào
+   * trên cái nào.
+   */
+  tierRank: number | null;
   /**
    * KHÔNG có `annualFee` ở đây — nó nằm trong `product_fees`.
    *
@@ -853,6 +909,8 @@ export interface AwardStrategy extends Temporal, Sourced {
 
 export interface RecommendationDataset {
   issuers: Issuer[];
+  productFamilies: ProductFamily[];
+  programValuations: ProgramValuation[];
   productFees: ProductFee[];
   pointsPrograms: PointsProgram[];
   transferPaths: TransferPath[];

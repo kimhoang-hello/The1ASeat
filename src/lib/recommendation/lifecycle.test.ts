@@ -188,6 +188,8 @@ test("6. thẻ mới cần dòng phí, nếu không engine chỉ thấy lợi í
     name: "Thẻ mới",
     effectiveFrom: "2027-01-01",
     availableFrom: "2027-01-01",
+    familyId: null,
+    tierRank: null,
   };
   const withoutFee = { ...BASE, products: [...BASE.products, launched] };
   assert.ok(
@@ -256,6 +258,10 @@ test("8b. thẻ có bản kế nhiệm: chuỗi lần được, vòng lặp bị
     name: "Thẻ kế nhiệm",
     effectiveFrom: "2027-01-01",
     availableFrom: "2027-01-01",
+    // Thẻ kế nhiệm là một sản phẩm RIÊNG, không phải một hạng của họ cũ —
+    // sao chép nguyên `familyId`/`tierRank` sẽ đụng hạng với thẻ nó thay thế.
+    familyId: null,
+    tierRank: null,
   };
   const closedOld = { ...old, availableTo: "2026-12-31", supersededByProductId: successor.id };
   const next = {
@@ -608,4 +614,92 @@ test("nhận diện hạng chịu được dấu câu và không bắt nhầm t�
   assert.ok(check("Only: Avion Elite"), "dấu hai chấm dính liền vẫn phải bắt được");
   assert.ok(!check("Mọi hạng Avion®"), "câu nói KHÔNG hạn chế thì đừng cảnh báo");
   assert.ok(!check("Cần chỉnh sửa sau"), "'chỉ' nằm trong một từ khác thì không tính");
+});
+
+/* --------------------------------------------------------------- *
+ * Nguyên liệu cho Phase 3 — kiểm rằng KHÔNG phải hard-code hay đọc chữ
+ * --------------------------------------------------------------- */
+
+test("các hạng của một họ thẻ nhận ra được mà không cần đoán theo slug", () => {
+  // Phase 3 phải biết ba thẻ CIBC® Aeroplan® là BA HẠNG của một thẻ, không
+  // phải ba lựa chọn độc lập — nếu không nó sẽ khuyên cả ba cùng lúc. Trước
+  // khi có `familyId` thì cách duy nhất là `slug.startsWith("cibc-aeroplan")`,
+  // tức hard-code tên sản phẩm vào logic.
+  const ix = indexDataset(BASE);
+  const tiers = ix.productsByFamily.get("fam_cibc-aeroplan") ?? [];
+  assert.deepEqual(
+    tiers.map((p) => [p.slug, p.tierRank]),
+    [
+      ["cibc-aeroplan-visa", 1],
+      ["cibc-aeroplan-visa-infinite", 2],
+      ["cibc-aeroplan-visa-infinite-privilege", 3],
+    ],
+    "phải sắp sẵn từ hạng thấp tới cao",
+  );
+  // Và họ khác KHÔNG lẫn vào, dù slug cùng chứa "aeroplan".
+  assert.ok(!tiers.some((p) => p.slug.startsWith("td-") || p.slug.startsWith("amex-")));
+});
+
+test("định giá điểm đổi được mà không ghi đè lịch sử", () => {
+  // Devalue là chuyện xảy ra thật, và đây là con số MỌI hàm chấm điểm nhân vào.
+  const current = BASE.programValuations.find((v) => (v.programId as string) === "aeroplan")!;
+  const devalued = {
+    ...current,
+    id: `${current.id}_v2` as typeof current.id,
+    centsPerPoint: 1.4,
+    effectiveFrom: "2027-01-01",
+    recordedAt: "2027-01-01",
+  };
+  const next = {
+    ...BASE,
+    programValuations: [
+      { ...current, effectiveTo: "2026-12-31" },
+      devalued,
+      ...BASE.programValuations.filter((v) => v.id !== current.id),
+    ],
+  };
+  assert.deepEqual(errorsIn(next, LATER), []);
+  assert.equal(
+    oneActiveAt(datasetAt(next, "2026-10-01").programValuations.filter((v) => (v.programId as string) === "aeroplan"), "2026-10-01")?.centsPerPoint,
+    current.centsPerPoint,
+    "khuyến nghị cũ phải được giải thích bằng định giá CỦA LÚC ĐÓ",
+  );
+  assert.equal(
+    oneActiveAt(datasetAt(next, LATER).programValuations.filter((v) => (v.programId as string) === "aeroplan"), LATER)?.centsPerPoint,
+    1.4,
+  );
+});
+
+test("chương trình nào cũng phải có định giá còn hiệu lực", () => {
+  // Thiếu nó thì engine hoặc coi đồng điểm đó đáng 0 — im lặng loại mọi thẻ
+  // kiếm nó — hoặc phải tự bịa một giá trị trong code.
+  const broken = { ...BASE, programValuations: BASE.programValuations.slice(1) };
+  assert.ok(errorsIn(broken).some((e) => e.includes("không có định giá nào còn hiệu lực")));
+});
+
+test("miễn phí theo điều kiện là QUYỀN LỢI, không phải điều kiện mở thẻ", () => {
+  // Gói ngân hàng của Scotiabank® làm miễn phí thường niên; nó KHÔNG chặn ai
+  // mở thẻ. Để nó trong bảng điều kiện dưới dạng một câu tiếng Việt vừa sai
+  // chỗ vừa buộc engine đọc chữ.
+  const gold = BASE.products.find((p) => p.slug === "scotiabank-gold-amex")!;
+  const rules = BASE.eligibilityRules.filter((r) => r.productId === gold.id);
+  assert.ok(!rules.some((r) => r.ruleType === "banking_relationship_required"));
+  assert.ok(
+    BASE.productBenefits.some(
+      (b) => b.productId === gold.id && (b.benefitId as string) === "annual-fee-waiver-conditional",
+    ),
+    "sự thật đó phải nằm ở chỗ đúng của nó",
+  );
+});
+
+test("quyền lợi có hạn thì hết hạn thật, không chỉ hết trong lời văn", () => {
+  const vip = BASE.products.find((p) => p.slug === "cibc-aeroplan-visa-infinite-privilege")!;
+  const lounge = BASE.productBenefits.find(
+    (b) => b.productId === vip.id && (b.benefitId as string) === "maple-leaf-lounge",
+  )!;
+  assert.equal(lounge.effectiveTo, "2026-12-31");
+  assert.ok(
+    !datasetAt(BASE, "2027-06-01").productBenefits.some((b) => b.id === lounge.id),
+    "sang 2027 thì engine không được cộng quyền lợi này vào giá trị thẻ nữa",
+  );
 });

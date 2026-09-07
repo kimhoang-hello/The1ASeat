@@ -1,7 +1,7 @@
 export { ISSUERS } from "./issuers.ts";
-export { POINTS_PROGRAMS } from "./points-programs.ts";
+export { POINTS_PROGRAMS, PROGRAM_VALUATIONS } from "./points-programs.ts";
 export { TRANSFER_PATHS } from "./transfer-paths.ts";
-export { PRODUCTS, PRODUCT_FEES } from "./products.ts";
+export { PRODUCTS, PRODUCT_FEES, PRODUCT_FAMILIES } from "./products.ts";
 export { OFFERS, OFFER_COMPONENTS, INCOMPLETE_OFFERS } from "./offers.ts";
 export { EARNING_RATES, EARNING_CAPS } from "./earning-rates.ts";
 export { BENEFITS } from "./benefits.ts";
@@ -14,9 +14,9 @@ export {
 } from "./award-strategies.ts";
 
 import { ISSUERS } from "./issuers.ts";
-import { POINTS_PROGRAMS } from "./points-programs.ts";
+import { POINTS_PROGRAMS, PROGRAM_VALUATIONS } from "./points-programs.ts";
 import { TRANSFER_PATHS } from "./transfer-paths.ts";
-import { PRODUCTS, PRODUCT_FEES } from "./products.ts";
+import { PRODUCTS, PRODUCT_FEES, PRODUCT_FAMILIES } from "./products.ts";
 import { OFFERS, OFFER_COMPONENTS } from "./offers.ts";
 import { EARNING_RATES, EARNING_CAPS } from "./earning-rates.ts";
 import { BENEFITS } from "./benefits.ts";
@@ -42,6 +42,8 @@ export function offlineDataset(): RecommendationDataset {
   return {
     issuers: ISSUERS,
     productFees: PRODUCT_FEES,
+    productFamilies: PRODUCT_FAMILIES,
+    programValuations: PROGRAM_VALUATIONS,
     pointsPrograms: POINTS_PROGRAMS,
     transferPaths: TRANSFER_PATHS,
     products: PRODUCTS.map((seed) => ({ ...seed, affiliateAvailable: false })),

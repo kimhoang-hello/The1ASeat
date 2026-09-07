@@ -29,7 +29,10 @@ import { validateDataset } from "../src/lib/recommendation/validate.ts";
 import { OFFERS } from "../src/lib/recommendation/data/offers.ts";
 import { PRODUCT_FEES } from "../src/lib/recommendation/data/products.ts";
 import { isActiveAt, oneActiveAt } from "../src/lib/recommendation/temporal.ts";
-import { POINTS_PROGRAMS as RECO_PROGRAMS } from "../src/lib/recommendation/data/points-programs.ts";
+import {
+  POINTS_PROGRAMS as RECO_PROGRAMS,
+  PROGRAM_VALUATIONS,
+} from "../src/lib/recommendation/data/points-programs.ts";
 import { TRANSFER_PATHS } from "../src/lib/recommendation/data/transfer-paths.ts";
 import { AWARD_STRATEGIES } from "../src/lib/recommendation/data/award-strategies.ts";
 import { POINTS_PROGRAMS as CALCULATOR_PROGRAMS } from "../src/lib/points-programs.ts";
@@ -156,10 +159,20 @@ for (const program of RECO_PROGRAMS) {
     );
     continue;
   }
-  if (upstream.centsPerPoint !== program.defaultCurrencyValue) {
+  // Định giá nay nằm ở `program_valuations` và có hiệu lực theo thời gian, nên
+  // so bản CÒN HIỆU LỰC HÔM NAY với con số của trang calculator.
+  const valuation = oneActiveAt(
+    PROGRAM_VALUATIONS.filter((row) => (row.programId as string) === (program.id as string)),
+    TODAY,
+  );
+  if (valuation === undefined) {
     errors.push(
-      `[points-programs] ${program.slug}: defaultCurrencyValue ${program.defaultCurrencyValue} ` +
-        `lệch centsPerPoint ${upstream.centsPerPoint} trong lib/points-programs.ts`,
+      `[points-programs] ${program.slug}: không có đúng một định giá còn hiệu lực hôm nay`,
+    );
+  } else if (upstream.centsPerPoint !== valuation.centsPerPoint) {
+    errors.push(
+      `[points-programs] ${program.slug}: định giá ${valuation.centsPerPoint} lệch ` +
+        `centsPerPoint ${upstream.centsPerPoint} trong lib/points-programs.ts`,
     );
   }
 }
@@ -376,7 +389,8 @@ if (warnings.length > 0) console.log("");
 for (const line of errors) console.error(`✗  ${line}`);
 
 const summary =
-  `${dataset.products.length} sản phẩm, ${dataset.productFees.length} mức phí, ` +
+  `${dataset.products.length} sản phẩm (${dataset.productFamilies.length} họ), ` +
+  `${dataset.productFees.length} mức phí, ${dataset.programValuations.length} định giá, ` +
   `${dataset.offers.length} offer, ` +
   `${dataset.offerComponents.length} component, ${dataset.earningRates.length} tỷ lệ tích điểm, ` +
   `${dataset.productBenefits.length} quyền lợi, ${dataset.eligibilityRules.length} điều kiện, ` +

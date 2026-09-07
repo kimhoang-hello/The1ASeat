@@ -3,6 +3,8 @@ import {
   makeId,
   type IssuerId,
   type PointsProgramId,
+  type ProductFamily,
+  type ProductFamilyId,
   type ProductFee,
   type ProductFeeId,
   type ProductId,
@@ -51,6 +53,9 @@ type Seed = {
   network: "amex" | "visa" | "mastercard" | "other";
   personalOrBusiness: "personal" | "business" | "student";
   program: string | null;
+  /** Họ sản phẩm + thứ hạng trong họ. Bỏ trống khi thẻ đứng một mình. */
+  family?: string;
+  tier?: number;
   /**
    * Lịch sử phí thường niên, cũ nhất trước.
    *
@@ -93,6 +98,8 @@ const SEEDS: Seed[] = [
     network: "amex",
     personalOrBusiness: "personal",
     program: "amex-mr",
+    family: "amex-mr-personal",
+    tier: 1,
     fees: [{ annualFee: 0, from: SEEDED_ON }],
     officialUrl: null,
   },
@@ -104,6 +111,8 @@ const SEEDS: Seed[] = [
     network: "amex",
     personalOrBusiness: "personal",
     program: "amex-mr",
+    family: "amex-mr-personal",
+    tier: 3,
     fees: [{ annualFee: 250, from: SEEDED_ON }],
     officialUrl: null,
   },
@@ -115,6 +124,8 @@ const SEEDS: Seed[] = [
     network: "amex",
     personalOrBusiness: "personal",
     program: "amex-mr",
+    family: "amex-mr-personal",
+    tier: 2,
     fees: [{ annualFee: 191.88, from: SEEDED_ON }],
     officialUrl: null,
   },
@@ -137,6 +148,8 @@ const SEEDS: Seed[] = [
     network: "visa",
     personalOrBusiness: "personal",
     program: "aventura",
+    family: "cibc-aventura",
+    tier: 1,
     fees: [{ annualFee: 139, from: SEEDED_ON }],
     officialUrl: "https://www.cibc.com/en/personal-banking/credit-cards/all-credit-cards/aventura-gold-visa-card.html",
   },
@@ -181,6 +194,8 @@ const SEEDS: Seed[] = [
     network: "amex",
     personalOrBusiness: "personal",
     program: "aeroplan",
+    family: "amex-aeroplan",
+    tier: 2,
     fees: [{ annualFee: 599, from: SEEDED_ON }],
     officialUrl: null,
   },
@@ -192,6 +207,8 @@ const SEEDS: Seed[] = [
     network: "visa",
     personalOrBusiness: "personal",
     program: "aeroplan",
+    family: "td-aeroplan",
+    tier: 3,
     fees: [{ annualFee: 599, from: SEEDED_ON }],
     officialUrl: null,
   },
@@ -203,6 +220,8 @@ const SEEDS: Seed[] = [
     network: "visa",
     personalOrBusiness: "personal",
     program: "aeroplan",
+    family: "td-aeroplan",
+    tier: 2,
     fees: [{ annualFee: 139, from: SEEDED_ON }],
     officialUrl: null,
   },
@@ -225,6 +244,8 @@ const SEEDS: Seed[] = [
     network: "visa",
     personalOrBusiness: "personal",
     program: "aventura",
+    family: "cibc-aventura",
+    tier: 2,
     fees: [{ annualFee: 139, from: SEEDED_ON }],
     officialUrl: "https://www.cibc.com/en/personal-banking/credit-cards/all-credit-cards/aventura-visa-infinite-card.html",
   },
@@ -280,6 +301,8 @@ const SEEDS: Seed[] = [
     network: "visa",
     personalOrBusiness: "personal",
     program: "cash-back",
+    family: "wealthsimple",
+    tier: 2,
     fees: [{ annualFee: 240, from: SEEDED_ON }],
     officialUrl: null,
   },
@@ -291,6 +314,8 @@ const SEEDS: Seed[] = [
     network: "visa",
     personalOrBusiness: "personal",
     program: "cash-back",
+    family: "wealthsimple",
+    tier: 1,
     fees: [{ annualFee: 240, from: SEEDED_ON }],
     officialUrl: null,
   },
@@ -302,6 +327,8 @@ const SEEDS: Seed[] = [
     network: "visa",
     personalOrBusiness: "personal",
     program: "avion",
+    family: "rbc-avion",
+    tier: 3,
     fees: [{ annualFee: 399, from: SEEDED_ON }],
     officialUrl: null,
   },
@@ -313,6 +340,8 @@ const SEEDS: Seed[] = [
     network: "visa",
     personalOrBusiness: "personal",
     program: "aeroplan",
+    family: "td-aeroplan",
+    tier: 1,
     fees: [{ annualFee: 89, from: SEEDED_ON }],
     officialUrl: null,
   },
@@ -324,6 +353,8 @@ const SEEDS: Seed[] = [
     network: "amex",
     personalOrBusiness: "personal",
     program: "aeroplan",
+    family: "amex-aeroplan",
+    tier: 1,
     fees: [{ annualFee: 120, from: SEEDED_ON }],
     officialUrl: null,
   },
@@ -379,6 +410,8 @@ const SEEDS: Seed[] = [
     network: "visa",
     personalOrBusiness: "personal",
     program: "avion",
+    family: "rbc-avion",
+    tier: 2,
     fees: [{ annualFee: 120, from: SEEDED_ON }],
     officialUrl: null,
   },
@@ -390,6 +423,8 @@ const SEEDS: Seed[] = [
     network: "visa",
     personalOrBusiness: "personal",
     program: "avion",
+    family: "rbc-avion",
+    tier: 1,
     fees: [{ annualFee: 120, from: SEEDED_ON }],
     officialUrl: null,
   },
@@ -401,6 +436,8 @@ const SEEDS: Seed[] = [
     network: "visa",
     personalOrBusiness: "personal",
     program: "aeroplan",
+    family: "cibc-aeroplan",
+    tier: 1,
     fees: [{ annualFee: 0, from: SEEDED_ON }],
     officialUrl: null,
   },
@@ -412,6 +449,8 @@ const SEEDS: Seed[] = [
     network: "visa",
     personalOrBusiness: "personal",
     program: "aeroplan",
+    family: "cibc-aeroplan",
+    tier: 2,
     fees: [{ annualFee: 139, from: SEEDED_ON }],
     officialUrl: null,
   },
@@ -423,6 +462,8 @@ const SEEDS: Seed[] = [
     network: "visa",
     personalOrBusiness: "personal",
     program: "aeroplan",
+    family: "cibc-aeroplan",
+    tier: 3,
     fees: [{ annualFee: 599, from: SEEDED_ON }],
     officialUrl: null,
   },
@@ -438,6 +479,8 @@ export const PRODUCTS: ProductSeed[] = SEEDS.map((seed) => ({
   network: seed.network,
   personalOrBusiness: seed.personalOrBusiness,
   pointsProgramId: seed.program === null ? null : (seed.program as PointsProgramId),
+  familyId: seed.family === undefined ? null : id<ProductFamilyId>(`fam_${seed.family}`),
+  tierRank: seed.tier ?? null,
   availableFrom: SEEDED_ON,
   availableTo: null,
   officialUrl: seed.officialUrl,
@@ -455,6 +498,40 @@ export const PRODUCTS: ProductSeed[] = SEEDS.map((seed) => ({
  * `Product.id` không nhúc nhích — nghĩa là không một khoá ngoại nào gãy, và
  * mọi khuyến nghị cũ vẫn tra ra đúng mức phí lúc nó được đưa ra.
  */
+/**
+ * Họ sản phẩm. Tên lấy đúng như site gọi, kèm ®/™.
+ *
+ * Suy ra từ chính các seed để không có họ nào được khai mà không thẻ nào thuộc
+ * về, và ngược lại.
+ */
+const FAMILY_NAMES: Record<string, string> = {
+  "cibc-aeroplan": "CIBC® Aeroplan®",
+  "cibc-aventura": "CIBC® Aventura®",
+  "td-aeroplan": "TD® Aeroplan®",
+  "rbc-avion": "RBC® Avion®",
+  "amex-mr-personal": "American Express® Membership Rewards® (thẻ cá nhân)",
+  "amex-aeroplan": "American Express® Aeroplan®",
+  wealthsimple: "Wealthsimple® Visa Infinite",
+};
+
+export const PRODUCT_FAMILIES: ProductFamily[] = [
+  ...new Set(SEEDS.map((seed) => seed.family).filter((f): f is string => f !== undefined)),
+].map((family) => {
+  const members = SEEDS.filter((seed) => seed.family === family);
+  const programs = new Set(members.map((seed) => seed.program));
+  return {
+    id: id<ProductFamilyId>(`fam_${family}`),
+    name: FAMILY_NAMES[family] ?? family,
+    issuerId: members[0].issuer as IssuerId,
+    // Cả họ chung một đồng tiền thì ghi ra; khác nhau thì `null` chứ không
+    // chọn bừa cái của hạng đầu tiên.
+    pointsProgramId:
+      programs.size === 1 && members[0].program !== null
+        ? (members[0].program as PointsProgramId)
+        : null,
+  };
+});
+
 export const PRODUCT_FEES: ProductFee[] = SEEDS.flatMap((seed) =>
   seed.fees.map((fee) => ({
     // Ngày hiệu lực nằm TRONG id, nên phiên bản thứ hai không đụng phiên bản

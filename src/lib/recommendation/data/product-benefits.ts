@@ -36,7 +36,7 @@ const RECORDED_ON = "2026-09-07";
 type BenefitSeed = [
   benefit: string,
   numericValue?: number | null,
-  opts?: { text?: string; minimumAnnualSpend?: number; provider?: string },
+  opts?: { text?: string; minimumAnnualSpend?: number; provider?: string; endsOn?: string },
 ];
 
 /**
@@ -266,7 +266,10 @@ const BY_PRODUCT: Record<string, BenefitSeed[]> = {
   ],
 
   "cibc-aeroplan-visa-infinite-privilege": [
-    ["maple-leaf-lounge", 1, { text: "Kèm 1 khách, đến hết 31/12/2026" }],
+    // Hạn 31/12/2026 nằm trong `effectiveTo`, KHÔNG chỉ trong chữ: một quyền
+    // lợi hết hạn mà `effectiveTo: null` sẽ được engine cộng vào giá trị thẻ
+    // mãi mãi, và không phép kiểm nào thấy vì hạn đó chỉ là một câu tiếng Việt.
+    ["maple-leaf-lounge", 1, { text: "Kèm 1 khách", endsOn: "2026-12-31" }],
     ["airport-lounge-passes", 6, { text: "Visa Airport Companion Program, mỗi chủ thẻ" }],
     ["free-checked-bag", 8, { text: "Kèm Priority Check-in, Boarding và Baggage" }],
     ["companion-pass", 99, { text: "Toàn cầu, từ $99 đến tối đa $599 chưa gồm thuế phí", minimumAnnualSpend: 25000 }],
@@ -299,7 +302,7 @@ export const PRODUCT_BENEFITS: ProductBenefit[] = Object.entries(BY_PRODUCT).fla
       // hãng thì KHÔNG trùng nhau — xem chú thích `ProductBenefit.provider`.
       provider: opts?.provider ?? PROVIDER_BY_PRODUCT[slug] ?? null,
       effectiveFrom: VERIFIED_ON,
-      effectiveTo: null,
+      effectiveTo: opts?.endsOn ?? null,
       sourceUrl: `https://ghe1a.com/credit-cards/${slug}`,
       sourceKind: "ghe1a",
       verifiedAt: VERIFIED_ON,

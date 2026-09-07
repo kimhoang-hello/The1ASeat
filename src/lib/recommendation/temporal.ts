@@ -97,6 +97,11 @@ export function datasetAt(
     issuers: data.issuers,
     pointsPrograms: data.pointsPrograms,
     benefits: data.benefits,
+    // Họ sản phẩm là từ điển, không có `Temporal` — nó chỉ nhóm các hạng lại.
+    productFamilies: data.productFamilies,
+    // Định giá thì CÓ, và phải lọc: devalue là một sự kiện có ngày, và một
+    // khuyến nghị cũ phải được giải thích bằng định giá của lúc đó.
+    programValuations: activeAt(known(data.programValuations), asOf),
     products,
     productFees: activeAt(known(data.productFees), asOf).filter((fee) =>
       liveProductIds.has(fee.productId),
