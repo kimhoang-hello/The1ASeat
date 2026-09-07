@@ -8,6 +8,7 @@ import {
   type PointsProgramId,
   type ProductId,
 } from "../types";
+import { longestWindowMonths, spendPerNinetyDays, totalSpend, type SpendWindow } from "../spend";
 
 /**
  * Welcome offer đang chạy, và cấu trúc thật bên trong nó.
@@ -505,96 +506,33 @@ const OFFER_SEEDS: OfferSeed[] = [
 ];
 
 /**
- * Tổng mức chi phải đạt để lấy HẾT bonus.
- *
- * Không phải MAX, cũng không phải SUM — cả hai cách đơn giản đều sai, và sai
- * theo hai hướng ngược nhau:
- *
- *   SUM sai vì các mốc có cửa sổ CHỒNG NHAU dùng chung tiền. TD® Aeroplan®
- *   Visa Infinite Privilege* đòi $12,000 trong 180 ngày rồi $24,000 trong 12
- *   tháng — cả hai cửa sổ đều mở từ ngày mở thẻ, nên $12,000 đầu tiên nằm
- *   TRONG $24,000. Tổng là $24,000. Cộng lại ra $36,000, tức bịa thêm
- *   $12,000 rồi loại oan thẻ khỏi tay người vừa đủ sức.
- *
- *   MAX sai vì các cửa sổ RỜI NHAU thì tiền không dùng lại được. Amex®
- *   Aeroplan®* Reserve đòi $7,500 trong 90 ngày đầu rồi $2,500 nữa ở tháng
- *   thứ 13. MAX ra $7,500, tức nói phần thưởng 25,000 điểm kỷ niệm là miễn phí.
- *
- * Nên: gom theo NGÀY MỞ CỬA SỔ, lấy MAX trong từng nhóm, rồi cộng các nhóm.
- * Gom theo `componentType` là cách cũ và là cách sai — `anniversary` nói điểm
- * được TRẢ lúc nào, không nói tiền phải chi lúc nào.
- *
- * `monthly_spend` nhân lên trước khi so: Cobalt đòi $750 MỖI chu kỳ trong 12
- * chu kỳ, tức $9,000 thật.
+ * `monthly_spend` là ngoại lệ duy nhất cần nhân: Cobalt đòi $750 MỖI chu kỳ
+ * sao kê trong 12 chu kỳ, tức $9,000 thật trải trên cả cửa sổ.
  */
 function requiredSpendOf(c: ComponentSeed): number | null {
   if (c.spend === undefined) return null;
   return c.type === "monthly_spend" ? c.spend * (c.repeat ?? 1) : c.spend;
 }
 
-function totalSpendOf(components: ComponentSeed[]): number | null {
-  const windows = components
+/** Các mốc chi của một offer, dạng khoảng ngày tính từ lúc mở thẻ. Phép tính
+ *  nằm trong `spend.ts` — hàm thuần, có test riêng. */
+function windowsOf(components: ComponentSeed[]): SpendWindow[] {
+  return components
     .map((c) => {
       const needed = requiredSpendOf(c);
       if (needed === null) return null;
       const from = c.startsAfterDays ?? 0;
       return { from, to: from + (c.windowDays ?? 90), needed };
     })
-    .filter((w): w is { from: number; to: number; needed: number } => w !== null)
-    .sort((a, b) => a.from - b.from);
-
-  // Gom theo CHỒNG LẤN THẬT, không theo ngày mở bằng nhau. Hai cửa sổ mở khác
-  // ngày nhưng còn giao nhau — ngày 0–180 và ngày 30–395 — vẫn dùng chung
-  // được tiền, nên cộng chúng lại là bịa ra một yêu cầu không tồn tại. So ngày
-  // mở là đúng với mọi thẻ trong bộ dữ liệu hiện tại (mọi cửa sổ hoặc mở ở
-  // ngày 0, hoặc mở ở ngày 365 và không giao), nhưng nó đúng do may chứ không
-  // do phép tính, và cái bẫy đó im lặng.
-  let total = 0;
-  let cluster: { to: number; max: number } | null = null;
-  for (const window of windows) {
-    if (cluster !== null && window.from < cluster.to) {
-      cluster.to = Math.max(cluster.to, window.to);
-      cluster.max = Math.max(cluster.max, window.needed);
-      continue;
-    }
-    if (cluster !== null) total += cluster.max;
-    cluster = { to: window.to, max: window.needed };
-  }
-  if (cluster !== null) total += cluster.max;
-  return total > 0 ? total : null;
+    .filter((w): w is SpendWindow => w !== null);
 }
 
-/**
- * Mức chi cần thiết QUY VỀ 90 NGÀY — xem `Offer.spendPerNinetyDays`.
- *
- * Lấy mốc NẶNG NHẤT sau khi quy đổi, không phải mốc có số tiền lớn nhất:
- * $40,000 trong 365 ngày (~$9,900/quý) nhẹ hơn $7,500 trong 90 ngày.
- */
-function spendPerNinetyDaysOf(components: ComponentSeed[]): number | null {
-  let worst = 0;
-  for (const c of components) {
-    const needed = requiredSpendOf(c);
-    if (needed === null) continue;
-    // `monthly_spend` lặp lại: cửa sổ thật của MỘT lần là một chu kỳ sao kê,
-    // nên quy đổi phải chia cho toàn bộ số ngày mà tổng đó trải ra.
-    const days = c.windowDays ?? 90;
-    const rate = (needed / days) * 90;
-    if (rate > worst) worst = rate;
-  }
-  return worst > 0 ? Math.round(worst) : null;
-}
-
-function longestWindowMonths(components: ComponentSeed[]): number | null {
-  // Tính tới NGÀY CUỐI CÙNG còn phải chi, tức `startsAfterDays + windowDays`.
-  // Chỉ nhìn `windowDays` thì Amex® Aeroplan®* Reserve — $7,500 trong 90 ngày
-  // rồi $2,500 ở tháng thứ 13 — hiện ra "3 tháng", trong khi người đọc phải
-  // giữ thẻ qua mốc kỷ niệm mới lấy hết bonus. Đó là câu về việc họ bị buộc
-  // trả annual fee năm thứ hai hay không.
-  const ends = components
+/** Mọi cửa sổ có mặt trong offer, kể cả những thành phần không đòi chi tiêu —
+ *  `longestWindowMonths` cần chúng để biết bonus kéo dài tới đâu. */
+function allWindowsOf(components: ComponentSeed[]): { to: number }[] {
+  return components
     .filter((c) => c.windowDays !== undefined)
-    .map((c) => (c.startsAfterDays ?? 0) + c.windowDays!);
-  if (ends.length === 0) return null;
-  return Math.round((Math.max(...ends) / 365) * 12);
+    .map((c) => ({ to: (c.startsAfterDays ?? 0) + c.windowDays! }));
 }
 
 /**
@@ -619,9 +557,9 @@ export const OFFERS: Offer[] = OFFER_SEEDS.map((seed) => ({
   endDate: seed.endDate ?? null,
   bonusCurrencyId: seed.currency ? (seed.currency as PointsProgramId) : null,
   headlineBonus: seed.headline,
-  minimumSpend: totalSpendOf(seed.components),
-  minimumSpendMonths: longestWindowMonths(seed.components),
-  spendPerNinetyDays: spendPerNinetyDaysOf(seed.components),
+  minimumSpend: totalSpend(windowsOf(seed.components)),
+  minimumSpendMonths: longestWindowMonths(allWindowsOf(seed.components)),
+  spendPerNinetyDays: spendPerNinetyDays(windowsOf(seed.components)),
   annualFeeFirstYear: seed.feeFirstYear ?? null,
   annualFeeRebate: seed.rebate ?? null,
   // V1 chỉ có offer công khai. Offer targeted (link riêng, thư mời) tồn tại

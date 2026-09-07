@@ -11,6 +11,13 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
+    // Test chạy thẳng bằng `node --test --experimental-strip-types`, và ESM
+    // của Node đòi phần mở rộng tường minh trong đường dẫn import. Bật cờ này
+    // để `./spend.ts` vừa chạy được vừa CÒN được tsc kiểm — cách kia là đẩy
+    // test ra ngoài `include` như `scripts/`, tức đánh đổi kiểm kiểu lấy chỗ
+    // đặt file. An toàn vì `noEmit` đã bật: không có bundle nào phải giải
+    // đường dẫn này.
+    "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
     "incremental": true,
     "plugins": [

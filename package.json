@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:game": "node --test games/catch-the-points/tests/*.js",
+    "test:reco": "node --test --experimental-strip-types src/lib/recommendation/*.test.ts",
     "audit:awards": "tsx scripts/audit-award-charts.mts",
     "audit:health": "tsx scripts/audit-content-health.mts",
     "audit:links": "tsx scripts/audit-internal-links.mts",
