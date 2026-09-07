@@ -75,3 +75,34 @@ test("nhãn không đọc ra số thì amount undefined, và hai cái liên ti�
 test("lịch sử rỗng trả về rỗng", () => {
   assert.deepEqual(dedupeHistory([]), []);
 });
+
+test("mất rồi có lại welcome bonus là HAI đợt, không phải một", () => {
+  // `null` là lần ghi mà thẻ không có welcome bonus nào — vạch ngăn giữa hai
+  // đợt. Lọc nó ra trước khi gộp thì hai mức 70,000 nằm cạnh nhau và bị nhập
+  // làm một, biến hai đợt riêng biệt thành một đợt kéo dài.
+  const kept = dedupeHistory([
+    point("2026-08-29", 70000, "points"),
+    null,
+    point("2026-09-06", 70000, "points"),
+  ]);
+  assert.deepEqual(
+    kept.map((p) => p.at),
+    ["2026-08-29", "2026-09-06"],
+  );
+});
+
+test("nhiều lần liên tiếp KHÔNG có bonus chỉ tính là một trạng thái", () => {
+  const kept = dedupeHistory([
+    point("2026-08-29", 70000, "points"),
+    null,
+    null,
+    null,
+    point("2026-09-06", 70000, "points"),
+  ]);
+  assert.equal(kept.length, 2);
+});
+
+test("dòng thời gian mở đầu bằng không-có-bonus vẫn giữ mức đầu tiên", () => {
+  const kept = dedupeHistory([null, point("2026-09-06", 70000, "points")]);
+  assert.deepEqual(kept.map((p) => p.amount), [70000]);
+});

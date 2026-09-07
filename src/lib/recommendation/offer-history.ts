@@ -33,27 +33,47 @@ export interface OfferHistoryPoint {
 }
 
 /**
- * Bỏ những lần ghi mà mức welcome bonus KHÔNG đổi.
+ * Bỏ những lần ghi mà TRẠNG THÁI welcome bonus không đổi, rồi trả về những
+ * lần thẻ CÓ bonus.
  *
- * `record-offer-history.mts` ghi thêm một dòng khi welcome bonus HOẶC rebate
- * đổi. Lọc theo "có welcome bonus" thôi thì mọi lần rebate đổi cũng kéo theo
- * một quan sát trùng: Scotiabank® Gold trả về 50,000 điểm HAI lần chỉ vì
- * rebate đi từ $150 lên $200, còn Momentum trả về "15%" bốn lần. Percentile
- * dựng trên đó sẽ đánh trọng số theo nhịp đổi rebate — một đại lượng chẳng
- * liên quan gì tới câu hỏi "mức này cao hay thường".
+ * Nhận cả dòng thời gian THÔ, trong đó `null` nghĩa là lần ghi đó thẻ không có
+ * welcome bonus nào. Nhận `null` là bắt buộc chứ không phải tiện tay:
+ *
+ *   `record-offer-history.mts` ghi thêm một dòng khi welcome bonus HOẶC rebate
+ *   đổi. Lọc bỏ những dòng không có bonus TRƯỚC khi gộp thì một thẻ đi từ
+ *   70,000 → không có gì → 70,000 mất đúng cái vạch ngăn giữa hai lần, và hai
+ *   mức 70,000 nằm cạnh nhau bị gộp làm một. Kết quả là hai đợt offer RIÊNG
+ *   BIỆT hoá thành một đợt kéo dài — sai cả percentile lẫn thời lượng, và sai
+ *   theo hướng làm một mức trông "thường" hơn thực tế. Thẻ mất rồi có lại
+ *   welcome bonus là chuyện có thật trên site (National Bank®, Wealthsimple®
+ *   đang không có mức nào).
+ *
+ * Lọc bỏ những lần rebate đổi mà bonus đứng yên thì vẫn cần: Scotiabank® Gold
+ * trả về 50,000 điểm HAI lần chỉ vì rebate đi từ $150 lên $200, còn Momentum
+ * trả về "15%" bốn lần. Percentile dựng trên đó sẽ đánh trọng số theo nhịp đổi
+ * rebate — một đại lượng chẳng liên quan gì tới câu hỏi "mức này cao hay
+ * thường".
  *
  * So bằng (SỐ, ĐƠN VỊ), không bằng NHÃN. Momentum đã đổi chữ từ "Hoàn tiền
  * 15%" sang "Cashback 15%" mà không đổi ưu đãi; so nhãn thì một lần biên tập
- * lại câu chữ thành một mức mới trong lịch sử. Cùng bài học với `welcomeBonusPeak`
- * trong `lib/offer-history.ts`.
+ * lại câu chữ thành một mức mới trong lịch sử. Cùng bài học với
+ * `welcomeBonusPeak` trong `lib/offer-history.ts`.
  */
-export function dedupeHistory(points: OfferHistoryPoint[]): OfferHistoryPoint[] {
-  const kept: OfferHistoryPoint[] = [];
-  for (const point of points) {
-    const previous = kept[kept.length - 1];
-    if (previous && previous.amount === point.amount && previous.unit === point.unit) continue;
+export function dedupeHistory(
+  timeline: readonly (OfferHistoryPoint | null)[],
+): OfferHistoryPoint[] {
+  const kept: (OfferHistoryPoint | null)[] = [];
+  for (const point of timeline) {
+    const previous = kept.length > 0 ? kept[kept.length - 1] : undefined;
+    if (previous !== undefined && sameState(previous, point)) continue;
     kept.push(point);
   }
-  return kept;
+  // Vạch ngăn `null` đã làm xong việc của nó — nó không phải một mức bonus nên
+  // không thuộc về kết quả.
+  return kept.filter((point): point is OfferHistoryPoint => point !== null);
 }
 
+function sameState(a: OfferHistoryPoint | null, b: OfferHistoryPoint | null): boolean {
+  if (a === null || b === null) return a === b;
+  return a.amount === b.amount && a.unit === b.unit;
+}
