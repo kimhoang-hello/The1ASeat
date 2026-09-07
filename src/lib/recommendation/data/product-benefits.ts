@@ -1,0 +1,240 @@
+import {
+  id,
+  type BenefitId,
+  type ProductBenefit,
+  type ProductBenefitId,
+  type ProductId,
+} from "../types";
+
+/**
+ * Quyền lợi của từng thẻ, ở dạng có cấu trúc.
+ *
+ * NGUỒN: `keyBenefitsVi` của entry Contentful. Chỉ seed quyền lợi site NÓI RA
+ * — không suy ra từ hiểu biết chung về thẻ. "Ưu tiên hành lý" trên Amex®
+ * Aeroplan®* Reserve chẳng hạn KHÔNG được ghi thành `free_checked_bag`, vì
+ * site viết "ưu tiên", và ưu tiên với miễn phí là hai chuyện khác nhau.
+ *
+ * `numericValue` là mặt SỐ của quyền lợi và mỗi quyền lợi có một đơn vị riêng:
+ * số lượt (lounge), số đô (credit), số người đi cùng (hành lý), số đêm (Elite
+ * Night). Đơn vị nằm trong `Benefit.name`, không lặp lại ở đây.
+ *
+ * `null` ở `numericValue` nghĩa là quyền lợi CÓ mà không có mặt số nào site
+ * nêu — không phải bằng 0. Priority Pass của Scotiabank® Gold là ví dụ: có
+ * thẻ hội viên, site không nói mấy lượt.
+ */
+
+const VERIFIED_ON = "2026-09-07";
+
+type BenefitSeed = [
+  benefit: string,
+  numericValue?: number | null,
+  opts?: { text?: string; minimumAnnualSpend?: number },
+];
+
+const BY_PRODUCT: Record<string, BenefitSeed[]> = {
+  "amex-green": [["free-supplementary-card"]],
+
+  "amex-gold-rewards": [
+    ["travel-credit", 100, { text: "Đặt qua American Express® Travel Online" }],
+    ["nexus-credit", 50, { text: "Mỗi 4 năm" }],
+    ["airport-lounge-passes", 4, { text: "Plaza Premium tại Canada" }],
+    ["trip-cancellation-insurance", 1500],
+    ["travel-medical-insurance", null, { text: "15 ngày, dưới 65 tuổi" }],
+    ["rental-car-insurance"],
+    ["free-supplementary-card", 1, { text: "Thẻ phụ đầu tiên" }],
+  ],
+
+  "amex-cobalt": [
+    ["mobile-device-insurance", 1000],
+    ["travel-medical-insurance", null, { text: "15 ngày tới $5 triệu, dưới 65 tuổi" }],
+    ["free-supplementary-card"],
+  ],
+
+  "scotiabank-momentum-visa-infinite-plus": [
+    ["travel-medical-insurance"],
+    ["trip-cancellation-insurance"],
+    ["mobile-device-insurance"],
+  ],
+
+  "cibc-aventura-gold-visa": [
+    ["airport-lounge-passes", 4, { text: "Visa Airport Companion Program" }],
+    ["nexus-credit", 160, { text: "4 năm một lần" }],
+    ["travel-medical-insurance", null, { text: "Y tế khẩn cấp ngoài tỉnh" }],
+    ["rental-car-insurance"],
+    ["mobile-device-insurance"],
+  ],
+
+  "scotiabank-gold-amex": [
+    ["no-fx-fee"],
+    ["airport-lounge-passes", null, { text: "Priority Pass — site không nêu số lượt" }],
+    ["annual-fee-waiver-conditional", null, { text: "Khi có gói ngân hàng phù hợp" }],
+  ],
+
+  "scotiabank-scene-plus-visa-students": [["free-supplementary-card"]],
+
+  "westjet-rbc-world-elite-mastercard": [
+    // Voucher cấp lại MỖI NĂM khi chi đủ $5,000 — nên nó là quyền lợi có điều
+    // kiện chi tiêu, không phải quyền lợi đương nhiên. Người chi $200/tháng
+    // không bao giờ chạm tới, và `conditions` là chỗ duy nhất nói được điều đó.
+    ["companion-pass", 119, { text: "Khứ hồi từ $119 chưa gồm thuế phí", minimumAnnualSpend: 5000 }],
+    ["free-checked-bag", 8, { text: "Chủ thẻ và tối đa 8 người cùng booking" }],
+    ["airport-lounge-passes", null, { text: "Mastercard® Travel Pass qua DragonPass" }],
+    ["airline-status-credits", null, { text: "$200 tier qualifying spend cho mỗi $5,000 chi tiêu" }],
+    ["travel-medical-insurance"],
+    ["trip-cancellation-insurance"],
+    ["rental-car-insurance"],
+    ["mobile-device-insurance"],
+  ],
+
+  "amex-aeroplan-reserve": [
+    ["maple-leaf-lounge"],
+    ["airport-lounge-passes", null, { text: "Priority Pass" }],
+    ["priority-boarding", 8, { text: "Check-in, boarding và hành lý cho tối đa 8 người đi cùng" }],
+    ["companion-pass", null, { minimumAnnualSpend: 25000 }],
+    ["travel-medical-insurance", 5000000],
+  ],
+
+  "td-aeroplan-visa-infinite-privilege": [
+    ["maple-leaf-lounge", 1, { text: "Không giới hạn, kèm 1 khách" }],
+    ["airport-lounge-passes", 6, { text: "Visa Airport Companion Program" }],
+    ["free-checked-bag", 8],
+    ["nexus-credit", 100, { text: "Mỗi 48 tháng" }],
+    ["travel-medical-insurance", null, { text: "31 ngày, dưới 65 tuổi" }],
+    ["trip-cancellation-insurance", 2500],
+  ],
+
+  "td-aeroplan-visa-infinite": [
+    ["free-checked-bag", 8],
+    ["nexus-credit", 100, { text: "Mỗi 48 tháng" }],
+    ["travel-medical-insurance", null, { text: "21 ngày, dưới 65 tuổi" }],
+    ["trip-cancellation-insurance", 1500],
+  ],
+
+  "td-first-class-travel-visa-infinite": [
+    ["travel-credit", 100, { text: "Khi đặt từ $500 qua Expedia® For TD" }],
+    ["airport-lounge-passes", 4, { text: "Visa Airport Companion" }],
+  ],
+
+  "cibc-aventura-visa-infinite": [
+    ["airport-lounge-passes", 4, { text: "Visa Airport Companion Program" }],
+    ["nexus-credit", 160, { text: "4 năm một lần" }],
+    ["travel-medical-insurance", null, { text: "Y tế khẩn cấp ngoài tỉnh" }],
+    ["trip-cancellation-insurance"],
+    ["rental-car-insurance"],
+    ["mobile-device-insurance"],
+  ],
+
+  "amex-aeroplan-business-reserve": [
+    ["maple-leaf-lounge", 1, { text: "Không giới hạn cho chủ thẻ và 1 khách, kèm Air Canada® Café" }],
+    ["free-checked-bag", 8],
+    ["nexus-credit", 100, { text: "Mỗi 4 năm" }],
+    ["companion-pass", 99, { text: "Worldwide Companion Pass từ $99", minimumAnnualSpend: 25000 }],
+    ["airline-status-credits", 25000, { text: "1,000 SQC cho mỗi $5,000 chi tiêu, tối đa 25,000/năm" }],
+  ],
+
+  "amex-marriott-bonvoy-business": [
+    ["free-night-award", 1],
+    ["elite-night-credits", 15],
+    ["hotel-status", null, { text: "Đủ điều kiện lên Gold Elite" }],
+  ],
+
+  "national-bank-world-elite-mastercard": [
+    ["travel-credit", 150],
+    ["airport-lounge-passes", null, { text: "Phòng chờ National Bank® tại Montréal-Trudeau, không giới hạn" }],
+    ["travel-medical-insurance", null, { text: "60 ngày, dưới 55 tuổi" }],
+    ["trip-cancellation-insurance", 2500],
+    ["mobile-device-insurance", 1000],
+  ],
+
+  "td-cash-back-visa-infinite": [
+    ["travel-medical-insurance"],
+    ["rental-car-insurance"],
+    ["mobile-device-insurance"],
+  ],
+
+  "wealthsimple-visa-infinite-privilege": [
+    ["airport-lounge-passes", 6, { text: "DragonPass" }],
+    ["no-fx-fee"],
+    ["rental-car-insurance", 65000, { text: "31 ngày, xe đến $65,000" }],
+    ["trip-cancellation-insurance", 1500],
+    ["travel-medical-insurance", 2000000, { text: "14 ngày, dưới 65 tuổi" }],
+    ["annual-fee-waiver-conditional", null, { text: "Hạng Premium/Generation hoặc chuyển ≥$4,000/tháng" }],
+  ],
+
+  "wealthsimple-visa-infinite-plus": [
+    ["no-fx-fee"],
+    ["travel-medical-insurance", 2000000, { text: "14 ngày, dưới 65 tuổi" }],
+    ["trip-cancellation-insurance", 1000],
+    ["mobile-device-insurance", 1000],
+    ["annual-fee-waiver-conditional", null, { text: "Hạng Premium/Generation hoặc chuyển ≥$4,000/tháng" }],
+    ["free-supplementary-card"],
+  ],
+
+  "rbc-avion-visa-infinite-privilege": [
+    ["airport-lounge-passes", 6, { text: "DragonPass" }],
+    ["travel-medical-insurance", null, { text: "31 ngày, dưới 65 tuổi" }],
+    ["trip-cancellation-insurance", 2500],
+  ],
+
+  // TD® Aeroplan® Visa Platinum*: site chỉ nêu bảo hiểm trễ chuyến, thất lạc
+  // hành lý và bảo vệ mua sắm — chưa quyền lợi nào trong từ điển. Để trống
+  // thay vì gán bừa vào một slug gần đúng.
+  "td-aeroplan-visa-platinum": [],
+
+  "amex-aeroplan": [
+    ["free-checked-bag", 9, { text: "Đến 23kg, tối đa 9 người trên cùng booking" }],
+    ["airline-status-credits", 25000, { text: "1,000 SQC cho mỗi $20,000 chi tiêu, tối đa 25,000/năm" }],
+  ],
+
+  "bmo-viporter-world-elite-mastercard": [
+    ["companion-pass", null, { text: "Khứ hồi $0 base fare trên Porter", minimumAnnualSpend: 9000 }],
+    ["free-checked-bag", 8, { text: "Ký gửi và xách tay, tối đa 8 khách đi cùng" }],
+    ["airport-lounge-passes", null, { text: "Mastercard® Travel Pass" }],
+  ],
+
+  "united-mileageplus-neo-world-elite-mastercard": [
+    ["free-checked-bag", 1, { text: "Chỉ chủ thẻ chính, trên chuyến bay United®" }],
+    ["priority-boarding", null, { text: "Nhóm 2, cho chủ thẻ và người cùng đặt vé" }],
+  ],
+
+  "amex-marriott-bonvoy": [
+    ["hotel-status", null, { text: "Silver Elite; Gold Elite khi chi $30,000/năm" }],
+    ["free-night-award", 1],
+    ["elite-night-credits", 15],
+  ],
+
+  "scotiabank-passport-visa-infinite": [
+    ["no-fx-fee"],
+    ["airport-lounge-passes", 6, { text: "Visa Airport Companion Program" }],
+    ["free-supplementary-card", 1, { text: "Thẻ phụ đầu tiên" }],
+    ["travel-medical-insurance", null, { text: "Cho chủ thẻ đến 75 tuổi" }],
+  ],
+
+  "rbc-avion-visa-infinite": [
+    ["travel-medical-insurance", null, { text: "Y tế khẩn cấp không giới hạn" }],
+  ],
+
+  // RBC® Avion® Visa Platinum: site không nêu quyền lợi nào ngoài cách đổi
+  // điểm và điều kiện thu nhập.
+  "rbc-avion-visa-platinum": [],
+};
+
+export const PRODUCT_BENEFITS: ProductBenefit[] = Object.entries(BY_PRODUCT).flatMap(
+  ([slug, seeds]) =>
+    seeds.map(([benefit, numericValue, opts]) => ({
+      id: id<ProductBenefitId>(`${slug}-${benefit}`),
+      productId: slug as ProductId,
+      benefitId: benefit as BenefitId,
+      numericValue: numericValue ?? null,
+      textValue: opts?.text ?? null,
+      conditions:
+        opts?.minimumAnnualSpend === undefined
+          ? null
+          : { minimumAnnualSpend: opts.minimumAnnualSpend },
+      effectiveFrom: VERIFIED_ON,
+      effectiveTo: null,
+      sourceUrl: `https://ghe1a.com/credit-cards/${slug}`,
+      verifiedAt: VERIFIED_ON,
+      confidence: "verified",
+    })),
+);

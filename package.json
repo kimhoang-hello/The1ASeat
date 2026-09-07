@@ -14,6 +14,7 @@
     "audit:trademarks": "node scripts/audit-trademarks.mjs",
     "audit:rebates": "tsx scripts/check-bank-rebates.mts",
     "audit:rebate-prose": "tsx scripts/audit-rebate-prose.mts",
+    "audit:reco-data": "tsx scripts/audit-reco-data.mts",
     "record:offer-history": "tsx scripts/record-offer-history.mts",
     "captions": "bash scripts/burned-captions.sh",
     "captions:all": "bash scripts/collect-captions.sh"
