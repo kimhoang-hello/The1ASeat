@@ -79,7 +79,7 @@ export type ClosureLookup =
 export function lastClosed(state: UserState, productId: ProductId): ClosureLookup {
   const past = state.cards.filter((card) => card.productId === productId && !holdsNow(card));
   if (past.length === 0) return { kind: "never_closed" };
-  if (past.some((card) => card.closedDate === null)) return { kind: "unknown" };
+  if (past.some((card) => card.closedDate == null)) return { kind: "unknown" };
   const latest = past
     .map((card) => card.closedDate as string)
     .reduce((newest, day) => (day > newest ? day : newest));
@@ -92,12 +92,12 @@ export function lastClosed(state: UserState, productId: ProductId): ClosureLooku
 
 /** `null` = chưa biết. KHÔNG phải bằng không — xem đầu `user-types.ts`. */
 export function spendFor(state: UserState, category: SpendCategory): EstimatedAmount | null {
-  return state.spend?.byCategory[category] ?? null;
+  return state.spend?.byCategory?.[category] ?? null;
 }
 
 /** Các hạng mục người dùng ĐÃ trả lời. Phần bù là phần chưa biết. */
 export function statedCategories(spend: UserSpendProfile): SpendCategory[] {
-  return Object.keys(spend.byCategory) as SpendCategory[];
+  return Object.keys(spend.byCategory ?? {}) as SpendCategory[];
 }
 
 /**
@@ -113,16 +113,16 @@ export function statedCategories(spend: UserSpendProfile): SpendCategory[] {
  */
 export function unallocatedMonthly(spend: UserSpendProfile): EstimatedAmount | null {
   const total = spend.monthlyTotal;
-  if (total === null) return null;
-  const stated = Object.values(spend.byCategory);
+  if (total == null) return null;
+  const stated = Object.values(spend.byCategory ?? {}).filter((amount) => amount != null);
   let sumLow = 0;
   let sumHigh: number | null = 0;
   for (const amount of stated) {
     sumLow += amount.low;
-    if (sumHigh !== null) sumHigh = amount.high === null ? null : sumHigh + amount.high;
+    if (sumHigh !== null) sumHigh = amount.high == null ? null : sumHigh + amount.high;
   }
   const low = sumHigh === null ? 0 : Math.max(0, total.low - sumHigh);
-  const high = total.high === null ? null : Math.max(0, total.high - sumLow);
+  const high = total.high == null ? null : Math.max(0, total.high - sumLow);
   return { low, high };
 }
 
@@ -227,7 +227,7 @@ export interface ResolvedTripGoal extends Omit<TripGoal, "originRegion"> {
  * khác" chứ không phải "đoán được".
  */
 export function resolveTripGoal(profile: UserProfile, goal: TripGoal): ResolvedTripGoal {
-  const inferred = goal.originRegion === null;
+  const inferred = goal.originRegion == null;
   return {
     ...goal,
     originRegion: goal.originRegion ?? ORIGIN_REGION_BY_COUNTRY[profile.country],
@@ -256,6 +256,6 @@ export function compareToThreshold(
   threshold: number,
 ): "at_or_above" | "below" | "straddles" {
   if (amount.low >= threshold) return "at_or_above";
-  if (amount.high !== null && amount.high < threshold) return "below";
+  if (amount.high != null && amount.high < threshold) return "below";
   return "straddles";
 }

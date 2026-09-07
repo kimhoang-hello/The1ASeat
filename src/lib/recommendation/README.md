@@ -487,6 +487,13 @@ như dữ liệu ĐẦY ĐỦ**. Hai lớp chặn: `requirePresent` báo lỗi t
 (`undefined ≠ null`), và các phép so `== null` vẫn sinh chỗ trống để engine
 không bao giờ coi nó là đã biết.
 
+**`validateUserState` TRẢ VỀ danh sách vấn đề, không bao giờ NÉM.** Nó chạy trên
+dữ liệu chưa đáng tin, nên một `TypeError` ở đó là chính lớp bảo vệ tự sập trước
+thứ nó sinh ra để chặn. Vì vậy mọi phép duyệt object mang `?? {}` và mọi phép so
+null mang `== null` — kể cả trong `user.ts`. Một test quét lần lượt xoá TỪNG
+trường tuỳ chọn rồi đòi cả validator lẫn `userGaps` không ném và vẫn báo đúng
+lỗi thiếu trường; đã kiểm ngược, gỡ bản vá ra là test đỏ.
+
 `user.test.ts` chốt hai luật này bằng cấu trúc: một test kiểm bộ khoá của mọi
 dòng số dư, một test kiểm không trường nào ngoài `cards` nhắc tới một `ProductId`
 — thêm `preferredProductId` vào hồ sơ sẽ làm nó đỏ.
@@ -495,7 +502,7 @@ dòng số dư, một test kiểm không trường nào ngoài `cards` nhắc t�
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # 146 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng
+npm run test:reco         # 148 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng
 ```
 
 `audit:reco-data` bắt ba lớp lỗi:

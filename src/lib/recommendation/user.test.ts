@@ -45,6 +45,8 @@ import {
   primaryGoal,
   resolveTripGoal,
   sortedGoals,
+  spendFor,
+  statedCategories,
   unallocatedMonthly,
 } from "./user.ts";
 import type { TripGoal } from "./user-types.ts";
@@ -710,6 +712,63 @@ test("mức linh hoạt chưa biết là chỗ trống — §10.2 cho nó 10% đ
   });
   assert.ok(gapKinds(state).includes("trip_flexibility_unknown"));
   assert.ok(!gapKinds(japanTripFunded).includes("trip_flexibility_unknown"));
+});
+
+test("không hàm nào NÉM khi mọi trường tuỳ chọn biến mất", () => {
+  // Phép kiểm hệ thống thay cho một test mỗi trường. `validateUserState` là
+  // thứ chạy trên dữ liệu CHƯA đáng tin, nên một `TypeError` ở đó là chính lớp
+  // bảo vệ tự sập trước thứ nó sinh ra để chặn — và `undefined` (dòng cũ thiếu
+  // trường mới thêm) là đúng ca nó phải chịu được.
+  const optional: Record<string, string[]> = {
+    profile: [
+      "province",
+      "annualPersonalIncome",
+      "annualHouseholdIncome",
+      "personalIncomeDeclined",
+      "householdIncomeDeclined",
+      "annualFeeTolerancePerCard",
+      "businessCardsAllowed",
+      "isStudent",
+    ],
+    spend: ["monthlyTotal", "minimumSpendCapacity3m", "byCategory"],
+  };
+
+  for (const [section, keys] of Object.entries(optional)) {
+    for (const key of keys) {
+      const state = broken(japanTripShortfall, (s) => {
+        delete (s as unknown as Record<string, Record<string, unknown>>)[section][key];
+      });
+      assert.doesNotThrow(() => validateUserState(state, data), `${section}.${key} làm validator ném`);
+      assert.doesNotThrow(() => userGaps(state), `${section}.${key} làm userGaps ném`);
+      assert.ok(
+        errorsIn(state).some((message) => message.includes(`Thiếu trường "${key}"`)),
+        `${section}.${key} vắng mặt mà không có lỗi nào`,
+      );
+    }
+  }
+
+  // Và các trường tuỳ chọn trên dòng con, nơi `requirePresent` cũng phải bắt.
+  const cardMissing = broken(flexiblePointsSufficient, (s) => {
+    delete (s.cards[1] as Partial<(typeof s.cards)[1]>).closedDate;
+  });
+  assert.doesNotThrow(() => validateUserState(cardMissing, data));
+  assert.doesNotThrow(() => userGaps(cardMissing));
+  assert.deepEqual(lastClosed(cardMissing, productIdFor("amex-gold-rewards")), { kind: "unknown" });
+
+  const balanceMissing = broken(aeroplanHeavy, (s) => {
+    delete (s.balances[0] as Partial<(typeof s.balances)[0]>).balance;
+  });
+  assert.doesNotThrow(() => validateUserState(balanceMissing, data));
+  assert.ok(gapKinds(balanceMissing).includes("point_balance_amount_unknown"));
+});
+
+test("hạng mục chi tiêu biến mất không làm phép cộng khoảng ném", () => {
+  const state = broken(japanTripShortfall, (s) => {
+    delete (s.spend as unknown as Record<string, unknown>).byCategory;
+  });
+  assert.doesNotThrow(() => unallocatedMonthly(state.spend!));
+  assert.doesNotThrow(() => statedCategories(state.spend!));
+  assert.equal(spendFor(state, "grocery"), null);
 });
 
 /* ------------------------------------------------------------------ *

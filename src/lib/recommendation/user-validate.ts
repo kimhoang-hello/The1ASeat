@@ -14,6 +14,12 @@
  *               mâu thuẫn. Engine đọc vào sẽ nói sai. Chặn.
  *   `warning` — bất thường nhưng có thể có thật. Không chặn.
  *
+ * HỢP ĐỒNG: hàm này TRẢ VỀ danh sách vấn đề, KHÔNG BAO GIỜ ném. Nó là thứ chạy
+ * trên dữ liệu chưa đáng tin, nên một `TypeError` ở đây là chính lớp bảo vệ tự
+ * sập trước thứ nó sinh ra để chặn. Vì vậy mọi phép so `null` dùng `== null`
+ * (bắt cả `undefined`) và mọi phép duyệt object có `?? {}` — một dòng cũ thiếu
+ * trường mới thêm phải ra một dòng LỖI, không ra một exception.
+ *
  * Chỗ trống KHÔNG phải lỗi và không xuất hiện ở đây — hồ sơ thiếu dữ liệu là
  * ca bình thường nhất của Phase 2, không phải ca hỏng. Chúng đi qua
  * `user-gaps.ts`.
@@ -63,7 +69,7 @@ function checkDate(
   entity: string,
   issues: ValidationIssue[],
 ): void {
-  if (value === null) return;
+  if (value == null) return;
   if (!isRealDate(value)) {
     issues.push({ level: "error", entity, message: `${label}: "${value}" không phải ngày YYYY-MM-DD có thật` });
   }
@@ -105,7 +111,7 @@ export function validateUserState(
   if (!(SUPPORTED_COUNTRIES as readonly string[]).includes(profile.country)) {
     issues.push({ level: "error", entity: P, message: `Quốc gia chưa phục vụ: "${profile.country}"` });
   }
-  if (profile.province !== null && !(CANADIAN_PROVINCES as readonly string[]).includes(profile.province)) {
+  if (profile.province != null && !(CANADIAN_PROVINCES as readonly string[]).includes(profile.province)) {
     issues.push({ level: "error", entity: P, message: `Tỉnh bang không hợp lệ: "${profile.province}"` });
   }
   checkDate(profile.createdAt, "createdAt", P, issues);
@@ -149,7 +155,7 @@ export function validateUserState(
     // Cùng lớp lỗi với `status` gõ sai: chuỗi `"false"` đi qua sạch rồi
     // Phase 3 đọc bằng truthiness và hiểu ngược lại. TypeScript không có mặt
     // lúc chạy, nên nó không bảo vệ dữ liệu đọc từ database hay JSON.
-    if (value !== null && typeof value !== "boolean") {
+    if (value != null && typeof value !== "boolean") {
       issues.push({ level: "error", entity: P, message: `${label} phải là boolean hoặc null (nhận "${String(value)}")` });
     }
   }
@@ -166,7 +172,7 @@ export function validateUserState(
       issues.push({ level: "error", entity: P, message: `${label} = true nhưng vẫn có số thu nhập` });
     }
   }
-  if (profile.annualFeeTolerancePerCard !== null) {
+  if (profile.annualFeeTolerancePerCard != null) {
     const fee = profile.annualFeeTolerancePerCard;
     if (!Number.isFinite(fee) || fee < 0) {
       issues.push({ level: "error", entity: P, message: `annualFeeTolerancePerCard không hợp lệ (${fee})` });
@@ -176,7 +182,7 @@ export function validateUserState(
   /* ---------------- user_spend_profiles ---------------- */
 
   const S = "user_spend_profiles";
-  if (spend !== null) {
+  if (spend != null) {
     if (spend.userId !== userId) {
       // Trộn hồ sơ chi tiêu của người khác vào là lỗi im lặng tuyệt đối: mọi
       // con số vẫn hợp lệ, chỉ là của người khác.
@@ -188,17 +194,17 @@ export function validateUserState(
     checkAmount(spend.minimumSpendCapacity3m, "minimumSpendCapacity3m", S, issues);
 
     let sumLow = 0;
-    for (const [category, amount] of Object.entries(spend.byCategory)) {
+    for (const [category, amount] of Object.entries(spend.byCategory ?? {})) {
       if (!(SPEND_CATEGORIES as readonly string[]).includes(category)) {
         issues.push({ level: "error", entity: S, message: `Hạng mục chi tiêu không tồn tại: "${category}"` });
         continue;
       }
       checkAmount(amount, `byCategory.${category}`, S, issues);
-      if (amount !== undefined) sumLow += amount.low;
+      if (amount != null) sumLow += amount.low;
     }
 
     const total = spend.monthlyTotal;
-    if (total !== null && total.high !== null && sumLow > total.high) {
+    if (total != null && total.high != null && sumLow > total.high) {
       // Số học mâu thuẫn, không phải chỗ trống: ngay cả khi mọi hạng mục rơi
       // vào cận DƯỚI của chúng thì tổng vẫn vượt cận TRÊN của tổng tháng.
       issues.push({
@@ -208,7 +214,7 @@ export function validateUserState(
       });
     }
     const capacity = spend.minimumSpendCapacity3m;
-    if (capacity !== null && total !== null && total.high !== null && capacity.low > total.high * 3) {
+    if (capacity != null && total != null && total.high != null && capacity.low > total.high * 3) {
       // Có thật — một khoản mua lớn đã lên kế hoạch — nên chỉ cảnh báo. Nhưng
       // nó cũng là hình dạng của việc gõ nhầm tổng tháng thành tổng quý.
       issues.push({
@@ -246,10 +252,10 @@ export function validateUserState(
     requirePresent(card, ["openedDate", "closedDate"], C, issues);
     checkDate(card.openedDate, `${card.id}.openedDate`, C, issues);
     checkDate(card.closedDate, `${card.id}.closedDate`, C, issues);
-    if (card.openedDate !== null && card.closedDate !== null && card.closedDate < card.openedDate) {
+    if (card.openedDate != null && card.closedDate != null && card.closedDate < card.openedDate) {
       issues.push({ level: "error", entity: C, message: `${card.id}: đóng trước khi mở` });
     }
-    if (card.status === "active" && card.closedDate !== null) {
+    if (card.status === "active" && card.closedDate != null) {
       issues.push({ level: "error", entity: C, message: `${card.id}: đang giữ mà có closedDate` });
     }
     if (card.status === "active") {
@@ -331,7 +337,7 @@ export function validateUserState(
       issues.push({ level: "error", entity: G, message: `${goal.id}: goal type không tồn tại "${goal.type}"` });
     }
     checkDate(goal.createdAt, `${goal.id}.createdAt`, G, issues);
-    if (goal.priority !== null) {
+    if (goal.priority != null) {
       if (!Number.isInteger(goal.priority) || goal.priority < 1) {
         issues.push({ level: "error", entity: G, message: `${goal.id}: priority phải là số nguyên ≥ 1` });
       } else if (seenPriorities.has(goal.priority)) {
@@ -342,7 +348,7 @@ export function validateUserState(
       seenPriorities.add(goal.priority);
     }
 
-    if (goal.type === "earn_points" && goal.targetProgramId !== null && !programIds.has(goal.targetProgramId)) {
+    if (goal.type === "earn_points" && goal.targetProgramId != null && !programIds.has(goal.targetProgramId)) {
       issues.push({
         level: "error",
         entity: G,
@@ -355,10 +361,10 @@ export function validateUserState(
     if (!(TRIP_REGIONS as readonly string[]).includes(goal.destinationRegion)) {
       issues.push({ level: "error", entity: G, message: `${goal.id}: vùng đến không tồn tại "${goal.destinationRegion}"` });
     }
-    if (goal.originRegion !== null && !(TRIP_REGIONS as readonly string[]).includes(goal.originRegion)) {
+    if (goal.originRegion != null && !(TRIP_REGIONS as readonly string[]).includes(goal.originRegion)) {
       issues.push({ level: "error", entity: G, message: `${goal.id}: vùng đi không tồn tại "${goal.originRegion}"` });
     }
-    if (goal.cabin !== null && !(CABINS as readonly string[]).includes(goal.cabin)) {
+    if (goal.cabin != null && !(CABINS as readonly string[]).includes(goal.cabin)) {
       issues.push({ level: "error", entity: G, message: `${goal.id}: hạng ghế không tồn tại "${goal.cabin}"` });
     }
     for (const [label, code] of [
@@ -367,19 +373,19 @@ export function validateUserState(
     ] as const) {
       // Ràng buộc hình dạng, và cũng là cái chốt duy nhất giữ cho mô hình
       // không có chỗ nào nhét được chuỗi tự do — xem đầu `user-types.ts`.
-      if (code !== null && !/^[A-Z]{3}$/.test(code)) {
+      if (code != null && !/^[A-Z]{3}$/.test(code)) {
         issues.push({ level: "error", entity: G, message: `${goal.id}: ${label} phải là mã IATA 3 chữ hoa ("${code}")` });
       }
     }
-    if (goal.flexibility !== null && !["low", "medium", "high"].includes(goal.flexibility)) {
+    if (goal.flexibility != null && !["low", "medium", "high"].includes(goal.flexibility)) {
       issues.push({ level: "error", entity: G, message: `${goal.id}: flexibility không hợp lệ "${goal.flexibility}"` });
     }
-    if (goal.passengers !== null && (!Number.isInteger(goal.passengers) || goal.passengers < 1)) {
+    if (goal.passengers != null && (!Number.isInteger(goal.passengers) || goal.passengers < 1)) {
       issues.push({ level: "error", entity: G, message: `${goal.id}: passengers phải là số nguyên ≥ 1` });
     }
     checkDate(goal.travelStart, `${goal.id}.travelStart`, G, issues);
     checkDate(goal.travelEnd, `${goal.id}.travelEnd`, G, issues);
-    if (goal.travelStart !== null && goal.travelEnd !== null && goal.travelEnd < goal.travelStart) {
+    if (goal.travelStart != null && goal.travelEnd != null && goal.travelEnd < goal.travelStart) {
       issues.push({ level: "error", entity: G, message: `${goal.id}: travelEnd nằm trước travelStart` });
     }
   }
