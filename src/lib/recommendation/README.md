@@ -278,6 +278,12 @@ lượng thời lượng thì được; đừng trình bày với người đọ
 Muốn chính xác hơn thì phải sửa `record-offer-history.mts` ghi thêm một dòng
 "không thấy thẻ này" — việc của recorder, không phải của lớp dữ liệu này.
 
+`Product.previousSlugs` gộp lịch sử qua các lần đổi tên. Một ca nhật ký gốc
+không kể lại được: thẻ đổi A→B→A rồi quay về đúng mức cũ của A thì recorder
+không sinh dòng nào (nó chỉ ghi khi số ĐỔI), và mức cuối của B ở lại như thể
+vẫn đang chạy. Validator cảnh báo khi thấy hình dạng đó; sửa thật vẫn là việc
+của recorder.
+
 ## Ba luật không được phá
 
 1. **Affiliate không bao giờ ảnh hưởng thứ hạng** (spec §16 Rule 7).

@@ -195,6 +195,21 @@ export function validateDataset(
       }
       slugOwner.set(slug, product.id);
     }
+    // Đổi về TÊN CŨ hợp lệ ở tầng dữ liệu, nhưng nhật ký lịch sử offer thì
+    // không kể lại được: `record-offer-history.mts` đánh khoá bằng slug và CHỈ
+    // ghi khi số đổi, nên A→B→A quay lại đúng mức cũ của A sẽ không sinh dòng
+    // nào — và mức cuối của B ở lại như thể vẫn đang chạy. Sửa chỗ đó là việc
+    // của recorder, không phải của lớp này; cảnh báo để nếu ngày nào xảy ra
+    // thì có người biết, thay vì để nó hỏng im lặng.
+    if (product.previousSlugs.includes(product.slug)) {
+      issues.push({
+        level: "warning",
+        entity: "products",
+        message:
+          `${product.slug}: thẻ đã quay về một slug từng dùng — nhật ký lịch sử ` +
+          `offer đánh khoá bằng slug nên không ghi được mốc quay lại này`,
+      });
+    }
   }
 
   // Chuyển điểm về chính nó là một vòng lặp vô hạn đang chờ Phase 3.
