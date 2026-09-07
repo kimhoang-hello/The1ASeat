@@ -4,7 +4,7 @@ import {
   type ProductBenefit,
   type ProductBenefitId,
   type ProductId,
-} from "../types";
+} from "../types.ts";
 
 /**
  * Quyền lợi của từng thẻ, ở dạng có cấu trúc.

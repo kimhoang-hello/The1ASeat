@@ -7,8 +7,8 @@ import {
   type OfferId,
   type PointsProgramId,
   type ProductId,
-} from "../types";
-import { longestWindowMonths, spendPerNinetyDays, totalSpend, type SpendWindow } from "../spend";
+} from "../types.ts";
+import { longestWindowMonths, spendPerNinetyDays, totalSpend, type SpendWindow } from "../spend.ts";
 
 /**
  * Welcome offer đang chạy, và cấu trúc thật bên trong nó.

@@ -222,10 +222,35 @@ export interface Product extends Temporal {
    *  thật thà hơn là đắp URL trang danh sách thẻ của ngân hàng vào rồi lời
    *  giải thích dẫn người đọc tới một trang không nói gì về thẻ đang bàn. */
   officialUrl: string | null;
-  /** false = sản phẩm engine biết nhưng site chưa có trang. Cho phép engine
-   *  nói "chưa tới lúc mở thẻ" mà vẫn hiểu bối cảnh thị trường. */
+  /**
+   * Contentful CÓ đang giữ một entry cho thẻ này không.
+   *
+   * `false` có hai nghĩa, và cả hai đều hợp lệ:
+   *   - Sản phẩm engine biết nhưng site chưa có trang. Engine vẫn hiểu bối
+   *     cảnh thị trường mà không hứa một đường link không tồn tại.
+   *   - Thẻ ĐÃ NGỪNG. Entry gỡ khỏi Contentful, nhưng bản ghi ở đây PHẢI Ở
+   *     LẠI — xem `isActive`.
+   */
   contentfulLinked: boolean;
 }
+
+/**
+ * Sản phẩm ngừng bán thì ĐÓNG, KHÔNG XOÁ.
+ *
+ * Đặt `isActive: false`, đặt `effectiveTo` bằng ngày cuối còn mở được, và đặt
+ * `contentfulLinked: false` nếu entry đã gỡ. Dòng sản phẩm ở lại vĩnh viễn.
+ *
+ * Vì sao không xoá: offer, tỷ lệ tích điểm, quyền lợi và điều kiện của nó đều
+ * trỏ vào `productId`. Xoá dòng là để lại một rừng tham chiếu mồ côi, và
+ * `recommendation_runs` của Phase 4 — thứ sinh ra để trả lời "vì sao khuyến
+ * nghị tháng trước khác tháng này" — sẽ trỏ vào một sản phẩm không còn ai giải
+ * thích được. Câu trả lời "thẻ đó đã ngừng" chỉ nói được nếu bản ghi còn đó.
+ *
+ * `validate.ts` cưỡng chế cả hai chiều: tham chiếu mồ côi là lỗi, và một sản
+ * phẩm `isActive: false` mà không có `effectiveTo` cũng là lỗi — nó nói "ngừng
+ * rồi" mà không nói ngừng từ bao giờ, nên không truy vấn theo thời điểm nào
+ * đọc được nó.
+ */
 
 /**
  * Sản phẩm ĐÚNG NHƯ NÓ NẰM TRONG FILE SEED.

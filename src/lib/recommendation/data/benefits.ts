@@ -1,4 +1,4 @@
-import { id, type Benefit, type BenefitId } from "../types";
+import { id, type Benefit, type BenefitId } from "../types.ts";
 
 /**
  * Từ điển quyền lợi.

@@ -1,4 +1,4 @@
-import { id, type Issuer, type IssuerId } from "../types";
+import { id, type Issuer, type IssuerId } from "../types.ts";
 
 /**
  * Nhà phát hành của các sản phẩm site đang có. Tên viết ĐÚNG như trên site,

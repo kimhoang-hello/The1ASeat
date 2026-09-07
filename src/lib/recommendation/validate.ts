@@ -1,5 +1,5 @@
-import { INCOMPLETE_OFFERS, UNQUOTABLE_AWARD_PROGRAMS } from "./data";
-import type { RecommendationDataset, Temporal } from "./types";
+import { INCOMPLETE_OFFERS, UNQUOTABLE_AWARD_PROGRAMS } from "./data/index.ts";
+import type { RecommendationDataset, Temporal } from "./types.ts";
 
 /**
  * Kiểm bộ dữ liệu Phase 1.
@@ -358,6 +358,39 @@ export function validateDataset(data: RecommendationDataset): ValidationIssue[] 
         level: "error",
         entity: "offer_components",
         message: `${offer.id}: component cộng lại ${total} điểm, vượt headlineBonus ${offer.headlineBonus}`,
+      });
+    }
+  }
+
+  // Sản phẩm ngừng bán phải nói RÕ ngừng từ bao giờ. `isActive: false` mà
+  // không có `effectiveTo` là một bản ghi nói "đã ngừng" nhưng không truy vấn
+  // theo thời điểm nào đọc được — Phase 4 sẽ không giải thích nổi vì sao một
+  // khuyến nghị cũ từng chọn nó.
+  for (const product of data.products) {
+    if (product.isActive) continue;
+    if (product.effectiveTo === null) {
+      issues.push({
+        level: "error",
+        entity: "products",
+        message: `${product.slug}: isActive=false nhưng chưa có effectiveTo — ngừng từ bao giờ?`,
+      });
+    }
+  }
+
+  // Sản phẩm ngừng bán KHÔNG được kéo theo việc xoá bản ghi con. `checkRef` ở
+  // trên đã bắt tham chiếu tới sản phẩm không tồn tại; phép kiểm này canh
+  // chiều còn lại — sản phẩm đã đóng mà mất sạch lịch sử offer nghĩa là ai đó
+  // đã dọn dẹp thay vì đóng lại, và lịch sử không dựng lại được.
+  const historyByProduct = new Set(data.offers.map((o) => o.productId as string));
+  for (const product of data.products) {
+    if (product.isActive) continue;
+    if (!historyByProduct.has(product.id)) {
+      issues.push({
+        level: "warning",
+        entity: "products",
+        message:
+          `${product.slug}: đã đóng nhưng không còn offer nào — nếu offer bị XOÁ thay vì ` +
+          `đóng bằng effectiveTo thì lịch sử đã mất`,
       });
     }
   }

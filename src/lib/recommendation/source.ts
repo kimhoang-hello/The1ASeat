@@ -1,20 +1,10 @@
 import { isReferralUrl } from "@/lib/affiliate-links";
 import { getCreditCardOffers } from "@/lib/content";
+import { amountIn, historyFor, TRACKING_SINCE } from "@/lib/offer-history";
 import type { CreditCardOffer } from "@/lib/content";
-import {
-  AWARD_STRATEGIES,
-  BENEFITS,
-  EARNING_RATES,
-  ELIGIBILITY_RULES,
-  ISSUERS,
-  OFFERS,
-  OFFER_COMPONENTS,
-  POINTS_PROGRAMS,
-  PRODUCTS,
-  PRODUCT_BENEFITS,
-  TRANSFER_PATHS,
-} from "./data";
-import type { Product, RecommendationDataset } from "./types";
+import { PRODUCTS } from "./data/index.ts";
+import { offlineDataset } from "./data/index.ts";
+import type { Product, RecommendationDataset } from "./types.ts";
 
 /**
  * Cửa DUY NHẤT engine đọc dữ liệu.
@@ -29,7 +19,39 @@ import type { Product, RecommendationDataset } from "./types";
  */
 export interface RecommendationDataSource {
   getDataset(): Promise<RecommendationDataset>;
+  /** Lịch sử mức welcome bonus của một sản phẩm — xem `OfferHistoryPoint`. */
+  getOfferHistory(productSlug: string): Promise<OfferHistoryPoint[]>;
 }
+
+/**
+ * Một lần mức welcome bonus của thẻ này đổi.
+ *
+ * Đây là primitive cho §12 (percentile lịch sử của offer) và là nửa còn thiếu
+ * của §11: "70,000 điểm" một mình không nói được gì, vì câu hỏi quyết định có
+ * nên mở thẻ NGAY hay chờ là "70,000 là mức cao hay mức thường của thẻ này".
+ *
+ * Nguồn là `data/offer-history.json`, do `.github/workflows/offer-history.yml`
+ * ghi mỗi ngày và CHỈ ghi thêm khi số đổi — nên nó là nhật ký thay đổi, không
+ * phải bản chép hằng ngày. Nó nối được với kho này vì cả hai đánh khoá bằng
+ * ĐÚNG slug Contentful.
+ *
+ * `amount` có thể `undefined`: nhãn cashback ("Hoàn tiền 15%") không rút ra
+ * được một con số so sánh được với số điểm. Phase 3 phải bỏ qua những điểm đó
+ * chứ không được coi là 0 — xem `unitOf` trong `lib/offer-history.ts`, vốn tồn
+ * tại đúng vì so 15 với 250 rồi tuyên bố "từng lên tới $250" là một câu về
+ * tiền, nói sai thì người đọc mở nhầm thẻ.
+ */
+export interface OfferHistoryPoint {
+  /** `YYYY-MM-DD`. */
+  at: string;
+  /** Nhãn đúng như nó từng hiện trên site. */
+  label: string;
+  amount: number | undefined;
+}
+
+/** Ngày sớm nhất bất kỳ lịch sử nào bắt đầu. Phase 3 phải nói "từ khi theo
+ *  dõi" chứ không được ngầm hứa là biết cả những gì xảy ra trước đó. */
+export const OFFER_HISTORY_SINCE = TRACKING_SINCE;
 
 /**
  * `affiliateAvailable` được TÍNH, không được khai.
@@ -64,43 +86,21 @@ function resolveProducts(offers: CreditCardOffer[]): Product[] {
  * khác — tức là hai câu trả lời khác nhau cho cùng một câu hỏi, tuỳ ai hỏi.
  */
 export const repoDataSource: RecommendationDataSource = {
+  async getOfferHistory(productSlug: string): Promise<OfferHistoryPoint[]> {
+    return historyFor(productSlug)
+      .filter((entry) => entry.welcomeBonus !== undefined)
+      .map((entry) => ({
+        at: entry.at,
+        label: entry.welcomeBonus!,
+        amount: amountIn(entry.welcomeBonus),
+      }));
+  },
+
   async getDataset(): Promise<RecommendationDataset> {
     const offers = await getCreditCardOffers();
-    return {
-      issuers: ISSUERS,
-      pointsPrograms: POINTS_PROGRAMS,
-      transferPaths: TRANSFER_PATHS,
-      products: resolveProducts(offers),
-      offers: OFFERS,
-      offerComponents: OFFER_COMPONENTS,
-      earningRates: EARNING_RATES,
-      benefits: BENEFITS,
-      productBenefits: PRODUCT_BENEFITS,
-      eligibilityRules: ELIGIBILITY_RULES,
-      awardStrategies: AWARD_STRATEGIES,
-    };
+    // Chỉ `products` khác bộ offline, và khác đúng một trường. Dựng lại từ bộ
+    // offline thay vì liệt kê lần nữa: hai chỗ liệt kê là hai chỗ sẽ lệch khi
+    // có entity thứ mười hai.
+    return { ...offlineDataset(), products: resolveProducts(offers) };
   },
 };
-
-/**
- * Bộ dữ liệu KHÔNG có phần Contentful, cho test và cho `audit:reco-data`.
- *
- * `affiliateAvailable` để `false` hết. An toàn ở chỗ: mọi test về Rule 7 phải
- * tự bật cờ lên cho thẻ nó muốn thử, nên không test nào vô tình chạy trên một
- * bộ dữ liệu mà cờ đã sẵn đúng.
- */
-export function offlineDataset(): RecommendationDataset {
-  return {
-    issuers: ISSUERS,
-    pointsPrograms: POINTS_PROGRAMS,
-    transferPaths: TRANSFER_PATHS,
-    products: PRODUCTS.map((seed) => ({ ...seed, affiliateAvailable: false })),
-    offers: OFFERS,
-    offerComponents: OFFER_COMPONENTS,
-    earningRates: EARNING_RATES,
-    benefits: BENEFITS,
-    productBenefits: PRODUCT_BENEFITS,
-    eligibilityRules: ELIGIBILITY_RULES,
-    awardStrategies: AWARD_STRATEGIES,
-  };
-}

@@ -4,7 +4,7 @@ import {
   type AwardStrategyId,
   type PointsProgramId,
   type TripRegion,
-} from "../types";
+} from "../types.ts";
 
 /**
  * KHOẢNG điểm cho một CÁCH đi, không phải giá của một chuyến bay (spec §6).

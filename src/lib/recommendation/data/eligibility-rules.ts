@@ -4,7 +4,7 @@ import {
   type EligibilityRuleId,
   type EligibilityRuleType,
   type ProductId,
-} from "../types";
+} from "../types.ts";
 
 /**
  * Điều kiện mở thẻ.

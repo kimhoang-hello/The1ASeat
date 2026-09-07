@@ -4,7 +4,7 @@ import {
   type PointsProgramId,
   type ProductId,
   type ProductSeed,
-} from "../types";
+} from "../types.ts";
 
 /** Ngày bộ seed này được dựng từ nội dung Contentful đang publish. Mọi bản ghi
  *  sản phẩm mở hiệu lực từ đây; điều đó KHÔNG có nghĩa thẻ ra đời hôm ấy, mà

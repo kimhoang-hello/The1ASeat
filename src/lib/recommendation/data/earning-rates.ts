@@ -5,7 +5,7 @@ import {
   type PointsProgramId,
   type ProductId,
   type SpendCategory,
-} from "../types";
+} from "../types.ts";
 
 /**
  * Tỷ lệ tích điểm theo hạng mục.

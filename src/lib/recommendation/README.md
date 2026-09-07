@@ -78,6 +78,34 @@ Bộ dữ liệu nói ra chỗ nó không biết thay vì lấp bằng phỏng �
 
 Phase 3 phải hạ độ tin cậy khi chạm vào chỗ trống, không được coi chúng là 0.
 
+## Thẻ ngừng bán: ĐÓNG, không XOÁ
+
+`isActive: false` + `effectiveTo` = ngày cuối còn mở được +
+`contentfulLinked: false` nếu entry đã gỡ. Dòng sản phẩm ở lại vĩnh viễn.
+
+Xoá dòng là để lại một rừng tham chiếu mồ côi — offer, tỷ lệ tích điểm, quyền
+lợi và điều kiện đều trỏ vào `productId` — và `recommendation_runs` của Phase 4,
+thứ sinh ra để trả lời "vì sao khuyến nghị tháng trước khác tháng này", sẽ trỏ
+vào một sản phẩm không còn ai giải thích được.
+
+Validator cưỡng chế cả hai chiều: tham chiếu mồ côi là lỗi, và `isActive: false`
+mà thiếu `effectiveTo` cũng là lỗi. Audit khi thấy entry biến mất khỏi Contentful
+sẽ nói thẳng cách sửa là ĐÓNG, vì cách sửa tự nhiên nhất — xoá cho hết đỏ — là
+cách phá lịch sử.
+
+## Lịch sử offer
+
+`RecommendationDataSource.getOfferHistory(slug)` trả về mọi lần mức welcome
+bonus của thẻ đổi, đọc từ [`../../../data/offer-history.json`](../../../data/offer-history.json)
+(GitHub Action ghi mỗi ngày, chỉ ghi thêm khi số đổi). Nối được vì cả hai kho
+đánh khoá bằng đúng slug Contentful.
+
+Đây là primitive cho §12 (percentile lịch sử) và là nửa còn thiếu của §11:
+"70,000 điểm" một mình không trả lời được câu quyết định — nên mở NGAY hay chờ.
+
+`amount` có thể `undefined` khi nhãn là cashback ("Hoàn tiền 15%"): không rút
+ra được con số so sánh được với số điểm. Bỏ qua, đừng coi là 0.
+
 ## Ba luật không được phá
 
 1. **Affiliate không bao giờ ảnh hưởng thứ hạng** (spec §16 Rule 7).

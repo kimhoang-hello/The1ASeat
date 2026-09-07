@@ -1,4 +1,4 @@
-import { id, type TransferPath, type TransferPathId, type PointsProgramId } from "../types";
+import { id, type TransferPath, type TransferPathId, type PointsProgramId } from "../types.ts";
 
 const AMEX_SOURCE = "https://global.americanexpress.com/rewards/transfer";
 const RBC_SOURCE = "https://www.rbcrewards.com/";

@@ -24,7 +24,7 @@
 
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { offlineDataset } from "../src/lib/recommendation/source.ts";
+import { offlineDataset } from "../src/lib/recommendation/data/index.ts";
 import { validateDataset } from "../src/lib/recommendation/validate.ts";
 import { OFFERS } from "../src/lib/recommendation/data/offers.ts";
 import { POINTS_PROGRAMS as RECO_PROGRAMS } from "../src/lib/recommendation/data/points-programs.ts";
@@ -289,9 +289,16 @@ if (cards === null) {
 
   for (const product of dataset.products) {
     if (!product.contentfulLinked) continue;
-    if (!contentfulBySlug.has(product.slug)) {
-      errors.push(`[contentful] ${product.slug}: có trong seed nhưng không có entry Contentful`);
-    }
+    if (contentfulBySlug.has(product.slug)) continue;
+    // Entry biến mất khỏi Contentful. Nói RÕ cách sửa, vì cách sửa tự nhiên
+    // nhất — xoá dòng sản phẩm cho hết đỏ — là cách phá lịch sử: offer, tỷ lệ
+    // tích điểm và quyền lợi của nó đều trỏ vào `productId`, và Phase 4 sẽ
+    // không giải thích nổi một khuyến nghị cũ từng chọn thẻ nào.
+    errors.push(
+      `[contentful] ${product.slug}: có trong seed nhưng không còn entry Contentful. ` +
+        `Nếu thẻ đã ngừng thì ĐÓNG nó — isActive: false, đặt effectiveTo, ` +
+        `contentfulLinked: false — ĐỪNG xoá dòng sản phẩm.`,
+    );
   }
   for (const card of cards) {
     if (!seedBySlug.has(card.slug)) {
@@ -305,6 +312,10 @@ if (cards === null) {
   for (const card of cards) {
     const product = seedBySlug.get(card.slug);
     if (!product) continue;
+    // Thẻ đã đóng: Contentful có thể vẫn còn entry một thời gian, nhưng số
+    // trong seed đã đông cứng ở ngày đóng. So tiếp là đòi bản ghi lịch sử phải
+    // đuổi theo hiện tại — đúng thứ `effectiveTo` sinh ra để khỏi phải làm.
+    if (!product.isActive) continue;
 
     const fee = feeIn(card.annualFeeVi);
     if (fee === undefined) {

@@ -1,4 +1,4 @@
-import { id, type PointsProgram, type PointsProgramId } from "../types";
+import { id, type PointsProgram, type PointsProgramId } from "../types.ts";
 
 /**
  * Các chương trình điểm engine cần biết ở V1.
