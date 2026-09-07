@@ -14,6 +14,7 @@ import { isReferralUrl } from "@/lib/affiliate-links";
 import { JsonLd } from "@/components/seo/json-ld";
 import { PointsProgramLinks } from "@/components/credit-cards/points-program-links";
 import { CardSortSelect } from "@/components/credit-cards/sort-select";
+import { BEST_CARDS_BASE, BEST_CARDS_CATEGORIES } from "@/lib/best-cards";
 import {
   creditCardsPath,
   getCardPointsPrograms,
@@ -25,6 +26,7 @@ import { t } from "@/lib/t";
 import { pageMetadata, absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
 
 const offers_t = t("offers");
+const best = t("bestCards");
 const seo = t("seo");
 
 export const metadata: Metadata = pageMetadata({
@@ -115,6 +117,27 @@ export default async function CreditCardsPage({
             `rounded-full` biến chúng thành ba khối tròn cao 76px ở màn 320px
             (56px ở 375px — tức gần như mọi điện thoại). Xuống dòng thành hai
             hàng pill là đúng hình dạng của nó. */}
+        {/* Cửa vào phần biên tập, đứng TRÊN bộ lọc.
+            Trang này để người đã biết mình tìm gì tự lọc; ai chưa biết thì bộ
+            lọc không giúp được gì cả, và trước dải này họ không có đường nào
+            khác ngoài việc cuộn hết danh sách. */}
+        <Link
+          href={BEST_CARDS_BASE}
+          className="mx-auto mb-6 flex max-w-page items-center justify-between gap-3 rounded-2xl border border-border bg-card px-5 py-4 transition-colors hover:border-primary"
+        >
+          <span>
+            <span className="block font-display font-bold text-foreground">
+              {best("hubTitle")}
+            </span>
+            <span className="mt-0.5 block text-sm text-muted-foreground">
+              {best("navDescription")}
+            </span>
+          </span>
+          <span className="shrink-0 text-sm font-semibold text-primary">
+            {best("categoryCount", { count: BEST_CARDS_CATEGORIES.length })} &rarr;
+          </span>
+        </Link>
+
         <div className="mx-auto mb-6 flex max-w-page flex-wrap gap-2">
           {TABS.map((tab) => (
             <Link

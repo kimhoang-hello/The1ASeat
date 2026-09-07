@@ -11,6 +11,7 @@ import {
   siblingCardsInProgram,
 } from "@/lib/card-next-steps";
 import { accountMetaLine } from "@/lib/bank-next-steps";
+import { bestCardsPath, categoriesFeaturing } from "@/lib/best-cards";
 import { BANK_ACCOUNTS, bankAccountPath } from "@/lib/bank-accounts";
 import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
 import { formatDate } from "@/lib/format-date";
@@ -62,6 +63,12 @@ export function CardNextSteps({
     ? bankAccountsFromIssuer(offer, BANK_ACCOUNTS, 2)
     : null;
   const related = relatedPostsForCard(offer, posts, offers);
+  // Các mục "tốt nhất" thẻ này có mặt. Chiều ngược lên, không phải chiều
+  // xuống: bốn trang đó nói về thẻ này, nên trang thẻ là chỗ tự nhiên nhất để
+  // dẫn sang — và nếu thiếu chiều này, chúng chỉ có menu và trang tổng làm cửa
+  // vào. Thẻ không nằm trong mục nào thì không hiện gì, cùng luật với mọi
+  // đường khác trong khối này.
+  const bestIn = categoriesFeaturing(offer.slug);
 
   return (
     <section className={className}>
@@ -73,6 +80,15 @@ export function CardNextSteps({
         />
 
         {tool && <StepLink href={tool.href} label={tool.label} description={tool.description} />}
+
+        {bestIn.map((category) => (
+          <StepLink
+            key={category.slug}
+            href={bestCardsPath(category.slug)}
+            label={t("bestInLabel", { category: category.navTitleVi })}
+            description={category.metaDescriptionVi}
+          />
+        ))}
 
         {/* Chỉ là cửa "xem tất cả" khi còn thẻ không lọt vào danh sách ngay
             bên dưới. Còn dưới ngưỡng đó thì ba link thẳng đã nói đủ, và thêm

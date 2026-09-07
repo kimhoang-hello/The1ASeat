@@ -4,6 +4,11 @@ import { fetchContentfulCreditCardOffers } from "@/lib/content/contentful";
 import { fetchFinlyWealthRebate, finlyWealthRebateUrl } from "@/lib/finlywealth";
 import { jobAuthResponse } from "@/lib/job-auth";
 import { RESERVED_SLUG, slugClashMessage } from "@/lib/card-compare";
+import {
+  BEST_CARDS_RESERVED_SLUG,
+  bestCardsProseDrift,
+  bestCardsSlugClashMessage,
+} from "@/lib/best-cards";
 import { rebateProseMismatches, rebateProsePatch } from "@/lib/rebate-prose";
 
 // Called twice a day (see .github/workflows/check-rebates.yml). FinlyWealth
@@ -58,6 +63,11 @@ async function handleCheck(request: NextRequest) {
       {
         rebate: offer.rebate ?? null,
         applyUrl: offer.applyUrl,
+        // Ba field dưới chỉ `bestCardsProseDrift` dùng: nó đối chiếu con số
+        // viết tay trên bốn trang "Các thẻ tốt nhất" với chính entry thẻ.
+        name: offer.name,
+        welcomeBonus: offer.welcomeBonus,
+        annualFee: offer.annualFee,
         // Chữ hiển thị, để đối chiếu con số rebate viết tay trong câu HOT TIP.
         // Lấy từ bản published vì đó là thứ người đọc đang nhìn thấy — bản
         // draft có thể là câu tác giả đang viết dở, báo lỗi vào đó là báo sai.
@@ -84,6 +94,41 @@ async function handleCheck(request: NextRequest) {
 
   if (published.has(RESERVED_SLUG)) {
     errors.push({ slug: RESERVED_SLUG, message: slugClashMessage() });
+  }
+
+  // Đoạn tĩnh thứ hai dưới `/credit-cards`, cùng cửa hậu với trang so sánh:
+  // `assertBestCardPicksExist` chạy lúc build, nên một thẻ mang slug này được
+  // publish SAU khi deploy xong thì không có gì đỏ — trang chi tiết của nó bị
+  // route tĩnh che trong im lặng, trong khi danh sách, ô tìm kiếm và sitemap
+  // vẫn trỏ tới đúng đường dẫn đó.
+  if (published.has(BEST_CARDS_RESERVED_SLUG)) {
+    errors.push({ slug: BEST_CARDS_RESERVED_SLUG, message: bestCardsSlugClashMessage() });
+  }
+
+  // Bốn trang "Các thẻ tốt nhất" là đoạn văn viết tay nói về mười thẻ khác.
+  // Khi một welcome bonus đổi, ISR cập nhật phần số liệu sống trong vòng một
+  // phút, còn câu văn ngay bên dưới nói con số cũ thì không có gì chạm tới —
+  // `npm run audit:best-cards` là bản chạy tay của đúng phép so này, nhưng chạy
+  // tay thì phải có người nhớ mà chạy.
+  //
+  // Đặt Ở ĐÂY vì đây là job duy nhất đã đọc sẵn toàn bộ thẻ published hai lượt
+  // mỗi ngày, và vì runner của GitHub Actions không có token Contentful để
+  // chạy script (xem `check-rebates.yml`). Cùng lý do đã đặt lượt canh slug
+  // ngay bên trên vào đây.
+  const drift = bestCardsProseDrift(
+    [...published.entries()].map(([slug, card]) => ({
+      slug,
+      name: card.name,
+      welcomeBonus: card.welcomeBonus,
+      annualFee: card.annualFee,
+      rebate: card.rebate ?? undefined,
+      headline: card.prose.headlineVi as string,
+      editorsTake: card.prose.editorsTakeVi as string,
+      keyBenefits: card.prose.keyBenefitsVi as string[],
+    })),
+  );
+  for (const message of drift.errors) {
+    errors.push({ slug: "best-cards", message });
   }
 
   const checkedSlugs = new Set<string>();

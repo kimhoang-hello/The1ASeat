@@ -16,6 +16,7 @@
     "audit:rebates": "tsx scripts/check-bank-rebates.mts",
     "audit:rebate-prose": "tsx scripts/audit-rebate-prose.mts",
     "audit:reco-data": "tsx scripts/audit-reco-data.mts",
+    "audit:best-cards": "tsx scripts/audit-best-cards.mts",
     "record:offer-history": "tsx scripts/record-offer-history.mts",
     "captions": "bash scripts/burned-captions.sh",
     "captions:all": "bash scripts/collect-captions.sh"

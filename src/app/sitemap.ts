@@ -8,6 +8,12 @@ import {
 } from "@/lib/blog-categories";
 import { absoluteUrl } from "@/lib/seo";
 import { COMPARE_PATH } from "@/lib/card-compare";
+import {
+  BEST_CARDS_BASE,
+  BEST_CARDS_CATEGORIES,
+  bestCardsPath,
+  pickSlugs,
+} from "@/lib/best-cards";
 import { CATCH_THE_POINTS_PATH } from "@/lib/catch-the-points-path";
 import { BANK_COMPARE_PATH } from "@/lib/bank-compare";
 import { BANK_ACCOUNTS, bankAccountPath } from "@/lib/bank-accounts";
@@ -53,6 +59,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [posts, offers] = await Promise.all([getPosts(), getCreditCardOffers()]);
 
   const categories = getCategories(posts);
+  const offerBySlug = new Map(offers.map((offer) => [offer.slug, offer]));
   const newestOffer = latestDate(offers.map((offer) => offer.updatedAt));
   // Lần SỬA gần nhất, không phải bài ĐĂNG gần nhất. `posts[0]` là bài có
   // `publishedAt` mới nhất; sửa một bài cũ sau khi đã đăng bài mới thì nội dung
@@ -85,6 +92,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly",
       priority: 0.9,
     },
+    // Trang tổng + bốn mục. `lastModified` lấy ngày mới nhất trong SỐ THẺ
+    // CHÍNH MỤC ĐÓ nhắc tới, không phải ngày thẻ mới nhất của cả site: chữ nằm
+    // trong repo nhưng mọi con số hiện ra đọc từ các entry thẻ, nên chỉ những
+    // entry đó mới làm trang này đổi. Khai ngày chung cho cả năm URL thì sửa
+    // một thẻ WestJet® cũng làm trang Aeroplan® tự nhận là vừa đổi — đúng loại
+    // `lastmod` vô nghĩa đã bị gỡ khỏi file này một lần rồi.
+    {
+      url: absoluteUrl(BEST_CARDS_BASE),
+      lastModified: latestDate(
+        BEST_CARDS_CATEGORIES.flatMap((category) =>
+          pickSlugs(category).map((slug) => offerBySlug.get(slug)?.updatedAt),
+        ),
+      ),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    ...BEST_CARDS_CATEGORIES.map((category) => ({
+      url: absoluteUrl(bestCardsPath(category.slug)),
+      lastModified: latestDate(
+        pickSlugs(category).map((slug) => offerBySlug.get(slug)?.updatedAt),
+      ),
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    })),
     // Chỉ trang trần. Mọi tổ hợp `?cards=` là cùng một công cụ và đều canonical
     // về đây, nên liệt kê từng tổ hợp là tự nộp cho Google hàng trăm URL trùng
     // nội dung.

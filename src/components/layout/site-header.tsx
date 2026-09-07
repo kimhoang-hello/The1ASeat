@@ -21,6 +21,7 @@ import {
   Scales,
   Sparkle,
   Stack,
+  Trophy,
   X,
   YoutubeLogo,
   type Icon,
@@ -39,7 +40,31 @@ import {
 import { t } from "@/lib/t";
 
 /** A menu entry: an icon, what it is, and what is behind it in one line. */
-type NavLink = { href: string; label: string; description: string; icon: Icon };
+type NavLink = {
+  href: string;
+  label: string;
+  description: string;
+  icon: Icon;
+  /**
+   * Dòng này còn sáng khi người đọc đang ở một trang CON của nó.
+   *
+   * Mặc định mọi dòng trong menu so đúng đường dẫn — đó là thứ giữ cho "Thẻ
+   * tín dụng" không sáng cạnh "Ngân hàng" trên `/bank-accounts`. Mục "Các thẻ
+   * tốt nhất" là ngoại lệ vì nó có bốn trang con thật, và `cardsRowActive` đã
+   * cố ý tắt dòng cha ở đó: không có cờ này thì đứng trên một trang mục, cả
+   * menu mở ra mà không dòng nào sáng.
+   */
+  matchPrefix?: boolean;
+};
+
+/** Dòng menu này có đang là trang hiện tại không — xem `NavLink.matchPrefix`. */
+function isNavLinkActive(link: NavLink, pathname: string): boolean {
+  if (pathname === link.href) return true;
+  // `${href}/` chứ không phải `startsWith(href)` trần: một thẻ mang slug
+  // "tot-nhat-khac" sống ở `/credit-cards/tot-nhat-khac`, và phép so trần nhận
+  // nhầm nó là trang con của mục này.
+  return link.matchPrefix === true && pathname.startsWith(`${link.href}/`);
+}
 
 /** A menu entry for a page that filters itself with `?type=`. `type` is null
  *  for the entry that lives at the bare path, with no param. */
@@ -315,7 +340,7 @@ function TypeDropdown({
           <MenuItem
             key={link.href}
             link={link}
-            active={pathname === link.href}
+            active={isNavLinkActive(link, pathname)}
             onNavigate={onNavigate}
           />
         ))}
@@ -326,7 +351,7 @@ function TypeDropdown({
               <MenuItem
                 key={link.href}
                 link={link}
-                active={pathname === link.href}
+                active={isNavLinkActive(link, pathname)}
                 onNavigate={onNavigate}
               />
             ))}
@@ -380,6 +405,21 @@ export function SiteHeader() {
   // still a draft, which takes the row out of both menus at once.
   // Trang riêng nằm trong menu thẻ, không phải một lát cắt `?type=` của danh
   // sách — nên đi qua `extraLinks` như Ngân hàng, không qua TypeLinks.
+  // Bốn trang biên tập "tốt nhất", không phải một lát cắt `?type=` của danh
+  // sách — nên đi qua `extraLinks` như So sánh và Ngân hàng.
+  //
+  // Đường dẫn viết THẲNG, không import `BEST_CARDS_BASE`: file này là Client
+  // Component, và `best-cards.ts` mang theo toàn bộ đoạn văn của bốn trang —
+  // một import như vậy nhét chúng vào bundle của MỌI trang trên site chỉ để
+  // lấy một chuỗi. Cùng lý do đã ghi ở `bay-ve-viet-nam` bên dưới.
+  const bestCardsLink: NavLink = {
+    href: "/credit-cards/tot-nhat",
+    label: nav("bestCards"),
+    description: tMenu("bestCards"),
+    icon: Trophy,
+    matchPrefix: true,
+  };
+
   const compareLink: NavLink = {
     href: COMPARE_PATH,
     label: tOffers("compare"),
@@ -506,7 +546,7 @@ export function SiteHeader() {
   // Nhóm "Thẻ tín dụng" trong menu mobile không có đường kẻ để chia hai phía
   // như dropdown desktop — nên ở đây hai nhóm nối làm một, và thứ tự (So sánh
   // trước, Ngân hàng sau) là thứ giữ cho hai menu đọc ra cùng một trình tự.
-  const cardExtraLinks: NavLink[] = [compareLink, ...bankLinks];
+  const cardExtraLinks: NavLink[] = [bestCardsLink, compareLink, ...bankLinks];
 
   const bankActive = bankLinks.some(
     (link) => pathname === link.href || pathname.startsWith(`${link.href}/`),
@@ -515,7 +555,8 @@ export function SiteHeader() {
   // Mở nhóm và tô sáng dòng cha là hai câu hỏi khác nhau — xem `MobileSection`.
   // Trừ trang So sánh ra vì nó có dòng riêng bên trong nhóm, và trừ luôn các
   // trang Ngân hàng vì `cardsActive` vốn đã không tính chúng.
-  const cardsRowActive = cardsActive && pathname !== COMPARE_PATH;
+  const cardsRowActive =
+    cardsActive && pathname !== COMPARE_PATH && !isNavLinkActive(bestCardsLink, pathname);
   const blogActive = pathname === "/blog" || pathname.startsWith("/blog/");
   const toolsActive = toolsLinks.some((link) => pathname === link.href);
 
@@ -594,7 +635,7 @@ export function SiteHeader() {
             label={nav("creditCards")}
             basePath="/credit-cards"
             links={cardLinks}
-            groupLinks={[compareLink]}
+            groupLinks={[bestCardsLink, compareLink]}
             extraLinks={bankLinks}
             active={cardsMenuActive}
             width="w-80"
@@ -701,7 +742,7 @@ export function SiteHeader() {
                 <MenuItem
                   key={link.href}
                   link={link}
-                  active={pathname === link.href}
+                  active={isNavLinkActive(link, pathname)}
                   onNavigate={closeMobileMenu}
                   compact
                 />

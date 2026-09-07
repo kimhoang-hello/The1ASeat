@@ -1044,6 +1044,124 @@ nào nói ưu đãi đã đóng, không đường nào sang thứ đang chạy.
   thẳng sang `/transfer-partners`, dùng CHÍNH phép lọc `hasExpired` mà trang
   `/transfer-bonuses` dùng. Đừng đổi ngược về một href cố định.
 
+## Trang "Các thẻ tốt nhất" (07/09/2026) — ĐÃ CÔNG BỐ
+
+Năm URL dưới `/credit-cards/tot-nhat`: một trang tổng và bốn mục (`offers`,
+`travel`, `aeroplan`, `nguoi-moi`). Nội dung do tác giả viết, dữ liệu thẻ đọc
+sống từ Contentful.
+
+**Vì sao nằm trong repo chứ không nằm trong Contentful.** Mỗi mục là một đoạn
+viết tay *nói về những thẻ khác*, tức nó phụ thuộc vào entry của mười thẻ. Đặt
+trong Contentful thì mối nối đó không tồn tại: đổi slug một thẻ, unpublish nó,
+hay hạ welcome bonus xuống đều không làm gì đỏ cả. Trong repo thì
+`assertBestCardPicksExist()` chạy lúc `next build` nên slug hỏng làm deploy đỏ,
+còn `audit:best-cards` đối chiếu từng con số trong đoạn văn với chính entry mà
+nó đang nói tới. Cùng cách chia vai như `award-routes.ts`.
+
+**Ba luật khi sửa `src/lib/best-cards.ts`:**
+
+1. **Không gõ tên thẻ vào tiêu đề mục.** `pickHeading()` lấy tên từ Contentful,
+   và ở mục `bonusInHeading` thì lấy cả con số welcome bonus. `headingVi` chỉ
+   ghi đè phần TÊN khi hai thẻ ghép lại quá dài, không bao giờ ghi đè con số.
+2. **Không gõ ngày.** Dùng `{expiresAt}`, `resolveProse()` thay nó bằng ngày
+   thật lúc render — và nếu thẻ không còn ngày hết hạn thì nó bỏ cả mệnh đề
+   chứa token, không phải chỉ token (bỏ mỗi token để lại "offer kết thúc ngày
+   ." trên trang). Ngày là thứ DUY NHẤT `audit:best-cards` không quét được.
+3. **Con số thì gõ được, nhưng phải khớp Contentful.** Xem `audit:best-cards`
+   ở mục dưới. Số không có trong Contentful phải khai `otherFiguresVi` kèm lý
+   do; hiện có ba khai báo, cả ba là giá trị tự quy đổi (Free Night Award
+   35,000 điểm Bonvoy®, 35,000 điểm Scene+™ × 1 cent, và một con số 70,000 dùng
+   làm ví dụ Aeroplan® trên trang của thẻ TD®).
+
+**Một chỗ đã sửa lời để audit kiểm được.** Câu gốc viết "annual fee năm đầu
+bằng $0", mà Contentful viết điều đó bằng chữ ("$139/năm — miễn năm đầu") nên
+phép so chuỗi không bắc cầu được. Đổi thành "annual fee năm đầu được miễn" —
+cùng nghĩa, và nay nói theo đúng cách Contentful nói. Khai `otherFiguresVi`
+cũng xong việc nhưng đó là một lần im lặng vĩnh viễn trên một câu về phí.
+
+**Đoạn công bố affiliate không viết vào prose.** `OfferDisclosure` đã in đúng
+câu đó ở cuối mỗi trang, lấy từ `common.disclosure` — cùng câu với footer và
+với `/credit-cards`. Bản thảo của tác giả có đoạn này ở cuối từng mục; nó bị
+lược đi vì component đã lo, không phải vì bỏ sót.
+
+**Cửa vào.** Menu "Thẻ tín dụng" (trên So sánh và Ngân hàng), một dải trên đầu
+`/credit-cards`, khối "Đi tiếp từ đây" của từng trang thẻ có mặt trong mục
+(`categoriesFeaturing`), sitemap và ô tìm kiếm (cả bốn mục, không chỉ trang
+tổng). `audit:links` ngày dựng: 143/143 trang có đường vào.
+
+**Header viết href thẳng, không import `BEST_CARDS_BASE`.** `site-header.tsx`
+là Client Component; import file đó kéo cả bốn đoạn văn vào bundle của MỌI
+trang chỉ để lấy một chuỗi. Cùng lý do đã ghi cho `bay-ve-viet-nam`.
+
+## Vòng Codex cho "Các thẻ tốt nhất" (07/09/2026) — đừng đề xuất lại
+
+Bảy chỗ đã sửa theo Codex, hai chỗ cố ý không sửa.
+
+**Lỗi nặng nhất Codex bắt được, mình đã bỏ sót:** trang không hiện trong menu
+DESKTOP. Link được thêm vào `cardExtraLinks`, nhưng `TypeDropdown` của desktop
+nhận `groupLinks`/`extraLinks` chứ không nhận biến đó — chỉ menu mobile dùng
+nó. Cửa vào chính của cả tính năng mất trên máy tính để bàn, mà `build`,
+`lint`, `tsc` và cả `audit:links` đều xanh (audit chỉ hỏi "có ai trỏ vào
+không", và dải trên `/credit-cards` đã trả lời có).
+
+Đã sửa, kèm theo:
+
+- `NavLink.matchPrefix` + `isNavLinkActive()`: dòng menu mặc định so ĐÚNG
+  đường dẫn (thứ giữ cho "Thẻ tín dụng" không sáng cạnh "Ngân hàng"), riêng
+  mục này so cả trang con. Trước đó, đứng trên một trang mục thì menu mở ra mà
+  không dòng nào sáng — dòng cha bị `cardsRowActive` tắt, dòng con so đúng nên
+  trượt. So bằng `${href}/` chứ không `startsWith` trần: thẻ slug
+  `tot-nhat-khac` sẽ bị nhận nhầm là trang con.
+- `resolveProse` bỏ CẢ CÂU chứa `{expiresAt}`, không cắt mệnh đề bằng regex.
+  Regex cũ dừng ở dấu phẩy, mà dấu phẩy còn là dấu phân cách hàng nghìn: câu
+  "offer 110,000 điểm kết thúc ngày {expiresAt}." bị cắt từ trong "110,000" và
+  để lại "offer 110." trên trang. Đổi lại là một luật cho người viết — câu chứa
+  token phải đứng riêng.
+- `resolveProse` còn kiểm `hasExpired()`, không chỉ kiểm ngày có tồn tại.
+  `expire-offers` cố ý giữ `expiresAt` khi lượt viết lại copy hỏng, nên một
+  ngày chết vẫn nằm trong dữ liệu; `CardBadges` giấu nó từ lâu, và nếu đoạn văn
+  ngay bên dưới vẫn in "offer kết thúc ngày 31/08/2026" thì hai chỗ trên cùng
+  một màn hình nói hai điều khác nhau.
+- `pickOffers` trả TẤT CẢ hoặc KHÔNG GÌ CẢ. Bỏ qua thẻ thiếu sẽ vẽ ra một mục
+  nói "cả hai thẻ" nhưng chỉ hiện một. Trang tổng cũng đếm thẻ dựng được thật,
+  không đếm cấu hình, để hai chỗ nói cùng một con số.
+- JSON-LD liệt kê MỌI thẻ trang vẽ ra và dùng `creditCardJsonLd()`. Đếm theo
+  mục thì trang `offers` khai 5 item cho 7 thẻ.
+- `lastmod` của năm URL lấy ngày mới nhất trong SỐ THẺ CHÍNH MỤC ĐÓ nhắc tới,
+  không phải ngày thẻ mới nhất của cả site.
+- Lượt canh slug `tot-nhat` thêm vào `/api/check-rebates`, cạnh lượt canh
+  `so-sanh` đã có — cùng cửa hậu: thẻ publish SAU khi deploy xong thì
+  `generateStaticParams` không chạy lại.
+- `audit:best-cards` nay chỉ là vỏ; phép so nằm trong `bestCardsProseDrift()`,
+  và `/api/check-rebates` gọi nó hai lượt mỗi ngày. Đây là câu trả lời cho
+  "audit chạy tay thì phải có người nhớ mà chạy": runner của Actions không có
+  token Contentful, còn server thì có.
+- `OfferFacts` thay cho `as CreditCardOffer` trong script — ép kiểu một object
+  thiếu nửa số field là tự tắt TypeScript đúng chỗ nó đang canh giúp.
+
+**Codex sai một chỗ, đừng áp lại.** Nó đề nghị mọi con số trong đoạn văn của
+một pick ghép phải khớp MỌI thẻ (`every`). Áp vào thì ba câu viết chuẩn nhất
+báo đỏ, vì chính chúng đem hai thẻ ra SO với nhau: "bản Gold chỉ đòi thu nhập
+hộ gia đình $15,000, trong khi bản Infinite yêu cầu $60,000" — hai con số đó,
+theo định nghĩa, mỗi con thuộc về một thẻ. Cái Codex thật sự chỉ đúng là câu
+"cả hai thẻ này đều…", và nó nay được canh riêng bằng `sharedFiguresVi`: người
+viết khai con số nào là lời hứa về cả hai, audit đòi con số đó có mặt ở mọi thẻ
+trong pick. Mặc định vẫn là "một thẻ khớp là đủ".
+
+**Hai chỗ cố ý không sửa:**
+
+1. **Audit bỏ qua số nhỏ, tỷ lệ và multiplier** (`6 lượt lounge`, `30% transfer
+   bonus`, `1.25X`, `180 ngày`). Bắt chúng thì mỗi đoạn văn đẻ ra mươi khai báo
+   `otherFiguresVi` cho những thứ không đổi, và một audit đòi khai báo cho hằng
+   số thì người ta khai bừa cho xong — lúc đó nó không còn canh được cả ba thứ
+   THẬT SỰ đổi hằng tuần (welcome bonus, annual fee, rebate), vốn đều mang dạng
+   `$X` hoặc `X,XXX`.
+2. **`offerHaystack` gộp mọi field của một thẻ.** Về lý thuyết, annual fee đổi
+   thành `$150` mà một dòng key benefit còn chữ `$120` thì câu "annual fee $120"
+   vẫn xanh. Muốn chặn phải gán từng con số vào từng field, tức bắt người viết
+   khai "con số này nói về annual fee" — đắt hơn nhiều so với xác suất trùng
+   ngẫu nhiên đó. Ghi lại đây làm giới hạn đã biết.
+
 ## Chạy gì trước khi kết luận
 
 ```
@@ -1053,6 +1171,7 @@ npm run build
 npm run audit:trademarks    # thiếu ®/™
 npm run audit:rebates       # số rebate lệch FinlyWealth (tài khoản ngân hàng)
 npm run audit:rebate-prose  # badge rebate lệch số viết tay trong editor's take
+npm run audit:best-cards    # số viết tay ở 4 trang "Các thẻ tốt nhất" lệch Contentful
 npm run audit:awards        # bảng award
 npm run audit:health        # nội dung ĐANG PHỤC VỤ: offer chết còn treo, thẻ mất chip, sắp hết hạn
 npm run audit:links         # mạng link nội bộ: trang nào không ai trỏ vào (crawl site đang chạy)

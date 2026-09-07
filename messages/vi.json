@@ -16,7 +16,8 @@
     "awardCharts": "Award Flight Finder",
     "bankAccounts": "Ngân hàng",
     "vietnamRoutes": "Bay về Việt Nam",
-    "catchThePoints": "Mini-game: Catch The Points"
+    "catchThePoints": "Mini-game: Catch The Points",
+    "bestCards": "Các thẻ tốt nhất"
   },
   "navMenu": {
     "cardsAll": "Toàn bộ thẻ đang theo dõi",
@@ -32,7 +33,8 @@
     "bankAccounts": "Tài khoản chi tiêu và tiết kiệm ở Canada",
     "compare": "Đặt hai, ba thẻ cạnh nhau và xem chúng khác nhau ở đâu",
     "vietnamRoutes": "Về Sài Gòn, Hà Nội, Đà Nẵng tốn bao nhiêu điểm",
-    "catchThePoints": "Mini-game 45 giây: hứng điểm, né phí"
+    "catchThePoints": "Mini-game 45 giây: hứng điểm, né phí",
+    "bestCards": "Thẻ tốt nhất theo từng mục đích, chọn sẵn kèm lý do"
   },
   "banner": {
     "eyebrow": "ELEVATED OFFER",
@@ -305,7 +307,10 @@
     "breadcrumbVietnamRoutes": "Bay về Việt Nam bằng điểm",
     "catchThePointsTitle": "Mini-game: Catch The Points",
     "catchThePointsDescription": "Mini-game 45 giây của Ghế 1A: hứng điểm Aeroplan®, Amex® MR, Avios®, Bonvoy®, né annual fee và devaluation. Xem ai đang giữ kỷ lục.",
-    "breadcrumbCatchThePoints": "Mini-game: Catch The Points"
+    "breadcrumbCatchThePoints": "Mini-game: Catch The Points",
+    "bestCardsTitle": "Các thẻ tốt nhất Canada",
+    "bestCardsDescription": "Thẻ tín dụng tốt nhất Canada theo từng mục đích: offers đang chạy, travel, Aeroplan® và thẻ cho người mới.",
+    "breadcrumbBestCards": "Các thẻ tốt nhất"
   },
   "awardCharts": {
     "eyebrow": "CÔNG CỤ",
@@ -406,7 +411,8 @@
     "moreProgramDescription": "Còn {count} thẻ nữa ngoài danh sách bên dưới",
     "siblingsTitle": "Thẻ khác cũng tích {program}",
     "bankAccountsTitle": "Tài khoản ngân hàng của {bank}",
-    "relatedTitle": "Bài viết liên quan"
+    "relatedTitle": "Bài viết liên quan",
+    "bestInLabel": "Thẻ này nằm trong: {category}"
   },
   "offerHistory": {
     "peakIsCurrent": "Mức hiện tại là mức cao nhất kể từ khi Ghế 1A bắt đầu theo dõi thẻ này ({since}).",
@@ -576,5 +582,26 @@
     "noteTitle": "Vài điều nên biết",
     "noteScore": "Kỷ lục cá nhân và achievements lưu ngay trong trình duyệt của bạn, không gửi đi đâu cả. Đổi máy hoặc xoá dữ liệu duyệt web là mất.",
     "noteFiction": "Tên chương trình, phí và devaluation trong game chỉ để chơi cho vui. Số liệu thật nằm ở các công cụ bên dưới."
+  },
+  "bestCards": {
+    "eyebrow": "CÁC THẺ TỐT NHẤT",
+    "hubTitle": "Các thẻ tốt nhất Canada",
+    "hubSubtitle": "Bốn câu hỏi hay được hỏi nhất, mỗi câu một trang trả lời — thẻ nào, vì sao, và hợp với ai.",
+    "hubIntro1": "Trang Thẻ tín dụng liệt kê mọi thẻ Ghế 1A đang theo dõi và để bạn tự lọc. Những trang dưới đây làm việc ngược lại: mình chọn sẵn, nói rõ vì sao chọn và ai thì không nên chọn.",
+    "hubIntro2": "Số liệu trên mỗi trang — welcome bonus, annual fee, rebate, ngày hết hạn — lấy trực tiếp từ trang thẻ tương ứng, nên chúng đổi cùng lúc với offer thật.",
+    "hubListHeading": "Chọn một mục",
+    "navLabel": "Các thẻ tốt nhất",
+    "navDescription": "Thẻ tốt nhất theo từng mục đích: offers, travel, Aeroplan®, người mới",
+    "backToHub": "Tất cả các mục",
+    "inThisPage": "Trong trang này",
+    "bestFor": "Phù hợp với",
+    "viewCard": "Xem chi tiết thẻ",
+    "alsoLabel": "Thẻ trong mục này",
+    "otherCategories": "Các mục khác",
+    "allCardsLabel": "Xem toàn bộ thẻ đang theo dõi",
+    "allCardsDescription": "Danh sách đầy đủ, lọc được theo loại điểm và sắp xếp theo phí hay rebate",
+    "verifiedNote": "Số liệu trên trang này đọc trực tiếp từ trang của từng thẻ lúc bạn mở trang. Offer thay đổi thường xuyên — luôn kiểm lại điều kiện trên trang của ngân hàng trước khi apply.",
+    "cardCount": "{count} thẻ",
+    "categoryCount": "{count} mục"
   }
 }

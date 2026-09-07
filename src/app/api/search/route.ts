@@ -16,6 +16,7 @@ import {
   VIETNAM_ROUTES_PUBLISHED,
 } from "@/lib/feature-flags";
 import { COMPARE_PATH } from "@/lib/card-compare";
+import { BEST_CARDS_BASE, BEST_CARDS_CATEGORIES, bestCardsPath } from "@/lib/best-cards";
 import { CATCH_THE_POINTS_PATH } from "@/lib/catch-the-points-path";
 import { BANK_COMPARE_PATH } from "@/lib/bank-compare";
 import { categoryPath, getCategories } from "@/lib/blog-categories";
@@ -68,6 +69,23 @@ const PAGES: SearchItem[] = [
     kind: "page",
     keywords: "credit card mở thẻ apply thẻ",
   },
+  // Trang tổng VÀ cả bốn mục, không phải chỉ trang tổng. Cùng lỗ hổng đã vá
+  // cho tài khoản ngân hàng và các trang chặng: gõ đúng tên một mục ("thẻ
+  // Aeroplan tốt nhất") mà chỉ có trang tổng trong chỉ mục thì kết quả trả về
+  // không phải trang người đọc muốn tới.
+  {
+    title: nav("bestCards"),
+    href: BEST_CARDS_BASE,
+    kind: "page",
+    keywords: "tốt nhất nên chọn thẻ nào gợi ý đề xuất best card",
+  },
+  ...BEST_CARDS_CATEGORIES.map((category) => ({
+    title: category.titleVi,
+    href: bestCardsPath(category.slug),
+    kind: "page" as const,
+    meta: nav("bestCards"),
+    keywords: category.keywordsVi,
+  })),
   ...(BANK_ACCOUNTS_PUBLISHED
     ? [
         {
