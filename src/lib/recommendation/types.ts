@@ -36,7 +36,7 @@
  * ------------------------------------------------------------------ */
 
 declare const brand: unique symbol;
-type Branded<K extends string> = string & { readonly [brand]: K };
+export type Branded<K extends string> = string & { readonly [brand]: K };
 
 /**
  * LUẬT VỀ ID — đọc trước khi đặt bất kỳ id nào.

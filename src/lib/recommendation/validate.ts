@@ -10,7 +10,7 @@ import type { RecommendationDataset, Temporal } from "./types.ts";
  * chúng thành một ngày khác hẳn, và mọi phép tính theo thời gian lệch đi âm
  * thầm.
  */
-function isRealDate(value: string): boolean {
+export function isRealDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const parsed = new Date(`${value}T00:00:00Z`);
   return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;

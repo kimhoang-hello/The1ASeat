@@ -15,3 +15,25 @@ export {
 } from "./offer-history.ts";
 export { offlineDataset } from "./data/index.ts";
 export { INCOMPLETE_OFFERS, UNQUOTABLE_AWARD_PROGRAMS } from "./data/index.ts";
+
+/* Phase 2 — trạng thái người dùng */
+export * from "./user-types.ts";
+export {
+  balanceRowFor,
+  compareToThreshold,
+  everHeld,
+  everHeldProductIds,
+  heldProductIds,
+  holdsNow,
+  lastClosedDate,
+  primaryGoal,
+  resolveTripGoal,
+  sortedGoals,
+  spendFor,
+  statedCategories,
+  unallocatedMonthly,
+  type ResolvedTripGoal,
+} from "./user.ts";
+export { userGaps } from "./user-gaps.ts";
+export { validateUserState } from "./user-validate.ts";
+export { inMemoryUserStore, type UserDataSource } from "./user-source.ts";

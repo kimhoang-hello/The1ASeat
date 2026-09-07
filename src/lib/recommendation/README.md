@@ -319,11 +319,109 @@ của recorder.
    một lần dù nó với tới năm chương trình. Validator chặn chặng chuyển đi từ
    một chương trình `transferable: false`.
 
+## Phase 2 — trạng thái người dùng
+
+Phase 1 mô tả thế giới sản phẩm; Phase 2 mô tả một CON NGƯỜI trong thế giới đó:
+**họ đang có gì, họ bị ràng buộc bởi cái gì, họ muốn làm gì**. Câu hỏi thứ tư —
+"nên khuyên thẻ nào" — cố ý không có chỗ nào để trả lời, vì khoảnh khắc mô hình
+người dùng mã hoá kết quả thì engine ở Phase 3 hết tất định.
+
+| File | Vai trò |
+| --- | --- |
+| `user-types.ts` | `UserProfile`, `UserSpendProfile`, `UserCard`, `UserPointBalance`, `Goal`, `UserState`, `UserDataGap` |
+| `user.ts` | Phép đọc mà viết tay ở chỗ gọi thì sai âm thầm (`everHeld`, `unallocatedMonthly`, `resolveTripGoal`, `compareToThreshold`) |
+| `user-gaps.ts` | Suy ra chỗ chưa biết, máy đọc được |
+| `user-validate.ts` | Ở database thì đây là FK + CHECK |
+| `user-source.ts` | `UserDataSource` — cửa duy nhất engine đọc trạng thái người dùng |
+| `data/user-fixtures.ts` | 9 nhân vật bám sát bộ test §32 |
+
+### Chưa chọn database, và không cần chọn để làm xong Phase 2
+
+Bàn giao Phase 1 để ngỏ câu hỏi chỗ lưu. Nó là quyết định hạ tầng/chi phí, còn
+việc Phase 2 thật sự phải làm là **mô hình** — mô hình không đổi theo chỗ lưu.
+`UserDataSource` chỉ có ĐỌC: Phase 3 chỉ đọc, còn phần ghi dính chặt vào
+transaction, migration và quyền truy cập của một backend cụ thể, nên dựng sẵn
+bây giờ là đoán hình dạng của thứ chưa tồn tại.
+
+`inMemoryUserStore` trả về **bản sao**. Database nào cũng trả bản sao; trả object
+gốc thì engine lỡ tay sửa sẽ chạy đúng ở đây và hỏng khi đổi backend.
+
+### Trống ≠ bằng không, ở BA mức
+
+Phase 1 có luật này cho từng trường. Ở dữ liệu người dùng nó phân ra ba mức, và
+mất mức nào cũng dẫn tới một khuyến nghị sai mà không có lỗi nào nổ ra:
+
+1. **Trường** — `grocery: 0` là "đã hỏi, người này không đi siêu thị"; vắng mặt
+   là "chưa hỏi". `annualFeeTolerancePerCard: 0` là "chỉ thẻ miễn phí"; `null` là
+   chưa hỏi.
+2. **Bộ sưu tập** — `cards: []` một mình không kể được nó là "tôi chưa có thẻ
+   nào" (Test A, tín hiệu mạnh nhất dẫn tới thẻ khởi đầu) hay "tôi bấm bỏ qua".
+   `UserState.declared` tách hai ca đó.
+3. **Dòng** — `balance: null` là "có tài khoản, không nhớ số dư": chặng chuyển
+   điểm vẫn dùng được, chỉ con số là chưa biết. Khác cả "không có dòng nào" lẫn
+   "0 điểm".
+
+`userGaps(state)` gom mọi chỗ chưa biết thành `UserDataGap` máy đọc được, thứ
+tự cố định — §29 (hạ độ tin cậy) và §30 (chọn câu hỏi tiếp theo) đều đọc nó.
+Chỗ trống **không phải lỗi**: hồ sơ thiếu dữ liệu là ca bình thường nhất của
+Phase 2, nên `validateUserState` không nói gì về chúng.
+
+### `everHeld`, không phải `status === "previously_held"`
+
+`closed` và `previously_held` CÙNG nghĩa "từng giữ". Luật Amex® once-in-a-lifetime
+(`EligibilityRule.previous_cardholder_excluded`, `scope: "welcome_offer"`) viết
+bằng phép so `previously_held` sẽ để mọi thẻ `closed` lọt qua — và hậu quả không
+phải một lỗi, mà là một khuyến nghị trông hợp lý hứa khoản bonus ngân hàng sẽ từ
+chối. Dùng `holdsNow` / `everHeld` / `everHeldProductIds`.
+
+Thẻ đã đóng mà không rõ ngày đóng sinh `card_closed_date_unknown`: luật "không có
+bonus nếu từng giữ trong N tháng qua" không đánh giá được, và mặc định là đủ điều
+kiện lại hứa một khoản bonus không có thật.
+
+### Tiền là KHOẢNG
+
+`EstimatedAmount { low, high }`, `high: null` = khoảng mở ("150K+"). Cùng luật
+với `AwardStrategy` của Phase 1, ở đầu kia của cùng một phép so. Hệ quả quan
+trọng nhất: `compareToThreshold` cho **ba** kết quả, không phải hai — thu nhập
+"60–80K" so với thẻ đòi $80,000 là `straddles`, và trả về "không đạt" ở đó là
+loại oan đúng những người khoảng đó bao trùm (§14 tách eligibility khỏi
+suitability đúng vì thế). `typicalAmount` của khoảng mở trả về `low`: engine
+không được tự bịa ra một trần rồi lấy chính con số bịa để kết luận.
+
+### Chi tiêu khoá theo `SpendCategory`, không theo sáu cột của spec §4.2
+
+`types.ts` đã nói danh sách hạng mục là từ vựng chung hai bên. Sáu cột riêng thì
+`food_delivery`, `streaming`, `transit`, `foreign_currency` — những chỗ các thẻ
+khác nhau NHIỀU NHẤT — không có chỗ nào để khai.
+
+`monthlyTotal` và các hạng mục **không suy ra nhau**. `unallocatedMonthly` trả về
+phần chưa phân bổ; coi nó bằng không là kết luận người ta không đi du lịch từ một
+câu chưa ai hỏi. `minimumSpendCapacity3m` cũng KHÔNG suy từ `monthlyTotal` — spec
+gọi nó "especially important" đúng vì phần lớn chi tiêu đã nằm trên thẻ khác.
+
+### Chuyến đi dùng VÙNG
+
+`TripGoal.destinationRegion` bắt buộc, sân bay không. `originRegion` để `null` thì
+`resolveTripGoal` điền từ `profile.country` — suy được thì đừng hỏi lại. Ngược
+lại `passengers` **không** mặc định là 1: mặc định 1 chia nhỏ số điểm cần cho một
+gia đình bốn người rồi để `NO_NEW_CARD` thắng nhờ một giả định.
+
+### Không có chỗ nào nhét được số tài khoản
+
+Spec §4.4 cấm lưu số tài khoản loyalty, và ở đây điều đó được cưỡng chế bằng việc
+**không có một trường chuỗi tự do nào trong cả mô hình** — mã sân bay bị ràng
+buộc `^[A-Z]{3}$`. Không có tên, email, ngày sinh; `UserId` là khoá vô nghĩa.
+Thu nhập là khoảng chứ không phải con số.
+
+`user.test.ts` chốt hai luật này bằng cấu trúc: một test kiểm bộ khoá của mọi
+dòng số dư, một test kiểm không trường nào ngoài `cards` nhắc tới một `ProductId`
+— thêm `preferredProductId` vào hồ sơ sẽ làm nó đỏ.
+
 ## Chạy gì
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # 89 test: phép tính chi tiêu, bất biến, vòng đời, quy mô
+npm run test:reco         # 131 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng
 ```
 
 `audit:reco-data` bắt ba lớp lỗi:
