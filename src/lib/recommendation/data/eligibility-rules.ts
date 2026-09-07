@@ -44,6 +44,19 @@ type RuleSeed = {
   scope?: "application" | "welcome_offer";
   /** Cùng `group` thì nối bằng HOẶC. Xem `EligibilityRule.ruleGroup`. */
   group?: string;
+  /**
+   * Hiệu lực của CHÍNH dòng này. Vắng thì lấy hằng mặc định của file.
+   *
+   * Có mặt vì đổi một sự thật là THÊM một phiên bản, không phải sửa số tại
+   * chỗ. Không có nó thì mọi dòng dùng chung một hằng của file, và cách duy
+   * nhất ghi lại một lần thay đổi là sửa hằng đó — tức ghi đè ngày hiệu lực
+   * của MỌI dòng cùng lúc, xoá sạch lịch sử. Đây đúng là lỗi đã sửa cho phí
+   * thường niên nhưng chưa lan sang các thực thể còn lại.
+   */
+  from?: string;
+  to?: string;
+  /** Ngày kiểm lại. Vắng thì lấy `from`. ĐỘC LẬP với ngày vào kho. */
+  verifiedAt?: string;
 };
 
 /**
@@ -149,7 +162,7 @@ export const ELIGIBILITY_RULES: EligibilityRule[] = Object.entries(BY_PRODUCT).f
       // phẩm có thể có hai luật cùng `type` (thu nhập cá nhân và hộ gia đình
       // là hai `type` khác nhau, nhưng `residency` thì chỉ một) — validator
       // bắt nếu hai luật rút về cùng một id.
-      id: makeId<EligibilityRuleId>("elig", `prd_${slug}`, seed.type, VERIFIED_ON),
+      id: makeId<EligibilityRuleId>("elig", `prd_${slug}`, seed.type, seed.from ?? VERIFIED_ON),
       productId: id<ProductId>(`prd_${slug}`),
       ruleType: seed.type,
       operator:
@@ -163,12 +176,12 @@ export const ELIGIBILITY_RULES: EligibilityRule[] = Object.entries(BY_PRODUCT).f
       // ra thì mọi luật thu nhập của cả site rơi vào một nhóm HOẶC khổng lồ,
       // và đạt điều kiện của một thẻ bất kỳ thành đạt điều kiện của tất cả.
       ruleGroup: seed.group ? `${slug}-${seed.group}` : null,
-      effectiveFrom: VERIFIED_ON,
-      effectiveTo: null,
+      effectiveFrom: seed.from ?? VERIFIED_ON,
+      effectiveTo: seed.to ?? null,
       sourceUrl: `https://ghe1a.com/credit-cards/${slug}`,
       sourceKind: "ghe1a",
-      verifiedAt: VERIFIED_ON,
-      recordedAt: RECORDED_ON,
+      verifiedAt: seed.verifiedAt ?? seed.from ?? VERIFIED_ON,
+      recordedAt: seed.from ?? RECORDED_ON,
       confidence: "verified",
     })),
 );

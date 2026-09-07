@@ -125,6 +125,21 @@ khi **cùng `benefitId` VÀ cùng `provider`** — "miễn hành lý" của Air 
 của United® là hai thứ khác nhau, và cờ `duplicatesAcrossCards` một mình sẽ
 triệt tiêu giá trị thẻ United® chỉ vì người dùng đã có thẻ Aeroplan®.
 
+## Đổi một sự thật = THÊM một phiên bản
+
+Mọi thực thể có hiệu lực theo thời gian đều nhận `from` / `to` / `verifiedAt`
+**trên từng dòng seed**, và id sinh từ `from` của chính dòng đó. Đóng dòng cũ,
+thêm dòng mới:
+
+```ts
+["everything_else", 1,    { to: "2026-12-31" }],
+["everything_else", 1.25, { from: "2027-01-01" }],
+```
+
+Một hằng ngày dùng chung cho cả file **không** làm được việc này: cách duy nhất
+ghi lại một thay đổi khi đó là sửa hằng, tức ghi đè ngày hiệu lực của mọi dòng
+cùng lúc. Với nhiều năm thay đổi tỷ lệ và quyền lợi thì đó là mất sạch lịch sử.
+
 ## Đọc dữ liệu tại một thời điểm
 
 `datasetAt(data, "2026-10-01")` trả về cả thế giới như nó ở ngày đó;

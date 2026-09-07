@@ -836,3 +836,56 @@ test("thẻ đổi tên rồi đổi VỀ tên cũ vẫn hợp lệ", () => {
   };
   assert.deepEqual(errorsIn(reverted), []);
 });
+
+/* --------------------------------------------------------------- *
+ * Quy mô production: đổi một sự thật phải là DỮ LIỆU, ở MỌI thực thể
+ * --------------------------------------------------------------- */
+
+test("mọi thực thể có hiệu lực đều dựng được phiên bản thứ hai", () => {
+  // Lỗi này từng chỉ được sửa cho phí thường niên: các thực thể còn lại dùng
+  // chung một hằng ngày của file, nên cách duy nhất ghi lại một thay đổi là
+  // sửa hằng đó — ghi đè ngày hiệu lực của MỌI dòng cùng lúc. Với giả định
+  // "nhiều năm thay đổi tỷ lệ và quyền lợi" thì đó là mất sạch lịch sử.
+  //
+  // Kiểm ở tầng DỮ LIỆU ĐÃ SINH RA, không phải ở tầng seed: điều thật sự quan
+  // trọng là hai phiên bản ra hai id khác nhau và tra theo ngày ra hai kết quả.
+  const cases = [
+    ["earningRates", BASE.earningRates],
+    ["productBenefits", BASE.productBenefits],
+    ["eligibilityRules", BASE.eligibilityRules],
+    ["productFees", BASE.productFees],
+    ["transferPaths", BASE.transferPaths],
+    ["programValuations", BASE.programValuations],
+  ] as const;
+
+  for (const [name, rows] of cases) {
+    const original = rows[0];
+    const second = {
+      ...original,
+      id: `${original.id}_v2` as typeof original.id,
+      effectiveFrom: "2027-01-01",
+      effectiveTo: null,
+      recordedAt: "2027-01-01",
+    };
+    const next = {
+      ...BASE,
+      [name]: [{ ...original, effectiveTo: "2026-12-31" }, second, ...rows.slice(1)],
+    } as typeof BASE;
+    assert.deepEqual(errorsIn(next, "2027-06-01"), [], `${name}: nối phiên bản phải hợp lệ`);
+    assert.notEqual(original.id, second.id);
+  }
+});
+
+test("id sinh từ ngày hiệu lực của chính dòng, không từ hằng của file", () => {
+  // Nếu id lấy hằng chung thì hai phiên bản trùng id, và người sửa hoặc thấy
+  // validator đỏ hoặc lặng lẽ đè lên bản cũ.
+  const ids = new Set(BASE.earningRates.map((r) => r.id as string));
+  assert.equal(ids.size, BASE.earningRates.length, "không được trùng id");
+  // Mỗi id phải chứa ngày hiệu lực của chính nó.
+  for (const rate of BASE.earningRates.slice(0, 20)) {
+    assert.ok(
+      (rate.id as string).endsWith(rate.effectiveFrom),
+      `${rate.id} phải kết thúc bằng ${rate.effectiveFrom}`,
+    );
+  }
+});

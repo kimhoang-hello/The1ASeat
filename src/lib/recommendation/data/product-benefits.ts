@@ -36,7 +36,26 @@ const RECORDED_ON = "2026-09-07";
 type BenefitSeed = [
   benefit: string,
   numericValue?: number | null,
-  opts?: { text?: string; minimumAnnualSpend?: number; provider?: string; endsOn?: string },
+  opts?: {
+    text?: string;
+    minimumAnnualSpend?: number;
+    provider?: string;
+    /** Hạn của chính quyền lợi (khác `to`, là hạn của PHIÊN BẢN bản ghi). */
+    endsOn?: string;
+  /**
+   * Hiệu lực của CHÍNH dòng này. Vắng thì lấy hằng mặc định của file.
+   *
+   * Có mặt vì đổi một sự thật là THÊM một phiên bản, không phải sửa số tại
+   * chỗ. Không có nó thì mọi dòng dùng chung một hằng của file, và cách duy
+   * nhất ghi lại một lần thay đổi là sửa hằng đó — tức ghi đè ngày hiệu lực
+   * của MỌI dòng cùng lúc, xoá sạch lịch sử. Đây đúng là lỗi đã sửa cho phí
+   * thường niên nhưng chưa lan sang các thực thể còn lại.
+   */
+  from?: string;
+  to?: string;
+  /** Ngày kiểm lại. Vắng thì lấy `from`. ĐỘC LẬP với ngày vào kho. */
+  verifiedAt?: string;
+  },
 ];
 
 /**
@@ -312,7 +331,7 @@ export const PRODUCT_BENEFITS: ProductBenefit[] = Object.entries(BY_PRODUCT).fla
       // Id mang NGÀY HIỆU LỰC: quyền lợi đổi thì bản mới nằm cạnh bản cũ, và
       // không có ngày trong id thì hai bản trùng id — hoặc validator đỏ, hoặc
       // người sửa lặng lẽ đè lên bản cũ. Xem "LUẬT VỀ ID" trong types.ts.
-      id: makeId<ProductBenefitId>("pb", `prd_${slug}`, benefit, VERIFIED_ON),
+      id: makeId<ProductBenefitId>("pb", `prd_${slug}`, benefit, opts?.from ?? VERIFIED_ON),
       productId: id<ProductId>(`prd_${slug}`),
       benefitId: benefit as BenefitId,
       numericValue: numericValue ?? null,
@@ -329,12 +348,19 @@ export const PRODUCT_BENEFITS: ProductBenefit[] = Object.entries(BY_PRODUCT).fla
       // nghĩa, và tệ hơn: hai thẻ khác hãng có cùng bảo hiểm sẽ trông như hai
       // quyền lợi KHÁC nhau, nên engine cộng cả hai vào giá trị gia tăng.
       provider: opts?.provider ?? providerFor(slug, benefit),
-      effectiveFrom: VERIFIED_ON,
-      effectiveTo: opts?.endsOn ?? null,
+      effectiveFrom: opts?.from ?? VERIFIED_ON,
+      // `to` đóng PHIÊN BẢN bản ghi (quyền lợi đổi giá trị); `endsOn` là hạn
+      // của chính quyền lợi. Cái nào tới trước thì thắng.
+      effectiveTo:
+        opts?.to !== undefined && opts?.endsOn !== undefined
+          ? opts.to < opts.endsOn
+            ? opts.to
+            : opts.endsOn
+          : (opts?.to ?? opts?.endsOn ?? null),
       sourceUrl: `https://ghe1a.com/credit-cards/${slug}`,
       sourceKind: "ghe1a",
-      verifiedAt: VERIFIED_ON,
-      recordedAt: RECORDED_ON,
+      verifiedAt: opts?.verifiedAt ?? opts?.from ?? VERIFIED_ON,
+      recordedAt: opts?.from ?? RECORDED_ON,
       confidence: "verified",
     })),
 );

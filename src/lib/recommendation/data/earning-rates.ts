@@ -48,6 +48,19 @@ type RateSeed = [
     cap?: string;
     rateAfterCap?: number;
     restrictedTo?: string;
+    /**
+     * Hiệu lực của CHÍNH dòng này. Vắng thì lấy hằng mặc định của file.
+     *
+     * Có mặt vì đổi một tỷ lệ là THÊM một phiên bản, không phải sửa số tại
+     * chỗ. Không có nó thì mọi dòng dùng chung một hằng của file, và cách duy
+     * nhất ghi lại một lần đổi tỷ lệ là sửa hằng đó — tức ghi đè ngày hiệu lực
+     * của MỌI dòng cùng lúc, xoá sạch lịch sử. Đây đúng là lỗi đã sửa cho phí
+     * thường niên nhưng chưa lan sang các thực thể còn lại.
+     */
+    from?: string;
+    to?: string;
+    /** Ngày kiểm lại. Vắng thì lấy `from`. ĐỘC LẬP với ngày vào kho. */
+    verifiedAt?: string;
   },
 ];
 
@@ -450,12 +463,14 @@ export const EARNING_RATES: EarningRate[] = Object.entries(RATES).flatMap(
       // của mọi dòng phía sau, im lặng. Id dựng từ NỘI DUNG — hạng mục, nhóm
       // merchant, ngày hiệu lực — nên nó ổn định qua mọi lần sắp xếp lại, và
       // hai phiên bản của cùng một tỷ lệ không đụng nhau.
+      // Id lấy ngày hiệu lực CỦA CHÍNH DÒNG NÀY, không lấy hằng của file: hai
+      // phiên bản của cùng một tỷ lệ phải ra hai id khác nhau.
       id: makeId<EarningRateId>(
         "er",
         `prd_${slug}`,
         category,
         idPart(opts?.restrictedTo ?? null),
-        VERIFIED_ON,
+        opts?.from ?? VERIFIED_ON,
       ),
       productId: id<ProductId>(`prd_${slug}`),
       category,
@@ -464,12 +479,12 @@ export const EARNING_RATES: EarningRate[] = Object.entries(RATES).flatMap(
       capId: opts?.cap === undefined ? null : capIdFor(slug, opts.cap),
       rateAfterCap: opts?.rateAfterCap ?? null,
       restrictedTo: opts?.restrictedTo ?? null,
-      effectiveFrom: VERIFIED_ON,
-      effectiveTo: null,
+      effectiveFrom: opts?.from ?? VERIFIED_ON,
+      effectiveTo: opts?.to ?? null,
       sourceUrl: `https://ghe1a.com/credit-cards/${slug}`,
       sourceKind: "ghe1a",
-      verifiedAt: VERIFIED_ON,
-      recordedAt: RECORDED_ON,
+      verifiedAt: opts?.verifiedAt ?? opts?.from ?? VERIFIED_ON,
+      recordedAt: opts?.from ?? RECORDED_ON,
       confidence: "verified",
     })),
 );
