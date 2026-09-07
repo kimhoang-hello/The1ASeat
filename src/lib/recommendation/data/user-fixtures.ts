@@ -53,6 +53,7 @@ function profileOf(slug: string, overrides: Partial<UserProfile> = {}): UserProf
     householdIncomeDeclined: false,
     annualFeeTolerancePerCard: null,
     businessCardsAllowed: null,
+    hasBusiness: null,
     isStudent: null,
     createdAt: TODAY,
     updatedAt: TODAY,
@@ -134,6 +135,7 @@ export const beginnerNoCards: UserState = {
     annualPersonalIncome: amountRange(60_000, 80_000),
     annualFeeTolerancePerCard: 120,
     businessCardsAllowed: false,
+    hasBusiness: false,
     isStudent: false,
   }),
   spend: spendOf("u_beginner", {
@@ -446,6 +448,7 @@ export const studentStarter: UserState = {
     householdIncomeDeclined: true,
     annualFeeTolerancePerCard: 0,
     businessCardsAllowed: false,
+    hasBusiness: false,
     isStudent: true,
   }),
   spend: spendOf("u_student", {
@@ -456,6 +459,135 @@ export const studentStarter: UserState = {
   cards: [],
   balances: [],
   goals: [goalOf("u_student", { type: "next_card", priority: 1 })],
+  declared: { cards: true, balances: true },
+};
+
+
+/* ------------------------------------------------------------------ *
+ * Người chơi lâu năm — nhiều thẻ, nhiều loại điểm, mục tiêu đa dạng hoá
+ * ------------------------------------------------------------------ */
+
+/**
+ * Sáu thẻ, năm loại điểm, một thẻ đã đóng và một thẻ không nhớ đóng khi nào.
+ *
+ * Nhân vật này tồn tại vì mọi nhân vật khác đều ĐƠN GIẢN, và một mô hình chỉ
+ * được thử bằng những ca đơn giản là một mô hình chưa được thử. Nó gộp bốn
+ * tình huống cùng lúc: danh mục nhiều thẻ, nhiều loại điểm, thẻ từng giữ, và
+ * mục tiêu `diversify` — loại mục tiêu mà trước đó chưa nhân vật nào dùng.
+ *
+ * Có `hasBusiness: true` nên `business_required` đánh giá được theo hướng ĐỦ
+ * điều kiện; `amex-business-platinum` trong ví là bằng chứng.
+ *
+ * Một số dư khai `null`: người giữ năm loại điểm không nhớ hết số dư là chuyện
+ * bình thường, và đó chính là ca "có tài khoản, chưa biết bao nhiêu".
+ */
+export const advancedCollector: UserState = {
+  profile: profileOf("u_advanced", {
+    province: "BC",
+    annualPersonalIncome: amountRange(150_000, null),
+    annualFeeTolerancePerCard: 900,
+    businessCardsAllowed: true,
+    hasBusiness: true,
+    isStudent: false,
+  }),
+  spend: spendOf("u_advanced", {
+    monthlyTotal: exactAmount(9_500),
+    byCategory: {
+      grocery: exactAmount(1_400),
+      dining: exactAmount(1_600),
+      travel: exactAmount(2_200),
+      foreign_currency: exactAmount(900),
+      streaming: exactAmount(120),
+      everything_else: exactAmount(2_000),
+    },
+    minimumSpendCapacity3m: exactAmount(18_000),
+  }),
+  cards: [
+    cardOf("u_advanced", "amex-cobalt", "active", { opened: "2021-04-01" }),
+    cardOf("u_advanced", "amex-platinum", "active", { opened: "2023-09-01" }),
+    cardOf("u_advanced", "amex-business-platinum", "active", { opened: "2025-02-01" }),
+    cardOf("u_advanced", "cibc-aeroplan-visa-infinite", "active", { opened: "2024-06-01" }),
+    cardOf("u_advanced", "td-aeroplan-visa-infinite", "closed", {
+      opened: "2020-01-15",
+      closed: "2023-02-28",
+    }),
+    cardOf("u_advanced", "amex-gold-rewards", "previously_held"),
+  ],
+  balances: [
+    balanceOf("u_advanced", AMEX_MR, 410_000),
+    balanceOf("u_advanced", AEROPLAN, 185_000),
+    balanceOf("u_advanced", id<PointsProgramId>("avios"), 62_000),
+    balanceOf("u_advanced", id<PointsProgramId>("bonvoy"), 130_000),
+    // Có tài khoản Scene+™, không nhớ số dư — ca thứ ba, khác "không có tài
+    // khoản" và khác "0 điểm".
+    balanceOf("u_advanced", id<PointsProgramId>("scene-plus"), null),
+  ],
+  goals: [goalOf("u_advanced", { type: "diversify", priority: 1 })],
+  declared: { cards: true, balances: true },
+};
+
+/* ------------------------------------------------------------------ *
+ * Chi tiêu CAO nhưng dồn được ÍT
+ * ------------------------------------------------------------------ */
+
+/**
+ * $12,000/tháng nhưng chỉ dồn được $2,000 sang thẻ mới trong 3 tháng.
+ *
+ * Đây là ca spec §4.2 gọi `minimum_spend_capacity_3m` là "especially
+ * important" để nói tới: ba tháng chi tiêu của người này là $36,000, mà mốc
+ * chi $10,000 vẫn NGOÀI TẦM. Suy sức dồn từ tổng tháng — theo bất kỳ tỷ lệ nào
+ * — đều cho ra một con số sai gấp nhiều lần ở đúng người mà con số đó quyết
+ * định nhiều nhất.
+ *
+ * Lý do có thật: phần lớn chi tiêu đã nằm trên thẻ khác đang chạy dở mốc chi,
+ * ở hoá đơn không quẹt thẻ được, hoặc ở chỗ chỉ nhận chuyển khoản.
+ */
+export const highSpendLowCapacity: UserState = {
+  profile: profileOf("u_high_spend", {
+    annualPersonalIncome: amountRange(150_000, null),
+    annualFeeTolerancePerCard: 700,
+    businessCardsAllowed: false,
+    hasBusiness: false,
+    isStudent: false,
+  }),
+  spend: spendOf("u_high_spend", {
+    monthlyTotal: exactAmount(12_000),
+    byCategory: {
+      grocery: exactAmount(2_000),
+      dining: exactAmount(1_800),
+      travel: exactAmount(3_000),
+      everything_else: exactAmount(4_000),
+    },
+    minimumSpendCapacity3m: exactAmount(2_000),
+  }),
+  cards: [cardOf("u_high_spend", "td-aeroplan-visa-infinite", "active", { opened: "2023-05-01" })],
+  balances: [balanceOf("u_high_spend", AEROPLAN, 90_000)],
+  goals: [goalOf("u_high_spend", { type: "next_card", priority: 1 })],
+  declared: { cards: true, balances: true },
+};
+
+/* ------------------------------------------------------------------ *
+ * Mục tiêu MƠ HỒ
+ * ------------------------------------------------------------------ */
+
+/**
+ * "Tôi muốn tích điểm" — không nói chương trình nào, không nói để làm gì.
+ *
+ * Mục tiêu mơ hồ nhất mà mô hình vẫn phải nhận, vì đó là câu phần lớn người
+ * đọc thật sự nói. `targetProgramId: null` = bất kỳ loại điểm nào có giá trị,
+ * và đó là một CÂU TRẢ LỜI chứ không phải chỗ trống — nên nó không sinh
+ * `UserDataGap` nào, và §30 không được đem nó ra hỏi lại.
+ *
+ * Đây cũng là nhân vật duy nhất dùng `earn_points`; trước đó hai trong bốn loại
+ * mục tiêu chưa từng được dựng lần nào, tức hai hàm chấm điểm của §10 chưa có
+ * lấy một đầu vào để chạy thử.
+ */
+export const vagueEarner: UserState = {
+  profile: profileOf("u_vague", { annualFeeTolerancePerCard: 250 }),
+  spend: spendOf("u_vague", { monthlyTotal: amountRange(3_000, 5_000) }),
+  cards: [],
+  balances: [],
+  goals: [goalOf("u_vague", { type: "earn_points", priority: null, targetProgramId: null })],
   declared: { cards: true, balances: true },
 };
 
@@ -471,4 +603,7 @@ export const USER_FIXTURES: UserState[] = [
   flexiblePointsSufficient,
   nearlyEmpty,
   studentStarter,
+  advancedCollector,
+  highSpendLowCapacity,
+  vagueEarner,
 ];

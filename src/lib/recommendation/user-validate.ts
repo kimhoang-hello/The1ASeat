@@ -97,13 +97,19 @@ function checkDate(
 }
 
 /**
- * Trường phải CÓ MẶT, kể cả khi giá trị là `null`.
+ * Bộ khoá của một dòng phải khớp ĐÚNG danh sách — không thiếu, và không thừa.
  *
- * `undefined` và `null` không giống nhau ở đây, và khác biệt đó im lặng theo
- * đúng hướng tệ nhất: một dòng database cũ thiếu trường mới thêm sẽ trượt qua
- * mọi phép kiểm `=== null` — validator không báo gì, `userGaps` không sinh chỗ
- * trống nào — nên dữ liệu THIẾU được trình bày như dữ liệu ĐẦY ĐỦ. Đúng thứ
- * lớp này sinh ra để chặn.
+ * THIẾU: `undefined` và `null` không giống nhau, và khác biệt đó im lặng theo
+ * đúng hướng tệ nhất — một dòng database cũ thiếu trường mới thêm trượt qua mọi
+ * phép kiểm `=== null`, nên dữ liệu THIẾU được trình bày như dữ liệu ĐẦY ĐỦ.
+ *
+ * THỪA: đây là chỗ hai lời hứa lớn nhất của mô hình được cưỡng chế LÚC CHẠY chứ
+ * không chỉ lúc biên dịch. Kiểu dữ liệu chặn được người viết TypeScript, nhưng
+ * một dòng JSON từ database hay từ API cũ thì không ai chặn — và
+ * `loyaltyAccountNumber` (spec §4.4 CẤM lưu) hay `preferredProductId` (mô hình
+ * người dùng không được mã hoá kết quả) sẽ đi thẳng qua validator, được lưu
+ * lại, rồi tới tay Phase 3. Cả hai im lặng, và cái đầu còn là dữ liệu nhạy cảm
+ * lẽ ra không được phép tồn tại.
  */
 /**
  * Danh sách khoá phải CÓ MẶT trên từng thực thể.
@@ -117,7 +123,7 @@ function checkDate(
 const PROFILE_KEYS = [
   "id", "country", "province", "annualPersonalIncome", "annualHouseholdIncome",
   "personalIncomeDeclined", "householdIncomeDeclined", "annualFeeTolerancePerCard",
-  "businessCardsAllowed", "isStudent", "createdAt", "updatedAt",
+  "businessCardsAllowed", "hasBusiness", "isStudent", "createdAt", "updatedAt",
 ] as const;
 const SPEND_KEYS = ["userId", "monthlyTotal", "byCategory", "minimumSpendCapacity3m", "updatedAt"] as const;
 const CARD_KEYS = ["id", "userId", "productId", "status", "openedDate", "closedDate"] as const;
@@ -144,17 +150,49 @@ const _nextCardGoalKeys: AssertAllKeys<NextCardGoal, typeof GOAL_BASE_KEYS> = tr
 const _diversifyGoalKeys: AssertAllKeys<DiversifyGoal, typeof GOAL_BASE_KEYS> = true;
 void [_profileKeys, _spendKeys, _cardKeys, _balanceKeys, _tripGoalKeys, _earnGoalKeys, _nextCardGoalKeys, _diversifyGoalKeys];
 
-function requirePresent(
+function checkKeys(
   row: object,
   keys: readonly string[],
   entity: string,
   issues: ValidationIssue[],
 ): void {
+  const record = row as Record<string, unknown>;
   for (const key of keys) {
-    if (!(key in row) || (row as Record<string, unknown>)[key] === undefined) {
+    if (!(key in row) || record[key] === undefined) {
       issues.push({ level: "error", entity, message: `Thiếu trường "${key}" (undefined ≠ null)` });
     }
   }
+  const allowed = new Set<string>(keys);
+  for (const key of Object.keys(row)) {
+    if (!allowed.has(key)) {
+      issues.push({
+        level: "error",
+        entity,
+        message: `Trường lạ "${key}" — mô hình không nhận trường ngoài danh sách (spec §4.4 cấm dữ liệu nhạy cảm; mô hình cũng không được mã hoá kết quả)`,
+      });
+    }
+  }
+}
+
+/**
+ * Ngày KHÔNG được phép trống (`createdAt`, `updatedAt`).
+ *
+ * Tách khỏi `checkDate` vì `checkDate` return sớm ở `null` — đúng với những
+ * ngày vốn có thể trống, nhưng với `createdAt` thì `null` là dữ liệu hỏng, và
+ * gộp hai loại vào một hàm nghĩa là MỌI ngày bắt buộc đều nhận `null` sạch sẽ.
+ * `checkKeys` không cứu được ca này: khoá CÓ MẶT, chỉ giá trị là sai.
+ */
+function checkRequiredDate(
+  value: string | null | undefined,
+  label: string,
+  entity: string,
+  issues: ValidationIssue[],
+): void {
+  if (value === null) {
+    issues.push({ level: "error", entity, message: `${label}: không được để trống` });
+    return;
+  }
+  checkDate(value, label, entity, issues);
 }
 
 export function validateUserState(
@@ -174,12 +212,12 @@ export function validateUserState(
   if (profile.province != null && !(CANADIAN_PROVINCES as readonly string[]).includes(profile.province)) {
     issues.push({ level: "error", entity: P, message: `Tỉnh bang không hợp lệ: "${profile.province}"` });
   }
-  checkDate(profile.createdAt, "createdAt", P, issues);
-  checkDate(profile.updatedAt, "updatedAt", P, issues);
+  checkRequiredDate(profile.createdAt, "createdAt", P, issues);
+  checkRequiredDate(profile.updatedAt, "updatedAt", P, issues);
   if (isRealDate(profile.createdAt) && isRealDate(profile.updatedAt) && profile.updatedAt < profile.createdAt) {
     issues.push({ level: "error", entity: P, message: "updatedAt nằm trước createdAt" });
   }
-  requirePresent(profile, PROFILE_KEYS, P, issues);
+  checkKeys(profile, PROFILE_KEYS, P, issues);
   checkAmount(profile.annualPersonalIncome, "annualPersonalIncome", P, issues);
   checkAmount(profile.annualHouseholdIncome, "annualHouseholdIncome", P, issues);
   const personal = profile.annualPersonalIncome;
@@ -196,6 +234,7 @@ export function validateUserState(
   }
   for (const [label, value] of [
     ["businessCardsAllowed", profile.businessCardsAllowed],
+    ["hasBusiness", profile.hasBusiness],
     ["isStudent", profile.isStudent],
   ] as const) {
     // Cùng lớp lỗi với `status` gõ sai: chuỗi `"false"` đi qua sạch rồi
@@ -234,8 +273,8 @@ export function validateUserState(
       // con số vẫn hợp lệ, chỉ là của người khác.
       issues.push({ level: "error", entity: S, message: `userId (${spend.userId}) không khớp hồ sơ (${userId})` });
     }
-    requirePresent(spend, SPEND_KEYS, S, issues);
-    checkDate(spend.updatedAt, "updatedAt", S, issues);
+    checkKeys(spend, SPEND_KEYS, S, issues);
+    checkRequiredDate(spend.updatedAt, "updatedAt", S, issues);
     checkAmount(spend.monthlyTotal, "monthlyTotal", S, issues);
     checkAmount(spend.minimumSpendCapacity3m, "minimumSpendCapacity3m", S, issues);
 
@@ -295,7 +334,7 @@ export function validateUserState(
       // nào khác nhận ra, và welcome bonus của thẻ đó được hứa lại.
       issues.push({ level: "error", entity: C, message: `${card.id}: status không tồn tại "${card.status}"` });
     }
-    requirePresent(card, CARD_KEYS, C, issues);
+    checkKeys(card, CARD_KEYS, C, issues);
     checkDate(card.openedDate, `${card.id}.openedDate`, C, issues);
     checkDate(card.closedDate, `${card.id}.closedDate`, C, issues);
     if (card.openedDate != null && card.closedDate != null && card.closedDate < card.openedDate) {
@@ -352,11 +391,11 @@ export function validateUserState(
       issues.push({ level: "error", entity: B, message: `Hai dòng số dư cho cùng chương trình: ${row.programId}` });
     }
     seenPrograms.add(row.programId);
-    requirePresent(row, BALANCE_KEYS, B, issues);
+    checkKeys(row, BALANCE_KEYS, B, issues);
     if (row.balance != null && (!Number.isFinite(row.balance) || row.balance < 0)) {
       issues.push({ level: "error", entity: B, message: `${row.programId}: số dư không hợp lệ (${row.balance})` });
     }
-    checkDate(row.updatedAt, `${row.programId}.updatedAt`, B, issues);
+    checkRequiredDate(row.updatedAt, `${row.programId}.updatedAt`, B, issues);
   }
   if (state.balances.length > 0 && !state.declared.balances) {
     issues.push({
@@ -382,13 +421,13 @@ export function validateUserState(
     if (!(GOAL_TYPES as readonly string[]).includes(goal.type)) {
       issues.push({ level: "error", entity: G, message: `${goal.id}: goal type không tồn tại "${goal.type}"` });
     }
-    requirePresent(
+    checkKeys(
       goal,
       goal.type === "trip" ? TRIP_GOAL_KEYS : goal.type === "earn_points" ? EARN_GOAL_KEYS : GOAL_BASE_KEYS,
       G,
       issues,
     );
-    checkDate(goal.createdAt, `${goal.id}.createdAt`, G, issues);
+    checkRequiredDate(goal.createdAt, `${goal.id}.createdAt`, G, issues);
     if (goal.priority != null) {
       if (!Number.isInteger(goal.priority) || goal.priority < 1) {
         issues.push({ level: "error", entity: G, message: `${goal.id}: priority phải là số nguyên ≥ 1` });

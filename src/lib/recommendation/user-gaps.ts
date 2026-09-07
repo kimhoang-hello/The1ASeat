@@ -44,13 +44,14 @@ export function userGaps(state: UserState): UserDataGap[] {
 
   /* --- Hồ sơ --- */
 
-  if (profile.province == null) {
-    gaps.push({
-      kind: "province_unknown",
-      subject: profile.id,
-      reason: "Chưa biết tỉnh bang. Điều khoản offer của một số ngân hàng viết khác cho Quebec.",
-    });
-  }
+  // KHÔNG có chỗ trống cho `province`. Trường đó vẫn được lưu — điều khoản
+  // offer của một số ngân hàng viết khác cho Quebec, và ngày có luật đó thì
+  // cần ngay — nhưng HÔM NAY không một dòng dữ liệu nào phụ thuộc vào nó: cả
+  // 34 luật `residency` đều là "CA", không luật nào theo tỉnh bang.
+  //
+  // Một chỗ trống không chặn điều gì mà vẫn khai ra là một câu hỏi cạnh tranh
+  // suất với những câu thật sự đổi kết quả (§30), và một điểm trừ độ tin cậy
+  // không có lý do (§29). Thêm luật theo tỉnh bang thì thêm lại chỗ trống này.
 
   // Mọi phép so ở đây dùng `== null` để bắt CẢ `undefined`: một dòng database
   // cũ thiếu trường mới thêm phải sinh ra chỗ trống, chứ không được trượt qua
@@ -108,7 +109,15 @@ export function userGaps(state: UserState): UserDataGap[] {
       kind: "business_cards_preference_unknown",
       subject: profile.id,
       reason:
-        "Chưa biết có nhận thẻ doanh nghiệp không. 4/34 sản phẩm là thẻ doanh nghiệp, nên mặc định theo hướng nào cũng lệch kết quả.",
+        "Chưa biết có MUỐN xét thẻ doanh nghiệp không. 4/34 sản phẩm là thẻ doanh nghiệp, nên mặc định theo hướng nào cũng lệch kết quả.",
+    });
+  }
+  if (profile.hasBusiness == null) {
+    gaps.push({
+      kind: "business_ownership_unknown",
+      subject: profile.id,
+      reason:
+        "Chưa biết có doanh nghiệp không. Đây là ĐIỀU KIỆN (`business_required`, hard, 4 sản phẩm), khác với việc có muốn xét thẻ doanh nghiệp hay không.",
     });
   }
 

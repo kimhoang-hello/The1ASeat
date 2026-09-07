@@ -359,7 +359,25 @@ Mỗi gạch đầu dòng dưới đây là một chỗ mà gộp lại sẽ là
   nằm sẵn trong hồ sơ. Ranh giới là "đã biết ở chỗ khác", không phải "đoán
   được".
 
-### 8.3 Không có chỗ nào nhét được dữ liệu nhạy cảm
+### 8.3 Rà đối kháng theo 12 kiểu người dùng
+
+Chạy sau khi Phase 2 đã "xong": dựng 12 kiểu người dùng khác hẳn nhau (người
+mới, người chơi lâu năm, nhiều thẻ, thẻ từng giữ, nhiều loại điểm, ngại phí,
+có/không thẻ doanh nghiệp, sức chi thấp, chi cao mà dồn được ít, hồ sơ dở dang,
+mục tiêu cụ thể, mục tiêu mơ hồ). Ba chỗ phải sửa:
+
+1. **Hai trong bốn loại mục tiêu chưa từng được dựng lần nào** — `earn_points`
+   và `diversify` không có nhân vật nào dùng, tức hai hàm chấm điểm của §10
+   chưa có lấy một đầu vào để chạy thử. Nay có, và một test khoá đủ bốn loại.
+2. **`businessCardsAllowed` gộp sở thích với điều kiện** — tách `hasBusiness`.
+3. **`province` sinh chỗ trống mà không ai đọc** — cả 34 luật `residency` đều
+   là `"CA"`, không luật nào theo tỉnh bang. Giữ trường, bỏ chỗ trống, và thêm
+   một test khoá từng `kind` với lý do tồn tại của nó.
+
+Kết quả: **trạng thái hợp lệ tối thiểu chỉ cần MỘT câu trả lời — người này
+muốn gì.** Mọi thứ khác bỏ trống được.
+
+### 8.4 Không có chỗ nào nhét được dữ liệu nhạy cảm
 
 Spec §4.4 cấm lưu số tài khoản loyalty. Cưỡng chế bằng cấu trúc: **cả mô hình
 không có một trường chuỗi tự do nào** (mã sân bay ràng buộc `^[A-Z]{3}$`).
@@ -367,18 +385,18 @@ Không tên, không email, không ngày sinh; thu nhập là khoảng. Hai test 
 việc này, và một test thứ ba chặn mô hình mã hoá kết quả — thêm
 `preferredProductId` vào hồ sơ sẽ làm nó đỏ.
 
-### 8.4 Kết quả kiểm thử Phase 2
+### 8.5 Kết quả kiểm thử Phase 2
 
 ```bash
 npx tsc --noEmit        # sạch
 npm run lint            # sạch
 npm run build           # Compiled successfully
-npm run test:reco       # 149/149 pass (91 của Phase 1 + 58 mới)
+npm run test:reco       # 160/160 pass (91 của Phase 1 + 69 mới)
 npm run test:game       # 43/43 pass
 npm run audit:reco-data # 0 lỗi, 9 cảnh báo (y như trước, đều là chỗ trống có chủ ý)
 ```
 
-### 8.5 Đã biết trước, để Phase 3 khỏi ngạc nhiên
+### 8.6 Đã biết trước, để Phase 3 khỏi ngạc nhiên
 
 - **Test C/D của spec §32 là chuyến Nhật, mà Phase 1 chưa dựng award strategy
   cho JAPAN** — chỉ `CANADA_US → SEA_VIETNAM` có dữ liệu. Đây KHÔNG phải lỗi

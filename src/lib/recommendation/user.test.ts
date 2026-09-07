@@ -22,7 +22,10 @@ import {
   japanTripShortfall,
   lowSpendCapacity,
   nearlyEmpty,
+  advancedCollector,
+  highSpendLowCapacity,
   studentStarter,
+  vagueEarner,
   USER_FIXTURES,
 } from "./data/user-fixtures.ts";
 import { userGaps } from "./user-gaps.ts";
@@ -766,6 +769,225 @@ test("hạng mục chi tiêu biến mất không làm phép cộng khoảng ném
   assert.doesNotThrow(() => unallocatedMonthly(state.spend!));
   assert.doesNotThrow(() => statedCategories(state.spend!));
   assert.equal(spendFor(state, "grocery"), null);
+});
+
+
+/* ------------------------------------------------------------------ *
+ * Mười hai kiểu người dùng KHÁC HẲN NHAU
+ *
+ * Đây là phép thử nghiệm thu của Phase 2 nói thành test: Phase 3 có suy luận
+ * được về những người rất khác nhau bằng mô hình này không, mà không cần một
+ * bảng câu hỏi dài. Mỗi test dưới đây đòi ĐẶC ĐIỂM PHÂN BIỆT của một kiểu
+ * người dùng đọc ra được — không phải chỉ "dữ liệu hợp lệ".
+ * ------------------------------------------------------------------ */
+
+test("kiểu 1+6: người mới, ngại phí — 'chưa có gì' là câu trả lời, không phải chỗ trống", () => {
+  assert.equal(everHeldProductIds(beginnerNoCards).size, 0);
+  assert.equal(beginnerNoCards.balances.length, 0);
+  assert.ok(beginnerNoCards.declared.cards && beginnerNoCards.declared.balances);
+  assert.equal(beginnerNoCards.profile.annualFeeTolerancePerCard, 120);
+  const kinds = gapKinds(beginnerNoCards);
+  assert.ok(!kinds.includes("cards_undeclared"));
+  assert.ok(!kinds.includes("annual_fee_tolerance_unknown"));
+});
+
+test("kiểu 2+3+5: người chơi lâu năm — nhiều thẻ, nhiều loại điểm, danh mục đọc được", () => {
+  assert.equal(heldProductIds(advancedCollector).size, 4);
+  assert.equal(everHeldProductIds(advancedCollector).size, 6);
+  assert.equal(advancedCollector.balances.length, 5);
+
+  // Năm loại điểm, và mọi chương trình đều tra được sang Phase 1 — nếu không
+  // thì Portfolio Analyzer không quy đổi được gì.
+  const programs = new Set(data.pointsPrograms.map((row) => row.id as string));
+  for (const row of advancedCollector.balances) {
+    assert.ok(programs.has(row.programId), `${row.programId} không có trong Phase 1`);
+  }
+  // Mô hình lưu số dư TRỰC TIẾP, không lưu "số dư tiếp cận được" — quy đổi qua
+  // chặng chuyển là việc của §7, và tính sẵn ở đây là đếm trùng điểm chuyển
+  // được ngay tại lớp dữ liệu.
+  assert.ok(data.transferPaths.length > 0);
+});
+
+test("kiểu 4: thẻ từng giữ — ba trạng thái đóng phân biệt được", () => {
+  assert.deepEqual(lastClosed(advancedCollector, productIdFor("td-aeroplan-visa-infinite")), {
+    kind: "closed",
+    date: "2023-02-28",
+  });
+  // Không nhớ đóng khi nào → KHÔNG được coi là đã hết hạn chờ.
+  assert.deepEqual(lastClosed(advancedCollector, productIdFor("amex-gold-rewards")), {
+    kind: "unknown",
+  });
+  assert.deepEqual(lastClosed(advancedCollector, productIdFor("amex-cobalt")), {
+    kind: "never_closed",
+  });
+  // Và cả ba thẻ Amex® đó đều dính luật once-in-a-lifetime, nên phân biệt này
+  // quyết định welcome bonus chứ không phải chuyện trang trí.
+  const once = data.eligibilityRules.filter(
+    (rule) =>
+      rule.ruleType === "previous_cardholder_excluded" &&
+      everHeldProductIds(advancedCollector).has(rule.productId),
+  );
+  assert.ok(once.length >= 2);
+  assert.ok(once.every((rule) => rule.scope === "welcome_offer"));
+});
+
+test("kiểu 7: thẻ doanh nghiệp — SỞ THÍCH và ĐIỀU KIỆN là hai trường", () => {
+  // Người có doanh nghiệp và muốn xét: cả hai vế đúng.
+  assert.equal(advancedCollector.profile.businessCardsAllowed, true);
+  assert.equal(advancedCollector.profile.hasBusiness, true);
+
+  // Người MUỐN xét nhưng KHÔNG có doanh nghiệp — trạng thái có thật, và gộp
+  // hai khái niệm vào một trường thì nó không tồn tại. `business_required` là
+  // luật `hard`, nên engine phải loại thẻ đó vì ĐIỀU KIỆN, không phải vì sở
+  // thích (§14).
+  const willingNoBusiness = broken(advancedCollector, (s) => {
+    s.profile.hasBusiness = false;
+  });
+  assert.deepEqual(errorsIn(willingNoBusiness), []);
+  const businessRules = data.eligibilityRules.filter((rule) => rule.ruleType === "business_required");
+  assert.equal(businessRules.length, 4);
+  assert.ok(businessRules.every((rule) => rule.severity === "hard"));
+
+  // Và người từ chối thẳng.
+  assert.equal(beginnerNoCards.profile.businessCardsAllowed, false);
+});
+
+test("kiểu 8+9: sức dồn chi tiêu không suy được từ tổng tháng, theo cả hai hướng", () => {
+  // Chi ÍT, dồn được gần hết.
+  const low = lowSpendCapacity.spend!;
+  assert.equal(typicalAmount(low.monthlyTotal!) * 3, 7_500);
+  assert.equal(typicalAmount(low.minimumSpendCapacity3m!), 3_000);
+
+  // Chi NHIỀU, dồn được rất ít — ca §4.2 gọi là "especially important".
+  const high = highSpendLowCapacity.spend!;
+  assert.equal(typicalAmount(high.monthlyTotal!) * 3, 36_000);
+  assert.equal(typicalAmount(high.minimumSpendCapacity3m!), 2_000);
+  // Tỷ lệ dồn được của hai người chênh nhau 7 lần. Bất kỳ hệ số suy nào cũng
+  // sai nặng ở ít nhất một trong hai.
+  assert.ok(3_000 / 7_500 > 5 * (2_000 / 36_000));
+  assert.deepEqual(errorsIn(highSpendLowCapacity), []);
+});
+
+test("hồ sơ TRỐNG NHẤT có thể vẫn hợp lệ — không có bảng câu hỏi bắt buộc", () => {
+  // Tiêu chí nghiệm thu của Phase 2 nói thẳng: không được bắt người dùng đi
+  // qua một bảng câu hỏi dài. Test này đo điều đó — dựng một trạng thái với
+  // MỌI trường tuỳ chọn để trống và đòi nó hợp lệ.
+  //
+  // Thứ duy nhất còn bắt buộc là: người này muốn gì. Mọi thứ khác — thu nhập,
+  // phí chấp nhận được, thẻ đang giữ, số dư, chi tiêu — đều bỏ trống được, và
+  // mỗi chỗ trống tự khai ra để §30 hỏi khi nó thật sự đổi kết quả.
+  const bare: UserState = {
+    profile: {
+      id: id("u_bare"),
+      country: "CA",
+      province: null,
+      annualPersonalIncome: null,
+      annualHouseholdIncome: null,
+      personalIncomeDeclined: false,
+      householdIncomeDeclined: false,
+      annualFeeTolerancePerCard: null,
+      businessCardsAllowed: null,
+      hasBusiness: null,
+      isStudent: null,
+      createdAt: "2026-09-08",
+      updatedAt: "2026-09-08",
+    },
+    spend: null,
+    cards: [],
+    balances: [],
+    goals: [
+      {
+        id: id("goal_bare"),
+        userId: id("u_bare"),
+        type: "next_card",
+        priority: null,
+        createdAt: "2026-09-08",
+      },
+    ],
+    declared: { cards: false, balances: false },
+  };
+  assert.deepEqual(errorsIn(bare), []);
+  assert.equal(primaryGoal(bare).kind, "resolved");
+  assert.ok(userGaps(bare).length > 0, "hồ sơ trống mà không khai chỗ trống nào");
+});
+
+test("kiểu 10: hồ sơ dở dang vẫn hợp lệ, và nói đúng nó thiếu gì", () => {
+  for (const state of [beginnerUndeclared, nearlyEmpty, vagueEarner]) {
+    assert.deepEqual(errorsIn(state), [], `${state.profile.id} có lỗi`);
+    assert.ok(userGaps(state).length > 0, `${state.profile.id} không khai chỗ trống nào`);
+  }
+  // Và hồ sơ dở dang nhất vẫn trả lời được câu "người này muốn gì".
+  assert.equal(primaryGoal(vagueEarner).kind, "resolved");
+});
+
+test("kiểu 11+12: mục tiêu cụ thể và mục tiêu mơ hồ đều biểu diễn được", () => {
+  const trip = japanTripShortfall.goals[0] as TripGoal;
+  assert.equal(trip.destinationRegion, "JAPAN");
+  assert.equal(trip.cabin, "business");
+  assert.equal(trip.passengers, 2);
+
+  const vague = vagueEarner.goals[0];
+  assert.equal(vague.type, "earn_points");
+  assert.equal(vague.type === "earn_points" ? vague.targetProgramId : "x", null);
+  // "Bất kỳ loại điểm nào" là một CÂU TRẢ LỜI, không phải chỗ trống — §30
+  // không được đem nó ra hỏi lại.
+  assert.ok(!gapKinds(vagueEarner).some((kind) => kind.startsWith("trip_")));
+});
+
+test("cả bốn loại mục tiêu đều có nhân vật dùng tới", () => {
+  // Hai hàm chấm điểm của §10 từng chưa có lấy một đầu vào để chạy thử.
+  const used = new Set(USER_FIXTURES.flatMap((state) => state.goals.map((goal) => goal.type)));
+  assert.deepEqual([...used].sort(), ["diversify", "earn_points", "next_card", "trip"]);
+});
+
+test("không hỏi thứ không ai dùng: tỉnh bang không sinh chỗ trống", () => {
+  // `province` vẫn được LƯU — điều khoản offer của một số ngân hàng viết khác
+  // cho Quebec, và ngày có luật đó thì cần ngay. Nhưng hôm nay không dòng dữ
+  // liệu nào phụ thuộc vào nó, nên khai nó thành chỗ trống là chiếm suất câu
+  // hỏi của những thứ thật sự đổi kết quả (§30) và trừ độ tin cậy không lý do
+  // (§29).
+  assert.equal(nearlyEmpty.profile.province, null);
+  assert.ok(!gapKinds(nearlyEmpty).some((kind) => kind.startsWith("province")));
+
+  const residency = data.eligibilityRules.filter((rule) => rule.ruleType === "residency");
+  assert.ok(residency.length > 0);
+  assert.deepEqual([...new Set(residency.map((rule) => rule.value))], ["CA"]);
+});
+
+test("mọi chỗ trống đều ứng với một thứ Phase 3 THẬT SỰ đọc", () => {
+  // Chốt ngược của test trên, ở dạng tổng quát: một `kind` chỉ được tồn tại
+  // nếu có dữ liệu hoặc quy tắc chấm điểm phụ thuộc vào nó. Danh sách này là
+  // chỗ đặt câu hỏi đó cho từng cái.
+  const justified: Record<UserDataGap["kind"], string> = {
+    goal_missing: "§10 chọn hàm chấm điểm theo loại mục tiêu",
+    goal_priority_ambiguous: "§10 dùng hàm khác nhau cho từng loại",
+    spend_profile_missing: "§10.1 Spend Fit",
+    monthly_total_unknown: "§10.1 Spend Fit",
+    spend_category_unknown: "earning_rates theo hạng mục",
+    minimum_spend_capacity_unknown: "§13 Minimum Spend Fit",
+    annual_fee_tolerance_unknown: "§14 suitability",
+    business_cards_preference_unknown: "§14 suitability, 4 sản phẩm",
+    business_ownership_unknown: "eligibility business_required, 4 sản phẩm",
+    personal_income_unknown: "eligibility minimum_personal_income",
+    household_income_unknown: "eligibility minimum_household_income",
+    personal_income_declined: "như trên, nhưng không hỏi lại được",
+    household_income_declined: "như trên, nhưng không hỏi lại được",
+    student_status_unknown: "eligibility student_status_required",
+    cards_undeclared: "§7 Portfolio Analyzer",
+    balances_undeclared: "§7 Portfolio Analyzer",
+    point_balance_amount_unknown: "§7 số dư trực tiếp",
+    card_closed_date_unknown: "eligibility previous_cardholder_excluded theo thời gian",
+    trip_cabin_unknown: "award_strategies khoá theo cabin",
+    trip_passengers_unknown: "§10.2 Points Gap Reduction nhân theo số người",
+    trip_dates_unknown: "§13 mốc chi có kịp trước chuyến đi không",
+    trip_flexibility_unknown: "§10.2 dành 10% cho Flexibility Value",
+  };
+  // Mọi kind mà `userGaps` sinh ra phải có mặt trong bảng biện minh, và ngược
+  // lại — thêm một kind mà không nói được ai đọc nó là làm dài bảng câu hỏi.
+  const emitted = new Set(USER_FIXTURES.flatMap((state) => gapKinds(state)));
+  for (const kind of emitted) {
+    assert.ok(justified[kind] !== undefined, `chỗ trống "${kind}" không có lý do tồn tại`);
+  }
 });
 
 /* ------------------------------------------------------------------ *

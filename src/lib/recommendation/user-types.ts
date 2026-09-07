@@ -189,7 +189,7 @@ export interface UserProfile {
    */
   annualFeeTolerancePerCard: number | null;
   /**
-   * Có nhận thẻ doanh nghiệp không.
+   * Có MUỐN xét thẻ doanh nghiệp không — SỞ THÍCH, thuộc về suitability (§14).
    *
    * `boolean | null` chứ không phải `boolean` như spec §4.1. Mặc định `false`
    * khi chưa hỏi sẽ im lặng giấu 4 trong 34 sản phẩm (Amex® Business Platinum,
@@ -200,6 +200,22 @@ export interface UserProfile {
    * kết quả.
    */
   businessCardsAllowed: boolean | null;
+  /**
+   * Có doanh nghiệp / thu nhập tự doanh không — ĐIỀU KIỆN, không phải sở thích.
+   *
+   * Tách khỏi `businessCardsAllowed` vì §14 nói eligibility và suitability là
+   * hai khái niệm phải giữ riêng, và gộp chúng ở đây sai theo cả hai hướng.
+   * `EligibilityRule.business_required` là luật `hard` trên 4 sản phẩm: người
+   * trả lời "có, tôi xét thẻ doanh nghiệp" mà không có doanh nghiệp thì vẫn
+   * KHÔNG mở được — engine sẽ khuyên một thứ ngân hàng từ chối. Ngược lại,
+   * người có doanh nghiệp mà không muốn quản thêm một thẻ nữa là chuyện bình
+   * thường, và đó là KHÔNG PHÙ HỢP chứ không phải KHÔNG ĐỦ ĐIỀU KIỆN.
+   *
+   * Spec §31 hỏi một câu duy nhất, nhưng một câu hỏi không bắt buộc phải ánh
+   * xạ thành một trường: `null` mặc định, và §30 chỉ hỏi khi thẻ doanh nghiệp
+   * còn là ứng viên — đúng mẫu của `isStudent`.
+   */
+  hasBusiness: boolean | null;
   /**
    * Đang là sinh viên.
    *
@@ -238,6 +254,11 @@ export interface UserProfile {
  * NHIỀU NHẤT — không có chỗ nào để khai.
  *
  * Hạng mục VẮNG MẶT = chưa biết, KHÔNG phải bằng không.
+ *
+ * HỢP ĐỒNG: các hạng mục RỜI NHAU. `dining` không bao gồm `food_delivery`,
+ * `travel` không bao gồm `hotel` hay `airline_direct`. Người dùng khai chồng
+ * lấn thì engine đếm đôi cùng một đồng, và validator chỉ bắt được khi tổng
+ * vượt `monthlyTotal` — nên khi hỏi, phải hỏi theo cách loại trừ nhau.
  */
 export interface UserSpendProfile {
   userId: UserId;
@@ -463,12 +484,12 @@ export interface UserDataGap {
     | "minimum_spend_capacity_unknown"
     | "annual_fee_tolerance_unknown"
     | "business_cards_preference_unknown"
+    | "business_ownership_unknown"
     | "personal_income_unknown"
     | "household_income_unknown"
     | "personal_income_declined"
     | "household_income_declined"
     | "student_status_unknown"
-    | "province_unknown"
     | "goal_priority_ambiguous"
     | "cards_undeclared"
     | "balances_undeclared"

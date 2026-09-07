@@ -340,7 +340,7 @@ người dùng mã hoá kết quả thì engine ở Phase 3 hết tất định.
 | `user-gaps.ts` | Suy ra chỗ chưa biết, máy đọc được |
 | `user-validate.ts` | Ở database thì đây là FK + CHECK |
 | `user-source.ts` | `UserDataSource` — cửa duy nhất engine đọc trạng thái người dùng |
-| `data/user-fixtures.ts` | 10 nhân vật bám sát bộ test §32 |
+| `data/user-fixtures.ts` | 13 nhân vật: bộ test §32 + 12 kiểu người dùng khác hẳn nhau |
 
 ### Chưa chọn database, và không cần chọn để làm xong Phase 2
 
@@ -457,6 +457,35 @@ là `GoalId` — một chuỗi sinh lúc lưu — và §10 dùng hàm chấm đi
 từng loại mục tiêu, nên id đó đổi luôn cả khuyến nghị. `ambiguous` để Phase 3
 hỏi người dùng xếp thứ tự, hoặc chạy cả hai rồi trình bày song song.
 
+### Không hỏi thứ không ai đọc
+
+Tiêu chí Phase 2 có hai vế, và vế thứ hai dễ quên: mô hình phải biểu diễn đủ,
+**và không được bắt thu thập thứ Phase 3 không cần**. Hai luật rút ra:
+
+- **Trạng thái hợp lệ tối thiểu chỉ cần MỘT câu trả lời: người này muốn gì.**
+  Thu nhập, phí chấp nhận được, thẻ đang giữ, số dư, chi tiêu — bỏ trống hết
+  vẫn hợp lệ. Có test dựng đúng hồ sơ trống nhất đó và đòi nó sạch.
+- **Một `UserDataGap` chỉ được tồn tại nếu có dữ liệu hoặc quy tắc chấm điểm
+  THẬT SỰ đọc nó.** Chỗ trống không chặn điều gì mà vẫn khai ra là chiếm suất
+  câu hỏi của những thứ đổi được kết quả (§30) và trừ độ tin cậy không lý do
+  (§29). `province` là ca đầu tiên rơi vào luật này: trường vẫn được lưu (điều
+  khoản một số ngân hàng viết khác cho Quebec, ngày có luật đó thì cần ngay),
+  nhưng hôm nay cả 34 luật `residency` đều là `"CA"` — không luật nào theo tỉnh
+  bang — nên nó KHÔNG sinh chỗ trống. Một test khoá từng `kind` với lý do tồn
+  tại của nó.
+
+### Sở thích và điều kiện là hai trường khác nhau
+
+`businessCardsAllowed` = có MUỐN xét thẻ doanh nghiệp không (suitability, §14).
+`hasBusiness` = có doanh nghiệp không (eligibility, `business_required` — luật
+`hard` trên 4 sản phẩm). Gộp lại thì sai theo cả hai hướng: người muốn xét mà
+không có doanh nghiệp sẽ được khuyên một thẻ ngân hàng từ chối, còn người có
+doanh nghiệp mà không muốn thêm thẻ bị đánh dấu KHÔNG ĐỦ ĐIỀU KIỆN thay vì
+KHÔNG PHÙ HỢP. §14 tách hai khái niệm đó đúng vì thế.
+
+Spec §31 hỏi một câu, nhưng một câu hỏi không bắt buộc phải ánh xạ thành một
+trường — cả hai mặc định `null` và chỉ hỏi khi thẻ doanh nghiệp còn là ứng viên.
+
 ### Chuyến đi dùng VÙNG
 
 `TripGoal.destinationRegion` bắt buộc, sân bay không. `originRegion` để `null` thì
@@ -515,11 +544,17 @@ của goal ra là test đỏ, nêu đích danh `goal.priority`.
 dòng số dư, một test kiểm không trường nào ngoài `cards` nhắc tới một `ProductId`
 — thêm `preferredProductId` vào hồ sơ sẽ làm nó đỏ.
 
+Nhưng test chỉ chạy trên fixture, mà dữ liệu thật tới từ database. Nên
+`checkKeys` cưỡng chế cả hai luật **lúc chạy**: bộ khoá của mỗi dòng phải khớp
+ĐÚNG danh sách, nên một `loyaltyAccountNumber` hay `preferredProductId` lọt vào
+từ JSON là một dòng LỖI, không phải một trường được lưu im lặng rồi giao cho
+Phase 3.
+
 ## Chạy gì
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # 149 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng
+npm run test:reco         # 160 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng
 ```
 
 `audit:reco-data` bắt ba lớp lỗi:
