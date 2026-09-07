@@ -889,3 +889,53 @@ test("id sinh từ ngày hiệu lực của chính dòng, không từ hằng c�
     );
   }
 });
+
+test("trạng thái bất khả thi bị chặn, không đi được vào engine", () => {
+  const bad = <K extends keyof typeof BASE>(key: K, row: unknown, needle: string) => {
+    const rows = BASE[key] as unknown[];
+    const broken = { ...BASE, [key]: [row, ...rows.slice(1)] } as typeof BASE;
+    assert.ok(
+      errorsIn(broken).some((e) => e.includes(needle)),
+      `phải chặn: ${needle}`,
+    );
+  };
+
+  const income = BASE.eligibilityRules.find((r) => r.ruleType === "minimum_personal_income")!;
+  bad("eligibilityRules", { ...income, value: "60000" }, "phải mang giá trị SỐ");
+  bad("eligibilityRules", { ...income, value: -1 }, "ngưỡng thu nhập âm");
+  bad("eligibilityRules", { ...income, operator: "lte" }, "chỉ dùng toán tử gte");
+
+  const flag = BASE.eligibilityRules.find((r) => r.ruleType === "previous_cardholder_excluded")!;
+  bad("eligibilityRules", { ...flag, value: "có" }, "phải mang giá trị boolean");
+
+  // Quyền lợi mang số nhưng loại của nó không có đơn vị → con số không so được.
+  const noUnit = BASE.benefits.find((b) => b.unit === null)!;
+  const withNumber = { ...BASE.productBenefits[0], benefitId: noUnit.id, numericValue: 4 };
+  bad("productBenefits", withNumber, "không khai đơn vị");
+
+  const uncapped = BASE.earningRates.find((r) => r.capId === null)!;
+  bad("earningRates", { ...uncapped, rateAfterCap: 1 }, "không có trần nào");
+
+  const strategy = BASE.awardStrategies[0];
+  bad(
+    "awardStrategies",
+    { ...strategy, pointsLow: null, pointsTypical: null, pointsHigh: null },
+    "không có con số nào",
+  );
+});
+
+test("id trùng bị bắt ở MỌI thực thể, kể cả earning_caps", () => {
+  for (const key of [
+    "products", "productFees", "offers", "offerComponents", "earningRates",
+    "earningCaps", "productBenefits", "eligibilityRules", "transferPaths",
+    "awardStrategies", "programValuations", "productFamilies",
+  ] as const) {
+    const rows = BASE[key] as { id: string }[];
+    if (rows.length === 0) continue;
+    const broken = { ...BASE, [key]: [rows[0], ...rows] } as typeof BASE;
+    assert.ok(
+      errorsIn(broken).some((e) => e.includes("Id trùng") || e.includes("chồng thời gian")),
+      `${key}: phải bắt được id trùng`,
+    );
+  }
+});

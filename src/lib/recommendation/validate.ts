@@ -145,6 +145,7 @@ export function validateDataset(
   checkUniqueIds(data.productFees, "product_fees", issues);
   checkUniqueIds(data.productFamilies, "product_families", issues);
   checkUniqueIds(data.programValuations, "program_valuations", issues);
+  checkUniqueIds(data.earningCaps, "earning_caps", issues);
 
   checkRef(data.products, "issuerId", (r: { issuerId: string }) => r.issuerId, issuerIds, "products", issues);
   checkRef(data.products, "pointsProgramId", (r: { pointsProgramId: string | null }) => r.pointsProgramId, programIds, "products", issues);
@@ -171,6 +172,7 @@ export function validateDataset(
   checkTemporal(data.awardStrategies, "award_strategies", issues);
   checkTemporal(data.productFees, "product_fees", issues);
   checkTemporal(data.programValuations, "program_valuations", issues);
+  checkTemporal(data.earningCaps, "earning_caps", issues);
 
   // Slug phải là duy nhất: nó là khoá nối sang Contentful, và hai sản phẩm
   // cùng slug nghĩa là một trong hai sẽ im lặng bị bỏ qua ở mọi phép tra.
@@ -866,6 +868,92 @@ export function validateDataset(
             `kiểm lại hoặc đánh dấu confidence: "stale"`,
         });
       }
+    }
+  }
+
+  // ---- Trạng thái BẤT KHẢ THI mà kiểu dữ liệu vẫn cho phép -----------------
+  //
+  // Mỗi phép kiểm dưới đây chặn một dòng dữ liệu hợp lệ về KIỂU nhưng vô nghĩa
+  // về NGHĨA. Ở database chúng là `CHECK`. Không có chúng thì một lần gõ nhầm
+  // đi thẳng vào engine và ra một con số về tiền.
+
+  // Giá trị của luật điều kiện phải khớp LOẠI luật. Kiểu khai
+  // `number | string | string[] | boolean` cho mọi loại, nên "60000" (chuỗi)
+  // hay `true` ở chỗ đáng lẽ là ngưỡng thu nhập đều lọt — rồi phép so `gte`
+  // của Phase 3 so chuỗi với số và cho ra kết quả tuỳ hứng.
+  for (const rule of data.eligibilityRules) {
+    const numeric = rule.ruleType === "minimum_personal_income" || rule.ruleType === "minimum_household_income";
+    const boolish =
+      rule.ruleType === "existing_cardholder_excluded" ||
+      rule.ruleType === "previous_cardholder_excluded" ||
+      rule.ruleType === "business_required" ||
+      rule.ruleType === "student_status_required";
+    if (numeric && typeof rule.value !== "number") {
+      issues.push({
+        level: "error",
+        entity: "eligibility_rules",
+        message: `${rule.id}: ${rule.ruleType} phải mang giá trị SỐ, đang là ${typeof rule.value}`,
+      });
+    }
+    if (numeric && typeof rule.value === "number" && rule.value < 0) {
+      issues.push({
+        level: "error",
+        entity: "eligibility_rules",
+        message: `${rule.id}: ngưỡng thu nhập âm`,
+      });
+    }
+    if (boolish && typeof rule.value !== "boolean") {
+      issues.push({
+        level: "error",
+        entity: "eligibility_rules",
+        message: `${rule.id}: ${rule.ruleType} phải mang giá trị boolean`,
+      });
+    }
+    if (numeric && rule.operator !== "gte") {
+      issues.push({
+        level: "error",
+        entity: "eligibility_rules",
+        message: `${rule.id}: ngưỡng thu nhập chỉ dùng toán tử gte`,
+      });
+    }
+  }
+
+  // Một con số không có đơn vị là một con số không so được với gì. Đơn vị nằm
+  // trên `Benefit`, nên quyền lợi có `numericValue` mà loại của nó không khai
+  // đơn vị là một cặp không đọc được.
+  const unitByBenefit = new Map(data.benefits.map((b) => [b.id as string, b.unit]));
+  for (const pb of data.productBenefits) {
+    if (pb.numericValue === null) continue;
+    if (unitByBenefit.get(pb.benefitId) == null) {
+      issues.push({
+        level: "error",
+        entity: "product_benefits",
+        message: `${pb.id}: có numericValue ${pb.numericValue} nhưng loại quyền lợi không khai đơn vị`,
+      });
+    }
+  }
+
+  // `rateAfterCap` không có trần thì không bao giờ áp dụng — dòng dữ liệu nói
+  // một điều không xảy ra, và người đọc sau sẽ tưởng tỷ lệ này có giới hạn.
+  for (const rate of data.earningRates) {
+    if (rate.capId === null && rate.rateAfterCap !== null) {
+      issues.push({
+        level: "error",
+        entity: "earning_rates",
+        message: `${rate.id}: có rateAfterCap nhưng không có trần nào`,
+      });
+    }
+  }
+
+  // Award strategy không có con số nào thì không nói được gì, và engine sẽ so
+  // số dư với `null`.
+  for (const strategy of data.awardStrategies) {
+    if (strategy.pointsLow === null && strategy.pointsTypical === null && strategy.pointsHigh === null) {
+      issues.push({
+        level: "error",
+        entity: "award_strategies",
+        message: `${strategy.id}: không có con số nào — hãy khai vào UNQUOTABLE_AWARD_PROGRAMS thay vì để trống`,
+      });
     }
   }
 
