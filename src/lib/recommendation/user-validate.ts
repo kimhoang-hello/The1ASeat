@@ -36,7 +36,11 @@ function checkAmount(
   entity: string,
   issues: ValidationIssue[],
 ): void {
-  if (amount === null || amount === undefined) return;
+  // `== null` bắt CẢ `undefined`. Validator này tồn tại vì dữ liệu tới từ
+  // database hoặc JSON, nơi một trường mới thêm sẽ vắng mặt ở mọi dòng cũ —
+  // và `undefined !== null` là đúng, nên một phép so nghiêm ngặt sẽ đi tiếp
+  // rồi ném `TypeError` thay vì báo lỗi dữ liệu.
+  if (amount == null) return;
   if (!Number.isFinite(amount.low) || amount.low < 0) {
     issues.push({ level: "error", entity, message: `${label}: cận dưới không hợp lệ (${amount.low})` });
   }
@@ -91,7 +95,7 @@ export function validateUserState(
   checkAmount(profile.annualHouseholdIncome, "annualHouseholdIncome", P, issues);
   const personal = profile.annualPersonalIncome;
   const household = profile.annualHouseholdIncome;
-  if (personal !== null && household !== null && household.high !== null && household.high < personal.low) {
+  if (personal != null && household != null && household.high != null && household.high < personal.low) {
     // Hộ gia đình bao gồm chính người đó, nên thu nhập hộ KHÔNG thể thấp hơn
     // thu nhập cá nhân. Chỉ báo khi chắc chắn — hai khoảng chồng lấn là bình
     // thường và không nói lên điều gì.
@@ -100,6 +104,24 @@ export function validateUserState(
       entity: P,
       message: `Thu nhập hộ gia đình (≤${household.high}) thấp hơn thu nhập cá nhân (≥${personal.low})`,
     });
+  }
+  for (const [label, value] of [
+    ["businessCardsAllowed", profile.businessCardsAllowed],
+    ["isStudent", profile.isStudent],
+  ] as const) {
+    // Cùng lớp lỗi với `status` gõ sai: chuỗi `"false"` đi qua sạch rồi
+    // Phase 3 đọc bằng truthiness và hiểu ngược lại. TypeScript không có mặt
+    // lúc chạy, nên nó không bảo vệ dữ liệu đọc từ database hay JSON.
+    if (value !== null && typeof value !== "boolean") {
+      issues.push({ level: "error", entity: P, message: `${label} phải là boolean hoặc null (nhận "${String(value)}")` });
+    }
+  }
+  if (typeof profile.incomeDeclined !== "boolean") {
+    issues.push({ level: "error", entity: P, message: "incomeDeclined phải là boolean" });
+  } else if (profile.incomeDeclined && (personal != null || household != null)) {
+    // Từ chối nói mà vẫn có số là hai câu trả lời mâu thuẫn; giữ cả hai thì
+    // không nói được cái nào là thật.
+    issues.push({ level: "error", entity: P, message: "incomeDeclined = true nhưng vẫn có số thu nhập" });
   }
   if (profile.annualFeeTolerancePerCard !== null) {
     const fee = profile.annualFeeTolerancePerCard;
@@ -200,6 +222,12 @@ export function validateUserState(
         });
       }
     }
+  }
+  if (typeof state.declared.cards !== "boolean" || typeof state.declared.balances !== "boolean") {
+    // `declared` là thứ tách "tôi chưa có thẻ nào" khỏi "tôi bấm bỏ qua".
+    // Chuỗi `"false"` ở đây là truthy, nên nó lặng lẽ biến "chưa hỏi" thành
+    // "đã khai" — đúng phân biệt mà cả mô hình dựng lên để giữ.
+    issues.push({ level: "error", entity: C, message: "declared.cards và declared.balances phải là boolean" });
   }
   if (state.cards.length > 0 && !state.declared.cards) {
     issues.push({

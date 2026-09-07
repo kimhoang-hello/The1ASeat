@@ -22,6 +22,7 @@ import {
   japanTripShortfall,
   lowSpendCapacity,
   nearlyEmpty,
+  studentStarter,
   USER_FIXTURES,
 } from "./data/user-fixtures.ts";
 import { userGaps } from "./user-gaps.ts";
@@ -33,6 +34,7 @@ import {
   isExactAmount,
   typicalAmount,
   type UserCardId,
+  type UserDataGap,
   type UserState,
 } from "./user-types.ts";
 import {
@@ -61,7 +63,11 @@ function broken(base: UserState, mutate: (state: UserState) => void): UserState 
   return copy;
 }
 
-function gapKinds(state: UserState): string[] {
+// Kiểu trả về là union của `kind`, KHÔNG phải `string[]`. Đổi tên một `kind`
+// mà quên sửa test thì `includes("ten_cu")` sẽ là lỗi biên dịch chứ không phải
+// một phép so luôn-sai chạy xanh mãi mãi — đúng chuyện đã xảy ra khi
+// `income_unknown` tách làm hai.
+function gapKinds(state: UserState): UserDataGap["kind"][] {
   return userGaps(state).map((gap) => gap.kind);
 }
 
@@ -478,16 +484,79 @@ test("nhiều mục tiêu cùng mức ưu tiên là AMBIGUOUS, không phải ch�
   assert.ok(!gapKinds(ranked).includes("goal_priority_ambiguous"));
 });
 
+/** Trạng thái có NHIỀU dòng sinh chỗ trống ở cả ba vòng lặp. Bản `nearlyEmpty`
+ *  gốc chỉ có một dòng mỗi loại, nên đảo nó lại không chứng minh được gì —
+ *  phép kiểm thứ tự sẽ xanh cả khi bỏ hết lệnh sắp xếp. */
+function manyGapRows(): UserState {
+  return broken(nearlyEmpty, (state) => {
+    for (const slug of ["amex-cobalt", "td-aeroplan-visa-infinite"]) {
+      state.cards.push({
+        id: id<UserCardId>(`uc_u_sparse_${slug}`),
+        userId: state.profile.id,
+        productId: productIdFor(slug),
+        status: "previously_held",
+        openedDate: null,
+        closedDate: null,
+      });
+    }
+    for (const program of ["amex-mr", "avios"]) {
+      state.balances.push({
+        userId: state.profile.id,
+        programId: id(program),
+        balance: null,
+        updatedAt: "2026-09-08",
+      });
+    }
+    for (const [suffix, region] of [
+      ["a", "EUROPE"],
+      ["b", "EAST_ASIA"],
+    ] as const) {
+      state.goals.push({
+        id: id(`goal_trip_${suffix}`),
+        userId: state.profile.id,
+        type: "trip",
+        priority: null,
+        createdAt: "2026-09-08",
+        originRegion: null,
+        originAirport: null,
+        destinationRegion: region,
+        destinationAirport: null,
+        cabin: null,
+        passengers: null,
+        travelStart: null,
+        travelEnd: null,
+        flexibility: null,
+      });
+    }
+  });
+}
+
 test("chỗ trống không đổi khi database trả về các dòng theo thứ tự khác", () => {
   // `userGaps` hứa thứ tự cố định. Nếu nó duyệt theo thứ tự mảng thì lời hứa
   // đó chỉ đúng khi truy vấn tình cờ trả về cùng một thứ tự — và Phase 4 sẽ
   // báo có thay đổi ở nơi không có gì thay đổi.
-  const shuffled = broken(flexiblePointsSufficient, (s) => {
+  const base = manyGapRows();
+  const shuffled = broken(base, (s) => {
     s.cards.reverse();
     s.balances.reverse();
     s.goals.reverse();
   });
-  assert.deepEqual(userGaps(shuffled), userGaps(flexiblePointsSufficient));
+  assert.deepEqual(userGaps(shuffled), userGaps(base));
+});
+
+test("chỗ trống của mỗi bộ sưu tập ra theo thứ tự khoá đã sắp", () => {
+  // Phép kiểm thật sự chặn việc bỏ lệnh sắp xếp: so với chính danh sách đã
+  // sắp, chứ không chỉ so hai lần chạy với nhau.
+  const gaps = userGaps(manyGapRows());
+  for (const kind of [
+    "card_closed_date_unknown",
+    "point_balance_amount_unknown",
+    "trip_cabin_unknown",
+  ] as const) {
+    const subjects = gaps.filter((gap) => gap.kind === kind).map((gap) => gap.subject);
+    assert.ok(subjects.length >= 2, `${kind} phải có ít nhất 2 dòng thì phép kiểm mới có nghĩa`);
+    assert.deepEqual(subjects, [...subjects].sort(), `${kind} ra không đúng thứ tự`);
+  }
 });
 
 /* ------------------------------------------------------------------ *
@@ -553,11 +622,63 @@ test("cùng một trạng thái cho cùng một danh sách chỗ trống", () =>
 
 test("hồ sơ đầy đủ nhất vẫn nói ra đúng chỗ nó thiếu", () => {
   const kinds = gapKinds(aeroplanHeavy);
-  assert.ok(!kinds.includes("income_unknown"));
+  assert.ok(!kinds.includes("personal_income_unknown"));
   assert.ok(!kinds.includes("annual_fee_tolerance_unknown"));
   assert.ok(!kinds.includes("business_cards_preference_unknown"));
   // Vẫn thiếu phần lớn hạng mục chi tiêu — và nói ra.
   assert.ok(kinds.includes("spend_category_unknown"));
+});
+
+test("giá trị boolean gõ sai bị bắt, không đi qua bằng truthiness", () => {
+  const state = broken(aeroplanHeavy, (s) => {
+    s.profile.isStudent = "false" as never;
+    s.declared.balances = "false" as never;
+  });
+  const errors = errorsIn(state);
+  assert.ok(errors.some((message) => message.includes("isStudent")));
+  assert.ok(errors.some((message) => message.includes("declared.cards và declared.balances")));
+});
+
+test("trường thu nhập vắng mặt cho ra LỖI DỮ LIỆU, không phải TypeError", () => {
+  // Dữ liệu từ database hay JSON thiếu một trường mới thêm sẽ là `undefined`,
+  // và `undefined !== null` là đúng — phép so nghiêm ngặt sẽ đi tiếp rồi ném.
+  const state = broken(aeroplanHeavy, (s) => {
+    delete (s.profile as Partial<typeof s.profile>).annualHouseholdIncome;
+  });
+  assert.doesNotThrow(() => validateUserState(state, data));
+});
+
+test("từ chối nói thu nhập khác chưa hỏi thu nhập", () => {
+  assert.ok(gapKinds(studentStarter).includes("income_declined"));
+  // Và KHÔNG sinh chỗ trống hỏi được, nếu không §30 sẽ hỏi lại mãi đúng điều
+  // người dùng vừa từ chối.
+  assert.ok(!gapKinds(studentStarter).includes("personal_income_unknown"));
+  assert.ok(!gapKinds(studentStarter).includes("household_income_unknown"));
+  assert.ok(gapKinds(nearlyEmpty).includes("personal_income_unknown"));
+
+  const contradictory = broken(studentStarter, (s) => {
+    s.profile.annualPersonalIncome = amountRange(20_000, 30_000);
+  });
+  assert.ok(errorsIn(contradictory).some((message) => message.includes("incomeDeclined")));
+});
+
+test("nhánh ĐỦ điều kiện của luật sinh viên biểu diễn được", () => {
+  assert.equal(studentStarter.profile.isStudent, true);
+  const rule = data.eligibilityRules.find(
+    (row) =>
+      row.productId === productIdFor("scotiabank-scene-plus-visa-students") &&
+      row.ruleType === "student_status_required",
+  );
+  assert.ok(rule !== undefined, "luật student_status_required phải có trong seed");
+  assert.equal(rule.severity, "hard");
+});
+
+test("mức linh hoạt chưa biết là chỗ trống — §10.2 cho nó 10% điểm", () => {
+  const state = broken(japanTripFunded, (s) => {
+    (s.goals[0] as TripGoal).flexibility = null;
+  });
+  assert.ok(gapKinds(state).includes("trip_flexibility_unknown"));
+  assert.ok(!gapKinds(japanTripFunded).includes("trip_flexibility_unknown"));
 });
 
 /* ------------------------------------------------------------------ *

@@ -156,6 +156,19 @@ export interface UserProfile {
    */
   annualHouseholdIncome: EstimatedAmount | null;
   /**
+   * Người dùng đã TỪ CHỐI nói thu nhập.
+   *
+   * Spec §4.1 liệt kê "Prefer not to say" là một lựa chọn thật, và nó KHÁC
+   * "chưa hỏi" — cả hai đều để hai trường thu nhập ở `null`, nhưng chỉ một
+   * trong hai còn đi hỏi được. Không tách ra thì bảng câu hỏi thích ứng của
+   * §30 sẽ mãi mãi chọn thu nhập làm câu hỏi đáng giá nhất và hỏi lại đúng
+   * điều người dùng vừa từ chối.
+   *
+   * Cùng một luật với `declared` ở `UserState`, chỉ ở mức trường thay vì mức
+   * bộ sưu tập: câu trả lời "tôi không muốn nói" là một câu trả lời.
+   */
+  incomeDeclined: boolean;
+  /**
    * Phí thường niên tối đa chấp nhận được CHO MỘT THẺ, CAD.
    *
    * Spec §4.1 gọi nó là `annual_fee_tolerance` mà không nói mỗi thẻ hay cả ví.
@@ -446,6 +459,7 @@ export interface UserDataGap {
     | "business_cards_preference_unknown"
     | "personal_income_unknown"
     | "household_income_unknown"
+    | "income_declined"
     | "student_status_unknown"
     | "province_unknown"
     | "goal_priority_ambiguous"
@@ -455,7 +469,8 @@ export interface UserDataGap {
     | "card_closed_date_unknown"
     | "trip_cabin_unknown"
     | "trip_passengers_unknown"
-    | "trip_dates_unknown";
+    | "trip_dates_unknown"
+    | "trip_flexibility_unknown";
   /** Id hoặc khoá của thứ còn thiếu — người dùng, hạng mục, chương trình, thẻ. */
   subject: string;
   /** Dành cho NGƯỜI đọc. Engine dùng `kind`. */

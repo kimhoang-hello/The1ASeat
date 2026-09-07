@@ -52,7 +52,15 @@ export function userGaps(state: UserState): UserDataGap[] {
     });
   }
 
-  if (profile.annualPersonalIncome === null) {
+  if (profile.incomeDeclined) {
+    // Vẫn là chỗ chưa biết — nhưng là chỗ KHÔNG hỏi được. Phase 3 phải hạ độ
+    // tin cậy vĩnh viễn ở đây thay vì xếp nó thành câu hỏi tiếp theo (§30).
+    gaps.push({
+      kind: "income_declined",
+      subject: profile.id,
+      reason: "Người dùng từ chối nói thu nhập. Đừng hỏi lại; hãy hạ độ tin cậy của mọi kết luận dựa vào điều kiện thu nhập.",
+    });
+  } else if (profile.annualPersonalIncome === null) {
     gaps.push({
       kind: "personal_income_unknown",
       subject: profile.id,
@@ -60,7 +68,7 @@ export function userGaps(state: UserState): UserDataGap[] {
         "Chưa biết khoảng thu nhập cá nhân. Không đánh giá được điều kiện thu nhập, nên phải coi là CHƯA BIẾT chứ không được coi là đạt.",
     });
   }
-  if (profile.annualHouseholdIncome === null) {
+  if (!profile.incomeDeclined && profile.annualHouseholdIncome === null) {
     gaps.push({
       kind: "household_income_unknown",
       subject: profile.id,
@@ -196,6 +204,14 @@ export function userGaps(state: UserState): UserDataGap[] {
         subject: goal.id,
         reason:
           "Chưa biết số người bay. Mặc định 1 sẽ chia nhỏ số điểm cần và làm NO_NEW_CARD thắng nhờ một giả định.",
+      });
+    }
+    if (goal.flexibility === null) {
+      gaps.push({
+        kind: "trip_flexibility_unknown",
+        subject: goal.id,
+        reason:
+          "Chưa biết mức linh hoạt của chuyến đi. §10.2 dành 10% điểm cho Flexibility Value, nên mặc định 'medium' là tự cho điểm một thứ chưa ai nói.",
       });
     }
     if (goal.travelStart === null && goal.travelEnd === null) {

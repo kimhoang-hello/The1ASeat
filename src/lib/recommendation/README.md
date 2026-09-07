@@ -20,9 +20,16 @@ Dữ liệu Phase 1 là dữ liệu THAM CHIẾU do biên tập viên duy trì t
 nói thẳng là V1 không scrape. Thứ nó cần là lịch sử đọc được và một vòng review
 trước khi lên site. Đó đúng là thứ git cho sẵn.
 
-Phase 2 (hồ sơ người dùng, thẻ đang giữ, số dư điểm) thì bắt buộc phải có
-database thật. Vì vậy mọi thứ đi qua `RecommendationDataSource` trong
-[`source.ts`](source.ts): đổi implementation ở đó, engine không đụng một dòng.
+Dữ liệu người dùng của Phase 2 (hồ sơ, thẻ đang giữ, số dư điểm) **rốt cuộc sẽ
+phải có database thật** — nó không nằm trong git được. Nhưng "rốt cuộc" không
+phải "ngay bây giờ": Phase 2 đã dựng xong mà chưa chọn chỗ lưu, vì việc của nó
+là MÔ HÌNH và mô hình không đổi theo chỗ lưu (xem mục "Phase 2" bên dưới).
+Chọn chỗ lưu là việc phải xong **trước Phase 5**.
+
+Cả hai lớp đều đi qua một cửa duy nhất — `RecommendationDataSource` trong
+[`source.ts`](source.ts) cho dữ liệu sản phẩm, `UserDataSource` trong
+[`user-source.ts`](user-source.ts) cho dữ liệu người dùng: đổi implementation ở
+đó, engine không đụng một dòng.
 
 ## Nối với Contentful
 
@@ -333,7 +340,7 @@ người dùng mã hoá kết quả thì engine ở Phase 3 hết tất định.
 | `user-gaps.ts` | Suy ra chỗ chưa biết, máy đọc được |
 | `user-validate.ts` | Ở database thì đây là FK + CHECK |
 | `user-source.ts` | `UserDataSource` — cửa duy nhất engine đọc trạng thái người dùng |
-| `data/user-fixtures.ts` | 9 nhân vật bám sát bộ test §32 |
+| `data/user-fixtures.ts` | 10 nhân vật bám sát bộ test §32 |
 
 ### Chưa chọn database, và không cần chọn để làm xong Phase 2
 
@@ -401,6 +408,12 @@ hoặc loại thẳng đúng những người vế kia sinh ra để cứu.
 `hard` có thật trong bộ dữ liệu. Không có trường thì hoặc loại thẻ sinh viên
 khỏi cả sinh viên, hoặc khuyên nó cho người bốn mươi lăm tuổi.
 
+`incomeDeclined` là câu trả lời "tôi không muốn nói" của spec §4.1, tách khỏi
+"chưa hỏi": cả hai để hai trường thu nhập ở `null`, nhưng chỉ một trong hai còn
+đi hỏi lại được. Không tách thì §30 sẽ mãi chọn thu nhập làm câu hỏi đáng giá
+nhất và hỏi lại đúng điều người dùng vừa từ chối. Cùng luật với `declared`, chỉ
+ở mức trường thay vì mức bộ sưu tập.
+
 Cả hai đều mặc định `null` và **không cần hỏi trước**: chúng chỉ đổi kết quả
 trong những ca cụ thể, nên chúng là câu hỏi §30 điển hình — hỏi lúc câu trả
 lời quyết định điều gì đó.
@@ -453,6 +466,16 @@ Spec §4.4 cấm lưu số tài khoản loyalty, và ở đây điều đó đư
 buộc `^[A-Z]{3}$`. Không có tên, email, ngày sinh; `UserId` là khoá vô nghĩa.
 Thu nhập là khoảng chứ không phải con số.
 
+### Validator phải chịu được dữ liệu KHÔNG đúng kiểu
+
+TypeScript vắng mặt lúc chạy, còn dữ liệu tới từ database hoặc JSON. Nên
+`validateUserState` kiểm cả những thứ kiểu đã hứa: `status` thuộc đúng ba giá
+trị, `businessCardsAllowed`/`isStudent`/`incomeDeclined`/`declared.*` là
+boolean thật (chuỗi `"false"` là truthy — nó lặng lẽ đảo ngược câu trả lời), và
+mọi phép so `null` dùng `== null` để bắt cả `undefined`: một trường mới thêm sẽ
+vắng mặt ở mọi dòng cũ, và `undefined !== null` là đúng, nên phép so nghiêm ngặt
+sẽ đi tiếp rồi ném `TypeError` thay vì báo lỗi dữ liệu.
+
 `user.test.ts` chốt hai luật này bằng cấu trúc: một test kiểm bộ khoá của mọi
 dòng số dư, một test kiểm không trường nào ngoài `cards` nhắc tới một `ProductId`
 — thêm `preferredProductId` vào hồ sơ sẽ làm nó đỏ.
@@ -461,7 +484,7 @@ dòng số dư, một test kiểm không trường nào ngoài `cards` nhắc t�
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # 138 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng
+npm run test:reco         # 144 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng
 ```
 
 `audit:reco-data` bắt ba lớp lỗi:

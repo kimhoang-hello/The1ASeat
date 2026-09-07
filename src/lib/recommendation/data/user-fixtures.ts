@@ -49,6 +49,7 @@ function profileOf(slug: string, overrides: Partial<UserProfile> = {}): UserProf
     province: "ON",
     annualPersonalIncome: null,
     annualHouseholdIncome: null,
+    incomeDeclined: false,
     annualFeeTolerancePerCard: null,
     businessCardsAllowed: null,
     isStudent: null,
@@ -423,6 +424,39 @@ export const nearlyEmpty: UserState = {
   declared: { cards: true, balances: true },
 };
 
+/* ------------------------------------------------------------------ *
+ * Sinh viên — nhánh eligible của `student_status_required`
+ * ------------------------------------------------------------------ */
+
+/**
+ * Sinh viên, thu nhập thấp, và TỪ CHỐI nói con số.
+ *
+ * Hai thứ chỉ nhân vật này có. `isStudent: true` là nhánh ĐỦ điều kiện của
+ * `student_status_required` — không có nó thì mọi nhân vật đều rơi vào nhánh
+ * loại trừ, và luật kia chưa từng được thử theo hướng nó sinh ra để phục vụ.
+ *
+ * `incomeDeclined: true` là câu trả lời "tôi không muốn nói" của spec §4.1,
+ * khác "chưa hỏi": cả hai để hai trường thu nhập ở `null`, nhưng chỉ một trong
+ * hai còn đi hỏi lại được.
+ */
+export const studentStarter: UserState = {
+  profile: profileOf("u_student", {
+    incomeDeclined: true,
+    annualFeeTolerancePerCard: 0,
+    businessCardsAllowed: false,
+    isStudent: true,
+  }),
+  spend: spendOf("u_student", {
+    monthlyTotal: exactAmount(900),
+    byCategory: { grocery: exactAmount(300), dining: exactAmount(200), transit: exactAmount(80) },
+    minimumSpendCapacity3m: exactAmount(1_000),
+  }),
+  cards: [],
+  balances: [],
+  goals: [goalOf("u_student", { type: "next_card", priority: 1 })],
+  declared: { cards: true, balances: true },
+};
+
 /** Mọi nhân vật, để test quét một lượt. */
 export const USER_FIXTURES: UserState[] = [
   beginnerNoCards,
@@ -434,4 +468,5 @@ export const USER_FIXTURES: UserState[] = [
   duplicateBagBenefit,
   flexiblePointsSufficient,
   nearlyEmpty,
+  studentStarter,
 ];

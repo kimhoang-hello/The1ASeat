@@ -51,9 +51,10 @@ có database nào. Dữ liệu Phase 1 là dữ liệu **tham chiếu do biên t
 trì tay** (spec §23 cấm scrape ở V1), nên thứ nó cần là lịch sử đọc được và một
 vòng review trước khi lên site — đúng thứ git cho sẵn.
 
-`RecommendationDataSource` trong `source.ts` là **cửa duy nhất** engine đọc qua.
-Phase 2 bắt buộc phải có DB thật → viết một implementation thứ hai, engine không
-đụng một dòng.
+`RecommendationDataSource` trong `source.ts` là **cửa duy nhất** engine đọc dữ
+liệu sản phẩm; `UserDataSource` trong `user-source.ts` là cửa cho dữ liệu người
+dùng. Dữ liệu người dùng rốt cuộc phải có DB thật, nhưng Phase 2 đã xong mà
+chưa cần chọn — xem §8.1. Chọn chỗ lưu là việc phải xong **trước Phase 5**.
 
 ### 3.2 Nối với Contentful bằng `slug`
 
@@ -254,7 +255,12 @@ kia trôi thẳng lên production.
 `RecommendationDataSource` đã có `getDataset({ asOf, knownAt })` và
 `getOfferHistory(productId)`, nhưng **chưa từng được chạy với implementation nào
 khác ngoài bản đọc file**. Đó là giả định lớn nhất chưa được kiểm chứng của cả
-Phase 1, và Phase 2 sẽ là lần đầu thử nó.
+Phase 1.
+
+**Phase 2 KHÔNG giải toả nó.** Phase 2 dựng một cửa thứ hai (`UserDataSource`)
+với một bản cài đặt trong bộ nhớ, và bản đó chỉ thu hẹp rủi ro một phần: nó trả
+về **bản sao** như một database thật, nhưng nó vẫn không phải database. Lần thử
+thật sự lùi tới lúc chọn chỗ lưu, tức trước Phase 5.
 
 ### Rủi ro về chất lượng lưới an toàn
 
@@ -329,6 +335,12 @@ Mỗi gạch đầu dòng dưới đây là một chỗ mà gộp lại sẽ là
 - **`lastClosed` có BA trạng thái**, và chuyển sang `unknown` khi chỉ một quãng
   giữ thẻ thiếu ngày đóng. Trả về ngày đã biết ở đó là trình bày một ngày cũ
   như thể nó là lần đóng gần nhất.
+- **`incomeDeclined` tách "tôi không muốn nói" khỏi "chưa hỏi".** Cả hai để
+  thu nhập ở `null`, nhưng chỉ một trong hai còn hỏi lại được — không tách thì
+  §30 hỏi lại mãi đúng điều người dùng vừa từ chối.
+- **Validator kiểm cả kiểu lúc chạy.** TypeScript vắng mặt lúc chạy: `status`
+  gõ sai, `"false"` thay cho `false`, hay một trường mới vắng mặt ở dòng cũ
+  đều đi qua sạch nếu không kiểm. Mọi phép so `null` ở đó dùng `== null`.
 - **`primaryGoal` trả về `none` / `resolved` / `ambiguous`.** Nhiều mục tiêu
   cùng mức ưu tiên thì để `GoalId` quyết định là để một chuỗi sinh lúc lưu
   chọn hàm chấm điểm nào chạy.
@@ -353,7 +365,7 @@ việc này, và một test thứ ba chặn mô hình mã hoá kết quả — t
 npx tsc --noEmit        # sạch
 npm run lint            # sạch
 npm run build           # Compiled successfully
-npm run test:reco       # 138/138 pass (91 của Phase 1 + 47 mới)
+npm run test:reco       # 144/144 pass (91 của Phase 1 + 53 mới)
 npm run test:game       # 43/43 pass
 npm run audit:reco-data # 0 lỗi, 9 cảnh báo (y như trước, đều là chỗ trống có chủ ý)
 ```
