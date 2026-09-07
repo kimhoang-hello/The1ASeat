@@ -174,12 +174,24 @@ export function validateDataset(
 
   // Slug phải là duy nhất: nó là khoá nối sang Contentful, và hai sản phẩm
   // cùng slug nghĩa là một trong hai sẽ im lặng bị bỏ qua ở mọi phép tra.
-  const slugs = new Set<string>();
+  // Mỗi slug — HIỆN TẠI hoặc TỪNG DÙNG — chỉ được thuộc về đúng một sản phẩm.
+  //
+  // Lịch sử offer tra theo slug (nhật ký gốc đánh khoá vậy), nên một slug bị
+  // hai sản phẩm cùng nhận sẽ lặng lẽ nhập lịch sử của thẻ kia vào thẻ này —
+  // rồi engine tính "mức này cao hay thường" trên số liệu của một thẻ khác.
+  const slugOwner = new Map<string, string>();
   for (const product of data.products) {
-    if (slugs.has(product.slug)) {
-      issues.push({ level: "error", entity: "products", message: `Slug trùng: ${product.slug}` });
+    for (const slug of [product.slug, ...product.previousSlugs]) {
+      const owner = slugOwner.get(slug);
+      if (owner !== undefined) {
+        issues.push({
+          level: "error",
+          entity: "products",
+          message: `Slug "${slug}" thuộc về cả ${owner} lẫn ${product.id}`,
+        });
+      }
+      slugOwner.set(slug, product.id);
     }
-    slugs.add(product.slug);
   }
 
   // Chuyển điểm về chính nó là một vòng lặp vô hạn đang chờ Phase 3.

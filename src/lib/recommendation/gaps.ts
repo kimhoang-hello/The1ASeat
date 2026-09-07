@@ -38,7 +38,13 @@ export function deriveGaps(data: RecommendationDataset): DataGap[] {
     });
   }
 
+  // Chỉ khai chỗ trống của những offer CÓ TRONG bộ dữ liệu đang xét.
+  // `INCOMPLETE_OFFERS` là danh sách toàn cục của hiện tại; rải nó vào một bản
+  // dựng lại của quá khứ sẽ nói về những offer chưa tồn tại lúc đó — rò rỉ
+  // kiến thức tương lai vào đúng chỗ `knownAt` sinh ra để chặn.
+  const offerIds = new Set(data.offers.map((offer) => offer.id as string));
   for (const offer of INCOMPLETE_OFFERS) {
+    if (!offerIds.has(offer.offerId)) continue;
     gaps.push({ kind: "offer_terms_unknown", subjectId: offer.offerId, reason: offer.reason });
   }
 
@@ -58,11 +64,17 @@ export function deriveGaps(data: RecommendationDataset): DataGap[] {
     });
   }
 
-  // Điều kiện: luật cư trú áp cho MỌI thẻ, nên có nó không có nghĩa là biết gì
-  // riêng về thẻ này. Đếm luật đặc thù mới nói lên điều gì.
+  // Điều kiện: chỉ đếm luật (a) đặc thù của thẻ này và (b) nói về việc ĐƯỢC
+  // DUYỆT ĐƠN.
+  //
+  // Luật cư trú áp cho mọi thẻ nên nó không nói gì riêng. Còn luật
+  // `scope: "welcome_offer"` — như "từng giữ thẻ Amex® này rồi" — nói về
+  // welcome bonus, KHÔNG nói người này có được duyệt thẻ hay không. Đếm nó là
+  // kết luận "đã biết điều kiện mở thẻ" cho một thẻ mà mình chưa biết gì về
+  // ngưỡng thu nhập, rồi engine im lặng bỏ qua một điều chưa chắc chắn.
   const specificRules = new Map<string, number>();
   for (const rule of data.eligibilityRules) {
-    if (rule.ruleType === "residency") continue;
+    if (rule.ruleType === "residency" || rule.scope !== "application") continue;
     specificRules.set(rule.productId, (specificRules.get(rule.productId) ?? 0) + 1);
   }
   for (const product of data.products) {

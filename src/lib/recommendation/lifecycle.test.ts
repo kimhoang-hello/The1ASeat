@@ -790,3 +790,38 @@ test("tierRank phải là số nguyên dương", () => {
     assert.ok(errorsIn(broken).some((e) => e.includes("tierRank")), `phải chặn ${bad}`);
   }
 });
+
+test("luật phạm vi welcome_offer KHÔNG tính là biết điều kiện mở thẻ", () => {
+  // Amex® Green chỉ có luật "từng giữ thẻ này rồi" — nó nói về welcome bonus,
+  // không nói người này có được duyệt thẻ hay không. Đếm nó là kết luận "đã
+  // biết điều kiện" cho một thẻ mà mình chưa biết ngưỡng thu nhập.
+  const green = BASE.products.find((p) => p.slug === "amex-green")!;
+  const rules = BASE.eligibilityRules.filter((r) => r.productId === green.id);
+  assert.ok(rules.some((r) => r.scope === "welcome_offer"));
+  assert.ok(!rules.some((r) => r.scope === "application" && r.ruleType !== "residency"));
+  assert.ok(
+    BASE.gaps.some((g) => g.kind === "eligibility_unknown" && g.subjectId === green.id),
+    "vẫn phải khai là chưa biết điều kiện mở thẻ",
+  );
+});
+
+test("khai chỗ trống của offer không rò rỉ vào bản dựng lại quá khứ", () => {
+  // `INCOMPLETE_OFFERS` là danh sách toàn cục của HIỆN TẠI. Rải nó vào một bản
+  // dựng lại trước khi những offer đó tồn tại là rò rỉ kiến thức tương lai.
+  const past = datasetAt(BASE, "2026-01-01");
+  assert.equal(past.offers.length, 0);
+  assert.equal(past.gaps.filter((g) => g.kind === "offer_terms_unknown").length, 0);
+  assert.ok(BASE.gaps.some((g) => g.kind === "offer_terms_unknown"), "hôm nay thì vẫn phải có");
+});
+
+test("một slug không được thuộc về hai sản phẩm", () => {
+  // Lịch sử offer tra theo slug, nên slug bị hai thẻ cùng nhận sẽ lặng lẽ nhập
+  // lịch sử của thẻ kia — rồi engine tính 'mức này cao hay thường' trên số
+  // liệu của một thẻ khác.
+  const [a, b] = BASE.products;
+  const broken = {
+    ...BASE,
+    products: BASE.products.map((p) => (p.id === b.id ? { ...p, previousSlugs: [a.slug] } : p)),
+  };
+  assert.ok(errorsIn(broken).some((e) => e.includes("thuộc về cả")));
+});
