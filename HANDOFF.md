@@ -8,11 +8,9 @@ Trạng thái tính đến **08/09/2026**, commit `60ee963` trên `origin/main`.
 ## 1. Mục tiêu
 
 Dựng recommendation engine cho Ghế 1A theo spec tại
-`~/Downloads/ghe1a-recommendation-engine-v1.md` (6 phase).
-
-> ⚠️ **Spec nằm NGOÀI repo và không nằm trong git.** Nếu file đó mất thì phần
-> lớn ngữ cảnh của các phase sau mất theo. Cân nhắc chép nó vào repo
-> (`docs/recommendation-engine-v1.md`) trước khi bắt đầu Phase 2.
+[`docs/recommendation-engine-v1.md`](docs/recommendation-engine-v1.md) (6 phase).
+Bản gốc user gửi ở `~/Downloads/ghe1a-recommendation-engine-v1.md`; bản trong
+repo là bản chép nguyên vẹn và là bản chuẩn từ đây.
 
 Engine trả lời:
 

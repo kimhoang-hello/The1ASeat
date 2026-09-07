@@ -6,6 +6,9 @@ chuyển điểm, quyền lợi, tỷ lệ tích điểm, điều kiện mở th
 Chỉ là DỮ LIỆU. Chưa có engine nào ở đây — Phase 3 mới có. Việc của Phase 1 là
 làm sao đến lúc đó engine chỉ phải đọc, không phải đoán.
 
+Spec đầy đủ: [`docs/recommendation-engine-v1.md`](../../../docs/recommendation-engine-v1.md).
+Mọi tham chiếu dạng "spec §11" trong các file ở đây đều trỏ vào nó.
+
 ## Vì sao không phải Supabase
 
 Spec đề xuất Supabase + Postgres. Repo này chưa từng có database nào: dữ liệu
