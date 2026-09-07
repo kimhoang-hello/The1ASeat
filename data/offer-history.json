@@ -204,6 +204,60 @@
         "at": "2026-09-02",
         "welcomeBonus": "60,000 điểm Aventura®"
       }
+    ],
+    "amex-business-gold": [
+      {
+        "at": "2026-09-07",
+        "welcomeBonus": "70,000 điểm Membership Rewards®"
+      }
+    ],
+    "amex-business-platinum": [
+      {
+        "at": "2026-09-07",
+        "welcomeBonus": "120,000 điểm Membership Rewards®"
+      }
+    ],
+    "amex-cobalt": [
+      {
+        "at": "2026-09-07",
+        "welcomeBonus": "15,000 điểm Membership Rewards®"
+      }
+    ],
+    "amex-gold-rewards": [
+      {
+        "at": "2026-09-07",
+        "welcomeBonus": "60,000 điểm Membership Rewards®"
+      }
+    ],
+    "amex-green": [
+      {
+        "at": "2026-09-07",
+        "welcomeBonus": "15,000 điểm Membership Rewards®"
+      }
+    ],
+    "amex-platinum": [
+      {
+        "at": "2026-09-07",
+        "welcomeBonus": "100,000 điểm Membership Rewards®"
+      }
+    ],
+    "cibc-aeroplan-visa": [
+      {
+        "at": "2026-09-07",
+        "welcomeBonus": "10,000 điểm Aeroplan®"
+      }
+    ],
+    "cibc-aeroplan-visa-infinite": [
+      {
+        "at": "2026-09-07",
+        "welcomeBonus": "50,000 điểm Aeroplan®"
+      }
+    ],
+    "cibc-aeroplan-visa-infinite-privilege": [
+      {
+        "at": "2026-09-07",
+        "welcomeBonus": "100,000 điểm Aeroplan®"
+      }
     ]
   }
 }
