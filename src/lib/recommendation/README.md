@@ -35,13 +35,51 @@ database thật. Vì vậy mọi thứ đi qua `RecommendationDataSource` trong
 Không chép chéo. Chỗ nào buộc phải trùng (phí, rebate) thì
 `npm run audit:reco-data` so hai bên mỗi lần chạy.
 
+## Khoá chính là `id`, không phải `slug`
+
+`Product.id` (`prd_<slug lúc seed>`) là **khoá thay thế bất biến**. `slug` là
+khoá tự nhiên nối sang Contentful và **đổi được** — nhà phát hành đổi tên thẻ
+thì `slug` và `name` đổi, `id` giữ nguyên, nên không một khoá ngoại nào gãy và
+mọi khuyến nghị cũ vẫn tra ra đúng sản phẩm. Đừng bao giờ suy `id` từ `slug`
+trong code; việc chúng trông giống nhau là tiện cho người đọc, không phải một
+bất biến.
+
+Bản ghi có hiệu lực theo thời gian mang `effectiveFrom` **trong id** — bản thứ
+hai của cùng một sự thật nằm cạnh bản thứ nhất, nên không có ngày trong id là
+hai bản trùng id. Và không bao giờ đánh số theo vị trí trong mảng: chèn một
+dòng vào giữa sẽ đổi id của mọi dòng phía sau, im lặng. Dùng `makeId`.
+
+## Phí thường niên nằm ở bảng riêng
+
+`product_fees`, có hiệu lực theo thời gian, **không** phải một trường trên
+`Product`. Lý do là ràng buộc cứng chứ không phải sở thích: phí đổi, và nếu nó
+nằm trên `Product` thì cách duy nhất giữ lịch sử là đóng cả dòng sản phẩm rồi
+mở dòng mới với id mới — kéo theo mọi khoá ngoại gãy cùng lúc. Tức là **không
+thể ghi lại một lần đổi phí mà không phá lịch sử**.
+
+Miễn phí năm đầu là ưu đãi của một OFFER (`Offer.annualFeeFirstYear`). Miễn phí
+theo điều kiện là một QUYỀN LỢI (`annual_fee_waiver_conditional`). Ba thứ khác
+nhau, ba chỗ khác nhau.
+
+## Đọc dữ liệu tại một thời điểm
+
+`datasetAt(data, "2026-10-01")` trả về cả thế giới như nó ở ngày đó;
+`activeAt` / `oneActiveAt` cho từng quan hệ. Đây là nửa còn lại của hợp đồng
+chỉ-thêm — giữ lịch sử mà không hỏi được "hôm đó trông thế nào" thì lịch sử chỉ
+là rác chiếm chỗ.
+
+`indexDataset(data)` dựng các `Map` tra theo khoá ngoại. Dùng nó thay vì
+`.filter()` trong vòng lặp ứng viên: ở database thì đây là index, và hình dạng
+dữ liệu quyết định hình dạng code Phase 3 sẽ viết.
+
 ## Thêm một thẻ mới
 
 **Chỉ sửa dữ liệu, không viết code.** Đã chứng minh: ba thẻ CIBC® Aeroplan®
 được thêm nguyên vẹn bằng cách này, không đụng một dòng logic nào.
 
-1. `data/products.ts` — một dòng. `slug` phải khớp Contentful, `annualFee` là
-   con số mở đầu `annualFeeVi`.
+1. `data/products.ts` — một dòng trong `SEEDS`. `slug` phải khớp Contentful,
+   `annualFee` là con số mở đầu `annualFeeVi` (nó đi vào `PRODUCT_FEES`, không
+   vào `PRODUCTS`).
 2. `data/offers.ts` — một `OfferSeed`. Tách welcome bonus thành `components`
    đúng như điều khoản viết: mốc nào, chi bao nhiêu, trong bao nhiêu ngày. Mốc
    mở ở tháng thứ 13 thì khai `startsAfterDays: 365`.

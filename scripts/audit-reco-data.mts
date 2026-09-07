@@ -27,6 +27,8 @@ import { fileURLToPath } from "node:url";
 import { offlineDataset } from "../src/lib/recommendation/data/index.ts";
 import { validateDataset } from "../src/lib/recommendation/validate.ts";
 import { OFFERS } from "../src/lib/recommendation/data/offers.ts";
+import { PRODUCT_FEES } from "../src/lib/recommendation/data/products.ts";
+import { oneActiveAt } from "../src/lib/recommendation/temporal.ts";
 import { POINTS_PROGRAMS as RECO_PROGRAMS } from "../src/lib/recommendation/data/points-programs.ts";
 import { TRANSFER_PATHS } from "../src/lib/recommendation/data/transfer-paths.ts";
 import { AWARD_STRATEGIES } from "../src/lib/recommendation/data/award-strategies.ts";
@@ -105,14 +107,22 @@ const warnings: string[] = [];
 // mục `expiresAt` trong AGENTS.md.
 const TODAY = todayInSiteZone();
 
-/** Offer đang có hiệu lực hôm nay của một sản phẩm. `validateDataset` đã chặn
- *  trường hợp có hơn một, nên ở đây chỉ cần lấy cái đầu. */
+/** Offer đang có hiệu lực hôm nay của một sản phẩm. `oneActiveAt` trả
+ *  `undefined` khi có NHIỀU hơn một thay vì im lặng chọn cái đầu — validator
+ *  đã chặn tình huống đó, đây là lưới thứ hai. */
 function liveOfferFor(productId: string) {
-  return OFFERS.find(
-    (row) =>
-      (row.productId as string) === productId &&
-      row.effectiveFrom <= TODAY &&
-      (row.effectiveTo === null || row.effectiveTo >= TODAY),
+  return oneActiveAt(
+    OFFERS.filter((row) => (row.productId as string) === productId),
+    TODAY,
+  );
+}
+
+/** Phí thường niên đang có hiệu lực hôm nay. Phí nay nằm ở `product_fees` chứ
+ *  không trên chính sản phẩm — xem chú thích `ProductFee` trong types.ts. */
+function liveFeeFor(productId: string) {
+  return oneActiveAt(
+    PRODUCT_FEES.filter((row) => (row.productId as string) === productId),
+    TODAY,
   );
 }
 
@@ -318,13 +328,18 @@ if (cards === null) {
     if (!product.isActive) continue;
 
     const fee = feeIn(card.annualFeeVi);
+    const seedFee = liveFeeFor(product.id);
     if (fee === undefined) {
       warnings.push(
         `[contentful] ${card.slug}: annualFeeVi không mở đầu bằng một con số, không đối chiếu được`,
       );
-    } else if (fee !== product.annualFee) {
+    } else if (seedFee === undefined) {
       errors.push(
-        `[contentful] ${card.slug}: annualFee seed là ${product.annualFee}, ` +
+        `[contentful] ${card.slug}: không có đúng một dòng product_fees còn hiệu lực hôm nay`,
+      );
+    } else if (fee !== seedFee.annualFee) {
+      errors.push(
+        `[contentful] ${card.slug}: annualFee seed là ${seedFee.annualFee}, ` +
           `Contentful nói ${fee} ("${card.annualFeeVi}")`,
       );
     }
@@ -354,7 +369,8 @@ if (warnings.length > 0) console.log("");
 for (const line of errors) console.error(`✗  ${line}`);
 
 const summary =
-  `${dataset.products.length} sản phẩm, ${dataset.offers.length} offer, ` +
+  `${dataset.products.length} sản phẩm, ${dataset.productFees.length} mức phí, ` +
+  `${dataset.offers.length} offer, ` +
   `${dataset.offerComponents.length} component, ${dataset.earningRates.length} tỷ lệ tích điểm, ` +
   `${dataset.productBenefits.length} quyền lợi, ${dataset.eligibilityRules.length} điều kiện, ` +
   `${dataset.transferPaths.length} chặng chuyển, ${dataset.awardStrategies.length} award strategy.`;

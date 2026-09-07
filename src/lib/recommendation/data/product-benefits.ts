@@ -1,5 +1,6 @@
 import {
   id,
+  makeId,
   type BenefitId,
   type ProductBenefit,
   type ProductBenefitId,
@@ -247,8 +248,11 @@ const BY_PRODUCT: Record<string, BenefitSeed[]> = {
 export const PRODUCT_BENEFITS: ProductBenefit[] = Object.entries(BY_PRODUCT).flatMap(
   ([slug, seeds]) =>
     seeds.map(([benefit, numericValue, opts]) => ({
-      id: id<ProductBenefitId>(`${slug}-${benefit}`),
-      productId: slug as ProductId,
+      // Id mang NGÀY HIỆU LỰC: quyền lợi đổi thì bản mới nằm cạnh bản cũ, và
+      // không có ngày trong id thì hai bản trùng id — hoặc validator đỏ, hoặc
+      // người sửa lặng lẽ đè lên bản cũ. Xem "LUẬT VỀ ID" trong types.ts.
+      id: makeId<ProductBenefitId>("pb", `prd_${slug}`, benefit, VERIFIED_ON),
+      productId: id<ProductId>(`prd_${slug}`),
       benefitId: benefit as BenefitId,
       numericValue: numericValue ?? null,
       textValue: opts?.text ?? null,

@@ -1,5 +1,6 @@
 import {
   id,
+  makeId,
   type EligibilityRule,
   type EligibilityRuleId,
   type EligibilityRuleType,
@@ -142,9 +143,13 @@ const CANADIAN_RESIDENCY: RuleSeed = { type: "residency", value: "CA", severity:
 
 export const ELIGIBILITY_RULES: EligibilityRule[] = Object.entries(BY_PRODUCT).flatMap(
   ([slug, seeds]) =>
-    [CANADIAN_RESIDENCY, ...seeds].map((seed, index) => ({
-      id: id<EligibilityRuleId>(`${slug}-${seed.type}-${index + 1}`),
-      productId: slug as ProductId,
+    [CANADIAN_RESIDENCY, ...seeds].map((seed) => ({
+      // Dựng từ nội dung + ngày hiệu lực, không từ vị trí trong mảng. Một sản
+      // phẩm có thể có hai luật cùng `type` (thu nhập cá nhân và hộ gia đình
+      // là hai `type` khác nhau, nhưng `residency` thì chỉ một) — validator
+      // bắt nếu hai luật rút về cùng một id.
+      id: makeId<EligibilityRuleId>("elig", `prd_${slug}`, seed.type, VERIFIED_ON),
+      productId: id<ProductId>(`prd_${slug}`),
       ruleType: seed.type,
       operator:
         seed.type === "minimum_personal_income" || seed.type === "minimum_household_income"

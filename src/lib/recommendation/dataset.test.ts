@@ -60,27 +60,60 @@ test("không có kiểu điều kiện nào là điểm tín dụng", () => {
   }
 });
 
-/** Thêm một sản phẩm ĐÃ ĐÓNG vào bộ dữ liệu, giữ nguyên mọi bản ghi con. */
+const CLOSED_ON = "2026-12-31";
+
+/**
+ * Đóng một sản phẩm ĐÚNG CÁCH: đóng cả bản ghi con.
+ *
+ * Đóng mỗi dòng sản phẩm thì offer/phí/tỷ lệ/quyền lợi của nó vẫn "đang chạy",
+ * và engine sẽ khuyên một thẻ không còn tồn tại — xem test ngay dưới.
+ */
 function withClosedProduct(base: RecommendationDataset): RecommendationDataset {
   const original = base.products[0];
   const closed: Product = {
     ...original,
     isActive: false,
-    effectiveTo: "2026-12-31",
+    effectiveTo: CLOSED_ON,
     contentfulLinked: false,
   };
-  return { ...base, products: [closed, ...base.products.slice(1)] };
+  const shut = <T extends { productId: string; effectiveTo: string | null }>(rows: T[]) =>
+    rows.map((row) => (row.productId === original.id ? { ...row, effectiveTo: CLOSED_ON } : row));
+  return {
+    ...base,
+    products: [closed, ...base.products.slice(1)],
+    offers: shut(base.offers),
+    productFees: shut(base.productFees),
+    earningRates: shut(base.earningRates),
+    productBenefits: shut(base.productBenefits),
+    eligibilityRules: shut(base.eligibilityRules),
+  };
 }
 
-test("sản phẩm ngừng bán vẫn hợp lệ khi có effectiveTo", () => {
-  const errors = validateDataset(withClosedProduct(data)).filter((i) => i.level === "error");
+test("sản phẩm ngừng bán vẫn hợp lệ khi đóng đủ cả bản ghi con", () => {
+  const errors = validateDataset(withClosedProduct(data), "2027-03-01").filter(
+    (i) => i.level === "error",
+  );
   assert.deepEqual(errors, []);
+});
+
+test("đóng mỗi dòng sản phẩm mà để offer treo là LỖI", () => {
+  // Thẻ ngừng bán nhưng offer vẫn mở = engine khuyên một thẻ không còn tồn tại.
+  const original = data.products[0];
+  const halfClosed = {
+    ...data,
+    products: [
+      { ...original, isActive: false, effectiveTo: CLOSED_ON },
+      ...data.products.slice(1),
+    ],
+  };
+  const errors = validateDataset(halfClosed, "2027-03-01").filter((i) => i.level === "error");
+  assert.ok(errors.some((e) => e.message.includes("chưa có effectiveTo")));
 });
 
 test("sản phẩm ngừng bán mà thiếu effectiveTo là LỖI", () => {
   const broken = withClosedProduct(data);
   broken.products[0] = { ...broken.products[0], effectiveTo: null };
-  const errors = validateDataset(broken).filter((i) => i.level === "error");
+  const errors = validateDataset(broken, "2027-03-01").filter((i) => i.level === "error");
   assert.ok(
     errors.some((e) => e.message.includes("ngừng từ bao giờ")),
     "phải báo lỗi khi đóng sản phẩm mà không nói ngừng từ bao giờ",

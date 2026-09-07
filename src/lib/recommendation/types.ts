@@ -38,6 +38,29 @@
 declare const brand: unique symbol;
 type Branded<K extends string> = string & { readonly [brand]: K };
 
+/**
+ * LUẬT VỀ ID — đọc trước khi đặt bất kỳ id nào.
+ *
+ * 1. Id là KHOÁ THAY THẾ, bất biến, và KHÔNG BAO GIỜ được suy ra từ một thứ có
+ *    thể đổi. Cụ thể: id KHÔNG phải slug. Slug là khoá tự nhiên nối sang
+ *    Contentful, và nhà phát hành đổi tên thẻ thì slug đổi theo. Nếu id chính
+ *    là slug thì một lần đổi tên sẽ đổi luôn khoá chính, kéo theo mọi khoá
+ *    ngoại — offer, tỷ lệ tích điểm, quyền lợi, điều kiện — và mọi
+ *    `recommendation_runs` cũ của Phase 4 trỏ vào một sản phẩm không còn tồn
+ *    tại. Spec §3.1 tách `id uuid` khỏi `slug text UNIQUE` đúng vì lý do này.
+ *
+ * 2. Id của bản ghi CÓ HIỆU LỰC THEO THỜI GIAN phải mang `effectiveFrom`. Hợp
+ *    đồng chỉ-thêm nghĩa là bản thứ hai của cùng một sự thật sẽ nằm cạnh bản
+ *    thứ nhất; không có ngày trong id thì hai bản trùng id, và hoặc validator
+ *    đỏ, hoặc người sửa lặng lẽ đè lên bản cũ rồi mất lịch sử.
+ *
+ * 3. KHÔNG đánh số theo vị trí trong mảng. `${slug}-${index + 1}` đổi id của
+ *    mọi dòng phía sau khi ai đó chèn một dòng vào giữa — im lặng, và mọi
+ *    tham chiếu lịch sử tới chúng trỏ sai chỗ.
+ *
+ * Dùng `makeId` bên dưới thay vì tự nối chuỗi.
+ */
+
 export type IssuerId = Branded<"IssuerId">;
 export type ProductId = Branded<"ProductId">;
 export type PointsProgramId = Branded<"PointsProgramId">;
@@ -49,12 +72,50 @@ export type ProductBenefitId = Branded<"ProductBenefitId">;
 export type EarningRateId = Branded<"EarningRateId">;
 export type EligibilityRuleId = Branded<"EligibilityRuleId">;
 export type AwardStrategyId = Branded<"AwardStrategyId">;
-export type SpendCategoryId = Branded<"SpendCategoryId">;
+export type ProductFeeId = Branded<"ProductFeeId">;
 
 /** Ép một chuỗi viết tay trong file seed thành id có brand. Chỉ dùng trong
  *  `data/`; không có kiểm tra nào ở đây, `validate.ts` mới là chỗ kiểm. */
 export function id<T extends Branded<string>>(value: string): T {
   return value as T;
+}
+
+/**
+ * Dựng id cho một bản ghi có hiệu lực theo thời gian.
+ *
+ * `makeId("er", productId, "grocery", "2026-09-07")` → `"er_amex-cobalt_grocery_2026-09-07"`.
+ *
+ * Tiền tố loại làm id tự nói nó là gì khi hiện trong log hay trong bảng debug
+ * của Phase 4 — `"amex-cobalt-grocery-1"` không nói được nó là tỷ lệ tích điểm
+ * hay quyền lợi. Dấu `_` ngăn các thành phần vì mọi thành phần đều có thể chứa
+ * `-` (slug, hạng mục, và cả ngày).
+ */
+export function makeId<T extends Branded<string>>(
+  prefix: string,
+  ...parts: (string | number)[]
+): T {
+  return `${prefix}_${parts.join("_")}` as T;
+}
+
+/**
+ * Rút một chuỗi tự do thành mảnh id ổn định.
+ *
+ * Dùng cho `EarningRate.restrictedTo`: hai dòng cùng (sản phẩm, hạng mục) chỉ
+ * phân biệt được bằng nhóm merchant, nên nhóm đó phải vào id. Cắt ngắn để id
+ * còn đọc được; `validate.ts` bắt nếu hai chuỗi khác nhau rút về cùng một
+ * mảnh.
+ */
+export function idPart(text: string | null): string {
+  if (text === null) return "base";
+  return (
+    text
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 24) || "x"
+  );
 }
 
 /* ------------------------------------------------------------------ *
@@ -197,11 +258,33 @@ export interface Product extends Temporal {
   /** Đồng tiền thưởng CHÍNH của thẻ. `null` cho thẻ cashback thuần không
    *  thuộc chương trình điểm nào. */
   pointsProgramId: PointsProgramId | null;
-  /** Phí thường niên năm thường, dạng SỐ, CAD. Miễn phí năm đầu là thuộc tính
-   *  của OFFER chứ không phải của sản phẩm — xem `Offer.annualFeeFirstYear`. */
-  annualFee: number;
-  currency: "CAD" | "USD";
+  /**
+   * KHÔNG có `annualFee` ở đây — nó nằm trong `product_fees`.
+   *
+   * Phí thường niên ĐỔI, và đổi độc lập với mọi thứ khác của thẻ. Để nó là
+   * một trường trên `Product` thì cách duy nhất giữ lịch sử là đóng cả dòng
+   * sản phẩm rồi mở dòng mới — nhưng dòng mới phải mang id mới, và mọi khoá
+   * ngoại trỏ vào sản phẩm (offer, tỷ lệ tích điểm, quyền lợi, điều kiện) gãy
+   * cùng lúc. Nói cách khác: với thiết kế cũ, KHÔNG THỂ ghi lại một lần đổi
+   * phí mà không phá lịch sử. Đó là đúng thứ Phase 1 sinh ra để không xảy ra.
+   *
+   * Tách ra bảng riêng có hiệu lực theo thời gian là cách chuẩn: cùng khuôn
+   * với `earning_rates` và `product_benefits`, vốn đã đúng ngay từ đầu.
+   */
   isActive: boolean;
+  /**
+   * Sản phẩm THAY THẾ sản phẩm này, khi nhà phát hành khai tử một thẻ và đưa
+   * ra thẻ kế nhiệm.
+   *
+   * `null` là trường hợp thường: thẻ chỉ ngừng, không ai thay. Có giá trị thì
+   * Phase 3 nói được "thẻ bạn đang giữ đã ngừng, bản kế nhiệm là X" thay vì im
+   * lặng bỏ qua — và Phase 4 lần được chuỗi kế nhiệm khi giải thích một khuyến
+   * nghị cũ.
+   *
+   * KHÁC với đổi tên: đổi tên là CÙNG một sản phẩm mang tên khác, nên `id` giữ
+   * nguyên và chỉ `slug`/`name` đổi. Chỗ này là HAI sản phẩm.
+   */
+  supersededByProductId: ProductId | null;
   /**
    * §16 Rule 7: trường này KHÔNG BAO GIỜ được vào công thức xếp hạng. Nó chỉ
    * quyết định có hiện nút affiliate hay không. Phase 3 có test riêng khoá
@@ -262,6 +345,30 @@ export interface Product extends Temporal {
 export type ProductSeed = Omit<Product, "affiliateAvailable">;
 
 /* ------------------------------------------------------------------ *
+ * product_fees
+ * ------------------------------------------------------------------ */
+
+/**
+ * Phí thường niên của một sản phẩm, có hiệu lực theo thời gian.
+ *
+ * Miễn phí năm đầu KHÔNG nằm ở đây — nó là ưu đãi của một OFFER cụ thể
+ * (`Offer.annualFeeFirstYear`), có thể hết trong khi phí gốc không đổi. Trộn
+ * hai thứ lại thì một thẻ $139 đang có ưu đãi miễn năm đầu sẽ vĩnh viễn trông
+ * như thẻ $0, kể cả sau khi ưu đãi hết.
+ *
+ * Miễn phí theo ĐIỀU KIỆN (gói ngân hàng, hạng Wealthsimple®) cũng không nằm
+ * ở đây — nó là quyền lợi `annual_fee_waiver_conditional`, vì nó phụ thuộc
+ * người dùng chứ không phải sản phẩm.
+ */
+export interface ProductFee extends Temporal, Sourced {
+  id: ProductFeeId;
+  productId: ProductId;
+  /** Phí năm thường, dạng số. `0` là hợp lệ và có thật (Amex® Green). */
+  annualFee: number;
+  currency: "CAD" | "USD";
+}
+
+/* ------------------------------------------------------------------ *
  * §3.5 offers  +  §3.6 offer_components
  * ------------------------------------------------------------------ */
 
@@ -271,7 +378,21 @@ export interface Offer extends Temporal, Sourced {
   name: string;
   startDate: string;
   endDate: string | null;
-  /** Đồng tiền của welcome bonus. `null` khi thưởng bằng tiền mặt. */
+  /**
+   * Welcome bonus này trả bằng GÌ.
+   *
+   * `points` — thưởng bằng điểm; `bonusCurrencyId` cho biết điểm gì.
+   * `cash`   — thưởng bằng tiền hoặc statement credit.
+   * `none`   — thẻ KHÔNG có welcome bonus nào.
+   *
+   * Không có trường này thì `bonusCurrencyId: null` phải gánh hai nghĩa hoàn
+   * toàn khác nhau, và trong chính bộ dữ liệu hiện tại đã có cả hai: TD® Cash
+   * Back thưởng bằng tiền, National Bank® thì không thưởng gì. Engine không
+   * phân biệt được sẽ hoặc bỏ qua thẻ có thưởng tiền, hoặc bịa ra một khoản
+   * thưởng cho thẻ không có.
+   */
+  bonusKind: "points" | "cash" | "none";
+  /** Đồng tiền của welcome bonus. `null` khi `bonusKind` không phải `points`. */
   bonusCurrencyId: PointsProgramId | null;
   /**
    * Con số quảng cáo, y như nhà phát hành rao. CỐ Ý tách khỏi tổng của
@@ -609,6 +730,7 @@ export interface AwardStrategy extends Temporal, Sourced {
 
 export interface RecommendationDataset {
   issuers: Issuer[];
+  productFees: ProductFee[];
   pointsPrograms: PointsProgram[];
   transferPaths: TransferPath[];
   products: Product[];

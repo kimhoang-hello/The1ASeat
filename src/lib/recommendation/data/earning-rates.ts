@@ -1,5 +1,7 @@
 import {
   id,
+  idPart,
+  makeId,
   type EarningRate,
   type EarningRateId,
   type PointsProgramId,
@@ -364,9 +366,19 @@ const RATES: Record<string, { program: string; rates: RateSeed[] }> = {
 
 export const EARNING_RATES: EarningRate[] = Object.entries(RATES).flatMap(
   ([slug, { program, rates }]) =>
-    rates.map(([category, multiplier, opts], index) => ({
-      id: id<EarningRateId>(`${slug}-${category}-${index + 1}`),
-      productId: slug as ProductId,
+    rates.map(([category, multiplier, opts]) => ({
+      // KHÔNG đánh số theo vị trí trong mảng: chèn một dòng vào giữa sẽ đổi id
+      // của mọi dòng phía sau, im lặng. Id dựng từ NỘI DUNG — hạng mục, nhóm
+      // merchant, ngày hiệu lực — nên nó ổn định qua mọi lần sắp xếp lại, và
+      // hai phiên bản của cùng một tỷ lệ không đụng nhau.
+      id: makeId<EarningRateId>(
+        "er",
+        `prd_${slug}`,
+        category,
+        idPart(opts?.restrictedTo ?? null),
+        VERIFIED_ON,
+      ),
+      productId: id<ProductId>(`prd_${slug}`),
       category,
       multiplier,
       pointsProgramId: program as PointsProgramId,

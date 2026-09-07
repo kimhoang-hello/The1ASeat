@@ -1,5 +1,7 @@
 export * from "./types.ts";
 export { validateDataset, type ValidationIssue } from "./validate.ts";
+export { activeAt, datasetAt, isActiveAt, oneActiveAt } from "./temporal.ts";
+export { indexDataset, routeKey, type DatasetIndex } from "./indexes.ts";
 export {
   repoDataSource,
   OFFER_HISTORY_SINCE,

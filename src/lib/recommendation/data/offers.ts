@@ -55,9 +55,29 @@ type OfferSeed = {
   name: string;
   /** Con số quảng cáo. `null` khi thẻ không rao welcome bonus bằng điểm. */
   headline: number | null;
+  /** Đồng tiền điểm, hoặc `null`. Xem `kind` ngay dưới — `null` một mình không
+   *  phân biệt được "thưởng tiền" với "không thưởng gì". */
   currency: string | null;
+  /** Mặc định suy ra: có `currency` → `points`, không có → `cash` nếu có
+   *  component trả tiền, ngược lại `none`. Khai tường minh khi cách suy đó sai. */
+  kind?: "points" | "cash" | "none";
+  /** Ngày nhà phát hành nói offer bắt đầu / kết thúc. Dữ kiện marketing. */
   startDate: string;
   endDate?: string;
+  /**
+   * Từ / tới khi nào ĐÂY là điều mình biết về offer của thẻ này.
+   *
+   * Mặc định bằng `startDate`/`endDate`, và với offer bình thường thì hai cặp
+   * này trùng nhau. Chúng TÁCH RA khi nhà phát hành rút offer sớm, hoặc thay
+   * bằng offer khác trước hạn: lúc đó `endDate` vẫn là hạn đã công bố (mình
+   * không được sửa lại lịch sử marketing), còn `effectiveTo` là ngày bản ghi
+   * này thôi mô tả hiện thực.
+   *
+   * Không tách thì hai chuyện đó là một, và cách duy nhất ghi lại một offer bị
+   * rút sớm là sửa `endDate` — tức nói dối về điều nhà phát hành đã công bố.
+   */
+  recordedFrom?: string;
+  recordedTo?: string;
   /** Phí năm đầu SAU ưu đãi. `null` = không có ưu đãi phí, trả phí thường. */
   feeFirstYear?: number;
   /** Rebate FinlyWealth, khớp `rebateVi` trên Contentful. */
@@ -545,16 +565,35 @@ function allWindowsOf(components: ComponentSeed[]): { to: number }[] {
  * offer cũ và mất luôn lịch sử, tức mất luôn khả năng trả lời "70,000 là mức
  * cao hay mức thường" mà `offer-history.json` sinh ra để trả lời.
  */
+/**
+ * Thẻ này thưởng bằng gì, khi seed không nói rõ.
+ *
+ * Có đồng tiền điểm thì là điểm. Không có, mà có thành phần trả tiền
+ * (`statement_credit`, hoặc `fee_waiver` đứng một mình như TD® Cash Back), thì
+ * là tiền. Không có gì cả thì là không có welcome bonus — trường hợp thật của
+ * National Bank® và hai thẻ Wealthsimple®.
+ */
+function inferBonusKind(seed: OfferSeed): "points" | "cash" | "none" {
+  if (seed.currency !== null) return "points";
+  const paysCash = seed.components.some((c) => (c.cash ?? 0) > 0);
+  return paysCash ? "cash" : "none";
+}
+
 function offerIdFor(seed: OfferSeed): string {
-  return `${seed.slug}-${seed.startDate}`;
+  // Lấy theo ngày BẢN GHI mở, không theo ngày điều khoản: hai offer nối tiếp
+  // nhau của cùng một thẻ luôn có `recordedFrom` khác nhau (validator chặn
+  // chồng lấn), còn `startDate` thì có thể trùng — nhà phát hành hay công bố
+  // một offer "từ 01/09" rồi chỉnh điều khoản giữa chừng.
+  return `offer_prd_${seed.slug}_${seed.recordedFrom ?? seed.startDate}`;
 }
 
 export const OFFERS: Offer[] = OFFER_SEEDS.map((seed) => ({
   id: id<OfferId>(offerIdFor(seed)),
-  productId: seed.slug as ProductId,
+  productId: id<ProductId>(`prd_${seed.slug}`),
   name: seed.name,
   startDate: seed.startDate,
   endDate: seed.endDate ?? null,
+  bonusKind: seed.kind ?? inferBonusKind(seed),
   bonusCurrencyId: seed.currency ? (seed.currency as PointsProgramId) : null,
   headlineBonus: seed.headline,
   minimumSpend: totalSpend(windowsOf(seed.components)),
@@ -567,8 +606,8 @@ export const OFFERS: Offer[] = OFFER_SEEDS.map((seed) => ({
   isTargeted: false,
   isPublic: true,
   isActive: true,
-  effectiveFrom: seed.startDate,
-  effectiveTo: seed.endDate ?? null,
+  effectiveFrom: seed.recordedFrom ?? seed.startDate,
+  effectiveTo: seed.recordedTo ?? seed.endDate ?? null,
   sourceUrl: `${CONTENTFUL_SOURCE}/${seed.slug}`,
   verifiedAt: VERIFIED_ON,
   confidence: seed.components.length === 0 && seed.headline !== null ? "estimated" : "verified",

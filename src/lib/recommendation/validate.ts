@@ -1,5 +1,11 @@
 import { INCOMPLETE_OFFERS, UNQUOTABLE_AWARD_PROGRAMS } from "./data/index.ts";
+import { isActiveAt } from "./temporal.ts";
 import type { RecommendationDataset, Temporal } from "./types.ts";
+
+/** Số ngày giữa hai ngày `YYYY-MM-DD`. Âm khi `from` nằm sau `to`. */
+function daysBetween(from: string, to: string): number {
+  return Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000);
+}
 
 /**
  * Kiểm bộ dữ liệu Phase 1.
@@ -80,12 +86,22 @@ function checkTemporal(
   }
 }
 
-export function validateDataset(data: RecommendationDataset): ValidationIssue[] {
+/**
+ * `asOf` chỉ dùng cho phép kiểm ĐỘ TƯƠI. Truyền vào thay vì đọc đồng hồ bên
+ * trong, để hàm còn thuần: cùng dữ liệu + cùng ngày = cùng kết quả, nên test
+ * viết được mà không phải giả lập thời gian. Phía site truyền
+ * `todayInSiteZone()`.
+ */
+export function validateDataset(
+  data: RecommendationDataset,
+  asOf: string = new Date().toISOString().slice(0, 10),
+): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
   const issuerIds = new Set(data.issuers.map((r) => r.id));
   const programIds = new Set(data.pointsPrograms.map((r) => r.id));
   const productIds = new Set(data.products.map((r) => r.id));
+  const productById = new Map(data.products.map((r) => [r.id as string, r]));
   const offerIds = new Set(data.offers.map((r) => r.id));
   const benefitIds = new Set(data.benefits.map((r) => r.id));
 
@@ -100,9 +116,12 @@ export function validateDataset(data: RecommendationDataset): ValidationIssue[] 
   checkUniqueIds(data.eligibilityRules, "eligibility_rules", issues);
   checkUniqueIds(data.transferPaths, "transfer_paths", issues);
   checkUniqueIds(data.awardStrategies, "award_strategies", issues);
+  checkUniqueIds(data.productFees, "product_fees", issues);
 
   checkRef(data.products, "issuerId", (r: { issuerId: string }) => r.issuerId, issuerIds, "products", issues);
   checkRef(data.products, "pointsProgramId", (r: { pointsProgramId: string | null }) => r.pointsProgramId, programIds, "products", issues);
+  checkRef(data.productFees, "productId", (r: { productId: string }) => r.productId, productIds, "product_fees", issues);
+  checkRef(data.products, "supersededByProductId", (r: { supersededByProductId: string | null }) => r.supersededByProductId, productIds, "products", issues);
   checkRef(data.offers, "productId", (r: { productId: string }) => r.productId, productIds, "offers", issues);
   checkRef(data.offers, "bonusCurrencyId", (r: { bonusCurrencyId: string | null }) => r.bonusCurrencyId, programIds, "offers", issues);
   checkRef(data.offerComponents, "offerId", (r: { offerId: string }) => r.offerId, offerIds, "offer_components", issues);
@@ -122,6 +141,7 @@ export function validateDataset(data: RecommendationDataset): ValidationIssue[] 
   checkTemporal(data.eligibilityRules, "eligibility_rules", issues);
   checkTemporal(data.transferPaths, "transfer_paths", issues);
   checkTemporal(data.awardStrategies, "award_strategies", issues);
+  checkTemporal(data.productFees, "product_fees", issues);
 
   // Slug phải là duy nhất: nó là khoá nối sang Contentful, và hai sản phẩm
   // cùng slug nghĩa là một trong hai sẽ im lặng bị bỏ qua ở mọi phép tra.
@@ -169,9 +189,16 @@ export function validateDataset(data: RecommendationDataset): ValidationIssue[] 
   // Mỗi cặp (sản phẩm, hạng mục) đúng MỘT dòng không giới hạn merchant.
   // Nhiều hơn: engine không biết chọn dòng nào. Chỉ có dòng giới hạn: hạng mục
   // đó trông như có tỷ lệ cao trong khi tỷ lệ nền chưa ai biết.
+  //
+  // TÍNH TRÊN CÁC DÒNG CÒN HIỆU LỰC TẠI `asOf`, không tính trên cả lịch sử.
+  // Bản trước đếm mọi dòng từng tồn tại, nên đóng một tỷ lệ rồi thêm bản mới —
+  // tức cách DUY NHẤT ghi lại một lần đổi tỷ lệ — lập tức thành "2 tỷ lệ không
+  // giới hạn cho cùng một hạng mục". Nói cách khác, phép kiểm này cấm đúng cái
+  // việc mà hợp đồng chỉ-thêm bắt phải làm. Test vòng đời số 4 bắt được.
+  const liveRates = data.earningRates.filter((rate) => isActiveAt(rate, asOf));
   const unrestricted = new Map<string, number>();
   const restrictedOnly = new Map<string, boolean>();
-  for (const rate of data.earningRates) {
+  for (const rate of liveRates) {
     const key = `${rate.productId}|${rate.category}`;
     if (rate.restrictedTo === null) {
       unrestricted.set(key, (unrestricted.get(key) ?? 0) + 1);
@@ -311,11 +338,14 @@ export function validateDataset(data: RecommendationDataset): ValidationIssue[] 
   // hạn của nó — nó chỉ so được phần welcome bonus, tức so một thẻ bằng đúng
   // cái phần dễ gây hiểu nhầm nhất.
   const withBaseRate = new Set(
-    data.earningRates
+    liveRates
       .filter((r) => r.category === "everything_else" && r.restrictedTo === null)
       .map((r) => r.productId as string),
   );
   for (const product of data.products) {
+    // Thẻ đã đóng thì không cần tỷ lệ nền còn hiệu lực — nó không còn được
+    // khuyên nữa, và đòi hỏi ngược lại buộc người sửa phải để dữ liệu treo.
+    if (!isActiveAt(product, asOf)) continue;
     if (!withBaseRate.has(product.id)) {
       issues.push({
         level: "warning",
@@ -348,11 +378,17 @@ export function validateDataset(data: RecommendationDataset): ValidationIssue[] 
   // Tổng điểm của các component không được VƯỢT headline. Bằng hoặc thấp hơn
   // đều hợp lệ — thấp hơn là chuyện thường khi một phần bonus trả bằng tiền.
   // Vượt thì một trong hai con số sai, và cả hai đều là con số về tiền.
+  // Gom MỘT lần rồi tra. Bản cũ `filter` toàn bộ `offerComponents` bên trong
+  // vòng lặp offer — O(offer × component). Không đau ở 31 thẻ, nhưng đây là
+  // mẫu code Phase 3 sẽ sao chép, nên nó phải đúng ngay từ chỗ này.
+  const pointsByOffer = new Map<string, number>();
+  for (const component of data.offerComponents) {
+    const points = (component.pointsAmount ?? 0) * (component.repeatCount ?? 1);
+    pointsByOffer.set(component.offerId, (pointsByOffer.get(component.offerId) ?? 0) + points);
+  }
   for (const offer of data.offers) {
     if (offer.headlineBonus === null) continue;
-    const total = data.offerComponents
-      .filter((c) => c.offerId === offer.id)
-      .reduce((sum, c) => sum + (c.pointsAmount ?? 0) * (c.repeatCount ?? 1), 0);
+    const total = pointsByOffer.get(offer.id) ?? 0;
     if (total > offer.headlineBonus) {
       issues.push({
         level: "error",
@@ -395,10 +431,207 @@ export function validateDataset(data: RecommendationDataset): ValidationIssue[] 
     }
   }
 
+  // ---- Chồng lấn theo thời gian, tổng quát -------------------------------
+  //
+  // Cùng một phép kiểm cho mọi quan hệ mà "hai bản ghi cùng lúc" là vô nghĩa.
+  // Viết một lần rồi gọi bốn lần, thay vì bốn bản sao lệch nhau dần.
+  function checkNoOverlap<T extends Temporal & { id: string }>(
+    rows: readonly T[],
+    keyOf: (row: T) => string,
+    entity: string,
+  ): void {
+    const byKey = new Map<string, T[]>();
+    for (const row of rows) {
+      const list = byKey.get(keyOf(row));
+      if (list === undefined) byKey.set(keyOf(row), [row]);
+      else list.push(row);
+    }
+    for (const [key, list] of byKey) {
+      const sorted = [...list].sort((a, b) =>
+        a.effectiveFrom < b.effectiveFrom ? -1 : a.effectiveFrom > b.effectiveFrom ? 1 : 0,
+      );
+      for (let i = 1; i < sorted.length; i += 1) {
+        const previous = sorted[i - 1];
+        // `effectiveTo` là NGÀY CUỐI CÙNG còn hiệu lực, nên chồng lấn có dấu
+        // bằng. `\uffff` sắp sau mọi ký tự: bản ghi chưa đóng là "muộn hơn tất cả".
+        const previousTo = previous.effectiveTo ?? "\uffff";
+        if (sorted[i].effectiveFrom <= previousTo) {
+          issues.push({
+            level: "error",
+            entity,
+            message: `${key}: ${previous.id} và ${sorted[i].id} chồng thời gian`,
+          });
+        }
+      }
+    }
+  }
+
+  checkNoOverlap(data.offers, (row) => row.productId, "offers");
+  checkNoOverlap(data.productFees, (row) => row.productId, "product_fees");
+  checkNoOverlap(data.transferPaths, (row) => `${row.sourceProgramId}->${row.destinationProgramId}`, "transfer_paths");
+  checkNoOverlap(data.productBenefits, (row) => `${row.productId}|${row.benefitId}`, "product_benefits");
+  // Tỷ lệ tích điểm: khoá gồm cả nhóm merchant, vì hai dòng cùng hạng mục khác
+  // nhóm merchant là hợp lệ và cùng tồn tại (xem `restrictedTo`).
+  checkNoOverlap(
+    data.earningRates,
+    (row) => `${row.productId}|${row.category}|${row.restrictedTo ?? ""}`,
+    "earning_rates",
+  );
+
+  // ---- Phí thường niên ----------------------------------------------------
+  for (const fee of data.productFees) {
+    if (fee.annualFee < 0) {
+      issues.push({
+        level: "error",
+        entity: "product_fees",
+        message: `${fee.id}: annualFee âm`,
+      });
+    }
+  }
+  // Sản phẩm CÒN HOẠT ĐỘNG mà không có dòng phí nào thì engine không tính nổi
+  // giá trị ròng của nó — nó chỉ cộng được lợi ích và bỏ qua chi phí, tức luôn
+  // nghiêng về thẻ đắt tiền.
+  const liveFeeProducts = new Set(
+    data.productFees.filter((fee) => isActiveAt(fee, asOf)).map((fee) => fee.productId as string),
+  );
+  for (const product of data.products) {
+    if (!product.isActive || !isActiveAt(product, asOf)) continue;
+    if (!liveFeeProducts.has(product.id)) {
+      issues.push({
+        level: "error",
+        entity: "product_fees",
+        message: `${product.slug}: sản phẩm còn hoạt động nhưng chưa có dòng phí nào còn hiệu lực`,
+      });
+    }
+  }
+
+  // ---- Sản phẩm kế nhiệm --------------------------------------------------
+  for (const product of data.products) {
+    if (product.supersededByProductId === null) continue;
+    if (product.supersededByProductId === product.id) {
+      issues.push({
+        level: "error",
+        entity: "products",
+        message: `${product.slug}: tự trỏ vào chính mình làm sản phẩm kế nhiệm`,
+      });
+      continue;
+    }
+    // Vòng lặp kế nhiệm treo mọi phép duyệt chuỗi của Phase 3/4.
+    const seen = new Set<string>([product.id]);
+    let cursor = productById.get(product.supersededByProductId);
+    while (cursor !== undefined && cursor.supersededByProductId !== null) {
+      if (seen.has(cursor.id)) {
+        issues.push({
+          level: "error",
+          entity: "products",
+          message: `${product.slug}: chuỗi sản phẩm kế nhiệm có vòng lặp`,
+        });
+        break;
+      }
+      seen.add(cursor.id);
+      cursor = productById.get(cursor.supersededByProductId);
+    }
+    // Sản phẩm còn hoạt động mà đã có kẻ kế nhiệm là mâu thuẫn: kế nhiệm chỉ
+    // có nghĩa khi bản gốc đã ngừng.
+    if (product.isActive) {
+      issues.push({
+        level: "warning",
+        entity: "products",
+        message: `${product.slug}: còn isActive nhưng đã khai sản phẩm kế nhiệm`,
+      });
+    }
+  }
+
+  // ---- Sản phẩm đã đóng thì bản ghi con cũng phải đóng ---------------------
+  //
+  // Không có phép kiểm này thì một thẻ ngừng bán vẫn có offer "đang chạy", và
+  // engine sẽ vui vẻ khuyên người đọc mở một thẻ không còn tồn tại.
+  const closedProducts = new Map(
+    data.products.filter((p) => !p.isActive).map((p) => [p.id as string, p]),
+  );
+  for (const [entity, rows] of [
+    ["offers", data.offers],
+    ["product_fees", data.productFees],
+    ["earning_rates", data.earningRates],
+    ["product_benefits", data.productBenefits],
+  ] as const) {
+    for (const row of rows) {
+      const product = closedProducts.get(row.productId);
+      if (product === undefined) continue;
+      if (row.effectiveTo === null) {
+        issues.push({
+          level: "error",
+          entity,
+          message: `${row.id}: sản phẩm ${product.slug} đã đóng nhưng bản ghi này chưa có effectiveTo`,
+        });
+      }
+    }
+  }
+
+  // ---- Welcome bonus: kiểu thưởng phải khớp dữ liệu -----------------------
+  for (const offer of data.offers) {
+    if (offer.bonusKind === "points" && offer.bonusCurrencyId === null) {
+      issues.push({
+        level: "error",
+        entity: "offers",
+        message: `${offer.id}: bonusKind là points nhưng không có bonusCurrencyId`,
+      });
+    }
+    if (offer.bonusKind !== "points" && offer.bonusCurrencyId !== null) {
+      issues.push({
+        level: "error",
+        entity: "offers",
+        message: `${offer.id}: bonusKind là ${offer.bonusKind} nhưng vẫn có bonusCurrencyId`,
+      });
+    }
+    if (offer.bonusKind === "none" && offer.headlineBonus !== null) {
+      issues.push({
+        level: "error",
+        entity: "offers",
+        message: `${offer.id}: bonusKind là none nhưng vẫn có headlineBonus`,
+      });
+    }
+  }
+
+  // ---- Độ tươi của dữ liệu ------------------------------------------------
+  //
+  // `confidence: "stale"` tồn tại trong kiểu từ đầu nhưng CHƯA AI sinh ra nó —
+  // tức một trạng thái được khai báo mà không bao giờ xảy ra, và Phase 3 sẽ
+  // học rằng nó không cần xử lý. Phép kiểm này làm nó có thật.
+  //
+  // Ngưỡng theo LOẠI dữ liệu, vì chúng mục với tốc độ khác nhau: welcome offer
+  // đổi hằng tháng, còn tỷ lệ tích điểm và quyền lợi thì hằng năm.
+  for (const [entity, rows, maxAgeDays] of [
+    ["offers", data.offers, 120],
+    ["product_fees", data.productFees, 365],
+    ["earning_rates", data.earningRates, 365],
+    ["product_benefits", data.productBenefits, 365],
+    ["eligibility_rules", data.eligibilityRules, 365],
+    ["transfer_paths", data.transferPaths, 180],
+    ["award_strategies", data.awardStrategies, 180],
+  ] as const) {
+    for (const row of rows) {
+      // Chỉ soi bản ghi CÒN HIỆU LỰC: bản ghi đã đóng thì `verifiedAt` cũ là
+      // đúng, đó là ngày nó đúng.
+      if (row.effectiveTo !== null) continue;
+      if (row.confidence === "stale") continue;
+      if (daysBetween(row.verifiedAt, asOf) > maxAgeDays) {
+        issues.push({
+          level: "warning",
+          entity,
+          message:
+            `${row.id}: kiểm lần cuối ${row.verifiedAt}, quá ${maxAgeDays} ngày — ` +
+            `kiểm lại hoặc đánh dấu confidence: "stale"`,
+        });
+      }
+    }
+  }
+
   // Sản phẩm chưa có offer nào: không nhất thiết sai (thẻ không có welcome
   // bonus là chuyện có thật), nhưng phải thấy được.
   const productsWithOffer = new Set(data.offers.map((o) => o.productId as string));
   for (const product of data.products) {
+    if (!isActiveAt(product, asOf)) continue;
     if (!productsWithOffer.has(product.id)) {
       issues.push({
         level: "warning",
@@ -425,6 +658,7 @@ export function validateDataset(data: RecommendationDataset): ValidationIssue[] 
   // Sản phẩm chưa có điều kiện mở thẻ nào.
   const withEligibility = new Set(data.eligibilityRules.map((r) => r.productId as string));
   for (const product of data.products) {
+    if (!isActiveAt(product, asOf)) continue;
     if (!withEligibility.has(product.id)) {
       issues.push({
         level: "warning",
