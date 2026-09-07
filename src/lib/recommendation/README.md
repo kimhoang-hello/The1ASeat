@@ -49,14 +49,18 @@ hai của cùng một sự thật nằm cạnh bản thứ nhất, nên không c
 hai bản trùng id. Và không bao giờ đánh số theo vị trí trong mảng: chèn một
 dòng vào giữa sẽ đổi id của mọi dòng phía sau, im lặng. Dùng `makeId`.
 
-## Ngừng phát hành ≠ hết tồn tại
+## Ngừng phát hành ≠ hết tồn tại (và mở lại được)
 
-`Product.availableFrom/availableTo` là cửa sổ thẻ còn **nhận đơn mới**. Nó
-TÁCH khỏi `effectiveFrom/effectiveTo` của bản ghi, và phân biệt này quan trọng:
+`product_availability` là các quãng thẻ còn **nhận đơn mới** — một BẢNG chứ
+không phải một cặp trường, vì thẻ ngừng rồi mở lại là chuyện có thật và một cặp
+`from/to` chỉ kể được một quãng. Nó TÁCH khỏi `effectiveFrom/effectiveTo` của
+bản ghi sản phẩm, và phân biệt này quan trọng:
 
-- Thẻ ngừng phát hành → `availableTo` đóng lại. **Offer phải đóng theo** (không
+- Thẻ ngừng phát hành → đóng quãng khả dụng hiện tại (`effectiveTo` + `closedReason`). **Offer phải đóng theo** (không
   ai mở được nữa), nhưng **tỷ lệ tích điểm, quyền lợi và phí thì KHÔNG** —
   người đang giữ thẻ vẫn kiếm điểm, vẫn hưởng quyền lợi, vẫn trả phí hằng năm.
+- Mở lại → thêm một quãng mới. Cả hai quãng ở lại; `isAvailableAt(windows, day)`
+  trả lời "hôm đó có mở không".
 - Sản phẩm KHÔNG bị loại khỏi `datasetAt` khi hết khả dụng. Danh tính là vĩnh
   viễn. Gộp hai thứ này lại sẽ làm Portfolio Analyzer ở Phase 3 quên mất một
   thẻ đang nằm trong ví người dùng — không cộng điểm nó kiếm, và đếm quyền lợi
@@ -174,9 +178,9 @@ dữ liệu quyết định hình dạng code Phase 3 sẽ viết.
 5. `npm run audit:reco-data`.
 
 Nhà phát hành mới → thêm vào `data/issuers.ts`. Chương trình điểm mới → thêm
-vào `data/points-programs.ts` **và** thêm rule vào
-[`../card-points-programs.ts`](../card-points-programs.ts), nếu không thẻ mất
-chip lọc trên `/credit-cards` một cách im lặng. Quyền lợi mới → thêm vào
+vào `data/points-programs.ts`, kèm `contentPattern` và một dòng trong
+`PROGRAM_VALUATIONS`. Chip lọc trên `/credit-cards` **tự suy ra** từ đó —
+`card-points-programs.ts` không còn danh sách viết tay riêng. Quyền lợi mới → thêm vào
 `data/benefits.ts`, nhớ trả lời `duplicatesAcrossCards`.
 
 Chỗ DUY NHẤT phải sửa kiểu chứ không phải dữ liệu là **hạng mục chi tiêu mới**
@@ -316,7 +320,7 @@ của recorder.
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # phép tính chi tiêu, bất biến dữ liệu, lịch sử offer
+npm run test:reco         # 89 test: phép tính chi tiêu, bất biến, vòng đời, quy mô
 ```
 
 `audit:reco-data` bắt ba lớp lỗi:
@@ -332,3 +336,21 @@ npm run test:reco         # phép tính chi tiêu, bất biến dữ liệu, l�
   XANH trong khi nói một con số trang bên cạnh đã sửa.
 
 Cảnh báo (`⚠︎`) không chặn. Lỗi (`✗`) chặn.
+
+## Quy mô
+
+Đo trên bộ dữ liệu tổng hợp (nhân bản seed thật):
+
+| Dòng | `validateDataset` | `datasetAt` | `indexDataset` |
+| --- | --- | --- | --- |
+| 500 | 5 ms | 0 ms | 0 ms |
+| 7,628 | 30 ms | 0 ms | 0 ms |
+| 60,280 | 178 ms | 1 ms | 0 ms |
+
+Tuyến tính. `validateDataset` dành cho CI và audit, không phải cho mỗi request;
+Phase 3 đọc qua `datasetAt` + `indexDataset`, và cả hai ~1 ms ở 60k dòng.
+
+`scripts/` **được kiểm kiểu** (`tsconfig.json`). Lý do trước đây loại nó ra đã
+được `allowImportingTsExtensions` gỡ, và đổi lại vì một lỗi thật: audit đọc một
+trường đã bị đổi tên, `undefined` là falsy nên MỌI thẻ bị bỏ qua và 31 phép so
+phí/rebate chết lặng suốt trong khi audit vẫn in "✓ Không lỗi".
