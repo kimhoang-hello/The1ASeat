@@ -36,7 +36,25 @@ import type {
  */
 export function asArray<T>(value: T[] | undefined): T[] {
   if (!Array.isArray(value)) return [];
-  return value.filter((row): row is T => typeof row === "object" && row !== null);
+  return value.filter((row): row is T => isObject(row));
+}
+
+/**
+ * Object thật: không phải `null`, không phải mảng, không phải giá trị nguyên
+ * thuỷ.
+ *
+ * MỘT định nghĩa dùng cho cả `asArray` lẫn `validateUserState`. Trước đó là
+ * hai phép kiểm viết riêng, và chúng đã lệch ngay lần đầu: `typeof [] ===
+ * "object"` nên bản trong `asArray` GIỮ LẠI một dòng `[]`, trong khi validator
+ * loại nó. Hậu quả không phải một exception mà là hai lớp nói khác nhau về
+ * cùng một dữ liệu — `primaryGoal` trả về `resolved` với một mảng rỗng làm mục
+ * tiêu, còn `userGaps` sinh chỗ trống mang `subject: undefined`.
+ *
+ * Hai phép kiểm cùng một khái niệm thì phải là MỘT hàm, không phải hai dòng
+ * giống nhau.
+ */
+export function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 /* ------------------------------------------------------------------ *

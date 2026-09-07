@@ -19,12 +19,14 @@ export { INCOMPLETE_OFFERS, UNQUOTABLE_AWARD_PROGRAMS } from "./data/index.ts";
 /* Phase 2 — trạng thái người dùng */
 export * from "./user-types.ts";
 export {
+  asArray,
   balanceRowFor,
   compareToThreshold,
   everHeld,
   everHeldProductIds,
   heldProductIds,
   holdsNow,
+  isObject,
   lastClosed,
   primaryGoal,
   resolveTripGoal,

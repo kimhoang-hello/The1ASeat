@@ -26,6 +26,7 @@
  */
 
 import { CABINS, SPEND_CATEGORIES, TRIP_REGIONS } from "./types.ts";
+import { isObject } from "./user.ts";
 import { isRealDate, type ValidationIssue } from "./validate.ts";
 import {
   CANADIAN_PROVINCES,
@@ -154,11 +155,6 @@ const _earnGoalKeys: AssertAllKeys<EarnPointsGoal, typeof EARN_GOAL_KEYS> = true
 const _nextCardGoalKeys: AssertAllKeys<NextCardGoal, typeof GOAL_BASE_KEYS> = true;
 const _diversifyGoalKeys: AssertAllKeys<DiversifyGoal, typeof GOAL_BASE_KEYS> = true;
 void [_stateKeys, _declaredKeys, _profileKeys, _spendKeys, _cardKeys, _balanceKeys, _tripGoalKeys, _earnGoalKeys, _nextCardGoalKeys, _diversifyGoalKeys];
-
-/** Object thật, không phải mảng, không phải `null`. */
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
 
 function checkKeys(
   row: unknown,

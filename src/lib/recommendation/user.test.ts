@@ -297,15 +297,34 @@ test("vật chứa SAI HÌNH DẠNG: báo lỗi, không ném, và không đọc 
     );
   }
 
-  // Và phần tử rác trong mảng cũng không được làm sập.
+  // Và phần tử rác trong mảng cũng không được làm sập. `[]` nằm trong danh
+  // sách vì `typeof [] === "object"`: đó là ca đã làm `asArray` và validator
+  // nói khác nhau về cùng một dữ liệu, khi hai bên còn là hai phép kiểm viết
+  // riêng.
   const junkRow = broken(advancedCollector, (s) => {
-    (s.cards as unknown[]).push(null, "x");
-    (s.balances as unknown[]).push(null);
-    (s.goals as unknown[]).push(null);
+    (s.cards as unknown[]).push(null, "x", []);
+    (s.balances as unknown[]).push(null, []);
+    (s.goals as unknown[]).push(null, []);
   });
   assert.doesNotThrow(() => validateUserState(junkRow, data));
   assert.doesNotThrow(() => userGaps(junkRow));
   assert.ok(errorsIn(junkRow).some((message) => message.includes("không phải object")));
+  // Hai lớp phải THẤY GIỐNG NHAU: dòng rác bị validator loại thì hàm đọc cũng
+  // phải coi như không có, chứ không được giữ lại.
+  assert.equal(heldProductIds(junkRow).size, heldProductIds(advancedCollector).size);
+  assert.deepEqual(userGaps(junkRow), userGaps(advancedCollector));
+});
+
+test("dòng rác không làm primaryGoal trả về 'resolved' với rác", () => {
+  // `goals: [[]]` từng qua được `asArray` vì `typeof [] === "object"`, và
+  // `primaryGoal` trả về `{ kind: "resolved", goal: [] }` — một mục tiêu rỗng
+  // được trình bày như một mục tiêu thật.
+  const onlyJunk = broken(advancedCollector, (s) => {
+    (s as unknown as Record<string, unknown>).goals = [[], null];
+  });
+  assert.deepEqual(primaryGoal(onlyJunk), { kind: "none" });
+  assert.ok(gapKinds(onlyJunk).includes("goal_missing"));
+  assert.ok(errorsIn(onlyJunk).some((message) => message.includes("không phải object")));
 });
 
 test("gốc UserState không phải object thì trả lỗi chứ không ném", () => {

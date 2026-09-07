@@ -568,11 +568,18 @@ Nên: kiểm hình dạng trước và báo thành lỗi, rồi mới đọc ti�
 `user.ts` là nửa còn lại — nó đòi mảng VÀ lọc bỏ dòng không phải object, để các
 hàm đọc coi rác là KHÔNG CÓ DỮ LIỆU thay vì đoán hay ném.
 
+Hai nửa đó dùng **chung một hàm** `isObject`, và đó không phải chuyện gọn gàng:
+lúc còn là hai phép kiểm viết riêng, chúng đã lệch ngay lần đầu. `typeof [] ===
+"object"` nên bản trong `asArray` GIỮ LẠI một dòng `[]` mà validator loại —
+`primaryGoal` trả về `resolved` với một mảng rỗng làm mục tiêu, `userGaps` sinh
+chỗ trống mang `subject: undefined`, và không có exception nào. Hai phép kiểm
+cùng một khái niệm thì phải là một hàm.
+
 ## Chạy gì
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # 164 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng
+npm run test:reco         # 165 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng
 ```
 
 `audit:reco-data` bắt ba lớp lỗi:
