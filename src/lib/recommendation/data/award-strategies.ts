@@ -7,6 +7,12 @@ import {
 } from "../types.ts";
 
 /**
+ * Ngày các dòng này được ĐƯA VÀO kho — độc lập với ngày kiểm lại. Kiểm lại một
+ * dữ kiện không đổi ngày nó vào kho.
+ */
+const RECORDED_ON = "2026-09-07";
+
+/**
  * KHOẢNG điểm cho một CÁCH đi, không phải giá của một chuyến bay (spec §6).
  *
  * "YYZ → Sài Gòn business = 102,500 Aeroplan" là một con số nghe chắc chắn mà
@@ -223,7 +229,7 @@ export const AWARD_STRATEGIES: AwardStrategy[] = SEEDS.flatMap((seed) =>
         sourceUrl: seed.sourceUrl,
         sourceKind: "issuer",
         verifiedAt: seed.verifiedAt,
-        recordedAt: seed.verifiedAt,
+        recordedAt: RECORDED_ON,
         confidence: seed.confidence,
       };
     }),

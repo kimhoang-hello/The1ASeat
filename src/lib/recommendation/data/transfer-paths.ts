@@ -1,5 +1,11 @@
 import { id, type TransferPath, type TransferPathId, type PointsProgramId } from "../types.ts";
 
+/**
+ * Ngày các dòng này được ĐƯA VÀO kho — độc lập với ngày kiểm lại. Kiểm lại một
+ * dữ kiện không đổi ngày nó vào kho.
+ */
+const RECORDED_ON = "2026-09-07";
+
 const AMEX_SOURCE = "https://global.americanexpress.com/rewards/transfer";
 const RBC_SOURCE = "https://www.rbcrewards.com/";
 
@@ -37,7 +43,7 @@ export const TRANSFER_PATHS: TransferPath[] = [
     sourceUrl: AMEX_SOURCE,
     sourceKind: "issuer",
     verifiedAt: "2026-08-04",
-    recordedAt: "2026-08-04",
+    recordedAt: RECORDED_ON,
     confidence: "verified",
   },
   {
@@ -53,7 +59,7 @@ export const TRANSFER_PATHS: TransferPath[] = [
     sourceUrl: AMEX_SOURCE,
     sourceKind: "issuer",
     verifiedAt: "2026-08-04",
-    recordedAt: "2026-08-04",
+    recordedAt: RECORDED_ON,
     confidence: "verified",
   },
   {
@@ -69,7 +75,7 @@ export const TRANSFER_PATHS: TransferPath[] = [
     sourceUrl: AMEX_SOURCE,
     sourceKind: "issuer",
     verifiedAt: "2026-08-04",
-    recordedAt: "2026-08-04",
+    recordedAt: RECORDED_ON,
     confidence: "verified",
   },
   {
@@ -85,7 +91,7 @@ export const TRANSFER_PATHS: TransferPath[] = [
     sourceUrl: AMEX_SOURCE,
     sourceKind: "issuer",
     verifiedAt: "2026-08-04",
-    recordedAt: "2026-08-04",
+    recordedAt: RECORDED_ON,
     confidence: "verified",
   },
   {
@@ -101,7 +107,7 @@ export const TRANSFER_PATHS: TransferPath[] = [
     sourceUrl: AMEX_SOURCE,
     sourceKind: "issuer",
     verifiedAt: "2026-08-04",
-    recordedAt: "2026-08-04",
+    recordedAt: RECORDED_ON,
     confidence: "verified",
   },
   {
@@ -117,7 +123,7 @@ export const TRANSFER_PATHS: TransferPath[] = [
     sourceUrl: RBC_SOURCE,
     sourceKind: "third_party",
     verifiedAt: "2026-08-04",
-    recordedAt: "2026-08-04",
+    recordedAt: RECORDED_ON,
     confidence: "estimated",
   },
   {
@@ -133,7 +139,7 @@ export const TRANSFER_PATHS: TransferPath[] = [
     sourceUrl: RBC_SOURCE,
     sourceKind: "third_party",
     verifiedAt: "2026-08-04",
-    recordedAt: "2026-08-04",
+    recordedAt: RECORDED_ON,
     confidence: "estimated",
   },
   {
@@ -149,7 +155,7 @@ export const TRANSFER_PATHS: TransferPath[] = [
     sourceUrl: RBC_SOURCE,
     sourceKind: "third_party",
     verifiedAt: "2026-08-04",
-    recordedAt: "2026-08-04",
+    recordedAt: RECORDED_ON,
     confidence: "estimated",
   },
   {
@@ -165,7 +171,7 @@ export const TRANSFER_PATHS: TransferPath[] = [
     sourceUrl: RBC_SOURCE,
     sourceKind: "third_party",
     verifiedAt: "2026-08-04",
-    recordedAt: "2026-08-04",
+    recordedAt: RECORDED_ON,
     confidence: "estimated",
   },
 ];

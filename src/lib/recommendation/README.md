@@ -145,10 +145,22 @@ hạng mục vô dụng.
 `recordedAt` = bản ghi được ĐƯA VÀO kho ngày nào.
 
 Chúng tách ra ở đúng chỗ quan trọng: một đính chính lùi ngày nhập hôm nay có
-`effectiveFrom` sáu tháng trước nhưng `recordedAt` là hôm nay. `datasetAt` một
-mình không phân biệt được nó với dữ liệu đã có sẵn từ sáu tháng trước, nên
-Phase 4 phải lọc thêm `recordedAt <= ngày chạy` khi giải thích một khuyến nghị
-cũ — nếu không nó sẽ "giải thích" bằng một dữ kiện mà engine lúc ấy chưa hề biết.
+`effectiveFrom` sáu tháng trước nhưng `recordedAt` là hôm nay.
+`datasetAt(data, asOf, { knownAt })` cắt theo cả hai trục — không có `knownAt`
+thì bản dựng lại của tháng trước chứa dữ kiện mà engine lúc ấy chưa hề biết.
+
+`recordedAt` **độc lập với `verifiedAt`**: kiểm lại một dữ kiện không đổi ngày
+nó vào kho. Buộc hai thứ vào nhau thì mỗi lần kiểm lại làm các lượt chạy trước
+đó trông như chưa từng biết dòng này.
+
+**Giới hạn, nói thẳng:** một `recordedAt` duy nhất không dựng lại được *mọi*
+chuyện. Đóng một dòng cũ là SỬA dòng đó (đặt `effectiveTo`), và bản ghi không
+giữ lại việc nó từng mở — nên dựng lại một ngày trước lần đóng sẽ thấy dòng đã
+đóng. Đúng tuyệt đối đòi mọi dòng bất biến và mỗi lần đóng là một phiên bản
+mới. Phase 1 **cố ý không làm vậy**: spec §20 đã yêu cầu `recommendation_runs`
+lưu `input_snapshot` + `derived_state` của chính lượt chạy đó, và một bản chụp
+đã lưu luôn đúng hơn mọi phép dựng lại. `datasetAt` là lưới thứ hai cho những
+lượt chạy không có bản chụp.
 
 ## Trống ≠ bằng không
 

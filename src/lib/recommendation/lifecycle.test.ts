@@ -516,3 +516,51 @@ test("dữ liệu quá hạn kiểm sinh cảnh báo, và đánh dấu stale th�
   );
   assert.equal(remaining.length, 0);
 });
+
+test("đính chính lùi ngày KHÔNG lọt vào bản dựng lại của quá khứ", () => {
+  // Sửa một dữ kiện hôm nay, khai hiệu lực từ tháng trước. Lượt chạy tháng
+  // trước không hề biết dòng này, nên dựng lại tháng đó không được thấy nó.
+  const fee = BASE.productFees[0];
+  const backdated = {
+    ...BASE,
+    productFees: [
+      { ...fee, effectiveTo: "2026-09-30" },
+      {
+        ...fee,
+        id: `${fee.id}_correction` as ProductFee["id"],
+        annualFee: fee.annualFee + 25,
+        effectiveFrom: "2026-10-01",
+        recordedAt: "2026-12-01", // nhập MUỘN
+      },
+      ...BASE.productFees.slice(1),
+    ],
+  };
+
+  // Không cắt theo `knownAt`: thấy cả đính chính.
+  const naive = datasetAt(backdated, "2026-10-15").productFees.filter(
+    (f) => f.productId === fee.productId,
+  );
+  assert.equal(naive.length, 1);
+  assert.equal(naive[0].annualFee, fee.annualFee + 25);
+
+  // Cắt theo những gì đã biết TÍNH ĐẾN 15/10: đính chính chưa tồn tại.
+  const asKnownThen = datasetAt(backdated, "2026-10-15", { knownAt: "2026-10-15" }).productFees.filter(
+    (f) => f.productId === fee.productId,
+  );
+  assert.equal(asKnownThen.length, 0, "dòng cũ đã đóng 30/09, dòng mới chưa nhập — đúng là không có gì");
+});
+
+test("cảnh báo hạng chuyển điểm bắt được chuỗi tiếng Việt", () => {
+  // `\b` của JavaScript dựa trên ASCII nên "Chỉ Avion® Elite" không khớp — phép
+  // kiểm im lặng trượt đúng chuỗi nó sinh ra để bắt.
+  const path = BASE.transferPaths.find((p) => p.conditionText !== null)!;
+  const broken = {
+    ...BASE,
+    transferPaths: [
+      { ...path, conditionText: "Chỉ Avion® Elite", requiresTier: null },
+      ...BASE.transferPaths.filter((p) => p.id !== path.id),
+    ],
+  };
+  const warnings = validateDataset(broken, TODAY).filter((i) => i.level === "warning");
+  assert.ok(warnings.some((w) => w.message.includes("requiresTier để trống")));
+});

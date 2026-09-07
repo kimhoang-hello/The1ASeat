@@ -15,6 +15,12 @@ import {
 const SEEDED_ON = "2026-09-07";
 
 /**
+ * Ngày các dòng này được ĐƯA VÀO kho — độc lập với ngày kiểm lại. Kiểm lại một
+ * dữ kiện không đổi ngày nó vào kho.
+ */
+const RECORDED_ON = "2026-09-07";
+
+/**
  * 31 thẻ tín dụng site đang có trang.
  *
  * KHOÁ CHÍNH LÀ `id`, KHÔNG PHẢI `slug`. `id` là `prd_<slug lúc seed>` và từ
@@ -459,7 +465,7 @@ export const PRODUCT_FEES: ProductFee[] = SEEDS.flatMap((seed) =>
     sourceUrl: `https://ghe1a.com/credit-cards/${seed.slug}`,
     sourceKind: "ghe1a",
     verifiedAt: fee.verifiedAt ?? fee.from,
-    recordedAt: fee.verifiedAt ?? fee.from,
+    recordedAt: RECORDED_ON,
     confidence: "verified",
   })),
 );

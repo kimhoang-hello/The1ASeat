@@ -60,10 +60,35 @@ export function oneActiveAt<T extends Temporal>(
  * có. Lọc theo khả dụng là việc của tầng khuyến nghị, không phải của tầng đọc
  * dữ liệu.
  */
-export function datasetAt(data: RecommendationDataset, asOf: string): RecommendationDataset {
+export function datasetAt(
+  data: RecommendationDataset,
+  asOf: string,
+  options?: { knownAt?: string },
+): RecommendationDataset {
+  // `knownAt` cắt theo TRỤC THỜI GIAN THỨ HAI: chỉ giữ những bản ghi đã có mặt
+  // trong kho tính đến ngày đó. Không có nó thì một đính chính LÙI NGÀY nhập
+  // hôm nay — `effectiveFrom` tháng trước, `recordedAt` hôm nay — vẫn lọt vào
+  // bản dựng lại của tháng trước, và Phase 4 "giải thích" một khuyến nghị cũ
+  // bằng dữ kiện mà engine lúc ấy chưa hề biết. Đó đúng là thứ `recordedAt`
+  // sinh ra để chặn, nên phép cắt phải nằm ở ĐÂY chứ không trông vào người gọi
+  // nhớ lọc thêm một lần nữa.
+  //
+  // GIỚI HẠN, nói thẳng: một `recordedAt` duy nhất KHÔNG dựng lại được mọi
+  // chuyện. Đóng một dòng cũ là SỬA dòng đó (đặt `effectiveTo`), và bản ghi
+  // không giữ lại việc nó từng mở — nên dựng lại một ngày trước lần đóng sẽ
+  // thấy dòng đã đóng. Muốn đúng tuyệt đối thì mọi dòng phải bất biến và mỗi
+  // lần đóng là một phiên bản mới. Phase 1 KHÔNG làm vậy có chủ ý: spec §20 đã
+  // yêu cầu `recommendation_runs` lưu `input_snapshot` và `derived_state` của
+  // chính lượt chạy đó, và một bản chụp đã lưu luôn đúng hơn mọi phép dựng
+  // lại. Chỗ này là lưới thứ hai cho những lượt chạy không có bản chụp.
+  const known = <T extends { recordedAt: string }>(rows: readonly T[]): T[] =>
+    options?.knownAt === undefined
+      ? [...rows]
+      : rows.filter((row) => row.recordedAt <= options.knownAt!);
+
   const products = activeAt(data.products, asOf);
   const liveProductIds = new Set(products.map((product) => product.id as string));
-  const offers = activeAt(data.offers, asOf).filter((offer) =>
+  const offers = activeAt(known(data.offers), asOf).filter((offer) =>
     liveProductIds.has(offer.productId),
   );
   const liveOfferIds = new Set(offers.map((offer) => offer.id as string));
@@ -73,7 +98,7 @@ export function datasetAt(data: RecommendationDataset, asOf: string): Recommenda
     pointsPrograms: data.pointsPrograms,
     benefits: data.benefits,
     products,
-    productFees: activeAt(data.productFees, asOf).filter((fee) =>
+    productFees: activeAt(known(data.productFees), asOf).filter((fee) =>
       liveProductIds.has(fee.productId),
     ),
     offers,
@@ -83,19 +108,19 @@ export function datasetAt(data: RecommendationDataset, asOf: string): Recommenda
     offerComponents: data.offerComponents.filter((component) =>
       liveOfferIds.has(component.offerId),
     ),
-    earningRates: activeAt(data.earningRates, asOf).filter((rate) =>
+    earningRates: activeAt(known(data.earningRates), asOf).filter((rate) =>
       liveProductIds.has(rate.productId),
     ),
-    earningCaps: activeAt(data.earningCaps, asOf).filter((cap) =>
+    earningCaps: activeAt(known(data.earningCaps), asOf).filter((cap) =>
       liveProductIds.has(cap.productId),
     ),
-    productBenefits: activeAt(data.productBenefits, asOf).filter((benefit) =>
+    productBenefits: activeAt(known(data.productBenefits), asOf).filter((benefit) =>
       liveProductIds.has(benefit.productId),
     ),
-    eligibilityRules: activeAt(data.eligibilityRules, asOf).filter((rule) =>
+    eligibilityRules: activeAt(known(data.eligibilityRules), asOf).filter((rule) =>
       liveProductIds.has(rule.productId),
     ),
-    transferPaths: activeAt(data.transferPaths, asOf),
-    awardStrategies: activeAt(data.awardStrategies, asOf),
+    transferPaths: activeAt(known(data.transferPaths), asOf),
+    awardStrategies: activeAt(known(data.awardStrategies), asOf),
   };
 }

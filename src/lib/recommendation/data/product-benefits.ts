@@ -25,6 +25,13 @@ import {
  */
 
 const VERIFIED_ON = "2026-09-07";
+/**
+ * Ngày các dòng này được ĐƯA VÀO kho. ĐỘC LẬP với `VERIFIED_ON`, và không được
+ * đổi khi kiểm lại: kiểm lại một dữ kiện không đổi ngày nó vào kho, còn buộc
+ * hai thứ vào nhau thì mỗi lần kiểm lại sẽ làm các lượt chạy TRƯỚC đó trông
+ * như chưa từng biết dòng này.
+ */
+const RECORDED_ON = "2026-09-07";
 
 type BenefitSeed = [
   benefit: string,
@@ -296,7 +303,7 @@ export const PRODUCT_BENEFITS: ProductBenefit[] = Object.entries(BY_PRODUCT).fla
       sourceUrl: `https://ghe1a.com/credit-cards/${slug}`,
       sourceKind: "ghe1a",
       verifiedAt: VERIFIED_ON,
-      recordedAt: VERIFIED_ON,
+      recordedAt: RECORDED_ON,
       confidence: "verified",
     })),
 );

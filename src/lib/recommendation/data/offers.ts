@@ -33,6 +33,13 @@ import { longestWindowMonths, spendPerNinetyDays, totalSpend, type SpendWindow }
 
 /** Ngày đọc nội dung Contentful để dựng bộ này. */
 const VERIFIED_ON = "2026-09-07";
+/**
+ * Ngày các dòng này được ĐƯA VÀO kho. ĐỘC LẬP với `VERIFIED_ON`, và không được
+ * đổi khi kiểm lại: kiểm lại một dữ kiện không đổi ngày nó vào kho, còn buộc
+ * hai thứ vào nhau thì mỗi lần kiểm lại sẽ làm các lượt chạy TRƯỚC đó trông
+ * như chưa từng biết dòng này.
+ */
+const RECORDED_ON = "2026-09-07";
 const CONTENTFUL_SOURCE = "https://ghe1a.com/credit-cards";
 
 type ComponentSeed = {
@@ -611,7 +618,7 @@ export const OFFERS: Offer[] = OFFER_SEEDS.map((seed) => ({
   sourceUrl: `${CONTENTFUL_SOURCE}/${seed.slug}`,
   sourceKind: "ghe1a",
   verifiedAt: VERIFIED_ON,
-  recordedAt: VERIFIED_ON,
+  recordedAt: RECORDED_ON,
   confidence: seed.components.length === 0 && seed.headline !== null ? "estimated" : "verified",
 }));
 

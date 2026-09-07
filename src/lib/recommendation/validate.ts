@@ -660,7 +660,11 @@ export function validateDataset(
     // Chỉ soi cách nói HẠN CHẾ. "Mọi hạng Avion®" cũng nhắc tới hạng nhưng nói
     // điều ngược lại — không hạn chế gì — nên `requiresTier: null` ở đó là
     // đúng, và cảnh báo nó là dạy người đọc bỏ qua cảnh báo.
-    if (/\b(chỉ|only|requires?)\b/i.test(path.conditionText)) {
+    // KHÔNG dùng `\b`: nó dựa trên bảng ký tự ASCII, nên trong "Chỉ Avion®"
+    // thì cả "ỉ" lẫn khoảng trắng sau nó đều là ký tự không-từ và ranh giới
+    // không khớp — tức phép kiểm im lặng trượt đúng chuỗi tiếng Việt nó sinh
+    // ra để bắt. Neo bằng đầu chuỗi hoặc khoảng trắng.
+    if (/(^|\s)(chỉ|only|requires?)(\s|$)/i.test(path.conditionText)) {
       issues.push({
         level: "warning",
         entity: "transfer_paths",
