@@ -391,7 +391,7 @@ việc này, và một test thứ ba chặn mô hình mã hoá kết quả — t
 npx tsc --noEmit        # sạch
 npm run lint            # sạch
 npm run build           # Compiled successfully
-npm run test:reco       # 160/160 pass (91 của Phase 1 + 69 mới)
+npm run test:reco       # 162/162 pass (91 của Phase 1 + 71 mới)
 npm run test:game       # 43/43 pass
 npm run audit:reco-data # 0 lỗi, 9 cảnh báo (y như trước, đều là chỗ trống có chủ ý)
 ```

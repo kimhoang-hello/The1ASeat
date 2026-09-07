@@ -161,7 +161,7 @@ export function userGaps(state: UserState): UserDataGap[] {
 
   /* --- Thẻ --- */
 
-  if (!state.declared.cards) {
+  if (!state.declared?.cards) {
     gaps.push({
       kind: "cards_undeclared",
       subject: profile.id,
@@ -170,7 +170,7 @@ export function userGaps(state: UserState): UserDataGap[] {
     });
   }
 
-  for (const card of [...state.cards].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))) {
+  for (const card of [...(state.cards ?? [])].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))) {
     if (!holdsNow(card) && card.closedDate == null) {
       gaps.push({
         kind: "card_closed_date_unknown",
@@ -183,7 +183,7 @@ export function userGaps(state: UserState): UserDataGap[] {
 
   /* --- Số dư điểm --- */
 
-  if (!state.declared.balances) {
+  if (!state.declared?.balances) {
     gaps.push({
       kind: "balances_undeclared",
       subject: profile.id,
@@ -192,7 +192,7 @@ export function userGaps(state: UserState): UserDataGap[] {
     });
   }
 
-  for (const row of [...state.balances].sort((a, b) =>
+  for (const row of [...(state.balances ?? [])].sort((a, b) =>
     a.programId < b.programId ? -1 : a.programId > b.programId ? 1 : 0,
   )) {
     if (row.balance == null) {
@@ -207,7 +207,7 @@ export function userGaps(state: UserState): UserDataGap[] {
 
   /* --- Chuyến đi --- */
 
-  for (const goal of [...state.goals].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))) {
+  for (const goal of [...(state.goals ?? [])].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))) {
     if (goal.type !== "trip") continue;
     if (goal.cabin == null) {
       gaps.push({

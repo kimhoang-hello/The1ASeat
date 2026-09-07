@@ -31,6 +31,7 @@ import {
   CANADIAN_PROVINCES,
   GOAL_TYPES,
   SUPPORTED_COUNTRIES,
+  type DeclaredCollections,
   type DiversifyGoal,
   type EarnPointsGoal,
   type EstimatedAmount,
@@ -120,6 +121,8 @@ function checkDate(
  * trường bị bỏ sót. Không có nó thì mỗi trường mới lại lặng lẽ thoát khỏi phép
  * kiểm hiện diện, và ca migration quay lại nguyên vẹn.
  */
+const STATE_KEYS = ["profile", "spend", "cards", "balances", "goals", "declared"] as const;
+const DECLARED_KEYS = ["cards", "balances"] as const;
 const PROFILE_KEYS = [
   "id", "country", "province", "annualPersonalIncome", "annualHouseholdIncome",
   "personalIncomeDeclined", "householdIncomeDeclined", "annualFeeTolerancePerCard",
@@ -140,6 +143,8 @@ const EARN_GOAL_KEYS = [...GOAL_BASE_KEYS, "targetProgramId"] as const;
 type AssertAllKeys<T, K extends readonly (keyof T)[]> =
   Exclude<keyof T, K[number]> extends never ? true : Exclude<keyof T, K[number]>;
 
+const _stateKeys: AssertAllKeys<UserState, typeof STATE_KEYS> = true;
+const _declaredKeys: AssertAllKeys<DeclaredCollections, typeof DECLARED_KEYS> = true;
 const _profileKeys: AssertAllKeys<UserProfile, typeof PROFILE_KEYS> = true;
 const _spendKeys: AssertAllKeys<UserSpendProfile, typeof SPEND_KEYS> = true;
 const _cardKeys: AssertAllKeys<UserCard, typeof CARD_KEYS> = true;
@@ -148,7 +153,7 @@ const _tripGoalKeys: AssertAllKeys<TripGoal, typeof TRIP_GOAL_KEYS> = true;
 const _earnGoalKeys: AssertAllKeys<EarnPointsGoal, typeof EARN_GOAL_KEYS> = true;
 const _nextCardGoalKeys: AssertAllKeys<NextCardGoal, typeof GOAL_BASE_KEYS> = true;
 const _diversifyGoalKeys: AssertAllKeys<DiversifyGoal, typeof GOAL_BASE_KEYS> = true;
-void [_profileKeys, _spendKeys, _cardKeys, _balanceKeys, _tripGoalKeys, _earnGoalKeys, _nextCardGoalKeys, _diversifyGoalKeys];
+void [_stateKeys, _declaredKeys, _profileKeys, _spendKeys, _cardKeys, _balanceKeys, _tripGoalKeys, _earnGoalKeys, _nextCardGoalKeys, _diversifyGoalKeys];
 
 function checkKeys(
   row: object,
@@ -202,6 +207,13 @@ export function validateUserState(
   const issues: ValidationIssue[] = [];
   const { profile, spend } = state;
   const userId = profile.id;
+
+  // Cả VẬT CHỨA cũng phải khớp bộ khoá, không chỉ các dòng bên trong. Một
+  // `loyaltyAccountNumber` gắn thẳng vào gốc `UserState` hay vào `declared`
+  // không đi qua vòng lặp nào của các thực thể con, nên lời hứa "không có chỗ
+  // nào nhét được" thủng đúng ở chỗ dễ nhét nhất.
+  checkKeys(state, STATE_KEYS, "user_state", issues);
+  checkKeys(state.declared ?? {}, DECLARED_KEYS, "user_state", issues);
 
   /* ---------------- user_profiles ---------------- */
 
@@ -317,7 +329,7 @@ export function validateUserState(
   const productIds = new Set(data.products.map((row) => row.id as string));
   const seenCardIds = new Set<string>();
   const activeByProduct = new Map<string, number>();
-  for (const card of state.cards) {
+  for (const card of state.cards ?? []) {
     if (seenCardIds.has(card.id)) {
       issues.push({ level: "error", entity: C, message: `Id trùng: ${card.id}` });
     }
@@ -359,13 +371,13 @@ export function validateUserState(
       }
     }
   }
-  if (typeof state.declared.cards !== "boolean" || typeof state.declared.balances !== "boolean") {
+  if (typeof state.declared?.cards !== "boolean" || typeof state.declared?.balances !== "boolean") {
     // `declared` là thứ tách "tôi chưa có thẻ nào" khỏi "tôi bấm bỏ qua".
     // Chuỗi `"false"` ở đây là truthy, nên nó lặng lẽ biến "chưa hỏi" thành
     // "đã khai" — đúng phân biệt mà cả mô hình dựng lên để giữ.
     issues.push({ level: "error", entity: C, message: "declared.cards và declared.balances phải là boolean" });
   }
-  if (state.cards.length > 0 && !state.declared.cards) {
+  if ((state.cards ?? []).length > 0 && !state.declared?.cards) {
     issues.push({
       level: "error",
       entity: C,
@@ -378,7 +390,7 @@ export function validateUserState(
   const B = "user_point_balances";
   const programIds = new Set(data.pointsPrograms.map((row) => row.id as string));
   const seenPrograms = new Set<string>();
-  for (const row of state.balances) {
+  for (const row of state.balances ?? []) {
     if (row.userId !== userId) {
       issues.push({ level: "error", entity: B, message: `${row.programId}: userId không khớp hồ sơ` });
     }
@@ -397,7 +409,7 @@ export function validateUserState(
     }
     checkRequiredDate(row.updatedAt, `${row.programId}.updatedAt`, B, issues);
   }
-  if (state.balances.length > 0 && !state.declared.balances) {
+  if ((state.balances ?? []).length > 0 && !state.declared?.balances) {
     issues.push({
       level: "error",
       entity: B,
@@ -410,7 +422,7 @@ export function validateUserState(
   const G = "goals";
   const seenGoalIds = new Set<string>();
   const seenPriorities = new Set<number>();
-  for (const goal of state.goals) {
+  for (const goal of state.goals ?? []) {
     if (seenGoalIds.has(goal.id)) {
       issues.push({ level: "error", entity: G, message: `Id trùng: ${goal.id}` });
     }

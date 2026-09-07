@@ -550,11 +550,16 @@ Nhưng test chỉ chạy trên fixture, mà dữ liệu thật tới từ databa
 từ JSON là một dòng LỖI, không phải một trường được lưu im lặng rồi giao cho
 Phase 3.
 
+Và **cả VẬT CHỨA** — gốc `UserState` lẫn `declared` — chứ không chỉ các dòng
+bên trong. Bản vá đầu chỉ kiểm profile/spend/card/balance/goal, nên một trường
+gắn thẳng vào gốc không đi qua vòng lặp nào: lời hứa thủng đúng ở chỗ dễ nhét
+nhất. Test thử nhét vào cả bảy tầng.
+
 ## Chạy gì
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # 160 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng
+npm run test:reco         # 162 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng
 ```
 
 `audit:reco-data` bắt ba lớp lỗi:

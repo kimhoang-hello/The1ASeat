@@ -242,6 +242,46 @@ test("không một trường nào ngoài cards nhắc tới một sản phẩm",
   }
 });
 
+test("trường lạ bị chặn LÚC CHẠY, ở mọi tầng — kể cả vật chứa", () => {
+  // Kiểu dữ liệu chặn được người viết TypeScript. Dòng JSON từ database thì
+  // không ai chặn, và đó là nơi hai lời hứa lớn nhất của mô hình thật sự bị
+  // thử: spec §4.4 cấm số tài khoản loyalty, và mô hình không được mã hoá thẻ
+  // nào nên được khuyên.
+  const spots: [string, (s: UserState) => object][] = [
+    ["gốc UserState", (s) => s],
+    ["declared", (s) => s.declared],
+    ["profile", (s) => s.profile],
+    ["spend", (s) => s.spend as object],
+    ["card", (s) => s.cards[0]],
+    ["balance", (s) => s.balances[0]],
+    ["goal", (s) => s.goals[0]],
+  ];
+  for (const [label, pick] of spots) {
+    for (const smuggled of ["loyaltyAccountNumber", "preferredProductId"]) {
+      const state = broken(advancedCollector, (s) => {
+        (pick(s) as Record<string, unknown>)[smuggled] = "x";
+      });
+      assert.ok(
+        errorsIn(state).some((message) => message.includes(`Trường lạ "${smuggled}"`)),
+        `${label}: "${smuggled}" lọt qua validator`,
+      );
+    }
+  }
+});
+
+test("vật chứa vắng mặt không làm hàm nào ném", () => {
+  for (const key of ["cards", "balances", "goals", "declared", "spend"]) {
+    const state = broken(advancedCollector, (s) => {
+      delete (s as unknown as Record<string, unknown>)[key];
+    });
+    assert.doesNotThrow(() => validateUserState(state, data), `thiếu ${key} làm validator ném`);
+    assert.doesNotThrow(() => userGaps(state), `thiếu ${key} làm userGaps ném`);
+    assert.doesNotThrow(() => heldProductIds(state), `thiếu ${key} làm heldProductIds ném`);
+    assert.doesNotThrow(() => primaryGoal(state), `thiếu ${key} làm primaryGoal ném`);
+    assert.ok(errorsIn(state).some((message) => message.includes(`Thiếu trường "${key}"`)));
+  }
+});
+
 test("dòng số dư không có chỗ nào nhét được số tài khoản", () => {
   // Spec §4.4 cấm lưu số tài khoản loyalty. Cưỡng chế bằng cách không có
   // trường nào chứa nổi nó — kể cả một ô ghi chú tự do.

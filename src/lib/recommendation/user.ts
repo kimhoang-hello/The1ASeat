@@ -48,11 +48,11 @@ export function everHeld(card: UserCard): boolean {
 }
 
 export function heldProductIds(state: UserState): Set<ProductId> {
-  return new Set(state.cards.filter(holdsNow).map((card) => card.productId));
+  return new Set((state.cards ?? []).filter(holdsNow).map((card) => card.productId));
 }
 
 export function everHeldProductIds(state: UserState): Set<ProductId> {
-  return new Set(state.cards.filter(everHeld).map((card) => card.productId));
+  return new Set((state.cards ?? []).filter(everHeld).map((card) => card.productId));
 }
 
 /**
@@ -77,7 +77,7 @@ export type ClosureLookup =
   | { kind: "unknown" };
 
 export function lastClosed(state: UserState, productId: ProductId): ClosureLookup {
-  const past = state.cards.filter((card) => card.productId === productId && !holdsNow(card));
+  const past = (state.cards ?? []).filter((card) => card.productId === productId && !holdsNow(card));
   if (past.length === 0) return { kind: "never_closed" };
   if (past.some((card) => card.closedDate == null)) return { kind: "unknown" };
   const latest = past
@@ -142,7 +142,7 @@ export function balanceRowFor(
   state: UserState,
   programId: PointsProgramId,
 ): UserPointBalance | null {
-  return state.balances.find((row) => row.programId === programId) ?? null;
+  return (state.balances ?? []).find((row) => row.programId === programId) ?? null;
 }
 
 /* ------------------------------------------------------------------ *
@@ -158,7 +158,7 @@ export function balanceRowFor(
  * sắp xếp không tất định ở đây là chỗ rò rỉ tính tất định sớm nhất có thể.
  */
 export function sortedGoals(state: UserState): Goal[] {
-  return [...state.goals].sort((a, b) => {
+  return [...(state.goals ?? [])].sort((a, b) => {
     const pa = a.priority ?? Number.POSITIVE_INFINITY;
     const pb = b.priority ?? Number.POSITIVE_INFINITY;
     if (pa !== pb) return pa - pb;
