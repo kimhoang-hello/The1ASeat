@@ -170,6 +170,21 @@ export interface Sourced {
   sourceKind: SourceKind;
   verifiedAt: string;
   confidence: Confidence;
+  /**
+   * Ngày bản ghi này được ĐƯA VÀO kho — khác `effectiveFrom`, là ngày sự thật
+   * nó mô tả bắt đầu đúng.
+   *
+   * Hai trục thời gian, và chúng tách ra đúng lúc quan trọng nhất: một đính
+   * chính LÙI NGÀY nhập hôm nay có `effectiveFrom` sáu tháng trước nhưng
+   * `recordedAt` là hôm nay. `datasetAt` một mình không phân biệt được nó với
+   * dữ liệu đã có sẵn từ sáu tháng trước — nên Phase 4 sẽ "giải thích" một
+   * khuyến nghị cũ bằng một dữ kiện mà lúc ấy engine chưa hề biết.
+   *
+   * Có trường này thì Phase 4 lọc thêm `recordedAt <= ngày chạy` và nói đúng
+   * thứ engine đã thấy. Không có nó, thêm về sau nghĩa là mọi bản ghi lịch sử
+   * đều thiếu giá trị và không dựng lại được.
+   */
+  recordedAt: string;
 }
 
 /* ------------------------------------------------------------------ *
@@ -248,9 +263,21 @@ export interface TransferPath extends Temporal, Sourced {
    *  chuyển tối thiểu. */
   ratioFrom: number;
   ratioTo: number;
-  /** Điều kiện kèm theo, đúng như nhà phát hành nêu ("Chỉ Avion® Elite").
-   *  Phase 3 chưa suy luận trên chuỗi này; nó có mặt để lời giải thích không
-   *  hứa một chặng chuyển mà người đọc không mở được. */
+  /**
+   * Hạng thẻ/tài khoản tối thiểu để mở được chặng này, dạng máy đọc được.
+   *
+   * `null` = ai giữ đồng điểm nguồn cũng chuyển được. Có giá trị thì Phase 3
+   * phải kiểm người dùng có đúng hạng đó không TRƯỚC khi cộng chặng này vào
+   * "số dư tiếp cận được" — RBC® chỉ mở Avios®/Asia Miles®/AAdvantage® cho
+   * Avion® Elite, nên hứa chúng cho người giữ Avion® thường là hứa một chuyến
+   * bay họ không đặt được.
+   *
+   * Tách khỏi `conditionText` vì điều kiện nằm trong chuỗi tiếng Việt thì
+   * engine không đọc nổi — đúng thứ spec §3.10 gọi là "eligibility without
+   * free-text parsing", áp cho chặng chuyển điểm.
+   */
+  requiresTier: string | null;
+  /** Nguyên văn điều kiện cho lời giải thích. KHÔNG dùng để suy luận. */
   conditionText: string | null;
 }
 

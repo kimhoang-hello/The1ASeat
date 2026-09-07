@@ -431,6 +431,7 @@ export const EARNING_CAPS: EarningCap[] = Object.entries(CAPS).flatMap(([slug, c
     sourceUrl: `https://ghe1a.com/credit-cards/${slug}`,
     sourceKind: "ghe1a",
     verifiedAt: VERIFIED_ON,
+    recordedAt: VERIFIED_ON,
     confidence: "verified",
   })),
 );
@@ -461,6 +462,7 @@ export const EARNING_RATES: EarningRate[] = Object.entries(RATES).flatMap(
       sourceUrl: `https://ghe1a.com/credit-cards/${slug}`,
       sourceKind: "ghe1a",
       verifiedAt: VERIFIED_ON,
+      recordedAt: VERIFIED_ON,
       confidence: "verified",
     })),
 );

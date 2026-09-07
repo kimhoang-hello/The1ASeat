@@ -459,6 +459,7 @@ export const PRODUCT_FEES: ProductFee[] = SEEDS.flatMap((seed) =>
     sourceUrl: `https://ghe1a.com/credit-cards/${seed.slug}`,
     sourceKind: "ghe1a",
     verifiedAt: fee.verifiedAt ?? fee.from,
+    recordedAt: fee.verifiedAt ?? fee.from,
     confidence: "verified",
   })),
 );

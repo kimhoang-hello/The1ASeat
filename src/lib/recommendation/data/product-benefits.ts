@@ -296,6 +296,7 @@ export const PRODUCT_BENEFITS: ProductBenefit[] = Object.entries(BY_PRODUCT).fla
       sourceUrl: `https://ghe1a.com/credit-cards/${slug}`,
       sourceKind: "ghe1a",
       verifiedAt: VERIFIED_ON,
+      recordedAt: VERIFIED_ON,
       confidence: "verified",
     })),
 );

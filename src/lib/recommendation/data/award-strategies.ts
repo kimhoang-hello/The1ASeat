@@ -223,6 +223,7 @@ export const AWARD_STRATEGIES: AwardStrategy[] = SEEDS.flatMap((seed) =>
         sourceUrl: seed.sourceUrl,
         sourceKind: "issuer",
         verifiedAt: seed.verifiedAt,
+        recordedAt: seed.verifiedAt,
         confidence: seed.confidence,
       };
     }),

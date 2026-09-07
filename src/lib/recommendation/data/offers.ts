@@ -611,6 +611,7 @@ export const OFFERS: Offer[] = OFFER_SEEDS.map((seed) => ({
   sourceUrl: `${CONTENTFUL_SOURCE}/${seed.slug}`,
   sourceKind: "ghe1a",
   verifiedAt: VERIFIED_ON,
+  recordedAt: VERIFIED_ON,
   confidence: seed.components.length === 0 && seed.headline !== null ? "estimated" : "verified",
 }));
 

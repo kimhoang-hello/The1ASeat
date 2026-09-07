@@ -139,6 +139,17 @@ Chỗ DUY NHẤT phải sửa kiểu chứ không phải dữ liệu là **hạn
 hồ sơ chi tiêu người dùng ở Phase 2, và một hạng mục chỉ có ở một bên là một
 hạng mục vô dụng.
 
+## Hai trục thời gian
+
+`effectiveFrom/To` = sự thật này ĐÚNG từ khi nào tới khi nào.
+`recordedAt` = bản ghi được ĐƯA VÀO kho ngày nào.
+
+Chúng tách ra ở đúng chỗ quan trọng: một đính chính lùi ngày nhập hôm nay có
+`effectiveFrom` sáu tháng trước nhưng `recordedAt` là hôm nay. `datasetAt` một
+mình không phân biệt được nó với dữ liệu đã có sẵn từ sáu tháng trước, nên
+Phase 4 phải lọc thêm `recordedAt <= ngày chạy` khi giải thích một khuyến nghị
+cũ — nếu không nó sẽ "giải thích" bằng một dữ kiện mà engine lúc ấy chưa hề biết.
+
 ## Trống ≠ bằng không
 
 Bộ dữ liệu nói ra chỗ nó không biết thay vì lấp bằng phỏng đoán:

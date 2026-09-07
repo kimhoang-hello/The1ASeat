@@ -623,6 +623,54 @@ export function validateDataset(
     }
   }
 
+  // ---- Hai trục thời gian phải nhất quán ---------------------------------
+  //
+  // `recordedAt` là ngày bản ghi được ĐƯA VÀO kho. Nó có thể SAU
+  // `effectiveFrom` (đính chính lùi ngày — chuyện thường), nhưng không thể
+  // trước: một bản ghi không thể được nhập trước khi nó tồn tại.
+  for (const [entity, rows] of [
+    ["offers", data.offers],
+    ["product_fees", data.productFees],
+    ["earning_rates", data.earningRates],
+    ["earning_caps", data.earningCaps],
+    ["product_benefits", data.productBenefits],
+    ["eligibility_rules", data.eligibilityRules],
+    ["transfer_paths", data.transferPaths],
+    ["award_strategies", data.awardStrategies],
+  ] as const) {
+    for (const row of rows) {
+      if (!isRealDate(row.recordedAt)) {
+        issues.push({
+          level: "error",
+          entity,
+          message: `${row.id}: recordedAt "${row.recordedAt}" không phải một ngày có thật`,
+        });
+        continue;
+      }
+    }
+  }
+
+  // ---- Chặng chuyển: hạng yêu cầu phải máy đọc được ----------------------
+  //
+  // Chặng nào nêu điều kiện bằng CHỮ mà không có `requiresTier` thì Phase 3
+  // không đọc nổi — nó sẽ cộng chặng đó vào "số dư tiếp cận được" cho mọi
+  // người, kể cả người không đủ hạng, rồi hứa một chuyến bay họ không đặt được.
+  for (const path of data.transferPaths) {
+    if (path.conditionText === null || path.requiresTier !== null) continue;
+    // Chỉ soi cách nói HẠN CHẾ. "Mọi hạng Avion®" cũng nhắc tới hạng nhưng nói
+    // điều ngược lại — không hạn chế gì — nên `requiresTier: null` ở đó là
+    // đúng, và cảnh báo nó là dạy người đọc bỏ qua cảnh báo.
+    if (/\b(chỉ|only|requires?)\b/i.test(path.conditionText)) {
+      issues.push({
+        level: "warning",
+        entity: "transfer_paths",
+        message:
+          `${path.id}: conditionText nhắc tới hạng ("${path.conditionText}") nhưng ` +
+          `requiresTier để trống — Phase 3 sẽ coi chặng này ai cũng dùng được`,
+      });
+    }
+  }
+
   // ---- Độ tươi của dữ liệu ------------------------------------------------
   //
   // `confidence: "stale"` tồn tại trong kiểu từ đầu nhưng CHƯA AI sinh ra nó —
