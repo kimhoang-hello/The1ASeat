@@ -33,6 +33,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     calculatorProgramId: "amex-mr",
     cardFilterProgramId: "amex-mr",
     awardChartProgramId: null,
+    contentPattern: /membership rewards|amex mr\b/i,
   },
   {
     id: id<PointsProgramId>("avion"),
@@ -43,6 +44,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     calculatorProgramId: "rbc-avion",
     cardFilterProgramId: "avion",
     awardChartProgramId: null,
+    contentPattern: /avion/i,
   },
   {
     id: id<PointsProgramId>("aeroplan"),
@@ -53,6 +55,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     calculatorProgramId: "aeroplan",
     cardFilterProgramId: "aeroplan",
     awardChartProgramId: "aeroplan",
+    contentPattern: /aeroplan/i,
   },
   {
     // Avios là ĐỒNG TIỀN mà British Airways, Qatar, Iberia và Aer Lingus dùng
@@ -66,6 +69,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     calculatorProgramId: null,
     cardFilterProgramId: null,
     awardChartProgramId: null,
+    contentPattern: null,
   },
   {
     id: id<PointsProgramId>("flying-blue"),
@@ -76,6 +80,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     calculatorProgramId: null,
     cardFilterProgramId: null,
     awardChartProgramId: null,
+    contentPattern: null,
   },
   {
     id: id<PointsProgramId>("asia-miles"),
@@ -86,6 +91,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     calculatorProgramId: null,
     cardFilterProgramId: null,
     awardChartProgramId: "asia-miles",
+    contentPattern: null,
   },
   {
     id: id<PointsProgramId>("aadvantage"),
@@ -96,6 +102,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     calculatorProgramId: null,
     cardFilterProgramId: null,
     awardChartProgramId: "aadvantage",
+    contentPattern: null,
   },
   {
     id: id<PointsProgramId>("bonvoy"),
@@ -106,6 +113,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     calculatorProgramId: null,
     cardFilterProgramId: "bonvoy",
     awardChartProgramId: null,
+    contentPattern: /bonvoy/i,
   },
   {
     id: id<PointsProgramId>("scene-plus"),
@@ -116,6 +124,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     calculatorProgramId: null,
     cardFilterProgramId: "scene-plus",
     awardChartProgramId: null,
+    contentPattern: /scene\s*\+/i,
   },
   {
     // 200 điểm = $1 tiền vé qua Expedia® For TD, và KHÔNG chuyển sang hãng
@@ -128,6 +137,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     calculatorProgramId: null,
     cardFilterProgramId: "td-rewards",
     awardChartProgramId: null,
+    contentPattern: /td rewards/i,
   },
   {
     id: id<PointsProgramId>("aventura"),
@@ -138,6 +148,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     calculatorProgramId: null,
     cardFilterProgramId: "aventura",
     awardChartProgramId: null,
+    contentPattern: /aventura/i,
   },
   {
     id: id<PointsProgramId>("westjet"),
@@ -148,6 +159,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     calculatorProgramId: null,
     cardFilterProgramId: "westjet",
     awardChartProgramId: null,
+    contentPattern: /westjet/i,
   },
   {
     id: id<PointsProgramId>("viporter"),
@@ -158,6 +170,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     calculatorProgramId: null,
     cardFilterProgramId: "viporter",
     awardChartProgramId: null,
+    contentPattern: /viporter/i,
   },
   {
     id: id<PointsProgramId>("mileageplus"),
@@ -168,6 +181,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     calculatorProgramId: null,
     cardFilterProgramId: "mileageplus",
     awardChartProgramId: null,
+    contentPattern: /mileageplus/i,
   },
   {
     id: id<PointsProgramId>("a-la-carte"),
@@ -178,6 +192,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     calculatorProgramId: null,
     cardFilterProgramId: "a-la-carte",
     awardChartProgramId: null,
+    contentPattern: /à la carte/i,
   },
   {
     // Đồng tiền giả cho thẻ cashback, để engine so thẳng 4% hoàn tiền với 2x
@@ -196,6 +211,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     calculatorProgramId: null,
     cardFilterProgramId: "cash-back",
     awardChartProgramId: null,
+    contentPattern: /hoàn tiền|cash\s?back/i,
   },
 ];
 

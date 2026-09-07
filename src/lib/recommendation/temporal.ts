@@ -61,6 +61,19 @@ export function oneActiveAt<T extends Temporal>(
  * có. Lọc theo khả dụng là việc của tầng khuyến nghị, không phải của tầng đọc
  * dữ liệu.
  */
+/**
+ * Thẻ có còn nhận đơn mới vào ngày này không.
+ *
+ * Nhiều quãng = thẻ từng ngừng rồi mở lại, nên câu trả lời là "có quãng nào
+ * phủ ngày này không", không phải "quãng duy nhất đã đóng chưa".
+ */
+export function isAvailableAt(
+  windows: readonly Temporal[],
+  asOf: string,
+): boolean {
+  return windows.some((window) => isActiveAt(window, asOf));
+}
+
 export function datasetAt(
   data: RecommendationDataset,
   asOf: string,
@@ -106,6 +119,12 @@ export function datasetAt(
     products,
     productFees: activeAt(known(data.productFees), asOf).filter((fee) =>
       liveProductIds.has(fee.productId),
+    ),
+    // KHÔNG lọc theo `asOf`: Phase 3 cần thấy CẢ lịch sử khả dụng để nói "thẻ
+    // này đã ngừng từ tháng 3" hay "mở lại từ tháng 9". Lọc còn-hiệu-lực ở đây
+    // sẽ biến "đã đóng" thành "không có thông tin".
+    productAvailability: data.productAvailability.filter((row) =>
+      liveProductIds.has(row.productId),
     ),
     offers,
     // `offer_components` KHÔNG có `Temporal` riêng: một offer là một gói điều

@@ -1,5 +1,4 @@
 import {
-  id,
   idPart,
   makeId,
   type EarningCap,
@@ -7,7 +6,6 @@ import {
   type EarningRate,
   type EarningRateId,
   type PointsProgramId,
-  type ProductId,
   type SpendCategory,
 } from "../types.ts";
 import { productIdFor } from "./products.ts";
@@ -393,6 +391,20 @@ const RATES: Record<string, { program: string; rates: RateSeed[] }> = {
   },
 
   "rbc-avion-visa-platinum": { program: "avion", rates: [["everything_else", 1]] },
+
+  "amex-platinum": {
+    program: "amex-mr",
+    rates: [
+      ["dining", 2],
+      ["food_delivery", 2],
+      ["travel", 2],
+      ["everything_else", 1],
+    ],
+  },
+
+  "amex-business-platinum": { program: "amex-mr", rates: [["everything_else", 1.25]] },
+
+  "amex-business-gold": { program: "amex-mr", rates: [["everything_else", 1]] },
 
   "cibc-aeroplan-visa": {
     program: "aeroplan",

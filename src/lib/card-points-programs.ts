@@ -1,4 +1,5 @@
 import type { CreditCardOffer } from "./content";
+import { POINTS_PROGRAMS } from "./recommendation/data/points-programs";
 import { DEFAULT_CARD_SORT } from "./credit-card-sort";
 
 /**
@@ -37,31 +38,29 @@ function withoutTrademarkMarks(text: string): string {
 }
 
 /**
- * Matched in the order below. "à la carte" has to come before the cash back
- * rule because National Bank's benefits mention a travel credit in dollars.
+ * SUY RA TỪ danh sách chương trình chuẩn trong `lib/recommendation`, không còn
+ * là một danh sách viết tay chạy song song.
+ *
+ * Trước đây thêm một chương trình điểm mới phải sửa HAI chỗ — và quên chỗ này
+ * thì thẻ mới im lặng mất chip lọc trên `/credit-cards`, không lỗi nào nổ ra.
+ * Nay pattern nằm cùng chỗ với chính chương trình (`PointsProgram.contentPattern`),
+ * nên không còn chỗ thứ hai để quên.
+ *
+ * THỨ TỰ khớp là thứ tự trong `POINTS_PROGRAMS`: "à la carte" đứng trước
+ * "cash back" vì quyền lợi của National Bank® nhắc tới travel credit bằng đô la.
+ * Chương trình không có `contentPattern` (Avios®, Flying Blue®…) chỉ là đích
+ * chuyển điểm, không xuất hiện trên trang thẻ, nên bị bỏ qua.
  */
-const PROGRAM_RULES: ProgramRule[] = [
-  { id: "aeroplan", name: "Aeroplan®", pattern: /aeroplan/i },
-  { id: "bonvoy", name: "Marriott Bonvoy®", pattern: /bonvoy/i },
-  { id: "amex-mr", name: "Amex Membership Rewards®", pattern: /membership rewards|amex mr\b/i },
-  { id: "avion", name: "RBC Avion®", pattern: /avion/i },
-  // Sau `avion` cho dễ đọc chứ không vì tranh chấp: "avion" và "aventura" chỉ
-  // chung ba chữ cái đầu, không chuỗi nào chứa chuỗi kia.
-  { id: "aventura", name: "CIBC Aventura®", pattern: /aventura/i },
-  { id: "scene-plus", name: "Scene+™", pattern: /scene\s*\+/i },
-  { id: "td-rewards", name: "TD Rewards", pattern: /td rewards/i },
-  { id: "viporter", name: "VIPorter®", pattern: /viporter/i },
-  { id: "mileageplus", name: "United® MileagePlus®", pattern: /mileageplus/i },
-  // "WestJet®" rather than "WestJet Rewards®", for the same reason as À la
-  // carte™ below.
-  { id: "westjet", name: "WestJet®", pattern: /westjet/i },
-  // "À la carte™" rather than the program's full "À la carte Rewards" name:
-  // the ®/™ audit learns brands by backing up from the symbol through capital
-  // words, so the longer form would teach it that a bare "Rewards" is a brand
-  // and flag every honest "TD Rewards"/"Promo Rewards" on the site.
-  { id: "a-la-carte", name: "À la carte™", pattern: /à la carte/i },
-  { id: "cash-back", name: "Cash back", pattern: /hoàn tiền|cash\s?back/i },
-];
+const PROGRAM_RULES: ProgramRule[] = POINTS_PROGRAMS.filter(
+  (program) => program.contentPattern !== null,
+).map((program) => ({
+  // `cardFilterProgramId` là id mà bộ lọc `?points=` của site dùng; nó KHÁC
+  // `id` nội bộ ở vài chương trình (`bonvoy` vs `marriott-bonvoy`), nên phải
+  // lấy đúng trường đó chứ không lấy `id`.
+  id: program.cardFilterProgramId ?? (program.id as string),
+  name: program.name,
+  pattern: program.contentPattern!,
+}));
 
 /**
  * The card's own name and welcome bonus name the currency directly, so they are

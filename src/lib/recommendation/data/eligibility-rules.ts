@@ -1,10 +1,8 @@
 import {
-  id,
   makeId,
   type EligibilityRule,
   type EligibilityRuleId,
   type EligibilityRuleType,
-  type ProductId,
 } from "../types.ts";
 import { productIdFor } from "./products.ts";
 
@@ -142,6 +140,16 @@ const BY_PRODUCT: Record<string, RuleSeed[]> = {
   // chú thích đầu file: trống nghĩa là chưa biết, không phải không yêu cầu.
   "united-mileageplus-neo-world-elite-mastercard": [],
   "scotiabank-passport-visa-infinite": [],
+
+  "amex-platinum": [AMEX_ONCE_IN_A_LIFETIME],
+  "amex-business-platinum": [
+    AMEX_ONCE_IN_A_LIFETIME,
+    { type: "business_required", value: true, severity: "hard" },
+  ],
+  "amex-business-gold": [
+    AMEX_ONCE_IN_A_LIFETIME,
+    { type: "business_required", value: true, severity: "hard" },
+  ],
 
   "cibc-aeroplan-visa": [
     { type: "minimum_household_income", value: 15000, severity: "hard" },

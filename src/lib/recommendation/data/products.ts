@@ -3,6 +3,8 @@ import {
   makeId,
   type IssuerId,
   type PointsProgramId,
+  type ProductAvailability,
+  type ProductAvailabilityId,
   type ProductFamily,
   type ProductFamilyId,
   type ProductFee,
@@ -68,6 +70,14 @@ type Seed = {
   network: "amex" | "visa" | "mastercard" | "other";
   personalOrBusiness: "personal" | "business" | "student";
   program: string | null;
+  /**
+   * Các quãng thẻ còn nhận đơn mới, cũ nhất trước. Vắng thì mặc định một quãng
+   * mở từ `SEEDED_ON` và chưa đóng.
+   *
+   * DANH SÁCH vì thẻ ngừng rồi mở lại là chuyện có thật — xem
+   * `ProductAvailability`.
+   */
+  availability?: { from: string; to?: string; closedReason?: string }[];
   /** Slug cũ, khi thẻ từng đổi tên. Xem `Product.previousSlugs`. */
   previousSlugs?: string[];
   /** Họ sản phẩm + thứ hạng trong họ. Bỏ trống khi thẻ đứng một mình. */
@@ -478,6 +488,39 @@ const SEEDS: Seed[] = [
     fees: [{ annualFee: 599, from: SEEDED_ON }],
     officialUrl: null,
   },
+  {
+    id: "prd_amex-platinum",
+    slug: "amex-platinum",
+    name: "American Express Platinum Card®",
+    issuer: "amex",
+    network: "amex",
+    personalOrBusiness: "personal",
+    program: "amex-mr",
+    fees: [{ annualFee: 799, from: SEEDED_ON }],
+    officialUrl: null,
+  },
+  {
+    id: "prd_amex-business-platinum",
+    slug: "amex-business-platinum",
+    name: "American Express Business Platinum Card®",
+    issuer: "amex",
+    network: "amex",
+    personalOrBusiness: "business",
+    program: "amex-mr",
+    fees: [{ annualFee: 799, from: SEEDED_ON }],
+    officialUrl: null,
+  },
+  {
+    id: "prd_amex-business-gold",
+    slug: "amex-business-gold",
+    name: "American Express® Business Gold Rewards Card",
+    issuer: "amex",
+    network: "amex",
+    personalOrBusiness: "business",
+    program: "amex-mr",
+    fees: [{ annualFee: 199, from: SEEDED_ON }],
+    officialUrl: null,
+  },
 ];
 
 /**
@@ -513,8 +556,6 @@ export const PRODUCTS: ProductSeed[] = SEEDS.map((seed) => ({
   previousSlugs: seed.previousSlugs ?? [],
   familyId: seed.family === undefined ? null : id<ProductFamilyId>(`fam_${seed.family}`),
   tierRank: seed.tier ?? null,
-  availableFrom: SEEDED_ON,
-  availableTo: null,
   officialUrl: seed.officialUrl,
   contentfulLinked: true,
   supersededByProductId: null,
@@ -561,6 +602,17 @@ export const PRODUCT_FAMILIES: ProductFamily[] = [
         ? (members[0].program as PointsProgramId)
         : null,
   };
+});
+
+export const PRODUCT_AVAILABILITY: ProductAvailability[] = SEEDS.flatMap((seed) => {
+  const windows = seed.availability ?? [{ from: SEEDED_ON }];
+  return windows.map((window) => ({
+    id: makeId<ProductAvailabilityId>("avail", seed.id, window.from),
+    productId: id<ProductId>(seed.id),
+    closedReason: window.closedReason ?? null,
+    effectiveFrom: window.from,
+    effectiveTo: window.to ?? null,
+  }));
 });
 
 export const PRODUCT_FEES: ProductFee[] = SEEDS.flatMap((seed) =>

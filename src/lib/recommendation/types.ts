@@ -76,6 +76,7 @@ export type ProductFeeId = Branded<"ProductFeeId">;
 export type EarningCapId = Branded<"EarningCapId">;
 export type ProgramValuationId = Branded<"ProgramValuationId">;
 export type ProductFamilyId = Branded<"ProductFamilyId">;
+export type ProductAvailabilityId = Branded<"ProductAvailabilityId">;
 
 /** Ép một chuỗi viết tay trong file seed thành id có brand. Chỉ dùng trong
  *  `data/`; không có kiểm tra nào ở đây, `validate.ts` mới là chỗ kiểm. */
@@ -250,6 +251,23 @@ export interface PointsProgram {
   /** Nối sang `PROGRAMS` trong `lib/award-charts.ts`. Chỉ chương trình hàng
    *  không có bảng giá mới có. */
   awardChartProgramId: string | null;
+  /**
+   * Mẫu nhận diện đồng tiền này trong nội dung tiếng Việt của thẻ.
+   *
+   * Ở ĐÂY vì đây là danh sách chương trình CHUẨN. Trước đó nó nằm riêng trong
+   * `lib/card-points-programs.ts`, nên thêm một chương trình mới phải sửa HAI
+   * chỗ — và chỗ thứ hai là code ứng dụng, tức lời hứa "thêm thẻ chỉ là thêm
+   * dữ liệu" chỉ đúng khi chương trình đã tồn tại. Quên nó thì thẻ mới im lặng
+   * mất chip lọc trên `/credit-cards`.
+   *
+   * `null` khi đồng tiền không xuất hiện trên trang thẻ (Avios®, Flying Blue®
+   * chỉ là đích chuyển điểm).
+   *
+   * THỨ TỰ trong `POINTS_PROGRAMS` là thứ tự khớp: "à la carte" phải đứng
+   * trước "cash back" vì quyền lợi của National Bank® nhắc tới travel credit
+   * bằng đô la.
+   */
+  contentPattern: RegExp | null;
 }
 
 /**
@@ -383,21 +401,15 @@ export interface Product extends Temporal {
    * với `earning_rates` và `product_benefits`, vốn đã đúng ngay từ đầu.
    */
   /**
-   * Cửa sổ thẻ còn MỞ CHO NGƯỜI NỘP ĐƠN MỚI. `availableTo: null` = còn mở.
+   * KHÔNG có cửa sổ khả dụng ở đây — xem `product_availability`.
    *
-   * TÁCH KHỎI `Temporal` của chính bản ghi, và đây là một phân biệt quan
-   * trọng: `effectiveFrom/To` nói bản ghi này có mô tả hiện thực hay không;
-   * `availableFrom/To` nói người ta còn mở được thẻ hay không. Thẻ ngừng phát
-   * hành thì `availableTo` đóng lại — nhưng bản ghi vẫn còn hiệu lực, và tỷ lệ
-   * tích điểm cùng quyền lợi của nó VẪN CHẠY cho người đang giữ.
-   *
-   * Gộp hai thứ này (bản trước dùng chung `isActive` + `effectiveTo`) làm thẻ
-   * ngừng bán BIẾN MẤT khỏi mọi truy vấn — nên Portfolio Analyzer ở Phase 3
-   * sẽ quên mất một thẻ người dùng đang cầm trong ví, không cộng điểm nó kiếm
-   * được, và đếm quyền lợi trùng của thẻ mới như thể là quyền lợi mới.
+   * Thẻ NGỪNG RỒI MỞ LẠI là chuyện có thật (nhà phát hành rút thẻ rồi đưa lại
+   * sau một mùa). Một cặp `availableFrom/To` duy nhất trên `Product` chỉ kể
+   * được MỘT khoảng: mở lại buộc phải xoá `availableTo`, tức xoá luôn dấu vết
+   * quãng thẻ từng đóng — và thêm một dòng `Product` thứ hai thì đụng khoá
+   * chính. Nói cách khác, với thiết kế cũ KHÔNG THỂ ghi lại một lần mở lại mà
+   * không phá lịch sử. Cùng đúng một lớp lỗi với phí thường niên.
    */
-  availableFrom: string;
-  availableTo: string | null;
   /**
    * Sản phẩm THAY THẾ sản phẩm này, khi nhà phát hành khai tử một thẻ và đưa
    * ra thẻ kế nhiệm.
@@ -469,6 +481,21 @@ export interface Product extends Temporal {
  * điền tay được, kể cả nhầm.
  */
 export type ProductSeed = Omit<Product, "affiliateAvailable">;
+
+/**
+ * Một quãng thẻ CÒN NHẬN ĐƠN MỚI.
+ *
+ * Nhiều dòng cho một sản phẩm = thẻ từng ngừng rồi mở lại. Không dòng nào còn
+ * hiệu lực = thẻ hiện không nhận đơn, nhưng người đang giữ vẫn kiếm điểm và
+ * hưởng quyền lợi — đó là lý do khả dụng tách khỏi `Temporal` của chính bản
+ * ghi sản phẩm.
+ */
+export interface ProductAvailability extends Temporal {
+  id: ProductAvailabilityId;
+  productId: ProductId;
+  /** Vì sao quãng này đóng lại. `null` khi còn mở. */
+  closedReason: string | null;
+}
 
 /* ------------------------------------------------------------------ *
  * product_fees
@@ -949,6 +976,7 @@ export interface RecommendationDataset {
   productFamilies: ProductFamily[];
   programValuations: ProgramValuation[];
   productFees: ProductFee[];
+  productAvailability: ProductAvailability[];
   pointsPrograms: PointsProgram[];
   transferPaths: TransferPath[];
   products: Product[];

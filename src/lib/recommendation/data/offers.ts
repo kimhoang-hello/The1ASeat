@@ -6,7 +6,6 @@ import {
   type OfferComponentType,
   type OfferId,
   type PointsProgramId,
-  type ProductId,
 } from "../types.ts";
 import { productIdFor } from "./products.ts";
 import { longestWindowMonths, spendPerNinetyDays, totalSpend, type SpendWindow } from "../spend.ts";
@@ -529,6 +528,51 @@ const OFFER_SEEDS: OfferSeed[] = [
       { type: "spend_threshold", points: 10000, spend: 1000, windowDays: 60 },
       { type: "spend_threshold", points: 40000, spend: 5000, windowDays: 120 },
       { type: "anniversary", points: 50000, spend: 25000, windowDays: 365 },
+    ],
+  },
+  {
+    slug: "amex-platinum",
+    name: "Tới 100,000 điểm Membership Rewards®",
+    headline: 100000,
+    currency: "amex-mr",
+    startDate: "2026-09-07",
+    components: [
+      { type: "spend_threshold", points: 70000, spend: 10000, windowDays: 90 },
+      {
+        type: "anniversary",
+        points: 30000,
+        windowDays: 90,
+        startsAfterDays: 425,
+        note: "Quẹt một giao dịch trong khoảng tháng 15–17",
+      },
+    ],
+  },
+  {
+    slug: "amex-business-platinum",
+    name: "Tới 120,000 điểm Membership Rewards®",
+    headline: 120000,
+    currency: "amex-mr",
+    startDate: "2026-09-07",
+    components: [
+      { type: "spend_threshold", points: 80000, spend: 15000, windowDays: 90 },
+      {
+        type: "anniversary",
+        points: 40000,
+        windowDays: 90,
+        startsAfterDays: 425,
+        note: "Quẹt một giao dịch trong khoảng tháng 15–17",
+      },
+    ],
+  },
+  {
+    slug: "amex-business-gold",
+    name: "Tới 70,000 điểm Membership Rewards®",
+    headline: 70000,
+    currency: "amex-mr",
+    startDate: "2026-09-07",
+    components: [
+      { type: "spend_threshold", points: 50000, spend: 7500, windowDays: 90 },
+      { type: "spend_threshold", points: 20000, spend: 30000, windowDays: 365 },
     ],
   },
 ];

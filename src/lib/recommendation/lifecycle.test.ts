@@ -11,7 +11,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { offlineDataset } from "./data/index.ts";
 import { indexDataset } from "./indexes.ts";
-import { datasetAt, oneActiveAt } from "./temporal.ts";
+import { datasetAt, isAvailableAt, oneActiveAt } from "./temporal.ts";
 import { validateDataset } from "./validate.ts";
 import type {
   EarningRate,
@@ -203,8 +203,12 @@ test("6. thẻ mới cần dòng phí, nếu không engine chỉ thấy lợi í
  * --------------------------------------------------------------- */
 test("7. thẻ ngừng phát hành: offer phải đóng, nhưng tỷ lệ và quyền lợi thì KHÔNG", () => {
   const victim = BASE.products[0];
-  const unavailable = { ...victim, availableTo: "2026-12-31" };
-  const offersStillOpen = { ...BASE, products: [unavailable, ...BASE.products.slice(1)] };
+  const offersStillOpen = {
+    ...BASE,
+    productAvailability: BASE.productAvailability.map((a) =>
+      a.productId === victim.id ? { ...a, effectiveTo: "2026-12-31" } : a,
+    ),
+  };
   // Offer còn mở → engine sẽ khuyên người đọc mở một thẻ không còn nhận đơn.
   assert.ok(errorsIn(offersStillOpen, LATER).some((e) => e.includes("offer vẫn chưa đóng")));
 
@@ -263,10 +267,22 @@ test("8b. thẻ có bản kế nhiệm: chuỗi lần được, vòng lặp bị
     familyId: null,
     tierRank: null,
   };
-  const closedOld = { ...old, availableTo: "2026-12-31", supersededByProductId: successor.id };
+  const closedOld = { ...old, supersededByProductId: successor.id };
   const next = {
     ...BASE,
     products: [closedOld, successor, ...BASE.products.slice(1)],
+    productAvailability: [
+      ...BASE.productAvailability.map((a) =>
+        a.productId === old.id ? { ...a, effectiveTo: "2026-12-31" } : a,
+      ),
+      {
+        ...BASE.productAvailability[0],
+        id: "avail_successor" as (typeof BASE.productAvailability)[number]["id"],
+        productId: successor.id,
+        effectiveFrom: "2027-01-01",
+        effectiveTo: null,
+      },
+    ],
     // Phí của thẻ cũ KHÔNG đóng: người đang giữ thẻ vẫn phải trả nó hằng năm.
     // Ngừng nhận đơn mới không làm phí biến mất.
     productFees: [
@@ -281,7 +297,7 @@ test("8b. thẻ có bản kế nhiệm: chuỗi lần được, vòng lặp bị
     ...next,
     products: [
       closedOld,
-      { ...successor, availableTo: "2027-06-30", supersededByProductId: old.id },
+      { ...successor, supersededByProductId: old.id },
       ...BASE.products.slice(1),
     ],
   };
@@ -348,8 +364,8 @@ test("10. dựng lại toàn bộ thế giới như nó ở một ngày trong qu
 
   const next: RecommendationDataset = {
     ...BASE,
-    products: BASE.products.map((p) =>
-      p.id === victim.id ? { ...p, availableTo: "2026-12-31" } : p,
+    productAvailability: BASE.productAvailability.map((a) =>
+      a.productId === victim.id ? { ...a, effectiveTo: "2026-12-31" } : a,
     ),
     productFees: [
       ...BASE.productFees.map((f) => (f.id === feeRow.id ? close(f, "2026-12-31") : f)),
@@ -1058,4 +1074,47 @@ test("index có đủ đường truy cập Phase 3 sẽ dùng", () => {
   assert.ok((ix.capsByProduct.get(cap.productId) ?? []).length > 0);
   assert.ok((ix.productsByProgram.get("aeroplan") ?? []).length >= 9);
   assert.ok((ix.productsByIssuer.get("amex") ?? []).length > 0);
+});
+
+test("thẻ NGỪNG RỒI MỞ LẠI: hai quãng, cả hai còn nguyên", () => {
+  // Trước đây bất khả thi: một cặp availableFrom/To duy nhất chỉ kể được MỘT
+  // quãng, nên mở lại buộc phải xoá dấu vết quãng đã đóng — còn thêm dòng
+  // Product thứ hai thì đụng khoá chính.
+  const product = BASE.products[0];
+  const first = BASE.productAvailability.find((a) => a.productId === product.id)!;
+  const relaunched = {
+    ...BASE,
+    productAvailability: [
+      { ...first, effectiveTo: "2026-11-30", closedReason: "Nhà phát hành rút thẻ" },
+      {
+        ...first,
+        id: `${first.id}_relaunch` as typeof first.id,
+        effectiveFrom: "2027-03-01",
+        effectiveTo: null,
+        closedReason: null,
+      },
+      ...BASE.productAvailability.filter((a) => a.id !== first.id),
+    ],
+    // Ngừng nhận đơn thì offer phải đóng theo — nhưng chỉ trong quãng đóng.
+    offers: BASE.offers.map((o) =>
+      o.productId === product.id ? { ...o, effectiveTo: "2026-11-30" } : o,
+    ),
+  };
+  assert.deepEqual(errorsIn(relaunched, "2026-12-15"), [], "trong quãng đóng phải hợp lệ");
+
+  const ix = indexDataset(relaunched);
+  const windows = ix.availabilityByProduct.get(product.id) ?? [];
+  assert.equal(windows.length, 2, "cả hai quãng phải còn nguyên");
+  assert.equal(windows[0].closedReason, "Nhà phát hành rút thẻ");
+
+  // Và câu trả lời "hôm nay mở không" đúng ở cả ba mốc.
+  assert.equal(isAvailableAt(windows, "2026-10-01"), true, "trước khi đóng");
+  assert.equal(isAvailableAt(windows, "2026-12-15"), false, "trong quãng đóng");
+  assert.equal(isAvailableAt(windows, "2027-06-01"), true, "sau khi mở lại");
+});
+
+test("sản phẩm còn hiệu lực phải có ít nhất một quãng khả dụng", () => {
+  // Không dòng nào = chưa ai nói thẻ này từng mở bao giờ, khác hẳn "đã đóng".
+  const orphan = { ...BASE, productAvailability: BASE.productAvailability.slice(1) };
+  assert.ok(errorsIn(orphan).some((e) => e.includes("không có quãng khả dụng nào")));
 });

@@ -1,5 +1,5 @@
 import { INCOMPLETE_OFFERS, UNQUOTABLE_AWARD_PROGRAMS } from "./data/index.ts";
-import { isActiveAt } from "./temporal.ts";
+import { isActiveAt, isAvailableAt } from "./temporal.ts";
 import type { RecommendationDataset, Temporal } from "./types.ts";
 
 /**
@@ -128,6 +128,13 @@ export function validateDataset(
   const programIds = new Set(data.pointsPrograms.map((r) => r.id));
   const productIds = new Set(data.products.map((r) => r.id));
   const productById = new Map(data.products.map((r) => [r.id as string, r]));
+  const availabilityByProduct = new Map<string, Temporal[]>();
+  for (const row of data.productAvailability) {
+    const list = availabilityByProduct.get(row.productId) ?? [];
+    list.push(row);
+    availabilityByProduct.set(row.productId, list);
+  }
+
   const offerIds = new Set(data.offers.map((r) => r.id));
   const benefitIds = new Set(data.benefits.map((r) => r.id));
 
@@ -458,24 +465,26 @@ export function validateDataset(
   // không có `effectiveTo` là một bản ghi nói "đã ngừng" nhưng không truy vấn
   // theo thời điểm nào đọc được — Phase 4 sẽ không giải thích nổi vì sao một
   // khuyến nghị cũ từng chọn nó.
+  const availabilityIds = new Set(data.productAvailability.map((r) => r.id as string));
+  void availabilityIds;
+  checkUniqueIds(data.productAvailability, "product_availability", issues);
+  checkTemporal(data.productAvailability, "product_availability", issues);
+  checkRef(data.productAvailability, "productId", (r: { productId: string }) => r.productId, productIds, "product_availability", issues);
+  // Hai quãng khả dụng chồng nhau là vô nghĩa: thẻ không thể "mở lại" khi chưa
+  // đóng. Cùng phép kiểm với mọi quan hệ khác.
+  checkNoOverlap(data.productAvailability, (row) => row.productId, "product_availability");
+  // Sản phẩm còn hiệu lực phải có ÍT NHẤT một quãng khả dụng — kể cả quãng đã
+  // đóng. Không có dòng nào nghĩa là chưa ai nói thẻ này từng mở bao giờ.
+  const productsWithAvailability = new Set(
+    data.productAvailability.map((row) => row.productId as string),
+  );
   for (const product of data.products) {
-    for (const [field, value] of [
-      ["availableFrom", product.availableFrom],
-      ["availableTo", product.availableTo],
-    ] as const) {
-      if (value !== null && !isRealDate(value)) {
-        issues.push({
-          level: "error",
-          entity: "products",
-          message: `${product.slug}: ${field} "${value}" không phải một ngày có thật`,
-        });
-      }
-    }
-    if (product.availableTo !== null && product.availableTo < product.availableFrom) {
+    if (!isActiveAt(product, asOf)) continue;
+    if (!productsWithAvailability.has(product.id)) {
       issues.push({
         level: "error",
-        entity: "products",
-        message: `${product.slug}: availableTo trước availableFrom`,
+        entity: "product_availability",
+        message: `${product.slug}: không có quãng khả dụng nào`,
       });
     }
   }
@@ -709,7 +718,7 @@ export function validateDataset(
       cursor = productById.get(cursor.supersededByProductId);
     }
     // Sản phẩm còn mở cho người nộp đơn mới mà đã có kẻ kế nhiệm là mâu thuẫn.
-    if (product.availableTo === null) {
+    if (isAvailableAt(availabilityByProduct.get(product.id) ?? [], asOf)) {
       issues.push({
         level: "warning",
         entity: "products",
@@ -726,7 +735,7 @@ export function validateDataset(
   // "ngừng phát hành" với "hết tồn tại" và làm sai cả hai.
   const unavailable = new Map(
     data.products
-      .filter((p) => p.availableTo !== null && p.availableTo < asOf)
+      .filter((p) => !isAvailableAt(availabilityByProduct.get(p.id) ?? [], asOf))
       .map((p) => [p.id as string, p]),
   );
   for (const offer of data.offers) {
@@ -738,7 +747,7 @@ export function validateDataset(
         entity: "offers",
         message:
           `${offer.id}: thẻ ${product.slug} không còn mở cho người nộp đơn mới ` +
-          `(availableTo ${product.availableTo}) nhưng offer vẫn chưa đóng`,
+          `nhưng offer vẫn chưa đóng`,
       });
     }
   }

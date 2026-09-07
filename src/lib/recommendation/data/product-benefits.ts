@@ -1,10 +1,8 @@
 import {
-  id,
   makeId,
   type BenefitId,
   type ProductBenefit,
   type ProductBenefitId,
-  type ProductId,
 } from "../types.ts";
 import { productIdFor } from "./products.ts";
 
@@ -296,6 +294,33 @@ const BY_PRODUCT: Record<string, BenefitSeed[]> = {
   // RBC® Avion® Visa Platinum: site không nêu quyền lợi nào ngoài cách đổi
   // điểm và điều kiện thu nhập.
   "rbc-avion-visa-platinum": [],
+
+  "amex-platinum": [
+    ["airport-lounge-passes", null, { text: "Global Lounge Collection™, hơn 1,400 phòng chờ" }],
+    ["travel-credit", 200],
+    ["nexus-credit", 100, { text: "Mỗi 4 năm" }],
+    ["hotel-status", null, { text: "Hilton Honors™ Gold và Marriott Bonvoy™ Gold" }],
+    ["travel-medical-insurance", null, { text: "15 ngày, dưới 65 tuổi" }],
+    ["trip-cancellation-insurance", 2500],
+  ],
+
+  "amex-business-platinum": [
+    ["airport-lounge-passes", null, { text: "Global Lounge Collection™, hơn 1,400 phòng chờ" }],
+    ["travel-credit", 200],
+    ["nexus-credit", 100, { text: "Mỗi 4 năm" }],
+    ["hotel-status", null, { text: "Marriott Bonvoy® Gold Elite khi chi $30,000 hoặc ở 10 đêm", provider: "Marriott Bonvoy®", minimumAnnualSpend: 30000 }],
+    ["elite-night-credits", 15, { provider: "Marriott Bonvoy®" }],
+    ["free-night-award", 1, { text: "Tới 35,000 điểm Bonvoy®", provider: "Marriott Bonvoy®" }],
+    ["travel-medical-insurance", 5000000, { text: "15 ngày, dưới 65 tuổi" }],
+    ["trip-cancellation-insurance", 1500],
+    ["mobile-device-insurance", 1500],
+    ["rental-car-insurance", 85000],
+  ],
+
+  "amex-business-gold": [
+    ["mobile-device-insurance", 1000],
+    ["rental-car-insurance"],
+  ],
 
   "cibc-aeroplan-visa": [["rental-car-insurance"]],
 

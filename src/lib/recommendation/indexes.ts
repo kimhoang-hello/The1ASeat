@@ -9,6 +9,7 @@ import type {
   OfferComponent,
   PointsProgram,
   Product,
+  ProductAvailability,
   ProductBenefit,
   ProductFamily,
   ProgramValuation,
@@ -51,6 +52,9 @@ export interface DatasetIndex {
   valuationsByProgram: ReadonlyMap<string, ProgramValuation[]>;
 
   feesByProduct: ReadonlyMap<string, ProductFee[]>;
+  /** Các quãng còn nhận đơn, đã sắp theo thời gian. Dùng `isActiveAt` trên
+   *  chúng để biết thẻ hôm nay có mở không. */
+  availabilityByProduct: ReadonlyMap<string, ProductAvailability[]>;
   offersByProduct: ReadonlyMap<string, Offer[]>;
   componentsByOffer: ReadonlyMap<string, OfferComponent[]>;
   ratesByProduct: ReadonlyMap<string, EarningRate[]>;
@@ -107,6 +111,12 @@ export function indexDataset(data: RecommendationDataset): DatasetIndex {
     valuationsByProgram: groupBy(data.programValuations, (row) => row.programId),
 
     feesByProduct: groupBy(data.productFees, (row) => row.productId),
+    availabilityByProduct: new Map(
+      [...groupBy(data.productAvailability, (row) => row.productId)].map(([key, rows]) => [
+        key,
+        [...rows].sort((a, b) => (a.effectiveFrom < b.effectiveFrom ? -1 : 1)),
+      ]),
+    ),
     offersByProduct: groupBy(data.offers, (row) => row.productId),
     componentsByOffer: groupBy(data.offerComponents, (row) => row.offerId),
     ratesByProduct: groupBy(data.earningRates, (row) => row.productId),

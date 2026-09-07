@@ -1,7 +1,7 @@
 export { ISSUERS } from "./issuers.ts";
 export { POINTS_PROGRAMS, PROGRAM_VALUATIONS } from "./points-programs.ts";
 export { TRANSFER_PATHS } from "./transfer-paths.ts";
-export { PRODUCTS, PRODUCT_FEES, PRODUCT_FAMILIES } from "./products.ts";
+export { PRODUCTS, PRODUCT_FEES, PRODUCT_FAMILIES, PRODUCT_AVAILABILITY } from "./products.ts";
 export { OFFERS, OFFER_COMPONENTS, INCOMPLETE_OFFERS } from "./offers.ts";
 export { EARNING_RATES, EARNING_CAPS } from "./earning-rates.ts";
 export { BENEFITS } from "./benefits.ts";
@@ -16,7 +16,7 @@ export {
 import { ISSUERS } from "./issuers.ts";
 import { POINTS_PROGRAMS, PROGRAM_VALUATIONS } from "./points-programs.ts";
 import { TRANSFER_PATHS } from "./transfer-paths.ts";
-import { PRODUCTS, PRODUCT_FEES, PRODUCT_FAMILIES } from "./products.ts";
+import { PRODUCTS, PRODUCT_FEES, PRODUCT_FAMILIES, PRODUCT_AVAILABILITY } from "./products.ts";
 import { OFFERS, OFFER_COMPONENTS } from "./offers.ts";
 import { EARNING_RATES, EARNING_CAPS } from "./earning-rates.ts";
 import { BENEFITS } from "./benefits.ts";
@@ -43,6 +43,7 @@ export function offlineDataset(): RecommendationDataset {
   const base: RecommendationDataset = {
     issuers: ISSUERS,
     productFees: PRODUCT_FEES,
+    productAvailability: PRODUCT_AVAILABILITY,
     productFamilies: PRODUCT_FAMILIES,
     programValuations: PROGRAM_VALUATIONS,
     pointsPrograms: POINTS_PROGRAMS,

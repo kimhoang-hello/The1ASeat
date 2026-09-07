@@ -70,16 +70,15 @@ const CLOSED_ON = "2026-12-31";
  */
 function withClosedProduct(base: RecommendationDataset): RecommendationDataset {
   const original = base.products[0];
-  const closed: Product = {
-    ...original,
-    availableTo: CLOSED_ON,
-    contentfulLinked: false,
-  };
+  const closed: Product = { ...original, contentfulLinked: false };
   // CHỈ offer phải đóng. Tỷ lệ tích điểm và quyền lợi vẫn chạy cho người đang
   // giữ thẻ — xem `Product.availableTo`.
   return {
     ...base,
     products: [closed, ...base.products.slice(1)],
+    productAvailability: base.productAvailability.map((row) =>
+      row.productId === original.id ? { ...row, effectiveTo: CLOSED_ON } : row,
+    ),
     offers: base.offers.map((row) =>
       row.productId === original.id ? { ...row, effectiveTo: CLOSED_ON } : row,
     ),
@@ -98,17 +97,27 @@ test("thẻ hết khả dụng mà offer vẫn mở là LỖI", () => {
   const original = data.products[0];
   const halfClosed = {
     ...data,
-    products: [{ ...original, availableTo: CLOSED_ON }, ...data.products.slice(1)],
+    productAvailability: data.productAvailability.map((row) =>
+      row.productId === original.id ? { ...row, effectiveTo: CLOSED_ON } : row,
+    ),
   };
   const errors = validateDataset(halfClosed, "2027-03-01").filter((i) => i.level === "error");
   assert.ok(errors.some((e) => e.message.includes("offer vẫn chưa đóng")));
 });
 
-test("availableTo trước availableFrom là LỖI", () => {
-  const broken = withClosedProduct(data);
-  broken.products[0] = { ...broken.products[0], availableTo: "2020-01-01" };
+test("hai quãng khả dụng chồng nhau là LỖI", () => {
+  // Thẻ không thể "mở lại" khi chưa đóng.
+  const first = data.productAvailability[0];
+  const broken = {
+    ...data,
+    productAvailability: [
+      first,
+      { ...first, id: `${first.id}_dup` as typeof first.id, effectiveFrom: "2026-10-01" },
+      ...data.productAvailability.slice(1),
+    ],
+  };
   const errors = validateDataset(broken, "2027-03-01").filter((i) => i.level === "error");
-  assert.ok(errors.some((e) => e.message.includes("availableTo trước availableFrom")));
+  assert.ok(errors.some((e) => e.message.includes("chồng thời gian")));
 });
 
 test("xoá sản phẩm để lại tham chiếu mồ côi là LỖI", () => {

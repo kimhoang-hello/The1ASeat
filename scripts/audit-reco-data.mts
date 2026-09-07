@@ -28,7 +28,7 @@ import { offlineDataset } from "../src/lib/recommendation/data/index.ts";
 import { validateDataset } from "../src/lib/recommendation/validate.ts";
 import { OFFERS } from "../src/lib/recommendation/data/offers.ts";
 import { PRODUCT_FEES } from "../src/lib/recommendation/data/products.ts";
-import { isActiveAt, oneActiveAt } from "../src/lib/recommendation/temporal.ts";
+import { isActiveAt, isAvailableAt, oneActiveAt } from "../src/lib/recommendation/temporal.ts";
 import {
   POINTS_PROGRAMS as RECO_PROGRAMS,
   PROGRAM_VALUATIONS,
@@ -363,7 +363,7 @@ if (cards === null) {
     // và MỌI thẻ bị bỏ qua: cả 31 phép so phí và rebate chết lặng suốt, trong
     // khi audit vẫn in "✓ Không lỗi". `scripts/` bị loại khỏi tsconfig nên
     // trình biên dịch không thấy. Đó là lý do `include` bên dưới nay có nó.
-    if (product.availableTo !== null && product.availableTo < TODAY) continue;
+    if (!isAvailableAt(dataset.productAvailability.filter((a) => a.productId === product.id), TODAY)) continue;
 
     const fee = feeIn(card.annualFeeVi);
     const seedFee = liveFeeFor(product.id);
