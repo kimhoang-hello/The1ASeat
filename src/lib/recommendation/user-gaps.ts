@@ -44,7 +44,7 @@ export function userGaps(state: UserState): UserDataGap[] {
 
   /* --- Hồ sơ --- */
 
-  if (profile.province === null) {
+  if (profile.province == null) {
     gaps.push({
       kind: "province_unknown",
       subject: profile.id,
@@ -52,15 +52,18 @@ export function userGaps(state: UserState): UserDataGap[] {
     });
   }
 
-  if (profile.incomeDeclined) {
+  // Mọi phép so ở đây dùng `== null` để bắt CẢ `undefined`: một dòng database
+  // cũ thiếu trường mới thêm phải sinh ra chỗ trống, chứ không được trượt qua
+  // im lặng thành "đã biết". Validator báo riêng rằng trường bị thiếu.
+  if (profile.personalIncomeDeclined) {
     // Vẫn là chỗ chưa biết — nhưng là chỗ KHÔNG hỏi được. Phase 3 phải hạ độ
     // tin cậy vĩnh viễn ở đây thay vì xếp nó thành câu hỏi tiếp theo (§30).
     gaps.push({
-      kind: "income_declined",
+      kind: "personal_income_declined",
       subject: profile.id,
-      reason: "Người dùng từ chối nói thu nhập. Đừng hỏi lại; hãy hạ độ tin cậy của mọi kết luận dựa vào điều kiện thu nhập.",
+      reason: "Người dùng từ chối nói thu nhập cá nhân. Đừng hỏi lại; hãy hạ độ tin cậy của kết luận dựa vào điều kiện thu nhập.",
     });
-  } else if (profile.annualPersonalIncome === null) {
+  } else if (profile.annualPersonalIncome == null) {
     gaps.push({
       kind: "personal_income_unknown",
       subject: profile.id,
@@ -68,7 +71,13 @@ export function userGaps(state: UserState): UserDataGap[] {
         "Chưa biết khoảng thu nhập cá nhân. Không đánh giá được điều kiện thu nhập, nên phải coi là CHƯA BIẾT chứ không được coi là đạt.",
     });
   }
-  if (!profile.incomeDeclined && profile.annualHouseholdIncome === null) {
+  if (profile.householdIncomeDeclined) {
+    gaps.push({
+      kind: "household_income_declined",
+      subject: profile.id,
+      reason: "Người dùng từ chối nói thu nhập hộ gia đình. Đừng hỏi lại; vế HOẶC của điều kiện thu nhập sẽ không đánh giá được.",
+    });
+  } else if (profile.annualHouseholdIncome == null) {
     gaps.push({
       kind: "household_income_unknown",
       subject: profile.id,
@@ -76,7 +85,7 @@ export function userGaps(state: UserState): UserDataGap[] {
         "Chưa biết thu nhập hộ gia đình. Chỉ đổi kết quả khi thu nhập cá nhân không đủ — vế HOẶC của điều kiện sinh ra để cứu đúng những ca đó.",
     });
   }
-  if (profile.isStudent === null) {
+  if (profile.isStudent == null) {
     gaps.push({
       kind: "student_status_unknown",
       subject: profile.id,
@@ -85,7 +94,7 @@ export function userGaps(state: UserState): UserDataGap[] {
     });
   }
 
-  if (profile.annualFeeTolerancePerCard === null) {
+  if (profile.annualFeeTolerancePerCard == null) {
     gaps.push({
       kind: "annual_fee_tolerance_unknown",
       subject: profile.id,
@@ -94,7 +103,7 @@ export function userGaps(state: UserState): UserDataGap[] {
     });
   }
 
-  if (profile.businessCardsAllowed === null) {
+  if (profile.businessCardsAllowed == null) {
     gaps.push({
       kind: "business_cards_preference_unknown",
       subject: profile.id,
@@ -105,7 +114,7 @@ export function userGaps(state: UserState): UserDataGap[] {
 
   /* --- Chi tiêu --- */
 
-  if (spend === null) {
+  if (spend == null) {
     // Gộp làm một chỗ trống thô. Nó đã hàm ý mọi thứ bên dưới — tổng tháng,
     // sức chi 3 tháng, cả mười bảy hạng mục — nên liệt kê thêm chỉ làm danh
     // sách phình ra mà không thêm một dữ kiện nào.
@@ -115,14 +124,14 @@ export function userGaps(state: UserState): UserDataGap[] {
       reason: "Người dùng chưa động tới phần chi tiêu. Chưa biết gì về tổng tháng, hạng mục, hay sức chi 3 tháng.",
     });
   } else {
-    if (spend.monthlyTotal === null) {
+    if (spend.monthlyTotal == null) {
       gaps.push({
         kind: "monthly_total_unknown",
         subject: profile.id,
         reason: "Chưa biết tổng chi tiêu tháng.",
       });
     }
-    if (spend.minimumSpendCapacity3m === null) {
+    if (spend.minimumSpendCapacity3m == null) {
       gaps.push({
         kind: "minimum_spend_capacity_unknown",
         subject: profile.id,
@@ -131,7 +140,7 @@ export function userGaps(state: UserState): UserDataGap[] {
       });
     }
     for (const category of SPEND_CATEGORIES) {
-      if (spend.byCategory[category] === undefined) {
+      if (spend.byCategory?.[category] == null) {
         gaps.push({
           kind: "spend_category_unknown",
           subject: category,
@@ -153,7 +162,7 @@ export function userGaps(state: UserState): UserDataGap[] {
   }
 
   for (const card of [...state.cards].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))) {
-    if (!holdsNow(card) && card.closedDate === null) {
+    if (!holdsNow(card) && card.closedDate == null) {
       gaps.push({
         kind: "card_closed_date_unknown",
         subject: card.id,
@@ -177,7 +186,7 @@ export function userGaps(state: UserState): UserDataGap[] {
   for (const row of [...state.balances].sort((a, b) =>
     a.programId < b.programId ? -1 : a.programId > b.programId ? 1 : 0,
   )) {
-    if (row.balance === null) {
+    if (row.balance == null) {
       gaps.push({
         kind: "point_balance_amount_unknown",
         subject: row.programId,
@@ -191,14 +200,14 @@ export function userGaps(state: UserState): UserDataGap[] {
 
   for (const goal of [...state.goals].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))) {
     if (goal.type !== "trip") continue;
-    if (goal.cabin === null) {
+    if (goal.cabin == null) {
       gaps.push({
         kind: "trip_cabin_unknown",
         subject: goal.id,
         reason: "Chưa biết hạng ghế. Cùng một chặng, business tốn gấp đôi tới gấp ba economy.",
       });
     }
-    if (goal.passengers === null) {
+    if (goal.passengers == null) {
       gaps.push({
         kind: "trip_passengers_unknown",
         subject: goal.id,
@@ -206,7 +215,7 @@ export function userGaps(state: UserState): UserDataGap[] {
           "Chưa biết số người bay. Mặc định 1 sẽ chia nhỏ số điểm cần và làm NO_NEW_CARD thắng nhờ một giả định.",
       });
     }
-    if (goal.flexibility === null) {
+    if (goal.flexibility == null) {
       gaps.push({
         kind: "trip_flexibility_unknown",
         subject: goal.id,
@@ -214,7 +223,7 @@ export function userGaps(state: UserState): UserDataGap[] {
           "Chưa biết mức linh hoạt của chuyến đi. §10.2 dành 10% điểm cho Flexibility Value, nên mặc định 'medium' là tự cho điểm một thứ chưa ai nói.",
       });
     }
-    if (goal.travelStart === null && goal.travelEnd === null) {
+    if (goal.travelStart == null && goal.travelEnd == null) {
       gaps.push({
         kind: "trip_dates_unknown",
         subject: goal.id,

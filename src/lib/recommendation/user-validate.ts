@@ -69,6 +69,28 @@ function checkDate(
   }
 }
 
+/**
+ * Trường phải CÓ MẶT, kể cả khi giá trị là `null`.
+ *
+ * `undefined` và `null` không giống nhau ở đây, và khác biệt đó im lặng theo
+ * đúng hướng tệ nhất: một dòng database cũ thiếu trường mới thêm sẽ trượt qua
+ * mọi phép kiểm `=== null` — validator không báo gì, `userGaps` không sinh chỗ
+ * trống nào — nên dữ liệu THIẾU được trình bày như dữ liệu ĐẦY ĐỦ. Đúng thứ
+ * lớp này sinh ra để chặn.
+ */
+function requirePresent(
+  row: object,
+  keys: readonly string[],
+  entity: string,
+  issues: ValidationIssue[],
+): void {
+  for (const key of keys) {
+    if (!(key in row) || (row as Record<string, unknown>)[key] === undefined) {
+      issues.push({ level: "error", entity, message: `Thiếu trường "${key}" (undefined ≠ null)` });
+    }
+  }
+}
+
 export function validateUserState(
   state: UserState,
   data: RecommendationDataset,
@@ -91,6 +113,21 @@ export function validateUserState(
   if (isRealDate(profile.createdAt) && isRealDate(profile.updatedAt) && profile.updatedAt < profile.createdAt) {
     issues.push({ level: "error", entity: P, message: "updatedAt nằm trước createdAt" });
   }
+  requirePresent(
+    profile,
+    [
+      "province",
+      "annualPersonalIncome",
+      "annualHouseholdIncome",
+      "personalIncomeDeclined",
+      "householdIncomeDeclined",
+      "annualFeeTolerancePerCard",
+      "businessCardsAllowed",
+      "isStudent",
+    ],
+    P,
+    issues,
+  );
   checkAmount(profile.annualPersonalIncome, "annualPersonalIncome", P, issues);
   checkAmount(profile.annualHouseholdIncome, "annualHouseholdIncome", P, issues);
   const personal = profile.annualPersonalIncome;
@@ -116,12 +153,18 @@ export function validateUserState(
       issues.push({ level: "error", entity: P, message: `${label} phải là boolean hoặc null (nhận "${String(value)}")` });
     }
   }
-  if (typeof profile.incomeDeclined !== "boolean") {
-    issues.push({ level: "error", entity: P, message: "incomeDeclined phải là boolean" });
-  } else if (profile.incomeDeclined && (personal != null || household != null)) {
-    // Từ chối nói mà vẫn có số là hai câu trả lời mâu thuẫn; giữ cả hai thì
-    // không nói được cái nào là thật.
-    issues.push({ level: "error", entity: P, message: "incomeDeclined = true nhưng vẫn có số thu nhập" });
+  for (const [label, declined, value] of [
+    ["personalIncomeDeclined", profile.personalIncomeDeclined, personal],
+    ["householdIncomeDeclined", profile.householdIncomeDeclined, household],
+  ] as const) {
+    if (typeof declined !== "boolean") {
+      issues.push({ level: "error", entity: P, message: `${label} phải là boolean` });
+    } else if (declined && value != null) {
+      // Từ chối nói mà vẫn có số là hai câu trả lời mâu thuẫn; giữ cả hai thì
+      // không nói được cái nào là thật. Kiểm THEO TỪNG TRƯỜNG, vì khai thu nhập
+      // cá nhân rồi từ chối câu hộ gia đình là một trạng thái hợp lệ.
+      issues.push({ level: "error", entity: P, message: `${label} = true nhưng vẫn có số thu nhập` });
+    }
   }
   if (profile.annualFeeTolerancePerCard !== null) {
     const fee = profile.annualFeeTolerancePerCard;
@@ -139,6 +182,7 @@ export function validateUserState(
       // con số vẫn hợp lệ, chỉ là của người khác.
       issues.push({ level: "error", entity: S, message: `userId (${spend.userId}) không khớp hồ sơ (${userId})` });
     }
+    requirePresent(spend, ["monthlyTotal", "minimumSpendCapacity3m", "byCategory"], S, issues);
     checkDate(spend.updatedAt, "updatedAt", S, issues);
     checkAmount(spend.monthlyTotal, "monthlyTotal", S, issues);
     checkAmount(spend.minimumSpendCapacity3m, "minimumSpendCapacity3m", S, issues);
@@ -199,6 +243,7 @@ export function validateUserState(
       // nào khác nhận ra, và welcome bonus của thẻ đó được hứa lại.
       issues.push({ level: "error", entity: C, message: `${card.id}: status không tồn tại "${card.status}"` });
     }
+    requirePresent(card, ["openedDate", "closedDate"], C, issues);
     checkDate(card.openedDate, `${card.id}.openedDate`, C, issues);
     checkDate(card.closedDate, `${card.id}.closedDate`, C, issues);
     if (card.openedDate !== null && card.closedDate !== null && card.closedDate < card.openedDate) {
@@ -255,7 +300,8 @@ export function validateUserState(
       issues.push({ level: "error", entity: B, message: `Hai dòng số dư cho cùng chương trình: ${row.programId}` });
     }
     seenPrograms.add(row.programId);
-    if (row.balance !== null && (!Number.isFinite(row.balance) || row.balance < 0)) {
+    requirePresent(row, ["balance"], B, issues);
+    if (row.balance != null && (!Number.isFinite(row.balance) || row.balance < 0)) {
       issues.push({ level: "error", entity: B, message: `${row.programId}: số dư không hợp lệ (${row.balance})` });
     }
     checkDate(row.updatedAt, `${row.programId}.updatedAt`, B, issues);

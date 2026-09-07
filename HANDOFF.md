@@ -335,12 +335,16 @@ Mỗi gạch đầu dòng dưới đây là một chỗ mà gộp lại sẽ là
 - **`lastClosed` có BA trạng thái**, và chuyển sang `unknown` khi chỉ một quãng
   giữ thẻ thiếu ngày đóng. Trả về ngày đã biết ở đó là trình bày một ngày cũ
   như thể nó là lần đóng gần nhất.
-- **`incomeDeclined` tách "tôi không muốn nói" khỏi "chưa hỏi".** Cả hai để
-  thu nhập ở `null`, nhưng chỉ một trong hai còn hỏi lại được — không tách thì
-  §30 hỏi lại mãi đúng điều người dùng vừa từ chối.
-- **Validator kiểm cả kiểu lúc chạy.** TypeScript vắng mặt lúc chạy: `status`
-  gõ sai, `"false"` thay cho `false`, hay một trường mới vắng mặt ở dòng cũ
-  đều đi qua sạch nếu không kiểm. Mọi phép so `null` ở đó dùng `== null`.
+- **`personalIncomeDeclined` / `householdIncomeDeclined` tách "tôi không muốn
+  nói" khỏi "chưa hỏi"** — và là HAI cờ, vì hộ gia đình chỉ đáng hỏi sau khi
+  biết thu nhập cá nhân không đủ. Một cờ chung thì "khai câu đầu, từ chối câu
+  sau" hoặc bị từ chối, hoặc bị hỏi lại mãi.
+- **Validator kiểm cả kiểu lúc chạy, và kiểm trường CÓ MẶT.** TypeScript vắng
+  mặt lúc chạy: `status` gõ sai, `"false"` thay cho `false`, hay một trường mới
+  vắng ở dòng cũ đều đi qua sạch nếu không kiểm. `undefined` là ca tệ nhất — nó
+  trượt qua mọi phép so `=== null` nên dữ liệu THIẾU trông như dữ liệu ĐẦY ĐỦ.
+  Hai lớp chặn: `requirePresent`, và mọi phép so `null` ở cả validator lẫn
+  `user-gaps.ts` dùng `== null`.
 - **`primaryGoal` trả về `none` / `resolved` / `ambiguous`.** Nhiều mục tiêu
   cùng mức ưu tiên thì để `GoalId` quyết định là để một chuỗi sinh lúc lưu
   chọn hàm chấm điểm nào chạy.
@@ -365,7 +369,7 @@ việc này, và một test thứ ba chặn mô hình mã hoá kết quả — t
 npx tsc --noEmit        # sạch
 npm run lint            # sạch
 npm run build           # Compiled successfully
-npm run test:reco       # 144/144 pass (91 của Phase 1 + 53 mới)
+npm run test:reco       # 146/146 pass (91 của Phase 1 + 55 mới)
 npm run test:game       # 43/43 pass
 npm run audit:reco-data # 0 lỗi, 9 cảnh báo (y như trước, đều là chỗ trống có chủ ý)
 ```

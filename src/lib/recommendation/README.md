@@ -408,11 +408,16 @@ hoặc loại thẳng đúng những người vế kia sinh ra để cứu.
 `hard` có thật trong bộ dữ liệu. Không có trường thì hoặc loại thẻ sinh viên
 khỏi cả sinh viên, hoặc khuyên nó cho người bốn mươi lăm tuổi.
 
-`incomeDeclined` là câu trả lời "tôi không muốn nói" của spec §4.1, tách khỏi
-"chưa hỏi": cả hai để hai trường thu nhập ở `null`, nhưng chỉ một trong hai còn
-đi hỏi lại được. Không tách thì §30 sẽ mãi chọn thu nhập làm câu hỏi đáng giá
-nhất và hỏi lại đúng điều người dùng vừa từ chối. Cùng luật với `declared`, chỉ
-ở mức trường thay vì mức bộ sưu tập.
+`personalIncomeDeclined` / `householdIncomeDeclined` là câu trả lời "tôi không
+muốn nói" của spec §4.1, tách khỏi "chưa hỏi": cả hai để trường thu nhập ở
+`null`, nhưng chỉ một trong hai còn đi hỏi lại được. Không tách thì §30 sẽ mãi
+chọn thu nhập làm câu hỏi đáng giá nhất và hỏi lại đúng điều người dùng vừa từ
+chối. Cùng luật với `declared`, chỉ ở mức trường thay vì mức bộ sưu tập.
+
+**HAI cờ chứ không một**, vì hai câu hỏi được hỏi ở hai thời điểm: thu nhập hộ
+gia đình chỉ đáng hỏi SAU KHI biết thu nhập cá nhân không đủ. Khai câu đầu rồi
+từ chối câu sau là chuyện bình thường — với một cờ chung thì trạng thái đó hoặc
+bị validator từ chối, hoặc phải để cờ `false` rồi bị hỏi lại mãi.
 
 Cả hai đều mặc định `null` và **không cần hỏi trước**: chúng chỉ đổi kết quả
 trong những ca cụ thể, nên chúng là câu hỏi §30 điển hình — hỏi lúc câu trả
@@ -472,9 +477,15 @@ TypeScript vắng mặt lúc chạy, còn dữ liệu tới từ database hoặc
 `validateUserState` kiểm cả những thứ kiểu đã hứa: `status` thuộc đúng ba giá
 trị, `businessCardsAllowed`/`isStudent`/`incomeDeclined`/`declared.*` là
 boolean thật (chuỗi `"false"` là truthy — nó lặng lẽ đảo ngược câu trả lời), và
-mọi phép so `null` dùng `== null` để bắt cả `undefined`: một trường mới thêm sẽ
-vắng mặt ở mọi dòng cũ, và `undefined !== null` là đúng, nên phép so nghiêm ngặt
-sẽ đi tiếp rồi ném `TypeError` thay vì báo lỗi dữ liệu.
+mọi phép so `null` — ở **cả** `user-validate.ts` lẫn `user-gaps.ts` — dùng
+`== null` để bắt cả `undefined`.
+
+Chuyện `undefined` đáng nói riêng vì nó im lặng theo đúng hướng tệ nhất. Một
+dòng cũ thiếu trường mới thêm trượt qua mọi phép so `=== null`: validator không
+báo gì, `userGaps` không sinh chỗ trống nào, nên **dữ liệu THIẾU được trình bày
+như dữ liệu ĐẦY ĐỦ**. Hai lớp chặn: `requirePresent` báo lỗi trường vắng mặt
+(`undefined ≠ null`), và các phép so `== null` vẫn sinh chỗ trống để engine
+không bao giờ coi nó là đã biết.
 
 `user.test.ts` chốt hai luật này bằng cấu trúc: một test kiểm bộ khoá của mọi
 dòng số dư, một test kiểm không trường nào ngoài `cards` nhắc tới một `ProductId`
@@ -484,7 +495,7 @@ dòng số dư, một test kiểm không trường nào ngoài `cards` nhắc t�
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # 144 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng
+npm run test:reco         # 146 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng
 ```
 
 `audit:reco-data` bắt ba lớp lỗi:

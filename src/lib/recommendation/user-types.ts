@@ -156,18 +156,24 @@ export interface UserProfile {
    */
   annualHouseholdIncome: EstimatedAmount | null;
   /**
-   * Người dùng đã TỪ CHỐI nói thu nhập.
+   * Người dùng đã TỪ CHỐI nói thu nhập — MỘT CỜ CHO MỖI TRƯỜNG.
    *
    * Spec §4.1 liệt kê "Prefer not to say" là một lựa chọn thật, và nó KHÁC
-   * "chưa hỏi" — cả hai đều để hai trường thu nhập ở `null`, nhưng chỉ một
-   * trong hai còn đi hỏi được. Không tách ra thì bảng câu hỏi thích ứng của
-   * §30 sẽ mãi mãi chọn thu nhập làm câu hỏi đáng giá nhất và hỏi lại đúng
-   * điều người dùng vừa từ chối.
+   * "chưa hỏi": cả hai để trường thu nhập ở `null`, nhưng chỉ một trong hai
+   * còn đi hỏi được. Không tách thì bảng câu hỏi thích ứng của §30 sẽ mãi mãi
+   * chọn thu nhập làm câu hỏi đáng giá nhất và hỏi lại đúng điều người dùng
+   * vừa từ chối. Cùng luật với `declared` ở `UserState`, chỉ ở mức trường thay
+   * vì mức bộ sưu tập.
    *
-   * Cùng một luật với `declared` ở `UserState`, chỉ ở mức trường thay vì mức
-   * bộ sưu tập: câu trả lời "tôi không muốn nói" là một câu trả lời.
+   * HAI cờ chứ không một, vì hai câu hỏi được hỏi ở hai thời điểm khác nhau:
+   * thu nhập hộ gia đình chỉ đáng hỏi SAU KHI biết thu nhập cá nhân không đủ.
+   * Người khai thu nhập cá nhân rồi từ chối câu hộ gia đình là chuyện bình
+   * thường — với một cờ chung thì trạng thái đó hoặc bị validator từ chối
+   * (đã khai mà lại bảo là từ chối), hoặc phải để cờ `false` và bị hỏi lại
+   * mãi. Cả hai đều sai.
    */
-  incomeDeclined: boolean;
+  personalIncomeDeclined: boolean;
+  householdIncomeDeclined: boolean;
   /**
    * Phí thường niên tối đa chấp nhận được CHO MỘT THẺ, CAD.
    *
@@ -459,7 +465,8 @@ export interface UserDataGap {
     | "business_cards_preference_unknown"
     | "personal_income_unknown"
     | "household_income_unknown"
-    | "income_declined"
+    | "personal_income_declined"
+    | "household_income_declined"
     | "student_status_unknown"
     | "province_unknown"
     | "goal_priority_ambiguous"

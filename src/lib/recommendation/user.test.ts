@@ -649,7 +649,8 @@ test("trường thu nhập vắng mặt cho ra LỖI DỮ LIỆU, không phải 
 });
 
 test("từ chối nói thu nhập khác chưa hỏi thu nhập", () => {
-  assert.ok(gapKinds(studentStarter).includes("income_declined"));
+  assert.ok(gapKinds(studentStarter).includes("personal_income_declined"));
+  assert.ok(gapKinds(studentStarter).includes("household_income_declined"));
   // Và KHÔNG sinh chỗ trống hỏi được, nếu không §30 sẽ hỏi lại mãi đúng điều
   // người dùng vừa từ chối.
   assert.ok(!gapKinds(studentStarter).includes("personal_income_unknown"));
@@ -659,7 +660,37 @@ test("từ chối nói thu nhập khác chưa hỏi thu nhập", () => {
   const contradictory = broken(studentStarter, (s) => {
     s.profile.annualPersonalIncome = amountRange(20_000, 30_000);
   });
-  assert.ok(errorsIn(contradictory).some((message) => message.includes("incomeDeclined")));
+  assert.ok(errorsIn(contradictory).some((message) => message.includes("personalIncomeDeclined")));
+});
+
+test("khai thu nhập cá nhân rồi từ chối câu hộ gia đình là hợp lệ", () => {
+  // Đây là hình dạng thật của bảng câu hỏi thích ứng: hộ gia đình chỉ đáng hỏi
+  // SAU KHI biết thu nhập cá nhân không đủ. Một cờ chung thì trạng thái này
+  // hoặc bị từ chối, hoặc phải để cờ false rồi bị hỏi lại mãi.
+  const state = broken(lowSpendCapacity, (s) => {
+    s.profile.annualHouseholdIncome = null;
+    s.profile.householdIncomeDeclined = true;
+  });
+  assert.deepEqual(errorsIn(state), []);
+  const kinds = gapKinds(state);
+  assert.ok(kinds.includes("household_income_declined"));
+  assert.ok(!kinds.includes("household_income_unknown"));
+  assert.ok(!kinds.includes("personal_income_declined"));
+});
+
+test("trường vắng mặt là LỖI và vẫn sinh chỗ trống, không thành 'đã biết'", () => {
+  // `undefined` trượt qua mọi phép so `=== null`: validator im, gaps im, và dữ
+  // liệu THIẾU được trình bày như dữ liệu ĐẦY ĐỦ.
+  const state = broken(aeroplanHeavy, (s) => {
+    delete (s.profile as Partial<typeof s.profile>).annualHouseholdIncome;
+    delete (s.profile as Partial<typeof s.profile>).isStudent;
+  });
+  const errors = errorsIn(state);
+  assert.ok(errors.some((message) => message.includes('Thiếu trường "annualHouseholdIncome"')));
+  assert.ok(errors.some((message) => message.includes('Thiếu trường "isStudent"')));
+  const kinds = gapKinds(state);
+  assert.ok(kinds.includes("household_income_unknown"));
+  assert.ok(kinds.includes("student_status_unknown"));
 });
 
 test("nhánh ĐỦ điều kiện của luật sinh viên biểu diễn được", () => {
