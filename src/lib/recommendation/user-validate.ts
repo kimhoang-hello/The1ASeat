@@ -31,7 +31,15 @@ import {
   CANADIAN_PROVINCES,
   GOAL_TYPES,
   SUPPORTED_COUNTRIES,
+  type DiversifyGoal,
+  type EarnPointsGoal,
   type EstimatedAmount,
+  type NextCardGoal,
+  type TripGoal,
+  type UserCard,
+  type UserPointBalance,
+  type UserProfile,
+  type UserSpendProfile,
   type UserState,
 } from "./user-types.ts";
 import type { RecommendationDataset } from "./types.ts";
@@ -63,13 +71,26 @@ function checkAmount(
   }
 }
 
+/**
+ * `null` = ngày này vốn được phép trống. `undefined` thì KHÔNG — nó là trường
+ * vắng mặt, và bỏ qua nó ở đây là đúng cách bản vá trước tự bắn vào chân mình:
+ * đổi hàng loạt sang `== null` đã ngăn được exception nhưng làm `createdAt`,
+ * `updatedAt` và ngày của goal thiếu hẳn mà vẫn trượt qua sạch.
+ *
+ * `requirePresent` mới là chỗ báo trường vắng mặt; ở đây chỉ cần KHÔNG im lặng
+ * nuốt nó, và không ném.
+ */
 function checkDate(
-  value: string | null,
+  value: string | null | undefined,
   label: string,
   entity: string,
   issues: ValidationIssue[],
 ): void {
-  if (value == null) return;
+  if (value === null) return;
+  if (value === undefined) {
+    issues.push({ level: "error", entity, message: `${label}: thiếu ngày (undefined ≠ null)` });
+    return;
+  }
   if (!isRealDate(value)) {
     issues.push({ level: "error", entity, message: `${label}: "${value}" không phải ngày YYYY-MM-DD có thật` });
   }
@@ -84,6 +105,45 @@ function checkDate(
  * trống nào — nên dữ liệu THIẾU được trình bày như dữ liệu ĐẦY ĐỦ. Đúng thứ
  * lớp này sinh ra để chặn.
  */
+/**
+ * Danh sách khoá phải CÓ MẶT trên từng thực thể.
+ *
+ * Viết ra thay vì suy từ kiểu, vì kiểu biến mất lúc chạy. Nhưng chúng được
+ * CƯỠNG CHẾ khớp với kiểu bằng `AssertAllKeys` ngay bên dưới: thêm một trường
+ * vào `UserProfile` mà quên thêm vào đây là một LỖI BIÊN DỊCH nêu đích danh
+ * trường bị bỏ sót. Không có nó thì mỗi trường mới lại lặng lẽ thoát khỏi phép
+ * kiểm hiện diện, và ca migration quay lại nguyên vẹn.
+ */
+const PROFILE_KEYS = [
+  "id", "country", "province", "annualPersonalIncome", "annualHouseholdIncome",
+  "personalIncomeDeclined", "householdIncomeDeclined", "annualFeeTolerancePerCard",
+  "businessCardsAllowed", "isStudent", "createdAt", "updatedAt",
+] as const;
+const SPEND_KEYS = ["userId", "monthlyTotal", "byCategory", "minimumSpendCapacity3m", "updatedAt"] as const;
+const CARD_KEYS = ["id", "userId", "productId", "status", "openedDate", "closedDate"] as const;
+const BALANCE_KEYS = ["userId", "programId", "balance", "updatedAt"] as const;
+const GOAL_BASE_KEYS = ["id", "userId", "type", "priority", "createdAt"] as const;
+const TRIP_GOAL_KEYS = [
+  ...GOAL_BASE_KEYS, "originRegion", "originAirport", "destinationRegion",
+  "destinationAirport", "cabin", "passengers", "travelStart", "travelEnd", "flexibility",
+] as const;
+const EARN_GOAL_KEYS = [...GOAL_BASE_KEYS, "targetProgramId"] as const;
+
+/** `true` nếu `K` phủ hết khoá của `T`; nếu không thì chính là tên khoá bị bỏ
+ *  sót — nên phép gán bên dưới đỏ và thông báo lỗi nêu đích danh nó. */
+type AssertAllKeys<T, K extends readonly (keyof T)[]> =
+  Exclude<keyof T, K[number]> extends never ? true : Exclude<keyof T, K[number]>;
+
+const _profileKeys: AssertAllKeys<UserProfile, typeof PROFILE_KEYS> = true;
+const _spendKeys: AssertAllKeys<UserSpendProfile, typeof SPEND_KEYS> = true;
+const _cardKeys: AssertAllKeys<UserCard, typeof CARD_KEYS> = true;
+const _balanceKeys: AssertAllKeys<UserPointBalance, typeof BALANCE_KEYS> = true;
+const _tripGoalKeys: AssertAllKeys<TripGoal, typeof TRIP_GOAL_KEYS> = true;
+const _earnGoalKeys: AssertAllKeys<EarnPointsGoal, typeof EARN_GOAL_KEYS> = true;
+const _nextCardGoalKeys: AssertAllKeys<NextCardGoal, typeof GOAL_BASE_KEYS> = true;
+const _diversifyGoalKeys: AssertAllKeys<DiversifyGoal, typeof GOAL_BASE_KEYS> = true;
+void [_profileKeys, _spendKeys, _cardKeys, _balanceKeys, _tripGoalKeys, _earnGoalKeys, _nextCardGoalKeys, _diversifyGoalKeys];
+
 function requirePresent(
   row: object,
   keys: readonly string[],
@@ -119,21 +179,7 @@ export function validateUserState(
   if (isRealDate(profile.createdAt) && isRealDate(profile.updatedAt) && profile.updatedAt < profile.createdAt) {
     issues.push({ level: "error", entity: P, message: "updatedAt nằm trước createdAt" });
   }
-  requirePresent(
-    profile,
-    [
-      "province",
-      "annualPersonalIncome",
-      "annualHouseholdIncome",
-      "personalIncomeDeclined",
-      "householdIncomeDeclined",
-      "annualFeeTolerancePerCard",
-      "businessCardsAllowed",
-      "isStudent",
-    ],
-    P,
-    issues,
-  );
+  requirePresent(profile, PROFILE_KEYS, P, issues);
   checkAmount(profile.annualPersonalIncome, "annualPersonalIncome", P, issues);
   checkAmount(profile.annualHouseholdIncome, "annualHouseholdIncome", P, issues);
   const personal = profile.annualPersonalIncome;
@@ -188,7 +234,7 @@ export function validateUserState(
       // con số vẫn hợp lệ, chỉ là của người khác.
       issues.push({ level: "error", entity: S, message: `userId (${spend.userId}) không khớp hồ sơ (${userId})` });
     }
-    requirePresent(spend, ["monthlyTotal", "minimumSpendCapacity3m", "byCategory"], S, issues);
+    requirePresent(spend, SPEND_KEYS, S, issues);
     checkDate(spend.updatedAt, "updatedAt", S, issues);
     checkAmount(spend.monthlyTotal, "monthlyTotal", S, issues);
     checkAmount(spend.minimumSpendCapacity3m, "minimumSpendCapacity3m", S, issues);
@@ -249,7 +295,7 @@ export function validateUserState(
       // nào khác nhận ra, và welcome bonus của thẻ đó được hứa lại.
       issues.push({ level: "error", entity: C, message: `${card.id}: status không tồn tại "${card.status}"` });
     }
-    requirePresent(card, ["openedDate", "closedDate"], C, issues);
+    requirePresent(card, CARD_KEYS, C, issues);
     checkDate(card.openedDate, `${card.id}.openedDate`, C, issues);
     checkDate(card.closedDate, `${card.id}.closedDate`, C, issues);
     if (card.openedDate != null && card.closedDate != null && card.closedDate < card.openedDate) {
@@ -306,7 +352,7 @@ export function validateUserState(
       issues.push({ level: "error", entity: B, message: `Hai dòng số dư cho cùng chương trình: ${row.programId}` });
     }
     seenPrograms.add(row.programId);
-    requirePresent(row, ["balance"], B, issues);
+    requirePresent(row, BALANCE_KEYS, B, issues);
     if (row.balance != null && (!Number.isFinite(row.balance) || row.balance < 0)) {
       issues.push({ level: "error", entity: B, message: `${row.programId}: số dư không hợp lệ (${row.balance})` });
     }
@@ -336,6 +382,12 @@ export function validateUserState(
     if (!(GOAL_TYPES as readonly string[]).includes(goal.type)) {
       issues.push({ level: "error", entity: G, message: `${goal.id}: goal type không tồn tại "${goal.type}"` });
     }
+    requirePresent(
+      goal,
+      goal.type === "trip" ? TRIP_GOAL_KEYS : goal.type === "earn_points" ? EARN_GOAL_KEYS : GOAL_BASE_KEYS,
+      G,
+      issues,
+    );
     checkDate(goal.createdAt, `${goal.id}.createdAt`, G, issues);
     if (goal.priority != null) {
       if (!Number.isInteger(goal.priority) || goal.priority < 1) {

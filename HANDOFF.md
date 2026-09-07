@@ -344,9 +344,11 @@ Mỗi gạch đầu dòng dưới đây là một chỗ mà gộp lại sẽ là
   vắng ở dòng cũ đều đi qua sạch nếu không kiểm. `undefined` là ca tệ nhất — nó
   trượt qua mọi phép so `=== null` nên dữ liệu THIẾU trông như dữ liệu ĐẦY ĐỦ.
   Hai lớp chặn: `requirePresent`, và mọi phép so `null` ở cả validator lẫn
-  `user-gaps.ts` dùng `== null`. **`validateUserState` không bao giờ NÉM** —
-  nó chạy trên dữ liệu chưa đáng tin, nên một `TypeError` ở đó là lớp bảo vệ
-  tự sập trước thứ nó sinh ra để chặn.
+  `user-gaps.ts` dùng `== null`. **"không ném" và "không im lặng" là
+  HAI yêu cầu** — bản vá đầu đạt vế đầu bằng cách phá vế sau. `requirePresent`
+  nay chạy trên danh sách khoá ĐẦY ĐỦ của từng thực thể, và danh sách đó được
+  cưỡng chế khớp với kiểu lúc biên dịch bằng `AssertAllKeys`: thêm trường mà
+  quên thêm vào danh sách là lỗi biên dịch nêu đích danh trường bỏ sót.
 - **`primaryGoal` trả về `none` / `resolved` / `ambiguous`.** Nhiều mục tiêu
   cùng mức ưu tiên thì để `GoalId` quyết định là để một chuỗi sinh lúc lưu
   chọn hàm chấm điểm nào chạy.
@@ -371,7 +373,7 @@ việc này, và một test thứ ba chặn mô hình mã hoá kết quả — t
 npx tsc --noEmit        # sạch
 npm run lint            # sạch
 npm run build           # Compiled successfully
-npm run test:reco       # 148/148 pass (91 của Phase 1 + 57 mới)
+npm run test:reco       # 149/149 pass (91 của Phase 1 + 58 mới)
 npm run test:game       # 43/43 pass
 npm run audit:reco-data # 0 lỗi, 9 cảnh báo (y như trước, đều là chỗ trống có chủ ý)
 ```

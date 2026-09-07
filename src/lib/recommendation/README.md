@@ -490,9 +490,26 @@ không bao giờ coi nó là đã biết.
 **`validateUserState` TRẢ VỀ danh sách vấn đề, không bao giờ NÉM.** Nó chạy trên
 dữ liệu chưa đáng tin, nên một `TypeError` ở đó là chính lớp bảo vệ tự sập trước
 thứ nó sinh ra để chặn. Vì vậy mọi phép duyệt object mang `?? {}` và mọi phép so
-null mang `== null` — kể cả trong `user.ts`. Một test quét lần lượt xoá TỪNG
-trường tuỳ chọn rồi đòi cả validator lẫn `userGaps` không ném và vẫn báo đúng
-lỗi thiếu trường; đã kiểm ngược, gỡ bản vá ra là test đỏ.
+null mang `== null` — kể cả trong `user.ts`.
+
+Nhưng "không ném" và "không im lặng" là HAI yêu cầu, và bản vá đầu tiên đạt vế
+đầu bằng cách phá vế sau: đổi hàng loạt sang `== null` khiến `createdAt`,
+`updatedAt` và ngày của goal — những trường KHÔNG được phép trống — thiếu hẳn mà
+vẫn trượt qua sạch. Cách giữ cả hai:
+
+- `requirePresent` chạy trên **danh sách khoá đầy đủ** của từng thực thể
+  (`PROFILE_KEYS`, `SPEND_KEYS`, `CARD_KEYS`, `BALANCE_KEYS`, và ba biến thể
+  goal), không chỉ trên các trường tuỳ chọn.
+- Danh sách đó được **cưỡng chế khớp với kiểu lúc biên dịch** bằng
+  `AssertAllKeys`: thêm một trường vào `UserProfile` mà quên thêm vào danh sách
+  là lỗi biên dịch **nêu đích danh trường bị bỏ sót**. Đã thử thật.
+- `checkDate` phân biệt `null` (được phép trống) với `undefined` (trường vắng
+  mặt) thay vì nuốt cả hai.
+
+Test quét xoá **TỪNG khoá một** của profile/spend/card/balance/goal — danh sách
+khoá lấy từ chính fixture nên trường mới tự động được kiểm — rồi đòi cả validator
+lẫn `userGaps` không ném VÀ vẫn báo lỗi. Đã kiểm ngược: gỡ phép kiểm hiện diện
+của goal ra là test đỏ, nêu đích danh `goal.priority`.
 
 `user.test.ts` chốt hai luật này bằng cấu trúc: một test kiểm bộ khoá của mọi
 dòng số dư, một test kiểm không trường nào ngoài `cards` nhắc tới một `ProductId`
@@ -502,7 +519,7 @@ dòng số dư, một test kiểm không trường nào ngoài `cards` nhắc t�
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # 148 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng
+npm run test:reco         # 149 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng
 ```
 
 `audit:reco-data` bắt ba lớp lỗi:

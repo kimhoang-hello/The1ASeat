@@ -714,51 +714,48 @@ test("mức linh hoạt chưa biết là chỗ trống — §10.2 cho nó 10% đ
   assert.ok(!gapKinds(japanTripFunded).includes("trip_flexibility_unknown"));
 });
 
-test("không hàm nào NÉM khi mọi trường tuỳ chọn biến mất", () => {
-  // Phép kiểm hệ thống thay cho một test mỗi trường. `validateUserState` là
-  // thứ chạy trên dữ liệu CHƯA đáng tin, nên một `TypeError` ở đó là chính lớp
-  // bảo vệ tự sập trước thứ nó sinh ra để chặn — và `undefined` (dòng cũ thiếu
-  // trường mới thêm) là đúng ca nó phải chịu được.
-  const optional: Record<string, string[]> = {
-    profile: [
-      "province",
-      "annualPersonalIncome",
-      "annualHouseholdIncome",
-      "personalIncomeDeclined",
-      "householdIncomeDeclined",
-      "annualFeeTolerancePerCard",
-      "businessCardsAllowed",
-      "isStudent",
-    ],
-    spend: ["monthlyTotal", "minimumSpendCapacity3m", "byCategory"],
-  };
+test("xoá BẤT KỲ trường nào cũng ra lỗi, và không hàm nào NÉM", () => {
+  // Phép kiểm hệ thống thay cho một test mỗi trường — và danh sách khoá lấy
+  // TỪ CHÍNH fixture, nên một trường mới thêm tự động được kiểm mà không ai
+  // phải nhớ cập nhật test.
+  //
+  // Hai vế, và vế thứ hai là vế bản vá trước làm hỏng: validator không được
+  // NÉM (nó chạy trên dữ liệu chưa đáng tin), nhưng cũng không được IM LẶNG
+  // nuốt một trường vắng mặt — đổi hàng loạt sang `== null` đã ngăn exception
+  // xong lại để `createdAt` thiếu hẳn mà vẫn trượt qua sạch.
+  const base = japanTripShortfall;
+  const targets: [string, () => UserState, (s: UserState) => object][] = [
+    ["profile", () => base, (s) => s.profile],
+    ["spend", () => base, (s) => s.spend as object],
+    ["card", () => flexiblePointsSufficient, (s) => s.cards[1]],
+    ["balance", () => aeroplanHeavy, (s) => s.balances[0]],
+    ["goal", () => base, (s) => s.goals[0]],
+  ];
 
-  for (const [section, keys] of Object.entries(optional)) {
-    for (const key of keys) {
-      const state = broken(japanTripShortfall, (s) => {
-        delete (s as unknown as Record<string, Record<string, unknown>>)[section][key];
+  for (const [label, fixture, pick] of targets) {
+    for (const key of Object.keys(pick(fixture()))) {
+      const state = broken(fixture(), (s) => {
+        delete (pick(s) as Record<string, unknown>)[key];
       });
-      assert.doesNotThrow(() => validateUserState(state, data), `${section}.${key} làm validator ném`);
-      assert.doesNotThrow(() => userGaps(state), `${section}.${key} làm userGaps ném`);
+      assert.doesNotThrow(() => validateUserState(state, data), `${label}.${key} làm validator ném`);
+      assert.doesNotThrow(() => userGaps(state), `${label}.${key} làm userGaps ném`);
       assert.ok(
-        errorsIn(state).some((message) => message.includes(`Thiếu trường "${key}"`)),
-        `${section}.${key} vắng mặt mà không có lỗi nào`,
+        errorsIn(state).length > 0,
+        `${label}.${key} vắng mặt mà validator không báo gì`,
       );
     }
   }
+});
 
-  // Và các trường tuỳ chọn trên dòng con, nơi `requirePresent` cũng phải bắt.
+test("trường vắng mặt vẫn ra đúng chỗ trống, không thành 'đã biết'", () => {
   const cardMissing = broken(flexiblePointsSufficient, (s) => {
     delete (s.cards[1] as Partial<(typeof s.cards)[1]>).closedDate;
   });
-  assert.doesNotThrow(() => validateUserState(cardMissing, data));
-  assert.doesNotThrow(() => userGaps(cardMissing));
   assert.deepEqual(lastClosed(cardMissing, productIdFor("amex-gold-rewards")), { kind: "unknown" });
 
   const balanceMissing = broken(aeroplanHeavy, (s) => {
     delete (s.balances[0] as Partial<(typeof s.balances)[0]>).balance;
   });
-  assert.doesNotThrow(() => validateUserState(balanceMissing, data));
   assert.ok(gapKinds(balanceMissing).includes("point_balance_amount_unknown"));
 });
 
