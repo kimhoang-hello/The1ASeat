@@ -128,6 +128,15 @@ Gold trả về 50,000 điểm hai lần chỉ vì rebate đi từ $150 lên $20
 (SỐ, ĐƠN VỊ) chứ không bằng nhãn: Momentum đã đổi chữ "Hoàn tiền 15%" →
 "Cashback 15%" mà ưu đãi y nguyên.
 
+**Mọi ngày trong lịch sử offer là NGÀY GHI NHẬN**, không phải ngày nhà phát
+hành đổi offer. Nhật ký ghi mỗi ngày một lượt, và khi một thẻ bị unpublish tạm
+thì recorder cố ý không ghi gì — nên một đợt có thể kết thúc, và đợt sau có thể
+bắt đầu, ở bất kỳ đâu trong khoảng thẻ vắng mặt. Dùng để xếp thứ tự và ước
+lượng thời lượng thì được; đừng trình bày với người đọc như ngày công bố.
+
+Muốn chính xác hơn thì phải sửa `record-offer-history.mts` ghi thêm một dòng
+"không thấy thẻ này" — việc của recorder, không phải của lớp dữ liệu này.
+
 ## Ba luật không được phá
 
 1. **Affiliate không bao giờ ảnh hưởng thứ hạng** (spec §16 Rule 7).

@@ -20,6 +20,19 @@ export type OfferHistoryState = {
 /**
  * Một đợt welcome bonus: mức nào, từ ngày nào tới ngày nào.
  *
+ * MỌI NGÀY Ở ĐÂY LÀ NGÀY GHI NHẬN, không phải ngày nhà phát hành đổi offer.
+ * Nhật ký được ghi mỗi ngày một lượt, nên một thay đổi hôm mùng 3 xuất hiện ở
+ * dòng ngày mùng 4. Tệ hơn: khi một thẻ bị unpublish tạm, snapshot không có
+ * nó và recorder CỐ Ý không ghi gì (xem `record-offer-history.mts` — lịch sử
+ * đã xoá thì không dựng lại được). Nghĩa là một đợt có thể kết thúc, và đợt
+ * sau có thể bắt đầu, ở BẤT KỲ ĐÂU trong khoảng thẻ vắng mặt.
+ *
+ * Vì vậy Phase 3 được phép dùng những ngày này để XẾP THỨ TỰ và để ước lượng
+ * thời lượng, KHÔNG được trình bày chúng với người đọc như ngày nhà phát hành
+ * công bố. Nhật ký hiện không có dấu vết nào về việc thẻ vắng mặt; muốn có,
+ * phải sửa recorder ghi thêm một dòng "không thấy thẻ này" — việc của nó, không
+ * phải của lớp này.
+ *
  * Đây là primitive cho §12 (percentile lịch sử) và là nửa còn thiếu của §11:
  * "70,000 điểm" một mình không nói được gì, vì câu hỏi quyết định có nên mở
  * thẻ NGAY hay chờ là "70,000 là mức cao hay mức thường của thẻ này".
@@ -56,14 +69,16 @@ export interface OfferHistoryPoint {
    */
   until: string | null;
   /**
-   * `at` chỉ là lần ĐẦU TIÊN quan sát thấy mức này, không phải ngày nó bắt
-   * đầu — mức đã chạy từ trước khi nhật ký bắt đầu ghi.
+   * KHÔNG có lần ghi nào trước đợt này, nên `at` chỉ là lần đầu NHÌN THẤY mức
+   * này — nó đã chạy từ trước khi nhật ký bắt đầu, không biết bao lâu.
    *
-   * Luôn đúng với đợt đầu tiên của mọi thẻ: nhật ký chỉ ghi thêm khi số ĐỔI,
-   * nên lần ghi đầu là lần đầu nhìn thấy, không phải lần đầu tồn tại. Phase 3
-   * phải nói "từ khi theo dõi" chứ không được tính thời lượng đợt này như một
-   * con số chắc chắn — làm vậy là luôn ước lượng THIẾU, và thiếu đúng ở đợt
-   * dài nhất.
+   * Luôn đúng với đợt đầu tiên của mọi thẻ: nhật ký chỉ ghi thêm khi số ĐỔI.
+   * Phase 3 phải nói "từ khi theo dõi" chứ không được tính thời lượng đợt này
+   * như con số chắc chắn — làm vậy là luôn ước lượng THIẾU, và thiếu đúng ở
+   * đợt dài nhất.
+   *
+   * `false` nghĩa là CÓ một lần ghi trước đó, không phải là đã chứng kiến lúc
+   * offer đổi: xem chú thích "ngày ghi nhận" ở đầu interface.
    */
   startCensored: boolean;
   /**
@@ -74,6 +89,9 @@ export interface OfferHistoryPoint {
    * cuối của một thẻ đã chết trông y hệt đợt đang chạy của một thẻ còn sống,
    * và chỉ vòng đời sản phẩm (`Product.isActive`, `effectiveTo`) mới phân biệt
    * được. Phase 3 phải tra chỗ đó trước khi nói bất cứ điều gì ở thì hiện tại.
+   *
+   * `false` nghĩa là CÓ một lần ghi sau đó, không phải là đã chứng kiến lúc
+   * offer kết thúc: xem chú thích "ngày ghi nhận" ở đầu interface.
    */
   endCensored: boolean;
   /** Nhãn đúng như nó từng hiện trên site. */
