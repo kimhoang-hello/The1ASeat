@@ -825,3 +825,14 @@ test("một slug không được thuộc về hai sản phẩm", () => {
   };
   assert.ok(errorsIn(broken).some((e) => e.includes("thuộc về cả")));
 });
+
+test("thẻ đổi tên rồi đổi VỀ tên cũ vẫn hợp lệ", () => {
+  // A→B→A: cùng một slug nằm ở cả `slug` lẫn `previousSlugs` của CÙNG một
+  // sản phẩm. Không thể trộn lịch sử với thẻ nào khác, nên đừng chặn.
+  const p = BASE.products[0];
+  const reverted = {
+    ...BASE,
+    products: [{ ...p, previousSlugs: ["ten-giua", p.slug] }, ...BASE.products.slice(1)],
+  };
+  assert.deepEqual(errorsIn(reverted), []);
+});

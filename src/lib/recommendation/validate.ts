@@ -181,9 +181,12 @@ export function validateDataset(
   // rồi engine tính "mức này cao hay thường" trên số liệu của một thẻ khác.
   const slugOwner = new Map<string, string>();
   for (const product of data.products) {
-    for (const slug of [product.slug, ...product.previousSlugs]) {
+    // `new Set`: một thẻ đổi tên rồi ĐỔI VỀ TÊN CŨ (A→B→A) sẽ có cùng một slug
+    // ở cả `slug` lẫn `previousSlugs`. Đó là vòng đời hợp lệ và không thể trộn
+    // lịch sử với thẻ nào khác, nên chặn nó là chặn nhầm.
+    for (const slug of new Set([product.slug, ...product.previousSlugs])) {
       const owner = slugOwner.get(slug);
-      if (owner !== undefined) {
+      if (owner !== undefined && owner !== product.id) {
         issues.push({
           level: "error",
           entity: "products",
