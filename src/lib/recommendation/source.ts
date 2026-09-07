@@ -30,8 +30,13 @@ export interface RecommendationDataSource {
    * IS NULL OR effective_to >= $1)` và dùng index. Nếu hợp đồng chỉ có "trả
    * hết rồi tự lọc" thì bản PostgreSQL buộc phải nạp cả lịch sử về ứng dụng —
    * và lúc đó sửa nó là sửa cả hợp đồng.
+   *
+   * `knownAt` cắt theo trục thời gian thứ hai: chỉ những bản ghi đã có trong
+   * kho tính đến ngày đó. Phase 4 dựng lại một lượt chạy cũ phải truyền CẢ
+   * HAI, nếu không đính chính lùi ngày sẽ lọt vào lời giải thích. Có mặt trên
+   * interface chứ không để người gọi tự lọc sau, cùng lý do với `asOf`.
    */
-  getDataset(options?: { asOf?: string }): Promise<RecommendationDataset>;
+  getDataset(options?: { asOf?: string; knownAt?: string }): Promise<RecommendationDataset>;
   /**
    * Lịch sử mức welcome bonus của một sản phẩm — xem `OfferHistoryPoint`.
    *
@@ -106,12 +111,13 @@ export const repoDataSource: RecommendationDataSource = {
     );
   },
 
-  async getDataset(options?: { asOf?: string }): Promise<RecommendationDataset> {
+  async getDataset(options?: { asOf?: string; knownAt?: string }): Promise<RecommendationDataset> {
     const offers = await getCreditCardOffers();
     // Chỉ `products` khác bộ offline, và khác đúng một trường. Dựng lại từ bộ
     // offline thay vì liệt kê lần nữa: hai chỗ liệt kê là hai chỗ sẽ lệch khi
     // có entity thứ mười hai.
     const full = { ...offlineDataset(), products: resolveProducts(offers) };
-    return options?.asOf === undefined ? full : datasetAt(full, options.asOf);
+    if (options?.asOf === undefined) return full;
+    return datasetAt(full, options.asOf, { knownAt: options.knownAt });
   },
 };

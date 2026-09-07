@@ -564,3 +564,48 @@ test("cảnh báo hạng chuyển điểm bắt được chuỗi tiếng Việt"
   const warnings = validateDataset(broken, TODAY).filter((i) => i.level === "warning");
   assert.ok(warnings.some((w) => w.message.includes("requiresTier để trống")));
 });
+
+test("phiên bản phí mang ngày vào kho RIÊNG, không dùng hằng chung của file", () => {
+  // Một đính chính nhập tháng 12 với hiệu lực từ tháng 10: truy vấn `knownAt`
+  // tháng 10 KHÔNG được thấy nó. Hằng chung cho cả file sẽ cho nó lọt.
+  const fee = BASE.productFees[0];
+  const late = {
+    ...BASE,
+    productFees: [
+      { ...fee, effectiveTo: "2026-09-30" },
+      {
+        ...fee,
+        id: `${fee.id}_late` as ProductFee["id"],
+        annualFee: fee.annualFee + 10,
+        effectiveFrom: "2026-10-01",
+        recordedAt: "2026-12-01",
+      },
+      ...BASE.productFees.slice(1),
+    ],
+  };
+  const known = datasetAt(late, "2026-10-15", { knownAt: "2026-10-15" }).productFees;
+  assert.ok(!known.some((f) => (f.id as string).endsWith("_late")));
+  const later = datasetAt(late, "2026-12-15", { knownAt: "2026-12-15" }).productFees;
+  assert.ok(later.some((f) => (f.id as string).endsWith("_late")));
+});
+
+test("nhận diện hạng chịu được dấu câu và không bắt nhầm từ chứa 'chỉ'", () => {
+  const path = BASE.transferPaths[0];
+  const check = (text: string) =>
+    validateDataset(
+      {
+        ...BASE,
+        transferPaths: [
+          { ...path, conditionText: text, requiresTier: null },
+          ...BASE.transferPaths.slice(1),
+        ],
+      },
+      TODAY,
+    ).some((i) => i.message.includes("requiresTier để trống"));
+
+  assert.ok(check("Chỉ Avion® Elite"));
+  assert.ok(check("(Chỉ Avion® Elite)"), "dấu ngoặc dính liền vẫn phải bắt được");
+  assert.ok(check("Only: Avion Elite"), "dấu hai chấm dính liền vẫn phải bắt được");
+  assert.ok(!check("Mọi hạng Avion®"), "câu nói KHÔNG hạn chế thì đừng cảnh báo");
+  assert.ok(!check("Cần chỉnh sửa sau"), "'chỉ' nằm trong một từ khác thì không tính");
+});

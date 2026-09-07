@@ -79,6 +79,15 @@ type FeeVersion = {
   /** Ngày kiểm lại mức này. Vắng thì lấy `from` — mức mới thì ngày biết nó
    *  chính là ngày nó bắt đầu. */
   verifiedAt?: string;
+  /**
+   * Ngày dòng này được ĐƯA VÀO kho. Vắng thì lấy `from`.
+   *
+   * Phải nằm trên TỪNG PHIÊN BẢN, không phải một hằng chung cho cả file: một
+   * đính chính nhập tháng 12 với hiệu lực từ tháng 10 mà mang ngày chung của
+   * file thì truy vấn `knownAt` tháng 10 sẽ thấy nó — đúng thứ `knownAt` sinh
+   * ra để chặn. Còn sửa hằng chung thì ghi đè ngày vào kho của mọi dòng cũ.
+   */
+  recordedAt?: string;
 };
 
 const SEEDS: Seed[] = [
@@ -465,7 +474,7 @@ export const PRODUCT_FEES: ProductFee[] = SEEDS.flatMap((seed) =>
     sourceUrl: `https://ghe1a.com/credit-cards/${seed.slug}`,
     sourceKind: "ghe1a",
     verifiedAt: fee.verifiedAt ?? fee.from,
-    recordedAt: RECORDED_ON,
+    recordedAt: fee.recordedAt ?? fee.from,
     confidence: "verified",
   })),
 );
