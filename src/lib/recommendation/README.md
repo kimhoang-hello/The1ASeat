@@ -103,8 +103,16 @@ bonus của thẻ đổi, đọc từ [`../../../data/offer-history.json`](../..
 Đây là primitive cho §12 (percentile lịch sử) và là nửa còn thiếu của §11:
 "70,000 điểm" một mình không trả lời được câu quyết định — nên mở NGAY hay chờ.
 
-`amount` có thể `undefined` khi nhãn là cashback ("Hoàn tiền 15%"): không rút
-ra được con số so sánh được với số điểm. Bỏ qua, đừng coi là 0.
+Mỗi điểm mang `unit` (`points` / `dollar` / `percent`), và Phase 3 **chỉ được
+so hai điểm cùng đơn vị**. Thẻ cashback đổi từ "Hoàn tiền 15%" sang "$250 tiền
+mặt" là đổi đơn vị: so thẳng 15 với 250 rồi nói "từng lên tới $250" là một câu
+về tiền, nói sai thì người đọc mở nhầm thẻ.
+
+Những lần ghi mà mức bonus KHÔNG đổi đã bị bỏ trước khi trả về — file gốc ghi
+thêm một dòng khi welcome bonus HOẶC rebate đổi, nên không lọc thì Scotiabank®
+Gold trả về 50,000 điểm hai lần chỉ vì rebate đi từ $150 lên $200. So bằng
+(SỐ, ĐƠN VỊ) chứ không bằng nhãn: Momentum đã đổi chữ "Hoàn tiền 15%" →
+"Cashback 15%" mà ưu đãi y nguyên.
 
 ## Ba luật không được phá
 
@@ -123,7 +131,7 @@ ra được con số so sánh được với số điểm. Bỏ qua, đừng coi
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # phép tính chi tiêu của welcome offer
+npm run test:reco         # phép tính chi tiêu, bất biến dữ liệu, lịch sử offer
 ```
 
 `audit:reco-data` bắt ba lớp lỗi:

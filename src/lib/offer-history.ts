@@ -67,7 +67,9 @@ export function amountIn(label: string | undefined): number | undefined {
  * tiền, nói sai thì người đọc mở nhầm thẻ. Khác đơn vị thì coi như không so
  * được và không nói gì.
  */
-function unitOf(label: string): "percent" | "dollar" | "points" {
+export type OfferUnit = "percent" | "dollar" | "points";
+
+export function unitOf(label: string): OfferUnit {
   if (label.includes("%")) return "percent";
   if (label.includes("$")) return "dollar";
   return "points";
