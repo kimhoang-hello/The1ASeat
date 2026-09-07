@@ -28,6 +28,7 @@ import {
   vagueEarner,
   USER_FIXTURES,
 } from "./data/user-fixtures.ts";
+import { SPEND_CATEGORIES } from "./types.ts";
 import { userGaps } from "./user-gaps.ts";
 import { inMemoryUserStore } from "./user-source.ts";
 import { validateUserState } from "./user-validate.ts";
@@ -420,6 +421,127 @@ test("vùng khởi hành do người dùng nói thì không bị coi là suy ra"
   assert.ok(!resolved.originRegionInferred);
 });
 
+test("khứ hồi hay một chiều là thừa số THỨ HAI, và không suy được từ ngày", () => {
+  // `AwardStrategy.pointsLow` của Phase 1 là "một chiều, một người". Số điểm
+  // cần = points × passengers × (khứ hồi ? 2 : 1). Thiếu thừa số cuối thì
+  // Phase 3 sai đúng 100% ở vế nặng nhất của §10.2.
+  const strategy = data.awardStrategies.find((row) => row.pointsLow !== null);
+  assert.ok(strategy !== undefined);
+
+  const funded = japanTripFunded.goals[0] as TripGoal;
+  assert.equal(funded.roundTrip, true);
+  assert.ok(!gapKinds(japanTripFunded).includes("trip_round_trip_unknown"));
+
+  // Có CẢ HAI ngày mà vẫn chưa biết chiều về: hai ngày chỉ là khoảng thời gian
+  // linh hoạt, không phải bằng chứng có chiều về.
+  const bothDates = broken(japanTripFunded, (s) => {
+    (s.goals[0] as TripGoal).roundTrip = null;
+  });
+  const goal = bothDates.goals[0] as TripGoal;
+  assert.ok(goal.travelStart !== null && goal.travelEnd !== null);
+  assert.ok(gapKinds(bothDates).includes("trip_round_trip_unknown"));
+
+  // Và `flexiblePointsSufficient` là ca thật: linh hoạt cao, chưa chốt chiều về.
+  assert.equal((flexiblePointsSufficient.goals[0] as TripGoal).roundTrip, null);
+  assert.ok(gapKinds(flexiblePointsSufficient).includes("trip_round_trip_unknown"));
+});
+
+test("chỗ trống không bao giờ bắt Phase 3 tách chuỗi", () => {
+  // `goal_priority_ambiguous` từng mang `subject` là danh sách id nối bằng dấu
+  // phẩy — đúng thứ lớp dữ liệu này sinh ra để khỏi phải làm. Danh sách ứng
+  // viên tra bằng `primaryGoal`, thứ trả về đã có kiểu.
+  const state = broken(nearlyEmpty, (s) => {
+    s.goals.push({ ...structuredClone(s.goals[0]), id: "goal_a", type: "diversify" } as never);
+  });
+  const gap = userGaps(state).find((row) => row.kind === "goal_priority_ambiguous");
+  assert.ok(gap !== undefined);
+  assert.equal(gap.subject, state.profile.id);
+  assert.ok(!gap.subject.includes(","));
+
+  const primary = primaryGoal(state);
+  assert.equal(primary.kind, "ambiguous");
+  assert.equal(primary.kind === "ambiguous" ? primary.candidates.length : 0, 2);
+
+  // Và không `subject` nào ở bất kỳ nhân vật nào chứa dấu phẩy.
+  for (const fixture of USER_FIXTURES) {
+    for (const row of userGaps(fixture)) {
+      assert.ok(!row.subject.includes(","), `${row.kind} mang danh sách trong subject`);
+    }
+  }
+});
+
+test("chỗ trống NỐI ĐƯỢC sang dữ liệu Phase 1 — điều kiện để hỏi đúng câu", () => {
+  // §30 nói: đừng bắt điền 25 câu, hãy tìm CÂU HỎI ĐÁNG GIÁ NHẤT. Muốn làm
+  // được thì mỗi chỗ trống phải nối được sang thứ dữ liệu quyết định nó — nếu
+  // không, Phase 3 chỉ còn cách hỏi tuần tự, tức là lại thành cái form.
+  //
+  // Test này KHÔNG chọn câu hỏi (việc của Phase 3). Nó chỉ đòi phép nối tồn tại.
+  const sparse = broken(advancedCollector, (s) => {
+    (s.spend as NonNullable<typeof s.spend>).byCategory = {};
+    s.profile.annualPersonalIncome = null;
+    s.profile.isStudent = null;
+  });
+  const gaps = userGaps(sparse);
+
+  // Hạng mục chi tiêu → `earning_rates.category`. Đây là chỗ luật "hạng mục là
+  // từ vựng CHUNG hai bên" của `types.ts` được kiểm: một hạng mục chỉ có ở một
+  // bên là một hạng mục vô dụng.
+  const rateCategories = new Set(data.earningRates.map((rate) => rate.category as string));
+  const categoryGaps = gaps.filter((gap) => gap.kind === "spend_category_unknown");
+  assert.ok(categoryGaps.length > 0);
+  const joinable = categoryGaps.filter((gap) => rateCategories.has(gap.subject));
+  assert.ok(
+    joinable.length >= categoryGaps.length / 2,
+    "quá ít hạng mục nối được sang earning_rates — bảng câu hỏi sẽ hỏi mò",
+  );
+
+  // Thu nhập → `eligibility_rules` có ngưỡng. Số dư → `points_programs`.
+  assert.ok(gaps.some((gap) => gap.kind === "personal_income_unknown"));
+  assert.ok(
+    data.eligibilityRules.some((rule) => rule.ruleType === "minimum_personal_income"),
+    "có chỗ trống thu nhập mà không luật nào đọc nó",
+  );
+  assert.ok(gaps.some((gap) => gap.kind === "student_status_unknown"));
+  assert.ok(data.eligibilityRules.some((rule) => rule.ruleType === "student_status_required"));
+
+  // Và chiều ngược lại: mọi hạng mục Phase 1 dùng đều khai được ở hồ sơ người
+  // dùng. Thiếu chiều này thì có tỷ lệ tích điểm mà không ai hỏi được người
+  // dùng có chi vào đó không.
+  for (const category of rateCategories) {
+    assert.ok(
+      (SPEND_CATEGORIES as readonly string[]).includes(category),
+      `earning_rates dùng hạng mục "${category}" mà hồ sơ chi tiêu không khai được`,
+    );
+  }
+});
+
+test("subject của mỗi chỗ trống đúng loại khoá mà hợp đồng nói", () => {
+  // Bảng quy ước nằm ở `UserDataGap`. Test này là bản chấp hành: đọc nhầm
+  // `subject` của `spend_category_unknown` như một id thì không có gì đỏ lên.
+  const state = broken(advancedCollector, (s) => {
+    (s.spend as NonNullable<typeof s.spend>).byCategory = {};
+    s.balances[0].balance = null;
+  });
+  const categories = new Set<string>(SPEND_CATEGORIES);
+  const cardIds = new Set(state.cards.map((card) => card.id as string));
+  const programIds = new Set(state.balances.map((row) => row.programId as string));
+  const goalIds = new Set(state.goals.map((goal) => goal.id as string));
+
+  for (const gap of userGaps(state)) {
+    if (gap.kind === "spend_category_unknown") {
+      assert.ok(categories.has(gap.subject), `${gap.kind}: subject không phải SpendCategory`);
+    } else if (gap.kind === "card_closed_date_unknown") {
+      assert.ok(cardIds.has(gap.subject), `${gap.kind}: subject không phải UserCardId`);
+    } else if (gap.kind === "point_balance_amount_unknown") {
+      assert.ok(programIds.has(gap.subject), `${gap.kind}: subject không phải PointsProgramId`);
+    } else if (gap.kind.startsWith("trip_")) {
+      assert.ok(goalIds.has(gap.subject), `${gap.kind}: subject không phải GoalId`);
+    } else {
+      assert.equal(gap.subject, state.profile.id, `${gap.kind}: subject phải là UserId`);
+    }
+  }
+});
+
 test("số người bay KHÔNG được mặc định là 1", () => {
   const goal = structuredClone(japanTripFunded.goals[0]) as TripGoal;
   goal.passengers = null;
@@ -638,6 +760,7 @@ function manyGapRows(): UserState {
         destinationAirport: null,
         cabin: null,
         passengers: null,
+        roundTrip: null,
         travelStart: null,
         travelEnd: null,
         flexibility: null,
@@ -1091,6 +1214,7 @@ test("mọi chỗ trống đều ứng với một thứ Phase 3 THẬT SỰ đ�
     trip_passengers_unknown: "§10.2 Points Gap Reduction nhân theo số người",
     trip_dates_unknown: "§13 mốc chi có kịp trước chuyến đi không",
     trip_flexibility_unknown: "§10.2 dành 10% cho Flexibility Value",
+    trip_round_trip_unknown: "points × số người × (khứ hồi ? 2 : 1) — AwardStrategy tính một chiều",
   };
   // Mọi kind mà `userGaps` sinh ra phải có mặt trong bảng biện minh, và ngược
   // lại — thêm một kind mà không nói được ai đọc nó là làm dài bảng câu hỏi.

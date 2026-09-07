@@ -368,6 +368,11 @@ mất mức nào cũng dẫn tới một khuyến nghị sai mà không có lỗ
    điểm vẫn dùng được, chỉ con số là chưa biết. Khác cả "không có dòng nào" lẫn
    "0 điểm".
 
+`UserDataGap.subject` mang gì thì tuỳ `kind` — bảng quy ước nằm ngay trên
+`interface UserDataGap`, và có test chấp hành nó. Không `kind` nào mang một
+DANH SÁCH nối bằng dấu phẩy: bắt Phase 3 tách chuỗi là đúng thứ lớp dữ liệu này
+sinh ra để khỏi phải làm.
+
 `userGaps(state)` gom mọi chỗ chưa biết thành `UserDataGap` máy đọc được. Thứ
 tự cố định đòi hỏi **sắp xếp** `cards`/`balances`/`goals` trước khi duyệt, không
 chỉ viết các khối theo thứ tự cố định: chúng đến từ một truy vấn database, và
@@ -486,6 +491,18 @@ KHÔNG PHÙ HỢP. §14 tách hai khái niệm đó đúng vì thế.
 Spec §31 hỏi một câu, nhưng một câu hỏi không bắt buộc phải ánh xạ thành một
 trường — cả hai mặc định `null` và chỉ hỏi khi thẻ doanh nghiệp còn là ứng viên.
 
+### Chuyến đi: ba thừa số, không phải một
+
+Số điểm cần = `points × số người × (khứ hồi ? 2 : 1)`.
+`AwardStrategy.pointsLow` của Phase 1 ghi rõ nó là **một chiều, một người** và
+việc nhân là của engine — nên `TripGoal` phải mang cả hai thừa số kia.
+`passengers` và `roundTrip` đều `null` khi chưa biết và **không được mặc định**:
+mặc định 1 người chia ba số điểm cần của một gia đình, mặc định một chiều chia
+đôi. Cả hai đều sai về hướng nguy hiểm — `NO_NEW_CARD` thắng vì một giả định.
+
+`roundTrip` KHÔNG suy được từ `travelStart`/`travelEnd`: có cả hai ngày chỉ
+nghĩa là một khoảng thời gian linh hoạt.
+
 ### Chuyến đi dùng VÙNG
 
 `TripGoal.destinationRegion` bắt buộc, sân bay không. `originRegion` để `null` thì
@@ -579,7 +596,7 @@ cùng một khái niệm thì phải là một hàm.
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # 165 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng
+npm run test:reco         # 169 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng
 ```
 
 `audit:reco-data` bắt ba lớp lỗi:

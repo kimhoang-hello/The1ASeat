@@ -36,9 +36,9 @@ export function userGaps(state: UserState): UserDataGap[] {
   } else if (primary.kind === "ambiguous") {
     gaps.push({
       kind: "goal_priority_ambiguous",
-      subject: primary.candidates.map((goal) => goal.id).join(","),
+      subject: profile.id,
       reason:
-        "Nhiều mục tiêu cùng mức ưu tiên. §10 dùng hàm chấm điểm khác nhau cho từng loại, nên chọn bừa một cái là để id quyết định khuyến nghị.",
+        "Nhiều mục tiêu cùng mức ưu tiên. §10 dùng hàm chấm điểm khác nhau cho từng loại, nên chọn bừa một cái là để id quyết định khuyến nghị. Danh sách ứng viên tra bằng `primaryGoal(state)`.",
     });
   }
 
@@ -230,6 +230,14 @@ export function userGaps(state: UserState): UserDataGap[] {
         subject: goal.id,
         reason:
           "Chưa biết mức linh hoạt của chuyến đi. §10.2 dành 10% điểm cho Flexibility Value, nên mặc định 'medium' là tự cho điểm một thứ chưa ai nói.",
+      });
+    }
+    if (goal.roundTrip == null) {
+      gaps.push({
+        kind: "trip_round_trip_unknown",
+        subject: goal.id,
+        reason:
+          "Chưa biết khứ hồi hay một chiều. Số điểm cần = points × số người × (khứ hồi ? 2 : 1), nên thiếu thừa số này là sai đúng 100%.",
       });
     }
     if (goal.travelStart == null && goal.travelEnd == null) {

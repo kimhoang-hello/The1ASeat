@@ -761,7 +761,7 @@ test("chỗ trống được tính LẠI cho từng thời điểm", () => {
   assert.ok(!after.gaps.some((g) => g.subjectId === missing.subjectId && g.kind === "base_earn_rate_unknown"));
 });
 
-test("Amex® Green/Cobalt/Gold KHÔNG phải các hạng của một họ", () => {
+test("Amex® Green/Cobalt®/Gold KHÔNG phải các hạng của một họ", () => {
   // Ba thẻ cùng kiếm Membership Rewards® nhưng cấu trúc tích điểm khác hẳn —
   // Cobalt 5x ăn uống, Gold 2x du lịch/siêu thị, Green 1x. Gom thành họ có thứ
   // hạng sẽ khiến engine im lặng giấu đi hai trong ba.

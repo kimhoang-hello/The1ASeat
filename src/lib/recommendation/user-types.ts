@@ -186,6 +186,12 @@ export interface UserProfile {
    * `0` = chỉ nhận thẻ miễn phí — một câu trả lời. `null` = chưa hỏi. Nhập
    * nhằng hai thứ này sẽ giấu mất toàn bộ thẻ có phí của một người chưa từng
    * được hỏi, hoặc đề xuất thẻ $799 cho một người đã nói không.
+   *
+   * LƯU Ý CHO PHASE 3: so ngưỡng này với phí THỰC TRẢ năm đầu, không phải phí
+   * niêm yết. `Offer.annualFeeFirstYear` của Phase 1 là chỗ một offer miễn phí
+   * năm đầu, và một thẻ $699 miễn năm đầu KHÔNG phải thứ người đặt ngưỡng $200
+   * muốn bị giấu đi. Đây là chính sách của §14, nên nó nằm ở Phase 3 — mô hình
+   * chỉ đưa đủ cả hai con số.
    */
   annualFeeTolerancePerCard: number | null;
   /**
@@ -419,6 +425,19 @@ export interface TripGoal extends GoalBase {
    * nói là chưa biết và để §30 hỏi.
    */
   passengers: number | null;
+  /**
+   * Khứ hồi hay một chiều. `null` = chưa biết, và KHÔNG được mặc định.
+   *
+   * `AwardStrategy.pointsLow` của Phase 1 ghi rõ: "Một chiều, một người. Nhân
+   * lên ở engine, không nhân sẵn ở dữ liệu." Nghĩa là số điểm cần =
+   * `points × passengers × (khứ hồi ? 2 : 1)`. Không có trường này thì thừa số
+   * cuối không tồn tại, và Phase 3 sai đúng 100% ở §10.2 "Points Gap Reduction"
+   * — vế nặng nhất của việc chấm điểm một chuyến đi.
+   *
+   * KHÔNG suy được từ `travelStart`/`travelEnd`: có cả hai ngày chỉ nghĩa là
+   * một khoảng thời gian linh hoạt, không nghĩa là có chiều về.
+   */
+  roundTrip: boolean | null;
   travelStart: string | null;
   travelEnd: string | null;
   flexibility: "low" | "medium" | "high" | null;
@@ -475,6 +494,25 @@ export interface UserState {
  * đâu — nên nó là việc của Phase 3 và đổi theo từng lượt chạy. Ghi sẵn ở đây
  * là chép một bảng tĩnh sẽ lệch.
  */
+/**
+ * `subject` mang gì, tuỳ theo `kind` — bảng này là hợp đồng.
+ *
+ * Nó KHÔNG đồng nhất, và phải nói ra: Phase 3 đọc `subject` của
+ * `spend_category_unknown` như một `ProductId` thì không có gì đỏ lên.
+ *
+ * | `kind` | `subject` |
+ * | --- | --- |
+ * | `spend_category_unknown` | `SpendCategory` |
+ * | `point_balance_amount_unknown` | `PointsProgramId` |
+ * | `card_closed_date_unknown` | `UserCardId` |
+ * | `trip_*` | `GoalId` |
+ * | mọi `kind` còn lại | `UserId` (hồ sơ) |
+ *
+ * Không có kind nào mang một DANH SÁCH nối bằng dấu phẩy — bắt Phase 3 tách
+ * chuỗi là đúng thứ lớp dữ liệu này sinh ra để khỏi phải làm. Mục tiêu hoà
+ * nhau thì tra bằng `primaryGoal(state)`, thứ trả về đúng danh sách ứng viên
+ * đã có kiểu.
+ */
 export interface UserDataGap {
   kind:
     | "goal_missing"
@@ -498,7 +536,8 @@ export interface UserDataGap {
     | "trip_cabin_unknown"
     | "trip_passengers_unknown"
     | "trip_dates_unknown"
-    | "trip_flexibility_unknown";
+    | "trip_flexibility_unknown"
+    | "trip_round_trip_unknown";
   /** Id hoặc khoá của thứ còn thiếu — người dùng, hạng mục, chương trình, thẻ. */
   subject: string;
   /** Dành cho NGƯỜI đọc. Engine dùng `kind`. */

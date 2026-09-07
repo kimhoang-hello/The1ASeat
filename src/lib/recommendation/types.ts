@@ -600,7 +600,7 @@ export interface Offer extends Temporal, Sourced {
 export type OfferComponentType =
   | "first_purchase"
   | "spend_threshold"
-  | "monthly_spend" // Amex Cobalt/Gold: mỗi chu kỳ sao kê đạt mốc lại được một phần
+  | "monthly_spend" // Amex® Cobalt®/Gold: mỗi chu kỳ sao kê đạt mốc lại được một phần
   | "anniversary"
   | "statement_credit"
   | "fee_waiver";

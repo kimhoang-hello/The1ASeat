@@ -106,7 +106,7 @@ test("quy về 90 ngày: cửa sổ dài thì nhẹ đi", () => {
   );
 });
 
-test("quy về 90 ngày: Cobalt trải 12 chu kỳ nên nhẹ", () => {
+test("quy về 90 ngày: Cobalt® trải 12 chu kỳ nên nhẹ", () => {
   // $750 mỗi chu kỳ × 12 = $9,000 trải trên 365 ngày ≈ $2,219 mỗi quý. So
   // thẳng $9,000 với sức chi 3 tháng sẽ loại người thừa sức đạt.
   assert.equal(spendPerNinetyDays([{ from: 0, to: 365, needed: 9000 }]), 2219);

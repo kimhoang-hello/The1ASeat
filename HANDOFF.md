@@ -377,7 +377,32 @@ mục tiêu cụ thể, mục tiêu mơ hồ). Ba chỗ phải sửa:
 Kết quả: **trạng thái hợp lệ tối thiểu chỉ cần MỘT câu trả lời — người này
 muốn gì.** Mọi thứ khác bỏ trống được.
 
-### 8.4 Không có chỗ nào nhét được dữ liệu nhạy cảm
+### 8.4 Rà cuối từ góc nhìn người viết Phase 3
+
+Dựng lần lượt chín thứ Phase 3 phải phân biệt được, rồi thử phá từng cái. Tám
+cái sạch. Cái thứ chín — **yêu cầu của chuyến đi** — thiếu một thừa số:
+
+**Số điểm cần = `points × số người × (khứ hồi ? 2 : 1)`.** `AwardStrategy` của
+Phase 1 ghi rõ nó là "một chiều, một người, nhân lên ở engine", mà `TripGoal`
+chỉ có `passengers`. Không có `roundTrip` thì Phase 3 sai đúng 100% ở vế nặng
+nhất của §10.2. Đã thêm, `null` khi chưa biết, có chỗ trống riêng — và **không
+suy được từ `travelStart`/`travelEnd`**: có cả hai ngày chỉ nghĩa là một khoảng
+thời gian linh hoạt.
+
+Hai chỗ nhỏ hơn cùng vòng:
+
+- `goal_priority_ambiguous` mang `subject` là danh sách id **nối bằng dấu
+  phẩy** — đúng thứ "bắt Phase 3 parse chuỗi" mà module này viết ra để tránh.
+  Nay `subject` là `UserId`, danh sách ứng viên tra bằng `primaryGoal`.
+- `subject` mang gì thì tuỳ `kind`, và điều đó chưa được nói ra ở đâu. Nay có
+  bảng quy ước trên `interface UserDataGap` và một test chấp hành nó.
+
+Và một lưu ý CHÍNH SÁCH cho Phase 3, không phải lỗi mô hình: so
+`annualFeeTolerancePerCard` với phí **thực trả năm đầu**
+(`Offer.annualFeeFirstYear`), không phải phí niêm yết — thẻ $699 miễn năm đầu
+không phải thứ người đặt ngưỡng $200 muốn bị giấu đi.
+
+### 8.5 Không có chỗ nào nhét được dữ liệu nhạy cảm
 
 Spec §4.4 cấm lưu số tài khoản loyalty. Cưỡng chế bằng cấu trúc: **cả mô hình
 không có một trường chuỗi tự do nào** (mã sân bay ràng buộc `^[A-Z]{3}$`).
@@ -385,18 +410,18 @@ Không tên, không email, không ngày sinh; thu nhập là khoảng. Hai test 
 việc này, và một test thứ ba chặn mô hình mã hoá kết quả — thêm
 `preferredProductId` vào hồ sơ sẽ làm nó đỏ.
 
-### 8.5 Kết quả kiểm thử Phase 2
+### 8.6 Kết quả kiểm thử Phase 2
 
 ```bash
 npx tsc --noEmit        # sạch
 npm run lint            # sạch
 npm run build           # Compiled successfully
-npm run test:reco       # 165/165 pass (91 của Phase 1 + 74 mới)
+npm run test:reco       # 169/169 pass (91 của Phase 1 + 78 mới)
 npm run test:game       # 43/43 pass
 npm run audit:reco-data # 0 lỗi, 9 cảnh báo (y như trước, đều là chỗ trống có chủ ý)
 ```
 
-### 8.6 Đã biết trước, để Phase 3 khỏi ngạc nhiên
+### 8.7 Đã biết trước, để Phase 3 khỏi ngạc nhiên
 
 - **Test C/D của spec §32 là chuyến Nhật, mà Phase 1 chưa dựng award strategy
   cho JAPAN** — chỉ `CANADA_US → SEA_VIETNAM` có dữ liệu. Đây KHÔNG phải lỗi
@@ -410,6 +435,20 @@ npm run audit:reco-data # 0 lỗi, 9 cảnh báo (y như trước, đều là ch
   **chưa có dòng nào trong seed**, nên hồ sơ người dùng cũng chưa có trường
   tương ứng. Thêm luật đó vào một thẻ nào đó thì phải thêm trường cùng lúc,
   nếu không nó sẽ không đánh giá được.
+- **Điểm hết hạn không được mô hình hoá.** Aeroplan® hết hạn sau 18 tháng không
+  hoạt động; `UserPointBalance` chỉ có `updatedAt` (độ cũ của con số), không có
+  ngày hết hạn. Spec §7 và §16 Rule 1 không đòi, nên để V2 — nhưng Phase 3
+  đừng nói "bạn đã đủ điểm" như thể số dư đó vĩnh viễn.
+- **Đổi hạng thẻ (product change) trông giống đóng-rồi-mở.** Hạ từ Infinite
+  Privilege xuống Infinite là hai dòng `user_cards`, không phải một dòng đổi
+  sản phẩm. Với luật welcome bonus thì kết quả như nhau (đều là TỪNG GIỮ), nên
+  chưa chặn gì.
+- **Điểm ngoài 16 chương trình của Phase 1 không khai được** (Hilton, IHG…).
+  Validator từ chối `programId` lạ. Hệ quả: §7 tính "tập trung danh mục" chỉ
+  trên phần trong phạm vi, nên sẽ hơi thổi phồng. Đúng phạm vi V1 (§33).
+- **Hỏi về MỘT thẻ cụ thể ("tôi có nên mở Cobalt không?") không phải một
+  `goal_type`.** Spec §5 chỉ có bốn loại. Không phải thiếu sót của Phase 2,
+  nhưng là câu người đọc hay hỏi nhất — đáng cân nhắc ở V2.
 - Mô hình **không có** khái niệm thẻ phụ / authorized user. Người giữ thẻ phụ
   hưởng quyền lợi nhưng thường không mất quyền welcome bonus — hiện chưa biểu
   diễn được. Ngoài phạm vi V1 nhưng sẽ va vào ở V2.

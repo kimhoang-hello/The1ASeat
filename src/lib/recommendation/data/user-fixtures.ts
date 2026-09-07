@@ -236,6 +236,7 @@ export const japanTripFunded: UserState = {
       destinationAirport: null,
       cabin: "business",
       passengers: 1,
+      roundTrip: true,
       travelStart: "2027-03-01",
       travelEnd: "2027-05-31",
       flexibility: "high",
@@ -274,6 +275,7 @@ export const japanTripShortfall: UserState = {
       destinationAirport: null,
       cabin: "business",
       passengers: 2,
+      roundTrip: true,
       travelStart: "2027-04-01",
       travelEnd: "2027-04-30",
       flexibility: "medium",
@@ -394,7 +396,11 @@ export const flexiblePointsSufficient: UserState = {
       destinationRegion: "EUROPE",
       destinationAirport: null,
       cabin: "business",
+      // Chưa chốt chiều về: người này linh hoạt cao và chưa có ngày. Số điểm
+      // cần chênh nhau ĐÚNG GẤP ĐÔI giữa hai khả năng, nên đây là chỗ trống
+      // đáng hỏi chứ không phải chỗ đoán.
       passengers: 2,
+      roundTrip: null,
       travelStart: null,
       travelEnd: null,
       flexibility: "high",

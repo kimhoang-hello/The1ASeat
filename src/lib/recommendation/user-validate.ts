@@ -135,7 +135,7 @@ const BALANCE_KEYS = ["userId", "programId", "balance", "updatedAt"] as const;
 const GOAL_BASE_KEYS = ["id", "userId", "type", "priority", "createdAt"] as const;
 const TRIP_GOAL_KEYS = [
   ...GOAL_BASE_KEYS, "originRegion", "originAirport", "destinationRegion",
-  "destinationAirport", "cabin", "passengers", "travelStart", "travelEnd", "flexibility",
+  "destinationAirport", "cabin", "passengers", "roundTrip", "travelStart", "travelEnd", "flexibility",
 ] as const;
 const EARN_GOAL_KEYS = [...GOAL_BASE_KEYS, "targetProgramId"] as const;
 
@@ -542,6 +542,9 @@ export function validateUserState(
     }
     if (goal.flexibility != null && !["low", "medium", "high"].includes(goal.flexibility)) {
       issues.push({ level: "error", entity: G, message: `${goal.id}: flexibility không hợp lệ "${goal.flexibility}"` });
+    }
+    if (goal.roundTrip != null && typeof goal.roundTrip !== "boolean") {
+      issues.push({ level: "error", entity: G, message: `${goal.id}: roundTrip phải là boolean hoặc null` });
     }
     if (goal.passengers != null && (!Number.isInteger(goal.passengers) || goal.passengers < 1)) {
       issues.push({ level: "error", entity: G, message: `${goal.id}: passengers phải là số nguyên ≥ 1` });
