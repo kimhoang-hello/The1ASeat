@@ -881,39 +881,61 @@ export function validateDataset(
   // `number | string | string[] | boolean` cho mọi loại, nên "60000" (chuỗi)
   // hay `true` ở chỗ đáng lẽ là ngưỡng thu nhập đều lọt — rồi phép so `gte`
   // của Phase 3 so chuỗi với số và cho ra kết quả tuỳ hứng.
+  /**
+   * Mỗi loại luật cho phép DẠNG GIÁ TRỊ nào và TOÁN TỬ nào.
+   *
+   * Bảng đầy đủ chứ không chỉ chặn vài ca: `business_required` với toán tử
+   * `in`, hay `residency` với `gte` và giá trị `true`, đều là những cặp
+   * comparator/value không có nghĩa nào cả — Phase 3 nhận chúng rồi phải tự
+   * bịa ra một cách hiểu.
+   *
+   * Thiếu một `ruleType` ở đây thì `shape` là `undefined` và phép kiểm báo
+   * ngay, thay vì im lặng cho qua — nên thêm loại luật mới mà quên khai ở đây
+   * sẽ đỏ, không trôi.
+   */
+  const RULE_SHAPES: Record<
+    string,
+    { value: "number" | "string" | "boolean"; operators: readonly string[] }
+  > = {
+    minimum_personal_income: { value: "number", operators: ["gte"] },
+    minimum_household_income: { value: "number", operators: ["gte"] },
+    residency: { value: "string", operators: ["eq", "in", "not_in"] },
+    existing_cardholder_excluded: { value: "boolean", operators: ["eq"] },
+    previous_cardholder_excluded: { value: "boolean", operators: ["eq"] },
+    business_required: { value: "boolean", operators: ["eq"] },
+    student_status_required: { value: "boolean", operators: ["eq"] },
+    banking_relationship_required: { value: "string", operators: ["eq"] },
+  };
+
   for (const rule of data.eligibilityRules) {
-    const numeric = rule.ruleType === "minimum_personal_income" || rule.ruleType === "minimum_household_income";
-    const boolish =
-      rule.ruleType === "existing_cardholder_excluded" ||
-      rule.ruleType === "previous_cardholder_excluded" ||
-      rule.ruleType === "business_required" ||
-      rule.ruleType === "student_status_required";
-    if (numeric && typeof rule.value !== "number") {
+    const shape = RULE_SHAPES[rule.ruleType];
+    if (shape === undefined) {
       issues.push({
         level: "error",
         entity: "eligibility_rules",
-        message: `${rule.id}: ${rule.ruleType} phải mang giá trị SỐ, đang là ${typeof rule.value}`,
+        message: `${rule.id}: loại luật "${rule.ruleType}" chưa khai dạng giá trị hợp lệ trong RULE_SHAPES`,
+      });
+      continue;
+    }
+    if (typeof rule.value !== shape.value) {
+      issues.push({
+        level: "error",
+        entity: "eligibility_rules",
+        message: `${rule.id}: ${rule.ruleType} phải mang giá trị ${shape.value}, đang là ${typeof rule.value}`,
       });
     }
-    if (numeric && typeof rule.value === "number" && rule.value < 0) {
+    if (!shape.operators.includes(rule.operator)) {
+      issues.push({
+        level: "error",
+        entity: "eligibility_rules",
+        message: `${rule.id}: ${rule.ruleType} không dùng được toán tử "${rule.operator}"`,
+      });
+    }
+    if (shape.value === "number" && typeof rule.value === "number" && rule.value < 0) {
       issues.push({
         level: "error",
         entity: "eligibility_rules",
         message: `${rule.id}: ngưỡng thu nhập âm`,
-      });
-    }
-    if (boolish && typeof rule.value !== "boolean") {
-      issues.push({
-        level: "error",
-        entity: "eligibility_rules",
-        message: `${rule.id}: ${rule.ruleType} phải mang giá trị boolean`,
-      });
-    }
-    if (numeric && rule.operator !== "gte") {
-      issues.push({
-        level: "error",
-        entity: "eligibility_rules",
-        message: `${rule.id}: ngưỡng thu nhập chỉ dùng toán tử gte`,
       });
     }
   }

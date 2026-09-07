@@ -901,12 +901,17 @@ test("trạng thái bất khả thi bị chặn, không đi được vào engine
   };
 
   const income = BASE.eligibilityRules.find((r) => r.ruleType === "minimum_personal_income")!;
-  bad("eligibilityRules", { ...income, value: "60000" }, "phải mang giá trị SỐ");
+  bad("eligibilityRules", { ...income, value: "60000" }, "phải mang giá trị number");
   bad("eligibilityRules", { ...income, value: -1 }, "ngưỡng thu nhập âm");
-  bad("eligibilityRules", { ...income, operator: "lte" }, "chỉ dùng toán tử gte");
+  bad("eligibilityRules", { ...income, operator: "lte" }, 'không dùng được toán tử "lte"');
 
   const flag = BASE.eligibilityRules.find((r) => r.ruleType === "previous_cardholder_excluded")!;
   bad("eligibilityRules", { ...flag, value: "có" }, "phải mang giá trị boolean");
+  // Toán tử vô nghĩa với loại luật — không chỉ luật thu nhập mới bị soi.
+  bad("eligibilityRules", { ...flag, operator: "in" }, 'không dùng được toán tử "in"');
+  const residency = BASE.eligibilityRules.find((r) => r.ruleType === "residency")!;
+  bad("eligibilityRules", { ...residency, value: true }, "phải mang giá trị string");
+  bad("eligibilityRules", { ...residency, operator: "gte" }, 'không dùng được toán tử "gte"');
 
   // Quyền lợi mang số nhưng loại của nó không có đơn vị → con số không so được.
   const noUnit = BASE.benefits.find((b) => b.unit === null)!;
@@ -925,17 +930,28 @@ test("trạng thái bất khả thi bị chặn, không đi được vào engine
 });
 
 test("id trùng bị bắt ở MỌI thực thể, kể cả earning_caps", () => {
+  // Dòng thứ hai KHÔNG chồng thời gian với dòng thứ nhất — nếu không, phép
+  // kiểm chồng lấn cũng đỏ và test vẫn xanh kể cả khi `checkUniqueIds` cho
+  // thực thể đó bị xoá. Đòi đúng chữ "Id trùng".
   for (const key of [
     "products", "productFees", "offers", "offerComponents", "earningRates",
     "earningCaps", "productBenefits", "eligibilityRules", "transferPaths",
     "awardStrategies", "programValuations", "productFamilies",
   ] as const) {
-    const rows = BASE[key] as { id: string }[];
+    const rows = BASE[key] as unknown as Record<string, unknown>[];
     if (rows.length === 0) continue;
-    const broken = { ...BASE, [key]: [rows[0], ...rows] } as typeof BASE;
+    const clone: Record<string, unknown> = { ...rows[0] };
+    if ("effectiveFrom" in clone) {
+      // Đẩy sang một khoảng thời gian rời hẳn.
+      clone.effectiveFrom = "2030-01-01";
+      clone.effectiveTo = "2030-12-31";
+      clone.recordedAt = "2030-01-01";
+    }
+    const broken = { ...BASE, [key]: [...rows, clone] } as typeof BASE;
+    const errors = errorsIn(broken, "2026-09-20");
     assert.ok(
-      errorsIn(broken).some((e) => e.includes("Id trùng") || e.includes("chồng thời gian")),
-      `${key}: phải bắt được id trùng`,
+      errors.some((e) => e.includes("Id trùng")),
+      `${key}: phải bắt được id trùng, nhận: ${errors.slice(0, 2).join(" | ")}`,
     );
   }
 });
