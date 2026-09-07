@@ -19,6 +19,23 @@ import type { Product, RecommendationDataset } from "./types.ts";
  * `getDataset` là async dù bộ seed nằm sẵn trong bộ nhớ — vì `affiliateAvailable`
  * đọc từ Contentful, và vì backend nào sau này cũng sẽ async.
  */
+/**
+ * Hỏi kho dữ liệu ở thời điểm nào.
+ *
+ * `asOf` BẮT BUỘC khi có `knownAt`, và điều đó được cưỡng chế bằng KIỂU DỮ
+ * LIỆU chứ không bằng chú thích: `{ knownAt }` một mình là một yêu cầu nghe
+ * như đang lọc mà thực ra không lọc gì — im lặng trả về cả những đính chính
+ * lùi ngày, đúng thứ `knownAt` sinh ra để chặn. Bỏ `options` đi nếu muốn cả
+ * lịch sử.
+ */
+export interface DatasetQuery {
+  /** Thế giới như nó ở ngày này (trục thời gian hiệu lực). */
+  asOf: string;
+  /** Chỉ những bản ghi đã có trong kho tính đến ngày này (trục thời gian ghi
+   *  nhận). Vắng = lấy mọi bản ghi, kể cả đính chính nhập sau. */
+  knownAt?: string;
+}
+
 export interface RecommendationDataSource {
   /**
    * `asOf` (YYYY-MM-DD) trả về thế giới như nó ở ngày đó; vắng thì trả về
@@ -36,7 +53,7 @@ export interface RecommendationDataSource {
    * HAI, nếu không đính chính lùi ngày sẽ lọt vào lời giải thích. Có mặt trên
    * interface chứ không để người gọi tự lọc sau, cùng lý do với `asOf`.
    */
-  getDataset(options?: { asOf?: string; knownAt?: string }): Promise<RecommendationDataset>;
+  getDataset(options?: DatasetQuery): Promise<RecommendationDataset>;
   /**
    * Lịch sử mức welcome bonus của một sản phẩm — xem `OfferHistoryPoint`.
    *
@@ -111,13 +128,16 @@ export const repoDataSource: RecommendationDataSource = {
     );
   },
 
-  async getDataset(options?: { asOf?: string; knownAt?: string }): Promise<RecommendationDataset> {
+  async getDataset(options?: DatasetQuery): Promise<RecommendationDataset> {
     const offers = await getCreditCardOffers();
     // Chỉ `products` khác bộ offline, và khác đúng một trường. Dựng lại từ bộ
     // offline thay vì liệt kê lần nữa: hai chỗ liệt kê là hai chỗ sẽ lệch khi
     // có entity thứ mười hai.
     const full = { ...offlineDataset(), products: resolveProducts(offers) };
-    if (options?.asOf === undefined) return full;
-    return datasetAt(full, options.asOf, { knownAt: options.knownAt });
+    // Không có `options` = trả cả lịch sử. Có `options` thì `asOf` là bắt buộc
+    // theo kiểu dữ liệu, nên không tồn tại nhánh "có knownAt mà không có asOf".
+    return options === undefined
+      ? full
+      : datasetAt(full, options.asOf, { knownAt: options.knownAt });
   },
 };

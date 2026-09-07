@@ -5,6 +5,7 @@ export { indexDataset, routeKey, type DatasetIndex } from "./indexes.ts";
 export {
   repoDataSource,
   OFFER_HISTORY_SINCE,
+  type DatasetQuery,
   type RecommendationDataSource,
 } from "./source.ts";
 export {
