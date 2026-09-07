@@ -29,8 +29,36 @@ const VERIFIED_ON = "2026-09-07";
 type BenefitSeed = [
   benefit: string,
   numericValue?: number | null,
-  opts?: { text?: string; minimumAnnualSpend?: number },
+  opts?: { text?: string; minimumAnnualSpend?: number; provider?: string },
 ];
+
+/**
+ * Hãng mà quyền lợi hàng không của thẻ này gắn vào.
+ *
+ * Suy từ sản phẩm vì gần như mọi quyền lợi hàng không của một thẻ đều thuộc
+ * cùng một hãng — thẻ Aeroplan® cho hành lý Air Canada®, thẻ United® cho hành
+ * lý United®. Ghi đè bằng `opts.provider` khi một thẻ có quyền lợi của hãng
+ * khác.
+ *
+ * `undefined` = thẻ không gắn hãng nào; quyền lợi của nó (travel credit, bảo
+ * hiểm) không cần phân biệt nhà cung cấp.
+ */
+const PROVIDER_BY_PRODUCT: Record<string, string> = {
+  "amex-aeroplan": "Air Canada®",
+  "amex-aeroplan-reserve": "Air Canada®",
+  "amex-aeroplan-business-reserve": "Air Canada®",
+  "td-aeroplan-visa-infinite": "Air Canada®",
+  "td-aeroplan-visa-infinite-privilege": "Air Canada®",
+  "td-aeroplan-visa-platinum": "Air Canada®",
+  "cibc-aeroplan-visa": "Air Canada®",
+  "cibc-aeroplan-visa-infinite": "Air Canada®",
+  "cibc-aeroplan-visa-infinite-privilege": "Air Canada®",
+  "westjet-rbc-world-elite-mastercard": "WestJet®",
+  "bmo-viporter-world-elite-mastercard": "Porter®",
+  "united-mileageplus-neo-world-elite-mastercard": "United®",
+  "amex-marriott-bonvoy": "Marriott Bonvoy®",
+  "amex-marriott-bonvoy-business": "Marriott Bonvoy®",
+};
 
 const BY_PRODUCT: Record<string, BenefitSeed[]> = {
   "amex-green": [["free-supplementary-card"]],
@@ -260,9 +288,13 @@ export const PRODUCT_BENEFITS: ProductBenefit[] = Object.entries(BY_PRODUCT).fla
         opts?.minimumAnnualSpend === undefined
           ? null
           : { minimumAnnualSpend: opts.minimumAnnualSpend },
+      // Hãng cấp quyền lợi. Hai thẻ cùng cho "miễn hành lý ký gửi" nhưng khác
+      // hãng thì KHÔNG trùng nhau — xem chú thích `ProductBenefit.provider`.
+      provider: opts?.provider ?? PROVIDER_BY_PRODUCT[slug] ?? null,
       effectiveFrom: VERIFIED_ON,
       effectiveTo: null,
       sourceUrl: `https://ghe1a.com/credit-cards/${slug}`,
+      sourceKind: "ghe1a",
       verifiedAt: VERIFIED_ON,
       confidence: "verified",
     })),

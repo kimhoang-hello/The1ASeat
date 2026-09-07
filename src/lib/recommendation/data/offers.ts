@@ -609,6 +609,7 @@ export const OFFERS: Offer[] = OFFER_SEEDS.map((seed) => ({
   effectiveFrom: seed.recordedFrom ?? seed.startDate,
   effectiveTo: seed.recordedTo ?? seed.endDate ?? null,
   sourceUrl: `${CONTENTFUL_SOURCE}/${seed.slug}`,
+  sourceKind: "ghe1a",
   verifiedAt: VERIFIED_ON,
   confidence: seed.components.length === 0 && seed.headline !== null ? "estimated" : "verified",
 }));

@@ -187,10 +187,11 @@ test("6. thẻ mới cần dòng phí, nếu không engine chỉ thấy lợi í
     slug: "new-card",
     name: "Thẻ mới",
     effectiveFrom: "2027-01-01",
+    availableFrom: "2027-01-01",
   };
   const withoutFee = { ...BASE, products: [...BASE.products, launched] };
   assert.ok(
-    errorsIn(withoutFee, LATER).some((e) => e.includes("chưa có dòng phí")),
+    errorsIn(withoutFee, LATER).some((e) => e.includes("không có dòng phí nào còn hiệu lực")),
     "thẻ còn hoạt động mà không có phí phải là lỗi",
   );
 });
@@ -198,33 +199,35 @@ test("6. thẻ mới cần dòng phí, nếu không engine chỉ thấy lợi í
 /* --------------------------------------------------------------- *
  * 7. Thẻ ngừng bán
  * --------------------------------------------------------------- */
-test("7. thẻ ngừng bán phải đóng cả bản ghi con, không được để offer treo", () => {
+test("7. thẻ ngừng phát hành: offer phải đóng, nhưng tỷ lệ và quyền lợi thì KHÔNG", () => {
   const victim = BASE.products[0];
-  const closedProduct = { ...victim, isActive: false, effectiveTo: "2026-12-31" };
-  const onlyProductClosed = {
-    ...BASE,
-    products: [closedProduct, ...BASE.products.slice(1)],
-  };
-  // Offer/phí/tỷ lệ của nó vẫn mở → engine sẽ khuyên một thẻ không còn tồn tại.
-  assert.ok(
-    errorsIn(onlyProductClosed, LATER).some((e) => e.includes("đã đóng nhưng bản ghi này chưa có effectiveTo")),
-  );
+  const unavailable = { ...victim, availableTo: "2026-12-31" };
+  const offersStillOpen = { ...BASE, products: [unavailable, ...BASE.products.slice(1)] };
+  // Offer còn mở → engine sẽ khuyên người đọc mở một thẻ không còn nhận đơn.
+  assert.ok(errorsIn(offersStillOpen, LATER).some((e) => e.includes("offer vẫn chưa đóng")));
 
   const properly = {
-    ...onlyProductClosed,
+    ...offersStillOpen,
     offers: BASE.offers.map((o) => (o.productId === victim.id ? close(o, "2026-12-31") : o)),
-    productFees: BASE.productFees.map((f) => (f.productId === victim.id ? close(f, "2026-12-31") : f)),
-    earningRates: BASE.earningRates.map((r) => (r.productId === victim.id ? close(r, "2026-12-31") : r)),
-    productBenefits: BASE.productBenefits.map((b) => (b.productId === victim.id ? close(b, "2026-12-31") : b)),
   };
   assert.deepEqual(errorsIn(properly, LATER), []);
 
-  // Và sự thật cũ vẫn tra được: đây là điều phân biệt "đóng" với "xoá".
-  const before = datasetAt(properly, "2026-10-01");
-  assert.ok(before.products.some((p) => p.id === victim.id));
-  assert.ok(before.offers.some((o) => o.productId === victim.id));
+  // ĐIỂM MẤU CHỐT: thẻ vẫn còn trong dữ liệu SAU khi ngừng phát hành, và tỷ lệ
+  // tích điểm của nó vẫn chạy — người dùng còn cầm nó trong ví. Gộp "ngừng
+  // phát hành" với "hết tồn tại" sẽ làm Portfolio Analyzer quên mất thẻ đó.
   const after = datasetAt(properly, LATER);
-  assert.ok(!after.products.some((p) => p.id === victim.id));
+  assert.ok(after.products.some((p) => p.id === victim.id), "thẻ vẫn phải có mặt");
+  assert.ok(
+    after.earningRates.some((r) => r.productId === victim.id),
+    "tỷ lệ tích điểm vẫn phải chạy cho người đang giữ thẻ",
+  );
+  assert.ok(
+    !after.offers.some((o) => o.productId === victim.id),
+    "nhưng không còn offer nào để khuyên mở",
+  );
+  // Và sự thật cũ vẫn tra được.
+  const before = datasetAt(properly, "2026-10-01");
+  assert.ok(before.offers.some((o) => o.productId === victim.id));
 });
 
 /* --------------------------------------------------------------- *
@@ -252,23 +255,19 @@ test("8b. thẻ có bản kế nhiệm: chuỗi lần được, vòng lặp bị
     slug: "the-ke-nhiem",
     name: "Thẻ kế nhiệm",
     effectiveFrom: "2027-01-01",
+    availableFrom: "2027-01-01",
   };
-  const closedOld = {
-    ...old,
-    isActive: false,
-    effectiveTo: "2026-12-31",
-    supersededByProductId: successor.id,
-  };
+  const closedOld = { ...old, availableTo: "2026-12-31", supersededByProductId: successor.id };
   const next = {
     ...BASE,
     products: [closedOld, successor, ...BASE.products.slice(1)],
+    // Phí của thẻ cũ KHÔNG đóng: người đang giữ thẻ vẫn phải trả nó hằng năm.
+    // Ngừng nhận đơn mới không làm phí biến mất.
     productFees: [
-      ...BASE.productFees.map((f) => (f.productId === old.id ? close(f, "2026-12-31") : f)),
+      ...BASE.productFees,
       { ...BASE.productFees[0], id: "fee_successor" as ProductFee["id"], productId: successor.id },
     ],
     offers: BASE.offers.map((o) => (o.productId === old.id ? close(o, "2026-12-31") : o)),
-    earningRates: BASE.earningRates.map((r) => (r.productId === old.id ? close(r, "2026-12-31") : r)),
-    productBenefits: BASE.productBenefits.map((b) => (b.productId === old.id ? close(b, "2026-12-31") : b)),
   };
   assert.deepEqual(errorsIn(next, LATER), []);
 
@@ -276,7 +275,7 @@ test("8b. thẻ có bản kế nhiệm: chuỗi lần được, vòng lặp bị
     ...next,
     products: [
       closedOld,
-      { ...successor, isActive: false, effectiveTo: "2027-06-30", supersededByProductId: old.id },
+      { ...successor, availableTo: "2027-06-30", supersededByProductId: old.id },
       ...BASE.products.slice(1),
     ],
   };
@@ -344,16 +343,10 @@ test("10. dựng lại toàn bộ thế giới như nó ở một ngày trong qu
   const next: RecommendationDataset = {
     ...BASE,
     products: BASE.products.map((p) =>
-      p.id === victim.id ? { ...p, isActive: false, effectiveTo: "2026-12-31" } : p,
+      p.id === victim.id ? { ...p, availableTo: "2026-12-31" } : p,
     ),
     productFees: [
-      ...BASE.productFees.map((f) =>
-        f.id === feeRow.id
-          ? close(f, "2026-12-31")
-          : f.productId === victim.id
-            ? close(f, "2026-12-31")
-            : f,
-      ),
+      ...BASE.productFees.map((f) => (f.id === feeRow.id ? close(f, "2026-12-31") : f)),
       {
         ...feeRow,
         id: `${feeRow.id}_v2` as ProductFee["id"],
@@ -378,12 +371,6 @@ test("10. dựng lại toàn bộ thế giới như nó ở một ngày trong qu
         effectiveTo: null,
       },
     ],
-    earningRates: BASE.earningRates.map((r) =>
-      r.productId === victim.id ? close(r, "2026-12-31") : r,
-    ),
-    productBenefits: BASE.productBenefits.map((b) =>
-      b.productId === victim.id ? close(b, "2026-12-31") : b,
-    ),
   };
   assert.deepEqual(errorsIn(next, LATER), []);
 
@@ -410,5 +397,122 @@ test("10. dựng lại toàn bộ thế giới như nó ở một ngày trong qu
     oneActiveAt(now.productFees.filter((f) => f.productId === feeRow.productId), LATER)?.annualFee,
     feeRow.annualFee + 60,
   );
-  assert.ok(!now.products.some((p) => p.id === victim.id));
+  // Thẻ ngừng phát hành VẪN có mặt — danh tính là vĩnh viễn. Cái mất đi là
+  // offer của nó.
+  assert.ok(now.products.some((p) => p.id === victim.id));
+  assert.ok(!now.offers.some((o) => o.productId === victim.id));
+});
+
+/* --------------------------------------------------------------- *
+ * Ràng buộc kiểu database mà một validator dễ bỏ sót
+ * --------------------------------------------------------------- */
+
+test("trần tích điểm DÙNG CHUNG chỉ đếm một lần", () => {
+  // TD® Cash Back có trần $450/năm dùng chung cho bốn hạng mục và một trần
+  // $450 KHÁC cho hai hạng mục nữa. Chép trần vào từng dòng thì sáu dòng trông
+  // như sáu cái trần độc lập, và engine cấp $2,700 thay vì $900.
+  const td = BASE.products.find((p) => p.slug === "td-cash-back-visa-infinite")!;
+  const rates = BASE.earningRates.filter((r) => r.productId === td.id && r.capId !== null);
+  const distinctCaps = new Set(rates.map((r) => r.capId));
+  assert.equal(rates.length, 6, "sáu hạng mục có trần");
+  assert.equal(distinctCaps.size, 2, "nhưng chỉ HAI cái trần");
+
+  const caps = BASE.earningCaps.filter((c) => c.productId === td.id);
+  assert.equal(caps.reduce((sum, c) => sum + c.amount, 0), 90000, "tổng trần là $900, không phải $2,700");
+});
+
+test("quyền lợi cùng tên nhưng khác hãng KHÔNG trùng nhau", () => {
+  // spec §16 Rule 6. Cờ `duplicatesAcrossCards` một mình là cờ toàn cục, nên
+  // nó sẽ triệt tiêu giá trị thẻ United® chỉ vì người dùng đã có thẻ Aeroplan®.
+  const bags = BASE.productBenefits.filter((b) => (b.benefitId as string) === "free-checked-bag");
+  const providers = new Set(bags.map((b) => b.provider));
+  assert.ok(providers.size > 1, "phải phân biệt được hãng cấp quyền lợi");
+  assert.ok(providers.has("Air Canada®") && providers.has("United®"));
+});
+
+test("thành phần offer không được vừa trả điểm vừa trả tiền", () => {
+  const component = BASE.offerComponents.find((c) => c.pointsAmount !== null)!;
+  const broken = {
+    ...BASE,
+    offerComponents: [
+      { ...component, cashAmount: 100 },
+      ...BASE.offerComponents.filter((c) => c.id !== component.id),
+    ],
+  };
+  assert.ok(errorsIn(broken).some((e) => e.includes("vừa trả điểm vừa trả tiền")));
+});
+
+test("trùng sequence trong một offer là LỖI", () => {
+  const first = BASE.offerComponents.find((c) => c.sequence === 1)!;
+  const broken = {
+    ...BASE,
+    offerComponents: [{ ...first, id: `${first.id}_dup` as typeof first.id }, ...BASE.offerComponents],
+  };
+  assert.ok(errorsIn(broken).some((e) => e.includes("trùng sequence")));
+});
+
+test("ngày không có thật bị chặn, không chỉ ngày sai định dạng", () => {
+  // "2026-02-31" đúng hình dạng và sắp đúng thứ tự với mọi ngày khác, nên phép
+  // so chuỗi không bao giờ thấy nó.
+  const fee = BASE.productFees[0];
+  const broken = {
+    ...BASE,
+    productFees: [{ ...fee, effectiveFrom: "2026-02-31" }, ...BASE.productFees.slice(1)],
+  };
+  assert.ok(errorsIn(broken).some((e) => e.includes("không phải một ngày có thật")));
+});
+
+test("offer targeted và offer công khai được phép chạy cùng lúc", () => {
+  // Schema có `isTargeted`/`isPublic`; cấm mọi offer song song là cấm đúng thứ
+  // hai trường đó sinh ra để mô tả.
+  const publicOffer = BASE.offers.find((o) => o.isPublic && !o.isTargeted)!;
+  const targeted = {
+    ...publicOffer,
+    id: `${publicOffer.id}_targeted` as typeof publicOffer.id,
+    isTargeted: true,
+    isPublic: false,
+  };
+  assert.deepEqual(errorsIn({ ...BASE, offers: [...BASE.offers, targeted] }), []);
+
+  // Nhưng HAI offer công khai cùng lúc thì vẫn là lỗi.
+  const secondPublic = {
+    ...publicOffer,
+    id: `${publicOffer.id}_second` as typeof publicOffer.id,
+  };
+  assert.ok(
+    errorsIn({ ...BASE, offers: [...BASE.offers, secondPublic] }).some((e) =>
+      e.includes("chồng thời gian"),
+    ),
+  );
+});
+
+test("thêm bản điều kiện mới mà quên đóng bản cũ là LỖI", () => {
+  const rule = BASE.eligibilityRules.find((r) => r.ruleType === "minimum_personal_income")!;
+  const second = {
+    ...rule,
+    id: `${rule.id}_v2` as typeof rule.id,
+    value: 999999,
+    effectiveFrom: "2027-01-01",
+  };
+  assert.ok(
+    errorsIn({ ...BASE, eligibilityRules: [...BASE.eligibilityRules, second] }, LATER).some((e) =>
+      e.includes("chồng thời gian"),
+    ),
+  );
+});
+
+test("dữ liệu quá hạn kiểm sinh cảnh báo, và đánh dấu stale thì thôi", () => {
+  const stale = validateDataset(BASE, "2028-01-01").filter(
+    (i) => i.level === "warning" && i.message.includes("kiểm lần cuối"),
+  );
+  assert.ok(stale.length > 0, "sang 2028 thì bộ seed 2026 phải bị nhắc kiểm lại");
+
+  const marked = {
+    ...BASE,
+    offers: BASE.offers.map((o) => ({ ...o, confidence: "stale" as const })),
+  };
+  const remaining = validateDataset(marked, "2028-01-01").filter(
+    (i) => i.entity === "offers" && i.message.includes("kiểm lần cuối"),
+  );
+  assert.equal(remaining.length, 0);
 });

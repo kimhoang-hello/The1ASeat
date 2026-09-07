@@ -51,6 +51,14 @@ export function oneActiveAt<T extends Temporal>(
  * điển, không phải sự thật đổi theo thời gian, nên đi qua nguyên vẹn. Nếu ngày
  * nào một trong ba cần lịch sử thì thêm `Temporal` cho nó rồi lọc ở đây; đó là
  * một dòng, không phải một cuộc đại tu.
+ *
+ * SẢN PHẨM NGỪNG PHÁT HÀNH VẪN Ở LẠI. `Temporal` của `Product` nói bản ghi có
+ * mô tả hiện thực hay không, KHÔNG nói thẻ còn mở được hay không — cái sau là
+ * `availableFrom/availableTo`. Loại thẻ ngừng phát hành khỏi kết quả sẽ làm
+ * Portfolio Analyzer ở Phase 3 quên mất một thẻ người dùng đang cầm trong ví:
+ * không cộng điểm nó kiếm được, và đếm quyền lợi của thẻ mới như thể chưa ai
+ * có. Lọc theo khả dụng là việc của tầng khuyến nghị, không phải của tầng đọc
+ * dữ liệu.
  */
 export function datasetAt(data: RecommendationDataset, asOf: string): RecommendationDataset {
   const products = activeAt(data.products, asOf);
@@ -77,6 +85,9 @@ export function datasetAt(data: RecommendationDataset, asOf: string): Recommenda
     ),
     earningRates: activeAt(data.earningRates, asOf).filter((rate) =>
       liveProductIds.has(rate.productId),
+    ),
+    earningCaps: activeAt(data.earningCaps, asOf).filter((cap) =>
+      liveProductIds.has(cap.productId),
     ),
     productBenefits: activeAt(data.productBenefits, asOf).filter((benefit) =>
       liveProductIds.has(benefit.productId),

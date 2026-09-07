@@ -165,6 +165,7 @@ export const ELIGIBILITY_RULES: EligibilityRule[] = Object.entries(BY_PRODUCT).f
       effectiveFrom: VERIFIED_ON,
       effectiveTo: null,
       sourceUrl: `https://ghe1a.com/credit-cards/${slug}`,
+      sourceKind: "ghe1a",
       verifiedAt: VERIFIED_ON,
       confidence: "verified",
     })),

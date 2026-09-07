@@ -72,52 +72,43 @@ function withClosedProduct(base: RecommendationDataset): RecommendationDataset {
   const original = base.products[0];
   const closed: Product = {
     ...original,
-    isActive: false,
-    effectiveTo: CLOSED_ON,
+    availableTo: CLOSED_ON,
     contentfulLinked: false,
   };
-  const shut = <T extends { productId: string; effectiveTo: string | null }>(rows: T[]) =>
-    rows.map((row) => (row.productId === original.id ? { ...row, effectiveTo: CLOSED_ON } : row));
+  // CHỈ offer phải đóng. Tỷ lệ tích điểm và quyền lợi vẫn chạy cho người đang
+  // giữ thẻ — xem `Product.availableTo`.
   return {
     ...base,
     products: [closed, ...base.products.slice(1)],
-    offers: shut(base.offers),
-    productFees: shut(base.productFees),
-    earningRates: shut(base.earningRates),
-    productBenefits: shut(base.productBenefits),
-    eligibilityRules: shut(base.eligibilityRules),
+    offers: base.offers.map((row) =>
+      row.productId === original.id ? { ...row, effectiveTo: CLOSED_ON } : row,
+    ),
   };
 }
 
-test("sản phẩm ngừng bán vẫn hợp lệ khi đóng đủ cả bản ghi con", () => {
+test("thẻ ngừng phát hành: đóng offer là đủ, tỷ lệ và quyền lợi vẫn chạy", () => {
   const errors = validateDataset(withClosedProduct(data), "2027-03-01").filter(
     (i) => i.level === "error",
   );
   assert.deepEqual(errors, []);
 });
 
-test("đóng mỗi dòng sản phẩm mà để offer treo là LỖI", () => {
-  // Thẻ ngừng bán nhưng offer vẫn mở = engine khuyên một thẻ không còn tồn tại.
+test("thẻ hết khả dụng mà offer vẫn mở là LỖI", () => {
+  // Engine sẽ khuyên người đọc mở một thẻ không còn nhận đơn.
   const original = data.products[0];
   const halfClosed = {
     ...data,
-    products: [
-      { ...original, isActive: false, effectiveTo: CLOSED_ON },
-      ...data.products.slice(1),
-    ],
+    products: [{ ...original, availableTo: CLOSED_ON }, ...data.products.slice(1)],
   };
   const errors = validateDataset(halfClosed, "2027-03-01").filter((i) => i.level === "error");
-  assert.ok(errors.some((e) => e.message.includes("chưa có effectiveTo")));
+  assert.ok(errors.some((e) => e.message.includes("offer vẫn chưa đóng")));
 });
 
-test("sản phẩm ngừng bán mà thiếu effectiveTo là LỖI", () => {
+test("availableTo trước availableFrom là LỖI", () => {
   const broken = withClosedProduct(data);
-  broken.products[0] = { ...broken.products[0], effectiveTo: null };
+  broken.products[0] = { ...broken.products[0], availableTo: "2020-01-01" };
   const errors = validateDataset(broken, "2027-03-01").filter((i) => i.level === "error");
-  assert.ok(
-    errors.some((e) => e.message.includes("ngừng từ bao giờ")),
-    "phải báo lỗi khi đóng sản phẩm mà không nói ngừng từ bao giờ",
-  );
+  assert.ok(errors.some((e) => e.message.includes("availableTo trước availableFrom")));
 });
 
 test("xoá sản phẩm để lại tham chiếu mồ côi là LỖI", () => {

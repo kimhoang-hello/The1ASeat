@@ -28,7 +28,7 @@ import { offlineDataset } from "../src/lib/recommendation/data/index.ts";
 import { validateDataset } from "../src/lib/recommendation/validate.ts";
 import { OFFERS } from "../src/lib/recommendation/data/offers.ts";
 import { PRODUCT_FEES } from "../src/lib/recommendation/data/products.ts";
-import { oneActiveAt } from "../src/lib/recommendation/temporal.ts";
+import { isActiveAt, oneActiveAt } from "../src/lib/recommendation/temporal.ts";
 import { POINTS_PROGRAMS as RECO_PROGRAMS } from "../src/lib/recommendation/data/points-programs.ts";
 import { TRANSFER_PATHS } from "../src/lib/recommendation/data/transfer-paths.ts";
 import { AWARD_STRATEGIES } from "../src/lib/recommendation/data/award-strategies.ts";
@@ -127,7 +127,10 @@ function liveFeeFor(productId: string) {
 }
 
 const dataset = offlineDataset();
-for (const issue of validateDataset(dataset)) {
+// Truyền ngày TORONTO vào. Mặc định của `validateDataset` là UTC, và UTC nhảy
+// sang ngày mới lúc 19:00–20:00 giờ Toronto — quanh một lần đổi phí hay đổi
+// tỷ lệ, kiểm theo ngày mai sẽ nhận dòng của ngày mai và báo thiếu dòng hôm nay.
+for (const issue of validateDataset(dataset, TODAY)) {
   const line = `[${issue.entity}] ${issue.message}`;
   (issue.level === "error" ? errors : warnings).push(line);
 }
@@ -188,7 +191,13 @@ const PARTNER_KEY_BY_PROGRAM: Record<string, string> = {
   westjet: "WestJet® Rewards",
 };
 
-for (const path of TRANSFER_PATHS) {
+// CHỈ đối chiếu bản CÒN HIỆU LỰC. `TRANSFER_PATHS` là nhật ký chỉ-thêm, nên
+// sau lần đổi tỷ lệ đầu tiên nó sẽ chứa cả bản cũ — và so bản cũ với tỷ lệ hôm
+// nay của nguồn thì audit đỏ VĨNH VIỄN, cho một dữ liệu hoàn toàn đúng. Một
+// audit đỏ mãi là một audit người ta học cách bỏ qua.
+const livePaths = TRANSFER_PATHS.filter((path) => isActiveAt(path, TODAY));
+
+for (const path of livePaths) {
   const source = path.sourceProgramId as string;
   const partnerKey = PARTNER_KEY_BY_PROGRAM[path.destinationProgramId as string];
   if (!partnerKey) {
@@ -246,12 +255,10 @@ for (const [programId, partnerKey] of Object.entries(PARTNER_KEY_BY_PROGRAM)) {
     // vẫn nằm lại trong file mãi mãi. Chỉ kiểm sự tồn tại thì một chặng đóng
     // hôm qua mà chưa ai thêm bản thay thế vẫn cho audit xanh — trong khi engine
     // hỏi "hôm nay chuyển được đi đâu" thì không thấy đường nào.
-    const seeded = TRANSFER_PATHS.some(
+    const seeded = livePaths.some(
       (path) =>
         (path.sourceProgramId as string) === source &&
-        (path.destinationProgramId as string) === programId &&
-        path.effectiveFrom <= TODAY &&
-        (path.effectiveTo === null || path.effectiveTo >= TODAY),
+        (path.destinationProgramId as string) === programId,
     );
     if (!seeded) {
       errors.push(

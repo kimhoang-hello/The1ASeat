@@ -73,6 +73,7 @@ export type EarningRateId = Branded<"EarningRateId">;
 export type EligibilityRuleId = Branded<"EligibilityRuleId">;
 export type AwardStrategyId = Branded<"AwardStrategyId">;
 export type ProductFeeId = Branded<"ProductFeeId">;
+export type EarningCapId = Branded<"EarningCapId">;
 
 /** Ép một chuỗi viết tay trong file seed thành id có brand. Chỉ dùng trong
  *  `data/`; không có kiểm tra nào ở đây, `validate.ts` mới là chỗ kiểm. */
@@ -148,8 +149,25 @@ export interface Temporal {
  */
 export type Confidence = "verified" | "estimated" | "editorial" | "stale";
 
+/**
+ * Nguồn thuộc LOẠI nào — tách khỏi `confidence`, vì hai câu hỏi khác nhau.
+ *
+ * `issuer`      — trang chính chủ của nhà phát hành hoặc chương trình.
+ * `ghe1a`       — nội dung Ghế 1A đã kiểm và đang xuất bản.
+ * `third_party` — nguồn thứ cấp (blog điểm thưởng, tổng hợp cộng đồng).
+ *
+ * Cần có, vì phần lớn bản ghi trong bộ này ghi `confidence: "verified"` trong
+ * khi `sourceUrl` trỏ về ghe1a.com — tức trỏ về CHÍNH MÌNH. Nội dung đó thật
+ * sự đã đối chiếu với điều khoản nhà phát hành, nên "verified" không sai;
+ * nhưng một hệ thống chỉ lưu URL thì không phân biệt nổi "đọc thẳng từ nhà
+ * phát hành" với "đọc từ trang của chúng ta". Ghi ra để lần kiểm sau biết phải
+ * mở cái gì.
+ */
+export type SourceKind = "issuer" | "ghe1a" | "third_party";
+
 export interface Sourced {
   sourceUrl: string | null;
+  sourceKind: SourceKind;
   verifiedAt: string;
   confidence: Confidence;
 }
@@ -271,7 +289,22 @@ export interface Product extends Temporal {
    * Tách ra bảng riêng có hiệu lực theo thời gian là cách chuẩn: cùng khuôn
    * với `earning_rates` và `product_benefits`, vốn đã đúng ngay từ đầu.
    */
-  isActive: boolean;
+  /**
+   * Cửa sổ thẻ còn MỞ CHO NGƯỜI NỘP ĐƠN MỚI. `availableTo: null` = còn mở.
+   *
+   * TÁCH KHỎI `Temporal` của chính bản ghi, và đây là một phân biệt quan
+   * trọng: `effectiveFrom/To` nói bản ghi này có mô tả hiện thực hay không;
+   * `availableFrom/To` nói người ta còn mở được thẻ hay không. Thẻ ngừng phát
+   * hành thì `availableTo` đóng lại — nhưng bản ghi vẫn còn hiệu lực, và tỷ lệ
+   * tích điểm cùng quyền lợi của nó VẪN CHẠY cho người đang giữ.
+   *
+   * Gộp hai thứ này (bản trước dùng chung `isActive` + `effectiveTo`) làm thẻ
+   * ngừng bán BIẾN MẤT khỏi mọi truy vấn — nên Portfolio Analyzer ở Phase 3
+   * sẽ quên mất một thẻ người dùng đang cầm trong ví, không cộng điểm nó kiếm
+   * được, và đếm quyền lợi trùng của thẻ mới như thể là quyền lợi mới.
+   */
+  availableFrom: string;
+  availableTo: string | null;
   /**
    * Sản phẩm THAY THẾ sản phẩm này, khi nhà phát hành khai tử một thẻ và đưa
    * ra thẻ kế nhiệm.
@@ -536,12 +569,19 @@ export interface EarningRate extends Temporal, Sourced {
    *  cashback dùng cùng trường này với phần trăm đọc thành số: 4% = 4. */
   multiplier: number;
   pointsProgramId: PointsProgramId;
-  /** Trần tính theo ĐƠN VỊ NÀO: `spend` = trần trên số tiền chi, `points` =
-   *  trần trên số điểm nhận. Nhà phát hành công bố cả hai kiểu, và đoán nhầm
-   *  kiểu làm sai giá trị thẻ hàng nghìn điểm. */
-  capKind: "spend" | "points" | null;
-  capAmount: number | null;
-  capPeriod: "monthly" | "quarterly" | "annual" | null;
+  /**
+   * Trần mà tỷ lệ này chịu, nếu có. Trỏ tới `earning_caps`.
+   *
+   * LÀ THAM CHIẾU chứ không phải trần chép sẵn tại chỗ, vì NHIỀU HẠNG MỤC
+   * DÙNG CHUNG MỘT TRẦN. TD® Cash Back có trần $450 mỗi năm dùng chung cho
+   * siêu thị, xăng, sạc xe điện và phương tiện công cộng — bốn hạng mục, MỘT
+   * cái trần. Chép trần vào từng dòng thì bốn dòng trông y hệt bốn cái trần
+   * riêng, và engine sẽ cấp $1,800 thay vì $450. Cobalt cũng vậy với ba nhóm
+   * 5x dùng chung trần 12,500 điểm/tháng.
+   *
+   * `null` = tỷ lệ không giới hạn.
+   */
+  capId: EarningCapId | null;
   /** Tỷ lệ áp dụng khi đã đụng trần. Gần như luôn là tỷ lệ
    *  `everything_else`, nhưng không phải luôn luôn, nên viết ra. */
   rateAfterCap: number | null;
@@ -563,6 +603,23 @@ export interface EarningRate extends Temporal, Sourced {
   restrictedTo: string | null;
 }
 
+/**
+ * Một cái trần tích điểm, dùng chung được giữa nhiều hạng mục.
+ *
+ * `kind` là ĐƠN VỊ của trần: `spend` = trần trên số tiền chi, `points` = trần
+ * trên số điểm/tiền hoàn nhận được. Nhà phát hành công bố cả hai kiểu, và đoán
+ * nhầm kiểu làm sai giá trị thẻ hàng nghìn điểm một năm.
+ */
+export interface EarningCap extends Temporal, Sourced {
+  id: EarningCapId;
+  productId: ProductId;
+  /** Nhãn ngắn cho người đọc file, ví dụ "Nhóm 3% thứ nhất". */
+  name: string;
+  kind: "spend" | "points";
+  amount: number;
+  period: "monthly" | "quarterly" | "annual";
+}
+
 /* ------------------------------------------------------------------ *
  * §3.8 benefits  +  §3.9 product_benefits
  * ------------------------------------------------------------------ */
@@ -575,6 +632,15 @@ export type BenefitCategory =
   | "credit"
   | "fee"
   | "status";
+
+/** Đơn vị của `ProductBenefit.numericValue`. */
+export type BenefitUnit =
+  | "cad" // số tiền
+  | "visits" // lượt vào phòng chờ
+  | "guests" // số người đi cùng được hưởng
+  | "nights" // đêm khách sạn / Elite Night
+  | "credits" // Status Qualifying Credits
+  | "count"; // số lượng chung (thẻ phụ, voucher…)
 
 export interface Benefit {
   id: BenefitId;
@@ -590,14 +656,42 @@ export interface Benefit {
    * chỉ nhìn chữ thì không cách nào biết cái nào cộng dồn được.
    */
   duplicatesAcrossCards: boolean;
+  /**
+   * Đơn vị của `ProductBenefit.numericValue` cho loại quyền lợi này.
+   *
+   * Ở đây chứ không ở từng cặp sản phẩm–quyền lợi: đơn vị là thuộc tính của
+   * LOẠI quyền lợi (lượt lounge luôn đếm bằng lượt), nên đặt nó ở cặp là chép
+   * lại cùng một sự thật 118 lần và mở đường cho 118 cách viết khác nhau.
+   *
+   * `null` khi quyền lợi không có mặt số nào (không phụ phí ngoại tệ).
+   */
+  unit: BenefitUnit | null;
 }
 
+/**
+ * Nhà cung cấp quyền lợi, khi việc trùng lặp phụ thuộc vào ai cấp nó.
+ *
+ * "Miễn hành lý ký gửi" trên thẻ Aeroplan® và trên thẻ United® KHÔNG trùng
+ * nhau: hai hãng khác nhau, hai chuyến bay khác nhau. `duplicatesAcrossCards`
+ * một mình là cờ TOÀN CỤC, nên nó sẽ triệt tiêu giá trị của thẻ United® chỉ vì
+ * người dùng đã có thẻ Air Canada® — một kết luận sai về tiền, ở đúng chỗ
+ * spec §16 Rule 6 nói phải cẩn thận.
+ *
+ * Hai quyền lợi chỉ trùng nhau khi CÙNG `benefitId` VÀ cùng `provider`.
+ * `null` = không gắn với nhà cung cấp nào (travel credit, bảo hiểm), lúc đó
+ * chỉ `duplicatesAcrossCards` quyết định.
+ */
 export interface ProductBenefit extends Temporal, Sourced {
   id: ProductBenefitId;
   productId: ProductId;
   benefitId: BenefitId;
-  /** Giá trị đo được: số lượt lounge, số tiền credit, số người đi cùng được
-   *  miễn hành lý. `null` khi quyền lợi không có mặt số nào. */
+  /**
+   * Giá trị đo được — và `numericUnit` nói nó đo bằng GÌ.
+   *
+   * Không có đơn vị thì `4` là bốn lượt lounge, bốn trăm đô, hay bốn người đi
+   * cùng? Cả ba đều có thật trong bộ dữ liệu này. Engine so hai thẻ bằng cách
+   * so hai con số không cùng đơn vị là ra một câu về tiền, nói sai.
+   */
   numericValue: number | null;
   textValue: string | null;
   /** Điều kiện có cấu trúc, đủ để engine đọc. Đang dùng:
@@ -605,6 +699,8 @@ export interface ProductBenefit extends Temporal, Sourced {
    *  (Companion Pass sau $25,000). Người không chi tới đó thì quyền lợi này
    *  đáng 0, và trước khi có trường này thì không cách nào nói điều đó. */
   conditions: { minimumAnnualSpend?: number } | null;
+  /** Hãng/chương trình cấp quyền lợi này — xem chú thích ngay trên. */
+  provider: string | null;
 }
 
 /* ------------------------------------------------------------------ *
@@ -737,6 +833,7 @@ export interface RecommendationDataset {
   offers: Offer[];
   offerComponents: OfferComponent[];
   earningRates: EarningRate[];
+  earningCaps: EarningCap[];
   benefits: Benefit[];
   productBenefits: ProductBenefit[];
   eligibilityRules: EligibilityRule[];

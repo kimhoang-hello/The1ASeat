@@ -49,6 +49,21 @@ hai của cùng một sự thật nằm cạnh bản thứ nhất, nên không c
 hai bản trùng id. Và không bao giờ đánh số theo vị trí trong mảng: chèn một
 dòng vào giữa sẽ đổi id của mọi dòng phía sau, im lặng. Dùng `makeId`.
 
+## Ngừng phát hành ≠ hết tồn tại
+
+`Product.availableFrom/availableTo` là cửa sổ thẻ còn **nhận đơn mới**. Nó
+TÁCH khỏi `effectiveFrom/effectiveTo` của bản ghi, và phân biệt này quan trọng:
+
+- Thẻ ngừng phát hành → `availableTo` đóng lại. **Offer phải đóng theo** (không
+  ai mở được nữa), nhưng **tỷ lệ tích điểm, quyền lợi và phí thì KHÔNG** —
+  người đang giữ thẻ vẫn kiếm điểm, vẫn hưởng quyền lợi, vẫn trả phí hằng năm.
+- Sản phẩm KHÔNG bị loại khỏi `datasetAt` khi hết khả dụng. Danh tính là vĩnh
+  viễn. Gộp hai thứ này lại sẽ làm Portfolio Analyzer ở Phase 3 quên mất một
+  thẻ đang nằm trong ví người dùng — không cộng điểm nó kiếm, và đếm quyền lợi
+  của thẻ mới như thể chưa ai có.
+- Thẻ bị thay bằng thẻ kế nhiệm → thêm `supersededByProductId`. Khác với đổi
+  tên: đổi tên là cùng một sản phẩm (`id` giữ nguyên), kế nhiệm là hai sản phẩm.
+
 ## Phí thường niên nằm ở bảng riêng
 
 `product_fees`, có hiệu lực theo thời gian, **không** phải một trường trên
@@ -61,12 +76,35 @@ Miễn phí năm đầu là ưu đãi của một OFFER (`Offer.annualFeeFirstYe
 theo điều kiện là một QUYỀN LỢI (`annual_fee_waiver_conditional`). Ba thứ khác
 nhau, ba chỗ khác nhau.
 
+## Trần tích điểm dùng chung
+
+`earning_caps` là entity riêng, và `EarningRate.capId` **trỏ** vào nó. Không
+chép trần vào từng dòng tỷ lệ: TD® Cash Back có một trần $450/năm dùng chung
+cho bốn hạng mục và một trần $450 khác cho hai hạng mục nữa. Chép vào từng dòng
+thì sáu dòng trông như sáu trần độc lập và engine cấp $2,700 thay vì $900.
+Cobalt cũng vậy với ba nhóm 5x dùng chung 12,500 điểm/tháng.
+
+## Quyền lợi: đơn vị và nhà cung cấp
+
+`Benefit.unit` nói `numericValue` đo bằng gì (`cad`, `visits`, `guests`,
+`nights`, `credits`, `count`). Không có nó thì `4` là bốn lượt lounge, bốn trăm
+đô, hay bốn người đi cùng — cả ba đều có thật trong bộ này.
+
+`ProductBenefit.provider` là hãng cấp quyền lợi. Hai quyền lợi chỉ trùng nhau
+khi **cùng `benefitId` VÀ cùng `provider`** — "miễn hành lý" của Air Canada® và
+của United® là hai thứ khác nhau, và cờ `duplicatesAcrossCards` một mình sẽ
+triệt tiêu giá trị thẻ United® chỉ vì người dùng đã có thẻ Aeroplan®.
+
 ## Đọc dữ liệu tại một thời điểm
 
 `datasetAt(data, "2026-10-01")` trả về cả thế giới như nó ở ngày đó;
 `activeAt` / `oneActiveAt` cho từng quan hệ. Đây là nửa còn lại của hợp đồng
 chỉ-thêm — giữ lịch sử mà không hỏi được "hôm đó trông thế nào" thì lịch sử chỉ
 là rác chiếm chỗ.
+
+`RecommendationDataSource.getDataset({ asOf })` đẩy phép lọc xuống backend —
+bản trong repo lọc mảng, bản PostgreSQL sau này sẽ dịch thành `WHERE` và dùng
+index thay vì nạp cả lịch sử về ứng dụng.
 
 `indexDataset(data)` dựng các `Map` tra theo khoá ngoại. Dùng nó thay vì
 `.filter()` trong vòng lặp ứng viên: ở database thì đây là index, và hình dạng

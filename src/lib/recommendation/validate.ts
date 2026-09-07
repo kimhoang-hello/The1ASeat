@@ -2,6 +2,20 @@ import { INCOMPLETE_OFFERS, UNQUOTABLE_AWARD_PROGRAMS } from "./data/index.ts";
 import { isActiveAt } from "./temporal.ts";
 import type { RecommendationDataset, Temporal } from "./types.ts";
 
+/**
+ * `YYYY-MM-DD` VÀ là một ngày có thật.
+ *
+ * So chuỗi thì "2026-02-31" và "2026-13-01" đều lọt: chúng sắp đúng thứ tự với
+ * mọi ngày khác nên không phép so sánh nào phát hiện ra. Rồi `Date.parse` đọc
+ * chúng thành một ngày khác hẳn, và mọi phép tính theo thời gian lệch đi âm
+ * thầm.
+ */
+function isRealDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+
 /** Số ngày giữa hai ngày `YYYY-MM-DD`. Âm khi `from` nằm sau `to`. */
 function daysBetween(from: string, to: string): number {
   return Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000);
@@ -76,6 +90,18 @@ function checkTemporal(
   issues: ValidationIssue[],
 ): void {
   for (const row of rows) {
+    for (const [field, value] of [
+      ["effectiveFrom", row.effectiveFrom],
+      ["effectiveTo", row.effectiveTo],
+    ] as const) {
+      if (value !== null && !isRealDate(value)) {
+        issues.push({
+          level: "error",
+          entity,
+          message: `${row.id}: ${field} "${value}" không phải một ngày có thật`,
+        });
+      }
+    }
     if (row.effectiveTo !== null && row.effectiveTo < row.effectiveFrom) {
       issues.push({
         level: "error",
@@ -281,48 +307,30 @@ export function validateDataset(
     }
   }
 
-  // Mỗi sản phẩm chỉ được có MỘT offer tại một thời điểm — KIỂM TRÊN CẢ TRỤC
-  // THỜI GIAN, không phải chỉ hôm nay.
-  //
-  // Bản trước so với ngày chạy, nên hai offer tương lai chồng nhau vẫn xanh
-  // cho tới đúng hôm chúng bắt đầu — tức lỗi nổ ra ở production chứ không ở
-  // lúc review, đúng lúc không ai đang nhìn. Chồng lấn trong QUÁ KHỨ thì vĩnh
-  // viễn không bao giờ báo. Sắp các khoảng rồi so hai khoảng kề nhau: kết quả
-  // không phụ thuộc vào lúc chạy, nên nó cũng không phụ thuộc vào múi giờ.
-  const intervalsByProduct = new Map<string, { id: string; from: string; to: string }[]>();
-  for (const offer of data.offers) {
-    const list = intervalsByProduct.get(offer.productId) ?? [];
-    // `\uffff` sắp sau mọi ký tự, nên một offer chưa có ngày kết thúc so ra
-    // "muộn hơn tất cả" — đúng nghĩa của `null` ở đây.
-    list.push({ id: offer.id, from: offer.effectiveFrom, to: offer.effectiveTo ?? "\uffff" });
-    intervalsByProduct.set(offer.productId, list);
-  }
-  for (const [productId, list] of intervalsByProduct) {
-    const sorted = [...list].sort((a, b) => (a.from < b.from ? -1 : a.from > b.from ? 1 : 0));
-    for (let i = 1; i < sorted.length; i += 1) {
-      const previous = sorted[i - 1];
-      const current = sorted[i];
-      // `effectiveTo` là NGÀY CUỐI CÙNG còn hiệu lực, không phải mốc kết thúc
-      // — cùng quy ước với `hasExpired()` trong lib/format-date.ts. Nên chồng
-      // lấn là `current.from <= previous.to`, có dấu bằng.
-      if (current.from <= previous.to) {
-        issues.push({
-          level: "error",
-          entity: "offers",
-          message: `${productId}: offer ${previous.id} và ${current.id} chồng thời gian`,
-        });
-      }
+  // (Phép kiểm chồng lấn offer nay nằm trong `checkNoOverlap` phía dưới, cùng
+  // một chỗ với mọi quan hệ khác — và nó biết loại trừ offer targeted.)
+
+  const capIds = new Set(data.earningCaps.map((cap) => cap.id as string));
+  for (const cap of data.earningCaps) {
+    if (cap.amount <= 0) {
+      issues.push({ level: "error", entity: "earning_caps", message: `${cap.id}: trần phải dương` });
     }
   }
-
-  // Trần phải đủ ba mảnh mới dùng được.
   for (const rate of data.earningRates) {
-    const parts = [rate.capKind, rate.capAmount, rate.capPeriod].filter((p) => p !== null).length;
-    if (parts !== 0 && parts !== 3) {
+    if (rate.capId !== null && !capIds.has(rate.capId)) {
       issues.push({
         level: "error",
         entity: "earning_rates",
-        message: `${rate.id}: trần khai thiếu — cần đủ capKind, capAmount và capPeriod`,
+        message: `${rate.id}: capId trỏ tới "${rate.capId}" không tồn tại`,
+      });
+    }
+    // Trần và tỷ lệ sau trần đi cùng nhau: có trần mà không nói sau trần ăn
+    // bao nhiêu là để engine tự đoán, và nó sẽ đoán là 0.
+    if (rate.capId !== null && rate.rateAfterCap === null) {
+      issues.push({
+        level: "warning",
+        entity: "earning_rates",
+        message: `${rate.id}: có trần nhưng không khai rateAfterCap`,
       });
     }
     if (rate.multiplier <= 0) {
@@ -403,12 +411,23 @@ export function validateDataset(
   // theo thời điểm nào đọc được — Phase 4 sẽ không giải thích nổi vì sao một
   // khuyến nghị cũ từng chọn nó.
   for (const product of data.products) {
-    if (product.isActive) continue;
-    if (product.effectiveTo === null) {
+    for (const [field, value] of [
+      ["availableFrom", product.availableFrom],
+      ["availableTo", product.availableTo],
+    ] as const) {
+      if (value !== null && !isRealDate(value)) {
+        issues.push({
+          level: "error",
+          entity: "products",
+          message: `${product.slug}: ${field} "${value}" không phải một ngày có thật`,
+        });
+      }
+    }
+    if (product.availableTo !== null && product.availableTo < product.availableFrom) {
       issues.push({
         level: "error",
         entity: "products",
-        message: `${product.slug}: isActive=false nhưng chưa có effectiveTo — ngừng từ bao giờ?`,
+        message: `${product.slug}: availableTo trước availableFrom`,
       });
     }
   }
@@ -417,19 +436,6 @@ export function validateDataset(
   // trên đã bắt tham chiếu tới sản phẩm không tồn tại; phép kiểm này canh
   // chiều còn lại — sản phẩm đã đóng mà mất sạch lịch sử offer nghĩa là ai đó
   // đã dọn dẹp thay vì đóng lại, và lịch sử không dựng lại được.
-  const historyByProduct = new Set(data.offers.map((o) => o.productId as string));
-  for (const product of data.products) {
-    if (product.isActive) continue;
-    if (!historyByProduct.has(product.id)) {
-      issues.push({
-        level: "warning",
-        entity: "products",
-        message:
-          `${product.slug}: đã đóng nhưng không còn offer nào — nếu offer bị XOÁ thay vì ` +
-          `đóng bằng effectiveTo thì lịch sử đã mất`,
-      });
-    }
-  }
 
   // ---- Chồng lấn theo thời gian, tổng quát -------------------------------
   //
@@ -466,7 +472,15 @@ export function validateDataset(
     }
   }
 
-  checkNoOverlap(data.offers, (row) => row.productId, "offers");
+  // CHỈ offer công khai, không targeted. Bản trước cấm mọi offer song song,
+  // trong khi chính schema có `isTargeted`/`isPublic` — tức nó cấm đúng thứ hai
+  // trường đó sinh ra để mô tả. Một offer công khai của ngân hàng và một offer
+  // targeted qua link riêng tồn tại cùng lúc là chuyện bình thường.
+  checkNoOverlap(
+    data.offers.filter((row) => row.isPublic && !row.isTargeted),
+    (row) => row.productId,
+    "offers",
+  );
   checkNoOverlap(data.productFees, (row) => row.productId, "product_fees");
   checkNoOverlap(data.transferPaths, (row) => `${row.sourceProgramId}->${row.destinationProgramId}`, "transfer_paths");
   checkNoOverlap(data.productBenefits, (row) => `${row.productId}|${row.benefitId}`, "product_benefits");
@@ -476,6 +490,21 @@ export function validateDataset(
     data.earningRates,
     (row) => `${row.productId}|${row.category}|${row.restrictedTo ?? ""}`,
     "earning_rates",
+  );
+  checkNoOverlap(data.earningCaps, (row) => `${row.productId}|${row.name}`, "earning_caps");
+  // Danh tính LOGIC của một luật điều kiện là (sản phẩm, loại luật, nhóm HOẶC).
+  // Thiếu phép kiểm này thì thêm bản mới mà quên đóng bản cũ sẽ cho ra hai
+  // ngưỡng thu nhập cùng lúc, và Phase 3 duyệt hay từ chối tuỳ dòng nào nó gặp
+  // trước.
+  checkNoOverlap(
+    data.eligibilityRules,
+    (row) => `${row.productId}|${row.ruleType}|${row.ruleGroup ?? ""}`,
+    "eligibility_rules",
+  );
+  checkNoOverlap(
+    data.awardStrategies,
+    (row) => `${row.originRegion}|${row.destinationRegion}|${row.cabin}|${row.programId}|${row.strategyName}`,
+    "award_strategies",
   );
 
   // ---- Phí thường niên ----------------------------------------------------
@@ -495,12 +524,15 @@ export function validateDataset(
     data.productFees.filter((fee) => isActiveAt(fee, asOf)).map((fee) => fee.productId as string),
   );
   for (const product of data.products) {
-    if (!product.isActive || !isActiveAt(product, asOf)) continue;
+    // Theo hoạt động TẠI `asOf`, không theo cờ trạng thái hôm nay: một thẻ nay
+    // đã ngừng nhưng còn hoạt động ở `asOf` vẫn phải có phí, nếu không thì
+    // `datasetAt` dựng lại một thế giới cũ trong đó thẻ đó miễn phí.
+    if (!isActiveAt(product, asOf)) continue;
     if (!liveFeeProducts.has(product.id)) {
       issues.push({
         level: "error",
         entity: "product_fees",
-        message: `${product.slug}: sản phẩm còn hoạt động nhưng chưa có dòng phí nào còn hiệu lực`,
+        message: `${product.slug}: bản ghi còn hiệu lực ${asOf} nhưng không có dòng phí nào còn hiệu lực`,
       });
     }
   }
@@ -531,40 +563,38 @@ export function validateDataset(
       seen.add(cursor.id);
       cursor = productById.get(cursor.supersededByProductId);
     }
-    // Sản phẩm còn hoạt động mà đã có kẻ kế nhiệm là mâu thuẫn: kế nhiệm chỉ
-    // có nghĩa khi bản gốc đã ngừng.
-    if (product.isActive) {
+    // Sản phẩm còn mở cho người nộp đơn mới mà đã có kẻ kế nhiệm là mâu thuẫn.
+    if (product.availableTo === null) {
       issues.push({
         level: "warning",
         entity: "products",
-        message: `${product.slug}: còn isActive nhưng đã khai sản phẩm kế nhiệm`,
+        message: `${product.slug}: còn mở cho người nộp đơn mới nhưng đã khai sản phẩm kế nhiệm`,
       });
     }
   }
 
-  // ---- Sản phẩm đã đóng thì bản ghi con cũng phải đóng ---------------------
+  // ---- Thẻ hết khả dụng thì OFFER phải đóng ------------------------------
   //
-  // Không có phép kiểm này thì một thẻ ngừng bán vẫn có offer "đang chạy", và
-  // engine sẽ vui vẻ khuyên người đọc mở một thẻ không còn tồn tại.
-  const closedProducts = new Map(
-    data.products.filter((p) => !p.isActive).map((p) => [p.id as string, p]),
+  // Nhưng CHỈ offer. Tỷ lệ tích điểm và quyền lợi vẫn chạy cho người đang giữ
+  // thẻ, nên đòi chúng đóng theo là buộc dữ liệu nói dối: nó sẽ khai rằng một
+  // thẻ trong ví người dùng không kiếm được điểm nào. Đây là chỗ bản trước gộp
+  // "ngừng phát hành" với "hết tồn tại" và làm sai cả hai.
+  const unavailable = new Map(
+    data.products
+      .filter((p) => p.availableTo !== null && p.availableTo < asOf)
+      .map((p) => [p.id as string, p]),
   );
-  for (const [entity, rows] of [
-    ["offers", data.offers],
-    ["product_fees", data.productFees],
-    ["earning_rates", data.earningRates],
-    ["product_benefits", data.productBenefits],
-  ] as const) {
-    for (const row of rows) {
-      const product = closedProducts.get(row.productId);
-      if (product === undefined) continue;
-      if (row.effectiveTo === null) {
-        issues.push({
-          level: "error",
-          entity,
-          message: `${row.id}: sản phẩm ${product.slug} đã đóng nhưng bản ghi này chưa có effectiveTo`,
-        });
-      }
+  for (const offer of data.offers) {
+    const product = unavailable.get(offer.productId);
+    if (product === undefined) continue;
+    if (offer.effectiveTo === null) {
+      issues.push({
+        level: "error",
+        entity: "offers",
+        message:
+          `${offer.id}: thẻ ${product.slug} không còn mở cho người nộp đơn mới ` +
+          `(availableTo ${product.availableTo}) nhưng offer vẫn chưa đóng`,
+      });
     }
   }
 
@@ -611,9 +641,11 @@ export function validateDataset(
     ["award_strategies", data.awardStrategies, 180],
   ] as const) {
     for (const row of rows) {
-      // Chỉ soi bản ghi CÒN HIỆU LỰC: bản ghi đã đóng thì `verifiedAt` cũ là
-      // đúng, đó là ngày nó đúng.
-      if (row.effectiveTo !== null) continue;
+      // Chỉ soi bản ghi CÒN HIỆU LỰC TẠI `asOf`. Bản trước bỏ qua mọi dòng có
+      // `effectiveTo`, kể cả khi ngày đó nằm ở TƯƠNG LAI — nên một offer dài
+      // hạn có hạn kết thúc rõ ràng sẽ không bao giờ bị nhắc kiểm lại, dù nó đã
+      // cũ hàng năm.
+      if (!isActiveAt(row, asOf)) continue;
       if (row.confidence === "stale") continue;
       if (daysBetween(row.verifiedAt, asOf) > maxAgeDays) {
         issues.push({
@@ -624,6 +656,69 @@ export function validateDataset(
             `kiểm lại hoặc đánh dấu confidence: "stale"`,
         });
       }
+    }
+  }
+
+  // ---- Thành phần offer ---------------------------------------------------
+  const seenSequence = new Set<string>();
+  for (const component of data.offerComponents) {
+    if (component.sequence < 1) {
+      issues.push({
+        level: "error",
+        entity: "offer_components",
+        message: `${component.id}: sequence phải bắt đầu từ 1`,
+      });
+    }
+    const seqKey = `${component.offerId}|${component.sequence}`;
+    if (seenSequence.has(seqKey)) {
+      issues.push({
+        level: "error",
+        entity: "offer_components",
+        message: `${component.id}: trùng sequence ${component.sequence} trong cùng một offer`,
+      });
+    }
+    seenSequence.add(seqKey);
+
+    // Một thành phần trả điểm HOẶC trả tiền, không phải cả hai — hai đơn vị
+    // khác nhau trong một dòng thì mọi phép cộng phía sau phải đoán xem cộng
+    // cái nào.
+    if ((component.pointsAmount ?? 0) > 0 && (component.cashAmount ?? 0) > 0) {
+      issues.push({
+        level: "error",
+        entity: "offer_components",
+        message: `${component.id}: vừa trả điểm vừa trả tiền trong một thành phần`,
+      });
+    }
+    for (const [field, value] of [
+      ["pointsAmount", component.pointsAmount],
+      ["cashAmount", component.cashAmount],
+      ["spendRequirement", component.spendRequirement],
+      ["spendWindowDays", component.spendWindowDays],
+      ["repeatCount", component.repeatCount],
+    ] as const) {
+      if (value !== null && value <= 0) {
+        issues.push({
+          level: "error",
+          entity: "offer_components",
+          message: `${component.id}: ${field} phải dương, đang là ${value}`,
+        });
+      }
+    }
+    if (component.windowStartsAfterDays < 0) {
+      issues.push({
+        level: "error",
+        entity: "offer_components",
+        message: `${component.id}: windowStartsAfterDays âm`,
+      });
+    }
+    // `repeatCount` chỉ có nghĩa với `monthly_spend`; ở chỗ khác nó lặng lẽ
+    // nhân số điểm lên trong `totalSpendOf` và mọi phép cộng phía sau.
+    if (component.repeatCount !== null && component.componentType !== "monthly_spend") {
+      issues.push({
+        level: "error",
+        entity: "offer_components",
+        message: `${component.id}: repeatCount chỉ dùng cho monthly_spend`,
+      });
     }
   }
 

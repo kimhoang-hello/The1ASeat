@@ -2,6 +2,8 @@ import {
   id,
   idPart,
   makeId,
+  type EarningCap,
+  type EarningCapId,
   type EarningRate,
   type EarningRateId,
   type PointsProgramId,
@@ -34,13 +36,60 @@ type RateSeed = [
   category: SpendCategory,
   multiplier: number,
   opts?: {
-    capKind?: "spend" | "points";
-    capAmount?: number;
-    capPeriod?: "monthly" | "quarterly" | "annual";
+    /** Tên trần DÙNG CHUNG, khai trong `CAPS` bên dưới. Nhiều hạng mục cùng
+     *  tên trần = cùng MỘT cái trần, không phải mỗi hạng mục một cái. */
+    cap?: string;
     rateAfterCap?: number;
     restrictedTo?: string;
   },
 ];
+
+/**
+ * Trần tích điểm, khai riêng để nhiều hạng mục dùng CHUNG một cái.
+ *
+ * Đây là chỗ dễ mất tiền nhất trong cả file. TD® Cash Back có trần $450 mỗi
+ * năm cho nhóm siêu thị/xăng/sạc/di chuyển và một trần $450 KHÁC cho nhóm hoá
+ * đơn định kỳ/streaming. Bản trước chép `capAmount: 45000` vào cả sáu dòng,
+ * nên sáu dòng trông như sáu cái trần độc lập — engine đọc nó sẽ cấp $2,700
+ * thay vì $900. Cobalt cũng vậy: ba nhóm 5x dùng chung 12,500 điểm/tháng.
+ */
+const CAPS: Record<string, Record<string, {
+  name: string;
+  kind: "spend" | "points";
+  amount: number;
+  period: "monthly" | "quarterly" | "annual";
+}>> = {
+  "amex-cobalt": {
+    dining5x: {
+      name: "Nhóm 5x ăn uống và siêu thị",
+      kind: "points",
+      amount: 12500,
+      period: "monthly",
+    },
+  },
+  "td-cash-back-visa-infinite": {
+    everyday3: {
+      name: "Nhóm 3% siêu thị, xăng, sạc và di chuyển",
+      kind: "points",
+      amount: 45000,
+      period: "annual",
+    },
+    recurring3: {
+      name: "Nhóm 3% hoá đơn định kỳ và streaming",
+      kind: "points",
+      amount: 45000,
+      period: "annual",
+    },
+  },
+  "bmo-viporter-world-elite-mastercard": {
+    porter3x: {
+      name: "Chi tiêu Porter® hưởng 3x",
+      kind: "spend",
+      amount: 20000,
+      period: "annual",
+    },
+  },
+};
 
 const RATES: Record<string, { program: string; rates: RateSeed[] }> = {
   "amex-green": { program: "amex-mr", rates: [["everything_else", 1]] },
@@ -65,9 +114,9 @@ const RATES: Record<string, { program: string; rates: RateSeed[] }> = {
       // Trần tính bằng ĐIỂM (12,500/tháng), không phải bằng tiền chi. Site quy
       // ra "$2,500 chi tiêu" cho dễ hiểu, nhưng đơn vị gốc là điểm — ghi sai
       // đơn vị ở đây là sai giá trị thẻ hàng chục nghìn điểm một năm.
-      ["dining", 5, { capKind: "points", capAmount: 12500, capPeriod: "monthly", rateAfterCap: 1 }],
-      ["food_delivery", 5, { capKind: "points", capAmount: 12500, capPeriod: "monthly", rateAfterCap: 1 }],
-      ["grocery", 5, { capKind: "points", capAmount: 12500, capPeriod: "monthly", rateAfterCap: 1 }],
+      ["dining", 5, { cap: "dining5x", rateAfterCap: 1 }],
+      ["food_delivery", 5, { cap: "dining5x", rateAfterCap: 1 }],
+      ["grocery", 5, { cap: "dining5x", rateAfterCap: 1 }],
       ["streaming", 3],
       ["gas", 2],
       ["transit", 2],
@@ -234,13 +283,14 @@ const RATES: Record<string, { program: string; rates: RateSeed[] }> = {
     rates: [
       // Trần $450 TIỀN HOÀN mỗi năm. Một "điểm" ở chương trình cash-back là
       // một CENT (xem points-programs.ts), nên trần viết là 45,000.
-      ["grocery", 3, { capKind: "points", capAmount: 45000, capPeriod: "annual", rateAfterCap: 1 }],
-      ["gas", 3, { capKind: "points", capAmount: 45000, capPeriod: "annual", rateAfterCap: 1 }],
-      ["ev_charging", 3, { capKind: "points", capAmount: 45000, capPeriod: "annual", rateAfterCap: 1 }],
-      ["transit", 3, { capKind: "points", capAmount: 45000, capPeriod: "annual", rateAfterCap: 1 }],
+      // Bốn hạng mục dưới đây dùng CHUNG một trần $450/năm — cùng `cap`.
+      ["grocery", 3, { cap: "everyday3", rateAfterCap: 1 }],
+      ["gas", 3, { cap: "everyday3", rateAfterCap: 1 }],
+      ["ev_charging", 3, { cap: "everyday3", rateAfterCap: 1 }],
+      ["transit", 3, { cap: "everyday3", rateAfterCap: 1 }],
       // Nhóm thứ hai có trần $450 RIÊNG, không dùng chung với nhóm trên.
-      ["recurring", 3, { capKind: "points", capAmount: 45000, capPeriod: "annual", rateAfterCap: 1 }],
-      ["streaming", 3, { capKind: "points", capAmount: 45000, capPeriod: "annual", rateAfterCap: 1 }],
+      ["recurring", 3, { cap: "recurring3", rateAfterCap: 1 }],
+      ["streaming", 3, { cap: "recurring3", rateAfterCap: 1 }],
       ["everything_else", 1],
     ],
   },
@@ -275,7 +325,7 @@ const RATES: Record<string, { program: string; rates: RateSeed[] }> = {
   "bmo-viporter-world-elite-mastercard": {
     program: "viporter",
     rates: [
-      ["airline_direct", 3, { capKind: "spend", capAmount: 20000, capPeriod: "annual", rateAfterCap: 2 }],
+      ["airline_direct", 3, { cap: "porter3x", rateAfterCap: 2 }],
       ["travel", 2],
       ["grocery", 2],
       ["dining", 2],
@@ -364,6 +414,27 @@ const RATES: Record<string, { program: string; rates: RateSeed[] }> = {
   },
 };
 
+function capIdFor(slug: string, cap: string): EarningCapId {
+  return makeId<EarningCapId>("cap", slug, cap, VERIFIED_ON);
+}
+
+export const EARNING_CAPS: EarningCap[] = Object.entries(CAPS).flatMap(([slug, caps]) =>
+  Object.entries(caps).map(([key, cap]) => ({
+    id: capIdFor(slug, key),
+    productId: id<ProductId>(`prd_${slug}`),
+    name: cap.name,
+    kind: cap.kind,
+    amount: cap.amount,
+    period: cap.period,
+    effectiveFrom: VERIFIED_ON,
+    effectiveTo: null,
+    sourceUrl: `https://ghe1a.com/credit-cards/${slug}`,
+    sourceKind: "ghe1a",
+    verifiedAt: VERIFIED_ON,
+    confidence: "verified",
+  })),
+);
+
 export const EARNING_RATES: EarningRate[] = Object.entries(RATES).flatMap(
   ([slug, { program, rates }]) =>
     rates.map(([category, multiplier, opts]) => ({
@@ -382,14 +453,13 @@ export const EARNING_RATES: EarningRate[] = Object.entries(RATES).flatMap(
       category,
       multiplier,
       pointsProgramId: program as PointsProgramId,
-      capKind: opts?.capKind ?? null,
-      capAmount: opts?.capAmount ?? null,
-      capPeriod: opts?.capPeriod ?? null,
+      capId: opts?.cap === undefined ? null : capIdFor(slug, opts.cap),
       rateAfterCap: opts?.rateAfterCap ?? null,
       restrictedTo: opts?.restrictedTo ?? null,
       effectiveFrom: VERIFIED_ON,
       effectiveTo: null,
       sourceUrl: `https://ghe1a.com/credit-cards/${slug}`,
+      sourceKind: "ghe1a",
       verifiedAt: VERIFIED_ON,
       confidence: "verified",
     })),

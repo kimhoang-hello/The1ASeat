@@ -3,7 +3,7 @@ export { POINTS_PROGRAMS } from "./points-programs.ts";
 export { TRANSFER_PATHS } from "./transfer-paths.ts";
 export { PRODUCTS, PRODUCT_FEES } from "./products.ts";
 export { OFFERS, OFFER_COMPONENTS, INCOMPLETE_OFFERS } from "./offers.ts";
-export { EARNING_RATES } from "./earning-rates.ts";
+export { EARNING_RATES, EARNING_CAPS } from "./earning-rates.ts";
 export { BENEFITS } from "./benefits.ts";
 export { PRODUCT_BENEFITS } from "./product-benefits.ts";
 export { ELIGIBILITY_RULES } from "./eligibility-rules.ts";
@@ -18,7 +18,7 @@ import { POINTS_PROGRAMS } from "./points-programs.ts";
 import { TRANSFER_PATHS } from "./transfer-paths.ts";
 import { PRODUCTS, PRODUCT_FEES } from "./products.ts";
 import { OFFERS, OFFER_COMPONENTS } from "./offers.ts";
-import { EARNING_RATES } from "./earning-rates.ts";
+import { EARNING_RATES, EARNING_CAPS } from "./earning-rates.ts";
 import { BENEFITS } from "./benefits.ts";
 import { PRODUCT_BENEFITS } from "./product-benefits.ts";
 import { ELIGIBILITY_RULES } from "./eligibility-rules.ts";
@@ -48,6 +48,7 @@ export function offlineDataset(): RecommendationDataset {
     offers: OFFERS,
     offerComponents: OFFER_COMPONENTS,
     earningRates: EARNING_RATES,
+    earningCaps: EARNING_CAPS,
     benefits: BENEFITS,
     productBenefits: PRODUCT_BENEFITS,
     eligibilityRules: ELIGIBILITY_RULES,

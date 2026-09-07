@@ -19,6 +19,7 @@ export const BENEFITS: Benefit[] = [
     // thêm gì, trừ khi nó phủ nhiều người đi cùng hơn — `numericValue` giữ số
     // người, nên engine so được hai thẻ thay vì coi chúng như nhau.
     duplicatesAcrossCards: true,
+    unit: "guests",
   },
   {
     id: id<BenefitId>("maple-leaf-lounge"),
@@ -26,6 +27,7 @@ export const BENEFITS: Benefit[] = [
     name: "Maple Leaf Lounge®",
     category: "airport",
     duplicatesAcrossCards: true,
+    unit: "guests",
   },
   {
     id: id<BenefitId>("airport-lounge-passes"),
@@ -35,6 +37,7 @@ export const BENEFITS: Benefit[] = [
     // Lượt thì cộng dồn: 4 lượt Visa Airport Companion cộng 6 lượt DragonPass
     // là 10 lượt thật.
     duplicatesAcrossCards: false,
+    unit: "visits",
   },
   {
     id: id<BenefitId>("priority-boarding"),
@@ -42,6 +45,7 @@ export const BENEFITS: Benefit[] = [
     name: "Ưu tiên check-in và lên máy bay",
     category: "airline",
     duplicatesAcrossCards: true,
+    unit: "guests",
   },
   {
     id: id<BenefitId>("preferred-aeroplan-pricing"),
@@ -49,6 +53,7 @@ export const BENEFITS: Benefit[] = [
     name: "Giá Aeroplan® ưu đãi cho chủ thẻ",
     category: "airline",
     duplicatesAcrossCards: true,
+    unit: null,
   },
   {
     id: id<BenefitId>("companion-pass"),
@@ -57,6 +62,7 @@ export const BENEFITS: Benefit[] = [
     category: "airline",
     // Hai voucher là hai chuyến bay cho người đi cùng, dùng được cả hai.
     duplicatesAcrossCards: false,
+    unit: "cad",
   },
   {
     id: id<BenefitId>("no-fx-fee"),
@@ -66,6 +72,7 @@ export const BENEFITS: Benefit[] = [
     // Chỉ quẹt được một thẻ cho một giao dịch, nên thẻ thứ hai không tiết kiệm
     // thêm đồng nào.
     duplicatesAcrossCards: true,
+    unit: null,
   },
   {
     id: id<BenefitId>("travel-credit"),
@@ -73,6 +80,7 @@ export const BENEFITS: Benefit[] = [
     name: "Travel credit hằng năm",
     category: "credit",
     duplicatesAcrossCards: false,
+    unit: "cad",
   },
   {
     id: id<BenefitId>("nexus-credit"),
@@ -81,6 +89,7 @@ export const BENEFITS: Benefit[] = [
     category: "credit",
     // NEXUS gia hạn 4-5 năm một lần. Thẻ thứ hai không có gì để hoàn.
     duplicatesAcrossCards: true,
+    unit: "cad",
   },
   {
     id: id<BenefitId>("hotel-status"),
@@ -89,6 +98,7 @@ export const BENEFITS: Benefit[] = [
     category: "status",
     // Chỉ giữ được một hạng; thẻ thứ hai cùng hạng không nâng lên.
     duplicatesAcrossCards: true,
+    unit: null,
   },
   {
     id: id<BenefitId>("free-night-award"),
@@ -96,6 +106,7 @@ export const BENEFITS: Benefit[] = [
     name: "Free Night Award hằng năm",
     category: "hotel",
     duplicatesAcrossCards: false,
+    unit: "count",
   },
   {
     id: id<BenefitId>("elite-night-credits"),
@@ -103,6 +114,7 @@ export const BENEFITS: Benefit[] = [
     name: "Elite Night Credits",
     category: "status",
     duplicatesAcrossCards: false,
+    unit: "nights",
   },
   {
     id: id<BenefitId>("airline-status-credits"),
@@ -110,6 +122,7 @@ export const BENEFITS: Benefit[] = [
     name: "Tín chỉ lên hạng hội viên hàng không",
     category: "status",
     duplicatesAcrossCards: false,
+    unit: "credits",
   },
   {
     id: id<BenefitId>("travel-medical-insurance"),
@@ -117,6 +130,7 @@ export const BENEFITS: Benefit[] = [
     name: "Bảo hiểm y tế du lịch",
     category: "insurance",
     duplicatesAcrossCards: true,
+    unit: "cad",
   },
   {
     id: id<BenefitId>("trip-cancellation-insurance"),
@@ -124,6 +138,7 @@ export const BENEFITS: Benefit[] = [
     name: "Bảo hiểm huỷ và gián đoạn chuyến đi",
     category: "insurance",
     duplicatesAcrossCards: true,
+    unit: "cad",
   },
   {
     id: id<BenefitId>("mobile-device-insurance"),
@@ -131,6 +146,7 @@ export const BENEFITS: Benefit[] = [
     name: "Bảo hiểm thiết bị di động",
     category: "insurance",
     duplicatesAcrossCards: true,
+    unit: "cad",
   },
   {
     id: id<BenefitId>("rental-car-insurance"),
@@ -138,6 +154,7 @@ export const BENEFITS: Benefit[] = [
     name: "Bảo hiểm thuê xe",
     category: "insurance",
     duplicatesAcrossCards: true,
+    unit: "cad",
   },
   {
     id: id<BenefitId>("annual-fee-waiver-conditional"),
@@ -147,6 +164,7 @@ export const BENEFITS: Benefit[] = [
     // Khác `Offer.annualFeeFirstYear`: cái kia là ưu đãi một lần của offer,
     // cái này là điều kiện lặp lại mỗi năm (gói ngân hàng, hạng Wealthsimple).
     duplicatesAcrossCards: false,
+    unit: null,
   },
   {
     id: id<BenefitId>("free-supplementary-card"),
@@ -154,5 +172,6 @@ export const BENEFITS: Benefit[] = [
     name: "Thẻ phụ miễn phí",
     category: "fee",
     duplicatesAcrossCards: false,
+    unit: "count",
   },
 ];
