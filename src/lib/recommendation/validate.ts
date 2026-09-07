@@ -254,24 +254,37 @@ export function validateDataset(data: RecommendationDataset): ValidationIssue[] 
     }
   }
 
-  // Mỗi sản phẩm chỉ được có MỘT offer đang chạy tại một thời điểm. Hai cái
-  // cùng lúc thì mọi phép tra "offer hiện tại" trả về cái nào tuỳ thứ tự khai.
-  const today = new Date().toISOString().slice(0, 10);
-  const liveByProduct = new Map<string, string[]>();
+  // Mỗi sản phẩm chỉ được có MỘT offer tại một thời điểm — KIỂM TRÊN CẢ TRỤC
+  // THỜI GIAN, không phải chỉ hôm nay.
+  //
+  // Bản trước so với ngày chạy, nên hai offer tương lai chồng nhau vẫn xanh
+  // cho tới đúng hôm chúng bắt đầu — tức lỗi nổ ra ở production chứ không ở
+  // lúc review, đúng lúc không ai đang nhìn. Chồng lấn trong QUÁ KHỨ thì vĩnh
+  // viễn không bao giờ báo. Sắp các khoảng rồi so hai khoảng kề nhau: kết quả
+  // không phụ thuộc vào lúc chạy, nên nó cũng không phụ thuộc vào múi giờ.
+  const intervalsByProduct = new Map<string, { id: string; from: string; to: string }[]>();
   for (const offer of data.offers) {
-    if (offer.effectiveFrom > today) continue;
-    if (offer.effectiveTo !== null && offer.effectiveTo < today) continue;
-    const list = liveByProduct.get(offer.productId) ?? [];
-    list.push(offer.id);
-    liveByProduct.set(offer.productId, list);
+    const list = intervalsByProduct.get(offer.productId) ?? [];
+    // `\uffff` sắp sau mọi ký tự, nên một offer chưa có ngày kết thúc so ra
+    // "muộn hơn tất cả" — đúng nghĩa của `null` ở đây.
+    list.push({ id: offer.id, from: offer.effectiveFrom, to: offer.effectiveTo ?? "\uffff" });
+    intervalsByProduct.set(offer.productId, list);
   }
-  for (const [productId, ids] of liveByProduct) {
-    if (ids.length > 1) {
-      issues.push({
-        level: "error",
-        entity: "offers",
-        message: `${productId}: ${ids.length} offer cùng đang chạy (${ids.join(", ")})`,
-      });
+  for (const [productId, list] of intervalsByProduct) {
+    const sorted = [...list].sort((a, b) => (a.from < b.from ? -1 : a.from > b.from ? 1 : 0));
+    for (let i = 1; i < sorted.length; i += 1) {
+      const previous = sorted[i - 1];
+      const current = sorted[i];
+      // `effectiveTo` là NGÀY CUỐI CÙNG còn hiệu lực, không phải mốc kết thúc
+      // — cùng quy ước với `hasExpired()` trong lib/format-date.ts. Nên chồng
+      // lấn là `current.from <= previous.to`, có dấu bằng.
+      if (current.from <= previous.to) {
+        issues.push({
+          level: "error",
+          entity: "offers",
+          message: `${productId}: offer ${previous.id} và ${current.id} chồng thời gian`,
+        });
+      }
     }
   }
 

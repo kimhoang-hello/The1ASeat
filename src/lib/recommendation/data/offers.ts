@@ -40,6 +40,10 @@ type ComponentSeed = {
   cash?: number;
   spend?: number;
   windowDays?: number;
+  /** Cửa sổ mở ra sau bao nhiêu ngày kể từ lúc mở thẻ. Bỏ trống = mở ngay.
+   *  Xem `OfferComponent.windowStartsAfterDays` — đây là chỗ phân biệt mốc
+   *  "trong 12 tháng" (vẫn tính từ ngày mở thẻ) với mốc "ở tháng thứ 13". */
+  startsAfterDays?: number;
   /** Chỉ cho `monthly_spend`: số chu kỳ sao kê thành phần này lặp lại. */
   repeat?: number;
   note?: string;
@@ -194,8 +198,9 @@ const OFFER_SEEDS: OfferSeed[] = [
         type: "anniversary",
         points: 25000,
         spend: 2500,
-        windowDays: 395,
-        note: "Chi $2,500 trong tháng thứ 13",
+        windowDays: 30,
+        startsAfterDays: 365,
+        note: "Chi $2,500 trong tháng thứ 13 — cửa sổ riêng, không dùng lại tiền đã chi",
       },
     ],
   },
@@ -267,7 +272,14 @@ const OFFER_SEEDS: OfferSeed[] = [
     startDate: "2026-09-07",
     components: [
       { type: "spend_threshold", points: 65000, spend: 10500, windowDays: 90 },
-      { type: "anniversary", points: 25000, spend: 3500, windowDays: 395 },
+      {
+        type: "anniversary",
+        points: 25000,
+        spend: 3500,
+        windowDays: 30,
+        startsAfterDays: 365,
+        note: "Chi $3,500 trong tháng thứ 13",
+      },
     ],
   },
   {
@@ -366,7 +378,14 @@ const OFFER_SEEDS: OfferSeed[] = [
     startDate: "2026-09-07",
     components: [
       { type: "spend_threshold", points: 35000, spend: 7500, windowDays: 180 },
-      { type: "anniversary", points: 10000, spend: 1000, windowDays: 395 },
+      {
+        type: "anniversary",
+        points: 10000,
+        spend: 1000,
+        windowDays: 30,
+        startsAfterDays: 365,
+        note: "Chi $1,000 trong tháng thứ 13",
+      },
     ],
   },
   {
@@ -488,54 +507,62 @@ const OFFER_SEEDS: OfferSeed[] = [
 /**
  * Tổng mức chi phải đạt để lấy HẾT bonus.
  *
- * Phép cộng ở đây tinh tế hơn "MAX" hay "SUM", và cả hai cách đơn giản đều
- * cho ra con số sai theo hai hướng ngược nhau:
+ * Không phải MAX, cũng không phải SUM — cả hai cách đơn giản đều sai, và sai
+ * theo hai hướng ngược nhau:
  *
- *   SUM sai vì các mốc trong CÙNG một giai đoạn là mốc TÍCH LUỸ. CIBC®
- *   Aventura® trả 30,000 điểm ở mốc $3,000 rồi 15,000 nữa ở mốc $5,000, cả
- *   hai trong 4 kỳ sao kê đầu — tổng phải chi là $5,000, không phải $8,000.
- *   Cộng lại là dựng ra một yêu cầu không tồn tại rồi loại oan thẻ.
+ *   SUM sai vì các mốc có cửa sổ CHỒNG NHAU dùng chung tiền. TD® Aeroplan®
+ *   Visa Infinite Privilege* đòi $12,000 trong 180 ngày rồi $24,000 trong 12
+ *   tháng — cả hai cửa sổ đều mở từ ngày mở thẻ, nên $12,000 đầu tiên nằm
+ *   TRONG $24,000. Tổng là $24,000. Cộng lại ra $36,000, tức bịa thêm
+ *   $12,000 rồi loại oan thẻ khỏi tay người vừa đủ sức.
  *
- *   MAX sai vì các giai đoạn RỜI NHAU thì chi tiêu KHÔNG dùng lại được. Amex®
- *   Aeroplan®* Reserve đòi $7,500 trong 90 ngày đầu VÀ $2,500 nữa trong tháng
- *   thứ 13. Lấy MAX ra $7,500, tức nói với người đọc rằng phần thưởng 25,000
- *   điểm ở mốc kỷ niệm là miễn phí.
+ *   MAX sai vì các cửa sổ RỜI NHAU thì tiền không dùng lại được. Amex®
+ *   Aeroplan®* Reserve đòi $7,500 trong 90 ngày đầu rồi $2,500 nữa ở tháng
+ *   thứ 13. MAX ra $7,500, tức nói phần thưởng 25,000 điểm kỷ niệm là miễn phí.
  *
- * Nên: MAX trong từng giai đoạn, rồi CỘNG các giai đoạn lại. Giai đoạn phân
- * theo `anniversary` — đó là ranh giới thật, vì mốc kỷ niệm mở ra sau khi cửa
- * sổ ban đầu đã đóng.
+ * Nên: gom theo NGÀY MỞ CỬA SỔ, lấy MAX trong từng nhóm, rồi cộng các nhóm.
+ * Gom theo `componentType` là cách cũ và là cách sai — `anniversary` nói điểm
+ * được TRẢ lúc nào, không nói tiền phải chi lúc nào.
  *
- * `monthly_spend` là ngoại lệ trong ngoại lệ: Cobalt đòi $750 MỖI chu kỳ
- * trong 12 chu kỳ, tức $9,000 thật. Ở đó nhân lên trước khi so.
+ * `monthly_spend` nhân lên trước khi so: Cobalt đòi $750 MỖI chu kỳ trong 12
+ * chu kỳ, tức $9,000 thật.
  */
+function requiredSpendOf(c: ComponentSeed): number | null {
+  if (c.spend === undefined) return null;
+  return c.type === "monthly_spend" ? c.spend * (c.repeat ?? 1) : c.spend;
+}
+
 function totalSpendOf(components: ComponentSeed[]): number | null {
-  const phases: Record<"initial" | "anniversary", number> = { initial: 0, anniversary: 0 };
+  const byWindowStart = new Map<number, number>();
   for (const c of components) {
-    if (c.spend === undefined) continue;
-    const needed = c.type === "monthly_spend" ? c.spend * (c.repeat ?? 1) : c.spend;
-    const phase = c.type === "anniversary" ? "anniversary" : "initial";
-    if (needed > phases[phase]) phases[phase] = needed;
+    const needed = requiredSpendOf(c);
+    if (needed === null) continue;
+    const start = c.startsAfterDays ?? 0;
+    byWindowStart.set(start, Math.max(byWindowStart.get(start) ?? 0, needed));
   }
-  const total = phases.initial + phases.anniversary;
+  let total = 0;
+  for (const amount of byWindowStart.values()) total += amount;
   return total > 0 ? total : null;
 }
 
 /**
- * Mức chi phải đạt trong GIAI ĐOẠN ĐẦU — thứ §13 thật sự đem so với sức chi
- * 3 tháng người dùng khai.
+ * Mức chi cần thiết QUY VỀ 90 NGÀY — xem `Offer.spendPerNinetyDays`.
  *
- * Tách khỏi `minimumSpend` vì hai con số trả lời hai câu hỏi khác nhau: "cả
- * offer này đòi bao nhiêu" và "mình có với tới được phần đầu không". Người có
- * $8,000 sức chi vẫn lấy được $7,500 của Reserve, dù cả offer đòi $10,000.
+ * Lấy mốc NẶNG NHẤT sau khi quy đổi, không phải mốc có số tiền lớn nhất:
+ * $40,000 trong 365 ngày (~$9,900/quý) nhẹ hơn $7,500 trong 90 ngày.
  */
-function initialSpendOf(components: ComponentSeed[]): number | null {
-  let max = 0;
+function spendPerNinetyDaysOf(components: ComponentSeed[]): number | null {
+  let worst = 0;
   for (const c of components) {
-    if (c.spend === undefined || c.type === "anniversary") continue;
-    const needed = c.type === "monthly_spend" ? c.spend * (c.repeat ?? 1) : c.spend;
-    if (needed > max) max = needed;
+    const needed = requiredSpendOf(c);
+    if (needed === null) continue;
+    // `monthly_spend` lặp lại: cửa sổ thật của MỘT lần là một chu kỳ sao kê,
+    // nên quy đổi phải chia cho toàn bộ số ngày mà tổng đó trải ra.
+    const days = c.windowDays ?? 90;
+    const rate = (needed / days) * 90;
+    if (rate > worst) worst = rate;
   }
-  return max > 0 ? max : null;
+  return worst > 0 ? Math.round(worst) : null;
 }
 
 function longestWindowMonths(components: ComponentSeed[]): number | null {
@@ -570,7 +597,7 @@ export const OFFERS: Offer[] = OFFER_SEEDS.map((seed) => ({
   headlineBonus: seed.headline,
   minimumSpend: totalSpendOf(seed.components),
   minimumSpendMonths: longestWindowMonths(seed.components),
-  initialSpend: initialSpendOf(seed.components),
+  spendPerNinetyDays: spendPerNinetyDaysOf(seed.components),
   annualFeeFirstYear: seed.feeFirstYear ?? null,
   annualFeeRebate: seed.rebate ?? null,
   // V1 chỉ có offer công khai. Offer targeted (link riêng, thư mời) tồn tại
@@ -595,6 +622,7 @@ export const OFFER_COMPONENTS: OfferComponent[] = OFFER_SEEDS.flatMap((seed) =>
     cashAmount: c.cash ?? null,
     spendRequirement: c.spend ?? null,
     spendWindowDays: c.windowDays ?? null,
+    windowStartsAfterDays: c.startsAfterDays ?? 0,
     repeatCount: c.repeat ?? null,
     conditionText: c.note ?? null,
   })),

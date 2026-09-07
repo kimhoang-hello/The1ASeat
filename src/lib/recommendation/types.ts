@@ -265,14 +265,23 @@ export interface Offer extends Temporal, Sourced {
   minimumSpend: number | null;
   minimumSpendMonths: number | null;
   /**
-   * Mức chi phải đạt trong GIAI ĐOẠN ĐẦU, tức trước mốc kỷ niệm.
+   * Mức chi cần thiết QUY VỀ MỘT CỬA SỔ 90 NGÀY — con số §13 đem so với
+   * `minimum_spend_capacity_3m` người dùng khai.
    *
-   * Đây mới là con số §13 đem so với `minimum_spend_capacity_3m` của người
-   * dùng. `minimumSpend` gộp cả phần chi ở tháng thứ 13 — dùng nhầm nó để lọc
-   * sẽ loại thẻ Amex® Aeroplan®* Reserve khỏi tay người thừa sức lấy $7,500
-   * đầu tiên, chỉ vì họ chưa hứa gì về năm sau.
+   * Phải quy đổi, vì `minimumSpend` trần trụi không so được với sức chi 3
+   * tháng của ai cả:
+   *
+   *   TD® First Class đòi $7,500 nhưng cho 180 ngày. So thẳng với sức chi 3
+   *   tháng là đòi gấp đôi mức thật, và loại người thừa sức đạt.
+   *   Amex® Cobalt đòi $750 mỗi chu kỳ sao kê. Cộng 12 chu kỳ ra $9,000 rồi
+   *   đem so với sức chi 3 tháng thì thành một thẻ gần như không ai đủ điều
+   *   kiện — trong khi nó là thẻ dễ đạt nhất danh sách.
+   *   Scotiabank® Passport® có tầng $40,000/năm, quy về 90 ngày là ~$9,900.
+   *
+   * GIẢ ĐỊNH: chi tiêu rải đều trong cửa sổ. Đúng với mọi mốc trong bộ dữ liệu
+   * hiện tại. Sai nếu có ngày một mốc đòi dồn vào cuối kỳ — chưa gặp.
    */
-  initialSpend: number | null;
+  spendPerNinetyDays: number | null;
   annualFeeFirstYear: number | null;
   /** Rebate của bên thứ ba (FinlyWealth). Nối với `rebateVi` trên Contentful;
    *  `audit:reco-data` bắt lệch, cùng lý do `audit:rebate-prose` tồn tại. */
@@ -307,6 +316,26 @@ export interface OfferComponent {
   cashAmount: number | null;
   spendRequirement: number | null;
   spendWindowDays: number | null;
+  /**
+   * Cửa sổ chi tiêu của thành phần này MỞ RA sau bao nhiêu ngày kể từ lúc mở
+   * thẻ. `0` = mở ngay.
+   *
+   * Đây là chỗ phân biệt hai thứ trông giống hệt nhau và cho ra hai con số
+   * khác nhau hàng chục nghìn đô:
+   *
+   *   TD® Aeroplan® Visa Infinite Privilege* đòi $12,000 trong 180 ngày, rồi
+   *   $24,000 trong 12 tháng. Cả hai cửa sổ đều MỞ TỪ NGÀY MỞ THẺ, nên
+   *   $12,000 đầu tiên ĐƯỢC TÍNH vào $24,000. Tổng phải chi là $24,000.
+   *
+   *   Amex® Aeroplan®* Reserve đòi $7,500 trong 3 tháng đầu, rồi $2,500 ở
+   *   THÁNG THỨ 13. Cửa sổ thứ hai mở ở ngày 365, không giao với cửa sổ đầu,
+   *   nên tiền không dùng lại được. Tổng là $10,000.
+   *
+   * Suy ra từ `componentType` là sai — `anniversary` nói điểm được TRẢ lúc
+   * nào, không nói tiền phải chi lúc nào. Đoán nhầm chiều nào cũng ra một con
+   * số về tiền nói sai với người đọc.
+   */
+  windowStartsAfterDays: number;
   /**
    * Bao nhiêu lần thành phần này lặp lại. Chỉ có nghĩa với `monthly_spend`:
    * Cobalt là 1,250 điểm × 12 chu kỳ. Không có trường này thì hoặc phải đẻ 12

@@ -33,6 +33,7 @@ import { AWARD_STRATEGIES } from "../src/lib/recommendation/data/award-strategie
 import { POINTS_PROGRAMS as CALCULATOR_PROGRAMS } from "../src/lib/points-programs.ts";
 import { TRANSFER_PARTNERS } from "../src/lib/transfer-partners.ts";
 import { PROGRAMS as AWARD_CHART_PROGRAMS } from "../src/lib/award-charts.ts";
+import { todayInSiteZone } from "../src/lib/format-date.ts";
 
 const REPO = fileURLToPath(new URL("..", import.meta.url));
 const REQUEST_TIMEOUT_MS = 20_000;
@@ -96,7 +97,13 @@ function rebateIn(text: string | undefined): number | undefined {
 const errors: string[] = [];
 const warnings: string[] = [];
 
-const TODAY = new Date().toISOString().slice(0, 10);
+// Ngày theo giờ TORONTO, không phải UTC. `toISOString()` nhảy sang ngày mới
+// lúc 19:00 hoặc 20:00 giờ Toronto, nên trong mấy tiếng cuối ngày cuối cùng
+// của một offer, audit sẽ chọn offer của ngày mai — hoặc không chọn được cái
+// nào — trong khi site vẫn phục vụ offer hôm nay. Kết quả là đỏ vì lệch
+// rebate, mà dữ liệu không có gì sai. Cùng quy ước với `hasExpired()`; xem
+// mục `expiresAt` trong AGENTS.md.
+const TODAY = todayInSiteZone();
 
 /** Offer đang có hiệu lực hôm nay của một sản phẩm. `validateDataset` đã chặn
  *  trường hợp có hơn một, nên ở đây chỉ cần lấy cái đầu. */
@@ -199,6 +206,42 @@ for (const path of TRANSFER_PATHS) {
       `[transfer-paths] ${path.id}: tỷ lệ ${path.ratioFrom}:${path.ratioTo} lệch ` +
         `"${leg.ratio}" trong lib/transfer-partners.ts`,
     );
+  }
+}
+
+// LƯỢT NGƯỢC. Vòng trên chỉ đi từ seed sang nguồn, nên nó bắt được chặng biến
+// mất khỏi nguồn mà KHÔNG bắt được chặng mới xuất hiện ở nguồn — mà đó mới là
+// chiều hay xảy ra: Amex® thêm một đối tác, `transfer-partners.ts` được cập
+// nhật cho trang Transfer Partners, còn engine thì vĩnh viễn không biết. Im
+// lặng hoàn toàn, và đúng loại im lặng làm engine bỏ sót phương án tốt nhất.
+//
+// Chỉ soi những chương trình NẰM TRONG phạm vi V1 (bảng tra ở trên). Hilton®,
+// Delta® và Accor® có trong nguồn nhưng cố ý ngoài phạm vi — xem chú thích đầu
+// `data/transfer-paths.ts` — nên vắng mặt ở seed không phải lỗi.
+for (const [programId, partnerKey] of Object.entries(PARTNER_KEY_BY_PROGRAM)) {
+  const row = TRANSFER_PARTNERS.find((partner) => partner.program === partnerKey);
+  if (!row) {
+    errors.push(
+      `[transfer-paths] bảng tra trỏ tới "${partnerKey}" không có trong lib/transfer-partners.ts`,
+    );
+    continue;
+  }
+  for (const [source, leg] of [
+    ["amex-mr", row.amex],
+    ["avion", row.rbc],
+  ] as const) {
+    if (!leg) continue;
+    const seeded = TRANSFER_PATHS.some(
+      (path) =>
+        (path.sourceProgramId as string) === source &&
+        (path.destinationProgramId as string) === programId,
+    );
+    if (!seeded) {
+      errors.push(
+        `[transfer-paths] ${source} → ${programId}: có trong lib/transfer-partners.ts ` +
+          `("${leg.ratio}") nhưng chưa có trong seed — engine không thấy chặng này`,
+      );
+    }
   }
 }
 

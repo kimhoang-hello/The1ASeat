@@ -40,12 +40,13 @@ mà không giữ lại commit đó, `remove` không cứu được nó.
 Quyền tự commit + push ở dưới chỉ áp cho `main`. Trên nhánh `wt/*` thì commit
 bình thường, còn merge vào `main` là việc phải hỏi.
 
-# Đụng vào thẻ tín dụng thì chạy hai audit này
+# Đụng vào thẻ tín dụng thì chạy ba audit này
 
 Thêm thẻ mới, sửa offer, đổi link apply, sửa rebate — xong việc là chạy:
 
     npm run audit:trademarks     # thiếu ®/™
     npm run audit:rebate-prose   # badge rebate lệch số viết tay trong editor's take
+    npm run audit:reco-data      # dữ liệu recommendation engine lệch Contentful
 
 Cả hai bắt loại lỗi mà `lint`, `tsc` và `build` đều không thấy, vì lỗi nằm
 trong **nội dung Contentful** chứ không nằm trong code.
@@ -57,6 +58,18 @@ câu "HOT TIP: … nhận thêm $140 rebate." của `editorsTakeVi`. Job
 vào lúc FinlyWealth đổi số — người gõ nhầm tay thì phải audit mới thấy. Rà tay
 01/09/2026: 3 trong 10 thẻ có rebate đang lệch, tệ nhất hứa dư $75 cho người
 đọc.
+
+`audit:reco-data` giữ hai kho nói cùng một chuyện về một thẻ. Engine đọc dữ
+liệu có cấu trúc trong `src/lib/recommendation/data/` (tỷ lệ tích điểm, thành
+phần welcome offer, quyền lợi, điều kiện), nối với Contentful bằng **slug**.
+Thêm thẻ trên Contentful mà quên thêm ở đó thì engine không bao giờ khuyên nó —
+im lặng tuyệt đối, không lỗi nào nổ ra. Audit bắt cả hai chiều, cộng annual fee
+và rebate, cộng cả drift với `points-programs.ts`, `transfer-partners.ts` và
+`award-charts.ts` (bộ seed chép số từ ba file đó). Nó bắt được ca đầu tiên ngay
+hôm dựng: 3 thẻ CIBC® Aeroplan® publish trong lúc đang làm.
+
+Cảnh báo (`⚠︎`) KHÔNG chặn — chúng là chỗ trống đã biết, ví dụ thẻ mà nội dung
+site chưa nêu tỷ lệ tích điểm nền. Để trống có chủ ý, đừng lấp bằng phỏng đoán.
 
 `audit:trademarks` phải chạy **sau** khi sửa xong, không phải trước: nó tự học
 thương hiệu từ chính nội dung, nên một thẻ mới mang tên hãng mới vào site sẽ
