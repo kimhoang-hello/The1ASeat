@@ -262,11 +262,21 @@ export interface ResolvedTripGoal extends Omit<TripGoal, "originRegion"> {
  * được từ dữ kiện nào cả, nên nó vẫn phải đi hỏi. Ranh giới là "đã biết ở chỗ
  * khác" chứ không phải "đoán được".
  */
-export function resolveTripGoal(profile: UserProfile, goal: TripGoal): ResolvedTripGoal {
+export function resolveTripGoal(
+  profile: UserProfile | null | undefined,
+  goal: TripGoal,
+): ResolvedTripGoal {
   const inferred = goal.originRegion == null;
+  // Hồ sơ thiếu hẳn, hoặc nước ở không nằm trong bảng, thì KHÔNG được ném:
+  // dữ liệu tới từ database, và cả module này đã chọn đường "rác là chưa
+  // biết" thay vì đường ngoại lệ (xem `asArray`, `isObject`). V1 chỉ có
+  // Canada, nên `CANADA_US` vừa là suy luận đúng vừa là mặc định an toàn —
+  // và `originRegionInferred` nói ra rằng nó được suy chứ không được khai.
+  const fromCountry =
+    profile?.country != null ? ORIGIN_REGION_BY_COUNTRY[profile.country] : undefined;
   return {
     ...goal,
-    originRegion: goal.originRegion ?? ORIGIN_REGION_BY_COUNTRY[profile.country],
+    originRegion: goal.originRegion ?? fromCountry ?? "CANADA_US",
     originRegionInferred: inferred,
   };
 }

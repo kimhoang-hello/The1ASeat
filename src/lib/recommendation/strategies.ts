@@ -42,6 +42,18 @@ export interface TripCoverage {
   bestProgram: PointsProgramId | null;
   accessible: number | null;
   accessibleIsLowerBound: boolean;
+  /**
+   * Chương trình định giá được chặng, người dùng CÓ điểm ở đó, mà engine
+   * không tra nổi cận trên — điển hình là chỉ có mức SÀN của định giá động.
+   *
+   * Có phần tử ở đây thì `coverage` là CẬN DƯỚI và khoảng cách điểm KHÔNG nói
+   * được. Ca thật trên chính bộ dữ liệu này: hạng phổ thông đặc biệt
+   * Canada→Việt Nam chỉ có Aeroplan® ở dạng `dynamic_floor`, nên một người
+   * giữ 260,000 điểm Aeroplan® bị loại khỏi phép đo, và engine kết luận "phủ
+   * 0%, còn thiếu đúng 100,000 điểm" — đo trên hai chương trình họ không có
+   * đồng nào.
+   */
+  unpricedHeldPrograms: PointsProgramId[];
 }
 
 /**
@@ -75,6 +87,7 @@ export function tripCoverage(
   let bestProgram: PointsProgramId | null = null;
   let accessible: number | null = null;
   let lowerBound = false;
+  const unpricedHeld: PointsProgramId[] = [];
 
   // BA giá trị trả về phải nói về CÙNG MỘT chương trình.
   //
@@ -89,7 +102,15 @@ export function tripCoverage(
   // Thứ tự cố định: `byProgram` đã sắp theo id ở `trip-need.ts`, và phép so
   // `>` bên dưới giữ chương trình ĐẦU TIÊN khi hoà.
   for (const row of rows) {
-    if (row.high === null || row.high <= 0) continue;
+    if (row.high === null || row.high <= 0) {
+      // Không tra được cận trên. Bỏ qua trong phép đo là ĐÚNG — không thể tính
+      // tỷ lệ phủ khi không biết mẫu số — nhưng nếu người dùng CÓ điểm ở đây
+      // thì im lặng bỏ qua là biến một chỗ chưa biết thành một kết luận: "bạn
+      // phủ 0%". Ghi lại để tầng sau thôi nói con số chính xác.
+      const held = accessibleFor(state, ix, row.programId, asOf);
+      if (held.total > 0 || held.hasUnknownSource) unpricedHeld.push(row.programId);
+      continue;
+    }
     const reach = accessibleFor(state, ix, row.programId, asOf);
     // Số dư chưa biết ở BẤT KỲ chương trình nào định giá được chặng đều làm cả
     // kết luận thành cận dưới — KHÔNG chỉ ở chương trình thắng cuộc.
@@ -128,12 +149,28 @@ export function tripCoverage(
   // số): `accessible` là CHƯA BIẾT, không phải 0. Trả 0 ở đây là chỗ luật
   // trống-≠-bằng-không thủng ngay tại biên giới đầu ra — `japanTripFunded` có
   // 200,000 điểm Membership Rewards® mà bản trước xuất ra `accessiblePoints: 0`.
-  if (bestProgram === null) return { coverage: null, bestProgram: null, accessible: null, accessibleIsLowerBound: false };
+  if (bestProgram === null) {
+    return {
+      coverage: null,
+      bestProgram: null,
+      accessible: null,
+      accessibleIsLowerBound: false,
+      unpricedHeldPrograms: unpricedHeld.sort(),
+    };
+  }
 
   // Số dư chưa biết góp vào thì `coverage` là cận DƯỚI. Phủ ĐỦ vẫn kết luận
   // được (cận dưới đã đủ thì thật sự đủ), nhưng CHƯA đủ thì không được nói
   // thiếu bao nhiêu — xem `engine.ts`.
-  return { coverage, bestProgram, accessible, accessibleIsLowerBound: lowerBound };
+  return {
+    coverage,
+    bestProgram,
+    accessible,
+    // Một chương trình có điểm mà không định giá nổi cũng làm kết luận thành
+    // cận dưới: người dùng có thể đang phủ tốt hơn con số này.
+    accessibleIsLowerBound: lowerBound || unpricedHeld.length > 0,
+    unpricedHeldPrograms: unpricedHeld.sort(),
+  };
 }
 
 export interface StrategyInput {

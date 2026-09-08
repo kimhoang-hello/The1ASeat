@@ -80,12 +80,43 @@ export function centsPerPoint(
   return row?.centsPerPoint ?? null;
 }
 
-/** Số dư của một chương trình — ba trạng thái, xem `BalanceKnowledge`. */
+/**
+ * Số dư dùng được của MỘT dòng — hoặc `null` khi dòng đó không đáng tin.
+ *
+ * Số âm và số không hữu hạn bị coi là CHƯA BIẾT, không phải là giá trị. Không
+ * có phép kiểm này thì một dòng `-50,000` (validator đã cấm, nhưng engine
+ * không gọi validator) đi thẳng vào mẫu số của phép đo tập trung và đẩy
+ * `flexibilityScore` lên 2.12 — một tỷ trọng lớn hơn 1, rồi lan sang
+ * `needs.portfolio.flexibility` và mọi chiến lược đọc nó.
+ */
+function usableBalance(value: number | null | undefined): number | null {
+  if (value == null) return null;
+  if (!Number.isFinite(value) || value < 0) return null;
+  return value;
+}
+
+/**
+ * Số dư của một chương trình — ba trạng thái, xem `BalanceKnowledge`.
+ *
+ * GOM MỌI DÒNG của cùng một chương trình. Dữ liệu người dùng đến từ database,
+ * và không gì trong `UserDataSource` hứa mỗi chương trình chỉ có một dòng.
+ * Hai dòng 100,000 Membership Rewards® mà cộng lại thành 200,000 là ĐÚNG phép
+ * đếm trùng §7 sinh ra để cấm — chỉ đến từ một hướng không ai canh.
+ *
+ * Hai dòng nói HAI SỐ KHÁC NHAU là dữ liệu tự mâu thuẫn: trả về `unknown`
+ * chứ không chọn bừa một số. Chọn bừa là biến một mâu thuẫn thành một con số
+ * trông chắc chắn.
+ */
 export function balanceKnowledge(state: UserState, programId: PointsProgramId): BalanceKnowledge {
-  const row = asArray(state.balances).find((entry) => entry?.programId === programId);
-  if (row === undefined) return { kind: "absent" };
-  if (row.balance == null) return { kind: "unknown" };
-  return { kind: "known", points: row.balance };
+  const rows = asArray(state.balances).filter((entry) => entry?.programId === programId);
+  if (rows.length === 0) return { kind: "absent" };
+  const values = [...new Set(rows.map((row) => usableBalance(row.balance)))];
+  if (values.length === 1 && values[0] !== null) return { kind: "known", points: values[0] };
+  const known = values.filter((value): value is number => value !== null);
+  // Mọi dòng đọc được đều nói cùng một số → dùng nó. Lệch nhau, hoặc có dòng
+  // không đọc được → chưa biết.
+  if (known.length === 1 && values.length === 1) return { kind: "known", points: known[0] };
+  return { kind: "unknown" };
 }
 
 /**
@@ -109,16 +140,26 @@ export function accessibleFor(
   let viaTransfer = 0;
   const sources: PointsProgramId[] = [];
 
-  for (const row of asArray(state.balances)) {
-    if (row?.programId == null) continue;
-    if (row.programId === programId) continue;
-    const source = ix.programById.get(row.programId);
+  // Duyệt trên tập chương trình ĐÃ GOM, không trên các dòng thô: hai dòng cùng
+  // một chương trình sẽ góp hai lần vào `viaTransfer`, và đó là phép đếm trùng
+  // §7 cấm, đến từ phía dữ liệu thay vì phía chặng chuyển.
+  const sourcePrograms = [
+    ...new Set(
+      asArray(state.balances)
+        .map((row) => row?.programId)
+        .filter((value): value is PointsProgramId => value != null),
+    ),
+  ].sort();
+
+  for (const sourceProgramId of sourcePrograms) {
+    if (sourceProgramId === programId) continue;
+    const source = ix.programById.get(sourceProgramId);
     // Chỉ chương trình `transferable` mới sinh ra điểm tiếp cận được — luật
     // này đã được validator của Phase 1 cưỡng chế ở phía dữ liệu, nhưng phép
     // kiểm ở đây rẻ và nó là luật của §7, không phải của một file seed.
     if (source === undefined || !source.transferable) continue;
 
-    const paths = activeAt(ix.pathsBySource.get(row.programId) ?? [], asOf).filter(
+    const paths = activeAt(ix.pathsBySource.get(sourceProgramId) ?? [], asOf).filter(
       (path) => path.destinationProgramId === programId && isOpenToEveryone(path.requiresTier),
     );
     if (paths.length === 0) continue;
@@ -126,9 +167,10 @@ export function accessibleFor(
     // Nhiều chặng cùng cặp nguồn–đích thì lấy tỷ lệ TỐT NHẤT: người dùng chọn
     // được, và chọn cái tệ hơn là ước lượng thiếu không có lý do.
     const bestRatio = Math.max(...paths.map((path) => path.ratioTo / path.ratioFrom));
-    sources.push(row.programId);
-    if (row.balance == null) hasUnknownSource = true;
-    else viaTransfer += Math.floor(row.balance * bestRatio);
+    sources.push(sourceProgramId);
+    const held = balanceKnowledge(state, sourceProgramId);
+    if (held.kind === "known") viaTransfer += Math.floor(held.points * bestRatio);
+    else hasUnknownSource = true;
   }
 
   sources.sort();
@@ -204,29 +246,38 @@ export function analyzePortfolio(
   // Sắp theo `programId` trước khi duyệt: các dòng tới từ một truy vấn
   // database, và truy vấn không hứa thứ tự nào. Cùng lý do `userGaps` phải
   // sắp — hai trạng thái giống hệt nhau không được cho hai kết quả khác nhau.
-  const balances = [...asArray(state.balances)]
-    .filter((row) => row?.programId != null)
-    .sort((a, b) => (a.programId < b.programId ? -1 : a.programId > b.programId ? 1 : 0));
+  // Tập chương trình đã GOM, sắp cố định. Duyệt các dòng thô ở đây sẽ cộng hai
+  // lần giá trị của một chương trình có hai dòng — và tệ hơn `direct` (một
+  // `Map`) chỉ giữ dòng cuối, nên bản đồ số dư và tổng giá trị nói hai chuyện
+  // khác nhau về cùng một danh mục.
+  const programIds = [
+    ...new Set(
+      asArray(state.balances)
+        .map((row) => row?.programId)
+        .filter((value): value is PointsProgramId => value != null),
+    ),
+  ].sort();
 
-  for (const row of balances) {
-    if (row.balance == null) {
-      direct.set(row.programId, { kind: "unknown" });
+  for (const programId of programIds) {
+    const known = balanceKnowledge(state, programId);
+    if (known.kind !== "known") {
+      direct.set(programId, { kind: "unknown" });
       hasUnknownBalance = true;
       continue;
     }
-    direct.set(row.programId, { kind: "known", points: row.balance });
+    direct.set(programId, known);
 
-    const program = ix.programById.get(row.programId);
-    const cpp = centsPerPoint(ix, row.programId, asOf);
+    const program = ix.programById.get(programId);
+    const cpp = centsPerPoint(ix, programId, asOf);
     // Chương trình lạ hoặc chưa có định giá: đếm là CÓ số dư (dòng `direct` ở
     // trên) nhưng không đưa vào phép đo tập trung. Gán một định giá mặc định ở
     // đây là bịa ra một con số rồi lấy chính nó kết luận danh mục nghiêng đi
     // đâu — xem `typicalAmount` của khoảng mở, cùng một cái bẫy.
     if (program === undefined || cpp === null) continue;
 
-    const valueCents = row.balance * cpp;
+    const valueCents = known.points * cpp;
     knownValueCents += valueCents;
-    if (isFlexibleInPractice(ix, row.programId, asOf)) flexibleValueCents += valueCents;
+    if (isFlexibleInPractice(ix, programId, asOf)) flexibleValueCents += valueCents;
 
     for (const [ecosystem, share] of ecosystemShares(program, ix, asOf)) {
       byEcosystem.set(ecosystem, (byEcosystem.get(ecosystem) ?? 0) + valueCents * share);
@@ -261,7 +312,9 @@ export function analyzePortfolio(
     balancesUndeclared: state.declared?.balances !== true,
     cardsUndeclared: state.declared?.cards !== true,
     concentration,
-    flexibilityScore: knownValueCents > 0 ? flexibleValueCents / knownValueCents : 0,
+    // Kẹp về [0,1]: nó là một TỶ TRỌNG, và mọi tầng sau đọc nó như vậy.
+    flexibilityScore:
+      knownValueCents > 0 ? Math.min(1, Math.max(0, flexibleValueCents / knownValueCents)) : 0,
     earnedPrograms,
     heldProducts: held,
   };

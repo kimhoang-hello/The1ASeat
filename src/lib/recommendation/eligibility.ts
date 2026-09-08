@@ -49,8 +49,34 @@ function boolOutcome(value: boolean | null, required: boolean): RuleOutcome {
   return value === required ? "pass" : "fail";
 }
 
+/**
+ * `EligibilityRule.operator` có năm giá trị, và engine chỉ hiểu đúng hai.
+ *
+ * Luật thu nhập được đọc như "≥ ngưỡng", luật cư trú như "thuộc danh sách".
+ * Bộ dữ liệu hôm nay chỉ dùng đúng hai dạng đó — nhưng KIỂU cho phép `lte`,
+ * `ne`, `not_in`, và một luật như vậy sẽ bị đọc NGƯỢC hoàn toàn mà không có
+ * dấu hiệu nào. Đọc ngược một luật cứng nghĩa là loại đúng những người đủ
+ * điều kiện, hoặc hứa một thẻ ngân hàng sẽ từ chối.
+ *
+ * Nên: gặp operator ngoài dự kiến thì trả `unknown` — engine nói nó không
+ * đánh giá được, §29 hạ độ tin cậy, và §30 có chỗ để hỏi. Cùng hướng với
+ * `offerBonusUnit`: thà im lặng còn hơn đoán sai về một dữ kiện cứng.
+ */
+function operatorUnderstood(rule: EligibilityRule): boolean {
+  switch (rule.ruleType) {
+    case "minimum_personal_income":
+    case "minimum_household_income":
+      return rule.operator === "gte";
+    case "residency":
+      return rule.operator === "in" || rule.operator === "eq";
+    default:
+      return rule.operator === "eq" || rule.operator === "in";
+  }
+}
+
 function evaluateRule(rule: EligibilityRule, state: UserState): RuleOutcome {
   const profile = state.profile;
+  if (!operatorUnderstood(rule)) return "unknown";
   switch (rule.ruleType) {
     case "residency": {
       const wanted = Array.isArray(rule.value) ? rule.value : [String(rule.value)];

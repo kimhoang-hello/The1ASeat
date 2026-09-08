@@ -19,12 +19,25 @@
  */
 
 import { SPEND_CATEGORIES } from "./types.ts";
-import { asArray, holdsNow, primaryGoal } from "./user.ts";
+import { asArray, holdsNow, isObject, primaryGoal } from "./user.ts";
 import type { UserDataGap, UserState } from "./user-types.ts";
 
 export function userGaps(state: UserState): UserDataGap[] {
   const gaps: UserDataGap[] = [];
-  const { profile, spend } = state;
+  /**
+   * Hồ sơ VẮNG HẲN cũng phải đọc được.
+   *
+   * Kiểu hứa `profile` luôn có, nhưng kiểu vắng mặt lúc chạy và dữ liệu tới từ
+   * database hoặc JSON — đúng lập luận đã làm `asArray`/`isObject` ra đời cho
+   * `cards` và `declared`. Không có phép phòng này thì mọi trường đọc bên dưới
+   * NÉM, và vì `engine.ts` gọi thẳng `userGaps`, cả một lượt chạy khuyến nghị
+   * đổ vì một dòng hồ sơ thiếu.
+   *
+   * Object rỗng cho ra đúng thứ nên có: mọi trường `== null`, tức mọi chỗ đều
+   * là CHƯA BIẾT. Validator vẫn báo riêng rằng bản ghi hỏng.
+   */
+  const profile = (isObject(state?.profile) ? state.profile : {}) as UserState["profile"];
+  const spend = state?.spend;
 
   const primary = primaryGoal(state);
   if (primary.kind === "none") {

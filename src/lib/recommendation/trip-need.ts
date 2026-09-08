@@ -141,13 +141,25 @@ export function tripNeedFor(
   const perTypical = minOf(priced.map((row) => row.pointsTypical));
   const perHigh = maxOf(priced.map((row) => row.pointsHigh));
 
-  if (trip.passengers == null) warnings.push("TRIP_PASSENGERS_UNKNOWN");
-  if (trip.roundTrip == null) warnings.push("TRIP_ROUND_TRIP_UNKNOWN");
+  // Số người phải là SỐ NGUYÊN DƯƠNG. `0` và số âm không phải "chưa biết" theo
+  // kiểu dữ liệu, nhưng chúng cũng không phải một chuyến đi — và nhân vào thì
+  // ra những con số vô nghĩa đi thẳng tới người đọc: `passengers: 0` cho
+  // "chuyến này cần 0 điểm" (rồi mọi thẻ mất sạch thành phần thu hẹp khoảng
+  // cách), `passengers: -2` cho "cần −476,000 điểm".
+  //
+  // `validateUserState` đã cấm cả hai, nhưng engine KHÔNG gọi validator —
+  // §30 đòi nhận được hồ sơ dở dang. Nên chỗ này tự phòng, và phòng theo đúng
+  // hướng của cả module: dữ liệu không dùng được là CHƯA BIẾT.
+  const passengers =
+    trip.passengers != null && Number.isInteger(trip.passengers) && trip.passengers > 0
+      ? trip.passengers
+      : null;
+  const roundTrip = typeof trip.roundTrip === "boolean" ? trip.roundTrip : null;
 
-  const canMultiply = trip.passengers != null && trip.roundTrip != null;
-  const factor = canMultiply
-    ? (trip.passengers as number) * ((trip.roundTrip as boolean) ? 2 : 1)
-    : null;
+  if (passengers === null) warnings.push("TRIP_PASSENGERS_UNKNOWN");
+  if (roundTrip === null) warnings.push("TRIP_ROUND_TRIP_UNKNOWN");
+
+  const factor = passengers !== null && roundTrip !== null ? passengers * (roundTrip ? 2 : 1) : null;
 
   const scale = (value: number | null): number | null =>
     value === null || factor === null ? null : value * factor;
@@ -168,8 +180,8 @@ export function tripNeedFor(
     low: scale(perLow),
     typical: scale(perTypical),
     high: scale(perHigh),
-    passengers: trip.passengers,
-    roundTrip: trip.roundTrip,
+    passengers,
+    roundTrip,
     floorOnly,
     reasonCodes,
     warnings,

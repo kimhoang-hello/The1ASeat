@@ -14,7 +14,7 @@ import { offlineDataset } from "./data/index.ts";
 import { datasetAt } from "./temporal.ts";
 import { indexDataset } from "./indexes.ts";
 import { ENGINE_VERSION, recommend } from "./engine.ts";
-import { accessibleFor, analyzePortfolio, isFlexibleInPractice } from "./portfolio.ts";
+import { accessibleFor, analyzePortfolio, balanceKnowledge, isFlexibleInPractice } from "./portfolio.ts";
 import { evaluateEligibility } from "./eligibility.ts";
 import { minimumSpendFit } from "./suitability.ts";
 import { tripNeedFor } from "./trip-need.ts";
@@ -27,6 +27,7 @@ import { nextQuestion } from "./explain.ts";
 import { SCORABLE_WEIGHT } from "./scoring/weights.ts";
 import { resolveTripGoal } from "./user.ts";
 import { id, type PointsProgramId, type ProductId } from "./types.ts";
+import { benefitFitFor, heldBenefitKeys } from "./benefit-fit.ts";
 import { productIdFor } from "./data/products.ts";
 import {
   USER_FIXTURES,
@@ -43,7 +44,7 @@ import {
   vietnamTripFunded,
   vietnamTripShortfall,
 } from "./data/user-fixtures.ts";
-import type { UserState } from "./user-types.ts";
+import type { UserCardId, UserState } from "./user-types.ts";
 import type { RecommendationRun } from "./engine-types.ts";
 
 const ASOF = "2026-09-08";
@@ -1478,4 +1479,219 @@ test("chặng CHƯA định giá không bị trừ độ tin cậy hai lần", (
     "chặng chưa định giá mà vẫn khai chỗ trống của một thẻ ứng viên",
   );
   assert.ok(japan.dataGaps.some((g) => g.kind === "award_route_uncovered"));
+});
+
+/* ================================================================== *
+ * Rà đối kháng — đầu vào THÙ ĐỊCH, không phải đầu vào mẫu
+ *
+ * Mọi ca dưới đây từng cho ra một con số SAI mà không lỗi nào nổ ra, và
+ * không ca nào bị các test phía trên bắt. `validateUserState` cấm phần lớn
+ * chúng, nhưng engine KHÔNG gọi validator — §30 đòi nhận hồ sơ dở dang —
+ * nên engine phải tự phòng, và phòng theo đúng hướng của cả module: dữ liệu
+ * không dùng được là CHƯA BIẾT, không phải một giá trị.
+ * ================================================================== */
+
+test("§7 — HAI DÒNG số dư cùng một chương trình không được cộng lại", () => {
+  // Không gì trong `UserDataSource` hứa mỗi chương trình chỉ có một dòng.
+  // Hai dòng 100,000 MR cộng thành 200,000 là ĐÚNG phép đếm trùng §7 cấm,
+  // chỉ đến từ một hướng không ai canh.
+  const twice: UserState = {
+    ...beginnerNoCards,
+    balances: [
+      { userId: beginnerNoCards.profile.id, programId: AMEX_MR, balance: 100_000, updatedAt: ASOF },
+      { userId: beginnerNoCards.profile.id, programId: AMEX_MR, balance: 100_000, updatedAt: ASOF },
+    ],
+  };
+  assert.equal(accessibleFor(twice, IX, AEROPLAN, ASOF).total, 100_000);
+  assert.deepEqual(accessibleFor(twice, IX, AEROPLAN, ASOF).sources, [AMEX_MR]);
+
+  const once: UserState = { ...twice, balances: [twice.balances[0]] };
+  assert.equal(
+    analyzePortfolio(twice, IX, ASOF).knownValueCents,
+    analyzePortfolio(once, IX, ASOF).knownValueCents,
+    "giá trị danh mục bị nhân đôi bởi một dòng trùng",
+  );
+});
+
+test("§7 — hai dòng nói HAI SỐ khác nhau là CHƯA BIẾT, không phải chọn bừa", () => {
+  const conflicting: UserState = {
+    ...beginnerNoCards,
+    balances: [
+      { userId: beginnerNoCards.profile.id, programId: AEROPLAN, balance: 10_000, updatedAt: ASOF },
+      { userId: beginnerNoCards.profile.id, programId: AEROPLAN, balance: 90_000, updatedAt: ASOF },
+    ],
+  };
+  assert.equal(balanceKnowledge(conflicting, AEROPLAN).kind, "unknown");
+  assert.equal(analyzePortfolio(conflicting, IX, ASOF).hasUnknownBalance, true);
+});
+
+test("số dư ÂM là dữ liệu hỏng ⇒ CHƯA BIẾT, và tỷ trọng vẫn nằm trong [0,1]", () => {
+  // `flexibilityScore` từng ra 2.12 — một tỷ trọng lớn hơn 1 — rồi lan sang
+  // `needs.portfolio.flexibility` và mọi chiến lược đọc nó.
+  const negative: UserState = {
+    ...beginnerNoCards,
+    balances: [
+      { userId: beginnerNoCards.profile.id, programId: AEROPLAN, balance: -50_000, updatedAt: ASOF },
+      { userId: beginnerNoCards.profile.id, programId: AMEX_MR, balance: 100_000, updatedAt: ASOF },
+    ],
+  };
+  const portfolio = analyzePortfolio(negative, IX, ASOF);
+  assert.equal(balanceKnowledge(negative, AEROPLAN).kind, "unknown");
+  assert.ok(portfolio.flexibilityScore >= 0 && portfolio.flexibilityScore <= 1);
+  const total = portfolio.concentration.reduce((sum, row) => sum + row.share, 0);
+  assert.ok(Math.abs(total - 1) < 1e-9, `tổng tỷ trọng = ${total}`);
+});
+
+test("§6 — số người không phải SỐ NGUYÊN DƯƠNG thì không nhân, và nói ra", () => {
+  const goal = vietnamTripFunded.goals[0];
+  if (goal.type !== "trip") return;
+  for (const passengers of [0, -2, 1.5]) {
+    const need = tripNeedFor(
+      resolveTripGoal(vietnamTripFunded.profile, { ...goal, passengers }),
+      IX,
+      ASOF,
+    );
+    assert.equal(need.low, null, `passengers=${passengers} vẫn ra một con số`);
+    assert.equal(need.high, null);
+    assert.equal(need.passengers, null);
+    assert.ok(need.warnings.includes("TRIP_PASSENGERS_UNKNOWN"));
+  }
+  // `passengers: -2` từng cho "chuyến này cần −476,000 điểm".
+  const negative = tripNeedFor(
+    resolveTripGoal(vietnamTripFunded.profile, { ...goal, passengers: -2 }),
+    IX,
+    ASOF,
+  );
+  assert.ok((negative.perPassengerOneWayLow ?? 0) > 0, "con số gốc vẫn tra được");
+});
+
+test("hồ sơ VẮNG HẲN không được làm đổ cả lượt chạy", () => {
+  // Kiểu hứa `profile` luôn có, nhưng kiểu vắng mặt lúc chạy và dữ liệu tới
+  // từ database. Cùng lập luận đã sinh ra `asArray`/`isObject` ở Phase 2.
+  for (const broken of [
+    { ...vietnamTripFunded, profile: undefined },
+    { ...vietnamTripFunded, profile: { ...vietnamTripFunded.profile, country: undefined } },
+  ] as never as UserState[]) {
+    const result = run(broken);
+    assert.ok(result.results.length >= 0, "không được ném");
+  }
+});
+
+test("§14 — operator engine KHÔNG hiểu thì trả `unknown`, không im lặng coi là gte", () => {
+  // `EligibilityRule.operator` có năm giá trị, engine chỉ đọc đúng hai. Một
+  // luật `lte` bị đọc như `gte` là đọc NGƯỢC một luật CỨNG — loại đúng những
+  // người đủ điều kiện, hoặc hứa một thẻ ngân hàng sẽ từ chối.
+  // Chọn một luật ĐỨNG RIÊNG, không thuộc nhóm HOẶC nào. Luật thu nhập nằm
+  // trong nhóm "income" (cá nhân HOẶC hộ gia đình), nên một vế không đánh giá
+  // được mà vế kia vẫn đạt thì cả nhóm ĐẠT — đó là phép HOẶC hoạt động đúng,
+  // không phải chỗ để thử luật này.
+  const product = productIdFor("scotiabank-scene-plus-visa-students");
+  const solo = DATA.eligibilityRules.find(
+    (rule) => rule.productId === product && rule.ruleType === "student_status_required",
+  );
+  assert.ok(solo !== undefined && solo.ruleGroup === null, "cần một luật cứng đứng riêng");
+
+  const student: UserState = {
+    ...beginnerNoCards,
+    profile: { ...beginnerNoCards.profile, isStudent: true },
+  };
+  assert.equal(
+    evaluateEligibility(product, student, IX, ASOF).status,
+    "eligible",
+    "mốc so sánh: operator hiểu được thì phán quyết bình thường",
+  );
+
+  const flipped = {
+    ...DATA,
+    eligibilityRules: DATA.eligibilityRules.map((rule) =>
+      rule.id === solo!.id ? { ...rule, operator: "not_in" as const } : rule,
+    ),
+  };
+  const verdict = evaluateEligibility(product, student, indexDataset(flipped), ASOF);
+  assert.equal(verdict.status, "unknown", "operator lạ mà vẫn phán quyết chắc chắn");
+  assert.ok(verdict.reasonCodes.includes("ELIGIBILITY_UNCERTAIN"));
+});
+
+test("§29 — MỘT ứng viên duy nhất thì không có khoảng cách để đo ⇒ không `high`", () => {
+  // Người dùng đã giữ hết thẻ trong bộ dữ liệu: chỉ còn `NO_NEW_CARD`, và bản
+  // trước lấy `second = 0` rồi kết luận "tách bạch tuyệt đối".
+  const everything: UserState = {
+    ...beginnerNoCards,
+    cards: DATA.products
+      .filter((product) => product.productType === "credit_card")
+      .map((product, index) => ({
+        id: id<UserCardId>(`uc_all_${index}`),
+        userId: beginnerNoCards.profile.id,
+        productId: product.id,
+        status: "active" as const,
+        openedDate: "2024-01-01",
+        closedDate: null,
+      })),
+  };
+  const result = run(everything).results[0];
+  assert.equal(result.primaryAction.kind, "no_new_card");
+  assert.equal(result.alternatives.length, 0);
+  assert.notEqual(result.confidence.level, "high", "một ứng viên mà vẫn tự tin CAO");
+});
+
+test("§6 — chương trình CÓ ĐIỂM mà không định giá nổi ⇒ thôi nói khoảng cách chính xác", () => {
+  // Ca thật: hạng phổ thông đặc biệt Canada→Việt Nam chỉ có Aeroplan® ở dạng
+  // `dynamic_floor`, nên nó bị loại khỏi phép đo phủ. Người giữ 260,000 điểm
+  // Aeroplan® bị kết luận "phủ 0%, còn thiếu đúng 100,000 điểm" — đo trên hai
+  // chương trình họ không có đồng nào.
+  const goal = vietnamTripFunded.goals[0];
+  if (goal.type !== "trip") return;
+  const premium = { ...goal, cabin: "premium_economy" as const };
+  const need = tripNeedFor(resolveTripGoal(vietnamTripFunded.profile, premium), IX, ASOF);
+
+  const aeroplanRow = need.byProgram.find((row) => row.programId === AEROPLAN);
+  assert.ok(aeroplanRow !== undefined && aeroplanRow.high === null, "dựng đúng ca giá sàn");
+
+  const covered = tripCoverage(vietnamTripFunded, IX, ASOF, need);
+  assert.deepEqual(covered.unpricedHeldPrograms, [AEROPLAN]);
+  assert.equal(covered.accessibleIsLowerBound, true);
+
+  const result = run({ ...vietnamTripFunded, goals: [premium] }).results[0];
+  assert.equal(result.numbers.pointsGapTypical, null, "vẫn nói một khoảng cách chính xác");
+  assert.ok(result.warnings.includes("AWARD_PRICE_FLOOR_ONLY"));
+});
+
+test("§16 Rule 6 — thẻ trùng HẾT quyền lợi thì giá trị tăng thêm bằng 0", () => {
+  const product = DATA.products.find((p) => p.slug === "td-aeroplan-visa-infinite");
+  assert.ok(product !== undefined);
+  const held = heldBenefitKeys([product!], IX, ASOF);
+  const fit = benefitFitFor(product!.id, held, IX, ASOF);
+  assert.equal(fit.incrementalCount, 0);
+  assert.equal(fit.incrementalCashCents, 0);
+  assert.equal(fit.duplicatedCount, fit.totalCount);
+  assert.ok(fit.reasonCodes.includes("EXISTING_BENEFIT_DUPLICATION"));
+});
+
+test("§7 — chương trình chưa có ĐỊNH GIÁ không phá phép đo tập trung", () => {
+  const exotic: UserState = {
+    ...beginnerNoCards,
+    balances: [
+      { userId: beginnerNoCards.profile.id, programId: id<PointsProgramId>("khong-ton-tai"), balance: 500_000, updatedAt: ASOF },
+      { userId: beginnerNoCards.profile.id, programId: AEROPLAN, balance: 100_000, updatedAt: ASOF },
+    ],
+  };
+  const portfolio = analyzePortfolio(exotic, IX, ASOF);
+  const total = portfolio.concentration.reduce((sum, row) => sum + row.share, 0);
+  assert.ok(Math.abs(total - 1) < 1e-9, `tổng tỷ trọng = ${total}`);
+  // Vẫn được ghi nhận là CÓ số dư, chỉ không đưa vào phép đo giá trị.
+  assert.equal(portfolio.direct.size, 2);
+});
+
+test("§8/§9 — tầng chiến lược và nhu cầu KHÔNG nhắc tên sản phẩm nào", async () => {
+  // Phép thử cấu trúc của "sinh hành động TRƯỚC khi nghĩ tới thẻ". Khoảnh khắc
+  // một chiến lược ra đời vì một cái thẻ cụ thể, thứ tự suy luận của spec đã
+  // bị đảo ngược.
+  const { readFile } = await import("node:fs/promises");
+  for (const name of ["strategies.ts", "needs.ts"]) {
+    const text = await readFile(new URL(`./${name}`, import.meta.url), "utf8");
+    const code = text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    for (const product of DATA.products) {
+      assert.ok(!code.includes(product.slug), `${name} nhắc tới sản phẩm ${product.slug}`);
+    }
+  }
 });

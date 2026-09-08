@@ -154,10 +154,17 @@ export function computeConfidence(input: ConfidenceInput): ConfidenceFactors {
   const top = input.ranked[0]?.score ?? 0;
   const second = input.ranked[1]?.score ?? 0;
   const gap = Math.max(0, top - second);
+  // MỘT ứng viên duy nhất thì không có khoảng cách nào để đo. Bản trước lấy
+  // `second = 0` rồi kết luận "tách bạch tuyệt đối" — engine tự tin CAO đúng
+  // lúc nó không có gì để so. Xảy ra thật khi người dùng đã giữ hết thẻ trong
+  // bộ dữ liệu: chỉ còn `NO_NEW_CARD`, và nó nhận `high`.
+  const hasRival = input.ranked.length > 1;
   // 0.20 trở lên là tách bạch; dưới 0.02 là hoà. Hai mốc đến từ chính hai ví
   // dụ của §29 (0.30 → cao, 0.01 → thấp).
-  const separation = clamp01((gap - 0.02) / (0.2 - 0.02));
-  if (gap < 0.05 && input.ranked.length > 1) {
+  const separation = hasRival ? clamp01((gap - 0.02) / (0.2 - 0.02)) : 0.5;
+  if (!hasRival) {
+    notes.push("chỉ có một ứng viên: không đo được khoảng cách điểm");
+  } else if (gap < 0.05) {
     notes.push(`hai ứng viên đầu chỉ cách nhau ${gap.toFixed(3)}`);
   }
 
@@ -167,9 +174,13 @@ export function computeConfidence(input: ConfidenceInput): ConfidenceFactors {
   // Khoảng cách điểm ĐẶT TRẦN, không chỉ góp một phần — xem đầu file.
   let level: ConfidenceFactors["level"] =
     blended >= 0.75 ? "high" : blended >= 0.5 ? "medium" : "low";
-  if (input.ranked.length > 1) {
+  if (hasRival) {
     if (gap < 0.05) level = "low";
     else if (gap < 0.12 && level === "high") level = "medium";
+  } else if (level === "high") {
+    // Không có đối thủ thì trần là `medium`: dữ liệu có thể đầy đủ và tươi,
+    // nhưng "ứng viên duy nhất" không phải bằng chứng nó là lựa chọn tốt.
+    level = "medium";
   }
 
   return {

@@ -71,6 +71,14 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * thôi đếm hai lần.
  * 3.2.0 — vòng ba và bốn: "chưa biết" thôi bị xuất thành 0, phạm vi chỗ trống
  * dữ liệu, `portfolio_already_covers` đọc thẳng chương trình của chuyến đi.
+ * 3.3.0 — rà đối kháng: dòng số dư TRÙNG thôi cộng lại, số dư âm và số người
+ * không hợp lệ thành CHƯA BIẾT, operator lạ thôi bị đọc như `gte`, độ tin cậy
+ * không còn CAO khi chỉ có một ứng viên, và chương trình có điểm mà chỉ biết
+ * mức sàn thôi sinh ra khoảng cách chính xác giả.
+ *
+ * 3.3.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu vào hỏng
+ * nào — nhưng nó đổi kết quả cho những đầu vào đó, và §20 nói về MỌI đầu vào
+ * chứ không chỉ về fixture.
  *
  * Cả hai lần đều ĐỔI THỨ HẠNG, nên ba bản không so sánh trực tiếp được — và
  * đó chính là việc trường này sinh ra để nói.
@@ -80,7 +88,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "3.2.0";
+export const ENGINE_VERSION = "3.3.0";
 
 export interface RecommendInput {
   state: UserState;
@@ -382,8 +390,20 @@ export function recommend(input: RecommendInput): RecommendationRun {
         confidence.level === "low" && ranked.length > 1
           ? (["SCORES_NEARLY_TIED"] as ReasonCode[])
           : [],
+        (covered?.unpricedHeldPrograms.length ?? 0) > 0
+          ? (["AWARD_PRICE_IS_FLOOR_ONLY"] as ReasonCode[])
+          : [],
       ),
-      warnings: mergeWarnings(winner.warnings, need?.warnings ?? []),
+      warnings: mergeWarnings(
+        winner.warnings,
+        need?.warnings ?? [],
+        // Người dùng có điểm ở một chương trình engine chỉ biết mức SÀN. Con
+        // số phủ và khoảng cách đều là cận dưới, và điều đó phải nói ra chứ
+        // không nằm im trong một trường boolean.
+        (covered?.unpricedHeldPrograms.length ?? 0) > 0
+          ? (["AWARD_PRICE_FLOOR_ONLY"] as WarningCode[])
+          : [],
+      ),
       numbers: {
         tripNeedLow: need?.low ?? null,
         tripNeedTypical: need?.typical ?? null,
