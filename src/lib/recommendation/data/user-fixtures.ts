@@ -597,6 +597,103 @@ export const vagueEarner: UserState = {
   declared: { cards: true, balances: true },
 };
 
+/* ------------------------------------------------------------------ *
+ * Test C / D chạy được — cùng tình huống, trên chặng ĐÃ CÓ dữ liệu
+ * ------------------------------------------------------------------ */
+
+/**
+ * Hai nhân vật dưới đây là bản chạy được của Test C và Test D.
+ *
+ * `japanTripFunded` / `japanTripShortfall` bị chặn bởi DỮ LIỆU, không bởi
+ * code: §33 mới dựng award strategy cho `CANADA_US → SEA_VIETNAM`, còn JAPAN,
+ * EUROPE và EAST_ASIA được khai đúng là `award_route_uncovered`. Cách sai để
+ * mở khoá chúng là bịa một bảng giá cho Nhật; cách đúng là thử CÙNG tình huống
+ * — đủ điểm và thiếu điểm — trên chặng bộ dữ liệu thật sự biết giá.
+ *
+ * Hai nhân vật Nhật Ở LẠI, và chúng vẫn có việc: chúng là ca "engine gặp chỗ
+ * trống của lớp dữ liệu", tức là ca §29 phải hạ độ tin cậy và §30 phải hỏi
+ * đúng câu. Đó là một bài test khác, không phải một bài test hỏng.
+ *
+ * Con số 260,000 không tuỳ tiện: `aeroplan-ca-sea` hạng business khai
+ * 102,500–115,000 điểm MỘT CHIỀU MỘT NGƯỜI, nên khứ hồi một người là
+ * 205,000–230,000. Người này phủ được cận TRÊN — điều kiện §16 Rule 1 đòi
+ * trước khi engine được phép nói "bạn đã đủ điểm".
+ */
+export const vietnamTripFunded: UserState = {
+  profile: profileOf("u_vn_funded", {
+    annualPersonalIncome: amountRange(90_000, 120_000),
+    annualFeeTolerancePerCard: 150,
+    businessCardsAllowed: false,
+    hasBusiness: false,
+    isStudent: false,
+  }),
+  spend: spendOf("u_vn_funded", {
+    monthlyTotal: exactAmount(3_500),
+    byCategory: { grocery: exactAmount(800), dining: exactAmount(500), travel: exactAmount(400) },
+    minimumSpendCapacity3m: exactAmount(4_000),
+  }),
+  cards: [cardOf("u_vn_funded", "td-aeroplan-visa-infinite", "active", { opened: "2023-07-01" })],
+  balances: [balanceOf("u_vn_funded", AEROPLAN, 260_000)],
+  goals: [
+    goalOf("u_vn_funded", {
+      type: "trip",
+      priority: 1,
+      originRegion: null,
+      originAirport: null,
+      destinationRegion: "SEA_VIETNAM",
+      destinationAirport: null,
+      cabin: "business",
+      passengers: 1,
+      roundTrip: true,
+      travelStart: "2027-02-01",
+      travelEnd: "2027-03-31",
+      flexibility: "high",
+    }),
+  ],
+  declared: { cards: true, balances: true },
+};
+
+/**
+ * Cùng chặng, cùng hạng ghế, HAI người, và 20,000 điểm.
+ *
+ * Khứ hồi hai người là 410,000–460,000 điểm. Khác `vietnamTripFunded` ở đúng
+ * hai con số — và đó chính là điều cần chứng minh: khoảng cách giữa "đã đủ" và
+ * "thiếu xa" là DỮ LIỆU, chứ không phải hai đường đi khác nhau trong engine.
+ */
+export const vietnamTripShortfall: UserState = {
+  profile: profileOf("u_vn_gap", {
+    annualPersonalIncome: amountRange(90_000, 120_000),
+    annualFeeTolerancePerCard: 600,
+    businessCardsAllowed: false,
+    hasBusiness: false,
+    isStudent: false,
+  }),
+  spend: spendOf("u_vn_gap", {
+    monthlyTotal: exactAmount(5_000),
+    byCategory: { grocery: exactAmount(1_000), dining: exactAmount(700), travel: exactAmount(600) },
+    minimumSpendCapacity3m: exactAmount(9_000),
+  }),
+  cards: [],
+  balances: [balanceOf("u_vn_gap", AEROPLAN, 20_000)],
+  goals: [
+    goalOf("u_vn_gap", {
+      type: "trip",
+      priority: 1,
+      originRegion: "CANADA_US",
+      originAirport: "YYZ",
+      destinationRegion: "SEA_VIETNAM",
+      destinationAirport: null,
+      cabin: "business",
+      passengers: 2,
+      roundTrip: true,
+      travelStart: "2027-04-01",
+      travelEnd: "2027-04-30",
+      flexibility: "medium",
+    }),
+  ],
+  declared: { cards: true, balances: true },
+};
+
 /** Mọi nhân vật, để test quét một lượt. */
 export const USER_FIXTURES: UserState[] = [
   beginnerNoCards,
@@ -612,4 +709,6 @@ export const USER_FIXTURES: UserState[] = [
   advancedCollector,
   highSpendLowCapacity,
   vagueEarner,
+  vietnamTripFunded,
+  vietnamTripShortfall,
 ];

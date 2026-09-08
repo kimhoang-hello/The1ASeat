@@ -8,7 +8,14 @@ import {
   type PointsProgramId,
 } from "../types.ts";
 import { productIdFor } from "./products.ts";
-import { longestWindowMonths, spendPerNinetyDays, totalSpend, type SpendWindow } from "../spend.ts";
+import {
+  allWindowEnds,
+  longestWindowMonths,
+  spendPerNinetyDays,
+  spendWindowsOf,
+  totalSpend,
+  type SpendComponentShape,
+} from "../spend.ts";
 
 /**
  * Welcome offer đang chạy, và cấu trúc thật bên trong nó.
@@ -586,33 +593,22 @@ const OFFER_SEEDS: OfferSeed[] = [
 ];
 
 /**
- * `monthly_spend` là ngoại lệ duy nhất cần nhân: Cobalt đòi $750 MỖI chu kỳ
- * sao kê trong 12 chu kỳ, tức $9,000 thật trải trên cả cửa sổ.
+ * `ComponentSeed` → hình dạng chung mà `spend.ts` nhận.
+ *
+ * Phép nhân của `monthly_spend` (Cobalt đòi $750 MỖI chu kỳ trong 12 chu kỳ,
+ * tức $9,000 thật) TỪNG nằm ở đây dưới dạng một hàm riêng. Nó chuyển sang
+ * `spend.ts` khi engine ở Phase 3 cần đúng quy tắc đó để tính mức bonus dùng
+ * được: hai chỗ kiểm cùng một khái niệm bằng hai dòng viết riêng thì chúng sẽ
+ * lệch, và lệch im lặng. Ở đây chỉ còn phép dịch tên trường.
  */
-function requiredSpendOf(c: ComponentSeed): number | null {
-  if (c.spend === undefined) return null;
-  return c.type === "monthly_spend" ? c.spend * (c.repeat ?? 1) : c.spend;
-}
-
-/** Các mốc chi của một offer, dạng khoảng ngày tính từ lúc mở thẻ. Phép tính
- *  nằm trong `spend.ts` — hàm thuần, có test riêng. */
-function windowsOf(components: ComponentSeed[]): SpendWindow[] {
-  return components
-    .map((c) => {
-      const needed = requiredSpendOf(c);
-      if (needed === null) return null;
-      const from = c.startsAfterDays ?? 0;
-      return { from, to: from + (c.windowDays ?? 90), needed };
-    })
-    .filter((w): w is SpendWindow => w !== null);
-}
-
-/** Mọi cửa sổ có mặt trong offer, kể cả những thành phần không đòi chi tiêu —
- *  `longestWindowMonths` cần chúng để biết bonus kéo dài tới đâu. */
-function allWindowsOf(components: ComponentSeed[]): { to: number }[] {
-  return components
-    .filter((c) => c.windowDays !== undefined)
-    .map((c) => ({ to: (c.startsAfterDays ?? 0) + c.windowDays! }));
+function shapeOf(components: ComponentSeed[]): SpendComponentShape[] {
+  return components.map((c) => ({
+    componentType: c.type,
+    spendRequirement: c.spend ?? null,
+    spendWindowDays: c.windowDays ?? null,
+    windowStartsAfterDays: c.startsAfterDays ?? 0,
+    repeatCount: c.repeat ?? null,
+  }));
 }
 
 /**
@@ -656,9 +652,9 @@ export const OFFERS: Offer[] = OFFER_SEEDS.map((seed) => ({
   bonusKind: seed.kind ?? inferBonusKind(seed),
   bonusCurrencyId: seed.currency ? (seed.currency as PointsProgramId) : null,
   headlineBonus: seed.headline,
-  minimumSpend: totalSpend(windowsOf(seed.components)),
-  minimumSpendMonths: longestWindowMonths(allWindowsOf(seed.components)),
-  spendPerNinetyDays: spendPerNinetyDays(windowsOf(seed.components)),
+  minimumSpend: totalSpend(spendWindowsOf(shapeOf(seed.components))),
+  minimumSpendMonths: longestWindowMonths(allWindowEnds(shapeOf(seed.components))),
+  spendPerNinetyDays: spendPerNinetyDays(spendWindowsOf(shapeOf(seed.components))),
   annualFeeFirstYear: seed.feeFirstYear ?? null,
   annualFeeRebate: seed.rebate ?? null,
   // V1 chỉ có offer công khai. Offer targeted (link riêng, thư mời) tồn tại

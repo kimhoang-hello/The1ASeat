@@ -98,3 +98,65 @@ export function longestWindowMonths(windows: { to: number }[]): number | null {
   const end = Math.max(...windows.map((w) => w.to));
   return Math.round((end / 365) * 12);
 }
+
+/* ------------------------------------------------------------------ *
+ * Từ thành phần offer sang cửa sổ chi tiêu
+ * ------------------------------------------------------------------ */
+
+/**
+ * Hình dạng tối thiểu của một thành phần offer mà ba hàm trên cần.
+ *
+ * Cố ý KHÔNG phải `OfferComponent`: file này là hàm thuần, không phụ thuộc bộ
+ * dữ liệu, và `data/offers.ts` gọi nó trên `ComponentSeed` — một hình dạng
+ * khác — TRƯỚC KHI `OfferComponent` tồn tại. Một kiểu cấu trúc hẹp là chỗ duy
+ * nhất cả hai đứng chung được.
+ */
+export interface SpendComponentShape {
+  componentType: string;
+  spendRequirement: number | null;
+  spendWindowDays: number | null;
+  windowStartsAfterDays: number;
+  repeatCount: number | null;
+}
+
+/**
+ * Chi tiêu THẬT một thành phần đòi hỏi.
+ *
+ * `monthly_spend` là ngoại lệ duy nhất cần nhân: Amex® Cobalt® đòi $750 MỖI
+ * chu kỳ sao kê trong 12 chu kỳ, tức $9,000 trải trên cả cửa sổ, trong khi
+ * `spendRequirement` chỉ ghi $750.
+ *
+ * Hàm này ở đây — chứ không nằm riêng trong `data/offers.ts` như trước — vì
+ * engine ở Phase 3 phải áp ĐÚNG quy tắc đó khi tính mức bonus dùng được. Hai
+ * phép kiểm cùng một khái niệm viết thành hai dòng riêng thì chúng sẽ lệch;
+ * bài học đó đã trả giá một lần ở `isObject` của Phase 2. Một khái niệm, một
+ * hàm.
+ */
+export function requiredSpendOf(component: SpendComponentShape): number | null {
+  if (component.spendRequirement === null) return null;
+  return component.componentType === "monthly_spend"
+    ? component.spendRequirement * (component.repeatCount ?? 1)
+    : component.spendRequirement;
+}
+
+/** Các mốc chi của một offer, dạng khoảng ngày tính từ lúc mở thẻ. */
+export function spendWindowsOf(components: readonly SpendComponentShape[]): SpendWindow[] {
+  return components
+    .map((component) => {
+      const needed = requiredSpendOf(component);
+      if (needed === null) return null;
+      const from = component.windowStartsAfterDays;
+      return { from, to: from + (component.spendWindowDays ?? 90), needed };
+    })
+    .filter((window): window is SpendWindow => window !== null);
+}
+
+/** Mọi cửa sổ có mặt, kể cả thành phần không đòi chi tiêu — `longestWindowMonths`
+ *  cần chúng để biết bonus kéo dài tới đâu. */
+export function allWindowEnds(components: readonly SpendComponentShape[]): { to: number }[] {
+  return components
+    .filter((component) => component.spendWindowDays !== null)
+    .map((component) => ({
+      to: component.windowStartsAfterDays + (component.spendWindowDays as number),
+    }));
+}
