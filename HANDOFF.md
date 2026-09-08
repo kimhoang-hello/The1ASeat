@@ -95,8 +95,8 @@ bảng debugger đáng tin.
 | --- | --- | --- |
 | A — người mới | `beginnerNoCards` | ✅ |
 | B — dồn hết vào Aeroplan® | `aeroplanHeavy` | ✅ |
-| C — đủ điểm | `vietnamTripFunded` | ✅ (xem dưới) |
-| D — thiếu điểm | `vietnamTripShortfall` | ✅ (xem dưới) |
+| C — đủ điểm | `vietnamTripFunded`, `japanTripFunded` | ✅ |
+| D — thiếu điểm | `vietnamTripShortfall`, `japanTripShortfall` | ✅ |
 | E — mốc chi ngoài tầm | `lowSpendCapacity`, `highSpendLowCapacity` | ✅ |
 | F — affiliate lớn | mọi nhân vật | ✅ |
 | G — quyền lợi trùng | `duplicateBagBenefit` | ✅ |
@@ -301,7 +301,7 @@ kiến của bản bàn giao trước.
 
 | Chỗ | Ảnh hưởng |
 | --- | --- |
-| Award strategy phủ 1/5 vùng của §33 | Chuyến Nhật/Âu/Đông Á rơi vào nhánh "chưa có giá"; §29 hạ độ tin cậy |
+| Award strategy phủ 3/4 cặp vùng | Chỉ còn `CANADA_US → EUROPE`; audit cảnh báo, §29 hạ độ tin cậy |
 | Hệ sinh thái = CHƯƠNG TRÌNH, không phải liên minh | Aeroplan® và United® đếm thành hai. Tập trung bị đo THIẾU chứ không thừa — engine khuyên đa dạng hoá ít hơn mức đáng, không ép vô cớ |
 | Chặng chuyển đòi hạng thành viên bị BỎ khỏi điểm tiếp cận được | Ước lượng thiếu; hướng an toàn (không hứa điểm người dùng không với tới) |
 | `editorial_rules` (§15) chưa làm | 5% trọng số editorial của §10 bằng 0 cho MỌI ứng viên, nên không đổi thứ hạng. `editorialAdjustment()` đã có chỗ và đã bị chặn ±10% |
@@ -323,15 +323,42 @@ nói ra ngay đầu file:
 
 ---
 
+## 6b. Lấp một vùng award mới (đã làm cho JAPAN + EAST_ASIA)
+
+Chỉ còn `CANADA_US → EUROPE`. Cách làm, đúng như đã làm cho hai vùng kia:
+
+1. **Đừng tra lại từ đầu.** `src/lib/award-charts.ts` đã có ba bảng giá đã
+   kiểm (Aeroplan® published, AAdvantage® published, Asia Miles® unpublished
+   nhưng dựng từ ba nguồn đồng thuận) kèm ngày verify. Chúng là NGUỒN.
+2. **Band khoảng cách TÍNH ĐƯỢC, đừng nhớ.** File đó có `lat`/`lon` từng sân
+   bay và hàm `greatCircleMiles`. Aeroplan® chia band trên khoảng cách TÍCH
+   LUỸ của các chặng, giới hạn bởi luật "không quá 2× bay thẳng"; Asia Miles®
+   cũng vậy nhưng luôn vòng qua HKG. AAdvantage® thì theo VÙNG, không theo
+   khoảng cách.
+3. **Một vùng của engine có thể bắc qua nhiều band/vùng của hãng** — đó chính
+   là lý do `pointsLow/Typical/High` tồn tại. `EAST_ASIA` bắc qua cả hai vùng
+   giá của AAdvantage® (Seoul ở Region 1, phần còn lại Region 2).
+4. **Chương trình không quote được thì khai vào `UNQUOTABLE_AWARD_PROGRAMS`**,
+   đừng để trống im lặng. Avios®, Flying Blue® và MileagePlus® đã ở đó.
+5. Châu Âu sẽ cần bộ chương trình KHÁC: Flying Blue® (hiện `unquotable`) và
+   Avios® quan trọng hơn hẳn, còn Asia Miles® gần như vô nghĩa. Nên đây không
+   phải là chép lại việc đã làm.
+6. `npm run audit:reco-data` — cảnh báo độ phủ sẽ tự mất khi vùng được lấp.
+
+⚠️ **Thêm dữ liệu KHÔNG cần tăng `ENGINE_VERSION`** (logic không đổi), nhưng
+bản chụp §20 thì phải chạy lại: `UPDATE_ENGINE_SNAPSHOT=1 npm run test:reco`.
+Bản chụp giữ RIÊNG `datasetFingerprint` và `engineVersion` đúng để phân biệt
+hai loại thay đổi đó.
+
 ## 7. Chạy gì
 
 ```bash
 npx tsc --noEmit          # sạch (đã bao gồm scripts/)
 npm run lint              # sạch
 npm run build             # Compiled successfully
-npm run test:reco         # 267/267 pass
+npm run test:reco         # 272/272 pass
 npm run test:game         # 43/43 pass (không liên quan, kiểm không hồi quy)
-npm run audit:reco-data   # 0 lỗi, 9 cảnh báo (đều là chỗ trống có chủ ý)
+npm run audit:reco-data   # 0 lỗi, 10 cảnh báo (đều là chỗ trống có chủ ý)
 ```
 
 Đụng vào thẻ tín dụng thì chạy thêm `audit:trademarks`, `audit:rebate-prose`,
