@@ -39,7 +39,12 @@ import { buildNoNewCardCandidate, finalScore, rankCandidates } from "./rank.ts";
 import { computeConfidence } from "./confidence.ts";
 import { mergeReasonCodes, mergeWarnings, nextQuestion } from "./explain.ts";
 import type { DatasetIndex } from "./indexes.ts";
-import type { BenefitId, Product, RecommendationDataset } from "./types.ts";
+import type {
+  AwardStrategy,
+  BenefitId,
+  Product,
+  RecommendationDataset,
+} from "./types.ts";
 import type { UserState } from "./user-types.ts";
 import type { RecommendationDataSource } from "./source.ts";
 import type { OfferHistoryPoint } from "./offer-history.ts";
@@ -60,8 +65,13 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * đầu ra" đều dựa vào nó. Đổi bất kỳ trọng số, ngưỡng hay luật nào thì tăng
  * số này — nếu không, hai lượt chạy cho hai kết quả khác nhau sẽ trông như
  * một lỗi tất định thay vì như một lần đổi mô hình.
+ *
+ * 3.1.0 — vòng review đầu: lọc thẻ không đủ điều kiện, phủ điểm theo từng
+ * chương trình, `rateAfterCap`, trần chi tiêu đúng đơn vị, miễn phí năm đầu
+ * thôi đếm hai lần. Tất cả đều ĐỔI THỨ HẠNG, nên bản 3.0.0 và 3.1.0 không so
+ * sánh trực tiếp được — và đó chính là việc trường này sinh ra để nói.
  */
-export const ENGINE_VERSION = "3.0.0";
+export const ENGINE_VERSION = "3.1.0";
 
 export interface RecommendInput {
   state: UserState;
@@ -143,6 +153,7 @@ function oldestVerifiedAt(
   data: RecommendationDataset,
   ix: DatasetIndex,
   asOf: string,
+  goalStrategies: readonly AwardStrategy[],
 ): string | null {
   let oldest: string | null = null;
   const consider = (day: string | undefined) => {
@@ -158,7 +169,10 @@ function oldestVerifiedAt(
   }
   for (const row of activeAt(data.programValuations, asOf)) consider(row.verifiedAt);
   for (const row of activeAt(data.transferPaths, asOf)) consider(row.verifiedAt);
-  for (const row of activeAt(data.awardStrategies, asOf)) consider(row.verifiedAt);
+  // Award strategy CHỈ của chặng đang hỏi. Quét cả bảng thì một chiến lược cũ
+  // cho một vùng chẳng liên quan cũng kéo `dataFreshness` xuống, và một khuyến
+  // nghị hoàn toàn tươi bị hạ độ tin cậy vì dữ liệu nó không hề đọc.
+  for (const strategy of goalStrategies) consider(strategy.verifiedAt);
   return oldest;
 }
 
@@ -309,7 +323,13 @@ export function recommend(input: RecommendInput): RecommendationRun {
       goal,
       userGaps: normalized.userGaps,
       dataGaps: normalized.dataGaps,
-      oldestVerifiedAt: oldestVerifiedAt(normalized.universe, data, ix, asOf),
+      oldestVerifiedAt: oldestVerifiedAt(
+        normalized.universe,
+        data,
+        ix,
+        asOf,
+        goal.tripNeed?.strategies ?? [],
+      ),
       asOf,
     });
 

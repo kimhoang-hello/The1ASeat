@@ -61,23 +61,34 @@ export function tripCoverage(
   let bestProgram: PointsProgramId | null = null;
   let accessible = 0;
 
+  // BA giá trị trả về phải nói về CÙNG MỘT chương trình.
+  //
+  // Bản trước giữ `accessible` là cực đại toàn cục trong khi `bestProgram` đi
+  // theo tỷ lệ phủ — hai đại lượng chọn độc lập nhau, nên chúng tách ra ngay
+  // khi chương trình nhiều điểm nhất không phải chương trình phủ tốt nhất:
+  // 130,000 dặm AAdvantage® (phủ 93%) cộng 200,000 Asia Miles® chọn
+  // AAdvantage® nhưng trả về 200,000 điểm, và tầng sau báo khoảng cách bằng 0
+  // thay vì 10,000. Cùng loại mâu thuẫn mà khoảng GỘP từng gây ra, chỉ ở một
+  // chỗ khác.
+  //
   // Thứ tự cố định: `byProgram` đã sắp theo id ở `trip-need.ts`, và phép so
   // `>` bên dưới giữ chương trình ĐẦU TIÊN khi hoà.
   for (const row of rows) {
-    const reach = accessibleFor(state, ix, row.programId, asOf).total;
-    if (reach > accessible || bestProgram === null) accessible = reach;
     if (row.high === null || row.high <= 0) continue;
+    const reach = accessibleFor(state, ix, row.programId, asOf).total;
     const own = Math.min(1, reach / row.high);
     if (coverage === null || own > coverage) {
       coverage = own;
       bestProgram = row.programId;
+      accessible = reach;
     }
   }
 
   // Không chương trình nào tính được giá (thiếu thừa số, hoặc toàn giá động):
-  // `coverage` là CHƯA BIẾT, không phải 0. Vẫn trả về chương trình có nhiều
-  // điểm nhất để các tầng sau có chỗ bám.
-  if (bestProgram === null && rows.length > 0) {
+  // `coverage` là CHƯA BIẾT, không phải 0. Vẫn trả về chương trình nhiều điểm
+  // nhất để các tầng sau có chỗ bám — và `accessible` đi kèm đúng chương trình
+  // đó.
+  if (bestProgram === null) {
     for (const row of rows) {
       const reach = accessibleFor(state, ix, row.programId, asOf).total;
       if (bestProgram === null || reach > accessible) {

@@ -1100,3 +1100,106 @@ test("§30 — chỉ hỏi về thẻ doanh nghiệp khi có thẻ doanh nghiệ
   });
   assert.equal(business?.gapKind, "business_cards_preference_unknown");
 });
+
+/* ================================================================== *
+ * Vòng review Codex 2 — lỗi nằm trong chính bản vá của vòng 1
+ * ================================================================== */
+
+test("§6 — điểm tiếp cận được phải thuộc về CHÍNH chương trình đã chọn", () => {
+  // Bản vá vòng 1 giữ `accessible` là cực đại toàn cục trong khi `bestProgram`
+  // đi theo tỷ lệ phủ — hai đại lượng chọn độc lập, nên chúng tách ra ngay khi
+  // chương trình nhiều điểm nhất KHÔNG phải chương trình phủ tốt nhất. Tầng
+  // sau lấy giá của chương trình này trừ đi số điểm của chương trình kia.
+  const goal = vietnamTripFunded.goals[0];
+  if (goal.type !== "trip") return;
+  const need = tripNeedFor(resolveTripGoal(vietnamTripFunded.profile, goal), IX, ASOF);
+
+  const aa = need.byProgram.find((row) => row.programId === id<PointsProgramId>("aadvantage"));
+  const asia = need.byProgram.find((row) => row.programId === id<PointsProgramId>("asia-miles"));
+  assert.ok(aa?.high != null && asia?.high != null);
+  assert.ok(asia!.high! > aa!.high!, "Asia Miles® phải đắt hơn AAdvantage® trên chặng này");
+
+  // Nhiều điểm Asia Miles® hơn, nhưng AAdvantage® phủ tốt hơn theo TỶ LỆ.
+  const aaPoints = Math.round(aa!.high! * 0.93);
+  const asiaPoints = Math.round(asia!.high! * 0.8);
+  assert.ok(asiaPoints > aaPoints, "dựng ca mà chương trình nhiều điểm hơn lại phủ kém hơn");
+
+  const split: UserState = {
+    ...vietnamTripFunded,
+    cards: [],
+    balances: [
+      { userId: vietnamTripFunded.profile.id, programId: id<PointsProgramId>("aadvantage"), balance: aaPoints, updatedAt: ASOF },
+      { userId: vietnamTripFunded.profile.id, programId: id<PointsProgramId>("asia-miles"), balance: asiaPoints, updatedAt: ASOF },
+    ],
+  };
+
+  const covered = tripCoverage(split, IX, ASOF, need);
+  assert.equal(covered.bestProgram, id<PointsProgramId>("aadvantage"));
+  assert.equal(
+    covered.accessible,
+    aaPoints,
+    "trả về số điểm của một chương trình KHÁC với chương trình đã chọn",
+  );
+
+  // Và khoảng cách báo ra phải khác 0 — đó là con số người đọc hành động theo.
+  const result = run(split).results[0];
+  assert.ok((result.numbers.pointsGapTypical ?? 0) > 0, "báo khoảng cách 0 trong khi vẫn còn thiếu");
+});
+
+test("chỗ trống `no_award_chart` chỉ tính cho mục tiêu CHUYẾN ĐI", () => {
+  // Câu "chương trình này không công bố bảng giá" chỉ có nghĩa khi ai đó định
+  // đổi vé. Bản vá vòng 1 gom cả sản phẩm ứng viên, nên một người hỏi "thẻ
+  // tiếp theo" bị báo thiếu bảng giá MileagePlus® chỉ vì thẻ United® có mặt
+  // trong danh sách.
+  const nextCard = run(beginnerNoCards).dataGaps.filter((gap) => gap.kind === "no_award_chart");
+  assert.deepEqual(nextCard, [], "mục tiêu không phải chuyến đi mà vẫn báo thiếu bảng giá");
+});
+
+test("chỗ trống `no_award_chart` tính cả chương trình người dùng ĐANG GIỮ", () => {
+  // Avios® có `no_award_chart` và KHÔNG có thẻ nào trong bộ dữ liệu kiếm nó
+  // trực tiếp. Bản vá vòng 1 chỉ gom chương trình định giá được chặng, nên
+  // người giữ Avios® mất hẳn chỗ trống đó — engine lặng lẽ bỏ qua số điểm của
+  // họ mà không hạ độ tin cậy.
+  assert.ok(
+    DATA.gaps.some((gap) => gap.kind === "no_award_chart" && gap.subjectId === "avios"),
+    "bộ dữ liệu phải còn khai avios là no_award_chart",
+  );
+  const holder: UserState = {
+    ...vietnamTripFunded,
+    balances: [
+      ...vietnamTripFunded.balances,
+      { userId: vietnamTripFunded.profile.id, programId: AVIOS, balance: 80_000, updatedAt: ASOF },
+    ],
+  };
+  const gaps = run(holder).dataGaps.filter((gap) => gap.kind === "no_award_chart");
+  assert.ok(
+    gaps.some((gap) => gap.subjectId === "avios"),
+    "người giữ Avios® mà chỗ trống bảng giá của nó biến mất",
+  );
+});
+
+test("§29 — độ tươi chỉ đọc award strategy của CHẶNG đang hỏi", () => {
+  // Quét cả bảng thì một chiến lược cũ cho một vùng chẳng liên quan cũng kéo
+  // `dataFreshness` xuống, và một khuyến nghị hoàn toàn tươi bị hạ độ tin cậy
+  // vì dữ liệu nó không hề đọc.
+  const stale = {
+    ...DATA,
+    awardStrategies: DATA.awardStrategies.map((row) =>
+      // Làm cũ MỌI chiến lược không thuộc chặng Việt Nam.
+      row.destinationRegion === "SEA_VIETNAM" ? row : { ...row, verifiedAt: "2020-01-01" },
+    ),
+  };
+  const ix = indexDataset(stale);
+  const before = run(vietnamTripFunded).results[0].confidence.dataFreshness;
+  const after = recommend({ state: vietnamTripFunded, data: stale, ix, asOf: ASOF }).results[0]
+    .confidence.dataFreshness;
+  assert.equal(after, before, "dữ liệu của chặng khác kéo tụt độ tươi của chặng này");
+});
+
+test("ENGINE_VERSION đổi khi hành vi đổi (§20 replay)", () => {
+  // Cùng đầu vào + CÙNG VERSION = cùng đầu ra. Vế thứ hai chỉ giữ được nếu
+  // version thật sự đổi khi thứ hạng đổi — nếu không, §20 dựng lại một lượt
+  // chạy cũ sẽ ra kết quả khác mà không ai giải thích được vì sao.
+  assert.notEqual(ENGINE_VERSION, "3.0.0", "hành vi đã đổi mà version đứng yên");
+  assert.match(ENGINE_VERSION, /^\d+\.\d+\.\d+$/);
+});

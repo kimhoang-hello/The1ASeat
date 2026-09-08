@@ -293,12 +293,21 @@ export function offerFacts(
   const usableRatio =
     reachable === null || fullValueCents === 0 ? null : reachable.valueCents / fullValueCents;
 
-  // `bonusKind` quyết định đơn vị: thưởng bằng điểm thì so với các đợt tính
-  // bằng điểm, thưởng bằng tiền thì so với các đợt tính bằng đô.
+  // `bonusKind` phân biệt ĐIỂM với TIỀN, nhưng KHÔNG phân biệt đô với phần
+  // trăm — mà nhật ký có cả ba đơn vị, và repo đang có một offer "Cashback
+  // 15%" thật. Gán cứng `cash → dollar` là lại lẫn đơn vị, chỉ theo một cách
+  // khác: mọi đợt tính bằng phần trăm bị lọc sạch.
+  //
+  // Với `points` thì `bonusKind` là đủ. Với `cash` thì đơn vị phải ĐỌC TỪ DỮ
+  // LIỆU: lấy đơn vị của đợt gần nhất trong nhật ký của chính thẻ này — đó là
+  // thứ recorder thật sự nhìn thấy — và chỉ rơi về `dollar` khi chưa có đợt
+  // nào để mà đọc.
+  const cashUnit: OfferUnit =
+    history.length === 0 ? "dollar" : (history[history.length - 1].unit ?? "dollar");
   const { percentile, points } = historicalPercentile(
     history,
     offer.headlineBonus,
-    offer.bonusKind === "cash" ? "dollar" : "points",
+    offer.bonusKind === "cash" ? cashUnit : "points",
   );
   if (percentile !== null && percentile >= 70) reasonCodes.push("CURRENT_OFFER_STRONG");
   if (percentile !== null && percentile <= 30) reasonCodes.push("CURRENT_OFFER_WEAK");

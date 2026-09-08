@@ -16,7 +16,7 @@
  */
 
 import { isAvailableAt } from "./temporal.ts";
-import { primaryGoal, resolveTripGoal } from "./user.ts";
+import { asArray, primaryGoal, resolveTripGoal } from "./user.ts";
 import { userGaps } from "./user-gaps.ts";
 import { tripNeedFor } from "./trip-need.ts";
 import { currentProductIds } from "./portfolio.ts";
@@ -75,6 +75,7 @@ function relevantDataGaps(
   data: RecommendationDataset,
   universe: readonly Product[],
   goals: readonly GoalContext[],
+  heldBalancePrograms: readonly string[],
 ): DataGap[] {
   const inPlay = new Set(universe.map((product) => product.id as string));
 
@@ -85,13 +86,31 @@ function relevantDataGaps(
       .filter((trip): trip is NonNullable<typeof trip> => trip !== null)
       .map((trip) => `${trip.originRegion}|${trip.destinationRegion}`),
   );
-  /** Chương trình lượt chạy này có đụng tới. */
+  /**
+   * Chương trình một MỤC TIÊU CHUYẾN ĐI đụng tới.
+   *
+   * `no_award_chart` nói "chương trình này không công bố bảng giá", và câu đó
+   * chỉ có nghĩa khi ai đó đang định ĐỔI VÉ. Nên hai phép lọc, và bản trước
+   * sai cả hai chiều:
+   *
+   *   - Không có mục tiêu chuyến đi thì KHÔNG tính. Bản trước gom cả sản phẩm
+   *     ứng viên, nên một người hỏi "thẻ tiếp theo" bị báo thiếu bảng giá
+   *     MileagePlus® chỉ vì thẻ United® nằm trong danh sách.
+   *   - Có mục tiêu chuyến đi thì phải tính cả SỐ DƯ NGƯỜI DÙNG ĐANG GIỮ. Bản
+   *     trước chỉ gom chương trình định giá được chặng; người giữ Avios® hay
+   *     Flying Blue® — hai chương trình có `no_award_chart` và không có thẻ
+   *     riêng trong bộ dữ liệu — mất hẳn chỗ trống đó, nên engine lặng lẽ bỏ
+   *     qua số điểm của họ mà KHÔNG hạ độ tin cậy.
+   */
+  const tripGoals = goals.filter((goal) => goal.goal.type === "trip");
   const programsInPlay = new Set<string>();
-  for (const goal of goals) {
-    for (const programId of goal.tripNeed?.programs ?? []) programsInPlay.add(programId as string);
-  }
-  for (const product of universe) {
-    if (product.pointsProgramId !== null) programsInPlay.add(product.pointsProgramId as string);
+  if (tripGoals.length > 0) {
+    for (const goal of tripGoals) {
+      for (const programId of goal.tripNeed?.programs ?? []) {
+        programsInPlay.add(programId as string);
+      }
+    }
+    for (const row of heldBalancePrograms) programsInPlay.add(row);
   }
 
   return data.gaps
@@ -179,6 +198,15 @@ export function normalize(
     goalResolution: resolved.kind,
     universe,
     userGaps: userGaps(state),
-    dataGaps: relevantDataGaps(data, universe, goals),
+    dataGaps: relevantDataGaps(
+      data,
+      universe,
+      goals,
+      // Chương trình người dùng ĐANG có số dư — kể cả những chương trình không
+      // có thẻ nào trong bộ dữ liệu.
+      asArray(state.balances)
+        .filter((row) => row?.programId != null)
+        .map((row) => row.programId as string),
+    ),
   };
 }
