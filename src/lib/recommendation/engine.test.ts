@@ -22,6 +22,7 @@ import {
   flexibilityReach,
   isFlexibleInPractice,
 } from "./portfolio.ts";
+import { computeConfidence } from "./confidence.ts";
 import { evaluateEligibility } from "./eligibility.ts";
 import { evaluateSuitability, minimumSpendFit } from "./suitability.ts";
 import { tripNeedFor } from "./trip-need.ts";
@@ -548,7 +549,14 @@ test("§6 — vùng chưa có award strategy thì nói KHÔNG BIẾT, không đo
 test("§6 — chặng chưa có giá KHÔNG được kéo mọi đồng tiền về cùng một mức", () => {
   // Một chỗ trống của lớp dữ liệu không được biến thành "không đồng tiền nào
   // hữu ích", vì lúc đó thẻ thắng cuộc được chọn bằng tiếng ồn.
-  const result = run(japanTripFunded).results[0];
+  // Phải dùng một chặng THẬT SỰ chưa có giá. Bài này từng dùng chuyến Nhật;
+  // sau khi JAPAN được dựng nó vẫn xanh, nhưng xanh vì lý do khác hẳn (các
+  // đồng tiền định giá được chặng vốn đã khác nhau) — tức nó thôi canh cái nó
+  // sinh ra để canh.
+  const goal = flexiblePointsSufficient.goals[0];
+  if (goal.type !== "trip") return;
+  assert.equal(goal.destinationRegion, "EUROPE", "cần một vùng chưa dựng bảng giá");
+  const result = run(flexiblePointsSufficient).results[0];
   const utilities = [result.primaryAction, ...result.alternatives].map(
     (c) => c.components.find((x) => x.key === "trip_currency_utility")?.raw ?? 0,
   );
@@ -1079,12 +1087,65 @@ test("chỗ trống award chỉ tính cho chặng người dùng THẬT SỰ h�
 });
 
 test("chỗ trống của lớp dữ liệu KÉO độ tin cậy xuống, không chỉ để lại ghi chú", () => {
-  const withGap = run(japanTripFunded).results[0].confidence;
-  const withoutGap = run(vietnamTripFunded).results[0].confidence;
+  // CÔ LẬP đúng một biến: cùng một người, cùng mọi thứ, chỉ đổi VÙNG ĐẾN —
+  // một vùng đã dựng bảng giá và một vùng chưa. So hai NHÂN VẬT khác nhau
+  // (như bài này từng làm) thì chênh lệch có thể đến từ bất kỳ chỗ trống nào
+  // khác của hồ sơ, và bài kiểm thôi nói về award chart.
+  const goal = vietnamTripFunded.goals[0];
+  if (goal.type !== "trip") return;
+  const priced = run(vietnamTripFunded).results[0].confidence;
+  const unpricedRun = run({
+    ...vietnamTripFunded,
+    goals: [{ ...goal, destinationRegion: "EUROPE" as const }],
+  });
+  const unpriced = unpricedRun.results[0].confidence;
+
+  // Chỗ trống phải được KHAI ra…
+  assert.ok(unpricedRun.dataGaps.some((gap) => gap.kind === "award_route_uncovered"));
+  assert.ok(unpricedRun.results[0].warnings.includes("AWARD_ROUTE_NOT_IN_DATASET"));
+
+  // …và phải ĐẶT TRẦN độ tin cậy, không chỉ để lại ghi chú.
+  //
+  // Đo thật cho thấy `dataCompleteness` KHÔNG phân biệt được hai ca: nó đếm
+  // theo LOẠI chỗ trống, nên `award_route_uncovered` cân bằng đúng một
+  // `no_award_chart` và cả hai lượt chạy ra cùng 0.708. Chuyến châu Âu rơi
+  // xuống `low` chỉ NHỜ điểm các ứng viên xúm lại — một sự tình cờ, không
+  // phải một bảo đảm. Nên trần là thứ phải kiểm.
+  assert.notEqual(unpriced.level, "high", "chặng chưa định giá mà vẫn tự tin CAO");
   assert.ok(
-    withGap.dataCompleteness < withoutGap.dataCompleteness,
-    `chặng chưa có giá (${withGap.dataCompleteness}) phải kém đầy đủ hơn chặng đã có (${withoutGap.dataCompleteness})`,
+    unpriced.notes.some((note) => note.includes("chưa có bảng giá")),
+    "phải nói ra lý do trong notes",
   );
+  assert.equal(priced.level, "high", "mốc so sánh: chặng đã định giá vẫn được CAO");
+
+  // Và TRẦN phải là thứ thật sự chặn, không phải một dòng ăn theo.
+  //
+  // Ca trên xanh kể cả khi gỡ trần đi, vì chuyến châu Âu vốn đã rơi xuống
+  // `low` nhờ điểm các ứng viên xúm lại. Phải dựng ca mà khoảng cách điểm
+  // RẤT TÁCH BẠCH — lúc đó chỉ còn trần ngăn engine tuyên bố `high` về một
+  // chuyến bay nó không biết giá.
+  const tripGoal = { ...goal, destinationRegion: "EUROPE" as const };
+  const wide = computeConfidence({
+    ranked: [
+      { ...run(vietnamTripFunded).results[0].primaryAction, score: 0.95 },
+      { ...run(vietnamTripFunded).results[0].primaryAction, score: 0.20 },
+    ],
+    goal: {
+      goal: tripGoal,
+      trip: resolveTripGoal(vietnamTripFunded.profile, tripGoal),
+      tripNeed: tripNeedFor(
+        resolveTripGoal(vietnamTripFunded.profile, tripGoal),
+        IX,
+        ASOF,
+      ),
+    },
+    userGaps: [],
+    dataGaps: [],
+    oldestVerifiedAt: ASOF,
+    asOf: ASOF,
+  });
+  assert.equal(wide.scoreSeparation, 1, "dựng đúng ca tách bạch tuyệt đối");
+  assert.notEqual(wide.level, "high", "điểm tách bạch KHÔNG cứu được một chặng chưa định giá");
 });
 
 test("thẻ KHÔNG có welcome bonus được 0 điểm offer, không được ~0.4", () => {
@@ -1250,17 +1311,24 @@ test("§20 — bản chụp hành vi khoá theo ENGINE_VERSION", async () => {
    *
    * Giữ cả hai ở đây thì thông báo lỗi nói được ĐÚNG thứ đã đổi.
    */
-  const datasetFingerprint = [
-    DATA.products.length,
-    DATA.offers.length,
-    DATA.offerComponents.length,
-    DATA.earningRates.length,
-    DATA.productBenefits.length,
-    DATA.eligibilityRules.length,
-    DATA.transferPaths.length,
-    DATA.awardStrategies.length,
-    DATA.programValuations.length,
-  ].join("-");
+  //
+  // Băm NỘI DUNG, không đếm số dòng. Đếm dòng hỏng theo cả hai chiều: sửa một
+  // tỷ lệ tích điểm tại chỗ thì mọi con số đếm đứng yên (nên đường cập nhật
+  // TỪ CHỐI một thay đổi dữ liệu hợp lệ), còn thêm một dòng chẳng liên quan
+  // thì lại cho một thay đổi LOGIC chưa đánh version đi lọt.
+  const canonical = JSON.stringify([
+    DATA.products, DATA.productFees, DATA.productAvailability, DATA.offers,
+    DATA.offerComponents, DATA.earningRates, DATA.earningCaps, DATA.benefits,
+    DATA.productBenefits, DATA.eligibilityRules, DATA.transferPaths,
+    DATA.awardStrategies, DATA.programValuations, DATA.pointsPrograms,
+  ]);
+  // FNV-1a: ổn định giữa các lần chạy và giữa các máy, không phụ thuộc thư viện.
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < canonical.length; i += 1) {
+    hash ^= canonical.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  const datasetFingerprint = `${canonical.length}-${hash.toString(16)}`;
 
   const actual = {
     engineVersion: ENGINE_VERSION,

@@ -151,6 +151,26 @@ export function computeConfidence(input: ConfidenceInput): ConfidenceFactors {
   const specificity = goalSpecificity(input.goal);
   if (specificity.value < 1) notes.push(specificity.note);
 
+  /*
+   * KHÔNG ĐỊNH GIÁ ĐƯỢC CHUYẾN ĐI là một hạn chế của chính lượt chạy, không
+   * phải một chỗ trống như mọi chỗ trống khác.
+   *
+   * `dataCompleteness` đếm theo LOẠI chỗ trống, nên `award_route_uncovered`
+   * cân bằng đúng một `no_award_chart` — và một lượt chạy không tra nổi giá
+   * chuyến đi vẫn ra cùng con số với một lượt chạy tra được. Đo thật cho thấy
+   * chuyến châu Âu chỉ rơi xuống `low` NHỜ điểm các ứng viên xúm lại
+   * (`scoreSeparation` 0.04), vì 55% bảng điểm chuyến đi nằm im. Tách bạch
+   * hơn một chút là nó lên `high` — tự tin cao về một chuyến bay engine không
+   * biết giá.
+   *
+   * Nên nó ĐẶT TRẦN, y như ca chỉ có một ứng viên.
+   */
+  const tripUnpriced =
+    input.goal.goal.type === "trip" && (input.goal.tripNeed?.programs.length ?? 0) === 0;
+  if (tripUnpriced) {
+    notes.push("chưa có bảng giá cho chặng này: không đo được khoảng cách điểm");
+  }
+
   /* ---- Khoảng cách điểm ------------------------------------------- */
   const top = input.ranked[0]?.score ?? 0;
   const second = input.ranked[1]?.score ?? 0;
@@ -183,6 +203,10 @@ export function computeConfidence(input: ConfidenceInput): ConfidenceFactors {
     // nhưng "ứng viên duy nhất" không phải bằng chứng nó là lựa chọn tốt.
     level = "medium";
   }
+  // Chặng chưa định giá được thì KHÔNG bao giờ `high`, dù điểm có tách bạch
+  // tới đâu: thứ tách bạch đó được tính bằng 45% bảng điểm còn sống, không
+  // phải bằng câu hỏi người dùng thật sự hỏi.
+  if (tripUnpriced && level === "high") level = "medium";
 
   return {
     dataCompleteness: completeness,

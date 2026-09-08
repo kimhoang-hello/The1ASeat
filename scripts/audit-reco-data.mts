@@ -416,9 +416,14 @@ if (cards === null) {
  * là một con số theo dõi được thay vì một khám phá.
  */
 {
-  const origins = [...new Set(dataset.awardStrategies.map((row) => row.originRegion))];
+  // Chỉ tính các chiến lược CÒN HIỆU LỰC hôm nay. `offlineDataset()` giữ cả
+  // lịch sử, nên một chặng đã đóng bằng `effectiveTo` — hoặc một chặng mới
+  // chỉ có hiệu lực từ tương lai — vẫn nằm trong mảng. Đếm chúng là báo "đã
+  // phủ" đúng chặng mà engine, vốn lọc theo ngày, sẽ nói là chưa định giá được.
+  const liveStrategies = dataset.awardStrategies.filter((row) => isActiveAt(row, TODAY));
+  const origins = [...new Set(liveStrategies.map((row) => row.originRegion))];
   const covered = new Set(
-    dataset.awardStrategies.map((row) => `${row.originRegion}|${row.destinationRegion}`),
+    liveStrategies.map((row) => `${row.originRegion}|${row.destinationRegion}`),
   );
   for (const origin of origins.length > 0 ? origins : ["CANADA_US"]) {
     for (const destination of TRIP_REGIONS) {
