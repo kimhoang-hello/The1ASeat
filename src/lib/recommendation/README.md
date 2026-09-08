@@ -793,6 +793,7 @@ trong bản vá của vòng trước). Phase 3 lặp lại y hệt hình dạng 
 | 2 | 5 (2 P1) | **toàn bộ trong bản vá của vòng 1** |
 | 3 | 3 (1 P1) | **toàn bộ trong bản vá của vòng 2** |
 | 4 | 2 P1 + 2 bản vá bị bác | **toàn bộ trong bản vá của vòng 3** |
+| 5 | 1 P2 | **trong bản vá AN TOÀN của vòng 4** |
 
 Chuỗi rõ nhất là câu chuyện ĐƠN VỊ của offer tiền mặt — ba cách đoán, ba vòng,
 ba kiểu hỏng:
@@ -828,6 +829,19 @@ chụp tự ghi lại — một lần đổi CÓ CHỦ Ý không phải là mộ
 
 > **Phép thử một bài test: nó có gọi thứ nó đang kiểm không, và nó có đỏ được
 > không?** Hai câu hỏi đó bắt được cả hai bài trên.
+
+Và vòng 5 bắt tiếp một tầng nữa — lần này trong bản vá AN TOÀN của vòng 4. Để
+CI đọc-only không gãy, phép ghi bản chụp được bọc `try/catch`; cộng với việc
+nó TỰ GHI khi version đổi, hai thứ đó tạo ra một lỗ: tăng version mà quên
+commit bản chụp, chạy trên CI đọc-only, thì phép ghi hỏng, ngoại lệ bị nuốt,
+và test XANH mãi mãi — không bao giờ so hành vi một lần nào nữa.
+
+> **Một bản vá "phòng thủ" có thể vô hiệu hoá đúng thứ nó đang bảo vệ.** Dấu
+> hiệu nhận ra: nó nuốt một lỗi VÀ nó nằm trên đường đi của một phép kiểm.
+
+Nay hai đường tách bạch — chạy bình thường chỉ ĐỌC và SO (lệch, thiếu file,
+hay lệch version đều ĐỎ); `UPDATE_ENGINE_SNAPSHOT=1` mới ghi. Đã kiểm cả bốn
+đường.
 
 ### "Chưa biết" thủng ở BIÊN GIỚI ĐẦU RA
 

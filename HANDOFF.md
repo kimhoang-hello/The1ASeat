@@ -24,7 +24,7 @@ Tài liệu module: [`src/lib/recommendation/README.md`](src/lib/recommendation/
 
 Phase 1: 31 commit, 24 vòng Codex, 68 phát hiện.
 Phase 2: 12 commit, 11 vòng, 19 phát hiện.
-Phase 3: 7 commit, 4 vòng Codex (25 phát hiện, 9 P1, 2 bản vá bị bác) + 5 lỗi
+Phase 3: 9 commit, 5 vòng Codex (26 phát hiện, 9 P1, 2 bản vá bị bác) + 5 lỗi
 tự tìm khi đọc kết quả chạy. 237 test.
 
 ### Tiêu chí nghiệm thu Phase 3 — đã đạt
@@ -174,6 +174,7 @@ của một lượt chạy thật rồi đọc từng dòng**.
 | 2 | 5 (2 P1) | **toàn bộ trong bản vá của vòng 1** |
 | 3 | 3 (1 P1) | **toàn bộ trong bản vá của vòng 2** |
 | 4 | 2 P1 + bác 2 bản vá | **toàn bộ trong bản vá của vòng 3** |
+| 5 | 1 P2 | **trong bản vá AN TOÀN của vòng 4** |
 
 Vòng 4 chạy với đề bài "với MỖI bản vá, chọn ĐÚNG / SAI / BẢN VÁ HỎNG, và tự
 bác lại kết luận sạch trước khi viết ra". Nó bác hai bản vá của chính nó, giữ
@@ -189,6 +190,24 @@ Nó cũng bắt được HAI BÀI TEST DIỄN — xanh mà không bảo vệ gì
 
 > **Phép thử một bài test: nó có GỌI thứ nó đang kiểm không, và nó có ĐỎ được
 > không?**
+
+Vòng 5 bắt tiếp một tầng nữa, lần này trong bản vá AN TOÀN của vòng 4: một
+`try/catch` thêm vào để CI đọc-only không gãy đã nuốt luôn lỗi ghi bản chụp,
+khiến test xanh vĩnh viễn khi version lệch.
+
+> **Một bản vá "phòng thủ" có thể vô hiệu hoá đúng thứ nó đang bảo vệ.** Dấu
+> hiệu: nó nuốt một lỗi VÀ nó nằm trên đường đi của một phép kiểm.
+
+### Bản chụp hành vi (§20) — cách dùng
+
+```bash
+npm run test:reco                              # chỉ ĐỌC và SO
+UPDATE_ENGINE_SNAPSHOT=1 npm run test:reco     # ghi lại, rồi COMMIT file
+```
+
+`engine.snapshot.json` **phải được commit** — CI đọc nó, không dựng lại nó.
+Đổi hành vi thì tăng `ENGINE_VERSION` rồi chạy đường cập nhật; quên tăng thì
+test đỏ và nói thẳng phải làm gì.
 
 Rõ nhất là câu chuyện ĐƠN VỊ của offer tiền mặt: ba cách đoán, ba vòng, ba
 kiểu hỏng — tra ngược theo con số, gán cứng `cash → dollar`, lấy đơn vị đợt
