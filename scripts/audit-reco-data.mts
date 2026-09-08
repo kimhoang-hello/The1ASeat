@@ -1,3 +1,4 @@
+import { TRIP_REGIONS } from "../src/lib/recommendation/types.ts";
 // Kiểm bộ dữ liệu nền của recommendation engine (Phase 1).
 //
 //   npm run audit:reco-data
@@ -398,6 +399,34 @@ if (cards === null) {
       errors.push(
         `[contentful] ${card.slug}: rebate seed là ${seedRebate ?? "(không có)"}, ` +
           `Contentful nói ${liveRebate ?? "(không có)"}`,
+      );
+    }
+  }
+}
+
+/*
+ * ĐỘ PHỦ AWARD CHART.
+ *
+ * Trước đây con số này chỉ tồn tại trong `dataset.gaps` — máy đọc được, người
+ * thì không. Ba cặp vùng trống hoàn toàn mà audit vẫn in "✓ Không lỗi", nên
+ * độ phủ chỉ lộ ra khi có người dùng thật hỏi đúng chặng đó.
+ *
+ * Đây là CẢNH BÁO chứ không phải lỗi: vùng chưa dựng là chỗ trống có chủ ý,
+ * và engine đã khai nó đúng. Nhưng nó phải đếm được, để "còn thiếu vùng nào"
+ * là một con số theo dõi được thay vì một khám phá.
+ */
+{
+  const origins = [...new Set(dataset.awardStrategies.map((row) => row.originRegion))];
+  const covered = new Set(
+    dataset.awardStrategies.map((row) => `${row.originRegion}|${row.destinationRegion}`),
+  );
+  for (const origin of origins.length > 0 ? origins : ["CANADA_US"]) {
+    for (const destination of TRIP_REGIONS) {
+      if (destination === origin) continue;
+      if (covered.has(`${origin}|${destination}`)) continue;
+      warnings.push(
+        `[award_strategies] ${origin} → ${destination}: chưa có bảng giá nào. ` +
+          "Engine sẽ nói 'chưa định giá được' cho mọi chuyến đi tới vùng này.",
       );
     }
   }

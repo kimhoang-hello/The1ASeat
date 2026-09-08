@@ -172,6 +172,230 @@ const SEEDS: StrategySeed[] = [
       "Cathay không còn công bố bảng giá; số dựng lại từ ba nguồn độc lập " +
       "đồng thuận. Đây là mức cho máy bay Cathay khai thác — bảng đối tác cao hơn vài nghìn.",
   },
+
+  /* ================================================================ *
+   * CANADA_US → JAPAN
+   *
+   * MỌI CON SỐ DƯỚI ĐÂY SUY RA TỪ CÙNG BA BẢNG GIÁ ĐÃ KIỂM của
+   * `src/lib/award-charts.ts`, không phải từ một lần tra mới. Phần duy nhất
+   * phải tính thêm là band khoảng cách, và nó tính được: file kia có sẵn toạ
+   * độ từng sân bay, nên band là phép tính chứ không phải trí nhớ.
+   *
+   * Band Aeroplan (0–5,000 / 5,001–7,500 / 7,501–11,000 / 11,001+) trên
+   * khoảng cách TÍCH LUỸ của các chặng bay:
+   *   YVR/YYC/YEG → NRT/HND  = 4,662–4,970 mi → band 1
+   *   YWG/YYZ/YUL/YOW/YHZ →  = 5,552–6,692 mi → band 2
+   *   nối chuyến dài nhất còn hợp lệ (luật ≤ 2× bay thẳng) = 8,950 mi → band 3
+   *
+   * KHÔNG có hạng First: `award-charts.ts` ghi rõ không hãng nào bán First
+   * giữa Canada và châu Á, nên vắng mặt là CÓ CHỦ Ý — giống hệt SEA_VIETNAM.
+   * ================================================================ */
+  {
+    key: "aeroplan-ca-japan",
+    origin: "CANADA_US",
+    destination: "JAPAN",
+    program: "aeroplan",
+    name: "Aeroplan® / Star Alliance™ qua đối tác",
+    // Cột "All other partners": cố định, có bảo đảm, và KHÔNG có dòng Premium
+    // Economy — đúng như chặng Đông Nam Á. Khoảng chạy từ band 1 (bờ Tây bay
+    // thẳng) qua band 2 (bờ Đông bay thẳng) tới band 3 (nối chuyến hợp lệ).
+    economy: [32500, 50000, 65000],
+    premium: null,
+    business: [55000, 85000, 102500],
+    surcharge: "low",
+    // Nhật có nhiều chỗ đối tác hơn hẳn Đông Nam Á: ANA và JAL đều bay thẳng
+    // từ Canada, và ANA mở chỗ Star Alliance™ đều đặn.
+    availability: "medium",
+    complexity: "moderate",
+    pricing: "fixed",
+    confidence: "verified",
+    verifiedAt: "2026-08-23",
+    sourceUrl: "https://www.aircanada.com/ca/en/aco/home/aeroplan/redeem/air-canada.html",
+    note:
+      "Số của cột đối tác cố định, band theo khoảng cách tích luỹ. Bờ Tây bay " +
+      "thẳng rơi band thấp nhất; nối chuyến đẩy lên một band. Hành trình bay " +
+      "toàn bằng Air Canada® định giá động, không theo bảng này.",
+  },
+  {
+    key: "aeroplan-select-ca-japan",
+    origin: "CANADA_US",
+    destination: "JAPAN",
+    program: "aeroplan",
+    name: "Aeroplan® trên Air Canada® và Select Partners — giá động",
+    // Cột THỨ HAI, và là chỗ DUY NHẤT Aeroplan® có Premium Economy. Mức sàn
+    // của band thấp nhất áp cho vùng này (band 1, bờ Tây) = 45,000.
+    economy: null,
+    premium: [45000, 0, 0],
+    business: null,
+    surcharge: "low",
+    availability: "medium",
+    complexity: "simple",
+    pricing: "dynamic_floor",
+    confidence: "estimated",
+    verifiedAt: "2026-08-23",
+    sourceUrl: "https://www.aircanada.com/ca/en/aco/home/aeroplan/redeem/air-canada.html",
+    note:
+      "Mức SÀN, không phải giá. Chỉ áp cho Air Canada® và nhóm Select Partners " +
+      "(United®, Emirates®, Flydubai®, Etihad®, Canadian North®, Calm Air®, " +
+      "Bearskin®, PAL®). ANA® và JAL® KHÔNG nằm trong nhóm này.",
+  },
+  {
+    key: "aadvantage-ca-japan",
+    origin: "CANADA_US",
+    destination: "JAPAN",
+    program: "aadvantage",
+    name: "AAdvantage® qua đối tác oneworld",
+    // Bảng theo VÙNG. Cả NRT lẫn HND đều thuộc Asia Region 1, nên một mức duy
+    // nhất — ba con số bằng nhau nói đúng bản chất, không phải thiếu dữ liệu.
+    economy: [35000, 35000, 35000],
+    premium: [50000, 50000, 50000],
+    business: [60000, 60000, 60000],
+    surcharge: "low",
+    // JAL bay thẳng YVR/YYZ → NRT và mở chỗ oneworld đều hơn chặng Đông Nam Á.
+    availability: "medium",
+    complexity: "moderate",
+    pricing: "fixed",
+    confidence: "verified",
+    verifiedAt: "2026-08-09",
+    sourceUrl:
+      "https://www.aa.com/web/i18n/aadvantage-program/use-miles/partner-airline-flights.html",
+    note:
+      "Asia Region 1 (Nhật, Hàn) rẻ hơn Region 2 một bậc. Chỉ áp cho chặng do " +
+      "đối tác khai thác; máy bay của chính American Airlines® định giá động.",
+  },
+  {
+    key: "asia-miles-ca-japan",
+    origin: "CANADA_US",
+    destination: "JAPAN",
+    program: "asia-miles",
+    name: "Asia Miles® trên máy bay Cathay Pacific®",
+    // Cathay bay hai chặng của chính nó qua Hong Kong, nên khoảng cách tích
+    // luỹ là Canada→HKG→Tokyo — MỌI thành phố Canada đều vượt 7,501 mi, rơi
+    // vào đúng một band. Đi vòng như vậy đắt hơn hẳn bay thẳng bằng Aeroplan®
+    // hay AAdvantage®, và con số nói ra điều đó.
+    economy: [38000, 38000, 38000],
+    premium: [78000, 78000, 78000],
+    business: [119000, 119000, 119000],
+    surcharge: "medium",
+    availability: "medium",
+    complexity: "complex",
+    pricing: "fixed",
+    confidence: "estimated",
+    verifiedAt: "2026-08-09",
+    sourceUrl:
+      "https://flights.cathaypacific.com/en_CA/redeem-flights/flight-award-chart.html",
+    note:
+      "Cathay không còn công bố bảng giá; số dựng lại từ ba nguồn độc lập " +
+      "đồng thuận. Hành trình phải vòng qua Hong Kong nên luôn rơi band cao nhất.",
+  },
+
+  /* ================================================================ *
+   * CANADA_US → EAST_ASIA  (Hàn Quốc, Trung Quốc, Đài Loan, Hong Kong)
+   *
+   * Vùng này BẮC QUA ranh giới của hai chương trình cùng lúc, và đó là lý do
+   * khoảng của nó rộng hơn Nhật:
+   *   Aeroplan   — bay thẳng rơi band 2 (Seoul, Bắc Kinh, Thượng Hải, và Đài
+   *                Bắc/Hong Kong từ bờ Tây) tới band 3 (Đài Bắc/Hong Kong từ
+   *                bờ Đông: 7,506–7,797 mi).
+   *   AAdvantage — Seoul ở Asia Region 1, còn Trung Quốc/Đài Loan/Hong Kong ở
+   *                Region 2. MỘT vùng của engine, HAI mức giá của hãng.
+   *   Asia Miles — Hong Kong là chính hub nên bay thẳng (band 3); các điểm
+   *                khác phải nối qua HKG và đội lên band 4.
+   * ================================================================ */
+  {
+    key: "aeroplan-ca-east-asia",
+    origin: "CANADA_US",
+    destination: "EAST_ASIA",
+    program: "aeroplan",
+    name: "Aeroplan® / Star Alliance™ qua đối tác",
+    economy: [50000, 50000, 65000],
+    premium: null,
+    business: [85000, 85000, 102500],
+    surcharge: "low",
+    availability: "medium",
+    complexity: "moderate",
+    pricing: "fixed",
+    confidence: "verified",
+    verifiedAt: "2026-08-23",
+    sourceUrl: "https://www.aircanada.com/ca/en/aco/home/aeroplan/redeem/air-canada.html",
+    note:
+      "Phần lớn điểm đến rơi band 5,001–7,500; Đài Bắc và Hong Kong từ bờ Đông " +
+      "vượt 7,500 mi nên lên một band. Riêng Toronto–Đài Bắc, Aeroplan® bán " +
+      "THẤP HƠN band khoảng cách (50,000/85,000) khi bay thẳng EVA Air®.",
+  },
+  {
+    key: "aeroplan-select-ca-east-asia",
+    origin: "CANADA_US",
+    destination: "EAST_ASIA",
+    program: "aeroplan",
+    name: "Aeroplan® trên Air Canada® và Select Partners — giá động",
+    // Band thấp nhất áp cho vùng này là band 2 → mức sàn Premium Economy
+    // 60,000, cao hơn Nhật đúng một bậc vì không điểm nào rơi band 1.
+    economy: null,
+    premium: [60000, 0, 0],
+    business: null,
+    surcharge: "low",
+    availability: "medium",
+    complexity: "simple",
+    pricing: "dynamic_floor",
+    confidence: "estimated",
+    verifiedAt: "2026-08-23",
+    sourceUrl: "https://www.aircanada.com/ca/en/aco/home/aeroplan/redeem/air-canada.html",
+    note:
+      "Mức SÀN, không phải giá. EVA Air®, Asiana® và Air China® KHÔNG nằm trong " +
+      "nhóm Select Partners, nên chặng của họ chỉ đọc được ở cột cố định.",
+  },
+  {
+    key: "aadvantage-ca-east-asia",
+    origin: "CANADA_US",
+    destination: "EAST_ASIA",
+    program: "aadvantage",
+    name: "AAdvantage® qua đối tác oneworld",
+    // Đây là ca hiếm: ba con số KHÁC nhau không vì khoảng cách mà vì một vùng
+    // của engine nằm vắt qua hai vùng của hãng. Seoul (Region 1) rẻ hơn Trung
+    // Quốc / Đài Loan / Hong Kong (Region 2).
+    economy: [35000, 37500, 37500],
+    premium: [50000, 50000, 50000],
+    business: [60000, 70000, 70000],
+    surcharge: "low",
+    availability: "hard",
+    complexity: "complex",
+    pricing: "fixed",
+    confidence: "verified",
+    verifiedAt: "2026-08-09",
+    sourceUrl:
+      "https://www.aa.com/web/i18n/aadvantage-program/use-miles/partner-airline-flights.html",
+    note:
+      "Seoul nằm Asia Region 1, Trung Quốc / Đài Loan / Hong Kong nằm Region 2 " +
+      "— nên cùng một vùng của công cụ này lại có hai mức giá. Chỉ áp cho chặng " +
+      "do đối tác khai thác.",
+  },
+  {
+    key: "asia-miles-ca-east-asia",
+    origin: "CANADA_US",
+    destination: "EAST_ASIA",
+    program: "asia-miles",
+    name: "Asia Miles® trên máy bay Cathay Pacific®",
+    // Hong Kong là hub của chính Cathay nên bay thẳng, rơi band 5,001–7,500 từ
+    // phần lớn Canada. Các điểm còn lại phải nối qua HKG và đội lên band cao
+    // nhất. Đây là chương trình DUY NHẤT trong ba cái mà Hong Kong rẻ hơn hẳn
+    // phần còn lại của vùng.
+    economy: [27000, 38000, 38000],
+    premium: [52000, 78000, 78000],
+    business: [91000, 119000, 119000],
+    surcharge: "medium",
+    availability: "medium",
+    complexity: "moderate",
+    pricing: "fixed",
+    confidence: "estimated",
+    verifiedAt: "2026-08-09",
+    sourceUrl:
+      "https://flights.cathaypacific.com/en_CA/redeem-flights/flight-award-chart.html",
+    note:
+      "Cathay không còn công bố bảng giá; số dựng lại từ ba nguồn độc lập đồng " +
+      "thuận. Cận dưới là Hong Kong bay thẳng; các điểm khác nối qua HKG nên " +
+      "rơi band cao nhất.",
+  },
 ];
 
 /** Chương trình có bảng giá nhưng KHÔNG quote được, kèm lý do. Có mặt ở đây

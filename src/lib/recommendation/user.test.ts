@@ -393,11 +393,15 @@ test("trip goal biểu diễn được chỉ bằng vùng", () => {
 });
 
 test("vùng chưa có bảng giá là chỗ trống ĐÃ KHAI, không phải im lặng", () => {
-  // Nhật là một trong bốn vùng Phase 1 chưa dựng award strategy. Trạng thái
-  // người dùng biểu diễn chuyến đi này hoàn toàn bình thường; việc engine
-  // chưa định giá được là chuyện của lớp dữ liệu sản phẩm, và nó NÓI RA.
-  const goal = japanTripFunded.goals[0] as TripGoal;
-  const resolved = resolveTripGoal(japanTripFunded.profile, goal);
+  // CHÂU ÂU là vùng còn lại chưa dựng award strategy. Trạng thái người dùng
+  // biểu diễn chuyến đi này hoàn toàn bình thường; việc engine chưa định giá
+  // được là chuyện của lớp dữ liệu sản phẩm, và nó NÓI RA.
+  //
+  // Bài này TỪNG dùng chuyến Nhật. JAPAN và EAST_ASIA đã được dựng, nên nó
+  // phải đổi sang vùng thật sự còn trống — nếu không nó chỉ đang chứng minh
+  // một chuyện đã hết đúng.
+  const goal = flexiblePointsSufficient.goals[0] as TripGoal;
+  const resolved = resolveTripGoal(flexiblePointsSufficient.profile, goal);
   const strategies = data.awardStrategies.filter(
     (row) =>
       row.originRegion === resolved.originRegion &&

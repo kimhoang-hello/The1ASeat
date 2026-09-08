@@ -1,5 +1,6 @@
 {
   "engineVersion": "4.0.0",
+  "datasetFingerprint": "34-34-73-152-136-80-9-27-16",
   "runs": [
     {
       "user": "u_beginner",
@@ -141,44 +142,46 @@
       "user": "u_japan_funded",
       "goalResolution": "resolved",
       "followUp": "spend_profile_missing",
-      "primary": "rbc-avion-visa-platinum",
-      "score": 0.4969,
-      "noAction": 0.3918,
-      "strategy": "EARN_SPECIFIC_CURRENCY",
+      "primary": "td-aeroplan-visa-infinite",
+      "score": 0.7393,
+      "noAction": 0.6419,
+      "strategy": "USE_EXISTING_POINTS",
       "confidence": "low",
       "reasonCodes": [
         "MIN_SPEND_CAPACITY_UNKNOWN",
-        "TRIP_ROUTE_NOT_PRICED",
-        "FLEXIBLE_CURRENCY_VALUABLE",
+        "TRIP_PROGRAM_MATCH",
+        "EXISTING_BENEFIT_DUPLICATION",
+        "ANNUAL_FEE_WAIVED_FIRST_YEAR",
+        "NO_NEW_CARD_NEEDED",
         "SCORES_NEARLY_TIED"
       ],
       "numbers": {
-        "tripNeedLow": null,
-        "tripNeedTypical": null,
-        "tripNeedHigh": null,
+        "tripNeedLow": 110000,
+        "tripNeedTypical": 120000,
+        "tripNeedHigh": 238000,
         "directPoints": null,
-        "accessiblePoints": null,
+        "accessiblePoints": 200000,
         "accessiblePointsIsLowerBound": false,
-        "pointsGapTypical": null,
+        "pointsGapTypical": 0,
         "topEcosystemShare": 0.2,
         "flexibilityScore": 1
       },
       "alternatives": [
         [
-          "bmo-viporter-world-elite-mastercard",
-          0.4919
-        ],
-        [
-          "westjet-rbc-world-elite-mastercard",
-          0.488
-        ],
-        [
           "amex-gold-rewards",
-          0.479
+          0.7365
         ],
         [
-          "td-aeroplan-visa-infinite",
-          0.4735
+          "amex-aeroplan",
+          0.7327
+        ],
+        [
+          "amex-green",
+          0.7196
+        ],
+        [
+          "cibc-aeroplan-visa-infinite",
+          0.6893
         ]
       ]
     },
@@ -187,13 +190,14 @@
       "goalResolution": "resolved",
       "followUp": "household_income_unknown",
       "primary": "amex-gold-rewards",
-      "score": 0.6408,
-      "noAction": 0.187,
-      "strategy": "DIVERSIFY",
+      "score": 0.6179,
+      "noAction": 0.1455,
+      "strategy": "EARN_FLEXIBLE_POINTS",
       "confidence": "low",
       "reasonCodes": [
         "MIN_SPEND_GOOD_FIT",
-        "TRIP_ROUTE_NOT_PRICED",
+        "POINTS_GAP_LARGE",
+        "TRIP_PROGRAM_MATCH",
         "PORTFOLIO_CONCENTRATED",
         "PORTFOLIO_LACKS_FLEXIBILITY",
         "FLEXIBLE_CURRENCY_VALUABLE",
@@ -201,32 +205,32 @@
         "SCORES_NEARLY_TIED"
       ],
       "numbers": {
-        "tripNeedLow": null,
-        "tripNeedTypical": null,
-        "tripNeedHigh": null,
-        "directPoints": null,
-        "accessiblePoints": null,
+        "tripNeedLow": 220000,
+        "tripNeedTypical": 240000,
+        "tripNeedHigh": 476000,
+        "directPoints": 20000,
+        "accessiblePoints": 20000,
         "accessiblePointsIsLowerBound": false,
-        "pointsGapTypical": null,
+        "pointsGapTypical": 320000,
         "topEcosystemShare": 1,
         "flexibilityScore": 0
       },
       "alternatives": [
         [
-          "amex-green",
-          0.6055
+          "amex-business-gold",
+          0.5775
         ],
         [
-          "amex-business-gold",
-          0.595
+          "amex-green",
+          0.5584
         ],
         [
           "amex-cobalt",
-          0.5897
+          0.5425
         ],
         [
-          "rbc-avion-visa-infinite",
-          0.5893
+          "td-aeroplan-visa-infinite",
+          0.4918
         ]
       ]
     },

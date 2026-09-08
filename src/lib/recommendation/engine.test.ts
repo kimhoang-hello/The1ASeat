@@ -39,7 +39,7 @@ import {
   usableRoundTrip,
 } from "./user.ts";
 import { userGaps } from "./user-gaps.ts";
-import { id, type PointsProgramId, type ProductId } from "./types.ts";
+import { id, type PointsProgramId, type ProductId, type TripRegion } from "./types.ts";
 import { benefitFitFor, heldBenefitKeys } from "./benefit-fit.ts";
 import { productIdFor } from "./data/products.ts";
 import {
@@ -51,6 +51,7 @@ import {
   flexiblePointsSufficient,
   highSpendLowCapacity,
   japanTripFunded,
+  japanTripShortfall,
   lowSpendCapacity,
   studentStarter,
   vagueEarner,
@@ -527,15 +528,21 @@ test("§6 — thiếu thừa số thì KHÔNG mặc định, mà báo trống", 
 });
 
 test("§6 — vùng chưa có award strategy thì nói KHÔNG BIẾT, không đoán", () => {
-  const goal = japanTripFunded.goals[0];
+  // CHÂU ÂU là vùng duy nhất còn chưa dựng bảng giá. Bài này TỪNG dùng chuyến
+  // Nhật; sau khi JAPAN được lấp thì nó phải đổi sang một vùng thật sự trống,
+  // nếu không nó chỉ đang chứng minh một chuyện đã hết đúng.
+  const goal = flexiblePointsSufficient.goals[0];
   if (goal.type !== "trip") return;
-  const need = tripNeedFor(resolveTripGoal(japanTripFunded.profile, goal), IX, ASOF);
+  assert.equal(goal.destinationRegion, "EUROPE");
+  const need = tripNeedFor(resolveTripGoal(flexiblePointsSufficient.profile, goal), IX, ASOF);
   assert.deepEqual(need.strategies, []);
   assert.equal(need.low, null);
   assert.ok(need.reasonCodes.includes("TRIP_ROUTE_NOT_PRICED"));
   assert.ok(need.warnings.includes("AWARD_ROUTE_NOT_IN_DATASET"));
   // Và chỗ trống đó phải nổi lên ở lượt chạy, không chìm đi.
-  assert.ok(run(japanTripFunded).dataGaps.some((gap) => gap.kind === "award_route_uncovered"));
+  assert.ok(
+    run(flexiblePointsSufficient).dataGaps.some((gap) => gap.kind === "award_route_uncovered"),
+  );
 });
 
 test("§6 — chặng chưa có giá KHÔNG được kéo mọi đồng tiền về cùng một mức", () => {
@@ -1064,11 +1071,11 @@ test("chỗ trống award chỉ tính cho chặng người dùng THẬT SỰ h�
   );
   assert.deepEqual(vietnam, [], "chặng đã có giá mà vẫn báo thiếu award data");
 
-  // Còn chuyến Nhật thì phải báo — và chỉ báo chặng Nhật.
-  const japan = run(japanTripFunded).dataGaps.filter(
+  // Còn chuyến CHÂU ÂU thì phải báo — và chỉ báo chặng châu Âu.
+  const europe = run(flexiblePointsSufficient).dataGaps.filter(
     (gap) => gap.kind === "award_route_uncovered",
   );
-  assert.deepEqual(japan.map((gap) => gap.subjectId), ["CANADA_US|JAPAN"]);
+  assert.deepEqual(europe.map((gap) => gap.subjectId), ["CANADA_US|EUROPE"]);
 });
 
 test("chỗ trống của lớp dữ liệu KÉO độ tin cậy xuống, không chỉ để lại ghi chú", () => {
@@ -1233,8 +1240,31 @@ test("§20 — bản chụp hành vi khoá theo ENGINE_VERSION", async () => {
   const { readFile, writeFile } = await import("node:fs/promises");
   const path = new URL("./engine.snapshot.json", import.meta.url);
 
+  /**
+   * Dấu vân tay của BỘ DỮ LIỆU, tách khỏi version của ENGINE.
+   *
+   * Hai thứ đổi vì hai lý do khác nhau, và gộp chúng lại thì mỗi lần thêm một
+   * dòng award chart lại buộc phải tăng `ENGINE_VERSION` — trong khi logic
+   * không đổi một dòng. §20 replay lưu `input_snapshot` của chính lượt chạy
+   * đó, nên `ENGINE_VERSION` chỉ nói về LOGIC; dữ liệu đi kèm bản chụp.
+   *
+   * Giữ cả hai ở đây thì thông báo lỗi nói được ĐÚNG thứ đã đổi.
+   */
+  const datasetFingerprint = [
+    DATA.products.length,
+    DATA.offers.length,
+    DATA.offerComponents.length,
+    DATA.earningRates.length,
+    DATA.productBenefits.length,
+    DATA.eligibilityRules.length,
+    DATA.transferPaths.length,
+    DATA.awardStrategies.length,
+    DATA.programValuations.length,
+  ].join("-");
+
   const actual = {
     engineVersion: ENGINE_VERSION,
+    datasetFingerprint,
     runs: USER_FIXTURES.map((state) => {
       const result = run(state);
       const first = result.results[0];
@@ -1272,13 +1302,15 @@ test("§20 — bản chụp hành vi khoá theo ENGINE_VERSION", async () => {
     // hai kết quả khác nhau lại được lưu dưới cùng một version.
     if (raw !== null) {
       const current = JSON.parse(raw) as typeof actual;
-      const drifted =
-        JSON.stringify(current.runs) !== JSON.stringify(actual.runs);
+      const drifted = JSON.stringify(current.runs) !== JSON.stringify(actual.runs);
+      const sameEngine = current.engineVersion === ENGINE_VERSION;
+      const sameData = current.datasetFingerprint === datasetFingerprint;
       assert.ok(
-        !(current.engineVersion === ENGINE_VERSION && drifted),
-        `Hành vi đã đổi nhưng ENGINE_VERSION vẫn là ${ENGINE_VERSION}. ` +
-          "TĂNG ENGINE_VERSION trước rồi mới cập nhật bản chụp — cập nhật ở " +
-          "đây là ghi đè một thay đổi không ai đánh dấu.",
+        !(sameEngine && sameData && drifted),
+        `Hành vi đã đổi nhưng CẢ ${ENGINE_VERSION} lẫn dấu vân tay dữ liệu ` +
+          `(${datasetFingerprint}) đều đứng yên. Tăng ENGINE_VERSION nếu đổi ` +
+          "logic; nếu đổi dữ liệu thì dấu vân tay phải tự đổi theo — đứng yên " +
+          "cả hai nghĩa là một hồi quy không ai đánh dấu.",
       );
     }
     await writeFile(path, `${JSON.stringify(actual, null, 2)}\n`, "utf8");
@@ -1298,11 +1330,19 @@ test("§20 — bản chụp hành vi khoá theo ENGINE_VERSION", async () => {
       "Đổi version là đổi hành vi CÓ CHỦ Ý — chạy " +
       "`UPDATE_ENGINE_SNAPSHOT=1 npm run test:reco` rồi COMMIT bản chụp mới.",
   );
+  assert.equal(
+    expected.datasetFingerprint,
+    datasetFingerprint,
+    `bộ dữ liệu đã đổi (${expected.datasetFingerprint} → ${datasetFingerprint}) ` +
+      "mà bản chụp chưa cập nhật. Thêm/bớt dữ liệu KHÔNG cần tăng " +
+      "ENGINE_VERSION — logic không đổi — nhưng bản chụp thì phải chạy lại.",
+  );
 
   assert.deepEqual(
     actual.runs,
     expected.runs,
-    `Hành vi engine đã đổi nhưng ENGINE_VERSION vẫn là ${ENGINE_VERSION}. ` +
+    `Hành vi đã đổi trong khi engine (${ENGINE_VERSION}) và dữ liệu ` +
+      `(${datasetFingerprint}) đều đứng yên. ` +
       "Nếu đây là đổi CÓ CHỦ Ý thì tăng ENGINE_VERSION (§20 replay đọc nó) rồi " +
       "chạy `UPDATE_ENGINE_SNAPSHOT=1 npm run test:reco`; nếu không thì đây là một hồi quy.",
   );
@@ -1396,12 +1436,12 @@ test("số dư bằng 0 là CÂU TRẢ LỜI, không phải một chương trìn
 test("§7 — 'chưa biết' KHÔNG được xuất ra thành 0 điểm", () => {
   // Đây là luật trống-≠-bằng-không thủng ngay tại BIÊN GIỚI ĐẦU RA — chỗ nguy
   // hiểm nhất, vì con số này đi thẳng vào câu engine nói với người đọc.
-  // `japanTripFunded` có 200,000 điểm Membership Rewards®, và bản trước xuất
-  // ra `accessiblePoints: 0` chỉ vì chặng Nhật chưa có award strategy nào.
-  const japan = run(japanTripFunded).results[0];
-  assert.equal(japan.numbers.accessiblePoints, null, "chưa tra được giá mà báo 0 điểm");
-  assert.equal(japan.numbers.directPoints, null);
-  assert.equal(japan.numbers.pointsGapTypical, null);
+  // `flexiblePointsSufficient` có 240,000 điểm Membership Rewards®, và bản
+  // trước xuất ra `accessiblePoints: 0` chỉ vì chặng chưa có award strategy.
+  const unpriced = run(flexiblePointsSufficient).results[0];
+  assert.equal(unpriced.numbers.accessiblePoints, null, "chưa tra được giá mà báo 0 điểm");
+  assert.equal(unpriced.numbers.directPoints, null);
+  assert.equal(unpriced.numbers.pointsGapTypical, null);
 
   // Và số dư `null` (có tài khoản, không nhớ số) không được sinh ra một
   // khoảng cách CHÍNH XÁC GIẢ.
@@ -1482,8 +1522,8 @@ test("chặng CHƯA định giá không bị trừ độ tin cậy hai lần", (
   // Chuyến Nhật chưa có award strategy nào — scoring đã rơi về công thức
   // chung và không đọc bảng giá của MileagePlus®. Thêm chỗ trống đó vào là
   // trừ độ tin cậy lần thứ hai cho cùng một sự thật.
-  const japan = run(japanTripFunded);
-  const chartGaps = japan.dataGaps.filter((g) => g.kind === "no_award_chart");
+  const unpriced = run(flexiblePointsSufficient);
+  const chartGaps = unpriced.dataGaps.filter((g) => g.kind === "no_award_chart");
   const united = DATA.products.find(
     (p) => p.slug === "united-mileageplus-neo-world-elite-mastercard",
   );
@@ -1491,7 +1531,7 @@ test("chặng CHƯA định giá không bị trừ độ tin cậy hai lần", (
     !chartGaps.some((g) => g.subjectId === united!.pointsProgramId),
     "chặng chưa định giá mà vẫn khai chỗ trống của một thẻ ứng viên",
   );
-  assert.ok(japan.dataGaps.some((g) => g.kind === "award_route_uncovered"));
+  assert.ok(unpriced.dataGaps.some((g) => g.kind === "award_route_uncovered"));
 });
 
 /* ================================================================== *
@@ -2215,4 +2255,117 @@ test("KHÔNG có hack theo sản phẩm trong logic chung", async () => {
       assert.ok(!code.includes(`"${program.id}"`), `${name} nhắc chương trình ${program.id}`);
     }
   }
+});
+
+/* ================================================================== *
+ * Award chart: JAPAN và EAST_ASIA
+ *
+ * Mọi con số suy ra từ CÙNG ba bảng giá đã kiểm của `lib/award-charts.ts`,
+ * cộng một phép tính band từ chính toạ độ sân bay trong file đó. Các bài
+ * dưới đây khoá lại những chỗ dữ liệu mới dễ trôi nhất.
+ * ================================================================== */
+
+test("JAPAN và EAST_ASIA đã định giá được; EUROPE thì CHƯA — và nói ra", () => {
+  const priced = (region: TripRegion) =>
+    DATA.awardStrategies.filter(
+      (row) => row.originRegion === "CANADA_US" && row.destinationRegion === region,
+    );
+  assert.ok(priced("JAPAN").length >= 3, "JAPAN phải có ít nhất 3 chiến lược");
+  assert.ok(priced("EAST_ASIA").length >= 3, "EAST_ASIA phải có ít nhất 3 chiến lược");
+  assert.equal(priced("EUROPE").length, 0, "EUROPE vẫn chưa dựng — đừng lấp bằng phỏng đoán");
+
+  // Và chỗ trống phải khớp: đúng một cặp vùng còn lại.
+  const gaps = DATA.gaps.filter((gap) => gap.kind === "award_route_uncovered");
+  assert.deepEqual(gaps.map((gap) => gap.subjectId), ["CANADA_US|EUROPE"]);
+});
+
+test("KHÔNG có hạng First đi châu Á — vắng mặt là CÓ CHỦ Ý", () => {
+  // `award-charts.ts` ghi rõ: không hãng nào bán First giữa Canada và châu Á.
+  // Nếu ngày nào đó có người thêm một dòng First, bài này đỏ và bắt họ chứng
+  // minh bằng nguồn thay vì suy từ việc "các hạng khác đều có".
+  for (const region of ["JAPAN", "EAST_ASIA", "SEA_VIETNAM"] as const) {
+    assert.equal(
+      DATA.awardStrategies.filter(
+        (row) => row.destinationRegion === region && row.cabin === "first",
+      ).length,
+      0,
+      `${region} có dòng First`,
+    );
+  }
+});
+
+test("EAST_ASIA bắc qua HAI vùng giá của AAdvantage®", () => {
+  // Seoul nằm Asia Region 1, còn Trung Quốc / Đài Loan / Hong Kong nằm Region
+  // 2 — nên MỘT vùng của engine có HAI mức giá của hãng. Đây là ca duy nhất
+  // trong bộ dữ liệu mà ba con số khác nhau KHÔNG vì khoảng cách.
+  const aa = DATA.awardStrategies.find(
+    (row) =>
+      row.destinationRegion === "EAST_ASIA" &&
+      row.programId === id<PointsProgramId>("aadvantage") &&
+      row.cabin === "business",
+  );
+  assert.ok(aa !== undefined);
+  assert.ok(
+    aa!.pointsLow !== null && aa!.pointsHigh !== null && aa!.pointsLow < aa!.pointsHigh,
+    "AAdvantage® EAST_ASIA phải là một KHOẢNG, không phải một con số",
+  );
+  // Nhật thì ngược lại: cả NRT lẫn HND đều Region 1 ⇒ một mức duy nhất.
+  const japan = DATA.awardStrategies.find(
+    (row) =>
+      row.destinationRegion === "JAPAN" &&
+      row.programId === id<PointsProgramId>("aadvantage") &&
+      row.cabin === "business",
+  );
+  assert.ok(japan !== undefined);
+  assert.equal(japan!.pointsLow, japan!.pointsHigh, "Nhật chỉ có một vùng giá AA");
+});
+
+test("Aeroplan® JAPAN là KHOẢNG theo band khoảng cách, không phải một số", () => {
+  // Bờ Tây bay thẳng rơi band 0–5,000; bờ Đông rơi band 5,001–7,500; nối
+  // chuyến hợp lệ đẩy lên band 7,501–11,000. Ba con số phải phản ánh đúng ba
+  // mức đó, nếu không thì engine hứa một cái giá cho cả nước.
+  const aero = DATA.awardStrategies.find(
+    (row) =>
+      row.destinationRegion === "JAPAN" &&
+      row.programId === AEROPLAN &&
+      row.cabin === "business" &&
+      row.pricingModel === "fixed",
+  );
+  assert.ok(aero !== undefined);
+  assert.ok(
+    (aero!.pointsLow as number) < (aero!.pointsTypical as number) &&
+      (aero!.pointsTypical as number) < (aero!.pointsHigh as number),
+    "ba band phải cho ba con số tăng dần",
+  );
+  // Và cột đối tác cố định KHÔNG có Premium Economy — nó chỉ tồn tại ở cột
+  // giá động, đúng như chặng Đông Nam Á.
+  assert.equal(
+    DATA.awardStrategies.filter(
+      (row) =>
+        row.destinationRegion === "JAPAN" &&
+        row.programId === AEROPLAN &&
+        row.cabin === "premium_economy" &&
+        row.pricingModel === "fixed",
+    ).length,
+    0,
+    "cột đối tác cố định của Aeroplan® không có Premium Economy",
+  );
+});
+
+test("Test C/D của §32 nay CHẠY trên dữ liệu thật, không còn bị chặn", () => {
+  // Hai nhân vật Nhật của Phase 2 từng rơi vào nhánh "chưa có bảng giá". Nay
+  // chúng đo được — và khoảng cách giữa "gần đủ" và "thiếu xa" phải hiện ra
+  // bằng SỐ, không phải bằng hai hình dạng trạng thái khác nhau.
+  const funded = run(japanTripFunded).results[0];
+  const short = run(japanTripShortfall).results[0];
+  for (const result of [funded, short]) {
+    assert.ok(result.numbers.tripNeedHigh !== null, "chặng Nhật vẫn chưa định giá được");
+    assert.ok(!result.warnings.includes("AWARD_ROUTE_NOT_IN_DATASET"));
+  }
+  assert.equal(funded.numbers.pointsGapTypical, 0, "200K MR phủ được mức thường");
+  assert.ok(
+    (short.numbers.pointsGapTypical ?? 0) > 200_000,
+    "20K điểm cho 2 người phải còn thiếu rất nhiều",
+  );
+  assert.ok(short.reasonCodes.includes("POINTS_GAP_LARGE"));
 });
