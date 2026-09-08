@@ -187,7 +187,7 @@ export default async function StartHerePage() {
       )}
 
       <JsonLd data={jsonLd} />
-      <PageHeader eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} width="3xl" />
+      <PageHeader eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl space-y-5">

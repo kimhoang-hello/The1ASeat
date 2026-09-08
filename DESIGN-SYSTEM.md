@@ -218,24 +218,20 @@ Hệ quả cho `/blog/[slug]`: khung chỉ nới **khi bài có từ 2 `h2` tr�
 mục lục để lấp cột phải). Bài không có đầu mục — review khách sạn, video — giữ
 nguyên 42rem ở mọi bề ngang.
 
-### 5.1.2 `PageHeader` phải rộng bằng thân trang
+### 5.1.2 `PageHeader` luôn `max-w-page`
 
-`PageHeader` nhận prop `width`, tên khoá đặt theo đúng class chặn bề ngang của
-thân trang: `page` (mặc định), `article` (68rem), `4xl`, `3xl`, `2xl`, `xl`.
+Dải tiêu đề KHÔNG có prop đổi bề ngang. Tên trang phải bắt đầu ở cùng một mép
+trái trên mọi trang của site — đó là thứ người dùng thấy khi bấm qua lại giữa
+các mục, và nó thắng việc khớp mép với thân trang bên dưới.
 
-Khai sai là thấy ngay trên màn hình rộng: dải tiêu đề chạy `max-w-page` còn
-thân trang canh giữa ở `max-w-3xl` thì hai mép trái cách nhau vài trăm pixel —
-trông như hai trang chồng lên nhau. Ngày 08/09/2026 có 9 trang đang lệch kiểu
-đó.
+Đã thử hướng ngược lại ngày 08/09/2026 (mỗi trang tự khai bề ngang cho khớp
+thân trang) và đã bỏ trong cùng ngày: thân trang hẹp thì canh giữa, nên dải
+tiêu đề khớp theo cũng thành canh giữa, và tên các trang trong mục Miles &
+Points nhảy vào giữa màn hình trong khi mọi trang khác vẫn nằm sát trái.
 
-| Trang | `width` |
-|---|---|
-| Blog, chuyên mục, thẻ tín dụng, ngân hàng, so sánh, transfer bonus, game | `page` (mặc định) |
-| `/credit-cards/tot-nhat/[category]` | `article` |
-| `/transfer-partners` | `4xl` |
-| `/bay-ve-viet-nam` + trang chặng, `/bat-dau`, `/award-flight-finder` | `3xl` |
-| `/contact` | `2xl` |
-| `/calculator` | `xl` |
+Trang nào thấy chật thì cách sửa là **nới thân trang cho lấp hết `max-w-page`**
+— như `/credit-cards/tot-nhat` làm với lưới 2×2 — chứ không phải bóp dải tiêu
+đề lại cho vừa thân trang.
 
 ### 5.2 Nhịp dọc của section
 

@@ -143,7 +143,7 @@ export default async function VietnamRoutePage({
           destination: route.destinationName,
           destinationCode: route.destination.code,
         })}
-        width="3xl"
+       
       />
 
       <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">

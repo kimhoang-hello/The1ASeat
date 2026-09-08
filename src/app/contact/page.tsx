@@ -29,7 +29,7 @@ export default function ContactPage() {
         eyebrow={contact("eyebrow")}
         title={contact("title")}
         subtitle={contact("subtitle")}
-        width="2xl"
+       
       />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">

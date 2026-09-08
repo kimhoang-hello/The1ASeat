@@ -1,39 +1,26 @@
 /**
- * Bề ngang của dải tiêu đề PHẢI bằng bề ngang thân trang ngay dưới nó.
+ * Dải tiêu đề của một trang. Bề ngang LUÔN là `max-w-page`, không có prop nào
+ * đổi được.
  *
- * Mặc định `page` khớp với `max-w-page` — đúng cho trang danh sách và trang
- * công cụ. Nhưng một trang đọc thì thân trang hẹp hơn thế nhiều, và khi hai
- * bên lệch nhau thì trên màn hình 1800px mép trái của tiêu đề cách mép trái
- * của đoạn văn đầu tiên vài trăm pixel — trông như hai trang chồng lên nhau
- * chứ không phải một trang. Đó là lý do có prop này thay vì một con số cứng.
+ * Đã thử cho mỗi trang tự khai bề ngang để dải này khớp mép trái với thân
+ * trang bên dưới, và đã bỏ ngày 08/09/2026: thân trang hẹp thì canh giữa, nên
+ * dải tiêu đề khớp theo cũng thành canh giữa — tên trang ở mục Miles & Points
+ * nhảy vào giữa màn hình trong khi mọi trang khác vẫn nằm sát trái. Hai mép
+ * trái lệch nhau trong một trang là chuyện nhỏ; tên trang mỗi trang một chỗ
+ * khi bấm qua lại giữa các mục là chuyện lớn hơn.
  */
-/** Tên khoá đặt theo ĐÚNG class chặn bề ngang của thân trang, để chỗ khai ở
- *  trang và chỗ khai ở đây không thể lệch nhau mà vẫn trông hợp lệ. */
-const WIDTH = {
-  /** Trang danh sách, trang lưới thẻ — `max-w-page`. */
-  page: "max-w-page",
-  /** Trang đọc có cột phải là mục lục — cùng 68rem với `/blog/[slug]`. */
-  article: "max-w-[68rem]",
-  "4xl": "max-w-4xl",
-  "3xl": "max-w-3xl",
-  "2xl": "max-w-2xl",
-  xl: "max-w-xl",
-} as const;
-
 export function PageHeader({
   eyebrow,
   title,
   subtitle,
-  width = "page",
 }: {
   eyebrow?: string;
   title: string;
   subtitle?: string;
-  width?: keyof typeof WIDTH;
 }) {
   return (
     <div className="border-b border-border bg-secondary px-4 py-12 sm:px-6 lg:px-8">
-      <div className={`mx-auto ${WIDTH[width]}`}>
+      <div className="mx-auto max-w-page">
         {eyebrow && (
           <p className="text-xs font-semibold tracking-wide text-primary">{eyebrow}</p>
         )}

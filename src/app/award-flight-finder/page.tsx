@@ -25,7 +25,7 @@ export const revalidate = 3600;
 export default function AwardChartsPage() {
   return (
     <>
-      <PageHeader eyebrow={ac("eyebrow")} title={ac("title")} subtitle={ac("subtitle")} width="3xl" />
+      <PageHeader eyebrow={ac("eyebrow")} title={ac("title")} subtitle={ac("subtitle")} />
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         <AwardChartFinder />
 

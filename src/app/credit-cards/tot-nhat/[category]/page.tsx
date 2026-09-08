@@ -129,7 +129,7 @@ export default async function BestCardsCategoryPage({
         eyebrow={best("eyebrow")}
         title={category.titleVi}
         subtitle={category.subtitleVi}
-        width="article"
+       
       />
 
       {/* Từ `xl`: chữ trái, mục lục dính bên phải — cùng bố cục với
