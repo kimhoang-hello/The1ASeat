@@ -5,7 +5,7 @@ dùng) và Phase 3 (engine) đã xong và đã lên `origin/main`. Đọc file n
 để làm tiếp Phase 4, không cần lịch sử chat.
 
 Spec đầy đủ: [`docs/recommendation-engine-v1.md`](docs/recommendation-engine-v1.md).
-Mọi tham chiếu "§n" ở đây trỏ vào nó.
+Mọi tham chiếu "§n" trỏ vào nó.
 Tài liệu module: [`src/lib/recommendation/README.md`](src/lib/recommendation/README.md)
 — **đọc trước khi sửa bất cứ gì trong module.**
 
@@ -18,99 +18,129 @@ Tài liệu module: [`src/lib/recommendation/README.md`](src/lib/recommendation/
 | 1 | Lớp dữ liệu nền | ✅ XONG |
 | 2 | Hồ sơ người dùng, thẻ, số dư, goals | ✅ XONG |
 | 3 | Engine (Portfolio Analyzer → Ranking) | ✅ XONG |
-| 4 | **Debugger + `recommendation_runs`** | ⬅️ **BẮT ĐẦU Ở ĐÂY** |
+| 4 | **`recommendation_runs` + Debugger** | ⬅️ **BẮT ĐẦU Ở ĐÂY** |
 | 5 | Frontend | ⛔ |
 | 6 | LLM giải thích | ⛔ |
 
 Phase 1: 31 commit, 24 vòng Codex, 68 phát hiện.
 Phase 2: 12 commit, 11 vòng, 19 phát hiện.
-Phase 3: 18 commit, 9 vòng Codex (37 phát hiện, 11 P1, 2 bản vá bị bác) + 17 lỗi
-tự tìm khi đọc kết quả chạy. 237 test.
+Phase 3: 24 commit, 10 vòng Codex (40 phát hiện, 11 P1, 2 bản vá bị bác) + 17
+lỗi tự tìm khi đọc kết quả chạy. **272 test**, `ENGINE_VERSION` 4.0.0.
 
-### Tiêu chí nghiệm thu Phase 3 — đã đạt
+### Tiêu chí nghiệm thu Phase 3 — đã đạt, kiểm bằng chạy thật
 
 | Tiêu chí | Bằng chứng |
 | --- | --- |
-| Cùng đầu vào + cùng version = cùng đầu ra | test tất định, kể cả khi đảo thứ tự mọi mảng đầu vào |
-| LLM không tham gia | không có lời gọi nào; `ENGINE_VERSION` thuần |
-| Affiliate không ảnh hưởng thứ hạng | 2 test: đảo cờ trên toàn bộ sản phẩm, VÀ quét mã nguồn 21 file |
-| `NO_NEW_CARD` thắng được | `vietnamTripFunded` → 0.503, độ tin cậy CAO |
-| Không đếm trùng điểm chuyển được | `accessible` trả kèm `sources`; tập trung chia phân số |
-| Mỗi mục tiêu một hàm chấm điểm | 4 bộ khoá thành phần khác nhau, test khoá trọng số theo §10 |
+| Cùng state + data + version = cùng đầu ra | 3 lượt × 15 nhân vật; đảo thứ tự mảng; đảo thứ tự sản phẩm |
+| LLM không tham gia | không có lời gọi nào; `recommend()` thuần và đồng bộ |
+| Affiliate không ảnh hưởng thứ hạng | đảo cờ trên MỌI sản phẩm + quét mã nguồn 21 file |
+| `NO_NEW_CARD` thắng được | 0.723, hơn MỌI thẻ, có mặt mọi lượt chạy |
+| Không đếm trùng điểm chuyển được | mỗi đích quy đổi theo tỷ lệ CỦA NÓ, `sources` chung |
+| Mỗi mục tiêu một hàm chấm điểm | 4 ý định → 4 bộ thành phần khác nhau |
 
-**Phép thử thật sự** — cùng chặng, cùng hạng ghế, khác đúng hai con số:
+**Phép thử thật** — cùng chặng, khác đúng hai con số:
 
-| | thắng | chiến lược | vì sao |
-| --- | --- | --- | --- |
-| `vietnamTripFunded` (260K Aeroplan®, 1 người) | **`NO_NEW_CARD`** | `USE_EXISTING_POINTS` | `pointsGapTypical: 0`, Rule 1 nổ |
-| `vietnamTripShortfall` (20K, 2 người) | `amex-gold-rewards` | `EARN_FLEXIBLE_POINTS` | thiếu > 100,000; MR chuyển sang Aeroplan® |
+| | thắng | chiến lược |
+| --- | --- | --- |
+| 260K Aeroplan®, 1 người, VN business | **`NO_NEW_CARD`** 0.723 | `USE_EXISTING_POINTS` |
+| 20K, 2 người, cùng chặng | `amex-gold-rewards` | `EARN_FLEXIBLE_POINTS` |
 
 ---
 
-## 2. Phase 4 phải xây gì (§20, §22)
+## 2. Phase 4 phải xây gì
 
-### 2.1 `recommendation_runs` — bản chụp một lượt chạy
+### 2.1 MỞ `derived_state` RA TRƯỚC — đây là việc đầu tiên
+
+**`RecommendationRun` hiện KHÔNG xuất ba thứ mà §22 bắt buộc**, dù engine đã
+tính đủ cả ba rồi vứt đi:
+
+| §22 đòi | Engine có? | Ở đâu trong `engine.ts` |
+| --- | --- | --- |
+| Normalized goal | ✅ | `goalResolution`, `results[].goalType` |
+| **Portfolio analysis** | ❌ **vứt đi** | `analyzePortfolio(...)` — biến `portfolio` |
+| **Derived needs** | ❌ **vứt đi** | `computeNeeds(...)` — biến `needs` |
+| Generated strategies | ✅ | `results[].strategies` |
+| **Excluded products** | ❌ **vứt đi** | `facts` trừ `selectable` |
+| Suitability warnings | ⚠️ chỉ của thẻ CÒN trong bảng | `candidate.suitability` |
+| Candidate products | ✅ | `primaryAction`, `alternatives` |
+| Score breakdown | ✅ | `components`, `adjustments` |
+| Editorial rule effects | ✅ | `adjustments` (§15 chưa làm nên rỗng) |
+| Final recommendation | ✅ | `primaryAction` |
+| Confidence | ✅ | `confidence` + 4 thừa số |
+
+Ba ô ❌ chính là `derived_state` của §20. Chúng là **cùng một việc**: thêm
+chúng vào `RecommendationRun` vừa mở khoá debugger vừa lấp đúng cột schema.
+
+**Thẻ BỊ LOẠI quan trọng ngang thẻ được chọn.** Câu admin hỏi nhiều nhất sẽ là
+"vì sao thẻ X không hiện ra", và hôm nay engine không trả lời được — nó lọc
+`ineligible` và `suitability.excluded` rồi im lặng. Giữ lại danh sách đó kèm
+LÝ DO (`failedRuleIds`, `excludedReason`) là việc nhỏ ở `engine.ts`, và không
+có nó thì debugger trả lời được một nửa câu hỏi.
+
+⚠️ Thêm trường vào `RecommendationRun` **không** đổi thứ hạng, nên KHÔNG cần
+tăng `ENGINE_VERSION` — nhưng bản chụp §20 phải chạy lại (xem §7).
+
+### 2.2 `recommendation_runs` (§20)
 
 ```sql
 recommendation_runs
 -------------------
-id, user_id, engine_version, created_at
-input_snapshot   jsonb   -- UserState + DatasetQuery { asOf, knownAt }
-derived_state    jsonb   -- portfolio, strategies, needs
-output           jsonb   -- RecommendationRun
+id, user_id nullable
+engine_version text          -- ENGINE_VERSION
+rule_version text            -- §15 chưa làm ⇒ hằng, nhưng giữ cột
+data_snapshot_at timestamptz -- = asOf
+input_snapshot   jsonb
+derived_state    jsonb       -- portfolio + needs + excluded (xem 2.1)
+output_snapshot  jsonb
+created_at
 ```
 
-**`input_snapshot` là cơ chế thật, không phải `datasetAt`.** README Phase 1 nói
-rõ giới hạn: đóng một dòng cũ là SỬA dòng đó, và bản ghi không giữ lại việc nó
-từng mở — nên dựng lại một ngày trước lần đóng sẽ thấy dòng đã đóng. Bản chụp
-đã lưu luôn đúng hơn mọi phép dựng lại.
+**`input_snapshot` phải lưu ĐỦ để chạy lại, không chỉ `{ asOf, knownAt }`.**
+README Phase 1 nói thẳng giới hạn: đóng một dòng cũ là SỬA dòng đó, và bản ghi
+không giữ lại việc nó từng mở — nên `datasetAt` dựng lại một ngày trước lần
+đóng sẽ thấy dòng đã đóng. Bản chụp đã lưu luôn đúng hơn mọi phép dựng lại.
 
-Dựng lại một lượt cũ phải truyền **CẢ HAI** trục thời gian:
-`getDataset({ asOf, knownAt })`. Thiếu `knownAt` thì đính chính nhập sau sẽ lọt
-vào lời giải thích của một lượt chạy trước đó.
+Tối thiểu phải chụp:
 
-`recommend()` là hàm **THUẦN và ĐỒNG BỘ** đúng để phục vụ việc này — dựng lại
-một lượt chạy không phải đi qua lớp bất đồng bộ nào. `recommendFromSource()` là
-bản có I/O, chỉ để nạp lịch sử offer.
+1. `UserState` (nguyên vẹn),
+2. `RecommendationDataset` đã cắt theo `asOf`/`knownAt` — hoặc một **dấu vân
+   tay nội dung** cộng cam kết dữ liệu bất biến,
+3. **`offerHistory`** — đây là cái dễ quên nhất. Nó là THAM SỐ của
+   `recommend()`, không nằm trong `RecommendationDataset`, và thiếu nó thì
+   percentile §12 chạy lại ra khác.
 
-### 2.2 Recommendation Debugger (§22)
+`engine.test.ts` đã có sẵn hàm băm FNV-1a trên nội dung dataset — dùng lại nó
+thay vì viết cái thứ hai.
 
-Trả lời "vì sao thẻ này thắng". Dữ liệu đã có sẵn, chỉ cần trình bày:
+### 2.3 Debugger (§22) — **bắt buộc cho V1**
 
-- `Candidate.components` — bảng §19, dùng `scoreTable()` để sắp theo đóng góp.
-  Mỗi dòng có `weight` (đúng con số §10), `raw`, `contribution`, và `note` giải
-  thích `raw` từ đâu ra.
-- `Candidate.adjustments` — từng luật §16 đã sửa điểm bao nhiêu, có tên.
-- `Recommendation.strategies` — cả chín hành động và điểm của chúng.
-- `Recommendation.confidence` — bốn thừa số của §29 + `notes`.
-- `RecommendationRun.dataGaps` / `userGaps` — chỗ trống lượt chạy này chạm tới.
+Admin nhập một hồ sơ giả, hệ thống in ra 11 mục ở bảng trên. Dữ liệu đã có
+sẵn sau khi làm 2.1; việc còn lại là trình bày.
 
-Bất biến đã có test: **bảng điểm cộng lại đúng bằng `baseScore`, và
-`baseScore` + tổng `adjustments` đúng bằng `score`.** Giữ nó — nó là thứ làm
-bảng debugger đáng tin.
+Bất biến đã có test, **giữ nó** — nó là thứ làm bảng debugger đáng tin:
 
-### 2.3 Bộ test §32 còn thiếu gì
+> bảng điểm cộng lại ĐÚNG bằng `baseScore`, và `baseScore` + tổng
+> `adjustments` ĐÚNG bằng `score`.
 
-| Test | Nhân vật | Trạng thái |
-| --- | --- | --- |
-| A — người mới | `beginnerNoCards` | ✅ |
-| B — dồn hết vào Aeroplan® | `aeroplanHeavy` | ✅ |
-| C — đủ điểm | `vietnamTripFunded`, `japanTripFunded` | ✅ |
-| D — thiếu điểm | `vietnamTripShortfall`, `japanTripShortfall` | ✅ |
-| E — mốc chi ngoài tầm | `lowSpendCapacity`, `highSpendLowCapacity` | ✅ |
-| F — affiliate lớn | mọi nhân vật | ✅ |
-| G — quyền lợi trùng | `duplicateBagBenefit` | ✅ |
-| H — đủ điểm linh hoạt | `flexiblePointsSufficient` | ⚠️ chạy được nhưng EUROPE chưa có giá |
-| I — offer đổi | mọi nhân vật | ✅ |
-| J — thiếu dữ liệu | `nearlyEmpty`, `vagueEarner` | ✅ |
+`scoreTable()` trong `explain.ts` sắp sẵn theo đóng góp giảm dần.
 
-**Test C/D chạy trên chặng Việt Nam, không phải Nhật.** §33 mới phủ
-`CANADA_US → SEA_VIETNAM`; JAPAN, EUROPE, EAST_ASIA còn trống và được khai
-đúng là `award_route_uncovered`. Cách SAI để mở khoá là bịa một bảng giá. Hai
-nhân vật Nhật **ở lại** làm ca "engine gặp chỗ trống của lớp dữ liệu".
+### 2.4 Quyết định DATABASE — **đến hạn ở đây**
 
-Muốn Test H đầy đủ (và mọi chuyến châu Âu) thì bổ sung `data/award-strategies.ts`
-— **đừng lấp bằng số phỏng đoán.**
+Phase 2 và 3 chỉ ĐỌC, nên `UserDataSource` không có phần ghi. `recommendation_runs`
+là chỗ đầu tiên cần **GHI thật**, nên câu hỏi này rơi vào đúng Phase 4 — sớm
+hơn dự kiến của bản bàn giao Phase 3.
+
+Ràng buộc có thật của repo, không phải sở thích:
+
+- Chưa từng có database nào. Dữ liệu tham chiếu nằm trong module TS, nội dung
+  biên tập ở Contentful, site deploy thẳng từ `main` lên Hostinger.
+- `RecommendationDataSource` và `UserDataSource` **chưa bao giờ chạy với thứ gì
+  ngoài bản đọc file / bản trong bộ nhớ.** `inMemoryUserStore` trả về BẢN SAO
+  (như một database thật) nên thu hẹp được một phần, nhưng nó vẫn không phải
+  database. Đây là rủi ro lớn nhất còn lại của cả ba phase.
+- `recommendation_runs` ghi nhiều, đọc ít, không cần join phức tạp — nên nó
+  KHÔNG ép lựa chọn nào. Đừng để một bảng append-only quyết định kiến trúc dữ
+  liệu người dùng.
 
 ---
 
@@ -119,236 +149,126 @@ Muốn Test H đầy đủ (và mọi chuyến châu Âu) thì bổ sung `data/a
 Import từ `@/lib/recommendation` (`index.ts`). Đừng import thẳng file con.
 
 ⚠️ **Test thì NGƯỢC LẠI: đừng import `index.ts`.** Nó tái xuất `source.ts`,
-thứ import `@/lib/...`, và alias đó chỉ tồn tại trong bundler của Next.
-`node --test` sẽ nổ `ERR_MODULE_NOT_FOUND`. Import thẳng từng file.
+thứ import `@/lib/...` — alias chỉ tồn tại trong bundler của Next, nên
+`node --test` nổ `ERR_MODULE_NOT_FOUND`. Import thẳng từng file.
 
 ```ts
 const data = await repoDataSource.getDataset({ asOf: "2026-09-08" });
 const ix = indexDataset(data);
 const state = await store.getUserState(userId);
-const run = recommend({ state, data, ix, asOf: "2026-09-08" });
+const run = recommend({ state, data, ix, asOf: "2026-09-08" });   // THUẦN, ĐỒNG BỘ
 ```
 
+`recommend()` thuần và đồng bộ **là một lựa chọn thiết kế cho đúng Phase 4**:
+chạy lại một lượt chạy cũ không phải đi qua lớp I/O nào. `recommendFromSource()`
+là bản có I/O, chỉ để nạp lịch sử offer.
+
 Bảng các hàm đọc trạng thái người dùng, hai trục thời gian, và các `Map` của
-`indexDataset` — xem [README](src/lib/recommendation/README.md), mục Phase 1/2.
+`indexDataset` — xem [README](src/lib/recommendation/README.md).
 
 ---
 
 ## 4. Sáu luật không được phá
 
 1. **Affiliate không bao giờ ảnh hưởng thứ hạng** (§16 Rule 7). Cưỡng chế bằng
-   SỰ VẮNG MẶT + hai test, một trong đó quét mã nguồn.
-2. **Điểm tín dụng không phải điều kiện cứng** (§3.10). `EligibilityRuleType`
-   không có nhánh nào cho nó, và đừng thêm.
+   SỰ VẮNG MẶT + hai test, một trong đó quét mã nguồn 21 file.
+2. **Điểm tín dụng không phải điều kiện cứng** (§3.10).
 3. **Không đếm trùng điểm chuyển được** (§7). Một đồng điểm chỉ tiêu được MỘT
    lần dù nó với tới năm chương trình.
 4. **`NO_NEW_CARD` là ứng viên trong mọi lượt chạy** (§16 Rule 8).
 5. **Mô hình người dùng không mã hoá thẻ nào nên được khuyên.** Thêm
    `preferredProductId` vào hồ sơ là test đỏ.
-6. **`strategies.ts` và `needs.ts` không được nhắc tên sản phẩm nào.** Khoảnh
-   khắc một chiến lược sinh ra vì một cái thẻ cụ thể, thứ tự suy luận của spec
-   đã bị đảo ngược.
+6. **`strategies.ts` và `needs.ts` không được nhắc tên sản phẩm nào**, và 21
+   file engine không được nhắc slug/id sản phẩm hay chương trình. Có test cấu
+   trúc quét cả hai.
 
 ---
 
-## 5. Bài học lớn nhất của Phase 3
+## 5. Cạm bẫy cụ thể của Phase 4
 
-> **Lỗi nằm ở chỗ engine ĐỌC CÁI CỜ thay vì ĐỌC DỮ LIỆU.**
+**Dữ liệu không dùng được là CHƯA BIẾT, không phải một giá trị.** Ba phép kiểm
+chung ở `user.ts` — `usableBalance`, `usablePassengers`, `usableRoundTrip`.
+Dùng lại chúng, đừng viết phép kiểm mới. Engine KHÔNG gọi `validateUserState`
+(§30 đòi nhận hồ sơ dở dang), nên nó tự phòng ở mọi biên giới.
 
-Cả ba lỗi tự tìm được đều biên dịch sạch, test xanh, và cho ra những con số
-trông hợp lý. Không lỗi nào lộ ra khi viết code; cả ba lộ ra khi **in bảng điểm
-của một lượt chạy thật rồi đọc từng dòng**.
+**Lưới an toàn bắt DỮ LIỆU sai tốt hơn bắt CODE KIỂM TRA sai.** Ba lỗi nghiêm
+trọng nhất của Phase 1, bốn của Phase 2 và toàn bộ Phase 3 đều **im lặng** —
+audit xanh, test xanh, build xanh — và chỉ lộ ra khi có người in bảng số ra
+rồi đọc từng dòng. Debugger của Phase 4 chính là dụng cụ đó; hãy dùng nó lên
+chính các nhân vật mẫu ngay khi dựng xong.
 
-1. `marriott-bonvoy` khai `transferable: true` với ĐÚNG KHÔNG chặng nào. Lớp dữ
-   liệu đã khai `transfer_paths_unmodelled`, và `audit:reco-data` cảnh báo bằng
-   một câu tiên đoán chính xác lỗi này. Engine vẫn đọc cờ → Bonvoy® đứng đầu
-   bảng cho một người muốn BAY.
-2. Miễn phí năm đầu ĐẾM HAI LẦN trên cả 9 thẻ có `fee_waiver`.
-3. Trần `kind: "spend"` đem trần-ĐÔ chia cho tổng-ĐIỂM.
+**Phép thử một bài test:** nó có GỌI thứ nó đang kiểm không, và nó có ĐỎ được
+không? Phase 3 có **ba** bài test xanh mà không bảo vệ gì, cả ba chỉ lộ ra khi
+làm phép kiểm ngược.
 
-### Chuỗi review lặp lại y hệt Phase 2
+**Khi một bài kiểm đỏ, hỏi TRƯỚC: bất biến mình vừa viết ra có ĐÚNG không?**
+Trong vòng rà cuối, ba lần liên tiếp câu trả lời là không — bài kiểm sai, engine
+đúng ("mọi đích ≤ pool gốc" quên tỷ lệ 1000:1200; "bonus lớn nhất" xếp theo SỐ
+ĐIỂM thay vì GIÁ TRỊ; "điểm thẻ thắng phải đơn điệu" so hai bảng khác nhau).
 
-| Vòng | Số lỗi | Lỗi nằm ở đâu |
-| --- | --- | --- |
-| 1 | 12 (4 P1) | code gốc |
-| 2 | 5 (2 P1) | **toàn bộ trong bản vá của vòng 1** |
-| 3 | 3 (1 P1) | **toàn bộ trong bản vá của vòng 2** |
-| 4 | 2 P1 + bác 2 bản vá | **toàn bộ trong bản vá của vòng 3** |
-| 5 | 1 P2 | **trong bản vá AN TOÀN của vòng 4** |
-| 6 | 1 P2 | **trong bản vá của vòng 5** |
+**Bản vá đẻ ra lỗi tiếp theo.** Phase 2 gặp 8 vòng liên tiếp; Phase 3 gặp lại
+y hệt: 12 → 5 → 3 → 2 → 1 → 1, và mọi lỗi từ vòng 2 trở đi đều nằm trong bản vá
+của vòng ngay trước. Chuỗi chỉ dừng khi sửa NGUYÊN NHÂN GỐC.
 
-Vòng 4 chạy với đề bài "với MỖI bản vá, chọn ĐÚNG / SAI / BẢN VÁ HỎNG, và tự
-bác lại kết luận sạch trước khi viết ra". Nó bác hai bản vá của chính nó, giữ
-nguyên một cái, và từ chối kết luận sạch. Đây là vòng đắt giá nhất — **dùng
-đúng đề bài đó cho Phase 4.**
+**Một bản vá "phòng thủ" có thể vô hiệu hoá đúng thứ nó bảo vệ.** Dấu hiệu: nó
+nuốt một lỗi VÀ nó nằm trên đường đi của một phép kiểm.
 
-Nó cũng bắt được HAI BÀI TEST DIỄN — xanh mà không bảo vệ gì:
+**Hai phép kiểm cùng một khái niệm thì phải là MỘT hàm** — ba lần trả giá:
+`isObject` (Phase 2), đơn vị offer (Phase 3 vòng 4), tính hợp lệ giá trị người
+dùng (vòng rà đối kháng). Gọi LẠI cùng hàm đó ở một biên giới khác thì KHÔNG
+vi phạm luật này.
 
-| Test | Vì sao vô dụng |
-| --- | --- |
-| đơn vị offer tiền mặt | **không hề gọi hàm đang kiểm** — tự dựng một `Set` rồi kiểm chính nó |
-| `ENGINE_VERSION` | so `!== "3.0.0"`, xanh VĨNH VIỄN sau lần tăng đầu |
+⚠️ **Đừng dùng `git checkout -- <file>`** để hoàn tác một thử nghiệm khi file
+còn thay đổi chưa commit — nó quay về bản đã commit, tức bản CÒN LỖI. Đã sập
+ba lần. Dùng bản sao (`cp` sang `/tmp`).
 
-> **Phép thử một bài test: nó có GỌI thứ nó đang kiểm không, và nó có ĐỎ được
-> không?**
-
-### Rà đối kháng — bài học lớn nhất
-
-Một vòng riêng với đề bài "phá engine, không phải xác nhận nó chạy" tìm ra 14
-lỗi mà 237 test không bắt được. Kết quả chia hai nửa rất rõ: các vùng CÓ test
-cấu trúc (affiliate, tất định, strategy-trước-product, quyền lợi trùng) đứng
-vững trước mọi đầu vào thù địch; các vùng chỉ được thử bằng fixture sạch thủng
-7 chỗ.
-
-> **Lỗ hổng nằm ở những bất biến chưa ai viết thành test** — và ở đây đều là
-> bất biến về GIÁ TRỊ (số dư âm, dòng trùng, `passengers: 0`, hồ sơ vắng).
-
-`validateUserState` cấm phần lớn các ca đó, nhưng engine **không gọi
-validator** — §30 đòi nhận hồ sơ dở dang. Nên engine phải tự phòng, và phòng
-theo đúng hướng của cả module: **dữ liệu không dùng được là CHƯA BIẾT, không
-phải một giá trị.** Ba phép kiểm chung nằm ở `user.ts`: `usableBalance`,
-`usablePassengers`, `usableRoundTrip`. Dùng lại chúng, đừng viết phép kiểm
-mới.
-
-Vòng 5 bắt tiếp một tầng nữa, lần này trong bản vá AN TOÀN của vòng 4: một
-`try/catch` thêm vào để CI đọc-only không gãy đã nuốt luôn lỗi ghi bản chụp,
-khiến test xanh vĩnh viễn khi version lệch.
-
-> **Một bản vá "phòng thủ" có thể vô hiệu hoá đúng thứ nó đang bảo vệ.** Dấu
-> hiệu: nó nuốt một lỗi VÀ nó nằm trên đường đi của một phép kiểm.
-
-### Bản chụp hành vi (§20) — cách dùng
-
-```bash
-npm run test:reco                              # chỉ ĐỌC và SO
-UPDATE_ENGINE_SNAPSHOT=1 npm run test:reco     # ghi lại, rồi COMMIT file
-```
-
-`engine.snapshot.json` **phải được commit** — CI đọc nó, không dựng lại nó.
-Đổi hành vi thì tăng `ENGINE_VERSION` rồi chạy đường cập nhật; quên tăng thì
-CẢ HAI đường đều đỏ — kể cả đường cập nhật, vì nếu không thì cách dễ nhất để
-làm test xanh trở lại chính là chạy lệnh cập nhật, và bất biến §20 mất sạch ý
-nghĩa.
-
-Bản chụp ghi cả GỢI Ý THAY THẾ, không chỉ ứng viên đứng đầu: một thay đổi chỉ
-xáo trộn thứ hạng phía dưới vẫn là thay đổi hành vi. Phát hiện ra điều đó khi
-một phép kiểm ngược KHÔNG đỏ — lần thứ hai trong Phase 3 mà một phép kiểm
-ngược thất bại lại đáng giá hơn một phép kiểm ngược thành công.
-
-Rõ nhất là câu chuyện ĐƠN VỊ của offer tiền mặt: ba cách đoán, ba vòng, ba
-kiểu hỏng — tra ngược theo con số, gán cứng `cash → dollar`, lấy đơn vị đợt
-gần nhất. Chuỗi chỉ dừng khi **thôi đoán** và trả `null` lúc không chắc.
-
-> **Khi một bản vá là bản vá thứ ba cho cùng một chỗ, vấn đề không nằm ở cách
-> vá.** Nó nằm ở việc đang cố suy ra một thứ không tồn tại trong dữ liệu.
-
-Và bài học của vòng 1: **bốn lỗi P1 đều là những chỗ mình TƯỞNG đã làm mà
-chưa nối dây.** Lọc `ineligible` khỏi ứng viên — tưởng đã có, thật ra chỉ lọc
-`suitability.excluded`. `eligibility_unknown` — tưởng đọc rồi, thật ra chưa
-truyền vào. Ba lần test đỏ trong vòng vá là ASSERTION quá chặt, không phải code
-sai; một lần là test bắt đúng lỗi trong chính bản vá vừa viết.
-
-> **Kiểm ngược mọi bản vá quan trọng: gỡ nó ra, test phải ĐỎ.** Đã làm thật với
-> 9 bản vá của Phase 3. Một lần đầu tiên test KHÔNG đỏ — và nó lộ ra rằng bài
-> test đang chứng minh một chuyện khác với chuyện nó tưởng.
-
-⚠️ Và một cái bẫy đã sập lần thứ ba: **đừng dùng `git checkout -- <file>` để
-hoàn tác một thử nghiệm** khi file đó còn thay đổi chưa commit. Nó quay về bản
-đã commit, tức bản CÒN LỖI. Dùng bản sao (`cp` sang `/tmp`).
+⚠️ **Có thể có phiên khác chạy song song.** Kiểm `git status` trước khi stage,
+và **stage theo đường dẫn cụ thể**, đừng `git add -A`. Đã xảy ra thật trong
+Phase 3 (một phiên khác đang làm blog TOC).
 
 ---
-
-## 5b. Rà toàn vẹn cuối — 12 bảo đảm, đã kiểm bằng chạy thật
-
-| # | Bảo đảm | Cách kiểm |
-| --- | --- | --- |
-| 1 | Cùng state + data + version = cùng đầu ra | 3 lượt × 15 nhân vật; đảo thứ tự mảng; đảo thứ tự sản phẩm |
-| 2 | Affiliate không đổi thứ hạng | đảo cờ trên MỌI sản phẩm; + quét mã nguồn 21 file |
-| 3 | `NO_NEW_CARD` thắng được mọi sản phẩm | thắng 0.723, hơn MỌI thẻ, có mặt mọi lượt chạy |
-| 4 | Một thay đổi → thay đổi hiểu được | quét sức dồn $500→$20,000: 3 lần đổi người thắng, đơn điệu theo từng thẻ |
-| 5 | Thiếu dữ liệu → hạ tin cậy, không bịa | số điểm cần, khoảng cách, cờ cận dưới |
-| 6 | Không đếm trùng điểm chuyển được | mỗi đích quy đổi theo tỷ lệ CỦA NÓ, `sources` chung |
-| 7 | Không hack theo sản phẩm | 21 file: không slug, không id sản phẩm, không id chương trình |
-| 8 | Điều chỉnh biên tập có trần, giải thích được | §17 ±10%, mọi điều chỉnh có tên luật |
-| 9 | Chấm điểm riêng theo ý định | 4 ý định → 4 bộ thành phần khác nhau |
-| 10 | Mọi khuyến nghị có mã lý do truy được | bảng điểm cộng lại ĐÚNG bằng điểm cuối |
-| 11 | Một chỉ số cực đoan không đè bẹp phù hợp | bonus lớn nhất thua người dồn $500, thắng người hợp |
-| 12 | Dữ liệu hỏng/cũ/thiếu được nêu ra | chặng chưa giá, offer thiếu điều khoản, định giá cũ 6 năm |
-
-**Ba bài kiểm của chính vòng này THẤT BẠI, và cả ba lần là bài kiểm sai, không
-phải engine sai.** Đáng ghi lại vì cả ba đều là cái bẫy engine đã học cách
-tránh:
-
-| Bài kiểm sai | Vì sao |
-| --- | --- |
-| "mọi đích ≤ pool gốc" | ngầm giả định tỷ lệ 1:1; MR→Bonvoy là 1000:1200 |
-| "thẻ bonus lớn nhất phải nổi lên" | xếp hạng theo SỐ ĐIỂM; 160K TD Rewards (0.5¢) < 120K MR (1.8¢) |
-| "điểm thẻ thắng cuộc phải đơn điệu" | bước đầu người thắng là `NO_NEW_CARD` — so hai bảng khác nhau |
-
-> **Khi một bài kiểm đỏ, hỏi trước: bất biến mình vừa viết ra có ĐÚNG không?**
-> Ba lần trong một vòng, câu trả lời là không.
 
 ## 6. Rủi ro và giới hạn đã biết
 
-### Chưa chọn database — **phải trả lời TRƯỚC Phase 5**
-
-`UserDataSource` chỉ có ĐỌC, và Phase 3 chỉ đọc, nên tới đây vẫn chưa cần. Phần
-GHI đi liền với lựa chọn lưu trữ. Phase 4 (`recommendation_runs`) là chỗ đầu
-tiên cần GHI thật — nên **câu hỏi database rơi vào đúng Phase 4**, sớm hơn dự
-kiến của bản bàn giao trước.
-
-### Giới hạn của mô hình (đã cân nhắc, cố ý giữ)
-
 | Chỗ | Ảnh hưởng |
 | --- | --- |
-| Award strategy phủ 3/4 cặp vùng | Chỉ còn `CANADA_US → EUROPE`; audit cảnh báo, §29 hạ độ tin cậy |
-| Hệ sinh thái = CHƯƠNG TRÌNH, không phải liên minh | Aeroplan® và United® đếm thành hai. Tập trung bị đo THIẾU chứ không thừa — engine khuyên đa dạng hoá ít hơn mức đáng, không ép vô cớ |
-| Chặng chuyển đòi hạng thành viên bị BỎ khỏi điểm tiếp cận được | Ước lượng thiếu; hướng an toàn (không hứa điểm người dùng không với tới) |
-| `editorial_rules` (§15) chưa làm | 5% trọng số editorial của §10 bằng 0 cho MỌI ứng viên, nên không đổi thứ hạng. `editorialAdjustment()` đã có chỗ và đã bị chặn ±10% |
-| Percentile lịch sử gần như luôn `null` | Nhật ký mới bắt đầu 29/08/2026, dưới 3 đợt thì trả `null`. Đúng — "mới theo dõi một tháng" không được nói thành "cao nhất từng thấy" |
-| Bảo hiểm còn trong `textValue` | Chỉ so được có/không, chưa chấm điểm được |
-| Điểm **hết hạn** không mô hình hoá | Mọi câu "bạn đã đủ điểm" đi kèm `POINTS_EXPIRY_NOT_MODELLED` |
+| `UserDataSource` chưa chạy với backend thứ hai | **Rủi ro lớn nhất.** Lần thử thật rơi vào chính Phase 4 |
+| Award chart phủ 3/4 cặp vùng | Chỉ còn `CANADA_US → EUROPE`; audit cảnh báo, độ tin cậy bị đặt trần `medium` |
+| Percentile lịch sử gần như luôn `null` | Nhật ký mới từ 29/08/2026; §12 hiện là tín hiệu chết |
+| Hệ sinh thái = CHƯƠNG TRÌNH, không phải liên minh | Aeroplan® và United® đếm thành hai ⇒ tập trung đo THIẾU (hướng an toàn) |
+| Chặng chuyển đòi hạng thành viên bị BỎ | Ước lượng thiếu; không hứa điểm người dùng không với tới |
+| `editorial_rules` (§15) chưa làm | 5% trọng số bằng 0 cho MỌI ứng viên nên không đổi thứ hạng; chỗ áp đã có và đã bị chặn ±10% |
+| Bảo hiểm còn trong `textValue` | Chỉ so được có/không |
+| Điểm **hết hạn** không mô hình hoá | Mọi câu "đã đủ điểm" kèm `POINTS_EXPIRY_NOT_MODELLED` |
 | Không có thẻ phụ / authorized user | V2 |
-| "Tôi có nên mở thẻ X?" không phải `goal_type` | §5 chỉ có bốn loại. Câu người đọc hay hỏi nhất — cân nhắc V2 |
+| "Tôi có nên mở thẻ X?" không phải `goal_type` | §5 chỉ có bốn loại — câu người đọc hay hỏi nhất. Cân nhắc V2 |
 
-### Trọng số nào là của SPEC, trọng số nào là của ENGINE
+### Trọng số nào của SPEC, trọng số nào của ENGINE
 
-Bốn bảng §10 chép nguyên văn, có test khoá. Những chỗ engine tự chọn — và đều
-nói ra ngay đầu file:
+Bốn bảng §10 chép nguyên văn, **có test khoá tới từng phần trăm**. Những chỗ
+engine tự chọn — và đều nói ra ngay đầu file:
 
-- `scoring/earning.ts` — cả bảng (spec nêu tên hàm, không cho trọng số).
-- `rank.ts` — bảng của `NO_NEW_CARD`.
-- `offer-quality.ts` — năm vế của §11 (spec liệt kê thành phần, không cho tỷ lệ).
-- `confidence.ts` — cách trộn bốn thừa số của §29.
+- `scoring/earning.ts` — cả bảng (spec nêu tên hàm, không cho trọng số)
+- `rank.ts` — bảng của `NO_NEW_CARD`
+- `offer-quality.ts` — năm vế của §11
+- `confidence.ts` — cách trộn bốn thừa số của §29
+
+### Lấp `CANADA_US → EUROPE` (nếu cần)
+
+1. **Đừng tra lại từ đầu** — `src/lib/award-charts.ts` đã có ba bảng giá đã
+   kiểm kèm ngày verify. Chúng là NGUỒN.
+2. **Band khoảng cách TÍNH ĐƯỢC, đừng nhớ** — file đó có `lat`/`lon` từng sân
+   bay và `greatCircleMiles`.
+3. Một vùng của engine có thể bắc qua nhiều band/vùng của hãng — đó là lý do
+   `pointsLow/Typical/High` tồn tại.
+4. Châu Âu cần bộ chương trình KHÁC: Flying Blue® và Avios® quan trọng hơn
+   hẳn, Asia Miles® gần như vô nghĩa. **Không phải chép lại việc đã làm cho
+   JAPAN/EAST_ASIA.** Cả hai chương trình đó hiện nằm trong
+   `UNQUOTABLE_AWARD_PROGRAMS`, nên lấp châu Âu là gỡ chúng ra khỏi đó trước.
+5. Chương trình không quote được thì khai vào `UNQUOTABLE_AWARD_PROGRAMS`,
+   đừng để trống im lặng.
 
 ---
-
-## 6b. Lấp một vùng award mới (đã làm cho JAPAN + EAST_ASIA)
-
-Chỉ còn `CANADA_US → EUROPE`. Cách làm, đúng như đã làm cho hai vùng kia:
-
-1. **Đừng tra lại từ đầu.** `src/lib/award-charts.ts` đã có ba bảng giá đã
-   kiểm (Aeroplan® published, AAdvantage® published, Asia Miles® unpublished
-   nhưng dựng từ ba nguồn đồng thuận) kèm ngày verify. Chúng là NGUỒN.
-2. **Band khoảng cách TÍNH ĐƯỢC, đừng nhớ.** File đó có `lat`/`lon` từng sân
-   bay và hàm `greatCircleMiles`. Aeroplan® chia band trên khoảng cách TÍCH
-   LUỸ của các chặng, giới hạn bởi luật "không quá 2× bay thẳng"; Asia Miles®
-   cũng vậy nhưng luôn vòng qua HKG. AAdvantage® thì theo VÙNG, không theo
-   khoảng cách.
-3. **Một vùng của engine có thể bắc qua nhiều band/vùng của hãng** — đó chính
-   là lý do `pointsLow/Typical/High` tồn tại. `EAST_ASIA` bắc qua cả hai vùng
-   giá của AAdvantage® (Seoul ở Region 1, phần còn lại Region 2).
-4. **Chương trình không quote được thì khai vào `UNQUOTABLE_AWARD_PROGRAMS`**,
-   đừng để trống im lặng. Avios®, Flying Blue® và MileagePlus® đã ở đó.
-5. Châu Âu sẽ cần bộ chương trình KHÁC: Flying Blue® (hiện `unquotable`) và
-   Avios® quan trọng hơn hẳn, còn Asia Miles® gần như vô nghĩa. Nên đây không
-   phải là chép lại việc đã làm.
-6. `npm run audit:reco-data` — cảnh báo độ phủ sẽ tự mất khi vùng được lấp.
-
-⚠️ **Thêm dữ liệu KHÔNG cần tăng `ENGINE_VERSION`** (logic không đổi), nhưng
-bản chụp §20 thì phải chạy lại: `UPDATE_ENGINE_SNAPSHOT=1 npm run test:reco`.
-Bản chụp giữ RIÊNG `datasetFingerprint` và `engineVersion` đúng để phân biệt
-hai loại thay đổi đó.
 
 ## 7. Chạy gì
 
@@ -364,9 +284,23 @@ npm run audit:reco-data   # 0 lỗi, 10 cảnh báo (đều là chỗ trống c�
 Đụng vào thẻ tín dụng thì chạy thêm `audit:trademarks`, `audit:rebate-prose`,
 `audit:best-cards` — xem [CLAUDE.md](CLAUDE.md).
 
-`test:reco` chạy bằng `node --test --experimental-strip-types`, nên **mọi import
-tương đối trong module phải mang đuôi `.ts` tường minh**, và `offer-history.ts`
-chỉ được import KIỂU từ `lib/offer-history.ts`.
+### Bản chụp hành vi §20
+
+```bash
+npm run test:reco                              # chỉ ĐỌC và SO
+UPDATE_ENGINE_SNAPSHOT=1 npm run test:reco     # ghi lại, rồi COMMIT file
+```
+
+`engine.snapshot.json` **phải được commit** — CI đọc nó, không dựng lại nó. Nó
+giữ RIÊNG `engineVersion` và `datasetFingerprint`:
+
+- đổi **logic** → tăng `ENGINE_VERSION`
+- đổi **dữ liệu** → dấu vân tay tự đổi, KHÔNG cần tăng version
+- cả hai đứng yên mà kết quả đổi → **hồi quy**, cả hai đường đều đỏ
+
+`test:reco` chạy bằng `node --test --experimental-strip-types`, nên **mọi
+import tương đối trong module phải mang đuôi `.ts` tường minh**, và
+`offer-history.ts` chỉ được import KIỂU từ `lib/offer-history.ts`.
 
 ---
 
@@ -379,10 +313,14 @@ chỉ được import KIỂU từ `lib/offer-history.ts`.
   ```bash
   cd "/Users/hoangle/Developer/Claude Code/ghe-1a" && codex exec review --commit HEAD -m gpt-5.6-sol -c model_reasoning_effort="high" < /dev/null 2>&1 | tail -40
   ```
-  Vòng đáng giá nhất là vòng bắt Codex **bác lại chính bản vá của nó** — ba lựa
-  chọn ĐÚNG / SAI / BẢN VÁ HỎNG, kết bằng "còn chặn Phase sau không?". Cũng bắt
-  nó bác cả kết luận "sạch".
-- ⚠️ **Có thể có phiên khác chạy song song.** Kiểm `git status` trước khi stage,
-  và **stage theo đường dẫn cụ thể**, đừng `git add -A`.
-- ⚠️ **Đừng dùng `git checkout -- <file>` để hoàn tác thử nghiệm** khi file đó
-  còn thay đổi chưa commit. Dùng bản sao.
+  **Vòng đắt giá nhất** là vòng bắt Codex bác lại chính bản vá của nó. Đề bài
+  đã dùng ở Phase 3, dùng lại nguyên văn:
+
+  > Với MỖI bản vá trong commit HEAD, chọn đúng MỘT: **ĐÚNG** (giải quyết
+  > nguyên nhân gốc) / **SAI** (vấn đề vốn không phải lỗi) / **BẢN VÁ HỎNG**
+  > (vấn đề có thật nhưng bản vá sai, hoặc mở ra ca hỏng mới). Bắt buộc bác
+  > lại chính mình nếu đề nghị cũ của bạn là sai. Kết bằng một câu: còn lỗi
+  > nào CHẶN Phase sau không? Nếu định kết luận "sạch", hãy tự bác lại kết
+  > luận đó trước khi viết ra.
+
+  Vòng đó bác 2 bản vá của chính nó, giữ 1, và bắt được 2 bài test diễn.
