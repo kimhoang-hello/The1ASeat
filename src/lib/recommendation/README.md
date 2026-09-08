@@ -794,6 +794,7 @@ trong bản vá của vòng trước). Phase 3 lặp lại y hệt hình dạng 
 | 3 | 3 (1 P1) | **toàn bộ trong bản vá của vòng 2** |
 | 4 | 2 P1 + 2 bản vá bị bác | **toàn bộ trong bản vá của vòng 3** |
 | 5 | 1 P2 | **trong bản vá AN TOÀN của vòng 4** |
+| 6 | 1 P2 | **trong bản vá của vòng 5** |
 
 Chuỗi rõ nhất là câu chuyện ĐƠN VỊ của offer tiền mặt — ba cách đoán, ba vòng,
 ba kiểu hỏng:
