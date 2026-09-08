@@ -31,6 +31,20 @@ import type {
 import type { ReasonCode, StrategyType } from "./reason-codes.ts";
 
 /**
+ * Kết quả của một phép phủ. BỐN trường, và `null` ở đây có nghĩa riêng.
+ *
+ * `accessible: null` = CHƯA BIẾT (không chương trình nào tra được giá), khác
+ * hẳn `accessible: 0` = biết chắc không có điểm nào.
+ * `accessibleIsLowerBound` = có số dư `null` góp vào, nên con số là cận DƯỚI.
+ */
+export interface TripCoverage {
+  coverage: number | null;
+  bestProgram: PointsProgramId | null;
+  accessible: number | null;
+  accessibleIsLowerBound: boolean;
+}
+
+/**
  * Phần số điểm chuyến đi cần mà người dùng đã có.
  *
  * HỎI TỪNG CHƯƠNG TRÌNH MỘT, bằng chính giá của nó và chính số điểm với tới
@@ -55,11 +69,12 @@ export function tripCoverage(
   ix: DatasetIndex,
   asOf: string,
   need: Pick<TripNeed, "byProgram"> | null,
-): { coverage: number | null; bestProgram: PointsProgramId | null; accessible: number } {
+): TripCoverage {
   const rows = need?.byProgram ?? [];
   let coverage: number | null = null;
   let bestProgram: PointsProgramId | null = null;
-  let accessible = 0;
+  let accessible: number | null = null;
+  let lowerBound = false;
 
   // BA giá trị trả về phải nói về CÙNG MỘT chương trình.
   //
@@ -75,12 +90,22 @@ export function tripCoverage(
   // `>` bên dưới giữ chương trình ĐẦU TIÊN khi hoà.
   for (const row of rows) {
     if (row.high === null || row.high <= 0) continue;
-    const reach = accessibleFor(state, ix, row.programId, asOf).total;
-    const own = Math.min(1, reach / row.high);
+    const reach = accessibleFor(state, ix, row.programId, asOf);
+    // Số dư chưa biết ở BẤT KỲ chương trình nào định giá được chặng đều làm cả
+    // kết luận thành cận dưới — KHÔNG chỉ ở chương trình thắng cuộc.
+    //
+    // Bản trước chỉ ghi cờ của người thắng, và nó thủng ngay ở ca đơn giản
+    // nhất: người có một tài khoản Aeroplan® không nhớ số dư, mọi chương trình
+    // cùng phủ 0%, nên người thắng là chương trình ĐẦU TIÊN theo id
+    // (`aadvantage` — không có dòng số dư nào, tức không có gì chưa biết). Sự
+    // chưa biết của Aeroplan® biến mất, và engine báo "còn thiếu đúng 140,000
+    // điểm" cho một người nó không biết đang có bao nhiêu.
+    if (reach.hasUnknownSource) lowerBound = true;
+    const own = Math.min(1, reach.total / row.high);
     if (coverage === null || own > coverage) {
       coverage = own;
       bestProgram = row.programId;
-      accessible = reach;
+      accessible = reach.total;
     }
   }
 
@@ -90,15 +115,25 @@ export function tripCoverage(
   // đó.
   if (bestProgram === null) {
     for (const row of rows) {
-      const reach = accessibleFor(state, ix, row.programId, asOf).total;
-      if (bestProgram === null || reach > accessible) {
-        accessible = reach;
+      const reach = accessibleFor(state, ix, row.programId, asOf);
+      if (reach.hasUnknownSource) lowerBound = true;
+      if (bestProgram === null || reach.total > (accessible ?? -1)) {
+        accessible = reach.total;
         bestProgram = row.programId;
       }
     }
   }
 
-  return { coverage, bestProgram, accessible };
+  // KHÔNG có chương trình nào để hỏi (chặng chưa định giá, hoặc thiếu thừa
+  // số): `accessible` là CHƯA BIẾT, không phải 0. Trả 0 ở đây là chỗ luật
+  // trống-≠-bằng-không thủng ngay tại biên giới đầu ra — `japanTripFunded` có
+  // 200,000 điểm Membership Rewards® mà bản trước xuất ra `accessiblePoints: 0`.
+  if (bestProgram === null) return { coverage: null, bestProgram: null, accessible: null, accessibleIsLowerBound: false };
+
+  // Số dư chưa biết góp vào thì `coverage` là cận DƯỚI. Phủ ĐỦ vẫn kết luận
+  // được (cận dưới đã đủ thì thật sự đủ), nhưng CHƯA đủ thì không được nói
+  // thiếu bao nhiêu — xem `engine.ts`.
+  return { coverage, bestProgram, accessible, accessibleIsLowerBound: lowerBound };
 }
 
 export interface StrategyInput {

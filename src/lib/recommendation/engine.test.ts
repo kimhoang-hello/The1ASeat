@@ -1196,12 +1196,61 @@ test("§29 — độ tươi chỉ đọc award strategy của CHẶNG đang hỏ
   assert.equal(after, before, "dữ liệu của chặng khác kéo tụt độ tươi của chặng này");
 });
 
-test("ENGINE_VERSION đổi khi hành vi đổi (§20 replay)", () => {
-  // Cùng đầu vào + CÙNG VERSION = cùng đầu ra. Vế thứ hai chỉ giữ được nếu
-  // version thật sự đổi khi thứ hạng đổi — nếu không, §20 dựng lại một lượt
-  // chạy cũ sẽ ra kết quả khác mà không ai giải thích được vì sao.
-  assert.notEqual(ENGINE_VERSION, "3.0.0", "hành vi đã đổi mà version đứng yên");
-  assert.match(ENGINE_VERSION, /^\d+\.\d+\.\d+$/);
+test("§20 — bản chụp hành vi khoá theo ENGINE_VERSION", async () => {
+  // Bài test cũ ở đây chỉ so `ENGINE_VERSION !== "3.0.0"` — nó xanh vĩnh viễn
+  // ngay sau lần tăng đầu tiên, tức là một bài test KHÔNG bảo vệ gì. Vòng
+  // review bắt đúng chỗ đó.
+  //
+  // Thay bằng thứ cưỡng chế được luật thật của §20: cùng đầu vào + CÙNG
+  // VERSION = cùng đầu ra. Bản chụp dưới đây khoá kết quả của cả 15 nhân vật
+  // vào version hiện tại. Đổi bất kỳ trọng số, ngưỡng hay luật nào mà quên
+  // tăng version thì bài này ĐỎ — và đó chính là lỗi im lặng mà
+  // `recommendation_runs` sinh ra để tránh.
+  const { readFile, writeFile } = await import("node:fs/promises");
+  const path = new URL("./engine.snapshot.json", import.meta.url);
+
+  const actual = {
+    engineVersion: ENGINE_VERSION,
+    runs: USER_FIXTURES.map((state) => {
+      const result = run(state);
+      const first = result.results[0];
+      return {
+        user: state.profile.id as string,
+        goalResolution: result.goalResolution,
+        followUp: result.followUp?.gapKind ?? null,
+        primary: first?.primaryAction.productSlug ?? first?.primaryAction.kind ?? null,
+        score: first === undefined ? null : Number(first.primaryAction.score.toFixed(4)),
+        noAction: first === undefined ? null : Number(first.noAction.score.toFixed(4)),
+        strategy: first?.strategy.strategy ?? null,
+        confidence: first?.confidence.level ?? null,
+        reasonCodes: first?.reasonCodes ?? [],
+        numbers: first?.numbers ?? null,
+      };
+    }),
+  };
+
+  let expected: typeof actual | null = null;
+  try {
+    expected = JSON.parse(await readFile(path, "utf8"));
+  } catch {
+    // Chưa có bản chụp: ghi ra rồi báo để lần chạy sau có mốc so.
+    await writeFile(path, `${JSON.stringify(actual, null, 2)}\n`, "utf8");
+    assert.fail("chưa có bản chụp — đã ghi engine.snapshot.json, chạy lại để khoá");
+  }
+
+  if (expected!.engineVersion !== ENGINE_VERSION) {
+    // Version đã tăng: đây là một lần đổi hành vi CÓ CHỦ Ý. Ghi lại bản chụp.
+    await writeFile(path, `${JSON.stringify(actual, null, 2)}\n`, "utf8");
+    return;
+  }
+
+  assert.deepEqual(
+    actual.runs,
+    expected!.runs,
+    `Hành vi engine đã đổi nhưng ENGINE_VERSION vẫn là ${ENGINE_VERSION}. ` +
+      `Nếu đây là đổi CÓ CHỦ Ý thì tăng ENGINE_VERSION (§20 replay đọc nó); ` +
+      `nếu không thì đây là một hồi quy.`,
+  );
 });
 
 /* ================================================================== *
@@ -1283,4 +1332,109 @@ test("số dư bằng 0 là CÂU TRẢ LỜI, không phải một chương trìn
 
   assert.ok(!gapsOf(withZero).includes("avios"), "số dư 0 mà vẫn khai thiếu bảng giá");
   assert.ok(gapsOf(withUnknown).includes("avios"), "số dư chưa biết thì PHẢI khai");
+});
+
+/* ================================================================== *
+ * Vòng review Codex 4 — bác lại chính bản vá của các vòng trước
+ * ================================================================== */
+
+test("§7 — 'chưa biết' KHÔNG được xuất ra thành 0 điểm", () => {
+  // Đây là luật trống-≠-bằng-không thủng ngay tại BIÊN GIỚI ĐẦU RA — chỗ nguy
+  // hiểm nhất, vì con số này đi thẳng vào câu engine nói với người đọc.
+  // `japanTripFunded` có 200,000 điểm Membership Rewards®, và bản trước xuất
+  // ra `accessiblePoints: 0` chỉ vì chặng Nhật chưa có award strategy nào.
+  const japan = run(japanTripFunded).results[0];
+  assert.equal(japan.numbers.accessiblePoints, null, "chưa tra được giá mà báo 0 điểm");
+  assert.equal(japan.numbers.directPoints, null);
+  assert.equal(japan.numbers.pointsGapTypical, null);
+
+  // Và số dư `null` (có tài khoản, không nhớ số) không được sinh ra một
+  // khoảng cách CHÍNH XÁC GIẢ.
+  const unsure: UserState = {
+    ...vietnamTripFunded,
+    balances: [
+      { userId: vietnamTripFunded.profile.id, programId: AEROPLAN, balance: null, updatedAt: ASOF },
+    ],
+  };
+  const result = run(unsure).results[0];
+  assert.equal(
+    result.numbers.pointsGapTypical,
+    null,
+    "số dư chưa biết mà vẫn báo còn thiếu đúng bao nhiêu điểm",
+  );
+  // Và con số điểm tiếp cận được phải TỰ NÓI ra rằng nó là cận dưới. Không có
+  // cờ này thì "0 điểm" của người có tài khoản Aeroplan® đọc y hệt "0 điểm"
+  // của người chưa từng mở tài khoản nào.
+  assert.equal(result.numbers.accessiblePointsIsLowerBound, true);
+  assert.equal(
+    run(vietnamTripFunded).results[0].numbers.accessiblePointsIsLowerBound,
+    false,
+    "mọi số dư đã biết mà vẫn đánh dấu là cận dưới",
+  );
+});
+
+test("§7 — cận dưới vẫn kết luận ĐỦ được, chỉ không kết luận THIẾU", () => {
+  // Hướng an toàn: nếu cận DƯỚI đã phủ đủ thì chắc chắn đủ thật. Chiều ngược
+  // lại thì không — chưa biết bao nhiêu thì không nói thiếu bao nhiêu.
+  const goal = vietnamTripFunded.goals[0];
+  if (goal.type !== "trip") return;
+  const need = tripNeedFor(resolveTripGoal(vietnamTripFunded.profile, goal), IX, ASOF);
+  const covered = tripCoverage(vietnamTripFunded, IX, ASOF, need);
+  assert.equal(covered.accessibleIsLowerBound, false, "mọi số dư đều đã biết");
+  assert.equal(covered.coverage, 1);
+  assert.equal(run(vietnamTripFunded).results[0].numbers.pointsGapTypical, 0);
+});
+
+test("§12 — offer TIỀN MẶT: engine thôi đoán đơn vị", () => {
+  // Bốn cách đoán đã thử và đều hỏng, cách cuối cùng là "con số này trước đây
+  // chỉ từng thấy dưới một đơn vị" — nhưng lịch sử 5%/10%/15% cộng một offer
+  // mới "$15" vẫn khớp con số 15 và trả về `percent`. Quá khứ của một CON SỐ
+  // không chứng minh đơn vị của HIỆN TẠI.
+  const percentHistory = [
+    { at: "2026-01-01", until: null, startCensored: true, endCensored: false, label: "5%", amount: 5, unit: "percent" as const },
+    { at: "2026-02-01", until: null, startCensored: false, endCensored: false, label: "10%", amount: 10, unit: "percent" as const },
+    { at: "2026-03-01", until: null, startCensored: false, endCensored: true, label: "15%", amount: 15, unit: "percent" as const },
+  ];
+  const cashProduct = DATA.products.find((p) => p.slug === "scotiabank-momentum-visa-infinite-plus");
+  assert.ok(cashProduct !== undefined);
+  const facts = offerFacts(cashProduct!, IX, ASOF, { low: 5_000, high: 5_000 }, percentHistory);
+  assert.equal(facts.active?.offer.bonusKind, "cash");
+  assert.equal(
+    facts.historicalPercentile,
+    null,
+    "offer tiền mặt vẫn đang được gán một đơn vị đoán được",
+  );
+});
+
+test("chỗ trống bảng giá theo được ĐÍCH CHUYỂN ĐIỂM của số dư đang giữ", () => {
+  // Người giữ Membership Rewards® thật sự đang nắm quyền đổi sang Avios® và
+  // Flying Blue® — cả hai đều `no_award_chart`. Chỉ khai `amex-mr` là nuốt mất
+  // đúng hai lựa chọn có thật mà engine không định giá nổi.
+  const mrHolder: UserState = {
+    ...vietnamTripFunded,
+    balances: [
+      { userId: vietnamTripFunded.profile.id, programId: AMEX_MR, balance: 120_000, updatedAt: ASOF },
+    ],
+  };
+  const subjects = run(mrHolder)
+    .dataGaps.filter((gap) => gap.kind === "no_award_chart")
+    .map((gap) => gap.subjectId);
+  assert.ok(subjects.includes("avios"), "MR đi được Avios® mà chỗ trống của nó biến mất");
+  assert.ok(subjects.includes("flying-blue"));
+});
+
+test("chặng CHƯA định giá không bị trừ độ tin cậy hai lần", () => {
+  // Chuyến Nhật chưa có award strategy nào — scoring đã rơi về công thức
+  // chung và không đọc bảng giá của MileagePlus®. Thêm chỗ trống đó vào là
+  // trừ độ tin cậy lần thứ hai cho cùng một sự thật.
+  const japan = run(japanTripFunded);
+  const chartGaps = japan.dataGaps.filter((g) => g.kind === "no_award_chart");
+  const united = DATA.products.find(
+    (p) => p.slug === "united-mileageplus-neo-world-elite-mastercard",
+  );
+  assert.ok(
+    !chartGaps.some((g) => g.subjectId === united!.pointsProgramId),
+    "chặng chưa định giá mà vẫn khai chỗ trống của một thẻ ứng viên",
+  );
+  assert.ok(japan.dataGaps.some((g) => g.kind === "award_route_uncovered"));
 });

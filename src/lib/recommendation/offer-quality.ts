@@ -249,27 +249,32 @@ export function historicalPercentile(
  *                                percentile 100 và một mã `CURRENT_OFFER_STRONG`
  *                                hoàn toàn bịa.
  *
- * Nên: chỉ trả về đơn vị khi nhật ký ĐÃ THẤY đúng con số này, và mọi lần thấy
- * đều cùng một đơn vị. Không chắc thì `null`, và §12 im lặng. Mất một
- * percentile là mất một tín hiệu phụ; nói sai một câu về TIỀN thì người đọc
- * mở nhầm thẻ.
+ *   con số này chỉ từng thấy   → lịch sử 5%/10%/15% cộng một offer mới "$15"
+ *   dưới MỘT đơn vị              vẫn khớp con số 15 và trả về `percent`. Quá
+ *                                khứ của một CON SỐ không chứng minh đơn vị
+ *                                của HIỆN TẠI.
+ *
+ * Bốn cách, bốn kiểu hỏng, cùng một nguyên nhân: đang cố suy ra một dữ kiện
+ * KHÔNG CÓ trong dữ liệu. Nên thôi suy — offer tiền mặt trả `null`, và §12 im
+ * lặng về chúng.
  *
  * GIỚI HẠN, nói thẳng: lời giải đúng hẳn là một trường `bonusUnit` trên chính
- * `Offer` ở Phase 1. Hôm nay chưa cần — cả hai offer `cash` trong bộ dữ liệu
- * đều có `headlineBonus: null`, nên nhánh này không với tới được — nhưng ngày
- * ai đó seed một offer tiền mặt có con số thì đó là việc phải làm.
+ * `Offer` ở Phase 1. Hôm nay chưa chặn gì (cả hai offer `cash` trong bộ dữ
+ * liệu đều có `headlineBonus: null`), nhưng KIỂU vẫn cho phép `cash` kèm một
+ * con số — nên đây là một lỗ HỢP ĐỒNG đang mở, không phải một ca không thể
+ * xảy ra. Ngày ai đó seed một offer tiền mặt có con số, đây là việc phải làm
+ * trước.
  */
-function offerBonusUnit(
-  bonusKind: "points" | "cash" | "none",
-  headlineBonus: number | null,
-  history: readonly OfferHistoryPoint[],
-): OfferUnit | null {
+function offerBonusUnit(bonusKind: "points" | "cash" | "none"): OfferUnit | null {
   if (bonusKind === "points") return "points";
-  if (bonusKind === "none" || headlineBonus === null) return null;
-  const seen = new Set(
-    history.filter((point) => point.amount === headlineBonus).map((point) => point.unit),
-  );
-  return seen.size === 1 ? [...seen][0] : null;
+  // Mọi cách suy đơn vị cho offer TIỀN MẶT đều đã hỏng — kể cả cách "con số
+  // này trước đây chỉ từng thấy dưới một đơn vị", vì lịch sử 5%/10%/15% cộng
+  // một offer mới "$15" vẫn khớp con số 15 và trả về `percent`. Quá khứ của
+  // một CON SỐ không chứng minh đơn vị của HIỆN TẠI.
+  //
+  // Nên không suy nữa. §12 im lặng cho offer tiền mặt cho tới khi `Offer` có
+  // một trường `bonusUnit` thật.
+  return null;
 }
 
 /** Phí thường niên đang hiệu lực (cent). 0 khi chưa có dòng phí nào. */
@@ -341,7 +346,7 @@ export function offerFacts(
   const { percentile, points } = historicalPercentile(
     history,
     offer.headlineBonus,
-    offerBonusUnit(offer.bonusKind, offer.headlineBonus, history),
+    offerBonusUnit(offer.bonusKind),
   );
   if (percentile !== null && percentile >= 70) reasonCodes.push("CURRENT_OFFER_STRONG");
   if (percentile !== null && percentile <= 30) reasonCodes.push("CURRENT_OFFER_WEAK");

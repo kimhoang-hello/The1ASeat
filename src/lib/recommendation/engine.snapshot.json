@@ -1,0 +1,414 @@
+{
+  "engineVersion": "3.2.0",
+  "runs": [
+    {
+      "user": "u_beginner",
+      "goalResolution": "resolved",
+      "followUp": "household_income_unknown",
+      "primary": "rbc-avion-visa-infinite",
+      "score": 0.6116,
+      "noAction": 0.1838,
+      "strategy": "BUILD_POINTS",
+      "confidence": "low",
+      "reasonCodes": [
+        "MIN_SPEND_TIGHT",
+        "FLEXIBLE_CURRENCY_VALUABLE",
+        "SCORES_NEARLY_TIED"
+      ],
+      "numbers": {
+        "tripNeedLow": null,
+        "tripNeedTypical": null,
+        "tripNeedHigh": null,
+        "directPoints": null,
+        "accessiblePoints": null,
+        "accessiblePointsIsLowerBound": false,
+        "pointsGapTypical": null,
+        "topEcosystemShare": null,
+        "flexibilityScore": 0
+      }
+    },
+    {
+      "user": "u_undeclared",
+      "goalResolution": "resolved",
+      "followUp": "cards_undeclared",
+      "primary": "amex-business-platinum",
+      "score": 0.4783,
+      "noAction": 0.125,
+      "strategy": "BUILD_POINTS",
+      "confidence": "low",
+      "reasonCodes": [
+        "MIN_SPEND_CAPACITY_UNKNOWN",
+        "FLEXIBLE_CURRENCY_VALUABLE",
+        "ELIGIBILITY_UNCERTAIN",
+        "SCORES_NEARLY_TIED"
+      ],
+      "numbers": {
+        "tripNeedLow": null,
+        "tripNeedTypical": null,
+        "tripNeedHigh": null,
+        "directPoints": null,
+        "accessiblePoints": null,
+        "accessiblePointsIsLowerBound": false,
+        "pointsGapTypical": null,
+        "topEcosystemShare": null,
+        "flexibilityScore": 0
+      }
+    },
+    {
+      "user": "u_aeroplan_heavy",
+      "goalResolution": "resolved",
+      "followUp": "household_income_unknown",
+      "primary": "amex-gold-rewards",
+      "score": 0.7184,
+      "noAction": 0.175,
+      "strategy": "EARN_FLEXIBLE_POINTS",
+      "confidence": "low",
+      "reasonCodes": [
+        "MIN_SPEND_GOOD_FIT",
+        "PORTFOLIO_CONCENTRATED",
+        "PORTFOLIO_LACKS_FLEXIBILITY",
+        "FLEXIBLE_CURRENCY_VALUABLE",
+        "EXISTING_BENEFIT_DUPLICATION",
+        "ELIGIBILITY_UNCERTAIN",
+        "SCORES_NEARLY_TIED"
+      ],
+      "numbers": {
+        "tripNeedLow": null,
+        "tripNeedTypical": null,
+        "tripNeedHigh": null,
+        "directPoints": null,
+        "accessiblePoints": null,
+        "accessiblePointsIsLowerBound": false,
+        "pointsGapTypical": null,
+        "topEcosystemShare": 0.8909090909090909,
+        "flexibilityScore": 0.13636363636363635
+      }
+    },
+    {
+      "user": "u_japan_funded",
+      "goalResolution": "resolved",
+      "followUp": "spend_profile_missing",
+      "primary": "rbc-avion-visa-platinum",
+      "score": 0.6241,
+      "noAction": 0.1992,
+      "strategy": "EARN_SPECIFIC_CURRENCY",
+      "confidence": "medium",
+      "reasonCodes": [
+        "MIN_SPEND_CAPACITY_UNKNOWN",
+        "TRIP_ROUTE_NOT_PRICED",
+        "FLEXIBLE_CURRENCY_VALUABLE"
+      ],
+      "numbers": {
+        "tripNeedLow": null,
+        "tripNeedTypical": null,
+        "tripNeedHigh": null,
+        "directPoints": null,
+        "accessiblePoints": null,
+        "accessiblePointsIsLowerBound": false,
+        "pointsGapTypical": null,
+        "topEcosystemShare": 0.2,
+        "flexibilityScore": 1
+      }
+    },
+    {
+      "user": "u_japan_gap",
+      "goalResolution": "resolved",
+      "followUp": "household_income_unknown",
+      "primary": "rbc-avion-visa-infinite",
+      "score": 0.7165,
+      "noAction": 0.1309,
+      "strategy": "DIVERSIFY",
+      "confidence": "low",
+      "reasonCodes": [
+        "MIN_SPEND_GOOD_FIT",
+        "TRIP_ROUTE_NOT_PRICED",
+        "PORTFOLIO_CONCENTRATED",
+        "PORTFOLIO_LACKS_FLEXIBILITY",
+        "FLEXIBLE_CURRENCY_VALUABLE",
+        "SCORES_NEARLY_TIED"
+      ],
+      "numbers": {
+        "tripNeedLow": null,
+        "tripNeedTypical": null,
+        "tripNeedHigh": null,
+        "directPoints": null,
+        "accessiblePoints": null,
+        "accessiblePointsIsLowerBound": false,
+        "pointsGapTypical": null,
+        "topEcosystemShare": 1,
+        "flexibilityScore": 0
+      }
+    },
+    {
+      "user": "u_low_capacity",
+      "goalResolution": "resolved",
+      "followUp": "spend_category_unknown",
+      "primary": "rbc-avion-visa-infinite",
+      "score": 0.6646,
+      "noAction": 0.2074,
+      "strategy": "BUILD_POINTS",
+      "confidence": "low",
+      "reasonCodes": [
+        "MIN_SPEND_TIGHT",
+        "FLEXIBLE_CURRENCY_VALUABLE",
+        "SCORES_NEARLY_TIED"
+      ],
+      "numbers": {
+        "tripNeedLow": null,
+        "tripNeedTypical": null,
+        "tripNeedHigh": null,
+        "directPoints": null,
+        "accessiblePoints": null,
+        "accessiblePointsIsLowerBound": false,
+        "pointsGapTypical": null,
+        "topEcosystemShare": null,
+        "flexibilityScore": 0
+      }
+    },
+    {
+      "user": "u_dup_benefit",
+      "goalResolution": "resolved",
+      "followUp": "household_income_unknown",
+      "primary": "rbc-avion-visa-platinum",
+      "score": 0.7481,
+      "noAction": 0.2174,
+      "strategy": "DIVERSIFY",
+      "confidence": "medium",
+      "reasonCodes": [
+        "MIN_SPEND_TIGHT",
+        "PORTFOLIO_CONCENTRATED",
+        "PORTFOLIO_LACKS_FLEXIBILITY",
+        "FLEXIBLE_CURRENCY_VALUABLE"
+      ],
+      "numbers": {
+        "tripNeedLow": null,
+        "tripNeedTypical": null,
+        "tripNeedHigh": null,
+        "directPoints": null,
+        "accessiblePoints": null,
+        "accessiblePointsIsLowerBound": false,
+        "pointsGapTypical": null,
+        "topEcosystemShare": 1,
+        "flexibilityScore": 0
+      }
+    },
+    {
+      "user": "u_flexible",
+      "goalResolution": "resolved",
+      "followUp": "trip_round_trip_unknown",
+      "primary": "rbc-avion-visa-platinum",
+      "score": 0.7131,
+      "noAction": 0.175,
+      "strategy": "EARN_SPECIFIC_CURRENCY",
+      "confidence": "low",
+      "reasonCodes": [
+        "MIN_SPEND_GOOD_FIT",
+        "TRIP_ROUTE_NOT_PRICED",
+        "FLEXIBLE_CURRENCY_VALUABLE",
+        "SCORES_NEARLY_TIED"
+      ],
+      "numbers": {
+        "tripNeedLow": null,
+        "tripNeedTypical": null,
+        "tripNeedHigh": null,
+        "directPoints": null,
+        "accessiblePoints": null,
+        "accessiblePointsIsLowerBound": false,
+        "pointsGapTypical": null,
+        "topEcosystemShare": 0.2495114006514658,
+        "flexibilityScore": 0.9381107491856677
+      }
+    },
+    {
+      "user": "u_sparse",
+      "goalResolution": "resolved",
+      "followUp": "minimum_spend_capacity_unknown",
+      "primary": "amex-business-platinum",
+      "score": 0.6279,
+      "noAction": 0.125,
+      "strategy": "EARN_FLEXIBLE_POINTS",
+      "confidence": "low",
+      "reasonCodes": [
+        "MIN_SPEND_CAPACITY_UNKNOWN",
+        "PORTFOLIO_LACKS_FLEXIBILITY",
+        "FLEXIBLE_CURRENCY_VALUABLE",
+        "ELIGIBILITY_UNCERTAIN",
+        "SCORES_NEARLY_TIED"
+      ],
+      "numbers": {
+        "tripNeedLow": null,
+        "tripNeedTypical": null,
+        "tripNeedHigh": null,
+        "directPoints": null,
+        "accessiblePoints": null,
+        "accessiblePointsIsLowerBound": false,
+        "pointsGapTypical": null,
+        "topEcosystemShare": null,
+        "flexibilityScore": 0
+      }
+    },
+    {
+      "user": "u_student",
+      "goalResolution": "resolved",
+      "followUp": "spend_category_unknown",
+      "primary": "scotiabank-scene-plus-visa-students",
+      "score": 0.4594,
+      "noAction": 0.2779,
+      "strategy": "BUILD_POINTS",
+      "confidence": "medium",
+      "reasonCodes": [
+        "MIN_SPEND_TIGHT"
+      ],
+      "numbers": {
+        "tripNeedLow": null,
+        "tripNeedTypical": null,
+        "tripNeedHigh": null,
+        "directPoints": null,
+        "accessiblePoints": null,
+        "accessiblePointsIsLowerBound": false,
+        "pointsGapTypical": null,
+        "topEcosystemShare": null,
+        "flexibilityScore": 0
+      }
+    },
+    {
+      "user": "u_advanced",
+      "goalResolution": "resolved",
+      "followUp": "household_income_unknown",
+      "primary": "rbc-avion-visa-platinum",
+      "score": 0.6647,
+      "noAction": 0.1817,
+      "strategy": "DIVERSIFY",
+      "confidence": "low",
+      "reasonCodes": [
+        "MIN_SPEND_GOOD_FIT",
+        "FLEXIBLE_CURRENCY_VALUABLE",
+        "SCORES_NEARLY_TIED"
+      ],
+      "numbers": {
+        "tripNeedLow": null,
+        "tripNeedTypical": null,
+        "tripNeedHigh": null,
+        "directPoints": null,
+        "accessiblePoints": null,
+        "accessiblePointsIsLowerBound": false,
+        "pointsGapTypical": null,
+        "topEcosystemShare": 0.3804405823614605,
+        "flexibilityScore": 0.5625428767436542
+      }
+    },
+    {
+      "user": "u_high_spend",
+      "goalResolution": "resolved",
+      "followUp": "household_income_unknown",
+      "primary": "rbc-avion-visa-platinum",
+      "score": 0.6049,
+      "noAction": 0.278,
+      "strategy": "DIVERSIFY",
+      "confidence": "low",
+      "reasonCodes": [
+        "MIN_SPEND_TOO_HIGH",
+        "PORTFOLIO_CONCENTRATED",
+        "PORTFOLIO_LACKS_FLEXIBILITY",
+        "FLEXIBLE_CURRENCY_VALUABLE",
+        "SCORES_NEARLY_TIED"
+      ],
+      "numbers": {
+        "tripNeedLow": null,
+        "tripNeedTypical": null,
+        "tripNeedHigh": null,
+        "directPoints": null,
+        "accessiblePoints": null,
+        "accessiblePointsIsLowerBound": false,
+        "pointsGapTypical": null,
+        "topEcosystemShare": 1,
+        "flexibilityScore": 0
+      }
+    },
+    {
+      "user": "u_vague",
+      "goalResolution": "resolved",
+      "followUp": "minimum_spend_capacity_unknown",
+      "primary": "rbc-avion-visa-platinum",
+      "score": 0.7124,
+      "noAction": 0.125,
+      "strategy": "BUILD_POINTS",
+      "confidence": "low",
+      "reasonCodes": [
+        "MIN_SPEND_CAPACITY_UNKNOWN",
+        "FLEXIBLE_CURRENCY_VALUABLE",
+        "SCORES_NEARLY_TIED"
+      ],
+      "numbers": {
+        "tripNeedLow": null,
+        "tripNeedTypical": null,
+        "tripNeedHigh": null,
+        "directPoints": null,
+        "accessiblePoints": null,
+        "accessiblePointsIsLowerBound": false,
+        "pointsGapTypical": null,
+        "topEcosystemShare": null,
+        "flexibilityScore": 0
+      }
+    },
+    {
+      "user": "u_vn_funded",
+      "goalResolution": "resolved",
+      "followUp": "household_income_unknown",
+      "primary": "no_new_card",
+      "score": 0.7235,
+      "noAction": 0.7235,
+      "strategy": "USE_EXISTING_POINTS",
+      "confidence": "high",
+      "reasonCodes": [
+        "POINTS_ALREADY_SUFFICIENT",
+        "TRIP_PROGRAM_MATCH",
+        "PORTFOLIO_CONCENTRATED",
+        "PORTFOLIO_LACKS_FLEXIBILITY",
+        "NO_NEW_CARD_NEEDED",
+        "FOCUS_ON_AWARD_AVAILABILITY"
+      ],
+      "numbers": {
+        "tripNeedLow": 140000,
+        "tripNeedTypical": 140000,
+        "tripNeedHigh": 238000,
+        "directPoints": 260000,
+        "accessiblePoints": 260000,
+        "accessiblePointsIsLowerBound": false,
+        "pointsGapTypical": 0,
+        "topEcosystemShare": 1,
+        "flexibilityScore": 0
+      }
+    },
+    {
+      "user": "u_vn_gap",
+      "goalResolution": "resolved",
+      "followUp": "household_income_unknown",
+      "primary": "amex-gold-rewards",
+      "score": 0.616,
+      "noAction": 0.1675,
+      "strategy": "EARN_FLEXIBLE_POINTS",
+      "confidence": "medium",
+      "reasonCodes": [
+        "MIN_SPEND_GOOD_FIT",
+        "POINTS_GAP_LARGE",
+        "TRIP_PROGRAM_MATCH",
+        "PORTFOLIO_CONCENTRATED",
+        "PORTFOLIO_LACKS_FLEXIBILITY",
+        "FLEXIBLE_CURRENCY_VALUABLE",
+        "ELIGIBILITY_UNCERTAIN"
+      ],
+      "numbers": {
+        "tripNeedLow": 280000,
+        "tripNeedTypical": 280000,
+        "tripNeedHigh": 476000,
+        "directPoints": 20000,
+        "accessiblePoints": 20000,
+        "accessiblePointsIsLowerBound": false,
+        "pointsGapTypical": 390000,
+        "topEcosystemShare": 1,
+        "flexibilityScore": 0
+      }
+    }
+  ]
+}

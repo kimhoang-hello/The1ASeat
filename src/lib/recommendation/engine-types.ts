@@ -312,6 +312,16 @@ export interface RecommendationNumbers {
   tripNeedHigh: number | null;
   directPoints: number | null;
   accessiblePoints: number | null;
+  /**
+   * `accessiblePoints` là CẬN DƯỚI, không phải con số chắc chắn.
+   *
+   * Bật khi có ít nhất một dòng số dư `null` ở một chương trình định giá được
+   * chặng — người dùng có tài khoản nhưng không nhớ số dư. Không có cờ này thì
+   * "0 điểm tiếp cận được" của một người có tài khoản Aeroplan® đọc y hệt "0
+   * điểm" của một người chưa từng mở tài khoản nào, và Phase 5/6 sẽ viết ra
+   * hai câu giống nhau cho hai tình huống khác hẳn.
+   */
+  accessiblePointsIsLowerBound: boolean;
   pointsGapTypical: number | null;
   topEcosystemShare: number | null;
   flexibilityScore: number;

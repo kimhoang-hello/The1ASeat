@@ -90,13 +90,31 @@ export function buildNoNewCardCandidate(
   }
 
   /* ---- Thẻ đang giữ đã phục vụ nhu cầu chưa ----------------------- */
-  const { programId: neededProgram } = topCurrencyNeed(ctx);
+  //
+  // Với mục tiêu CHUYẾN ĐI, "nhu cầu" là các chương trình định giá được chặng
+  // — đọc thẳng từ `tripNeed`, KHÔNG đi qua `topCurrencyNeed`. Lý do: khi
+  // chuyến đi đã đủ điểm, mọi nhu cầu đồng tiền tụt về gần 0 (đó chính là §16
+  // Rule 1 hoạt động), nên `topCurrencyNeed` trả về một chương trình gần như
+  // ngẫu nhiên trong đám hoà nhau ở 0.05 — và thành phần này đo một thứ vô
+  // nghĩa đúng vào lượt chạy mà nó quan trọng nhất.
+  const neededPrograms: PointsProgramId[] =
+    need !== null && need.programs.length > 0
+      ? need.programs
+      : (() => {
+          const { programId } = topCurrencyNeed(ctx);
+          return programId === null ? [] : [programId];
+        })();
+
   let covers = 0;
-  if (neededProgram !== null && ctx.portfolio.heldProducts.length > 0) {
-    const servesDirectly = ctx.portfolio.earnedPrograms.has(neededProgram);
+  if (neededPrograms.length > 0 && ctx.portfolio.heldProducts.length > 0) {
+    const servesDirectly = neededPrograms.some((programId) =>
+      ctx.portfolio.earnedPrograms.has(programId),
+    );
     const servesViaTransfer = [...ctx.portfolio.earnedPrograms].some((earned) =>
       activeAt(ctx.ix.pathsBySource.get(earned) ?? [], ctx.asOf).some(
-        (path) => path.requiresTier === null && path.destinationProgramId === neededProgram,
+        (path) =>
+          path.requiresTier === null &&
+          neededPrograms.includes(path.destinationProgramId as PointsProgramId),
       ),
     );
     covers = servesDirectly ? 1 : servesViaTransfer ? 0.8 : 0.2;

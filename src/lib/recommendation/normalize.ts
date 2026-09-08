@@ -15,7 +15,7 @@
  *     sẽ chiếm suất câu hỏi của §30 và trừ độ tin cậy §29 vô cớ.
  */
 
-import { isAvailableAt } from "./temporal.ts";
+import { activeAt, isAvailableAt } from "./temporal.ts";
 import { asArray, primaryGoal, resolveTripGoal } from "./user.ts";
 import { userGaps } from "./user-gaps.ts";
 import { tripNeedFor } from "./trip-need.ts";
@@ -76,6 +76,8 @@ function relevantDataGaps(
   universe: readonly Product[],
   goals: readonly GoalContext[],
   heldBalancePrograms: readonly string[],
+  ix: DatasetIndex,
+  asOf: string,
 ): DataGap[] {
   const inPlay = new Set(universe.map((product) => product.id as string));
 
@@ -111,13 +113,34 @@ function relevantDataGaps(
       }
     }
     for (const row of heldBalancePrograms) programsInPlay.add(row);
-    // Và đồng tiền của các thẻ ỨNG VIÊN: với một mục tiêu chuyến đi, thẻ
-    // United® vẫn được chấm điểm, và `scoreTrip` cho nó mức thấp nhất chính vì
-    // MileagePlus® không định giá được chặng. Chỗ trống đó có thật và phải hạ
-    // độ tin cậy — nhưng CHỈ trong nhánh chuyến đi, để nó không rò sang một
-    // người chỉ hỏi "thẻ tiếp theo".
-    for (const product of universe) {
-      if (product.pointsProgramId !== null) programsInPlay.add(product.pointsProgramId as string);
+
+    // Đồng tiền của các thẻ ỨNG VIÊN — nhưng CHỈ khi chặng đã định giá được.
+    //
+    // Hai chiều đều từng sai. Thêm vô điều kiện thì một chuyến Nhật (chưa có
+    // award strategy nào) bị trừ độ tin cậy HAI LẦN: một lần bởi
+    // `award_route_uncovered`, một lần nữa bởi chỗ trống bảng giá MileagePlus®
+    // mà scoring thậm chí không đọc — nó đã rơi về công thức chung rồi. Không
+    // thêm gì thì thẻ United® trên một chặng ĐÃ định giá lại giấu mất chỗ
+    // trống có thật.
+    if (tripGoals.some((goal) => (goal.tripNeed?.programs.length ?? 0) > 0)) {
+      for (const product of universe) {
+        if (product.pointsProgramId !== null) programsInPlay.add(product.pointsProgramId as string);
+      }
+    }
+
+    // Và các ĐÍCH CHUYỂN ĐIỂM của những chương trình người dùng ĐANG GIỮ.
+    // Người có Membership Rewards® thật sự đang nắm quyền đổi sang Avios® và
+    // Flying Blue® — cả hai đều `no_award_chart` — nên đó là hai lựa chọn có
+    // thật mà engine không định giá nổi, và người đọc phải biết.
+    //
+    // CHỈ từ số dư đang giữ, KHÔNG từ đồng tiền của các thẻ ứng viên: một thẻ
+    // chưa mở không cho họ đồng Avios® nào hôm nay, và mở rộng tới đó làm mọi
+    // lượt chạy có chuyến đi ngập chỗ trống của những chương trình không ai
+    // chạm vào.
+    for (const source of heldBalancePrograms) {
+      for (const path of activeAt(ix.pathsBySource.get(source) ?? [], asOf)) {
+        if (path.requiresTier === null) programsInPlay.add(path.destinationProgramId as string);
+      }
     }
   }
 
@@ -222,6 +245,8 @@ export function normalize(
       asArray(state.balances)
         .filter((row) => row?.programId != null && row.balance !== 0)
         .map((row) => row.programId as string),
+      ix,
+      asOf,
     ),
   };
 }

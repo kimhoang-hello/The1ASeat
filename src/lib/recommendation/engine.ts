@@ -68,10 +68,19 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  *
  * 3.1.0 — vòng review đầu: lọc thẻ không đủ điều kiện, phủ điểm theo từng
  * chương trình, `rateAfterCap`, trần chi tiêu đúng đơn vị, miễn phí năm đầu
- * thôi đếm hai lần. Tất cả đều ĐỔI THỨ HẠNG, nên bản 3.0.0 và 3.1.0 không so
- * sánh trực tiếp được — và đó chính là việc trường này sinh ra để nói.
+ * thôi đếm hai lần.
+ * 3.2.0 — vòng ba và bốn: "chưa biết" thôi bị xuất thành 0, phạm vi chỗ trống
+ * dữ liệu, `portfolio_already_covers` đọc thẳng chương trình của chuyến đi.
+ *
+ * Cả hai lần đều ĐỔI THỨ HẠNG, nên ba bản không so sánh trực tiếp được — và
+ * đó chính là việc trường này sinh ra để nói.
+ *
+ * QUÊN TĂNG SỐ NÀY LÀ MỘT LỖI IM LẶNG, nên nó không được canh bằng trí nhớ:
+ * `engine.test.ts` giữ một bản chụp kết quả của cả 15 nhân vật, khoá theo
+ * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
+ * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "3.1.0";
+export const ENGINE_VERSION = "3.2.0";
 
 export interface RecommendInput {
   state: UserState;
@@ -379,16 +388,23 @@ export function recommend(input: RecommendInput): RecommendationRun {
         tripNeedLow: need?.low ?? null,
         tripNeedTypical: need?.typical ?? null,
         tripNeedHigh: need?.high ?? null,
+        // `null` = CHƯA BIẾT. Cả ba con số dưới đây đi thẳng vào lời giải
+        // thích của người đọc, nên một số 0 bịa ở đây là một câu sai về TIỀN.
         directPoints:
-          need === null
+          need === null || need.programs.length === 0
             ? null
-            : need.programs.reduce((best, programId) => {
+            : need.programs.reduce<number | null>((best, programId) => {
                 const entry = portfolio.direct.get(programId);
-                return entry?.kind === "known" ? Math.max(best, entry.points) : best;
-              }, 0),
+                if (entry?.kind !== "known") return best;
+                return best === null ? entry.points : Math.max(best, entry.points);
+              }, null),
         accessiblePoints: accessible,
+        accessiblePointsIsLowerBound: covered?.accessibleIsLowerBound ?? false,
+        // Khoảng cách chỉ nói được khi số điểm là con số CHẮC CHẮN. Có một số
+        // dư `null` góp vào thì `accessible` là cận dưới, và "còn thiếu
+        // 140,000" dựng trên một cận dưới là một con số chính xác giả.
         pointsGapTypical:
-          bestRow?.typical == null || accessible === null
+          bestRow?.typical == null || accessible === null || covered?.accessibleIsLowerBound === true
             ? null
             : Math.max(0, bestRow.typical - accessible),
         topEcosystemShare: topEcosystemShare(portfolio),
