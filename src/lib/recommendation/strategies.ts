@@ -22,41 +22,72 @@ import type { DatasetIndex } from "./indexes.ts";
 import type { PointsProgramId } from "./types.ts";
 import type { UserState } from "./user-types.ts";
 import type { OfferClimate } from "./offer-quality.ts";
-import type { GoalContext, PortfolioAnalysis, StrategyScore } from "./engine-types.ts";
+import type {
+  GoalContext,
+  PortfolioAnalysis,
+  StrategyScore,
+  TripNeed,
+} from "./engine-types.ts";
 import type { ReasonCode, StrategyType } from "./reason-codes.ts";
 
 /**
  * Phần số điểm chuyến đi cần mà người dùng đã có.
  *
- * Lấy MAX qua các chương trình định giá được chặng, KHÔNG lấy tổng. Đây chính
- * là luật §7: người dùng sẽ dồn điểm về MỘT chương trình để đặt vé, nên cộng
- * "điểm tiếp cận được" của Aeroplan® với của Avios® là đếm cùng một pool
- * Membership Rewards® hai lần.
+ * HỎI TỪNG CHƯƠNG TRÌNH MỘT, bằng chính giá của nó và chính số điểm với tới
+ * được nó — rồi lấy chương trình phủ tốt nhất. Hai lỗi khác nhau bị chặn ở
+ * đây, và cả hai đều đã xảy ra thật:
  *
- * So với cận TRÊN của khoảng. Nói "bạn đã đủ điểm" dựa trên cận dưới là hứa đủ
- * cho một người sẽ phát hiện mình thiếu ở bước đặt vé — và §6 chọn khoảng thay
- * vì một con số đúng để tránh chuyện đó.
+ *  1. **Cộng qua các chương trình.** Đó là phép đếm trùng §7 cấm: người dùng
+ *     dồn điểm về MỘT chương trình để đặt vé, nên "điểm tiếp cận được" của
+ *     Aeroplan® và của Avios® đang tranh nhau cùng một pool Membership
+ *     Rewards®.
+ *  2. **So với một khoảng GỘP.** Khoảng gộp trộn mức thấp của chương trình
+ *     này với mức cao của chương trình kia. 150,000 dặm AAdvantage® phủ đủ
+ *     chuyến 140,000 dặm của chính AAdvantage®, nhưng đem so với trần 238,000
+ *     của Asia Miles® thì engine kết luận còn thiếu — trong khi vẫn báo khoảng
+ *     cách bằng 0 ở chỗ khác. Xem `TripNeed.byProgram`.
+ *
+ * So với cận TRÊN của chương trình đó. Nói "bạn đã đủ điểm" dựa trên cận dưới
+ * là hứa đủ cho một người sẽ phát hiện mình thiếu ở bước đặt vé.
  */
 export function tripCoverage(
   state: UserState,
   ix: DatasetIndex,
   asOf: string,
-  programs: readonly PointsProgramId[],
-  needHigh: number | null,
+  need: Pick<TripNeed, "byProgram"> | null,
 ): { coverage: number | null; bestProgram: PointsProgramId | null; accessible: number } {
-  let best = 0;
+  const rows = need?.byProgram ?? [];
+  let coverage: number | null = null;
   let bestProgram: PointsProgramId | null = null;
-  for (const programId of programs) {
-    const reach = accessibleFor(state, ix, programId, asOf);
-    if (reach.total > best || bestProgram === null) {
-      best = reach.total;
-      bestProgram = programId;
+  let accessible = 0;
+
+  // Thứ tự cố định: `byProgram` đã sắp theo id ở `trip-need.ts`, và phép so
+  // `>` bên dưới giữ chương trình ĐẦU TIÊN khi hoà.
+  for (const row of rows) {
+    const reach = accessibleFor(state, ix, row.programId, asOf).total;
+    if (reach > accessible || bestProgram === null) accessible = reach;
+    if (row.high === null || row.high <= 0) continue;
+    const own = Math.min(1, reach / row.high);
+    if (coverage === null || own > coverage) {
+      coverage = own;
+      bestProgram = row.programId;
     }
   }
-  if (needHigh === null || needHigh <= 0) {
-    return { coverage: null, bestProgram, accessible: best };
+
+  // Không chương trình nào tính được giá (thiếu thừa số, hoặc toàn giá động):
+  // `coverage` là CHƯA BIẾT, không phải 0. Vẫn trả về chương trình có nhiều
+  // điểm nhất để các tầng sau có chỗ bám.
+  if (bestProgram === null && rows.length > 0) {
+    for (const row of rows) {
+      const reach = accessibleFor(state, ix, row.programId, asOf).total;
+      if (bestProgram === null || reach > accessible) {
+        accessible = reach;
+        bestProgram = row.programId;
+      }
+    }
   }
-  return { coverage: Math.min(1, best / needHigh), bestProgram, accessible: best };
+
+  return { coverage, bestProgram, accessible };
 }
 
 export interface StrategyInput {
@@ -98,7 +129,7 @@ export function generateStrategies(input: StrategyInput): StrategyScore[] {
   /* ---- Dùng điểm đang có / xây thêm điểm -------------------------- */
   let coverage: number | null = null;
   if (isTrip && need !== null) {
-    coverage = tripCoverage(state, ix, asOf, need.programs, need.high).coverage;
+    coverage = tripCoverage(state, ix, asOf, need).coverage;
   }
 
   if (coverage !== null) {

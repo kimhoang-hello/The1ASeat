@@ -592,11 +592,155 @@ lúc còn là hai phép kiểm viết riêng, chúng đã lệch ngay lần đ�
 chỗ trống mang `subject: undefined`, và không có exception nào. Hai phép kiểm
 cùng một khái niệm thì phải là một hàm.
 
+## Phase 3 — engine
+
+Phase 1 mô tả thế giới, Phase 2 mô tả một con người trong đó. Phase 3 trả lời
+câu hỏi: **với tình huống và mục tiêu của người này, bước hợp lý tiếp theo là
+gì?**
+
+Nó KHÔNG mặc định rằng mở thẻ mới là câu trả lời đúng.
+
+### Thứ tự các tầng, và vì sao thứ tự là nội dung
+
+```
+User State → Goal → Portfolio → Strategies → Needs
+           → Eligibility/Suitability → Candidates
+           → Intent Scoring → Rules → Ranking → Recommendation
+```
+
+| File | Vai trò |
+| --- | --- |
+| `reason-codes.ts` | Từ vựng ĐÓNG: mã lý do, mã cảnh báo, loại hành động, tên thành phần điểm |
+| `engine-types.ts` | Kiểu dùng chung của cả dây chuyền |
+| `normalize.ts` | Giải mục tiêu, dựng tập ứng viên (§16 Rule 5 sống ở đây), gom chỗ trống |
+| `portfolio.ts` | §7 — direct / accessible / tập trung / linh hoạt |
+| `trip-need.ts` | §6 + ba thừa số của số điểm chuyến đi |
+| `offer-quality.ts` | §11 mức DÙNG ĐƯỢC ≠ mức quảng cáo, §12 percentile lịch sử |
+| `earn-fit.ts` | Giá trị tích điểm một năm, tôn trọng trần dùng chung |
+| `benefit-fit.ts` | §16 Rule 6 — chỉ phần quyền lợi TĂNG THÊM |
+| `strategies.ts` | §8 — sinh HÀNH ĐỘNG trước khi nghĩ tới thẻ |
+| `needs.ts` | §9 — nhu cầu bằng đồng tiền / quyền lợi / hình dạng danh mục |
+| `eligibility.ts` | §14 vế ngân hàng từ chối |
+| `suitability.ts` | §14 vế người dùng từ chối |
+| `scoring/*.ts` | §10 — BỐN bảng trọng số cho bốn ý định |
+| `rules.ts` | §16 tám luật + §17 trần điều chỉnh biên tập |
+| `rank.ts` | §18 + `NO_NEW_CARD` như một ứng viên thật |
+| `confidence.ts` | §29 |
+| `explain.ts` | §19 bảng điểm + §30 câu hỏi tiếp theo |
+| `engine.ts` | CHỈ thứ tự. Không một quyết định nào |
+
+**`strategies.ts` và `needs.ts` không chứa tên sản phẩm nào.** Đó là phép thử,
+không phải sự trùng hợp: khoảnh khắc một chiến lược được sinh ra vì một cái thẻ
+cụ thể, thứ tự suy luận của spec đã bị đảo ngược, và bảng khảo sát sẽ dần biến
+thành bảng câu hỏi về sản phẩm.
+
+### Ba luật cưỡng chế bằng CẤU TRÚC, không bằng phép kiểm
+
+1. **Affiliate không đổi thứ hạng** (§16 Rule 7) — cưỡng chế bằng SỰ VẮNG MẶT.
+   Có hai test: một test đảo `affiliateAvailable` trên toàn bộ sản phẩm rồi đòi
+   kết quả không đổi một chữ, và một test đọc mã nguồn 21 file engine (đã bỏ
+   chú thích) rồi đòi chuỗi đó không xuất hiện. Test đầu một mình không đủ: một
+   trường được đọc rồi nhân với 0 vẫn qua, và sẽ thành phép nhân với 0.01 ở lần
+   sửa sau.
+2. **Không đếm trùng điểm chuyển được** (§7) — cưỡng chế bằng HÌNH DẠNG KIỂU.
+   `accessible` không phải một bản đồ cộng lại được; nó là một hàm nhận MỘT
+   đích và trả về kèm `sources`. Muốn cộng hai đích lại thì phải cố ý bỏ qua
+   `sources`, và lúc đó không ai gọi đó là nhầm lẫn được nữa.
+3. **`NO_NEW_CARD` là ứng viên trong mọi lượt chạy** (§16 Rule 8) — nó có bảng
+   điểm riêng, giải thích được, và thắng được.
+
+### Trọng số: con số của spec, và con số của engine
+
+Bốn bảng §10 được chép nguyên văn và có test khoá lại tới từng phần trăm. Chúng
+cộng lại **0.95**, không phải 1.0: 5% còn lại là "Editorial Adjustment", và §15
+(`editorial_rules`) cố ý chưa làm. `assembleScore` chia cho tổng trọng số THẬT
+có mặt, nên tỷ lệ giữa các thành phần giữ nguyên và điểm vẫn nằm trên thang
+0..1 — thang mà `NO_NEW_CARD` cũng dùng.
+
+`scoring/earning.ts` là bảng DUY NHẤT không có trong spec (§10 nêu tên hàm
+nhưng không cho trọng số). Nó nói ra điều đó ngay đầu file thay vì trông giống
+ba bảng có nguồn.
+
+### Ba lỗi bới ra được khi ĐỌC KẾT QUẢ CHẠY, không phải khi viết code
+
+Cả ba đều biên dịch sạch, test xanh, và cho ra những con số trông hợp lý.
+
+**1. Đọc cái cờ thay vì đọc dữ liệu.** `marriott-bonvoy` khai
+`transferable: true` với ĐÚNG KHÔNG chặng chuyển nào — và lớp dữ liệu đã nói
+thẳng chuyện đó bằng `DataGap` `transfer_paths_unmodelled`, còn `audit:reco-data`
+thì cảnh báo bằng đúng một câu tiên đoán lỗi này. Engine vẫn đọc cờ, nên Bonvoy®
+được chấm linh hoạt tối đa và đứng ĐẦU BẢNG cho một người muốn bay — bằng một
+đồng tiền engine không biết bay đi đâu. `isFlexibleInPractice` đòi có ít nhất
+một chặng ai cũng đi được.
+
+> Luật rộng hơn Bonvoy®: **một khả năng chỉ có giá trị khi engine tra được nó.**
+> Chặng chưa dựng là chỗ trống, và chỗ trống phải kéo điểm XUỐNG.
+
+**2. Cảnh báo gắn vào ứng viên THUA.** Rule 1 đặt `POINTS_EXPIRY_NOT_MODELLED`
+lên các thẻ nó phạt, mà lượt chạy chỉ giữ cảnh báo của ứng viên THẮNG. Nên đúng
+vào lúc engine nói "bạn đã đủ điểm rồi" — tức đúng lúc câu cảnh báo cần nhất —
+nó biến mất. Nay nó nằm trên chính `NO_NEW_CARD`.
+
+**3. Luật chống tập trung phạt đúng liều thuốc.** Rule 3 phạt Membership
+Rewards® nguyên 15% với người dồn 100% vào Aeroplan®, vì MR có chặng tới
+Aeroplan®. Nhưng MR còn đi được bốn nơi khác — nó chính là thứ đa dạng hoá nhất
+trong bảng. `feedShare` chia theo số đích đi được, cùng phép chia phân số mà
+`portfolio.ts` dùng để không đếm trùng. Thẻ đồng thương hiệu vẫn ăn trọn hình
+phạt; đó là ca luật này sinh ra để bắt.
+
+### Test C/D: chặn bởi DỮ LIỆU, và cách đi vòng cho đúng
+
+§33 mới phủ `CANADA_US → SEA_VIETNAM`; JAPAN, EUROPE, EAST_ASIA còn trống và
+được khai đúng là `award_route_uncovered`. Cách SAI để chạy được Test C/D là
+bịa một bảng giá cho Nhật. Cách đúng là thử CÙNG tình huống — đủ điểm và thiếu
+điểm — trên chặng bộ dữ liệu thật sự biết giá: `vietnamTripFunded` và
+`vietnamTripShortfall`.
+
+Hai nhân vật Nhật **ở lại**, và chúng vẫn có việc: chúng là ca "engine gặp chỗ
+trống của lớp dữ liệu", tức ca §29 phải hạ độ tin cậy và §30 phải hỏi đúng câu.
+Một bài test khác, không phải một bài test hỏng.
+
+Và một luật rút ra từ chính chúng: **chỗ trống của lớp dữ liệu không được kéo
+mọi ứng viên về cùng một mức.** Bản đầu tiên cho mọi đồng tiền nhu cầu 0.05 khi
+chặng chưa có giá, nên thẻ thắng cuộc được chọn bằng những thành phần còn lại —
+tức bằng tiếng ồn. Nay nó rơi về công thức của mục tiêu rộng, và §29 hạ độ tin
+cậy vì thứ thiếu là GIÁ, không phải MỤC TIÊU.
+
+### Phép thử nghiệm thu, bằng số
+
+Cùng chặng, cùng hạng ghế, khác đúng hai con số:
+
+| | thắng | chiến lược | vì sao |
+| --- | --- | --- | --- |
+| `vietnamTripFunded` (260K Aeroplan®, 1 người) | **`NO_NEW_CARD`** 0.503 | `USE_EXISTING_POINTS` | `pointsGapTypical: 0`, Rule 1 nổ, độ tin cậy CAO |
+| `vietnamTripShortfall` (20K, 2 người) | `amex-gold-rewards` 0.545 | `EARN_FLEXIBLE_POINTS` | thiếu > 100,000 điểm; MR chuyển được sang Aeroplan® |
+
+### Test không được import `index.ts`
+
+`index.ts` tái xuất `source.ts`, thứ import `@/lib/...` — alias chỉ tồn tại
+trong bundler của Next. `node --test` sẽ nổ `ERR_MODULE_NOT_FOUND`. Import
+thẳng từng file, như test của Phase 1 và 2.
+
+### Kiểm ngược, đã làm thật
+
+Năm bản vá quan trọng đều được gỡ ra một lần để xem test có đỏ không — và đỏ
+ĐÚNG CÁI:
+
+| Gỡ | Test đỏ |
+| --- | --- |
+| `isFlexibleInPractice` → đọc cờ `transferable` | §7 — `bonvoy` không tính là linh hoạt |
+| `TIEBREAK` → phá hoà theo bảng chữ cái | phép thử nghiệm thu hai người |
+| `feedShare` → Rule 3 quay lại có/không | §16 Rule 3 — không phạt linh hoạt ngang co-brand |
+| cảnh báo hạn điểm khỏi `NO_NEW_CARD` | §16 Rule 8 — thắng vì lý do truy được |
+| `everHeld` → `status === "previously_held"` | Amex® once-in-a-lifetime |
+
+Test xanh mà không bảo vệ gì là thứ vòng review bỏ qua nhiều nhất.
+
 ## Chạy gì
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # 169 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng
+npm run test:reco         # 212 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng, engine
 ```
 
 `audit:reco-data` bắt ba lớp lỗi:

@@ -118,10 +118,30 @@ export interface PortfolioAnalysis {
  * chia ba số điểm của một gia đình, mặc định một chiều chia đôi, và cả hai sai
  * về hướng làm `NO_NEW_CARD` thắng nhờ một giả định.
  */
+/** Khoảng điểm của MỘT chương trình, đã nhân đủ ba thừa số. */
+export interface TripNeedByProgram {
+  programId: PointsProgramId;
+  perPassengerOneWayLow: number | null;
+  perPassengerOneWayTypical: number | null;
+  perPassengerOneWayHigh: number | null;
+  low: number | null;
+  typical: number | null;
+  high: number | null;
+}
+
 export interface TripNeed {
   strategies: AwardStrategy[];
   /** Chương trình định giá được chặng này, đã sắp theo id. */
   programs: PointsProgramId[];
+  /**
+   * Khoảng của TỪNG chương trình, giữ riêng — dùng cho mọi phép PHỦ.
+   *
+   * `low/typical/high` bên dưới là khoảng GỘP, chỉ để trình bày "chuyến này
+   * tốn khoảng bao nhiêu". Đừng đem số dư đi so với nó: nó trộn mức thấp của
+   * chương trình này với mức cao của chương trình kia, nên nó là một khoảng
+   * không ai bán.
+   */
+  byProgram: TripNeedByProgram[];
   perPassengerOneWayLow: number | null;
   perPassengerOneWayTypical: number | null;
   perPassengerOneWayHigh: number | null;

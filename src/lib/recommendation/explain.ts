@@ -97,6 +97,8 @@ const QUESTION_PRIORITY: Partial<Record<UserDataGap["kind"], number>> = {
 export interface FollowUpInput {
   gaps: readonly UserDataGap[];
   ranked: readonly Candidate[];
+  /** Id các sản phẩm là thẻ DOANH NGHIỆP — xem `nextQuestion`. */
+  businessProductIds?: ReadonlySet<string>;
 }
 
 /**
@@ -116,9 +118,15 @@ export function nextQuestion(input: FollowUpInput): FollowUpQuestion | null {
   const eligibilityUncertain = input.ranked.some(
     (candidate) => candidate.eligibility?.status === "unknown",
   );
+  // Hỏi về thẻ doanh nghiệp khi và chỉ khi một thẻ doanh nghiệp đang trong
+  // bảng. Bản đầu suy điều đó từ mã `ELIGIBILITY_UNCERTAIN` — một mã dùng
+  // chung cho mọi loại điều kiện chưa rõ — nên nó hỏi nhầm khi một thẻ thường
+  // thiếu thông tin thu nhập, và im lặng khi một thẻ doanh nghiệp đủ điều kiện
+  // đang đứng đầu.
+  const businessIds = input.businessProductIds ?? new Set<string>();
   const businessCandidateInPlay = input.ranked
     .slice(0, 5)
-    .some((candidate) => candidate.reasonCodes.includes("ELIGIBILITY_UNCERTAIN"));
+    .some((candidate) => candidate.productId !== null && businessIds.has(candidate.productId));
 
   const usable = input.gaps.filter((gap) => {
     if (QUESTION_PRIORITY[gap.kind] === undefined) return false;

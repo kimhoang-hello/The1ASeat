@@ -100,8 +100,8 @@ export function applyRules(input: RuleInput): RuleOutcome {
 
   /* ---- Rule 1 — đã đủ điểm ---------------------------------------- */
   const need = ctx.goal.tripNeed;
-  if (need !== null && need.high !== null) {
-    const { coverage } = tripCoverage(ctx.state, ctx.ix, ctx.asOf, need.programs, need.high);
+  if (need !== null) {
+    const { coverage } = tripCoverage(ctx.state, ctx.ix, ctx.asOf, need);
     if (coverage !== null && coverage >= 1) {
       // Điểm số ĐÃ phản ánh chuyện này ở `points_gap_reduction` (bằng 0 cho
       // mọi thẻ). Phạt thêm ở đây để nhu cầu mở thẻ giảm THẬT, chứ không chỉ

@@ -38,6 +38,9 @@ const BLOCKING_USER_GAPS: ReadonlySet<UserDataGap["kind"]> = new Set([
   "goal_priority_ambiguous",
 ]);
 
+/** Số `DataGap["kind"]` mà lớp dữ liệu có thể phát ra — xem `types.ts`. */
+const DATA_GAP_KINDS = 6;
+
 /** Số ngày kể từ `verifiedAt` mà một dữ kiện còn coi là tươi. */
 const FRESH_DAYS = 90;
 /** Quá mốc này thì coi như đã cũ hẳn. */
@@ -104,17 +107,31 @@ export function computeConfidence(input: ConfidenceInput): ConfidenceFactors {
   const notes: string[] = [];
 
   /* ---- Độ đầy đủ ------------------------------------------------- */
-  const blocking = input.userGaps.filter((gap) => BLOCKING_USER_GAPS.has(gap.kind));
-  // Chia cho SỐ LOẠI chỗ trống có thể chặn, không cho tổng số chỗ trống: một
-  // người khai thiếu năm hạng mục chi tiêu không kém chắc chắn gấp năm lần
-  // người khai thiếu một.
-  const completeness = clamp01(1 - blocking.length / BLOCKING_USER_GAPS.size);
-  if (blocking.length > 0) {
-    notes.push(`${blocking.length} chỗ trống ảnh hưởng kết quả: ${blocking.map((gap) => gap.kind).join(", ")}`);
+  // Đếm số LOẠI, không đếm số DÒNG — và bản đầu nói đúng điều đó trong chú
+  // thích rồi làm ngược lại trong công thức. Người có năm tài khoản điểm chưa
+  // nhớ số dư sinh năm dòng cùng một `kind`, và phép đếm dòng hạ độ tin cậy
+  // của họ năm lần chỉ vì họ có nhiều tài khoản hơn.
+  const blockingKinds = new Set(
+    input.userGaps.filter((gap) => BLOCKING_USER_GAPS.has(gap.kind)).map((gap) => gap.kind),
+  );
+  const userCompleteness = clamp01(1 - blockingKinds.size / BLOCKING_USER_GAPS.size);
+  if (blockingKinds.size > 0) {
+    notes.push(`${blockingKinds.size} loại chỗ trống ảnh hưởng kết quả: ${[...blockingKinds].sort().join(", ")}`);
   }
-  if (input.dataGaps.length > 0) {
-    notes.push(`${input.dataGaps.length} chỗ trống của lớp dữ liệu chạm tới lượt chạy này`);
+
+  // Chỗ trống của LỚP DỮ LIỆU cũng phải kéo độ đầy đủ xuống, không chỉ để lại
+  // một dòng ghi chú. Một lượt chạy chạm vào điều khoản offer chưa biết, điều
+  // kiện chưa biết hay chặng bay chưa có giá mà vẫn báo "high" là engine tự
+  // tin đúng ở chỗ nó không có quyền tự tin.
+  const dataKinds = new Set(input.dataGaps.map((gap) => gap.kind));
+  const dataCompleteness = clamp01(1 - dataKinds.size / DATA_GAP_KINDS);
+  if (dataKinds.size > 0) {
+    notes.push(`${dataKinds.size} loại chỗ trống của lớp dữ liệu: ${[...dataKinds].sort().join(", ")}`);
   }
+
+  // Trung bình có trọng số nghiêng về phía người dùng: thiếu dữ liệu người
+  // dùng thường đổi kết quả mạnh hơn thiếu một mảnh dữ liệu sản phẩm.
+  const completeness = 0.65 * userCompleteness + 0.35 * dataCompleteness;
 
   /* ---- Độ tươi ---------------------------------------------------- */
   let freshness = 1;

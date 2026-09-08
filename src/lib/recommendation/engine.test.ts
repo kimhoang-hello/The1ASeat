@@ -18,8 +18,12 @@ import { accessibleFor, analyzePortfolio, isFlexibleInPractice } from "./portfol
 import { evaluateEligibility } from "./eligibility.ts";
 import { minimumSpendFit } from "./suitability.ts";
 import { tripNeedFor } from "./trip-need.ts";
+import { historicalPercentile, offerClimate, offerFacts, offerQualityScore } from "./offer-quality.ts";
+import { earnFitFor } from "./earn-fit.ts";
+import { tripCoverage } from "./strategies.ts";
 import { candidateUniverse, normalize } from "./normalize.ts";
 import { REASON_CODES, WARNING_CODES } from "./reason-codes.ts";
+import { nextQuestion } from "./explain.ts";
 import { SCORABLE_WEIGHT } from "./scoring/weights.ts";
 import { resolveTripGoal } from "./user.ts";
 import { id, type PointsProgramId, type ProductId } from "./types.ts";
@@ -408,11 +412,36 @@ test("§13 — mốc chi ngoài tầm vẫn là ỨNG VIÊN, kèm cảnh báo", 
   const flagged = [result.primaryAction, ...result.alternatives].filter((c) =>
     c.warnings.includes("SPEND_REQUIREMENT_LIKELY_UNSUITABLE"),
   );
-  // Thẻ nào lọt vào top mà ngoài tầm thì phải mang cảnh báo; và thẻ thắng
-  // cuộc thì không được ngoài tầm.
-  assert.ok(!result.primaryAction.warnings.includes("SPEND_REQUIREMENT_LIKELY_UNSUITABLE"));
+  // Thẻ thắng cuộc ĐƯỢỢC PHÉP hơi quá tầm — §13 nói thẳng là mốc chi không
+  // phải pass/fail, và một thẻ đòi $2,700 với người khai $2,000 vẫn là lựa
+  // chọn hợp lý nếu người đọc được cảnh báo. Cái KHÔNG được phép là thẻ rơi
+  // vào vùng "strong penalty" của §13 (Rule 4 nổ) mà vẫn thắng.
+  const winnerFit = result.primaryAction.suitability?.minSpendFit;
+  assert.ok(
+    winnerFit === null || winnerFit === undefined || winnerFit >= 0.4,
+    `thẻ thắng cuộc có fit=${winnerFit}, tức đã vào vùng phạt nặng của §13`,
+  );
+  assert.ok(
+    !result.primaryAction.adjustments.some((a) => a.rule === "R4_minimum_spend_pressure"),
+    "Rule 4 nổ trên chính thẻ thắng cuộc",
+  );
   for (const candidate of flagged) {
-    assert.ok((candidate.suitability?.minSpendFit ?? 1) < 0.5);
+    // Cảnh báo và mã lý do phải luôn đi cùng nhau — §13 đòi CẢ HAI vế, và một
+    // vế đi một mình nghĩa là người đọc thấy thẻ tụt hạng mà không biết vì sao
+    // (hoặc ngược lại, đọc lý do mà không thấy cảnh báo).
+    assert.ok(
+      candidate.reasonCodes.includes("MIN_SPEND_TOO_HIGH"),
+      `${candidate.productSlug}: có cảnh báo mà thiếu mã lý do`,
+    );
+    // Và nó phải THẬT SỰ ngoài tầm: mốc chi vượt sức dồn đã khai.
+    const fit = candidate.suitability?.minSpendFit;
+    assert.ok(fit !== null && fit !== undefined && fit < 1, `${candidate.productSlug}: fit=${fit}`);
+  }
+  // Chiều ngược lại: mã lý do mà thiếu cảnh báo cũng là hỏng.
+  for (const candidate of [result.primaryAction, ...result.alternatives]) {
+    if (candidate.reasonCodes.includes("MIN_SPEND_TOO_HIGH")) {
+      assert.ok(candidate.warnings.includes("SPEND_REQUIREMENT_LIKELY_UNSUITABLE"));
+    }
   }
 });
 
@@ -773,4 +802,301 @@ test("sản phẩm ngừng phát hành rơi khỏi tập ứng viên nhưng KHÔ
   assert.ok(!universe.some((p) => p.id === target.id));
   assert.ok(closed.products.some((p) => p.id === target.id));
   assert.ok(ix.productById.get(target.id as ProductId) !== undefined);
+});
+
+/* ================================================================== *
+ * §11 — mức DÙNG ĐƯỢC, và hai phép đếm hai lần
+ * ================================================================== */
+
+test("§11 — miễn phí năm đầu KHÔNG được tính hai lần", () => {
+  // Cả chín thẻ có `fee_waiver` trong bộ dữ liệu đều đồng thời khai
+  // `annualFeeFirstYear: 0`. Cộng cả hai thì thẻ được cộng $139 vào phần
+  // thưởng RỒI lại được tính là không mất phí — cùng một ưu đãi, hai lần, và
+  // chín thẻ cùng được lợi so với phần còn lại của bảng.
+  const product = DATA.products.find((p) => p.slug === "td-aeroplan-visa-infinite");
+  assert.ok(product !== undefined);
+  const facts = offerFacts(product, IX, ASOF, { low: 9_000, high: 9_000 }, []);
+  assert.ok(facts.active !== null);
+
+  const waivers = facts.active!.components.filter((c) => c.componentType === "fee_waiver");
+  assert.ok(waivers.length > 0, "thẻ mẫu phải có thành phần fee_waiver");
+  assert.equal(facts.active!.offer.annualFeeFirstYear, 0, "và phải khai miễn phí năm đầu");
+
+  const waiverCents = waivers.reduce((sum, c) => sum + (c.cashAmount ?? 0) * 100, 0);
+  const others = facts.active!.components
+    .filter((c) => c.componentType !== "fee_waiver")
+    .reduce((sum, c) => {
+      const repeats = c.componentType === "monthly_spend" ? (c.repeatCount ?? 1) : 1;
+      const cpp = 1.9; // Aeroplan®, xem PROGRAM_VALUATIONS
+      return sum + (c.pointsAmount ?? 0) * repeats * cpp + (c.cashAmount ?? 0) * repeats * 100;
+    }, 0);
+
+  assert.ok(waiverCents > 0);
+  assert.ok(
+    Math.abs((facts.fullValueCents ?? 0) - others) < 1,
+    `giá trị offer ${facts.fullValueCents} đang bao gồm cả ${waiverCents} cent tiền miễn phí`,
+  );
+  assert.equal(facts.firstYearFeeCents, 0, "ưu đãi đó phải nằm ở phí năm đầu, và chỉ ở đó");
+});
+
+test("§12 — percentile chỉ so hai đợt CÙNG ĐƠN VỊ", () => {
+  const history = [
+    { at: "2026-01-01", until: null, startCensored: true, endCensored: false, label: "10%", amount: 10, unit: "percent" as const },
+    { at: "2026-02-01", until: null, startCensored: false, endCensored: false, label: "15%", amount: 15, unit: "percent" as const },
+    { at: "2026-03-01", until: null, startCensored: false, endCensored: false, label: "20%", amount: 20, unit: "percent" as const },
+    { at: "2026-04-01", until: null, startCensored: false, endCensored: true, label: "$250", amount: 250, unit: "dollar" as const },
+  ];
+  // Ba đợt phần trăm, một đợt đô. Hỏi về $250 thì chỉ có MỘT điểm cùng đơn vị
+  // — dưới ngưỡng, nên `null`. So thẳng 250 với 10/15/20 rồi kết luận "cao
+  // nhất từng thấy" là một câu về TIỀN, và nó sai.
+  const dollars = historicalPercentile(history, 250, "dollar");
+  assert.equal(dollars.percentile, null);
+  assert.equal(dollars.points, 1);
+
+  const percents = historicalPercentile(history, 15, "percent");
+  assert.equal(percents.points, 3);
+  assert.equal(percents.percentile, 67, "15 đứng trên 2 trong 3 đợt phần trăm");
+});
+
+test("§12 — mức hiện tại CHƯA có trong nhật ký vẫn không được so lẫn đơn vị", () => {
+  // Recorder chạy mỗi ngày một lượt, nên một offer vừa đổi hôm nay chưa có
+  // dòng nào. Bản đầu tra đơn vị bằng cách tìm con số trong lịch sử; không
+  // tìm thấy thì đơn vị `undefined` và phép lọc mở toang cho mọi đơn vị.
+  const history = [
+    { at: "2026-01-01", until: null, startCensored: true, endCensored: false, label: "10%", amount: 10, unit: "percent" as const },
+    { at: "2026-02-01", until: null, startCensored: false, endCensored: false, label: "15%", amount: 15, unit: "percent" as const },
+    { at: "2026-03-01", until: null, startCensored: false, endCensored: true, label: "20%", amount: 20, unit: "percent" as const },
+  ];
+  const result = historicalPercentile(history, 60_000, "points");
+  assert.equal(result.percentile, null, "60,000 điểm không được so với 10/15/20 phần trăm");
+  assert.equal(result.points, 0);
+});
+
+test("trần tích điểm: `points` và `spend` so với đại lượng CÙNG ĐƠN VỊ", () => {
+  // BMO® VIPorter® giới hạn $20,000 CHI TIÊU Porter® mỗi năm ở mức 3x. Bản
+  // trước đem trần-ĐÔ chia cho tổng-ĐIỂM, nên với tỷ lệ 3x nó bắt đầu cắt ở
+  // đúng một phần ba mức thật — tức cắt cả những người chưa hề chạm trần.
+  //
+  // Ca phân biệt được hai bản là ca NẰM DƯỚI TRẦN, không phải ca ở đúng trần:
+  // ở đúng trần thì cả hai bản đều cắt, chỉ khác con số. Dưới trần thì bản
+  // đúng không cắt gì cả, nên giá trị phải TUYẾN TÍNH theo chi tiêu.
+  const capped = DATA.earningCaps.filter((cap) => cap.kind === "spend");
+  assert.ok(capped.length > 0, "bộ dữ liệu phải còn ít nhất một trần theo chi tiêu");
+
+  const cap = capped[0];
+  const rate = DATA.earningRates.find((row) => row.capId === cap.id);
+  assert.ok(rate !== undefined && rate.multiplier > 1, "và nó phải gắn vào một tỷ lệ > 1x");
+
+  const spender = (annual: number): UserState["spend"] => ({
+    userId: beginnerNoCards.profile.id,
+    monthlyTotal: { low: annual / 12, high: annual / 12 },
+    byCategory: { [rate!.category]: { low: annual / 12, high: annual / 12 } },
+    minimumSpendCapacity3m: { low: 3_000, high: 3_000 },
+    updatedAt: ASOF,
+  });
+
+  const quarter = earnFitFor(rate!.productId, spender(cap.amount / 4), IX, ASOF);
+  const half = earnFitFor(rate!.productId, spender(cap.amount / 2), IX, ASOF);
+  assert.ok(quarter.annualValueCents > 0);
+  assert.ok(
+    Math.abs(half.annualValueCents - quarter.annualValueCents * 2) < 1,
+    `dưới trần mà đã bị cắt: ${quarter.annualValueCents} → ${half.annualValueCents}`,
+  );
+
+  // Và trên trần thì tỷ lệ BIÊN phải tụt xuống `rateAfterCap` — không phải về
+  // 0. Chi tiêu vượt trần vẫn kiếm được: Amex® Cobalt® vượt trần 5x vẫn ăn 1x,
+  // BMO® VIPorter® vượt trần 3x vẫn ăn 2x. Cắt thẳng về 0 làm người chi nhiều
+  // bị đánh giá thấp hẳn.
+  assert.ok(rate!.rateAfterCap !== null, "tỷ lệ có trần phải khai rateAfterCap");
+  const atCap = earnFitFor(rate!.productId, spender(cap.amount), IX, ASOF);
+  const double = earnFitFor(rate!.productId, spender(cap.amount * 2), IX, ASOF);
+
+  const marginalBelow = (half.annualValueCents - quarter.annualValueCents) / (cap.amount / 4);
+  const marginalAbove = (double.annualValueCents - atCap.annualValueCents) / cap.amount;
+  assert.ok(marginalAbove > 0, "vượt trần mà không kiếm thêm gì");
+  assert.ok(
+    marginalAbove < marginalBelow,
+    `tỷ lệ biên trên trần (${marginalAbove}) phải thấp hơn dưới trần (${marginalBelow})`,
+  );
+  // Và tụt đúng theo tỷ lệ khai trong dữ liệu, không theo một hằng nào khác.
+  assert.ok(
+    Math.abs(marginalAbove / marginalBelow - rate!.rateAfterCap! / rate!.multiplier) < 1e-6,
+    "tỷ lệ biên sau trần không khớp rateAfterCap",
+  );
+});
+
+/* ================================================================== *
+ * Vòng review Codex — bốn lỗi P1
+ * ================================================================== */
+
+test("§14 — thẻ KHÔNG ĐỦ ĐIỀU KIỆN không bao giờ được khuyên", () => {
+  // Hồ sơ khai thu nhập 0: mọi thẻ đòi thu nhập tối thiểu đều là cánh cửa
+  // đóng. Phạt điểm không cứu được ca này — luật CỨNG là luật cứng, và bản
+  // đầu để RBC® Avion® Visa Infinite thắng kèm nguyên `ineligible` trong đầu
+  // ra của chính nó.
+  const broke: UserState = {
+    ...beginnerNoCards,
+    profile: {
+      ...beginnerNoCards.profile,
+      annualPersonalIncome: { low: 0, high: 0 },
+      annualHouseholdIncome: { low: 0, high: 0 },
+    },
+  };
+  const result = run(broke).results[0];
+  for (const candidate of [result.primaryAction, ...result.alternatives]) {
+    assert.notEqual(
+      candidate.eligibility?.status,
+      "ineligible",
+      `${candidate.productSlug} bị ngân hàng từ chối mà vẫn được khuyên`,
+    );
+  }
+  // Nhưng chúng vẫn phải được ĐẾM vào "còn ứng viên nào với tới được không" —
+  // đó chính là tín hiệu đẩy NO_NEW_CARD lên.
+  const blocked = result.noAction.components.find((c) => c.key === "no_reachable_candidate");
+  assert.ok((blocked?.raw ?? 0) > 0, "phần ứng viên bị chặn phải khác 0");
+});
+
+test("§14 — thẻ lớp dữ liệu nói CHƯA BIẾT điều kiện thì không được coi là đủ", () => {
+  // Luật cư trú áp cho MỌI thẻ, nên thẻ chỉ có đúng dòng `residency` trông y
+  // hệt thẻ đã kiểm và không có yêu cầu nào khác. Bộ dữ liệu phân biệt hai ca
+  // đó bằng `eligibility_unknown`; engine phải đọc nó.
+  const gaps = DATA.gaps.filter((gap) => gap.kind === "eligibility_unknown");
+  assert.ok(gaps.length > 0, "bộ dữ liệu phải còn thẻ chưa biết điều kiện");
+
+  const unknown = new Set(gaps.map((gap) => gap.subjectId));
+  const target = DATA.products.find((p) => unknown.has(p.id as string));
+  assert.ok(target !== undefined);
+
+  const withGap = evaluateEligibility(target!.id, beginnerNoCards, IX, ASOF, unknown);
+  assert.equal(withGap.status, "unknown");
+  assert.ok(withGap.reasonCodes.includes("ELIGIBILITY_UNCERTAIN"));
+  assert.ok(withGap.warnings.includes("ELIGIBILITY_NOT_VERIFIABLE"));
+
+  // Và chỗ trống đó phải đi tới tận đầu ra của engine.
+  const result = run(beginnerNoCards).results[0];
+  const scored = [result.primaryAction, ...result.alternatives].find(
+    (c) => c.productId === target!.id,
+  );
+  if (scored !== undefined) assert.equal(scored.eligibility?.status, "unknown");
+});
+
+test("§6 — phủ điểm đo theo TỪNG chương trình, không theo khoảng gộp", () => {
+  // Ca Codex bắt được: khoảng gộp trộn mức thấp của chương trình này với mức
+  // cao của chương trình kia, tạo ra một khoảng KHÔNG ai bán. 150,000 dặm
+  // AAdvantage® phủ đủ chuyến khứ hồi 140,000 dặm của chính AAdvantage®,
+  // nhưng bị đem so với trần của Asia Miles® — engine kết luận còn thiếu
+  // trong khi cùng lúc báo khoảng cách bằng 0.
+  const goal = vietnamTripFunded.goals[0];
+  if (goal.type !== "trip") return;
+  const need = tripNeedFor(resolveTripGoal(vietnamTripFunded.profile, goal), IX, ASOF);
+
+  assert.ok(need.byProgram.length > 1, "chặng này phải có nhiều chương trình đặt được");
+  const aa = need.byProgram.find((row) => row.programId === id<PointsProgramId>("aadvantage"));
+  assert.ok(aa !== undefined && aa.high !== null);
+  // Khoảng GỘP phải rộng hơn khoảng riêng của AAdvantage® — đó là lý do không
+  // được đem số dư đi so với nó.
+  assert.ok(need.high !== null && need.high > aa!.high!, "khoảng gộp phải rộng hơn");
+
+  const holder: UserState = {
+    ...vietnamTripFunded,
+    balances: [
+      {
+        userId: vietnamTripFunded.profile.id,
+        programId: id<PointsProgramId>("aadvantage"),
+        balance: aa!.high! + 10_000,
+        updatedAt: ASOF,
+      },
+    ],
+    cards: [],
+  };
+  const covered = tripCoverage(holder, IX, ASOF, need);
+  assert.equal(covered.coverage, 1, "đủ điểm cho chương trình của chính mình mà báo thiếu");
+  assert.equal(covered.bestProgram, id<PointsProgramId>("aadvantage"));
+
+  // Và hai con số trong cùng một đầu ra không được mâu thuẫn nhau.
+  const result = run(holder).results[0];
+  assert.equal(result.numbers.pointsGapTypical, 0);
+  assert.ok(result.reasonCodes.includes("POINTS_ALREADY_SUFFICIENT"));
+});
+
+/* ================================================================== *
+ * Vòng review Codex — các lỗi P2
+ * ================================================================== */
+
+test("gợi ý thay thế không được lặp lại cùng một HỌ thẻ", () => {
+  // Ba hạng CIBC® Aeroplan® là ba hạng của MỘT thẻ, không phải ba lựa chọn.
+  // Không gom lại thì một thẻ chiếm nhiều suất, và người đọc nhận "bốn lựa
+  // chọn" mà thật ra là hai.
+  for (const state of USER_FIXTURES) {
+    for (const result of run(state).results) {
+      const families = [result.primaryAction, ...result.alternatives]
+        .map((c) => (c.productId === null ? null : IX.productById.get(c.productId)?.familyId ?? null))
+        .filter((family): family is NonNullable<typeof family> => family !== null);
+      assert.equal(
+        families.length,
+        new Set(families).size,
+        `${state.profile.id}: một họ thẻ chiếm nhiều suất`,
+      );
+    }
+  }
+});
+
+test("chỗ trống award chỉ tính cho chặng người dùng THẬT SỰ hỏi", () => {
+  // Chuyến Canada–Việt Nam ĐÃ có giá. Báo kèm mọi vùng chưa có dữ liệu là nói
+  // với người dùng rằng khuyến nghị của họ thiếu dữ liệu, trong khi nó không
+  // thiếu — và §29 sẽ hạ độ tin cậy vì một chỗ trống không liên quan.
+  const vietnam = run(vietnamTripFunded).dataGaps.filter(
+    (gap) => gap.kind === "award_route_uncovered",
+  );
+  assert.deepEqual(vietnam, [], "chặng đã có giá mà vẫn báo thiếu award data");
+
+  // Còn chuyến Nhật thì phải báo — và chỉ báo chặng Nhật.
+  const japan = run(japanTripFunded).dataGaps.filter(
+    (gap) => gap.kind === "award_route_uncovered",
+  );
+  assert.deepEqual(japan.map((gap) => gap.subjectId), ["CANADA_US|JAPAN"]);
+});
+
+test("chỗ trống của lớp dữ liệu KÉO độ tin cậy xuống, không chỉ để lại ghi chú", () => {
+  const withGap = run(japanTripFunded).results[0].confidence;
+  const withoutGap = run(vietnamTripFunded).results[0].confidence;
+  assert.ok(
+    withGap.dataCompleteness < withoutGap.dataCompleteness,
+    `chặng chưa có giá (${withGap.dataCompleteness}) phải kém đầy đủ hơn chặng đã có (${withoutGap.dataCompleteness})`,
+  );
+});
+
+test("thẻ KHÔNG có welcome bonus được 0 điểm offer, không được ~0.4", () => {
+  // `bonusKind: "none"` là một dòng offer THẬT nói rằng thẻ không có bonus.
+  // Chỉ kiểm `active === null` thì chúng lọt qua và còn nhận hiệu quả chi tiêu
+  // TỐI ĐA vì không đòi chi gì — tức được thưởng cho việc không có gì để
+  // thưởng.
+  const none = DATA.offers.filter((offer) => offer.bonusKind === "none");
+  assert.ok(none.length > 0, "bộ dữ liệu phải còn thẻ không có welcome bonus");
+
+  const product = DATA.products.find((p) => p.id === none[0].productId);
+  assert.ok(product !== undefined);
+  const facts = offerFacts(product!, IX, ASOF, { low: 5_000, high: 5_000 }, []);
+  const climate = offerClimate([facts]);
+  assert.equal(offerQualityScore(facts, climate), 0);
+});
+
+test("§30 — chỉ hỏi về thẻ doanh nghiệp khi có thẻ doanh nghiệp trong bảng", () => {
+  const gaps = [
+    { kind: "business_cards_preference_unknown" as const, subject: "profile", reason: "chưa hỏi" },
+  ];
+  const personal = nextQuestion({
+    gaps,
+    ranked: [{ ...run(beginnerNoCards).results[0].primaryAction }],
+    businessProductIds: new Set<string>(),
+  });
+  assert.equal(personal, null, "không có thẻ doanh nghiệp nào mà vẫn hỏi");
+
+  const winner = run(beginnerNoCards).results[0].primaryAction;
+  const business = nextQuestion({
+    gaps,
+    ranked: [winner],
+    businessProductIds: new Set([winner.productId as string]),
+  });
+  assert.equal(business?.gapKind, "business_cards_preference_unknown");
 });

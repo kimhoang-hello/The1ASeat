@@ -113,11 +113,23 @@ function combineGroup(outcomes: RuleOutcome[]): RuleOutcome {
   return "unknown";
 }
 
+/**
+ * `unknownRequirements` là các sản phẩm mà LỚP DỮ LIỆU nói là chưa biết điều
+ * kiện (`DataGap` `eligibility_unknown`) — 11 thẻ hôm nay.
+ *
+ * Bắt buộc phải truyền vào, vì không có nó thì phép suy luận ở đây sai theo
+ * hướng tệ nhất: luật cư trú áp cho MỌI thẻ, nên một thẻ chỉ có đúng dòng
+ * `residency` trông y hệt một thẻ đã kiểm và không có yêu cầu nào khác. Cả hai
+ * cùng trả `eligible`, và thẻ chưa ai kiểm điều kiện thoát được cả hình phạt
+ * lẫn cảnh báo dành cho chỗ chưa biết. README của Phase 1 đã nói thẳng: "có
+ * luật không có nghĩa là đã biết điều kiện".
+ */
 export function evaluateEligibility(
   productId: ProductId,
   state: UserState,
   ix: DatasetIndex,
   asOf: string,
+  unknownRequirements: ReadonlySet<string> = new Set(),
 ): EligibilityVerdict {
   const rules = activeAt(ix.rulesByProduct.get(productId) ?? [], asOf)
     // Thứ tự cố định cho `failedRuleIds` / `unknownRuleIds` — chúng đi vào
@@ -170,8 +182,15 @@ export function evaluateEligibility(
     return sawUnknown ? "unknown" : "pass";
   }
 
-  const application = verdictOf(applicationGroups);
+  let application = verdictOf(applicationGroups);
   const welcome = verdictOf(welcomeGroups);
+
+  // Mọi luật ĐÃ BIẾT đều qua, nhưng lớp dữ liệu nói là chưa biết hết. "Qua hết
+  // những gì ta biết" không phải "đủ điều kiện".
+  if (application === "pass" && unknownRequirements.has(productId as string)) {
+    application = "unknown";
+    unknownRuleIds.push(`gap:eligibility_unknown:${productId}`);
+  }
 
   if (application === "unknown") {
     reasonCodes.push("ELIGIBILITY_UNCERTAIN");

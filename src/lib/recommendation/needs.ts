@@ -84,7 +84,7 @@ export function computeNeeds(input: NeedsInput): Needs {
     goal.tripNeed === null
       ? null
       : (() => {
-          const { coverage } = tripCoverage(state, ix, asOf, tripPrograms, goal.tripNeed.high);
+          const { coverage } = tripCoverage(state, ix, asOf, goal.tripNeed);
           return coverage === null ? null : 1 - coverage;
         })();
 

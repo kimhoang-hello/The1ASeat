@@ -29,6 +29,7 @@ function emptyNeed(reasonCodes: ReasonCode[], warnings: WarningCode[]): TripNeed
   return {
     strategies: [],
     programs: [],
+    byProgram: [],
     perPassengerOneWayLow: null,
     perPassengerOneWayTypical: null,
     perPassengerOneWayHigh: null,
@@ -98,6 +99,35 @@ export function tripNeedFor(
 
   const programs = [...new Set(strategies.map((row) => row.programId))].sort() as PointsProgramId[];
 
+  /**
+   * Khoảng điểm của TỪNG chương trình, giữ riêng.
+   *
+   * Đây là nửa quan trọng nhất của cấu trúc này, và nó từng thiếu. Khoảng gộp
+   * bên dưới trộn mức thấp nhất của chương trình này với mức cao nhất của
+   * chương trình kia — một khoảng KHÔNG chương trình nào thật sự chào bán. Đem
+   * số dư đi so với nó thì kết luận sai theo cả hai chiều, và ca thật trên
+   * chính bộ dữ liệu này: 150,000 dặm AAdvantage® PHỦ ĐỦ chuyến khứ hồi
+   * 140,000 dặm của chính AAdvantage®, nhưng bị đem so với trần 238,000 của
+   * Asia Miles® — engine kết luận còn thiếu và khuyên mở thêm thẻ, trong khi
+   * cùng lúc báo khoảng cách điểm bằng 0.
+   *
+   * Người dùng đặt vé bằng MỘT chương trình. Phép phủ phải hỏi từng chương
+   * trình một, bằng chính giá của nó và chính số điểm với tới được nó.
+   */
+  const byProgram: TripNeed["byProgram"] = programs.map((programId) => {
+    const own = strategies.filter((row) => row.programId === programId);
+    const ownPriced = own.filter((row) => row.pricingModel === "fixed");
+    return {
+      programId,
+      perPassengerOneWayLow: minOf(own.map((row) => row.pointsLow)),
+      perPassengerOneWayTypical: minOf(ownPriced.map((row) => row.pointsTypical)),
+      perPassengerOneWayHigh: maxOf(ownPriced.map((row) => row.pointsHigh)),
+      low: null,
+      typical: null,
+      high: null,
+    };
+  });
+
   // `dynamic_floor` thì CHỈ `pointsLow` có nghĩa — hai số kia bắt buộc `null`
   // ở phía dữ liệu. Trình bày mức sàn như một cái giá là nói sai về tiền.
   const priced = strategies.filter((row) => row.pricingModel === "fixed");
@@ -122,9 +152,16 @@ export function tripNeedFor(
   const scale = (value: number | null): number | null =>
     value === null || factor === null ? null : value * factor;
 
+  for (const row of byProgram) {
+    row.low = scale(row.perPassengerOneWayLow);
+    row.typical = scale(row.perPassengerOneWayTypical);
+    row.high = scale(row.perPassengerOneWayHigh);
+  }
+
   return {
     strategies,
     programs,
+    byProgram,
     perPassengerOneWayLow: perLow,
     perPassengerOneWayTypical: perTypical,
     perPassengerOneWayHigh: perHigh,

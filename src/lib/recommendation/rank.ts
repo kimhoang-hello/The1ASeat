@@ -61,9 +61,10 @@ export function buildNoNewCardCandidate(
   /* ---- Đã đủ điểm ------------------------------------------------- */
   let sufficiency = 0;
   let sufficiencyNote = "chưa tính được";
-  if (need !== null && need.high !== null) {
-    const { coverage } = tripCoverage(ctx.state, ctx.ix, ctx.asOf, need.programs, need.high);
-    sufficiency = coverage ?? 0;
+  const tripCovered = need === null ? null : tripCoverage(ctx.state, ctx.ix, ctx.asOf, need);
+  if (tripCovered !== null && tripCovered.coverage !== null) {
+    const coverage = tripCovered.coverage;
+    sufficiency = coverage;
     sufficiencyNote = `${Math.round(sufficiency * 100)}% cận trên của khoảng điểm chuyến đi`;
     if (sufficiency >= 1) {
       reasonCodes.push("POINTS_ALREADY_SUFFICIENT");

@@ -26,6 +26,7 @@ import type { DatasetIndex } from "./indexes.ts";
 import type { OfferComponent, Product } from "./types.ts";
 import type { EstimatedAmount } from "./user-types.ts";
 import type { OfferHistoryPoint } from "./offer-history.ts";
+import type { OfferUnit } from "../offer-history.ts";
 import type { ActiveOffer } from "./engine-types.ts";
 import type { ReasonCode, WarningCode } from "./reason-codes.ts";
 
@@ -57,12 +58,27 @@ export function activeOfferFor(
   return { offer, components };
 }
 
-/** Giá trị (cent) của một thành phần: điểm × định giá, cộng tiền mặt. */
+/**
+ * Giá trị (cent) của một thành phần: điểm × định giá, cộng tiền mặt.
+ *
+ * `countsFeeWaiver: false` bỏ qua thành phần `fee_waiver`, và đó là một phép
+ * ĐẾM HAI LẦN đã có thật trên cả chín thẻ trong bộ dữ liệu. Miễn phí năm đầu
+ * được ghi ở HAI chỗ cùng lúc: một thành phần `fee_waiver` mang số tiền, VÀ
+ * `Offer.annualFeeFirstYear = 0`. Cộng cả hai thì thẻ được cộng $139 vào phần
+ * thưởng RỒI lại được `feeScore` tính là không mất phí — cùng một ưu đãi, tính
+ * hai lần, và chín thẻ cùng được lợi so với phần còn lại của bảng.
+ *
+ * README của Phase 1 đã nói ba khái niệm này ở ba chỗ khác nhau: phí thường
+ * niên là `product_fees`, miễn năm đầu là ưu đãi của OFFER, miễn có điều kiện
+ * là một QUYỀN LỢI. Chỗ đúng để đọc miễn năm đầu là `annualFeeFirstYear`.
+ */
 function componentValueCents(
   component: OfferComponent,
   cpp: number | null,
   repeats: number,
+  countsFeeWaiver: boolean,
 ): number {
+  if (component.componentType === "fee_waiver" && !countsFeeWaiver) return 0;
   const points = (component.pointsAmount ?? 0) * repeats;
   const cash = (component.cashAmount ?? 0) * repeats;
   return (cpp === null ? 0 : points * cpp) + cash * 100;
@@ -117,11 +133,12 @@ function bestReachableSubset(
   components: OfferComponent[],
   cpp: number | null,
   capacity: EstimatedAmount | null,
+  countsFeeWaiver: boolean,
 ): { valueCents: number; requiredPerNinetyDays: number | null; tight: boolean } | null {
   const spending = components.filter((component) => requiredSpendOf(component) !== null);
   const free = components.filter((component) => requiredSpendOf(component) === null);
   const freeValue = free.reduce(
-    (sum, component) => sum + componentValueCents(component, cpp, repeatsOf(component)),
+    (sum, component) => sum + componentValueCents(component, cpp, repeatsOf(component), countsFeeWaiver),
     0,
   );
 
@@ -156,7 +173,8 @@ function bestReachableSubset(
     const valueCents =
       freeValue +
       chosen.reduce(
-        (sum, component) => sum + componentValueCents(component, cpp, repeatsOf(component)),
+        (sum, component) =>
+          sum + componentValueCents(component, cpp, repeatsOf(component), countsFeeWaiver),
         0,
       );
     const better =
@@ -187,12 +205,17 @@ function bestReachableSubset(
 export function historicalPercentile(
   history: readonly OfferHistoryPoint[],
   current: number | null,
+  unit: OfferUnit,
 ): { percentile: number | null; points: number } {
   if (current === null) return { percentile: null, points: 0 };
-  const currentPoint = history.find((point) => point.amount === current);
-  const unit = currentPoint?.unit;
+  // Đơn vị đến từ chính OFFER, không tra ngược từ lịch sử theo con số. Tra
+  // ngược thì một mức chưa kịp vào nhật ký (recorder chạy mỗi ngày một lượt)
+  // sẽ không tìm thấy điểm nào, đơn vị thành `undefined`, và phép lọc mở toang
+  // cho MỌI đơn vị — đúng thứ lớp dữ liệu cấm. So thẳng 15 với 250 rồi nói
+  // "từng lên tới $250" là một câu về tiền, và nói sai thì người đọc mở nhầm
+  // thẻ.
   const sameUnit = history.filter(
-    (point) => point.amount !== undefined && (unit === undefined || point.unit === unit),
+    (point) => point.amount !== undefined && point.unit === unit,
   );
   // Dưới 3 đợt thì percentile là tiếng ồn. Ngưỡng là lựa chọn của engine, nói
   // ra ở đây chứ không giấu trong một phép so.
@@ -247,8 +270,14 @@ export function offerFacts(
   const cpp =
     offer.bonusCurrencyId === null ? null : centsPerPoint(ix, offer.bonusCurrencyId, asOf);
 
+  // Nếu offer KHÔNG khai phí năm đầu thì thành phần `fee_waiver` là chỗ duy
+  // nhất ưu đãi đó được ghi, và bỏ nó đi là đánh mất một lợi ích thật. Chỉ bỏ
+  // khi ưu đãi đã được đếm ở `annualFeeFirstYear` — an toàn theo cả hai chiều.
+  const countsFeeWaiver = offer.annualFeeFirstYear === null;
+
   const fullValueCents = components.reduce(
-    (sum, component) => sum + componentValueCents(component, cpp, repeatsOf(component)),
+    (sum, component) =>
+      sum + componentValueCents(component, cpp, repeatsOf(component), countsFeeWaiver),
     0,
   );
 
@@ -259,12 +288,18 @@ export function offerFacts(
     warnings.push("OFFER_TERMS_INCOMPLETE");
   }
 
-  const reachable = bestReachableSubset(components, cpp, capacity);
+  const reachable = bestReachableSubset(components, cpp, capacity, countsFeeWaiver);
   const usableValueCents = reachable?.valueCents ?? null;
   const usableRatio =
     reachable === null || fullValueCents === 0 ? null : reachable.valueCents / fullValueCents;
 
-  const { percentile, points } = historicalPercentile(history, offer.headlineBonus);
+  // `bonusKind` quyết định đơn vị: thưởng bằng điểm thì so với các đợt tính
+  // bằng điểm, thưởng bằng tiền thì so với các đợt tính bằng đô.
+  const { percentile, points } = historicalPercentile(
+    history,
+    offer.headlineBonus,
+    offer.bonusKind === "cash" ? "dollar" : "points",
+  );
   if (percentile !== null && percentile >= 70) reasonCodes.push("CURRENT_OFFER_STRONG");
   if (percentile !== null && percentile <= 30) reasonCodes.push("CURRENT_OFFER_WEAK");
 
@@ -363,7 +398,12 @@ export function offerClimate(facts: readonly OfferFacts[]): OfferClimate {
  * thành phần còn lại của §10 thay vì bị loại khỏi bảng.
  */
 export function offerQualityScore(fact: OfferFacts, climate: OfferClimate): number {
-  if (fact.active === null) return 0;
+  // `bonusKind: "none"` là một dòng offer THẬT nói rằng thẻ này KHÔNG có
+  // welcome bonus — National Bank® và hai thẻ Wealthsimple® đang vậy. Chỉ
+  // kiểm `active === null` thì chúng lọt qua và nhận ~0.4 điểm offer từ những
+  // giá trị trung tính, cộng hiệu quả chi tiêu TỐI ĐA vì chúng không đòi chi
+  // gì. Tức là được thưởng cho việc không có gì để thưởng.
+  if (fact.active === null || fact.active.offer.bonusKind === "none") return 0;
 
   const value = fact.usableValueCents ?? fact.fullValueCents ?? 0;
   const valueScore = climate.maxUsableValueCents > 0 ? value / climate.maxUsableValueCents : 0;

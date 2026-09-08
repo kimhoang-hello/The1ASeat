@@ -70,15 +70,15 @@ export function scoreTrip(candidate: CandidateFacts, ctx: ScoringContext): Score
   /* ---- Thu hẹp khoảng cách điểm ---------------------------------- */
   let gapRaw = 0;
   let gapNote = "chưa tính được khoảng cách điểm";
-  if (need !== null && need.high !== null) {
-    const { coverage, bestProgram } = tripCoverage(
-      ctx.state,
-      ctx.ix,
-      ctx.asOf,
-      programs,
-      need.high,
-    );
-    const gap = coverage === null ? null : Math.max(0, need.high * (1 - coverage));
+  if (need !== null) {
+    const { coverage, bestProgram } = tripCoverage(ctx.state, ctx.ix, ctx.asOf, need);
+    // Khoảng cách đo bằng giá của CHÍNH chương trình phủ tốt nhất, không bằng
+    // khoảng gộp — xem `tripCoverage`.
+    const bestRow = need.byProgram.find((row) => row.programId === bestProgram);
+    const gap =
+      coverage === null || bestRow?.high == null
+        ? null
+        : Math.max(0, bestRow.high * (1 - coverage));
     if (gap !== null && bestProgram !== null) {
       if (gap === 0) {
         gapRaw = 0;

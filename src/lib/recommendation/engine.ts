@@ -20,8 +20,8 @@
 
 import { analyzePortfolio, topEcosystemShare } from "./portfolio.ts";
 import { normalize } from "./normalize.ts";
-import { generateStrategies } from "./strategies.ts";
-import { bestAccessibleFor, computeNeeds } from "./needs.ts";
+import { generateStrategies, tripCoverage } from "./strategies.ts";
+import { computeNeeds } from "./needs.ts";
 import { evaluateEligibility } from "./eligibility.ts";
 import { evaluateSuitability } from "./suitability.ts";
 import { earnFitFor } from "./earn-fit.ts";
@@ -72,6 +72,43 @@ export interface RecommendInput {
   offerHistory?: ReadonlyMap<string, OfferHistoryPoint[]>;
 }
 
+/**
+ * Giữ lại HẠNG TỐT NHẤT của mỗi họ thẻ.
+ *
+ * Ba hạng CIBC® Aeroplan® là ba hạng của MỘT thẻ, không phải ba lựa chọn độc
+ * lập — README của Phase 1 dựng `ProductFamily` đúng vì chuyện này. Không gom
+ * lại thì một thẻ duy nhất chiếm nhiều suất trong danh sách gợi ý, và người
+ * đọc nhận "bốn lựa chọn" mà thật ra là hai.
+ *
+ * Danh sách vào đã sắp theo điểm, nên phần tử đầu tiên của mỗi họ chính là
+ * hạng tốt nhất cho người này. Thẻ không thuộc họ nào thì luôn giữ.
+ */
+function bestPerFamily(
+  candidates: readonly Candidate[],
+  ix: DatasetIndex,
+  alreadyShown: readonly Candidate[] = [],
+): Candidate[] {
+  const seen = new Set<string>();
+  // Gieo sẵn họ của những thẻ ĐÃ hiện ra — trước hết là thẻ thắng cuộc. Bỏ
+  // bước này thì phép gom chỉ chặn trùng lặp GIỮA các gợi ý thay thế, còn
+  // hạng thứ hai của chính thẻ đứng đầu vẫn đứng ngay dưới nó.
+  for (const candidate of alreadyShown) {
+    const product = candidate.productId === null ? undefined : ix.productById.get(candidate.productId);
+    if (product?.familyId != null) seen.add(product.familyId as string);
+  }
+  const kept: Candidate[] = [];
+  for (const candidate of candidates) {
+    const product = candidate.productId === null ? undefined : ix.productById.get(candidate.productId);
+    const family = product?.familyId ?? null;
+    if (family !== null) {
+      if (seen.has(family as string)) continue;
+      seen.add(family as string);
+    }
+    kept.push(candidate);
+  }
+  return kept;
+}
+
 /** Quyền lợi đi lại thẻ này THÊM vào — §10.2 dành 5% cho chúng. */
 function travelBenefitCount(
   productId: string,
@@ -91,9 +128,19 @@ function travelBenefitCount(
   return count;
 }
 
-/** Ngày kiểm lại cũ nhất trong các bản ghi lượt chạy này dựa vào (§29 độ tươi). */
+/**
+ * Ngày kiểm lại cũ nhất trong các bản ghi lượt chạy này dựa vào (§29 độ tươi).
+ *
+ * Phải quét MỌI loại bản ghi thứ hạng phụ thuộc vào, không chỉ offer và phí.
+ * Định giá điểm nhân vào mọi điểm số, tỷ lệ tích điểm quyết định `earn_fit`,
+ * chặng chuyển quyết định điểm tiếp cận được, award strategy quyết định số
+ * điểm chuyến đi cần. Chỉ nhìn offer thì một bộ định giá cũ hai năm vẫn cho
+ * `dataFreshness = 1`, và độ tin cậy "cao" được cấp cho một khuyến nghị dựng
+ * trên số cũ.
+ */
 function oldestVerifiedAt(
   products: readonly Product[],
+  data: RecommendationDataset,
   ix: DatasetIndex,
   asOf: string,
 ): string | null {
@@ -105,7 +152,13 @@ function oldestVerifiedAt(
   for (const product of products) {
     for (const row of activeAt(ix.offersByProduct.get(product.id) ?? [], asOf)) consider(row.verifiedAt);
     for (const row of activeAt(ix.feesByProduct.get(product.id) ?? [], asOf)) consider(row.verifiedAt);
+    for (const row of activeAt(ix.ratesByProduct.get(product.id) ?? [], asOf)) consider(row.verifiedAt);
+    for (const row of activeAt(ix.benefitsByProduct.get(product.id) ?? [], asOf)) consider(row.verifiedAt);
+    for (const row of activeAt(ix.rulesByProduct.get(product.id) ?? [], asOf)) consider(row.verifiedAt);
   }
+  for (const row of activeAt(data.programValuations, asOf)) consider(row.verifiedAt);
+  for (const row of activeAt(data.transferPaths, asOf)) consider(row.verifiedAt);
+  for (const row of activeAt(data.awardStrategies, asOf)) consider(row.verifiedAt);
   return oldest;
 }
 
@@ -153,6 +206,11 @@ export function recommend(input: RecommendInput): RecommendationRun {
 
   const capacity = state.spend?.minimumSpendCapacity3m ?? null;
   const heldKeys = heldBenefitKeys(portfolio.heldProducts, ix, asOf);
+  // Chỗ trống của lớp dữ liệu đi THẲNG vào phán quyết điều kiện — xem
+  // `evaluateEligibility`.
+  const unknownRequirements = new Set(
+    data.gaps.filter((gap) => gap.kind === "eligibility_unknown").map((gap) => gap.subjectId),
+  );
 
   /* ---- Dữ kiện từng ứng viên (không phụ thuộc mục tiêu) ------------ */
   const facts: CandidateFacts[] = normalized.universe.map((product) => {
@@ -162,7 +220,7 @@ export function recommend(input: RecommendInput): RecommendationRun {
       offer,
       earn: earnFitFor(product.id, state.spend, ix, asOf),
       benefits: benefitFitFor(product.id, heldKeys, ix, asOf),
-      eligibility: evaluateEligibility(product.id, state, ix, asOf),
+      eligibility: evaluateEligibility(product.id, state, ix, asOf, unknownRequirements),
       suitability: evaluateSuitability({
         product,
         state,
@@ -176,16 +234,40 @@ export function recommend(input: RecommendInput): RecommendationRun {
     };
   });
 
-  const climate = offerClimate(facts.map((row) => row.offer));
-  const scale = buildScale(facts);
-  const scorable = facts.filter((row) => !row.suitability.excluded);
+  /**
+   * Ứng viên thật sự chấm điểm được.
+   *
+   * HAI phép lọc, hai lý do khác nhau (§14):
+   *
+   *   `suitability.excluded`      — NGƯỜI DÙNG đã nói không với loại thẻ này.
+   *   `eligibility === ineligible` — NGÂN HÀNG sẽ từ chối.
+   *
+   * Vế thứ hai TỪNG THIẾU, và hậu quả không nhẹ: một hồ sơ khai thu nhập 0
+   * vẫn nhận RBC® Avion® Visa Infinite làm khuyến nghị chính, kèm nguyên
+   * `eligibility.status === "ineligible"` trong chính đầu ra. Phạt điểm không
+   * cứu được ca này — luật CỨNG là luật cứng, và §14 tách hai khái niệm ra
+   * đúng để chỗ này không phải chọn một hình phạt cho một cánh cửa đóng.
+   *
+   * `unknown` thì KHÔNG lọc: khoảng thu nhập bắc qua ngưỡng bao trùm đúng
+   * những người vế hộ gia đình sinh ra để nhận. Nó bị phạt ở `rules.ts`.
+   */
+  const selectable = facts.filter(
+    (row) => !row.suitability.excluded && row.eligibility.status !== "ineligible",
+  );
+
+  // Thang đo dựng trên ỨNG VIÊN CHỌN ĐƯỢC, không trên cả tập. Một thẻ doanh
+  // nghiệp người dùng đã từ chối, hoặc một thẻ ngân hàng sẽ từ chối họ, không
+  // được kéo tụt điểm tương đối của mọi thẻ còn lại — và qua đó đổi luôn kết
+  // quả thẻ-hay-không-thẻ.
+  const climate = offerClimate(selectable.map((row) => row.offer));
+  const scale = buildScale(selectable);
 
   const results: Recommendation[] = normalized.goals.map((goal) => {
     const strategies = generateStrategies({ state, ix, asOf, portfolio, goal, climate });
     const needs = computeNeeds({ state, data, ix, asOf, portfolio, goal, strategies });
     const ctx: ScoringContext = { state, ix, asOf, needs, portfolio, goal, climate, scale };
 
-    const cardCandidates: Candidate[] = scorable.map((candidate) => {
+    const cardCandidates: Candidate[] = selectable.map((candidate) => {
       const components = scoreFor(goal, candidate, ctx);
       const baseScore = assembleScore(components);
       const ruled = applyRules({ candidate, ctx, baseScore });
@@ -217,7 +299,9 @@ export function recommend(input: RecommendInput): RecommendationRun {
     });
 
     // §16 Rule 8 — MỌI lượt chạy, không phải chỉ khi không còn thẻ nào.
-    const noAction = buildNoNewCardCandidate(scorable, ctx);
+    // Truyền TẬP ĐẦY ĐỦ: thành phần `no_reachable_candidate` đo đúng phần ứng
+    // viên bị chặn, nên nó phải nhìn thấy cả những thẻ vừa bị lọc ra.
+    const noAction = buildNoNewCardCandidate(facts, ctx);
     const ranked = rankCandidates([...cardCandidates, noAction]);
 
     const confidence = computeConfidence({
@@ -225,13 +309,21 @@ export function recommend(input: RecommendInput): RecommendationRun {
       goal,
       userGaps: normalized.userGaps,
       dataGaps: normalized.dataGaps,
-      oldestVerifiedAt: oldestVerifiedAt(normalized.universe, ix, asOf),
+      oldestVerifiedAt: oldestVerifiedAt(normalized.universe, data, ix, asOf),
       asOf,
     });
 
     const need = goal.tripNeed;
-    const accessible =
-      need === null ? null : bestAccessibleFor(state, ix, asOf, need.programs);
+    // Số điểm và khoảng cách đều đo trên CHƯƠNG TRÌNH PHỦ TỐT NHẤT, không trên
+    // khoảng gộp — xem `tripCoverage`. Báo khoảng cách bằng một con số và kết
+    // luận phủ bằng một con số khác là cách engine tự mâu thuẫn với chính nó
+    // trong cùng một đầu ra.
+    const covered = need === null ? null : tripCoverage(state, ix, asOf, need);
+    const bestRow =
+      need === null || covered === null
+        ? undefined
+        : need.byProgram.find((row) => row.programId === covered.bestProgram);
+    const accessible = covered?.accessible ?? null;
     const winner = ranked[0];
 
     return {
@@ -243,7 +335,11 @@ export function recommend(input: RecommendInput): RecommendationRun {
       // Chỉ các thẻ, và `NO_NEW_CARD` luôn có chỗ riêng ở `noAction` — kể cả
       // khi nó đang đứng đầu. Trộn nó vào `alternatives` là để nó biến mất
       // khỏi đầu ra đúng lúc nó thắng.
-      alternatives: ranked.filter((row) => row !== winner && row.kind === "open_card").slice(0, 4),
+      alternatives: bestPerFamily(
+        ranked.filter((row) => row !== winner && row.kind === "open_card"),
+        ix,
+        [winner],
+      ).slice(0, 4),
       noAction,
       reasonCodes: mergeReasonCodes(
         winner.reasonCodes,
@@ -272,9 +368,9 @@ export function recommend(input: RecommendInput): RecommendationRun {
               }, 0),
         accessiblePoints: accessible,
         pointsGapTypical:
-          need?.typical == null || accessible === null
+          bestRow?.typical == null || accessible === null
             ? null
-            : Math.max(0, need.typical - accessible),
+            : Math.max(0, bestRow.typical - accessible),
         topEcosystemShare: topEcosystemShare(portfolio),
         flexibilityScore: portfolio.flexibilityScore,
       },
@@ -289,7 +385,19 @@ export function recommend(input: RecommendInput): RecommendationRun {
     results,
     followUp: nextQuestion({
       gaps: normalized.userGaps,
-      ranked: results[0]?.primaryAction === undefined ? [] : [results[0].primaryAction, ...results[0].alternatives],
+      ranked:
+        results[0]?.primaryAction === undefined
+          ? []
+          : [results[0].primaryAction, ...results[0].alternatives],
+      // Câu hỏi "có xét thẻ doanh nghiệp không" chỉ đáng hỏi khi một thẻ
+      // DOANH NGHIỆP đang thật sự trong bảng. Suy nó từ mã `ELIGIBILITY_UNCERTAIN`
+      // là suy sai cả hai chiều: hỏi khi một thẻ thường có thu nhập chưa rõ,
+      // và KHÔNG hỏi khi một thẻ doanh nghiệp đủ điều kiện đang đứng đầu.
+      businessProductIds: new Set(
+        normalized.universe
+          .filter((product) => product.personalOrBusiness === "business")
+          .map((product) => product.id as string),
+      ),
     }),
     reasonCodes: mergeReasonCodes(runReasons),
     warnings: mergeWarnings(runWarnings),

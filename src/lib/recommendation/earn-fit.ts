@@ -91,44 +91,83 @@ export function earnFitFor(
     }
   }
 
-  /** Điểm (hoặc đô cashback) kiếm được, gom theo nhóm trần. `null` = không trần. */
-  const byCap = new Map<string | null, { points: number; programId: PointsProgramId }[]>();
+  /**
+   * Điểm kiếm được VÀ chi tiêu đã bỏ ra, gom theo nhóm trần. `null` = không
+   * trần.
+   *
+   * Phải giữ CẢ HAI, và đó là một lỗi ĐƠN VỊ đã có thật ở bản trước: trần
+   * `kind: "spend"` đo bằng ĐÔ (BMO® VIPorter® giới hạn $20,000 chi tiêu
+   * Porter® mỗi năm), còn trần `kind: "points"` đo bằng ĐIỂM. Bản trước gom
+   * mỗi điểm rồi đem trần chi tiêu chia cho tổng điểm — chia đô cho điểm — nên
+   * với một tỷ lệ 3x nó bắt đầu cắt ở đúng một phần ba mức thật, và cắt cả
+   * những người chưa hề chạm trần.
+   */
+  const byCap = new Map<
+    string | null,
+    {
+      points: number;
+      spend: number;
+      multiplier: number;
+      rateAfterCap: number | null;
+      programId: PointsProgramId;
+    }[]
+  >();
 
   for (const [category, annualSpend] of annualByCategory) {
     const rate = baseRateFor(rates, category);
     if (rate === null) continue;
     const key = rate.capId === null ? null : (rate.capId as string);
     const list = byCap.get(key) ?? [];
-    list.push({ points: annualSpend * rate.multiplier, programId: rate.pointsProgramId });
+    list.push({
+      points: annualSpend * rate.multiplier,
+      spend: annualSpend,
+      multiplier: rate.multiplier,
+      rateAfterCap: rate.rateAfterCap,
+      programId: rate.pointsProgramId,
+    });
     byCap.set(key, list);
   }
 
   let annualValueCents = 0;
   for (const [capId, entries] of byCap) {
     const cap = capId === null ? null : ix.capById.get(capId);
-    const rawTotal = entries.reduce((sum, entry) => sum + entry.points, 0);
+    const rawPoints = entries.reduce((sum, entry) => sum + entry.points, 0);
+    const rawSpend = entries.reduce((sum, entry) => sum + entry.spend, 0);
 
-    let allowed = rawTotal;
+    let scale = 1;
     if (cap !== undefined && cap !== null) {
       const perYear =
-        cap.period === "monthly" ? cap.amount * 12 : cap.period === "quarterly" ? cap.amount * 4 : cap.amount;
+        cap.period === "monthly"
+          ? cap.amount * 12
+          : cap.period === "quarterly"
+            ? cap.amount * 4
+            : cap.amount;
+      // So trần với đại lượng CÙNG ĐƠN VỊ với nó, rồi quy thành một hệ số
+      // chung cho cả nhóm.
       if (cap.kind === "points") {
-        allowed = Math.min(rawTotal, perYear);
+        scale = rawPoints === 0 ? 0 : Math.min(1, perYear / rawPoints);
       } else {
-        // Trần theo CHI TIÊU: cắt chi tiêu chứ không cắt điểm, nên phần vượt
-        // vẫn kiếm được ở tỷ lệ nền. Không mô hình hoá `rateAfterCap` ở đây —
-        // nó là dòng riêng của dữ liệu, và cắt thẳng về 0 là ước lượng thiếu,
-        // hướng an toàn.
-        const cappedShare = rawTotal === 0 ? 0 : Math.min(1, perYear / (rawTotal || 1));
-        allowed = rawTotal * cappedShare;
+        // Trần theo CHI TIÊU: phần chi vượt trần vẫn kiếm được, chỉ ở tỷ lệ
+        // nền. Không mô hình hoá `rateAfterCap` ở đây — nó là dòng riêng của
+        // dữ liệu, và cắt thẳng về 0 là ước lượng THIẾU, hướng an toàn.
+        scale = rawSpend === 0 ? 0 : Math.min(1, perYear / rawSpend);
       }
     }
 
-    const scale = rawTotal === 0 ? 0 : allowed / rawTotal;
     for (const entry of entries) {
       const cpp = centsPerPoint(ix, entry.programId, asOf);
       if (cpp === null) continue;
-      annualValueCents += entry.points * scale * cpp;
+      // Phần TRONG trần, ở tỷ lệ thưởng.
+      let points = entry.points * scale;
+      // Phần VƯỢT trần vẫn kiếm được, chỉ ở tỷ lệ nền — và `rateAfterCap` là
+      // dòng dữ liệu nói tỷ lệ đó. Cắt thẳng về 0 làm người chi nhiều bị đánh
+      // giá thấp hẳn: chi tiêu Amex® Cobalt® vượt trần 5x vẫn ăn 1x, và với
+      // một người chi $2,000/tháng thì phần "vẫn ăn 1x" đó không hề nhỏ.
+      if (scale < 1 && entry.rateAfterCap !== null) {
+        const cappedSpend = entry.spend * scale;
+        points += (entry.spend - cappedSpend) * entry.rateAfterCap;
+      }
+      annualValueCents += points * cpp;
     }
   }
 

@@ -77,7 +77,23 @@ function relevantDataGaps(
   goals: readonly GoalContext[],
 ): DataGap[] {
   const inPlay = new Set(universe.map((product) => product.id as string));
-  const wantsAward = goals.some((goal) => goal.goal.type === "trip");
+
+  /** Cặp vùng người dùng THẬT SỰ hỏi, dạng `ORIGIN|DESTINATION`. */
+  const routesAsked = new Set(
+    goals
+      .map((goal) => goal.trip)
+      .filter((trip): trip is NonNullable<typeof trip> => trip !== null)
+      .map((trip) => `${trip.originRegion}|${trip.destinationRegion}`),
+  );
+  /** Chương trình lượt chạy này có đụng tới. */
+  const programsInPlay = new Set<string>();
+  for (const goal of goals) {
+    for (const programId of goal.tripNeed?.programs ?? []) programsInPlay.add(programId as string);
+  }
+  for (const product of universe) {
+    if (product.pointsProgramId !== null) programsInPlay.add(product.pointsProgramId as string);
+  }
+
   return data.gaps
     .filter((gap) => {
       switch (gap.kind) {
@@ -85,10 +101,24 @@ function relevantDataGaps(
         case "base_earn_rate_unknown":
         case "eligibility_unknown":
           // `subjectId` của ba loại này là một sản phẩm hoặc một offer của nó.
-          return [...inPlay].some((productId) => gap.subjectId.includes(productId));
+          // So bằng ĐƯỜNG BIÊN, không bằng `includes` trần: `prd_amex-aeroplan`
+          // là chuỗi con của `prd_amex-aeroplan-reserve`, nên phép so lỏng gán
+          // chỗ trống của thẻ này cho thẻ kia.
+          return [...inPlay].some(
+            (productId) =>
+              gap.subjectId === productId ||
+              gap.subjectId.startsWith(`${productId}_`) ||
+              gap.subjectId.includes(`_${productId}_`),
+          );
         case "award_route_uncovered":
+          // CHỈ chặng người dùng hỏi. Báo ra mọi vùng chưa có dữ liệu cho một
+          // chuyến Canada–Việt Nam đã có giá là nói với họ rằng khuyến nghị
+          // của họ thiếu dữ liệu, trong khi nó không thiếu — và §29 sẽ hạ độ
+          // tin cậy vì một chỗ trống không liên quan.
+          return routesAsked.has(gap.subjectId);
         case "no_award_chart":
-          return wantsAward;
+          // `subjectId` là một chương trình. Chỉ tính khi nó có trong cuộc.
+          return programsInPlay.has(gap.subjectId);
         case "transfer_paths_unmodelled":
           // Chặng chuyển ảnh hưởng mọi ý định: chúng quyết định điểm tiếp cận
           // được, độ linh hoạt và phép đo tập trung.
