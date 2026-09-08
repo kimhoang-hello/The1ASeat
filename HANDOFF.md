@@ -24,7 +24,7 @@ Tài liệu module: [`src/lib/recommendation/README.md`](src/lib/recommendation/
 
 Phase 1: 31 commit, 24 vòng Codex, 68 phát hiện.
 Phase 2: 12 commit, 11 vòng, 19 phát hiện.
-Phase 3: 11 commit, 6 vòng Codex (27 phát hiện, 9 P1, 2 bản vá bị bác) + 5 lỗi
+Phase 3: 15 commit, 9 vòng Codex (37 phát hiện, 11 P1, 2 bản vá bị bác) + 12 lỗi
 tự tìm khi đọc kết quả chạy. 237 test.
 
 ### Tiêu chí nghiệm thu Phase 3 — đã đạt
@@ -192,6 +192,24 @@ Nó cũng bắt được HAI BÀI TEST DIỄN — xanh mà không bảo vệ gì
 > **Phép thử một bài test: nó có GỌI thứ nó đang kiểm không, và nó có ĐỎ được
 > không?**
 
+### Rà đối kháng — bài học lớn nhất
+
+Một vòng riêng với đề bài "phá engine, không phải xác nhận nó chạy" tìm ra 14
+lỗi mà 237 test không bắt được. Kết quả chia hai nửa rất rõ: các vùng CÓ test
+cấu trúc (affiliate, tất định, strategy-trước-product, quyền lợi trùng) đứng
+vững trước mọi đầu vào thù địch; các vùng chỉ được thử bằng fixture sạch thủng
+7 chỗ.
+
+> **Lỗ hổng nằm ở những bất biến chưa ai viết thành test** — và ở đây đều là
+> bất biến về GIÁ TRỊ (số dư âm, dòng trùng, `passengers: 0`, hồ sơ vắng).
+
+`validateUserState` cấm phần lớn các ca đó, nhưng engine **không gọi
+validator** — §30 đòi nhận hồ sơ dở dang. Nên engine phải tự phòng, và phòng
+theo đúng hướng của cả module: **dữ liệu không dùng được là CHƯA BIẾT, không
+phải một giá trị.** Ba phép kiểm chung nằm ở `user.ts`: `usableBalance`,
+`usablePassengers`, `usableRoundTrip`. Dùng lại chúng, đừng viết phép kiểm
+mới.
+
 Vòng 5 bắt tiếp một tầng nữa, lần này trong bản vá AN TOÀN của vòng 4: một
 `try/catch` thêm vào để CI đọc-only không gãy đã nuốt luôn lỗi ghi bản chụp,
 khiến test xanh vĩnh viễn khi version lệch.
@@ -281,7 +299,7 @@ nói ra ngay đầu file:
 npx tsc --noEmit          # sạch (đã bao gồm scripts/)
 npm run lint              # sạch
 npm run build             # Compiled successfully
-npm run test:reco         # 237/237 pass
+npm run test:reco         # 257/257 pass
 npm run test:game         # 43/43 pass (không liên quan, kiểm không hồi quy)
 npm run audit:reco-data   # 0 lỗi, 9 cảnh báo (đều là chỗ trống có chủ ý)
 ```

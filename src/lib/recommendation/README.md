@@ -887,6 +887,63 @@ bằng script trước khi quyết định, không kết luận bằng cảm gi�
 giới hạn ngay tại chỗ, để ngày ai đó seed một offer tiền mặt có con số thì
 người sửa đọc được vì sao chỗ này lại như vậy.
 
+### Rà đối kháng: 14 lỗi mà 237 test không bắt được
+
+Một vòng riêng, đề bài là **phá engine, không phải xác nhận nó chạy**. Cách
+làm: dựng đầu vào THÙ ĐỊCH cho từng vùng của §35 rồi đọc con số đi ra.
+
+Kết quả chia làm hai nửa rất rõ:
+
+| Vùng | Kết quả |
+| --- | --- |
+| Affiliate, tất định, strategy-trước-product, quyền lợi trùng, giá trị tăng thêm, chấm điểm theo ý định, mốc chi | **đứng vững** — đều đã có test cấu trúc |
+| Bất biến về GIÁ TRỊ của dữ liệu người dùng | **thủng 7 chỗ** |
+
+> **Lỗ hổng nằm ở những bất biến chưa ai viết thành test.** Các vùng có test
+> cấu trúc chịu được mọi đầu vào thù địch; các vùng chỉ được thử bằng fixture
+> sạch thì không.
+
+Bảy lỗi của vòng đầu, tất cả đều là số ĐI RA cho người đọc:
+
+| Đầu vào | Engine nói |
+| --- | --- |
+| hai dòng 100K Membership Rewards® | 200,000 điểm tiếp cận được, 360,000 cent giá trị — đúng phép đếm trùng §7 cấm, từ hướng không ai canh |
+| số dư `-50,000` | `flexibilityScore = 2.12` — một tỷ trọng lớn hơn 1 |
+| `passengers: 0` | "chuyến này cần 0 điểm" |
+| `passengers: -2` | "cần −476,000 điểm" |
+| hạng phổ thông đặc biệt Canada→Việt Nam | "phủ 0%, còn thiếu đúng 100,000 điểm" cho người giữ 260,000 điểm Aeroplan® |
+| hồ sơ vắng hẳn | đổ cả lượt chạy |
+| `operator: "lte"` | đọc như `gte` — một luật CỨNG đọc ngược |
+| đã giữ hết thẻ | độ tin cậy CAO với đúng một ứng viên |
+
+Ca hạng phổ thông đặc biệt đáng chú ý nhất vì nó là **cùng lớp lỗi với ca
+AAdvantage® của vòng Codex 2**: Aeroplan® chỉ được định giá bằng một chiến
+lược `dynamic_floor`, nên nó bị loại khỏi phép đo phủ — và engine kết luận
+một con số CHÍNH XÁC trong khi một dữ kiện liên quan đã bị loại khỏi phép đo.
+Lỗi cũ ở phía chương trình; lỗi này ở phía mô hình giá.
+
+Ba vòng review tiếp theo bắt thêm 7 lỗi nữa, **toàn bộ trong bản vá đối kháng
+của vòng ngay trước** — cùng một nguyên nhân gốc:
+
+> **Bản vá biến giá trị hỏng thành CHƯA BIẾT bên trong engine, nhưng
+> `userGaps`, `goalSpecificity` và các cảnh báo vẫn đọc giá trị THÔ.** Engine
+> coi là chưa biết, siêu dữ liệu lại báo đã biết đủ: không sinh chỗ trống,
+> không hạ độ tin cậy, không hỏi lại.
+>
+> Một nửa bản vá tệ hơn không vá, vì nó tạo ra vẻ ngoài đã xử lý.
+
+Chuỗi dừng khi ba phép kiểm hợp lệ chuyển hẳn vào `user.ts` —
+`usableBalance`, `usablePassengers`, `usableRoundTrip` — và MỌI tầng gọi chung
+chúng. `resolveTripGoal` làm sạch ngay tại nguồn.
+
+Đây là **lần thứ ba** cùng một bài học trong dự án: `isObject` ở Phase 2, đơn
+vị offer ở vòng Codex 4, và tính hợp lệ của giá trị người dùng ở đây.
+
+> **Hai phép kiểm cùng một khái niệm thì phải là MỘT hàm** — và gọi lại đúng
+> hàm đó ở một biên giới khác KHÔNG phải vi phạm luật này. `tripNeedFor` được
+> export, nên biên giới của nó là biên giới thật, và bỏ phép lọc ở đó (để
+> tránh "hai phép kiểm") đã mở lại đúng ca vừa vá.
+
 ### Kiểm ngược, đã làm thật
 
 Năm bản vá quan trọng đều được gỡ ra một lần để xem test có đỏ không — và đỏ
@@ -913,7 +970,7 @@ giá hơn một phép kiểm ngược thành công.
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # 237 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng, engine
+npm run test:reco         # 257 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng, engine
 ```
 
 `audit:reco-data` bắt ba lớp lỗi:
