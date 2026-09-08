@@ -11,11 +11,13 @@ import { CommentSection } from "@/components/blog/comment-section";
 import { PostCard } from "@/components/blog/post-card";
 import { AffiliateClickTracker } from "@/components/blog/affiliate-click-tracker";
 import { PostBody } from "@/components/blog/post-body";
+import { PostToc } from "@/components/blog/post-toc";
 import { PostNextSteps } from "@/components/blog/post-next-steps";
 import { OfferStatusNotice } from "@/components/blog/offer-status-notice";
 import { JsonLd } from "@/components/seo/json-ld";
 import { categoryPath, getRelatedPosts, lastModified, slugifyVi } from "@/lib/blog-categories";
 import { postOfferStatus } from "@/lib/post-offer-status";
+import { withHeadingAnchors } from "@/lib/post-toc";
 import { SITE_URL } from "@/lib/subscriber-email";
 import { t } from "@/lib/t";
 import { pageMetadata, absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
@@ -134,8 +136,29 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     ],
   };
 
+  // Mục lục dựng từ thân bài, và thân bài được gắn `id` vào từng `h2` để
+  // link của mục lục có chỗ mà nhảy tới. Truyền bản ĐÃ GẮN cho `PostBody`;
+  // những chỗ khác vẫn dùng `post` gốc vì chúng chỉ đọc slug/tiêu đề.
+  const { blocks: anchoredBlocks, toc } = withHeadingAnchors(post.bodyBlocks);
+  const anchoredPost = { ...post, bodyBlocks: anchoredBlocks, body: anchoredBlocks.join("") };
+  const hasToc = toc.length >= 2;
+
   return (
-    <article className="mx-auto max-w-2xl px-4 py-12 sm:px-6 lg:px-8">
+    /* Từ `xl` khung bài rộng 68rem chứ không còn 42rem, nhưng CỘT CHỮ vẫn
+       42rem — xem chú thích trong `PostToc`. Phần rộng thêm dành cho ảnh
+       cover, tiêu đề, mục lục và các khối cuối bài, không dành cho câu văn.
+       DƯỚI `xl` giữ nguyên 42rem như trước: chỉ nới khung mà không có cột
+       phải thì tiêu đề nằm sát mép trái còn thân bài thụt vào giữa, hai lề
+       trái lệch nhau không vì lý do gì.
+
+       CÙNG LÝ DO ĐÓ, bài không đủ đầu mục để có mục lục thì không nới khung ở
+       bất kỳ bề ngang nào. Không có cột phải thì không có gì lấp chỗ trống,
+       và một khung 68rem đựng một cột chữ 42rem canh giữa chỉ đẩy tiêu đề ra
+       xa thân bài của chính nó. 30/40 bài hiện nay rơi vào nhóm này — review
+       khách sạn và video, thân bài không có `h2` nào. */
+    <article
+      className={`mx-auto max-w-2xl px-4 py-12 sm:px-6 lg:px-8${hasToc ? " xl:max-w-[68rem]" : ""}`}
+    >
       <JsonLd data={jsonLd} />
       <Link href="/" className="text-sm font-semibold text-primary hover:underline">
         &larr; {common("backHome")}
@@ -153,22 +176,23 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           />
         </div>
       ) : post.coverPhoto ? (
-        <div className="relative mt-6 h-56 w-full overflow-hidden rounded-2xl bg-primary sm:h-80">
+        <div className="relative mt-6 h-56 w-full overflow-hidden rounded-2xl bg-primary sm:h-80 xl:h-[26rem]">
           {/* `sizes` phải tả BỀ RỘNG ẢNH ĐƯỢC VẼ, không phải bề rộng tối đa
               của bài. Khung là `max-w-2xl` (672px) TRỪ padding: 100vw−2rem
               trên điện thoại, 608px từ `lg` trở lên. Bốn mốc là bốn khoảng
               padding thật: `px-4` dưới 640, `px-6` từ 640, khung chạm trần
               672px ở đúng 672px màn hình (100vw−48 = 624 từ đó trở đi), rồi
-              `px-8` từ 1024. Khai 672px trần thì máy 375px ở DPR 2 đi lấy
-              biến thể cho 1344px thay vì cho 686px — vài trăm KB cho một tấm
-              ảnh cao 224px.
+              `px-8` từ 1024 (608px), rồi khung nhảy lên 68rem ở `xl` → 1024px
+              từ 1280 trở đi. Khai 1024px cho mọi mốc thì máy 375px ở DPR 2 đi
+              lấy biến thể cho 2048px thay vì cho 686px — vài trăm KB cho một
+              tấm ảnh cao 224px.
               `preload` vì đây là thứ lớn nhất trong màn hình đầu của một bài
               viết chữ; trang thẻ đã làm đúng như vậy với ảnh thẻ. */}
           <Image
             src={post.coverPhoto}
             alt={post.title}
             fill
-            sizes="(min-width: 1024px) 608px, (min-width: 672px) 624px, (min-width: 640px) calc(100vw - 3rem), calc(100vw - 2rem)"
+            sizes="(min-width: 1280px) 1024px, (min-width: 1024px) 608px, (min-width: 672px) 624px, (min-width: 640px) calc(100vw - 3rem), calc(100vw - 2rem)"
             preload
             className="object-cover"
           />
@@ -222,9 +246,38 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           riêng và chỉ nhận chuỗi slug. Lý do là ranh giới client, KHÔNG phải
           số byte — xem chú thích trong chính component đó, chỗ đo được rằng
           chuỗi thân bài nằm hai lần trong trang dù đi đường nào. */}
-      <PostBody post={post} offers={offers} className="mt-8" />
-      <AffiliateClickTracker scope="post-body" slug={post.slug} />
+      {/* Hai cột từ `xl`: chữ trái, mục lục phải. Bài không đủ đầu mục thì
+          không có cột phải, và cột chữ tự canh giữa khung — nếu không nó sẽ
+          nằm lệch trái với một mảng trống 18rem không giải thích được. */}
+      <div
+        className={
+          hasToc
+            ? "mt-8 grid gap-14 xl:grid-cols-[minmax(0,42rem)_18rem]"
+            : "mt-8"
+        }
+      >
+        {/* Bài không có mục lục thì không có lưới, nên cột chữ phải TỰ chặn ở
+            42rem — bỏ ra là nó chạy hết 64rem của khung từ `xl`, 119 ký tự
+            một dòng, đúng thứ khung rộng ra sinh ra để tránh. */}
+        <div className={hasToc ? "min-w-0" : "mx-auto w-full max-w-[42rem]"}>
+          <PostBody post={anchoredPost} offers={offers} />
+          <AffiliateClickTracker scope="post-body" slug={post.slug} />
+        </div>
 
+        {/* `aside` KHÔNG dính, `nav` bên trong mới dính. Cột lưới phải cao
+            bằng cả thân bài thì phần tử `sticky` mới có quãng đường mà đi —
+            đặt `sticky` thẳng lên cột (và để nó co bằng nội dung) là nó đứng
+            yên rồi trôi mất cùng đoạn đầu tiên. */}
+        {hasToc && (
+          <aside className="hidden xl:block">
+            <PostToc items={toc} className="sticky top-24" />
+          </aside>
+        )}
+      </div>
+
+      {/* Ba khối cuối bài chạy hết bề ngang khung (1024px), bằng đúng ảnh
+          cover ở đầu — chúng không còn là chữ để đọc mà là chỗ đi tiếp, và để
+          chúng hẹp bằng cột chữ thì mỗi đường kẻ ngang lại dài một kiểu. */}
       <PostNextSteps
         post={post}
         posts={allPosts}
@@ -235,7 +288,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       {related.length > 0 && (
         <section className="mt-12 border-t border-border pt-8">
           <h2 className="font-display text-xl font-bold text-foreground">{seo("relatedTitle")}</h2>
-          <div className="mt-5 grid gap-5 sm:grid-cols-2">
+          {/* Cột thứ ba CHỈ khi khung đã nới ra. Bài không có mục lục vẫn
+              rộng 38rem, nhét ba thẻ vào đó là tiêu đề nào cũng gãy bốn dòng. */}
+          <div className={`mt-5 grid gap-5 sm:grid-cols-2${hasToc ? " xl:grid-cols-3" : ""}`}>
             {related.map((item) => (
               <PostCard key={item.slug} post={item} headingLevel="h3" />
             ))}

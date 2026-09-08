@@ -120,6 +120,14 @@ export function PostBody({
 }
 
 /** Đúng chuỗi class thân bài đang dùng — giữ một chỗ để hai nhánh trên không
- *  lệch nhau. */
+ *  lệch nhau.
+ *
+ *  `xl:prose-lg` nâng chữ lên 18px từ `xl`. Đây là cách trang bài "rộng ra"
+ *  trên màn hình lớn mà không kéo dài dòng: cột vẫn 42rem, chữ to hơn nên số
+ *  ký tự trên một dòng gần như đứng yên (75 → 74) trong khi khối chữ chiếm
+ *  nhiều chỗ hơn và dễ đọc hơn ở khoảng cách ngồi xa.
+ *
+ *  `prose-headings:scroll-mt-28` vì header dính trên đỉnh: không có nó, link
+ *  mục lục nhảy tới đúng heading rồi để header che mất chính cái heading đó. */
 const PROSE =
-  "prose prose-neutral max-w-none prose-headings:font-display prose-a:text-primary [&_:is(h1,h2,h3,h4)_a]:[font-weight:inherit]";
+  "prose prose-neutral max-w-none prose-headings:font-display prose-headings:scroll-mt-28 prose-a:text-primary [&_:is(h1,h2,h3,h4)_a]:[font-weight:inherit] xl:prose-lg";

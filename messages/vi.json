@@ -7,7 +7,7 @@
     "home": "Trang chủ",
     "creditCards": "Thẻ tín dụng",
     "blog": "Blog",
-    "pointsTools": "Công cụ điểm thưởng",
+    "pointsTools": "Miles & Points",
     "calculator": "Points Calculator",
     "transferBonuses": "Transfer Bonus",
     "transferPartners": "Transfer Partners",
@@ -170,7 +170,8 @@
     "offerCtaTransferPartners": "Xem tỷ lệ chuyển điểm hiện tại",
     "offerCtaCreditCards": "Xem elevated offer đang chạy",
     "offerCtaBankAccounts": "Xem tài khoản ngân hàng đang có bonus",
-    "cardInPost": "THẺ NHẮC TỚI TRONG BÀI"
+    "cardInPost": "THẺ NHẮC TỚI TRONG BÀI",
+    "tocTitle": "Trong bài này"
   },
   "bonuses": {
     "eyebrow": "CẬP NHẬT THƯỜNG XUYÊN",
@@ -183,7 +184,7 @@
     "emptyCta": "Xem tỷ lệ transfer thường ngày"
   },
   "calculator": {
-    "eyebrow": "CÔNG CỤ",
+    "eyebrow": "MILES & POINTS",
     "title": "Points Calculator",
     "subtitle": "Ước tính giá trị quy đổi point/mile của bạn cho một vé award cụ thể.",
     "programLabel": "Chương trình điểm thưởng (tuỳ chọn)",
@@ -198,7 +199,7 @@
     "reset": "Tính lại"
   },
   "transferPartners": {
-    "eyebrow": "CÔNG CỤ",
+    "eyebrow": "MILES & POINTS",
     "title": "Transfer Partners",
     "subtitle": "So sánh tỷ lệ transfer điểm từ Amex® Membership Rewards® (Canada) và RBC® Avion® sang các chương trình hàng không & khách sạn đối tác.",
     "columnProgram": "Chương trình đối tác",
@@ -314,7 +315,7 @@
     "breadcrumbBestCards": "Các thẻ tốt nhất"
   },
   "awardCharts": {
-    "eyebrow": "CÔNG CỤ",
+    "eyebrow": "MILES & POINTS",
     "title": "Award Flight Finder",
     "subtitle": "Cùng một ghế, mỗi chương trình đòi một số miles khác nhau. So sánh 6 chương trình mà thẻ tín dụng Canada thật sự chuyển điểm tới được, trên đúng những chặng bay có thật.",
     "originLabel": "Điểm đi",
@@ -373,7 +374,7 @@
     "feederOnlyShort": "Cần nối chuyến nội địa"
   },
   "compare": {
-    "eyebrow": "CÔNG CỤ",
+    "eyebrow": "MILES & POINTS",
     "title": "So Sánh Thẻ",
     "subtitle": "Chọn hai hoặc ba thẻ để đặt cạnh nhau: welcome bonus, annual fee, rebate và quyền lợi, cùng một hàng cho dễ so.",
     "metaTitle": "So sánh thẻ tín dụng Canada cạnh nhau",
@@ -463,7 +464,7 @@
     "routerNewcomerNote": "Chưa có credit history thì bắt đầu từ đâu"
   },
   "bankCompare": {
-    "eyebrow": "CÔNG CỤ",
+    "eyebrow": "MILES & POINTS",
     "title": "So Sánh Tài Khoản",
     "subtitle": "Chọn hai hoặc ba tài khoản để đặt cạnh nhau: welcome bonus, monthly fee và cách được miễn, lãi suất, rebate và quyền lợi.",
     "metaTitle": "So sánh tài khoản ngân hàng Canada cạnh nhau",
@@ -571,7 +572,7 @@
     "draftNotice": "Bản nháp — trang này chưa công bố. Số liệu đã đúng nhưng phần trình bày còn đang sửa."
   },
   "game": {
-    "eyebrow": "Công cụ điểm thưởng",
+    "eyebrow": "MILES & POINTS",
     "title": "Mini-game: Catch The Points",
     "subtitle": "Một lượt chơi 45 giây. Kéo vali qua lại để hứng điểm thưởng, né annual fee & devaluation, và tuyệt đối đừng carry balance.",
     "frameTitle": "Catch The Points — mini-game của Ghế 1A",

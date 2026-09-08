@@ -200,9 +200,23 @@ trong một dải hẹp.
 | Ngữ cảnh | Bề ngang |
 |---|---|
 | Section thường | `mx-auto max-w-page` |
-| Bài viết (một cột chữ) | `max-w-3xl` |
+| Bài viết (một cột chữ) | `max-w-2xl`, nới `xl:max-w-[68rem]` khi có mục lục |
+| Trang chi tiết một mục (thẻ, tài khoản) | `max-w-3xl` |
 | Đoạn dẫn dưới tiêu đề | `max-w-2xl` |
 | Header & footer | không giới hạn — tràn hết bề ngang |
+
+### 5.1.1 Bề ngang thêm ra KHÔNG dùng để kéo dài dòng chữ
+
+Cột chữ 42rem ở cỡ 16px đã là **75 ký tự một dòng** — kịch trần khoảng dễ đọc,
+và tiếng Việt có dấu còn nặng hơn tiếng Anh ở khoảng này. Nên khi một trang
+đọc được nới rộng, phần rộng thêm phải đựng thứ khác: ảnh cover, mục lục dính
+bên phải, các khối "đi tiếp" cuối trang. Cột chữ vẫn 42rem, chỉ chữ to lên
+(`xl:prose-lg`, 18px) để khối chữ chiếm nhiều chỗ hơn mà số ký tự trên dòng
+đứng yên.
+
+Hệ quả cho `/blog/[slug]`: khung chỉ nới **khi bài có từ 2 `h2` trở lên** (có
+mục lục để lấp cột phải). Bài không có đầu mục — review khách sạn, video — giữ
+nguyên 42rem ở mọi bề ngang.
 
 ### 5.2 Nhịp dọc của section
 
