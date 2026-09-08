@@ -721,6 +721,67 @@ Cùng chặng, cùng hạng ghế, khác đúng hai con số:
 trong bundler của Next. `node --test` sẽ nổ `ERR_MODULE_NOT_FOUND`. Import
 thẳng từng file, như test của Phase 1 và 2.
 
+### Bốn lỗi P1 của vòng Codex — đều là "tưởng đã nối dây"
+
+Không lỗi nào trong bốn cái dưới đây là một phép tính sai. Cả bốn là những chỗ
+ý định đã đúng, code đã viết, mà DÂY CHƯA NỐI — nên chúng biên dịch sạch và
+test xanh.
+
+**1. Thẻ không đủ điều kiện vẫn thắng được.** `eligibility.ts` phân loại đúng
+`ineligible`, `rules.ts` phạt `unknown` — nhưng không ai LỌC `ineligible` khỏi
+tập ứng viên. Một hồ sơ khai thu nhập 0 nhận RBC® Avion® Visa Infinite làm
+khuyến nghị chính, kèm nguyên chữ `"ineligible"` trong chính đầu ra của nó.
+Phạt điểm không cứu được ca này: §14 tách hai khái niệm đúng để chỗ này không
+phải chọn một hình phạt cho một cánh cửa đóng.
+
+**2. `eligibility_unknown` không tới được phán quyết.** Lớp dữ liệu khai 11 thẻ
+chưa biết điều kiện; `evaluateEligibility` không nhận danh sách đó. Luật cư trú
+áp cho MỌI thẻ, nên một thẻ chỉ có đúng dòng `residency` trông y hệt một thẻ đã
+kiểm và không có yêu cầu nào khác — cả hai trả `eligible`, và 11 thẻ thoát cả
+hình phạt lẫn cảnh báo dành cho chỗ chưa biết.
+
+**3. Phủ điểm so với một khoảng KHÔNG AI BÁN.** `tripNeedFor` gộp `min(low)` và
+`max(high)` QUA CÁC CHƯƠNG TRÌNH, rồi `tripCoverage` đem số dư so với khoảng
+gộp đó. 150,000 dặm AAdvantage® phủ đủ chuyến khứ hồi 140,000 dặm của chính
+AAdvantage®, nhưng bị so với trần 238,000 của Asia Miles® — engine kết luận còn
+thiếu và khuyên mở thêm thẻ, TRONG KHI cùng lúc báo `pointsGapTypical: 0`. Hai
+con số mâu thuẫn nhau trong cùng một đầu ra.
+
+Nay `TripNeed.byProgram` giữ khoảng riêng từng chương trình, và mọi phép phủ
+hỏi từng chương trình một, bằng chính giá của nó và chính số điểm với tới được
+nó. Khoảng gộp ở lại, nhưng CHỈ để trình bày "chuyến này tốn khoảng bao nhiêu".
+
+**4. Trần chi tiêu chia đô cho điểm.** Xem mục dưới.
+
+### Ba lỗi tự tìm được — tất cả khi ĐỌC KẾT QUẢ, không khi viết code
+
+**1. Đọc cái cờ thay vì đọc dữ liệu.** `marriott-bonvoy` khai
+`transferable: true` với ĐÚNG KHÔNG chặng chuyển nào — lớp dữ liệu đã nói thẳng
+bằng `DataGap` `transfer_paths_unmodelled`, và `audit:reco-data` cảnh báo bằng
+một câu tiên đoán chính xác lỗi này. Engine vẫn đọc cờ, nên Bonvoy® được chấm
+linh hoạt tối đa và đứng ĐẦU BẢNG cho một người muốn bay — bằng một đồng tiền
+engine không biết bay đi đâu.
+
+> Luật rộng hơn Bonvoy®: **một khả năng chỉ có giá trị khi engine tra được nó.**
+
+**2. Miễn phí năm đầu đếm HAI LẦN.** Cả chín thẻ có `fee_waiver` đều đồng thời
+khai `annualFeeFirstYear: 0`. Cộng cả hai thì thẻ được cộng $139 vào phần
+thưởng RỒI lại được tính là không mất phí — cùng một ưu đãi, hai lần, và chín
+thẻ cùng được lợi so với phần còn lại của bảng. README Phase 1 đã nói ba khái
+niệm này ở ba chỗ khác nhau; chỗ đúng để đọc miễn năm đầu là
+`annualFeeFirstYear`.
+
+**3. Trần tích điểm lẫn ĐƠN VỊ.** Trần `kind: "spend"` đo bằng ĐÔ (BMO®
+VIPorter®: $20,000 chi tiêu Porter®/năm), trần `kind: "points"` đo bằng ĐIỂM.
+Bản đầu gom mỗi điểm rồi đem trần-đô chia cho tổng-điểm — với tỷ lệ 3x nó bắt
+đầu cắt ở đúng một phần ba mức thật, và cắt cả những người chưa hề chạm trần.
+Codex tìm ra cùng lỗi này độc lập.
+
+**4. Percentile tra ĐƠN VỊ bằng cách tìm con số.** Mức chưa kịp vào nhật ký
+(recorder chạy mỗi ngày một lượt) thì không tìm thấy điểm nào, đơn vị thành
+`undefined`, và phép lọc mở toang cho MỌI đơn vị — đúng thứ lớp dữ liệu cấm.
+Nay đơn vị đến từ `Offer.bonusKind`.
+
 ### Kiểm ngược, đã làm thật
 
 Năm bản vá quan trọng đều được gỡ ra một lần để xem test có đỏ không — và đỏ
@@ -733,14 +794,21 @@ Năm bản vá quan trọng đều được gỡ ra một lần để xem test c
 | `feedShare` → Rule 3 quay lại có/không | §16 Rule 3 — không phạt linh hoạt ngang co-brand |
 | cảnh báo hạn điểm khỏi `NO_NEW_CARD` | §16 Rule 8 — thắng vì lý do truy được |
 | `everHeld` → `status === "previously_held"` | Amex® once-in-a-lifetime |
+| trần chi tiêu → chia đô cho điểm | trần tích điểm cùng đơn vị |
 
 Test xanh mà không bảo vệ gì là thứ vòng review bỏ qua nhiều nhất.
+
+Và một lần phép kiểm ngược **KHÔNG đỏ** — nó lộ ra rằng bài test đang chứng
+minh một chuyện khác với chuyện nó tưởng. Test trần tích điểm ban đầu so hai
+mức chi ĐỀU TRÊN trần, mà ở trên trần thì cả bản đúng lẫn bản sai đều cắt; ca
+phân biệt được hai bản là ca nằm DƯỚI trần. Một phép kiểm ngược thất bại đáng
+giá hơn một phép kiểm ngược thành công.
 
 ## Chạy gì
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # 212 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng, engine
+npm run test:reco         # 224 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng, engine
 ```
 
 `audit:reco-data` bắt ba lớp lỗi:
