@@ -158,7 +158,7 @@ export default async function TransferPartnersPage() {
 
   return (
     <>
-      <PageHeader eyebrow={tp("eyebrow")} title={tp("title")} subtitle={tp("subtitle")} />
+      <PageHeader eyebrow={tp("eyebrow")} title={tp("title")} subtitle={tp("subtitle")} width="4xl" />
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl">
           <p className="mb-2 text-xs font-medium text-muted-foreground sm:hidden">

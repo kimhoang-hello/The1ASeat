@@ -31,7 +31,12 @@ export default async function CalculatorPage() {
 
   return (
     <>
-      <PageHeader eyebrow={calc("eyebrow")} title={calc("title")} subtitle={calc("subtitle")} />
+      <PageHeader
+        eyebrow={calc("eyebrow")}
+        title={calc("title")}
+        subtitle={calc("subtitle")}
+        width="xl"
+      />
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         <PointsCalculator cardProgramIds={cardProgramIds} />
       </section>

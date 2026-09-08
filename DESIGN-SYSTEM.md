@@ -218,6 +218,25 @@ Hệ quả cho `/blog/[slug]`: khung chỉ nới **khi bài có từ 2 `h2` tr�
 mục lục để lấp cột phải). Bài không có đầu mục — review khách sạn, video — giữ
 nguyên 42rem ở mọi bề ngang.
 
+### 5.1.2 `PageHeader` phải rộng bằng thân trang
+
+`PageHeader` nhận prop `width`, tên khoá đặt theo đúng class chặn bề ngang của
+thân trang: `page` (mặc định), `article` (68rem), `4xl`, `3xl`, `2xl`, `xl`.
+
+Khai sai là thấy ngay trên màn hình rộng: dải tiêu đề chạy `max-w-page` còn
+thân trang canh giữa ở `max-w-3xl` thì hai mép trái cách nhau vài trăm pixel —
+trông như hai trang chồng lên nhau. Ngày 08/09/2026 có 9 trang đang lệch kiểu
+đó.
+
+| Trang | `width` |
+|---|---|
+| Blog, chuyên mục, thẻ tín dụng, ngân hàng, so sánh, transfer bonus, game | `page` (mặc định) |
+| `/credit-cards/tot-nhat/[category]` | `article` |
+| `/transfer-partners` | `4xl` |
+| `/bay-ve-viet-nam` + trang chặng, `/bat-dau`, `/award-flight-finder` | `3xl` |
+| `/contact` | `2xl` |
+| `/calculator` | `xl` |
+
 ### 5.2 Nhịp dọc của section
 
 | Loại section | Class |

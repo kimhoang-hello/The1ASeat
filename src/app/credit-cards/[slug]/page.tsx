@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getCreditCardOfferBySlug, getCreditCardOffers, getPosts } from "@/lib/content";
+import {
+  getCreditCardOfferBySlug,
+  getCreditCardOffers,
+  getPosts,
+} from "@/lib/content";
 import { CardImage, applyOverlay } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
 import { CardNextSteps } from "@/components/credit-cards/card-next-steps";
@@ -83,81 +87,110 @@ export default async function CreditCardDetailPage({
   };
 
   return (
-    <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+    /* Từ `xl` trang tách hai cột: ảnh thẻ dính bên trái, mọi thứ còn lại bên
+       phải. Dưới `xl` giữ nguyên một cột 42rem như trước.
+
+       THỨ TỰ DOM KHÔNG ĐỔI MỘT DÒNG NÀO. Ảnh thẻ là thứ DUY NHẤT tách sang
+       cột trái, chính vì nó là thứ duy nhất đứng đầu sẵn — gom thêm
+       `OfferStats` hay nút Apply vào đó thì trên điện thoại chúng nhảy lên
+       trước cả tên thẻ, tức là đổi chỗ đứng của nút Apply mà không đo được gì.
+       Nút Apply dính theo màn hình là việc đáng làm, nhưng là một thay đổi về
+       sản phẩm, không phải một lần dọn bố cục. */
+    <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8 xl:max-w-[68rem]">
       <JsonLd data={jsonLd} />
-      <Link href="/credit-cards" className="text-sm font-semibold text-primary hover:underline">
+      <Link
+        href="/credit-cards"
+        className="text-sm font-semibold text-primary hover:underline"
+      >
         &larr; {offers("viewAll")}
       </Link>
 
-      <CardImage
-        image={offer.cardImage}
-        name={offer.name}
-        placeholderIcon={offer.image}
-        badge={
-          offer.rebate && (
-            <RebateChip
-              amount={offer.rebate}
-              label={offers("rebate")}
-              className="absolute -bottom-3 left-1/2 -translate-x-1/2 shadow-sm"
+      <div className="xl:grid xl:grid-cols-[22rem_minmax(0,1fr)] xl:gap-12">
+        <div className="mt-6 xl:sticky xl:top-24 xl:self-start">
+          <CardImage
+            image={offer.cardImage}
+            name={offer.name}
+            placeholderIcon={offer.image}
+            badge={
+              offer.rebate && (
+                <RebateChip
+                  amount={offer.rebate}
+                  label={offers("rebate")}
+                  className="absolute -bottom-3 left-1/2 -translate-x-1/2 shadow-sm"
+                />
+              )
+            }
+            className="h-56 w-full rounded-2xl"
+            {...applyOverlay(offer.applyUrl, "card_detail", offer.slug)}
+            preload
+          />
+        </div>
+
+        <div className="min-w-0">
+          <div className="mt-6">
+            <CardBadges
+              offer={offer}
+              cardType={offer.cardType}
+              elevatedBonusLabel={offers("elevatedBonus")}
+              expiresOnLabel={offers("expiresOn")}
             />
-          )
-        }
-        className="mt-6 h-56 w-full rounded-2xl"
-        {...applyOverlay(offer.applyUrl, "card_detail", offer.slug)}
-        preload
-      />
+          </div>
 
-      <div className="mt-6">
-        <CardBadges
-          offer={offer}
-          cardType={offer.cardType}
-          elevatedBonusLabel={offers("elevatedBonus")}
-          expiresOnLabel={offers("expiresOn")}
-        />
-      </div>
+          <h1 className="mt-2 font-display text-3xl font-extrabold text-foreground">
+            {offer.name}
+          </h1>
+          <OfferStats offer={offer} className="mt-4" />
 
-      <h1 className="mt-2 font-display text-3xl font-extrabold text-foreground">{offer.name}</h1>
-      <OfferStats offer={offer} className="mt-4" />
-
-      {/* Ngay dưới con số, vì nó nói về chính con số đó. Không hiện gì khi
+          {/* Ngay dưới con số, vì nó nói về chính con số đó. Không hiện gì khi
           chưa đủ lịch sử để nói. */}
-      <OfferHistoryNote offer={offer} className="mt-4" />
+          <OfferHistoryNote offer={offer} className="mt-4" />
 
-      <p className="mt-4 text-lg leading-relaxed text-foreground/90">{offer.headline}</p>
+          <p className="mt-4 text-lg leading-relaxed text-foreground/90">
+            {offer.headline}
+          </p>
 
-      <EditorsTake editorsTake={offer.editorsTake} className="mt-6" />
+          <EditorsTake editorsTake={offer.editorsTake} className="mt-6" />
 
-      <h2 className="mt-8 font-display text-xl font-bold text-foreground">{offers("keyBenefits")}</h2>
-      <ul className="mt-3 list-disc space-y-2 pl-5 text-foreground/90">
-        {offer.keyBenefits.map((benefit) => (
-          <li key={benefit}>{benefit}</li>
-        ))}
-      </ul>
+          <h2 className="mt-8 font-display text-xl font-bold text-foreground">
+            {offers("keyBenefits")}
+          </h2>
+          <ul className="mt-3 list-disc space-y-2 pl-5 text-foreground/90">
+            {offer.keyBenefits.map((benefit) => (
+              <li key={benefit}>{benefit}</li>
+            ))}
+          </ul>
 
-      {/* Không render nút khi `applyUrl` bị loại vì không phải http(s) — xem
+          {/* Không render nút khi `applyUrl` bị loại vì không phải http(s) — xem
           `safeApplyUrl`. Nút trỏ `href=""` sẽ mở lại chính trang này ở tab mới
           VÀ vẫn bắn `apply_clicked`, tức vừa hỏng vừa làm sai số đo doanh thu. */}
-      {offer.applyUrl && (
-        <ApplyButton
-          href={offer.applyUrl}
-          affiliate={isReferralUrl(offer.applyUrl)}
-          className="mt-8"
-          placement="card_detail"
-          product={offer.slug}
-        />
-      )}
+          {offer.applyUrl && (
+            <ApplyButton
+              href={offer.applyUrl}
+              affiliate={isReferralUrl(offer.applyUrl)}
+              className="mt-8"
+              placement="card_detail"
+              product={offer.slug}
+            />
+          )}
 
-      <OfferDisclosure className="mt-8" />
+          <OfferDisclosure className="mt-8" />
 
-      {/* Đặt SAU nút apply và phần công bố: khối này là đường đi tiếp cho người
+          {/* Đặt SAU nút apply và phần công bố: khối này là đường đi tiếp cho người
           chưa quyết, không phải thứ chen ngang giữa họ và nút bấm. */}
-      <CardNextSteps offer={offer} offers={allOffers} posts={posts} className="mt-12" />
+          <CardNextSteps
+            offer={offer}
+            offers={allOffers}
+            posts={posts}
+            className="mt-12"
+          />
 
-      <p className="mt-10 border-t border-border pt-4 text-xs text-muted-foreground">
-        <Link href="/" className="underline">
-          {common("backHome")}
-        </Link>
-      </p>
+          <p className="mt-10 border-t border-border pt-4 text-xs text-muted-foreground">
+            <Link href="/" className="underline">
+              {common("backHome")}
+            </Link>
+          </p>
+        </div>
+      </div>
     </article>
   );
 }

@@ -129,88 +129,125 @@ export default async function BestCardsCategoryPage({
         eyebrow={best("eyebrow")}
         title={category.titleVi}
         subtitle={category.subtitleVi}
+        width="article"
       />
 
-      <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
-        <Link href={BEST_CARDS_BASE} className="text-sm font-semibold text-primary hover:underline">
+      {/* Từ `xl`: chữ trái, mục lục dính bên phải — cùng bố cục với
+          `/blog/[slug]`, và vì lý do giống hệt. Dưới `xl` không đổi gì.
+
+          Mục lục KHÔNG bị nhân đôi ra hai bản (một cho mobile, một cho
+          desktop): nó nằm đúng một chỗ trong DOM, giữa đoạn dẫn và các mục
+          thẻ, rồi `xl:row-span-full` kéo nó sang cột phải. Nhân đôi thì hai
+          `id="best-toc"` cùng tồn tại, và `aria-labelledby` của cái thứ hai
+          lặng lẽ trỏ về cái thứ nhất. */}
+      <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8 xl:max-w-[68rem]">
+        <Link
+          href={BEST_CARDS_BASE}
+          className="text-sm font-semibold text-primary hover:underline"
+        >
           &larr; {best("backToHub")}
         </Link>
 
-        <div className="mt-8 space-y-4 leading-relaxed text-foreground/90">
-          {category.introVi.map((paragraph) => (
-            <p key={paragraph.slice(0, 40)}>{paragraph}</p>
-          ))}
-        </div>
-
-        {/* Mục lục: sáu mục thẻ là quá dài để cuộn tìm, và tiêu đề mỗi mục
-            mang sẵn tên thẻ nên danh sách này cũng là câu trả lời nhanh cho
-            "trang này nói về những thẻ nào". */}
-        {/* Ẩn hẳn khi không còn mục nào dựng được — `pickOffers` bỏ cả pick khi
-            thiếu thẻ (xem chú thích của nó), nên về lý thuyết phần thẻ của cả
-            trang có thể rỗng. Một khung "Trong trang này" trống thì tệ hơn là
-            không có khung. */}
-        {sections.length > 0 && (
-          <nav
-            aria-labelledby="best-toc"
-            className="mt-8 rounded-xl border border-border bg-secondary p-4"
-          >
-            <p id="best-toc" className="text-sm font-semibold text-foreground">
-              {best("inThisPage")}
-            </p>
-            <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm">
-              {sections.map(({ pick, cards }) => (
-                <li key={pick.slug}>
-                  <a href={`#${pick.slug}`} className="text-primary hover:underline">
-                    {pickHeading(pick, cards, category.bonusInHeading ?? false)}
-                  </a>
-                </li>
-              ))}
-            </ol>
-          </nav>
-        )}
-
-        <div className="mt-10 space-y-10">
-          {sections.map(({ pick, cards }) => (
-            <BestCardPickSection
-              key={pick.slug}
-              pick={pick}
-              cards={cards}
-              bonusInHeading={category.bonusInHeading}
-              placement={`best_cards_${category.slug}`}
-            />
-          ))}
-        </div>
-
-        <section className="mt-10 border-t border-border pt-10">
-          <h2 className="font-display text-xl font-bold text-foreground">
-            {category.closingHeadingVi}
-          </h2>
-          <div className="mt-4 space-y-4 leading-relaxed text-foreground/90">
-            {category.closingVi.map((paragraph) => (
+        {/* `grid-rows` khai TƯỜNG MINH: mục lục span cả hai hàng, và nếu để
+            hàng nào cũng `auto` thì trình duyệt kéo giãn hàng đầu tiên cho vừa
+            chiều cao mục lục — đo được 434px cho một đoạn dẫn cao 150px, tức
+            gần 300px trống giữa đoạn dẫn và mục thẻ đầu tiên. */}
+        <div className="xl:grid xl:grid-cols-[minmax(0,44rem)_17rem] xl:grid-rows-[min-content_1fr] xl:gap-x-12">
+          <div className="mt-8 space-y-4 leading-relaxed text-foreground/90 xl:col-start-1 xl:self-start">
+            {category.introVi.map((paragraph) => (
               <p key={paragraph.slice(0, 40)}>{paragraph}</p>
             ))}
           </div>
-        </section>
 
-        <p className="mt-8 text-xs leading-relaxed text-muted-foreground">{best("verifiedNote")}</p>
+          {/* Mục lục: sáu mục thẻ là quá dài để cuộn tìm, và tiêu đề mỗi mục
+            mang sẵn tên thẻ nên danh sách này cũng là câu trả lời nhanh cho
+            "trang này nói về những thẻ nào". */}
+          {/* Ẩn hẳn khi không còn mục nào dựng được — `pickOffers` bỏ cả pick khi
+            thiếu thẻ (xem chú thích của nó), nên về lý thuyết phần thẻ của cả
+            trang có thể rỗng. Một khung "Trong trang này" trống thì tệ hơn là
+            không có khung. */}
+          {sections.length > 0 && (
+            <div className="mt-8 xl:col-start-2 xl:row-span-full">
+              <nav
+                aria-labelledby="best-toc"
+                className="rounded-xl border border-border bg-secondary p-4 xl:sticky xl:top-24"
+              >
+                <p
+                  id="best-toc"
+                  className="text-sm font-semibold text-foreground"
+                >
+                  {best("inThisPage")}
+                </p>
+                <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm">
+                  {sections.map(({ pick, cards }) => (
+                    <li key={pick.slug}>
+                      <a
+                        href={`#${pick.slug}`}
+                        className="text-primary hover:underline"
+                      >
+                        {pickHeading(
+                          pick,
+                          cards,
+                          category.bonusInHeading ?? false,
+                        )}
+                      </a>
+                    </li>
+                  ))}
+                </ol>
+              </nav>
+            </div>
+          )}
 
-        <OfferDisclosure className="mt-4" />
+          <div className="xl:col-start-1">
+            <div className="mt-10 space-y-10">
+              {sections.map(({ pick, cards }) => (
+                <BestCardPickSection
+                  key={pick.slug}
+                  pick={pick}
+                  cards={cards}
+                  bonusInHeading={category.bonusInHeading}
+                  placement={`best_cards_${category.slug}`}
+                />
+              ))}
+            </div>
 
-        <NextSteps title={best("otherCategories")} className="mt-10 border-t border-border pt-8">
-          {siblings.map((sibling) => (
-            <StepLink
-              key={sibling.slug}
-              href={bestCardsPath(sibling.slug)}
-              label={sibling.titleVi}
-              description={sibling.metaDescriptionVi}
-            />
-          ))}
-          <StepLink
-            href="/credit-cards"
-            label={best("allCardsLabel")}
-            description={best("allCardsDescription")}
-          />
-        </NextSteps>
+            <section className="mt-10 border-t border-border pt-10">
+              <h2 className="font-display text-xl font-bold text-foreground">
+                {category.closingHeadingVi}
+              </h2>
+              <div className="mt-4 space-y-4 leading-relaxed text-foreground/90">
+                {category.closingVi.map((paragraph) => (
+                  <p key={paragraph.slice(0, 40)}>{paragraph}</p>
+                ))}
+              </div>
+            </section>
+
+            <p className="mt-8 text-xs leading-relaxed text-muted-foreground">
+              {best("verifiedNote")}
+            </p>
+
+            <OfferDisclosure className="mt-4" />
+
+            <NextSteps
+              title={best("otherCategories")}
+              className="mt-10 border-t border-border pt-8"
+            >
+              {siblings.map((sibling) => (
+                <StepLink
+                  key={sibling.slug}
+                  href={bestCardsPath(sibling.slug)}
+                  label={sibling.titleVi}
+                  description={sibling.metaDescriptionVi}
+                />
+              ))}
+              <StepLink
+                href="/credit-cards"
+                label={best("allCardsLabel")}
+                description={best("allCardsDescription")}
+              />
+            </NextSteps>
+          </div>
+        </div>
 
         <p className="mt-10 border-t border-border pt-4 text-xs text-muted-foreground">
           <Link href="/" className="underline">

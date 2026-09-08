@@ -25,7 +25,12 @@ export const revalidate = 3600;
 export default function ContactPage() {
   return (
     <>
-      <PageHeader eyebrow={contact("eyebrow")} title={contact("title")} subtitle={contact("subtitle")} />
+      <PageHeader
+        eyebrow={contact("eyebrow")}
+        title={contact("title")}
+        subtitle={contact("subtitle")}
+        width="2xl"
+      />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl">

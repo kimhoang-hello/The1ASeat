@@ -75,12 +75,17 @@ export default async function BestCardsHubPage() {
         subtitle={best("hubSubtitle")}
       />
 
-      <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+      {/* Cùng bề ngang với `PageHeader` ngay trên. Trước đây thân trang hẹp
+          `max-w-3xl` và canh giữa, còn tiêu đề chạy `max-w-page`, nên trên màn
+          hình rộng hai mép trái cách nhau vài trăm pixel — trông như hai trang
+          chồng lên nhau. Chữ dẫn bên trong vẫn chặn ở `max-w-2xl`, chỗ rộng
+          thêm dành cho lưới mục. */}
+      <div className="mx-auto max-w-page px-4 py-12 sm:px-6 lg:px-8">
         <Link href="/credit-cards" className="text-sm font-semibold text-primary hover:underline">
           &larr; {offers_t("viewAll")}
         </Link>
 
-        <div className="mt-8 space-y-4 leading-relaxed text-foreground/90">
+        <div className="mt-8 max-w-2xl space-y-4 leading-relaxed text-foreground/90">
           <p>{best("hubIntro1")}</p>
           <p>{best("hubIntro2")}</p>
         </div>
@@ -89,7 +94,7 @@ export default async function BestCardsHubPage() {
           {best("hubListHeading")}
         </h2>
 
-        <ul className="mt-4 space-y-4">
+        <ul className="mt-4 grid gap-4 xl:grid-cols-2">
           {rows.map(({ category, cards, count }) => (
             <li key={category.slug}>
               <Link
@@ -129,7 +134,9 @@ export default async function BestCardsHubPage() {
           ))}
         </ul>
 
-        <OfferDisclosure className="mt-8" />
+        {/* Chặn bề ngang: khối chữ `text-xs` chạy hết 1692px là hơn 200 ký tự
+            một dòng, không ai đọc hết một dòng như vậy. */}
+        <OfferDisclosure className="mt-8 max-w-3xl" />
 
         <NextSteps title={next("title")} className="mt-10 border-t border-border pt-8">
           <StepLink
