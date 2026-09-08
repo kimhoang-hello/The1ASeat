@@ -11,13 +11,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { offlineDataset } from "./data/index.ts";
-import { datasetAt } from "./temporal.ts";
+import { activeAt, datasetAt } from "./temporal.ts";
 import { indexDataset } from "./indexes.ts";
 import { ENGINE_VERSION, recommend } from "./engine.ts";
 import {
   accessibleFor,
   analyzePortfolio,
   balanceKnowledge,
+  centsPerPoint,
   flexibilityReach,
   isFlexibleInPractice,
 } from "./portfolio.ts";
@@ -2025,4 +2026,193 @@ test("NO_NEW_CARD không được chấm bằng một chương trình CHỌN B�
       (c) => c.key === "points_already_sufficient",
     ),
   );
+});
+
+/* ================================================================== *
+ * Rà toàn vẹn cuối Phase 3
+ *
+ * Engine này sẽ tác động tới quyết định TÀI CHÍNH thật. Các bài dưới đây
+ * khoá lại những bảo đảm mà mọi vòng rà trước đã dựng, ở dạng KIỂM ĐƯỢC.
+ * ================================================================== */
+
+test("§7 — mỗi đích quy đổi theo tỷ lệ CỦA NÓ, và không ai cộng chúng lại", () => {
+  // Bài kiểm đầu tiên mình viết cho việc này đã SAI: nó đòi mọi đích ≤ pool
+  // gốc, tức ngầm giả định mọi tỷ lệ là 1:1. Membership Rewards® → Bonvoy® là
+  // 1000:1200, nên 120,000 mới là con số ĐÚNG. Bất biến thật không phải "≤
+  // pool" mà là "đúng bằng pool ĐÓ quy đổi theo tỷ lệ CỦA ĐÍCH ĐÓ".
+  const holder: UserState = {
+    ...beginnerNoCards,
+    balances: [
+      { userId: beginnerNoCards.profile.id, programId: AMEX_MR, balance: 100_000, updatedAt: ASOF },
+    ],
+  };
+  const paths = activeAt(IX.pathsBySource.get(AMEX_MR) ?? [], ASOF).filter(
+    (path) => path.requiresTier === null,
+  );
+  assert.ok(paths.length >= 3, "cần nhiều đích để bài này có nghĩa");
+
+  let sawRatioAboveOne = false;
+  for (const path of paths) {
+    const ratio = path.ratioTo / path.ratioFrom;
+    if (ratio > 1) sawRatioAboveOne = true;
+    const reach = accessibleFor(holder, IX, path.destinationProgramId, ASOF);
+    assert.equal(
+      reach.total,
+      Math.floor(100_000 * ratio),
+      `${path.destinationProgramId} quy đổi sai`,
+    );
+    // Và mọi đích phải khai NGUỒN chung — đó là thứ làm phép cộng sai nhìn
+    // thấy được thay vì im lặng.
+    assert.deepEqual(reach.sources, [AMEX_MR]);
+  }
+  assert.ok(sawRatioAboveOne, "bộ dữ liệu phải còn một tỷ lệ > 1:1 để bài này không vô nghĩa");
+});
+
+test("một thay đổi đầu vào cho thay đổi HIỂU ĐƯỢC, không hỗn loạn", () => {
+  // Người dùng thật sẽ chỉnh một câu trả lời rồi chạy lại. Nếu người thắng
+  // nhảy loạn xạ giữa các bước liền nhau thì engine không đáng tin, dù mỗi
+  // lượt chạy đều tất định.
+  const at = (capacity: number): UserState => ({
+    ...beginnerNoCards,
+    profile: { ...beginnerNoCards.profile, annualFeeTolerancePerCard: 700 },
+    spend: { ...beginnerNoCards.spend!, minimumSpendCapacity3m: { low: capacity, high: capacity } },
+  });
+  const steps = [500, 1_000, 2_000, 3_000, 4_000, 6_000, 8_000, 12_000, 20_000];
+  const runs = steps.map((capacity) => {
+    const result = run(at(capacity)).results[0];
+    return { capacity, winner: result.primaryAction.productSlug, score: result.primaryAction.score };
+  });
+
+  // Đơn điệu phải phát biểu trên MỘT thẻ cố định, không trên "thẻ thắng cuộc":
+  // ở bước đầu người thắng là `NO_NEW_CARD`, và so điểm của nó với điểm của
+  // một cái thẻ là so hai thứ đo bằng hai bảng khác nhau. Bài kiểm đầu tiên
+  // mình viết đã vấp đúng chỗ đó.
+  //
+  // Bất biến thật: với MỘT thẻ, dồn được nhiều hơn thì mốc chi dễ hơn hoặc
+  // bằng — không bao giờ khó hơn.
+  const scoreOf = (state: UserState, slug: string): number | null => {
+    const result = run(state).results[0];
+    return (
+      [result.primaryAction, ...result.alternatives].find((c) => c.productSlug === slug)?.score ??
+      null
+    );
+  };
+  const tracked = "amex-cobalt";
+  const curve = steps
+    .map((capacity) => ({ capacity, score: scoreOf(at(capacity), tracked) }))
+    .filter((row): row is { capacity: number; score: number } => row.score !== null);
+  assert.ok(curve.length >= 4, "cần đủ điểm dữ liệu để nói về đơn điệu");
+  for (let i = 1; i < curve.length; i += 1) {
+    assert.ok(
+      curve[i].score >= curve[i - 1].score - 1e-9,
+      `${tracked}: dồn $${curve[i].capacity} cho điểm THẤP hơn $${curve[i - 1].capacity}`,
+    );
+  }
+  // Và người thắng chỉ được đổi vài lần trên cả dải — mỗi lần là một ngưỡng
+  // có thật (đủ sức đạt mốc chi của một hạng thẻ cao hơn).
+  const flips = runs.filter((row, i) => i > 0 && row.winner !== runs[i - 1].winner).length;
+  assert.ok(flips <= 4, `người thắng đổi ${flips} lần trên 9 bước — hỗn loạn`);
+  // Đầu dải phải là "chưa cần thẻ": dồn $500 thì không bonus nào với tới.
+  assert.equal(runs[0].winner, null, "dồn $500 mà vẫn khuyên mở thẻ");
+});
+
+test("một chỉ số CỰC ĐOAN không đè bẹp được phù hợp", () => {
+  // Thẻ bonus lớn nhất bộ dữ liệu, đặt cạnh một người không thể đạt mốc chi
+  // và không chịu nổi phí. Nếu `offer_quality` một mình kéo được nó lên đầu
+  // thì mọi vế phù hợp của §14 là trang trí.
+  // "Lớn nhất" phải đo bằng GIÁ TRỊ, không bằng SỐ ĐIỂM. 160,000 điểm TD
+  // Rewards® (0.5¢) đáng $800; 120,000 Membership Rewards® (1.8¢) đáng $2,160.
+  // Bài kiểm đầu tiên mình viết xếp hạng theo số điểm rồi kết luận nhầm rằng
+  // engine đang chôn vùi thẻ bonus lớn nhất — trong khi chính engine mới là
+  // bên quy đổi đúng. Đây là cùng một cái bẫy §11 và luật đơn vị của nhật ký
+  // offer sinh ra để chặn.
+  const valueOf = (offer: (typeof DATA.offers)[number]): number => {
+    if (offer.headlineBonus === null) return 0;
+    if (offer.bonusCurrencyId === null) return offer.headlineBonus * 100;
+    return offer.headlineBonus * (centsPerPoint(IX, offer.bonusCurrencyId, ASOF) ?? 0);
+  };
+  const biggest = [...DATA.offers].sort((a, b) => valueOf(b) - valueOf(a))[0];
+  const bigProduct = DATA.products.find((p) => p.id === biggest.productId);
+  assert.ok(bigProduct !== undefined);
+
+  const constrained: UserState = {
+    ...beginnerNoCards,
+    profile: {
+      ...beginnerNoCards.profile,
+      annualFeeTolerancePerCard: 100,
+      businessCardsAllowed: false,
+      hasBusiness: false,
+    },
+    spend: { ...beginnerNoCards.spend!, minimumSpendCapacity3m: { low: 500, high: 500 } },
+  };
+  const result = run(constrained).results[0];
+  assert.notEqual(result.primaryAction.productId, bigProduct!.id);
+
+  // Bài này KHÔNG được thắng một cách rỗng: phải chứng minh chính thẻ đó
+  // THẮNG ĐƯỢC khi người dùng hợp với nó — nếu không thì nó chỉ đang chứng
+  // minh "chẳng thẻ nào thắng".
+  const wellMatched: UserState = {
+    ...beginnerNoCards,
+    profile: {
+      ...beginnerNoCards.profile,
+      annualPersonalIncome: { low: 200_000, high: null },
+      annualHouseholdIncome: { low: 200_000, high: null },
+      annualFeeTolerancePerCard: 900,
+      businessCardsAllowed: true,
+      hasBusiness: true,
+      isStudent: false,
+    },
+    spend: {
+      ...beginnerNoCards.spend!,
+      monthlyTotal: { low: 12_000, high: 12_000 },
+      minimumSpendCapacity3m: { low: 30_000, high: 30_000 },
+    },
+  };
+  const matched = run(wellMatched).results[0];
+  const seen = [matched.primaryAction, ...matched.alternatives].some(
+    (c) => c.productId === bigProduct!.id,
+  );
+  assert.ok(seen, `${bigProduct!.slug} không bao giờ nổi lên — bài kiểm trên là rỗng`);
+});
+
+test("§29 — dữ liệu CŨ kéo độ tươi xuống", () => {
+  const stale = {
+    ...DATA,
+    programValuations: DATA.programValuations.map((row) => ({ ...row, verifiedAt: "2020-01-01" })),
+  };
+  const before = run(vietnamTripFunded).results[0].confidence.dataFreshness;
+  const after = recommend({
+    state: vietnamTripFunded,
+    data: stale,
+    ix: indexDataset(stale),
+    asOf: ASOF,
+  }).results[0].confidence.dataFreshness;
+  assert.ok(after < before, `định giá cũ 6 năm mà độ tươi không đổi (${before} → ${after})`);
+});
+
+test("KHÔNG có hack theo sản phẩm trong logic chung", async () => {
+  // Mở rộng bài kiểm affiliate thành phép quét đầy đủ: không file engine nào
+  // được nhắc tới một SLUG sản phẩm, một ID sản phẩm, hay một ID chương trình
+  // cụ thể. Một dòng `if (slug === "amex-cobalt")` lọt vào đây là engine thôi
+  // tất định theo DỮ LIỆU và bắt đầu tất định theo DANH SÁCH.
+  const ENGINE_FILES = [
+    "engine.ts", "normalize.ts", "portfolio.ts", "strategies.ts", "needs.ts",
+    "eligibility.ts", "suitability.ts", "rules.ts", "rank.ts", "confidence.ts",
+    "explain.ts", "offer-quality.ts", "earn-fit.ts", "benefit-fit.ts", "trip-need.ts",
+    "scoring/weights.ts", "scoring/context.ts", "scoring/next-card.ts",
+    "scoring/trip.ts", "scoring/diversify.ts", "scoring/earning.ts",
+  ];
+  const { readFile } = await import("node:fs/promises");
+  for (const name of ENGINE_FILES) {
+    const text = await readFile(new URL(`./${name}`, import.meta.url), "utf8");
+    const code = text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    assert.ok(!code.includes("affiliateAvailable"), `${name} đọc affiliateAvailable`);
+    for (const product of DATA.products) {
+      assert.ok(!code.includes(product.slug), `${name} nhắc slug ${product.slug}`);
+      assert.ok(!code.includes(product.id as string), `${name} nhắc id ${product.id}`);
+    }
+    for (const program of DATA.pointsPrograms) {
+      assert.ok(!code.includes(`"${program.id}"`), `${name} nhắc chương trình ${program.id}`);
+    }
+  }
 });
