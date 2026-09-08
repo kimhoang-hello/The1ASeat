@@ -1197,15 +1197,25 @@ test("§29 — độ tươi chỉ đọc award strategy của CHẶNG đang hỏ
 });
 
 test("§20 — bản chụp hành vi khoá theo ENGINE_VERSION", async () => {
-  // Bài test cũ ở đây chỉ so `ENGINE_VERSION !== "3.0.0"` — nó xanh vĩnh viễn
-  // ngay sau lần tăng đầu tiên, tức là một bài test KHÔNG bảo vệ gì. Vòng
-  // review bắt đúng chỗ đó.
+  // Bài test cũ ở đây chỉ so `ENGINE_VERSION !== "3.0.0"` — xanh vĩnh viễn
+  // ngay sau lần tăng đầu tiên, tức một bài test KHÔNG bảo vệ gì. Vòng review
+  // bắt đúng chỗ đó.
   //
   // Thay bằng thứ cưỡng chế được luật thật của §20: cùng đầu vào + CÙNG
-  // VERSION = cùng đầu ra. Bản chụp dưới đây khoá kết quả của cả 15 nhân vật
-  // vào version hiện tại. Đổi bất kỳ trọng số, ngưỡng hay luật nào mà quên
-  // tăng version thì bài này ĐỎ — và đó chính là lỗi im lặng mà
-  // `recommendation_runs` sinh ra để tránh.
+  // VERSION = cùng đầu ra. Bản chụp khoá kết quả của cả 15 nhân vật vào
+  // version hiện tại.
+  //
+  // HAI ĐƯỜNG TÁCH BẠCH, và tách chúng ra là bài học của một vòng review nữa:
+  //
+  //   chạy test bình thường → chỉ ĐỌC và SO. Lệch, thiếu file, hay lệch
+  //                            version đều là ĐỎ.
+  //   `UPDATE_ENGINE_SNAPSHOT=1` → ghi lại bản chụp. Một hành động CÓ CHỦ Ý.
+  //
+  // Bản trước gộp hai đường: nó tự ghi khi version đổi, và bọc phép ghi trong
+  // try/catch để CI đọc-only không gãy. Hai thứ đó cộng lại thành một lỗ:
+  // tăng version mà quên commit bản chụp, chạy trên CI đọc-only, thì phép ghi
+  // hỏng, ngoại lệ bị nuốt, và test XANH — mãi mãi, không bao giờ so hành vi
+  // một lần nào nữa. Một bản vá "phòng thủ" tự vô hiệu hoá đúng thứ nó bảo vệ.
   const { readFile, writeFile } = await import("node:fs/promises");
   const path = new URL("./engine.snapshot.json", import.meta.url);
 
@@ -1229,40 +1239,32 @@ test("§20 — bản chụp hành vi khoá theo ENGINE_VERSION", async () => {
     }),
   };
 
-  let expected: typeof actual | null = null;
-  try {
-    expected = JSON.parse(await readFile(path, "utf8"));
-  } catch {
-    // Chưa có bản chụp: ghi ra rồi báo để lần chạy sau có mốc so. File này
-    // PHẢI được commit — CI đọc nó, không dựng lại nó.
-    try {
-      await writeFile(path, `${JSON.stringify(actual, null, 2)}\n`, "utf8");
-    } catch {
-      /* chỉ đọc */
-    }
-    assert.fail("chưa có bản chụp — đã ghi engine.snapshot.json, chạy lại để khoá");
-  }
-
-  if (expected!.engineVersion !== ENGINE_VERSION) {
-    // Version đã tăng: đây là một lần đổi hành vi CÓ CHỦ Ý. Ghi lại bản chụp.
-    //
-    // Ghi hỏng thì KHÔNG làm test đỏ: CI có thể chạy trên hệ thống file chỉ
-    // đọc, và một lỗi ghi ở đó nói về môi trường chứ không nói gì về engine.
-    // Bài test này canh HÀNH VI, không canh quyền ghi đĩa.
-    try {
-      await writeFile(path, `${JSON.stringify(actual, null, 2)}\n`, "utf8");
-    } catch {
-      /* chỉ đọc — bỏ qua */
-    }
+  if (process.env.UPDATE_ENGINE_SNAPSHOT === "1") {
+    await writeFile(path, `${JSON.stringify(actual, null, 2)}\n`, "utf8");
     return;
   }
 
+  const raw = await readFile(path, "utf8").catch(() => null);
+  assert.ok(
+    raw !== null,
+    "thiếu engine.snapshot.json — chạy `UPDATE_ENGINE_SNAPSHOT=1 npm run test:reco` rồi COMMIT file đó",
+  );
+  const expected = JSON.parse(raw as string) as typeof actual;
+
+  assert.equal(
+    expected.engineVersion,
+    ENGINE_VERSION,
+    `bản chụp đang ở ${expected.engineVersion} còn engine ở ${ENGINE_VERSION}. ` +
+      "Đổi version là đổi hành vi CÓ CHỦ Ý — chạy " +
+      "`UPDATE_ENGINE_SNAPSHOT=1 npm run test:reco` rồi COMMIT bản chụp mới.",
+  );
+
   assert.deepEqual(
     actual.runs,
-    expected!.runs,
+    expected.runs,
     `Hành vi engine đã đổi nhưng ENGINE_VERSION vẫn là ${ENGINE_VERSION}. ` +
-      `Nếu đây là đổi CÓ CHỦ Ý thì tăng ENGINE_VERSION (§20 replay đọc nó); ` +
-      `nếu không thì đây là một hồi quy.`,
+      "Nếu đây là đổi CÓ CHỦ Ý thì tăng ENGINE_VERSION (§20 replay đọc nó) rồi " +
+      "chạy `UPDATE_ENGINE_SNAPSHOT=1 npm run test:reco`; nếu không thì đây là một hồi quy.",
   );
 });
 
