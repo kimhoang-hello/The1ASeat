@@ -15,7 +15,7 @@
  * Thang đo: 0 = không liên quan, 1 = cực kỳ hữu ích.
  */
 
-import { accessibleFor, centsPerPoint, isFlexibleInPractice } from "./portfolio.ts";
+import { centsPerPoint, isFlexibleInPractice } from "./portfolio.ts";
 import { activeAt } from "./temporal.ts";
 import { clamp01 } from "./offer-quality.ts";
 import {
@@ -223,22 +223,6 @@ export function bestCurrencyNeedVia(
     if (path.requiresTier !== null) continue;
     const via = currencyNeed(needs, path.destinationProgramId) * 0.85;
     if (via > best) best = via;
-  }
-  return best;
-}
-
-/** Số dư tiếp cận được lớn nhất qua các chương trình định giá chặng — dùng cho
- *  `numbers` của §18 và cho Rule 1. Xem `tripCoverage` về việc KHÔNG cộng. */
-export function bestAccessibleFor(
-  state: UserState,
-  ix: DatasetIndex,
-  asOf: string,
-  programs: readonly PointsProgramId[],
-): number | null {
-  if (programs.length === 0) return null;
-  let best = 0;
-  for (const programId of programs) {
-    best = Math.max(best, accessibleFor(state, ix, programId, asOf).total);
   }
   return best;
 }

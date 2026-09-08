@@ -77,7 +77,10 @@ export {
   newCardNeed,
   tripCoverage,
 } from "./strategies.ts";
-export { bestAccessibleFor, bestCurrencyNeedVia, computeNeeds, currencyNeed } from "./needs.ts";
+// `bestAccessibleFor` đã bị gỡ: `tripCoverage` trả về cùng con số kèm cả
+// chương trình phủ tốt nhất, và hai hàm cho cùng một khái niệm là hai chỗ
+// lệch được.
+export { bestCurrencyNeedVia, computeNeeds, currencyNeed } from "./needs.ts";
 export { evaluateEligibility } from "./eligibility.ts";
 export { evaluateSuitability, minimumSpendFit } from "./suitability.ts";
 export { earnFitFor, type EarnFit } from "./earn-fit.ts";
