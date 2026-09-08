@@ -105,6 +105,16 @@ export interface FollowUpInput {
 }
 
 /**
+ * Chỗ trống được ĐẨY LÊN ĐẦU vì chính khuyến nghị hiện tại phụ thuộc vào nó.
+ *
+ * §30 nói hỏi câu "highest-value", và giá trị của một câu hỏi không cố định —
+ * nó phụ thuộc thẻ nào đang thắng. Ngưỡng phí là câu hỏi hạng 14 với người
+ * được khuyên một thẻ $0, và là câu hỏi QUAN TRỌNG NHẤT với người đang được
+ * khuyên một thẻ $799 mà chưa khai ngưỡng nào.
+ */
+const URGENT = -1;
+
+/**
  * Một câu hỏi, hoặc `null` khi không câu nào đổi được kết quả.
  *
  * Hai bộ lọc trước khi xếp hạng, và cả hai đều là "đừng hỏi thứ không ai đọc":
@@ -145,9 +155,26 @@ export function nextQuestion(input: FollowUpInput): FollowUpQuestion | null {
 
   if (usable.length === 0) return null;
 
+  // Thẻ thắng cuộc đang dựa vào một dữ kiện chưa ai hỏi thì hỏi CHÍNH nó.
+  const winner = input.ranked[0];
+  const urgent = new Set<UserDataGap["kind"]>();
+  if (winner !== undefined) {
+    // Phí cao mà chưa khai ngưỡng: `suitability.ts` đã hạ điểm và phát mã, và
+    // câu hỏi này là thứ duy nhất biến phỏng đoán đó thành một câu trả lời.
+    if (winner.reasonCodes.includes("ANNUAL_FEE_HIGH_TOLERANCE_UNKNOWN")) {
+      urgent.add("annual_fee_tolerance_unknown");
+    }
+    // Thẻ doanh nghiệp đang thắng mà chưa biết người này có doanh nghiệp
+    // không: `business_required` là luật CỨNG, nên câu trả lời "không" xoá
+    // thẻ này khỏi bảng hoàn toàn.
+    if (winner.productId !== null && businessIds.has(winner.productId)) {
+      urgent.add("business_ownership_unknown");
+    }
+  }
+
   const best = [...usable].sort((a, b) => {
-    const pa = QUESTION_PRIORITY[a.kind] as number;
-    const pb = QUESTION_PRIORITY[b.kind] as number;
+    const pa = urgent.has(a.kind) ? URGENT : (QUESTION_PRIORITY[a.kind] as number);
+    const pb = urgent.has(b.kind) ? URGENT : (QUESTION_PRIORITY[b.kind] as number);
     if (pa !== pb) return pa - pb;
     // Cùng loại thì theo `subject`: hai hạng mục chi tiêu chưa biết phải cho
     // ra cùng một câu hỏi ở mọi lượt chạy.

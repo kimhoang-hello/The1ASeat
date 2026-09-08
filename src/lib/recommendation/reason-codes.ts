@@ -66,6 +66,7 @@ export const REASON_CODES = [
   "INCOME_MAY_NOT_QUALIFY",
   "ANNUAL_FEE_ABOVE_TOLERANCE",
   "ANNUAL_FEE_WAIVED_FIRST_YEAR",
+  "ANNUAL_FEE_HIGH_TOLERANCE_UNKNOWN",
   "UPGRADE_WITHIN_HELD_FAMILY",
 
   /* Không hành động (§16 Rule 8) */
@@ -132,6 +133,8 @@ export const REASON_CODE_NOTES: Record<ReasonCode, string> = {
   ANNUAL_FEE_ABOVE_TOLERANCE: "suitability.ts — phí thực trả năm đầu vượt ngưỡng người dùng khai.",
   ANNUAL_FEE_WAIVED_FIRST_YEAR:
     "suitability.ts — offer miễn phí năm đầu, nên phí năm đầu KHÁC phí thường niên (§5.6 bàn giao).",
+  ANNUAL_FEE_HIGH_TOLERANCE_UNKNOWN:
+    "suitability.ts — phí cao hơn trung vị thị trường mà người dùng CHƯA khai ngưỡng chịu được. Chưa hỏi không phải là đồng ý.",
   UPGRADE_WITHIN_HELD_FAMILY:
     "suitability.ts — người dùng đã giữ một hạng khác trong cùng họ thẻ; đây là NÂNG HẠNG, không phải thẻ thứ hai.",
 

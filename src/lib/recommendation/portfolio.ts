@@ -75,6 +75,47 @@ export function isFlexibleInPractice(
   );
 }
 
+/**
+ * Độ LINH HOẠT của một đồng tiền, 0..1 — không phải một câu có/không.
+ *
+ * `isFlexibleInPractice` trả lời "có chuyển đi đâu được không". Đó là câu hỏi
+ * đúng cho việc xếp một pool vào nhóm nào, và là câu hỏi SAI cho việc chấm
+ * điểm — vì nó đặt Membership Rewards® ngang RBC Avion®:
+ *
+ *   amex-mr   5 đích ai cũng đi được: Aeroplan®, Avios®, Flying Blue®,
+ *             Asia Miles®, Bonvoy®
+ *   avion     1 đích: WestJet®. Ba đích còn lại đòi hạng Avion® Elite.
+ *
+ * Với người không có hạng Elite, Avion® gần như là một đồng tiền CỐ ĐỊNH tiêu
+ * qua cổng du lịch của RBC®, không phải một đồng tiền chuyển được. Chấm cả hai
+ * bằng 1.0 là nói với người đọc rằng hai thứ đó giữ lại cùng một lượng lựa
+ * chọn — và đó là lời khuyên sai về đúng thứ quan trọng nhất của cả sở thích
+ * này: giữ được quyền quyết định muộn.
+ *
+ * Chuẩn hoá theo chương trình với tới NHIỀU NHẤT trong bộ dữ liệu, đọc từ dữ
+ * liệu chứ không chôn hằng: thêm một chặng chuyển là thang tự đổi.
+ */
+export function flexibilityReach(
+  ix: DatasetIndex,
+  programId: PointsProgramId,
+  asOf: string,
+): number {
+  const count = (id: PointsProgramId): number => {
+    const program = ix.programById.get(id);
+    if (program === undefined || !program.transferable) return 0;
+    return new Set(
+      activeAt(ix.pathsBySource.get(id) ?? [], asOf)
+        .filter((path) => isOpenToEveryone(path.requiresTier))
+        .map((path) => path.destinationProgramId as string),
+    ).size;
+  };
+  const own = count(programId);
+  if (own === 0) return 0;
+  let best = own;
+  for (const program of ix.programById.values()) best = Math.max(best, count(program.id));
+  return best === 0 ? 0 : own / best;
+}
+
 /** Định giá đang hiệu lực của một chương trình, `null` khi chưa có dòng nào. */
 export function centsPerPoint(
   ix: DatasetIndex,
@@ -268,7 +309,11 @@ export function analyzePortfolio(
 
     const valueCents = known.points * cpp;
     knownValueCents += valueCents;
-    if (isFlexibleInPractice(ix, programId, asOf)) flexibleValueCents += valueCents;
+    // Đánh trọng số theo TẦM VỚI, không cộng nguyên: một danh mục toàn Avion®
+    // (một đích) không linh hoạt bằng một danh mục toàn Membership Rewards®
+    // (năm đích), và `PORTFOLIO_LACKS_FLEXIBILITY` phải phân biệt được hai ca
+    // đó — chúng dẫn tới hai lời khuyên khác nhau.
+    flexibleValueCents += valueCents * flexibilityReach(ix, programId, asOf);
 
     for (const [ecosystem, share] of ecosystemShares(program, ix, asOf)) {
       byEcosystem.set(ecosystem, (byEcosystem.get(ecosystem) ?? 0) + valueCents * share);

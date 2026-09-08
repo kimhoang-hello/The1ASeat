@@ -19,7 +19,7 @@
  */
 
 import { CONCENTRATION_THRESHOLD, tripCoverage } from "./strategies.ts";
-import { isFlexibleInPractice } from "./portfolio.ts";
+import { flexibilityReach } from "./portfolio.ts";
 import { activeAt } from "./temporal.ts";
 import type { PointsProgramId } from "./types.ts";
 import type { CandidateFacts, ScoringContext } from "./scoring/context.ts";
@@ -127,11 +127,13 @@ export function applyRules(input: RuleInput): RuleOutcome {
   // và luật này im lặng.
   const programId = candidate.product.pointsProgramId;
   const bookNow = ctx.goal.trip?.travelStart != null && ctx.goal.trip.flexibility === "low";
-  const flexible = programId !== null && isFlexibleInPractice(ctx.ix, programId, ctx.asOf);
-  if (flexible && !bookNow) {
+  const reach = programId === null ? 0 : flexibilityReach(ctx.ix, programId, ctx.asOf);
+  if (reach > 0 && !bookNow) {
+    // Thưởng theo TẦM VỚI: Avion® (một đích) không giữ lại cùng lượng lựa chọn
+    // như Membership Rewards® (năm đích), nên không được cùng một khoản thưởng.
     adjustments.push({
       rule: "R2_keep_points_flexible",
-      delta: 0.03,
+      delta: 0.03 * reach,
       reasonCode: "FLEXIBLE_CURRENCY_VALUABLE",
     });
     reasonCodes.push("FLEXIBLE_CURRENCY_VALUABLE");

@@ -15,7 +15,7 @@
  * Thang đo: 0 = không liên quan, 1 = cực kỳ hữu ích.
  */
 
-import { centsPerPoint, isFlexibleInPractice } from "./portfolio.ts";
+import { centsPerPoint, flexibilityReach, isFlexibleInPractice } from "./portfolio.ts";
 import { activeAt } from "./temporal.ts";
 import { clamp01 } from "./offer-quality.ts";
 import {
@@ -102,7 +102,7 @@ export function computeNeeds(input: NeedsInput): Needs {
           // đúng công thức của mục tiêu rộng (`next_card`) và để §29 hạ độ
           // tin cậy, vì thứ ta thiếu là GIÁ, không phải mục tiêu.
           need = clamp01(
-            0.5 * (isFlexibleInPractice(ix, program.id, asOf) ? 1 : 0.7) + 0.5 * (1 - share),
+            0.5 * (0.7 + 0.3 * flexibilityReach(ix, program.id, asOf)) + 0.5 * (1 - share),
           );
           break;
         }
@@ -123,7 +123,7 @@ export function computeNeeds(input: NeedsInput): Needs {
           // "Tôi muốn tích điểm", không nói loại nào. Đó là một CÂU TRẢ LỜI,
           // không phải chỗ trống — nên không đi hỏi lại, và mọi đồng tiền có
           // giá đều hữu ích, đồng tiền chuyển được thì hơn.
-          need = isFlexibleInPractice(ix, program.id, asOf) ? 0.9 : 0.55;
+          need = 0.55 + 0.35 * flexibilityReach(ix, program.id, asOf);
         } else {
           need = program.id === target ? 1 : reaches(ix, program.id, target, asOf) ? 0.8 : 0.1;
         }
@@ -138,7 +138,7 @@ export function computeNeeds(input: NeedsInput): Needs {
         // Không có mục tiêu hẹp: một nửa là giá trị chung của đồng tiền, một
         // nửa là "người này chưa có nhiều ở đây".
         need = clamp01(
-          0.5 * (isFlexibleInPractice(ix, program.id, asOf) ? 1 : 0.7) + 0.5 * (1 - share),
+          0.5 * (0.7 + 0.3 * flexibilityReach(ix, program.id, asOf)) + 0.5 * (1 - share),
         );
         break;
     }

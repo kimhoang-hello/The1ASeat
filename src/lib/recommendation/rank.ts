@@ -26,28 +26,75 @@
 import { clamp01 } from "./offer-quality.ts";
 import { tripCoverage } from "./strategies.ts";
 import { component, assembleScore } from "./scoring/weights.ts";
+import { earnFitFor } from "./earn-fit.ts";
 import { activeAt } from "./temporal.ts";
 import type { PointsProgramId } from "./types.ts";
 import type { CandidateFacts, ScoringContext } from "./scoring/context.ts";
 import type { Candidate, ScoreComponent } from "./engine-types.ts";
 import type { ReasonCode, WarningCode } from "./reason-codes.ts";
 
-/** Nhu cầu đồng tiền lớn nhất, và phần nhu cầu đó đã được phục vụ sẵn. */
-function topCurrencyNeed(ctx: ScoringContext): { programId: PointsProgramId | null; need: number } {
-  let programId: PointsProgramId | null = null;
-  let need = 0;
-  // Sắp theo id trước khi so: `Map` giữ thứ tự chèn, tức thứ tự mảng
-  // `pointsPrograms`, và hai chương trình cùng nhu cầu sẽ đổi người thắng khi
-  // ai đó sắp lại file seed.
-  for (const [candidateId, value] of [...ctx.needs.currency].sort((a, b) =>
-    a[0] < b[0] ? -1 : 1,
-  )) {
-    if (value > need) {
-      need = value;
-      programId = candidateId;
-    }
+/**
+ * Phần giá trị tích điểm hằng năm mà VÍ HIỆN TẠI đã lo được.
+ *
+ * Đây là câu hỏi "bạn có cần thêm thẻ không" ở dạng đo được: nếu những thẻ
+ * đang giữ đã kiếm gần bằng thẻ tốt nhất còn lại, thì thẻ mới thêm rất ít.
+ *
+ * Nó THAY cho phép đo cũ, thứ hỏi "người này có điểm ở chương trình cần nhất
+ * không" — một câu hỏi tự mâu thuẫn với mọi mục tiêu không phải chuyến đi:
+ * `needs.currency` tỷ lệ NGHỊCH với những gì người dùng đang có, nên "chương
+ * trình cần nhất" theo định nghĩa là chương trình họ KHÔNG có, và phép đo
+ * luôn trả về ~0. Tệ hơn, hàng chục chương trình hoà nhau ở cùng một mức nhu
+ * cầu, và phép phá hoà theo `id` chọn ra `a-la-carte` — một đồng tiền cố định
+ * chẳng liên quan — rồi để nó quyết định 55% điểm của `NO_NEW_CARD`.
+ */
+function walletEarnCoverage(
+  candidates: readonly CandidateFacts[],
+  ctx: ScoringContext,
+): { raw: number; note: string } {
+  let bestHeld = 0;
+  for (const product of ctx.portfolio.heldProducts) {
+    bestHeld = Math.max(bestHeld, earnFitFor(product.id, ctx.state.spend, ctx.ix, ctx.asOf).annualValueCents);
   }
-  return { programId, need };
+  let bestNew = 0;
+  for (const candidate of candidates) bestNew = Math.max(bestNew, candidate.earn.annualValueCents);
+
+  if (ctx.portfolio.heldProducts.length === 0) {
+    return { raw: 0, note: "chưa giữ thẻ nào, nên ví hiện tại không lo được gì" };
+  }
+  if (bestNew <= 0) {
+    // Không tính được giá trị tích điểm của bất kỳ thẻ nào (người dùng chưa
+    // khai chi tiêu). Chưa biết, không phải bằng không.
+    return { raw: 0.5, note: "chưa khai chi tiêu nên không so được ví hiện tại với thẻ mới" };
+  }
+  const raw = Math.min(1, bestHeld / bestNew);
+  return {
+    raw,
+    note: `thẻ đang giữ kiếm được ${Math.round(raw * 100)}% so với thẻ tốt nhất còn lại`,
+  };
+}
+
+/** Ví hiện tại đã phục vụ đồng tiền của CHUYẾN ĐI chưa. */
+function tripCurrencyCoverage(
+  neededPrograms: readonly PointsProgramId[],
+  ctx: ScoringContext,
+): { raw: number; note: string } {
+  if (ctx.portfolio.heldProducts.length === 0) {
+    return { raw: 0, note: "chưa giữ thẻ nào" };
+  }
+  const servesDirectly = neededPrograms.some((programId) =>
+    ctx.portfolio.earnedPrograms.has(programId),
+  );
+  if (servesDirectly) return { raw: 1, note: "thẻ đang giữ kiếm thẳng đồng tiền đặt được chặng này" };
+  const servesViaTransfer = [...ctx.portfolio.earnedPrograms].some((earned) =>
+    activeAt(ctx.ix.pathsBySource.get(earned) ?? [], ctx.asOf).some(
+      (path) =>
+        path.requiresTier === null &&
+        neededPrograms.includes(path.destinationProgramId as PointsProgramId),
+    ),
+  );
+  return servesViaTransfer
+    ? { raw: 0.8, note: "thẻ đang giữ kiếm đồng tiền chuyển được sang chương trình đặt chặng" }
+    : { raw: 0.2, note: "thẻ đang giữ không phục vụ chặng này" };
 }
 
 export function buildNoNewCardCandidate(
@@ -59,13 +106,20 @@ export function buildNoNewCardCandidate(
   const need = ctx.goal.tripNeed;
 
   /* ---- Đã đủ điểm ------------------------------------------------- */
-  let sufficiency = 0;
-  let sufficiencyNote = "chưa tính được";
+  const components: ScoreComponent[] = [];
   const tripCovered = need === null ? null : tripCoverage(ctx.state, ctx.ix, ctx.asOf, need);
-  if (tripCovered !== null && tripCovered.coverage !== null) {
-    const coverage = tripCovered.coverage;
-    sufficiency = coverage;
-    sufficiencyNote = `${Math.round(sufficiency * 100)}% cận trên của khoảng điểm chuyến đi`;
+  const pricedTrip = tripCovered !== null && tripCovered.coverage !== null;
+
+  if (pricedTrip) {
+    const sufficiency = tripCovered.coverage as number;
+    components.push(
+      component(
+        "points_already_sufficient",
+        0.3,
+        sufficiency,
+        `${Math.round(sufficiency * 100)}% cận trên của khoảng điểm chuyến đi`,
+      ),
+    );
     if (sufficiency >= 1) {
       reasonCodes.push("POINTS_ALREADY_SUFFICIENT");
       // Cảnh báo này PHẢI nằm trên chính ứng viên này, không chỉ trên các thẻ
@@ -75,50 +129,29 @@ export function buildNoNewCardCandidate(
       // trong mô hình V1: Aeroplan® hết hạn sau 18 tháng không hoạt động.
       warnings.push("POINTS_EXPIRY_NOT_MODELLED");
     }
-  } else {
+  }
+  /*
+   * KHÔNG có chuyến đi định giá được thì "đã đủ điểm" là một câu KHÔNG ĐẶT RA
+   * ĐƯỢC — và cách đúng để xử lý một thành phần không áp dụng là BỎ HẲN dòng
+   * đó, không phải điền một con số. `assembleScore` chia cho tổng trọng số
+   * thật có mặt, nên ba thành phần còn lại tự chuẩn hoá lại; bảng §19 in ra ba
+   * dòng, và không ai phải giải thích một số 0 vô nghĩa.
+   */
+  if (false) {
     // Không có mục tiêu chuyến đi (hoặc chưa tra được giá) thì vế tương đương
     // là: người này đã có sẵn bao nhiêu ở đúng chỗ họ đang cần. KHÔNG dùng
     // `accessible` — cộng điểm tiếp cận được của nhiều chương trình là đúng
     // phép đếm trùng §7 cấm.
-    const { programId } = topCurrencyNeed(ctx);
-    const entry = programId === null ? undefined : ctx.portfolio.direct.get(programId);
-    const has = entry !== undefined && entry.kind === "known" && entry.points > 0;
-    sufficiency = has ? 0.5 : 0;
-    sufficiencyNote = has
-      ? "đã có số dư ở đúng chương trình đang cần (không có chuyến đi để đo chính xác)"
-      : "chưa có số dư ở chương trình đang cần";
+    /* không dùng nữa — xem chú thích trên */
   }
 
-  /* ---- Thẻ đang giữ đã phục vụ nhu cầu chưa ----------------------- */
+  /* ---- Ví hiện tại đã lo được đến đâu ------------------------------ */
   //
-  // Với mục tiêu CHUYẾN ĐI, "nhu cầu" là các chương trình định giá được chặng
-  // — đọc thẳng từ `tripNeed`, KHÔNG đi qua `topCurrencyNeed`. Lý do: khi
-  // chuyến đi đã đủ điểm, mọi nhu cầu đồng tiền tụt về gần 0 (đó chính là §16
-  // Rule 1 hoạt động), nên `topCurrencyNeed` trả về một chương trình gần như
-  // ngẫu nhiên trong đám hoà nhau ở 0.05 — và thành phần này đo một thứ vô
-  // nghĩa đúng vào lượt chạy mà nó quan trọng nhất.
-  const neededPrograms: PointsProgramId[] =
-    need !== null && need.programs.length > 0
-      ? need.programs
-      : (() => {
-          const { programId } = topCurrencyNeed(ctx);
-          return programId === null ? [] : [programId];
-        })();
-
-  let covers = 0;
-  if (neededPrograms.length > 0 && ctx.portfolio.heldProducts.length > 0) {
-    const servesDirectly = neededPrograms.some((programId) =>
-      ctx.portfolio.earnedPrograms.has(programId),
-    );
-    const servesViaTransfer = [...ctx.portfolio.earnedPrograms].some((earned) =>
-      activeAt(ctx.ix.pathsBySource.get(earned) ?? [], ctx.asOf).some(
-        (path) =>
-          path.requiresTier === null &&
-          neededPrograms.includes(path.destinationProgramId as PointsProgramId),
-      ),
-    );
-    covers = servesDirectly ? 1 : servesViaTransfer ? 0.8 : 0.2;
-  }
+  // Hai câu hỏi khác nhau cho hai tình huống khác nhau — và trước đây cả hai
+  // đều đi qua `topCurrencyNeed`, thứ chỉ có nghĩa khi chuyến đi định giá được.
+  const covers = pricedTrip
+    ? tripCurrencyCoverage(need?.programs ?? [], ctx)
+    : walletEarnCoverage(candidates, ctx);
 
   /* ---- Còn ứng viên nào với tới được không ------------------------ */
   const usable = candidates.filter(
@@ -135,9 +168,8 @@ export function buildNoNewCardCandidate(
     ctx.climate.medianPercentile === null ? 0.5 : clamp01(1 - ctx.climate.medianPercentile / 100);
   if (climateWeak >= 0.7) reasonCodes.push("WAIT_FOR_BETTER_OFFER");
 
-  const components: ScoreComponent[] = [
-    component("points_already_sufficient", 0.3, sufficiency, sufficiencyNote),
-    component("portfolio_already_covers", 0.25, covers, "thẻ đang giữ có kiếm đúng đồng tiền đang cần không"),
+  components.push(
+    component("portfolio_already_covers", 0.25, covers.raw, covers.note),
     component(
       "no_reachable_candidate",
       0.2,
@@ -145,7 +177,7 @@ export function buildNoNewCardCandidate(
       `${Math.round(blockedShare * 100)}% ứng viên bị điều kiện hoặc mốc chi chặn`,
     ),
     component("offer_climate_weak", 0.25, climateWeak, "percentile trung vị của các offer đang chạy"),
-  ];
+  );
 
   const score = assembleScore(components);
   if (score >= 0.5) reasonCodes.push("NO_NEW_CARD_NEEDED");

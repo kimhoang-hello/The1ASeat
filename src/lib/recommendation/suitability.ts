@@ -59,6 +59,14 @@ export interface SuitabilityInput {
   asOf: string;
   /** Sản phẩm người dùng đang giữ — dùng cho phép so hạng trong họ thẻ. */
   heldProducts: readonly Product[];
+  /**
+   * Phí thường niên TRUNG VỊ của tập ứng viên, tính bằng cent.
+   *
+   * Chỉ dùng khi người dùng CHƯA khai ngưỡng phí — xem `evaluateSuitability`.
+   * Đọc từ chính tập ứng viên chứ không chôn một hằng: thị trường đổi thì
+   * thang tự đổi theo.
+   */
+  medianFeeCents: number;
 }
 
 export function evaluateSuitability(input: SuitabilityInput): SuitabilityVerdict {
@@ -93,6 +101,28 @@ export function evaluateSuitability(input: SuitabilityInput): SuitabilityVerdict
 
   if (firstYearFee < ongoingFee) reasonCodes.push("ANNUAL_FEE_WAIVED_FIRST_YEAR");
 
+  if (tolerance === null) {
+    /*
+     * CHƯA HỎI KHÔNG PHẢI LÀ ĐỒNG Ý.
+     *
+     * Bản trước bỏ qua phí hoàn toàn khi ngưỡng chưa biết, nên với một hồ sơ
+     * trống thì thẻ ĐẮT NHẤT thắng gần như mặc định: nó có nhiều quyền lợi
+     * nhất (`benefits_fit` đếm số quyền lợi tăng thêm, mà người chưa có thẻ
+     * nào thì mọi quyền lợi đều là mới) và không có gì kéo lại. Amex®
+     * Business Platinum $799 đứng đầu bảng cho một người chưa khai một chữ.
+     *
+     * Không phải là loại — §14 vẫn đúng, chưa biết thì không được kết luận.
+     * Chỉ là thôi giả định ngưỡng vô hạn: phí trên trung vị bị hạ nhẹ theo
+     * mức vượt, tối đa 20%, và §30 được nhắc đi hỏi ngưỡng.
+     */
+    const excess = facts.firstYearFeeCents - input.medianFeeCents;
+    if (excess > 0) {
+      reasonCodes.push("ANNUAL_FEE_HIGH_TOLERANCE_UNKNOWN");
+      const scale = Math.min(1, excess / Math.max(input.medianFeeCents, 10_000));
+      penalty *= 1 - 0.2 * scale;
+    }
+  }
+
   if (tolerance !== null) {
     if (firstYearFee > tolerance) {
       reasonCodes.push("ANNUAL_FEE_ABOVE_TOLERANCE");
@@ -111,7 +141,16 @@ export function evaluateSuitability(input: SuitabilityInput): SuitabilityVerdict
   /* ---- Mốc chi (§13) --------------------------------------------- */
   let minSpendFit: number | null = null;
   const required = facts.fullRequiredPerNinetyDays;
-  if (required === null) {
+  if (facts.termsUnknown) {
+    // Offer CÓ con số quảng cáo nhưng không dựng được mốc chi nào. Đây là chỗ
+    // TRỐNG, không phải số không — và bản trước gộp nó vào nhánh "không có mốc
+    // nào" bên dưới, tức chấm 1.0, tức mức phù hợp TỐI ĐA.
+    //
+    // Hậu quả thấy được ngay trên hồ sơ trống: thẻ có điều khoản chưa biết
+    // đứng ĐẦU bảng nhờ `spend_fit` hoàn hảo, và engine nói với người đọc rằng
+    // nó dễ đạt bonus trong khi chưa ai biết phải chi bao nhiêu.
+    reasonCodes.push("OFFER_TERMS_UNKNOWN");
+  } else if (required === null) {
     // Không có mốc nào để đạt. Đó là mức phù hợp TỐI ĐA, không phải thiếu dữ
     // liệu — và phân biệt đó quyết định thẻ này bị phạt hay không.
     minSpendFit = 1;

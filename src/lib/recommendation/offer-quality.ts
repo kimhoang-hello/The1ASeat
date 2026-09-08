@@ -109,6 +109,14 @@ export interface OfferFacts {
   fullRequiredPerNinetyDays: number | null;
   historicalPercentile: number | null;
   historyPoints: number;
+  /**
+   * Offer có con số quảng cáo nhưng KHÔNG có mốc chi nào dựng được.
+   *
+   * Khác hẳn "offer không đòi chi tiêu gì". Lẫn hai thứ đó là nói với người
+   * đọc rằng một thẻ dễ đạt bonus, trong khi thật ra chưa ai biết phải chi
+   * bao nhiêu — xem `suitability.ts`.
+   */
+  termsUnknown: boolean;
   /** Số ngày còn lại tới `endDate`, `null` khi offer không có ngày kết thúc. */
   endsInDays: number | null;
   firstYearFeeCents: number;
@@ -308,6 +316,7 @@ export function offerFacts(
       fullRequiredPerNinetyDays: null,
       historicalPercentile: null,
       historyPoints: 0,
+      termsUnknown: false,
       endsInDays: null,
       firstYearFeeCents: ongoingFeeCents,
       ongoingFeeCents,
@@ -367,6 +376,7 @@ export function offerFacts(
     fullRequiredPerNinetyDays: offer.spendPerNinetyDays,
     historicalPercentile: percentile,
     historyPoints: points,
+    termsUnknown: components.length === 0 && offer.headlineBonus !== null,
     endsInDays,
     // Miễn phí năm đầu là ưu đãi của OFFER, không phải của sản phẩm — ba khái
     // niệm khác nhau ở ba chỗ khác nhau (xem README Phase 1).

@@ -81,6 +81,10 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * đọc thành trượt điều kiện.
  * 3.5.0 — thiếu nước ở nay là một chỗ trống có tên (`country_unknown`), và là
  * câu hỏi ưu tiên thứ hai sau mục tiêu.
+ * 4.0.0 — rà theo góc nhìn CHƠI ĐIỂM. Đổi THỨ HẠNG trên diện rộng, nên tăng
+ * số lớn: linh hoạt thành một thang thay vì có/không; ngưỡng phí chưa khai
+ * thôi được coi là vô hạn; điều khoản offer chưa biết thôi được chấm là vừa
+ * sức; và `NO_NEW_CARD` thôi được chấm bằng một chương trình chọn bừa.
  *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
@@ -94,7 +98,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "3.5.0";
+export const ENGINE_VERSION = "4.0.0";
 
 export interface RecommendInput {
   state: UserState;
@@ -242,6 +246,12 @@ export function recommend(input: RecommendInput): RecommendationRun {
   if (portfolio.cardsUndeclared) runWarnings.push("CARDS_UNDECLARED");
 
   const capacity = state.spend?.minimumSpendCapacity3m ?? null;
+  // Trung vị phí của TẬP ỨNG VIÊN — mốc so khi người dùng chưa khai ngưỡng phí.
+  const feeList = normalized.universe
+    .map((product) => activeAt(ix.feesByProduct.get(product.id) ?? [], asOf)[0]?.annualFee ?? 0)
+    .sort((a, b) => a - b);
+  const medianFeeCents =
+    feeList.length === 0 ? 0 : Math.round(feeList[Math.floor(feeList.length / 2)] * 100);
   const heldKeys = heldBenefitKeys(portfolio.heldProducts, ix, asOf);
   // Chỗ trống của lớp dữ liệu đi THẲNG vào phán quyết điều kiện — xem
   // `evaluateEligibility`.
@@ -266,6 +276,7 @@ export function recommend(input: RecommendInput): RecommendationRun {
         ix,
         asOf,
         heldProducts: portfolio.heldProducts,
+        medianFeeCents,
       }),
       travelBenefitCount: travelBenefitCount(product.id, heldKeys, ix, asOf),
     };

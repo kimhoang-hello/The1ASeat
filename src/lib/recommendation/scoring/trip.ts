@@ -24,7 +24,7 @@
 import { bestCurrencyNeedVia } from "../needs.ts";
 import { offerQualityScore } from "../offer-quality.ts";
 import { tripCoverage } from "../strategies.ts";
-import { isFlexibleInPractice } from "../portfolio.ts";
+import { flexibilityReach } from "../portfolio.ts";
 import { activeAt } from "../temporal.ts";
 import { component, relativeTo } from "./weights.ts";
 import { bonusPointsToward } from "./context.ts";
@@ -102,8 +102,10 @@ export function scoreTrip(candidate: CandidateFacts, ctx: ScoringContext): Score
   //
   // `isFlexibleInPractice`, không phải cờ `transferable`: một đồng tiền chưa
   // có chặng nào trong dữ liệu không giữ được lựa chọn nào cho ai cả.
+  // Theo TẦM VỚI, không theo có/không: một đồng tiền chuyển được tới đúng một
+  // hãng nội địa giữ lại ít lựa chọn hơn hẳn một đồng tiền tới được năm nơi.
   const flexibilityRaw =
-    programId !== null && isFlexibleInPractice(ctx.ix, programId, ctx.asOf) ? 1 : 0.3;
+    programId === null ? 0.3 : 0.3 + 0.7 * flexibilityReach(ctx.ix, programId, ctx.asOf);
 
   return [
     component("trip_currency_utility", 0.35, utility.raw, utility.note),

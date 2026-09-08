@@ -14,9 +14,15 @@ import { offlineDataset } from "./data/index.ts";
 import { datasetAt } from "./temporal.ts";
 import { indexDataset } from "./indexes.ts";
 import { ENGINE_VERSION, recommend } from "./engine.ts";
-import { accessibleFor, analyzePortfolio, balanceKnowledge, isFlexibleInPractice } from "./portfolio.ts";
+import {
+  accessibleFor,
+  analyzePortfolio,
+  balanceKnowledge,
+  flexibilityReach,
+  isFlexibleInPractice,
+} from "./portfolio.ts";
 import { evaluateEligibility } from "./eligibility.ts";
-import { minimumSpendFit } from "./suitability.ts";
+import { evaluateSuitability, minimumSpendFit } from "./suitability.ts";
 import { tripNeedFor } from "./trip-need.ts";
 import { historicalPercentile, offerClimate, offerFacts, offerQualityScore } from "./offer-quality.ts";
 import { earnFitFor } from "./earn-fit.ts";
@@ -1861,4 +1867,162 @@ test("id người dùng phục hồi được từ BẤT KỲ bản ghi nào, k�
   for (const gap of userGaps(onlySpend)) {
     assert.notEqual(gap.subject, "unknown-user", `${gap.kind} mất id thật của người dùng`);
   }
+});
+
+/* ================================================================== *
+ * Rà theo góc nhìn CHƠI ĐIỂM — lời khuyên có đúng ngoài đời không
+ *
+ * Mọi ca dưới đây engine đều tính ĐÚNG về mặt số học trước khi sửa; cái sai
+ * là lời khuyên đi ra. Đó là lớp lỗi mà test kỹ thuật không bắt được, vì
+ * không có bất biến nào bị vi phạm — chỉ có một người thật bị khuyên sai.
+ * ================================================================== */
+
+test("linh hoạt là MỘT THANG, không phải có/không", () => {
+  // Membership Rewards® đi được 5 nơi ai cũng đi được; Avion® đi được đúng
+  // MỘT (WestJet®) — ba đích còn lại đòi hạng Avion® Elite. Với người không
+  // có hạng đó, Avion® gần như là đồng tiền CỐ ĐỊNH tiêu qua cổng du lịch.
+  // Chấm cả hai bằng 1.0 là nói rằng hai thứ giữ lại cùng một lượng lựa chọn.
+  const mr = flexibilityReach(IX, AMEX_MR, ASOF);
+  const avion = flexibilityReach(IX, id<PointsProgramId>("avion"), ASOF);
+  const aeroplan = flexibilityReach(IX, AEROPLAN, ASOF);
+  assert.equal(mr, 1, "MR với tới nhiều nhất nên là mốc 1.0");
+  assert.ok(avion > 0 && avion < mr, `Avion® phải nằm GIỮA: đang là ${avion}`);
+  assert.equal(aeroplan, 0, "Aeroplan® không chuyển đi đâu được");
+
+  // Và thang đó phải ĐI VÀO điểm: thưởng "giữ điểm linh hoạt" của §16 Rule 2
+  // không được bằng nhau cho hai đồng tiền khác nhau một trời một vực.
+  const bonusOf = (slug: string) => {
+    const result = run(aeroplanHeavy).results[0];
+    return [result.primaryAction, ...result.alternatives]
+      .find((c) => c.productSlug === slug)
+      ?.adjustments.find((a) => a.rule === "R2_keep_points_flexible")?.delta;
+  };
+  const mrBonus = bonusOf("amex-gold-rewards");
+  const avionBonus = bonusOf("rbc-avion-visa-platinum");
+  if (mrBonus !== undefined && avionBonus !== undefined) {
+    assert.ok(mrBonus > avionBonus, `MR ${mrBonus} phải được thưởng hơn Avion® ${avionBonus}`);
+  }
+});
+
+test("CHƯA HỎI ngưỡng phí không phải là ĐỒNG Ý với thẻ $799", () => {
+  // Hồ sơ trống: `benefits_fit` đếm quyền lợi tăng thêm, mà người chưa có thẻ
+  // nào thì MỌI quyền lợi đều mới — nên thẻ đắt nhất có nhiều quyền lợi nhất
+  // và không có gì kéo lại. Amex® Business Platinum $799 từng đứng đầu bảng
+  // cho một người chưa khai một chữ nào.
+  const blank: UserState = {
+    profile: {
+      ...beginnerNoCards.profile,
+      annualPersonalIncome: null,
+      annualFeeTolerancePerCard: null,
+      businessCardsAllowed: null,
+      hasBusiness: null,
+      isStudent: null,
+    },
+    spend: null,
+    cards: [],
+    balances: [],
+    goals: beginnerNoCards.goals,
+    declared: { cards: false, balances: false },
+  };
+  const result = run(blank).results[0];
+  const fee = result.primaryAction.suitability?.firstYearFee ?? 0;
+  assert.ok(fee <= 300, `hồ sơ trống mà được khuyên thẻ phí $${fee}`);
+
+  // Và thẻ phí cao phải mang mã nói ra vì sao nó bị hạ điểm.
+  const pricey = DATA.products.find((p) => p.slug === "amex-business-platinum");
+  const scored = [result.primaryAction, ...result.alternatives].find(
+    (c) => c.productId === pricey?.id,
+  );
+  if (scored !== undefined) {
+    assert.ok(scored.reasonCodes.includes("ANNUAL_FEE_HIGH_TOLERANCE_UNKNOWN"));
+  }
+});
+
+test("§30 — thẻ thắng cuộc phụ thuộc dữ kiện nào thì hỏi CHÍNH dữ kiện đó", () => {
+  // Ngưỡng phí là câu hỏi hạng 14 với người được khuyên thẻ $0, và là câu hỏi
+  // QUAN TRỌNG NHẤT với người đang được khuyên một thẻ đắt mà chưa khai ngưỡng.
+  const winner = {
+    ...run(beginnerNoCards).results[0].primaryAction,
+    reasonCodes: ["ANNUAL_FEE_HIGH_TOLERANCE_UNKNOWN" as const],
+  };
+  const question = nextQuestion({
+    gaps: [
+      { kind: "spend_category_unknown", subject: "grocery", reason: "" },
+      { kind: "annual_fee_tolerance_unknown", subject: "profile", reason: "" },
+    ],
+    ranked: [winner],
+  });
+  assert.equal(question?.gapKind, "annual_fee_tolerance_unknown");
+});
+
+test("điều khoản offer CHƯA BIẾT ≠ offer KHÔNG đòi chi tiêu", () => {
+  // Cả hai đều cho `spendPerNinetyDays === null`, và bản trước chấm cả hai
+  // bằng 1.0 — mức phù hợp TỐI ĐA. Nghĩa là engine nói "thẻ này dễ đạt bonus"
+  // về một thẻ chưa ai biết phải chi bao nhiêu.
+  const unknownTerms = DATA.offers.find(
+    (offer) =>
+      offer.headlineBonus !== null &&
+      (IX.componentsByOffer.get(offer.id) ?? []).length === 0,
+  );
+  assert.ok(unknownTerms !== undefined, "bộ dữ liệu phải còn offer chưa rõ điều khoản");
+  const product = DATA.products.find((p) => p.id === unknownTerms!.productId);
+  const facts = offerFacts(product!, IX, ASOF, { low: 5_000, high: 5_000 }, []);
+  assert.equal(facts.termsUnknown, true);
+
+  const verdict = evaluateSuitability({
+    product: product!,
+    state: beginnerNoCards,
+    facts,
+    capacity: { low: 5_000, high: 5_000 },
+    ix: IX,
+    asOf: ASOF,
+    heldProducts: [],
+    medianFeeCents: 13_900,
+  });
+  assert.equal(verdict.minSpendFit, null, "điều khoản chưa biết mà vẫn chấm là vừa sức");
+  assert.ok(verdict.reasonCodes.includes("OFFER_TERMS_UNKNOWN"));
+});
+
+test("NO_NEW_CARD không được chấm bằng một chương trình CHỌN BỪA", () => {
+  // `needs.currency` tỷ lệ NGHỊCH với những gì người dùng đang có, nên
+  // "chương trình cần nhất" theo định nghĩa là chương trình họ KHÔNG có, và
+  // hàng chục chương trình hoà nhau ở cùng một mức. Phép phá hoà theo `id`
+  // chọn ra `a-la-carte` — một đồng tiền cố định chẳng liên quan — rồi để nó
+  // quyết định 55% điểm của `NO_NEW_CARD`.
+  const wellServed: UserState = {
+    ...beginnerNoCards,
+    cards: [
+      {
+        id: id<UserCardId>("uc_cobalt"),
+        userId: beginnerNoCards.profile.id,
+        productId: productIdFor("amex-cobalt"),
+        status: "active",
+        openedDate: "2023-01-01",
+        closedDate: null,
+      },
+    ],
+    balances: [
+      { userId: beginnerNoCards.profile.id, programId: AMEX_MR, balance: 240_000, updatedAt: ASOF },
+    ],
+  };
+  const result = run(wellServed).results[0];
+  const covers = result.noAction.components.find((c) => c.key === "portfolio_already_covers");
+  assert.ok(covers !== undefined);
+  assert.ok(
+    covers.raw > 0.5,
+    `ví đã có Amex® Cobalt® mà chỉ được chấm ${covers.raw} — đang đo bằng một chương trình vô can`,
+  );
+
+  // Và khi mục tiêu KHÔNG phải chuyến đi định giá được, "đã đủ điểm" là câu
+  // không đặt ra được: BỎ HẲN dòng đó thay vì điền một số 0 vô nghĩa.
+  assert.ok(
+    !result.noAction.components.some((c) => c.key === "points_already_sufficient"),
+    "mục tiêu không có chuyến đi mà vẫn chấm 'đã đủ điểm'",
+  );
+  // Chuyến đi ĐỊNH GIÁ ĐƯỢC thì dòng đó phải có mặt.
+  assert.ok(
+    run(vietnamTripFunded).results[0].noAction.components.some(
+      (c) => c.key === "points_already_sufficient",
+    ),
+  );
 });
