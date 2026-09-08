@@ -93,9 +93,8 @@ export default async function CreditCardDetailPage({
        THỨ TỰ DOM KHÔNG ĐỔI MỘT DÒNG NÀO. Ảnh thẻ là thứ DUY NHẤT tách sang
        cột trái, chính vì nó là thứ duy nhất đứng đầu sẵn — gom thêm
        `OfferStats` hay nút Apply vào đó thì trên điện thoại chúng nhảy lên
-       trước cả tên thẻ, tức là đổi chỗ đứng của nút Apply mà không đo được gì.
-       Nút Apply dính theo màn hình là việc đáng làm, nhưng là một thay đổi về
-       sản phẩm, không phải một lần dọn bố cục. */
+       trước cả tên thẻ. Nút Apply thì có thêm một cái NỮA trong cột trái —
+       thêm chứ không di chuyển, và chỉ từ `xl`; xem chú thích tại chỗ. */
     <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8 xl:max-w-[68rem]">
       <JsonLd data={jsonLd} />
       <Link
@@ -124,6 +123,36 @@ export default async function CreditCardDetailPage({
             {...applyOverlay(offer.applyUrl, "card_detail", offer.slug)}
             preload
           />
+
+          {/* Nút Apply thứ hai, CHỈ ở cột trái và CHỈ từ `xl`. Cột này dính
+              theo màn hình, nên nút đi cùng người đọc suốt bài thay vì nằm
+              sau danh sách quyền lợi — trước đây muốn bấm phải cuộn qua cả
+              editor's take và quyền lợi chính.
+
+              KHÔNG hiện dưới `xl`: ở đó không có cột trái, nút sẽ rơi vào
+              giữa ảnh thẻ và tên thẻ — tức người đọc gặp "Apply ngay" trước
+              khi biết đang đọc thẻ nào.
+
+              `placement` KHÁC nút dưới thân bài. Hai nút cùng khai
+              `card_detail` thì `apply_clicked` gộp làm một và không còn trả
+              lời được câu hỏi chính: nút mới có thật sự lấy được click hay
+              chỉ chia lại số click của nút cũ. */}
+          {offer.applyUrl && (
+            <div className="mt-6 hidden xl:block">
+              <ApplyButton
+                href={offer.applyUrl}
+                affiliate={isReferralUrl(offer.applyUrl)}
+                placement="card_detail_rail"
+                product={offer.slug}
+                className="w-full text-center"
+              />
+              {isReferralUrl(offer.applyUrl) && (
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                  {offers("applyAffiliateNote")}
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="min-w-0">
