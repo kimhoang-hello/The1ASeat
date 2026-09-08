@@ -792,6 +792,7 @@ trong bản vá của vòng trước). Phase 3 lặp lại y hệt hình dạng 
 | 1 | 12 (4 P1) | code gốc |
 | 2 | 5 (2 P1) | **toàn bộ trong bản vá của vòng 1** |
 | 3 | 3 (1 P1) | **toàn bộ trong bản vá của vòng 2** |
+| 4 | 2 P1 + 2 bản vá bị bác | **toàn bộ trong bản vá của vòng 3** |
 
 Chuỗi rõ nhất là câu chuyện ĐƠN VỊ của offer tiền mặt — ba cách đoán, ba vòng,
 ba kiểu hỏng:
@@ -801,12 +802,51 @@ ba kiểu hỏng:
 | 0 | tra ngược đơn vị theo con số | không thấy → `undefined` → lọc mở toang cho MỌI đơn vị |
 | 1 | gán cứng `cash → dollar` | lọc sạch mọi đợt tính bằng phần trăm, mà repo có offer "Cashback 15%" thật |
 | 2 | lấy đơn vị của đợt GẦN NHẤT | recorder chạy mỗi ngày một lượt: thẻ vừa đổi 15% → $250 vẫn còn `percent` ở dòng cuối, so 250 với 10/15/20 ra percentile 100 |
-| 3 | **thôi đoán** | chỉ trả đơn vị khi nhật ký ĐÃ THẤY đúng con số đó và mọi lần thấy đều cùng đơn vị; không chắc thì `null` |
+| 3 | chỉ trả đơn vị khi nhật ký ĐÃ THẤY đúng con số đó dưới MỘT đơn vị | lịch sử 5%/10%/15% cộng offer mới "$15" vẫn khớp con số 15 → trả `percent`. Quá khứ của một CON SỐ không chứng minh đơn vị của HIỆN TẠI |
+| 4 | **thôi đoán hẳn** | offer tiền mặt trả `null`; §12 im lặng về chúng |
 
-Chuỗi chỉ dừng khi bỏ hẳn việc suy ra một dữ kiện không có trong dữ liệu. Đúng
-kết luận của Phase 2, phát biểu lại: **hai phép kiểm cùng một khái niệm thì
-phải là một hàm** — và khi khái niệm đó KHÔNG có trong dữ liệu, câu trả lời
-đúng là `null`, không phải một hàm đoán giỏi hơn.
+Chuỗi chỉ dừng ở vòng 4, khi bỏ hẳn việc suy ra một dữ kiện không có trong dữ
+liệu. Đúng kết luận của Phase 2, phát biểu lại: **hai phép kiểm cùng một khái
+niệm thì phải là một hàm** — và khi khái niệm đó KHÔNG có trong dữ liệu, câu
+trả lời đúng là `null`, không phải một hàm đoán giỏi hơn.
+
+### Hai bài TEST DIỄN, và cách phát hiện
+
+Vòng 4 bắt được hai bài test xanh mà không bảo vệ gì — đúng thứ mà README của
+Phase 2 gọi là "thứ vòng review thường bỏ qua nhất":
+
+| Test | Vì sao nó vô dụng |
+| --- | --- |
+| đơn vị offer tiền mặt | **không hề gọi hàm đang kiểm.** Nó tự dựng một `Set` rồi kiểm chính cái `Set` đó |
+| `ENGINE_VERSION` | so `!== "3.0.0"`, nên xanh VĨNH VIỄN ngay sau lần tăng đầu tiên |
+
+Bài thứ hai được thay bằng thứ cưỡng chế được luật thật của §20: một BẢN CHỤP
+kết quả của cả 15 nhân vật ([`engine.snapshot.json`](engine.snapshot.json)),
+khoá theo `ENGINE_VERSION`. Đổi bất kỳ trọng số hay luật nào mà quên tăng
+version là test ĐỎ, kèm thông báo nói thẳng phải làm gì. Version tăng thì bản
+chụp tự ghi lại — một lần đổi CÓ CHỦ Ý không phải là một lỗi.
+
+> **Phép thử một bài test: nó có gọi thứ nó đang kiểm không, và nó có đỏ được
+> không?** Hai câu hỏi đó bắt được cả hai bài trên.
+
+### "Chưa biết" thủng ở BIÊN GIỚI ĐẦU RA
+
+Lỗi nguy hiểm nhất của cả Phase 3, và nó không nằm trong một phép tính nào:
+`tripCoverage` trả `accessible: 0` khi chưa tra được giá, và `engine.ts` xuất
+thẳng con số đó ra. `japanTripFunded` có 200,000 điểm Membership Rewards® mà
+đầu ra ghi `accessiblePoints: 0`. Số dư `null` còn tệ hơn — nó sinh ra một
+khoảng cách CHÍNH XÁC GIẢ: "còn thiếu đúng 140,000 điểm" cho một người engine
+không biết đang có bao nhiêu.
+
+Luật trống-≠-bằng-không được canh rất kỹ ở lớp dữ liệu và lớp người dùng, rồi
+thủng ở chỗ cuối cùng — nơi con số đi ra ngoài cho người đọc.
+
+Và **bản vá đầu tiên cho nó cũng hỏng**: cờ cận-dưới chỉ ghi cho chương trình
+THẮNG, nên ca đơn giản nhất vẫn thủng — mọi chương trình cùng phủ 0%, người
+thắng là chương trình đầu theo `id` (không có dòng số dư nào, tức không có gì
+chưa biết), và sự chưa biết của Aeroplan® biến mất. Nay bất kỳ số dư chưa biết
+nào ở một chương trình định giá được chặng cũng làm cả kết luận thành cận dưới,
+và `accessiblePointsIsLowerBound` nói ra điều đó thay vì giấu đi.
 
 > **Khi một bản vá là bản vá thứ ba cho cùng một chỗ, vấn đề không nằm ở cách
 > vá.** Nó nằm ở việc đang cố suy ra một thứ không tồn tại.
@@ -858,7 +898,7 @@ giá hơn một phép kiểm ngược thành công.
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # 232 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng, engine
+npm run test:reco         # 237 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng, engine
 ```
 
 `audit:reco-data` bắt ba lớp lỗi:

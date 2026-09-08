@@ -24,8 +24,8 @@ Tài liệu module: [`src/lib/recommendation/README.md`](src/lib/recommendation/
 
 Phase 1: 31 commit, 24 vòng Codex, 68 phát hiện.
 Phase 2: 12 commit, 11 vòng, 19 phát hiện.
-Phase 3: 5 commit, 3 vòng Codex (20 phát hiện, 7 P1) + 4 lỗi tự tìm khi đọc
-kết quả chạy. 232 test.
+Phase 3: 7 commit, 4 vòng Codex (25 phát hiện, 9 P1, 2 bản vá bị bác) + 5 lỗi
+tự tìm khi đọc kết quả chạy. 237 test.
 
 ### Tiêu chí nghiệm thu Phase 3 — đã đạt
 
@@ -173,6 +173,22 @@ của một lượt chạy thật rồi đọc từng dòng**.
 | 1 | 12 (4 P1) | code gốc |
 | 2 | 5 (2 P1) | **toàn bộ trong bản vá của vòng 1** |
 | 3 | 3 (1 P1) | **toàn bộ trong bản vá của vòng 2** |
+| 4 | 2 P1 + bác 2 bản vá | **toàn bộ trong bản vá của vòng 3** |
+
+Vòng 4 chạy với đề bài "với MỖI bản vá, chọn ĐÚNG / SAI / BẢN VÁ HỎNG, và tự
+bác lại kết luận sạch trước khi viết ra". Nó bác hai bản vá của chính nó, giữ
+nguyên một cái, và từ chối kết luận sạch. Đây là vòng đắt giá nhất — **dùng
+đúng đề bài đó cho Phase 4.**
+
+Nó cũng bắt được HAI BÀI TEST DIỄN — xanh mà không bảo vệ gì:
+
+| Test | Vì sao vô dụng |
+| --- | --- |
+| đơn vị offer tiền mặt | **không hề gọi hàm đang kiểm** — tự dựng một `Set` rồi kiểm chính nó |
+| `ENGINE_VERSION` | so `!== "3.0.0"`, xanh VĨNH VIỄN sau lần tăng đầu |
+
+> **Phép thử một bài test: nó có GỌI thứ nó đang kiểm không, và nó có ĐỎ được
+> không?**
 
 Rõ nhất là câu chuyện ĐƠN VỊ của offer tiền mặt: ba cách đoán, ba vòng, ba
 kiểu hỏng — tra ngược theo con số, gán cứng `cash → dollar`, lấy đơn vị đợt
@@ -238,7 +254,7 @@ nói ra ngay đầu file:
 npx tsc --noEmit          # sạch (đã bao gồm scripts/)
 npm run lint              # sạch
 npm run build             # Compiled successfully
-npm run test:reco         # 232/232 pass
+npm run test:reco         # 237/237 pass
 npm run test:game         # 43/43 pass (không liên quan, kiểm không hồi quy)
 npm run audit:reco-data   # 0 lỗi, 9 cảnh báo (đều là chỗ trống có chủ ý)
 ```
