@@ -1203,3 +1203,84 @@ test("ENGINE_VERSION đổi khi hành vi đổi (§20 replay)", () => {
   assert.notEqual(ENGINE_VERSION, "3.0.0", "hành vi đã đổi mà version đứng yên");
   assert.match(ENGINE_VERSION, /^\d+\.\d+\.\d+$/);
 });
+
+/* ================================================================== *
+ * Vòng review Codex 3 — lỗi trong bản vá của vòng 2
+ * ================================================================== */
+
+test("§12 — không xác định được ĐƠN VỊ thì KHÔNG so, chứ không đoán", () => {
+  // Ba cách đoán đều đã thử và đều hỏng: tra ngược theo con số (không thấy thì
+  // mở toang mọi đơn vị), gán cứng cash→dollar (lọc sạch các đợt phần trăm),
+  // lấy đơn vị đợt gần nhất (recorder chạy mỗi ngày một lượt, nên một thẻ vừa
+  // đổi từ 15% sang $250 vẫn còn `percent` ở dòng cuối → so 250 với 10/15/20
+  // ra percentile 100 và một mã CURRENT_OFFER_STRONG hoàn toàn bịa).
+  const percentHistory = [
+    { at: "2026-01-01", until: null, startCensored: true, endCensored: false, label: "10%", amount: 10, unit: "percent" as const },
+    { at: "2026-02-01", until: null, startCensored: false, endCensored: false, label: "15%", amount: 15, unit: "percent" as const },
+    { at: "2026-03-01", until: null, startCensored: false, endCensored: true, label: "20%", amount: 20, unit: "percent" as const },
+  ];
+  // Offer hiện tại là $250, nhật ký chưa kịp ghi. Đơn vị KHÔNG xác định được.
+  assert.equal(historicalPercentile(percentHistory, 250, null).percentile, null);
+
+  // Cùng con số xuất hiện dưới HAI đơn vị khác nhau cũng là không xác định.
+  const mixed = [
+    ...percentHistory,
+    { at: "2026-04-01", until: null, startCensored: false, endCensored: true, label: "$15", amount: 15, unit: "dollar" as const },
+  ];
+  const ambiguous = new Set(mixed.filter((p) => p.amount === 15).map((p) => p.unit));
+  assert.equal(ambiguous.size, 2, "dựng ca hai đơn vị cho cùng một con số");
+});
+
+test("chỗ trống bảng giá tính cả đồng tiền của thẻ ỨNG VIÊN, nhưng chỉ khi có chuyến đi", () => {
+  // Thẻ United® vẫn được chấm điểm cho một mục tiêu chuyến đi, và `scoreTrip`
+  // cho nó mức thấp nhất CHÍNH VÌ MileagePlus® không định giá được chặng. Chỗ
+  // trống đó có thật.
+  const united = DATA.products.find(
+    (p) => p.slug === "united-mileageplus-neo-world-elite-mastercard",
+  );
+  assert.ok(united?.pointsProgramId != null);
+  assert.ok(
+    DATA.gaps.some((g) => g.kind === "no_award_chart" && g.subjectId === united!.pointsProgramId),
+    "bộ dữ liệu phải còn khai mileageplus là no_award_chart",
+  );
+
+  const trip = run(vietnamTripFunded).dataGaps.filter((g) => g.kind === "no_award_chart");
+  assert.ok(
+    trip.some((g) => g.subjectId === united!.pointsProgramId),
+    "mục tiêu chuyến đi mà bỏ qua chỗ trống bảng giá của một thẻ ứng viên",
+  );
+
+  // Nhưng KHÔNG được rò sang người chỉ hỏi "thẻ tiếp theo".
+  assert.deepEqual(
+    run(beginnerNoCards).dataGaps.filter((g) => g.kind === "no_award_chart"),
+    [],
+  );
+});
+
+test("số dư bằng 0 là CÂU TRẢ LỜI, không phải một chương trình đang tham gia", () => {
+  // `balance: 0` = "đã hỏi, không có điểm nào". Không đồng điểm nào của chương
+  // trình đó tham gia phép tính, nên khai thiếu bảng giá của nó là hạ độ tin
+  // cậy vì một thứ không ảnh hưởng gì. `balance: null` thì ngược lại — có tài
+  // khoản, chưa biết bao nhiêu.
+  const withZero: UserState = {
+    ...vietnamTripFunded,
+    balances: [
+      ...vietnamTripFunded.balances,
+      { userId: vietnamTripFunded.profile.id, programId: AVIOS, balance: 0, updatedAt: ASOF },
+    ],
+  };
+  const withUnknown: UserState = {
+    ...vietnamTripFunded,
+    balances: [
+      ...vietnamTripFunded.balances,
+      { userId: vietnamTripFunded.profile.id, programId: AVIOS, balance: null, updatedAt: ASOF },
+    ],
+  };
+  const gapsOf = (state: UserState) =>
+    run(state)
+      .dataGaps.filter((g) => g.kind === "no_award_chart")
+      .map((g) => g.subjectId);
+
+  assert.ok(!gapsOf(withZero).includes("avios"), "số dư 0 mà vẫn khai thiếu bảng giá");
+  assert.ok(gapsOf(withUnknown).includes("avios"), "số dư chưa biết thì PHẢI khai");
+});

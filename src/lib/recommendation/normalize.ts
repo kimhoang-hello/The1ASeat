@@ -111,6 +111,14 @@ function relevantDataGaps(
       }
     }
     for (const row of heldBalancePrograms) programsInPlay.add(row);
+    // Và đồng tiền của các thẻ ỨNG VIÊN: với một mục tiêu chuyến đi, thẻ
+    // United® vẫn được chấm điểm, và `scoreTrip` cho nó mức thấp nhất chính vì
+    // MileagePlus® không định giá được chặng. Chỗ trống đó có thật và phải hạ
+    // độ tin cậy — nhưng CHỈ trong nhánh chuyến đi, để nó không rò sang một
+    // người chỉ hỏi "thẻ tiếp theo".
+    for (const product of universe) {
+      if (product.pointsProgramId !== null) programsInPlay.add(product.pointsProgramId as string);
+    }
   }
 
   return data.gaps
@@ -204,8 +212,15 @@ export function normalize(
       goals,
       // Chương trình người dùng ĐANG có số dư — kể cả những chương trình không
       // có thẻ nào trong bộ dữ liệu.
+      //
+      // `balance: 0` KHÔNG tính: nó là câu trả lời "đã hỏi, không có điểm nào"
+      // (luật trống-≠-bằng-không ở mức DÒNG, README Phase 2). Không đồng điểm
+      // nào của chương trình đó tham gia phép tính, nên khai thiếu bảng giá
+      // của nó là hạ độ tin cậy vì một thứ không ảnh hưởng gì.
+      // `balance: null` thì NGƯỢC LẠI — có tài khoản, chưa biết bao nhiêu, tức
+      // số điểm đó có thể đang tham gia.
       asArray(state.balances)
-        .filter((row) => row?.programId != null)
+        .filter((row) => row?.programId != null && row.balance !== 0)
         .map((row) => row.programId as string),
     ),
   };

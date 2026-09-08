@@ -205,9 +205,14 @@ function bestReachableSubset(
 export function historicalPercentile(
   history: readonly OfferHistoryPoint[],
   current: number | null,
-  unit: OfferUnit,
+  unit: OfferUnit | null,
 ): { percentile: number | null; points: number } {
   if (current === null) return { percentile: null, points: 0 };
+  // Không xác định được đơn vị thì KHÔNG so. Đây là hướng an toàn duy nhất:
+  // đoán sai đơn vị sinh ra một percentile trông chuẩn (thậm chí 100) cho một
+  // phép so giữa "$250" và "15%", rồi phát `CURRENT_OFFER_STRONG` và đổi thứ
+  // hạng. "Chưa biết" thì §12 đã có sẵn cách nói: trả `null`.
+  if (unit === null) return { percentile: null, points: 0 };
   // Đơn vị đến từ chính OFFER, không tra ngược từ lịch sử theo con số. Tra
   // ngược thì một mức chưa kịp vào nhật ký (recorder chạy mỗi ngày một lượt)
   // sẽ không tìm thấy điểm nào, đơn vị thành `undefined`, và phép lọc mở toang
@@ -225,6 +230,46 @@ export function historicalPercentile(
     percentile: Math.round((notBetter / sameUnit.length) * 100),
     points: sameUnit.length,
   };
+}
+
+/**
+ * Đơn vị của con số quảng cáo trên offer — hoặc `null` khi KHÔNG chắc.
+ *
+ * `Offer.bonusKind` phân biệt ĐIỂM với TIỀN, nhưng nhật ký có BA đơn vị
+ * (`points` / `dollar` / `percent`) và lớp dữ liệu không có trường nào nói đô
+ * hay phần trăm. Ba cách sai đã thử qua, mỗi cách hỏng một kiểu:
+ *
+ *   tra ngược theo con số      → không thấy thì đơn vị `undefined`, rồi phép
+ *                                lọc mở toang cho MỌI đơn vị.
+ *   gán cứng `cash → dollar`   → mọi đợt tính bằng phần trăm bị lọc sạch, và
+ *                                repo đang có một offer "Cashback 15%" thật.
+ *   lấy đơn vị của đợt GẦN NHẤT → recorder chạy mỗi ngày một lượt, nên một thẻ
+ *                                vừa đổi từ 15% sang $250 vẫn còn đơn vị
+ *                                `percent` ở dòng cuối; so 250 với 10/15/20 ra
+ *                                percentile 100 và một mã `CURRENT_OFFER_STRONG`
+ *                                hoàn toàn bịa.
+ *
+ * Nên: chỉ trả về đơn vị khi nhật ký ĐÃ THẤY đúng con số này, và mọi lần thấy
+ * đều cùng một đơn vị. Không chắc thì `null`, và §12 im lặng. Mất một
+ * percentile là mất một tín hiệu phụ; nói sai một câu về TIỀN thì người đọc
+ * mở nhầm thẻ.
+ *
+ * GIỚI HẠN, nói thẳng: lời giải đúng hẳn là một trường `bonusUnit` trên chính
+ * `Offer` ở Phase 1. Hôm nay chưa cần — cả hai offer `cash` trong bộ dữ liệu
+ * đều có `headlineBonus: null`, nên nhánh này không với tới được — nhưng ngày
+ * ai đó seed một offer tiền mặt có con số thì đó là việc phải làm.
+ */
+function offerBonusUnit(
+  bonusKind: "points" | "cash" | "none",
+  headlineBonus: number | null,
+  history: readonly OfferHistoryPoint[],
+): OfferUnit | null {
+  if (bonusKind === "points") return "points";
+  if (bonusKind === "none" || headlineBonus === null) return null;
+  const seen = new Set(
+    history.filter((point) => point.amount === headlineBonus).map((point) => point.unit),
+  );
+  return seen.size === 1 ? [...seen][0] : null;
 }
 
 /** Phí thường niên đang hiệu lực (cent). 0 khi chưa có dòng phí nào. */
@@ -293,21 +338,10 @@ export function offerFacts(
   const usableRatio =
     reachable === null || fullValueCents === 0 ? null : reachable.valueCents / fullValueCents;
 
-  // `bonusKind` phân biệt ĐIỂM với TIỀN, nhưng KHÔNG phân biệt đô với phần
-  // trăm — mà nhật ký có cả ba đơn vị, và repo đang có một offer "Cashback
-  // 15%" thật. Gán cứng `cash → dollar` là lại lẫn đơn vị, chỉ theo một cách
-  // khác: mọi đợt tính bằng phần trăm bị lọc sạch.
-  //
-  // Với `points` thì `bonusKind` là đủ. Với `cash` thì đơn vị phải ĐỌC TỪ DỮ
-  // LIỆU: lấy đơn vị của đợt gần nhất trong nhật ký của chính thẻ này — đó là
-  // thứ recorder thật sự nhìn thấy — và chỉ rơi về `dollar` khi chưa có đợt
-  // nào để mà đọc.
-  const cashUnit: OfferUnit =
-    history.length === 0 ? "dollar" : (history[history.length - 1].unit ?? "dollar");
   const { percentile, points } = historicalPercentile(
     history,
     offer.headlineBonus,
-    offer.bonusKind === "cash" ? cashUnit : "points",
+    offerBonusUnit(offer.bonusKind, offer.headlineBonus, history),
   );
   if (percentile !== null && percentile >= 70) reasonCodes.push("CURRENT_OFFER_STRONG");
   if (percentile !== null && percentile <= 30) reasonCodes.push("CURRENT_OFFER_WEAK");
