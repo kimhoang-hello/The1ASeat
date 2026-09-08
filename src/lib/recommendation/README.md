@@ -782,6 +782,56 @@ Codex tìm ra cùng lỗi này độc lập.
 `undefined`, và phép lọc mở toang cho MỌI đơn vị — đúng thứ lớp dữ liệu cấm.
 Nay đơn vị đến từ `Offer.bonusKind`.
 
+### Chuỗi review: bản vá đẻ ra lỗi tiếp theo, lần thứ hai
+
+Phase 2 đã học bài này một lần (tám vòng Codex liên tiếp, mỗi vòng bắt lỗi
+trong bản vá của vòng trước). Phase 3 lặp lại y hệt hình dạng đó:
+
+| Vòng | Số lỗi | Lỗi nằm ở đâu |
+| --- | --- | --- |
+| 1 | 12 (4 P1) | code gốc |
+| 2 | 5 (2 P1) | **toàn bộ trong bản vá của vòng 1** |
+| 3 | 3 (1 P1) | **toàn bộ trong bản vá của vòng 2** |
+
+Chuỗi rõ nhất là câu chuyện ĐƠN VỊ của offer tiền mặt — ba cách đoán, ba vòng,
+ba kiểu hỏng:
+
+| Vòng | Cách đoán | Hỏng thế nào |
+| --- | --- | --- |
+| 0 | tra ngược đơn vị theo con số | không thấy → `undefined` → lọc mở toang cho MỌI đơn vị |
+| 1 | gán cứng `cash → dollar` | lọc sạch mọi đợt tính bằng phần trăm, mà repo có offer "Cashback 15%" thật |
+| 2 | lấy đơn vị của đợt GẦN NHẤT | recorder chạy mỗi ngày một lượt: thẻ vừa đổi 15% → $250 vẫn còn `percent` ở dòng cuối, so 250 với 10/15/20 ra percentile 100 |
+| 3 | **thôi đoán** | chỉ trả đơn vị khi nhật ký ĐÃ THẤY đúng con số đó và mọi lần thấy đều cùng đơn vị; không chắc thì `null` |
+
+Chuỗi chỉ dừng khi bỏ hẳn việc suy ra một dữ kiện không có trong dữ liệu. Đúng
+kết luận của Phase 2, phát biểu lại: **hai phép kiểm cùng một khái niệm thì
+phải là một hàm** — và khi khái niệm đó KHÔNG có trong dữ liệu, câu trả lời
+đúng là `null`, không phải một hàm đoán giỏi hơn.
+
+> **Khi một bản vá là bản vá thứ ba cho cùng một chỗ, vấn đề không nằm ở cách
+> vá.** Nó nằm ở việc đang cố suy ra một thứ không tồn tại.
+
+Cùng hình dạng, ở một chỗ khác — sự phân rã của `tripCoverage`:
+
+| Vòng | Lỗi |
+| --- | --- |
+| 1 | so số dư với khoảng GỘP giữa các chương trình — một khoảng không ai bán |
+| 2 | vá khoảng gộp, nhưng `accessible` vẫn là cực đại toàn cục trong khi `bestProgram` đi theo tỷ lệ phủ — hai đại lượng chọn độc lập, lại tách ra |
+
+Bài học: khi một hàm trả về nhiều giá trị mô tả cùng MỘT lựa chọn, chúng phải
+được chọn trong CÙNG một vòng lặp. Tách phép chọn ra là mời gọi đúng lỗi vừa vá
+quay lại dưới một cái tên khác.
+
+### Một lần từ chối đề nghị của Codex
+
+Vòng 3 đề nghị thêm trường `bonusUnit` vào entity `Offer` (Phase 1). Đúng về
+lâu dài, nhưng đó là đổi schema cho một nhánh **hôm nay không với tới được**:
+cả hai offer `bonusKind: "cash"` trong bộ dữ liệu đều có `headlineBonus: null`,
+nên `historicalPercentile` trả `null` trước khi đơn vị kịp có nghĩa. Đã KIỂM
+bằng script trước khi quyết định, không kết luận bằng cảm giác — và ghi lại
+giới hạn ngay tại chỗ, để ngày ai đó seed một offer tiền mặt có con số thì
+người sửa đọc được vì sao chỗ này lại như vậy.
+
 ### Kiểm ngược, đã làm thật
 
 Năm bản vá quan trọng đều được gỡ ra một lần để xem test có đỏ không — và đỏ
@@ -808,7 +858,7 @@ giá hơn một phép kiểm ngược thành công.
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # 224 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng, engine
+npm run test:reco         # 232 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng, engine
 ```
 
 `audit:reco-data` bắt ba lớp lỗi:

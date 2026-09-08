@@ -24,8 +24,8 @@ Tài liệu module: [`src/lib/recommendation/README.md`](src/lib/recommendation/
 
 Phase 1: 31 commit, 24 vòng Codex, 68 phát hiện.
 Phase 2: 12 commit, 11 vòng, 19 phát hiện.
-Phase 3: 2 commit, 1 vòng Codex (12 phát hiện, 4 P1) + 3 lỗi tự tìm khi đọc
-kết quả chạy. 224 test.
+Phase 3: 5 commit, 3 vòng Codex (20 phát hiện, 7 P1) + 4 lỗi tự tìm khi đọc
+kết quả chạy. 232 test.
 
 ### Tiêu chí nghiệm thu Phase 3 — đã đạt
 
@@ -166,14 +166,29 @@ của một lượt chạy thật rồi đọc từng dòng**.
 2. Miễn phí năm đầu ĐẾM HAI LẦN trên cả 9 thẻ có `fee_waiver`.
 3. Trần `kind: "spend"` đem trần-ĐÔ chia cho tổng-ĐIỂM.
 
-Và bài học của vòng Codex: **bốn lỗi P1 đều là những chỗ mình TƯỞNG đã làm mà
+### Chuỗi review lặp lại y hệt Phase 2
+
+| Vòng | Số lỗi | Lỗi nằm ở đâu |
+| --- | --- | --- |
+| 1 | 12 (4 P1) | code gốc |
+| 2 | 5 (2 P1) | **toàn bộ trong bản vá của vòng 1** |
+| 3 | 3 (1 P1) | **toàn bộ trong bản vá của vòng 2** |
+
+Rõ nhất là câu chuyện ĐƠN VỊ của offer tiền mặt: ba cách đoán, ba vòng, ba
+kiểu hỏng — tra ngược theo con số, gán cứng `cash → dollar`, lấy đơn vị đợt
+gần nhất. Chuỗi chỉ dừng khi **thôi đoán** và trả `null` lúc không chắc.
+
+> **Khi một bản vá là bản vá thứ ba cho cùng một chỗ, vấn đề không nằm ở cách
+> vá.** Nó nằm ở việc đang cố suy ra một thứ không tồn tại trong dữ liệu.
+
+Và bài học của vòng 1: **bốn lỗi P1 đều là những chỗ mình TƯỞNG đã làm mà
 chưa nối dây.** Lọc `ineligible` khỏi ứng viên — tưởng đã có, thật ra chỉ lọc
 `suitability.excluded`. `eligibility_unknown` — tưởng đọc rồi, thật ra chưa
 truyền vào. Ba lần test đỏ trong vòng vá là ASSERTION quá chặt, không phải code
 sai; một lần là test bắt đúng lỗi trong chính bản vá vừa viết.
 
 > **Kiểm ngược mọi bản vá quan trọng: gỡ nó ra, test phải ĐỎ.** Đã làm thật với
-> 6 bản vá của Phase 3. Một lần đầu tiên test KHÔNG đỏ — và nó lộ ra rằng bài
+> 9 bản vá của Phase 3. Một lần đầu tiên test KHÔNG đỏ — và nó lộ ra rằng bài
 > test đang chứng minh một chuyện khác với chuyện nó tưởng.
 
 ⚠️ Và một cái bẫy đã sập lần thứ ba: **đừng dùng `git checkout -- <file>` để
@@ -223,7 +238,7 @@ nói ra ngay đầu file:
 npx tsc --noEmit          # sạch (đã bao gồm scripts/)
 npm run lint              # sạch
 npm run build             # Compiled successfully
-npm run test:reco         # 224/224 pass
+npm run test:reco         # 232/232 pass
 npm run test:game         # 43/43 pass (không liên quan, kiểm không hồi quy)
 npm run audit:reco-data   # 0 lỗi, 9 cảnh báo (đều là chỗ trống có chủ ý)
 ```
