@@ -19,7 +19,15 @@
  */
 
 import { SPEND_CATEGORIES } from "./types.ts";
-import { asArray, holdsNow, isObject, primaryGoal } from "./user.ts";
+import {
+  asArray,
+  holdsNow,
+  isObject,
+  primaryGoal,
+  usableBalance,
+  usablePassengers,
+  usableRoundTrip,
+} from "./user.ts";
 import type { UserDataGap, UserState } from "./user-types.ts";
 
 export function userGaps(state: UserState): UserDataGap[] {
@@ -36,7 +44,23 @@ export function userGaps(state: UserState): UserDataGap[] {
    * Object rỗng cho ra đúng thứ nên có: mọi trường `== null`, tức mọi chỗ đều
    * là CHƯA BIẾT. Validator vẫn báo riêng rằng bản ghi hỏng.
    */
-  const profile = (isObject(state?.profile) ? state.profile : {}) as UserState["profile"];
+  const rawProfile: Partial<UserState["profile"]> = isObject(state?.profile)
+    ? (state.profile as Partial<UserState["profile"]>)
+    : {};
+  // `subject` của mọi chỗ trống cấp hồ sơ là id người dùng, và nó phải là một
+  // CHUỖI dùng được — `undefined` ở đó biến chỗ trống thành rác không tra
+  // ngược được, đúng lúc engine cần nó nhất. Không có hồ sơ thì mượn id từ
+  // bất kỳ bản ghi nào khác của chính người đó; hết cách thì một sentinel ổn
+  // định, không phải `undefined`.
+  const fallbackId =
+    asArray(state?.goals).find((goal) => goal?.userId != null)?.userId ??
+    asArray(state?.cards).find((card) => card?.userId != null)?.userId ??
+    asArray(state?.balances).find((row) => row?.userId != null)?.userId ??
+    "unknown-user";
+  const profile = {
+    ...rawProfile,
+    id: rawProfile.id ?? fallbackId,
+  } as UserState["profile"];
   const spend = state?.spend;
 
   const primary = primaryGoal(state);
@@ -205,17 +229,30 @@ export function userGaps(state: UserState): UserDataGap[] {
     });
   }
 
-  for (const row of [...asArray(state.balances)].sort((a, b) =>
-    a.programId < b.programId ? -1 : a.programId > b.programId ? 1 : 0,
-  )) {
-    if (row.balance == null) {
-      gaps.push({
-        kind: "point_balance_amount_unknown",
-        subject: row.programId,
-        reason:
-          "Có tài khoản chương trình này nhưng chưa biết số dư. Chặng chuyển điểm vẫn dùng được; chỉ con số là chưa biết.",
-      });
-    }
+  // Gom theo CHƯƠNG TRÌNH, không theo dòng: một chương trình có hai dòng chỉ
+  // sinh MỘT chỗ trống, và hai dòng nói hai số khác nhau cũng là "chưa biết"
+  // y như một dòng `null`.
+  //
+  // `usableBalance` là ĐÚNG hàm mà `portfolio.ts` dùng để quyết định số dư có
+  // dùng được không. Đọc giá trị thô ở đây thay vì gọi nó thì engine coi một
+  // số dư âm là chưa biết trong khi chỗ này báo là đã biết — không sinh chỗ
+  // trống, không hạ độ tin cậy, không hỏi lại.
+  const balanceByProgram = new Map<string, (number | null)[]>();
+  for (const row of asArray(state.balances)) {
+    if (row?.programId == null) continue;
+    const list = balanceByProgram.get(row.programId) ?? [];
+    list.push(usableBalance(row.balance));
+    balanceByProgram.set(row.programId, list);
+  }
+  for (const programId of [...balanceByProgram.keys()].sort()) {
+    const values = [...new Set(balanceByProgram.get(programId))];
+    if (values.length === 1 && values[0] !== null) continue;
+    gaps.push({
+      kind: "point_balance_amount_unknown",
+      subject: programId,
+      reason:
+        "Có tài khoản chương trình này nhưng chưa biết số dư (chưa khai, số không hợp lệ, hoặc nhiều dòng nói khác nhau). Chặng chuyển điểm vẫn dùng được; chỉ con số là chưa biết.",
+    });
   }
 
   /* --- Chuyến đi --- */
@@ -229,7 +266,7 @@ export function userGaps(state: UserState): UserDataGap[] {
         reason: "Chưa biết hạng ghế. Cùng một chặng, business tốn gấp đôi tới gấp ba economy.",
       });
     }
-    if (goal.passengers == null) {
+    if (usablePassengers(goal.passengers) === null) {
       gaps.push({
         kind: "trip_passengers_unknown",
         subject: goal.id,
@@ -245,7 +282,7 @@ export function userGaps(state: UserState): UserDataGap[] {
           "Chưa biết mức linh hoạt của chuyến đi. §10.2 dành 10% điểm cho Flexibility Value, nên mặc định 'medium' là tự cho điểm một thứ chưa ai nói.",
       });
     }
-    if (goal.roundTrip == null) {
+    if (usableRoundTrip(goal.roundTrip) === null) {
       gaps.push({
         kind: "trip_round_trip_unknown",
         subject: goal.id,

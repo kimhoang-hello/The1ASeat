@@ -150,11 +150,11 @@ export function tripNeedFor(
   // `validateUserState` đã cấm cả hai, nhưng engine KHÔNG gọi validator —
   // §30 đòi nhận được hồ sơ dở dang. Nên chỗ này tự phòng, và phòng theo đúng
   // hướng của cả module: dữ liệu không dùng được là CHƯA BIẾT.
-  const passengers =
-    trip.passengers != null && Number.isInteger(trip.passengers) && trip.passengers > 0
-      ? trip.passengers
-      : null;
-  const roundTrip = typeof trip.roundTrip === "boolean" ? trip.roundTrip : null;
+  // `resolveTripGoal` đã lọc: số người phải là số nguyên dương, khứ hồi phải
+  // là boolean thật. Lọc LẠI ở đây là dựng phép kiểm thứ hai cho cùng một
+  // khái niệm — đúng thứ đã sinh ra lỗi này.
+  const passengers = trip.passengers;
+  const roundTrip = trip.roundTrip;
 
   if (passengers === null) warnings.push("TRIP_PASSENGERS_UNKNOWN");
   if (roundTrip === null) warnings.push("TRIP_ROUND_TRIP_UNKNOWN");

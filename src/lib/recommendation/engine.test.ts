@@ -25,7 +25,13 @@ import { candidateUniverse, normalize } from "./normalize.ts";
 import { REASON_CODES, WARNING_CODES } from "./reason-codes.ts";
 import { nextQuestion } from "./explain.ts";
 import { SCORABLE_WEIGHT } from "./scoring/weights.ts";
-import { resolveTripGoal } from "./user.ts";
+import {
+  resolveTripGoal,
+  usableBalance,
+  usablePassengers,
+  usableRoundTrip,
+} from "./user.ts";
+import { userGaps } from "./user-gaps.ts";
 import { id, type PointsProgramId, type ProductId } from "./types.ts";
 import { benefitFitFor, heldBenefitKeys } from "./benefit-fit.ts";
 import { productIdFor } from "./data/products.ts";
@@ -1694,4 +1700,117 @@ test("§8/§9 — tầng chiến lược và nhu cầu KHÔNG nhắc tên sản 
       assert.ok(!code.includes(product.slug), `${name} nhắc tới sản phẩm ${product.slug}`);
     }
   }
+});
+
+/* ================================================================== *
+ * Rà đối kháng, vòng 2 — "chưa biết" phải LAN tới siêu dữ liệu
+ *
+ * Bản vá vòng trước biến giá trị hỏng thành CHƯA BIẾT ở bên trong engine,
+ * nhưng `userGaps`, `goalSpecificity` và các cảnh báo vẫn đọc giá trị THÔ.
+ * Engine coi là chưa biết, siêu dữ liệu lại báo đã biết đủ: không sinh chỗ
+ * trống, không hạ độ tin cậy, không hỏi lại. Một nửa bản vá tệ hơn không vá,
+ * vì nó tạo ra vẻ ngoài đã xử lý.
+ * ================================================================== */
+
+test("§14 — thiếu NƯỚC Ở là chưa biết, không được loại sạch tập ứng viên", () => {
+  // Luật cư trú áp cho MỌI thẻ. Coi thiếu-dữ-liệu là trượt sẽ loại sạch bảng
+  // và trả `NO_NEW_CARD` — một khuyến nghị trông có lý, dựng trên một dữ kiện
+  // chưa ai hỏi.
+  const noCountry: UserState = {
+    ...beginnerNoCards,
+    profile: { ...beginnerNoCards.profile, country: undefined as never },
+  };
+  const verdict = evaluateEligibility(
+    productIdFor("td-aeroplan-visa-infinite"),
+    noCountry,
+    IX,
+    ASOF,
+  );
+  assert.notEqual(verdict.status, "ineligible");
+
+  const result = run(noCountry).results[0];
+  assert.ok(result.alternatives.length > 0, "tập ứng viên bị quét sạch vì thiếu nước ở");
+});
+
+test("mọi chỗ trống phải có `subject` dùng được, kể cả khi hồ sơ vắng hẳn", () => {
+  // `undefined` ở đó biến chỗ trống thành rác không tra ngược được, đúng lúc
+  // §30 cần nó để chọn câu hỏi tiếp theo.
+  const noProfile = { ...vietnamTripFunded, profile: undefined } as never as UserState;
+  for (const gap of userGaps(noProfile)) {
+    assert.equal(typeof gap.subject, "string", `chỗ trống ${gap.kind} có subject không dùng được`);
+    assert.ok(gap.subject.length > 0);
+  }
+});
+
+test("thiếu THỪA SỐ chuyến đi ≠ thiếu GIÁ của chương trình", () => {
+  // Thiếu số người làm MỌI `row.high` thành null, kể cả những chương trình có
+  // bảng giá cố định đầy đủ. Bản vá đầu đọc `row.high` nên kết luận mọi
+  // chương trình đều "chưa định giá" và phát AWARD_PRICE_FLOOR_ONLY cho một
+  // chặng giá cố định bình thường.
+  const goal = vietnamTripFunded.goals[0];
+  if (goal.type !== "trip") return;
+  const result = run({ ...vietnamTripFunded, goals: [{ ...goal, passengers: null }] }).results[0];
+  assert.ok(result.warnings.includes("TRIP_PASSENGERS_UNKNOWN"));
+  assert.ok(
+    !result.warnings.includes("AWARD_PRICE_FLOOR_ONLY"),
+    "thiếu thừa số bị báo nhầm thành thiếu bảng giá",
+  );
+  assert.equal(result.numbers.accessiblePointsIsLowerBound, false);
+});
+
+test("thừa số chuyến đi bị làm sạch phải LAN tới chỗ trống và độ cụ thể", () => {
+  const goal = vietnamTripFunded.goals[0];
+  if (goal.type !== "trip") return;
+  const full = run(vietnamTripFunded).results[0].confidence.goalSpecificity;
+
+  for (const passengers of [0, -2, 1.5]) {
+    const broken: UserState = { ...vietnamTripFunded, goals: [{ ...goal, passengers }] };
+    assert.ok(
+      userGaps(broken).some((gap) => gap.kind === "trip_passengers_unknown"),
+      `passengers=${passengers} không sinh chỗ trống`,
+    );
+    assert.ok(
+      run(broken).results[0].confidence.goalSpecificity < full,
+      `passengers=${passengers} mà độ cụ thể của mục tiêu không giảm`,
+    );
+  }
+});
+
+test("số dư bị TỪ CHỐI phải sinh chỗ trống y như số dư `null`", () => {
+  // `portfolio.ts` coi số âm và hai dòng lệch nhau là chưa biết. `userGaps`
+  // đọc giá trị thô thì hai tầng nói hai chuyện khác nhau về cùng một dòng.
+  const row = (balance: number | null) => ({
+    userId: beginnerNoCards.profile.id,
+    programId: AEROPLAN,
+    balance,
+    updatedAt: ASOF,
+  });
+  const has = (state: UserState) =>
+    userGaps(state).some((gap) => gap.kind === "point_balance_amount_unknown");
+
+  assert.ok(has({ ...beginnerNoCards, balances: [row(-5)] }), "số dư âm");
+  assert.ok(has({ ...beginnerNoCards, balances: [row(10), row(90)] }), "hai dòng lệch nhau");
+  assert.ok(has({ ...beginnerNoCards, balances: [row(null)] }), "số dư null");
+  // Hai dòng KHỚP nhau thì không phải chỗ trống — và chỉ sinh MỘT chỗ trống
+  // cho mỗi chương trình, không phải một chỗ cho mỗi dòng.
+  assert.ok(!has({ ...beginnerNoCards, balances: [row(50), row(50)] }), "hai dòng khớp nhau");
+  assert.equal(
+    userGaps({ ...beginnerNoCards, balances: [row(null), row(null)] }).filter(
+      (gap) => gap.kind === "point_balance_amount_unknown",
+    ).length,
+    1,
+    "hai dòng cùng chương trình sinh hai chỗ trống",
+  );
+});
+
+test("một khái niệm, một hàm: engine và chỗ trống dùng CHUNG phép kiểm", () => {
+  // Phép thử cấu trúc cho bài học đã trả giá ba lần (`isObject`, đơn vị offer,
+  // và chính vòng này). Nếu `user-gaps.ts` tự viết lại phép kiểm hợp lệ thay
+  // vì gọi hàm chung, hai tầng sẽ lệch nhau lần nữa.
+  assert.equal(usableBalance(-1), null);
+  assert.equal(usableBalance(0), 0, "0 là một câu trả lời hợp lệ, không phải rác");
+  assert.equal(usablePassengers(0), null);
+  assert.equal(usablePassengers(2), 2);
+  assert.equal(usableRoundTrip("false" as never), null, "chuỗi truthy không phải boolean");
+  assert.equal(usableRoundTrip(false), false);
 });

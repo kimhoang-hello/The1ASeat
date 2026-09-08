@@ -22,7 +22,13 @@
  */
 
 import { activeAt, oneActiveAt } from "./temporal.ts";
-import { asArray, everHeldProductIds, heldProductIds, holdsNow } from "./user.ts";
+import {
+  asArray,
+  everHeldProductIds,
+  heldProductIds,
+  holdsNow,
+  usableBalance,
+} from "./user.ts";
 import type { DatasetIndex } from "./indexes.ts";
 import type { PointsProgram, PointsProgramId, Product, ProductId } from "./types.ts";
 import type { UserState } from "./user-types.ts";
@@ -78,21 +84,6 @@ export function centsPerPoint(
   const rows = ix.valuationsByProgram.get(programId) ?? [];
   const row = oneActiveAt(rows, asOf);
   return row?.centsPerPoint ?? null;
-}
-
-/**
- * Số dư dùng được của MỘT dòng — hoặc `null` khi dòng đó không đáng tin.
- *
- * Số âm và số không hữu hạn bị coi là CHƯA BIẾT, không phải là giá trị. Không
- * có phép kiểm này thì một dòng `-50,000` (validator đã cấm, nhưng engine
- * không gọi validator) đi thẳng vào mẫu số của phép đo tập trung và đẩy
- * `flexibilityScore` lên 2.12 — một tỷ trọng lớn hơn 1, rồi lan sang
- * `needs.portfolio.flexibility` và mọi chiến lược đọc nó.
- */
-function usableBalance(value: number | null | undefined): number | null {
-  if (value == null) return null;
-  if (!Number.isFinite(value) || value < 0) return null;
-  return value;
 }
 
 /**

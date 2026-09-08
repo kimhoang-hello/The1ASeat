@@ -107,8 +107,16 @@ export function tripCoverage(
       // tỷ lệ phủ khi không biết mẫu số — nhưng nếu người dùng CÓ điểm ở đây
       // thì im lặng bỏ qua là biến một chỗ chưa biết thành một kết luận: "bạn
       // phủ 0%". Ghi lại để tầng sau thôi nói con số chính xác.
-      const held = accessibleFor(state, ix, row.programId, asOf);
-      if (held.total > 0 || held.hasUnknownSource) unpricedHeld.push(row.programId);
+      //
+      // Đọc GIÁ GỐC (một người, một chiều) chứ không đọc `row.high` đã nhân:
+      // thiếu số người hay thiếu khứ hồi cũng làm `high` thành null, và khi đó
+      // MỌI chương trình trông như "chưa định giá" — kể cả những chương trình
+      // có bảng giá cố định đầy đủ. Phân biệt hai chuyện: thiếu THỪA SỐ là
+      // chuyện của chuyến đi, thiếu GIÁ là chuyện của chương trình.
+      if (row.perPassengerOneWayHigh === null) {
+        const held = accessibleFor(state, ix, row.programId, asOf);
+        if (held.total > 0 || held.hasUnknownSource) unpricedHeld.push(row.programId);
+      }
       continue;
     }
     const reach = accessibleFor(state, ix, row.programId, asOf);

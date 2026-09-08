@@ -76,9 +76,13 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * không còn CAO khi chỉ có một ứng viên, và chương trình có điểm mà chỉ biết
  * mức sàn thôi sinh ra khoảng cách chính xác giả.
  *
- * 3.3.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu vào hỏng
- * nào — nhưng nó đổi kết quả cho những đầu vào đó, và §20 nói về MỌI đầu vào
- * chứ không chỉ về fixture.
+ * 3.4.0 — rà đối kháng vòng hai: "chưa biết" nay LAN tới chỗ trống, độ tin
+ * cậy và cảnh báo, chứ không dừng ở bên trong engine; thiếu nước ở thôi bị
+ * đọc thành trượt điều kiện.
+ *
+ * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
+ * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
+ * MỌI đầu vào chứ không chỉ về fixture.
  *
  * Cả hai lần đều ĐỔI THỨ HẠNG, nên ba bản không so sánh trực tiếp được — và
  * đó chính là việc trường này sinh ra để nói.
@@ -88,7 +92,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "3.3.0";
+export const ENGINE_VERSION = "3.4.0";
 
 export interface RecommendInput {
   state: UserState;

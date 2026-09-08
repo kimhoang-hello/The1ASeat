@@ -126,6 +126,38 @@ export function lastClosed(state: UserState, productId: ProductId): ClosureLooku
  * Chi tiêu
  * ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ *
+ * Giá trị DÙNG ĐƯỢC
+ *
+ * Ba hàm dưới đây trả lời đúng một câu: giá trị này có dùng được không, hay
+ * phải coi là CHƯA BIẾT. Chúng ở đây — trong lớp đọc dữ liệu người dùng — chứ
+ * không nằm rải trong engine, vì mọi tầng phải trả lời GIỐNG NHAU.
+ *
+ * Bài học đã trả giá hai lần: `isObject` từng là hai phép kiểm viết riêng và
+ * chúng lệch nhau. Rồi ở Phase 3, engine tự lọc số dư âm và số người không
+ * hợp lệ thành "chưa biết" trong khi `userGaps` và `goalSpecificity` vẫn đọc
+ * giá trị THÔ — nên engine coi là chưa biết, còn phần siêu dữ liệu lại báo là
+ * đã biết đủ: không sinh chỗ trống, không hạ độ tin cậy, không hỏi lại.
+ * ------------------------------------------------------------------ */
+
+/** Số dư dùng được, hoặc `null`. Số âm và số không hữu hạn là dữ liệu hỏng. */
+export function usableBalance(value: number | null | undefined): number | null {
+  if (value == null) return null;
+  if (!Number.isFinite(value) || value < 0) return null;
+  return value;
+}
+
+/** Số người dùng được: SỐ NGUYÊN DƯƠNG. `0` và số âm không phải một chuyến đi. */
+export function usablePassengers(value: number | null | undefined): number | null {
+  if (value == null) return null;
+  return Number.isInteger(value) && value > 0 ? value : null;
+}
+
+/** Khứ hồi dùng được: boolean THẬT. Chuỗi `"false"` là truthy — xem README. */
+export function usableRoundTrip(value: boolean | null | undefined): boolean | null {
+  return typeof value === "boolean" ? value : null;
+}
+
 /** `null` = chưa biết. KHÔNG phải bằng không — xem đầu `user-types.ts`. */
 export function spendFor(state: UserState, category: SpendCategory): EstimatedAmount | null {
   return state.spend?.byCategory?.[category] ?? null;
@@ -276,6 +308,11 @@ export function resolveTripGoal(
     profile?.country != null ? ORIGIN_REGION_BY_COUNTRY[profile.country] : undefined;
   return {
     ...goal,
+    // Làm sạch NGAY tại đây, không để mỗi tầng tự lọc: `GoalContext.trip`,
+    // `confidence.goalSpecificity` và `trip-need.ts` đều đọc object này, và
+    // ba nơi tự quyết định "hợp lệ" là ba nơi lệch được.
+    passengers: usablePassengers(goal.passengers),
+    roundTrip: usableRoundTrip(goal.roundTrip),
     originRegion: goal.originRegion ?? fromCountry ?? "CANADA_US",
     originRegionInferred: inferred,
   };

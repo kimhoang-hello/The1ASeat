@@ -79,8 +79,14 @@ function evaluateRule(rule: EligibilityRule, state: UserState): RuleOutcome {
   if (!operatorUnderstood(rule)) return "unknown";
   switch (rule.ruleType) {
     case "residency": {
+      // Không biết người này ở đâu thì KHÔNG được kết luận là trượt. Luật cư
+      // trú áp cho MỌI thẻ, nên coi thiếu-dữ-liệu là trượt sẽ loại sạch tập
+      // ứng viên và trả về `NO_NEW_CARD` — một khuyến nghị trông có lý, dựng
+      // trên một dữ kiện chưa ai hỏi. §14 tách `unknown` khỏi `ineligible`
+      // đúng vì chỗ này.
+      if (profile?.country == null) return "unknown";
       const wanted = Array.isArray(rule.value) ? rule.value : [String(rule.value)];
-      return wanted.includes(profile?.country) ? "pass" : "fail";
+      return wanted.includes(profile.country) ? "pass" : "fail";
     }
     case "minimum_personal_income":
       return incomeOutcome(
