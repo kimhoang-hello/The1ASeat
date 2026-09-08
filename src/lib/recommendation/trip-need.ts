@@ -19,6 +19,7 @@
 
 import { activeAt } from "./temporal.ts";
 import { routeKey } from "./indexes.ts";
+import { usablePassengers, usableRoundTrip } from "./user.ts";
 import type { DatasetIndex } from "./indexes.ts";
 import type { AwardStrategy, PointsProgramId } from "./types.ts";
 import type { ResolvedTripGoal } from "./user.ts";
@@ -150,11 +151,14 @@ export function tripNeedFor(
   // `validateUserState` đã cấm cả hai, nhưng engine KHÔNG gọi validator —
   // §30 đòi nhận được hồ sơ dở dang. Nên chỗ này tự phòng, và phòng theo đúng
   // hướng của cả module: dữ liệu không dùng được là CHƯA BIẾT.
-  // `resolveTripGoal` đã lọc: số người phải là số nguyên dương, khứ hồi phải
-  // là boolean thật. Lọc LẠI ở đây là dựng phép kiểm thứ hai cho cùng một
-  // khái niệm — đúng thứ đã sinh ra lỗi này.
-  const passengers = trip.passengers;
-  const roundTrip = trip.roundTrip;
+  // Gọi LẠI cùng hai hàm mà `resolveTripGoal` đã gọi. Không phải phép kiểm
+  // thứ hai — là CÙNG một hàm, ở một biên giới khác: `tripNeedFor` được export,
+  // và `ResolvedTripGoal.passengers` vẫn là `number | null`, nên một người gọi
+  // hợp lệ về kiểu vẫn truyền thẳng `0` vào đây mà không đi qua
+  // `resolveTripGoal`. Hai lần gọi một hàm thuần thì vô hại; một biên giới
+  // không ai canh thì không.
+  const passengers = usablePassengers(trip.passengers);
+  const roundTrip = usableRoundTrip(trip.roundTrip);
 
   if (passengers === null) warnings.push("TRIP_PASSENGERS_UNKNOWN");
   if (roundTrip === null) warnings.push("TRIP_ROUND_TRIP_UNKNOWN");

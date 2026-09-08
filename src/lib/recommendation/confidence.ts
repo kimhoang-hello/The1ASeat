@@ -36,6 +36,7 @@ const BLOCKING_USER_GAPS: ReadonlySet<UserDataGap["kind"]> = new Set([
   "trip_round_trip_unknown",
   "trip_cabin_unknown",
   "goal_priority_ambiguous",
+  "country_unknown",
 ]);
 
 /** Số `DataGap["kind"]` mà lớp dữ liệu có thể phát ra — xem `types.ts`. */

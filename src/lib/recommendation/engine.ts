@@ -79,6 +79,8 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * 3.4.0 — rà đối kháng vòng hai: "chưa biết" nay LAN tới chỗ trống, độ tin
  * cậy và cảnh báo, chứ không dừng ở bên trong engine; thiếu nước ở thôi bị
  * đọc thành trượt điều kiện.
+ * 3.5.0 — thiếu nước ở nay là một chỗ trống có tên (`country_unknown`), và là
+ * câu hỏi ưu tiên thứ hai sau mục tiêu.
  *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
@@ -92,7 +94,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "3.4.0";
+export const ENGINE_VERSION = "3.5.0";
 
 export interface RecommendInput {
   state: UserState;

@@ -56,6 +56,7 @@ export function userGaps(state: UserState): UserDataGap[] {
     asArray(state?.goals).find((goal) => goal?.userId != null)?.userId ??
     asArray(state?.cards).find((card) => card?.userId != null)?.userId ??
     asArray(state?.balances).find((row) => row?.userId != null)?.userId ??
+    state?.spend?.userId ??
     "unknown-user";
   const profile = {
     ...rawProfile,
@@ -123,6 +124,20 @@ export function userGaps(state: UserState): UserDataGap[] {
         "Chưa biết thu nhập hộ gia đình. Chỉ đổi kết quả khi thu nhập cá nhân không đủ — vế HOẶC của điều kiện sinh ra để cứu đúng những ca đó.",
     });
   }
+  // Nước ở quyết định luật `residency`, và luật đó áp cho MỌI thẻ. Thiếu nó
+  // thì `evaluateEligibility` trả `unknown` cho toàn bộ tập ứng viên — mọi thẻ
+  // bị phạt và kèm cảnh báo cùng lúc. Không khai chỗ trống này thì §29 không
+  // hạ độ tin cậy và §30 đi hỏi những câu chẳng liên quan, trong khi đây là
+  // câu DUY NHẤT gỡ được cả bảng.
+  if (profile.country == null) {
+    gaps.push({
+      kind: "country_unknown",
+      subject: profile.id,
+      reason:
+        "Chưa biết người này ở nước nào. Luật cư trú áp cho MỌI thẻ, nên thiếu nó thì cả tập ứng viên đều ở trạng thái chưa đánh giá được.",
+    });
+  }
+
   if (profile.isStudent == null) {
     gaps.push({
       kind: "student_status_unknown",

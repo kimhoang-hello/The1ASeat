@@ -1206,6 +1206,7 @@ test("mọi chỗ trống đều ứng với một thứ Phase 3 THẬT SỰ đ�
     personal_income_declined: "như trên, nhưng không hỏi lại được",
     household_income_declined: "như trên, nhưng không hỏi lại được",
     student_status_unknown: "eligibility student_status_required",
+    country_unknown: "eligibility residency — luật áp cho MỌI thẻ",
     cards_undeclared: "§7 Portfolio Analyzer",
     balances_undeclared: "§7 Portfolio Analyzer",
     point_balance_amount_unknown: "§7 số dư trực tiếp",

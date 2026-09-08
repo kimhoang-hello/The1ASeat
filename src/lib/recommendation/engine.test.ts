@@ -1814,3 +1814,51 @@ test("một khái niệm, một hàm: engine và chỗ trống dùng CHUNG phép
   assert.equal(usableRoundTrip("false" as never), null, "chuỗi truthy không phải boolean");
   assert.equal(usableRoundTrip(false), false);
 });
+
+test("thiếu NƯỚC Ở sinh chỗ trống, hạ độ tin cậy, và thành câu hỏi ƯU TIÊN", () => {
+  // `evaluateEligibility` trả `unknown` cho TOÀN BỘ tập ứng viên khi thiếu
+  // nước ở — mọi thẻ bị phạt và kèm cảnh báo cùng lúc. Không khai chỗ trống
+  // này thì §29 không hạ độ tin cậy và §30 đi hỏi những câu chẳng liên quan,
+  // trong khi đây là câu DUY NHẤT gỡ được cả bảng.
+  const noCountry: UserState = {
+    ...beginnerNoCards,
+    profile: { ...beginnerNoCards.profile, country: undefined as never },
+  };
+  assert.ok(userGaps(noCountry).some((gap) => gap.kind === "country_unknown"));
+
+  const result = run(noCountry);
+  assert.equal(result.followUp?.gapKind, "country_unknown", "hỏi sai câu");
+  assert.ok(
+    result.results[0].confidence.dataCompleteness <
+      run(beginnerNoCards).results[0].confidence.dataCompleteness,
+    "thiếu nước ở mà độ đầy đủ không giảm",
+  );
+});
+
+test("`tripNeedFor` tự phòng ở BIÊN GIỚI của chính nó", () => {
+  // Nó được export, và `ResolvedTripGoal.passengers` vẫn là `number | null`,
+  // nên một người gọi hợp lệ về kiểu vẫn truyền thẳng `0` vào mà không đi qua
+  // `resolveTripGoal`. Gọi lại cùng một hàm thuần thì vô hại; một biên giới
+  // không ai canh thì không.
+  const goal = vietnamTripFunded.goals[0];
+  if (goal.type !== "trip") return;
+  const resolved = resolveTripGoal(vietnamTripFunded.profile, goal);
+  const forged = { ...resolved, passengers: 0 };
+  const need = tripNeedFor(forged, IX, ASOF);
+  assert.equal(need.low, null, "gọi thẳng với passengers=0 vẫn ra một con số");
+  assert.ok(need.warnings.includes("TRIP_PASSENGERS_UNKNOWN"));
+});
+
+test("id người dùng phục hồi được từ BẤT KỲ bản ghi nào, kể cả chỉ có `spend`", () => {
+  const onlySpend = {
+    profile: undefined,
+    spend: { ...beginnerNoCards.spend },
+    cards: [],
+    balances: [],
+    goals: [],
+    declared: { cards: false, balances: false },
+  } as never as UserState;
+  for (const gap of userGaps(onlySpend)) {
+    assert.notEqual(gap.subject, "unknown-user", `${gap.kind} mất id thật của người dùng`);
+  }
+});

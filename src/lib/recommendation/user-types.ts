@@ -528,6 +528,7 @@ export interface UserDataGap {
     | "personal_income_declined"
     | "household_income_declined"
     | "student_status_unknown"
+    | "country_unknown"
     | "goal_priority_ambiguous"
     | "cards_undeclared"
     | "balances_undeclared"
