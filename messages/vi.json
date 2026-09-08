@@ -169,7 +169,8 @@
     "offerCtaTransferBonuses": "Xem Transfer Bonus đang chạy",
     "offerCtaTransferPartners": "Xem tỷ lệ chuyển điểm hiện tại",
     "offerCtaCreditCards": "Xem elevated offer đang chạy",
-    "offerCtaBankAccounts": "Xem tài khoản ngân hàng đang có bonus"
+    "offerCtaBankAccounts": "Xem tài khoản ngân hàng đang có bonus",
+    "cardInPost": "THẺ NHẮC TỚI TRONG BÀI"
   },
   "bonuses": {
     "eyebrow": "CẬP NHẬT THƯỜNG XUYÊN",

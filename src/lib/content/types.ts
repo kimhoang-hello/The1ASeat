@@ -7,6 +7,17 @@ export interface BlogPost {
   title: string;
   excerpt: string;
   body: string;
+  /**
+   * Thân bài cắt theo KHỐI CẤP CAO NHẤT của rich text — mỗi đoạn, mỗi tiêu đề,
+   * mỗi danh sách là một chuỗi HTML riêng. `body` là đúng các khối này nối
+   * lại, không sai khác một byte (đo trên cả 40 bài, 390 khối).
+   *
+   * Tồn tại để chèn được component React vào GIỮA thân bài — khối thẻ tín dụng
+   * dưới đoạn đầu tiên nhắc tới thẻ đó. Cắt chuỗi HTML đã render bằng regex là
+   * cách kia, và nó vỡ ngay khi đoạn văn chứa `</p>` lồng trong blockquote hay
+   * list. Cắt từ chính cây rich text thì không có ca nào vỡ được.
+   */
+  bodyBlocks: string[];
   coverImage: string;
   coverPhoto?: string;
   videoUrl?: string;

@@ -512,11 +512,42 @@ export function resolveProse(paragraph: string, card: CreditCardOffer | undefine
   const live = card?.expiresAt && !hasExpired(card.expiresAt) ? card.expiresAt : undefined;
   if (live) return paragraph.replaceAll(EXPIRES_TOKEN, formatDate(live));
 
-  return paragraph
-    .split(/(?<=\.)\s+/)
-    .filter((sentence) => !sentence.includes(EXPIRES_TOKEN))
-    .join(" ")
-    .trim();
+  // Cắt từ dấu chấm CUỐI CÙNG đứng trước token, không tách câu bằng regex.
+  //
+  // Bản trước `split(/(?<=\.)\s+/)` rồi bỏ mảnh chứa token. Nó đúng với nội
+  // dung hiện có nhưng vỡ với chữ viết tắt: "Áp dụng tại TP. Hồ Chí Minh, offer
+  // kết thúc {expiresAt}." bị tách ngay sau "TP." nên phần bỏ đi chỉ là nửa
+  // sau, để lại "Áp dụng tại TP." trên trang. Không có cách tách câu nào đáng
+  // tin cho tiếng Việt có viết tắt, nên đừng tách: `assertExpiryTokenIsLast`
+  // ép token phải nằm ở câu CUỐI đoạn, và ở đó chỉ cần cắt tại dấu chấm cuối
+  // cùng trước nó — phép cắt không còn phải hiểu câu là gì.
+  const cut = paragraph.lastIndexOf(".", paragraph.indexOf(EXPIRES_TOKEN));
+  return cut < 0 ? "" : paragraph.slice(0, cut + 1).trim();
+}
+
+/**
+ * Câu chứa `{expiresAt}` phải là câu CUỐI của đoạn — cửa canh cho luật mà
+ * `resolveProse` dựa vào. Chạy lúc `next build` qua `assertBestCardPicksExist`,
+ * nên vi phạm làm deploy đỏ chứ không trôi ra production thành câu cụt.
+ */
+function assertExpiryTokenIsLast(): void {
+  for (const category of BEST_CARDS_CATEGORIES) {
+    for (const pick of category.picks) {
+      for (const paragraph of pick.bodyVi) {
+        const at = paragraph.indexOf(EXPIRES_TOKEN);
+        if (at < 0) continue;
+        // Sau token chỉ được còn đúng phần đuôi của chính câu đó: không có dấu
+        // chấm nào nữa trừ dấu kết câu ở ngay cuối đoạn.
+        const after = paragraph.slice(at + EXPIRES_TOKEN.length);
+        if (after.trim() !== "." && !/^[^.]*\.$/.test(after.trim())) {
+          throw new Error(
+            `best-cards: ${category.slug} → ${pick.slug}: câu chứa {expiresAt} phải là câu CUỐI ` +
+              `của đoạn (xem resolveProse) — "${paragraph.slice(Math.max(0, at - 40), at + 60)}"`,
+          );
+        }
+      }
+    }
+  }
 }
 
 /**
@@ -526,6 +557,8 @@ export function resolveProse(paragraph: string, card: CreditCardOffer | undefine
  * tập lặng lẽ biến mất trên production.
  */
 export function assertBestCardPicksExist(offers: CreditCardOffer[]): void {
+  assertExpiryTokenIsLast();
+
   const known = new Set(offers.map((offer) => offer.slug));
   const missing: string[] = [];
 
@@ -591,7 +624,11 @@ export function containsFigure(haystack: string, figure: string): boolean {
     const at = haystack.indexOf(figure, from);
     if (at < 0) return false;
 
-    const before = at > 0 ? haystack[at - 1] : "";
+    // Lùi qua khoảng trắng trước khi xét: "$ 70,000" có dấu cách giữa `$` và
+    // số, nên chỉ nhìn đúng một ký tự liền trước thì con số TRẦN "70,000" vẫn
+    // khớp vào một con số TIỀN — phá đúng cái bất biến hàm này dựng ra.
+    const head = haystack.slice(0, at).replace(/\s+$/, "");
+    const before = head.slice(-1);
     const after = haystack.slice(at + figure.length);
     // Bên trái: không dính chữ số, dấu phân cách hay dấu tiền.
     // Bên phải: không dính chữ số, và không dính "phần đuôi" của một con số
@@ -616,6 +653,18 @@ export type OfferFacts = Pick<
   CreditCardOffer,
   "slug" | "name" | "welcomeBonus" | "annualFee" | "rebate" | "headline" | "editorsTake" | "keyBenefits"
 >;
+
+/**
+ * Ba field ĐỔI THEO OFFER, tách riêng khỏi `offerHaystack`.
+ *
+ * `sharedFiguresVi` khẳng định "cả hai thẻ đều có con số này", và thứ nó thật
+ * sự canh là ngày ngân hàng hạ MỘT trong hai bản. So với cả `offerHaystack`
+ * thì một con số cũ còn sót trong headline hay key benefit của thẻ vừa bị hạ
+ * cũng đủ giữ audit xanh — tức là canh trượt đúng ca sinh ra nó.
+ */
+export function volatileHaystack(offer: OfferFacts): string {
+  return [offer.welcomeBonus ?? "", offer.annualFee, offer.rebate ?? ""].join(" · ");
+}
 
 /** Toàn bộ chữ của một entry mà một con số trong prose có thể đối chiếu vào. */
 export function offerHaystack(offer: OfferFacts): string {
@@ -694,13 +743,16 @@ export function bestCardsProseDrift(offers: OfferFacts[]): {
     shared: string[] = [],
   ): Set<string> {
     const haystacks = cards.map(offerHaystack);
+    // Con số khai ở `sharedFiguresVi` so với BA FIELD hay đổi, không so với cả
+    // entry — xem `volatileHaystack`.
+    const volatile_ = cards.map(volatileHaystack);
     const used = new Set<string>();
 
     for (const paragraph of paragraphs) {
       for (const figure of figuresIn(paragraph)) {
         const everywhere = shared.includes(figure);
         const ok = everywhere
-          ? haystacks.every((hay) => containsFigure(hay, figure))
+          ? volatile_.every((hay) => containsFigure(hay, figure))
           : haystacks.some((hay) => containsFigure(hay, figure));
         if (ok) continue;
         if (!everywhere && declared && figure in declared) {

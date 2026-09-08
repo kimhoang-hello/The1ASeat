@@ -107,6 +107,21 @@ export function renderPostBody(document: Document): string {
   return documentToHtmlString(document, bodyOptions);
 }
 
+/**
+ * Thân bài cắt theo khối cấp cao nhất — xem `BlogPost.bodyBlocks`.
+ *
+ * `documentToHtmlString` nối các khối cấp cao nhất lại mà không chèn gì vào
+ * giữa, nên render từng khối một rồi nối lại cho ra ĐÚNG chuỗi cũ. Đã đo trên
+ * cả 40 bài đang có (390 khối): không lệch một byte nào. Nếu một ngày nào đó
+ * bộ render thêm thứ gì vào giữa hai khối, `body` bên dưới sẽ đổi theo và
+ * trang vẫn đúng — hai giá trị luôn được dựng từ cùng một mảng.
+ */
+export function renderPostBlocks(document: Document): string[] {
+  return (document.content ?? []).map((node) =>
+    documentToHtmlString({ ...document, content: [node] }, bodyOptions),
+  );
+}
+
 function assetUrl(asset: unknown): string {
   if (asset && typeof asset === "object" && "fields" in asset) {
     const url = (asset as Asset).fields?.file?.url;
@@ -187,6 +202,8 @@ interface AuthorSkeleton {
 
 function toPost(entry: Entry<PostSkeleton, undefined>): BlogPost {
   const f = entry.fields;
+  const bodyBlocks = renderPostBlocks(f.bodyVi).map(keepBrandTogether);
+
   return {
     slug: f.slug,
     type: f.type,
@@ -195,7 +212,10 @@ function toPost(entry: Entry<PostSkeleton, undefined>): BlogPost {
     // editor-written copy, the same way the UI strings are treated in lib/t.
     title: keepBrandTogether(f.titleVi),
     excerpt: keepBrandTogether(f.excerptVi),
-    body: keepBrandTogether(renderPostBody(f.bodyVi)),
+    // `body` dựng TỪ `bodyBlocks`, không gọi renderer lần thứ hai: hai giá trị
+    // phải là cùng một chuỗi, và cách chắc chắn nhất là chỉ có một nguồn.
+    body: bodyBlocks.join(""),
+    bodyBlocks,
     coverImage: f.coverImage,
     coverPhoto: f.coverPhoto ? assetUrl(f.coverPhoto) || undefined : undefined,
     videoUrl: f.videoUrl,

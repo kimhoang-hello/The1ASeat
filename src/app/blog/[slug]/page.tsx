@@ -10,6 +10,7 @@ import { getVideoEmbedUrl, getYouTubeThumbnailUrl, getYouTubeWatchUrl } from "@/
 import { CommentSection } from "@/components/blog/comment-section";
 import { PostCard } from "@/components/blog/post-card";
 import { AffiliateClickTracker } from "@/components/blog/affiliate-click-tracker";
+import { PostBody } from "@/components/blog/post-body";
 import { PostNextSteps } from "@/components/blog/post-next-steps";
 import { OfferStatusNotice } from "@/components/blog/offer-status-notice";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -221,11 +222,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           riêng và chỉ nhận chuỗi slug. Lý do là ranh giới client, KHÔNG phải
           số byte — xem chú thích trong chính component đó, chỗ đo được rằng
           chuỗi thân bài nằm hai lần trong trang dù đi đường nào. */}
-      <div
-        data-affiliate-scope="post-body"
-        className="prose prose-neutral mt-8 max-w-none prose-headings:font-display prose-a:text-primary [&_:is(h1,h2,h3,h4)_a]:[font-weight:inherit]"
-        dangerouslySetInnerHTML={{ __html: post.body }}
-      />
+      <PostBody post={post} offers={offers} className="mt-8" />
       <AffiliateClickTracker scope="post-body" slug={post.slug} />
 
       <PostNextSteps

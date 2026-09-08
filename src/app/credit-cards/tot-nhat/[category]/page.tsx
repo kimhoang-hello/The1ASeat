@@ -75,6 +75,15 @@ export default async function BestCardsCategoryPage({
     .map((pick) => ({ pick, cards: pickOffers(pick, offers) }))
     .filter(({ cards }) => cards.length > 0);
 
+  // Không còn mục nào dựng được thì trang này không còn là trang.
+  //
+  // Đoạn mở đầu và đoạn kết vẫn render được, nhưng đoạn kết GỌI TÊN và nhắc
+  // CON SỐ của chính những thẻ vừa bị loại ("RBC® Avion® 70,000 điểm là offer
+  // mình sẽ nhìn đầu tiên") — một trang chỉ còn hai khối chữ nói về những tấm
+  // thẻ không hiện ở đâu cả thì tệ hơn 404. Chỉ xảy ra khi mọi thẻ của mọi
+  // pick cùng rơi khỏi Contentful giữa hai lượt revalidate.
+  if (sections.length === 0) notFound();
+
   // Vòng, không phải "ba mục đầu": với bốn mục thì lấy ba mục đầu sẽ để mục
   // thứ tư không có một link nội bộ nào ngoài trang tổng trỏ vào. Cùng lý do
   // đã ghi ở `siblingCardsInProgram`.
@@ -136,20 +145,29 @@ export default async function BestCardsCategoryPage({
         {/* Mục lục: sáu mục thẻ là quá dài để cuộn tìm, và tiêu đề mỗi mục
             mang sẵn tên thẻ nên danh sách này cũng là câu trả lời nhanh cho
             "trang này nói về những thẻ nào". */}
-        <nav aria-labelledby="best-toc" className="mt-8 rounded-xl border border-border bg-secondary p-4">
-          <p id="best-toc" className="text-sm font-semibold text-foreground">
-            {best("inThisPage")}
-          </p>
-          <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm">
-            {sections.map(({ pick, cards }) => (
-              <li key={pick.slug}>
-                <a href={`#${pick.slug}`} className="text-primary hover:underline">
-                  {pickHeading(pick, cards, category.bonusInHeading ?? false)}
-                </a>
-              </li>
-            ))}
-          </ol>
-        </nav>
+        {/* Ẩn hẳn khi không còn mục nào dựng được — `pickOffers` bỏ cả pick khi
+            thiếu thẻ (xem chú thích của nó), nên về lý thuyết phần thẻ của cả
+            trang có thể rỗng. Một khung "Trong trang này" trống thì tệ hơn là
+            không có khung. */}
+        {sections.length > 0 && (
+          <nav
+            aria-labelledby="best-toc"
+            className="mt-8 rounded-xl border border-border bg-secondary p-4"
+          >
+            <p id="best-toc" className="text-sm font-semibold text-foreground">
+              {best("inThisPage")}
+            </p>
+            <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm">
+              {sections.map(({ pick, cards }) => (
+                <li key={pick.slug}>
+                  <a href={`#${pick.slug}`} className="text-primary hover:underline">
+                    {pickHeading(pick, cards, category.bonusInHeading ?? false)}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        )}
 
         <div className="mt-10 space-y-10">
           {sections.map(({ pick, cards }) => (

@@ -1162,6 +1162,75 @@ trong pick. Mặc định vẫn là "một thẻ khớp là đủ".
    khai "con số này nói về annual fee" — đắt hơn nhiều so với xác suất trùng
    ngẫu nhiên đó. Ghi lại đây làm giới hạn đã biết.
 
+## Khối thẻ trong thân bài viết (07/09/2026)
+
+Bài viết nhắc tới một thẻ có trên site thì ngay dưới đoạn đó hiện khối thẻ —
+cùng component `CardSpotlight` với bốn trang "Các thẻ tốt nhất". Không ai đặt
+tay: `cardMentionsInPost` nhận ra tên thẻ trong thân bài LÚC RENDER, nên bài cũ
+cũng có, và mọi con số luôn là số của hôm nay chứ không phải số ngày đăng bài.
+
+**`bodyBlocks` là thứ làm việc này khả thi.** Thân bài từ Contentful là rich
+text, render ra một chuỗi HTML rồi bơm bằng `dangerouslySetInnerHTML` — không
+chèn được React vào giữa. Nay `lib/content` render TỪNG khối cấp cao nhất
+thành một chuỗi riêng (`BlogPost.bodyBlocks`), còn `body` là các khối đó nối
+lại. Đã đo trên cả 40 bài, 390 khối: nối lại KHÔNG lệch một byte so với cách
+render cả tài liệu. Cắt chuỗi HTML đã render bằng regex là cách kia, và nó vỡ
+ngay khi `</p>` nằm lồng trong blockquote hay list.
+
+**Bảng bí danh chỉ nhận tên CHỈ CANADA MỚI CÓ.** Luật này sinh ra từ một false
+positive đo được: bí danh `"amex gold"` khớp câu "Nếu có US credit card thì
+options khá nhiều như Amex Gold, Chase Sapphire Preferred…" và dựng khối
+American Express® Gold Rewards Card của Canada kèm nút Apply affiliate Canada —
+CTA cho đúng sản phẩm mà câu văn không nói tới. Nên Amex® Gold, Amex® Platinum,
+Amex® Green và các thẻ Marriott Bonvoy® KHÔNG có bí danh ngắn; chúng chỉ khớp
+khi bài viết trọn tên. Bỏ sót một khối thì không ai thiệt, gắn nhầm thẻ thì có.
+
+**Độ phủ thật, đo ngày 07/09/2026: 6/40 bài, 9 khối.** Con số nhỏ là đúng —
+phần lớn bài viết nói về chương trình điểm chứ không về một tấm thẻ. Chạy
+`npm run audit:card-mentions` để xem lại bất cứ lúc nào; nó cũng in ra thẻ nào
+chưa có bí danh (19/34) và đỏ khi bí danh trỏ tới thẻ không còn tồn tại.
+
+**Công bố affiliate in NGAY TRONG BÀI** khi bài có khối thẻ. Trước đây bài viết
+chỉ dựa vào footer, và như vậy là đủ khi link affiliate trong bài là chữ do tác
+giả viết. Khối thẻ đổi điều đó — nó là một CTA to đúng bằng cái trên trang thẻ,
+và mọi bề mặt khác có nút Apply đều in `OfferDisclosure` cạnh nút.
+
+**Một chỗ đã sửa vì `Map` nuốt dữ liệu:** bản đầu dựng
+`new Map(mentions.map(m => [m.afterBlock, m.card]))`, nên một đoạn nhắc hai thẻ
+liền nhau có hai mention cùng `afterBlock` và thẻ sau đè thẻ trước. Đo được
+trên nội dung thật: 2 trong 10 khối biến mất, ở hai bài khác nhau. Nay mỗi chỗ
+chèn giữ một MẢNG thẻ.
+
+## Vòng Codex bác bỏ bản vá (07/09/2026) — đừng đề xuất lại
+
+Vòng hai: bắt Codex bác chính bản vá nó vừa yêu cầu. Kết quả 2 ĐÚNG, 6 "bản vá
+hỏng"; bốn cái sửa, hai cái không.
+
+- **Đã sửa — `resolveProse` không tách câu bằng regex nữa.** `split(/(?<=\.)\s+/)`
+  vỡ với viết tắt: "Áp dụng tại TP. Hồ Chí Minh, offer kết thúc {expiresAt}."
+  tách ngay sau "TP." nên chỉ nửa sau bị bỏ, để lại một câu cụt. Nay cắt tại
+  dấu chấm cuối cùng trước token, và `assertExpiryTokenIsLast()` (chạy lúc
+  build) ép token phải nằm ở câu CUỐI đoạn — phép cắt không còn phải hiểu câu
+  là gì.
+- **Đã sửa — trang mục không còn thẻ nào thì `notFound()`.** Trước đó vẫn render
+  đoạn mở đầu và đoạn kết, mà đoạn kết gọi tên và nhắc con số của chính những
+  thẻ vừa bị loại.
+- **Đã sửa — `sharedFiguresVi` so với `volatileHaystack`** (welcome bonus,
+  annual fee, rebate) chứ không so với cả entry. Con số cũ còn sót trong
+  headline của thẻ vừa bị hạ đủ giữ audit xanh, tức trượt đúng ca sinh ra nó.
+- **Đã sửa — `containsFigure` lùi qua khoảng trắng.** "$ 70,000" có dấu cách
+  nên con số trần "70,000" vẫn khớp vào một con số tiền, phá bất biến đã ghi.
+- **Không sửa — `/bank-accounts/[slug]` không sáng dòng nào trong menu mobile.**
+  Có thật, nhưng CÓ TỪ TRƯỚC và không phải hệ quả của bản vá này. Thêm
+  `matchPrefix` cho dòng Ngân hàng KHÔNG phải một dòng sửa: `/bank-accounts` khi
+  đó cũng sáng trên `/bank-accounts/so-sanh`, mà trang đó đã có dòng riêng —
+  thành hai dòng sáng cùng lúc, đúng cái lỗi phép so đúng đang chặn.
+- **Không sửa — `headingWords` nối tên hai thẻ rồi so.** Thẻ thứ hai đổi
+  Visa → Mastercard mà thẻ đầu vẫn có "Visa" thì heading cũ lọt. Muốn bắt thì
+  phải biết từ nào thuộc thẻ nào, mà tiêu đề cố ý viết tắt ("CIBC® Aventura®
+  Visa Infinite* / Gold Visa*" bỏ chữ "Card"). Phép kiểm vẫn bắt được ca chính
+  — chữ trong tiêu đề không có trong tên thẻ NÀO. Ghi lại làm giới hạn đã biết.
+
 ## Chạy gì trước khi kết luận
 
 ```
@@ -1172,6 +1241,7 @@ npm run audit:trademarks    # thiếu ®/™
 npm run audit:rebates       # số rebate lệch FinlyWealth (tài khoản ngân hàng)
 npm run audit:rebate-prose  # badge rebate lệch số viết tay trong editor's take
 npm run audit:best-cards    # số viết tay ở 4 trang "Các thẻ tốt nhất" lệch Contentful
+npm run audit:card-mentions # độ phủ khối thẻ trong thân bài + bí danh mồ côi
 npm run audit:awards        # bảng award
 npm run audit:health        # nội dung ĐANG PHỤC VỤ: offer chết còn treo, thẻ mất chip, sắp hết hạn
 npm run audit:links         # mạng link nội bộ: trang nào không ai trỏ vào (crawl site đang chạy)
