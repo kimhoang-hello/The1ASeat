@@ -1233,14 +1233,27 @@ test("§20 — bản chụp hành vi khoá theo ENGINE_VERSION", async () => {
   try {
     expected = JSON.parse(await readFile(path, "utf8"));
   } catch {
-    // Chưa có bản chụp: ghi ra rồi báo để lần chạy sau có mốc so.
-    await writeFile(path, `${JSON.stringify(actual, null, 2)}\n`, "utf8");
+    // Chưa có bản chụp: ghi ra rồi báo để lần chạy sau có mốc so. File này
+    // PHẢI được commit — CI đọc nó, không dựng lại nó.
+    try {
+      await writeFile(path, `${JSON.stringify(actual, null, 2)}\n`, "utf8");
+    } catch {
+      /* chỉ đọc */
+    }
     assert.fail("chưa có bản chụp — đã ghi engine.snapshot.json, chạy lại để khoá");
   }
 
   if (expected!.engineVersion !== ENGINE_VERSION) {
     // Version đã tăng: đây là một lần đổi hành vi CÓ CHỦ Ý. Ghi lại bản chụp.
-    await writeFile(path, `${JSON.stringify(actual, null, 2)}\n`, "utf8");
+    //
+    // Ghi hỏng thì KHÔNG làm test đỏ: CI có thể chạy trên hệ thống file chỉ
+    // đọc, và một lỗi ghi ở đó nói về môi trường chứ không nói gì về engine.
+    // Bài test này canh HÀNH VI, không canh quyền ghi đĩa.
+    try {
+      await writeFile(path, `${JSON.stringify(actual, null, 2)}\n`, "utf8");
+    } catch {
+      /* chỉ đọc — bỏ qua */
+    }
     return;
   }
 
