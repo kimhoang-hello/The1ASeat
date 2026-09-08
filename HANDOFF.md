@@ -24,7 +24,7 @@ Tài liệu module: [`src/lib/recommendation/README.md`](src/lib/recommendation/
 
 Phase 1: 31 commit, 24 vòng Codex, 68 phát hiện.
 Phase 2: 12 commit, 11 vòng, 19 phát hiện.
-Phase 3: 15 commit, 9 vòng Codex (37 phát hiện, 11 P1, 2 bản vá bị bác) + 12 lỗi
+Phase 3: 18 commit, 9 vòng Codex (37 phát hiện, 11 P1, 2 bản vá bị bác) + 17 lỗi
 tự tìm khi đọc kết quả chạy. 237 test.
 
 ### Tiêu chí nghiệm thu Phase 3 — đã đạt
@@ -258,6 +258,36 @@ hoàn tác một thử nghiệm** khi file đó còn thay đổi chưa commit. N
 
 ---
 
+## 5b. Rà toàn vẹn cuối — 12 bảo đảm, đã kiểm bằng chạy thật
+
+| # | Bảo đảm | Cách kiểm |
+| --- | --- | --- |
+| 1 | Cùng state + data + version = cùng đầu ra | 3 lượt × 15 nhân vật; đảo thứ tự mảng; đảo thứ tự sản phẩm |
+| 2 | Affiliate không đổi thứ hạng | đảo cờ trên MỌI sản phẩm; + quét mã nguồn 21 file |
+| 3 | `NO_NEW_CARD` thắng được mọi sản phẩm | thắng 0.723, hơn MỌI thẻ, có mặt mọi lượt chạy |
+| 4 | Một thay đổi → thay đổi hiểu được | quét sức dồn $500→$20,000: 3 lần đổi người thắng, đơn điệu theo từng thẻ |
+| 5 | Thiếu dữ liệu → hạ tin cậy, không bịa | số điểm cần, khoảng cách, cờ cận dưới |
+| 6 | Không đếm trùng điểm chuyển được | mỗi đích quy đổi theo tỷ lệ CỦA NÓ, `sources` chung |
+| 7 | Không hack theo sản phẩm | 21 file: không slug, không id sản phẩm, không id chương trình |
+| 8 | Điều chỉnh biên tập có trần, giải thích được | §17 ±10%, mọi điều chỉnh có tên luật |
+| 9 | Chấm điểm riêng theo ý định | 4 ý định → 4 bộ thành phần khác nhau |
+| 10 | Mọi khuyến nghị có mã lý do truy được | bảng điểm cộng lại ĐÚNG bằng điểm cuối |
+| 11 | Một chỉ số cực đoan không đè bẹp phù hợp | bonus lớn nhất thua người dồn $500, thắng người hợp |
+| 12 | Dữ liệu hỏng/cũ/thiếu được nêu ra | chặng chưa giá, offer thiếu điều khoản, định giá cũ 6 năm |
+
+**Ba bài kiểm của chính vòng này THẤT BẠI, và cả ba lần là bài kiểm sai, không
+phải engine sai.** Đáng ghi lại vì cả ba đều là cái bẫy engine đã học cách
+tránh:
+
+| Bài kiểm sai | Vì sao |
+| --- | --- |
+| "mọi đích ≤ pool gốc" | ngầm giả định tỷ lệ 1:1; MR→Bonvoy là 1000:1200 |
+| "thẻ bonus lớn nhất phải nổi lên" | xếp hạng theo SỐ ĐIỂM; 160K TD Rewards (0.5¢) < 120K MR (1.8¢) |
+| "điểm thẻ thắng cuộc phải đơn điệu" | bước đầu người thắng là `NO_NEW_CARD` — so hai bảng khác nhau |
+
+> **Khi một bài kiểm đỏ, hỏi trước: bất biến mình vừa viết ra có ĐÚNG không?**
+> Ba lần trong một vòng, câu trả lời là không.
+
 ## 6. Rủi ro và giới hạn đã biết
 
 ### Chưa chọn database — **phải trả lời TRƯỚC Phase 5**
@@ -299,7 +329,7 @@ nói ra ngay đầu file:
 npx tsc --noEmit          # sạch (đã bao gồm scripts/)
 npm run lint              # sạch
 npm run build             # Compiled successfully
-npm run test:reco         # 257/257 pass
+npm run test:reco         # 267/267 pass
 npm run test:game         # 43/43 pass (không liên quan, kiểm không hồi quy)
 npm run audit:reco-data   # 0 lỗi, 9 cảnh báo (đều là chỗ trống có chủ ý)
 ```
