@@ -25,7 +25,25 @@
         "pointsGapTypical": null,
         "topEcosystemShare": null,
         "flexibilityScore": 0
-      }
+      },
+      "alternatives": [
+        [
+          "td-aeroplan-visa-infinite",
+          0.5738
+        ],
+        [
+          "scotiabank-momentum-visa-infinite-plus",
+          0.5577
+        ],
+        [
+          "amex-green",
+          0.5477
+        ],
+        [
+          "cibc-aeroplan-visa-infinite",
+          0.5314
+        ]
+      ]
     },
     {
       "user": "u_undeclared",
@@ -52,7 +70,25 @@
         "pointsGapTypical": null,
         "topEcosystemShare": null,
         "flexibilityScore": 0
-      }
+      },
+      "alternatives": [
+        [
+          "amex-marriott-bonvoy",
+          0.4641
+        ],
+        [
+          "amex-marriott-bonvoy-business",
+          0.4641
+        ],
+        [
+          "scotiabank-gold-amex",
+          0.4641
+        ],
+        [
+          "rbc-avion-visa-platinum",
+          0.4588
+        ]
+      ]
     },
     {
       "user": "u_aeroplan_heavy",
@@ -82,7 +118,25 @@
         "pointsGapTypical": null,
         "topEcosystemShare": 0.8909090909090909,
         "flexibilityScore": 0.13636363636363635
-      }
+      },
+      "alternatives": [
+        [
+          "rbc-avion-visa-platinum",
+          0.7054
+        ],
+        [
+          "westjet-rbc-world-elite-mastercard",
+          0.6689
+        ],
+        [
+          "td-first-class-travel-visa-infinite",
+          0.6299
+        ],
+        [
+          "bmo-viporter-world-elite-mastercard",
+          0.6269
+        ]
+      ]
     },
     {
       "user": "u_japan_funded",
@@ -108,7 +162,25 @@
         "pointsGapTypical": null,
         "topEcosystemShare": 0.2,
         "flexibilityScore": 1
-      }
+      },
+      "alternatives": [
+        [
+          "bmo-viporter-world-elite-mastercard",
+          0.4919
+        ],
+        [
+          "westjet-rbc-world-elite-mastercard",
+          0.488
+        ],
+        [
+          "amex-gold-rewards",
+          0.479
+        ],
+        [
+          "scotiabank-gold-amex",
+          0.4763
+        ]
+      ]
     },
     {
       "user": "u_japan_gap",
@@ -137,7 +209,25 @@
         "pointsGapTypical": null,
         "topEcosystemShare": 1,
         "flexibilityScore": 0
-      }
+      },
+      "alternatives": [
+        [
+          "amex-gold-rewards",
+          0.6408
+        ],
+        [
+          "amex-green",
+          0.6055
+        ],
+        [
+          "amex-business-gold",
+          0.595
+        ],
+        [
+          "amex-cobalt",
+          0.5897
+        ]
+      ]
     },
     {
       "user": "u_low_capacity",
@@ -163,7 +253,25 @@
         "pointsGapTypical": null,
         "topEcosystemShare": null,
         "flexibilityScore": 0
-      }
+      },
+      "alternatives": [
+        [
+          "amex-cobalt",
+          0.6495
+        ],
+        [
+          "td-aeroplan-visa-infinite",
+          0.6232
+        ],
+        [
+          "cibc-aeroplan-visa-infinite",
+          0.5852
+        ],
+        [
+          "amex-gold-rewards",
+          0.5811
+        ]
+      ]
     },
     {
       "user": "u_dup_benefit",
@@ -190,7 +298,25 @@
         "pointsGapTypical": null,
         "topEcosystemShare": 1,
         "flexibilityScore": 0
-      }
+      },
+      "alternatives": [
+        [
+          "amex-green",
+          0.656
+        ],
+        [
+          "amex-marriott-bonvoy",
+          0.6198
+        ],
+        [
+          "cibc-aventura-visa-infinite",
+          0.6131
+        ],
+        [
+          "td-cash-back-visa-infinite",
+          0.5854
+        ]
+      ]
     },
     {
       "user": "u_flexible",
@@ -217,7 +343,25 @@
         "pointsGapTypical": null,
         "topEcosystemShare": 0.2495114006514658,
         "flexibilityScore": 0.9381107491856677
-      }
+      },
+      "alternatives": [
+        [
+          "cibc-aeroplan-visa-infinite-privilege",
+          0.5984
+        ],
+        [
+          "td-aeroplan-visa-infinite-privilege",
+          0.5862
+        ],
+        [
+          "bmo-viporter-world-elite-mastercard",
+          0.5717
+        ],
+        [
+          "westjet-rbc-world-elite-mastercard",
+          0.5678
+        ]
+      ]
     },
     {
       "user": "u_sparse",
@@ -245,7 +389,25 @@
         "pointsGapTypical": null,
         "topEcosystemShare": null,
         "flexibilityScore": 0
-      }
+      },
+      "alternatives": [
+        [
+          "amex-marriott-bonvoy",
+          0.5838
+        ],
+        [
+          "amex-marriott-bonvoy-business",
+          0.5838
+        ],
+        [
+          "rbc-avion-visa-infinite-privilege",
+          0.5653
+        ],
+        [
+          "amex-gold-rewards",
+          0.5451
+        ]
+      ]
     },
     {
       "user": "u_student",
@@ -269,7 +431,25 @@
         "pointsGapTypical": null,
         "topEcosystemShare": null,
         "flexibilityScore": 0
-      }
+      },
+      "alternatives": [
+        [
+          "amex-green",
+          0.3519
+        ],
+        [
+          "td-aeroplan-visa-platinum",
+          0.2262
+        ],
+        [
+          "scotiabank-gold-amex",
+          0.2218
+        ],
+        [
+          "amex-marriott-bonvoy",
+          0.2155
+        ]
+      ]
     },
     {
       "user": "u_advanced",
@@ -295,7 +475,25 @@
         "pointsGapTypical": null,
         "topEcosystemShare": 0.3804405823614605,
         "flexibilityScore": 0.5625428767436542
-      }
+      },
+      "alternatives": [
+        [
+          "cibc-aeroplan-visa-infinite-privilege",
+          0.6103
+        ],
+        [
+          "bmo-viporter-world-elite-mastercard",
+          0.6025
+        ],
+        [
+          "amex-green",
+          0.6019
+        ],
+        [
+          "amex-marriott-bonvoy-business",
+          0.5958
+        ]
+      ]
     },
     {
       "user": "u_high_spend",
@@ -323,7 +521,25 @@
         "pointsGapTypical": null,
         "topEcosystemShare": 1,
         "flexibilityScore": 0
-      }
+      },
+      "alternatives": [
+        [
+          "wealthsimple-visa-infinite-privilege",
+          0.5852
+        ],
+        [
+          "amex-green",
+          0.5811
+        ],
+        [
+          "amex-marriott-bonvoy",
+          0.5665
+        ],
+        [
+          "scotiabank-gold-amex",
+          0.5649
+        ]
+      ]
     },
     {
       "user": "u_vague",
@@ -349,7 +565,25 @@
         "pointsGapTypical": null,
         "topEcosystemShare": null,
         "flexibilityScore": 0
-      }
+      },
+      "alternatives": [
+        [
+          "amex-green",
+          0.7045
+        ],
+        [
+          "amex-gold-rewards",
+          0.6777
+        ],
+        [
+          "amex-business-gold",
+          0.6754
+        ],
+        [
+          "amex-cobalt",
+          0.6653
+        ]
+      ]
     },
     {
       "user": "u_vn_funded",
@@ -378,7 +612,25 @@
         "pointsGapTypical": 0,
         "topEcosystemShare": 1,
         "flexibilityScore": 0
-      }
+      },
+      "alternatives": [
+        [
+          "amex-green",
+          0.4515
+        ],
+        [
+          "amex-cobalt",
+          0.3443
+        ],
+        [
+          "cibc-aeroplan-visa-infinite",
+          0.2873
+        ],
+        [
+          "amex-aeroplan",
+          0.2785
+        ]
+      ]
     },
     {
       "user": "u_vn_gap",
@@ -408,7 +660,25 @@
         "pointsGapTypical": 390000,
         "topEcosystemShare": 1,
         "flexibilityScore": 0
-      }
+      },
+      "alternatives": [
+        [
+          "amex-green",
+          0.5575
+        ],
+        [
+          "amex-cobalt",
+          0.5416
+        ],
+        [
+          "cibc-aeroplan-visa-infinite-privilege",
+          0.5049
+        ],
+        [
+          "td-aeroplan-visa-infinite-privilege",
+          0.4931
+        ]
+      ]
     }
   ]
 }

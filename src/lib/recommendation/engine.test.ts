@@ -1235,16 +1235,42 @@ test("§20 — bản chụp hành vi khoá theo ENGINE_VERSION", async () => {
         confidence: first?.confidence.level ?? null,
         reasonCodes: first?.reasonCodes ?? [],
         numbers: first?.numbers ?? null,
+        // Ghi cả các gợi ý thay thế: một thay đổi chỉ xáo trộn thứ hạng phía
+        // dưới vẫn là một thay đổi HÀNH VI, và bản chụp chỉ nhìn ứng viên
+        // đứng đầu sẽ để nó trôi qua. Đã kiểm thật — sửa hình phạt của §16
+        // Rule 1 không đổi người thắng của `vietnamTripFunded` (là
+        // NO_NEW_CARD) mà chỉ đảo thứ tự bên dưới.
+        alternatives:
+          first?.alternatives.map((candidate) => [
+            candidate.productSlug,
+            Number(candidate.score.toFixed(4)),
+          ]) ?? [],
       };
     }),
   };
 
+  const raw = await readFile(path, "utf8").catch(() => null);
+
   if (process.env.UPDATE_ENGINE_SNAPSHOT === "1") {
+    // Đường cập nhật KHÔNG được ban phước cho một thay đổi hành vi chưa tăng
+    // version. Không có phép kiểm này thì cách dễ nhất để làm test xanh trở
+    // lại là chạy đúng lệnh cập nhật — và bất biến §20 mất sạch ý nghĩa, vì
+    // hai kết quả khác nhau lại được lưu dưới cùng một version.
+    if (raw !== null) {
+      const current = JSON.parse(raw) as typeof actual;
+      const drifted =
+        JSON.stringify(current.runs) !== JSON.stringify(actual.runs);
+      assert.ok(
+        !(current.engineVersion === ENGINE_VERSION && drifted),
+        `Hành vi đã đổi nhưng ENGINE_VERSION vẫn là ${ENGINE_VERSION}. ` +
+          "TĂNG ENGINE_VERSION trước rồi mới cập nhật bản chụp — cập nhật ở " +
+          "đây là ghi đè một thay đổi không ai đánh dấu.",
+      );
+    }
     await writeFile(path, `${JSON.stringify(actual, null, 2)}\n`, "utf8");
     return;
   }
 
-  const raw = await readFile(path, "utf8").catch(() => null);
   assert.ok(
     raw !== null,
     "thiếu engine.snapshot.json — chạy `UPDATE_ENGINE_SNAPSHOT=1 npm run test:reco` rồi COMMIT file đó",
