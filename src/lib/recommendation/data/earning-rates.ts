@@ -208,6 +208,9 @@ const RATES: Record<string, { program: string; rates: RateSeed[] }> = {
       ["airline_direct", 3],
       ["dining", 2],
       ["food_delivery", 2],
+      ["hotel", 2, { restrictedTo: "Khách sạn Hyatt®" }],
+      ["hotel", 1.25],
+      ["everything_else", 1.25],
     ],
   },
 
@@ -258,10 +261,12 @@ const RATES: Record<string, { program: string; rates: RateSeed[] }> = {
     program: "aeroplan",
     rates: [
       ["airline_direct", 3],
-      ["hotel", 2, { restrictedTo: "Tại Canada" }],
-      ["hotel", 1.25],
-      ["car_rental", 2, { restrictedTo: "Tại Canada" }],
-      ["car_rental", 1.25],
+      // Amex® đã bỏ giới hạn "tại Canada" khỏi nhóm khách sạn & thuê xe: chú
+      // thích 10 trên trang thẻ nay chỉ nói "eligible hotel or car rental
+      // purchases", không nhắc nơi chi. Kiểm lại 08/09/2026.
+      ["hotel", 2.5, { restrictedTo: "Khách sạn Hyatt®" }],
+      ["hotel", 2],
+      ["car_rental", 2],
       ["everything_else", 1.25],
     ],
   },
@@ -337,6 +342,8 @@ const RATES: Record<string, { program: string; rates: RateSeed[] }> = {
       ["airline_direct", 2],
       ["dining", 1.5],
       ["food_delivery", 1.5],
+      ["hotel", 1.5, { restrictedTo: "Khách sạn Hyatt®" }],
+      ["hotel", 1],
       ["everything_else", 1],
     ],
   },

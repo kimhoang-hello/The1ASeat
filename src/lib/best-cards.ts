@@ -320,7 +320,7 @@ export const BEST_CARDS_CATEGORIES: BestCardsCategory[] = [
         roleVi: "Thẻ Premium tốt nhất",
         bodyVi: [
           "Nếu Air Canada® là hãng bạn bay thường xuyên và lounge access quan trọng, Aeroplan® Reserve nằm ở một tier hoàn toàn khác.",
-          "Welcome bonus hiện tại lên đến 85,000 điểm Aeroplan®. Thẻ earn 3X Aeroplan® trên Air Canada® và Air Canada Vacations®, 2X cho dining và food delivery tại Canada, đồng thời có Maple Leaf Lounge® access, Priority Pass và các quyền lợi priority airport.",
+          "Welcome bonus hiện tại lên đến 85,000 điểm Aeroplan®. Thẻ earn 3X Aeroplan® trên Air Canada® và Air Canada Vacations®, 2X cho dining và food delivery tại Canada cùng chi tiêu tại khách sạn Hyatt®, 1.25X cho mọi chi tiêu khác, đồng thời có Maple Leaf Lounge® access, Priority Pass, hạng World of Hyatt® Discoverist và các quyền lợi priority airport.",
           "Đổi lại, annual fee là $599.",
           "Đây không phải thẻ mình khuyên mở chỉ để lấy points. Giá trị của nó nằm ở việc bạn thực sự sử dụng Air Canada® benefits nhiều lần trong năm. Nếu một năm chỉ bay Air Canada® một hai chuyến, rất khó justify $599 chỉ bằng lounge access.",
         ],

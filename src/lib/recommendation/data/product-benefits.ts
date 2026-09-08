@@ -164,10 +164,14 @@ const BY_PRODUCT: Record<string, BenefitSeed[]> = {
   ],
 
   "amex-aeroplan-reserve": [
-    ["maple-leaf-lounge"],
-    ["airport-lounge-passes", null, { text: "Priority Pass" }],
+    ["maple-leaf-lounge", 1, { text: "Không giới hạn tại Bắc Mỹ, kèm 1 khách và Air Canada® Café" }],
+    ["airport-lounge-passes", null, { text: "Priority Pass — site không nêu số lượt" }],
     ["priority-boarding", 8, { text: "Check-in, boarding và hành lý cho tối đa 8 người đi cùng" }],
-    ["companion-pass", null, { minimumAnnualSpend: 25000 }],
+    ["free-checked-bag", 8],
+    ["companion-pass", 99, { text: "Toàn cầu, từ $99 đến tối đa $599 chưa gồm thuế phí", minimumAnnualSpend: 25000 }],
+    ["nexus-credit", 100, { text: "Mỗi 4 năm" }],
+    ["hotel-status", null, { text: "World of Hyatt® Discoverist, kèm 5 đêm tính hạng mỗi năm" }],
+    ["airline-status-credits", 25000, { text: "1,000 SQC cho mỗi $5,000 chi tiêu, tối đa 25,000/năm" }],
     ["travel-medical-insurance", 5000000],
   ],
 
@@ -202,10 +206,17 @@ const BY_PRODUCT: Record<string, BenefitSeed[]> = {
   ],
 
   "amex-aeroplan-business-reserve": [
-    ["maple-leaf-lounge", 1, { text: "Không giới hạn cho chủ thẻ và 1 khách, kèm Air Canada® Café" }],
+    // "Không giới hạn" là số LƯỢT, không phải số lounge: amex.ca viết "select
+    // Air Canada Maple Leaf Lounges", còn trang co-brand của Air Canada® viết
+    // thẳng "Unlimited Maple Leaf Lounge Access in North America". Hai câu
+    // không chọi nhau — vào không giới hạn lượt, ở nhóm lounge Bắc Mỹ. Đã gỡ
+    // nhầm chữ "không giới hạn" ngày 08/09/2026 rồi trả lại cùng ngày.
+    ["maple-leaf-lounge", 1, { text: "Không giới hạn tại Bắc Mỹ, kèm 1 khách và Air Canada® Café" }],
+    ["airport-lounge-passes", null, { text: "Priority Pass — site không nêu số lượt" }],
     ["free-checked-bag", 8],
     ["nexus-credit", 100, { text: "Mỗi 4 năm" }],
     ["companion-pass", 99, { text: "Worldwide Companion Pass từ $99", minimumAnnualSpend: 25000 }],
+    ["hotel-status", null, { text: "World of Hyatt® Discoverist, kèm 5 đêm tính hạng mỗi năm" }],
     ["airline-status-credits", 25000, { text: "1,000 SQC cho mỗi $5,000 chi tiêu, tối đa 25,000/năm" }],
   ],
 
