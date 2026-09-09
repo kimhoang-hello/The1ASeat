@@ -36,7 +36,15 @@ export function escapeHtml(value: string): string {
 // styling — email clients don't apply our stylesheet reliably, so every tag
 // needs its own inline style, same as the hand-written paragraphs elsewhere
 // in this file.
-export function renderPostBodyForEmail(document: Document): string {
+export function renderPostBodyForEmail(document: Document, postPath?: string): string {
+  // Gốc để giải `?query`/`#fragment` PHẢI là URL của chính bài đang gửi, không
+  // phải `SITE_URL` trần — vòng phản biện Codex bắt đúng chỗ này ở bản trước:
+  // một link `?cards=x` viết trong bài `/blog/abc` là "cùng trang, đổi query",
+  // và giải nó trên gốc trần cho ra trang chủ kèm query lạ, không phải trang
+  // đang đọc. Không có `postPath` (gọi từ chỗ khác trong tương lai) thì lùi về
+  // gốc trần — vẫn đúng với mọi link CÓ đường dẫn riêng (`/credit-cards/...`,
+  // phần lớn link thật trong thân bài), chỉ sai với hai dạng hiếm `?`/`#` trần.
+  const base = `${SITE_URL}${postPath ?? ""}`;
   return documentToHtmlString(document, {
     renderMark: {
       [MARKS.BOLD]: (text) => `<strong style="font-weight:700;">${text}</strong>`,
@@ -61,8 +69,23 @@ export function renderPostBodyForEmail(document: Document): string {
         const text = next(node.content);
         const href = safeHref(uri);
         if (href === null) return text;
+        // `rel` phải tính trên `href` GỐC (có thể là đường tương đối
+        // `/credit-cards/...`), giống hệt cách trang web tính — `relForUrl`
+        // chỉ khớp `^https?://` nên link nội bộ trả `null`, đúng ý (không cần
+        // sponsored/nofollow). Chỉ CHUỖI IN RA `href=` mới cần biến thành
+        // tuyệt đối, vì email không có gốc `ghe1a.com` như trang web — một
+        // link tương đối gửi nguyên vào email sẽ giải theo domain của mail
+        // client (hoặc vô hiệu), và bản tin gửi rồi thì không sửa lại được.
+        //
+        // `safeHref` chấp nhận NHIỀU dạng nội bộ hơn chỉ `/...` — `?query`,
+        // `#fragment`, và cả biến thể gõ nhầm `\credit-cards/...` (dấu gạch
+        // chéo ngược). So `startsWith("/")` bỏ sót ba dạng đó — vòng phản
+        // biện Codex bắt đúng chỗ này. Dùng `URL` để GIẢI trên gốc thật thay
+        // vì tự ghép chuỗi: cùng nguyên tắc "để chính bộ giải URL trả lời"
+        // mà `safeHref` đã áp dụng, và nó tự chuẩn hoá `\` thành `/` luôn.
         const rel = relForUrl(href);
-        return `<a href="${escapeHtml(href).replace(/"/g, "&quot;")}"${rel ? ` rel="${rel}"` : ""} style="${emailLinkStyle}">${text}</a>`;
+        const absoluteHref = /^(https?|mailto|tel):/i.test(href) ? href : new URL(href, base).toString();
+        return `<a href="${escapeHtml(absoluteHref).replace(/"/g, "&quot;")}"${rel ? ` rel="${rel}"` : ""} style="${emailLinkStyle}">${text}</a>`;
       },
     },
   });

@@ -443,7 +443,7 @@ async function maybeNotifyNewPost(payload: unknown, deadline: number): Promise<b
   const bodyHtml = `
     <p style="${emailParagraphStyle}" class="email-text">Có bài viết mới trên Ghế 1A:</p>
     <p style="${emailHeadlineStyle}" class="email-brand">${escapeHtml(title)}</p>
-    ${bodyDocument ? renderPostBodyForEmail(bodyDocument) : ""}
+    ${bodyDocument ? renderPostBodyForEmail(bodyDocument, `/blog/${slug}`) : ""}
   `;
   const html = renderSubscriberEmailHtml({
     title,

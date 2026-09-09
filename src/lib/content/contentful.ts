@@ -100,7 +100,30 @@ export function safeHref(uri: string): string | null {
   // phép so scheme, nên bỏ chúng TRƯỚC khi so, không phải sau — VÀ trả về đúng
   // chuỗi đã bỏ, để không chỗ nào phía sau còn nhìn thấy bản thô.
   const cleaned = trimmed.replace(/[\u0000-\u001F\u007F]/g, "");
-  return /^(https?|mailto|tel):/i.test(cleaned) ? cleaned : null;
+  // Lần thứ TƯ cùng một lớp lỗi: regex chỉ so TIỀN TỐ scheme (`/^https?:/`)
+  // mà không đòi cú pháp `//` theo sau, nên `https:\finlywealth.com/r/x` (một
+  // gạch chéo ngược, không phải `//`) qua được cửa và bị trả về NGUYÊN VĂN có
+  // gạch chéo ngược — `relForUrl` (khớp `^https?://`, hai gạch chéo xuôi)
+  // không nhận ra nó là link ngoài, nên site in link referral này mà THIẾU
+  // `sponsored`.
+  //
+  // Bản vá ĐẦU dùng `new URL(cleaned)` KHÔNG base để tự giải rồi trả
+  // `.toString()` — và vòng phản biện Codex bắt đây là BẢN VÁ HỎNG: không có
+  // base, `new URL` coi "https:\host" là một URL ĐỘC LẬP nên đọc host là
+  // "host" → link ngoài. Nhưng trình duyệt LUÔN giải `href` với base là
+  // chính trang đang đứng; với base đó, vì scheme "https" TRÙNG scheme của
+  // trang, WHATWG cho vào "special-authority-slashes state" và bỏ qua nhóm
+  // "https:" dư — phần còn lại ("\host/path", gạch ngược đọc như gạch xuôi)
+  // trở thành ĐƯỜNG DẪN CÙNG ORIGIN `https://ghe1a.com/host/path`, không
+  // phải link ra ngoài. Hai cách giải ra hai đích khác hẳn nhau — không có
+  // cách nào "biết chắc" người viết định trỏ đi đâu.
+  //
+  // Nên KHÔNG đoán: một scheme tuyệt đối phải viết ĐÚNG `//` mới được chấp
+  // nhận. Thiếu `//` thì trả `null` — mất một link viết sai còn hơn giữ một
+  // link mà chính trình duyệt và server đọc ra hai đích khác nhau. Đã đối
+  // chiếu: cả 35 link thật đang có trên site đều viết đúng `//`.
+  if (/^(mailto|tel):/i.test(cleaned)) return cleaned;
+  return /^https?:\/\//i.test(cleaned) ? cleaned : null;
 }
 
 export function renderPostBody(document: Document): string {
