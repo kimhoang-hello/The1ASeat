@@ -247,7 +247,7 @@ test("§10 — trọng số đúng như spec viết, và cộng lại đúng 0.9
  * §7 — không đếm trùng điểm chuyển được
  * ================================================================== */
 
-test("§7 — 100K MR KHÔNG đồng thời là 100K Aeroplan + 100K Avios", () => {
+test("§7 — 100K MR KHÔNG đồng thời là 100K Aeroplan® + 100K Avios®", () => {
   const state: UserState = {
     ...beginnerNoCards,
     balances: [{ userId: beginnerNoCards.profile.id, programId: AMEX_MR, balance: 100_000, updatedAt: ASOF }],
@@ -262,7 +262,7 @@ test("§7 — 100K MR KHÔNG đồng thời là 100K Aeroplan + 100K Avios", () 
   // sai đó nhìn thấy được: cùng một nguồn xuất hiện ở cả hai.
   assert.deepEqual(toAeroplan.sources, [AMEX_MR]);
   assert.deepEqual(toAvios.sources, [AMEX_MR]);
-  assert.equal(toAeroplan.direct, 0, "không có Aeroplan nào nằm sẵn");
+  assert.equal(toAeroplan.direct, 0, "không có Aeroplan® nào nằm sẵn");
 });
 
 test("§7 — tập trung danh mục KHÔNG cộng pool linh hoạt vào từng nơi", () => {
@@ -578,9 +578,9 @@ test("§16 Rule 5 — thẻ đang giữ KHÔNG phải ứng viên", () => {
 });
 
 test("§16 Rule 6 — quyền lợi chỉ trùng khi CÙNG hãng", () => {
-  // `duplicateBagBenefit` giữ TD® Aeroplan®, tức đã có miễn hành lý Air
-  // Canada®. Thẻ United® cho miễn hành lý United® — KHÁC hãng, vẫn là giá trị
-  // mới. Cờ `duplicatesAcrossCards` một mình sẽ triệt tiêu nó.
+  // `duplicateBagBenefit` giữ TD® Aeroplan®, tức đã có miễn hành lý
+  // Air Canada®. Thẻ United® cho miễn hành lý United® — KHÁC hãng, vẫn là
+  // giá trị mới. Cờ `duplicatesAcrossCards` một mình sẽ triệt tiêu nó.
   const result = run(duplicateBagBenefit).results[0];
   const united = [result.primaryAction, ...result.alternatives].find(
     (c) => c.productSlug === "united-mileageplus-neo-world-elite-mastercard",
@@ -2228,8 +2228,9 @@ test("một chỉ số CỰC ĐOAN không đè bẹp được phù hợp", () =>
   // Thẻ bonus lớn nhất bộ dữ liệu, đặt cạnh một người không thể đạt mốc chi
   // và không chịu nổi phí. Nếu `offer_quality` một mình kéo được nó lên đầu
   // thì mọi vế phù hợp của §14 là trang trí.
-  // "Lớn nhất" phải đo bằng GIÁ TRỊ, không bằng SỐ ĐIỂM. 160,000 điểm TD
-  // Rewards® (0.5¢) đáng $800; 120,000 Membership Rewards® (1.8¢) đáng $2,160.
+  // "Lớn nhất" phải đo bằng GIÁ TRỊ, không bằng SỐ ĐIỂM. 160,000 điểm
+  // TD Rewards® (0.5¢) đáng $800; 120,000 Membership Rewards® (1.8¢) đáng
+  // $2,160.
   // Bài kiểm đầu tiên mình viết xếp hạng theo số điểm rồi kết luận nhầm rằng
   // engine đang chôn vùi thẻ bonus lớn nhất — trong khi chính engine mới là
   // bên quy đổi đúng. Đây là cùng một cái bẫy §11 và luật đơn vị của nhật ký

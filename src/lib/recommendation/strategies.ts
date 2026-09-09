@@ -65,8 +65,8 @@ export interface TripCoverage {
  *
  *  1. **Cộng qua các chương trình.** Đó là phép đếm trùng §7 cấm: người dùng
  *     dồn điểm về MỘT chương trình để đặt vé, nên "điểm tiếp cận được" của
- *     Aeroplan® và của Avios® đang tranh nhau cùng một pool Membership
- *     Rewards®.
+ *     Aeroplan® và của Avios® đang tranh nhau cùng một pool
+ *     Membership Rewards®.
  *  2. **So với một khoảng GỘP.** Khoảng gộp trộn mức thấp của chương trình
  *     này với mức cao của chương trình kia. 150,000 dặm AAdvantage® phủ đủ
  *     chuyến 140,000 dặm của chính AAdvantage®, nhưng đem so với trần 238,000

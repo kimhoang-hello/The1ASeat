@@ -159,9 +159,9 @@ export const BEST_CARDS_CATEGORIES: BestCardsCategory[] = [
       {
         slug: "td-first-class-travel-visa-infinite",
         bodyVi: [
-          "Offer hiện tại lên đến 160,000 điểm TD Rewards: 20,000 điểm sau giao dịch đầu tiên và 140,000 điểm sau khi chi $7,500 trong 180 ngày đầu. Annual fee $139 được miễn năm đầu.",
-          "160,000 điểm TD Rewards tương đương khoảng $800 travel khi redeem qua Expedia® For TD. Thẻ còn có $100 TD Travel Credit, 4 lượt airport lounge mỗi năm và Birthday Bonus lên đến 10,000 điểm.",
-          "Điểm cần hiểu trước khi apply là TD Rewards không phải transferable points. Bạn không thể chuyển chúng sang Aeroplan® rồi dùng để săn Business Class. Đây là một currency tương đối đơn giản: book travel rồi dùng points để giảm chi phí.",
+          "Offer hiện tại lên đến 160,000 điểm TD Rewards®: 20,000 điểm sau giao dịch đầu tiên và 140,000 điểm sau khi chi $7,500 trong 180 ngày đầu. Annual fee $139 được miễn năm đầu.",
+          "160,000 điểm TD Rewards® tương đương khoảng $800 travel khi redeem qua Expedia® For TD. Thẻ còn có $100 TD Travel Credit, 4 lượt airport lounge mỗi năm và Birthday Bonus lên đến 10,000 điểm.",
+          "Điểm cần hiểu trước khi apply là TD Rewards® không phải transferable points. Bạn không thể chuyển chúng sang Aeroplan® rồi dùng để săn Business Class. Đây là một currency tương đối đơn giản: book travel rồi dùng points để giảm chi phí.",
         ],
         bestForVi:
           "Người muốn travel rewards dễ sử dụng và không muốn học cách transfer points sang airline programs.",
@@ -238,7 +238,7 @@ export const BEST_CARDS_CATEGORIES: BestCardsCategory[] = [
         roleVi: "Thẻ travel đơn giản nhất",
         bodyVi: [
           "Không phải ai cũng muốn tìm award availability hay muốn tìm hiểu về transfer partners.",
-          "TD First Class Travel® giải quyết bài toán đó theo cách đơn giản hơn: earn điểm TD Rewards rồi dùng points cho travel, đặc biệt qua Expedia® For TD. Offer hiện tại lên đến 160,000 điểm TD Rewards, tương đương khoảng $800 travel khi redeem qua Expedia® For TD, cùng annual fee năm đầu được miễn.",
+          "TD First Class Travel® giải quyết bài toán đó theo cách đơn giản hơn: earn điểm TD Rewards® rồi dùng points cho travel, đặc biệt qua Expedia® For TD. Offer hiện tại lên đến 160,000 điểm TD Rewards, tương đương khoảng $800 travel khi redeem qua Expedia® For TD, cùng annual fee năm đầu được miễn.",
           "Bạn không có cơ hội đổi 70,000 points lấy Business Class trị giá vài nghìn đô như với Aeroplan®, nhưng cũng không phải mất thời gian săn award availability.",
         ],
         bestForVi: "Người muốn travel rewards đơn giản.",

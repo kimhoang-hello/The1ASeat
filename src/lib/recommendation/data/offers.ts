@@ -278,7 +278,7 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "td-first-class-travel-visa-infinite",
-    name: "160,000 điểm TD Rewards",
+    name: "160,000 điểm TD Rewards®",
     headline: 160000,
     currency: "td-rewards",
     // Cùng lý do với Scotiabank® Scene+™ ở trên: TD® nâng mức này từ 01/09,

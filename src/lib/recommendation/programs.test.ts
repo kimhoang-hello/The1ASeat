@@ -30,7 +30,7 @@ test("mỗi chương trình có mặt trên trang thẻ đều nhận diện đ�
     ["100,000 điểm Avion®", "avion"],
     ["60,000 điểm Aventura®", "aventura"],
     ["50,000 điểm Scene+™", "scene-plus"],
-    ["160,000 điểm TD Rewards", "td-rewards"],
+    ["160,000 điểm TD Rewards®", "td-rewards"],
     ["70,000 điểm VIPorter®", "viporter"],
     ["25,000 miles MileagePlus®", "mileageplus"],
     ["70,000 điểm WestJet®", "westjet"],

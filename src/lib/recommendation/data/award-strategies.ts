@@ -143,8 +143,8 @@ const SEEDS: StrategySeed[] = [
     sourceUrl:
       "https://www.aa.com/web/i18n/aadvantage-program/use-miles/partner-airline-flights.html",
     note:
-      "Chỉ áp cho chặng do đối tác khai thác; máy bay của chính American " +
-      "Airlines® được định giá động và không dùng bảng này.",
+      "Chỉ áp cho chặng do đối tác khai thác; máy bay của chính " +
+      "American Airlines® được định giá động và không dùng bảng này.",
   },
   {
     key: "asia-miles-ca-sea",
@@ -405,7 +405,7 @@ export const UNQUOTABLE_AWARD_PROGRAMS: { programId: string; reason: string }[] 
   {
     programId: "avios",
     reason:
-      "British Airways® và Qatar® chia bảng giá theo từng hãng khai thác, có " +
+      "British Airways® và Qatar Airways® chia bảng giá theo từng hãng khai thác, có " +
       "mức peak/off-peak, và devalue đối tác lần gần nhất 15/12/2025. Không " +
       "nguồn công khai nào dựng lại đủ tin cậy.",
   },

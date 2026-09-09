@@ -63,7 +63,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     // với `award-charts.ts`.
     id: id<PointsProgramId>("avios"),
     slug: "avios",
-    name: "Avios",
+    name: "Avios®",
     programType: "airline",
     transferable: false,
     calculatorProgramId: null,
@@ -131,7 +131,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     // nào — chính là điều làm nó khác Aeroplan về bản chất, không chỉ về giá.
     id: id<PointsProgramId>("td-rewards"),
     slug: "td-rewards",
-    name: "TD Rewards",
+    name: "TD Rewards®",
     programType: "fixed_value",
     transferable: false,
     calculatorProgramId: null,

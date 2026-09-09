@@ -275,7 +275,7 @@ const BY_PRODUCT: Record<string, BenefitSeed[]> = {
   ],
 
   "bmo-viporter-world-elite-mastercard": [
-    ["companion-pass", null, { text: "Khứ hồi $0 base fare trên Porter", minimumAnnualSpend: 9000 }],
+    ["companion-pass", null, { text: "Khứ hồi $0 base fare trên Porter®", minimumAnnualSpend: 9000 }],
     ["free-checked-bag", 8, { text: "Ký gửi và xách tay, tối đa 8 khách đi cùng" }],
     ["airport-lounge-passes", null, { text: "Mastercard® Travel Pass" }],
   ],

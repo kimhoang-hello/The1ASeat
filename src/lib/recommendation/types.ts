@@ -217,10 +217,10 @@ export interface Issuer {
  * MỘT lần dù nó với tới năm chương trình.
  */
 export type PointsProgramType =
-  | "flexible_bank" // Amex MR, RBC Avion — chuyển đi nhiều nơi
+  | "flexible_bank" // Amex® MR, RBC Avion® — chuyển đi nhiều nơi
   | "airline"
   | "hotel"
-  | "fixed_value" // TD Rewards, CIBC Aventura — quy ra tiền vé theo bảng cố định
+  | "fixed_value" // TD Rewards®, CIBC Aventura® — quy ra tiền vé theo bảng cố định
   | "cash_back";
 
 export interface PointsProgram {
@@ -843,7 +843,7 @@ export type EligibilityRuleType =
   | "minimum_household_income"
   | "residency"
   | "existing_cardholder_excluded" // đang giữ thẻ này thì không có welcome bonus
-  | "previous_cardholder_excluded" // từng giữ — Amex "once in a lifetime"
+  | "previous_cardholder_excluded" // từng giữ — Amex® "once in a lifetime"
   | "business_required"
   | "student_status_required"
   | "banking_relationship_required";

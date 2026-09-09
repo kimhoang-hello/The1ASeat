@@ -1415,6 +1415,68 @@ Xếp theo hậu quả khi sai, không theo độ khó của code:
 5. `lib/content/*` — cache và revalidate.
 6. `lib/job-auth`, `lib/rate-limit` — lớp bảo vệ duy nhất của route công khai.
 
+## Vòng kiểm toàn diện 09/09/2026 — đừng đề xuất lại
+
+Mọi gate xanh trước khi bắt đầu. `audit:trademarks` báo 171 chỗ — rà tay từng
+nhóm thì hoá ra phần lớn là MỘT lỗi của chính script, không phải 171 lỗi nội
+dung.
+
+**Lỗi script: cụm thương hiệu học sai khi bị NGẮT DÒNG.** Script học cụm bằng
+cách lùi về trước qua các từ viết hoa liền nhau, nhưng nó xử lý từng DÒNG
+riêng — nếu một thương hiệu hai từ bị wrap qua dòng khác (`"...miễn hành lý
+Air\n// Canada®..."`), script chỉ thấy nửa sau nằm một mình trên dòng có dấu
+®, và học nhầm "Canada" hay "Rewards" là thương hiệu độc lập. Hai cụm đó sau
+đó khớp vào MỌI chỗ viết "Canada" hay "Rewards" bình thường trên site, tạo ra
+143/171 phát hiện giả (Canada 116 chỗ, Rewards 27 chỗ). Đã vá tại nguồn — reflow
+3 comment trong `engine.test.ts` (dòng ~581, ~2231) và `strategies.ts` (dòng
+~68) để "Air Canada®" và "Membership Rewards®"/"TD Rewards®" không còn nằm vắt
+qua ranh dòng — không sửa script, vì nội dung comment vốn đã đúng, chỉ là chỗ
+xuống dòng vô tình rơi giữa cụm.
+
+Cùng lỗi làm lộ một chỗ NGẮT DÒNG THẬT trong dữ liệu (không phải comment):
+`award-strategies.ts` viết `"...American " + "Airlines® được định giá..."` —
+"American Airlines®" đúng nhưng bị xẻ đôi bởi phép nối chuỗi, nên script học
+nhầm "Airlines" là thương hiệu riêng. Đã nối lại chuỗi ở điểm ngắt khác, giữ
+nguyên văn bản render ra.
+
+**Nếu gặp lại một thương hiệu học sai theo kiểu "từ đơn lẽ ra phải ghép":**
+tìm dòng nào có ký hiệu ®/™ đứng một mình đầu dòng trong file `.ts`/`.tsx`
+(comment hoặc chuỗi nối `+`) — gần như chắc chắn là chỗ vắt dòng, không phải
+171 lỗi nội dung thật. `grep -rnB1 -E "^\s*(//|\*)? *TÊN®" --include="*.ts"
+src/` tìm được ngay.
+
+**Sau khi lọc hết nhiễu, còn 24 chỗ THẬT:** BMO® VIPorter® thiếu ® trên
+"Porter" (3 chỗ Contentful + 1 chỗ `product-benefits.ts`), Amex® Platinum và
+Amex® Business Platinum thiếu ™ trên "Global Lounge Collection" (2 chỗ
+Contentful), TD First Class Travel® thiếu ® trên "TD Rewards" (5 chỗ
+Contentful qua CMA + 4 chỗ `best-cards.ts` + `points-programs.ts`/`offers.ts`/
+`programs.test.ts`), và `award-strategies.ts` viết nhầm "Qatar®" thay vì
+"Qatar Airways®" (mọi chỗ khác trên site đều dùng "Qatar Airways®" cho lần
+nhắc đầu). Tất cả đã sửa và publish; `test:reco` chạy lại xanh (272/272) sau
+khi cập nhật `engine.snapshot.json` bằng `UPDATE_ENGINE_SNAPSHOT=1` — đổi
+`name` trong `points-programs.ts`/`offers.ts` đổi dấu vân tay dữ liệu chứ
+không đổi hành vi, đúng cơ chế §20 đã thiết kế.
+
+**Quan trọng: `program.name` trong `points-programs.ts` RENDER THẲNG ra
+`/calculator`, `/award-flight-finder`, `/transfer-partners`, dropdown thẻ và
+`post-next-steps`** (`program.name` xuất hiện trực tiếp trong JSX ở nhiều
+component) — đây KHÔNG phải dữ liệu nội bộ của engine như phần lớn
+`src/lib/recommendation/data/*`. "Avios" và "TD Rewards" thiếu ® ở đây là lỗi
+thật đang hiện sống trên site, không phải nhiễu của script. Khi audit
+trademark tương lai bắt trúng field `name` này, kiểm ngay — đừng xếp chung với
+nhiễu dòng-vắt.
+
+**Hai chỗ CỐ Ý không sửa, đừng đề xuất lại:**
+- `sourceUrl: RBC_SOURCE` trong `transfer-paths.ts` (4 chỗ) — đây là TÊN BIẾN
+  JS, không phải chữ hiển thị. Không thể thêm ® vào một identifier (`RBC®_SOURCE`
+  không phải cú pháp hợp lệ). Script khớp nhầm chuỗi con "RBC" bên trong tên
+  biến; đây là biến thể khác của lỗi "Element" kiểu TypeScript đã ghi ở mục
+  cũ, áp cho biến thay vì kiểu.
+- `lifecycle.test.ts:630`: `assert.ok(check("Only: Avion Elite"), ...)` — chuỗi
+  này CỐ Ý không có ® vì bài test đang kiểm chính logic nhận diện có bắt được
+  "Avion Elite" đứng sát dấu hai chấm hay không, bất kể có ký hiệu thương hiệu
+  hay không. Thêm ® vào sẽ đổi đúng thứ đang được kiểm.
+
 ## Đo đạc GA4 (06/09/2026) — đừng đề xuất lại
 
 - **Link nội bộ KHÔNG BAO GIỜ gắn `utm_*`.** `recommendationURL` trong
