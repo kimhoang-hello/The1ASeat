@@ -3,8 +3,8 @@
 //   npm run audit:rebates        chỉ báo, không sửa (exit 1 nếu có sai lệch)
 //   npm run audit:rebates -- --fix   sửa thẳng vào src/lib/bank-accounts.ts
 //
-// VÌ SAO CẦN RIÊNG MỘT SCRIPT: thẻ tín dụng đã có `/api/check-rebates` chạy
-// hai lượt mỗi ngày, nhưng route đó chỉ đi qua `creditCardOffer` trong
+// VÌ SAO CẦN RIÊNG MỘT SCRIPT: thẻ tín dụng đã có job `check-rebates` chạy
+// hai lượt mỗi ngày, nhưng job đó chỉ đi qua `creditCardOffer` trong
 // Contentful. Rebate tài khoản ngân hàng nằm trong một file TypeScript trong
 // repo, mà một route đang chạy thì không sửa được file nguồn — nên suốt thời
 // gian qua chưa có gì canh chừng chúng cả. Ngày 19/08/2026 phát hiện

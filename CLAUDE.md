@@ -55,7 +55,7 @@ trong **nội dung** chứ không nằm trong code.
 `audit:rebate-prose` tồn tại vì con số rebate nằm ở HAI chỗ trên cùng một
 entry: field `rebateVi` (badge trên ảnh thẻ) và cùng con số đó viết tay trong
 câu "HOT TIP: … nhận thêm $140 rebate." của `editorsTakeVi`. Job
-`/api/check-rebates` chạy hai lượt mỗi ngày, giữ hai chỗ khớp nhau, nhưng chỉ
+`check-rebates` chạy hai lượt mỗi ngày, giữ hai chỗ khớp nhau, nhưng chỉ
 vào lúc FinlyWealth đổi số — người gõ nhầm tay thì phải audit mới thấy. Rà tay
 01/09/2026: 3 trong 10 thẻ có rebate đang lệch, tệ nhất hứa dư $75 cho người
 đọc.
@@ -78,8 +78,7 @@ làm lộ ra mọi chỗ cũ đang viết trần. Thêm 2 thẻ CIBC® ngày 01/
 báo 15 chỗ, trong đó 11 chỗ là hệ quả trực tiếp.
 
 `audit:best-cards` nay chỉ là bản CHẠY TAY: phép so nằm trong
-`bestCardsProseDrift()`, và `/api/check-rebates` gọi nó hai lượt mỗi ngày trên
-server (runner của Actions không có token Contentful). Nó tồn tại vì `src/lib/best-cards.ts` là đoạn văn viết tay nói
+`bestCardsProseDrift()`, và job `check-rebates` gọi nó hai lượt mỗi ngày. Nó tồn tại vì `src/lib/best-cards.ts` là đoạn văn viết tay nói
 về mười thẻ khác, mà số liệu mười thẻ đó sống trong Contentful. Tiêu đề mỗi mục
 đã lấy tên và welcome bonus thẳng từ entry nên không lệch được, nhưng câu
 "welcome bonus lên đến 70,000 điểm Avion®" trong thân đoạn văn thì sẽ nằm

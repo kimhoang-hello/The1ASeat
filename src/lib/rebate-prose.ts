@@ -1,7 +1,8 @@
 /**
- * Con số rebate xuất hiện ở HAI chỗ trên một thẻ, và chỉ một chỗ được canh.
+ * Con số rebate xuất hiện ở HAI chỗ trên một thẻ, và suốt một thời gian dài
+ * chỉ một chỗ được canh.
  *
- * `rebateVi` là con số vẽ thành badge trên ảnh thẻ, và `/api/check-rebates`
+ * `rebateVi` là con số vẽ thành badge trên ảnh thẻ, và job `check-rebates`
  * đồng bộ nó với FinlyWealth hai lượt mỗi ngày. Nhưng cùng con số đó còn được
  * viết tay vào phần chữ — "HOT TIP: Apply thẻ qua FinlyWealth để nhận thêm $140
  * rebate." trong `editorsTakeVi` — và trước 01/09/2026 không có gì đụng tới
@@ -12,8 +13,11 @@
  * $75, không rõ đã sai bao lâu, vì chẳng có gì báo. Hai thẻ khác lệch cùng
  * ngày do job `check-rebates` gãy suốt thời gian token management hết hạn.
  *
- * Đây là tiền hứa với người đọc, đúng thứ mà `/api/check-rebates` sinh ra để
- * canh — nó chỉ canh sót một nửa.
+ * Đây là tiền hứa với người đọc, đúng thứ mà `check-rebates` sinh ra để canh
+ * — và nó từng canh sót một nửa. Nay không còn: job vừa SỬA phần chữ lúc
+ * FinlyWealth đổi số (`rebateProsePatch`, ghi cùng một chuyến với `rebateVi`),
+ * vừa BÁO khi hai con số đá nhau mà FinlyWealth không đổi gì
+ * (`rebateProseMismatches` — báo chứ không đoán hộ cái nào đúng).
  */
 
 /**

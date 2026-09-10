@@ -36,11 +36,25 @@ website trên hPanel → bấm **Redeploy**.
 - `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` — tuỳ chọn, chỉ là thẻ xác minh Search
   Console.
 
-Các job chạy theo lịch (GitHub Actions) gọi ngược vào site, nên server cũng cần
-đúng các biến này — mỗi cái đồng thời phải là repo secret cùng tên:
-`CONTENTFUL_MANAGEMENT_TOKEN`, `SYNC_VIDEOS_SECRET`, `EXPIRE_OFFERS_SECRET`,
-`ANTHROPIC_API_KEY`, `KIT_V4_API_KEY`. Xem chú thích từng biến trong
-[.env.example](.env.example).
+Phần lớn job chạy theo lịch (GitHub Actions) gọi ngược vào site, nên server
+cũng cần đúng các biến này. Kiểm 09/09/2026, phía GitHub giữ ĐÚNG những cái
+sau — không phải mọi biến ở trên:
+
+| Ở đâu trên GitHub | Biến | Job dùng |
+|---|---|---|
+| Repo secret | `EXPIRE_OFFERS_SECRET` | `expire-offers`, `offer-history` |
+| Repo secret | `SYNC_VIDEOS_SECRET` | `sync-videos` |
+| Environment `contentful-write` (chỉ branch `main`) | `CONTENTFUL_SPACE_ID`, `CONTENTFUL_ACCESS_TOKEN`, `CONTENTFUL_MANAGEMENT_TOKEN` | `check-rebates` |
+| Repo secret | `VPS_HOST`, `VPS_PORT`, `VPS_USERNAME`, `VPS_SSH_KEY`, `VPS_APP_PATH` | `deploy` |
+
+`ANTHROPIC_API_KEY` và `KIT_V4_API_KEY` chỉ nằm trên server — không workflow
+nào đọc chúng.
+
+Vì sao `check-rebates` khác mọi job khác: từ 09/09/2026 nó chạy THẲNG TRONG
+RUNNER chứ không gọi site (edge Hostinger chặn IP runner — xem
+`scripts/check-rebates.mts`), nên nó cần token Contentful ở phía GitHub. Đặt
+trong environment thay vì secret cấp repo để lượt `workflow_dispatch` từ branch
+lạ không đọc được. Xem chú thích từng biến trong [.env.example](.env.example).
 
 Site không đọc `NEXT_PUBLIC_SITE_URL`: base URL là hằng `SITE_URL` trong
 `src/lib/subscriber-email.ts`, cố ý để trong repo chứ không để trong hosting

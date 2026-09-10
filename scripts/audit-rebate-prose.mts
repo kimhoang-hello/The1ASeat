@@ -3,10 +3,10 @@
 //   npm run audit:rebate-prose          chỉ báo (exit 1 nếu có lệch)
 //   npm run audit:rebate-prose -- --fix sửa thẳng vào Contentful rồi publish
 //
-// VÌ SAO CẦN, KHI ĐÃ CÓ `/api/check-rebates`: route đó nay tự sửa phần chữ,
+// VÌ SAO CẦN, KHI ĐÃ CÓ JOB `check-rebates`: job đó nay tự sửa phần chữ,
 // nhưng CHỈ vào lúc FinlyWealth đổi số. Một thẻ giữ nguyên $50 suốt nửa năm mà
 // có người gõ "$125 rebate" vào editor's take trong giao diện Contentful thì
-// route không có việc gì để làm — nó thấy số cũ bằng số mới rồi đi tiếp. Route
+// job không có việc gì để làm — nó thấy số cũ bằng số mới rồi đi tiếp. Job
 // nay có thêm một lượt canh báo trạng thái đó ra `errors`, nhưng báo thì phải
 // đợi tới lượt kế (8:30 hoặc 20:30 UTC) và phải mở log GitHub Actions ra đọc.
 //

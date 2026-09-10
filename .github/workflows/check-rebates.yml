@@ -1,26 +1,18 @@
 name: Check FinlyWealth rebate amounts
 
-# Calls the deployed site's /api/check-rebates endpoint, which reads the
-# current rebate off each card's FinlyWealth page and writes it back to
-# Contentful when it has changed. FinlyWealth moves these figures without
-# notice, and a rebate on the card that no longer matches what the reader
-# actually gets is worse than showing none.
+# Giữ cho con số rebate trên trang thẻ khớp với thứ FinlyWealth đang thật sự
+# trả. Chi tiết phép so nằm trong `src/lib/check-rebates.ts`.
 #
-# Route này canh HAI chỗ, vì con số rebate nằm ở hai chỗ: field `rebateVi`
-# (badge trên ảnh thẻ) và câu "HOT TIP: ... nhận thêm $140 rebate." viết tay
-# trong `editorsTakeVi`. Trước 01/09/2026 nó chỉ canh chỗ đầu, và chỗ thứ hai
-# trôi trong im lặng — đo hôm đó: 3/10 thẻ có rebate đang lệch, tệ nhất hứa dư
-# $75. Nay route vá phần chữ trong cùng lần ghi, và báo ra `errors` khi hai số
-# đá nhau mà FinlyWealth không đổi gì (ca gõ nhầm tay trong Contentful).
+# Job này CHẠY THẲNG TRONG RUNNER, không gọi https://ghe1a.com nữa. Lý do đầy
+# đủ ở đầu `scripts/check-rebates.mts`; tóm tắt: edge Hostinger chặn IP runner —
+# 403 ở lượt 04/09 và 05/09, rồi từ 08/09 là chặn thẳng ở tầng TCP (`curl (28)`,
+# 268 giây một lượt, 5 lượt, ~25 phút runner cho một job không chạy nổi dòng
+# nào), trong khi site vẫn trả 200 trong 0.4 giây khi gọi từ máy nhà. Hai ngày
+# liền mỗi ngày mất một trong hai lượt.
 #
-# Từ 07/09/2026 route còn canh thêm bốn trang "Các thẻ tốt nhất": đoạn văn viết
-# tay ở đó nhắc số welcome bonus, annual fee và rebate của mười thẻ, mà chỉ
-# phần SỐ LIỆU SỐNG trên trang tự cập nhật theo Contentful — câu văn thì không.
-# Cùng lý do đặt vào đây: đây là job duy nhất đã đọc sẵn toàn bộ thẻ published
-# hai lượt mỗi ngày. Bản chạy tay là `npm run audit:best-cards`.
-#
-# Không cần thêm step nào ở đây: runner không có token Contentful, còn server
-# thì có. Bản chạy tay của cùng phép so là `npm run audit:rebate-prose`.
+# Ba job còn lại (`expire-offers`, `sync-videos`, `offer-history`) vẫn đi qua
+# ghe1a.com và vẫn dính đúng rủi ro đó — chưa chuyển vì chúng cần những thứ
+# khác nữa từ server, không chỉ token Contentful.
 on:
   schedule:
     # Hai lượt mỗi ngày, cách nhau 12 tiếng. Một lượt là không đủ: 04/09/2026
@@ -29,13 +21,8 @@ on:
     # người đọc suốt phần còn lại của ngày, và phải chạy tay mới thấy.
     #
     # Giờ ghi ở đây là giờ SỚM NHẤT, không phải giờ chạy: cron của GitHub
-    # Actions xếp hàng chứ không đúng phút, và ba lượt 02-04/09/2026 đều nổ
-    # lúc ~12:55 UTC dù đặt 8:30. Đó là thêm một lý do chạy hai lượt — lượt
-    # nào bị đẩy trễ thì lượt kia vẫn còn.
-    #
-    # Chạy lại an toàn và rẻ: route tự đối chiếu với bản đã publish trước khi
-    # ghi, nên lượt thứ hai của một ngày không đổi gì sẽ chỉ đọc rồi thôi
-    # (~15 giây, 10 thẻ).
+    # xếp hàng, và đo 02–09/09/2026 thì lượt 8:30 UTC đều nổ quanh 12:55–13:10
+    # UTC. Đừng suy ra "job không chạy" khi chưa thấy nó nổ đúng giờ.
     - cron: "30 8 * * *"
     - cron: "30 20 * * *"
   workflow_dispatch: {}
@@ -43,15 +30,40 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    # Ba secret Contentful sống trong environment `contentful-write`, KHÔNG
+    # phải secret cấp repo, và environment đó chỉ cho phép branch `main`.
+    #
+    # Vì sao phải vậy: repo này PUBLIC và `workflow_dispatch` nhận `ref` là
+    # branch/tag bất kỳ. Với secret cấp repo, ai có quyền write chỉ cần đẩy một
+    # branch sửa `scripts/check-rebates.mts` rồi dispatch vào chính branch đó —
+    # và mã tuỳ ý chạy với `CONTENTFUL_MANAGEMENT_TOKEN`, token DUY NHẤT có
+    # quyền ghi Contentful. Buộc theo branch thì GitHub chặn cả job trước khi
+    # runner nhận secret.
+    #
+    # Nó KHÔNG ngăn được người đã có quyền write: `main` chưa có branch
+    # protection nên push thẳng vào `main` là đường ngắn hơn. Xem AGENTS.md,
+    # mục 09/09/2026 — đã cân nhắc và cố ý không mở rộng sang các workflow
+    # khác.
+    #
+    # Đây cũng là lý do KHÔNG bỏ `workflow_dispatch` cho xong: chạy tay trên
+    # `main` là cách duy nhất kiểm được chính đường chạy trong runner (gọi
+    # route `/api/check-rebates` chỉ kiểm được đường trên server).
+    environment: contentful-write
     steps:
       - uses: actions/checkout@v4
 
-      - name: Gọi check-rebates
-        # Toàn bộ phần curl, thử lại và ghi log nằm trong action dùng
-        # chung — ba workflow này trước đây chép lại cùng một khối, và
-        # khối đó còn mang nguyên cùng một comment nói về FinlyWealth kể
-        # cả ở job không đụng gì tới FinlyWealth.
-        uses: ./.github/actions/call-site-endpoint
+      - uses: actions/setup-node@v4
         with:
-          path: /api/check-rebates
-          secret: ${{ secrets.EXPIRE_OFFERS_SECRET }}
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Đối chiếu rebate thẻ với FinlyWealth
+        env:
+          # CDA — đọc bản ĐÃ PUBLISH, tức thứ người đọc đang nhìn thấy.
+          CONTENTFUL_SPACE_ID: ${{ secrets.CONTENTFUL_SPACE_ID }}
+          CONTENTFUL_ACCESS_TOKEN: ${{ secrets.CONTENTFUL_ACCESS_TOKEN }}
+          # CMA — ghi số mới rồi publish.
+          CONTENTFUL_MANAGEMENT_TOKEN: ${{ secrets.CONTENTFUL_MANAGEMENT_TOKEN }}
+        run: npm run job:check-rebates

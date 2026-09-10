@@ -716,10 +716,10 @@ export function categoriesFeaturing(slug: string): BestCardsCategory[] {
  *
  * Hàm THUẦN, và cố ý sống ở đây chứ không sống trong script: nó có hai người
  * gọi. `npm run audit:best-cards` là bản chạy tay, cho lúc đang ngồi sửa nội
- * dung; còn `/api/check-rebates` gọi nó hai lượt mỗi ngày trên server, và đó
- * mới là thứ biến phép so này thành báo động dai. Runner của GitHub Actions
- * không có token Contentful — chỉ server có — nên một workflow riêng chạy
- * script sẽ không đọc được gì; cùng lý do đã ghi trong `check-rebates.yml`.
+ * dung; còn job `check-rebates` gọi nó hai lượt mỗi ngày, và đó mới là thứ
+ * biến phép so này thành báo động dai. Từ 09/09/2026 job đó chạy THẲNG TRONG
+ * RUNNER (`npm run job:check-rebates`) thay vì gọi qua ghe1a.com — runner nay
+ * có token Contentful; lý do đổi nằm ở đầu `scripts/check-rebates.mts`.
  *
  * Không có nó, một welcome bonus đổi lúc 3 giờ sáng sẽ được ISR cập nhật ở
  * phần số liệu sống trong vòng một phút, còn câu văn ngay bên dưới nói con số

@@ -76,7 +76,7 @@ Mẹo viết:
 
 > **`rebateVi` và câu HOT TIP phải khớp nhau.** Cùng con số rebate thường được
 > viết lại trong `editorsTakeVi` ("HOT TIP: Apply thẻ qua FinlyWealth để nhận
-> thêm $140 rebate."). Job `/api/check-rebates` chạy hai lượt mỗi ngày, giữ hai
+> thêm $140 rebate."). Job `check-rebates` chạy hai lượt mỗi ngày, giữ hai
 > chỗ đó khớp nhau và báo lỗi nếu bạn sửa tay một chỗ mà quên chỗ kia — kiểm
 > ngay bằng `npm run audit:rebate-prose` (thêm `-- --fix` để sửa luôn). Trước
 > khi có
@@ -337,31 +337,82 @@ thường, chỉ riêng phần viết lại lời văn là bỏ qua.
 ## Tự động kiểm tra rebate FinlyWealth
 
 FinlyWealth đổi số tiền rebate mà không báo trước (thẻ BMO® VIPorter® từng đổi
-từ $125 lên $200). Route
-[`/api/check-rebates`](src/app/api/check-rebates/route.ts) chạy hai lượt mỗi
-ngày, mở trang FinlyWealth của từng thẻ, đọc số rebate hiện tại rồi ghi đè vào
-ô `Rebate Vi` nếu lệch — nên con số hiển thị trên web luôn khớp với số người
-đọc thực nhận. Chỉ những thẻ có `Apply Url` trỏ tới trang `/rebates/...` của
-FinlyWealth mới được kiểm tra; thẻ dùng link referral riêng của ngân hàng thì
-route bỏ qua.
+từ $125 lên $200). Job `check-rebates` chạy hai lượt mỗi ngày, mở trang
+FinlyWealth của từng thẻ, đọc số rebate hiện tại rồi ghi đè vào ô `Rebate Vi`
+nếu lệch — nên con số hiển thị trên web luôn khớp với số người đọc thực nhận.
+Chỉ những thẻ có `Apply Url` trỏ tới trang `/rebates/...` của FinlyWealth mới
+được kiểm tra; thẻ dùng link referral riêng của ngân hàng thì job bỏ qua.
 
-Workflow: [`.github/workflows/check-rebates.yml`](.github/workflows/check-rebates.yml).
-Dùng chung `EXPIRE_OFFERS_SECRET` bên dưới, không cần thêm biến mới.
+Phép so nằm trong [`src/lib/check-rebates.ts`](src/lib/check-rebates.ts) và có
+HAI người gọi cùng gọi một hàm:
+
+- [`.github/workflows/check-rebates.yml`](.github/workflows/check-rebates.yml)
+  → `npm run job:check-rebates`, chạy **thẳng trong runner**. Đây là đường theo
+  lịch. Cần ba secret trong **environment `contentful-write`** (không phải
+  secret cấp repo): `CONTENTFUL_SPACE_ID`, `CONTENTFUL_ACCESS_TOKEN` (CDA) và
+  `CONTENTFUL_MANAGEMENT_TOKEN` (CMA).
+- [`/api/check-rebates`](src/app/api/check-rebates/route.ts) → đường gọi tay,
+  dùng `EXPIRE_OFFERS_SECRET` như ba route job kia.
+
+Trước 09/09/2026 chỉ có route, và workflow gọi nó bằng `curl`. Bỏ vì edge
+Hostinger chặn IP của runner GitHub — 403 rồi tới chặn thẳng ở tầng TCP, mất
+đều một trong hai lượt mỗi ngày trong khi site vẫn khoẻ. Lý do đầy đủ ở đầu
+[`scripts/check-rebates.mts`](scripts/check-rebates.mts).
 
 **1. Thêm 1 biến môi trường cho site live** — vào đúng chỗ bạn đã điền
 `CONTENTFUL_SPACE_ID` (hPanel → website → Environment variables), thêm:
 
 | Biến                   | Giá trị                                                                 |
 |-------------------------|--------------------------------------------------------------------------|
-| `EXPIRE_OFFERS_SECRET`  | một chuỗi bất kỳ bạn tự nghĩ ra, để không ai gọi được route này ngoài GitHub Actions |
+| `EXPIRE_OFFERS_SECRET`  | một chuỗi bất kỳ bạn tự nghĩ ra, để không ai gọi được ba route dưới đây nếu không có nó |
+
+Secret này che BA route: `/api/expire-offers` và `/api/offer-snapshot` (GitHub
+Actions gọi theo lịch) và `/api/check-rebates` (nay chỉ còn là đường CHẠY TAY —
+lượt theo lịch không đi qua route nữa).
 
 (`CONTENTFUL_MANAGEMENT_TOKEN` đã cần có sẵn từ phần "Tự động đăng bài khi có
-video YouTube mới" ở trên — route này dùng lại, không cần thêm.)
+video YouTube mới" ở trên — hai route này dùng lại, không cần thêm.)
 
-**2. Thêm 1 secret trên GitHub** — vào repo trên GitHub → **Settings → Secrets
-and variables → Actions → New repository secret**:
-- Name: `EXPIRE_OFFERS_SECRET`
-- Value: giống hệt giá trị bạn vừa điền ở bước 1
+**2a. Secret cấp repo** — **Settings → Secrets and variables → Actions → New
+repository secret**:
+
+| Secret | Dùng cho | Giá trị |
+|---|---|---|
+| `EXPIRE_OFFERS_SECRET` | `expire-offers` và `offer-history` (cả hai gọi route qua HTTP) | giống hệt giá trị bạn vừa điền ở bước 1 |
+
+**2b. Secret của environment `contentful-write`** — **Settings → Environments →
+`contentful-write` → Environment secrets**. Environment này đã tạo sẵn và **chỉ
+cho phép branch `main`**:
+
+| Secret | Giá trị |
+|---|---|
+| `CONTENTFUL_SPACE_ID` | giống biến cùng tên trên hPanel |
+| `CONTENTFUL_ACCESS_TOKEN` | giống biến cùng tên trên hPanel (token Delivery API) |
+| `CONTENTFUL_MANAGEMENT_TOKEN` | giống biến cùng tên trên hPanel (token Content management) |
+
+Ba cái này chỉ `check-rebates` cần, vì từ 09/09/2026 job đó chạy THẲNG TRONG
+RUNNER thay vì gọi route qua HTTP. Thiếu chúng thì job đỏ ngay ở bước đầu với
+câu `Thiếu biến môi trường: …`, không chạy nửa vời.
+
+> **Vì sao là environment chứ không phải secret cấp repo.**
+> `CONTENTFUL_MANAGEMENT_TOKEN` là token duy nhất có quyền GHI vào Contentful,
+> và repo này PUBLIC. Với secret cấp repo, ai có quyền write chỉ cần đẩy một
+> branch sửa `scripts/check-rebates.mts` rồi bấm **Run workflow** vào chính
+> branch đó — `workflow_dispatch` nhận branch/tag bất kỳ — và mã tuỳ ý chạy
+> với token ghi. Buộc environment theo `main` thì lượt dispatch từ branch lạ
+> không đọc được secret nào.
+>
+> **Giới hạn, nói cho rõ:** cách này KHÔNG ngăn được người đã có quyền write.
+> `main` chưa bật branch protection, nên họ push thẳng vào `main` là xong.
+> Thứ environment mua được là đóng đường chạy mã với token ghi mà không để
+> lại dấu trong lịch sử `main`. Muốn chặn hẳn thì bật branch protection cho
+> `main`.
+>
+> Kiểm 09/09/2026: repo PUBLIC, 1 collaborator, 0 deploy key, 0 webhook,
+> `GITHUB_TOKEN` mặc định chỉ đọc, workflow này không có trigger `pull_request`
+> (nên fork PR không chạm tới). **Chưa kiểm kê được GitHub Apps** — token hiện
+> tại không liệt kê được; nếu sau này cài app có quyền `Actions: write` thì
+> xem lại chỗ này.
 
 **3. Kiểm tra** — vào tab **Actions** trên GitHub → chọn workflow **Unpublish
 expired credit card offers & transfer bonuses** (hoặc **Check FinlyWealth rebate amounts**) → **Run workflow** để chạy thử

@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test:game": "node --test games/catch-the-points/tests/*.js",
     "test:reco": "node --test --experimental-strip-types src/lib/recommendation/*.test.ts",
+    "test:jobs": "node --test --experimental-strip-types src/lib/job-retry.test.ts",
     "audit:awards": "tsx scripts/audit-award-charts.mts",
     "audit:health": "tsx scripts/audit-content-health.mts",
     "audit:links": "tsx scripts/audit-internal-links.mts",
@@ -19,6 +20,7 @@
     "audit:best-cards": "tsx scripts/audit-best-cards.mts",
     "audit:card-mentions": "tsx scripts/audit-card-mentions.mts",
     "record:offer-history": "tsx scripts/record-offer-history.mts",
+    "job:check-rebates": "tsx scripts/check-rebates.mts",
     "captions": "bash scripts/burned-captions.sh",
     "captions:all": "bash scripts/collect-captions.sh"
   },

@@ -5,7 +5,7 @@ description: >
 
 inputs:
   path:
-    description: Đường dẫn của route, ví dụ /api/check-rebates
+    description: Đường dẫn của route, ví dụ /api/expire-offers
     required: true
   secret:
     description: Giá trị Bearer token
@@ -47,8 +47,13 @@ runs:
         # mình là ai thay vì giả làm trình duyệt — nếu vẫn bị chặn thì log sẽ
         # cho thấy, và lúc đó mới biết là chặn theo IP chứ không theo UA.
         #
-        # Gọi lại an toàn với cả bốn route: chúng đều tự đối chiếu với
+        # Gọi lại an toàn với cả hai route: chúng đều tự đối chiếu với
         # Contentful trước khi ghi, nên một lượt chạy hai lần không tạo trùng.
+        #
+        # `check-rebates` KHÔNG còn dùng action này (09/09/2026): edge Hostinger
+        # chặn IP runner nên job chạy thẳng trong runner. Còn `expire-offers` và
+        # `sync-videos` vẫn đi qua đây và vẫn dính đúng rủi ro đó — xem
+        # `scripts/check-rebates.mts`.
         body="$RUNNER_TEMP/job-response.txt"
 
         for attempt in $(seq 1 "$JOB_ATTEMPTS"); do

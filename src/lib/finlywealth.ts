@@ -41,11 +41,15 @@ export function finlyWealthRebateUrl(applyUrl: string | undefined): string | nul
  * Hạn giờ cho một lượt đọc FinlyWealth.
  *
  * `check-rebates` duyệt thẻ TUẦN TỰ, nên một trang mở kết nối rồi im giữ luôn
- * cả vòng lặp: mọi thẻ đứng sau nó không được đối chiếu. Job gọi bằng
- * `curl --max-time 300 --retry 3 --retry-all-errors`, nên chuyện đó không đỏ
- * một lần rồi thôi — curl cắt, chạy lại, và ba lượt như vậy là 15 phút không
- * kiểm được gì. Hết giờ thì ném, và `check-rebates` đã có sẵn đường ghi lỗi
- * theo từng thẻ để lượt sau tìm lại được nó.
+ * cả vòng lặp: mọi thẻ đứng sau nó không được đối chiếu.
+ *
+ * Từ 09/09/2026 hạn giờ này quan trọng hơn trước chứ không kém đi: job không
+ * còn gọi qua `curl --max-time 300` nữa mà chạy thẳng trong runner (xem
+ * `scripts/check-rebates.mts`). Vẫn còn lớp cắt khác — mặc định của undici và
+ * hạn 360 phút của Actions — nhưng chúng tính bằng phút tới hàng giờ, còn đây
+ * là lớp DUY NHẤT cắt ở thang giây, tức lớp duy nhất giữ được lượt chạy trong
+ * khoảng thời gian còn có ích. Hết giờ thì ném, và `check-rebates` đã có sẵn đường ghi lỗi theo từng
+ * thẻ — nay còn đánh dấu `retryable` để lượt sau thử lại đúng loại lỗi này.
  */
 const FETCH_TIMEOUT_MS = 15_000;
 

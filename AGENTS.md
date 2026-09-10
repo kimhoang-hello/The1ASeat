@@ -62,9 +62,12 @@ mỗi lần, không nhớ gì giữa các phiên). Ghi lại để không phải
   `23:59` cuối ngày ở 1 entry); so theo ngày làm cả hai hành xử đúng như dòng
   chữ người đọc nhìn thấy. Đừng đổi lại thành `[lte]=now`.
 
-- **Cả 3 workflow job đều gọi bằng `curl -sfS --retry 3 --retry-all-errors`,
-  nên trả 500 KHÔNG đủ để một lỗi hiện ra.** curl chạy lại; nếu lượt sau trả
-  200 thì job xanh và lỗi biến mất. Vì vậy mọi lỗi ghi dở phải còn *nhận ra
+- **Job chạy lại khi hỏng, nên trả 500 / đỏ một lần KHÔNG đủ để một lỗi hiện
+  ra.** `expire-offers` và `sync-videos` gọi route bằng `curl` qua
+  `call-site-endpoint` (5 lượt, theo HTTP status). `check-rebates` từ
+  09/09/2026 chạy trong runner và thử lại tối đa 3 lượt, nhưng CHỈ với lỗi
+  mang cờ `retryable` — xem `isTransient()` trong `lib/job-retry.ts`.
+  Lượt sau trả sạch thì job xanh và lỗi biến mất. Vì vậy mọi lỗi ghi dở phải còn *nhận ra
   được ở lượt chạy sau*, không chỉ đỏ đúng một lần. Đã cắn hai lần cùng kiểu:
   `updateEntry` ghi draft xong mới publish, nên publish hỏng để lại draft đã
   đổi trong khi CDA vẫn phục vụ bản cũ — và mọi truy vấn CMA sau đó (đọc
@@ -1518,3 +1521,88 @@ nhiễu dòng-vắt.
   KHÔNG tính ngược, nên dữ liệu chỉ có từ 06/09 trở đi. `apply_clicked` bắn từ
   HAI chỗ: `ui/apply-link.tsx` và `blog/affiliate-click-tracker.tsx`
   (`placement: "post_body"`).
+
+## `check-rebates` bỏ đường vòng qua ghe1a.com (09/09/2026) — đừng đề xuất lại
+
+**Triệu chứng:** job đỏ đều, 3/9 lượt gần nhất. 04/09 và 05/09 nhận HTTP 403 ở
+cả 5 lượt; 08/09 và 09/09 nặng hơn — `curl (28) Failed to connect to ghe1a.com
+port 443 after 268s`, không bắt được cả TCP, 5 lượt, ~25 phút runner cho một
+job không chạy nổi dòng nào. Hai ngày liền mỗi ngày mất đúng MỘT trong hai
+lượt, tức lịch hai lượt trên giấy thành một lượt trên thực tế.
+
+**Không phải site sập:** gọi `https://ghe1a.com/` từ máy nhà cùng lúc đó trả
+200 trong 0.4 giây. Cũng không phải User-Agent: bản vá 04/09 (đổi UA, bỏ `-f`)
+đã ở đúng chỗ khi lượt 05/09 vẫn 403. Chặn theo IP của runner GitHub, ở edge
+Hostinger (`server: hcdn`), và nó leo thang từ trả-mã-lỗi sang nuốt-gói-tin.
+
+**Cách sửa:** phép so chuyển từ `app/api/check-rebates/route.ts` sang
+`src/lib/check-rebates.ts` (`runCheckRebates`), gọi từ hai phía:
+
+- `scripts/check-rebates.mts` → `npm run job:check-rebates`, chạy trong runner.
+  Đây là đường theo lịch. Không còn `curl`, không còn WAF chen vào.
+- Route vẫn còn, nay là vỏ mỏng: auth + gọi + map status. Đường gọi tay.
+
+**Cái giá, và cách đã trả:** runner nay giữ `CONTENTFUL_MANAGEMENT_TOKEN` —
+token DUY NHẤT có quyền ghi vào Contentful. Repo này PUBLIC và
+`workflow_dispatch` nhận `ref` là branch/tag bất kỳ, nên **secret cấp repo là
+không đủ**: ai có quyền write chỉ cần đẩy một branch sửa
+`scripts/check-rebates.mts` rồi dispatch vào chính branch đó, và mã tuỳ ý chạy
+với token ghi. (Codex bắt đúng chỗ này ở vòng 2; lập luận "repo chỉ có một
+collaborator" của mình KHÔNG đủ để đóng finding, vì collaborator không phải
+toàn bộ bề mặt quyền.)
+
+Cách đã chọn: ba secret Contentful nằm trong **environment
+`contentful-write`**, có deployment branch policy chỉ cho `main`. Dispatch từ
+branch lạ không đọc được secret nào — GitHub chặn cả job trước khi runner nhận
+secret. Giữ được `workflow_dispatch` trên `main`, thứ cần để kiểm chính đường
+chạy trong runner (gọi route chỉ kiểm được đường trên server).
+
+**Nó KHÔNG ngăn được người có quyền write, và đừng ghi là có.** `main` hiện
+KHÔNG có branch protection, nên ai write được là push thẳng vào `main` được —
+một bước, không cần vòng vo. Codex ở vòng 3 còn chỉ ra một đường vòng dài hơn
+(dispatch `check-bank-rebates`/`offer-history` trên branch lạ, dùng
+`contents: write` của chúng đẩy mã lên `main`, rồi dispatch `check-rebates`);
+đường đó CÓ THẬT nhưng không thêm quyền gì so với việc push thẳng, nên bỏ
+`workflow_dispatch` khỏi hai job kia không đóng được gì mà mất hai nút chạy
+tay. **Đã cân nhắc và bác — đừng đề xuất lại.**
+
+Cái environment policy thật sự mua được: đóng đường chạy mã với token ghi mà
+KHÔNG để lại dấu trong lịch sử `main`. Muốn thật sự chặn người có quyền write
+thì thứ cần là branch protection cho `main`, không phải sửa thêm workflow.
+
+Bề mặt đã kiểm 09/09/2026: repo PUBLIC, 1 collaborator, 0 deploy key, 0
+webhook, `GITHUB_TOKEN` mặc định chỉ đọc, `main` KHÔNG được bảo vệ, workflow
+này không có trigger `pull_request`. **GitHub Apps chưa kiểm kê được** (token
+hiện tại không liệt kê được) — cài app có quyền `Actions: write` thì xem lại.
+
+**Vòng thử lại KHÔNG mất, nhưng đổi ngữ nghĩa** (Codex bắt được ở vòng review;
+bản vá đầu của mình thật sự làm rơi nó). Action cũ `curl --retry 5` thử lại
+theo HTTP STATUS, mà 500 gộp mọi loại hỏng vào một mã: một trang FinlyWealth
+timeout và một con số viết tay gõ nhầm đọc giống hệt nhau, nên curl chạy lại
+cả hai — loại thứ hai không bao giờ khỏi, mỗi lượt thừa là 10 lần đọc
+FinlyWealth đổ đi. Nay lỗi mang cờ `retryable`, gắn theo HÌNH DẠNG lỗi
+(`isTransient()` trong `lib/job-retry.ts`, có test ở `job-retry.test.ts`,
+`npm run test:jobs`): 4xx trừ 408/429 và "FinlyWealth đổi markup" là vĩnh
+viễn, còn lại mặc định chạy lại — đoán sai theo hướng chạy thừa chỉ tốn một
+lượt đọc, đoán sai theo hướng bỏ qua thì mất cả lượt kiểm. Script thử tối đa 3
+lượt và CHỈ khi có lỗi loại đó (hoặc lượt chạy ném thẳng).
+
+`updated` được GỘP qua mọi lượt chứ không lấy ảnh chụp lượt cuối — cũng là
+Codex bắt: lượt 1 sửa thẻ A rồi thẻ B rớt mạng, lượt 2 đọc lại bản published
+nên A thành `unchanged`, và log sẽ im lặng về một lần GHI đã xảy ra thật. `finlywealth.ts` và `contentful-cma.ts` cũng đã sửa
+comment: hạn giờ `AbortSignal` trong hai file đó nay là lớp cắt NGẮN NHẤT còn
+lại cho job này, vì không còn `curl --max-time 300` bọc ngoài. (Không phải
+"duy nhất" — mặc định của undici và hạn 360 phút của Actions vẫn ở đó, nhưng
+chúng tính bằng phút tới hàng giờ.)
+
+**Ba job kia vẫn đi qua ghe1a.com** — `expire-offers`, `sync-videos`,
+`offer-history` — và vẫn dính đúng rủi ro này. Chưa chuyển vì chúng cần thứ
+khác từ server chứ không chỉ token Contentful (`offer-history` gọi
+`/api/offer-snapshot`, và nó là job DUY NHẤT ghi lịch sử: một lượt trượt mà số
+kịp đổi hai lần thì mức ở giữa mất vĩnh viễn). Nếu chúng bắt đầu đỏ theo cùng
+kiểu thì đây là bản mẫu để chuyển.
+
+**Câu chữ đã sai sau lần này** — "runner của Actions không có token Contentful,
+chỉ server có" nằm rải trong `src/lib/best-cards.ts`, `CLAUDE.md`,
+`CONTENTFUL.md` và đã sửa. Các mục AGENTS.md có ghi ngày thì giữ nguyên: đúng ở
+thời điểm viết.

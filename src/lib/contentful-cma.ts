@@ -1,6 +1,6 @@
 /**
  * The little slice of the Contentful Management API the scheduled jobs share.
- * Both /api/expire-offers and /api/check-rebates read every entry of a content
+ * Both /api/expire-offers and the check-rebates job read every entry of a content
  * type and write a field back, and each had grown its own copy of the fetch
  * plumbing.
  */
@@ -33,18 +33,23 @@ export function field<T>(entry: CmaEntry, name: string): T | undefined {
  * Hạn giờ cho một lượt gọi CMA.
  *
  * `fetch` của Node không tự bỏ cuộc khi máy chủ mở kết nối rồi im: nó chờ tới
- * mặc định của undici. Ba job đều gọi bằng `curl --max-time 300 --retry 3
- * --retry-all-errors`, nên một lượt treo không đỏ ngay — curl cắt rồi chạy
- * lại, và 15 phút trôi qua mà không thẻ nào sau cái bị treo được xử lý. Cùng
+ * mặc định của undici. Các job gọi route qua HTTP dùng
+ * `curl --max-time 300`, nên một lượt treo không đỏ ngay — curl cắt rồi chạy
+ * lại, và 15 phút trôi qua mà không entry nào sau cái bị treo được xử lý. Cùng
  * lý do `api/revalidate` và `api/sync-videos` đã có `AbortSignal`; hai file
  * dùng chung này bị bỏ sót ở lượt đó.
+ *
+ * `check-rebates` từ 09/09/2026 chạy thẳng trong runner, không còn `curl` bọc
+ * ngoài — với nó thì đây là lớp cắt ngắn nhất còn lại (undici và hạn 360 phút
+ * của Actions vẫn ở đó, nhưng ở thang phút tới hàng giờ).
  */
 const CMA_TIMEOUT_MS = 20_000;
 
 /**
  * Bọc MỌI lượt gọi CMA, kể cả những lượt nằm ngoài file này — `unpublish` của
- * `expire-offers` là một, và bỏ sót đúng một lượt là đủ để job treo tới lúc
- * `curl --max-time 300` cắt, đúng cái nó sinh ra để chặn.
+ * `expire-offers` là một, và bỏ sót đúng một lượt là đủ để job treo — tới lúc
+ * `curl --max-time 300` cắt với những job còn gọi qua HTTP, và tới tận mặc
+ * định của undici với `check-rebates` vốn không còn `curl` bọc ngoài.
  */
 export function cmaInit(init: RequestInit & { headers: Record<string, string> }): RequestInit {
   return { ...init, cache: "no-store", signal: AbortSignal.timeout(CMA_TIMEOUT_MS) };
