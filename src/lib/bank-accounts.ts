@@ -265,7 +265,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     url: "https://www.scotiabank.com/ca/en/personal/bank-accounts/chequing-accounts/preferred-student-youth-bank-account.html",
     affiliateUrl:
       "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fscotiabank-preferred-package-student&utm_source=ghe-1a",
-    rebate: "$50",
+    rebate: "$100",
   },
   {
     slug: "scotiabank-momentumplus-savings",
