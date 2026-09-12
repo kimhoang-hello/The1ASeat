@@ -1,7 +1,8 @@
 import { isReferralUrl } from "@/lib/affiliate-links";
 import { getCreditCardOffers } from "@/lib/content";
-import { amountIn, historyFor, TRACKING_SINCE, unitOf } from "@/lib/offer-history";
-import { dedupeHistory, type OfferHistoryPoint } from "./offer-history.ts";
+import { TRACKING_SINCE } from "@/lib/offer-history";
+import type { OfferHistoryPoint } from "./offer-history.ts";
+import { repoOfferHistory } from "./offer-history-source.ts";
 import type { CreditCardOffer } from "@/lib/content";
 import { PRODUCTS } from "./data/index.ts";
 import { offlineDataset } from "./data/index.ts";
@@ -106,32 +107,7 @@ export const OFFER_HISTORY_SINCE = TRACKING_SINCE;
 
 export const repoDataSource: RecommendationDataSource = {
   async getOfferHistory(productId: string): Promise<OfferHistoryPoint[]> {
-    const product = PRODUCTS.find((row) => row.id === productId);
-    if (product === undefined) return [];
-    // Gộp lịch sử dưới MỌI slug thẻ này từng mang. Nhật ký gốc đánh khoá bằng
-    // slug đang dùng lúc ghi, nên sau một lần đổi tên nó nằm ở hai chỗ.
-    const slugs = [...product.previousSlugs, product.slug];
-    // Đưa CẢ dòng thời gian thô vào, kể cả những lần thẻ không có welcome
-    // bonus — chúng là vạch ngăn giữa hai đợt offer, và chúng mang ngày. Lọc
-    // chúng ra trước khi gộp sẽ nhập hai đợt 70,000 rời nhau thành một, và
-    // vứt ngày của chúng đi sẽ làm `until` của đợt trước nhảy qua cả khoảng
-    // trống. Xem `dedupeHistory`.
-    return dedupeHistory(
-      slugs
-        .flatMap((slug) => historyFor(slug))
-        .sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0))
-        .map((entry) => ({
-        at: entry.at,
-        bonus:
-          entry.welcomeBonus === undefined
-            ? null
-            : {
-                label: entry.welcomeBonus,
-                amount: amountIn(entry.welcomeBonus),
-                unit: unitOf(entry.welcomeBonus),
-              },
-        })),
-    );
+    return repoOfferHistory(productId);
   },
 
   async getDataset(options?: DatasetQuery): Promise<RecommendationDataset> {

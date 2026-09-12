@@ -23,7 +23,7 @@ import { currentProductIds } from "./portfolio.ts";
 import type { DatasetIndex } from "./indexes.ts";
 import type { DataGap, Product, RecommendationDataset } from "./types.ts";
 import type { Goal, UserDataGap, UserState } from "./user-types.ts";
-import type { GoalContext } from "./engine-types.ts";
+import type { GoalContext, UniverseExclusionReason } from "./engine-types.ts";
 
 export interface NormalizedInput {
   asOf: string;
@@ -34,6 +34,8 @@ export interface NormalizedInput {
   goals: GoalContext[];
   goalResolution: "none" | "resolved" | "ambiguous";
   universe: Product[];
+  /** Sản phẩm KHÔNG vào tập ứng viên, kèm cửa đã chặn — cùng một phép tính với `universe`. */
+  universeExclusions: { product: Product; reason: UniverseExclusionReason }[];
   userGaps: UserDataGap[];
   dataGaps: DataGap[];
 }
@@ -57,17 +59,43 @@ export function candidateUniverse(
   ix: DatasetIndex,
   asOf: string,
 ): Product[] {
+  return universeVerdicts(state, data, ix, asOf)
+    .filter((row) => row.reason === null)
+    .map((row) => row.product);
+}
+
+/**
+ * Cửa nào đã chặn từng sản phẩm — `null` là lọt qua cả bốn.
+ *
+ * `candidateUniverse` và danh sách thẻ bị loại của debugger đều đọc từ ĐÂY.
+ * Hai hàm viết riêng cho cùng một câu hỏi là hai chỗ lệch được, và lệch ở
+ * đây thì debugger nói "thẻ X bị loại vì đang giữ" trong khi engine thật ra
+ * loại nó vì lý do khác — một lời giải thích sai còn tệ hơn không có.
+ *
+ * Kiểm theo đúng một thứ tự và dừng ở cửa đầu tiên, để mỗi sản phẩm có ĐÚNG
+ * MỘT lý do.
+ */
+export function universeVerdicts(
+  state: UserState,
+  data: RecommendationDataset,
+  ix: DatasetIndex,
+  asOf: string,
+): { product: Product; reason: UniverseExclusionReason | null }[] {
   const held = currentProductIds(state);
   const country = state.profile?.country ?? "CA";
-  return data.products
-    .filter((product) => product.productType === "credit_card")
-    .filter((product) => product.country === country)
-    .filter((product) => isAvailableAt(ix.availabilityByProduct.get(product.id) ?? [], asOf))
+  const reasonFor = (product: Product): UniverseExclusionReason | null => {
+    if (product.productType !== "credit_card") return "not_credit_card";
+    if (product.country !== country) return "other_country";
+    if (!isAvailableAt(ix.availabilityByProduct.get(product.id) ?? [], asOf)) return "not_available";
     // §16 Rule 5. Thẻ đang giữ ra khỏi bảng "thẻ mới" — trừ khi kiểu khuyến
     // nghị là "giữ/dùng thẻ hiện có", và kiểu đó là `NO_NEW_CARD`, một ứng
     // viên riêng ở `rank.ts`.
-    .filter((product) => !held.has(product.id))
-    .sort((a, b) => (a.id < b.id ? -1 : 1));
+    if (held.has(product.id)) return "already_held";
+    return null;
+  };
+  return [...data.products]
+    .sort((a, b) => (a.id < b.id ? -1 : 1))
+    .map((product) => ({ product, reason: reasonFor(product) }));
 }
 
 /** Chỗ trống của lớp dữ liệu mà lượt chạy này thật sự chạm tới. */
@@ -218,7 +246,8 @@ export function normalize(
             .map((goal) => contextFor(goal, state, ix, asOf))
         : [];
 
-  const universe = candidateUniverse(state, data, ix, asOf);
+  const verdicts = universeVerdicts(state, data, ix, asOf);
+  const universe = verdicts.filter((row) => row.reason === null).map((row) => row.product);
 
   return {
     asOf,
@@ -228,6 +257,9 @@ export function normalize(
     goals,
     goalResolution: resolved.kind,
     universe,
+    universeExclusions: verdicts.flatMap((row) =>
+      row.reason === null ? [] : [{ product: row.product, reason: row.reason }],
+    ),
     userGaps: userGaps(state),
     dataGaps: relevantDataGaps(
       data,

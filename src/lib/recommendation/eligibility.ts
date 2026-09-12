@@ -242,5 +242,19 @@ export function evaluateEligibility(
     warnings,
     failedRuleIds,
     unknownRuleIds,
+    // MỌI luật, đánh giá bằng CHÍNH `evaluateRule` ở trên — không phải một
+    // phép đánh giá thứ hai viết cho debugger. `verdictOf` dừng ở nhóm trượt
+    // đầu tiên, nên `failedRuleIds` một mình không kể được các nhóm sau; bảng
+    // này thì kể hết, kể cả luật `soft` không chặn.
+    rules: rules.map((rule) => ({
+      ruleId: rule.id as string,
+      ruleType: rule.ruleType,
+      operator: rule.operator,
+      value: rule.value,
+      severity: rule.severity,
+      scope: rule.scope,
+      ruleGroup: rule.ruleGroup,
+      outcome: evaluateRule(rule, state),
+    })),
   };
 }

@@ -25,6 +25,12 @@ import type {
 } from "./types.ts";
 import type { Goal, GoalId, GoalType, UserDataGap } from "./user-types.ts";
 import type { ResolvedTripGoal } from "./user.ts";
+// Chỉ KIỂU, nên vòng import này bị xoá khi biên dịch — xem chú thích đầu file.
+import type { OfferClimate, OfferFacts } from "./offer-quality.ts";
+import type { EarnFit } from "./earn-fit.ts";
+import type { BenefitFit } from "./benefit-fit.ts";
+import type { ScoringScale } from "./scoring/context.ts";
+import type { TripCoverage } from "./strategies.ts";
 
 /* ------------------------------------------------------------------ *
  * §7 Portfolio Analyzer
@@ -193,6 +199,27 @@ export interface StrategyScore {
  */
 export type EligibilityStatus = "eligible" | "ineligible" | "unknown";
 
+/**
+ * Kết quả của TỪNG luật, kể cả luật không chặn.
+ *
+ * `failedRuleIds` chỉ kể nhóm đầu tiên làm thẻ trượt, vì phán quyết dừng ở
+ * đó. Admin hỏi "vì sao thẻ X bị loại" thì cần thấy CẢ bảng: luật nào qua,
+ * luật nào trượt, luật nào chưa đánh giá được — và luật `soft` trượt cũng phải
+ * hiện, vì nó là thứ ngân hàng có thể vẫn áp dụng. Đặt dữ kiện của luật (loại,
+ * phép so, ngưỡng) cạnh kết quả để phân biệt được lỗi ở DỮ LIỆU LUẬT với lỗi ở
+ * CÂU TRẢ LỜI CỦA NGƯỜI DÙNG mà không phải mở thêm file nào.
+ */
+export interface EligibilityRuleTrace {
+  ruleId: string;
+  ruleType: string;
+  operator: string;
+  value: number | string | string[] | boolean;
+  severity: "hard" | "soft" | "unknown";
+  scope: "application" | "welcome_offer";
+  ruleGroup: string | null;
+  outcome: "pass" | "fail" | "unknown";
+}
+
 export interface EligibilityVerdict {
   status: EligibilityStatus;
   /** Được mở thẻ, nhưng KHÔNG được welcome bonus (Amex® once-in-a-lifetime). */
@@ -202,6 +229,8 @@ export interface EligibilityVerdict {
   /** Luật đã chặn, để debugger của Phase 4 chỉ đúng dòng. */
   failedRuleIds: string[];
   unknownRuleIds: string[];
+  /** Mọi luật đang hiệu lực của thẻ, đã sắp theo id — xem `EligibilityRuleTrace`. */
+  rules: EligibilityRuleTrace[];
 }
 
 export interface SuitabilityVerdict {
@@ -275,9 +304,20 @@ export interface ScoreComponent {
   note: string;
 }
 
+/**
+ * Tầng sinh ra một điều chỉnh.
+ *
+ * Tường minh chứ không suy từ tiền tố tên luật: debugger dùng nó để trả lời
+ * "khuyến nghị sai này đến từ LUẬT §16, từ PHÙ HỢP §14, từ ĐIỀU KIỆN §14 hay
+ * từ BIÊN TẬP §17" — bốn chỗ sửa khác nhau, bốn người chịu trách nhiệm khác
+ * nhau. Một quy ước đặt tên thì gãy lặng lẽ ngay lần đầu có người đặt tên lệch.
+ */
+export type AdjustmentLayer = "rules" | "suitability" | "eligibility" | "editorial";
+
 /** Một lần điểm bị đổi SAU khi chấm (§16 rules, §17 editorial). */
 export interface ScoreAdjustment {
   rule: string;
+  layer: AdjustmentLayer;
   /** Cộng vào điểm cuối. Âm là phạt. */
   delta: number;
   reasonCode: ReasonCode | null;
@@ -367,6 +407,8 @@ export interface Recommendation {
 /** Một lượt chạy. Nhiều kết quả CHỈ khi mục tiêu hoà nhau (§30 / `primaryGoal`). */
 export interface RecommendationRun {
   engineVersion: string;
+  /** Version bộ luật BIÊN TẬP (§15/§17) — xem `RULE_VERSION` ở `rules.ts`. */
+  ruleVersion: string;
   asOf: string;
   goalResolution: "none" | "resolved" | "ambiguous";
   results: Recommendation[];
@@ -376,6 +418,172 @@ export interface RecommendationRun {
   /** Chỗ trống của lớp dữ liệu mà lượt chạy này thật sự chạm vào. */
   dataGaps: DataGap[];
   userGaps: UserDataGap[];
+  /**
+   * Mọi thứ engine TÍNH RA giữa đầu vào và đầu ra — `derived_state` của §20.
+   *
+   * Engine Phase 3 đã tính đủ cả ba thứ §22 đòi (danh mục, nhu cầu, thẻ bị
+   * loại) rồi vứt đi, nên câu admin hỏi nhiều nhất — "vì sao thẻ X không hiện
+   * ra" — không có câu trả lời. Giữ lại ở đây thì không phải tính lại, và quan
+   * trọng hơn: không thể tính lại KHÁC đi.
+   */
+  derived: DerivedState;
+}
+
+/* ------------------------------------------------------------------ *
+ * §20 derived_state + §22 Recommendation Debugger
+ *
+ * Mọi kiểu dưới đây phải đi qua JSON nguyên vẹn: chúng được LƯU (§20), và một
+ * `Map` hay `Set` ở đây thành `{}` khi ghi xuống — im lặng, và lượt chạy lưu
+ * lại không còn giải thích được chính nó. Nên không có `Map`, không có `Set`,
+ * không có `undefined` có nghĩa; mọi danh sách đều đã sắp theo khoá cố định.
+ * ------------------------------------------------------------------ */
+
+/**
+ * Vì sao một sản phẩm không vào nổi tập ứng viên — bốn cửa của
+ * `candidateUniverse`, theo đúng thứ tự nó kiểm.
+ */
+export type UniverseExclusionReason =
+  | "not_credit_card"
+  | "other_country"
+  | "not_available"
+  | "already_held";
+
+/**
+ * Một sản phẩm KHÔNG được chấm điểm, và cửa nào đã chặn nó.
+ *
+ * Ba tầng, ba người chịu trách nhiệm khác nhau (§14): `universe` là dữ liệu
+ * sản phẩm hoặc §16 Rule 5, `suitability` là câu trả lời của người dùng,
+ * `eligibility` là luật của ngân hàng.
+ */
+export interface ExcludedProduct {
+  productId: ProductId;
+  productSlug: string;
+  productName: string;
+  stage: "universe" | "suitability" | "eligibility";
+  /** `UniverseExclusionReason`, `SuitabilityVerdict.excludedReason`, hoặc `"ineligible"`. */
+  reason: string;
+  failedRuleIds: string[];
+}
+
+export interface PortfolioSnapshot {
+  direct: { programId: PointsProgramId; knowledge: BalanceKnowledge }[];
+  knownValueCents: number;
+  hasUnknownBalance: boolean;
+  balancesUndeclared: boolean;
+  cardsUndeclared: boolean;
+  concentration: EcosystemExposure[];
+  flexibilityScore: number;
+  earnedPrograms: PointsProgramId[];
+  heldProductIds: ProductId[];
+}
+
+export interface NeedsSnapshot {
+  /** Giảm dần theo nhu cầu, hoà thì theo id. */
+  currency: { programId: PointsProgramId; need: number }[];
+  benefit: { benefitId: string; need: number }[];
+  portfolio: { diversification: number; flexibility: number };
+  action: { newCard: number };
+}
+
+/**
+ * Một bản ghi dữ liệu engine ĐÃ ĐỌC cho một ứng viên.
+ *
+ * Đây là cửa của "lỗi nằm ở DỮ LIỆU NGUỒN": khi một offer sai, admin phải thấy
+ * ngay dòng nào, kiểm lại ngày nào, từ trang nào — chứ không phải tự tra lại
+ * `activeAt` bằng tay và hy vọng ra đúng dòng engine đã thấy.
+ *
+ * KHÔNG lưu trong `derived_state`: nó suy lại được, chính xác, từ bản chụp bộ
+ * dữ liệu đã lưu cùng lượt chạy (`activeOfferId` chốt offer nào, phần còn lại
+ * là `activeAt` ở `asOf`). Lưu thì mỗi lượt chạy mang thêm ~150 KB chép lại
+ * đúng những URL đã nằm trong bản chụp đó. Xem `provenanceFor` ở `debug.ts`.
+ */
+export interface ProvenanceRow {
+  table: "offers" | "offer_components" | "product_fees" | "earning_rates" | "product_benefits" | "eligibility_rules";
+  id: string;
+  verifiedAt: string | null;
+  recordedAt: string | null;
+  sourceUrl: string | null;
+  sourceKind: string | null;
+  confidence: string | null;
+}
+
+/** `OfferFacts` không kèm nguyên dòng offer — id đủ để tra, bản ghi nằm trong `provenance`. */
+export type OfferFactsSnapshot = Omit<OfferFacts, "active"> & {
+  activeOfferId: string | null;
+  componentIds: string[];
+};
+
+/** Dữ kiện KHÔNG phụ thuộc mục tiêu của một sản phẩm trong tập ứng viên. */
+export interface CandidateFactsSnapshot {
+  productId: ProductId;
+  productSlug: string;
+  productName: string;
+  /** Qua cả điều kiện lẫn phù hợp, nên được chấm điểm. */
+  selectable: boolean;
+  offer: OfferFactsSnapshot;
+  earn: EarnFit;
+  benefits: BenefitFit;
+  travelBenefitCount: number;
+  eligibility: EligibilityVerdict;
+  suitability: SuitabilityVerdict;
+}
+
+/**
+ * Ứng viên đã chấm có hiện ra cho người dùng không, và nếu không thì vì sao.
+ *
+ * Hai cách một thẻ được chấm điểm tốt mà vẫn vô hình: bị một hạng khác CÙNG
+ * HỌ chiếm chỗ (`bestPerFamily`), hoặc nằm dưới vạch cắt số gợi ý. Không ghi
+ * lại thì "thẻ X hạng 3 mà không thấy đâu" trông như một lỗi xếp hạng.
+ */
+export type CandidateVisibility =
+  | "primary"
+  | "alternative"
+  | "no_action"
+  | "hidden_same_family"
+  | "hidden_beyond_cutoff";
+
+export interface RankedCandidate {
+  /** 1 = đứng đầu. */
+  rank: number;
+  visibility: CandidateVisibility;
+  /** Với `hidden_same_family`: sản phẩm cùng họ đã hiện ra thay nó. */
+  hiddenBy: ProductId | null;
+  candidate: Candidate;
+}
+
+/** Những con số §29 thật sự đọc — để "vì sao chỉ `medium`" có câu trả lời bằng số. */
+export interface ConfidenceInputs {
+  topScore: number | null;
+  secondScore: number | null;
+  rivalCount: number;
+  oldestVerifiedAt: string | null;
+}
+
+export interface GoalTrace {
+  goalId: GoalId | null;
+  goalType: GoalType;
+  /** Mục tiêu đã chuẩn hoá: chuyến đi đã giải + số điểm cần. */
+  goal: GoalContext;
+  tripCoverage: TripCoverage | null;
+  needs: NeedsSnapshot;
+  /** TOÀN BỘ bảng xếp hạng, kể cả `NO_NEW_CARD` và những thẻ không hiện ra. */
+  ranking: RankedCandidate[];
+  confidenceInputs: ConfidenceInputs;
+}
+
+export interface DerivedState {
+  /** Sản phẩm vào tập ứng viên, đã sắp theo id. */
+  universe: ProductId[];
+  /** Mọi sản phẩm KHÔNG được chấm điểm, kèm cửa đã chặn nó. */
+  excluded: ExcludedProduct[];
+  portfolio: PortfolioSnapshot;
+  /** Mốc phí khi người dùng chưa khai ngưỡng — xem `evaluateSuitability`. */
+  medianFeeCents: number;
+  climate: OfferClimate;
+  scale: ScoringScale;
+  /** Mọi sản phẩm trong tập ứng viên, chọn được hay không. */
+  candidates: CandidateFactsSnapshot[];
+  goals: GoalTrace[];
 }
 
 /* ------------------------------------------------------------------ *

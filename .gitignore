@@ -46,3 +46,6 @@ next-env.d.ts
 # ...and the critiques it writes: local working notes, not source
 .impeccable/
 .claude/settings.local.json
+
+# recommendation debugger (§22) — lượt chạy lưu cục bộ bằng `npm run reco:debug -- run … --save`
+/.reco-runs/

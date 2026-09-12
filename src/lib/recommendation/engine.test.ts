@@ -14,6 +14,7 @@ import { offlineDataset } from "./data/index.ts";
 import { activeAt, datasetAt } from "./temporal.ts";
 import { indexDataset } from "./indexes.ts";
 import { ENGINE_VERSION, recommend } from "./engine.ts";
+import { fingerprint } from "./fingerprint.ts";
 import {
   accessibleFor,
   analyzePortfolio,
@@ -154,6 +155,8 @@ test("§16 Rule 7 — mã nguồn engine không nhắc tới `affiliateAvailable
     "explain.ts", "offer-quality.ts", "earn-fit.ts", "benefit-fit.ts", "trip-need.ts",
     "scoring/weights.ts", "scoring/context.ts", "scoring/next-card.ts",
     "scoring/trip.ts", "scoring/diversify.ts", "scoring/earning.ts",
+    // Phase 4: chạy BÊN TRONG `recommend()`, nên cùng luật với 21 file kia.
+    "trace.ts",
   ]);
   for (const name of files) {
     if (!ENGINE_FILES.has(name)) continue;
@@ -1309,26 +1312,12 @@ test("§20 — bản chụp hành vi khoá theo ENGINE_VERSION", async () => {
    * không đổi một dòng. §20 replay lưu `input_snapshot` của chính lượt chạy
    * đó, nên `ENGINE_VERSION` chỉ nói về LOGIC; dữ liệu đi kèm bản chụp.
    *
-   * Giữ cả hai ở đây thì thông báo lỗi nói được ĐÚNG thứ đã đổi.
+   * Băm NỘI DUNG, không đếm số dòng — đếm dòng hỏng theo cả hai chiều. Và băm
+   * CẢ bộ dữ liệu bằng CHÍNH hàm `recommendation_runs` dùng (`fingerprint.ts`):
+   * bản cũ viết tay ở đây bỏ sót `gaps`, thứ engine đọc thẳng, nên một đổi
+   * chỗ trống không làm dấu vân tay nhúc nhích.
    */
-  //
-  // Băm NỘI DUNG, không đếm số dòng. Đếm dòng hỏng theo cả hai chiều: sửa một
-  // tỷ lệ tích điểm tại chỗ thì mọi con số đếm đứng yên (nên đường cập nhật
-  // TỪ CHỐI một thay đổi dữ liệu hợp lệ), còn thêm một dòng chẳng liên quan
-  // thì lại cho một thay đổi LOGIC chưa đánh version đi lọt.
-  const canonical = JSON.stringify([
-    DATA.products, DATA.productFees, DATA.productAvailability, DATA.offers,
-    DATA.offerComponents, DATA.earningRates, DATA.earningCaps, DATA.benefits,
-    DATA.productBenefits, DATA.eligibilityRules, DATA.transferPaths,
-    DATA.awardStrategies, DATA.programValuations, DATA.pointsPrograms,
-  ]);
-  // FNV-1a: ổn định giữa các lần chạy và giữa các máy, không phụ thuộc thư viện.
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < canonical.length; i += 1) {
-    hash ^= canonical.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193) >>> 0;
-  }
-  const datasetFingerprint = `${canonical.length}-${hash.toString(16)}`;
+  const datasetFingerprint = fingerprint(DATA);
 
   const actual = {
     engineVersion: ENGINE_VERSION,
@@ -2310,6 +2299,7 @@ test("KHÔNG có hack theo sản phẩm trong logic chung", async () => {
     "explain.ts", "offer-quality.ts", "earn-fit.ts", "benefit-fit.ts", "trip-need.ts",
     "scoring/weights.ts", "scoring/context.ts", "scoring/next-card.ts",
     "scoring/trip.ts", "scoring/diversify.ts", "scoring/earning.ts",
+    "trace.ts",
   ];
   const { readFile } = await import("node:fs/promises");
   for (const name of ENGINE_FILES) {

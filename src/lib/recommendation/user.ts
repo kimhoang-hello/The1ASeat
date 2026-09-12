@@ -165,7 +165,13 @@ export function spendFor(state: UserState, category: SpendCategory): EstimatedAm
 
 /** Các hạng mục người dùng ĐÃ trả lời. Phần bù là phần chưa biết. */
 export function statedCategories(spend: UserSpendProfile): SpendCategory[] {
-  return Object.keys(spend.byCategory ?? {}) as SpendCategory[];
+  // SẮP, không trả thứ tự khoá. Thứ tự khoá của một object là thứ tự CHÈN —
+  // tức thứ tự database hay JSON trả về — và các tầng sau cộng dồn số thực
+  // theo đúng thứ tự này. Phép cộng số thực không kết hợp: cùng một hồ sơ với
+  // hai thứ tự khoá cho `earn_fit` lệch ở chữ số thứ 16. Nhỏ, nhưng §35 hứa
+  // "cùng đầu vào = cùng đầu ra", và chính debugger Phase 4 bắt được nó khi
+  // chạy lại một lượt chạy đã lưu (JSON chuẩn hoá sắp khoá).
+  return (Object.keys(spend.byCategory ?? {}) as SpendCategory[]).sort();
 }
 
 /**
@@ -182,7 +188,10 @@ export function statedCategories(spend: UserSpendProfile): SpendCategory[] {
 export function unallocatedMonthly(spend: UserSpendProfile): EstimatedAmount | null {
   const total = spend.monthlyTotal;
   if (total == null) return null;
-  const stated = Object.values(spend.byCategory ?? {}).filter((amount) => amount != null);
+  // Cùng thứ tự với `statedCategories` — xem lý do ở đó.
+  const stated = statedCategories(spend)
+    .map((category) => spend.byCategory?.[category])
+    .filter((amount): amount is EstimatedAmount => amount != null);
   let sumLow = 0;
   let sumHigh: number | null = 0;
   for (const amount of stated) {

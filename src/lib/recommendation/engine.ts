@@ -34,15 +34,23 @@ import { scoreNextCard } from "./scoring/next-card.ts";
 import { scoreTrip } from "./scoring/trip.ts";
 import { scoreDiversify } from "./scoring/diversify.ts";
 import { scoreEarning } from "./scoring/earning.ts";
-import { applyRules } from "./rules.ts";
+import { RULE_VERSION, applyRules } from "./rules.ts";
 import { buildNoNewCardCandidate, finalScore, rankCandidates } from "./rank.ts";
 import { computeConfidence } from "./confidence.ts";
 import { mergeReasonCodes, mergeWarnings, nextQuestion } from "./explain.ts";
+import {
+  excludedProducts,
+  rankingTrace,
+  snapshotFacts,
+  snapshotNeeds,
+  snapshotPortfolio,
+} from "./trace.ts";
 import type { DatasetIndex } from "./indexes.ts";
 import type {
   AwardStrategy,
   BenefitId,
   Product,
+  ProductId,
   RecommendationDataset,
 } from "./types.ts";
 import type { UserState } from "./user-types.ts";
@@ -52,6 +60,7 @@ import type { CandidateFacts, ScoringContext } from "./scoring/context.ts";
 import type {
   Candidate,
   GoalContext,
+  GoalTrace,
   Recommendation,
   RecommendationRun,
   ScoreComponent,
@@ -86,6 +95,11 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * thôi được coi là vô hạn; điều khoản offer chưa biết thôi được chấm là vừa
  * sức; và `NO_NEW_CARD` thôi được chấm bằng một chương trình chọn bừa.
  *
+ * 4.0.1 — Phase 4: hạng mục chi tiêu cộng theo thứ tự CỐ ĐỊNH thay vì thứ tự
+ * khoá của object. Kết quả 15 nhân vật không đổi ở chữ số thứ tư, nhưng
+ * `earn_fit` lệch ở chữ số thứ 16 giữa hai thứ tự khoá — và một lượt chạy lưu
+ * qua JSON (khoá đã sắp) không tái lập được bản chạy trên object gốc.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -98,7 +112,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.0.0";
+export const ENGINE_VERSION = "4.0.1";
 
 export interface RecommendInput {
   state: UserState;
@@ -124,26 +138,37 @@ function bestPerFamily(
   candidates: readonly Candidate[],
   ix: DatasetIndex,
   alreadyShown: readonly Candidate[] = [],
-): Candidate[] {
-  const seen = new Set<string>();
+): { kept: Candidate[]; hidden: Map<Candidate, ProductId> } {
+  /** Họ thẻ → sản phẩm đã giữ chỗ cho họ đó. */
+  const claimedBy = new Map<string, ProductId>();
   // Gieo sẵn họ của những thẻ ĐÃ hiện ra — trước hết là thẻ thắng cuộc. Bỏ
   // bước này thì phép gom chỉ chặn trùng lặp GIỮA các gợi ý thay thế, còn
   // hạng thứ hai của chính thẻ đứng đầu vẫn đứng ngay dưới nó.
   for (const candidate of alreadyShown) {
     const product = candidate.productId === null ? undefined : ix.productById.get(candidate.productId);
-    if (product?.familyId != null) seen.add(product.familyId as string);
+    if (product?.familyId != null && !claimedBy.has(product.familyId as string)) {
+      claimedBy.set(product.familyId as string, product.id);
+    }
   }
   const kept: Candidate[] = [];
+  // Thẻ bị gom đi, kèm thẻ đã chiếm chỗ của họ nó. Debugger §22 đọc thẳng từ
+  // đây: "thẻ X hạng 3 mà không thấy đâu" phải trả lời được bằng chính phép
+  // gom đã giấu nó, không phải bằng một phép gom thứ hai viết lại cho debugger.
+  const hidden = new Map<Candidate, ProductId>();
   for (const candidate of candidates) {
     const product = candidate.productId === null ? undefined : ix.productById.get(candidate.productId);
     const family = product?.familyId ?? null;
     if (family !== null) {
-      if (seen.has(family as string)) continue;
-      seen.add(family as string);
+      const holder = claimedBy.get(family as string);
+      if (holder !== undefined) {
+        hidden.set(candidate, holder);
+        continue;
+      }
+      claimedBy.set(family as string, product!.id);
     }
     kept.push(candidate);
   }
-  return kept;
+  return { kept, hidden };
 }
 
 /** Quyền lợi đi lại thẻ này THÊM vào — §10.2 dành 5% cho chúng. */
@@ -310,6 +335,7 @@ export function recommend(input: RecommendInput): RecommendationRun {
   const climate = offerClimate(selectable.map((row) => row.offer));
   const scale = buildScale(selectable);
 
+  const goalTraces: GoalTrace[] = [];
   const results: Recommendation[] = normalized.goals.map((goal) => {
     const strategies = generateStrategies({ state, ix, asOf, portfolio, goal, climate });
     const needs = computeNeeds({ state, data, ix, asOf, portfolio, goal, strategies });
@@ -352,18 +378,19 @@ export function recommend(input: RecommendInput): RecommendationRun {
     const noAction = buildNoNewCardCandidate(facts, ctx);
     const ranked = rankCandidates([...cardCandidates, noAction]);
 
+    const oldest = oldestVerifiedAt(
+      normalized.universe,
+      data,
+      ix,
+      asOf,
+      goal.tripNeed?.strategies ?? [],
+    );
     const confidence = computeConfidence({
       ranked,
       goal,
       userGaps: normalized.userGaps,
       dataGaps: normalized.dataGaps,
-      oldestVerifiedAt: oldestVerifiedAt(
-        normalized.universe,
-        data,
-        ix,
-        asOf,
-        goal.tripNeed?.strategies ?? [],
-      ),
+      oldestVerifiedAt: oldest,
       asOf,
     });
 
@@ -379,6 +406,30 @@ export function recommend(input: RecommendInput): RecommendationRun {
         : need.byProgram.find((row) => row.programId === covered.bestProgram);
     const accessible = covered?.accessible ?? null;
     const winner = ranked[0];
+    // Chỉ các thẻ, và `NO_NEW_CARD` luôn có chỗ riêng ở `noAction` — kể cả
+    // khi nó đang đứng đầu. Trộn nó vào `alternatives` là để nó biến mất
+    // khỏi đầu ra đúng lúc nó thắng.
+    const grouped = bestPerFamily(
+      ranked.filter((row) => row !== winner && row.kind === "open_card"),
+      ix,
+      [winner],
+    );
+    const alternatives = grouped.kept.slice(0, 4);
+
+    goalTraces.push({
+      goalId: goal.goal.id,
+      goalType: goal.goal.type,
+      goal,
+      tripCoverage: covered,
+      needs: snapshotNeeds(needs),
+      ranking: rankingTrace(ranked, winner, alternatives, grouped.hidden),
+      confidenceInputs: {
+        topScore: ranked[0]?.score ?? null,
+        secondScore: ranked[1]?.score ?? null,
+        rivalCount: Math.max(0, ranked.length - 1),
+        oldestVerifiedAt: oldest,
+      },
+    });
 
     return {
       goalId: goal.goal.id,
@@ -386,14 +437,7 @@ export function recommend(input: RecommendInput): RecommendationRun {
       strategy: strategies[0] ?? { strategy: "OPEN_CARD", score: 0, reasonCodes: [] },
       strategies,
       primaryAction: winner,
-      // Chỉ các thẻ, và `NO_NEW_CARD` luôn có chỗ riêng ở `noAction` — kể cả
-      // khi nó đang đứng đầu. Trộn nó vào `alternatives` là để nó biến mất
-      // khỏi đầu ra đúng lúc nó thắng.
-      alternatives: bestPerFamily(
-        ranked.filter((row) => row !== winner && row.kind === "open_card"),
-        ix,
-        [winner],
-      ).slice(0, 4),
+      alternatives,
       noAction,
       reasonCodes: mergeReasonCodes(
         winner.reasonCodes,
@@ -451,8 +495,10 @@ export function recommend(input: RecommendInput): RecommendationRun {
     };
   });
 
+  const selectableIds = new Set(selectable.map((row) => row.product.id as string));
   return {
     engineVersion: ENGINE_VERSION,
+    ruleVersion: RULE_VERSION,
     asOf,
     goalResolution: normalized.goalResolution,
     results,
@@ -476,6 +522,18 @@ export function recommend(input: RecommendInput): RecommendationRun {
     warnings: mergeWarnings(runWarnings),
     dataGaps: normalized.dataGaps,
     userGaps: normalized.userGaps,
+    derived: {
+      universe: normalized.universe.map((product) => product.id),
+      excluded: excludedProducts(normalized.universeExclusions, facts),
+      portfolio: snapshotPortfolio(portfolio),
+      medianFeeCents,
+      climate: { ...climate },
+      scale: { ...scale },
+      candidates: facts.map((row) =>
+snapshotFacts(row, selectableIds.has(row.product.id as string)),
+      ),
+      goals: goalTraces,
+    },
   };
 }
 

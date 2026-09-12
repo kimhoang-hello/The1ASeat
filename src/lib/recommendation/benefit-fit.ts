@@ -33,6 +33,14 @@ export interface BenefitFit {
   incrementalCount: number;
   /** Số quyền lợi bị trùng hoàn toàn (cùng quyền lợi, cùng hãng). */
   duplicatedCount: number;
+  /**
+   * Chính các quyền lợi bị trùng, dạng `benefitId|provider`, đã sắp.
+   *
+   * Con số `duplicatedCount` một mình không trả lời được câu admin sẽ hỏi
+   * (Test G): trùng CÁI GÌ, với thẻ nào của hãng nào. Hai quyền lợi chỉ trùng
+   * khi cùng quyền lợi VÀ cùng hãng, nên khoá phải mang cả hai.
+   */
+  duplicatedKeys: string[];
   totalCount: number;
   reasonCodes: ReasonCode[];
 }
@@ -69,6 +77,7 @@ export function benefitFitFor(
   let incrementalCashCents = 0;
   let incrementalCount = 0;
   let duplicatedCount = 0;
+  const duplicatedKeys: string[] = [];
   let sawNewProvider = false;
 
   for (const row of rows) {
@@ -83,6 +92,7 @@ export function benefitFitFor(
 
     if (duplicated) {
       duplicatedCount += 1;
+      duplicatedKeys.push(benefitKey(row));
       continue;
     }
     // Cùng quyền lợi, KHÁC hãng: vẫn là giá trị mới.
@@ -106,6 +116,7 @@ export function benefitFitFor(
     incrementalCashCents,
     incrementalCount,
     duplicatedCount,
+    duplicatedKeys: duplicatedKeys.sort(),
     totalCount: rows.length,
     reasonCodes,
   };

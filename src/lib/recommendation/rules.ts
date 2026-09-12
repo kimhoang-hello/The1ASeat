@@ -38,7 +38,22 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  */
 export const EDITORIAL_CAP = 0.1;
 
-export function editorialAdjustment(): ScoreAdjustment | null {
+/**
+ * Version của bộ luật BIÊN TẬP (§15/§17) — cột `rule_version` của §20.
+ *
+ * TÁCH khỏi `ENGINE_VERSION` vì hai thứ đổi theo hai nhịp và do hai người đổi:
+ * tám luật §16 là CODE (đổi chúng là đổi `ENGINE_VERSION`, bản chụp hành vi
+ * canh), còn luật biên tập là DỮ LIỆU biên tập viên bật/tắt/sửa ngưỡng trong
+ * admin (§22 "Rules"). Gộp chúng vào một số thì mỗi lần biên tập viên chỉnh một
+ * ngưỡng lại trông như một lần đổi mô hình, và ngược lại.
+ *
+ * `"0"` = bộ luật RỖNG: §15 chưa làm, `editorialAdjustment` luôn trả `null`.
+ * Ngày có luật biên tập đầu tiên thì số này phải đổi theo nội dung bộ luật —
+ * lúc đó nó nên là dấu vân tay của chính bộ luật, không phải một số gõ tay.
+ */
+export const RULE_VERSION = "0";
+
+export function editorialAdjustment(): Omit<ScoreAdjustment, "layer"> | null {
   return null;
 }
 
@@ -109,6 +124,7 @@ export function applyRules(input: RuleInput): RuleOutcome {
       // này là `NO_NEW_CARD`, và nó được chấm trên một bảng khác.
       adjustments.push({
         rule: "R1_points_already_sufficient",
+        layer: "rules",
         delta: -0.1,
         reasonCode: "POINTS_ALREADY_SUFFICIENT",
       });
@@ -133,6 +149,7 @@ export function applyRules(input: RuleInput): RuleOutcome {
     // như Membership Rewards® (năm đích), nên không được cùng một khoản thưởng.
     adjustments.push({
       rule: "R2_keep_points_flexible",
+      layer: "rules",
       delta: 0.03 * reach,
       reasonCode: "FLEXIBLE_CURRENCY_VALUABLE",
     });
@@ -154,6 +171,7 @@ export function applyRules(input: RuleInput): RuleOutcome {
       ) * feeds;
     adjustments.push({
       rule: "R3_portfolio_concentration",
+      layer: "rules",
       delta,
       reasonCode: "PORTFOLIO_CONCENTRATED",
     });
@@ -168,6 +186,7 @@ export function applyRules(input: RuleInput): RuleOutcome {
     // nằm dưới.
     adjustments.push({
       rule: "R4_minimum_spend_pressure",
+      layer: "rules",
       delta: -0.25 * (1 - fit),
       reasonCode: "MIN_SPEND_TOO_HIGH",
     });
@@ -183,6 +202,7 @@ export function applyRules(input: RuleInput): RuleOutcome {
     if (duplicatedShare >= 0.5 && incrementalCount <= 2) {
       adjustments.push({
         rule: "R6_duplicate_benefits",
+        layer: "rules",
         delta: -0.08 * duplicatedShare,
         reasonCode: "LOW_INCREMENTAL_VALUE",
       });
@@ -194,6 +214,7 @@ export function applyRules(input: RuleInput): RuleOutcome {
   if (candidate.suitability.penalty < 1) {
     adjustments.push({
       rule: "S_suitability_penalty",
+      layer: "suitability",
       // Hệ số nhân thành một số cộng, để mọi dòng trong bảng §19 cùng đơn vị.
       // Bảng trộn cộng với nhân là bảng không cộng lại ra điểm cuối được.
       delta: -(input.baseScore * (1 - candidate.suitability.penalty)),
@@ -208,6 +229,7 @@ export function applyRules(input: RuleInput): RuleOutcome {
     // thành một câu trả lời "không".
     adjustments.push({
       rule: "E_eligibility_uncertain",
+      layer: "eligibility",
       delta: -0.05,
       reasonCode: "ELIGIBILITY_UNCERTAIN",
     });
@@ -219,6 +241,7 @@ export function applyRules(input: RuleInput): RuleOutcome {
     // ngắn hạn của nó vừa biến mất, và điểm phải nói ra điều đó.
     adjustments.push({
       rule: "E_welcome_offer_blocked",
+      layer: "eligibility",
       delta: -0.15,
       reasonCode: "WELCOME_BONUS_UNAVAILABLE",
     });
@@ -228,6 +251,9 @@ export function applyRules(input: RuleInput): RuleOutcome {
   if (editorial !== null) {
     adjustments.push({
       ...editorial,
+      // Tầng do CHỖ ÁP quyết định, không do dòng luật tự khai: một luật biên
+      // tập không được tự gắn nhãn `rules` để né trần ±10% trong debugger.
+      layer: "editorial",
       delta: Math.max(-EDITORIAL_CAP, Math.min(EDITORIAL_CAP, editorial.delta)),
     });
   }
