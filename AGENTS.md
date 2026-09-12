@@ -1606,3 +1606,71 @@ kiểu thì đây là bản mẫu để chuyển.
 chỉ server có" nằm rải trong `src/lib/best-cards.ts`, `CLAUDE.md`,
 `CONTENTFUL.md` và đã sửa. Các mục AGENTS.md có ghi ngày thì giữ nguyên: đúng ở
 thời điểm viết.
+
+## Kiểm toàn diện định kỳ 12/09/2026
+
+Mọi gate xanh (lint, tsc, build, 8 audit, 3 test suite, `npm audit` 0 lỗ hổng)
+trước khi Codex rà. Hai phát hiện; một đã vá và được vòng phản biện xác nhận
+ĐÚNG, một xác nhận THẬT nhưng cố ý CHƯA vá.
+
+**Đã vá — `safeApplyUrl` (`lib/content/contentful.ts`) và cửa kiểm tương ứng
+trong `audit-content-health.mts` đòi `^https?://` bằng KÝ TỰ, không chỉ đòi
+`new URL(raw).protocol` chạy được.** `new URL()` KHÔNG có base tự thêm `//`
+cho scheme đặc biệt: `https:finlywealth.com/x` và `https:/finlywealth.com/x`
+đều được nó hiểu là https hợp lệ và gật đầu cho qua. Nhưng trình duyệt phân
+tích CHÍNH chuỗi đó làm `href` với BASE là trang thẻ đang đứng (vì thiếu `//`
+nên bị coi là tham chiếu tương đối), ra một URL NỘI BỘ 404
+(`https://ghe1a.com/credit-cards/finlywealth.com/x`) — nút Apply mở trang lỗi
+nhưng `apply_clicked` vẫn bắn, và `check-rebates`/`finlyWealthRebateUrl` vẫn
+coi đây là link FinlyWealth thật. Cùng lớp lỗi "một chuỗi đọc được nhiều cách
+khác nhau" đã vá ba lần ở `safeHref`/`relForUrl` (xem các mục 29/08, 04/09,
+05/09 ở trên), nhưng lần này ở một hàm khác, chưa được hardening theo cùng
+cách. Đã kiểm cả 34 `applyUrl` đang có trên Contentful đều khớp
+`^https?://` sẵn — vá không làm rớt link nào. Vòng phản biện Codex xác nhận
+ĐÚNG, không tìm thêm được dạng ambiguous nào lọt qua (đã thử `HTTPS://`,
+khoảng trắng, ký tự điều khiển chen giữa scheme và host).
+
+**Chưa vá — `sync-videos` có thể tự publish một video TRÙNG khi entry đã
+publish nhưng đang có draft đổi/xoá `videoUrl` chưa publish.**
+[`fetchVideoUrlsByState`](src/app/api/sync-videos/route.ts:283) đọc
+`item.fields.videoUrl` từ CMA — LUÔN LÀ GIÁ TRỊ DRAFT — rồi ở dòng ~359 chỉ
+dùng `item.sys.publishedVersion` (có publish TỪNG LẦN NÀO chưa) để quyết định
+bỏ URL đó vào `published` hay `unpublished`. Nếu một entry ĐANG publish với
+URL X, mà tác giả lưu draft đổi videoUrl thành Y (hoặc xoá) nhưng CHƯA publish
+lại, thì `published` sẽ chứa Y chứ không phải X — X biến mất khỏi cả hai Set.
+Lượt sync kế tiếp gặp X trong feed YouTube, không thấy nó ở đâu trong
+`published`/`unpublished`, nên đi tạo VÀ PUBLISH một entry thứ hai cho đúng
+video đó. Job trả 200; slug entry mới khác slug cũ (sinh từ tiêu đề, có thể
+trùng hệt hoặc lệch một hậu tố `videoId`) nên `audit:health` mục 6 (trùng
+slug) không bắt được ca này.
+
+Cố ý CHƯA vá trong lượt này: bản sửa đúng cần đọc thêm CDA (bản đang phục vụ)
+để biết videoUrl THẬT SỰ đang publish là gì, độc lập với draft hiện tại —
+không chỉ đổi điều kiện lọc trong hàm hiện có, vì CMA vốn dĩ không mang giá trị
+đã publish tách biệt khỏi draft. Đây là một thay đổi rộng hơn (thêm một lượt
+gọi mạng, viết lại logic gộp hai nguồn) và không có test hiện có cho
+`sync-videos/route.ts` để tự tin không hồi quy — đúng loại việc AGENTS.md đã
+nhiều lần ghi "cần một phiên riêng, không làm kèm" (xem mục "Việc còn nợ" của
+`api/revalidate` phía trên). Rủi ro thực tế thấp: video là nội dung do chính
+`sync-videos` tự tạo, tác giả hiếm khi sửa tay trường `videoUrl` của một entry
+đã publish. Xác nhận ĐÚNG qua hai vòng Codex độc lập (vòng rà lỗi mới, và vòng
+phản biện bản vá `safeApplyUrl` — được yêu cầu xác nhận lại riêng).
+
+**Phát hiện ngoài code — `check-rebates.yml` (thẻ tín dụng) đỏ 100% từ
+10/09/2026, không phải lỗi code.** Environment `contentful-write` trên GitHub
+(tạo 09/09/2026 để cách ly ba secret Contentful khỏi secret cấp repo — xem mục
+09/09/2026 ở trên) được tạo ĐÚNG với branch policy, nhưng BA SECRET
+(`CONTENTFUL_SPACE_ID`, `CONTENTFUL_ACCESS_TOKEN`, `CONTENTFUL_MANAGEMENT_TOKEN`)
+CHƯA TỪNG được thêm VÀO chính environment đó — `gh secret list --env
+contentful-write` trả rỗng, trong khi `gh secret list` (cấp repo) chỉ thấy
+`EXPIRE_OFFERS_SECRET`/`SYNC_VIDEOS_SECRET`. Workflow chạy đúng (checkout,
+`npm ci`, vào tới bước gọi script) nhưng cả ba biến môi trường đều RỖNG, nên
+`scripts/check-rebates.mts` thoát ngay ở dòng kiểm biến môi trường đầu tiên.
+Đã xảy ra ở MỌI lượt chạy theo lịch từ 10/09/2026 13:04 UTC (5/5 lượt liên
+tiếp tính tới 12/09/2026 12:19 UTC) — tức audit rebate thẻ tín dụng VÀ
+`bestCardsProseDrift()` (cũng chạy trong route này) không thực sự chạy qua CI
+suốt ~3 ngày, dù chạy tay bằng `.env.local` (như lượt kiểm toàn diện này) vẫn
+cho kết quả sạch. KHÔNG tự sửa bằng cách đẩy giá trị từ `.env.local` vào
+`gh secret set --env` — đó là thay đổi cấu hình bảo mật của GitHub, không phải
+sửa code, và nằm ngoài phạm vi tự động được cho phép. Cần bạn vào GitHub
+(Settings → Environments → `contentful-write`) thêm lại ba secret đó.
