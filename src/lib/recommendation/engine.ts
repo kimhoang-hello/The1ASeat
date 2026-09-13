@@ -209,6 +209,13 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * đi (`points_gap_reduction`). Nay một nửa — điểm giữa của "bị chặn" (0, cộng
  * phạt −0.15) và "nhận được", khớp với nửa mức phạt −0.075.
  *
+ * 4.22.0 — vòng Codex 20 (**lỗi từ Phase 3**): bonus BỊ CHẶN vẫn được chấm §11
+ * đầy đủ rồi trừ −0.15 cố định — nên cỡ của một bonus người dùng không nhận
+ * được vẫn xếp hạng thẻ (Amex® Gold từ hạng 20 lên 1 khi bonus bị chặn phình
+ * to). Nay mất bonus đo ở chính chỗ đọc bonus: `offer_quality` = 0 khi bị
+ * chặn, một nửa khi chưa chắc; bỏ hai mức phạt cố định; và bonus bị chặn không
+ * còn đặt mốc thang §11 cho các thẻ khác.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -221,7 +228,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.21.0";
+export const ENGINE_VERSION = "4.22.0";
 
 export interface RecommendInput {
   state: UserState;
@@ -429,7 +436,13 @@ export function recommend(input: RecommendInput): RecommendationRun {
   // nghiệp người dùng đã từ chối, hoặc một thẻ ngân hàng sẽ từ chối họ, không
   // được kéo tụt điểm tương đối của mọi thẻ còn lại — và qua đó đổi luôn kết
   // quả thẻ-hay-không-thẻ.
-  const climate = offerClimate(selectable.map((row) => row.offer));
+  // Thị trường offer CỦA NGƯỜI NÀY: bonus bị chặn không phải một offer họ có
+  // thể nhận, nên nó không được đặt mốc "offer lớn nhất" cho các thẻ khác —
+  // bonus 1,000,000 điểm không nhận được từng kéo thấp §11 của mọi thẻ (vòng
+  // rà sau Codex 20).
+  const climate = offerClimate(
+    selectable.filter((row) => !row.eligibility.welcomeOfferBlocked).map((row) => row.offer),
+  );
   const scale = buildScale(selectable);
 
   const goalTraces: GoalTrace[] = [];

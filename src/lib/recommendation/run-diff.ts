@@ -13,6 +13,7 @@
 
 import { canonicalJson } from "./fingerprint.ts";
 import { cutHistory, historyCutoff } from "./offer-history.ts";
+import { alignRecords } from "./legacy.ts";
 import { executeRun, inputOf, type RecommendationRunRecord, type RunInput } from "./runs.ts";
 import type { RecommendationDataset } from "./types.ts";
 import type { Candidate } from "./engine-types.ts";
@@ -348,6 +349,8 @@ export function diffRecords(
   after: RecommendationRunRecord,
   limit = 30,
 ): StageDiff[] {
+  // Cùng một hình dạng trước khi so — xem `legacy.ts`.
+  [before, after] = alignRecords(before, after);
   const diffs: StageDiff[] = PIPELINE_STAGES.map((stage) => {
     const entries = deepDiff(stageValue(before, stage), stageValue(after, stage));
     return {

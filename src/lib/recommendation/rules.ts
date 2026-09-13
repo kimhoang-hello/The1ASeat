@@ -235,30 +235,10 @@ export function applyRules(input: RuleInput): RuleOutcome {
     });
   }
 
-  /* ---- Welcome bonus bị chặn -------------------------------------- */
-  if (candidate.eligibility.welcomeOfferBlocked) {
-    // Thẻ vẫn mở được và vẫn kiếm điểm, nên không loại. Nhưng phần lớn giá trị
-    // ngắn hạn của nó vừa biến mất, và điểm phải nói ra điều đó.
-    adjustments.push({
-      rule: "E_welcome_offer_blocked",
-      layer: "eligibility",
-      delta: -0.15,
-      reasonCode: "WELCOME_BONUS_UNAVAILABLE",
-    });
-  }
-
-  /* ---- Welcome bonus CHƯA CHẮC ------------------------------------ */
-  if (candidate.eligibility.welcomeOfferUncertain) {
-    // Nửa mức của bonus bị chặn: chưa biết = điểm giữa của "được" (0) và
-    // "không được" (−0.15) — cùng quy ước "chưa biết = trung tính" của cả
-    // engine. Không trừ gì là hứa trọn bonus cho người có thể đã từng giữ thẻ.
-    adjustments.push({
-      rule: "E_welcome_offer_uncertain",
-      layer: "eligibility",
-      delta: -0.075,
-      reasonCode: "WELCOME_BONUS_UNCERTAIN",
-    });
-  }
+  // Welcome bonus bị chặn / chưa chắc KHÔNG còn là một mức phạt cố định ở
+  // đây: nó được đo ở chính các thành phần đọc bonus (`offer_quality`,
+  // `points_gap_reduction`) — xem `offerQualityComponent`. Mức cố định để cỡ
+  // của một bonus không nhận được vẫn xếp hạng thẻ (vòng Codex 20).
 
   const editorial = editorialAdjustment();
   if (editorial !== null) {

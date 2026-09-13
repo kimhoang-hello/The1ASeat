@@ -19,8 +19,30 @@ import type { CandidateFacts, ScoringContext } from "./context.ts";
 
 const dollars = (cents: number) => `$${Math.round(cents / 100).toLocaleString("en-US")}`;
 
+/**
+ * §11 cho thẻ NÀY, với người dùng NÀY: bonus bị chặn thì không có gì để chấm,
+ * bonus chưa chắc thì một nửa.
+ *
+ * Bản trước chấm §11 như nhau cho mọi người rồi trừ một mức CỐ ĐỊNH ở
+ * `rules.ts` (−0.15 bị chặn). Mức cố định không đổi theo cỡ bonus, nên cỡ của
+ * một bonus người dùng KHÔNG nhận được vẫn xếp hạng thẻ: đổi bonus bị chặn
+ * của Amex® Gold từ 1 lên 1,000,000 điểm đưa nó từ hạng 20 lên hạng 1 (vòng
+ * Codex 20). Mất bonus nay đo ở chính chỗ đọc bonus — đây và
+ * `points_gap_reduction` — và mức phạt cố định bỏ đi.
+ */
 export function offerQualityComponent(weight: number, candidate: CandidateFacts, ctx: ScoringContext): ScoreComponent {
   const offer = offerQuality(candidate.offer, ctx.climate);
+  if (candidate.eligibility.welcomeOfferBlocked) {
+    return component("offer_quality", weight, 0, "§11: welcome bonus BỊ CHẶN với người dùng này — không có gì để chấm");
+  }
+  if (candidate.eligibility.welcomeOfferUncertain) {
+    return component(
+      "offer_quality",
+      weight,
+      offer.score / 2,
+      `${offer.note} — chưa chắc nhận được bonus: tính MỘT NỬA (${(offer.score / 2).toFixed(3)})`,
+    );
+  }
   return component("offer_quality", weight, offer.score, offer.note);
 }
 

@@ -1303,8 +1303,9 @@ test("cửa welcome bonus CHƯA BIẾT không được đọc như cửa mở (l
     assert.equal(row.eligibility.welcomeOfferUncertain, true, row.productSlug);
     assert.ok(row.eligibility.reasonCodes.includes("WELCOME_BONUS_UNCERTAIN"));
     assert.ok(eligibilityUnknownCauses(row.eligibility, "welcome_offer").some((c) => c.source === "user_input"));
-    const ranked = findRanked(record, row.productSlug)!;
-    assert.ok(ranked.adjustments.some((a) => a.rule === "E_welcome_offer_uncertain" && a.delta === -0.075));
+    // Bonus chưa chắc đo ở chính chỗ đọc bonus: §11 tính một nửa.
+    const offer = findRanked(record, row.productSlug)!.components.find((c) => c.key === "offer_quality")!;
+    assert.match(offer.note, /MỘT NỬA/, row.productSlug);
   }
   // Khai rồi (không từng giữ thẻ nào) thì cửa mở, không trừ gì.
   const declared = { ...beginnerUndeclared, declared: { ...beginnerUndeclared.declared, cards: true } };
@@ -1353,4 +1354,30 @@ test("bonus CHƯA CHẮC nhận được: phần tăng chuyến đi tính một 
   assert.ok(full.raw > 0, `tiền đề: bonus của ${slug} thu hẹp khoảng cách`);
   assert.ok(Math.abs(half.raw - full.raw / 2) < 1e-12, `${half.raw} ≠ ${full.raw} / 2`);
   assert.match(half.note, /MỘT NỬA/);
+});
+
+test("cỡ của một welcome bonus BỊ CHẶN không được xếp hạng thẻ (vòng Codex 20)", () => {
+  // Người từng giữ Amex® Gold: bonus once-in-a-lifetime bị chặn. Bản trước chấm
+  // §11 như mọi người rồi trừ −0.15 cố định — đổi bonus đó từ 1 lên 1,000,000
+  // điểm đưa thẻ từ hạng 20 lên hạng 1.
+  const gold = productIdFor("amex-gold-rewards");
+  const state = structuredClone(aeroplanHeavy);
+  state.cards = [...state.cards, { ...state.cards[0], id: "card_test_gold" as never, productId: gold, status: "closed" as never }];
+  const withBonus = (points: number): RecommendationDataset => {
+    const offers = new Set(DATA.offers.filter((o) => o.productId === gold).map((o) => o.id as string));
+    return {
+      ...DATA,
+      offerComponents: DATA.offerComponents.map((c) =>
+        offers.has(c.offerId as string) && c.pointsAmount !== null ? { ...c, pointsAmount: points } : c,
+      ),
+    };
+  };
+  const small = execute(state, { data: withBonus(1) }).record;
+  const huge = execute(state, { data: withBonus(1_000_000) }).record;
+  assert.equal(small.derivedState.candidates.find((r) => r.productId === gold)!.eligibility.welcomeOfferBlocked, true, "tiền đề: bonus bị chặn");
+  // Không chỉ điểm của chính nó: bonus bị chặn cũng không được đặt mốc thang
+  // §11 cho các thẻ khác — MỌI dòng của bảng đứng yên.
+  const scores = (r: RecommendationRunRecord) => ranking(r).map((row) => [candidateKey(row.candidate), row.candidate.score]);
+  assert.deepEqual(scores(huge), scores(small));
+  assert.match(findRanked(huge, "amex-gold-rewards")!.components.find((c) => c.key === "offer_quality")!.note, /BỊ CHẶN/);
 });

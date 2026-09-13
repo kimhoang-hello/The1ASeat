@@ -262,6 +262,29 @@ test("debugger đọc được bản ghi CŨ — thiếu các trường thêm sa
       assert.ok(!why.includes("undefined"), `${row.productSlug}: 'vì sao' in 'undefined'`);
     }
   }
+  // Phép so giữa bản CŨ và bản mới của CÙNG một kết quả không được báo tầng
+  // nào "khác" chỉ vì lược đồ đổi (vòng Codex 20) — ở cả hai đời bản ghi.
+  // Người ĐÃ khai thẻ: engine trước 4.20 chưa từng ra "bonus chưa chắc", nên
+  // chỉ hồ sơ này mới có một bản cũ cùng kết quả thật.
+  const same = execute(beginnerNoCards).record;
+  const asLegacy = (fields: string[]) => {
+    const legacy = JSON.parse(JSON.stringify(same), (key, value) => (fields.includes(key) ? undefined : value)) as RecommendationRunRecord;
+    for (const row of legacy.derivedState.candidates) {
+      const fresh = same.derivedState.candidates.find((f) => f.productId === row.productId)!.eligibility;
+      row.eligibility.unknownRuleIds = [...fresh.unknownRuleIds, ...fresh.welcomeUnknownRuleIds];
+      row.eligibility.failedRuleIds = [...fresh.failedRuleIds, ...fresh.welcomeFailedRuleIds];
+    }
+    return legacy;
+  };
+  for (const legacy of [
+    asLegacy(["welcomeOfferUncertain", "welcomeFailedRuleIds", "welcomeUnknownRuleIds"]),
+    asLegacy(["welcomeOfferUncertain", "welcomeFailedRuleIds", "welcomeUnknownRuleIds", "basis", "flipShare", "unknownCause", "resultFingerprint"]),
+  ]) {
+    const changed = diffRecords(legacy, same).filter(
+      (row) => row.changed && row.stage !== "source_data" && row.stage !== "user_input",
+    );
+    assert.deepEqual(changed.map((row) => `${row.stage}: ${row.entries[0]?.path}`), []);
+  }
   // Bản 4.16–4.19: cặp danh sách cũ chia lại theo `scope` — nguyên nhân của
   // cửa bonus không mất, và không lọt sang cửa mở thẻ.
   const amex = before420.derivedState.candidates.find((row) =>
