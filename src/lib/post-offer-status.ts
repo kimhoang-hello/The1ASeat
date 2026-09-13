@@ -48,6 +48,10 @@ export const POSTS_WITHOUT_DEADLINE: Record<string, string> = {
   // (120 ngày, 153 ngày), không có một ngày chốt chung nào cho cả bài.
   "top-hisa-promo-lai-suat-cao-canada-thang-8-2026":
     "promo tính theo số ngày kể từ lúc mở tài khoản, không có ngày chốt",
+  // Bài News về thẻ Mỹ. "31/12/2026" trong thân bài là ngày 3X grocery/dining
+  // hạ về 2X, không phải hạn welcome offer — Chase không công bố ngày kết thúc.
+  "chase-aeroplan-card-refresh-115000-points-25k-status":
+    "welcome offer không có ngày kết thúc công bố; 31/12/2026 là hạn earn rate 3X grocery/dining",
 };
 
 export interface OfferStatus extends PostOffer {
