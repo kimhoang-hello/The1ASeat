@@ -381,9 +381,31 @@ export function renderRunReport(record: RecommendationRunRecord, options: RunRep
   }
   out.push(
     `\n  câu hỏi tiếp theo §30: ${
-      output.followUp === null ? "không còn câu nào đổi được kết quả" : `${output.followUp.gapKind} (${output.followUp.subject}) — ${output.followUp.reason}`
+      output.followUp === null ? "không có câu nào để hỏi" : `${output.followUp.gapKind} (${output.followUp.subject}) — ${output.followUp.reason}`
     }`,
   );
+  // Những câu §30 đã ĐO — câu nào lấp vào đổi được người thắng. Đây là chỗ
+  // trả lời "lỗi có nằm ở đầu vào không": chỗ trống nào đủ sức lật kết quả.
+  const probes = derived.followUpProbes ?? [];
+  if (probes.length === 0) {
+    out.push("  (không câu hỏi nào đo được bằng câu trả lời thử)");
+  } else {
+    out.push("  đã đo (lấp thử từng chỗ trống, chạy lại engine):");
+    for (const probe of [...probes].filter((row) => row.flips > 0).sort((a, b) => b.flips - a.flips)) {
+      const flipped = probe.outcomes.filter((row) => row.flipsWinner);
+      out.push(
+        `    ${pad(`${probe.gapKind}:${probe.subject}`, 46)} ${probe.flips}/${probe.outcomes.length} đổi người thắng — ` +
+          flipped.map((row) => `${row.label} → ${row.winner}`).join("; "),
+      );
+    }
+    const inert = probes.filter((row) => row.flips === 0);
+    if (inert.length > 0) {
+      out.push(
+        `    ${inert.length} chỗ trống khác KHÔNG đổi được người thắng: ` +
+          [...new Set(inert.map((row) => row.gapKind))].join(", "),
+      );
+    }
+  }
   return out.join("\n");
 }
 
@@ -397,8 +419,10 @@ const OUTCOME_TEXT: Record<ProductExplanation["outcome"], string> = {
   excluded_universe: "bị loại TRƯỚC khi chấm điểm (tập ứng viên)",
   excluded_suitability: "bị loại vì PHÙ HỢP — người dùng đã nói không",
   excluded_eligibility: "bị loại vì ĐIỀU KIỆN — ngân hàng sẽ từ chối",
+  not_ranked_no_goal: "chọn được, nhưng KHÔNG được xếp hạng — lượt chạy chưa có mục tiêu nào",
   primary: "là HÀNH ĐỘNG CHÍNH",
   alternative: "là GỢI Ý THAY THẾ",
+  no_action_slot: "không thắng — nằm ở chỗ RIÊNG của NO_NEW_CARD, không phải gợi ý thay thế",
   hidden_same_family: "được chấm điểm nhưng BỊ ẨN — một hạng cùng họ đã hiện ra",
   hidden_beyond_cutoff: "được chấm điểm nhưng BỊ ẨN — nằm dưới vạch cắt số gợi ý",
 };

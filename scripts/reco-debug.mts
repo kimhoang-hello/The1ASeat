@@ -30,11 +30,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { offlineDataset } from "../src/lib/recommendation/data/index.ts";
 import { datasetAt } from "../src/lib/recommendation/temporal.ts";
-import { normalize } from "../src/lib/recommendation/normalize.ts";
-import { indexDataset } from "../src/lib/recommendation/indexes.ts";
 import { USER_FIXTURES } from "../src/lib/recommendation/data/user-fixtures.ts";
 import * as FIXTURE_EXPORTS from "../src/lib/recommendation/data/user-fixtures.ts";
 import { repoOfferHistory } from "../src/lib/recommendation/offer-history-source.ts";
+import { historyCutoff } from "../src/lib/recommendation/offer-history.ts";
 import { executeRun, inputOf, replayRun, type RecommendationRunRecord } from "../src/lib/recommendation/runs.ts";
 import { compareCandidates, explainProduct } from "../src/lib/recommendation/debug.ts";
 import { diffRecords, explainChange } from "../src/lib/recommendation/run-diff.ts";
@@ -110,11 +109,15 @@ function newRunId(): string {
   return `run_${stamp}_${randomUUID().slice(0, 8)}`;
 }
 
-/** Lịch sử offer cho mọi sản phẩm engine SẼ xét — đúng như `recommendFromSource`. */
-function historyFor(state: UserState, data: RecommendationDataset, asOf: string) {
-  const universe = normalize(state, data, indexDataset(data), asOf).universe;
+/**
+ * Lịch sử offer của MỌI sản phẩm, cắt ở ngày chạy — đúng như
+ * `loadOfferHistory` của production. Mọi sản phẩm để `what-if` trên một lượt
+ * đã lưu vẫn có lịch sử cho thẻ mới vào tập ứng viên.
+ */
+function historyFor(data: RecommendationDataset, asOf: string, knownAt: string | null) {
+  const cutoff = historyCutoff(asOf, knownAt);
   return new Map<string, OfferHistoryPoint[]>(
-    universe.map((product) => [product.id as string, repoOfferHistory(product.id)]),
+    data.products.map((product) => [product.id as string, repoOfferHistory(product.id, cutoff)]),
   );
 }
 
@@ -123,7 +126,7 @@ function freshRun(state: UserState, overrides: { asOf?: string } = {}) {
   const knownAt = flag("known-at") ?? null;
   const data = datasetAt(offlineDataset(), asOf, knownAt === null ? {} : { knownAt });
   return executeRun(
-    { state, data, asOf, knownAt, offerHistory: historyFor(state, data, asOf) },
+    { state, data, asOf, knownAt, offerHistory: historyFor(data, asOf, knownAt) },
     { id: newRunId(), createdAt: new Date().toISOString(), userId: null },
   );
 }

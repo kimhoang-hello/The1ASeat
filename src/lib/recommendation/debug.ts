@@ -245,7 +245,21 @@ export function provenanceFor(
   const byProduct = <T extends Temporal & { productId: string }>(table: readonly T[]) =>
     activeAt(table.filter((row) => row.productId === facts.productId), asOf);
   for (const row of byProduct(dataset.productFees)) rows.push(provenanceRow("product_fees", row));
-  for (const row of byProduct(dataset.earningRates)) rows.push(provenanceRow("earning_rates", row));
+  const rates = byProduct(dataset.earningRates);
+  for (const row of rates) rows.push(provenanceRow("earning_rates", row));
+  // Trần tích điểm mà các tỷ lệ trỏ vào — `earnFitFor` đọc chúng qua `capId`,
+  // nên một giá trị tích điểm sai có thể nằm ở trần chứ không ở tỷ lệ.
+  const capIds = new Set(rates.map((row) => row.capId).filter((id) => id !== null) as string[]);
+  for (const cap of activeAt(dataset.earningCaps, asOf)) {
+    if (capIds.has(cap.id as string)) rows.push(provenanceRow("earning_caps", cap));
+  }
+  // Định giá điểm nhân vào CẢ giá trị tích điểm lẫn giá trị offer: chương
+  // trình của tỷ lệ tích điểm và đồng tiền của welcome bonus.
+  const programs = new Set<string>(facts.earn.programs as string[]);
+  if (offer?.bonusCurrencyId != null) programs.add(offer.bonusCurrencyId as string);
+  for (const valuation of activeAt(dataset.programValuations, asOf)) {
+    if (programs.has(valuation.programId as string)) rows.push(provenanceRow("program_valuations", valuation));
+  }
   for (const row of byProduct(dataset.productBenefits)) rows.push(provenanceRow("product_benefits", row));
   for (const row of byProduct(dataset.eligibilityRules)) rows.push(provenanceRow("eligibility_rules", row));
   return rows.sort((a, b) =>
@@ -270,8 +284,12 @@ export type ProductOutcome =
   | "excluded_universe"
   | "excluded_suitability"
   | "excluded_eligibility"
+  /** Chọn được, nhưng lượt chạy KHÔNG xếp hạng gì — chưa có mục tiêu (§30). */
+  | "not_ranked_no_goal"
   | "primary"
   | "alternative"
+  /** `NO_NEW_CARD` không thắng: nó có chỗ RIÊNG, không nằm trong gợi ý thay thế. */
+  | "no_action_slot"
   | "hidden_same_family"
   | "hidden_beyond_cutoff";
 
@@ -280,8 +298,10 @@ export const OUTCOME_STAGE: Record<ProductOutcome, PipelineStage> = {
   excluded_universe: "normalization",
   excluded_suitability: "eligibility_suitability",
   excluded_eligibility: "eligibility_suitability",
+  not_ranked_no_goal: "normalization",
   primary: "ranking",
   alternative: "ranking",
+  no_action_slot: "ranking",
   hidden_same_family: "ranking",
   hidden_beyond_cutoff: "ranking",
 };
@@ -373,12 +393,7 @@ export function explainProduct(
   let outcome: ProductOutcome;
   let drivenBy: ProductExplanation["drivenBy"];
   if (ranked !== null) {
-    outcome =
-      ranked.visibility === "no_action"
-        ? ranked.rank === 1
-          ? "primary"
-          : "alternative"
-        : ranked.visibility;
+    outcome = ranked.visibility === "no_action" ? "no_action_slot" : ranked.visibility;
     drivenBy = ["engine"];
   } else if (excluded?.stage === "universe") {
     outcome = "excluded_universe";
@@ -391,6 +406,12 @@ export function explainProduct(
   } else if (excluded?.stage === "eligibility") {
     outcome = "excluded_eligibility";
     drivenBy = ["source_data", "user_input"];
+  } else if (facts !== null || (ref === "NO_NEW_CARD" && goal === undefined)) {
+    // Thẻ CÓ trong tập ứng viên và qua mọi cửa, mà không có bảng xếp hạng nào
+    // để đứng: lượt chạy chưa giải được mục tiêu. Gán nó cho "dữ liệu nguồn"
+    // như một thẻ không tồn tại là chỉ admin đi tìm lỗi ở sai hẳn một tầng.
+    outcome = "not_ranked_no_goal";
+    drivenBy = ["user_input"];
   } else {
     outcome = "not_in_dataset";
     drivenBy = ["source_data"];

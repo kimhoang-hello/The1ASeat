@@ -1,7 +1,7 @@
 import { isReferralUrl } from "@/lib/affiliate-links";
 import { getCreditCardOffers } from "@/lib/content";
 import { TRACKING_SINCE } from "@/lib/offer-history";
-import type { OfferHistoryPoint } from "./offer-history.ts";
+import { historyCutoff, type OfferHistoryPoint } from "./offer-history.ts";
 import { repoOfferHistory } from "./offer-history-source.ts";
 import type { CreditCardOffer } from "@/lib/content";
 import { PRODUCTS } from "./data/index.ts";
@@ -63,7 +63,7 @@ export interface RecommendationDataSource {
    * tên là lịch sử đứt làm đôi và nửa cũ không bao giờ tìm lại được. Tra qua
    * sản phẩm thì khoá bền, còn slug chỉ là bước dịch bên trong.
    */
-  getOfferHistory(productId: string): Promise<OfferHistoryPoint[]>;
+  getOfferHistory(productId: string, options?: DatasetQuery): Promise<OfferHistoryPoint[]>;
 }
 
 /**
@@ -106,8 +106,12 @@ function resolveProducts(offers: CreditCardOffer[]): Product[] {
 export const OFFER_HISTORY_SINCE = TRACKING_SINCE;
 
 export const repoDataSource: RecommendationDataSource = {
-  async getOfferHistory(productId: string): Promise<OfferHistoryPoint[]> {
-    return repoOfferHistory(productId);
+  async getOfferHistory(productId: string, options?: DatasetQuery): Promise<OfferHistoryPoint[]> {
+    // Cùng cặp trục thời gian với `getDataset` — xem `repoOfferHistory`.
+    return repoOfferHistory(
+      productId,
+      options === undefined ? undefined : historyCutoff(options.asOf, options.knownAt),
+    );
   },
 
   async getDataset(options?: DatasetQuery): Promise<RecommendationDataset> {

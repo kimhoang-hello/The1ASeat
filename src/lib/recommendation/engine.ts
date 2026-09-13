@@ -38,6 +38,7 @@ import { RULE_VERSION, applyRules } from "./rules.ts";
 import { buildNoNewCardCandidate, finalScore, rankCandidates } from "./rank.ts";
 import { computeConfidence } from "./confidence.ts";
 import { mergeReasonCodes, mergeWarnings, nextQuestion } from "./explain.ts";
+import { probeGap, type GapProbe } from "./sensitivity.ts";
 import {
   excludedProducts,
   rankingTrace,
@@ -53,7 +54,7 @@ import type {
   ProductId,
   RecommendationDataset,
 } from "./types.ts";
-import type { UserState } from "./user-types.ts";
+import type { UserDataGap, UserState } from "./user-types.ts";
 import type { RecommendationDataSource } from "./source.ts";
 import type { OfferHistoryPoint } from "./offer-history.ts";
 import type { CandidateFacts, ScoringContext } from "./scoring/context.ts";
@@ -100,6 +101,17 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * `earn_fit` lệch ở chữ số thứ 16 giữa hai thứ tự khoá — và một lượt chạy lưu
  * qua JSON (khoá đã sắp) không tái lập được bản chạy trên object gốc.
  *
+ * 4.1.0 — Phase 4, lỗi đầu tiên debugger bới ra trên Test C: `points_gap_
+ * reduction` chấm theo phần KHOẢNG CÁCH được lấp, nên thiếu 5,000 trên chuyến
+ * 205,000 thì mọi thẻ nhận trọn 20% — và điểm nhảy từ 1 xuống 0 ở đúng mép đủ
+ * điểm. Nay chấm theo phần CHUYẾN ĐI, liền mạch. `FOCUS_ON_AVAILABILITY` bật
+ * từ lúc số điểm phủ được giá ĐIỂN HÌNH, không đợi tới cận trên. Đổi người
+ * thắng của `japanTripFunded` sang `NO_NEW_CARD`.
+ *
+ * 4.2.0 — §30 chọn câu hỏi tiếp theo bằng THỰC NGHIỆM: câu nào lấp vào đổi
+ * được người thắng thì lên trước bảng ưu tiên tĩnh. Đổi `followUp` của nhiều
+ * nhân vật, không đổi thứ hạng nào.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -112,7 +124,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.0.1";
+export const ENGINE_VERSION = "4.2.0";
 
 export interface RecommendInput {
   state: UserState;
@@ -121,6 +133,23 @@ export interface RecommendInput {
   asOf: string;
   /** Lịch sử offer theo `productId`. Rỗng thì §12 trả `null`, không trả 0. */
   offerHistory?: ReadonlyMap<string, OfferHistoryPoint[]>;
+  /**
+   * Đo giá trị câu hỏi §30 bằng cách chạy lại engine — mặc định BẬT.
+   *
+   * Chỉ tắt ở chính các lượt chạy thử bên trong phép đo: một phép đo tự đo
+   * chính nó là đệ quy không đáy, và câu hỏi tiếp theo của một hồ sơ GIẢ ĐỊNH
+   * không phải thứ ai cần.
+   */
+  probeFollowUps?: boolean;
+}
+
+/** Khoá người thắng cho phép đo §30 — id sản phẩm, hoặc `NO_NEW_CARD`. */
+function winnerKey(results: readonly Recommendation[]): string | null {
+  const first = results[0];
+  if (first === undefined) return null;
+  return first.primaryAction.kind === "no_new_card"
+    ? "NO_NEW_CARD"
+    : (first.primaryAction.productId as string);
 }
 
 /**
@@ -496,28 +525,48 @@ export function recommend(input: RecommendInput): RecommendationRun {
   });
 
   const selectableIds = new Set(selectable.map((row) => row.product.id as string));
+
+  // §30 đo bằng thực nghiệm — xem `sensitivity.ts`. Lười: chỉ đo những câu
+  // `nextQuestion` đã cho qua bộ lọc, và mỗi phép đo được ghi lại vào
+  // `derived` để admin thấy §30 đã cân những gì.
+  const followUpProbes: GapProbe[] = [];
+  const current = winnerKey(results);
+  const measure =
+    input.probeFollowUps === false || results.length === 0
+      ? undefined
+      : (gap: UserDataGap) => {
+          const probe = probeGap(gap, state, current, (probed) =>
+            winnerKey(recommend({ ...input, state: probed, probeFollowUps: false }).results),
+          );
+          if (probe === null) return null;
+          followUpProbes.push(probe);
+          return probe.flips / probe.outcomes.length;
+        };
+  const followUp = nextQuestion({
+    gaps: normalized.userGaps,
+    ranked:
+      results[0]?.primaryAction === undefined
+        ? []
+        : [results[0].primaryAction, ...results[0].alternatives],
+    // Câu hỏi "có xét thẻ doanh nghiệp không" chỉ đáng hỏi khi một thẻ
+    // DOANH NGHIỆP đang thật sự trong bảng. Suy nó từ mã `ELIGIBILITY_UNCERTAIN`
+    // là suy sai cả hai chiều: hỏi khi một thẻ thường có thu nhập chưa rõ,
+    // và KHÔNG hỏi khi một thẻ doanh nghiệp đủ điều kiện đang đứng đầu.
+    businessProductIds: new Set(
+      normalized.universe
+        .filter((product) => product.personalOrBusiness === "business")
+        .map((product) => product.id as string),
+    ),
+    measure,
+  });
+
   return {
     engineVersion: ENGINE_VERSION,
     ruleVersion: RULE_VERSION,
     asOf,
     goalResolution: normalized.goalResolution,
     results,
-    followUp: nextQuestion({
-      gaps: normalized.userGaps,
-      ranked:
-        results[0]?.primaryAction === undefined
-          ? []
-          : [results[0].primaryAction, ...results[0].alternatives],
-      // Câu hỏi "có xét thẻ doanh nghiệp không" chỉ đáng hỏi khi một thẻ
-      // DOANH NGHIỆP đang thật sự trong bảng. Suy nó từ mã `ELIGIBILITY_UNCERTAIN`
-      // là suy sai cả hai chiều: hỏi khi một thẻ thường có thu nhập chưa rõ,
-      // và KHÔNG hỏi khi một thẻ doanh nghiệp đủ điều kiện đang đứng đầu.
-      businessProductIds: new Set(
-        normalized.universe
-          .filter((product) => product.personalOrBusiness === "business")
-          .map((product) => product.id as string),
-      ),
-    }),
+    followUp,
     reasonCodes: mergeReasonCodes(runReasons),
     warnings: mergeWarnings(runWarnings),
     dataGaps: normalized.dataGaps,
@@ -533,6 +582,7 @@ export function recommend(input: RecommendInput): RecommendationRun {
 snapshotFacts(row, selectableIds.has(row.product.id as string)),
       ),
       goals: goalTraces,
+      followUpProbes,
     },
   };
 }
@@ -550,12 +600,31 @@ export async function recommendFromSource(
   data: RecommendationDataset,
   ix: DatasetIndex,
   asOf: string,
+  knownAt?: string,
 ): Promise<RecommendationRun> {
-  const universe = normalize(state, data, ix, asOf).universe;
+  return recommend({ state, data, ix, asOf, offerHistory: await loadOfferHistory(source, data, asOf, knownAt) });
+}
+
+/**
+ * Lịch sử offer của MỌI sản phẩm trong bộ dữ liệu, cắt đúng ngày chạy.
+ *
+ * Mọi sản phẩm, không chỉ tập ứng viên: engine chỉ ĐỌC lịch sử của tập ứng
+ * viên, nhưng bản ghi §20 phải chạy lại được cả những lượt "nếu như" — người
+ * dùng thôi giữ một thẻ, đổi nước ở — mà tập ứng viên của chúng khác. Chỉ lưu
+ * lịch sử của tập cũ thì thẻ mới vào tập nhận lịch sử RỖNG trong phép thử,
+ * và percentile của nó sai theo đúng cách mà bản ghi sinh ra để tránh.
+ */
+export async function loadOfferHistory(
+  source: RecommendationDataSource,
+  data: RecommendationDataset,
+  asOf: string,
+  knownAt?: string,
+): Promise<Map<string, OfferHistoryPoint[]>> {
+  const query = knownAt === undefined ? { asOf } : { asOf, knownAt };
   const entries = await Promise.all(
-    universe.map(
-      async (product) => [product.id as string, await source.getOfferHistory(product.id)] as const,
-    ),
+    [...data.products]
+      .sort((a, b) => (a.id < b.id ? -1 : 1))
+      .map(async (product) => [product.id as string, await source.getOfferHistory(product.id, query)] as const),
   );
-  return recommend({ state, data, ix, asOf, offerHistory: new Map(entries) });
+  return new Map(entries);
 }

@@ -31,6 +31,7 @@ import type { EarnFit } from "./earn-fit.ts";
 import type { BenefitFit } from "./benefit-fit.ts";
 import type { ScoringScale } from "./scoring/context.ts";
 import type { TripCoverage } from "./strategies.ts";
+import type { GapProbe } from "./sensitivity.ts";
 
 /* ------------------------------------------------------------------ *
  * §7 Portfolio Analyzer
@@ -498,7 +499,15 @@ export interface NeedsSnapshot {
  * đúng những URL đã nằm trong bản chụp đó. Xem `provenanceFor` ở `debug.ts`.
  */
 export interface ProvenanceRow {
-  table: "offers" | "offer_components" | "product_fees" | "earning_rates" | "product_benefits" | "eligibility_rules";
+  table:
+    | "offers"
+    | "offer_components"
+    | "product_fees"
+    | "earning_rates"
+    | "earning_caps"
+    | "program_valuations"
+    | "product_benefits"
+    | "eligibility_rules";
   id: string;
   verifiedAt: string | null;
   recordedAt: string | null;
@@ -584,6 +593,12 @@ export interface DerivedState {
   /** Mọi sản phẩm trong tập ứng viên, chọn được hay không. */
   candidates: CandidateFactsSnapshot[];
   goals: GoalTrace[];
+  /**
+   * §30 đã cân những câu hỏi nào, và câu trả lời thử nào đổi được người thắng
+   * — xem `sensitivity.ts`. Rỗng khi không câu nào đo được (hoặc lượt chạy là
+   * một lượt THỬ bên trong phép đo).
+   */
+  followUpProbes: GapProbe[];
 }
 
 /* ------------------------------------------------------------------ *

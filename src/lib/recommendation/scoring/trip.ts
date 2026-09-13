@@ -18,7 +18,9 @@
  *
  * `points_gap_reduction` bằng 0 khi khoảng cách bằng 0 — và đó không phải lỗi
  * làm tròn, nó là §16 Rule 1 phát biểu bằng điểm số: người đã đủ điểm thì mọi
- * thẻ mất 20% điểm cùng lúc, và `NO_NEW_CARD` thắng vì lý do đúng.
+ * thẻ mất 20% điểm cùng lúc, và `NO_NEW_CARD` thắng vì lý do đúng. Nó đi về 0
+ * LIỀN MẠCH khi người dùng gần đủ, không nhảy từ 1 xuống 0 ở mép — xem
+ * `scoreTrip`.
  */
 
 import { bestCurrencyNeedVia } from "../needs.ts";
@@ -85,11 +87,27 @@ export function scoreTrip(candidate: CandidateFacts, ctx: ScoringContext): Score
         gapNote = "đã đủ điểm — không còn khoảng cách nào để thu hẹp (§16 Rule 1)";
       } else {
         const bonus = bonusPointsToward(candidate, bestProgram, ctx.ix, ctx.asOf);
-        gapRaw = bonus === null ? 0 : Math.min(1, bonus / gap);
+        /*
+         * Phần CHUYẾN ĐI mà bonus này lấp được — không phải phần KHOẢNG CÁCH.
+         *
+         * Bản trước chấm `bonus / khoảng cách`, nên một khoảng cách 5,000 điểm
+         * trên chuyến 205,000 được lấp "100%" bởi mọi thẻ có bonus từ 5,000
+         * trở lên — tức cả bảng nhận trọn 20% trọng số. Và nó GÃY ở đúng mép:
+         * thiếu 5,000 thì mọi thẻ được 1.0, thiếu 0 thì mọi thẻ được 0 (§16
+         * Rule 1). Debugger Phase 4 bắt được nó trên chính Test C: 200,000
+         * Membership Rewards® cho chuyến Nhật cần tới 205,000, và engine
+         * khuyên mở một thẻ 50,000 điểm để lấp 5,000 — trong khi cùng lượt
+         * chạy đó xếp `USE_EXISTING_POINTS` đứng đầu các chiến lược.
+         *
+         * `min(bonus, khoảng cách) / cận trên` = `min(1, bonus/khoảng cách) ×
+         * (1 − phủ)`: y như bản cũ khi người dùng còn xa (phủ ≈ 0), và trượt
+         * dần về 0 khi họ gần đủ — liền mạch với nhánh `gap === 0` phía trên.
+         */
+        gapRaw = bonus === null ? 0 : Math.min(bonus, gap) / (bestRow?.high as number);
         gapNote =
           bonus === null
             ? "welcome bonus không với tới được đồng tiền cần"
-            : `bonus quy đổi ${Math.round(bonus).toLocaleString("en-US")} trên khoảng cách ${Math.round(gap).toLocaleString("en-US")}`;
+            : `bonus quy đổi ${Math.round(bonus).toLocaleString("en-US")} lấp ${Math.round(Math.min(bonus, gap)).toLocaleString("en-US")} trên chuyến ${Math.round(bestRow?.high as number).toLocaleString("en-US")} (còn thiếu ${Math.round(gap).toLocaleString("en-US")})`;
       }
     }
   }

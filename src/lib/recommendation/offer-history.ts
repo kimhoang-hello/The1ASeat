@@ -125,9 +125,18 @@ export interface OfferHistoryPoint {
  * lại câu chữ thành một mức mới trong lịch sử. Cùng bài học với
  * `welcomeBonusPeak` trong `lib/offer-history.ts`.
  */
-export function dedupeHistory(timeline: readonly OfferHistoryState[]): OfferHistoryPoint[] {
+export function dedupeHistory(
+  timeline: readonly OfferHistoryState[],
+  /**
+   * Ngày cuối được phép nhìn thấy — xem `repoOfferHistory`. Cắt ở ĐÂY, trước
+   * khi gộp đợt, để mức cuối trước ngày cắt thành `endCensored` thay vì mang
+   * `until` của một lần ghi chưa xảy ra vào ngày đó.
+   */
+  cutoff?: string,
+): OfferHistoryPoint[] {
   const states: OfferHistoryState[] = [];
   for (const state of timeline) {
+    if (cutoff !== undefined && state.at > cutoff) continue;
     const previous = states[states.length - 1];
     if (previous !== undefined && sameState(previous, state)) continue;
     states.push(state);
@@ -167,4 +176,15 @@ export function dedupeHistory(timeline: readonly OfferHistoryState[]): OfferHist
 function sameState(a: OfferHistoryState, b: OfferHistoryState): boolean {
   if (a.bonus === null || b.bonus === null) return a.bonus === b.bonus;
   return a.bonus.amount === b.bonus.amount && a.bonus.unit === b.bonus.unit;
+}
+
+/**
+ * Ngày cắt nhật ký offer cho một lượt chạy: SỚM hơn của `asOf` và `knownAt`.
+ *
+ * Ngày trong nhật ký là NGÀY GHI NHẬN, nên nó thuộc cả hai trục thời gian: một
+ * mức ghi sau `asOf` là tương lai của thế giới, một mức ghi sau `knownAt` là
+ * thứ kho chưa biết. Lượt chạy phải không thấy cả hai.
+ */
+export function historyCutoff(asOf: string, knownAt?: string | null): string {
+  return knownAt != null && knownAt < asOf ? knownAt : asOf;
 }

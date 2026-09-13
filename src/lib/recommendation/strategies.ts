@@ -219,8 +219,26 @@ export function generateStrategies(input: StrategyInput): StrategyScore[] {
 
   /* ---- Dùng điểm đang có / xây thêm điểm -------------------------- */
   let coverage: number | null = null;
+  /**
+   * Số điểm với tới được đã phủ mức giá ĐIỂN HÌNH của chương trình phủ tốt
+   * nhất — "đủ cho khoảng giá hợp lý" của §16 Rule 1, chưa phải đủ cho mức
+   * trần.
+   *
+   * `coverage` đo trên cận TRÊN, và đó là đúng cho câu "bạn ĐÃ đủ điểm" (nói
+   * đủ dựa trên mức giá thấp là hứa suông). Nhưng lời khuyên "đi tìm chỗ ngồi"
+   * thì đúng từ lúc người dùng đặt được ở giá điển hình — bản trước chỉ bật nó
+   * ở đúng 100% cận trên, nên 200,000 điểm cho chuyến cần 110,000–205,000
+   * (điển hình 170,000) nhận đủ `USE_EXISTING_POINTS` mà không một chữ nào về
+   * chỗ ngồi.
+   */
+  let coversTypical = false;
   if (isTrip && need !== null) {
-    coverage = tripCoverage(state, ix, asOf, need).coverage;
+    const covered = tripCoverage(state, ix, asOf, need);
+    coverage = covered.coverage;
+    const typical = need.byProgram.find((row) => row.programId === covered.bestProgram)?.typical ?? null;
+    // Cận dưới đã vượt mức điển hình thì con số thật càng vượt — kết luận
+    // ĐỦ vẫn đứng, dù `accessible` là cận dưới.
+    coversTypical = typical !== null && covered.accessible !== null && covered.accessible >= typical;
   }
 
   if (coverage !== null) {
@@ -302,10 +320,14 @@ export function generateStrategies(input: StrategyInput): StrategyScore[] {
   /* ---- Đi tìm chỗ ngồi, không đi tìm điểm (§16 Rule 1) ------------- */
   const difficulty = need === null ? null : availabilityDifficulty(need);
   const availabilityPressure = difficulty === "hard" ? 1 : difficulty === "medium" ? 0.6 : 0.2;
+  // Đủ ở cận trên thì trọn áp lực; mới đủ ở giá điển hình thì theo đúng phần
+  // cận trên đã phủ — liền mạch, không nhảy bậc ở 100%.
+  const availabilityWeight =
+    coverage === null ? 0 : coverage >= 1 ? 1 : coversTypical ? coverage : 0;
   add(
     "FOCUS_ON_AVAILABILITY",
-    coverage !== null && coverage >= 1 ? availabilityPressure : 0,
-    ...(coverage !== null && coverage >= 1 && difficulty !== "easy"
+    availabilityPressure * availabilityWeight,
+    ...(availabilityWeight > 0 && difficulty !== "easy"
       ? (["FOCUS_ON_AWARD_AVAILABILITY"] as ReasonCode[])
       : []),
   );

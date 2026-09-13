@@ -13,7 +13,20 @@ import { amountIn, historyFor, unitOf } from "@/lib/offer-history";
 import { dedupeHistory, type OfferHistoryPoint } from "./offer-history.ts";
 import { PRODUCTS } from "./data/index.ts";
 
-export function repoOfferHistory(productId: string): OfferHistoryPoint[] {
+/**
+ * `cutoff` = ngày cuối cùng được phép nhìn thấy (YYYY-MM-DD). Vắng = cả nhật ký.
+ *
+ * Một lượt chạy cho ngày trong quá khứ mà đọc cả nhật ký là đọc TƯƠNG LAI:
+ * mức offer ghi nhận sau ngày chạy đi vào percentile §12, đổi mã lý do, đổi
+ * thị trường offer, và có thể đổi thứ hạng — bằng một dữ kiện engine lúc ấy
+ * chưa thể biết. Cắt TRƯỚC khi gộp đợt, để mức cuối trước ngày cắt thành
+ * `endCensored` (chưa thấy nó kết thúc — đúng như lúc đó) chứ không mang `until`
+ * của một lần ghi chưa xảy ra. Phép cắt nằm ở `dedupeHistory` để test được.
+ *
+ * Ngày trong nhật ký là NGÀY GHI NHẬN, nên ngày cắt là cả trục `asOf` lẫn
+ * `knownAt` — lấy ngày SỚM hơn.
+ */
+export function repoOfferHistory(productId: string, cutoff?: string): OfferHistoryPoint[] {
   const product = PRODUCTS.find((row) => row.id === productId);
   if (product === undefined) return [];
   // Gộp lịch sử dưới MỌI slug thẻ này từng mang. Nhật ký gốc đánh khoá bằng
@@ -39,5 +52,6 @@ export function repoOfferHistory(productId: string): OfferHistoryPoint[] {
                 unit: unitOf(entry.welcomeBonus),
               },
       })),
+    cutoff,
   );
 }

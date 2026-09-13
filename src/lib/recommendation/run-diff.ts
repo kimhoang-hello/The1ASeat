@@ -75,19 +75,27 @@ export function deepDiff(before: unknown, after: unknown, path = ""): DiffEntry[
  * ------------------------------------------------------------------ */
 
 /**
- * Tên tầng — đúng danh sách nguồn lỗi Phase 4 phải phân biệt được, cộng ba
- * tầng giữa (chuẩn hoá, dữ kiện ứng viên, độ tin cậy) mà một thay đổi có thể
- * đi qua.
+ * Tên tầng — đúng danh sách nguồn lỗi Phase 4 phải phân biệt được, cộng các
+ * tầng giữa (chuẩn hoá, dữ kiện ứng viên, thang đo chung, độ tin cậy) mà một
+ * thay đổi có thể đi qua.
+ *
+ * Thứ tự là thứ tự TÍNH của `engine.ts`, không phải thứ tự trình bày của spec.
+ * Chúng khác nhau ở một chỗ, và chỗ đó quyết định: spec vẽ Strategies → Needs
+ * → Eligibility, nhưng engine tính dữ kiện từng thẻ và điều kiện TRƯỚC, vì
+ * chiến lược `WAIT_FOR_BETTER_OFFER` đọc thị trường offer của tập ứng viên
+ * chọn được. Xếp theo spec thì một lần đổi lịch sử offer báo "lan từ tầng
+ * chiến lược" trong khi nó bắt đầu ở percentile của một thẻ.
  */
 export const PIPELINE_STAGES = [
   "source_data",
   "user_input",
   "normalization",
   "portfolio_analysis",
+  "candidate_facts",
+  "eligibility_suitability",
+  "offer_climate",
   "strategy_generation",
   "needs_calculation",
-  "eligibility_suitability",
-  "candidate_facts",
   "scoring",
   "rules",
   "ranking",
@@ -106,6 +114,7 @@ export const STAGE_LABELS: Record<PipelineStage, string> = {
   needs_calculation: "Tính nhu cầu §9",
   eligibility_suitability: "Điều kiện / phù hợp §14",
   candidate_facts: "Dữ kiện ứng viên (offer §11–12, tích điểm, quyền lợi)",
+  offer_climate: "Thang đo chung của tập chọn được (thị trường offer, thang điểm)",
   scoring: "Chấm điểm theo ý định §10",
   rules: "Luật §16 + biên tập §17",
   ranking: "Xếp hạng §18",
@@ -156,6 +165,14 @@ export function stageValue(record: RecommendationRunRecord, stage: PipelineStage
         userGaps: output.userGaps,
         dataGaps: output.dataGaps,
         universe: derived.universe,
+        // Cửa chặn của tập ứng viên thuộc về tầng NÀY. Để nó ở tầng điều kiện
+        // thì một thẻ vẫn bị loại nhưng đổi LÝ DO (đang giữ → hết nhận đơn)
+        // làm tập ứng viên đứng yên, và tầng khác đầu tiên bị báo sai chỗ.
+        universeExclusions: keyed(
+          derived.excluded.filter((row) => row.stage === "universe"),
+          (row) => row.productSlug,
+          (row) => row.reason,
+        ),
       };
     case "portfolio_analysis":
       return derived.portfolio;
@@ -173,17 +190,21 @@ export function stageValue(record: RecommendationRunRecord, stage: PipelineStage
       );
     case "eligibility_suitability":
       return {
-        excluded: keyed(derived.excluded, (row) => row.productSlug, (row) => row),
+        excluded: keyed(
+          derived.excluded.filter((row) => row.stage !== "universe"),
+          (row) => row.productSlug,
+          (row) => row,
+        ),
         verdicts: keyed(
           derived.candidates,
           (row) => row.productSlug,
           (row) => ({ eligibility: row.eligibility, suitability: row.suitability }),
         ),
       };
+    case "offer_climate":
+      return { climate: derived.climate, scale: derived.scale };
     case "candidate_facts":
       return {
-        climate: derived.climate,
-        scale: derived.scale,
         medianFeeCents: derived.medianFeeCents,
         candidates: keyed(
           derived.candidates,
@@ -204,12 +225,12 @@ export function stageValue(record: RecommendationRunRecord, stage: PipelineStage
           keyed(
             goal.ranking,
             (row) => candidateKey(row.candidate),
+            // NGUYÊN dòng thành phần, cả `note`: một lần đổi version sửa lời giải
+            // thích mà không đổi con số vẫn là một bản ghi khác, và phép so phải
+            // thấy nó.
             (row) => ({
               baseScore: row.candidate.baseScore,
-              components: keyed(row.candidate.components, (c) => c.key, (c) => ({
-                weight: c.weight,
-                raw: c.raw,
-              })),
+              components: keyed(row.candidate.components, (c) => c.key, (c) => c),
             }),
           ),
       );
@@ -221,7 +242,7 @@ export function stageValue(record: RecommendationRunRecord, stage: PipelineStage
           keyed(
             goal.ranking,
             (row) => candidateKey(row.candidate),
-            (row) => keyed(row.candidate.adjustments, (a) => a.rule, (a) => a.delta),
+            (row) => keyed(row.candidate.adjustments, (a) => a.rule, (a) => a),
           ),
       );
     case "ranking":

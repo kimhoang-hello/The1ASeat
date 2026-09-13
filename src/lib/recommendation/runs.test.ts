@@ -428,6 +428,7 @@ test("§22 — bản ghi nguồn chỉ đúng những dòng engine đã đọc",
     [
       ...dataset.offers, ...dataset.offerComponents, ...dataset.productFees,
       ...dataset.earningRates, ...dataset.productBenefits, ...dataset.eligibilityRules,
+      ...dataset.earningCaps, ...dataset.programValuations,
     ].map((row) => row.id as string),
   );
   for (const facts of record.derivedState.candidates) {
@@ -435,6 +436,14 @@ test("§22 — bản ghi nguồn chỉ đúng những dòng engine đã đọc",
     for (const row of rows) assert.ok(ids.has(row.id), `${row.table} ${row.id} không có trong bộ dữ liệu`);
     const offer = rows.filter((row) => row.table === "offers").map((row) => row.id);
     assert.deepEqual(offer, facts.offer.activeOfferId === null ? [] : [facts.offer.activeOfferId]);
+    // Định giá của chính các chương trình thẻ này kiếm — thứ nhân vào mọi
+    // con số tiền của nó.
+    for (const program of facts.earn.programs) {
+      assert.ok(
+        rows.some((row) => row.table === "program_valuations" && dataset.programValuations.find((v) => v.id === row.id)?.programId === program),
+        `${facts.productSlug}: thiếu định giá ${program}`,
+      );
+    }
     // Luật điều kiện trong bảng nguồn = luật engine đã đánh giá.
     assert.deepEqual(
       rows.filter((row) => row.table === "eligibility_rules").map((row) => row.id),
@@ -520,8 +529,9 @@ test("mọi tầng của dây chuyền đều có trong phép so", () => {
   // mà không ai thấy. Danh sách phải đúng thứ tự nhân quả của `engine.ts`.
   assert.deepEqual([...PIPELINE_STAGES], [
     "source_data", "user_input", "normalization", "portfolio_analysis",
-    "strategy_generation", "needs_calculation", "eligibility_suitability",
-    "candidate_facts", "scoring", "rules", "ranking", "final_recommendation", "confidence",
+    "candidate_facts", "eligibility_suitability", "offer_climate",
+    "strategy_generation", "needs_calculation", "scoring", "rules", "ranking",
+    "final_recommendation", "confidence",
   ]);
 });
 
@@ -549,4 +559,69 @@ test("`inputOf` dựng lại đúng đầu vào của một bản ghi", () => {
   });
   const again = executeRun(inputOf(record, dataset), { id: record.id, createdAt: record.createdAt });
   assert.equal(canonicalJson(again.record), canonicalJson(record));
+});
+
+/* ================================================================== *
+ * Vòng Codex 1
+ * ================================================================== */
+
+test("lịch sử offer CẮT ở ngày chạy: lượt chạy quá khứ không đọc được tương lai", async () => {
+  const { dedupeHistory } = await import("./offer-history.ts");
+  const timeline = [
+    { at: "2026-01-01", bonus: { label: "10,000", amount: 10_000, unit: "points" as const } },
+    { at: "2026-03-01", bonus: { label: "12,000", amount: 12_000, unit: "points" as const } },
+    { at: "2026-06-01", bonus: { label: "15,000", amount: 15_000, unit: "points" as const } },
+  ];
+  const full = dedupeHistory(timeline);
+  const cut = dedupeHistory(timeline, "2026-04-15");
+  assert.equal(full.length, 3);
+  assert.deepEqual(cut.map((p) => p.amount), [10_000, 12_000]);
+  // Mức cuối trước ngày cắt CHƯA thấy kết thúc — không mang `until` của lần
+  // ghi 01/06 chưa xảy ra vào ngày đó.
+  assert.equal(cut[1].until, null);
+  assert.equal(cut[1].endCensored, true);
+  const { historyCutoff } = await import("./offer-history.ts");
+  assert.equal(historyCutoff("2026-09-08", "2026-08-01"), "2026-08-01");
+  assert.equal(historyCutoff("2026-09-08", null), "2026-09-08");
+  assert.equal(historyCutoff("2026-08-01", "2026-09-08"), "2026-08-01");
+});
+
+test("vì sao thẻ X — lượt chạy KHÔNG có mục tiêu thì thẻ chọn được là 'chưa xếp hạng', không phải 'không tồn tại'", () => {
+  const noGoal = { ...vietnamTripShortfall, goals: [] };
+  const { record, dataset } = execute(noGoal);
+  assert.equal(record.derivedState.goals.length, 0);
+  const pick = record.derivedState.candidates.find((row) => row.selectable)!;
+  const e = explainProduct(record, pick.productSlug, { dataset });
+  assert.equal(e.outcome, "not_ranked_no_goal");
+  assert.deepEqual(e.drivenBy, ["user_input"]);
+  assert.equal(explainProduct(record, "the-khong-ton-tai", { dataset }).outcome, "not_in_dataset");
+});
+
+test("vì sao thẻ X — NO_NEW_CARD không thắng thì ở chỗ RIÊNG, không phải gợi ý thay thế", () => {
+  const { record, dataset } = execute(vietnamTripShortfall);
+  assert.notEqual(record.outputSnapshot.results[0].primaryAction.kind, "no_new_card");
+  const e = explainProduct(record, "NO_NEW_CARD", { dataset });
+  assert.equal(e.outcome, "no_action_slot");
+  const funded = execute(vietnamTripFunded);
+  assert.equal(explainProduct(funded.record, "NO_NEW_CARD", { dataset: funded.dataset }).outcome, "primary");
+});
+
+test("so lượt chạy — thẻ vẫn bị loại nhưng đổi LÝ DO thì tầng khác đầu tiên là CHUẨN HOÁ", () => {
+  const a = execute(aeroplanHeavy).record;
+  const b = structuredClone(a);
+  const row = b.derivedState.excluded.find((x) => x.stage === "universe")!;
+  row.reason = row.reason === "already_held" ? "not_available" : "already_held";
+  assert.equal(firstComputedDivergence(diffRecords(a, b))?.stage, "normalization");
+});
+
+test("so lượt chạy — đổi LỜI GIẢI THÍCH mà không đổi con số vẫn là khác", () => {
+  const a = execute(aeroplanHeavy).record;
+  const b = structuredClone(a);
+  const loser = b.derivedState.goals[0].ranking.at(-2)!.candidate;
+  loser.components[0].note = "lời giải thích đã sửa";
+  assert.equal(diffRecords(a, b).find((row) => row.stage === "scoring")?.changed, true);
+  const c = structuredClone(a);
+  const adjusted = c.derivedState.goals[0].ranking.find((row) => row.candidate.adjustments.length > 0)!.candidate;
+  adjusted.adjustments[0].reasonCode = null;
+  assert.equal(diffRecords(a, c).find((row) => row.stage === "rules")?.changed, true);
 });

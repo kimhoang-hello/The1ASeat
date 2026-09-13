@@ -102,7 +102,33 @@ export interface FollowUpInput {
   ranked: readonly Candidate[];
   /** Id các sản phẩm là thẻ DOANH NGHIỆP — xem `nextQuestion`. */
   businessProductIds?: ReadonlySet<string>;
+  /**
+   * Đo giá trị THẬT của một câu hỏi: tỷ lệ câu trả lời thử ĐỔI ĐƯỢC người
+   * thắng, 0..1, hoặc `null` khi không đo được. Xem `sensitivity.ts`.
+   *
+   * Tuỳ chọn: vắng nó thì chỉ còn bảng ưu tiên tĩnh — đúng hành vi trước Phase
+   * 4, và đúng thứ các lượt chạy thử bên trong phép đo dùng (một phép đo không
+   * được tự đo chính nó).
+   */
+  measure?: (gap: UserDataGap) => number | null;
 }
+
+/**
+ * Chỗ trống GÁC CỔNG cả lượt chạy — hỏi trước mọi câu khác, không đo.
+ *
+ * Không có mục tiêu thì không có gì để khuyên; không biết nước ở thì cả tập
+ * ứng viên chưa đánh giá được; chưa khai thẻ/số dư thì engine có thể đang
+ * khuyên đúng cái thẻ người dùng đang cầm. Giá trị của chúng không đo được
+ * bằng câu trả lời thử (không có "thẻ đang giữ điển hình" nào), nên chúng giữ
+ * nguyên chỗ trong bảng ưu tiên.
+ */
+const GATEKEEPERS: ReadonlySet<UserDataGap["kind"]> = new Set([
+  "goal_missing",
+  "goal_priority_ambiguous",
+  "country_unknown",
+  "cards_undeclared",
+  "balances_undeclared",
+]);
 
 /**
  * Chỗ trống được ĐẨY LÊN ĐẦU vì chính khuyến nghị hiện tại phụ thuộc vào nó.
@@ -172,7 +198,37 @@ export function nextQuestion(input: FollowUpInput): FollowUpQuestion | null {
     }
   }
 
+  /*
+   * Ba tầng, theo thứ tự:
+   *
+   *   1. Chỗ trống gác cổng (`GATEKEEPERS`) — theo bảng ưu tiên.
+   *   2. Câu hỏi ĐO ĐƯỢC là đổi được người thắng — câu đổi được nhiều câu trả
+   *      lời thử nhất lên trước. §30 nói đúng thế: "if missing information
+   *      could materially change the recommendation".
+   *   3. Mọi câu còn lại — theo bảng ưu tiên, câu khẩn lên đầu.
+   *
+   * Tầng 2 KHÔNG thay bảng ưu tiên, nó đặt lên trên: khi không câu nào đổi
+   * được gì, hành vi y hệt trước. Và phép đo chỉ chạy cho những câu đã qua hai
+   * bộ lọc ở trên — không đo thu nhập khi không thẻ nào vướng điều kiện.
+   */
+  const measured = new Map<UserDataGap, number>();
+  if (input.measure !== undefined) {
+    for (const gap of usable) {
+      if (GATEKEEPERS.has(gap.kind)) continue;
+      const value = input.measure(gap);
+      if (value !== null && value > 0) measured.set(gap, value);
+    }
+  }
+  const tier = (gap: UserDataGap) => (GATEKEEPERS.has(gap.kind) ? 0 : measured.has(gap) ? 1 : 2);
   const best = [...usable].sort((a, b) => {
+    const ta = tier(a);
+    const tb = tier(b);
+    if (ta !== tb) return ta - tb;
+    if (ta === 1) {
+      const va = measured.get(a) as number;
+      const vb = measured.get(b) as number;
+      if (va !== vb) return vb - va;
+    }
     const pa = urgent.has(a.kind) ? URGENT : (QUESTION_PRIORITY[a.kind] as number);
     const pb = urgent.has(b.kind) ? URGENT : (QUESTION_PRIORITY[b.kind] as number);
     if (pa !== pb) return pa - pb;

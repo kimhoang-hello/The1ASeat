@@ -1,5 +1,5 @@
 {
-  "engineVersion": "4.0.1",
+  "engineVersion": "4.2.0",
   "datasetFingerprint": "298326-8e32ed48bcd1fdd7",
   "runs": [
     {
@@ -141,18 +141,15 @@
       "user": "u_japan_funded",
       "goalResolution": "resolved",
       "followUp": "spend_profile_missing",
-      "primary": "td-aeroplan-visa-infinite",
-      "score": 0.7367,
+      "primary": "no_new_card",
+      "score": 0.6419,
       "noAction": 0.6419,
       "strategy": "USE_EXISTING_POINTS",
-      "confidence": "low",
+      "confidence": "medium",
       "reasonCodes": [
-        "MIN_SPEND_CAPACITY_UNKNOWN",
         "TRIP_PROGRAM_MATCH",
-        "EXISTING_BENEFIT_DUPLICATION",
-        "ANNUAL_FEE_WAIVED_FIRST_YEAR",
         "NO_NEW_CARD_NEEDED",
-        "SCORES_NEARLY_TIED"
+        "FOCUS_ON_AWARD_AVAILABILITY"
       ],
       "numbers": {
         "tripNeedLow": 110000,
@@ -167,29 +164,29 @@
       },
       "alternatives": [
         [
+          "td-aeroplan-visa-infinite",
+          0.5313
+        ],
+        [
           "amex-gold-rewards",
-          0.7338
+          0.5284
         ],
         [
           "amex-aeroplan",
-          0.7301
+          0.5247
         ],
         [
           "amex-green",
-          0.7196
-        ],
-        [
-          "cibc-aeroplan-visa-infinite",
-          0.6867
+          0.5142
         ]
       ]
     },
     {
       "user": "u_japan_gap",
       "goalResolution": "resolved",
-      "followUp": "household_income_unknown",
+      "followUp": "business_ownership_unknown",
       "primary": "amex-gold-rewards",
-      "score": 0.6153,
+      "score": 0.6137,
       "noAction": 0.1455,
       "strategy": "EARN_FLEXIBLE_POINTS",
       "confidence": "low",
@@ -217,19 +214,19 @@
       "alternatives": [
         [
           "amex-business-gold",
-          0.5775
+          0.5757
         ],
         [
           "amex-green",
-          0.5584
+          0.558
         ],
         [
           "amex-cobalt",
-          0.5425
+          0.5421
         ],
         [
           "td-aeroplan-visa-infinite",
-          0.4892
+          0.4879
         ]
       ]
     },
@@ -327,7 +324,7 @@
     {
       "user": "u_flexible",
       "goalResolution": "resolved",
-      "followUp": "trip_round_trip_unknown",
+      "followUp": "business_ownership_unknown",
       "primary": "cibc-aeroplan-visa-infinite-privilege",
       "score": 0.5879,
       "noAction": 0.5357,
@@ -372,7 +369,7 @@
     {
       "user": "u_sparse",
       "goalResolution": "resolved",
-      "followUp": "minimum_spend_capacity_unknown",
+      "followUp": "personal_income_unknown",
       "primary": "rbc-avion-visa-platinum",
       "score": 0.5222,
       "noAction": 0.1786,
@@ -548,7 +545,7 @@
     {
       "user": "u_vague",
       "goalResolution": "resolved",
-      "followUp": "minimum_spend_capacity_unknown",
+      "followUp": "spend_category_unknown",
       "primary": "amex-green",
       "score": 0.7045,
       "noAction": 0.1786,
@@ -642,7 +639,7 @@
       "goalResolution": "resolved",
       "followUp": "household_income_unknown",
       "primary": "amex-gold-rewards",
-      "score": 0.6134,
+      "score": 0.6122,
       "noAction": 0.1675,
       "strategy": "EARN_FLEXIBLE_POINTS",
       "confidence": "medium",
@@ -669,19 +666,19 @@
       "alternatives": [
         [
           "amex-green",
-          0.5575
+          0.5571
         ],
         [
           "amex-cobalt",
-          0.5416
+          0.5413
         ],
         [
           "cibc-aeroplan-visa-infinite-privilege",
-          0.4944
+          0.4923
         ],
         [
           "td-aeroplan-visa-infinite",
-          0.4882
+          0.4872
         ]
       ]
     }
