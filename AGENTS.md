@@ -1674,3 +1674,45 @@ cho kết quả sạch. KHÔNG tự sửa bằng cách đẩy giá trị từ `.
 `gh secret set --env` — đó là thay đổi cấu hình bảo mật của GitHub, không phải
 sửa code, và nằm ngoài phạm vi tự động được cho phép. Cần bạn vào GitHub
 (Settings → Environments → `contentful-write`) thêm lại ba secret đó.
+
+## Đo đạc GA4 (13/09/2026) — đừng đề xuất lại
+
+- **`apply_clicked` có thể bị ĐẾM ĐÔI khi một khối `CardSpotlight` (thẻ nhắc
+  trong thân bài blog) được bấm — bug có thật, đã kiểm bằng code, CHƯA sửa.**
+  `AffiliateClickTracker` (`components/blog/affiliate-click-tracker.tsx`) gắn
+  listener capture-phase lên `data-affiliate-scope="post-body"`, khớp mọi
+  `a[rel~='sponsored']` bên trong — kể cả anchor của `ApplyButton`/`CardImage`
+  thuộc `CardSpotlight` mà `post-body.tsx` chèn giữa đoạn văn. Một click vào
+  nút Apply hoặc ảnh của khối thẻ đó vì vậy bắn HAI event `apply_clicked`:
+  một từ `ApplyLink` (`product=card.slug`), một từ tracker
+  (`product=post.slug`, vì tracker gán `product` = slug BÀI VIẾT chứa link,
+  không phải slug thẻ). Comment trong `post-body.tsx` ("Nút Apply trong khối
+  thẻ tự bắn event riêng của nó, nên không bị đếm hai lần") **SAI** theo cách
+  đọc code hiện tại. `CardImage` tự thêm hậu tố `_image` vào placement nó
+  nhận (`card-image.tsx`), nên đường ảnh mang `placement="post_body_image"`,
+  khác với đường nút (`"post_body"`) — phải kiểm CẢ HAI riêng khi tính có bao
+  nhiêu lượt bị đếm đôi trong một tuần: (a) so tổng event `placement=post_body`
+  với tổng các dòng "Product" dạng slug-bài-viết (nếu bằng nhau, N=0 cho
+  đường nút); (b) xem có dòng `placement=post_body_image` nào không (nếu
+  không có, N=0 cho đường ảnh). Tuần 06–12/09/2026 cả hai đều N=0 (may mắn,
+  không phải bug đã hết). Sửa đúng cần chặn double-fire ở tracker khi anchor
+  đã tự bắn event, hoặc bỏ hẳn `CardSpotlight` khỏi scope của tracker vì nó
+  đã tự đo — chưa làm, là việc nợ.
+- **`window.gtag()` gọi trực tiếp trên site thật là cách rẻ để kiểm một tham
+  số event có phải tên dành riêng của gtag hay không** (cùng lớp bug với vụ
+  `tracking_id` 06/09), không cần đợi ai đó thực sự bấm. Đã dùng để loại trừ
+  giả thuyết "`source` (tham số của `newsletter_subscribed`) là tên dành
+  riêng" — không phải, `g/collect` trả đúng `tid`. Nhớ dùng giá trị nhận
+  dạng được (ví dụ `verify_..._YYYYMMDD`) và trừ nó ra khỏi tổng của báo cáo
+  tuần chứa ngày gửi.
+- **Bảng phiên GA4 vẫn có thể cộng ra nhiều hơn tổng ở tuần MỚI, dù tuần
+  TRƯỚC đó đã settle sạch (0 lệch).** Tuần 06–12/09/2026: 312 tổng nhưng cộng
+  các dòng kênh/nguồn ra 329 (thừa 17, ~5.4%) — nhẹ hơn tuần 30/08–05/09 lúc
+  đọc tươi (thừa 47/323, ~14.5%) nhưng cùng một loại lỗi. Đây KHÔNG phải lỗi
+  đã đóng vĩnh viễn ở lần trước — mỗi tuần mới lại phải kiểm lại từ đầu.
+- **`get_page_text` không giữ được hướng mũi tên tăng/giảm của Home report —
+  phải zoom màn hình gốc để đọc, đừng suy đoán dấu từ ngữ cảnh.** Đã tự đọc
+  nhầm Sessions/Views là tăng (dựa vào số dương "5.7%"/"4.5%" không kèm dấu
+  trong text) trong khi thực tế cả hai đều giảm (mũi tên đỏ) — chỉ phát hiện
+  ra khi Codex tính chéo `312/331` ra số âm và mình đi zoom lại ảnh gốc để
+  xác nhận màu mũi tên.
