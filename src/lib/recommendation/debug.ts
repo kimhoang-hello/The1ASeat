@@ -454,3 +454,20 @@ export function explainProduct(
         : provenanceFor(facts, options.dataset, record.inputSnapshot.asOf),
   };
 }
+
+/**
+ * Một ứng viên trong bảng xếp hạng của một mục tiêu, theo slug, id hoặc
+ * `NO_NEW_CARD`. `null` khi nó không được xếp hạng — `explainProduct` nói vì sao.
+ */
+export function findRanked(
+  record: RecommendationRunRecord,
+  ref: string,
+  goalIndex = 0,
+): Candidate | null {
+  const ranking = record.derivedState.goals[goalIndex]?.ranking ?? [];
+  const row =
+    ref === "NO_NEW_CARD"
+      ? ranking.find((r) => r.candidate.kind === "no_new_card")
+      : ranking.find((r) => matches(ref, r.candidate));
+  return row?.candidate ?? null;
+}

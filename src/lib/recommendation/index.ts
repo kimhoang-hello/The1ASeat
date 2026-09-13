@@ -47,7 +47,13 @@ export { inMemoryUserStore, type UserDataSource } from "./user-source.ts";
  * Import từ đây, không import thẳng file con: thứ tự các tầng là một phần của
  * hợp đồng (§26), và một chỗ gọi `scoreTrip` mà bỏ qua `applyRules` sẽ chạy
  * được, cho ra số, và sai. */
-export { ENGINE_VERSION, recommend, recommendFromSource, type RecommendInput } from "./engine.ts";
+export {
+  ENGINE_VERSION,
+  loadOfferHistory,
+  recommend,
+  recommendFromSource,
+  type RecommendInput,
+} from "./engine.ts";
 export * from "./engine-types.ts";
 export {
   REASON_CODES,
@@ -94,7 +100,7 @@ export {
   type OfferClimate,
   type OfferFacts,
 } from "./offer-quality.ts";
-export { EDITORIAL_CAP, applyRules } from "./rules.ts";
+export { EDITORIAL_CAP, RULE_VERSION, applyRules } from "./rules.ts";
 export { buildNoNewCardCandidate, finalScore, rankCandidates } from "./rank.ts";
 export { computeConfidence } from "./confidence.ts";
 export { mergeReasonCodes, mergeWarnings, nextQuestion, scoreTable } from "./explain.ts";
@@ -110,3 +116,57 @@ export {
   spendWindowsOf,
   type SpendComponentShape,
 } from "./spend.ts";
+
+/* Phase 4 — `recommendation_runs` (§20) và debugger (§22).
+ *
+ * `run-store-fs.ts` CỐ Ý vắng mặt: nó import `node:fs`, và mọi thứ ở file này
+ * có thể bị một client component kéo vào bundle trình duyệt. Chỗ nào cần kho
+ * file thì import thẳng nó, ở phía server. */
+export { canonicalJson, fingerprint } from "./fingerprint.ts";
+export {
+  executeRun,
+  inputOf,
+  replayRun,
+  type ExecutedRun,
+  type InputSnapshot,
+  type RecommendationOutput,
+  type RecommendationRunRecord,
+  type ReplayResult,
+  type RunInput,
+  type RunMeta,
+} from "./runs.ts";
+export { inMemoryRunStore, type RunStore, type RunSummary } from "./run-store.ts";
+export {
+  PIPELINE_STAGES,
+  STAGE_LABELS,
+  candidateKey,
+  deepDiff,
+  diffDatasets,
+  diffRecords,
+  explainChange,
+  firstComputedDivergence,
+  type ChangeExplanation,
+  type PipelineStage,
+  type StageDiff,
+} from "./run-diff.ts";
+export {
+  compareCandidates,
+  explainProduct,
+  findRanked,
+  provenanceFor,
+  scoreBreakdown,
+  type CandidateComparison,
+  type ProductExplanation,
+  type ScoreBreakdown,
+} from "./debug.ts";
+export {
+  renderChangeExplanation,
+  renderComparison,
+  renderProductExplanation,
+  renderRunReport,
+  renderScoreTable,
+  renderStageDiffs,
+} from "./debug-render.ts";
+export { applyAssignment, applyAssignments } from "./debug-input.ts";
+export { answersFor, probeGap, type GapProbe } from "./sensitivity.ts";
+export { recoDebuggerEnabled } from "./debugger-gate.ts";

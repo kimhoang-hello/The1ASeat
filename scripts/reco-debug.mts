@@ -35,7 +35,8 @@ import * as FIXTURE_EXPORTS from "../src/lib/recommendation/data/user-fixtures.t
 import { repoOfferHistory } from "../src/lib/recommendation/offer-history-source.ts";
 import { historyCutoff } from "../src/lib/recommendation/offer-history.ts";
 import { executeRun, inputOf, replayRun, type RecommendationRunRecord } from "../src/lib/recommendation/runs.ts";
-import { compareCandidates, explainProduct } from "../src/lib/recommendation/debug.ts";
+import { compareCandidates, explainProduct, findRanked } from "../src/lib/recommendation/debug.ts";
+import { applyAssignments } from "../src/lib/recommendation/debug-input.ts";
 import { diffRecords, explainChange } from "../src/lib/recommendation/run-diff.ts";
 import {
   renderChangeExplanation,
@@ -150,27 +151,6 @@ async function save(record: RecommendationRunRecord, dataset: RecommendationData
   console.log(`\n✓ đã lưu ${record.id} vào .reco-runs/`);
 }
 
-/** `a.b[2].c=giá-trị` — giá trị đọc như JSON nếu được, không thì là chuỗi. */
-function applySet(target: unknown, assignment: string): void {
-  const eq = assignment.indexOf("=");
-  if (eq <= 0) die(`--set cần dạng đường.dẫn=giá-trị, nhận được "${assignment}"`);
-  const pathText = assignment.slice(0, eq);
-  const rawValue = assignment.slice(eq + 1);
-  let value: unknown;
-  try {
-    value = JSON.parse(rawValue);
-  } catch {
-    value = rawValue;
-  }
-  const keys = pathText.replace(/\[(\d+)\]/g, ".$1").split(".").filter(Boolean);
-  let node = target as Record<string, unknown>;
-  for (const key of keys.slice(0, -1)) {
-    if (node[key] === null || typeof node[key] !== "object") die(`--set: "${key}" trong "${pathText}" không phải object`);
-    node = node[key] as Record<string, unknown>;
-  }
-  node[keys[keys.length - 1]] = value;
-}
-
 /* ---- Lệnh --------------------------------------------------------- */
 
 async function main() {
@@ -220,11 +200,10 @@ async function main() {
       const [ref, a, b] = rest;
       if (ref === undefined || a === undefined || b === undefined) die("cần: compare <hồ sơ|run-id> <A> <B>");
       const { record } = await loadSubject(ref);
-      const goal = record.derivedState.goals[Number(flag("goal") ?? 0)];
+      const goalIndex = Number(flag("goal") ?? 0);
       const find = (key: string) =>
-        goal?.ranking.find((row) =>
-          key === "NO_NEW_CARD" ? row.candidate.kind === "no_new_card" : row.candidate.productSlug === key,
-        )?.candidate ?? die(`"${key}" không nằm trong bảng xếp hạng — dùng \`why\` để xem nó dừng ở đâu`);
+        findRanked(record, key, goalIndex) ??
+        die(`"${key}" không nằm trong bảng xếp hạng — dùng \`why\` để xem nó dừng ở đâu`);
       console.log(renderComparison(compareCandidates(find(a), find(b)), 40));
       return;
     }
@@ -236,7 +215,8 @@ async function main() {
       const { record, dataset } = await loadSubject(ref);
       const input = inputOf(record, dataset);
       const state = structuredClone(input.state);
-      for (const assignment of sets) applySet(state, assignment);
+      const errors = applyAssignments(state, sets.join("\n"));
+      if (errors.length > 0) die(`--set: ${errors.join("; ")}`);
       let after;
       if (asOf === undefined) {
         after = executeRun({ ...input, state }, { id: newRunId(), createdAt: new Date().toISOString() });
