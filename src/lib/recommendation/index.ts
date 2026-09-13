@@ -151,12 +151,14 @@ export {
 } from "./run-diff.ts";
 export {
   compareCandidates,
+  eligibilityUnknownCauses,
   explainProduct,
   findRanked,
   goalIndexError,
   provenanceFor,
   scoreBreakdown,
   type CandidateComparison,
+  type EligibilityUnknownCause,
   type ProductExplanation,
   type ScoreBreakdown,
 } from "./debug.ts";

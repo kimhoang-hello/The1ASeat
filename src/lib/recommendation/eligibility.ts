@@ -28,25 +28,55 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
 
 type RuleOutcome = "pass" | "fail" | "unknown";
 
+/**
+ * Vì sao một luật ra `unknown` — bốn nguồn lỗi khác nhau, bốn người sửa khác
+ * nhau, mà cùng một chữ `unknown` trên trace:
+ *
+ *   rule_not_understood — operator ngoài dự kiến: DỮ LIỆU NGUỒN cần sửa;
+ *   user_field_missing  — người dùng chưa khai (hoặc từ chối khai): ĐẦU VÀO;
+ *   user_range_straddles — khoảng người dùng khai bắc qua ngưỡng: ĐẦU VÀO,
+ *                          nhưng hỏi lại cho hẹp hơn thì trả lời được;
+ *   not_modelled        — mô hình người dùng không có trường này: ENGINE.
+ *
+ * Trace từng chỉ ghi `outcome`, nên admin nhìn 17 thẻ "điều kiện unknown" mà
+ * không biết nên sửa dữ liệu hay hỏi người dùng (vòng rà Phase 4).
+ */
+export type RuleUnknownCause =
+  | "rule_not_understood"
+  | "user_field_missing"
+  | "user_range_straddles"
+  | "not_modelled";
+
+interface RuleEvaluation {
+  outcome: RuleOutcome;
+  unknownCause: RuleUnknownCause | null;
+}
+
+const known = (outcome: "pass" | "fail"): RuleEvaluation => ({ outcome, unknownCause: null });
+const unknown = (cause: RuleUnknownCause): RuleEvaluation => ({ outcome: "unknown", unknownCause: cause });
+
 /** Thu nhập so với ngưỡng — ba kết quả, xem `compareToThreshold`. */
 function incomeOutcome(
   amount: { low: number; high: number | null } | null,
-  declined: boolean,
   threshold: number,
-): RuleOutcome {
+): RuleEvaluation {
   // Ngưỡng 0 = "đã kiểm và không yêu cầu thu nhập". Đó là một DỮ KIỆN khác hẳn
   // "chưa biết yêu cầu", và nó đúng với mọi người — kể cả người chưa khai.
-  if (threshold <= 0) return "pass";
+  if (threshold <= 0) return known("pass");
   // Từ chối nói và chưa hỏi đều dẫn tới `unknown` ở đây; chúng khác nhau ở chỗ
   // §30 còn hỏi lại được cái nào, và `userGaps` đã tách sẵn hai ca đó.
-  if (amount == null) return declined ? "unknown" : "unknown";
+  if (amount == null) return unknown("user_field_missing");
   const verdict = compareToThreshold(amount, threshold);
-  return verdict === "at_or_above" ? "pass" : verdict === "below" ? "fail" : "unknown";
+  return verdict === "at_or_above"
+    ? known("pass")
+    : verdict === "below"
+      ? known("fail")
+      : unknown("user_range_straddles");
 }
 
-function boolOutcome(value: boolean | null, required: boolean): RuleOutcome {
-  if (value == null) return "unknown";
-  return value === required ? "pass" : "fail";
+function boolOutcome(value: boolean | null, required: boolean): RuleEvaluation {
+  if (value == null) return unknown("user_field_missing");
+  return known(value === required ? "pass" : "fail");
 }
 
 /**
@@ -74,9 +104,9 @@ function operatorUnderstood(rule: EligibilityRule): boolean {
   }
 }
 
-function evaluateRule(rule: EligibilityRule, state: UserState): RuleOutcome {
+function evaluateRule(rule: EligibilityRule, state: UserState): RuleEvaluation {
   const profile = state.profile;
-  if (!operatorUnderstood(rule)) return "unknown";
+  if (!operatorUnderstood(rule)) return unknown("rule_not_understood");
   switch (rule.ruleType) {
     case "residency": {
       // Không biết người này ở đâu thì KHÔNG được kết luận là trượt. Luật cư
@@ -84,22 +114,14 @@ function evaluateRule(rule: EligibilityRule, state: UserState): RuleOutcome {
       // ứng viên và trả về `NO_NEW_CARD` — một khuyến nghị trông có lý, dựng
       // trên một dữ kiện chưa ai hỏi. §14 tách `unknown` khỏi `ineligible`
       // đúng vì chỗ này.
-      if (profile?.country == null) return "unknown";
+      if (profile?.country == null) return unknown("user_field_missing");
       const wanted = Array.isArray(rule.value) ? rule.value : [String(rule.value)];
-      return wanted.includes(profile.country) ? "pass" : "fail";
+      return known(wanted.includes(profile.country) ? "pass" : "fail");
     }
     case "minimum_personal_income":
-      return incomeOutcome(
-        profile?.annualPersonalIncome ?? null,
-        profile?.personalIncomeDeclined === true,
-        Number(rule.value),
-      );
+      return incomeOutcome(profile?.annualPersonalIncome ?? null, Number(rule.value));
     case "minimum_household_income":
-      return incomeOutcome(
-        profile?.annualHouseholdIncome ?? null,
-        profile?.householdIncomeDeclined === true,
-        Number(rule.value),
-      );
+      return incomeOutcome(profile?.annualHouseholdIncome ?? null, Number(rule.value));
     case "business_required":
       // `hasBusiness` (có doanh nghiệp không) chứ KHÔNG phải
       // `businessCardsAllowed` (có muốn xét thẻ doanh nghiệp không). Gộp hai
@@ -108,26 +130,26 @@ function evaluateRule(rule: EligibilityRule, state: UserState): RuleOutcome {
     case "student_status_required":
       return boolOutcome(profile?.isStudent ?? null, rule.value === true);
     case "existing_cardholder_excluded":
-      return asArray(state.cards).some(
-        (card) => card?.productId === rule.productId && holdsNow(card),
-      )
-        ? "fail"
-        : "pass";
+      return known(
+        asArray(state.cards).some((card) => card?.productId === rule.productId && holdsNow(card))
+          ? "fail"
+          : "pass",
+      );
     case "previous_cardholder_excluded":
       // `closed` VÀ `previously_held` ĐỀU là từng giữ. Viết
       // `status === "previously_held"` ở đây là để mọi thẻ đã đóng lọt qua —
       // và hậu quả không phải một lỗi, mà là một khuyến nghị trông hợp lý hứa
       // khoản bonus ngân hàng sẽ từ chối.
-      return asArray(state.cards).some(
-        (card) => card?.productId === rule.productId && everHeld(card),
-      )
-        ? "fail"
-        : "pass";
+      return known(
+        asArray(state.cards).some((card) => card?.productId === rule.productId && everHeld(card))
+          ? "fail"
+          : "pass",
+      );
     case "banking_relationship_required":
       // Mô hình người dùng không khai quan hệ ngân hàng — §31 không hỏi, nên
       // không có trường nào để đọc. `unknown` là câu trả lời đúng; trả `pass`
       // là bịa ra một dữ kiện, trả `fail` là loại oan.
-      return "unknown";
+      return unknown("not_modelled");
   }
 }
 
@@ -191,7 +213,7 @@ export function evaluateEligibility(
   function verdictOf(groups: Map<string, EligibilityRule[]>): RuleOutcome {
     let sawUnknown = false;
     for (const [, group] of [...groups].sort((a, b) => (a[0] < b[0] ? -1 : 1))) {
-      const outcomes = group.map((rule) => evaluateRule(rule, state));
+      const outcomes = group.map((rule) => evaluateRule(rule, state).outcome);
       const combined = combineGroup(outcomes);
       if (combined === "fail") {
         failedRuleIds.push(...group.map((rule) => rule.id as string));
@@ -254,7 +276,7 @@ export function evaluateEligibility(
       severity: rule.severity,
       scope: rule.scope,
       ruleGroup: rule.ruleGroup,
-      outcome: evaluateRule(rule, state),
+      ...evaluateRule(rule, state),
     })),
   };
 }

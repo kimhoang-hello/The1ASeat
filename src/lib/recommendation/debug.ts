@@ -23,11 +23,13 @@ import { flexibilityScale, isOpenToEveryone } from "./portfolio.ts";
 import { indexDataset } from "./indexes.ts";
 import { candidateKey, type PipelineStage } from "./run-diff.ts";
 import type { RecommendationRunRecord } from "./runs.ts";
+import type { RuleUnknownCause } from "./eligibility.ts";
 import type { AwardStrategy, DataGap, RecommendationDataset, Temporal } from "./types.ts";
 import type {
   AdjustmentLayer,
   Candidate,
   CandidateFactsSnapshot,
+  EligibilityVerdict,
   ExcludedProduct,
   GoalTrace,
   ProvenanceRow,
@@ -55,6 +57,15 @@ export interface ScoreLine {
 export interface ScoreBreakdown {
   candidate: string;
   lines: ScoreLine[];
+  /**
+   * Tổng trọng số của các thành phần CÓ MẶT — mẫu số của `assembleScore`.
+   *
+   * Bảng §10 cộng tới 100% nhưng 5% biên tập (§15) chưa có thành phần nào, nên
+   * mẫu số là 0.95 và mỗi dòng là `w × raw ÷ 0.95`. Không in con số này ra thì
+   * admin nhân `0.35 × 0.85 = 0.2975` rồi thấy bảng ghi `+0.3132`, và phép
+   * chuẩn hoá thành một phép biến đổi không ai dựng lại được từ bảng.
+   */
+  totalWeight: number;
   baseScore: number;
   score: number;
 }
@@ -116,7 +127,58 @@ export function scoreBreakdown(candidate: Candidate): ScoreBreakdown {
       note: null,
     });
   }
-  return { candidate: candidateKey(candidate), lines, baseScore: candidate.baseScore, score: candidate.score };
+  return {
+    candidate: candidateKey(candidate),
+    lines,
+    totalWeight,
+    baseScore: candidate.baseScore,
+    score: candidate.score,
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * Điều kiện "chưa biết" — vì đâu
+ * ------------------------------------------------------------------ */
+
+export interface EligibilityUnknownCause {
+  /** Tầng sửa được nó — cùng từ vựng với `PipelineStage` của phép so lượt chạy. */
+  source: "source_data" | "user_input" | "engine";
+  detail: string;
+}
+
+const CAUSE_SOURCE: Record<RuleUnknownCause, EligibilityUnknownCause["source"]> = {
+  rule_not_understood: "source_data",
+  user_field_missing: "user_input",
+  user_range_straddles: "user_input",
+  not_modelled: "engine",
+};
+
+const CAUSE_TEXT: Record<RuleUnknownCause, string> = {
+  rule_not_understood: "operator engine không đọc được",
+  user_field_missing: "người dùng chưa khai",
+  user_range_straddles: "khoảng người dùng khai bắc qua ngưỡng",
+  not_modelled: "mô hình người dùng không có trường này",
+};
+
+/**
+ * Vì sao phán quyết điều kiện là `unknown` — từng nguyên nhân gắn với tầng sửa
+ * được nó. Chỉ những luật ĐÃ làm nhóm của chúng thành `unknown`
+ * (`unknownRuleIds`), cộng chỗ trống của lớp dữ liệu (`gap:`): một luật chưa
+ * biết nằm cạnh một luật khác trong nhóm HOẶC đã qua thì không quyết định gì.
+ */
+export function eligibilityUnknownCauses(verdict: EligibilityVerdict): EligibilityUnknownCause[] {
+  const byId = new Map(verdict.rules.map((rule) => [rule.ruleId, rule]));
+  const out: EligibilityUnknownCause[] = [];
+  for (const id of verdict.unknownRuleIds) {
+    if (id.startsWith("gap:")) {
+      out.push({ source: "source_data", detail: "lớp dữ liệu nói chưa biết hết điều kiện của thẻ" });
+      continue;
+    }
+    const rule = byId.get(id);
+    if (rule?.unknownCause == null) continue;
+    out.push({ source: CAUSE_SOURCE[rule.unknownCause], detail: `${rule.ruleType}: ${CAUSE_TEXT[rule.unknownCause]}` });
+  }
+  return out;
 }
 
 /* ------------------------------------------------------------------ *

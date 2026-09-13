@@ -1320,14 +1320,39 @@ test("§20 — bản chụp hành vi khoá theo ENGINE_VERSION", async () => {
    */
   const datasetFingerprint = fingerprint(DATA);
 
+  // Mười lăm nhân vật mẫu đều MỘT mục tiêu, nên hai ca engine đi đường khác
+  // hẳn — nhiều mục tiêu hoà nhau, và không mục tiêu nào — không có mặt ở đây
+  // cho tới vòng rà Phase 4. Bốn lỗi phạm vi chỗ trống của hai mục tiêu (Codex
+  // vòng 8–11) đã sống qua bản chụp vì thế.
+  const tiedGoals: UserState = {
+    ...vietnamTripShortfall,
+    profile: { ...vietnamTripShortfall.profile, id: "u_snapshot_two_goals" as never },
+    goals: [
+      ...vietnamTripShortfall.goals.map((goal) => ({ ...goal, priority: null })),
+      { type: "next_card", id: "goal_snapshot_next" as never, userId: vietnamTripShortfall.profile.id, priority: null, createdAt: ASOF },
+    ],
+  };
+  const noGoal: UserState = {
+    ...beginnerNoCards,
+    profile: { ...beginnerNoCards.profile, id: "u_snapshot_no_goal" as never },
+    goals: [],
+  };
+
   const actual = {
     engineVersion: ENGINE_VERSION,
     datasetFingerprint,
-    runs: USER_FIXTURES.map((state) => {
+    runs: [...USER_FIXTURES, tiedGoals, noGoal].map((state) => {
       const result = run(state);
       const first = result.results[0];
       return {
         user: state.profile.id as string,
+        // Dấu vân tay của TOÀN BỘ lượt chạy — mọi mục tiêu, `derived`, độ tin
+        // cậy, phép đo §30, từng chữ số. Các trường đọc được bên dưới chỉ để
+        // người xem diff hiểu CÁI GÌ đổi; chúng không đủ để canh: vòng rà Phase
+        // 4 thấy 4.12–4.14 đổi độ tin cậy và chỗ trống mà các trường đó đứng
+        // yên, tức quên tăng version thì không test nào đỏ — và một lượt chạy
+        // cũ chạy lại sẽ bị gọi là "hồi quy" dưới cùng version.
+        run: fingerprint(result),
         goalResolution: result.goalResolution,
         followUp: result.followUp?.gapKind ?? null,
         primary: first?.primaryAction.productSlug ?? first?.primaryAction.kind ?? null,

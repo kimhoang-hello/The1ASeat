@@ -159,6 +159,23 @@ test("§20 — chạy lại với NHẦM bộ dữ liệu là LỖI, không ph�
   assert.throws(() => replayRun(record, other), /không phải bộ/);
 });
 
+test("§20 — hồ sơ hay lịch sử offer trong bản ghi bị sửa là LỖI KHO, không phải hồi quy", () => {
+  // Hai thứ này nằm ngay trong bản ghi nên hỏng cùng nó — một migration đổi
+  // kiểu một trường, một người sửa tay. Chạy lại trên đầu vào đã đổi thì kết
+  // quả khác, và không kiểm thì nó bị gọi là hồi quy của engine.
+  const cobalt = productIdFor("amex-cobalt") as string;
+  const { record, dataset } = execute(aeroplanHeavy, { offerHistory: new Map([[cobalt, SAMPLE_HISTORY]]) });
+  assert.ok(replayRun(record, dataset).identical, "tiền đề: bản ghi nguyên vẹn chạy lại khớp");
+
+  const state = structuredClone(record);
+  state.inputSnapshot.state.balances[0].balance = 1;
+  assert.throws(() => replayRun(state, dataset), /hồ sơ người dùng.*không còn khớp/);
+
+  const history = structuredClone(record);
+  history.inputSnapshot.offerHistory[0].points.pop();
+  assert.throws(() => replayRun(history, dataset), /lịch sử offer.*không còn khớp/);
+});
+
 test("§20 — khác mà version KHÔNG đổi là HỒI QUY; khác vì version đổi thì không", () => {
   const { record, dataset } = execute(vietnamTripShortfall);
   const tampered = structuredClone(record);

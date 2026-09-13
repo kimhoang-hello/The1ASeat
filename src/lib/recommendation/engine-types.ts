@@ -25,6 +25,7 @@ import type {
 } from "./types.ts";
 import type { Goal, GoalId, GoalType, UserDataGap } from "./user-types.ts";
 import type { ResolvedTripGoal } from "./user.ts";
+import type { RuleUnknownCause } from "./eligibility.ts";
 // Chỉ KIỂU, nên vòng import này bị xoá khi biên dịch — xem chú thích đầu file.
 import type { OfferClimate, OfferFacts } from "./offer-quality.ts";
 import type { EarnFit } from "./earn-fit.ts";
@@ -232,6 +233,8 @@ export interface EligibilityRuleTrace {
   scope: "application" | "welcome_offer";
   ruleGroup: string | null;
   outcome: "pass" | "fail" | "unknown";
+  /** Vì sao `unknown` — dữ liệu nguồn, đầu vào hay engine. Xem `RuleUnknownCause`. */
+  unknownCause: RuleUnknownCause | null;
 }
 
 export interface EligibilityVerdict {
@@ -400,6 +403,25 @@ export interface FollowUpQuestion {
   subject: string;
   /** Vì sao câu này đáng hỏi HÔM NAY, với chính hồ sơ này. */
   reason: string;
+  /**
+   * Tầng nào của `nextQuestion` đã chọn nó — và đó là câu trả lời cho "vì sao
+   * hỏi câu này mà không hỏi câu kia":
+   *
+   *   gatekeeper — chỗ trống gác cổng (không có nó thì không chấm được gì);
+   *   measured   — lấp thử vào ĐỔI được người thắng (xem `flips`);
+   *   urgent     — người thắng đang dựa vào đúng dữ kiện chưa hỏi này;
+   *   priority   — không câu nào đo được là đổi kết quả: theo bảng ưu tiên tĩnh.
+   *
+   * Thiếu trường này, một câu chọn theo bảng tĩnh trông y như một câu đã đo là
+   * quan trọng — admin đọc "hỏi thu nhập hộ" cạnh "thu nhập hộ không đổi được
+   * người thắng" mà không biết engine nghĩ gì (vòng rà Phase 4).
+   */
+  basis: "gatekeeper" | "measured" | "urgent" | "priority";
+  /**
+   * Phần câu trả lời thử HỢP LỆ làm đổi người thắng (0..1) — chỉ khi
+   * `basis === "measured"`; đếm từng câu ở `derived.followUpProbes`.
+   */
+  flipShare: number | null;
 }
 
 export interface Recommendation {

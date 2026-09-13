@@ -17,9 +17,11 @@
 
 import {
   compareCandidates,
+  eligibilityUnknownCauses,
   goalIndexError,
   scoreBreakdown,
   type CandidateComparison,
+  type EligibilityUnknownCause,
   type ProductExplanation,
 } from "./debug.ts";
 import { candidateKey, STAGE_LABELS, type ChangeExplanation, type StageDiff } from "./run-diff.ts";
@@ -92,15 +94,27 @@ function goalLabel(goal: GoalTrace): string {
 
 export function renderScoreTable(candidate: Candidate): string {
   const table = scoreBreakdown(candidate);
-  const lines = [`  ${pad(candidateKey(candidate), 40)} điểm cuối ${score(candidate.score)}`];
-  for (const row of table.lines) {
+  const lines = [
+    `  ${pad(candidateKey(candidate), 40)} điểm cuối ${score(candidate.score)}`,
+    // Nói ra phép chuẩn hoá — xem `ScoreBreakdown.totalWeight`.
+    `    (mỗi dòng chấm điểm = w × raw ÷ Σw, Σw = ${table.totalWeight.toFixed(2)})`,
+  ];
+  const row = (layer: string, key: string, effect: string, detail: string) =>
+    `    ${pad(layer, 12)} ${pad(key, 30)} ${effect}  ${detail}`;
+  // Điểm nền đứng SAU các dòng chấm điểm và TRƯỚC các điều chỉnh — đúng thứ tự
+  // engine tính. Bản trước in "= điểm nền" ở cuối bảng, ngay dưới các dòng
+  // luật, nên bảng đọc như thể luật đã nằm trong điểm nền.
+  const isBase = (layer: string, key: string) => layer === "scoring" || key === "base_clamp";
+  for (const line of table.lines.filter((line) => isBase(line.layer, line.key))) {
     const detail =
-      row.layer === "scoring"
-        ? `w=${row.weight?.toFixed(2)} raw=${row.raw?.toFixed(3)}  ${row.note ?? ""}`
-        : row.note ?? "";
-    lines.push(`    ${pad(row.layer, 12)} ${pad(row.key, 30)} ${signed(row.effect)}  ${detail}`);
+      line.layer === "scoring" ? `w=${line.weight?.toFixed(2)} raw=${line.raw?.toFixed(3)}  ${line.note ?? ""}` : "";
+    lines.push(row(line.layer, line.key, signed(line.effect), detail));
   }
-  lines.push(`    ${pad("", 12)} ${pad("= điểm nền", 30)}  ${score(table.baseScore)}`);
+  lines.push(row("", "= điểm nền", ` ${score(table.baseScore)}`, ""));
+  for (const line of table.lines.filter((line) => !isBase(line.layer, line.key))) {
+    lines.push(row(line.layer, line.key, signed(line.effect), line.note ?? ""));
+  }
+  lines.push(row("", "= điểm cuối", ` ${score(table.score)}`, ""));
   return lines.join("\n");
 }
 
@@ -303,7 +317,13 @@ export function renderRunReport(record: RecommendationRunRecord, options: RunRep
     const bits: string[] = [];
     if (s.penalty < 1) bits.push(`phạt ×${s.penalty.toFixed(2)}`);
     if (s.minSpendFit !== null && s.minSpendFit < 0.9) bits.push(`mốc chi vừa ${s.minSpendFit.toFixed(2)}`);
-    if (e.status !== "eligible") bits.push(`điều kiện ${e.status}`);
+    if (e.status !== "eligible") {
+      // Nói ra tầng sửa được — "unknown" trần không cho biết nên sửa dữ liệu
+      // hay hỏi người dùng.
+      const causes = eligibilityUnknownCauses(e);
+      const sources = [...new Set(causes.map((cause) => SOURCE_TEXT[cause.source]))];
+      bits.push(`điều kiện ${e.status}${sources.length > 0 ? ` (${sources.join(" + ")})` : ""}`);
+    }
     if (e.welcomeOfferBlocked) bits.push("bonus bị chặn");
     const warnings = [...s.warnings, ...e.warnings];
     if (bits.length === 0 && warnings.length === 0) continue;
@@ -390,11 +410,24 @@ export function renderRunReport(record: RecommendationRunRecord, options: RunRep
       for (const note of c.notes) out.push(`  • ${note}`);
     }
   }
+  const BASIS_TEXT: Record<NonNullable<typeof output.followUp>["basis"], string> = {
+    gatekeeper: "chỗ trống GÁC CỔNG — thiếu nó thì không chấm được gì",
+    measured: "ĐO ĐƯỢC là đổi người thắng",
+    urgent: "người thắng đang dựa vào đúng dữ kiện chưa hỏi này",
+    priority: "không câu nào đo được là đổi kết quả — chọn theo BẢNG ƯU TIÊN TĨNH",
+  };
   out.push(
     `\n  câu hỏi tiếp theo §30: ${
       output.followUp === null ? "không có câu nào để hỏi" : `${output.followUp.gapKind} (${output.followUp.subject}) — ${output.followUp.reason}`
     }`,
   );
+  if (output.followUp !== null) {
+    const flips =
+      output.followUp.flipShare === null
+        ? ""
+        : ` (${Math.round(output.followUp.flipShare * 100)}% câu trả lời thử hợp lệ)`;
+    out.push(`  chọn vì: ${BASIS_TEXT[output.followUp.basis]}${flips}`);
+  }
   // Những câu §30 đã ĐO — câu nào lấp vào đổi được người thắng. Đây là chỗ
   // trả lời "lỗi có nằm ở đầu vào không": chỗ trống nào đủ sức lật kết quả.
   const probes = derived.followUpProbes ?? [];
@@ -418,7 +451,7 @@ export function renderRunReport(record: RecommendationRunRecord, options: RunRep
     const inert = probes.filter((row) => row.flips === 0);
     if (inert.length > 0) {
       out.push(
-        `    ${inert.length} chỗ trống khác KHÔNG đổi được người thắng: ` +
+        `    ${inert.length} chỗ trống KHÔNG đổi được người thắng với câu trả lời thử: ` +
           [...new Set(inert.map((row) => row.gapKind))].join(", "),
       );
     }
@@ -430,6 +463,12 @@ export function renderRunReport(record: RecommendationRunRecord, options: RunRep
 /* ------------------------------------------------------------------ *
  * Thẻ X đi tới đâu
  * ------------------------------------------------------------------ */
+
+const SOURCE_TEXT: Record<EligibilityUnknownCause["source"], string> = {
+  source_data: "DỮ LIỆU NGUỒN",
+  user_input: "ĐẦU VÀO người dùng",
+  engine: "ENGINE chưa mô hình hoá",
+};
 
 const OUTCOME_TEXT: Record<ProductExplanation["outcome"], string> = {
   not_in_dataset: "KHÔNG có trong bộ dữ liệu của lượt chạy này",
@@ -472,11 +511,13 @@ export function renderProductExplanation(explanation: ProductExplanation): strin
     for (const rule of facts.eligibility.rules) {
       out.push(
         `  ${pad(rule.outcome.toUpperCase(), 8)} ${pad(rule.severity, 8)} ${pad(rule.scope, 14)} ` +
-          `${rule.ruleType} ${rule.operator} ${JSON.stringify(rule.value)}${rule.ruleGroup ? ` [nhóm HOẶC ${rule.ruleGroup}]` : ""}  (${rule.ruleId})`,
+          `${rule.ruleType} ${rule.operator} ${JSON.stringify(rule.value)}${rule.ruleGroup ? ` [nhóm HOẶC ${rule.ruleGroup}]` : ""}` +
+          `${rule.unknownCause === null ? "" : ` ← ${rule.unknownCause}`}  (${rule.ruleId})`,
       );
     }
-    const gapIds = facts.eligibility.unknownRuleIds.filter((id) => id.startsWith("gap:"));
-    if (gapIds.length > 0) out.push(`  lớp dữ liệu nói CHƯA BIẾT hết điều kiện: ${gapIds.join(", ")}`);
+    for (const cause of eligibilityUnknownCauses(facts.eligibility)) {
+      out.push(`  chưa biết vì ${SOURCE_TEXT[cause.source]}: ${cause.detail}`);
+    }
 
     out.push(heading(null, "Phù hợp §14"));
     const s = facts.suitability;

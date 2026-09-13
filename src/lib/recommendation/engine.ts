@@ -175,6 +175,12 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * `POINTS_COVERAGE_UNKNOWN` + `AWARD_PRICE_FLOOR_ONLY` — trước đó người đọc
  * chỉ thấy "phủ từ 0% lên 50%" dựng trên điểm giữa của [0, 1].
  *
+ * 4.16.0 — vòng rà Phase 4 theo spec: bản ghi nói ra hai quyết định trước đó
+ * chạy ngầm — `followUp.basis` (câu hỏi §30 được chọn vì gác cổng, vì đo
+ * được, vì khẩn, hay chỉ theo bảng tĩnh) và `unknownCause` của từng luật điều
+ * kiện (dữ liệu nguồn, đầu vào người dùng, hay engine chưa mô hình hoá). Không
+ * đổi thứ hạng; đổi hình dạng đầu ra, nên tăng số.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -187,7 +193,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.15.0";
+export const ENGINE_VERSION = "4.16.0";
 
 export interface RecommendInput {
   state: UserState;

@@ -206,6 +206,23 @@ export function replayRun(record: RecommendationRunRecord, dataset: Recommendati
         `(${record.inputSnapshot.datasetFingerprint}). Lấy đúng bản chụp từ kho, đừng dùng bộ hôm nay.`,
     );
   }
+  // Hồ sơ và lịch sử offer nằm NGAY TRONG bản ghi, nên chúng hỏng cùng bản
+  // ghi: một migration database đổi kiểu một trường, một người sửa tay một
+  // dòng. Không kiểm thì lượt chạy lại đọc đầu vào ĐÃ ĐỔI, ra kết quả khác, và
+  // bị gọi là HỒI QUY — admin đi tìm lỗi trong engine trong khi lỗi nằm ở kho.
+  // Cùng lý do bộ dữ liệu phải khớp dấu vân tay ở trên (vòng rà Phase 4).
+  const stored = [
+    ["hồ sơ người dùng", fingerprint(record.inputSnapshot.state), record.inputSnapshot.stateFingerprint],
+    ["lịch sử offer", fingerprint(record.inputSnapshot.offerHistory), record.inputSnapshot.offerHistoryFingerprint],
+  ] as const;
+  for (const [what, actual, expected] of stored) {
+    if (actual !== expected) {
+      throw new Error(
+        `replayRun: ${what} trong bản ghi ${record.id} không còn khớp dấu vân tay lúc lưu ` +
+          `(${expected} → ${actual}). Bản ghi đã bị sửa hoặc hỏng khi lưu — kết quả chạy lại sẽ không nói gì về engine.`,
+      );
+    }
+  }
   const { record: replayed } = executeRun(
     {
       state: record.inputSnapshot.state,

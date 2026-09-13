@@ -247,5 +247,18 @@ export function nextQuestion(input: FollowUpInput): FollowUpQuestion | null {
     return a.subject < b.subject ? -1 : a.subject > b.subject ? 1 : 0;
   })[0];
 
-  return { gapKind: best.kind, subject: best.subject, reason: best.reason };
+  const basis: FollowUpQuestion["basis"] = GATEKEEPERS.has(best.kind)
+    ? "gatekeeper"
+    : measured.has(best)
+      ? "measured"
+      : urgent.has(best.kind)
+        ? "urgent"
+        : "priority";
+  return {
+    gapKind: best.kind,
+    subject: best.subject,
+    reason: best.reason,
+    basis,
+    flipShare: basis === "measured" ? (measured.get(best) as number) : null,
+  };
 }

@@ -20,8 +20,8 @@ import { offlineDataset } from "./data/index.ts";
 import { datasetAt } from "./temporal.ts";
 import { executeRun, type RecommendationRunRecord } from "./runs.ts";
 import { candidateKey, diffRecords, explainChange, firstComputedDivergence } from "./run-diff.ts";
-import { compareCandidates, explainProduct, findRanked } from "./debug.ts";
-import { renderRunReport } from "./debug-render.ts";
+import { compareCandidates, eligibilityUnknownCauses, explainProduct, findRanked } from "./debug.ts";
+import { renderRunReport, renderScoreTable } from "./debug-render.ts";
 import { STRATEGY_TYPES } from "./reason-codes.ts";
 import { productIdFor } from "./data/products.ts";
 import {
@@ -316,7 +316,7 @@ test("Test I — offer đổi từ YẾU sang GẦN ĐỈNH lịch sử: thứ h
 
 test("Test J — thiếu dữ liệu, hai thẻ gần hoà: độ tin cậy THẤP, và câu hỏi tiếp theo ĐỔI ĐƯỢC kết quả", () => {
   for (const state of [beginnerNoCards, nearlyEmpty]) {
-    const { record, dataset } = execute(state);
+    const { record } = execute(state);
     const rows = ranking(record);
     const gap = rows[0].candidate.score - rows[1].candidate.score;
     assert.ok(gap < 0.05, `${state.profile.id}: hai thẻ đầu cách ${gap} — không phải ca gần hoà`);
@@ -331,6 +331,10 @@ test("Test J — thiếu dữ liệu, hai thẻ gần hoà: độ tin cậy TH�
     assert.ok(chosen !== undefined && chosen.flips > 0, `${state.profile.id}: câu ${followUp.gapKind} không đổi được gì`);
     const best = Math.max(...probes.map((p) => p.flips / p.valid));
     assert.equal(chosen.flips / chosen.valid, best);
+    // Và bản ghi NÓI RA vì sao nó được chọn — không phải để admin tự suy từ
+    // bảng phép đo (vòng rà Phase 4).
+    assert.equal(followUp.basis, "measured");
+    assert.equal(followUp.flipShare, chosen.flips / chosen.valid);
     // Không câu trả lời thử nào được tính mà làm hồ sơ mâu thuẫn với chính nó.
     for (const probe of probes) {
       for (const outcome of probe.outcomes) if (outcome.invalid) assert.equal(outcome.flipsWinner, false);
@@ -340,7 +344,6 @@ test("Test J — thiếu dữ liệu, hai thẻ gần hoà: độ tin cậy TH�
     // làm lật kết quả, chạy lại, người thắng đổi.
     const flip = chosen.outcomes.find((o) => o.flipsWinner)!;
     assert.notEqual(flip.winner, candidateKey(winner(record)) === "NO_NEW_CARD" ? "NO_NEW_CARD" : winner(record).productId);
-    void dataset;
   }
 });
 
@@ -355,6 +358,11 @@ test("Test J — câu hỏi về một chặng CHƯA có giá không được ch
   if (probes.some((p) => p.flips > 0)) {
     assert.notEqual(record.outputSnapshot.followUp?.gapKind, "trip_round_trip_unknown");
   }
+  // Câu được chọn nói ra TẦNG đã chọn nó; và "đo được" chỉ khi phép đo thật
+  // sự thấy nó đổi người thắng.
+  const followUp = record.outputSnapshot.followUp!;
+  const chosen = probes.find((p) => p.gapKind === followUp.gapKind && p.subject === followUp.subject);
+  assert.equal(followUp.basis === "measured", (chosen?.flips ?? 0) > 0);
   // Và debugger giải thích được người thắng hiện tại đứng đó vì đâu.
   const top = explainProduct(record, candidateKey(winner(record)));
   assert.equal(top.outcome, "primary");
@@ -1073,4 +1081,67 @@ test("so lượt chạy — thẻ trượt luật cứng làm mất chỗ trốn
   const gapsOf = (r: RecommendationRunRecord) => r.outputSnapshot.dataGaps.map((gap) => `${gap.kind}:${gap.subjectId}`).join("|");
   assert.notEqual(gapsOf(after), gapsOf(before), "tiền đề: chỗ trống của lượt chạy đổi");
   assert.equal(firstComputedDivergence(diffRecords(before, after))?.stage, "eligibility_suitability");
+});
+
+/* ================================================================== *
+ * Vòng rà Phase 4 theo spec — phép biến đổi không được chạy ngầm
+ * ================================================================== */
+
+test("điều kiện 'unknown' nói ra NGUỒN: dữ liệu ngân hàng, đầu vào người dùng, hay operator lạ", () => {
+  // `vietnamTripShortfall` chưa khai thu nhập hộ: thẻ có cặp luật "cá nhân
+  // HOẶC hộ" mà thu nhập cá nhân dưới ngưỡng thì chưa biết vì ĐẦU VÀO; thẻ mà
+  // lớp dữ liệu nói chưa biết điều kiện thì vì DỮ LIỆU NGUỒN.
+  const { record } = execute(vietnamTripShortfall);
+  const unknowns = record.derivedState.candidates.filter((row) => row.eligibility.status === "unknown");
+  const sources = new Set(unknowns.flatMap((row) => eligibilityUnknownCauses(row.eligibility).map((c) => c.source)));
+  assert.ok(sources.has("user_input") && sources.has("source_data"), "tiền đề: có cả hai nguồn");
+  for (const row of unknowns) {
+    assert.ok(eligibilityUnknownCauses(row.eligibility).length > 0, `${row.productSlug}: unknown mà không nói vì đâu`);
+  }
+  const byInput = unknowns.find((row) => eligibilityUnknownCauses(row.eligibility).some((c) => c.source === "user_input"))!;
+  assert.ok(byInput.eligibility.rules.some((rule) => rule.unknownCause === "user_field_missing" && rule.ruleType === "minimum_household_income"));
+
+  // Khoảng thu nhập bắc qua ngưỡng: vẫn là đầu vào, nhưng một câu khác —
+  // hỏi cho hẹp lại, không phải hỏi từ đầu.
+  const straddle = structuredClone(vietnamTripShortfall);
+  const rule = byInput.eligibility.rules.find((r) => r.unknownCause === "user_field_missing")!;
+  straddle.profile.annualHouseholdIncome = amountRange(Number(rule.value) - 10_000, Number(rule.value) + 10_000);
+  const again = execute(straddle).record.derivedState.candidates.find((row) => row.productId === byInput.productId)!;
+  assert.ok(again.eligibility.rules.some((r) => r.unknownCause === "user_range_straddles"));
+
+  // Operator engine không đọc được là lỗi DỮ LIỆU NGUỒN, không phải đầu vào.
+  const target = DATA.eligibilityRules.find((r) => r.id === rule.ruleId)!;
+  const data: RecommendationDataset = {
+    ...DATA,
+    eligibilityRules: DATA.eligibilityRules.map((r) => (r.id === target.id ? { ...r, operator: "lte" as never } : r)),
+  };
+  const odd = execute(vietnamTripShortfall, { data }).record.derivedState.candidates.find((row) => row.productId === byInput.productId)!;
+  const oddRule = odd.eligibility.rules.find((r) => r.ruleId === target.id)!;
+  assert.equal(oddRule.outcome, "unknown");
+  assert.equal(oddRule.unknownCause, "rule_not_understood");
+});
+
+test("bảng điểm §19 đặt ĐIỂM NỀN giữa chấm điểm và điều chỉnh, và nói ra phép chuẩn hoá", () => {
+  const { record } = execute(vietnamTripShortfall);
+  const top = ranking(record)[0].candidate;
+  assert.ok(top.adjustments.length > 0, "tiền đề: có điều chỉnh");
+  const lines = renderScoreTable(top).split("\n");
+  const base = lines.findIndex((line) => line.includes("= điểm nền"));
+  const firstAdjustment = lines.findIndex((line) => line.includes(top.adjustments[0].rule));
+  const lastScoring = lines.map((line, i) => (line.includes("w=") ? i : -1)).reduce((a, b) => Math.max(a, b));
+  assert.ok(lastScoring < base && base < firstAdjustment, "điểm nền phải nằm giữa");
+  assert.ok(lines.some((line) => line.includes("= điểm cuối")));
+  const totalWeight = top.components.reduce((sum, row) => sum + row.weight, 0);
+  assert.ok(lines.some((line) => line.includes(`Σw = ${totalWeight.toFixed(2)}`)));
+});
+
+test("§30: câu hỏi chọn theo BẢNG TĨNH nói ra như thế, không đội lốt một câu đã đo", () => {
+  // Ca đọc được trên debugger: không câu nào đổi được người thắng, engine vẫn
+  // hỏi thu nhập hộ — theo bảng ưu tiên. Bản ghi phải nói ra điều đó.
+  const { record } = execute(vietnamTripShortfall);
+  const followUp = record.outputSnapshot.followUp!;
+  assert.ok(record.derivedState.followUpProbes.every((probe) => probe.flips === 0), "tiền đề: không câu nào lật");
+  assert.equal(followUp.basis, "priority");
+  assert.equal(followUp.flipShare, null);
+  assert.match(renderRunReport(record), /BẢNG ƯU TIÊN TĨNH/);
 });
