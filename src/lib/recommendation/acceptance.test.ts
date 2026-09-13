@@ -1035,6 +1035,36 @@ test("bonus rơi vào chương trình chỉ biết giá SÀN: thẻ được khu
   }
 });
 
+test("bảng CỐ ĐỊNH kèm sàn động: điểm phủ là ước lượng, nhưng KHÔNG phải 'chỉ biết giá sàn' (vòng Codex 16)", () => {
+  // Cùng chặng như trên, nhưng Aeroplan® có thêm một bảng cố định 230,000:
+  // khoảng phủ sau bonus là [bonus/230,000, bonus/45,000] — ước lượng, mà giá
+  // của Aeroplan® không còn là "chỉ có sàn".
+  const state = structuredClone(japanTripFunded);
+  state.balances = [];
+  state.cards = [];
+  state.goals = state.goals.map((goal) => (goal.type === "trip" ? { ...goal, cabin: "premium_economy", roundTrip: false } : goal));
+  const floorRow = DATA.awardStrategies.find((row) => row.id === ("aeroplan-select-ca-japan-premium_economy" as never))!;
+  const fixedRow = DATA.awardStrategies.find((row) => row.id === ("aadvantage-ca-japan-premium_economy" as never))!;
+  assert.equal(floorRow.pricingModel, "dynamic_floor", "tiền đề: Aeroplan® chỉ có sàn trên chặng này");
+  const data: RecommendationDataset = {
+    ...DATA,
+    awardStrategies: [
+      ...DATA.awardStrategies,
+      { ...fixedRow, id: "aeroplan-fixed-test" as never, programId: floorRow.programId, pointsLow: 230_000, pointsTypical: 230_000, pointsHigh: 230_000 },
+    ],
+  };
+  const record = execute(state, { data }).record;
+  const estimated = ranking(record).filter((row) =>
+    row.candidate.components.some((c) => c.key === "points_gap_reduction" && c.note.includes("ƯỚC LƯỢNG")),
+  );
+  assert.ok(estimated.length > 0, "tiền đề: có thẻ nhận điểm phủ ước lượng");
+  for (const row of estimated) {
+    assert.ok(row.candidate.reasonCodes.includes("POINTS_COVERAGE_UNKNOWN"), row.candidate.productSlug ?? "");
+    assert.ok(!row.candidate.warnings.includes("AWARD_PRICE_FLOOR_ONLY"), row.candidate.productSlug ?? "");
+    assert.ok(!row.candidate.reasonCodes.includes("AWARD_PRICE_IS_FLOOR_ONLY"), row.candidate.productSlug ?? "");
+  }
+});
+
 test("'vì sao thẻ X' kể cả chặng chuyển của chương trình ĐẶT MẪU SỐ tầm với", () => {
   // Thêm 15 chặng mở từ Avios® đổi điểm linh hoạt của thẻ Amex® mà không chạm
   // dòng nào của thẻ đó. Provenance chỉ kể chặng từ đồng tiền của thẻ/ví thì
@@ -1060,6 +1090,20 @@ test("'vì sao thẻ X' kể cả chặng chuyển của chương trình ĐẶT 
   assert.notEqual(cobalt(record), cobalt(base), "tiền đề: chặng Avios® đổi điểm của Cobalt");
   const rows = explainProduct(record, "amex-cobalt", { dataset }).provenance ?? [];
   assert.ok(rows.some((row) => row.table === "transfer_paths" && row.id.startsWith("tp_test_avios_")));
+
+  // Và CHỈ khi tầm với được đọc: thẻ mà mọi đồng tiền của nó đều không chuyển
+  // đi đâu được (ví người mới cũng trống) không được kể dòng nào trong số đó
+  // (vòng Codex 16).
+  const transferable = new Set(DATA.pointsPrograms.filter((row) => row.transferable).map((row) => row.id as string));
+  const fixedOnly = record.derivedState.candidates.find((row) => {
+    const offer = DATA.offers.find((o) => o.id === row.offer.activeOfferId);
+    const currencies = [...row.earn.programs, ...(offer?.bonusCurrencyId == null ? [] : [offer.bonusCurrencyId])];
+    return row.selectable && currencies.length > 0 && currencies.every((id) => !transferable.has(id as string));
+  })!;
+  assert.ok(fixedOnly !== undefined, "tiền đề: có thẻ chỉ kiếm đồng tiền không chuyển được");
+  assert.equal(beginnerNoCards.balances.length, 0, "tiền đề: ví trống");
+  const plain = explainProduct(record, fixedOnly.productSlug, { dataset }).provenance ?? [];
+  assert.ok(!plain.some((row) => row.id.startsWith("tp_test_avios_")), fixedOnly.productSlug);
 });
 
 test("so lượt chạy — thẻ trượt luật cứng làm mất chỗ trống của nó: tầng khác đầu tiên là ĐIỀU KIỆN, không phải chuẩn hoá", () => {
@@ -1144,4 +1188,21 @@ test("§30: câu hỏi chọn theo BẢNG TĨNH nói ra như thế, không độ
   assert.equal(followUp.basis, "priority");
   assert.equal(followUp.flipShare, null);
   assert.match(renderRunReport(record), /BẢNG ƯU TIÊN TĨNH/);
+});
+
+test("§30 xét cả thẻ BỊ ẨN vì cùng họ: câu thu nhập hộ đổi được người thắng thì phải được hỏi (vòng Codex 16)", () => {
+  // `flexiblePointsSufficient`: không thẻ HIỆN RA nào vướng điều kiện, nên bộ
+  // lọc cũ bỏ câu thu nhập mà không đo — trong khi một thẻ bị ẩn vì cùng họ
+  // đang vướng đúng luật thu nhập, và khai thu nhập hộ đưa nó lên đầu.
+  const { record } = execute(flexiblePointsSufficient);
+  const result = record.outputSnapshot.results[0];
+  const visible = [result.primaryAction, ...result.alternatives];
+  assert.ok(visible.every((row) => row.eligibility?.status !== "unknown"), "tiền đề: không thẻ hiện ra nào vướng điều kiện");
+  assert.ok(
+    ranking(record).some((row) => row.visibility === "hidden_same_family" && row.candidate.eligibility?.status === "unknown"),
+    "tiền đề: có thẻ bị ẩn đang vướng điều kiện",
+  );
+  const followUp = record.outputSnapshot.followUp!;
+  assert.equal(followUp.gapKind, "household_income_unknown");
+  assert.equal(followUp.basis, "measured");
 });

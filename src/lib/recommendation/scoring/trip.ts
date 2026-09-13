@@ -79,8 +79,7 @@ export function tripGain(
 ): { before: number; after: number; raw: number; estimated: boolean; floorOnly: boolean } | null {
   const need = ctx.goal.tripNeed;
   if (need === null) return null;
-  const now = tripCoverage(ctx.state, ctx.ix, ctx.asOf, need);
-  const before = now.coverage;
+  const before = tripCoverage(ctx.state, ctx.ix, ctx.asOf, need).coverage;
   if (before === null) return null;
   if (before >= 1) return { before, after: before, raw: 0, estimated: false, floorOnly: false };
   const after = tripCoverage(
@@ -97,10 +96,10 @@ export function tripGain(
     after: after.coverage as number,
     raw,
     estimated,
-    // "Trước" chắc chắn mà chưa đủ thì không có số dư chưa biết nào trong phép
-    // đo (khoảng [cận dưới, 1] của nó buộc "chắc chắn" nghĩa là đã phủ 100%) —
-    // nên cái làm "sau" thành ước lượng chỉ có thể là giá SÀN.
-    floorOnly: estimated && now.coverageKnown,
+    // Cảnh báo "chỉ biết giá sàn" CHỈ khi phần bất định đến từ một chương trình
+    // chỉ có sàn — một bảng cố định kèm sàn động cũng làm "sau" thành ước
+    // lượng, nhưng giá của nó không phải "chỉ có sàn" (vòng Codex 16).
+    floorOnly: estimated && after.uncertainFromFloorOnly,
   };
 }
 

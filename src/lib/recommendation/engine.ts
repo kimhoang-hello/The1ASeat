@@ -186,6 +186,12 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * `diversification`, mẫu số tầm với. Bốn thành phần dùng chung ở nhiều bảng
  * nay là một hàm (`scoring/shared.ts`). Không đổi một chữ số điểm nào.
  *
+ * 4.18.0 — vòng Codex 16: cảnh báo "chỉ biết giá sàn" trên thẻ chỉ khi phần
+ * bất định đến từ chương trình CHỈ có sàn (`TripCoverage.uncertainFromFloorOnly`)
+ * — bảng cố định kèm sàn động là ước lượng nhưng không phải "chỉ có sàn". §30
+ * xét bảng xếp hạng ĐẦY ĐỦ, kể cả thẻ bị ẩn vì cùng họ: câu thu nhập hộ đổi
+ * được người thắng của `flexiblePointsSufficient` từng bị lọc mất không đo.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -198,7 +204,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.17.0";
+export const ENGINE_VERSION = "4.18.0";
 
 export interface RecommendInput {
   state: UserState;
@@ -630,11 +636,12 @@ export function recommend(input: RecommendInput): RecommendationRun {
         };
   const followUp = nextQuestion({
     gaps: normalized.userGaps,
-    ranked:
-      results[0]?.primaryAction === undefined
-        ? []
-        : [results[0].primaryAction, ...results[0].alternatives],
-    rankings: results.map((result) => [result.primaryAction, ...result.alternatives]),
+    // Bảng ĐẦY ĐỦ của từng mục tiêu, không chỉ phần hiện ra: một thẻ bị ẩn vì
+    // cùng họ vẫn là ứng viên, và nếu nó đang vướng điều kiện thì câu hỏi thu
+    // nhập có thể đưa nó lên đầu. Chỉ nhìn hành động chính + gợi ý thay thế
+    // làm §30 bỏ lọc mất đúng câu đổi được người thắng (vòng Codex 16).
+    ranked: goalTraces[0]?.ranking.map((row) => row.candidate) ?? [],
+    rankings: goalTraces.map((trace) => trace.ranking.map((row) => row.candidate)),
     // Câu hỏi "có xét thẻ doanh nghiệp không" chỉ đáng hỏi khi một thẻ
     // DOANH NGHIỆP đang thật sự trong bảng. Suy nó từ mã `ELIGIBILITY_UNCERTAIN`
     // là suy sai cả hai chiều: hỏi khi một thẻ thường có thu nhập chưa rõ,

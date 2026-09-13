@@ -161,6 +161,8 @@ export function stageValue(record: RecommendationRunRecord, stage: PipelineStage
     case "normalization":
       return {
         goalResolution: output.goalResolution,
+        // Mã cấp lượt chạy (`GOAL_MISSING`, `GOAL_AMBIGUOUS`) sinh từ phép giải mục tiêu.
+        runReasonCodes: output.reasonCodes,
         goals: derived.goals.map((goal) => goal.goal),
         userGaps: output.userGaps,
         // KHÔNG có `dataGaps`: chỗ trống dữ liệu của lượt chạy được lọc theo
@@ -179,7 +181,20 @@ export function stageValue(record: RecommendationRunRecord, stage: PipelineStage
         ),
       };
     case "portfolio_analysis":
-      return derived.portfolio;
+      return {
+        portfolio: derived.portfolio,
+        // Cảnh báo cấp lượt chạy (`CARDS_UNDECLARED`, `BALANCES_UNDECLARED`) sinh từ danh mục.
+        runWarnings: output.warnings,
+        // Tỷ lệ phủ chuyến đi là phép phân tích danh mục §7 NHÌN QUA chặng
+        // đang hỏi — chỉ đọc hồ sơ và giá chặng, tính trước mọi tầng sau. Nó
+        // từng không nằm ở tầng nào, nên cả chuỗi lỗi `tripCoverage` (Codex
+        // vòng 3–7) chỉ hiện ra ở các tầng hạ nguồn (vòng rà Phase 4).
+        tripCoverage: keyed(
+          derived.goals.map((goal, index) => ({ goal, index })),
+          ({ goal, index }) => goalKey(goal, index),
+          ({ goal }) => goal.tripCoverage,
+        ),
+      };
     case "strategy_generation":
       return keyed(
         output.results.map((result, index) => ({ result, index })),
@@ -202,7 +217,7 @@ export function stageValue(record: RecommendationRunRecord, stage: PipelineStage
         verdicts: keyed(
           derived.candidates,
           (row) => row.productSlug,
-          (row) => ({ eligibility: row.eligibility, suitability: row.suitability }),
+          (row) => ({ eligibility: row.eligibility, suitability: row.suitability, selectable: row.selectable }),
         ),
       };
     case "offer_climate":
@@ -246,7 +261,13 @@ export function stageValue(record: RecommendationRunRecord, stage: PipelineStage
           keyed(
             goal.ranking,
             (row) => candidateKey(row.candidate),
-            (row) => keyed(row.candidate.adjustments, (a) => a.rule, (a) => a),
+            // Mã và cảnh báo của ứng viên được GỘP ở đây (luật + điều kiện + phù
+            // hợp + offer + quyền lợi), cho MỌI ứng viên kể cả thẻ bị ẩn.
+            (row) => ({
+              adjustments: keyed(row.candidate.adjustments, (a) => a.rule, (a) => a),
+              reasonCodes: row.candidate.reasonCodes,
+              warnings: row.candidate.warnings,
+            }),
           ),
       );
     case "ranking":
@@ -257,21 +278,36 @@ export function stageValue(record: RecommendationRunRecord, stage: PipelineStage
           order: goal.ranking.map((row) => candidateKey(row.candidate)),
           scores: keyed(goal.ranking, (row) => candidateKey(row.candidate), (row) => row.candidate.score),
           visibility: keyed(goal.ranking, (row) => candidateKey(row.candidate), (row) => row.visibility),
+          rank: keyed(goal.ranking, (row) => candidateKey(row.candidate), (row) => row.rank),
+          hiddenBy: keyed(goal.ranking, (row) => candidateKey(row.candidate), (row) => row.hiddenBy),
         }),
       );
-    case "final_recommendation":
+    case "final_recommendation": {
+      // Mỗi ứng viên HIỆN RA, NGUYÊN VẸN — thứ người đọc thấy. Bản trước chỉ
+      // giữ slug của gợi ý thay thế và điểm của NO_NEW_CARD, nên thêm/bớt cảnh
+      // báo trên một gợi ý thay thế làm bản ghi khác mà phép so báo 0/14 tầng
+      // (vòng Codex 16). Trong bản ghi đã lưu, ứng viên ở đầu ra là một BẢN SAO
+      // độc lập với dòng của nó trong bảng xếp hạng — nên chiếu một phần là để
+      // phần còn lại khác mà không ai thấy.
+      const shown = (candidate: Candidate) => candidate;
       return output.results.map((result) => ({
         strategy: result.strategy.strategy,
         primary: candidateKey(result.primaryAction),
+        primaryAction: shown(result.primaryAction),
         alternatives: result.alternatives.map(candidateKey),
-        noActionScore: result.noAction.score,
+        alternativeDetails: keyed(result.alternatives, candidateKey, shown),
+        noAction: shown(result.noAction),
         reasonCodes: result.reasonCodes,
         warnings: result.warnings,
         numbers: result.numbers,
       }));
+    }
     case "confidence":
       return {
         confidence: output.results.map((result) => result.confidence),
+        // Bốn con số độ tin cậy ĐỌC — đổi dòng dữ liệu cũ nhất mà độ tươi vẫn
+        // tròn về cùng mức thì chỉ ở đây mới thấy.
+        inputs: derived.goals.map((goal) => goal.confidenceInputs),
         // Chỗ trống ĐÃ lọc theo những gì lượt chạy đọc — tính cùng lúc với độ
         // tin cậy, sau xếp hạng, và chỉ độ tin cậy + §30 đọc chúng.
         dataGaps: output.dataGaps,
@@ -294,7 +330,8 @@ export function stageValue(record: RecommendationRunRecord, stage: PipelineStage
 }
 
 export interface StageDiff {
-  stage: PipelineStage;
+  /** `unmapped` — xem lưới an toàn ở `diffRecords`. */
+  stage: PipelineStage | "unmapped";
   label: string;
   changed: boolean;
   /** Tổng số chỗ khác — `entries` có thể đã bị cắt. */
@@ -308,7 +345,7 @@ export function diffRecords(
   after: RecommendationRunRecord,
   limit = 30,
 ): StageDiff[] {
-  return PIPELINE_STAGES.map((stage) => {
+  const diffs: StageDiff[] = PIPELINE_STAGES.map((stage) => {
     const entries = deepDiff(stageValue(before, stage), stageValue(after, stage));
     return {
       stage,
@@ -318,7 +355,32 @@ export function diffRecords(
       entries: entries.slice(0, limit),
     };
   });
+  // LƯỚI AN TOÀN. Mỗi tầng là một phép chiếu viết tay của bản ghi, và một
+  // trường mới không ai thêm vào phép chiếu nào sẽ khác mà không tầng nào báo
+  // — đúng lỗi vòng Codex 16 bắt ở gợi ý thay thế. Khi bản ghi khác mà không
+  // tầng TÍNH nào khác, nói thẳng ra thay vì trả về "không có gì khác".
+  const computedChanged = diffs.some(
+    (row) => row.changed && row.stage !== "source_data" && row.stage !== "user_input",
+  );
+  if (!computedChanged) {
+    const whole = deepDiff(
+      { derived: before.derivedState, output: before.outputSnapshot },
+      { derived: after.derivedState, output: after.outputSnapshot },
+    );
+    if (whole.length > 0) {
+      diffs.push({
+        stage: "unmapped",
+        label: UNMAPPED_LABEL,
+        changed: true,
+        count: whole.length,
+        entries: whole.slice(0, limit),
+      });
+    }
+  }
+  return diffs;
 }
+
+const UNMAPPED_LABEL = "Khác ở một trường CHƯA tầng nào ánh xạ — sửa `stageValue` trong run-diff.ts";
 
 /**
  * Tầng đầu tiên khác nhau, BỎ QUA hai tầng đầu vào.
@@ -395,7 +457,7 @@ export interface FactorSwap {
   /** Người thắng khi CHỈ đổi yếu tố này, giữ nguyên mọi thứ khác của lượt cũ. */
   winnerAlone: string | null;
   /** Tầng đầu tiên engine tính khác đi khi chỉ đổi yếu tố này. */
-  firstDivergence: PipelineStage | null;
+  firstDivergence: StageDiff["stage"] | null;
 }
 
 export interface ChangeExplanation {

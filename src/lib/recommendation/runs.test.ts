@@ -41,6 +41,7 @@ import {
   USER_FIXTURES,
   aeroplanHeavy,
   beginnerNoCards,
+  flexiblePointsSufficient,
   japanTripFunded,
   vietnamTripFunded,
   vietnamTripShortfall,
@@ -693,4 +694,95 @@ test("vòng Codex 5 — bản ghi nguồn KHÔNG có chặng đòi hạng thành
       }
     }
   }
+});
+
+test("so lượt chạy — đổi BẤT KỲ lá nào của bản ghi thì một tầng tính phải báo (vét cạn)", () => {
+  // Mỗi tầng là một phép chiếu viết tay của bản ghi, và vòng Codex 16 bắt
+  // được một trường không tầng nào chiếu (mã của gợi ý thay thế). Vét cạn
+  // tìm thêm năm chỗ nữa: cả `tripCoverage`, đầu vào độ tin cậy, mã của mọi
+  // ứng viên trong bảng, `rank`/`hiddenBy`, `selectable`. Bài này đổi từng
+  // LOẠI lá (một lần mỗi đường dẫn đã gộp chỉ số mảng) và đòi một tầng TÍNH
+  // báo — lưới an toàn `unmapped` không được tính là đã ánh xạ.
+  //
+  // Miễn trừ, và lý do:
+  //   productId/productName/kind/goalId — bản sao DANH TÍNH; phép so khoá theo
+  //     slug, và đổi tên một thẻ là đổi dữ liệu nguồn;
+  //   asOf/engineVersion/ruleVersion ở đầu ra — siêu dữ liệu, phần đầu báo
+  //     cáo và `explainChange` nói về chúng;
+  //   trường null của NO_NEW_CARD (eligibility, suitability, productSlug) —
+  //     nó không có những thứ đó; đổi null thành chuỗi không phải một ca có thật;
+  //   `eligibility`/`suitability` của ứng viên trong bảng xếp hạng và
+  //     `results[].strategy` — BẢN SAO của dữ kiện ứng viên và của
+  //     `strategies[0]`, đã chiếu ở tầng của bản gốc; bài ngay dưới đòi bản sao
+  //     luôn bằng bản gốc.
+  const EXEMPT = new RegExp(
+    [
+      String.raw`\.(productId|productName|kind|goalId)$`,
+      String.raw`^outputSnapshot\.(asOf|engineVersion|ruleVersion)$`,
+      String.raw`\.candidate\.(eligibility|suitability)\.`,
+      String.raw`^outputSnapshot\.results\.#\.(primaryAction|alternatives\.#|noAction)\.(eligibility|suitability)\.`,
+      String.raw`^outputSnapshot\.results\.#\.strategy\.`,
+    ].join("|"),
+  );
+  const state: UserState = {
+    ...vietnamTripShortfall,
+    goals: [
+      ...vietnamTripShortfall.goals.map((goal) => ({ ...goal, priority: null })),
+      { type: "next_card", id: "goal_sweep_next" as never, userId: vietnamTripShortfall.profile.id, priority: null, createdAt: ASOF },
+    ],
+  };
+  // Qua JSON trước: trong bộ nhớ, gợi ý thay thế ở đầu ra và dòng của nó trong
+  // bảng xếp hạng là CÙNG một object, nên đổi một chỗ là đổi cả hai và phép vét
+  // bị lừa. Bản lưu trong kho thì không chung gì — vét đúng trên dạng đó.
+  const record = JSON.parse(JSON.stringify(execute(state).record)) as RecommendationRunRecord;
+  const seen = new Set<string>();
+  const missed: string[] = [];
+  const walk = (value: unknown, path: (string | number)[], parent: Record<string, unknown> | null) => {
+    if (value !== null && typeof value === "object") {
+      if (Array.isArray(value)) value.forEach((item, i) => walk(item, [...path, i], null));
+      else for (const [key, item] of Object.entries(value)) walk(item, [...path, key], value as Record<string, unknown>);
+      return;
+    }
+    const shape = path.map((part) => (typeof part === "number" ? "#" : part)).join(".");
+    if (seen.has(shape) || EXEMPT.test(shape)) return;
+    if (value === null && parent?.kind === "no_new_card") return;
+    seen.add(shape);
+    const clone = structuredClone({ derivedState: record.derivedState, outputSnapshot: record.outputSnapshot }) as Record<string, unknown>;
+    let at: Record<string | number, unknown> = clone;
+    for (const part of path.slice(0, -1)) at = at[part] as Record<string | number, unknown>;
+    const last = path[path.length - 1];
+    at[last] = value === null ? "X" : typeof value === "number" ? value + 1 : typeof value === "boolean" ? !value : `${String(value)}X`;
+    const changed = { ...record, ...(clone as Pick<RecommendationRunRecord, "derivedState" | "outputSnapshot">) };
+    const hit = diffRecords(record, changed).some(
+      (row) => row.changed && row.stage !== "unmapped" && row.stage !== "source_data" && row.stage !== "user_input",
+    );
+    if (!hit) missed.push(shape);
+  };
+  walk({ derivedState: record.derivedState, outputSnapshot: record.outputSnapshot }, [], null);
+  assert.ok(seen.size > 200, `tiền đề: vét được ${seen.size} loại lá`);
+  assert.deepEqual(missed, [], "các trường này đổi mà không tầng nào báo — thêm chúng vào `stageValue`");
+});
+
+test("bản sao trong bản ghi luôn bằng bản gốc (điều kiện miễn trừ của phép vét)", () => {
+  for (const state of [vietnamTripShortfall, aeroplanHeavy, flexiblePointsSufficient]) {
+    const { record } = execute(state);
+    const facts = new Map(record.derivedState.candidates.map((row) => [row.productId as string, row]));
+    for (const goal of record.derivedState.goals) {
+      for (const row of goal.ranking) {
+        if (row.candidate.kind !== "open_card") continue;
+        const source = facts.get(row.candidate.productId as string)!;
+        assert.deepEqual(row.candidate.eligibility, source.eligibility);
+        assert.deepEqual(row.candidate.suitability, source.suitability);
+      }
+    }
+    for (const result of record.outputSnapshot.results) assert.deepEqual(result.strategy, result.strategies[0]);
+  }
+});
+
+test("so lượt chạy — lưới an toàn: bản ghi khác ở chỗ chưa ánh xạ thì báo `unmapped`, không im lặng", () => {
+  const { record } = execute(aeroplanHeavy);
+  const changed = structuredClone(record);
+  changed.outputSnapshot.results[0].goalId = "goal_khac" as never;
+  const diffs = diffRecords(record, changed);
+  assert.equal(firstComputedDivergence(diffs)?.stage, "unmapped");
 });

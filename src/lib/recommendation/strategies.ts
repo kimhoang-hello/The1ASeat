@@ -64,6 +64,17 @@ export interface TripCoverage {
   /** `coverage` là con số chắc chắn, không phải điểm giữa của một khoảng. */
   coverageKnown: boolean;
   /**
+   * Phần CÒN BẤT ĐỊNH (chương trình có cận trên vượt phần chắc chắn) có đến từ
+   * một chương trình CHỈ biết giá sàn không.
+   *
+   * "Ước lượng" có hai hình dạng và hai lời cảnh báo khác nhau: chỉ-có-sàn
+   * (`AWARD_PRICE_FLOOR_ONLY` — đừng trình bày mức sàn như một cái giá) và
+   * bảng cố định có thêm sàn động (chỉ `POINTS_COVERAGE_UNKNOWN`). Vòng Codex
+   * 16 bắt `tripGain` gộp hai thứ: "trước chắc chắn" chứng minh được bất định
+   * đến từ sàn động, KHÔNG chứng minh được chương trình chỉ có sàn.
+   */
+  uncertainFromFloorOnly: boolean;
+  /**
    * Có chương trình nào mà số điểm với tới được đã phủ mức giá ĐIỂN HÌNH của
    * CHÍNH nó không. Đo trên TỪNG chương trình, không trên `bestProgram`:
    * chương trình phủ tốt nhất theo cận trên không nhất thiết là chương trình
@@ -155,6 +166,7 @@ export function tripCoverage(
     hi: number;
     mid: number;
     balanceUnknown: boolean;
+    floorOnly: boolean;
   }
   const evaluated: Evaluated[] = [];
   const unpricedHeld: PointsProgramId[] = [];
@@ -188,6 +200,7 @@ export function tripCoverage(
       hi,
       mid: lo + (hi - lo) / 2,
       balanceUnknown: reach.hasUnknownSource,
+      floorOnly,
     });
   }
 
@@ -205,6 +218,7 @@ export function tripCoverage(
       coverage: null,
       coverageLowerBound: null,
       coverageKnown: false,
+      uncertainFromFloorOnly: false,
       coversTypical: false,
       bestProgram: null,
       accessible: null,
@@ -226,6 +240,7 @@ export function tripCoverage(
     // 10% (vòng Codex 7). Chỉ nhìn khoảng của chương trình thắng thì quá lỏng:
     // chương trình khác vẫn có thể thật sự đạt 100%.
     coverageKnown: floor >= ceiling,
+    uncertainFromFloorOnly: evaluated.some((row) => row.floorOnly && row.hi > floor),
     coversTypical,
     bestProgram: best.programId,
     accessible: best.total,

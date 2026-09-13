@@ -19,12 +19,12 @@
  */
 
 import { activeAt } from "./temporal.ts";
-import { flexibilityScale, isOpenToEveryone } from "./portfolio.ts";
+import { flexibilityReach, flexibilityScale, isOpenToEveryone } from "./portfolio.ts";
 import { indexDataset } from "./indexes.ts";
 import { candidateKey, type PipelineStage } from "./run-diff.ts";
 import type { RecommendationRunRecord } from "./runs.ts";
 import type { RuleUnknownCause } from "./eligibility.ts";
-import type { AwardStrategy, DataGap, RecommendationDataset, Temporal } from "./types.ts";
+import type { AwardStrategy, DataGap, PointsProgramId, RecommendationDataset, Temporal } from "./types.ts";
 import type {
   AdjustmentLayer,
   Candidate,
@@ -347,11 +347,17 @@ export function provenanceFor(
   // mà mọi phép tính điểm của engine dùng (bonus quy đổi, tầm với, phủ chuyến
   // đi, tập trung danh mục) và mà độ tươi §29 dùng. Độ tươi của cả lượt chạy
   // truy riêng ở `ConfidenceInputs.oldestVerifiedRow`.
-  // Cộng chương trình ĐẶT MẪU SỐ tầm với — xem `flexibilityScale`.
+  // Cộng chương trình ĐẶT MẪU SỐ tầm với — xem `flexibilityScale` — nhưng CHỈ
+  // khi một chương trình nguồn có đích mở: `flexibilityReach` thoát trước mẫu
+  // số khi chính nó không chuyển đi đâu được. Thêm vô điều kiện thì một thẻ
+  // cash back, ví không có đồng tiền chuyển được, được kể 15 chặng Avios® mà
+  // điểm của nó không đọc dòng nào (vòng Codex 16).
+  const ix = indexDataset(dataset);
+  const own = new Set<string>([...programs, ...walletPrograms]);
+  const readsScale = [...own].some((programId) => flexibilityReach(ix, programId as PointsProgramId, asOf) > 0);
   const sources = new Set<string>([
-    ...programs,
-    ...walletPrograms,
-    ...(flexibilityScale(indexDataset(dataset), asOf).programs as string[]),
+    ...own,
+    ...(readsScale ? (flexibilityScale(ix, asOf).programs as string[]) : []),
   ]);
   for (const path of activeAt(dataset.transferPaths, asOf)) {
     if (isOpenToEveryone(path.requiresTier) && sources.has(path.sourceProgramId as string)) {
