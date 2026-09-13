@@ -1040,16 +1040,32 @@ trường offer). Xếp theo spec thì "tầng khác đầu tiên" chỉ sai ch�
 **Provenance không lưu, suy lại.** Nó suy lại được chính xác từ bản chụp bộ
 dữ liệu + `activeOfferId` đã lưu; lưu thì mỗi lượt mang thêm ~150 KB URL.
 
-### Ba lỗi engine debugger bới ra — chạy nó lên nhân vật mẫu ngay khi dựng xong
+### Lỗi engine của Phase 4 — ba do debugger bới ra, phần còn lại do Codex
 
 | Version | Lỗi | Lộ ra thế nào |
 | --- | --- | --- |
 | 4.0.1 | tổng chi tiêu phụ thuộc thứ tự khoá object | test "qua JSON = trên object gốc" |
 | 4.1.0 | thiếu 5,000/205,000 điểm ⇒ mọi thẻ nhận trọn 20% "thu hẹp khoảng cách"; gãy bậc ở mép đủ điểm | Test C: `USE_EXISTING_POINTS` đứng đầu chiến lược mà khuyên mở thẻ |
 | 4.2.0 | §30 hỏi câu không đổi được gì ở 4/8 ca (khứ hồi cho chặng chưa có giá) | đo bằng câu trả lời thử |
+| 4.3.0–4.6.0 | số dư chưa biết / giá chỉ biết sàn / bonus / chương trình được chọn — `tripCoverage` | Codex vòng 3–6 |
 
-Cả ba xanh qua mọi test Phase 3. Đúng như bàn giao dự đoán: **lưới an toàn
-bắt dữ liệu sai tốt hơn bắt code kiểm tra sai**, và debugger là dụng cụ đó.
+Ba cái đầu xanh qua mọi test Phase 3. Đúng như bàn giao dự đoán: **lưới an
+toàn bắt dữ liệu sai tốt hơn bắt code kiểm tra sai**, và debugger là dụng cụ
+đó.
+
+### Chuỗi vá `tripCoverage`, lần thứ ba trong dự án
+
+| Vòng | Bản vá | Hỏng thế nào |
+| --- | --- | --- |
+| 3 | số dư chưa biết ⇒ `coverage: null` | mượn nghĩa "chặng chưa có giá": `NO_NEW_CARD` mất thành phần đủ-điểm |
+| 4 | điểm giữa [cận dưới, 1] | áp nhầm cho giá chỉ biết sàn: 1 điểm phủ 50% |
+| 5 | nhánh riêng cho giá sàn | nhánh đó quên bonus và quên cập nhật chương trình được chọn |
+| 6 | **viết lại: mỗi chương trình một khoảng [lo, hi], một phép chọn** | — |
+
+Cùng hình dạng Phase 2 và 3: mỗi loại "chưa biết" một nhánh riêng, và nhánh
+nào cũng quên một giá trị nhánh kia cập nhật. Chuỗi chỉ dừng khi mọi loại
+"chưa biết" đi qua CÙNG một phép đánh giá. `points_gap_reduction` giờ cũng là
+hiệu của chính hàm đó chạy hai lần (không bonus / có bonus).
 
 ### Giới hạn, nói thẳng
 
@@ -1067,7 +1083,7 @@ bắt dữ liệu sai tốt hơn bắt code kiểm tra sai**, và debugger là d
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # 333 test: chi tiêu, bất biến, vòng đời, quy mô, người dùng, engine, Phase 4, Test A–J
+npm run test:reco         # 335 test: chi tiêu, bất biến, vòng đời, quy mô, người dùng, engine, Phase 4, Test A–J
 npm run reco:debug        # debugger §22 dòng lệnh — xem mục Phase 4
 ```
 

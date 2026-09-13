@@ -545,3 +545,64 @@ test("độ tươi §29 nói ra DÒNG cũ nhất, và bỏ qua chặng engine kh
     id: open.id,
   });
 });
+
+/* ================================================================== *
+ * Vòng Codex 7
+ * ================================================================== */
+
+test("chương trình có CẢ bảng giá cố định LẪN sàn động: sàn mở rộng cận trên", () => {
+  // Aeroplan® Canada → Việt Nam business: thêm một chiến lược định giá động
+  // sàn 25,000/chiều. 100,000 điểm phủ CHẮC 100/230 = 43% (trần cố định), và
+  // CÓ THỂ tới 100% (sàn 50,000 khứ hồi) — điểm giữa 72%, không phải 43%.
+  const fixed = DATA.awardStrategies.find(
+    (row) =>
+      row.programId === ("aeroplan" as never) &&
+      row.destinationRegion === "SEA_VIETNAM" &&
+      row.cabin === "business" &&
+      row.pricingModel === "fixed",
+  )!;
+  const data: RecommendationDataset = {
+    ...DATA,
+    awardStrategies: [
+      ...DATA.awardStrategies,
+      {
+        ...fixed,
+        id: `${fixed.id}-dynamic-test` as never,
+        pricingModel: "dynamic_floor",
+        pointsLow: 25_000,
+        pointsTypical: null,
+        pointsHigh: null,
+      },
+    ],
+  };
+  const state = structuredClone(vietnamTripFunded);
+  state.balances = state.balances.map((row) => ({ ...row, balance: 100_000 }));
+  const record = execute(state, { data }).record;
+  const cover = record.derivedState.goals[0].tripCoverage!;
+  const high = record.derivedState.goals[0].goal.tripNeed!.byProgram.find((r) => r.programId === "aeroplan")!.high!;
+  assert.equal(cover.coverageLowerBound, Math.min(1, 100_000 / high));
+  assert.equal(cover.coverageKnown, false, "sàn động mở cận trên — tỷ lệ phủ là ước lượng");
+  assert.ok(Math.abs(cover.coverage! - (100_000 / high + 1) / 2) < 1e-12, String(cover.coverage));
+  assert.equal(record.outputSnapshot.results[0].numbers.pointsGapTypical, null);
+});
+
+test("phần CHẮC CHẮN đã bằng phần CÓ THỂ thì tỷ lệ phủ là số đo, không phải ước lượng", () => {
+  // 80,000 AAdvantage® phủ chắc 80% chuyến phổ thông đặc biệt; 17,000
+  // Aeroplan® trên sàn 170,000 phủ tối đa 10%. Không chương trình nào CÓ THỂ
+  // vượt 80% ⇒ 80% là con số chắc chắn.
+  const state = structuredClone(vietnamTripFunded);
+  state.goals = state.goals.map((goal) => (goal.type === "trip" ? { ...goal, cabin: "premium_economy" } : goal));
+  state.balances = [
+    { ...state.balances[0], programId: "aadvantage" as never, balance: 80_000 },
+    { ...state.balances[0], programId: "aeroplan" as never, balance: 17_000 },
+  ];
+  const record = execute(state).record;
+  const cover = record.derivedState.goals[0].tripCoverage!;
+  const aa = record.derivedState.goals[0].goal.tripNeed!.byProgram.find((r) => r.programId === "aadvantage")!;
+  assert.equal(cover.bestProgram, "aadvantage");
+  assert.equal(cover.coverage, 80_000 / aa.high!);
+  assert.equal(cover.coverageKnown, true);
+  const numbers = record.outputSnapshot.results[0].numbers;
+  assert.equal(numbers.pointsGapTypical, Math.max(0, aa.typical! - 80_000));
+  assert.ok(!record.outputSnapshot.results[0].strategies.some((s) => s.reasonCodes.includes("POINTS_COVERAGE_UNKNOWN")));
+});

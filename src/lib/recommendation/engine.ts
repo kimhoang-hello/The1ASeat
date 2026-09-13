@@ -138,6 +138,10 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * trị. `directPoints` theo đúng chương trình được chọn; `pointsGapTypical`
  * chỉ nói khi tỷ lệ phủ chắc chắn; độ tươi §29 bỏ chặng đòi hạng thành viên.
  *
+ * 4.7.0 — vòng Codex 7: sàn ĐỘNG của một chương trình có cả bảng giá cố định
+ * mở rộng cận trên của khoảng phủ (`TripNeedByProgram.floor`), và tỷ lệ phủ
+ * là số đo khi cực đại các cận dưới đã bằng cực đại các cận trên.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -150,7 +154,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.6.0";
+export const ENGINE_VERSION = "4.7.0";
 
 export interface RecommendInput {
   state: UserState;

@@ -118,14 +118,17 @@ export function tripNeedFor(
   const byProgram: TripNeed["byProgram"] = programs.map((programId) => {
     const own = strategies.filter((row) => row.programId === programId);
     const ownPriced = own.filter((row) => row.pricingModel === "fixed");
+    const ownFloor = own.filter((row) => row.pricingModel !== "fixed");
     return {
       programId,
       perPassengerOneWayLow: minOf(own.map((row) => row.pointsLow)),
       perPassengerOneWayTypical: minOf(ownPriced.map((row) => row.pointsTypical)),
       perPassengerOneWayHigh: maxOf(ownPriced.map((row) => row.pointsHigh)),
+      perPassengerOneWayFloor: minOf(ownFloor.map((row) => row.pointsLow)),
       low: null,
       typical: null,
       high: null,
+      floor: null,
     };
   });
 
@@ -172,6 +175,7 @@ export function tripNeedFor(
     row.low = scale(row.perPassengerOneWayLow);
     row.typical = scale(row.perPassengerOneWayTypical);
     row.high = scale(row.perPassengerOneWayHigh);
+    row.floor = scale(row.perPassengerOneWayFloor);
   }
 
   return {

@@ -131,9 +131,22 @@ export interface TripNeedByProgram {
   perPassengerOneWayLow: number | null;
   perPassengerOneWayTypical: number | null;
   perPassengerOneWayHigh: number | null;
+  /** Sàn động thấp nhất, một chiều một người — xem `floor`. */
+  perPassengerOneWayFloor: number | null;
   low: number | null;
   typical: number | null;
   high: number | null;
+  /**
+   * Sàn THẤP NHẤT của các chiến lược `dynamic_floor` của chương trình này, đã
+   * nhân đủ thừa số — `null` khi nó không có chiến lược định giá động nào.
+   *
+   * Tách khỏi `low` vì hai con số nói hai chuyện: `low` của bảng giá cố định
+   * là mức rẻ nhất của một bảng ĐÃ BIẾT, còn sàn động là mức giá CÓ THỂ rẻ tới
+   * mà không ai hứa. Một chương trình có cả hai (bảng cố định trần 230,000 và
+   * sàn động 50,000) thì 100,000 điểm phủ CHẮC 43% và CÓ THỂ tới 100% — gộp
+   * vào `low` là mất hẳn nửa sau (vòng Codex 7).
+   */
+  floor: number | null;
 }
 
 export interface TripNeed {

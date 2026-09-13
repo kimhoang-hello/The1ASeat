@@ -132,10 +132,15 @@ export function tripCoverage(
    *
    * Nay mỗi chương trình có một KHOẢNG phủ `[lo, hi]`:
    *
-   *   giá cố định, số dư đã biết  → [điểm/trần, điểm/trần]
-   *   giá cố định, số dư chưa biết → [điểm/trần, 1]
-   *   chỉ biết giá sàn, đã biết    → [0, min(1, điểm/sàn)]   (giá ≥ sàn, không trần)
-   *   chỉ biết giá sàn, chưa biết  → [0, 1]
+   *   giá cố định, số dư đã biết        → [điểm/trần, điểm/trần]
+   *   giá cố định + sàn động, đã biết   → [điểm/trần, max(điểm/trần, điểm/sàn)]
+   *   chỉ biết giá sàn, đã biết         → [0, min(1, điểm/sàn)]  (giá ≥ sàn, không trần)
+   *   số dư chưa biết (mọi loại giá)    → [cận dưới như trên, 1]
+   *
+   * (mọi tỷ số kẹp về 1). Giá cố định đo trên TRẦN của bảng — lựa chọn thận
+   * trọng của Phase 3; khoảng giữa mức thấp và trần của một bảng giá cố định
+   * là chuyện đường bay, không phải chuyện giá chưa biết. Sàn ĐỘNG thì khác:
+   * nó là mức giá có thể xảy ra mà không ai hứa, nên nó mở rộng CẬN TRÊN.
    *
    * Tỷ lệ phủ quyết định của chương trình là ĐIỂM GIỮA khoảng đó (quy ước
    * "chưa biết = trung tính" engine đã dùng), và chương trình thắng là chương
@@ -162,7 +167,8 @@ export function tripCoverage(
     // Đọc GIÁ GỐC (một người, một chiều) để phân biệt "chỉ biết sàn" với
     // "thiếu thừa số": thiếu số người cũng làm `row.high` thành null, và khi
     // đó mọi chương trình trông như chưa định giá.
-    const floorOnly = !priced && row.perPassengerOneWayHigh === null && row.low !== null && row.low > 0;
+    const hasFloor = row.floor !== null && row.floor > 0;
+    const floorOnly = !priced && row.perPassengerOneWayHigh === null && hasFloor;
     if (!priced && !floorOnly) continue;
     // Chỉ để TRÌNH BÀY: chương trình người dùng có điểm mà engine chỉ biết sàn.
     if (floorOnly && (reach.total > 0 || reach.hasUnknownSource)) unpricedHeld.push(row.programId);
@@ -172,9 +178,9 @@ export function tripCoverage(
     const lo = priced ? Math.min(1, total / (row.high as number)) : 0;
     const hi = reach.hasUnknownSource
       ? 1
-      : priced
-        ? lo
-        : Math.min(1, total / (row.low as number));
+      : hasFloor
+        ? Math.max(lo, Math.min(1, total / (row.floor as number)))
+        : lo;
     evaluated.push({
       programId: row.programId,
       total,
@@ -208,13 +214,18 @@ export function tripCoverage(
   }
 
   const floor = Math.max(...evaluated.map((row) => row.lo));
+  const ceiling = Math.max(...evaluated.map((row) => row.hi));
   return {
     coverage: best.mid,
     // Phần CHẮC CHẮN, qua mọi chương trình — sàn của mọi câu "đã đủ".
     coverageLowerBound: floor,
-    // Con số chắc chắn khi đã chắc đủ, hoặc khi không chương trình nào còn
-    // khoảng mở: không có số dư chưa biết, không có giá chỉ biết sàn.
-    coverageKnown: floor >= 1 || evaluated.every((row) => row.lo === row.hi),
+    // Chắc chắn khi phần chắc chắn (cực đại các cận dưới) đã bằng phần CÓ THỂ
+    // (cực đại các cận trên) — không chương trình nào còn khả năng vượt nó.
+    // Đòi MỌI khoảng đều đóng thì quá chặt: 80% chắc chắn qua AAdvantage® bị
+    // gọi là ước lượng chỉ vì 17,000 Aeroplan® trên sàn 170,000 có thể phủ tới
+    // 10% (vòng Codex 7). Chỉ nhìn khoảng của chương trình thắng thì quá lỏng:
+    // chương trình khác vẫn có thể thật sự đạt 100%.
+    coverageKnown: floor >= ceiling,
     coversTypical,
     bestProgram: best.programId,
     accessible: best.total,
