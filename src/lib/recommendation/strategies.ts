@@ -39,19 +39,30 @@ import type { ReasonCode, StrategyType } from "./reason-codes.ts";
  */
 export interface TripCoverage {
   /**
-   * Tỷ lệ phủ DÙNG ĐỂ QUYẾT ĐỊNH — `null` khi chưa biết.
+   * Tỷ lệ phủ DÙNG ĐỂ QUYẾT ĐỊNH. `null` CHỈ khi không chương trình nào tra
+   * được giá — nghĩa đó mọi tầng sau đã đọc từ Phase 3, và KHÔNG được mượn
+   * cho nghĩa khác.
    *
-   * Chưa biết ở HAI ca: không chương trình nào tra được giá, HOẶC có số dư
-   * chưa biết góp vào mà cận dưới chưa tới 100%. Ca thứ hai từng trả về chính
-   * cận dưới, và mọi tầng sau đọc nó như con số thật: một người có tài khoản
-   * Membership Rewards® không nhớ số dư được chấm y hệt người có 0 điểm —
-   * `BUILD_POINTS = 1`, cùng người thắng, cùng điểm (vòng Codex 3, P1). Cờ
-   * cận dưới khi đó chỉ được dùng để TRÌNH BÀY, còn quyết định vẫn là "chưa
-   * biết = 0". Cận dưới đã tới 100% thì vẫn là 100%: đủ là đủ.
+   * Có số dư chưa biết mà phần đã biết chưa tới 100% thì con số thật nằm
+   * đâu đó trong `[cận dưới, 1]`, và đây là ĐIỂM GIỮA của khoảng đó — cùng quy
+   * ước "chưa biết = trung tính 0.5" mà `spend_fit`, `offer_climate_weak` đã
+   * dùng. Hai bản trước đều sai, theo hai hướng:
+   *
+   *  - trả CẬN DƯỚI: tài khoản Membership Rewards® không nhớ số dư được chấm y
+   *    hệt 0 điểm — `BUILD_POINTS = 1`, thẻ được thưởng vì "lấp" một khoảng
+   *    chưa ai biết (vòng Codex 3, P1);
+   *  - trả `null`: mượn nghĩa "chặng chưa có giá", nên `NO_NEW_CARD` bỏ luôn
+   *    thành phần đủ-điểm và `FOCUS_ON_AVAILABILITY` về 0 — thêm một tài khoản
+   *    AAdvantage® không nhớ số dư làm người có 170,000 Aeroplan® (đủ giá điển
+   *    hình) bị khuyên mở thẻ (vòng Codex 4, P1 — bản vá hỏng của vòng 3).
+   *
+   * Cận dưới đã tới 100% thì là 100%: đủ là đủ, và chỉ lúc đó §16 Rule 1 nổ.
    */
   coverage: number | null;
-  /** Tỷ lệ phủ tính trên phần ĐÃ BIẾT — chỉ để trình bày; xem `coverage`. */
+  /** Tỷ lệ phủ của phần ĐÃ BIẾT — sàn của `coverage`; dùng cho mọi câu "đã đủ". */
   coverageLowerBound: number | null;
+  /** `coverage` là con số chắc chắn, không phải điểm giữa của một khoảng. */
+  coverageKnown: boolean;
   /**
    * Có chương trình nào mà số điểm với tới được đã phủ mức giá ĐIỂN HÌNH của
    * CHÍNH nó không. Đo trên TỪNG chương trình, không trên `bestProgram`:
@@ -102,9 +113,21 @@ export function tripCoverage(
   ix: DatasetIndex,
   asOf: string,
   need: Pick<TripNeed, "byProgram"> | null,
+  /**
+   * Điểm CỘNG THÊM vào từng chương trình — dùng để hỏi "nếu người này nhận
+   * welcome bonus của thẻ X thì phủ tới đâu" bằng CHÍNH phép đo này, thay vì
+   * một phép đo thứ hai cho điểm số (xem `scoreTrip`). Vắng = không cộng gì.
+   */
+  extra?: (programId: PointsProgramId) => number,
 ): TripCoverage {
   const rows = need?.byProgram ?? [];
   let coverage: number | null = null;
+  /**
+   * Tỷ lệ phủ quyết định: cực đại qua các chương trình, mỗi chương trình tự
+   * lấy điểm giữa khi CHÍNH nó có nguồn chưa biết. Người dùng chỉ cần MỘT
+   * chương trình đủ để đặt vé, nên cực đại là đúng phép.
+   */
+  let decision: number | null = null;
   let bestProgram: PointsProgramId | null = null;
   let accessible: number | null = null;
   let lowerBound = false;
@@ -151,14 +174,17 @@ export function tripCoverage(
     // (`aadvantage` — không có dòng số dư nào, tức không có gì chưa biết). Sự
     // chưa biết của Aeroplan® biến mất, và engine báo "còn thiếu đúng 140,000
     // điểm" cho một người nó không biết đang có bao nhiêu.
+    const total = reach.total + (extra?.(row.programId) ?? 0);
     if (reach.hasUnknownSource) lowerBound = true;
     // Cận dưới đã vượt giá điển hình thì con số thật càng vượt.
-    if (row.typical !== null && reach.total >= row.typical) coversTypical = true;
-    const own = Math.min(1, reach.total / row.high);
+    if (row.typical !== null && total >= row.typical) coversTypical = true;
+    const own = Math.min(1, total / row.high);
+    const ownDecision = reach.hasUnknownSource && own < 1 ? own + (1 - own) / 2 : own;
+    if (decision === null || ownDecision > decision) decision = ownDecision;
     if (coverage === null || own > coverage) {
       coverage = own;
       bestProgram = row.programId;
-      accessible = reach.total;
+      accessible = total;
     }
   }
 
@@ -185,6 +211,7 @@ export function tripCoverage(
     return {
       coverage: null,
       coverageLowerBound: null,
+      coverageKnown: false,
       coversTypical: false,
       bestProgram: null,
       accessible: null,
@@ -199,9 +226,15 @@ export function tripCoverage(
   // Một chương trình có điểm mà không định giá nổi cũng làm kết luận thành
   // cận dưới: người dùng có thể đang phủ tốt hơn con số này.
   const isLowerBound = lowerBound || unpricedHeld.length > 0;
+  // Chương trình có điểm mà chỉ biết giá sàn: nó có thể phủ bất cứ đâu trong
+  // [cận dưới, 1], nên nó góp đúng điểm giữa đó.
+  if (coverage !== null && decision !== null && unpricedHeld.length > 0 && coverage < 1) {
+    decision = Math.max(decision, coverage + (1 - coverage) / 2);
+  }
   return {
-    coverage: coverage !== null && isLowerBound && coverage < 1 ? null : coverage,
+    coverage: decision,
     coverageLowerBound: coverage,
+    coverageKnown: coverage !== null && (coverage >= 1 || !isLowerBound),
     coversTypical,
     bestProgram,
     accessible,
@@ -261,13 +294,12 @@ export function generateStrategies(input: StrategyInput): StrategyScore[] {
    * chỗ ngồi.
    */
   let coversTypical = false;
-  /** Chặng CÓ giá nhưng số dư chưa biết đủ để kết luận — khác hẳn chặng chưa có giá. */
-  let balanceUnknown = false;
+  let coverageKnown = true;
   if (isTrip && need !== null) {
     const covered = tripCoverage(state, ix, asOf, need);
     coverage = covered.coverage;
     coversTypical = covered.coversTypical;
-    balanceUnknown = covered.coverage === null && covered.coverageLowerBound !== null;
+    coverageKnown = covered.coverageKnown;
   }
 
   if (coverage !== null) {
@@ -275,6 +307,8 @@ export function generateStrategies(input: StrategyInput): StrategyScore[] {
       "USE_EXISTING_POINTS",
       coverage,
       ...(coverage >= 1 ? (["POINTS_ALREADY_SUFFICIENT"] as ReasonCode[]) : []),
+      // Điểm giữa của một khoảng, không phải số đo — nói ra, và §30 đi hỏi.
+      ...(coverageKnown ? [] : (["POINTS_COVERAGE_UNKNOWN"] as ReasonCode[])),
     );
     add(
       "BUILD_POINTS",
@@ -285,11 +319,7 @@ export function generateStrategies(input: StrategyInput): StrategyScore[] {
     // Chuyến đi mà chưa tính được số điểm cần — thiếu hạng ghế, thiếu số
     // người, hoặc chưa có award strategy cho vùng này. KHÔNG được suy ra "đủ
     // điểm": cả ba chỗ trống đó đều làm số điểm cần bị chia nhỏ.
-    add(
-      "USE_EXISTING_POINTS",
-      hasBalances ? 0.2 : 0,
-      balanceUnknown ? "POINTS_COVERAGE_UNKNOWN" : "TRIP_ROUTE_NOT_PRICED",
-    );
+    add("USE_EXISTING_POINTS", hasBalances ? 0.2 : 0, "TRIP_ROUTE_NOT_PRICED");
     add("BUILD_POINTS", 0.5);
   } else {
     add("USE_EXISTING_POINTS", hasBalances ? 0.35 : 0);

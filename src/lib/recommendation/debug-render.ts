@@ -206,8 +206,8 @@ export function renderRunReport(record: RecommendationRunRecord, options: RunRep
     if (cover !== null) {
       out.push(
         `      phủ: ${
-          cover.coverage === null && cover.coverageLowerBound !== null
-            ? `CHƯA BIẾT (cận dưới ${pct(cover.coverageLowerBound)})`
+          cover.coverage !== null && !cover.coverageKnown
+            ? `ƯỚC ${pct(cover.coverage)} (có số dư chưa biết — phần đã biết phủ ${pct(cover.coverageLowerBound)})`
             : pct(cover.coverage)
         } qua ${cover.bestProgram ?? "—"}${cover.coversTypical ? " · đã đủ ở giá điển hình" : ""} · tiếp cận được ${int(cover.accessible)}` +
           `${cover.accessibleIsLowerBound ? " (CẬN DƯỚI)" : ""}` +

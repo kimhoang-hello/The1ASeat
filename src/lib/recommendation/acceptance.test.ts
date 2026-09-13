@@ -387,17 +387,39 @@ test("số dư CHƯA BIẾT không được chấm như số dư 0 — ở quy�
     r.outputSnapshot.results[0].strategies.find((s) => s.strategy === type)!;
   // 0 điểm: thiếu thật, xây từ đầu.
   assert.equal(strategy(zero, "BUILD_POINTS").score, 1);
-  // Chưa biết: KHÔNG phải thiếu 100%, và nói ra vì sao.
-  assert.ok(strategy(unknown, "BUILD_POINTS").score < 1);
+  // Chưa biết: KHÔNG phải thiếu 100% — điểm giữa của [0, 1] — và nói ra vì sao.
+  const cover = unknown.derivedState.goals[0].tripCoverage!;
+  assert.equal(cover.coverageKnown, false);
+  assert.equal(cover.coverageLowerBound, 0);
+  assert.equal(cover.coverage, 0.5);
+  assert.equal(strategy(unknown, "BUILD_POINTS").score, 0.5);
   assert.ok(strategy(unknown, "USE_EXISTING_POINTS").reasonCodes.includes("POINTS_COVERAGE_UNKNOWN"));
-  assert.equal(unknown.derivedState.goals[0].tripCoverage?.coverage, null);
-  // Không một thẻ nào được thưởng vì "lấp" một khoảng cách chưa ai biết.
-  for (const row of ranking(unknown)) {
-    const gap = row.candidate.components.find((c) => c.key === "points_gap_reduction");
-    if (gap !== undefined) assert.equal(gap.raw, 0, row.candidate.productSlug ?? "");
-  }
+  assert.ok(!unknown.outputSnapshot.results[0].reasonCodes.includes("POINTS_ALREADY_SUFFICIENT"));
+  // Thẻ được thưởng "lấp khoảng cách" ÍT hơn hẳn so với người có 0 điểm.
+  const gapOf = (r: RecommendationRunRecord) =>
+    ranking(r).find((row) => row.candidate.productSlug === "td-aeroplan-visa-infinite")!
+      .candidate.components.find((c) => c.key === "points_gap_reduction")!.raw;
+  assert.ok(gapOf(unknown) < gapOf(zero));
   // Và câu hỏi tiếp theo là CHÍNH số dư đó — nó lật được người thắng.
   assert.equal(unknown.outputSnapshot.followUp?.gapKind, "point_balance_amount_unknown");
+});
+
+test("thêm một số dư CHƯA BIẾT không được làm yếu đi thứ đã đủ (vòng Codex 4)", () => {
+  // 170,000 Aeroplan® đúng bằng giá điển hình chuyến Nhật. Thêm một tài khoản
+  // AAdvantage® không nhớ số dư chỉ có thể làm người này GIÀU hơn — bản vá
+  // hỏng của vòng 3 lại làm NO_NEW_CARD tụt 0.598 → 0.392 và khuyên mở thẻ.
+  const base = structuredClone(japanTripFunded);
+  base.balances = [{ ...base.balances[0], programId: "aeroplan" as never, balance: 170_000 }];
+  const plus = structuredClone(base);
+  plus.balances = [...plus.balances, { ...plus.balances[0], programId: "aadvantage" as never, balance: null }];
+  const a = execute(base).record;
+  const b = execute(plus).record;
+  const noAction = (r: RecommendationRunRecord) => r.outputSnapshot.results[0].noAction.score;
+  assert.ok(noAction(b) >= noAction(a) - 1e-9, `${noAction(a)} → ${noAction(b)}`);
+  assert.equal(candidateKey(winner(b)), candidateKey(winner(a)));
+  const focus = (r: RecommendationRunRecord) =>
+    r.outputSnapshot.results[0].strategies.find((s) => s.strategy === "FOCUS_ON_AVAILABILITY")!.score;
+  assert.ok(focus(b) > 0);
 });
 
 test("FOCUS_ON_AVAILABILITY đo giá điển hình trên TỪNG chương trình, không trên chương trình phủ tốt nhất", () => {
@@ -415,4 +437,15 @@ test("FOCUS_ON_AVAILABILITY đo giá điển hình trên TỪNG chương trình,
   assert.equal(aeroplan.typical, 170_000, "bài này dựa trên giá điển hình Aeroplan® 170,000");
   const focus = record.outputSnapshot.results[0].strategies.find((s) => s.strategy === "FOCUS_ON_AVAILABILITY")!;
   assert.ok(focus.score > 0);
+});
+
+test("người CHƯA có điểm nào: thẻ Aeroplan® không mất điểm thu hẹp khoảng cách vì 'aa' đứng trước 'ae'", () => {
+  // Mọi chương trình cùng phủ 0% ⇒ `bestProgram` là cái đầu theo id
+  // (`aadvantage`). Phép đo cũ chỉ tính bonus quy về chương trình đó.
+  const state = structuredClone(japanTripFunded);
+  state.balances = [];
+  const { record } = execute(state);
+  const td = ranking(record).find((row) => row.candidate.productSlug === "td-aeroplan-visa-infinite")!;
+  const gap = td.candidate.components.find((c) => c.key === "points_gap_reduction")!;
+  assert.ok(gap.raw > 0, gap.note);
 });

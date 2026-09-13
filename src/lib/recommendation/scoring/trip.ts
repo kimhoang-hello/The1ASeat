@@ -70,45 +70,42 @@ export function scoreTrip(candidate: CandidateFacts, ctx: ScoringContext): Score
   const utility = tripCurrencyUtility(candidate, ctx, programs);
 
   /* ---- Thu hẹp khoảng cách điểm ---------------------------------- */
+  /*
+   * Phần CHUYẾN ĐI mà welcome bonus này thêm vào — đo bằng CHÍNH `tripCoverage`,
+   * chạy hai lần: không có bonus, và có bonus cộng vào mọi chương trình nó
+   * với tới. Hiệu hai con số là điểm.
+   *
+   * Ba bản trước đều dựng một phép đo thứ hai ở đây, và cả ba hỏng:
+   *   - `bonus / khoảng cách`: thiếu 5,000 trên 205,000 thì mọi thẻ nhận
+   *     trọn 20%, và điểm gãy bậc ở mép đủ điểm (Test C, 4.1.0);
+   *   - `min(bonus, khoảng cách) / cận trên` của `bestProgram`: đúng dáng,
+   *     nhưng với người CHƯA có điểm nào, mọi chương trình cùng phủ 0% và
+   *     `bestProgram` là cái đứng đầu theo id (`aadvantage`) — nên mọi thẻ
+   *     Aeroplan® được 0 điểm thu hẹp khoảng cách chỉ vì "aa" đứng trước "ae";
+   *   - và số dư chưa biết lọt vào như số 0 (vòng Codex 3).
+   * Cùng một hàm cho "trước" và "sau" thì cả ba hết chỗ quay lại: chỉ cần MỘT
+   * chương trình đủ, số dư chưa biết lấy điểm giữa, và mép đủ điểm liền mạch
+   * vì hiệu hai tỷ lệ phủ đi về 0 khi cả hai cùng về 1.
+   */
   let gapRaw = 0;
   let gapNote = "chưa tính được khoảng cách điểm";
   if (need !== null) {
-    const { coverage, bestProgram } = tripCoverage(ctx.state, ctx.ix, ctx.asOf, need);
-    // Khoảng cách đo bằng giá của CHÍNH chương trình phủ tốt nhất, không bằng
-    // khoảng gộp — xem `tripCoverage`.
-    const bestRow = need.byProgram.find((row) => row.programId === bestProgram);
-    const gap =
-      coverage === null || bestRow?.high == null
-        ? null
-        : Math.max(0, bestRow.high * (1 - coverage));
-    if (gap !== null && bestProgram !== null) {
-      if (gap === 0) {
-        gapRaw = 0;
-        gapNote = "đã đủ điểm — không còn khoảng cách nào để thu hẹp (§16 Rule 1)";
-      } else {
-        const bonus = bonusPointsToward(candidate, bestProgram, ctx.ix, ctx.asOf);
-        /*
-         * Phần CHUYẾN ĐI mà bonus này lấp được — không phải phần KHOẢNG CÁCH.
-         *
-         * Bản trước chấm `bonus / khoảng cách`, nên một khoảng cách 5,000 điểm
-         * trên chuyến 205,000 được lấp "100%" bởi mọi thẻ có bonus từ 5,000
-         * trở lên — tức cả bảng nhận trọn 20% trọng số. Và nó GÃY ở đúng mép:
-         * thiếu 5,000 thì mọi thẻ được 1.0, thiếu 0 thì mọi thẻ được 0 (§16
-         * Rule 1). Debugger Phase 4 bắt được nó trên chính Test C: 200,000
-         * Membership Rewards® cho chuyến Nhật cần tới 205,000, và engine
-         * khuyên mở một thẻ 50,000 điểm để lấp 5,000 — trong khi cùng lượt
-         * chạy đó xếp `USE_EXISTING_POINTS` đứng đầu các chiến lược.
-         *
-         * `min(bonus, khoảng cách) / cận trên` = `min(1, bonus/khoảng cách) ×
-         * (1 − phủ)`: y như bản cũ khi người dùng còn xa (phủ ≈ 0), và trượt
-         * dần về 0 khi họ gần đủ — liền mạch với nhánh `gap === 0` phía trên.
-         */
-        gapRaw = bonus === null ? 0 : Math.min(bonus, gap) / (bestRow?.high as number);
-        gapNote =
-          bonus === null
-            ? "welcome bonus không với tới được đồng tiền cần"
-            : `bonus quy đổi ${Math.round(bonus).toLocaleString("en-US")} lấp ${Math.round(Math.min(bonus, gap)).toLocaleString("en-US")} trên chuyến ${Math.round(bestRow?.high as number).toLocaleString("en-US")} (còn thiếu ${Math.round(gap).toLocaleString("en-US")})`;
-      }
+    const before = tripCoverage(ctx.state, ctx.ix, ctx.asOf, need).coverage;
+    if (before !== null && before >= 1) {
+      gapNote = "đã đủ điểm — không còn khoảng cách nào để thu hẹp (§16 Rule 1)";
+    } else if (before !== null) {
+      const after = tripCoverage(
+        ctx.state,
+        ctx.ix,
+        ctx.asOf,
+        need,
+        (programId) => bonusPointsToward(candidate, programId, ctx.ix, ctx.asOf) ?? 0,
+      ).coverage as number;
+      gapRaw = Math.max(0, after - before);
+      gapNote =
+        gapRaw === 0
+          ? "welcome bonus không đưa chương trình nào đặt được chặng này tiến gần hơn"
+          : `welcome bonus đưa phần chuyến đi đã phủ từ ${Math.round(before * 100)}% lên ${Math.round(after * 100)}%`;
     }
   }
 

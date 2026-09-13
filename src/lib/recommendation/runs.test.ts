@@ -639,10 +639,15 @@ test("so lượt chạy — phép đo §30 đổi mà câu hỏi đứng yên v�
 
 test("vòng Codex 3 — bản ghi nguồn có cả chặng chuyển điểm và bảng giá chặng đang hỏi", () => {
   const { record, dataset } = execute(japanTripFunded);
-  const facts = record.derivedState.candidates.find((row) => row.earn.programs.includes("amex-mr" as never))!;
-  const e = explainProduct(record, facts.productSlug, { dataset });
+  // Thẻ KHÔNG kiếm MR — chặng MR → Aeroplan® vẫn phải hiện, vì nó đến từ VÍ
+  // người dùng và quyết định khoảng cách mà thẻ này được chấm là "lấp".
+  const e = explainProduct(record, "amex-aeroplan", { dataset });
   const tables = new Set(e.provenance!.map((row) => row.table));
-  assert.ok(tables.has("transfer_paths"), "thiếu chặng MR → Aeroplan®");
+  const mrToAeroplan = dataset.transferPaths.find(
+    (path) => path.sourceProgramId === ("amex-mr" as never) && path.destinationProgramId === ("aeroplan" as never),
+  )!;
+  assert.ok(e.provenance!.some((row) => row.id === mrToAeroplan.id), "thiếu chặng MR → Aeroplan® của ví");
+  assert.ok(tables.has("transfer_paths"));
   assert.ok(tables.has("award_strategies"), "thiếu bảng giá chặng Nhật");
   const strategies = record.derivedState.goals[0].goal.tripNeed!.strategies.map((row) => row.id as string);
   assert.deepEqual(

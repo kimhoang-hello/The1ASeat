@@ -238,6 +238,14 @@ export function provenanceFor(
    * đúng những dòng engine đã đọc.
    */
   awardStrategies: readonly AwardStrategy[] = [],
+  /**
+   * Chương trình người dùng ĐANG có số dư. Chặng chuyển đi từ chúng quyết
+   * định điểm tiếp cận được của chuyến đi — tức khoảng cách mà mọi thẻ được
+   * chấm là "lấp" — dù chúng không phải đồng tiền của thẻ nào (vòng Codex 4:
+   * `amex-aeroplan` được chấm trên chặng MR → Aeroplan® của VÍ người dùng mà
+   * bảng nguồn không ghi dòng đó).
+   */
+  walletPrograms: readonly string[] = [],
 ): ProvenanceRow[] {
   const rows: ProvenanceRow[] = [];
   const offer = dataset.offers.find((row) => row.id === facts.offer.activeOfferId);
@@ -271,8 +279,9 @@ export function provenanceFor(
   // chương trình đặt vé, tầm với linh hoạt, và phần "đổ vào hệ sinh thái"
   // của §16 Rule 3. Một tỷ lệ chuyển sai đổi thứ hạng mà không chạm dòng nào
   // của chính thẻ.
+  const sources = new Set<string>([...programs, ...walletPrograms]);
   for (const path of activeAt(dataset.transferPaths, asOf)) {
-    if (programs.has(path.sourceProgramId as string)) rows.push(provenanceRow("transfer_paths", path));
+    if (sources.has(path.sourceProgramId as string)) rows.push(provenanceRow("transfer_paths", path));
   }
   for (const strategy of awardStrategies) rows.push(provenanceRow("award_strategies", strategy));
   for (const row of byProduct(dataset.productBenefits)) rows.push(provenanceRow("product_benefits", row));
@@ -466,7 +475,13 @@ export function explainProduct(
     provenance:
       facts === null || options.dataset === undefined
         ? null
-        : provenanceFor(facts, options.dataset, record.inputSnapshot.asOf, goal?.goal.tripNeed?.strategies ?? []),
+        : provenanceFor(
+            facts,
+            options.dataset,
+            record.inputSnapshot.asOf,
+            goal?.goal.tripNeed?.strategies ?? [],
+            derived.portfolio.direct.map((row) => row.programId as string),
+          ),
   };
 }
 

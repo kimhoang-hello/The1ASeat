@@ -117,7 +117,9 @@ export function buildNoNewCardCandidate(
         "points_already_sufficient",
         0.3,
         sufficiency,
-        `${Math.round(sufficiency * 100)}% cận trên của khoảng điểm chuyến đi`,
+        tripCovered.coverageKnown
+          ? `${Math.round(sufficiency * 100)}% cận trên của khoảng điểm chuyến đi`
+          : `ước ${Math.round(sufficiency * 100)}% — điểm giữa của [${Math.round((tripCovered.coverageLowerBound ?? 0) * 100)}%, 100%] vì có số dư chưa biết`,
       ),
     );
     if (sufficiency >= 1) {
