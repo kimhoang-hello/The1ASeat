@@ -34,6 +34,8 @@ import {
   japanTripShortfall,
   lowSpendCapacity,
   nearlyEmpty,
+  studentStarter,
+  USER_FIXTURES,
   vietnamTripFunded,
   vietnamTripShortfall,
 } from "./data/user-fixtures.ts";
@@ -858,12 +860,24 @@ function staleAny(table: keyof RecommendationDataset, id: string): Recommendatio
 }
 const freshness = (r: RecommendationRunRecord) => r.outputSnapshot.results[0].confidence.dataFreshness;
 
-test("phí của thẻ ĐÃ TỪ CHỐI vẫn được đọc (trung vị phí), luật điều kiện của nó thì không", () => {
+test("phí của thẻ ĐÃ TỪ CHỐI chỉ được đọc khi trung vị phí được dùng; luật điều kiện của nó thì không", () => {
+  // Vòng Codex 13 chốt "phí của mọi thẻ" và test cũ chứng minh nó trên
+  // `vietnamTripFunded` — hồ sơ ĐÃ khai ngưỡng $150, tức hồ sơ mà trung vị
+  // phí không bao giờ được dùng. Test xanh vì luật sai và test sai khớp nhau
+  // (vòng Codex 14).
   const declined = productIdFor("amex-marriott-bonvoy-business");
+  const fee = DATA.productFees.find((row) => row.productId === declined)!;
+  const staleFee = staleAny("productFees", fee.id as string);
   const base = execute(vietnamTripFunded).record;
   assert.ok(base.derivedState.excluded.some((row) => row.productId === declined && row.stage === "suitability"));
-  const fee = DATA.productFees.find((row) => row.productId === declined)!;
-  assert.equal(freshness(execute(vietnamTripFunded, { data: staleAny("productFees", fee.id as string) }).record), 0);
+  assert.equal(vietnamTripFunded.profile.annualFeeTolerancePerCard, 150, "tiền đề: đã khai ngưỡng");
+  assert.equal(freshness(execute(vietnamTripFunded, { data: staleFee }).record), freshness(base));
+
+  // Chưa khai ngưỡng: trung vị trên CẢ tập ứng viên đi vào điểm phù hợp.
+  const open = structuredClone(vietnamTripFunded);
+  open.profile.annualFeeTolerancePerCard = null;
+  assert.equal(freshness(execute(open, { data: staleFee }).record), 0);
+
   const rule = DATA.eligibilityRules.find((row) => row.productId === declined)!;
   assert.equal(freshness(execute(vietnamTripFunded, { data: staleAny("eligibilityRules", rule.id as string) }).record), freshness(base));
 });
@@ -930,4 +944,58 @@ test("lượt chạy KHÔNG mục tiêu không kể tỷ lệ tích điểm củ
   const record = execute(holder).record;
   assert.equal(record.outputSnapshot.results.length, 0);
   assert.ok(!record.outputSnapshot.dataGaps.some((gap) => gap.subjectId === unknownRate.subjectId));
+});
+
+/* ================================================================== *
+ * Vòng Codex 14
+ * ================================================================== */
+
+test("SCORES_NEARLY_TIED nói đúng khoảng cách điểm, không nói thay cho độ tin cậy thấp", () => {
+  // Ca của Codex: sinh viên, hai ứng viên đầu cách nhau ~0.062. Làm cũ phí của
+  // chính thẻ thắng (thẻ chọn được, ngưỡng đã khai → phí đi vào điểm phù hợp)
+  // kéo độ tin cậy xuống `low` — nhưng lý do không phải "sát nhau".
+  const base = execute(studentStarter).record;
+  const [top, second] = ranking(base);
+  assert.ok(top.candidate.score - second.candidate.score >= 0.05, "tiền đề: không sát nhau");
+  const fee = DATA.productFees.find((row) => row.productId === top.candidate.productId)!;
+  const stale = execute(studentStarter, { data: staleAny("productFees", fee.id as string) }).record;
+  const result = stale.outputSnapshot.results[0];
+  assert.equal(result.confidence.level, "low", "tiền đề: dữ liệu cũ kéo độ tin cậy xuống");
+  assert.ok(!result.reasonCodes.includes("SCORES_NEARLY_TIED"));
+
+  // Và chiều ngược lại: mã có mặt ĐÚNG khi khoảng cách < 0.05, trên mọi nhân vật.
+  let tied = 0;
+  for (const state of USER_FIXTURES) {
+    const record = execute(state).record;
+    record.outputSnapshot.results.forEach((row, goal) => {
+      const [a, b] = ranking(record, goal);
+      const expected = b !== undefined && a.candidate.score - b.candidate.score < 0.05;
+      if (expected) tied += 1;
+      assert.equal(row.reasonCodes.includes("SCORES_NEARLY_TIED"), expected, state.profile.id);
+    });
+  }
+  assert.ok(tied > 0, "tiền đề: có nhân vật hai ứng viên đầu sát nhau");
+});
+
+test("định giá của chương trình có số dư CHƯA BIẾT không làm kém tươi; số dư biết thì có", () => {
+  // `analyzePortfolio` và ba bảng điểm thoát trước phép nhân khi số dư chưa
+  // biết — dòng định giá đó không đi vào đâu.
+  const { record: base } = execute(beginnerNoCards);
+  const used = new Set<string>();
+  for (const row of base.derivedState.candidates.filter((c) => c.selectable)) {
+    for (const program of row.earn.programs) used.add(program);
+    const offer = DATA.offers.find((o) => o.id === row.offer.activeOfferId);
+    if (offer?.bonusCurrencyId != null) used.add(offer.bonusCurrencyId);
+  }
+  const valuation = DATA.programValuations.find((row) => !used.has(row.programId as string))!;
+  assert.ok(valuation !== undefined, "tiền đề: có một định giá không phép nhân nào khác dùng");
+  const withBalance = (balance: number | null): UserState => {
+    const state = structuredClone(beginnerNoCards);
+    state.balances = [{ ...vietnamTripFunded.balances[0], userId: state.profile.id, programId: valuation.programId, balance }];
+    state.declared = { ...state.declared, balances: true };
+    return state;
+  };
+  const data = staleAny("programValuations", valuation.id as string);
+  assert.equal(freshness(execute(withBalance(null), { data }).record), freshness(execute(withBalance(null)).record));
+  assert.equal(freshness(execute(withBalance(50_000), { data }).record), 0);
 });

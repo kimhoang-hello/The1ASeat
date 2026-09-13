@@ -47,6 +47,23 @@ const FRESH_DAYS = 90;
 /** Quá mốc này thì coi như đã cũ hẳn. */
 const STALE_DAYS = 365;
 
+/** Dưới khoảng cách này, hai ứng viên đầu coi như hoà — trần `low` của §29. */
+const NEARLY_TIED_GAP = 0.05;
+
+/**
+ * Hai ứng viên đầu có hoà nhau không — MỘT định nghĩa cho cả trần độ tin cậy
+ * lẫn mã `SCORES_NEARLY_TIED`.
+ *
+ * `engine.ts` từng suy mã này từ `level === "low"`, nhưng `low` còn đến từ dữ
+ * liệu thiếu hay cũ: một dòng phí cũ làm lượt chạy cách nhau 0.062 in ra "hai
+ * ứng viên đầu sát nhau" — lý do SAI, và admin đi tìm ở tầng chấm điểm trong
+ * khi lỗi nằm ở tầng dữ liệu (Codex vòng 14).
+ */
+export function scoresNearlyTied(ranked: readonly Candidate[]): boolean {
+  if (ranked.length < 2) return false;
+  return Math.max(0, ranked[0].score - ranked[1].score) < NEARLY_TIED_GAP;
+}
+
 export interface ConfidenceInput {
   ranked: readonly Candidate[];
   goal: GoalContext;
@@ -180,12 +197,13 @@ export function computeConfidence(input: ConfidenceInput): ConfidenceFactors {
   // lúc nó không có gì để so. Xảy ra thật khi người dùng đã giữ hết thẻ trong
   // bộ dữ liệu: chỉ còn `NO_NEW_CARD`, và nó nhận `high`.
   const hasRival = input.ranked.length > 1;
+  const tied = scoresNearlyTied(input.ranked);
   // 0.20 trở lên là tách bạch; dưới 0.02 là hoà. Hai mốc đến từ chính hai ví
   // dụ của §29 (0.30 → cao, 0.01 → thấp).
   const separation = hasRival ? clamp01((gap - 0.02) / (0.2 - 0.02)) : 0.5;
   if (!hasRival) {
     notes.push("chỉ có một ứng viên: không đo được khoảng cách điểm");
-  } else if (gap < 0.05) {
+  } else if (tied) {
     notes.push(`hai ứng viên đầu chỉ cách nhau ${gap.toFixed(3)}`);
   }
 
@@ -196,7 +214,7 @@ export function computeConfidence(input: ConfidenceInput): ConfidenceFactors {
   let level: ConfidenceFactors["level"] =
     blended >= 0.75 ? "high" : blended >= 0.5 ? "medium" : "low";
   if (hasRival) {
-    if (gap < 0.05) level = "low";
+    if (tied) level = "low";
     else if (gap < 0.12 && level === "high") level = "medium";
   } else if (level === "high") {
     // Không có đối thủ thì trần là `medium`: dữ liệu có thể đầy đủ và tươi,

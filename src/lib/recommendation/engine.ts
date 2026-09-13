@@ -37,7 +37,7 @@ import { scoreDiversify } from "./scoring/diversify.ts";
 import { scoreEarning } from "./scoring/earning.ts";
 import { RULE_VERSION, applyRules } from "./rules.ts";
 import { buildNoNewCardCandidate, finalScore, rankCandidates } from "./rank.ts";
-import { computeConfidence } from "./confidence.ts";
+import { computeConfidence, scoresNearlyTied } from "./confidence.ts";
 import { mergeReasonCodes, mergeWarnings, nextQuestion } from "./explain.ts";
 import { probeGap, type GapProbe } from "./sensitivity.ts";
 import { validateUserState } from "./user-validate.ts";
@@ -165,6 +165,11 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * lệ/trần chỉ khi có hồ sơ chi tiêu, định giá chỉ khi một phép nhân dùng,
  * mọi chặng không đòi hạng (mẫu số tầm với).
  *
+ * 4.14.0 — vòng Codex 14: `SCORES_NEARLY_TIED` phát khi hai ứng viên đầu THẬT
+ * SỰ cách nhau < 0.05, không phải mỗi khi độ tin cậy `low` (dữ liệu cũ từng
+ * in ra "sát nhau" cho khoảng cách 0.062). Phí của thẻ bị loại chỉ tính khi
+ * trung vị phí được dùng; số dư chưa biết không kéo định giá vào độ tươi.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -177,7 +182,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.13.0";
+export const ENGINE_VERSION = "4.14.0";
 
 export interface RecommendInput {
   state: UserState;
@@ -391,11 +396,12 @@ export function recommend(input: RecommendInput): RecommendationRun {
   const goalTraces: GoalTrace[] = [];
   const goalDataGapSets: DataGap[][] = [];
   const declined = facts.filter((row) => row.suitability.excluded).map((row) => row.product);
-  // Chương trình có dòng số dư khác 0 — portfolio và phép phủ chuyến đi đọc
-  // chúng. Cùng quy ước với chỗ trống bảng giá ở `normalize.ts`.
-  const balancePrograms = [...portfolio.direct]
-    .filter(([, knowledge]) => knowledge.kind !== "known" || knowledge.points !== 0)
+  // Số dư được NHÂN với định giá: chỉ số dư biết và khác 0 — `analyzePortfolio`
+  // và ba bảng điểm đều thoát trước phép nhân khi số dư chưa biết.
+  const valuedBalancePrograms = [...portfolio.direct]
+    .filter(([, knowledge]) => knowledge.kind === "known" && knowledge.points !== 0)
     .map(([programId]) => programId as string);
+  const feeToleranceKnown = state.profile?.annualFeeTolerancePerCard != null;
   const results: Recommendation[] = normalized.goals.map((goal, goalIndex) => {
     const strategies = generateStrategies({ state, ix, asOf, portfolio, goal, climate });
     const needs = computeNeeds({ state, data, ix, asOf, portfolio, goal, strategies });
@@ -447,7 +453,8 @@ export function recommend(input: RecommendInput): RecommendationRun {
       held: portfolio.heldProducts,
       goalReadsEarn: goalReadsEarn(goal, state, ix, asOf),
       spendKnown: state.spend != null,
-      balancePrograms,
+      feeToleranceKnown,
+      valuedBalancePrograms,
       awardStrategies: goal.tripNeed?.strategies ?? [],
     });
     const oldest = oldestVerified(read, data, ix, asOf);
@@ -519,9 +526,7 @@ export function recommend(input: RecommendInput): RecommendationRun {
         // `EARN_FLEXIBLE_POINTS` hơn `DIVERSIFY` đúng vài phần trăm.
         ...strategies.filter((row) => row.score >= 0.5).map((row) => row.reasonCodes),
         need?.reasonCodes ?? [],
-        confidence.level === "low" && ranked.length > 1
-          ? (["SCORES_NEARLY_TIED"] as ReasonCode[])
-          : [],
+        scoresNearlyTied(ranked) ? (["SCORES_NEARLY_TIED"] as ReasonCode[]) : [],
         (covered?.unpricedHeldPrograms.length ?? 0) > 0
           ? (["AWARD_PRICE_IS_FLOOR_ONLY"] as ReasonCode[])
           : [],
@@ -644,7 +649,8 @@ export function recommend(input: RecommendInput): RecommendationRun {
               held: [],
               goalReadsEarn: true,
               spendKnown: state.spend != null,
-              balancePrograms,
+              feeToleranceKnown,
+              valuedBalancePrograms,
               awardStrategies: [],
             }),
           )

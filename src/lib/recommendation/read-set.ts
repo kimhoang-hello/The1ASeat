@@ -22,9 +22,11 @@
  * mà quên sửa luật ở đây là để hai thứ lệch nhau — và mỗi luật có một test
  * trong `acceptance.test.ts` sẽ đỏ.
  *
- *   phí              — MỌI thẻ trong tập ứng viên: `medianFeeCents` (mốc phí
- *                      khi người dùng chưa khai ngưỡng) lấy trung vị trên cả
- *                      tập, trước khi lọc (vòng Codex 13 bác đề nghị cũ của nó).
+ *   phí              — thẻ chọn được; và MỌI thẻ trong tập ứng viên khi người
+ *                      dùng CHƯA khai ngưỡng phí, vì chỉ khi đó
+ *                      `medianFeeCents` (trung vị trên cả tập, trước khi lọc)
+ *                      đi vào `evaluateSuitability`. Khai ngưỡng rồi thì phí
+ *                      của thẻ đã bị loại không đổi được gì (vòng Codex 14).
  *   luật điều kiện   — tập ứng viên TRỪ thẻ người dùng đã từ chối (`gated`):
  *                      luật quyết định cửa và `no_reachable_candidate`, nhưng
  *                      với thẻ đã bị từ chối thì cửa đã đóng trước nó.
@@ -35,7 +37,8 @@
  *                      `earnFitFor` thoát trước mọi dòng khi chưa khai chi
  *                      tiêu. Trần tích điểm theo cùng điều kiện.
  *   định giá         — chỉ chương trình mà một phép nhân thật sự dùng: số dư
- *                      (danh mục), đồng tiền thưởng của offer, chương trình của
+ *                      BIẾT và khác 0 (danh mục — số dư chưa biết thoát trước
+ *                      phép nhân), đồng tiền thưởng của offer, chương trình của
  *                      tỷ lệ đã đọc.
  *   chặng chuyển     — MỌI chặng không đòi hạng thành viên: `flexibilityReach`
  *                      chia cho số đích LỚN NHẤT qua mọi chương trình, nên một
@@ -65,13 +68,15 @@ export function goalReadsEarn(goal: GoalContext, state: UserState, ix: DatasetIn
 
 export interface ReadSet {
   universe: ReadonlySet<string>;
+  /** Thẻ mà phí thường niên đi vào một phép tính — xem đầu file. */
+  fees: ReadonlySet<string>;
   gated: ReadonlySet<string>;
   scored: ReadonlySet<string>;
   held: ReadonlySet<string>;
   /** Tỷ lệ tích điểm (và trần) có thật sự đi vào phép tính — xem đầu file. */
   readsEarn: boolean;
-  /** Chương trình người dùng có dòng số dư khác 0 — portfolio và phép phủ đọc chúng. */
-  balancePrograms: ReadonlySet<string>;
+  /** Chương trình có số dư BIẾT và khác 0 — những số dư duy nhất nhân với định giá. */
+  valuedBalancePrograms: ReadonlySet<string>;
   /** Award strategy của CHẶNG đang hỏi, đúng những dòng `tripNeed` đã đọc. */
   awardStrategies: readonly AwardStrategy[];
 }
@@ -86,17 +91,22 @@ export function buildReadSet(input: {
   goalReadsEarn: boolean;
   /** Người dùng có hồ sơ chi tiêu — không có thì `earnFitFor` không đọc dòng nào. */
   spendKnown: boolean;
-  balancePrograms: Iterable<string>;
+  /** Người dùng đã khai ngưỡng phí — có thì trung vị phí không được dùng. */
+  feeToleranceKnown: boolean;
+  valuedBalancePrograms: Iterable<string>;
   awardStrategies: readonly AwardStrategy[];
 }): ReadSet {
   const declined = new Set(input.declined.map((product) => product.id as string));
+  const scored = new Set(input.scored.map((product) => product.id as string));
+  const universe = new Set(input.universe.map((product) => product.id as string));
   return {
-    universe: new Set(input.universe.map((product) => product.id as string)),
+    universe,
+    fees: input.feeToleranceKnown ? scored : universe,
     gated: new Set(input.universe.map((product) => product.id as string).filter((id) => !declined.has(id))),
-    scored: new Set(input.scored.map((product) => product.id as string)),
+    scored,
     held: new Set(input.held.map((product) => product.id as string)),
     readsEarn: input.goalReadsEarn && input.spendKnown,
-    balancePrograms: new Set(input.balancePrograms),
+    valuedBalancePrograms: new Set(input.valuedBalancePrograms),
     awardStrategies: input.awardStrategies,
   };
 }
@@ -160,10 +170,10 @@ export function oldestVerified(
   const sorted = (ids: ReadonlySet<string>) => [...ids].sort();
 
   /** Chương trình mà một phép nhân định giá thật sự dùng. */
-  const valued = new Set<string>(read.balancePrograms);
+  const valued = new Set<string>(read.valuedBalancePrograms);
   const earnProducts = read.readsEarn ? [...read.scored, ...read.held] : [];
 
-  for (const productId of sorted(read.universe)) {
+  for (const productId of sorted(read.fees)) {
     for (const row of activeAt(ix.feesByProduct.get(productId) ?? [], asOf)) consider("product_fees", row);
   }
   for (const productId of sorted(read.gated)) {
