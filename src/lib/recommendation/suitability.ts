@@ -67,6 +67,14 @@ export interface SuitabilityInput {
    * thang tự đổi theo.
    */
   medianFeeCents: number;
+  /**
+   * Welcome bonus BỊ CHẶN với người dùng này (`EligibilityVerdict`). Khi đó
+   * mốc chi không còn là thứ phải đạt — không có bonus nào ở cuối nó — nên nó
+   * không được phạt thẻ. Vắng = không bị chặn.
+   */
+  welcomeOfferBlocked?: boolean;
+  /** Cửa welcome bonus CHƯA BIẾT — mốc chi tính điểm giữa, xem dưới. */
+  welcomeOfferUncertain?: boolean;
 }
 
 export function evaluateSuitability(input: SuitabilityInput): SuitabilityVerdict {
@@ -141,7 +149,12 @@ export function evaluateSuitability(input: SuitabilityInput): SuitabilityVerdict
   /* ---- Mốc chi (§13) --------------------------------------------- */
   let minSpendFit: number | null = null;
   const required = facts.fullRequiredPerNinetyDays;
-  if (facts.termsUnknown) {
+  if (input.welcomeOfferBlocked === true) {
+    // Bonus bị chặn: mốc chi của nó là mốc để lấy một thứ người này không
+    // được nhận. Chấm như "không có mốc" — bản trước phạt MIN_SPEND_TOO_HIGH
+    // cho một khoản chi chẳng ai cần tiêu (vòng rà sau Codex 20).
+    minSpendFit = 1;
+  } else if (facts.termsUnknown) {
     // Offer CÓ con số quảng cáo nhưng không dựng được mốc chi nào. Đây là chỗ
     // TRỐNG, không phải số không — và bản trước gộp nó vào nhánh "không có mốc
     // nào" bên dưới, tức chấm 1.0, tức mức phù hợp TỐI ĐA.
@@ -169,6 +182,13 @@ export function evaluateSuitability(input: SuitabilityInput): SuitabilityVerdict
     } else {
       reasonCodes.push("MIN_SPEND_TIGHT");
     }
+  }
+  // Bonus chưa chắc: mốc chi chỉ phải đạt trong thế giới người dùng NHẬN được
+  // bonus. Điểm giữa của hai thế giới (vừa sức như đo / không có mốc = 1) —
+  // cùng quy ước với nửa `offer_quality` và nửa phần tăng chuyến đi. Mã
+  // MIN_SPEND_* vẫn giữ: chúng đúng trong thế giới nhận được bonus (vòng Codex 21).
+  if (input.welcomeOfferUncertain === true && minSpendFit !== null) {
+    minSpendFit = (minSpendFit + 1) / 2;
   }
 
   /* ---- Hạng trong họ thẻ ----------------------------------------- */

@@ -24,6 +24,7 @@ import { compareCandidates, eligibilityUnknownCauses, explainProduct, findRanked
 import { renderRunReport, renderScoreTable } from "./debug-render.ts";
 import { STRATEGY_TYPES } from "./reason-codes.ts";
 import { productIdFor } from "./data/products.ts";
+import { offerClimate } from "./offer-quality.ts";
 import { validateDataset } from "./validate.ts";
 import {
   aeroplanHeavy,
@@ -1380,4 +1381,73 @@ test("cỡ của một welcome bonus BỊ CHẶN không được xếp hạng th
   const scores = (r: RecommendationRunRecord) => ranking(r).map((row) => [candidateKey(row.candidate), row.candidate.score]);
   assert.deepEqual(scores(huge), scores(small));
   assert.match(findRanked(huge, "amex-gold-rewards")!.components.find((c) => c.key === "offer_quality")!.note, /BỊ CHẶN/);
+});
+
+test("bonus BỊ CHẶN thì mốc chi của nó không còn phạt thẻ", () => {
+  // Mốc chi là mốc để lấy bonus; người không được nhận bonus không cần đạt nó.
+  const gold = productIdFor("amex-gold-rewards");
+  const state = structuredClone(aeroplanHeavy);
+  state.cards = [...state.cards, { ...state.cards[0], id: "card_test_gold" as never, productId: gold, status: "closed" as never }];
+  state.spend = { ...state.spend!, minimumSpendCapacity3m: amountRange(500, 500) };
+  const open = structuredClone(state);
+  open.cards = open.cards.filter((card) => card.productId !== gold);
+  const free = execute(open).record.derivedState.candidates.find((r) => r.productId === gold)!;
+  assert.ok(free.suitability.reasonCodes.includes("MIN_SPEND_TOO_HIGH"), "tiền đề: mốc chi vượt sức dồn khi bonus còn nhận được");
+  const blocked = execute(state).record.derivedState.candidates.find((r) => r.productId === gold)!;
+  assert.equal(blocked.eligibility.welcomeOfferBlocked, true, "tiền đề: bonus bị chặn");
+  assert.equal(blocked.suitability.minSpendFit, 1);
+  assert.ok(!blocked.suitability.reasonCodes.includes("MIN_SPEND_TOO_HIGH"));
+});
+
+test("bonus CHƯA CHẮC: mốc chi tính điểm giữa của hai thế giới (vòng Codex 21)", () => {
+  const gold = productIdFor("amex-gold-rewards");
+  const tight = structuredClone(aeroplanHeavy);
+  tight.spend = { ...tight.spend!, minimumSpendCapacity3m: amountRange(1_500, 1_500) };
+  const undeclared = { ...structuredClone(tight), declared: { ...tight.declared, cards: false } };
+  const fitOf = (state: UserState) => execute(state).record.derivedState.candidates.find((r) => r.productId === gold)!.suitability.minSpendFit!;
+  const sure = fitOf(tight);
+  assert.ok(sure < 0.4, "tiền đề: mốc chi vượt sức dồn khi chắc nhận bonus");
+  assert.ok(Math.abs(fitOf(undeclared) - (sure + 1) / 2) < 1e-12);
+});
+
+test("mã của offer không đi kèm thẻ mà bonus đã BỊ CHẶN (vòng Codex 21)", () => {
+  // Lịch sử đưa offer Amex® Gold lên đỉnh (CURRENT_OFFER_STRONG) — mã đó nói
+  // về một bonus người từng giữ thẻ không nhận được.
+  const gold = productIdFor("amex-gold-rewards") as string;
+  const history = new Map([[gold, [
+    { at: "2026-01-01", until: "2026-03-01", startCensored: true, endCensored: false, label: "15,000 điểm", amount: 15_000, unit: "points" as const },
+    { at: "2026-03-01", until: "2026-05-01", startCensored: false, endCensored: false, label: "30,000 điểm", amount: 30_000, unit: "points" as const },
+    { at: "2026-05-01", until: "2026-07-01", startCensored: false, endCensored: false, label: "45,000 điểm", amount: 45_000, unit: "points" as const },
+    { at: "2026-07-01", until: null, startCensored: false, endCensored: true, label: "60,000 điểm", amount: 60_000, unit: "points" as const },
+  ]]]);
+  const open = execute(aeroplanHeavy, { offerHistory: history }).record;
+  assert.ok(findRanked(open, "amex-gold-rewards")!.reasonCodes.includes("CURRENT_OFFER_STRONG"), "tiền đề: offer đang ở đỉnh");
+  const state = structuredClone(aeroplanHeavy);
+  state.cards = [...state.cards, { ...state.cards[0], id: "card_test_gold" as never, productId: gold as never, status: "closed" as never }];
+  const blocked = findRanked(execute(state, { offerHistory: history }).record, "amex-gold-rewards")!;
+  assert.ok(blocked.reasonCodes.includes("WELCOME_BONUS_UNAVAILABLE"));
+  assert.ok(!blocked.reasonCodes.some((code) => code.startsWith("CURRENT_OFFER_") || code === "OFFER_ENDING_SOON"));
+});
+
+test("thị trường offer: offer có cửa bonus chưa chắc góp NỬA trọng số vào trung vị percentile", () => {
+  const facts = (percentiles: number[]) =>
+    percentiles.map((p) => ({ historicalPercentile: p, usableValueCents: null, fullValueCents: null, requiredPerNinetyDays: null, fullRequiredPerNinetyDays: null }) as never);
+  assert.equal(offerClimate(facts([25, 75])).medianPercentile, 50);
+  assert.equal(offerClimate(facts([25, 75]), [1, 1]).medianPercentile, 50, "trọng số đều = trung vị thường");
+  assert.equal(offerClimate(facts([25, 75]), [0.5, 1]).medianPercentile, 75);
+  assert.equal(offerClimate(facts([25, 50, 75]), [1, 0.5, 0.5]).medianPercentile, 37.5);
+
+  // Và engine truyền đúng trọng số: người chưa khai thẻ, một thẻ Amex® (cửa
+  // bonus chưa chắc) ở percentile thấp, một thẻ khác ở percentile cao.
+  const point = (at: string, until: string | null, amount: number) =>
+    ({ at, until, startCensored: at === "2026-01-01", endCensored: until === null, label: `${amount}`, amount, unit: "points" as const });
+  const low = [point("2026-01-01", "2026-03-01", 90_000), point("2026-03-01", "2026-05-01", 80_000), point("2026-05-01", "2026-07-01", 70_000), point("2026-07-01", null, 60_000)];
+  const high = [point("2026-01-01", "2026-03-01", 10_000), point("2026-03-01", "2026-05-01", 20_000), point("2026-05-01", "2026-07-01", 30_000), point("2026-07-01", null, 40_000)];
+  const gold = productIdFor("amex-gold-rewards") as string;
+  const avion = productIdFor("rbc-avion-visa-infinite") as string;
+  const record = execute(beginnerUndeclared, { offerHistory: new Map([[gold, low], [avion, high]]) }).record;
+  const percentile = (id: string) => record.derivedState.candidates.find((r) => r.productId === id)!.offer.historicalPercentile;
+  assert.ok(record.derivedState.candidates.find((r) => r.productId === gold)!.eligibility.welcomeOfferUncertain, "tiền đề: cửa bonus Amex® chưa chắc");
+  assert.ok(percentile(gold)! < percentile(avion)!, "tiền đề: Amex® thấp, Avion® cao");
+  assert.equal(record.derivedState.climate.medianPercentile, percentile(avion));
 });

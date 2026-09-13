@@ -216,6 +216,12 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chặn, một nửa khi chưa chắc; bỏ hai mức phạt cố định; và bonus bị chặn không
  * còn đặt mốc thang §11 cho các thẻ khác.
  *
+ * 4.23.0 — vòng Codex 21, cùng họ lỗi: mốc chi của bonus bị chặn thôi phạt
+ * thẻ (không có mốc để đạt), của bonus chưa chắc lấy điểm giữa; mã/cảnh báo
+ * của offer bị chặn không đi vào khuyến nghị (`CURRENT_OFFER_STRONG` cạnh
+ * `WELCOME_BONUS_UNAVAILABLE`); offer có cửa bonus chưa chắc góp nửa trọng số
+ * vào trung vị percentile của thị trường (`WAIT_FOR_BETTER_OFFER`).
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -228,7 +234,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.22.0";
+export const ENGINE_VERSION = "4.23.0";
 
 export interface RecommendInput {
   state: UserState;
@@ -391,13 +397,16 @@ export function recommend(input: RecommendInput): RecommendationRun {
   /* ---- Dữ kiện từng ứng viên (không phụ thuộc mục tiêu) ------------ */
   const facts: CandidateFacts[] = normalized.universe.map((product) => {
     const offer = offerFacts(product, ix, asOf, capacity, history.get(product.id) ?? []);
+    const eligibility = evaluateEligibility(product.id, state, ix, asOf, unknownRequirements);
     return {
       product,
       offer,
       earn: earnFitFor(product.id, state.spend, ix, asOf),
       benefits: benefitFitFor(product.id, heldKeys, ix, asOf),
-      eligibility: evaluateEligibility(product.id, state, ix, asOf, unknownRequirements),
+      eligibility,
       suitability: evaluateSuitability({
+        welcomeOfferBlocked: eligibility.welcomeOfferBlocked,
+        welcomeOfferUncertain: eligibility.welcomeOfferUncertain,
         product,
         state,
         facts: offer,
@@ -440,8 +449,10 @@ export function recommend(input: RecommendInput): RecommendationRun {
   // thể nhận, nên nó không được đặt mốc "offer lớn nhất" cho các thẻ khác —
   // bonus 1,000,000 điểm không nhận được từng kéo thấp §11 của mọi thẻ (vòng
   // rà sau Codex 20).
+  const obtainable = selectable.filter((row) => !row.eligibility.welcomeOfferBlocked);
   const climate = offerClimate(
-    selectable.filter((row) => !row.eligibility.welcomeOfferBlocked).map((row) => row.offer),
+    obtainable.map((row) => row.offer),
+    obtainable.map((row) => (row.eligibility.welcomeOfferUncertain ? 0.5 : 1)),
   );
   const scale = buildScale(selectable);
 
@@ -467,6 +478,10 @@ export function recommend(input: RecommendInput): RecommendationRun {
       // người đọc phải nghe điều đó từ CHÍNH thẻ được khuyên — mã cấp chiến
       // lược chỉ nói về số dư đang có, không nói về bonus của thẻ này.
       const gain = goal.goal.type === "trip" ? tripGain(candidate, ctx) : null;
+      // Mã của offer nói về một bonus. Bị chặn thì bonus đó không tồn tại với
+      // người này, và `CURRENT_OFFER_STRONG` cạnh `WELCOME_BONUS_UNAVAILABLE`
+      // là giải thích sai vì sao thẻ đứng đó (vòng Codex 21).
+      const blocked = candidate.eligibility.welcomeOfferBlocked;
       return {
         kind: "open_card" as const,
         productId: candidate.product.id,
@@ -480,7 +495,7 @@ export function recommend(input: RecommendInput): RecommendationRun {
           ruled.reasonCodes,
           candidate.eligibility.reasonCodes,
           candidate.suitability.reasonCodes,
-          candidate.offer.reasonCodes,
+          blocked ? [] : candidate.offer.reasonCodes,
           candidate.benefits.reasonCodes,
           gain?.estimated ? (["POINTS_COVERAGE_UNKNOWN"] as ReasonCode[]) : [],
           gain?.floorOnly ? (["AWARD_PRICE_IS_FLOOR_ONLY"] as ReasonCode[]) : [],
@@ -489,7 +504,7 @@ export function recommend(input: RecommendInput): RecommendationRun {
           ruled.warnings,
           candidate.eligibility.warnings,
           candidate.suitability.warnings,
-          candidate.offer.warnings,
+          blocked ? [] : candidate.offer.warnings,
           gain?.floorOnly ? (["AWARD_PRICE_FLOOR_ONLY"] as WarningCode[]) : [],
         ),
         eligibility: candidate.eligibility,

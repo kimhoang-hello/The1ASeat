@@ -406,12 +406,23 @@ export interface OfferClimate {
   medianPercentile: number | null;
 }
 
-export function offerClimate(facts: readonly OfferFacts[]): OfferClimate {
+export function offerClimate(
+  facts: readonly OfferFacts[],
+  /**
+   * Trọng số của từng offer trong TRUNG VỊ percentile, cùng thứ tự với
+   * `facts`; vắng = 1 cho mọi offer. Offer mà cửa bonus CHƯA CHẮC mở góp 0.5:
+   * nó chỉ là thị trường của người này trong một nửa số thế giới — cùng quy
+   * ước điểm giữa với nửa `offer_quality` (vòng Codex 21). Thang giá trị lớn
+   * nhất thì không cân: một offer có thể nhận được vẫn đặt được mốc.
+   */
+  weights?: readonly number[],
+): OfferClimate {
   let maxUsable = 0;
   let maxFull = 0;
   let maxPerDollar = 0;
   const percentiles: number[] = [];
-  for (const fact of facts) {
+  const weighted: { percentile: number; weight: number }[] = [];
+  for (const [index, fact] of facts.entries()) {
     maxUsable = Math.max(maxUsable, fact.usableValueCents ?? 0);
     maxFull = Math.max(maxFull, fact.fullValueCents ?? 0);
     const required = fact.requiredPerNinetyDays ?? fact.fullRequiredPerNinetyDays;
@@ -419,15 +430,19 @@ export function offerClimate(facts: readonly OfferFacts[]): OfferClimate {
     if (required !== null && required > 0 && value !== null) {
       maxPerDollar = Math.max(maxPerDollar, value / required);
     }
-    if (fact.historicalPercentile !== null) percentiles.push(fact.historicalPercentile);
+    if (fact.historicalPercentile !== null) {
+      percentiles.push(fact.historicalPercentile);
+      weighted.push({ percentile: fact.historicalPercentile, weight: weights?.[index] ?? 1 });
+    }
   }
   percentiles.sort((a, b) => a - b);
-  const median =
-    percentiles.length === 0
+  const median = weighted.every((row) => row.weight === 1)
+    ? percentiles.length === 0
       ? null
       : percentiles.length % 2 === 1
         ? percentiles[(percentiles.length - 1) / 2]
-        : (percentiles[percentiles.length / 2 - 1] + percentiles[percentiles.length / 2]) / 2;
+        : (percentiles[percentiles.length / 2 - 1] + percentiles[percentiles.length / 2]) / 2
+    : weightedMedian(weighted);
 
   return {
     maxUsableValueCents: maxUsable,
@@ -525,6 +540,24 @@ export function offerQuality(fact: OfferFacts, climate: OfferClimate): { score: 
       `§11: ${parts.map(([label, weight, raw, why]) => `${label} ${raw.toFixed(3)}×${weight}${why}`).join(" + ")}` +
       ` = ${score.toFixed(3)}`,
   };
+}
+
+/**
+ * Trung vị có trọng số: giá trị đầu tiên mà trọng số cộng dồn vượt nửa tổng;
+ * đúng BẰNG nửa tổng thì lấy trung bình với giá trị kế — cùng quy ước với
+ * trung vị số chẵn phần tử khi mọi trọng số bằng nhau.
+ */
+function weightedMedian(rows: readonly { percentile: number; weight: number }[]): number | null {
+  const sorted = rows.filter((row) => row.weight > 0).sort((a, b) => a.percentile - b.percentile);
+  const total = sorted.reduce((sum, row) => sum + row.weight, 0);
+  if (total <= 0) return null;
+  let acc = 0;
+  for (let i = 0; i < sorted.length; i += 1) {
+    acc += sorted[i].weight;
+    if (acc > total / 2) return sorted[i].percentile;
+    if (acc === total / 2) return (sorted[i].percentile + sorted[i + 1].percentile) / 2;
+  }
+  return sorted[sorted.length - 1].percentile;
 }
 
 export function clamp01(value: number): number {

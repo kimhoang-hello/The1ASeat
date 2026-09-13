@@ -93,10 +93,10 @@ export function tripGain(
   const bonusTo = (programId: PointsProgramId) => bonusPointsToward(candidate, programId, ctx.ix, ctx.asOf) ?? 0;
   const after = tripCoverage(ctx.state, ctx.ix, ctx.asOf, need, bonusTo);
   const full = Math.max(0, (after.coverage as number) - before);
-  // Bonus BỊ CHẶN thì `bonusPointsToward` về 0 — phần tăng bằng 0, cộng phạt
-  // −0.15 ở `rules.ts`. Bonus CHƯA CHẮC thì điểm giữa của hai ca: nửa phần
-  // tăng, cộng nửa mức phạt. Cộng trọn là hứa bonus cho người có thể đã từng
-  // giữ thẻ (vòng rà sau Codex 18).
+  // Bonus BỊ CHẶN thì `bonusPointsToward` về 0 — phần tăng bằng 0. Bonus
+  // CHƯA CHẮC thì điểm giữa của hai thế giới: nửa phần tăng — cùng quy ước với
+  // nửa `offer_quality` (`scoring/shared.ts`). Cộng trọn là hứa bonus cho người
+  // có thể đã từng giữ thẻ (vòng Codex 19).
   const bonusUncertain = candidate.eligibility.welcomeOfferUncertain && full > 0;
   const raw = bonusUncertain ? full / 2 : full;
   const estimated = raw > 0 && !after.coverageKnown;

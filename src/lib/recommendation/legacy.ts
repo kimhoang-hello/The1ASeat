@@ -49,59 +49,70 @@ function currentVerdict(verdict: EligibilityVerdict): EligibilityVerdict {
 }
 
 /**
- * Trường sinh sau mà KHÔNG suy được từ bản ghi cũ: vắng nghĩa là "engine lúc
- * ấy không ghi", không phải một giá trị. So bản cũ với bản mới thì bỏ chúng ở
- * CẢ HAI phía — giữ lại là báo "khác" cho một điều bản cũ chưa từng nói.
- */
-const UNINFERABLE = ["unknownCause", "basis", "flipShare", "uncertainFloorOnlyPrograms"] as const;
-
-/** Có phán quyết điều kiện nào ở hình dạng trước 4.20.0 không. */
-function hasLegacyVerdict(value: unknown): boolean {
-  if (value === null || typeof value !== "object") return false;
-  if (Array.isArray(value)) return value.some(hasLegacyVerdict);
-  const row = value as Record<string, unknown>;
-  if (Array.isArray(row.rules) && "failedRuleIds" in row && !("welcomeFailedRuleIds" in row)) return true;
-  return Object.values(row).some(hasLegacyVerdict);
-}
-
-function hasKey(value: unknown, key: string): boolean {
-  if (value === null || typeof value !== "object") return false;
-  if (Array.isArray(value)) return value.some((item) => hasKey(item, key));
-  return key in value || Object.values(value).some((item) => hasKey(item, key));
-}
-
-/**
  * Hai bản ghi ở CÙNG một hình dạng, để phép so chỉ thấy khác biệt của engine
  * và dữ liệu, không thấy khác biệt của lược đồ. Trả về bản sao.
+ *
+ * Hai bước, và bước hai là thứ làm lời hứa "mọi version" đứng được:
+ *
+ *   1. Trường SUY ĐƯỢC thì suy (danh sách luật theo cửa, `welcomeOfferUncertain`,
+ *      cả bản sao `excluded[].failedRuleIds` từng trộn luật bonus).
+ *   2. Khoá chỉ có ở MỘT phía, tại CÙNG đường dẫn, thì bỏ ở phía có nó. Kiểu
+ *      của lượt chạy không có trường tuỳ chọn nào và mọi "bản đồ" đều là mảng,
+ *      nên một khoá lệch như vậy chỉ có thể là lược đồ đổi giữa hai version —
+ *      không phải một khác biệt engine hay dữ liệu. Bản trước liệt kê tay bốn
+ *      trường đời sau và bỏ sót cả chục trường sinh ở 4.2–4.12 (vòng Codex 21).
+ *
+ * Cùng version thì cùng lược đồ: trả nguyên, không sao chép.
  */
 export function alignRecords(
   a: RecommendationRunRecord,
   b: RecommendationRunRecord,
 ): [RecommendationRunRecord, RecommendationRunRecord] {
-  const results = (r: RecommendationRunRecord) => ({ d: r.derivedState, o: r.outputSnapshot });
-  const drop = UNINFERABLE.filter((key) => hasKey(results(a), key) !== hasKey(results(b), key));
-  // Đường nhanh: cả hai đã ở hình dạng hiện tại — trường hợp của mọi phép so
-  // giữa hai lượt chạy cùng đời, và của bài vét cạn (hàng trăm lần so).
-  if (drop.length === 0 && !hasLegacyVerdict(results(a)) && !hasLegacyVerdict(results(b))) return [a, b];
-  const reshape = (record: RecommendationRunRecord): RecommendationRunRecord => {
-    const copy = JSON.parse(JSON.stringify(record), (key, value) =>
-      (drop as readonly string[]).includes(key) ? undefined : value,
-    ) as RecommendationRunRecord;
-    const visit = (value: unknown): void => {
-      if (value === null || typeof value !== "object") return;
-      if (Array.isArray(value)) {
-        value.forEach(visit);
-        return;
-      }
-      const row = value as Record<string, unknown>;
-      if (row.eligibility !== null && typeof row.eligibility === "object" && Array.isArray((row.eligibility as EligibilityVerdict).rules)) {
-        row.eligibility = currentVerdict(row.eligibility as EligibilityVerdict);
-      }
-      Object.values(row).forEach(visit);
-    };
-    visit(copy.derivedState);
-    visit(copy.outputSnapshot);
-    return copy;
+  if (a.engineVersion === b.engineVersion) return [a, b];
+  const [x, y] = [upgrade(a), upgrade(b)];
+  dropOneSidedKeys({ d: x.derivedState, o: x.outputSnapshot }, { d: y.derivedState, o: y.outputSnapshot });
+  return [x, y];
+}
+
+function upgrade(record: RecommendationRunRecord): RecommendationRunRecord {
+  const copy = JSON.parse(JSON.stringify(record)) as RecommendationRunRecord;
+  const visit = (value: unknown): void => {
+    if (value === null || typeof value !== "object") return;
+    if (Array.isArray(value)) {
+      value.forEach(visit);
+      return;
+    }
+    const row = value as Record<string, unknown>;
+    if (row.eligibility !== null && typeof row.eligibility === "object" && Array.isArray((row.eligibility as EligibilityVerdict).rules)) {
+      row.eligibility = currentVerdict(row.eligibility as EligibilityVerdict);
+    }
+    Object.values(row).forEach(visit);
   };
-  return [reshape(a), reshape(b)];
+  visit(copy.derivedState);
+  visit(copy.outputSnapshot);
+  // `excluded[]` mang BẢN SAO danh sách luật đã chặn — trước 4.20.0 nó trộn
+  // cả luật chỉ chặn bonus. Chia theo scope của luật trong dữ kiện ứng viên.
+  const scopes = new Map<string, string>();
+  for (const row of copy.derivedState.candidates ?? []) {
+    for (const rule of row.eligibility.rules) scopes.set(rule.ruleId, rule.scope);
+  }
+  for (const row of copy.derivedState.excluded ?? []) {
+    row.failedRuleIds = row.failedRuleIds.filter((id) => scopes.get(id) !== "welcome_offer");
+  }
+  return copy;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function dropOneSidedKeys(a: unknown, b: unknown): void {
+  if (Array.isArray(a) && Array.isArray(b)) {
+    for (let i = 0; i < Math.min(a.length, b.length); i += 1) dropOneSidedKeys(a[i], b[i]);
+    return;
+  }
+  if (!isPlainObject(a) || !isPlainObject(b)) return;
+  for (const key of Object.keys(a)) if (!(key in b)) delete a[key];
+  for (const key of Object.keys(b)) if (!(key in a)) delete b[key];
+  for (const key of Object.keys(a)) dropOneSidedKeys(a[key], b[key]);
 }

@@ -252,7 +252,7 @@ test("debugger đọc được bản ghi CŨ — thiếu các trường thêm sa
     }
     return legacy;
   };
-  const before420 = strip(["welcomeOfferUncertain", "welcomeFailedRuleIds", "welcomeUnknownRuleIds"]);
+  const before420 = { ...strip(["welcomeOfferUncertain", "welcomeFailedRuleIds", "welcomeUnknownRuleIds"]), engineVersion: "4.19.0" };
   const before416 = strip(["welcomeOfferUncertain", "welcomeFailedRuleIds", "welcomeUnknownRuleIds", "basis", "flipShare", "unknownCause", "resultFingerprint"]);
   for (const legacy of [before420, before416]) {
     const report = renderRunReport(legacy);
@@ -263,28 +263,54 @@ test("debugger đọc được bản ghi CŨ — thiếu các trường thêm sa
     }
   }
   // Phép so giữa bản CŨ và bản mới của CÙNG một kết quả không được báo tầng
-  // nào "khác" chỉ vì lược đồ đổi (vòng Codex 20) — ở cả hai đời bản ghi.
-  // Người ĐÃ khai thẻ: engine trước 4.20 chưa từng ra "bonus chưa chắc", nên
-  // chỉ hồ sơ này mới có một bản cũ cùng kết quả thật.
-  const same = execute(beginnerNoCards).record;
-  const asLegacy = (fields: string[]) => {
+  // nào "khác" chỉ vì lược đồ đổi (vòng Codex 20, 21) — ở ba đời bản ghi.
+  // Người ĐÃ khai thẻ, từng giữ một thẻ Amex® và không có doanh nghiệp: bản
+  // cũ trộn luật bonus vào `excluded[].failedRuleIds` của thẻ doanh nghiệp.
+  const collector = structuredClone(beginnerNoCards);
+  const bizGold = productIdFor("amex-business-gold");
+  collector.profile.hasBusiness = false;
+  collector.profile.businessCardsAllowed = null;
+  collector.cards = [{ ...vietnamTripFunded.cards[0], userId: collector.profile.id, productId: bizGold, status: "closed" as never }];
+  collector.declared = { ...collector.declared, cards: true };
+  const same = execute(collector).record;
+  const asLegacy = (version: string, fields: string[], goalFields: string[] = []) => {
     const legacy = JSON.parse(JSON.stringify(same), (key, value) => (fields.includes(key) ? undefined : value)) as RecommendationRunRecord;
+    legacy.engineVersion = version;
     for (const row of legacy.derivedState.candidates) {
       const fresh = same.derivedState.candidates.find((f) => f.productId === row.productId)!.eligibility;
       row.eligibility.unknownRuleIds = [...fresh.unknownRuleIds, ...fresh.welcomeUnknownRuleIds];
       row.eligibility.failedRuleIds = [...fresh.failedRuleIds, ...fresh.welcomeFailedRuleIds];
     }
+    for (const row of legacy.derivedState.excluded) {
+      const fresh = same.derivedState.candidates.find((f) => f.productId === row.productId)?.eligibility;
+      if (fresh !== undefined) row.failedRuleIds = [...fresh.failedRuleIds, ...fresh.welcomeFailedRuleIds];
+    }
+    for (const goal of legacy.derivedState.goals as unknown as Record<string, unknown>[]) {
+      for (const key of goalFields) delete goal[key];
+    }
     return legacy;
   };
+  const excludedMixed = asLegacy("4.19.0", []).derivedState.excluded.find((row) => row.productId === bizGold)!;
+  assert.equal(excludedMixed.failedRuleIds.length, 2, "tiền đề: bản cũ trộn luật mở thẻ và luật bonus");
+  const newer = ["welcomeOfferUncertain", "welcomeFailedRuleIds", "welcomeUnknownRuleIds"];
   for (const legacy of [
-    asLegacy(["welcomeOfferUncertain", "welcomeFailedRuleIds", "welcomeUnknownRuleIds"]),
-    asLegacy(["welcomeOfferUncertain", "welcomeFailedRuleIds", "welcomeUnknownRuleIds", "basis", "flipShare", "unknownCause", "resultFingerprint"]),
+    asLegacy("4.19.0", newer),
+    asLegacy("4.15.0", [...newer, "basis", "flipShare", "unknownCause", "resultFingerprint"]),
+    asLegacy(
+      "4.1.0",
+      [...newer, "basis", "flipShare", "unknownCause", "resultFingerprint", "followUpProbes", "oldestVerifiedRow", "floor", "perPassengerOneWayFloor"],
+      ["userGaps", "dataGaps"],
+    ),
   ]) {
     const changed = diffRecords(legacy, same).filter(
       (row) => row.changed && row.stage !== "source_data" && row.stage !== "user_input",
     );
-    assert.deepEqual(changed.map((row) => `${row.stage}: ${row.entries[0]?.path}`), []);
+    assert.deepEqual(changed.map((row) => `${legacy.engineVersion} ${row.stage}: ${row.entries[0]?.path}`), []);
   }
+  // Và một khác biệt THẬT vẫn hiện ra qua phép căn hình dạng.
+  const real = asLegacy("4.15.0", newer);
+  real.outputSnapshot.results[0].primaryAction.score += 0.01;
+  assert.ok(diffRecords(real, same).some((row) => row.changed && row.stage === "final_recommendation"));
   // Bản 4.16–4.19: cặp danh sách cũ chia lại theo `scope` — nguyên nhân của
   // cửa bonus không mất, và không lọt sang cửa mở thẻ.
   const amex = before420.derivedState.candidates.find((row) =>
