@@ -166,9 +166,17 @@ export function answersFor(gap: UserDataGap): Answer[] {
 
 export interface ProbeOutcome {
   label: string;
+  /** `null` khi câu trả lời thử bị loại vì tạo ra một hồ sơ không thể có. */
   winner: string | null;
-  /** Người thắng khác người thắng hiện tại. */
+  /** Người thắng khác người thắng hiện tại. Luôn `false` khi `invalid`. */
   flipsWinner: boolean;
+  /**
+   * Câu trả lời thử làm hồ sơ MÂU THUẪN với chính nó — ví dụ các hạng mục
+   * vượt tổng chi tiêu đã khai, hoặc thu nhập hộ gia đình dưới thu nhập cá
+   * nhân. Không chạy engine, không được tính: một hồ sơ không thể có không
+   * phải bằng chứng câu hỏi đó đáng hỏi.
+   */
+  invalid: boolean;
 }
 
 /** Kết quả đo một chỗ trống — đi vào `derived_state` để admin thấy §30 đã cân gì. */
@@ -176,8 +184,10 @@ export interface GapProbe {
   gapKind: UserDataGap["kind"];
   subject: string;
   outcomes: ProbeOutcome[];
-  /** Số câu trả lời thử làm đổi người thắng. */
+  /** Số câu trả lời thử HỢP LỆ làm đổi người thắng. */
   flips: number;
+  /** Số câu trả lời thử hợp lệ — mẫu số của giá trị câu hỏi. */
+  valid: number;
 }
 
 /**
@@ -192,19 +202,36 @@ export function probeGap(
   state: UserState,
   winner: string | null,
   winnerAfter: (state: UserState) => string | null,
+  /**
+   * Lỗi hồ sơ theo `validateUserState`, dạng chuỗi so được. Câu trả lời thử
+   * nào sinh ra một lỗi MỚI (so với hồ sơ gốc) thì bị loại — hồ sơ gốc được
+   * phép hỏng sẵn (§30 nhận hồ sơ dở dang), nhưng phép thử không được làm nó
+   * hỏng thêm.
+   *
+   * Vòng Codex 2 bắt được đúng ca này: hạng mục của người mới đã cộng đủ
+   * $2,000 tổng tháng, và câu trả lời thử "$1,200 cho vé máy bay" — một hồ
+   * sơ không thể có — lật người thắng, nên §30 chọn hỏi hạng mục đó.
+   */
+  errorsOf: (state: UserState) => ReadonlySet<string>,
 ): GapProbe | null {
   const answers = answersFor(gap);
   if (answers.length === 0 || !isObject(state.profile)) return null;
-  const outcomes = answers.map((answer) => {
+  const before = errorsOf(state);
+  const outcomes: ProbeOutcome[] = answers.map((answer) => {
     const copy = structuredClone(state);
     answer.apply(copy);
+    const introduced = [...errorsOf(copy)].some((error) => !before.has(error));
+    if (introduced) return { label: answer.label, winner: null, flipsWinner: false, invalid: true };
     const after = winnerAfter(copy);
-    return { label: answer.label, winner: after, flipsWinner: after !== winner };
+    return { label: answer.label, winner: after, flipsWinner: after !== winner, invalid: false };
   });
+  const valid = outcomes.filter((row) => !row.invalid).length;
+  if (valid === 0) return null;
   return {
     gapKind: gap.kind,
     subject: gap.subject,
     outcomes,
     flips: outcomes.filter((row) => row.flipsWinner).length,
+    valid,
   };
 }

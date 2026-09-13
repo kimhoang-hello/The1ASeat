@@ -269,6 +269,14 @@ export function stageValue(record: RecommendationRunRecord, stage: PipelineStage
       return {
         confidence: output.results.map((result) => result.confidence),
         followUp: output.followUp,
+        // Phép đo §30 cũng là trạng thái của lượt chạy: một lần đổi engine
+        // làm lật một câu trả lời thử mà vẫn chọn cùng câu hỏi thì bản ghi đã
+        // khác, và phép so phải thấy.
+        followUpProbes: keyed(
+          derived.followUpProbes ?? [],
+          (row) => `${row.gapKind}:${row.subject}`,
+          (row) => row,
+        ),
       };
   }
 }

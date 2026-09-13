@@ -39,6 +39,7 @@ import { buildNoNewCardCandidate, finalScore, rankCandidates } from "./rank.ts";
 import { computeConfidence } from "./confidence.ts";
 import { mergeReasonCodes, mergeWarnings, nextQuestion } from "./explain.ts";
 import { probeGap, type GapProbe } from "./sensitivity.ts";
+import { validateUserState } from "./user-validate.ts";
 import {
   excludedProducts,
   rankingTrace,
@@ -112,6 +113,9 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * được người thắng thì lên trước bảng ưu tiên tĩnh. Đổi `followUp` của nhiều
  * nhân vật, không đổi thứ hạng nào.
  *
+ * 4.2.1 — vòng Codex 2: câu trả lời thử làm hồ sơ mâu thuẫn (hạng mục vượt
+ * tổng tháng, thu nhập hộ dưới thu nhập cá nhân) bị loại khỏi phép đo §30.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -124,7 +128,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.2.0";
+export const ENGINE_VERSION = "4.2.1";
 
 export interface RecommendInput {
   state: UserState;
@@ -535,12 +539,21 @@ export function recommend(input: RecommendInput): RecommendationRun {
     input.probeFollowUps === false || results.length === 0
       ? undefined
       : (gap: UserDataGap) => {
-          const probe = probeGap(gap, state, current, (probed) =>
-            winnerKey(recommend({ ...input, state: probed, probeFollowUps: false }).results),
+          const probe = probeGap(
+            gap,
+            state,
+            current,
+            (probed) => winnerKey(recommend({ ...input, state: probed, probeFollowUps: false }).results),
+            (probed) =>
+              new Set(
+                validateUserState(probed, data)
+                  .filter((issue) => issue.level === "error")
+                  .map((issue) => `${issue.entity}|${issue.message}`),
+              ),
           );
           if (probe === null) return null;
           followUpProbes.push(probe);
-          return probe.flips / probe.outcomes.length;
+          return probe.flips / probe.valid;
         };
   const followUp = nextQuestion({
     gaps: normalized.userGaps,

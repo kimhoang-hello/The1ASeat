@@ -394,9 +394,15 @@ export function renderRunReport(record: RecommendationRunRecord, options: RunRep
     for (const probe of [...probes].filter((row) => row.flips > 0).sort((a, b) => b.flips - a.flips)) {
       const flipped = probe.outcomes.filter((row) => row.flipsWinner);
       out.push(
-        `    ${pad(`${probe.gapKind}:${probe.subject}`, 46)} ${probe.flips}/${probe.outcomes.length} đổi người thắng — ` +
+        `    ${pad(`${probe.gapKind}:${probe.subject}`, 46)} ${probe.flips}/${probe.valid} đổi người thắng — ` +
           flipped.map((row) => `${row.label} → ${row.winner}`).join("; "),
       );
+    }
+    const rejected = probes.flatMap((row) =>
+      row.outcomes.filter((o) => o.invalid).map((o) => `${row.gapKind}: ${o.label}`),
+    );
+    if (rejected.length > 0) {
+      out.push(`    bỏ ${rejected.length} câu trả lời thử làm hồ sơ mâu thuẫn: ${rejected.slice(0, 6).join("; ")}`);
     }
     const inert = probes.filter((row) => row.flips === 0);
     if (inert.length > 0) {

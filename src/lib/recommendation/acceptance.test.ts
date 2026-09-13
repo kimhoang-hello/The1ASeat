@@ -323,8 +323,12 @@ test("Test J — thiếu dữ liệu, hai thẻ gần hoà: độ tin cậy TH�
     const probes = record.derivedState.followUpProbes;
     const chosen = probes.find((p) => p.gapKind === followUp.gapKind && p.subject === followUp.subject);
     assert.ok(chosen !== undefined && chosen.flips > 0, `${state.profile.id}: câu ${followUp.gapKind} không đổi được gì`);
-    const best = Math.max(...probes.map((p) => p.flips / p.outcomes.length));
-    assert.equal(chosen.flips / chosen.outcomes.length, best);
+    const best = Math.max(...probes.map((p) => p.flips / p.valid));
+    assert.equal(chosen.flips / chosen.valid, best);
+    // Không câu trả lời thử nào được tính mà làm hồ sơ mâu thuẫn với chính nó.
+    for (const probe of probes) {
+      for (const outcome of probe.outcomes) if (outcome.invalid) assert.equal(outcome.flipsWinner, false);
+    }
 
     // Và phép đo đó là THẬT: trả lời đúng câu đã chọn bằng câu trả lời thử
     // làm lật kết quả, chạy lại, người thắng đổi.
@@ -348,4 +352,21 @@ test("Test J — câu hỏi về một chặng CHƯA có giá không được ch
   // Và debugger giải thích được người thắng hiện tại đứng đó vì đâu.
   const top = explainProduct(record, candidateKey(winner(record)));
   assert.equal(top.outcome, "primary");
+});
+
+test("§30 — câu trả lời thử làm hồ sơ MÂU THUẪN thì bị loại, không được tính là lật kết quả", () => {
+  // Vòng Codex 2: các hạng mục của người mới đã cộng đủ $2,000 tổng tháng, nên
+  // "$1,200/tháng cho một hạng mục nữa" là một hồ sơ không thể có — và bản
+  // trước vẫn đếm nó là lật người thắng.
+  const { record } = execute(beginnerNoCards);
+  const category = record.derivedState.followUpProbes.filter((p) => p.gapKind === "spend_category_unknown");
+  assert.ok(category.length > 0);
+  for (const probe of category) {
+    const big = probe.outcomes.find((o) => o.label.endsWith("$1,200/tháng"))!;
+    assert.equal(big.invalid, true, `${probe.subject}: $1,200 vượt tổng tháng mà không bị loại`);
+    assert.equal(big.flipsWinner, false);
+    const zero = probe.outcomes.find((o) => o.label.endsWith("$0/tháng"))!;
+    assert.equal(zero.invalid, false, "$0 là câu trả lời hợp lệ");
+  }
+  assert.notEqual(record.outputSnapshot.followUp?.gapKind, "spend_category_unknown");
 });

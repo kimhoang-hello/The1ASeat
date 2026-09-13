@@ -966,11 +966,109 @@ mức chi ĐỀU TRÊN trần, mà ở trên trần thì cả bản đúng lẫn
 phân biệt được hai bản là ca nằm DƯỚI trần. Một phép kiểm ngược thất bại đáng
 giá hơn một phép kiểm ngược thành công.
 
+## Phase 4 — truy vết, lưu, chạy lại
+
+Tiêu chí của Phase 4 là một câu hỏi: **có người nói "khuyến nghị này sai",
+admin tìm ra NHANH vì sao engine đưa ra nó không?** — và lỗi nằm ở dữ liệu
+nguồn, đầu vào người dùng, phân tích danh mục, chiến lược, nhu cầu, điều
+kiện/phù hợp, chấm điểm, luật, hay xếp hạng.
+
+| File | Vai trò |
+| --- | --- |
+| `trace.ts` | `derived_state`: danh mục, nhu cầu, thẻ bị loại + lý do, bảng xếp hạng ĐẦY ĐỦ |
+| `runs.ts` | Bản ghi §20 (`executeRun`), chạy lại (`replayRun`) |
+| `fingerprint.ts` | Một phép băm nội dung cho cả bản chụp test lẫn kho |
+| `run-store.ts` / `run-store-fs.ts` | Kho chỉ thêm — bộ nhớ và file (`.reco-runs/`) |
+| `run-diff.ts` | So hai lượt chạy theo 14 tầng; `explainChange` đổi từng yếu tố một |
+| `debug.ts` | `explainProduct`, `compareCandidates`, `scoreBreakdown`, `provenanceFor` |
+| `sensitivity.ts` | §30 đo bằng thực nghiệm: câu hỏi nào lấp vào đổi được người thắng |
+| `debug-render.ts` | Trình bày — dùng chung cho CLI và trang admin |
+| `acceptance.test.ts` | Test A–J của §32, mỗi kỳ vọng thành một con số đỏ được |
+
+### Dùng
+
+```
+npm run reco:debug -- run u_japan_gap --top 8          # 11 mục §22
+npm run reco:debug -- why u_japan_gap amex-business-gold
+npm run reco:debug -- compare u_japan_gap amex-gold-rewards amex-business-gold
+npm run reco:debug -- what-if u_beginner --set 'profile.annualHouseholdIncome={"low":40000,"high":50000}'
+npm run reco:debug -- run u_beginner --save && npm run reco:debug -- replay <run-id>
+```
+
+Trang `/admin/reco-debugger` làm đúng những việc đó bằng form — chỉ bật dưới
+`next dev` hoặc với `RECO_DEBUGGER=1` (site chưa có đăng nhập, và server
+action nhận POST trực tiếp). Bản build production trả 404.
+
+### Cách đọc một khuyến nghị sai
+
+1. **`why <thẻ>`** trả về kết cục của thẻ và TẦNG đã quyết định nó, kèm ai
+   chịu trách nhiệm (`drivenBy`: người dùng / dữ liệu nguồn / engine). Thẻ bị
+   loại vì điều kiện hiện nguyên bảng luật, luật cạnh câu trả lời — lỗi ở luật
+   hay ở hồ sơ thì nhìn là thấy.
+2. **`compare A B`** tách khoảng cách điểm thành từng thành phần và từng luật,
+   CÙNG MỘT ĐƠN VỊ, cộng lại đúng bằng khoảng cách. `byLayer` nói A thắng nhờ
+   chấm điểm hay nhờ luật; "dòng quyết định" là dòng gỡ ra thì thứ tự đảo.
+3. **Mục 11** liệt kê những chỗ trống §30 đã đo: câu trả lời thử nào lật
+   người thắng. Có dòng lật được = khuyến nghị đang đứng trên một dữ kiện
+   người dùng chưa khai.
+4. **`what-if`** đổi đầu vào rồi chỉ ra tầng TÍNH khác đầu tiên.
+5. **Bản ghi nguồn** (cuối `why`) là các dòng dữ liệu engine đã đọc, kèm ngày
+   kiểm và URL — cửa của "lỗi ở dữ liệu nguồn".
+
+### Năm quyết định, và vì sao
+
+**Engine chạy trên bản đầu vào ĐÃ QUA JSON.** Bản ghi lưu JSON; chạy trên
+object gốc rồi lưu bản JSON của nó thì mọi khác biệt giữa hai thứ là một lượt
+chạy không tái lập được. Test đòi hai lượt bằng nhau trên mọi nhân vật — và
+nó bắt được lỗi ngay: hạng mục chi tiêu cộng theo thứ tự khoá object, nên
+`earn_fit` lệch ở chữ số 16 giữa hai thứ tự khoá (4.0.1).
+
+**Bộ dữ liệu lưu theo dấu vân tay, không lưu kèm từng lượt.** ~300 KB, gần
+như mọi lượt trong ngày dùng chung. Khoá là băm nội dung (64 bit, khoá sắp,
+mảng giữ thứ tự), kho kiểm lại khoá và nổ khi va chạm. `input_snapshot` giữ
+dấu vân tay + hồ sơ + lịch sử offer của MỌI sản phẩm (không chỉ tập ứng
+viên — phép thử "nếu như" có tập ứng viên khác).
+
+**Lịch sử offer cắt ở ngày chạy.** Nhật ký là ngày GHI NHẬN; lượt chạy quá
+khứ đọc cả nhật ký là đọc tương lai. Cắt ở `min(asOf, knownAt)`, trước khi
+gộp đợt.
+
+**Thứ tự tầng là thứ tự TÍNH, không phải thứ tự vẽ của spec.** Engine tính
+dữ kiện thẻ và điều kiện TRƯỚC chiến lược (vì `WAIT_FOR_BETTER_OFFER` đọc thị
+trường offer). Xếp theo spec thì "tầng khác đầu tiên" chỉ sai chỗ.
+
+**Provenance không lưu, suy lại.** Nó suy lại được chính xác từ bản chụp bộ
+dữ liệu + `activeOfferId` đã lưu; lưu thì mỗi lượt mang thêm ~150 KB URL.
+
+### Ba lỗi engine debugger bới ra — chạy nó lên nhân vật mẫu ngay khi dựng xong
+
+| Version | Lỗi | Lộ ra thế nào |
+| --- | --- | --- |
+| 4.0.1 | tổng chi tiêu phụ thuộc thứ tự khoá object | test "qua JSON = trên object gốc" |
+| 4.1.0 | thiếu 5,000/205,000 điểm ⇒ mọi thẻ nhận trọn 20% "thu hẹp khoảng cách"; gãy bậc ở mép đủ điểm | Test C: `USE_EXISTING_POINTS` đứng đầu chiến lược mà khuyên mở thẻ |
+| 4.2.0 | §30 hỏi câu không đổi được gì ở 4/8 ca (khứ hồi cho chặng chưa có giá) | đo bằng câu trả lời thử |
+
+Cả ba xanh qua mọi test Phase 3. Đúng như bàn giao dự đoán: **lưới an toàn
+bắt dữ liệu sai tốt hơn bắt code kiểm tra sai**, và debugger là dụng cụ đó.
+
+### Giới hạn, nói thẳng
+
+- Kho file là của admin trên máy mình. Kho production cho người dùng thật là
+  quyết định database — chưa chọn (xem HANDOFF).
+- Câu trả lời thử của §30 là giá trị ĐIỂN HÌNH: "câu này CÓ THỂ đổi kết quả",
+  không chứng minh "nó KHÔNG thể". `cards_undeclared` / `balances_undeclared`
+  không đo được (không có "thẻ đang giữ điển hình") nên giữ chỗ theo bảng tĩnh.
+- `explainChange` đổi từng yếu tố MỘT; nhiều yếu tố cùng đổi có thể tương
+  tác — nó là bằng chứng, không phải phép chia trách nhiệm.
+- Chạy lại một bản ghi của engine CŨ chỉ dùng được engine HÔM NAY: nó tách
+  được tác động của lần đổi version, không dựng lại được engine cũ.
+
 ## Chạy gì
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # 257 test: chi tiêu, bất biến, vòng đời, quy mô, trạng thái người dùng, engine
+npm run test:reco         # 318 test: chi tiêu, bất biến, vòng đời, quy mô, người dùng, engine, Phase 4, Test A–J
+npm run reco:debug        # debugger §22 dòng lệnh — xem mục Phase 4
 ```
 
 `audit:reco-data` bắt ba lớp lỗi:

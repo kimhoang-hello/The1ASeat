@@ -40,6 +40,7 @@ import { productIdFor } from "./data/products.ts";
 import {
   USER_FIXTURES,
   aeroplanHeavy,
+  beginnerNoCards,
   japanTripFunded,
   vietnamTripFunded,
   vietnamTripShortfall,
@@ -624,4 +625,13 @@ test("so lượt chạy — đổi LỜI GIẢI THÍCH mà không đổi con s�
   const adjusted = c.derivedState.goals[0].ranking.find((row) => row.candidate.adjustments.length > 0)!.candidate;
   adjusted.adjustments[0].reasonCode = null;
   assert.equal(diffRecords(a, c).find((row) => row.stage === "rules")?.changed, true);
+});
+
+test("so lượt chạy — phép đo §30 đổi mà câu hỏi đứng yên vẫn là khác", () => {
+  const a = execute(beginnerNoCards).record;
+  assert.ok(a.derivedState.followUpProbes.length > 0);
+  const b = structuredClone(a);
+  const outcome = b.derivedState.followUpProbes[0].outcomes.find((o) => !o.invalid)!;
+  outcome.flipsWinner = !outcome.flipsWinner;
+  assert.equal(diffRecords(a, b).find((row) => row.stage === "confidence")?.changed, true);
 });
