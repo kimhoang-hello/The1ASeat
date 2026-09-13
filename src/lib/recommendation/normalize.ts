@@ -110,6 +110,22 @@ export function universeVerdicts(
     .map((product) => ({ product, reason: reasonFor(product) }));
 }
 
+/**
+ * Điểm số của mục tiêu này có đọc tỷ lệ tích điểm không.
+ *
+ * Ba bảng §10 đọc (thẻ tiếp theo, tích điểm, đa dạng hoá); bảng chuyến đi thì
+ * KHÔNG — trừ khi chặng chưa tính được tỷ lệ phủ, vì khi đó `NO_NEW_CARD` rơi
+ * về so tích điểm của ví với thẻ mới (`walletEarnCoverage` ở `rank.ts`).
+ *
+ * MỘT hàm cho mọi chỗ hỏi câu này: chỗ trống dữ liệu (§29 độ đầy đủ) và độ
+ * tươi (§29 độ tươi) từng trả lời khác nhau — vá bên này thì một tỷ lệ tích
+ * điểm cũ không ai đọc vẫn hạ độ tin cậy của chuyến đi từ `high` xuống
+ * `medium` qua bên kia (vòng Codex 10).
+ */
+export function goalReadsEarn(goal: GoalContext, state: UserState, ix: DatasetIndex, asOf: string): boolean {
+  return goal.goal.type !== "trip" || tripCoverage(state, ix, asOf, goal.tripNeed).coverage === null;
+}
+
 /** Chỗ trống của lớp dữ liệu mà lượt chạy này thật sự chạm tới. */
 function relevantDataGaps(
   data: RecommendationDataset,
@@ -131,12 +147,7 @@ function relevantDataGaps(
    * không phép tính nào của nó đọc tỷ lệ đó (vòng Codex 9). Không có mục tiêu
    * nào thì giữ như cũ: không có gì để chấm, và danh sách chỉ để trình bày.
    */
-  const earnMatters =
-    goals.length === 0 ||
-    goals.some(
-      (goal) =>
-        goal.goal.type !== "trip" || tripCoverage(state, ix, asOf, goal.tripNeed).coverage === null,
-    );
+  const earnMatters = goals.length === 0 || goals.some((goal) => goalReadsEarn(goal, state, ix, asOf));
 
   /** Cặp vùng người dùng THẬT SỰ hỏi, dạng `ORIGIN|DESTINATION`. */
   const routesAsked = new Set(

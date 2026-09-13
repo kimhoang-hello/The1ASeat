@@ -602,6 +602,9 @@ export interface GoalTrace {
   /** TOÀN BỘ bảng xếp hạng, kể cả `NO_NEW_CARD` và những thẻ không hiện ra. */
   ranking: RankedCandidate[];
   confidenceInputs: ConfidenceInputs;
+  /** Chỗ trống THUỘC VỀ mục tiêu này — đúng thứ §29 của nó đã đọc. */
+  userGaps: UserDataGap[];
+  dataGaps: DataGap[];
 }
 
 export interface DerivedState {

@@ -733,3 +733,32 @@ test("lượt chạy HAI mục tiêu lưu, chạy lại ra đúng từng chữ s
   assert.equal(replay.identical, true);
   assert.equal(back.outputSnapshot.results.length, 2);
 });
+
+/* ================================================================== *
+ * Vòng Codex 10 — "mục tiêu có đọc tỷ lệ tích điểm không" là MỘT câu hỏi
+ * ================================================================== */
+
+test("tỷ lệ tích điểm CŨ mà chuyến đi đã định giá không đọc thì không làm nó kém tươi", () => {
+  const green = productIdFor("amex-green");
+  const rate = DATA.earningRates.find((row) => row.productId === green)!;
+  const data: RecommendationDataset = {
+    ...DATA,
+    earningRates: DATA.earningRates.map((row) => (row.id === rate.id ? { ...row, verifiedAt: "2020-01-01" } : row)),
+  };
+  const base = execute(vietnamTripFunded).record.outputSnapshot.results[0];
+  const stale = execute(vietnamTripFunded, { data }).record.outputSnapshot.results[0];
+  assert.equal(stale.primaryAction.score, base.primaryAction.score, "tiền đề: điểm không đổi");
+  assert.equal(stale.confidence.dataFreshness, base.confidence.dataFreshness);
+  assert.equal(stale.confidence.level, base.confidence.level);
+  // Còn "thẻ tiếp theo" thì CÓ đọc tỷ lệ đó — nó phải kém tươi đi.
+  const nextCardBase = execute(beginnerNoCards).record.outputSnapshot.results[0].confidence.dataFreshness;
+  const nextCardStale = execute(beginnerNoCards, { data }).record.outputSnapshot.results[0].confidence.dataFreshness;
+  assert.ok(nextCardStale < nextCardBase);
+});
+
+test("'vì sao thẻ X' chỉ kể chỗ trống mà mục tiêu đó ĐÃ tính, không phải bộ thô", () => {
+  const { record, dataset } = execute(vietnamTripFunded);
+  const e = explainProduct(record, "td-first-class-travel-visa-infinite", { dataset });
+  assert.ok(dataset.gaps.some((gap) => gap.kind === "base_earn_rate_unknown" && gap.subjectId === e.productId), "tiền đề: bộ thô có chỗ trống này");
+  assert.ok(!e.dataGaps.some((gap) => gap.kind === "base_earn_rate_unknown"));
+});

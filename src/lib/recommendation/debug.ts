@@ -420,7 +420,11 @@ export function explainProduct(
   const dataGaps =
     productId === null
       ? []
-      : (options.dataset?.gaps ?? record.outputSnapshot.dataGaps).filter((gap) => gapTouches(gap, productId));
+      : // Chỗ trống engine ĐÃ tính cho mục tiêu này — không phải `dataset.gaps`
+        // thô: bộ thô gồm cả những chỗ trống normalize đã loại vì không phép
+        // tính nào của mục tiêu đọc chúng, và in chúng ra là giải thích một
+        // lượt chạy khác (vòng Codex 10).
+        (goal?.dataGaps ?? record.outputSnapshot.dataGaps).filter((gap) => gapTouches(gap, productId));
 
   let outcome: ProductOutcome;
   let drivenBy: ProductExplanation["drivenBy"];

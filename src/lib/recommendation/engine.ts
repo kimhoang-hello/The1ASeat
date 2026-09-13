@@ -19,7 +19,7 @@
  */
 
 import { analyzePortfolio, isOpenToEveryone, topEcosystemShare } from "./portfolio.ts";
-import { normalize } from "./normalize.ts";
+import { goalReadsEarn, normalize } from "./normalize.ts";
 import { generateStrategies, tripCoverage } from "./strategies.ts";
 import { computeNeeds } from "./needs.ts";
 import { evaluateEligibility } from "./eligibility.ts";
@@ -150,6 +150,9 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * tỷ lệ tích điểm chưa biết chỉ tính khi một mục tiêu thật sự đọc nó; §30
  * lọc câu hỏi theo bảng của MỌI mục tiêu.
  *
+ * 4.10.0 — vòng Codex 10: độ tươi §29 chỉ quét tỷ lệ tích điểm khi mục tiêu
+ * thật sự đọc chúng (`goalReadsEarn`, cùng hàm với chỗ trống dữ liệu).
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -162,7 +165,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.9.0";
+export const ENGINE_VERSION = "4.10.0";
 
 export interface RecommendInput {
   state: UserState;
@@ -282,6 +285,8 @@ function oldestVerified(
   ix: DatasetIndex,
   asOf: string,
   goalStrategies: readonly AwardStrategy[],
+  /** Mục tiêu có đọc tỷ lệ tích điểm không — xem `goalReadsEarn`. */
+  readsEarn: boolean,
 ): OldestVerified | null {
   // Trả về CẢ DÒNG, không chỉ ngày: "độ tin cậy thấp vì dữ kiện cũ 2,442
   // ngày" mà không nói dữ kiện NÀO là một lời giải thích admin không sửa được
@@ -296,7 +301,9 @@ function oldestVerified(
   for (const product of products) {
     for (const row of activeAt(ix.offersByProduct.get(product.id) ?? [], asOf)) consider("offers", row);
     for (const row of activeAt(ix.feesByProduct.get(product.id) ?? [], asOf)) consider("product_fees", row);
-    for (const row of activeAt(ix.ratesByProduct.get(product.id) ?? [], asOf)) consider("earning_rates", row);
+    if (readsEarn) {
+      for (const row of activeAt(ix.ratesByProduct.get(product.id) ?? [], asOf)) consider("earning_rates", row);
+    }
     for (const row of activeAt(ix.benefitsByProduct.get(product.id) ?? [], asOf)) consider("product_benefits", row);
     for (const row of activeAt(ix.rulesByProduct.get(product.id) ?? [], asOf)) consider("eligibility_rules", row);
   }
@@ -470,6 +477,7 @@ export function recommend(input: RecommendInput): RecommendationRun {
       ix,
       asOf,
       goal.tripNeed?.strategies ?? [],
+      goalReadsEarn(goal, state, ix, asOf),
     );
     const confidence = computeConfidence({
       ranked,
@@ -516,6 +524,8 @@ export function recommend(input: RecommendInput): RecommendationRun {
         oldestVerifiedAt: oldest?.verifiedAt ?? null,
         oldestVerifiedRow: oldest === null ? null : { table: oldest.table, id: oldest.id },
       },
+      userGaps: normalized.goalGaps[goalIndex].userGaps,
+      dataGaps: normalized.goalGaps[goalIndex].dataGaps,
     });
 
     return {
