@@ -163,7 +163,11 @@ export function stageValue(record: RecommendationRunRecord, stage: PipelineStage
         goalResolution: output.goalResolution,
         goals: derived.goals.map((goal) => goal.goal),
         userGaps: output.userGaps,
-        dataGaps: output.dataGaps,
+        // KHÔNG có `dataGaps`: chỗ trống dữ liệu của lượt chạy được lọc theo
+        // `read-set.ts` — tức theo thẻ CHỌN ĐƯỢC, sau tầng điều kiện. Để nó ở
+        // đây thì một thẻ trượt luật cứng làm mất chỗ trống của nó, và tầng
+        // khác đầu tiên bị báo là chuẩn hoá thay vì điều kiện (vòng Codex 15).
+        // Chỗ trống thô là hàm của dữ liệu + tập ứng viên, cả hai đã có ở trên.
         universe: derived.universe,
         // Cửa chặn của tập ứng viên thuộc về tầng NÀY. Để nó ở tầng điều kiện
         // thì một thẻ vẫn bị loại nhưng đổi LÝ DO (đang giữ → hết nhận đơn)
@@ -268,6 +272,14 @@ export function stageValue(record: RecommendationRunRecord, stage: PipelineStage
     case "confidence":
       return {
         confidence: output.results.map((result) => result.confidence),
+        // Chỗ trống ĐÃ lọc theo những gì lượt chạy đọc — tính cùng lúc với độ
+        // tin cậy, sau xếp hạng, và chỉ độ tin cậy + §30 đọc chúng.
+        dataGaps: output.dataGaps,
+        goalGaps: keyed(
+          derived.goals.map((goal, index) => ({ goal, index })),
+          ({ goal, index }) => goalKey(goal, index),
+          ({ goal }) => ({ userGaps: goal.userGaps, dataGaps: goal.dataGaps }),
+        ),
         followUp: output.followUp,
         // Phép đo §30 cũng là trạng thái của lượt chạy: một lần đổi engine
         // làm lật một câu trả lời thử mà vẫn chọn cùng câu hỏi thì bản ghi đã

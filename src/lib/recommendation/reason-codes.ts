@@ -108,9 +108,9 @@ export const REASON_CODE_NOTES: Record<ReasonCode, string> = {
   TRIP_ROUTE_NOT_PRICED:
     "portfolio.ts / normalize.ts — chưa có award strategy cho cặp vùng này (DataGap award_route_uncovered).",
   POINTS_COVERAGE_UNKNOWN:
-    "strategies.ts — tỷ lệ phủ chuyến đi là ƯỚC LƯỢNG: có số dư chưa biết, hoặc giá chỉ biết sàn động, nên phần phủ nằm trong một khoảng (xem `tripCoverage`) và engine dùng điểm giữa — đừng đọc là thiếu, cũng đừng đọc là đủ.",
+    "strategies.ts — tỷ lệ phủ chuyến đi là ƯỚC LƯỢNG: có số dư chưa biết, hoặc giá chỉ biết sàn động, nên phần phủ nằm trong một khoảng (xem `tripCoverage`) và engine dùng điểm giữa — đừng đọc là thiếu, cũng đừng đọc là đủ. engine.ts — trên THẺ mà phần phủ sau welcome bonus là ước lượng (scoring/trip.ts `tripGain`).",
   AWARD_PRICE_IS_FLOOR_ONLY:
-    "trip-need.ts — chiến lược duy nhất tra được có pricingModel dynamic_floor: chỉ pointsLow có nghĩa, đừng trình bày như một cái giá.",
+    "trip-need.ts — chiến lược duy nhất tra được có pricingModel dynamic_floor: chỉ pointsLow có nghĩa, đừng trình bày như một cái giá. engine.ts — cả khi người dùng CÓ điểm ở chương trình chỉ biết sàn, và trên THẺ mà welcome bonus rơi vào chương trình đó (scoring/trip.ts `tripGain`).",
 
   PORTFOLIO_CONCENTRATED: "rules.ts Rule 3 — một hệ sinh thái chiếm > 70% giá trị danh mục.",
   PORTFOLIO_LACKS_FLEXIBILITY: "needs.ts — flexibilityScore < 0.3 và người dùng có số dư đáng kể.",

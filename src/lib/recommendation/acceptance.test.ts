@@ -19,7 +19,7 @@ import test from "node:test";
 import { offlineDataset } from "./data/index.ts";
 import { datasetAt } from "./temporal.ts";
 import { executeRun, type RecommendationRunRecord } from "./runs.ts";
-import { candidateKey, explainChange } from "./run-diff.ts";
+import { candidateKey, diffRecords, explainChange, firstComputedDivergence } from "./run-diff.ts";
 import { compareCandidates, explainProduct, findRanked } from "./debug.ts";
 import { renderRunReport } from "./debug-render.ts";
 import { STRATEGY_TYPES } from "./reason-codes.ts";
@@ -41,7 +41,7 @@ import {
 } from "./data/user-fixtures.ts";
 import type { OfferHistoryPoint } from "./offer-history.ts";
 import type { RecommendationDataset } from "./types.ts";
-import type { UserState } from "./user-types.ts";
+import { amountRange, type UserState } from "./user-types.ts";
 import type { Candidate } from "./engine-types.ts";
 
 const ASOF = "2026-09-08";
@@ -998,4 +998,79 @@ test("định giá của chương trình có số dư CHƯA BIẾT không làm k
   const data = staleAny("programValuations", valuation.id as string);
   assert.equal(freshness(execute(withBalance(null), { data }).record), freshness(execute(withBalance(null)).record));
   assert.equal(freshness(execute(withBalance(50_000), { data }).record), 0);
+});
+
+/* ================================================================== *
+ * Vòng Codex 15 — debugger chỉ đúng tầng, người đọc nghe đúng điều
+ * ================================================================== */
+
+test("bonus rơi vào chương trình chỉ biết giá SÀN: thẻ được khuyên phải nói điểm phủ là ước lượng", () => {
+  // Ca của Codex: Nhật một chiều Premium Economy, 0 điểm. Aeroplan® chỉ có
+  // sàn, nên phần phủ "sau bonus" là điểm giữa của [0, bonus/sàn].
+  const state = structuredClone(japanTripFunded);
+  state.balances = [];
+  state.cards = [];
+  state.goals = state.goals.map((goal) => (goal.type === "trip" ? { ...goal, cabin: "premium_economy", roundTrip: false } : goal));
+  const record = execute(state).record;
+  assert.equal(record.derivedState.goals[0].tripCoverage?.coverageKnown, true, "tiền đề: phủ HIỆN TẠI là số đo (0%)");
+  const estimated = ranking(record).filter((row) =>
+    row.candidate.components.some((c) => c.key === "points_gap_reduction" && c.note.includes("ƯỚC LƯỢNG")),
+  );
+  assert.ok(estimated.length > 0, "tiền đề: có thẻ nhận điểm phủ từ giá sàn");
+  for (const row of estimated) {
+    assert.ok(row.candidate.reasonCodes.includes("POINTS_COVERAGE_UNKNOWN"), row.candidate.productSlug ?? "");
+    assert.ok(row.candidate.warnings.includes("AWARD_PRICE_FLOOR_ONLY"), row.candidate.productSlug ?? "");
+  }
+  const top = record.outputSnapshot.results[0];
+  if (estimated.some((row) => row.candidate.productSlug === top.primaryAction.productSlug)) {
+    assert.ok(top.warnings.includes("AWARD_PRICE_FLOOR_ONLY"));
+  }
+});
+
+test("'vì sao thẻ X' kể cả chặng chuyển của chương trình ĐẶT MẪU SỐ tầm với", () => {
+  // Thêm 15 chặng mở từ Avios® đổi điểm linh hoạt của thẻ Amex® mà không chạm
+  // dòng nào của thẻ đó. Provenance chỉ kể chặng từ đồng tiền của thẻ/ví thì
+  // admin không thấy nguồn và đi tìm ở tầng chấm điểm.
+  const template = DATA.transferPaths.find((row) => row.requiresTier === null)!;
+  const destinations = DATA.pointsPrograms.map((row) => row.id).filter((id) => id !== ("avios" as never));
+  const data: RecommendationDataset = {
+    ...DATA,
+    pointsPrograms: DATA.pointsPrograms.map((row) => (row.id === ("avios" as never) ? { ...row, transferable: true } : row)),
+    transferPaths: [
+      ...DATA.transferPaths,
+      ...destinations.map((destination, i) => ({
+        ...template,
+        id: `tp_test_avios_${i}` as never,
+        sourceProgramId: "avios" as never,
+        destinationProgramId: destination,
+      })),
+    ],
+  };
+  const base = execute(beginnerNoCards).record;
+  const { record, dataset } = execute(beginnerNoCards, { data });
+  const cobalt = (r: RecommendationRunRecord) => ranking(r).find((row) => row.candidate.productSlug === "amex-cobalt")!.candidate.score;
+  assert.notEqual(cobalt(record), cobalt(base), "tiền đề: chặng Avios® đổi điểm của Cobalt");
+  const rows = explainProduct(record, "amex-cobalt", { dataset }).provenance ?? [];
+  assert.ok(rows.some((row) => row.table === "transfer_paths" && row.id.startsWith("tp_test_avios_")));
+});
+
+test("so lượt chạy — thẻ trượt luật cứng làm mất chỗ trống của nó: tầng khác đầu tiên là ĐIỀU KIỆN, không phải chuẩn hoá", () => {
+  // Ca của Codex: thu nhập về 0 làm một thẻ trượt luật cứng, và chỗ trống
+  // `base_earn_rate_unknown` của nó rời khỏi lượt chạy. Chỗ trống đó được lọc
+  // SAU tầng điều kiện (`read-set.ts`), nên nó không được làm tầng chuẩn hoá
+  // "khác" trước.
+  // Khai CẢ hai thu nhập ở cả hai lượt: đổi "chưa khai" thành "0" là đổi
+  // chỗ trống người dùng, và tầng chuẩn hoá khác thật.
+  const rich = structuredClone(aeroplanHeavy);
+  rich.profile.annualPersonalIncome = amountRange(150_000, 150_000);
+  rich.profile.annualHouseholdIncome = amountRange(250_000, 250_000);
+  const poor = structuredClone(rich);
+  poor.profile.annualPersonalIncome = amountRange(0, 0);
+  poor.profile.annualHouseholdIncome = amountRange(0, 0);
+  const before = execute(rich).record;
+  const after = execute(poor).record;
+  assert.deepEqual(after.outputSnapshot.userGaps, before.outputSnapshot.userGaps, "tiền đề: chỗ trống người dùng đứng yên");
+  const gapsOf = (r: RecommendationRunRecord) => r.outputSnapshot.dataGaps.map((gap) => `${gap.kind}:${gap.subjectId}`).join("|");
+  assert.notEqual(gapsOf(after), gapsOf(before), "tiền đề: chỗ trống của lượt chạy đổi");
+  assert.equal(firstComputedDivergence(diffRecords(before, after))?.stage, "eligibility_suitability");
 });

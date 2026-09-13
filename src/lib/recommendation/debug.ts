@@ -19,7 +19,8 @@
  */
 
 import { activeAt } from "./temporal.ts";
-import { isOpenToEveryone } from "./portfolio.ts";
+import { flexibilityScale, isOpenToEveryone } from "./portfolio.ts";
+import { indexDataset } from "./indexes.ts";
 import { candidateKey, type PipelineStage } from "./run-diff.ts";
 import type { RecommendationRunRecord } from "./runs.ts";
 import type { AwardStrategy, DataGap, RecommendationDataset, Temporal } from "./types.ts";
@@ -284,7 +285,12 @@ export function provenanceFor(
   // mà mọi phép tính điểm của engine dùng (bonus quy đổi, tầm với, phủ chuyến
   // đi, tập trung danh mục) và mà độ tươi §29 dùng. Độ tươi của cả lượt chạy
   // truy riêng ở `ConfidenceInputs.oldestVerifiedRow`.
-  const sources = new Set<string>([...programs, ...walletPrograms]);
+  // Cộng chương trình ĐẶT MẪU SỐ tầm với — xem `flexibilityScale`.
+  const sources = new Set<string>([
+    ...programs,
+    ...walletPrograms,
+    ...(flexibilityScale(indexDataset(dataset), asOf).programs as string[]),
+  ]);
   for (const path of activeAt(dataset.transferPaths, asOf)) {
     if (isOpenToEveryone(path.requiresTier) && sources.has(path.sourceProgramId as string)) {
       rows.push(provenanceRow("transfer_paths", path));

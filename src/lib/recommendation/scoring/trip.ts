@@ -63,6 +63,47 @@ function tripCurrencyUtility(
   return { raw: 0.05, note: "không với tới chương trình nào định giá chặng này" };
 }
 
+/**
+ * Phần chuyến đi mà welcome bonus của thẻ này thêm vào — `null` khi chưa tính
+ * được (chặng chưa định giá, thiếu thừa số chuyến đi).
+ *
+ * Một hàm cho cả điểm số lẫn mã lý do: `estimated` là chỗ bản trước im lặng.
+ * Bonus rơi vào một chương trình chỉ biết giá SÀN thì tỷ lệ phủ "sau" là điểm
+ * giữa của [0, bonus/sàn] — với bonus bằng đúng mức sàn, 50% chuyến đi được
+ * cộng vào điểm từ một con số không ai hứa, và người đọc chỉ thấy "phủ từ 0%
+ * lên 50%" (vòng Codex 15).
+ */
+export function tripGain(
+  candidate: CandidateFacts,
+  ctx: ScoringContext,
+): { before: number; after: number; raw: number; estimated: boolean; floorOnly: boolean } | null {
+  const need = ctx.goal.tripNeed;
+  if (need === null) return null;
+  const now = tripCoverage(ctx.state, ctx.ix, ctx.asOf, need);
+  const before = now.coverage;
+  if (before === null) return null;
+  if (before >= 1) return { before, after: before, raw: 0, estimated: false, floorOnly: false };
+  const after = tripCoverage(
+    ctx.state,
+    ctx.ix,
+    ctx.asOf,
+    need,
+    (programId) => bonusPointsToward(candidate, programId, ctx.ix, ctx.asOf) ?? 0,
+  );
+  const raw = Math.max(0, (after.coverage as number) - before);
+  const estimated = raw > 0 && !after.coverageKnown;
+  return {
+    before,
+    after: after.coverage as number,
+    raw,
+    estimated,
+    // "Trước" chắc chắn mà chưa đủ thì không có số dư chưa biết nào trong phép
+    // đo (khoảng [cận dưới, 1] của nó buộc "chắc chắn" nghĩa là đã phủ 100%) —
+    // nên cái làm "sau" thành ước lượng chỉ có thể là giá SÀN.
+    floorOnly: estimated && now.coverageKnown,
+  };
+}
+
 export function scoreTrip(candidate: CandidateFacts, ctx: ScoringContext): ScoreComponent[] {
   const need = ctx.goal.tripNeed;
   const programs = need?.programs ?? [];
@@ -87,26 +128,18 @@ export function scoreTrip(candidate: CandidateFacts, ctx: ScoringContext): Score
    * chương trình đủ, số dư chưa biết lấy điểm giữa, và mép đủ điểm liền mạch
    * vì hiệu hai tỷ lệ phủ đi về 0 khi cả hai cùng về 1.
    */
+  const gain = tripGain(candidate, ctx);
   let gapRaw = 0;
   let gapNote = "chưa tính được khoảng cách điểm";
-  if (need !== null) {
-    const before = tripCoverage(ctx.state, ctx.ix, ctx.asOf, need).coverage;
-    if (before !== null && before >= 1) {
-      gapNote = "đã đủ điểm — không còn khoảng cách nào để thu hẹp (§16 Rule 1)";
-    } else if (before !== null) {
-      const after = tripCoverage(
-        ctx.state,
-        ctx.ix,
-        ctx.asOf,
-        need,
-        (programId) => bonusPointsToward(candidate, programId, ctx.ix, ctx.asOf) ?? 0,
-      ).coverage as number;
-      gapRaw = Math.max(0, after - before);
-      gapNote =
-        gapRaw === 0
-          ? "welcome bonus không đưa chương trình nào đặt được chặng này tiến gần hơn"
-          : `welcome bonus đưa phần chuyến đi đã phủ từ ${Math.round(before * 100)}% lên ${Math.round(after * 100)}%`;
-    }
+  if (gain !== null && gain.before >= 1) {
+    gapNote = "đã đủ điểm — không còn khoảng cách nào để thu hẹp (§16 Rule 1)";
+  } else if (gain !== null) {
+    gapRaw = gain.raw;
+    gapNote =
+      gapRaw === 0
+        ? "welcome bonus không đưa chương trình nào đặt được chặng này tiến gần hơn"
+        : `welcome bonus đưa phần chuyến đi đã phủ từ ${Math.round(gain.before * 100)}% lên ${Math.round(gain.after * 100)}%` +
+          (gain.estimated ? " — ƯỚC LƯỢNG: điểm giữa một khoảng phủ, không phải số đo" : "");
   }
 
   /* ---- Giá trị của sự linh hoạt (§16 Rule 2) ---------------------- */

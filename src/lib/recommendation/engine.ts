@@ -32,7 +32,7 @@ import { activeAt } from "./temporal.ts";
 import { assembleScore } from "./scoring/weights.ts";
 import { buildScale } from "./scoring/context.ts";
 import { scoreNextCard } from "./scoring/next-card.ts";
-import { scoreTrip } from "./scoring/trip.ts";
+import { scoreTrip, tripGain } from "./scoring/trip.ts";
 import { scoreDiversify } from "./scoring/diversify.ts";
 import { scoreEarning } from "./scoring/earning.ts";
 import { RULE_VERSION, applyRules } from "./rules.ts";
@@ -170,6 +170,11 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * in ra "sát nhau" cho khoảng cách 0.062). Phí của thẻ bị loại chỉ tính khi
  * trung vị phí được dùng; số dư chưa biết không kéo định giá vào độ tươi.
  *
+ * 4.15.0 — vòng Codex 15: thẻ mà phần phủ chuyến đi SAU welcome bonus là ước
+ * lượng (bonus rơi vào chương trình chỉ biết giá sàn) mang
+ * `POINTS_COVERAGE_UNKNOWN` + `AWARD_PRICE_FLOOR_ONLY` — trước đó người đọc
+ * chỉ thấy "phủ từ 0% lên 50%" dựng trên điểm giữa của [0, 1].
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -182,7 +187,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.14.0";
+export const ENGINE_VERSION = "4.15.0";
 
 export interface RecommendInput {
   state: UserState;
@@ -411,6 +416,10 @@ export function recommend(input: RecommendInput): RecommendationRun {
       const components = scoreFor(goal, candidate, ctx);
       const baseScore = assembleScore(components);
       const ruled = applyRules({ candidate, ctx, baseScore });
+      // Điểm "thu hẹp khoảng cách" dựng trên một khoảng phủ, không phải số đo:
+      // người đọc phải nghe điều đó từ CHÍNH thẻ được khuyên — mã cấp chiến
+      // lược chỉ nói về số dư đang có, không nói về bonus của thẻ này.
+      const gain = goal.goal.type === "trip" ? tripGain(candidate, ctx) : null;
       return {
         kind: "open_card" as const,
         productId: candidate.product.id,
@@ -426,12 +435,15 @@ export function recommend(input: RecommendInput): RecommendationRun {
           candidate.suitability.reasonCodes,
           candidate.offer.reasonCodes,
           candidate.benefits.reasonCodes,
+          gain?.estimated ? (["POINTS_COVERAGE_UNKNOWN"] as ReasonCode[]) : [],
+          gain?.floorOnly ? (["AWARD_PRICE_IS_FLOOR_ONLY"] as ReasonCode[]) : [],
         ),
         warnings: mergeWarnings(
           ruled.warnings,
           candidate.eligibility.warnings,
           candidate.suitability.warnings,
           candidate.offer.warnings,
+          gain?.floorOnly ? (["AWARD_PRICE_FLOOR_ONLY"] as WarningCode[]) : [],
         ),
         eligibility: candidate.eligibility,
         suitability: candidate.suitability,

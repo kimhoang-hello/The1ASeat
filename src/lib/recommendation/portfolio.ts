@@ -100,20 +100,48 @@ export function flexibilityReach(
   programId: PointsProgramId,
   asOf: string,
 ): number {
-  const count = (id: PointsProgramId): number => {
-    const program = ix.programById.get(id);
-    if (program === undefined || !program.transferable) return 0;
-    return new Set(
-      activeAt(ix.pathsBySource.get(id) ?? [], asOf)
-        .filter((path) => isOpenToEveryone(path.requiresTier))
-        .map((path) => path.destinationProgramId as string),
-    ).size;
-  };
-  const own = count(programId);
+  const own = openDestinationCount(ix, programId, asOf);
   if (own === 0) return 0;
-  let best = own;
-  for (const program of ix.programById.values()) best = Math.max(best, count(program.id));
+  const { best } = flexibilityScale(ix, asOf);
   return best === 0 ? 0 : own / best;
+}
+
+/** Số đích KHÔNG đòi hạng mà một đồng tiền chuyển tới được. */
+function openDestinationCount(ix: DatasetIndex, id: PointsProgramId, asOf: string): number {
+  const program = ix.programById.get(id);
+  if (program === undefined || !program.transferable) return 0;
+  return new Set(
+    activeAt(ix.pathsBySource.get(id) ?? [], asOf)
+      .filter((path) => isOpenToEveryone(path.requiresTier))
+      .map((path) => path.destinationProgramId as string),
+  ).size;
+}
+
+/**
+ * Mẫu số của `flexibilityReach`, và chương trình NÀO đặt ra nó.
+ *
+ * Tách ra để debugger kể được nguồn: mẫu số là số đích của chương trình với
+ * tới nhiều nhất — thường là một chương trình không dính gì tới thẻ đang xét —
+ * nên thêm một chặng Avios® đổi điểm của thẻ Amex® mà không chạm dòng nào của
+ * thẻ đó. Provenance chỉ kể chặng từ đồng tiền của thẻ thì admin được dẫn sang
+ * tầng chấm điểm (vòng Codex 15).
+ */
+export function flexibilityScale(
+  ix: DatasetIndex,
+  asOf: string,
+): { best: number; programs: PointsProgramId[] } {
+  let best = 0;
+  let programs: PointsProgramId[] = [];
+  for (const program of ix.programById.values()) {
+    const count = openDestinationCount(ix, program.id, asOf);
+    if (count > best) {
+      best = count;
+      programs = [program.id];
+    } else if (count === best && count > 0) {
+      programs.push(program.id);
+    }
+  }
+  return { best, programs: programs.sort() };
 }
 
 /** Định giá đang hiệu lực của một chương trình, `null` khi chưa có dòng nào. */
