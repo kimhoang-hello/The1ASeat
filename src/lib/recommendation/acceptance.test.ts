@@ -32,6 +32,7 @@ import {
   japanTripShortfall,
   lowSpendCapacity,
   nearlyEmpty,
+  vietnamTripFunded,
 } from "./data/user-fixtures.ts";
 import type { OfferHistoryPoint } from "./offer-history.ts";
 import type { RecommendationDataset } from "./types.ts";
@@ -448,4 +449,31 @@ test("người CHƯA có điểm nào: thẻ Aeroplan® không mất điểm thu
   const td = ranking(record).find((row) => row.candidate.productSlug === "td-aeroplan-visa-infinite")!;
   const gap = td.candidate.components.find((c) => c.key === "points_gap_reduction")!;
   assert.ok(gap.raw > 0, gap.note);
+});
+
+test("chỉ biết giá SÀN: 1 điểm không phủ được 50% chuyến đi (vòng Codex 5)", () => {
+  // Canada → Việt Nam phổ thông đặc biệt: Aeroplan® chỉ có sàn, không có trần.
+  const state = structuredClone(vietnamTripFunded);
+  state.goals = state.goals.map((goal) => (goal.type === "trip" ? { ...goal, cabin: "premium_economy" } : goal));
+  const withBalance = (balance: number) => {
+    const copy = structuredClone(state);
+    copy.balances = copy.balances.map((row) => ({ ...row, balance }));
+    return execute(copy).record;
+  };
+  const one = withBalance(1).derivedState.goals[0].tripCoverage!;
+  assert.ok(one.coverage !== null && one.coverage < 0.01, `1 điểm phủ ${one.coverage}`);
+  assert.equal(one.coverageKnown, false);
+  // Nhiều điểm hơn giá sàn thì mới lên tới điểm giữa — không bao giờ quá 50%
+  // khi chưa ai biết trần.
+  const many = withBalance(260_000).derivedState.goals[0].tripCoverage!;
+  assert.ok(many.coverage! > one.coverage! && many.coverage! <= 0.5);
+});
+
+test("chương trình đi kèm tỷ lệ phủ là chương trình QUYẾT ĐỊNH nó (vòng Codex 5)", () => {
+  const state = structuredClone(japanTripFunded);
+  state.balances = state.balances.map((row) => ({ ...row, balance: null }));
+  const cover = execute(state).record.derivedState.goals[0].tripCoverage!;
+  // MR chuyển được sang Aeroplan® / Asia Miles®, KHÔNG sang AAdvantage®.
+  assert.notEqual(cover.bestProgram, "aadvantage");
+  assert.equal(cover.coverage, 0.5);
 });

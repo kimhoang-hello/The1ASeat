@@ -664,3 +664,16 @@ test("vòng Codex 3 — phép gán 'nếu như' có setter ném thì TRẢ lỗi
   assert.equal(applyAssignment(state, "profile.annualFeeTolerancePerCard=0"), null);
   assert.equal(state.profile.annualFeeTolerancePerCard, 0);
 });
+
+test("vòng Codex 5 — bản ghi nguồn KHÔNG có chặng đòi hạng thành viên (engine không đọc chúng)", () => {
+  for (const state of USER_FIXTURES) {
+    const { record, dataset } = execute(state);
+    for (const facts of record.derivedState.candidates.slice(0, 8)) {
+      const e = explainProduct(record, facts.productSlug, { dataset });
+      for (const row of e.provenance!.filter((r) => r.table === "transfer_paths")) {
+        const path = dataset.transferPaths.find((p) => p.id === row.id)!;
+        assert.equal(path.requiresTier, null, `${facts.productSlug}: ${row.id}`);
+      }
+    }
+  }
+});

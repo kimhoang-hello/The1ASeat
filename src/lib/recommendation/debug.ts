@@ -279,9 +279,14 @@ export function provenanceFor(
   // chương trình đặt vé, tầm với linh hoạt, và phần "đổ vào hệ sinh thái"
   // của §16 Rule 3. Một tỷ lệ chuyển sai đổi thứ hạng mà không chạm dòng nào
   // của chính thẻ.
+  // Chỉ chặng KHÔNG đòi hạng thành viên — engine bỏ mọi chặng có
+  // `requiresTier` ở mọi phép tính (bonus quy đổi, tầm với, phủ chuyến đi,
+  // tập trung danh mục). Ghi chúng ra là chỉ admin tới dòng engine không đọc.
   const sources = new Set<string>([...programs, ...walletPrograms]);
   for (const path of activeAt(dataset.transferPaths, asOf)) {
-    if (sources.has(path.sourceProgramId as string)) rows.push(provenanceRow("transfer_paths", path));
+    if (path.requiresTier === null && sources.has(path.sourceProgramId as string)) {
+      rows.push(provenanceRow("transfer_paths", path));
+    }
   }
   for (const strategy of awardStrategies) rows.push(provenanceRow("award_strategies", strategy));
   for (const row of byProduct(dataset.productBenefits)) rows.push(provenanceRow("product_benefits", row));

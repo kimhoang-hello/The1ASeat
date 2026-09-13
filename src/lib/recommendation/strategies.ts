@@ -128,6 +128,8 @@ export function tripCoverage(
    * chương trình đủ để đặt vé, nên cực đại là đúng phép.
    */
   let decision: number | null = null;
+  let bestDecision: number | null = null;
+  let bestOwn: number | null = null;
   let bestProgram: PointsProgramId | null = null;
   let accessible: number | null = null;
   let lowerBound = false;
@@ -160,7 +162,19 @@ export function tripCoverage(
       // chuyện của chuyến đi, thiếu GIÁ là chuyện của chương trình.
       if (row.perPassengerOneWayHigh === null) {
         const held = accessibleFor(state, ix, row.programId, asOf);
-        if (held.total > 0 || held.hasUnknownSource) unpricedHeld.push(row.programId);
+        if (held.total > 0 || held.hasUnknownSource) {
+          unpricedHeld.push(row.programId);
+          // Chỉ biết giá SÀN: giá thật ≥ sàn, không có trần. Nên phần phủ của
+          // chương trình này nằm trong [0, min(1, điểm / sàn)] — không phải
+          // [cận dưới, 1]. Một điểm Aeroplan® trên chuyến sàn 170,000 phủ tối
+          // đa 1/170,000, và bản trước cho nó 50% (vòng Codex 5, P1). Số dư
+          // chưa biết thì trần là 1.
+          if (row.low !== null && row.low > 0) {
+            const total = held.total + (extra?.(row.programId) ?? 0);
+            const hi = held.hasUnknownSource ? 1 : Math.min(1, total / row.low);
+            if (decision === null || hi / 2 > decision) decision = hi / 2;
+          }
+        }
       }
       continue;
     }
@@ -179,10 +193,21 @@ export function tripCoverage(
     // Cận dưới đã vượt giá điển hình thì con số thật càng vượt.
     if (row.typical !== null && total >= row.typical) coversTypical = true;
     const own = Math.min(1, total / row.high);
+    // Số dư chưa biết: phần phủ nằm trong [own, 1] — lấy điểm giữa.
     const ownDecision = reach.hasUnknownSource && own < 1 ? own + (1 - own) / 2 : own;
     if (decision === null || ownDecision > decision) decision = ownDecision;
-    if (coverage === null || own > coverage) {
-      coverage = own;
+    if (coverage === null || own > coverage) coverage = own;
+    // `bestProgram` + `accessible` là chương trình QUYẾT ĐỊNH tỷ lệ phủ, chọn
+    // trong CÙNG vòng lặp với nó — không phải chương trình có cận dưới cao
+    // nhất. Chọn theo cận dưới thì MR chưa biết (quyết định 50% qua Aeroplan®)
+    // đi kèm `bestProgram: "aadvantage", accessible: 0` (vòng Codex 5).
+    if (
+      bestDecision === null ||
+      ownDecision > bestDecision ||
+      (ownDecision === bestDecision && own > (bestOwn ?? -1))
+    ) {
+      bestDecision = ownDecision;
+      bestOwn = own;
       bestProgram = row.programId;
       accessible = total;
     }
@@ -226,11 +251,6 @@ export function tripCoverage(
   // Một chương trình có điểm mà không định giá nổi cũng làm kết luận thành
   // cận dưới: người dùng có thể đang phủ tốt hơn con số này.
   const isLowerBound = lowerBound || unpricedHeld.length > 0;
-  // Chương trình có điểm mà chỉ biết giá sàn: nó có thể phủ bất cứ đâu trong
-  // [cận dưới, 1], nên nó góp đúng điểm giữa đó.
-  if (coverage !== null && decision !== null && unpricedHeld.length > 0 && coverage < 1) {
-    decision = Math.max(decision, coverage + (1 - coverage) / 2);
-  }
   return {
     coverage: decision,
     coverageLowerBound: coverage,

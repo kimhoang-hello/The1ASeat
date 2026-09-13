@@ -127,6 +127,10 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * người chưa có điểm nào, `bestProgram` là chương trình đầu theo id và mọi
  * thẻ Aeroplan® được 0 điểm thu hẹp khoảng cách.
  *
+ * 4.5.0 — vòng Codex 5: chương trình chỉ biết giá SÀN phủ trong
+ * [0, min(1, điểm/sàn)] chứ không phải [cận dưới, 1] (1 điểm từng được 50%);
+ * `bestProgram`/`accessible` là chương trình QUYẾT ĐỊNH tỷ lệ phủ.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -139,7 +143,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.4.0";
+export const ENGINE_VERSION = "4.5.0";
 
 export interface RecommendInput {
   state: UserState;
