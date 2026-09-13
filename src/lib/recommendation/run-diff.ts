@@ -12,6 +12,7 @@
  */
 
 import { canonicalJson } from "./fingerprint.ts";
+import { cutHistory, historyCutoff } from "./offer-history.ts";
 import { executeRun, inputOf, type RecommendationRunRecord, type RunInput } from "./runs.ts";
 import type { RecommendationDataset } from "./types.ts";
 import type { Candidate } from "./engine-types.ts";
@@ -553,7 +554,14 @@ export function explainChange(
     ];
     swaps = variants.map(({ factor, input, differs }) => {
       if (!differs) return { factor, differs, winnerAlone: winnerOf(base), firstDivergence: null };
-      const swapped = executeRun(input, meta).record;
+      // Lịch sử offer cắt theo NGÀY của biến thể: đổi riêng lịch sử (ngày cũ)
+      // hay đổi riêng bộ dữ liệu (ngày mới) đều ghép lịch sử của ngày này vào
+      // ngày kia, và `executeRun` từ chối mốc nằm sau ngày cắt (vòng Codex 18).
+      const cutoff = historyCutoff(input.asOf, input.knownAt);
+      const offerHistory = new Map(
+        [...(input.offerHistory ?? new Map())].map(([productId, points]) => [productId, cutHistory(points, cutoff)]),
+      );
+      const swapped = executeRun({ ...input, offerHistory }, meta).record;
       return {
         factor,
         differs,

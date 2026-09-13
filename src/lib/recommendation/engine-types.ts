@@ -241,11 +241,17 @@ export interface EligibilityVerdict {
   status: EligibilityStatus;
   /** Được mở thẻ, nhưng KHÔNG được welcome bonus (Amex® once-in-a-lifetime). */
   welcomeOfferBlocked: boolean;
+  /** Cửa welcome bonus CHƯA BIẾT — vd. người dùng chưa khai thẻ nào từng giữ. */
+  welcomeOfferUncertain: boolean;
   reasonCodes: ReasonCode[];
   warnings: WarningCode[];
   /** Luật đã chặn, để debugger của Phase 4 chỉ đúng dòng. */
+  /** Luật cửa MỞ THẺ đã chặn / chưa biết — thứ quyết định `status`. */
   failedRuleIds: string[];
   unknownRuleIds: string[];
+  /** Luật cửa WELCOME BONUS đã chặn / chưa biết — không đổi `status`. */
+  welcomeFailedRuleIds: string[];
+  welcomeUnknownRuleIds: string[];
   /** Mọi luật đang hiệu lực của thẻ, đã sắp theo id — xem `EligibilityRuleTrace`. */
   rules: EligibilityRuleTrace[];
 }

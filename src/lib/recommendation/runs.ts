@@ -84,8 +84,12 @@ export interface RecommendationRunRecord {
    * của spec: nó tách "bản ghi hỏng trong kho" khỏi "engine chạy lại ra khác"
    * — thiếu nó, một điểm số bị sửa trong kho làm replay báo HỒI QUY dưới cùng
    * version, và admin đi tìm lỗi trong engine (vòng Codex 17).
+   *
+   * VẮNG ở bản ghi tạo trước khi có trường này (ENGINE_VERSION < 4.19.0): khi
+   * đó kết quả đã lưu không kiểm được, và `ReplayResult.resultVerified` nói ra
+   * — chứ không kết luận bản ghi hỏng (vòng Codex 18).
    */
-  resultFingerprint: string;
+  resultFingerprint?: string;
   createdAt: string;
 }
 
@@ -151,11 +155,17 @@ export function executeRun(input: RunInput, meta: RunMeta): ExecutedRun {
   const history = throughJson(historyEntries(input.offerHistory));
   const knownAt = input.knownAt ?? null;
 
-  // Bộ dữ liệu phải ĐÃ cắt theo đúng `asOf`/`knownAt` bản ghi sẽ khai — cắt lại
-  // lần nữa phải ra y hệt. Không kiểm thì một người gọi truyền bộ CHƯA cắt, bản
-  // ghi nói "biết tới ngày X" trong khi engine đã đọc cả đính chính nhập sau X,
-  // và không phép so nào về sau phát hiện được: dấu vân tay khớp chính cái bộ
-  // sai đó (vòng rà Phase 4).
+  // Bộ dữ liệu không được mang dòng mà `asOf`/`knownAt` bản ghi khai chưa thể
+  // thấy — cắt lại lần nữa phải ra y hệt. Không kiểm thì một người gọi truyền
+  // bộ CHƯA cắt, bản ghi nói "biết tới ngày X" trong khi engine đã đọc cả đính
+  // chính nhập sau X (vòng rà Phase 4).
+  //
+  // Giới hạn, nói thẳng: phép này bắt dòng THỪA, không bắt được bộ bị cắt
+  // THIẾU (cắt ở một ngày sớm hơn, hay lịch sử thiếu một mốc) — dòng đã mất
+  // không dựng lại được từ chính bộ đó (vòng Codex 18). Bộ thiếu vẫn được ghi
+  // đúng dấu vân tay của thứ engine đã đọc, nên `diff` giữa hai lượt chạy chỉ
+  // ra dòng nào vắng; lời hứa "đủ" thuộc về nguồn (`getDataset`,
+  // `loadOfferHistory`), không thuộc về chỗ này.
   // Cùng lý do cho lịch sử offer: nó là THAM SỐ, và một điểm ghi sau ngày cắt
   // (hay một `until` biết trước lần ghi kế tiếp) là tương lai lọt vào §12.
   const cutoff = historyCutoff(input.asOf, knownAt);
@@ -219,6 +229,11 @@ export function executeRun(input: RunInput, meta: RunMeta): ExecutedRun {
 export interface ReplayResult {
   /** Đầu ra VÀ derived state chạy lại khớp bản đã lưu, tới từng chữ số. */
   identical: boolean;
+  /**
+   * Kết quả đã lưu được kiểm với dấu vân tay lúc lưu. `false` = bản ghi cũ
+   * không có dấu vân tay: một `regression` khi đó CÓ THỂ là kho hỏng.
+   */
+  resultVerified: boolean;
   /** Version lúc lưu và version bây giờ. */
   engineVersion: { recorded: string; current: string };
   ruleVersion: { recorded: string; current: string };
@@ -254,7 +269,9 @@ export function replayRun(record: RecommendationRunRecord, dataset: Recommendati
   const stored = [
     ["hồ sơ người dùng", fingerprint(record.inputSnapshot.state), record.inputSnapshot.stateFingerprint],
     ["lịch sử offer", fingerprint(record.inputSnapshot.offerHistory), record.inputSnapshot.offerHistoryFingerprint],
-    ["kết quả đã lưu", resultFingerprintOf(record.derivedState, record.outputSnapshot), record.resultFingerprint],
+    ...(record.resultFingerprint === undefined
+      ? []
+      : ([["kết quả đã lưu", resultFingerprintOf(record.derivedState, record.outputSnapshot), record.resultFingerprint]] as const)),
   ] as const;
   for (const [what, actual, expected] of stored) {
     if (actual !== expected) {
@@ -281,6 +298,7 @@ export function replayRun(record: RecommendationRunRecord, dataset: Recommendati
     record.engineVersion === ENGINE_VERSION && record.ruleVersion === RULE_VERSION;
   return {
     identical,
+    resultVerified: record.resultFingerprint !== undefined,
     engineVersion: { recorded: record.engineVersion, current: ENGINE_VERSION },
     ruleVersion: { recorded: record.ruleVersion, current: RULE_VERSION },
     regression: !identical && sameVersion,

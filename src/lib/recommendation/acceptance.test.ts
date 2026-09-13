@@ -1284,3 +1284,58 @@ test("cảnh báo 'chỉ biết giá sàn' trên THẺ chỉ khi bonus của ch�
   assert.match(platinum.components.find((c) => c.key === "points_gap_reduction")!.note, /ƯỚC LƯỢNG/);
   assert.ok(platinum.warnings.includes("AWARD_PRICE_FLOOR_ONLY"));
 });
+
+/* ================================================================== *
+ * Vòng Codex 18
+ * ================================================================== */
+
+test("cửa welcome bonus CHƯA BIẾT không được đọc như cửa mở (lỗi từ Phase 3)", () => {
+  // Người chưa khai thẻ nào: luật Amex® once-in-a-lifetime không biết họ từng
+  // giữ thẻ đó chưa. Bản trước hứa trọn bonus.
+  assert.equal(beginnerUndeclared.declared.cards, false, "tiền đề: chưa khai thẻ");
+  const { record } = execute(beginnerUndeclared);
+  const onceInLifetime = new Set(
+    DATA.eligibilityRules.filter((r) => r.scope === "welcome_offer").map((r) => r.productId as string),
+  );
+  const amex = record.derivedState.candidates.filter((row) => row.selectable && onceInLifetime.has(row.productId as string));
+  assert.ok(amex.length > 0, "tiền đề: có thẻ mang luật welcome-offer");
+  for (const row of amex) {
+    assert.equal(row.eligibility.welcomeOfferUncertain, true, row.productSlug);
+    assert.ok(row.eligibility.reasonCodes.includes("WELCOME_BONUS_UNCERTAIN"));
+    assert.ok(eligibilityUnknownCauses(row.eligibility, "welcome_offer").some((c) => c.source === "user_input"));
+    const ranked = findRanked(record, row.productSlug)!;
+    assert.ok(ranked.adjustments.some((a) => a.rule === "E_welcome_offer_uncertain" && a.delta === -0.075));
+  }
+  // Khai rồi (không từng giữ thẻ nào) thì cửa mở, không trừ gì.
+  const declared = { ...beginnerUndeclared, declared: { ...beginnerUndeclared.declared, cards: true } };
+  const after = execute(declared).record;
+  for (const row of amex) {
+    const facts = after.derivedState.candidates.find((f) => f.productId === row.productId)!;
+    assert.equal(facts.eligibility.welcomeOfferUncertain, false, row.productSlug);
+  }
+});
+
+test("thẻ bị loại vì cửa MỞ THẺ không bị kể thêm luật chỉ chặn BONUS", () => {
+  // Thu nhập $10,000 trượt ngưỡng mở thẻ; từng giữ đúng thẻ đó thì trượt thêm
+  // luật once-in-a-lifetime — thứ chỉ làm mất bonus (vòng Codex 18).
+  // Thẻ Amex® mang luật bonus nhưng không công bố ngưỡng thu nhập: dựng thêm
+  // một ngưỡng mở thẻ $100,000 cho nó (cùng dạng một luật thật).
+  const welcomeRule = DATA.eligibilityRules.find((r) => r.scope === "welcome_offer")!;
+  const productId = welcomeRule.productId;
+  const template = DATA.eligibilityRules.find((r) => r.ruleType === "minimum_personal_income" && Number(r.value) > 0)!;
+  const gate = { ...template, id: "elig_test_income_gate" as never, productId, value: 100_000, ruleGroup: null };
+  // Qua `datasetAt`: chỗ trống `eligibility_unknown` của thẻ tính lại theo luật mới.
+  const data = datasetAt({ ...DATA, eligibilityRules: [...DATA.eligibilityRules, gate] }, ASOF);
+  const state = structuredClone(beginnerNoCards);
+  state.profile.annualPersonalIncome = amountRange(10_000, 10_000);
+  state.profile.annualHouseholdIncome = amountRange(10_000, 10_000);
+  state.cards = [{ ...vietnamTripFunded.cards[0], userId: state.profile.id, productId, status: "closed" as never }];
+  state.declared = { ...state.declared, cards: true };
+  const { record } = execute(state, { data });
+  const excluded = record.derivedState.excluded.find((row) => row.productId === productId)!;
+  assert.equal(excluded.stage, "eligibility");
+  assert.deepEqual(excluded.failedRuleIds, ["elig_test_income_gate"]);
+  assert.ok(!excluded.failedRuleIds.includes(welcomeRule.id as string), "luật bonus không phải lý do loại thẻ");
+  const facts = record.derivedState.candidates.find((row) => row.productId === productId)!;
+  assert.ok(facts.eligibility.welcomeFailedRuleIds.includes(welcomeRule.id as string), "nó vẫn nằm ở danh sách của cửa bonus");
+});

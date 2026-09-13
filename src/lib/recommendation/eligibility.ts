@@ -122,21 +122,21 @@ function evaluateRule(rule: EligibilityRule, state: UserState): RuleEvaluation {
     case "student_status_required":
       return boolOutcome(profile?.isStudent ?? null, rule.value === true);
     case "existing_cardholder_excluded":
-      return known(
-        asArray(state.cards).some((card) => card?.productId === rule.productId && holdsNow(card))
-          ? "fail"
-          : "pass",
-      );
+      if (asArray(state.cards).some((card) => card?.productId === rule.productId && holdsNow(card))) {
+        return known("fail");
+      }
+      // Không thấy thẻ đó trong danh sách CHƯA KHAI thì chưa biết — không phải
+      // "chưa từng giữ". Trống ≠ không (bài học Phase 2, `UserState.declared`).
+      return state.declared?.cards === true ? known("pass") : unknown("user_field_missing");
     case "previous_cardholder_excluded":
       // `closed` VÀ `previously_held` ĐỀU là từng giữ. Viết
       // `status === "previously_held"` ở đây là để mọi thẻ đã đóng lọt qua —
       // và hậu quả không phải một lỗi, mà là một khuyến nghị trông hợp lý hứa
       // khoản bonus ngân hàng sẽ từ chối.
-      return known(
-        asArray(state.cards).some((card) => card?.productId === rule.productId && everHeld(card))
-          ? "fail"
-          : "pass",
-      );
+      if (asArray(state.cards).some((card) => card?.productId === rule.productId && everHeld(card))) {
+        return known("fail");
+      }
+      return state.declared?.cards === true ? known("pass") : unknown("user_field_missing");
     case "banking_relationship_required":
       // Mô hình người dùng không khai quan hệ ngân hàng — §31 không hỏi, nên
       // không có trường nào để đọc. `unknown` là câu trả lời đúng; trả `pass`
@@ -185,8 +185,13 @@ export function evaluateEligibility(
 
   const reasonCodes: ReasonCode[] = [];
   const warnings: WarningCode[] = [];
+  // HAI cặp danh sách, một cho mỗi cửa: luật chặn MỞ THẺ và luật chỉ chặn
+  // BONUS. Chung một cặp thì một thẻ bị loại vì thu nhập được debugger kể thêm
+  // luật once-in-a-lifetime — thứ chỉ làm mất bonus (vòng Codex 18).
   const failedRuleIds: string[] = [];
   const unknownRuleIds: string[] = [];
+  const welcomeFailedRuleIds: string[] = [];
+  const welcomeUnknownRuleIds: string[] = [];
 
   // Luật `soft` và `unknown` không chặn: chúng là ghi chú, và severity nằm
   // trong dữ liệu đúng vì engine không tự phân biệt được.
@@ -202,18 +207,18 @@ export function evaluateEligibility(
     target.set(key, [...(target.get(key) ?? []), rule]);
   }
 
-  function verdictOf(groups: Map<string, EligibilityRule[]>): RuleOutcome {
+  function verdictOf(groups: Map<string, EligibilityRule[]>, failed: string[], unknownIds: string[]): RuleOutcome {
     let sawUnknown = false;
     for (const [, group] of [...groups].sort((a, b) => (a[0] < b[0] ? -1 : 1))) {
       const outcomes = group.map((rule) => evaluateRule(rule, state).outcome);
       const combined = combineGroup(outcomes);
       if (combined === "fail") {
-        failedRuleIds.push(...group.map((rule) => rule.id as string));
+        failed.push(...group.map((rule) => rule.id as string));
         return "fail";
       }
       if (combined === "unknown") {
         sawUnknown = true;
-        unknownRuleIds.push(
+        unknownIds.push(
           ...group
             .filter((_row, index) => outcomes[index] === "unknown")
             .map((rule) => rule.id as string),
@@ -228,8 +233,8 @@ export function evaluateEligibility(
     return sawUnknown ? "unknown" : "pass";
   }
 
-  let application = verdictOf(applicationGroups);
-  const welcome = verdictOf(welcomeGroups);
+  let application = verdictOf(applicationGroups, failedRuleIds, unknownRuleIds);
+  const welcome = verdictOf(welcomeGroups, welcomeFailedRuleIds, welcomeUnknownRuleIds);
 
   // Mọi luật ĐÃ BIẾT đều qua, nhưng lớp dữ liệu nói là chưa biết hết. "Qua hết
   // những gì ta biết" không phải "đủ điều kiện".
@@ -248,14 +253,25 @@ export function evaluateEligibility(
     reasonCodes.push("WELCOME_BONUS_UNAVAILABLE");
     warnings.push("WELCOME_BONUS_BLOCKED_BY_PAST_CARD");
   }
+  // Cửa BONUS chưa biết KHÔNG phải cửa mở. Bản trước chỉ nhìn `fail`, nên
+  // người chưa khai thẻ nào được hứa trọn bonus Amex® once-in-a-lifetime — đúng
+  // người có thể đã từng giữ thẻ đó (vòng Codex 18).
+  const welcomeOfferUncertain = welcome === "unknown";
+  if (welcomeOfferUncertain) {
+    reasonCodes.push("WELCOME_BONUS_UNCERTAIN");
+    warnings.push("WELCOME_BONUS_NOT_VERIFIABLE");
+  }
 
   return {
     status: application === "fail" ? "ineligible" : application === "unknown" ? "unknown" : "eligible",
     welcomeOfferBlocked,
+    welcomeOfferUncertain,
     reasonCodes,
     warnings,
     failedRuleIds,
     unknownRuleIds,
+    welcomeFailedRuleIds,
+    welcomeUnknownRuleIds,
     // MỌI luật, đánh giá bằng CHÍNH `evaluateRule` ở trên — không phải một
     // phép đánh giá thứ hai viết cho debugger. `verdictOf` dừng ở nhóm trượt
     // đầu tiên, nên `failedRuleIds` một mình không kể được các nhóm sau; bảng

@@ -188,3 +188,21 @@ function sameState(a: OfferHistoryState, b: OfferHistoryState): boolean {
 export function historyCutoff(asOf: string, knownAt?: string | null): string {
   return knownAt != null && knownAt < asOf ? knownAt : asOf;
 }
+
+/**
+ * Cắt một lịch sử ĐÃ gộp đợt ở ngày cắt — kết quả bằng đúng `dedupeHistory`
+ * trên dòng thời gian gốc với cùng ngày cắt: mức bắt đầu sau ngày cắt biến
+ * mất, và mức đang chạy qua ngày cắt thành `endCensored` (lượt chạy lúc ấy
+ * chưa thể biết nó kết thúc khi nào).
+ *
+ * Dùng khi ghép lịch sử của một lượt chạy vào NGÀY của lượt chạy khác
+ * (`explainChange`): lịch sử của ngày 08/09 ghép vào ngày 07/09 mà không cắt là
+ * cho lượt chạy 07/09 thấy tương lai (vòng Codex 18).
+ */
+export function cutHistory(points: readonly OfferHistoryPoint[], cutoff: string): OfferHistoryPoint[] {
+  return points
+    .filter((point) => point.at <= cutoff)
+    .map((point) =>
+      point.until !== null && point.until > cutoff ? { ...point, until: null, endCensored: true } : point,
+    );
+}

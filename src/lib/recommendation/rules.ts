@@ -247,6 +247,19 @@ export function applyRules(input: RuleInput): RuleOutcome {
     });
   }
 
+  /* ---- Welcome bonus CHƯA CHẮC ------------------------------------ */
+  if (candidate.eligibility.welcomeOfferUncertain) {
+    // Nửa mức của bonus bị chặn: chưa biết = điểm giữa của "được" (0) và
+    // "không được" (−0.15) — cùng quy ước "chưa biết = trung tính" của cả
+    // engine. Không trừ gì là hứa trọn bonus cho người có thể đã từng giữ thẻ.
+    adjustments.push({
+      rule: "E_welcome_offer_uncertain",
+      layer: "eligibility",
+      delta: -0.075,
+      reasonCode: "WELCOME_BONUS_UNCERTAIN",
+    });
+  }
+
   const editorial = editorialAdjustment();
   if (editorial !== null) {
     adjustments.push({

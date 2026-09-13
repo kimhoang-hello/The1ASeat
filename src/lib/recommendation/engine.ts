@@ -198,6 +198,13 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * phạt (validator và engine nay đọc CHUNG `rule-shapes.ts`); cảnh báo "chỉ biết
  * giá sàn" trên thẻ chỉ khi bonus của chính thẻ rơi vào chương trình đó.
  *
+ * 4.20.0 — vòng Codex 18 (**lỗi từ Phase 3**): cửa welcome bonus `unknown` bị
+ * đọc như `pass` — người chưa khai thẻ nào được hứa trọn bonus Amex®
+ * once-in-a-lifetime. Nay luật "đang/từng giữ thẻ" ra `unknown` khi danh sách
+ * thẻ chưa khai, và cửa bonus chưa biết trừ nửa mức bonus bị chặn
+ * (`WELCOME_BONUS_UNCERTAIN`). Luật chặn mở thẻ và luật chặn bonus tách danh
+ * sách, để debugger không kể luật bonus là lý do loại thẻ.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -210,7 +217,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.19.0";
+export const ENGINE_VERSION = "4.20.0";
 
 export interface RecommendInput {
   state: UserState;

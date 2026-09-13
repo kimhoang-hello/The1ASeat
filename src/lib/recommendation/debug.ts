@@ -166,10 +166,14 @@ const CAUSE_TEXT: Record<RuleUnknownCause, string> = {
  * (`unknownRuleIds`), cộng chỗ trống của lớp dữ liệu (`gap:`): một luật chưa
  * biết nằm cạnh một luật khác trong nhóm HOẶC đã qua thì không quyết định gì.
  */
-export function eligibilityUnknownCauses(verdict: EligibilityVerdict): EligibilityUnknownCause[] {
+export function eligibilityUnknownCauses(
+  verdict: EligibilityVerdict,
+  /** Cửa MỞ THẺ (quyết định `status`) hay cửa WELCOME BONUS. */
+  gate: "application" | "welcome_offer" = "application",
+): EligibilityUnknownCause[] {
   const byId = new Map(verdict.rules.map((rule) => [rule.ruleId, rule]));
   const out: EligibilityUnknownCause[] = [];
-  for (const id of verdict.unknownRuleIds) {
+  for (const id of gate === "application" ? verdict.unknownRuleIds : verdict.welcomeUnknownRuleIds) {
     if (id.startsWith("gap:")) {
       out.push({ source: "source_data", detail: "lớp dữ liệu nói chưa biết hết điều kiện của thẻ" });
       continue;

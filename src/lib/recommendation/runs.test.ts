@@ -219,6 +219,32 @@ test("§20 — hồ sơ hay lịch sử offer trong bản ghi bị sửa là L�
   assert.throws(() => replayRun(output, dataset), /kết quả đã lưu.*không còn khớp/);
 });
 
+test("§20 — bản ghi CŨ (trước khi có dấu vân tay kết quả) vẫn chạy lại được, và nói ra là chưa kiểm", () => {
+  // Vòng Codex 18: trường mới bắt buộc làm mọi bản ghi cũ bị gọi là hỏng kho.
+  const { record, dataset } = execute(vietnamTripShortfall);
+  const old = structuredClone(record);
+  delete old.resultFingerprint;
+  const replay = replayRun(old, dataset);
+  assert.equal(replay.identical, true);
+  assert.equal(replay.resultVerified, false);
+  assert.equal(replayRun(record, dataset).resultVerified, true);
+});
+
+test("explainChange ghép lịch sử offer của ngày này vào ngày kia thì cắt theo ngày đó, không nổ", () => {
+  // Hai lượt hợp lệ ngày 07/09 và 08/09; lịch sử có thêm một mốc ghi ngày
+  // 08/09. Đổi riêng lịch sử (ngày 07/09) mà không cắt là cho lượt 07/09 thấy
+  // tương lai — `executeRun` từ chối, và `explainChange` từng nổ (vòng Codex 18).
+  const cobalt = productIdFor("amex-cobalt") as string;
+  const early = [SAMPLE_HISTORY[0], SAMPLE_HISTORY[1], { ...SAMPLE_HISTORY[2], until: null, endCensored: true }];
+  const later = [SAMPLE_HISTORY[0], SAMPLE_HISTORY[1], { ...SAMPLE_HISTORY[2], until: "2026-09-08", endCensored: false }, { ...SAMPLE_HISTORY[2], at: "2026-09-08", until: null, amount: 20_000, label: "20,000 điểm" }];
+  const d7 = datasetAt(offlineDataset(), "2026-09-07");
+  const a = executeRun({ state: aeroplanHeavy, data: d7, asOf: "2026-09-07", offerHistory: new Map([[cobalt, early]]) }, { id: "a", createdAt: "2026-09-07" });
+  const b = executeRun({ state: aeroplanHeavy, data: DATA, asOf: ASOF, offerHistory: new Map([[cobalt, later]]) }, { id: "b", createdAt: ASOF });
+  const change = explainChange(a.record, b.record, { before: a.dataset, after: b.dataset });
+  const history = change.swaps!.find((row) => row.factor === "offer_history")!;
+  assert.equal(history.differs, true);
+});
+
 test("§20 — khác mà version KHÔNG đổi là HỒI QUY; khác vì version đổi thì không", () => {
   const { record, dataset } = execute(vietnamTripShortfall);
   // Giả lập "engine LÚC ẤY ra kết quả khác": đổi kết quả VÀ dấu vân tay đi

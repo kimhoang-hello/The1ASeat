@@ -325,6 +325,10 @@ export function renderRunReport(record: RecommendationRunRecord, options: RunRep
       bits.push(`điều kiện ${e.status}${sources.length > 0 ? ` (${sources.join(" + ")})` : ""}`);
     }
     if (e.welcomeOfferBlocked) bits.push("bonus bị chặn");
+    if (e.welcomeOfferUncertain) {
+      const sources = [...new Set(eligibilityUnknownCauses(e, "welcome_offer").map((cause) => SOURCE_TEXT[cause.source]))];
+      bits.push(`bonus chưa chắc${sources.length > 0 ? ` (${sources.join(" + ")})` : ""}`);
+    }
     const warnings = [...s.warnings, ...e.warnings];
     if (bits.length === 0 && warnings.length === 0) continue;
     anyWarning = true;
@@ -506,7 +510,10 @@ export function renderProductExplanation(explanation: ProductExplanation): strin
   const facts = explanation.facts;
   if (facts !== null) {
     out.push(heading(null, "Điều kiện §14 — từng luật"));
-    out.push(`  phán quyết: ${facts.eligibility.status}${facts.eligibility.welcomeOfferBlocked ? " · welcome bonus BỊ CHẶN" : ""}`);
+    out.push(
+      `  phán quyết: ${facts.eligibility.status}${facts.eligibility.welcomeOfferBlocked ? " · welcome bonus BỊ CHẶN" : ""}` +
+        `${facts.eligibility.welcomeOfferUncertain ? " · welcome bonus CHƯA CHẮC" : ""}`,
+    );
     if (facts.eligibility.rules.length === 0) out.push("  không có luật nào đang hiệu lực");
     for (const rule of facts.eligibility.rules) {
       out.push(
@@ -517,6 +524,9 @@ export function renderProductExplanation(explanation: ProductExplanation): strin
     }
     for (const cause of eligibilityUnknownCauses(facts.eligibility)) {
       out.push(`  chưa biết vì ${SOURCE_TEXT[cause.source]}: ${cause.detail}`);
+    }
+    for (const cause of eligibilityUnknownCauses(facts.eligibility, "welcome_offer")) {
+      out.push(`  welcome bonus chưa chắc vì ${SOURCE_TEXT[cause.source]}: ${cause.detail}`);
     }
 
     out.push(heading(null, "Phù hợp §14"));

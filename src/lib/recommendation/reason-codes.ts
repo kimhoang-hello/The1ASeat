@@ -32,6 +32,7 @@ export const REASON_CODES = [
   "OFFER_ENDING_SOON",
   "OFFER_TERMS_UNKNOWN",
   "WELCOME_BONUS_UNAVAILABLE",
+  "WELCOME_BONUS_UNCERTAIN",
 
   /* Mốc chi (§13) */
   "MIN_SPEND_GOOD_FIT",
@@ -94,6 +95,8 @@ export const REASON_CODE_NOTES: Record<ReasonCode, string> = {
     "offer-quality.ts — offer có headline nhưng không có component nào, tức mức DÙNG ĐƯỢC chưa biết (DataGap offer_terms_unknown).",
   WELCOME_BONUS_UNAVAILABLE:
     "eligibility.ts — luật scope welcome_offer chặn (Amex® once-in-a-lifetime). Thẻ vẫn mở được, bonus thì không.",
+  WELCOME_BONUS_UNCERTAIN:
+    "eligibility.ts — cửa welcome bonus CHƯA BIẾT (vd. chưa khai thẻ từng giữ). rules.ts trừ nửa mức của WELCOME_BONUS_UNAVAILABLE.",
 
   MIN_SPEND_GOOD_FIT: "suitability.ts — mốc chi 90 ngày ≤ 70% sức dồn người dùng khai (§13).",
   MIN_SPEND_TIGHT: "suitability.ts — mốc chi nằm trong khoảng 70–100% sức dồn.",
@@ -167,6 +170,7 @@ export const WARNING_CODES = [
   "ANNUAL_FEE_ABOVE_STATED_TOLERANCE",
   "SECOND_YEAR_FEE_APPLIES",
   "WELCOME_BONUS_BLOCKED_BY_PAST_CARD",
+  "WELCOME_BONUS_NOT_VERIFIABLE",
   "ELIGIBILITY_NOT_VERIFIABLE",
   "AWARD_ROUTE_NOT_IN_DATASET",
   "AWARD_PRICE_FLOOR_ONLY",
@@ -188,6 +192,8 @@ export const WARNING_CODE_NOTES: Record<WarningCode, string> = {
     "suitability.ts — offer miễn phí năm đầu nhưng phí thường niên vẫn tới ở năm thứ hai.",
   WELCOME_BONUS_BLOCKED_BY_PAST_CARD:
     "eligibility.ts — everHeld + luật once-in-a-lifetime. Không phải 'từng đóng' mà là TỪNG GIỮ.",
+  WELCOME_BONUS_NOT_VERIFIABLE:
+    "eligibility.ts — thiếu dữ liệu người dùng cho luật welcome bonus (thường là danh sách thẻ chưa khai).",
   ELIGIBILITY_NOT_VERIFIABLE: "eligibility.ts — thiếu dữ liệu người dùng cho một luật cứng.",
   AWARD_ROUTE_NOT_IN_DATASET: "trip-need.ts — cặp vùng chưa có award strategy nào.",
   AWARD_PRICE_FLOOR_ONLY: "trip-need.ts — chỉ có mức sàn của định giá động.",

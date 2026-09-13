@@ -259,7 +259,9 @@ async function main() {
       }
       console.log(
         result.regression
-          ? "✗ HỒI QUY: version không đổi mà kết quả đổi — engine không còn tất định (§35)"
+          ? result.resultVerified
+            ? "✗ HỒI QUY: version không đổi mà kết quả đổi — engine không còn tất định (§35)"
+            : "✗ HỒI QUY hoặc KHO HỎNG: version không đổi mà kết quả đổi, và bản ghi cũ này không có dấu vân tay kết quả để phân biệt"
           : "≠ kết quả đổi vì engine/luật đã đổi version — đây là tác động của lần đổi đó:",
       );
       console.log(renderStageDiffs(diffRecords(record, result.replayed)));
