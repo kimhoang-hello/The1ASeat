@@ -15,16 +15,32 @@
  * Mỗi lần vá ở MỘT chỗ thì chỗ kia vẫn trả lời câu hỏi theo cách cũ. File này
  * là chỗ duy nhất trả lời nó; `engine.ts` chỉ gọi.
  *
- * Tập sản phẩm, theo đúng cách engine dùng chúng:
+ * "Đọc" ở đây nghĩa là CÓ THỂ ĐỔI MỘT ĐẦU RA — không phải "được truy cập".
+ * Engine tính dữ kiện cho cả những thẻ nó sẽ loại (tính trước, lọc sau), và
+ * một dòng chỉ được truy cập để rồi bị vứt đi không làm khuyến nghị kém tươi.
+ * Mỗi luật dưới đây gắn với MỘT phép tính cụ thể của engine; đổi phép tính đó
+ * mà quên sửa luật ở đây là để hai thứ lệch nhau — và mỗi luật có một test
+ * trong `acceptance.test.ts` sẽ đỏ.
  *
- *   `gated`  — tập ứng viên: luật điều kiện của MỌI thẻ được đánh giá để quyết
- *              định cửa (một luật sai loại oan một thẻ, dù thẻ đó không được
- *              chấm điểm).
- *   `scored` — thẻ CHỌN ĐƯỢC: offer, phí, quyền lợi, tỷ lệ tích điểm của chúng
- *              đi vào điểm số và thang đo chung.
- *   `held`   — thẻ ĐANG GIỮ: quyền lợi (quyền lợi trùng, §16 Rule 6) và tỷ lệ
- *              tích điểm (`walletEarnCoverage` của `NO_NEW_CARD`). Không offer,
- *              không phí, không điều kiện.
+ *   phí              — MỌI thẻ trong tập ứng viên: `medianFeeCents` (mốc phí
+ *                      khi người dùng chưa khai ngưỡng) lấy trung vị trên cả
+ *                      tập, trước khi lọc (vòng Codex 13 bác đề nghị cũ của nó).
+ *   luật điều kiện   — tập ứng viên TRỪ thẻ người dùng đã từ chối (`gated`):
+ *                      luật quyết định cửa và `no_reachable_candidate`, nhưng
+ *                      với thẻ đã bị từ chối thì cửa đã đóng trước nó.
+ *   offer, quyền lợi — thẻ CHỌN ĐƯỢC (`scored`); quyền lợi cả thẻ ĐANG GIỮ
+ *                      (§16 Rule 6).
+ *   tỷ lệ tích điểm  — thẻ chọn được + thẻ đang giữ (`walletEarnCoverage`),
+ *                      CHỈ khi mục tiêu đọc chúng VÀ có hồ sơ chi tiêu —
+ *                      `earnFitFor` thoát trước mọi dòng khi chưa khai chi
+ *                      tiêu. Trần tích điểm theo cùng điều kiện.
+ *   định giá         — chỉ chương trình mà một phép nhân thật sự dùng: số dư
+ *                      (danh mục), đồng tiền thưởng của offer, chương trình của
+ *                      tỷ lệ đã đọc.
+ *   chặng chuyển     — MỌI chặng không đòi hạng thành viên: `flexibilityReach`
+ *                      chia cho số đích LỚN NHẤT qua mọi chương trình, nên một
+ *                      chặng Avios® đổi điểm của thẻ Amex® dù không ai giữ Avios®.
+ *   award strategy   — của chặng đang hỏi.
  */
 
 import { activeAt } from "./temporal.ts";
@@ -48,9 +64,11 @@ export function goalReadsEarn(goal: GoalContext, state: UserState, ix: DatasetIn
 }
 
 export interface ReadSet {
+  universe: ReadonlySet<string>;
   gated: ReadonlySet<string>;
   scored: ReadonlySet<string>;
   held: ReadonlySet<string>;
+  /** Tỷ lệ tích điểm (và trần) có thật sự đi vào phép tính — xem đầu file. */
   readsEarn: boolean;
   /** Chương trình người dùng có dòng số dư khác 0 — portfolio và phép phủ đọc chúng. */
   balancePrograms: ReadonlySet<string>;
@@ -60,17 +78,24 @@ export interface ReadSet {
 
 export function buildReadSet(input: {
   universe: readonly Product[];
+  /** Thẻ bị loại ở tầng PHÙ HỢP (người dùng đã từ chối) — cửa đóng trước luật điều kiện. */
+  declined: readonly Product[];
   scored: readonly Product[];
   held: readonly Product[];
-  readsEarn: boolean;
+  /** `goalReadsEarn` của mục tiêu — hoặc `true` khi chỉ dựng thang đo chung. */
+  goalReadsEarn: boolean;
+  /** Người dùng có hồ sơ chi tiêu — không có thì `earnFitFor` không đọc dòng nào. */
+  spendKnown: boolean;
   balancePrograms: Iterable<string>;
   awardStrategies: readonly AwardStrategy[];
 }): ReadSet {
+  const declined = new Set(input.declined.map((product) => product.id as string));
   return {
-    gated: new Set(input.universe.map((product) => product.id as string)),
+    universe: new Set(input.universe.map((product) => product.id as string)),
+    gated: new Set(input.universe.map((product) => product.id as string).filter((id) => !declined.has(id))),
     scored: new Set(input.scored.map((product) => product.id as string)),
     held: new Set(input.held.map((product) => product.id as string)),
-    readsEarn: input.readsEarn,
+    readsEarn: input.goalReadsEarn && input.spendKnown,
     balancePrograms: new Set(input.balancePrograms),
     awardStrategies: input.awardStrategies,
   };
@@ -134,10 +159,13 @@ export function oldestVerified(
   };
   const sorted = (ids: ReadonlySet<string>) => [...ids].sort();
 
-  /** Chương trình có điểm số của lượt chạy phụ thuộc — cho định giá và chặng chuyển. */
-  const programs = new Set<string>(read.balancePrograms);
+  /** Chương trình mà một phép nhân định giá thật sự dùng. */
+  const valued = new Set<string>(read.balancePrograms);
   const earnProducts = read.readsEarn ? [...read.scored, ...read.held] : [];
 
+  for (const productId of sorted(read.universe)) {
+    for (const row of activeAt(ix.feesByProduct.get(productId) ?? [], asOf)) consider("product_fees", row);
+  }
   for (const productId of sorted(read.gated)) {
     for (const row of activeAt(ix.rulesByProduct.get(productId) ?? [], asOf)) consider("eligibility_rules", row);
   }
@@ -146,24 +174,17 @@ export function oldestVerified(
     const active = activeOfferFor(ix, productId, asOf);
     if (active !== null) {
       consider("offers", active.offer);
-      if (active.offer.bonusCurrencyId !== null) programs.add(active.offer.bonusCurrencyId as string);
+      if (active.offer.bonusCurrencyId !== null) valued.add(active.offer.bonusCurrencyId as string);
     }
-    for (const row of activeAt(ix.feesByProduct.get(productId) ?? [], asOf)) consider("product_fees", row);
-    const product = ix.productById.get(productId as never);
-    if (product?.pointsProgramId != null) programs.add(product.pointsProgramId as string);
   }
   for (const productId of [...new Set([...read.scored, ...read.held])].sort()) {
     for (const row of activeAt(ix.benefitsByProduct.get(productId) ?? [], asOf)) consider("product_benefits", row);
-  }
-  for (const productId of sorted(read.held)) {
-    const product = ix.productById.get(productId as never);
-    if (product?.pointsProgramId != null) programs.add(product.pointsProgramId as string);
   }
   const caps = new Set<string>();
   for (const productId of [...new Set(earnProducts)].sort()) {
     for (const row of activeAt(ix.ratesByProduct.get(productId) ?? [], asOf)) {
       consider("earning_rates", row);
-      programs.add(row.pointsProgramId as string);
+      valued.add(row.pointsProgramId as string);
       if (row.capId !== null) caps.add(row.capId as string);
     }
   }
@@ -173,19 +194,15 @@ export function oldestVerified(
     const cap = ix.capById.get(capId);
     if (cap !== undefined) consider("earning_caps", cap);
   }
-  // Chặng chuyển KHÔNG đòi hạng thành viên, đi từ chương trình mà lượt chạy
-  // đọc: số dư (phủ chuyến đi, danh mục), đồng tiền của thẻ chấm điểm và thẻ
-  // đang giữ (bonus quy đổi, tầm với, `tripCurrencyCoverage`).
+  // MỌI chặng không đòi hạng thành viên — xem đầu file (`flexibilityReach`).
   for (const row of activeAt(data.transferPaths, asOf)) {
-    if (isOpenToEveryone(row.requiresTier) && programs.has(row.sourceProgramId as string)) {
-      consider("transfer_paths", row);
-    }
+    if (isOpenToEveryone(row.requiresTier)) consider("transfer_paths", row);
   }
   // Định giá CHỈ của chương trình có mặt trong phép tính — không cả bảng: một
   // định giá AAdvantage® cũ không làm kém tươi một lượt chạy không có đồng
   // AAdvantage® nào (vòng Codex 12).
   for (const row of activeAt(data.programValuations, asOf)) {
-    if (programs.has(row.programId as string)) consider("program_valuations", row);
+    if (valued.has(row.programId as string)) consider("program_valuations", row);
   }
   for (const strategy of read.awardStrategies) consider("award_strategies", strategy);
   return oldest;

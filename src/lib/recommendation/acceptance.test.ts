@@ -27,6 +27,7 @@ import { productIdFor } from "./data/products.ts";
 import {
   aeroplanHeavy,
   beginnerNoCards,
+  beginnerUndeclared,
   duplicateBagBenefit,
   flexiblePointsSufficient,
   japanTripFunded,
@@ -841,4 +842,92 @@ test("offer của thẻ người dùng ĐÃ TỪ CHỐI không trừ độ tin c
     stale.outputSnapshot.results[0].confidence.dataFreshness,
     record.outputSnapshot.results[0].confidence.dataFreshness,
   );
+});
+
+/* ================================================================== *
+ * Vòng Codex 13 — mỗi luật của read-set.ts gắn với một phép tính thật
+ * ================================================================== */
+
+function staleAny(table: keyof RecommendationDataset, id: string): RecommendationDataset {
+  return {
+    ...DATA,
+    [table]: (DATA[table] as unknown as { id: string }[]).map((row) =>
+      row.id === id ? { ...row, verifiedAt: "2020-01-01" } : row,
+    ),
+  } as RecommendationDataset;
+}
+const freshness = (r: RecommendationRunRecord) => r.outputSnapshot.results[0].confidence.dataFreshness;
+
+test("phí của thẻ ĐÃ TỪ CHỐI vẫn được đọc (trung vị phí), luật điều kiện của nó thì không", () => {
+  const declined = productIdFor("amex-marriott-bonvoy-business");
+  const base = execute(vietnamTripFunded).record;
+  assert.ok(base.derivedState.excluded.some((row) => row.productId === declined && row.stage === "suitability"));
+  const fee = DATA.productFees.find((row) => row.productId === declined)!;
+  assert.equal(freshness(execute(vietnamTripFunded, { data: staleAny("productFees", fee.id as string) }).record), 0);
+  const rule = DATA.eligibilityRules.find((row) => row.productId === declined)!;
+  assert.equal(freshness(execute(vietnamTripFunded, { data: staleAny("eligibilityRules", rule.id as string) }).record), freshness(base));
+});
+
+test("chưa khai chi tiêu thì tỷ lệ và trần tích điểm không được đọc", () => {
+  assert.equal(beginnerUndeclared.spend, null, "tiền đề: hồ sơ không có chi tiêu");
+  const cobalt = productIdFor("amex-cobalt");
+  const capId = DATA.earningRates.find((row) => row.productId === cobalt && row.capId !== null)!.capId!;
+  const base = execute(beginnerUndeclared).record;
+  const stale = execute(beginnerUndeclared, { data: staleAny("earningCaps", capId as string) }).record;
+  assert.equal(freshness(stale), freshness(base));
+});
+
+test("chặng chuyển của chương trình KHÔNG ai giữ, KHÔNG thẻ nào kiếm vẫn là dữ liệu engine đọc (mẫu số tầm với)", () => {
+  // Ca vòng Codex 13: một chương trình chuyển được với NHIỀU đích hơn mọi
+  // chương trình khác đổi mẫu số của `flexibilityReach` — tức đổi điểm của
+  // mọi thẻ linh hoạt — dù không ai giữ nó. Dựng nó từ Avios®, đích lấy từ
+  // chính các chương trình trong bộ dữ liệu.
+  const template = DATA.transferPaths.find((row) => row.requiresTier === null)!;
+  const destinations = DATA.pointsPrograms.map((row) => row.id).filter((id) => id !== ("avios" as never)).slice(0, 8);
+  const data: RecommendationDataset = {
+    ...DATA,
+    pointsPrograms: DATA.pointsPrograms.map((row) => (row.id === ("avios" as never) ? { ...row, transferable: true } : row)),
+    transferPaths: [
+      ...DATA.transferPaths,
+      ...destinations.map((destination, i) => ({
+        ...template,
+        id: `tp_test_avios_${i}` as never,
+        sourceProgramId: "avios" as never,
+        destinationProgramId: destination,
+        verifiedAt: "2020-01-01",
+      })),
+    ],
+  };
+  const base = execute(beginnerNoCards).record;
+  const wide = execute(beginnerNoCards, { data }).record;
+  const green = (r: RecommendationRunRecord) => ranking(r).find((row) => row.candidate.productSlug === "amex-green")!.candidate.score;
+  assert.notEqual(green(wide), green(base), "tiền đề: mẫu số tầm với đổi điểm của thẻ linh hoạt");
+  assert.equal(freshness(wide), 0);
+});
+
+test("định giá chỉ tính cho chương trình mà một phép nhân thật sự dùng", () => {
+  // Chuyến Việt Nam đã định giá: tỷ lệ tích điểm không được đọc, nên chương
+  // trình mà thẻ chỉ KIẾM (không thưởng bằng, không có số dư) không làm kém tươi.
+  const { record } = execute(vietnamTripFunded);
+  const valued = new Set<string>(vietnamTripFunded.balances.map((row) => row.programId as string));
+  for (const row of record.derivedState.candidates.filter((c) => c.selectable)) {
+    const offer = DATA.offers.find((o) => o.id === row.offer.activeOfferId);
+    if (offer?.bonusCurrencyId != null) valued.add(offer.bonusCurrencyId);
+  }
+  const unused = DATA.programValuations.find((row) => !valued.has(row.programId as string))!;
+  assert.ok(unused !== undefined);
+  assert.equal(
+    freshness(execute(vietnamTripFunded, { data: staleAny("programValuations", unused.id as string) }).record),
+    freshness(record),
+  );
+});
+
+test("lượt chạy KHÔNG mục tiêu không kể tỷ lệ tích điểm của thẻ đang giữ", () => {
+  const holder = structuredClone(beginnerNoCards);
+  const unknownRate = DATA.gaps.find((gap) => gap.kind === "base_earn_rate_unknown")!;
+  holder.cards = [{ ...vietnamTripFunded.cards[0], userId: holder.profile.id, productId: unknownRate.subjectId as never, status: "active" }];
+  holder.goals = [];
+  const record = execute(holder).record;
+  assert.equal(record.outputSnapshot.results.length, 0);
+  assert.ok(!record.outputSnapshot.dataGaps.some((gap) => gap.subjectId === unknownRate.subjectId));
 });

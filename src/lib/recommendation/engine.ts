@@ -160,6 +160,11 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * những dòng lượt chạy đọc (`read-set.ts`): thêm trần tích điểm, bỏ định giá
  * của chương trình vắng mặt, bỏ offer/phí của thẻ không chọn được.
  *
+ * 4.13.0 — vòng Codex 13: mỗi luật của `read-set.ts` gắn với MỘT phép tính
+ * thật — phí của mọi thẻ (trung vị), luật điều kiện trừ thẻ đã từ chối, tỷ
+ * lệ/trần chỉ khi có hồ sơ chi tiêu, định giá chỉ khi một phép nhân dùng,
+ * mọi chặng không đòi hạng (mẫu số tầm với).
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -172,7 +177,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.12.0";
+export const ENGINE_VERSION = "4.13.0";
 
 export interface RecommendInput {
   state: UserState;
@@ -385,6 +390,7 @@ export function recommend(input: RecommendInput): RecommendationRun {
 
   const goalTraces: GoalTrace[] = [];
   const goalDataGapSets: DataGap[][] = [];
+  const declined = facts.filter((row) => row.suitability.excluded).map((row) => row.product);
   // Chương trình có dòng số dư khác 0 — portfolio và phép phủ chuyến đi đọc
   // chúng. Cùng quy ước với chỗ trống bảng giá ở `normalize.ts`.
   const balancePrograms = [...portfolio.direct]
@@ -436,10 +442,12 @@ export function recommend(input: RecommendInput): RecommendationRun {
     // cả độ tươi lẫn chỗ trống theo sản phẩm. Xem `read-set.ts`.
     const read = buildReadSet({
       universe: normalized.universe,
+      declined,
       scored: selectable.map((row) => row.product),
       held: portfolio.heldProducts,
-      readsEarn: goalReadsEarn(goal, state, ix, asOf),
-      balancePrograms: balancePrograms,
+      goalReadsEarn: goalReadsEarn(goal, state, ix, asOf),
+      spendKnown: state.spend != null,
+      balancePrograms,
       awardStrategies: goal.tripNeed?.strategies ?? [],
     });
     const oldest = oldestVerified(read, data, ix, asOf);
@@ -626,11 +634,16 @@ export function recommend(input: RecommendInput): RecommendationRun {
       goalDataGapSets.length === 0
         ? scopeDataGaps(
             normalized.dataGaps,
+            // Không mục tiêu nào: chỉ thang đo chung được dựng (trên thẻ chọn
+            // được) — `walletEarnCoverage` của thẻ đang giữ chạy theo mục tiêu,
+            // nên không có thẻ đang giữ nào ở đây.
             buildReadSet({
               universe: normalized.universe,
+              declined,
               scored: selectable.map((row) => row.product),
-              held: portfolio.heldProducts,
-              readsEarn: true,
+              held: [],
+              goalReadsEarn: true,
+              spendKnown: state.spend != null,
               balancePrograms,
               awardStrategies: [],
             }),
