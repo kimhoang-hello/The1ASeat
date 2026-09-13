@@ -38,6 +38,12 @@ export function AffiliateClickTracker({ scope, slug }: { scope: string; slug: st
       if (event.type === "auxclick" && (event as MouseEvent).button !== 1) return;
       const anchor = (event.target as HTMLElement | null)?.closest?.("a[rel~='sponsored']");
       if (!anchor) return;
+      // `CardSpotlight` (nút Apply, ảnh thẻ) tự bắn `apply_clicked` của riêng
+      // nó qua `ApplyLink` — anchor của nó CŨNG khớp `rel~="sponsored"`, nên
+      // không loại trừ ở đây thì một click vào đó ra HAI event. Khối thẻ đánh
+      // dấu phạm vi của mình bằng `data-affiliate-self-tracked` (xem
+      // `post-body.tsx`); gặp nó thì bỏ qua, chỉ đo link chữ thật trong prose.
+      if (anchor.closest("[data-affiliate-self-tracked]")) return;
       sendGAEvent("event", "apply_clicked", { placement: "post_body", product: slug });
     }
 

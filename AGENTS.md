@@ -1678,7 +1678,7 @@ sửa code, và nằm ngoài phạm vi tự động được cho phép. Cần b�
 ## Đo đạc GA4 (13/09/2026) — đừng đề xuất lại
 
 - **`apply_clicked` có thể bị ĐẾM ĐÔI khi một khối `CardSpotlight` (thẻ nhắc
-  trong thân bài blog) được bấm — bug có thật, đã kiểm bằng code, CHƯA sửa.**
+  trong thân bài blog) được bấm — phát hiện 13/09/2026, ĐÃ VÁ cùng ngày.**
   `AffiliateClickTracker` (`components/blog/affiliate-click-tracker.tsx`) gắn
   listener capture-phase lên `data-affiliate-scope="post-body"`, khớp mọi
   `a[rel~='sponsored']` bên trong — kể cả anchor của `ApplyButton`/`CardImage`
@@ -1686,18 +1686,29 @@ sửa code, và nằm ngoài phạm vi tự động được cho phép. Cần b�
   nút Apply hoặc ảnh của khối thẻ đó vì vậy bắn HAI event `apply_clicked`:
   một từ `ApplyLink` (`product=card.slug`), một từ tracker
   (`product=post.slug`, vì tracker gán `product` = slug BÀI VIẾT chứa link,
-  không phải slug thẻ). Comment trong `post-body.tsx` ("Nút Apply trong khối
-  thẻ tự bắn event riêng của nó, nên không bị đếm hai lần") **SAI** theo cách
-  đọc code hiện tại. `CardImage` tự thêm hậu tố `_image` vào placement nó
-  nhận (`card-image.tsx`), nên đường ảnh mang `placement="post_body_image"`,
-  khác với đường nút (`"post_body"`) — phải kiểm CẢ HAI riêng khi tính có bao
-  nhiêu lượt bị đếm đôi trong một tuần: (a) so tổng event `placement=post_body`
-  với tổng các dòng "Product" dạng slug-bài-viết (nếu bằng nhau, N=0 cho
-  đường nút); (b) xem có dòng `placement=post_body_image` nào không (nếu
-  không có, N=0 cho đường ảnh). Tuần 06–12/09/2026 cả hai đều N=0 (may mắn,
-  không phải bug đã hết). Sửa đúng cần chặn double-fire ở tracker khi anchor
-  đã tự bắn event, hoặc bỏ hẳn `CardSpotlight` khỏi scope của tracker vì nó
-  đã tự đo — chưa làm, là việc nợ.
+  không phải slug thẻ). Comment cũ trong `post-body.tsx` ("Nút Apply trong
+  khối thẻ tự bắn event riêng của nó, nên không bị đếm hai lần") mô tả Ý ĐỊNH
+  đúng nhưng KHÔNG có cơ chế nào ép nó thành sự thật.
+  **Cách vá:** CHÍNH `CardSpotlight` (không phải nơi gọi nó) nay tự đánh dấu
+  root của mình bằng `data-affiliate-self-tracked`; `AffiliateClickTracker`
+  kiểm `anchor.closest("[data-affiliate-self-tracked]")` và BỎ QUA nếu khớp —
+  biến đúng cái ý định cũ thành một điều kiện thật thay vì một câu comment
+  suông. Đặt marker ở component thay vì ở `post-body.tsx` (Codex gợi ý,
+  13/09/2026) để chỗ dùng còn lại của `CardSpotlight`
+  (`BestCardPickSection`/`best-card-pick.tsx`, hiện KHÔNG nằm trong vùng
+  `AffiliateClickTracker` nào) tự động an toàn nếu sau này bị đặt vào trong
+  một `data-affiliate-scope` — không cần ai nhớ khai báo lại marker ở nơi
+  gọi.
+  `CardImage` tự thêm hậu tố `_image` vào placement nó nhận (`card-image.tsx`),
+  nên đường ảnh mang `placement="post_body_image"`, khác đường nút
+  (`"post_body"`) — cả hai đường đều nằm trong vùng `data-affiliate-self-tracked`
+  nên cả hai đều được loại trừ đúng. **Cách kiểm lại nếu nghi ngờ tái phát ở
+  tuần nào đó:** so tổng event `placement=post_body` với tổng các dòng
+  "Product" dạng slug-bài-viết (phải BẰNG NHAU — dư ra tức là đếm đôi đang xảy
+  ra lại) và xem có dòng `placement=post_body_image` nào lẫn slug-bài-viết
+  không (không nên có). Chưa có test tự động cho cơ chế này — repo không có
+  hạ tầng test DOM/component (chỉ `node --test` cho logic thuần), nên xác
+  minh dựa vào lint/tsc/build xanh và đọc lại code, không phải test đỏ→xanh.
 - **`window.gtag()` gọi trực tiếp trên site thật là cách rẻ để kiểm một tham
   số event có phải tên dành riêng của gtag hay không** (cùng lớp bug với vụ
   `tracking_id` 06/09), không cần đợi ai đó thực sự bấm. Đã dùng để loại trừ

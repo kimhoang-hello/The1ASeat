@@ -85,8 +85,11 @@ export function PostBody({
     /* `data-affiliate-scope` bọc CẢ cụm, không bọc từng khối:
        `AffiliateClickTracker` gắn một listener lên phần tử mang thuộc tính
        này, và chia thành nhiều vùng thì link ở vùng thứ hai trở đi không được
-       đếm. Nút Apply trong khối thẻ tự bắn event riêng của nó (`ApplyButton`),
-       nên không bị đếm hai lần. */
+       đếm. `CardSpotlight` tự đánh dấu `data-affiliate-self-tracked` ở chính
+       nó (xem `card-spotlight.tsx`) để tracker bỏ qua nút Apply/ảnh bên
+       trong — nút và ảnh đó đã tự bắn `apply_clicked` riêng qua `ApplyLink`,
+       đếm thêm ở đây là đếm đôi (đã có lúc xảy ra thật, phát hiện
+       13/09/2026). */
     <div data-affiliate-scope="post-body" className={className}>
       {runs.map((run, index) => (
         <div key={index}>

@@ -39,7 +39,17 @@ export function CardSpotlight({
   placement: string;
 }) {
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:flex-row">
+    // `data-affiliate-self-tracked`: cả ảnh lẫn nút Apply bên dưới tự bắn
+    // `apply_clicked` riêng qua `ApplyLink`. Khi component này đứng trong
+    // vùng `AffiliateClickTracker` quét (thân bài blog), thuộc tính này báo
+    // cho tracker BỎ QUA — không đếm thêm một lần nữa cho cùng một click.
+    // Đặt ở CHÍNH root của component, không phải ở nơi gọi nó, để bất kỳ chỗ
+    // nào tái dùng `CardSpotlight` sau này cũng tự động đúng, không cần nhớ
+    // khai báo lại (đã có một lần quên — xem AGENTS.md 13/09/2026).
+    <div
+      className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:flex-row"
+      data-affiliate-self-tracked
+    >
       <CardImage
         image={card.cardImage}
         name={card.name}
