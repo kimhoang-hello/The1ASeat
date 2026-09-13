@@ -24,6 +24,7 @@ import { compareCandidates, eligibilityUnknownCauses, explainProduct, findRanked
 import { renderRunReport, renderScoreTable } from "./debug-render.ts";
 import { STRATEGY_TYPES } from "./reason-codes.ts";
 import { productIdFor } from "./data/products.ts";
+import { validateDataset } from "./validate.ts";
 import {
   aeroplanHeavy,
   beginnerNoCards,
@@ -1205,4 +1206,81 @@ test("§30 xét cả thẻ BỊ ẨN vì cùng họ: câu thu nhập hộ đổi
   const followUp = record.outputSnapshot.followUp!;
   assert.equal(followUp.gapKind, "household_income_unknown");
   assert.equal(followUp.basis, "measured");
+});
+
+/* ================================================================== *
+ * Vòng Codex 17
+ * ================================================================== */
+
+test("§11: điều khoản offer CHƯA BIẾT không được chấm hiệu quả chi tiêu tối đa", () => {
+  const { record } = execute(beginnerNoCards);
+  const unknownTerms = record.derivedState.candidates.filter((row) => row.selectable && row.offer.termsUnknown);
+  assert.ok(unknownTerms.length > 0, "tiền đề: có thẻ điều khoản chưa biết");
+  for (const facts of unknownTerms) {
+    const candidate = findRanked(record, facts.productSlug)!;
+    const note = candidate.components.find((c) => c.key === "offer_quality")!.note;
+    assert.match(note, /hiệu quả chi 0\.500×0\.2 \(điều khoản chưa biết\)/, facts.productSlug);
+  }
+  // Và ghi chú cộng lại ĐÚNG ra raw của nó, ở mọi ứng viên.
+  for (const row of ranking(record)) {
+    const c = row.candidate.components.find((x) => x.key === "offer_quality");
+    if (c === undefined || !c.note.includes(" = ")) continue;
+    const parts = [...c.note.matchAll(/(\d\.\d{3})×(0\.\d+)/g)].map((m) => Number(m[1]) * Number(m[2]));
+    assert.ok(Math.abs(parts.reduce((a, b) => a + b, 0) - c.raw) < 0.003, `${row.candidate.productSlug}: ghi chú không cộng ra raw`);
+    assert.ok(c.note.endsWith(` = ${c.raw.toFixed(3)}`));
+  }
+});
+
+test("luật cư trú `not_in` — hợp lệ theo validator — được engine đánh giá, không ra unknown", () => {
+  // Hai bảng "operator nào hợp lệ" từng sống riêng ở validator và engine; luật
+  // hợp lệ ra `unknown`, bị phạt −0.05 và bị đổ cho dữ liệu nguồn.
+  const { record } = execute(beginnerNoCards);
+  const target = record.derivedState.candidates.find((row) => row.selectable && row.eligibility.status === "eligible")!;
+  // THAY luật cư trú của thẻ đó (mỗi thẻ một luật cư trú mỗi lúc).
+  const template = DATA.eligibilityRules.find((r) => r.ruleType === "residency" && r.productId === target.productId)!;
+  const rule = { ...template, id: "elig_test_not_in" as never, operator: "not_in" as const, value: ["US"] };
+  const data: RecommendationDataset = {
+    ...DATA,
+    eligibilityRules: [...DATA.eligibilityRules.filter((r) => r.id !== template.id), rule],
+  };
+  assert.deepEqual(validateDataset(data).filter((i) => i.level === "error" && i.message.includes("elig_test_not_in")), [], "tiền đề: validator nhận luật này");
+  const after = execute(beginnerNoCards, { data }).record.derivedState.candidates.find((row) => row.productId === target.productId)!;
+  const traced = after.eligibility.rules.find((r) => r.ruleId === "elig_test_not_in")!;
+  assert.equal(traced.outcome, "pass");
+  assert.equal(after.eligibility.status, "eligible");
+  // Nước của người dùng NẰM trong danh sách loại thì trượt.
+  const excluding: RecommendationDataset = {
+    ...data,
+    eligibilityRules: data.eligibilityRules.map((r) => (r.id === rule.id ? { ...r, value: ["CA"] } : r)),
+  };
+  const blocked = execute(beginnerNoCards, { data: excluding }).record.derivedState.candidates.find((row) => row.productId === target.productId)!;
+  assert.equal(blocked.eligibility.rules.find((r) => r.ruleId === "elig_test_not_in")!.outcome, "fail");
+  assert.equal(blocked.eligibility.status, "ineligible");
+});
+
+test("cảnh báo 'chỉ biết giá sàn' trên THẺ chỉ khi bonus của chính thẻ rơi vào chương trình chỉ-có-sàn", () => {
+  // Người dùng giữ sẵn 45,000 Aeroplan® trên chặng Aeroplan® chỉ có sàn: phần
+  // phủ là ước lượng cho MỌI thẻ. Một thẻ mà bonus đổ vào Asia Miles® (giá cố
+  // định) có phần tăng là ước lượng — nhưng mức sàn thuộc về Aeroplan® người
+  // dùng đã giữ, không thuộc về thẻ đó (vòng Codex 17).
+  const state = structuredClone(japanTripFunded);
+  state.cards = [];
+  state.balances = [{ ...japanTripFunded.balances[0], programId: "aeroplan" as never, balance: 45_000 }];
+  state.goals = state.goals.map((goal) => (goal.type === "trip" ? { ...goal, cabin: "premium_economy", roundTrip: false } : goal));
+  const gold = productIdFor("amex-gold-rewards");
+  const data: RecommendationDataset = {
+    ...DATA,
+    offers: DATA.offers.map((o) => (o.productId === gold ? { ...o, bonusCurrencyId: "asia-miles" as never } : o)),
+  };
+  const record = execute(state, { data }).record;
+  assert.deepEqual(record.derivedState.goals[0].tripCoverage?.uncertainFloorOnlyPrograms, ["aeroplan"], "tiền đề: Aeroplan® là chỗ bất định");
+  const other = findRanked(record, "amex-gold-rewards")!;
+  assert.match(other.components.find((c) => c.key === "points_gap_reduction")!.note, /ƯỚC LƯỢNG/, "tiền đề: phần tăng là ước lượng");
+  assert.ok(other.reasonCodes.includes("POINTS_COVERAGE_UNKNOWN"));
+  assert.ok(!other.warnings.includes("AWARD_PRICE_FLOOR_ONLY"));
+
+  // Thẻ Membership Rewards® thì bonus CÓ đổ vào Aeroplan® (chặng chuyển mở).
+  const platinum = findRanked(record, "amex-platinum")!;
+  assert.match(platinum.components.find((c) => c.key === "points_gap_reduction")!.note, /ƯỚC LƯỢNG/);
+  assert.ok(platinum.warnings.includes("AWARD_PRICE_FLOOR_ONLY"));
 });

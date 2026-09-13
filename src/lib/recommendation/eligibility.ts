@@ -21,6 +21,7 @@
 import { activeAt } from "./temporal.ts";
 import { compareToThreshold, everHeld, holdsNow, asArray } from "./user.ts";
 import type { DatasetIndex } from "./indexes.ts";
+import { RULE_SHAPES } from "./rule-shapes.ts";
 import type { EligibilityRule, ProductId } from "./types.ts";
 import type { UserState } from "./user-types.ts";
 import type { EligibilityVerdict } from "./engine-types.ts";
@@ -80,28 +81,18 @@ function boolOutcome(value: boolean | null, required: boolean): RuleEvaluation {
 }
 
 /**
- * `EligibilityRule.operator` có năm giá trị, và engine chỉ hiểu đúng hai.
+ * Operator mà KIỂU cho phép nhiều hơn operator có nghĩa với từng loại luật —
+ * `minimum_personal_income lte` đọc NGƯỢC hoàn toàn mà không có dấu hiệu nào,
+ * và đọc ngược một luật cứng là loại đúng những người đủ điều kiện, hoặc hứa
+ * một thẻ ngân hàng sẽ từ chối.
  *
- * Luật thu nhập được đọc như "≥ ngưỡng", luật cư trú như "thuộc danh sách".
- * Bộ dữ liệu hôm nay chỉ dùng đúng hai dạng đó — nhưng KIỂU cho phép `lte`,
- * `ne`, `not_in`, và một luật như vậy sẽ bị đọc NGƯỢC hoàn toàn mà không có
- * dấu hiệu nào. Đọc ngược một luật cứng nghĩa là loại đúng những người đủ
- * điều kiện, hoặc hứa một thẻ ngân hàng sẽ từ chối.
- *
- * Nên: gặp operator ngoài dự kiến thì trả `unknown` — engine nói nó không
- * đánh giá được, §29 hạ độ tin cậy, và §30 có chỗ để hỏi. Cùng hướng với
- * `offerBonusUnit`: thà im lặng còn hơn đoán sai về một dữ kiện cứng.
+ * Nên: operator ngoài `RULE_SHAPES` thì trả `unknown` — engine nói nó không
+ * đánh giá được, §29 hạ độ tin cậy. Bảng đó cũng là bảng validator dùng, nên
+ * mọi luật qua được validator đều được engine đánh giá; ca `unknown` ở đây chỉ
+ * còn là dữ liệu sai dạng lọt vào mà không qua validator.
  */
 function operatorUnderstood(rule: EligibilityRule): boolean {
-  switch (rule.ruleType) {
-    case "minimum_personal_income":
-    case "minimum_household_income":
-      return rule.operator === "gte";
-    case "residency":
-      return rule.operator === "in" || rule.operator === "eq";
-    default:
-      return rule.operator === "eq" || rule.operator === "in";
-  }
+  return RULE_SHAPES[rule.ruleType]?.operators.includes(rule.operator) ?? false;
 }
 
 function evaluateRule(rule: EligibilityRule, state: UserState): RuleEvaluation {
@@ -115,8 +106,9 @@ function evaluateRule(rule: EligibilityRule, state: UserState): RuleEvaluation {
       // trên một dữ kiện chưa ai hỏi. §14 tách `unknown` khỏi `ineligible`
       // đúng vì chỗ này.
       if (profile?.country == null) return unknown("user_field_missing");
-      const wanted = Array.isArray(rule.value) ? rule.value : [String(rule.value)];
-      return known(wanted.includes(profile.country) ? "pass" : "fail");
+      const listed = (Array.isArray(rule.value) ? rule.value : [String(rule.value)]).includes(profile.country);
+      // `not_in`: ngân hàng loại một danh sách nước — trong danh sách là trượt.
+      return known(listed === (rule.operator !== "not_in") ? "pass" : "fail");
     }
     case "minimum_personal_income":
       return incomeOutcome(profile?.annualPersonalIncome ?? null, Number(rule.value));

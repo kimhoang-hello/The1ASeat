@@ -82,13 +82,8 @@ export function tripGain(
   const before = tripCoverage(ctx.state, ctx.ix, ctx.asOf, need).coverage;
   if (before === null) return null;
   if (before >= 1) return { before, after: before, raw: 0, estimated: false, floorOnly: false };
-  const after = tripCoverage(
-    ctx.state,
-    ctx.ix,
-    ctx.asOf,
-    need,
-    (programId) => bonusPointsToward(candidate, programId, ctx.ix, ctx.asOf) ?? 0,
-  );
+  const bonusTo = (programId: PointsProgramId) => bonusPointsToward(candidate, programId, ctx.ix, ctx.asOf) ?? 0;
+  const after = tripCoverage(ctx.state, ctx.ix, ctx.asOf, need, bonusTo);
   const raw = Math.max(0, (after.coverage as number) - before);
   const estimated = raw > 0 && !after.coverageKnown;
   return {
@@ -96,10 +91,9 @@ export function tripGain(
     after: after.coverage as number,
     raw,
     estimated,
-    // Cảnh báo "chỉ biết giá sàn" CHỈ khi phần bất định đến từ một chương trình
-    // chỉ có sàn — một bảng cố định kèm sàn động cũng làm "sau" thành ước
-    // lượng, nhưng giá của nó không phải "chỉ có sàn" (vòng Codex 16).
-    floorOnly: estimated && after.uncertainFromFloorOnly,
+    // Cảnh báo "chỉ biết giá sàn" CHỈ khi bonus của CHÍNH thẻ này rơi vào một
+    // chương trình chỉ-có-sàn đang còn bất định — xem `uncertainFloorOnlyPrograms`.
+    floorOnly: estimated && after.uncertainFloorOnlyPrograms.some((programId) => bonusTo(programId) > 0),
   };
 }
 

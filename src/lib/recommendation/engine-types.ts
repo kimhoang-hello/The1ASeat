@@ -407,7 +407,11 @@ export interface FollowUpQuestion {
    * Tầng nào của `nextQuestion` đã chọn nó — và đó là câu trả lời cho "vì sao
    * hỏi câu này mà không hỏi câu kia":
    *
-   *   gatekeeper — chỗ trống gác cổng (không có nó thì không chấm được gì);
+   *   gatekeeper — câu NỀN (mục tiêu, nước ở, thẻ, số dư, ưu tiên mục tiêu):
+   *                engine VẪN chấm được, nhưng câu trả lời có thể đổi cả tập
+   *                ứng viên và phép đo bằng câu trả lời thử không đo nổi nó
+   *                (không có "thẻ đang giữ điển hình") — nên hỏi trước, KHÔNG
+   *                phải vì đã đo là quan trọng hơn câu `measured`;
    *   measured   — lấp thử vào ĐỔI được người thắng (xem `flips`);
    *   urgent     — người thắng đang dựa vào đúng dữ kiện chưa hỏi này;
    *   priority   — không câu nào đo được là đổi kết quả: theo bảng ưu tiên tĩnh.

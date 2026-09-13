@@ -1,5 +1,6 @@
 import { INCOMPLETE_OFFERS, UNQUOTABLE_AWARD_PROGRAMS } from "./data/index.ts";
 import { isActiveAt, isAvailableAt } from "./temporal.ts";
+import { RULE_SHAPES } from "./rule-shapes.ts";
 import type { RecommendationDataset, Temporal } from "./types.ts";
 
 /**
@@ -934,19 +935,6 @@ export function validateDataset(
    * ngay, thay vì im lặng cho qua — nên thêm loại luật mới mà quên khai ở đây
    * sẽ đỏ, không trôi.
    */
-  const RULE_SHAPES: Record<
-    string,
-    { value: "number" | "string" | "boolean"; operators: readonly string[] }
-  > = {
-    minimum_personal_income: { value: "number", operators: ["gte"] },
-    minimum_household_income: { value: "number", operators: ["gte"] },
-    residency: { value: "string", operators: ["eq", "in", "not_in"] },
-    existing_cardholder_excluded: { value: "boolean", operators: ["eq"] },
-    previous_cardholder_excluded: { value: "boolean", operators: ["eq"] },
-    business_required: { value: "boolean", operators: ["eq"] },
-    student_status_required: { value: "boolean", operators: ["eq"] },
-    banking_relationship_required: { value: "string", operators: ["eq"] },
-  };
 
   for (const rule of data.eligibilityRules) {
     const shape = RULE_SHAPES[rule.ruleType];

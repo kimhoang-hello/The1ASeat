@@ -79,6 +79,13 @@ export interface RecommendationRunRecord {
   inputSnapshot: InputSnapshot;
   derivedState: DerivedState;
   outputSnapshot: RecommendationOutput;
+  /**
+   * Dấu vân tay của `derivedState` + `outputSnapshot` LÚC LƯU. Không phải cột
+   * của spec: nó tách "bản ghi hỏng trong kho" khỏi "engine chạy lại ra khác"
+   * — thiếu nó, một điểm số bị sửa trong kho làm replay báo HỒI QUY dưới cùng
+   * version, và admin đi tìm lỗi trong engine (vòng Codex 17).
+   */
+  resultFingerprint: string;
   createdAt: string;
 }
 
@@ -118,6 +125,10 @@ function historyMap(entries: readonly OfferHistoryEntry[]): Map<string, OfferHis
 function throughJson<T>(value: T): { value: T; canonical: string } {
   const canonical = canonicalJson(value);
   return { value: JSON.parse(canonical) as T, canonical };
+}
+
+function resultFingerprintOf(derived: DerivedState, output: RecommendationOutput): string {
+  return fingerprint({ d: derived, o: output });
 }
 
 function splitRun(run: RecommendationRun): { output: RecommendationOutput; derived: DerivedState } {
@@ -195,6 +206,7 @@ export function executeRun(input: RunInput, meta: RunMeta): ExecutedRun {
       },
       derivedState: derived,
       outputSnapshot: output,
+      resultFingerprint: resultFingerprintOf(derived, output),
       createdAt: meta.createdAt,
     },
   };
@@ -242,6 +254,7 @@ export function replayRun(record: RecommendationRunRecord, dataset: Recommendati
   const stored = [
     ["hồ sơ người dùng", fingerprint(record.inputSnapshot.state), record.inputSnapshot.stateFingerprint],
     ["lịch sử offer", fingerprint(record.inputSnapshot.offerHistory), record.inputSnapshot.offerHistoryFingerprint],
+    ["kết quả đã lưu", resultFingerprintOf(record.derivedState, record.outputSnapshot), record.resultFingerprint],
   ] as const;
   for (const [what, actual, expected] of stored) {
     if (actual !== expected) {

@@ -486,8 +486,13 @@ export function offerQuality(fact: OfferFacts, climate: OfferClimate): { score: 
 
   const required = fact.requiredPerNinetyDays ?? fact.fullRequiredPerNinetyDays;
   const perDollar = required !== null && required > 0 ? value / required : null;
-  const efficiencyScore =
-    perDollar === null || climate.maxValuePerSpendDollar <= 0
+  const efficiencyScore = fact.termsUnknown
+    ? // Điều khoản chưa biết: `required` là null vì KHÔNG AI BIẾT mốc chi, không
+      // phải vì không có mốc. Nhánh "không mốc chi = tối đa" bên dưới từng nuốt
+      // cả ca này — cùng lỗi Phase 3 đã sửa ở `spend_fit`, sót lại ở §11, đủ
+      // đổi người thắng giữa hai thẻ sát nhau (vòng Codex 17).
+      0.5
+    : perDollar === null || climate.maxValuePerSpendDollar <= 0
       ? // Không có mốc chi nào = lấy được bonus không cần chi gì. Đó là hiệu
         // quả TỐI ĐA, không phải thiếu dữ liệu.
         required === null
@@ -502,12 +507,23 @@ export function offerQuality(fact: OfferFacts, climate: OfferClimate): { score: 
     ["giá trị", 0.3, clamp01(valueScore), ""],
     ["percentile", 0.25, clamp01(percentileScore), fact.historicalPercentile === null ? " (chưa có lịch sử)" : ""],
     ["dùng được", 0.15, clamp01(usableScore), fact.usableRatio === null ? " (chưa biết)" : ""],
-    ["hiệu quả chi", 0.2, clamp01(efficiencyScore), required === null ? " (không mốc chi)" : ""],
+    [
+      "hiệu quả chi",
+      0.2,
+      clamp01(efficiencyScore),
+      fact.termsUnknown ? " (điều khoản chưa biết)" : required === null ? " (không mốc chi)" : "",
+    ],
     ["phí/giá trị", 0.1, clamp01(feeScore), ""],
   ] as const;
+  const score = clamp01(parts.reduce((sum, [, weight, raw]) => sum + weight * raw, 0));
+  // Ba chữ số mỗi vế và in luôn tổng: hai chữ số làm năm vế cộng lại lệch raw
+  // tới 0.002, và một ghi chú cộng không ra chính con số của nó là một lời
+  // khẳng định sai về phép tính (vòng Codex 17).
   return {
-    score: clamp01(parts.reduce((sum, [, weight, raw]) => sum + weight * raw, 0)),
-    note: `§11: ${parts.map(([label, weight, raw, why]) => `${label} ${raw.toFixed(2)}×${weight}${why}`).join(" · ")}`,
+    score,
+    note:
+      `§11: ${parts.map(([label, weight, raw, why]) => `${label} ${raw.toFixed(3)}×${weight}${why}`).join(" + ")}` +
+      ` = ${score.toFixed(3)}`,
   };
 }
 

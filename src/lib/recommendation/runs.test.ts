@@ -211,12 +211,22 @@ test("§20 — hồ sơ hay lịch sử offer trong bản ghi bị sửa là L�
   const history = structuredClone(record);
   history.inputSnapshot.offerHistory[0].points.pop();
   assert.throws(() => replayRun(history, dataset), /lịch sử offer.*không còn khớp/);
+
+  // Kết quả đã lưu bị sửa: cùng version, cùng đầu vào — trước đây replay gọi
+  // đó là HỒI QUY và dẫn admin vào engine (vòng Codex 17).
+  const output = structuredClone(record);
+  output.outputSnapshot.results[0].primaryAction.score += 0.001;
+  assert.throws(() => replayRun(output, dataset), /kết quả đã lưu.*không còn khớp/);
 });
 
 test("§20 — khác mà version KHÔNG đổi là HỒI QUY; khác vì version đổi thì không", () => {
   const { record, dataset } = execute(vietnamTripShortfall);
+  // Giả lập "engine LÚC ẤY ra kết quả khác": đổi kết quả VÀ dấu vân tay đi
+  // kèm — một bản ghi nhất quán với chính nó. Chỉ đổi kết quả mà không đổi dấu
+  // vân tay là bản ghi HỎNG, xem bài ngay dưới.
   const tampered = structuredClone(record);
   tampered.outputSnapshot.results[0].primaryAction.score += 0.01;
+  tampered.resultFingerprint = fingerprint({ d: tampered.derivedState, o: tampered.outputSnapshot });
   const same = replayRun(tampered, dataset);
   assert.equal(same.identical, false);
   assert.equal(same.regression, true, "cùng version mà kết quả khác phải là hồi quy");
@@ -751,12 +761,16 @@ test("so lượt chạy — đổi BẤT KỲ lá nào của bản ghi thì mộ
   //     `results[].strategy` — BẢN SAO của dữ kiện ứng viên và của
   //     `strategies[0]`, đã chiếu ở tầng của bản gốc; bài ngay dưới đòi bản sao
   //     luôn bằng bản gốc.
+  // ĐƯỜNG DẪN CHÍNH XÁC, không phải tên trường trần: vòng Codex 17 bắt bản
+  // trước miễn trừ mọi `.kind`/`.goalId` — tức cả `userGaps[].kind`,
+  // `dataGaps[].kind`, `results[].goalId`, những trường thật.
   const EXEMPT = new RegExp(
     [
-      String.raw`\.(productId|productName|kind|goalId)$`,
+      String.raw`^derivedState\.goals\.#\.ranking\.#\.candidate\.(productId|productName|kind)$`,
+      String.raw`^derivedState\.(candidates|excluded)\.#\.(productId|productName)$`,
+      String.raw`^derivedState\.goals\.#\.goalId$`,
       String.raw`^outputSnapshot\.(asOf|engineVersion|ruleVersion)$`,
-      String.raw`\.candidate\.(eligibility|suitability)\.`,
-      String.raw`^outputSnapshot\.results\.#\.(primaryAction|alternatives\.#|noAction)\.(eligibility|suitability)\.`,
+      String.raw`^derivedState\.goals\.#\.ranking\.#\.candidate\.(eligibility|suitability)\.`,
       String.raw`^outputSnapshot\.results\.#\.strategy\.`,
     ].join("|"),
   );
@@ -812,13 +826,15 @@ test("bản sao trong bản ghi luôn bằng bản gốc (điều kiện miễn 
       }
     }
     for (const result of record.outputSnapshot.results) assert.deepEqual(result.strategy, result.strategies[0]);
+    for (const goal of record.derivedState.goals) assert.equal(goal.goalId, goal.goal.goal.id);
   }
 });
 
 test("so lượt chạy — lưới an toàn: bản ghi khác ở chỗ chưa ánh xạ thì báo `unmapped`, không im lặng", () => {
   const { record } = execute(aeroplanHeavy);
   const changed = structuredClone(record);
-  changed.outputSnapshot.results[0].goalId = "goal_khac" as never;
+  // Một bản sao danh tính (miễn trừ trong bài vét) — không tầng nào chiếu nó.
+  changed.derivedState.goals[0].goalId = "goal_khac" as never;
   const diffs = diffRecords(record, changed);
   assert.equal(firstComputedDivergence(diffs)?.stage, "unmapped");
 });

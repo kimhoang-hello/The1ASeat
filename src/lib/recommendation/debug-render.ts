@@ -97,7 +97,7 @@ export function renderScoreTable(candidate: Candidate): string {
   const lines = [
     `  ${pad(candidateKey(candidate), 40)} điểm cuối ${score(candidate.score)}`,
     // Nói ra phép chuẩn hoá — xem `ScoreBreakdown.totalWeight`.
-    `    (mỗi dòng chấm điểm = w × raw ÷ Σw, Σw = ${table.totalWeight.toFixed(2)})`,
+    `    (mỗi dòng chấm điểm = w × raw ÷ Σw, Σw = ${table.totalWeight.toFixed(2)}; số làm tròn 4 chữ số, tổng tính trên số đầy đủ)`,
   ];
   const row = (layer: string, key: string, effect: string, detail: string) =>
     `    ${pad(layer, 12)} ${pad(key, 30)} ${effect}  ${detail}`;
@@ -411,7 +411,7 @@ export function renderRunReport(record: RecommendationRunRecord, options: RunRep
     }
   }
   const BASIS_TEXT: Record<NonNullable<typeof output.followUp>["basis"], string> = {
-    gatekeeper: "chỗ trống GÁC CỔNG — thiếu nó thì không chấm được gì",
+    gatekeeper: "câu NỀN hỏi trước mọi câu khác — không đo được bằng câu trả lời thử, nhưng có thể đổi cả tập ứng viên",
     measured: "ĐO ĐƯỢC là đổi người thắng",
     urgent: "người thắng đang dựa vào đúng dữ kiện chưa hỏi này",
     priority: "không câu nào đo được là đổi kết quả — chọn theo BẢNG ƯU TIÊN TĨNH",

@@ -291,6 +291,8 @@ export function stageValue(record: RecommendationRunRecord, stage: PipelineStage
       // phần còn lại khác mà không ai thấy.
       const shown = (candidate: Candidate) => candidate;
       return output.results.map((result) => ({
+        // Kết quả này thuộc MỤC TIÊU nào — thứ nối nó với bảng xếp hạng.
+        goalId: result.goalId,
         strategy: result.strategy.strategy,
         primary: candidateKey(result.primaryAction),
         primaryAction: shown(result.primaryAction),
@@ -355,10 +357,12 @@ export function diffRecords(
       entries: entries.slice(0, limit),
     };
   });
-  // LƯỚI AN TOÀN. Mỗi tầng là một phép chiếu viết tay của bản ghi, và một
-  // trường mới không ai thêm vào phép chiếu nào sẽ khác mà không tầng nào báo
-  // — đúng lỗi vòng Codex 16 bắt ở gợi ý thay thế. Khi bản ghi khác mà không
-  // tầng TÍNH nào khác, nói thẳng ra thay vì trả về "không có gì khác".
+  // LƯỚI AN TOÀN, và giới hạn của nó nói thẳng: nó chỉ bắt ca IM LẶNG HOÀN
+  // TOÀN — bản ghi khác mà không tầng tính nào khác. Một trường chưa ánh xạ
+  // đổi CÙNG LÚC với một trường đã ánh xạ thì lưới không thấy (vòng Codex 17).
+  // Thứ đóng lỗ đó là bài vét cạn trong `runs.test.ts` (mọi lá của bản ghi
+  // phải có tầng báo), còn bản ghi bị sửa trong kho thì `replayRun` bắt bằng
+  // dấu vân tay kết quả.
   const computedChanged = diffs.some(
     (row) => row.changed && row.stage !== "source_data" && row.stage !== "user_input",
   );

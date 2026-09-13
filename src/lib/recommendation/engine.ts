@@ -192,6 +192,12 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * xét bảng xếp hạng ĐẦY ĐỦ, kể cả thẻ bị ẩn vì cùng họ: câu thu nhập hộ đổi
  * được người thắng của `flexiblePointsSufficient` từng bị lọc mất không đo.
  *
+ * 4.19.0 — vòng Codex 17: điều khoản offer CHƯA BIẾT thôi được chấm hiệu quả
+ * chi tiêu tối đa ở §11 (0.5 trung tính, như `spend_fit`); luật cư trú
+ * `not_in` — hợp lệ theo validator — được đánh giá thay vì ra `unknown` và bị
+ * phạt (validator và engine nay đọc CHUNG `rule-shapes.ts`); cảnh báo "chỉ biết
+ * giá sàn" trên thẻ chỉ khi bonus của chính thẻ rơi vào chương trình đó.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -204,7 +210,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.18.0";
+export const ENGINE_VERSION = "4.19.0";
 
 export interface RecommendInput {
   state: UserState;
