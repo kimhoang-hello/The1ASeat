@@ -37,7 +37,13 @@ export function applyAssignment(target: unknown, assignment: string): string | n
     if (next === null || typeof next !== "object") return `"${key}" trong "${pathText}" không phải object`;
     node = next as Record<string, unknown>;
   }
-  node[keys[keys.length - 1]] = value;
+  try {
+    node[keys[keys.length - 1]] = value;
+  } catch (error) {
+    // Vài phép gán có setter riêng và ném — `goals.length=-1` là RangeError.
+    // Hợp đồng của hàm này là TRẢ lỗi, nên đổi nó thành lỗi dạng chữ.
+    return `không gán được "${pathText}": ${(error as Error).message}`;
+  }
   return null;
 }
 

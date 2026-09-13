@@ -44,6 +44,7 @@ export const REASON_CODES = [
   "POINTS_GAP_LARGE",
   "TRIP_PROGRAM_MATCH",
   "TRIP_ROUTE_NOT_PRICED",
+  "POINTS_COVERAGE_UNKNOWN",
   "AWARD_PRICE_IS_FLOOR_ONLY",
 
   /* Danh mục */
@@ -106,6 +107,8 @@ export const REASON_CODE_NOTES: Record<ReasonCode, string> = {
   TRIP_PROGRAM_MATCH: "scoring/trip.ts — thẻ kiếm (hoặc chuyển tới được) chương trình định giá chặng này.",
   TRIP_ROUTE_NOT_PRICED:
     "portfolio.ts / normalize.ts — chưa có award strategy cho cặp vùng này (DataGap award_route_uncovered).",
+  POINTS_COVERAGE_UNKNOWN:
+    "strategies.ts — chặng CÓ giá nhưng số dư chưa biết (balance null / chương trình chỉ có giá sàn) khiến cận dưới chưa tới 100%: chưa kết luận được đủ hay thiếu, nên không được đọc là thiếu.",
   AWARD_PRICE_IS_FLOOR_ONLY:
     "trip-need.ts — chiến lược duy nhất tra được có pricingModel dynamic_floor: chỉ pointsLow có nghĩa, đừng trình bày như một cái giá.",
 

@@ -30,6 +30,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { offlineDataset } from "../src/lib/recommendation/data/index.ts";
 import { datasetAt } from "../src/lib/recommendation/temporal.ts";
+import { isRealDate } from "../src/lib/recommendation/validate.ts";
 import { USER_FIXTURES } from "../src/lib/recommendation/data/user-fixtures.ts";
 import * as FIXTURE_EXPORTS from "../src/lib/recommendation/data/user-fixtures.ts";
 import { repoOfferHistory } from "../src/lib/recommendation/offer-history-source.ts";
@@ -125,6 +126,9 @@ function historyFor(data: RecommendationDataset, asOf: string, knownAt: string |
 function freshRun(state: UserState, overrides: { asOf?: string } = {}) {
   const asOf = overrides.asOf ?? flag("as-of") ?? todayInSiteZone();
   const knownAt = flag("known-at") ?? null;
+  for (const [name, value] of [["as-of", asOf], ["known-at", knownAt]] as const) {
+    if (value !== null && !isRealDate(value)) die(`--${name} không phải một ngày có thật: ${value}`);
+  }
   const data = datasetAt(offlineDataset(), asOf, knownAt === null ? {} : { knownAt });
   return executeRun(
     { state, data, asOf, knownAt, offerHistory: historyFor(data, asOf, knownAt) },

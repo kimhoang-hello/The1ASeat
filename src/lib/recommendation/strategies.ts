@@ -38,7 +38,28 @@ import type { ReasonCode, StrategyType } from "./reason-codes.ts";
  * `accessibleIsLowerBound` = có số dư `null` góp vào, nên con số là cận DƯỚI.
  */
 export interface TripCoverage {
+  /**
+   * Tỷ lệ phủ DÙNG ĐỂ QUYẾT ĐỊNH — `null` khi chưa biết.
+   *
+   * Chưa biết ở HAI ca: không chương trình nào tra được giá, HOẶC có số dư
+   * chưa biết góp vào mà cận dưới chưa tới 100%. Ca thứ hai từng trả về chính
+   * cận dưới, và mọi tầng sau đọc nó như con số thật: một người có tài khoản
+   * Membership Rewards® không nhớ số dư được chấm y hệt người có 0 điểm —
+   * `BUILD_POINTS = 1`, cùng người thắng, cùng điểm (vòng Codex 3, P1). Cờ
+   * cận dưới khi đó chỉ được dùng để TRÌNH BÀY, còn quyết định vẫn là "chưa
+   * biết = 0". Cận dưới đã tới 100% thì vẫn là 100%: đủ là đủ.
+   */
   coverage: number | null;
+  /** Tỷ lệ phủ tính trên phần ĐÃ BIẾT — chỉ để trình bày; xem `coverage`. */
+  coverageLowerBound: number | null;
+  /**
+   * Có chương trình nào mà số điểm với tới được đã phủ mức giá ĐIỂN HÌNH của
+   * CHÍNH nó không. Đo trên TỪNG chương trình, không trên `bestProgram`:
+   * chương trình phủ tốt nhất theo cận trên không nhất thiết là chương trình
+   * đã đủ ở giá điển hình (100,000 AAdvantage® phủ 83% cận trên, trong khi
+   * 170,000 Aeroplan® đã đúng bằng giá điển hình — vòng Codex 3).
+   */
+  coversTypical: boolean;
   bestProgram: PointsProgramId | null;
   accessible: number | null;
   accessibleIsLowerBound: boolean;
@@ -87,6 +108,7 @@ export function tripCoverage(
   let bestProgram: PointsProgramId | null = null;
   let accessible: number | null = null;
   let lowerBound = false;
+  let coversTypical = false;
   const unpricedHeld: PointsProgramId[] = [];
 
   // BA giá trị trả về phải nói về CÙNG MỘT chương trình.
@@ -130,6 +152,8 @@ export function tripCoverage(
     // chưa biết của Aeroplan® biến mất, và engine báo "còn thiếu đúng 140,000
     // điểm" cho một người nó không biết đang có bao nhiêu.
     if (reach.hasUnknownSource) lowerBound = true;
+    // Cận dưới đã vượt giá điển hình thì con số thật càng vượt.
+    if (row.typical !== null && reach.total >= row.typical) coversTypical = true;
     const own = Math.min(1, reach.total / row.high);
     if (coverage === null || own > coverage) {
       coverage = own;
@@ -160,6 +184,8 @@ export function tripCoverage(
   if (bestProgram === null) {
     return {
       coverage: null,
+      coverageLowerBound: null,
+      coversTypical: false,
       bestProgram: null,
       accessible: null,
       accessibleIsLowerBound: false,
@@ -170,13 +196,16 @@ export function tripCoverage(
   // Số dư chưa biết góp vào thì `coverage` là cận DƯỚI. Phủ ĐỦ vẫn kết luận
   // được (cận dưới đã đủ thì thật sự đủ), nhưng CHƯA đủ thì không được nói
   // thiếu bao nhiêu — xem `engine.ts`.
+  // Một chương trình có điểm mà không định giá nổi cũng làm kết luận thành
+  // cận dưới: người dùng có thể đang phủ tốt hơn con số này.
+  const isLowerBound = lowerBound || unpricedHeld.length > 0;
   return {
-    coverage,
+    coverage: coverage !== null && isLowerBound && coverage < 1 ? null : coverage,
+    coverageLowerBound: coverage,
+    coversTypical,
     bestProgram,
     accessible,
-    // Một chương trình có điểm mà không định giá nổi cũng làm kết luận thành
-    // cận dưới: người dùng có thể đang phủ tốt hơn con số này.
-    accessibleIsLowerBound: lowerBound || unpricedHeld.length > 0,
+    accessibleIsLowerBound: isLowerBound,
     unpricedHeldPrograms: unpricedHeld.sort(),
   };
 }
@@ -232,13 +261,13 @@ export function generateStrategies(input: StrategyInput): StrategyScore[] {
    * chỗ ngồi.
    */
   let coversTypical = false;
+  /** Chặng CÓ giá nhưng số dư chưa biết đủ để kết luận — khác hẳn chặng chưa có giá. */
+  let balanceUnknown = false;
   if (isTrip && need !== null) {
     const covered = tripCoverage(state, ix, asOf, need);
     coverage = covered.coverage;
-    const typical = need.byProgram.find((row) => row.programId === covered.bestProgram)?.typical ?? null;
-    // Cận dưới đã vượt mức điển hình thì con số thật càng vượt — kết luận
-    // ĐỦ vẫn đứng, dù `accessible` là cận dưới.
-    coversTypical = typical !== null && covered.accessible !== null && covered.accessible >= typical;
+    coversTypical = covered.coversTypical;
+    balanceUnknown = covered.coverage === null && covered.coverageLowerBound !== null;
   }
 
   if (coverage !== null) {
@@ -256,7 +285,11 @@ export function generateStrategies(input: StrategyInput): StrategyScore[] {
     // Chuyến đi mà chưa tính được số điểm cần — thiếu hạng ghế, thiếu số
     // người, hoặc chưa có award strategy cho vùng này. KHÔNG được suy ra "đủ
     // điểm": cả ba chỗ trống đó đều làm số điểm cần bị chia nhỏ.
-    add("USE_EXISTING_POINTS", hasBalances ? 0.2 : 0, "TRIP_ROUTE_NOT_PRICED");
+    add(
+      "USE_EXISTING_POINTS",
+      hasBalances ? 0.2 : 0,
+      balanceUnknown ? "POINTS_COVERAGE_UNKNOWN" : "TRIP_ROUTE_NOT_PRICED",
+    );
     add("BUILD_POINTS", 0.5);
   } else {
     add("USE_EXISTING_POINTS", hasBalances ? 0.35 : 0);

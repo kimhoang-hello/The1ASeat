@@ -8,6 +8,7 @@ import {
   explainChange,
   explainProduct,
   findRanked,
+  isRealDate,
   loadOfferHistory,
   recoDebuggerEnabled,
   renderChangeExplanation,
@@ -72,7 +73,10 @@ async function run(state: UserState, asOf: string): Promise<{ record: Recommenda
 export async function runDebugger(request: DebuggerRequest): Promise<DebuggerResponse> {
   if (!recoDebuggerEnabled()) notFound();
 
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(request.asOf)) return { ...EMPTY, error: `ngày chạy không hợp lệ: ${request.asOf}` };
+  // Ngày THẬT, không chỉ đúng hình dạng: `2026-02-31` qua được regex, rồi
+  // phép lọc thời gian so chuỗi như 31/02 còn phép tính số ngày lại chuẩn hoá
+  // sang tháng 3 — một báo cáo trộn hai thời điểm mà trông hoàn toàn hợp lệ.
+  if (!isRealDate(request.asOf)) return { ...EMPTY, error: `ngày chạy không hợp lệ: ${request.asOf}` };
   let state: UserState;
   try {
     state = JSON.parse(request.state) as UserState;

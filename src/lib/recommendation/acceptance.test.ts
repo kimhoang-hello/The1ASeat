@@ -370,3 +370,49 @@ test("§30 — câu trả lời thử làm hồ sơ MÂU THUẪN thì bị loạ
   }
   assert.notEqual(record.outputSnapshot.followUp?.gapKind, "spend_category_unknown");
 });
+
+/* ================================================================== *
+ * Vòng Codex 3
+ * ================================================================== */
+
+test("số dư CHƯA BIẾT không được chấm như số dư 0 — ở quyết định, không chỉ ở trình bày", () => {
+  const withBalance = (balance: number | null) => {
+    const state = structuredClone(japanTripFunded);
+    state.balances = state.balances.map((row) => ({ ...row, balance }));
+    return execute(state).record;
+  };
+  const unknown = withBalance(null);
+  const zero = withBalance(0);
+  const strategy = (r: RecommendationRunRecord, type: string) =>
+    r.outputSnapshot.results[0].strategies.find((s) => s.strategy === type)!;
+  // 0 điểm: thiếu thật, xây từ đầu.
+  assert.equal(strategy(zero, "BUILD_POINTS").score, 1);
+  // Chưa biết: KHÔNG phải thiếu 100%, và nói ra vì sao.
+  assert.ok(strategy(unknown, "BUILD_POINTS").score < 1);
+  assert.ok(strategy(unknown, "USE_EXISTING_POINTS").reasonCodes.includes("POINTS_COVERAGE_UNKNOWN"));
+  assert.equal(unknown.derivedState.goals[0].tripCoverage?.coverage, null);
+  // Không một thẻ nào được thưởng vì "lấp" một khoảng cách chưa ai biết.
+  for (const row of ranking(unknown)) {
+    const gap = row.candidate.components.find((c) => c.key === "points_gap_reduction");
+    if (gap !== undefined) assert.equal(gap.raw, 0, row.candidate.productSlug ?? "");
+  }
+  // Và câu hỏi tiếp theo là CHÍNH số dư đó — nó lật được người thắng.
+  assert.equal(unknown.outputSnapshot.followUp?.gapKind, "point_balance_amount_unknown");
+});
+
+test("FOCUS_ON_AVAILABILITY đo giá điển hình trên TỪNG chương trình, không trên chương trình phủ tốt nhất", () => {
+  // 100,000 AAdvantage® phủ 83% cận trên; 170,000 Aeroplan® đã đúng bằng giá
+  // điển hình của chính nó. Chọn chung một `bestProgram` thì Aeroplan® bị
+  // bỏ qua và lời khuyên "đi tìm chỗ ngồi" biến mất.
+  const state = structuredClone(japanTripFunded);
+  state.balances = [
+    { ...state.balances[0], programId: "aadvantage" as never, balance: 100_000 },
+    { ...state.balances[0], programId: "aeroplan" as never, balance: 170_000 },
+  ];
+  const { record } = execute(state);
+  const need = record.derivedState.goals[0].goal.tripNeed!;
+  const aeroplan = need.byProgram.find((row) => row.programId === "aeroplan")!;
+  assert.equal(aeroplan.typical, 170_000, "bài này dựa trên giá điển hình Aeroplan® 170,000");
+  const focus = record.outputSnapshot.results[0].strategies.find((s) => s.strategy === "FOCUS_ON_AVAILABILITY")!;
+  assert.ok(focus.score > 0);
+});

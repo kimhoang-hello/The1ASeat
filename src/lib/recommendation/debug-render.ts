@@ -205,7 +205,11 @@ export function renderRunReport(record: RecommendationRunRecord, options: RunRep
     const cover = goal.tripCoverage;
     if (cover !== null) {
       out.push(
-        `      phủ: ${pct(cover.coverage)} qua ${cover.bestProgram ?? "—"} · tiếp cận được ${int(cover.accessible)}` +
+        `      phủ: ${
+          cover.coverage === null && cover.coverageLowerBound !== null
+            ? `CHƯA BIẾT (cận dưới ${pct(cover.coverageLowerBound)})`
+            : pct(cover.coverage)
+        } qua ${cover.bestProgram ?? "—"}${cover.coversTypical ? " · đã đủ ở giá điển hình" : ""} · tiếp cận được ${int(cover.accessible)}` +
           `${cover.accessibleIsLowerBound ? " (CẬN DƯỚI)" : ""}` +
           `${cover.unpricedHeldPrograms.length > 0 ? ` · chỉ biết giá sàn: ${cover.unpricedHeldPrograms.join(", ")}` : ""}`,
       );

@@ -506,6 +506,8 @@ export interface ProvenanceRow {
     | "earning_rates"
     | "earning_caps"
     | "program_valuations"
+    | "transfer_paths"
+    | "award_strategies"
     | "product_benefits"
     | "eligibility_rules";
   id: string;

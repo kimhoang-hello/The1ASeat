@@ -116,6 +116,11 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * 4.2.1 — vòng Codex 2: câu trả lời thử làm hồ sơ mâu thuẫn (hạng mục vượt
  * tổng tháng, thu nhập hộ dưới thu nhập cá nhân) bị loại khỏi phép đo §30.
  *
+ * 4.3.0 — vòng Codex 3 (P1): tỷ lệ phủ dựng trên số dư CHƯA BIẾT mà chưa tới
+ * 100% thôi được dùng để quyết định — nó là "chưa biết", không phải "thiếu".
+ * Trước đó một tài khoản không nhớ số dư được chấm y hệt 0 điểm. Và
+ * `FOCUS_ON_AVAILABILITY` đo giá điển hình trên TỪNG chương trình.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -128,7 +133,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.2.1";
+export const ENGINE_VERSION = "4.3.0";
 
 export interface RecommendInput {
   state: UserState;

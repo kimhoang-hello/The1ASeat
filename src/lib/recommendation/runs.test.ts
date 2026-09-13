@@ -430,6 +430,7 @@ test("§22 — bản ghi nguồn chỉ đúng những dòng engine đã đọc",
       ...dataset.offers, ...dataset.offerComponents, ...dataset.productFees,
       ...dataset.earningRates, ...dataset.productBenefits, ...dataset.eligibilityRules,
       ...dataset.earningCaps, ...dataset.programValuations,
+      ...dataset.transferPaths, ...dataset.awardStrategies,
     ].map((row) => row.id as string),
   );
   for (const facts of record.derivedState.candidates) {
@@ -634,4 +635,27 @@ test("so lượt chạy — phép đo §30 đổi mà câu hỏi đứng yên v�
   const outcome = b.derivedState.followUpProbes[0].outcomes.find((o) => !o.invalid)!;
   outcome.flipsWinner = !outcome.flipsWinner;
   assert.equal(diffRecords(a, b).find((row) => row.stage === "confidence")?.changed, true);
+});
+
+test("vòng Codex 3 — bản ghi nguồn có cả chặng chuyển điểm và bảng giá chặng đang hỏi", () => {
+  const { record, dataset } = execute(japanTripFunded);
+  const facts = record.derivedState.candidates.find((row) => row.earn.programs.includes("amex-mr" as never))!;
+  const e = explainProduct(record, facts.productSlug, { dataset });
+  const tables = new Set(e.provenance!.map((row) => row.table));
+  assert.ok(tables.has("transfer_paths"), "thiếu chặng MR → Aeroplan®");
+  assert.ok(tables.has("award_strategies"), "thiếu bảng giá chặng Nhật");
+  const strategies = record.derivedState.goals[0].goal.tripNeed!.strategies.map((row) => row.id as string);
+  assert.deepEqual(
+    e.provenance!.filter((row) => row.table === "award_strategies").map((row) => row.id),
+    strategies,
+  );
+});
+
+test("vòng Codex 3 — phép gán 'nếu như' có setter ném thì TRẢ lỗi, không ném", async () => {
+  const { applyAssignment } = await import("./debug-input.ts");
+  const state = structuredClone(japanTripFunded);
+  assert.match(applyAssignment(state, "goals.length=-1") ?? "", /không gán được/);
+  assert.match(applyAssignment(state, "__proto__.x=1") ?? "", /không hợp lệ/);
+  assert.equal(applyAssignment(state, "profile.annualFeeTolerancePerCard=0"), null);
+  assert.equal(state.profile.annualFeeTolerancePerCard, 0);
 });

@@ -21,7 +21,7 @@
 import { activeAt } from "./temporal.ts";
 import { candidateKey, type PipelineStage } from "./run-diff.ts";
 import type { RecommendationRunRecord } from "./runs.ts";
-import type { DataGap, RecommendationDataset, Temporal } from "./types.ts";
+import type { AwardStrategy, DataGap, RecommendationDataset, Temporal } from "./types.ts";
 import type {
   AdjustmentLayer,
   Candidate,
@@ -231,6 +231,13 @@ export function provenanceFor(
   facts: CandidateFactsSnapshot,
   dataset: RecommendationDataset,
   asOf: string,
+  /**
+   * Award strategy của CHẶNG đang hỏi — thuộc về mục tiêu, không thuộc về thẻ,
+   * nhưng giá chuyến đi quyết định `points_gap_reduction` và
+   * `trip_currency_utility` của MỌI thẻ. Lấy từ `GoalTrace.goal.tripNeed`,
+   * đúng những dòng engine đã đọc.
+   */
+  awardStrategies: readonly AwardStrategy[] = [],
 ): ProvenanceRow[] {
   const rows: ProvenanceRow[] = [];
   const offer = dataset.offers.find((row) => row.id === facts.offer.activeOfferId);
@@ -260,6 +267,14 @@ export function provenanceFor(
   for (const valuation of activeAt(dataset.programValuations, asOf)) {
     if (programs.has(valuation.programId as string)) rows.push(provenanceRow("program_valuations", valuation));
   }
+  // Chặng chuyển điểm đi từ đồng tiền của thẻ: chúng quyết định bonus quy về
+  // chương trình đặt vé, tầm với linh hoạt, và phần "đổ vào hệ sinh thái"
+  // của §16 Rule 3. Một tỷ lệ chuyển sai đổi thứ hạng mà không chạm dòng nào
+  // của chính thẻ.
+  for (const path of activeAt(dataset.transferPaths, asOf)) {
+    if (programs.has(path.sourceProgramId as string)) rows.push(provenanceRow("transfer_paths", path));
+  }
+  for (const strategy of awardStrategies) rows.push(provenanceRow("award_strategies", strategy));
   for (const row of byProduct(dataset.productBenefits)) rows.push(provenanceRow("product_benefits", row));
   for (const row of byProduct(dataset.eligibilityRules)) rows.push(provenanceRow("eligibility_rules", row));
   return rows.sort((a, b) =>
@@ -451,7 +466,7 @@ export function explainProduct(
     provenance:
       facts === null || options.dataset === undefined
         ? null
-        : provenanceFor(facts, options.dataset, record.inputSnapshot.asOf),
+        : provenanceFor(facts, options.dataset, record.inputSnapshot.asOf, goal?.goal.tripNeed?.strategies ?? []),
   };
 }
 

@@ -1067,7 +1067,7 @@ bắt dữ liệu sai tốt hơn bắt code kiểm tra sai**, và debugger là d
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # 318 test: chi tiêu, bất biến, vòng đời, quy mô, người dùng, engine, Phase 4, Test A–J
+npm run test:reco         # 324 test: chi tiêu, bất biến, vòng đời, quy mô, người dùng, engine, Phase 4, Test A–J
 npm run reco:debug        # debugger §22 dòng lệnh — xem mục Phase 4
 ```
 
