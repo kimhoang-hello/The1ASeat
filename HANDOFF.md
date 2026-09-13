@@ -18,10 +18,11 @@ Tài liệu module: [`src/lib/recommendation/README.md`](src/lib/recommendation/
 | 2 | Hồ sơ người dùng, thẻ, số dư, goals | ✅ |
 | 3 | Engine (Portfolio Analyzer → Ranking) | ✅ |
 | 4 | `recommendation_runs` + Debugger + Test A–J | ✅ |
-| 5 | **Frontend UX** | ⬅️ **BẮT ĐẦU Ở ĐÂY** — chặn bởi quyết định database (§3) |
+| 5 | **Frontend UX** | ⬅️ **BẮT ĐẦU Ở ĐÂY** — chặn bởi quyết định database (§3). Phán quyết cuối Phase 4: **READY FOR PHASE 5 WITH KNOWN RISKS** (§7) |
 | 6 | LLM giải thích | ⛔ |
 
-Phase 4: nhánh `wt/reco-phase4`, 29 commit, 21 vòng Codex, **389 test**,
+Phase 4: **đã merge vào `main` ngày 13/09/2026** (nhánh `wt/reco-phase4`,
+29 commit), 21 vòng Codex, **389 test**,
 `ENGINE_VERSION` **4.24.0**. Chuỗi "bản vá đẻ ra lỗi" lặp lại lần thứ ba
 (sau Phase 2 và 3), ba lần trong phase này: `tripCoverage` (vòng 3→7, dừng
 khi viết lại thành một phép đánh giá), phạm vi chỗ trống khi nhiều mục tiêu
@@ -149,6 +150,35 @@ của user.
 ---
 
 ## 4. Phase 5 phải xây gì (§35)
+
+### Việc đầu tiên, theo thứ tự
+
+1. **Chốt database** (§3) — không có nó thì không lưu được hồ sơ và lượt chạy
+   của người dùng thật, và mọi thứ dưới đây dựa vào việc lưu.
+2. **Chặn deploy hỏng.** Repo KHÔNG có CI chạy test; Hostinger tự deploy mỗi
+   lần push lên `main` (xem `DEPLOY.md`, `.github/workflows/deploy.yml` chỉ là
+   workflow tay không dùng). Nên một bản build làm sai engine mà quên tăng
+   `ENGINE_VERSION` sẽ lên production và ghi lượt chạy dưới nhãn version cũ —
+   lỗ duy nhất `replay` không tự bịt được (diễn tập, §1). Tối thiểu: workflow
+   chạy `tsc`, `lint`, `test:reco` trên mỗi push (báo, không chặn được
+   Hostinger); chặn thật cần hook `pre-push` hoặc đổi sang deploy qua nhánh.
+3. **Viết backend database cho hai interface đã sẵn** — `RunStore`
+   (`run-store.ts`: `saveDataset` theo dấu vân tay, `saveRun` từ chối id
+   trùng, `getRun`, `listRuns`) và phần GHI của `UserDataSource`. Chạy CÙNG
+   bộ test của bản bộ nhớ / bản file (`runs.test.ts`) trên backend mới.
+4. **Mỗi lượt chạy thật đi qua `executeRun` + `RunStore`** — kể cả lượt của
+   questionnaire thích ứng. Không có lượt mốc thì năm tầng giữa (chiến lược,
+   nhu cầu, luật, xếp hạng, chấm điểm) chỉ chẩn đoán được bằng hiểu biết
+   nghiệp vụ; có mốc thì `replay`/`diff` quy về đúng tầng một cách máy móc.
+5. **Đăng nhập admin trước khi bật `RECO_DEBUGGER=1` trên production** — trang
+   debugger và server action của nó hiện chỉ được chặn bằng cờ môi trường.
+6. **Dịch mã thành câu tiếng Việt ở tầng trang.** `REASON_CODE_NOTES` là ghi
+   chú cho DEV (nói mã phát ra ở đâu), không phải câu cho người đọc.
+7. **Không đổi engine trong lúc làm UI.** Cần đổi logic thì tăng
+   `ENGINE_VERSION`, chạy lại bản chụp, và cân nhắc một vòng Codex: các bản vá
+   vòng 21 và buổi diễn tập chưa được Codex kiểm lại (§1).
+
+### Phạm vi
 
 adaptive questionnaire · result page · alternatives · warnings · confidence ·
 affiliate CTA. Tiêu chí: không bắt điền đủ, thiếu thì hỏi một câu tiếp
@@ -347,7 +377,9 @@ cả hai đứng yên mà kết quả đổi → hồi quy. Dấu vân tay nay d
 ## 9. Quy ước của repo
 
 - **Tự commit và push lên `origin main`** sau khi build/lint xanh — chỉ trên
-  `main`; nhánh `wt/*` merge vào `main` là việc phải hỏi.
+  `main`; nhánh `wt/*` merge vào `main` là việc phải hỏi. Đẩy từ worktree
+  bằng `git push origin HEAD:main` sau khi đã gộp `origin/main` vào nhánh —
+  không đụng thư mục `main` mà phiên khác có thể đang dùng.
 - **Trả lời user bằng tiếng Việt**, gọi user là "bạn", tự xưng là "mình".
 - Comment trong code: giải thích **vì sao**, không phải **làm gì**.
 - **Cross-check với Codex sau mỗi thay đổi.** `codex exec review --commit
