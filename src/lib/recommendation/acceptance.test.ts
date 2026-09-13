@@ -1339,3 +1339,18 @@ test("thẻ bị loại vì cửa MỞ THẺ không bị kể thêm luật chỉ
   const facts = record.derivedState.candidates.find((row) => row.productId === productId)!;
   assert.ok(facts.eligibility.welcomeFailedRuleIds.includes(welcomeRule.id as string), "nó vẫn nằm ở danh sách của cửa bonus");
 });
+
+test("bonus CHƯA CHẮC nhận được: phần tăng chuyến đi tính một nửa, như điểm giữa của bị chặn và nhận được", () => {
+  // Chuyến Việt Nam còn thiếu điểm; cùng hồ sơ, chỉ khác đã khai thẻ hay chưa.
+  const declared = structuredClone(vietnamTripShortfall);
+  const undeclared = { ...structuredClone(vietnamTripShortfall), declared: { ...vietnamTripShortfall.declared, cards: false } };
+  const gapOf = (state: UserState, slug: string) =>
+    findRanked(execute(state).record, slug)!.components.find((c) => c.key === "points_gap_reduction")!;
+  const onceInLifetime = DATA.eligibilityRules.find((r) => r.scope === "welcome_offer")!;
+  const slug = DATA.products.find((p) => p.id === onceInLifetime.productId)!.slug;
+  const full = gapOf(declared, slug);
+  const half = gapOf(undeclared, slug);
+  assert.ok(full.raw > 0, `tiền đề: bonus của ${slug} thu hẹp khoảng cách`);
+  assert.ok(Math.abs(half.raw - full.raw / 2) < 1e-12, `${half.raw} ≠ ${full.raw} / 2`);
+  assert.match(half.note, /MỘT NỬA/);
+});

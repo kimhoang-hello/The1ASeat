@@ -76,21 +76,36 @@ function tripCurrencyUtility(
 export function tripGain(
   candidate: CandidateFacts,
   ctx: ScoringContext,
-): { before: number; after: number; raw: number; estimated: boolean; floorOnly: boolean } | null {
+): {
+  before: number;
+  after: number;
+  raw: number;
+  estimated: boolean;
+  floorOnly: boolean;
+  /** Cửa welcome bonus chưa biết — phần tăng tính MỘT NỬA, xem dưới. */
+  bonusUncertain: boolean;
+} | null {
   const need = ctx.goal.tripNeed;
   if (need === null) return null;
   const before = tripCoverage(ctx.state, ctx.ix, ctx.asOf, need).coverage;
   if (before === null) return null;
-  if (before >= 1) return { before, after: before, raw: 0, estimated: false, floorOnly: false };
+  if (before >= 1) return { before, after: before, raw: 0, estimated: false, floorOnly: false, bonusUncertain: false };
   const bonusTo = (programId: PointsProgramId) => bonusPointsToward(candidate, programId, ctx.ix, ctx.asOf) ?? 0;
   const after = tripCoverage(ctx.state, ctx.ix, ctx.asOf, need, bonusTo);
-  const raw = Math.max(0, (after.coverage as number) - before);
+  const full = Math.max(0, (after.coverage as number) - before);
+  // Bonus BỊ CHẶN thì `bonusPointsToward` về 0 — phần tăng bằng 0, cộng phạt
+  // −0.15 ở `rules.ts`. Bonus CHƯA CHẮC thì điểm giữa của hai ca: nửa phần
+  // tăng, cộng nửa mức phạt. Cộng trọn là hứa bonus cho người có thể đã từng
+  // giữ thẻ (vòng rà sau Codex 18).
+  const bonusUncertain = candidate.eligibility.welcomeOfferUncertain && full > 0;
+  const raw = bonusUncertain ? full / 2 : full;
   const estimated = raw > 0 && !after.coverageKnown;
   return {
     before,
     after: after.coverage as number,
     raw,
     estimated,
+    bonusUncertain,
     // Cảnh báo "chỉ biết giá sàn" CHỈ khi bonus của CHÍNH thẻ này rơi vào một
     // chương trình chỉ-có-sàn đang còn bất định — xem `uncertainFloorOnlyPrograms`.
     floorOnly: estimated && after.uncertainFloorOnlyPrograms.some((programId) => bonusTo(programId) > 0),
@@ -132,6 +147,7 @@ export function scoreTrip(candidate: CandidateFacts, ctx: ScoringContext): Score
       gapRaw === 0
         ? "welcome bonus không đưa chương trình nào đặt được chặng này tiến gần hơn"
         : `welcome bonus đưa phần chuyến đi đã phủ từ ${Math.round(gain.before * 100)}% lên ${Math.round(gain.after * 100)}%` +
+          (gain.bonusUncertain ? " — chưa chắc nhận được bonus: tính MỘT NỬA phần tăng" : "") +
           (gain.estimated ? " — ƯỚC LƯỢNG: điểm giữa một khoảng phủ, không phải số đo" : "");
   }
 

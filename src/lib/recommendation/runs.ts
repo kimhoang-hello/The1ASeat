@@ -131,6 +131,19 @@ function throughJson<T>(value: T): { value: T; canonical: string } {
   return { value: JSON.parse(canonical) as T, canonical };
 }
 
+/** Version đầu tiên mọi bản ghi đều mang `resultFingerprint`. */
+const RESULT_FINGERPRINT_SINCE = "4.19.0";
+
+/** `a` < `b` theo semver số (không có nhãn tiền phát hành). */
+function olderThan(a: string, b: string): boolean {
+  const pa = a.split(".").map(Number);
+  const pb = b.split(".").map(Number);
+  for (let i = 0; i < 3; i += 1) {
+    if ((pa[i] ?? 0) !== (pb[i] ?? 0)) return (pa[i] ?? 0) < (pb[i] ?? 0);
+  }
+  return false;
+}
+
 function resultFingerprintOf(derived: DerivedState, output: RecommendationOutput): string {
   return fingerprint({ d: derived, o: output });
 }
@@ -266,6 +279,14 @@ export function replayRun(record: RecommendationRunRecord, dataset: Recommendati
   // dòng. Không kiểm thì lượt chạy lại đọc đầu vào ĐÃ ĐỔI, ra kết quả khác, và
   // bị gọi là HỒI QUY — admin đi tìm lỗi trong engine trong khi lỗi nằm ở kho.
   // Cùng lý do bộ dữ liệu phải khớp dấu vân tay ở trên (vòng rà Phase 4).
+  // Chỉ bản ghi TRƯỚC khi có trường này được phép thiếu nó; bản ghi từ 4.19.0
+  // trở đi mà thiếu là đã bị cắt bớt trong kho (vòng Codex 19).
+  if (record.resultFingerprint === undefined && !olderThan(record.engineVersion, RESULT_FINGERPRINT_SINCE)) {
+    throw new Error(
+      `replayRun: bản ghi ${record.id} (engine ${record.engineVersion}) thiếu dấu vân tay kết quả — ` +
+        `mọi bản ghi từ ${RESULT_FINGERPRINT_SINCE} đều có, nên bản này đã hỏng trong kho.`,
+    );
+  }
   const stored = [
     ["hồ sơ người dùng", fingerprint(record.inputSnapshot.state), record.inputSnapshot.stateFingerprint],
     ["lịch sử offer", fingerprint(record.inputSnapshot.offerHistory), record.inputSnapshot.offerHistoryFingerprint],

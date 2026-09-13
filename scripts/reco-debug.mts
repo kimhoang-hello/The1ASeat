@@ -259,11 +259,14 @@ async function main() {
       }
       console.log(
         result.regression
-          ? result.resultVerified
-            ? "✗ HỒI QUY: version không đổi mà kết quả đổi — engine không còn tất định (§35)"
-            : "✗ HỒI QUY hoặc KHO HỎNG: version không đổi mà kết quả đổi, và bản ghi cũ này không có dấu vân tay kết quả để phân biệt"
+          ? "✗ HỒI QUY: version không đổi mà kết quả đổi — engine không còn tất định (§35)"
           : "≠ kết quả đổi vì engine/luật đã đổi version — đây là tác động của lần đổi đó:",
       );
+      // Bản ghi cũ không kiểm được kết quả đã lưu: khác biệt bên dưới CÓ THỂ
+      // là kho hỏng, dù version đổi hay không (vòng Codex 19).
+      if (!result.resultVerified) {
+        console.log("  ⚠︎ bản ghi trước 4.19.0 không có dấu vân tay kết quả — một phần khác biệt có thể do kho, không do engine");
+      }
       console.log(renderStageDiffs(diffRecords(record, result.replayed)));
       if (result.regression) process.exit(1);
       return;

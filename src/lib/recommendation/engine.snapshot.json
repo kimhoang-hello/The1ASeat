@@ -1,10 +1,10 @@
 {
-  "engineVersion": "4.20.0",
+  "engineVersion": "4.21.0",
   "datasetFingerprint": "298326-8e32ed48bcd1fdd7",
   "runs": [
     {
       "user": "u_beginner",
-      "run": "188936-318e20fac01707ad",
+      "run": "188936-8788b349e5d1e58e",
       "goalResolution": "resolved",
       "followUp": "household_income_unknown",
       "primary": "td-aeroplan-visa-infinite",
@@ -49,7 +49,7 @@
     },
     {
       "user": "u_undeclared",
-      "run": "203489-fccf20f40bd01a09",
+      "run": "203489-32da1bc58968a1e8",
       "goalResolution": "resolved",
       "followUp": "cards_undeclared",
       "primary": "rbc-avion-visa-platinum",
@@ -94,7 +94,7 @@
     },
     {
       "user": "u_aeroplan_heavy",
-      "run": "196427-621cafb8d28a127d",
+      "run": "196427-8f638411695f4d44",
       "goalResolution": "resolved",
       "followUp": "household_income_unknown",
       "primary": "amex-gold-rewards",
@@ -142,7 +142,7 @@
     },
     {
       "user": "u_japan_funded",
-      "run": "179472-09d47efae2bdd2f5",
+      "run": "179472-d0555e4937c9aff6",
       "goalResolution": "resolved",
       "followUp": "spend_profile_missing",
       "primary": "no_new_card",
@@ -187,7 +187,7 @@
     },
     {
       "user": "u_japan_gap",
-      "run": "205926-9fec19ed1820775e",
+      "run": "205926-a87a31625aa1b109",
       "goalResolution": "resolved",
       "followUp": "business_ownership_unknown",
       "primary": "amex-gold-rewards",
@@ -237,7 +237,7 @@
     },
     {
       "user": "u_low_capacity",
-      "run": "170751-dd134dd999ee5e44",
+      "run": "170751-4c5d495ebe051c6f",
       "goalResolution": "resolved",
       "followUp": "spend_category_unknown",
       "primary": "amex-cobalt",
@@ -283,7 +283,7 @@
     },
     {
       "user": "u_dup_benefit",
-      "run": "193633-99bb3a1e925489f7",
+      "run": "193633-f0f5cdd9471a1d24",
       "goalResolution": "resolved",
       "followUp": "household_income_unknown",
       "primary": "rbc-avion-visa-platinum",
@@ -330,7 +330,7 @@
     },
     {
       "user": "u_flexible",
-      "run": "196532-aae27b13f57326c8",
+      "run": "196532-57999544231205c7",
       "goalResolution": "resolved",
       "followUp": "household_income_unknown",
       "primary": "cibc-aeroplan-visa-infinite-privilege",
@@ -376,7 +376,7 @@
     },
     {
       "user": "u_sparse",
-      "run": "214787-6f62cdf09808454d",
+      "run": "214787-66b7683984be7604",
       "goalResolution": "resolved",
       "followUp": "personal_income_unknown",
       "primary": "rbc-avion-visa-platinum",
@@ -422,7 +422,7 @@
     },
     {
       "user": "u_student",
-      "run": "201400-dcc965d296f1764d",
+      "run": "201400-a61400d94fe687f6",
       "goalResolution": "resolved",
       "followUp": "spend_category_unknown",
       "primary": "scotiabank-scene-plus-visa-students",
@@ -465,7 +465,7 @@
     },
     {
       "user": "u_advanced",
-      "run": "171003-f42b49f6a8d9d0f7",
+      "run": "171003-fa29da0b861b5c72",
       "goalResolution": "resolved",
       "followUp": "household_income_unknown",
       "primary": "rbc-avion-visa-platinum",
@@ -510,7 +510,7 @@
     },
     {
       "user": "u_high_spend",
-      "run": "185429-ebecd51e8aeb466b",
+      "run": "185429-fa7acd0da0e570c4",
       "goalResolution": "resolved",
       "followUp": "household_income_unknown",
       "primary": "wealthsimple-visa-infinite-privilege",
@@ -556,7 +556,7 @@
     },
     {
       "user": "u_vague",
-      "run": "201538-12f878034800f724",
+      "run": "201538-2eafee9a43fdef65",
       "goalResolution": "resolved",
       "followUp": "spend_category_unknown",
       "primary": "amex-green",
@@ -602,7 +602,7 @@
     },
     {
       "user": "u_vn_funded",
-      "run": "192344-ac5c705105220e12",
+      "run": "192344-a3f7b05aeebe21e9",
       "goalResolution": "resolved",
       "followUp": "household_income_unknown",
       "primary": "no_new_card",
@@ -650,7 +650,7 @@
     },
     {
       "user": "u_vn_gap",
-      "run": "187707-dc47662a316a6af7",
+      "run": "187707-817078dd551a7974",
       "goalResolution": "resolved",
       "followUp": "household_income_unknown",
       "primary": "amex-gold-rewards",
@@ -699,7 +699,7 @@
     },
     {
       "user": "u_snapshot_two_goals",
-      "run": "289625-a492b40c41555309",
+      "run": "289625-aaf9a579b9cf5edc",
       "goalResolution": "ambiguous",
       "followUp": "goal_priority_ambiguous",
       "primary": "amex-gold-rewards",
@@ -747,7 +747,7 @@
     },
     {
       "user": "u_snapshot_no_goal",
-      "run": "80696-8483b989e169ef1e",
+      "run": "80696-25c410c2097d9fc5",
       "goalResolution": "none",
       "followUp": "goal_missing",
       "primary": null,

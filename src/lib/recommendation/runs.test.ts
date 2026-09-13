@@ -30,7 +30,7 @@ import {
   firstComputedDivergence,
   PIPELINE_STAGES,
 } from "./run-diff.ts";
-import { compareCandidates, explainProduct, provenanceFor, scoreBreakdown } from "./debug.ts";
+import { compareCandidates, eligibilityUnknownCauses, explainProduct, provenanceFor, scoreBreakdown } from "./debug.ts";
 import {
   renderChangeExplanation,
   renderProductExplanation,
@@ -222,12 +222,54 @@ test("§20 — hồ sơ hay lịch sử offer trong bản ghi bị sửa là L�
 test("§20 — bản ghi CŨ (trước khi có dấu vân tay kết quả) vẫn chạy lại được, và nói ra là chưa kiểm", () => {
   // Vòng Codex 18: trường mới bắt buộc làm mọi bản ghi cũ bị gọi là hỏng kho.
   const { record, dataset } = execute(vietnamTripShortfall);
-  const old = structuredClone(record);
+  const old = { ...structuredClone(record), engineVersion: "4.18.0" };
   delete old.resultFingerprint;
   const replay = replayRun(old, dataset);
   assert.equal(replay.identical, true);
   assert.equal(replay.resultVerified, false);
   assert.equal(replayRun(record, dataset).resultVerified, true);
+  // Bản ghi TỪ 4.19.0 mà thiếu nó thì đã bị cắt bớt trong kho (vòng Codex 19).
+  const truncated = structuredClone(record);
+  delete truncated.resultFingerprint;
+  assert.throws(() => replayRun(truncated, dataset), /thiếu dấu vân tay kết quả/);
+});
+
+test("debugger đọc được bản ghi CŨ — thiếu các trường thêm sau — không nổ, không in 'undefined'", () => {
+  // §20 hứa đọc được mọi lượt chạy đã lưu. Bản ghi trước 4.16–4.20 thiếu
+  // `basis`, `flipShare`, `unknownCause`, `welcomeOfferUncertain` và hai danh
+  // sách luật của cửa bonus; `why` từng nổ TypeError trên chúng (vòng Codex 19).
+  const state = structuredClone(beginnerNoCards);
+  state.declared = { ...state.declared, cards: false };
+  const { record, dataset } = execute(state);
+  // Hai đời bản ghi thật: 4.16–4.19 (có `unknownCause`, `basis`; chưa có hai
+  // danh sách của cửa bonus — cặp cũ trộn hai cửa) và trước 4.16 (thiếu cả).
+  const strip = (fields: string[]) => {
+    const legacy = JSON.parse(JSON.stringify(record), (key, value) => (fields.includes(key) ? undefined : value)) as RecommendationRunRecord;
+    for (const row of legacy.derivedState.candidates) {
+      const fresh = record.derivedState.candidates.find((f) => f.productId === row.productId)!.eligibility;
+      row.eligibility.unknownRuleIds = [...fresh.unknownRuleIds, ...fresh.welcomeUnknownRuleIds];
+      row.eligibility.failedRuleIds = [...fresh.failedRuleIds, ...fresh.welcomeFailedRuleIds];
+    }
+    return legacy;
+  };
+  const before420 = strip(["welcomeOfferUncertain", "welcomeFailedRuleIds", "welcomeUnknownRuleIds"]);
+  const before416 = strip(["welcomeOfferUncertain", "welcomeFailedRuleIds", "welcomeUnknownRuleIds", "basis", "flipShare", "unknownCause", "resultFingerprint"]);
+  for (const legacy of [before420, before416]) {
+    const report = renderRunReport(legacy);
+    assert.ok(!report.includes("undefined"), "báo cáo in 'undefined'");
+    for (const row of legacy.derivedState.candidates) {
+      const why = renderProductExplanation(explainProduct(legacy, row.productSlug, { dataset }));
+      assert.ok(!why.includes("undefined"), `${row.productSlug}: 'vì sao' in 'undefined'`);
+    }
+  }
+  // Bản 4.16–4.19: cặp danh sách cũ chia lại theo `scope` — nguyên nhân của
+  // cửa bonus không mất, và không lọt sang cửa mở thẻ.
+  const amex = before420.derivedState.candidates.find((row) =>
+    row.eligibility.rules.some((rule) => rule.scope === "welcome_offer" && rule.outcome === "unknown"),
+  )!;
+  assert.ok(amex !== undefined, "tiền đề: có thẻ mà cửa bonus chưa biết");
+  assert.ok(eligibilityUnknownCauses(amex.eligibility, "welcome_offer").length > 0);
+  assert.equal(eligibilityUnknownCauses(amex.eligibility, "application").some((c) => c.detail.startsWith("previous_cardholder")), false);
 });
 
 test("explainChange ghép lịch sử offer của ngày này vào ngày kia thì cắt theo ngày đó, không nổ", () => {

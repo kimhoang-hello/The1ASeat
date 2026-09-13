@@ -140,6 +140,30 @@ export function scoreBreakdown(candidate: Candidate): ScoreBreakdown {
  * Điều kiện "chưa biết" — vì đâu
  * ------------------------------------------------------------------ */
 
+/**
+ * Danh sách luật của MỘT cửa — chịu được bản ghi trước 4.20.0.
+ *
+ * Bản ghi cũ không có `welcomeFailedRuleIds`/`welcomeUnknownRuleIds`: hai cửa
+ * chung một cặp danh sách. Debugger phải đọc được mọi bản ghi §20 đã lưu, nên
+ * ở đây chia lại cặp cũ theo `scope` của từng luật trong trace — không phải
+ * `?? []`, thứ làm mất nguyên nhân của cửa bonus đã lưu (vòng Codex 19). Chỉ
+ * ĐỌC: bản ghi không bị sửa, vì replay so dấu vân tay trên bản gốc.
+ */
+export function gateRuleIds(
+  verdict: EligibilityVerdict,
+  gate: "application" | "welcome_offer",
+): { failed: string[]; unknown: string[] } {
+  if (verdict.welcomeFailedRuleIds !== undefined && verdict.welcomeUnknownRuleIds !== undefined) {
+    return gate === "application"
+      ? { failed: verdict.failedRuleIds, unknown: verdict.unknownRuleIds }
+      : { failed: verdict.welcomeFailedRuleIds, unknown: verdict.welcomeUnknownRuleIds };
+  }
+  const scopeOf = new Map(verdict.rules.map((rule) => [rule.ruleId, rule.scope]));
+  // Chỗ trống của lớp dữ liệu (`gap:`) luôn thuộc cửa mở thẻ.
+  const inGate = (id: string) => (scopeOf.get(id) ?? "application") === gate;
+  return { failed: verdict.failedRuleIds.filter(inGate), unknown: verdict.unknownRuleIds.filter(inGate) };
+}
+
 export interface EligibilityUnknownCause {
   /** Tầng sửa được nó — cùng từ vựng với `PipelineStage` của phép so lượt chạy. */
   source: "source_data" | "user_input" | "engine";
@@ -173,7 +197,7 @@ export function eligibilityUnknownCauses(
 ): EligibilityUnknownCause[] {
   const byId = new Map(verdict.rules.map((rule) => [rule.ruleId, rule]));
   const out: EligibilityUnknownCause[] = [];
-  for (const id of gate === "application" ? verdict.unknownRuleIds : verdict.welcomeUnknownRuleIds) {
+  for (const id of gateRuleIds(verdict, gate).unknown) {
     if (id.startsWith("gap:")) {
       out.push({ source: "source_data", detail: "lớp dữ liệu nói chưa biết hết điều kiện của thẻ" });
       continue;

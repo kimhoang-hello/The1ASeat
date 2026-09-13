@@ -298,9 +298,11 @@ export function renderRunReport(record: RecommendationRunRecord, options: RunRep
     derived.candidates.flatMap((row) => row.eligibility.rules.map((rule) => [rule.ruleId, rule] as const)),
   );
   for (const row of derived.excluded) {
+    // Chỉ luật của cửa MỞ THẺ là lý do loại thẻ — bản ghi trước 4.20.0 trộn cả
+    // luật chỉ chặn bonus vào đây (vòng Codex 18, 19).
     const failed = row.failedRuleIds
       .map((id) => ruleOf.get(id))
-      .filter((rule) => rule !== undefined)
+      .filter((rule): rule is NonNullable<typeof rule> => rule !== undefined && rule.scope !== "welcome_offer")
       .map((rule) => `${rule.ruleType} ${rule.operator} ${JSON.stringify(rule.value)}`);
     out.push(
       `  ${pad(row.productSlug, 42)} ${pad(row.stage, 12)} ${row.reason}${failed.length > 0 ? ` — ${failed.join("; ")}` : ""}`,
@@ -325,7 +327,7 @@ export function renderRunReport(record: RecommendationRunRecord, options: RunRep
       bits.push(`điều kiện ${e.status}${sources.length > 0 ? ` (${sources.join(" + ")})` : ""}`);
     }
     if (e.welcomeOfferBlocked) bits.push("bonus bị chặn");
-    if (e.welcomeOfferUncertain) {
+    if (e.welcomeOfferUncertain === true) {
       const sources = [...new Set(eligibilityUnknownCauses(e, "welcome_offer").map((cause) => SOURCE_TEXT[cause.source]))];
       bits.push(`bonus chưa chắc${sources.length > 0 ? ` (${sources.join(" + ")})` : ""}`);
     }
@@ -425,9 +427,12 @@ export function renderRunReport(record: RecommendationRunRecord, options: RunRep
       output.followUp === null ? "không có câu nào để hỏi" : `${output.followUp.gapKind} (${output.followUp.subject}) — ${output.followUp.reason}`
     }`,
   );
-  if (output.followUp !== null) {
+  // `basis` vắng ở bản ghi trước 4.16.0 — nói ra thay vì in "undefined".
+  if (output.followUp !== null && output.followUp.basis === undefined) {
+    out.push("  chọn vì: (bản ghi trước 4.16.0 không ghi lý do chọn)");
+  } else if (output.followUp !== null) {
     const flips =
-      output.followUp.flipShare === null
+      output.followUp.flipShare == null
         ? ""
         : ` (${Math.round(output.followUp.flipShare * 100)}% câu trả lời thử hợp lệ)`;
     out.push(`  chọn vì: ${BASIS_TEXT[output.followUp.basis]}${flips}`);
@@ -512,14 +517,14 @@ export function renderProductExplanation(explanation: ProductExplanation): strin
     out.push(heading(null, "Điều kiện §14 — từng luật"));
     out.push(
       `  phán quyết: ${facts.eligibility.status}${facts.eligibility.welcomeOfferBlocked ? " · welcome bonus BỊ CHẶN" : ""}` +
-        `${facts.eligibility.welcomeOfferUncertain ? " · welcome bonus CHƯA CHẮC" : ""}`,
+        `${facts.eligibility.welcomeOfferUncertain === true ? " · welcome bonus CHƯA CHẮC" : ""}`,
     );
     if (facts.eligibility.rules.length === 0) out.push("  không có luật nào đang hiệu lực");
     for (const rule of facts.eligibility.rules) {
       out.push(
         `  ${pad(rule.outcome.toUpperCase(), 8)} ${pad(rule.severity, 8)} ${pad(rule.scope, 14)} ` +
           `${rule.ruleType} ${rule.operator} ${JSON.stringify(rule.value)}${rule.ruleGroup ? ` [nhóm HOẶC ${rule.ruleGroup}]` : ""}` +
-          `${rule.unknownCause === null ? "" : ` ← ${rule.unknownCause}`}  (${rule.ruleId})`,
+          `${rule.unknownCause == null ? "" : ` ← ${rule.unknownCause}`}  (${rule.ruleId})`,
       );
     }
     for (const cause of eligibilityUnknownCauses(facts.eligibility)) {
