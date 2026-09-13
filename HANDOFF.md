@@ -21,8 +21,8 @@ Tài liệu module: [`src/lib/recommendation/README.md`](src/lib/recommendation/
 | 5 | **Frontend UX** | ⬅️ **BẮT ĐẦU Ở ĐÂY** — chặn bởi quyết định database (§3) |
 | 6 | LLM giải thích | ⛔ |
 
-Phase 4: nhánh `wt/reco-phase4`, 26 commit, 21 vòng Codex, **382 test**,
-`ENGINE_VERSION` **4.23.0**. Chuỗi "bản vá đẻ ra lỗi" lặp lại lần thứ ba
+Phase 4: nhánh `wt/reco-phase4`, 29 commit, 21 vòng Codex, **389 test**,
+`ENGINE_VERSION` **4.24.0**. Chuỗi "bản vá đẻ ra lỗi" lặp lại lần thứ ba
 (sau Phase 2 và 3), ba lần trong phase này: `tripCoverage` (vòng 3→7, dừng
 khi viết lại thành một phép đánh giá), phạm vi chỗ trống khi nhiều mục tiêu
 hoà nhau (vòng 8→11, dừng khi "mục tiêu có đọc X không" thành một hàm), và
@@ -48,6 +48,27 @@ trả lời nó:
 | Chấm điểm | mục 8, `compare A B` — khoảng cách tách theo thành phần, cộng lại đúng |
 | Luật §16 / biên tập §17 | mục 9; mỗi điều chỉnh mang `layer` |
 | Xếp hạng | mục 7 — bảng ĐẦY ĐỦ, kể cả thẻ bị ẩn vì cùng họ / dưới vạch cắt |
+
+### Diễn tập "khuyến nghị này sai" (13/09/2026)
+
+Gây lỗi thật ở từng tầng rồi CHỈ dùng `reco:debug` để tìm. Hai tình huống,
+hai con đường:
+
+| Nguồn lỗi (cách gây) | Có lượt mốc: `replay` / `diff` | Chỉ có MỘT lượt bị khiếu nại |
+| --- | --- | --- |
+| Dữ liệu nguồn (bonus gõ thừa số 0) | `diff` chỉ đúng dòng + trường; "đổi riêng dữ liệu là đủ đổi người thắng" | dòng 4 báo cáo: `kiểm dữ liệu: ✗ component 150000 vượt headline 15000`; `why` → "do: DỮ LIỆU NGUỒN" |
+| Đầu vào (thu nhập gõ $6,000) | `what-if` sửa lại → người thắng trở về | `why` → "do: ĐẦU VÀO" + vế thu nhập TRƯỢT của nhóm HOẶC |
+| Dữ liệu điều kiện (ngưỡng $600,000) | `diff` chỉ đúng luật | `why` → cảnh báo validator "ngưỡng vượt mốc hợp lý" |
+| Phân tích danh mục (lỗi code) | `replay` → HỒI QUY, tầng đầu: danh mục | mục 2 tự cộng lại các dòng định giá: "KHÁC con số engine ⇒ lỗi ở PHÂN TÍCH DANH MỤC" |
+| Chiến lược / nhu cầu / luật §16 / xếp hạng (lỗi code) | `replay` → HỒI QUY, tầng đầu đúng từng ca | con số hiện đủ ở mục 4/3/9/7; phán xử cần hiểu biết nghiệp vụ |
+| Điều kiện / phù hợp (lỗi code) | `replay` → tầng "Điều kiện §14" / "Phù hợp §14" (nay là HAI tầng) | bảng luật từng dòng + nguồn của `unknown` |
+| Trọng số §10 (lỗi code) | `replay` → tầng chấm điểm, dòng `.weight: 0.25 → 0.45` | bảng điểm: `⚠︎ TRỌNG SỐ LỆCH §10.1 (0.25)` |
+| Biên tập §17 | `replay` → tầng "Biên tập §17" (tách khỏi luật §16) | lớp `editorial` riêng ở bảng điểm và mục 9 |
+
+**Hệ quả cho Phase 5: lưu MỌI lượt chạy của người dùng thật** (`executeRun` +
+`RunStore`). Có lượt mốc thì mọi lỗi code quy được về đúng tầng một cách máy
+móc; không có thì năm tầng giữa (chiến lược, nhu cầu, luật, xếp hạng, chấm
+điểm) vẫn cần người đọc hiểu nghiệp vụ.
 
 Tái lập + version: `executeRun` lưu bản ghi §20 đúng các cột spec;
 `replayRun` chạy lại ra đúng từng chữ số, và phân biệt HỒI QUY (khác mà
@@ -141,7 +162,7 @@ Những thứ đã có sẵn cho nó:
 - **Mỗi lượt chạy của người dùng thật nên đi qua `executeRun`** và lưu bằng
   `RunStore` — đó là thứ làm "khuyến nghị này sai" trả lời được sau này.
 - **Affiliate CTA**: đọc `Product.affiliateAvailable` ở TRANG, không bao giờ
-  ở engine. Test F và test quét mã nguồn 26 file canh chuyện đó.
+  ở engine. Test F và test quét mã nguồn 27 file canh chuyện đó.
 - Engine phát MÃ (`reasonCodes`, `warnings`), không phát câu tiếng Việt —
   Phase 5 dịch mã thành chữ; `REASON_CODE_NOTES` là điểm khởi đầu.
 
@@ -154,10 +175,10 @@ Những thứ đã có sẵn cho nó:
 3. **Không đếm trùng điểm chuyển được** (§7).
 4. **`NO_NEW_CARD` là ứng viên trong mọi lượt chạy** (§16 Rule 8).
 5. **Mô hình người dùng không mã hoá thẻ nào nên được khuyên.**
-6. **`strategies.ts` và `needs.ts` không nhắc tên sản phẩm nào**; 26 file
+6. **`strategies.ts` và `needs.ts` không nhắc tên sản phẩm nào**; 27 file
    engine (21 cũ + `trace.ts`, `read-set.ts`, `sensitivity.ts`,
-   `rule-shapes.ts`, `scoring/shared.ts`) không nhắc slug/id sản phẩm hay
-   chương trình.
+   `rule-shapes.ts`, `scoring/shared.ts`, `spec-weights.ts`) không nhắc
+   slug/id sản phẩm hay chương trình.
 
 Cộng một luật Phase 4:
 
@@ -283,6 +304,8 @@ stage theo đường dẫn cụ thể.
 | §30 hỏi câu NỀN (thẻ, số dư, nước ở, mục tiêu) trước câu ĐO ĐƯỢC là đổi người thắng | Quyết định thiết kế, giữ nguyên: câu nền không đo được bằng câu trả lời thử mà có thể đổi cả tập ứng viên. `followUp.basis = "gatekeeper"` nói ra điều đó. Codex vòng 17 phản đối — Phase 5 có thể xem lại khi có dữ liệu người dùng thật |
 | Bonus CHƯA CHẮC = điểm giữa hai thế giới ở từng thành phần | Xấp xỉ có chủ ý: trung vị percentile của thị trường cân offer chưa chắc bằng 0.5 (không phải kỳ vọng thật qua mọi tổ hợp thế giới); mã `MIN_SPEND_*` vẫn giữ vì đúng trong thế giới nhận được bonus |
 | Thẻ không có bonus (hoặc bonus bị chặn) nhận `spend_fit` = 1 | Quy ước Phase 3 ("không có mốc = phù hợp tối đa"). Khi chưa biết sức dồn, thẻ có bonus nhận 0.5 — nên thẻ không bonus hơn 0.105 ở vế này, bù lại mất `offer_quality`. Ca `u_sparse` sát nút vì đúng điểm này |
+| Bản build HỎNG mang cùng version với bản tốt | `ENGINE_VERSION` chỉ định danh logic khi MỌI lần deploy qua bài bản chụp §20 — lượt `ad979b91` của buổi diễn tập được tạo khi engine đang cài lỗi mà vẫn mang nhãn 4.23.0; replay về sau quy khác biệt cho "đổi version". **Phase 5: chạy `test:reco` trong CI trước deploy** |
+| Bảng "dòng điểm đọc từ nguồn nào" (`COMPONENT_SOURCES` ở `debug.ts`) viết tay | Như `read-set.ts`: thêm thành phần chấm điểm mà quên khai thì `why` ghi "engine" cho dòng đó |
 | Lưới `unmapped` của phép so chỉ bắt ca IM LẶNG hoàn toàn | Trường chưa ánh xạ đổi cùng lúc với trường đã ánh xạ thì lưới không thấy; thứ đóng lỗ là bài vét cạn (đỏ khi thêm trường mà quên `stageValue`) |
 | `read-set.ts` đo §29 THỪA ở vài chỗ (nhóm B vòng Codex 14) | Lấy MỌI tỷ lệ/trần của một thẻ thay vì những dòng khớp chi tiêu (tỷ lệ bị `restrictedTo` loại, trần của hạng mục người dùng không chi); luật điều kiện `soft`/`unknown` không tham gia cửa cứng; `eligibility_unknown` của thẻ đã trượt luật cứng. Mỗi ca chỉ trừ độ tin cậy, không đổi người thắng, điểm hay câu hỏi — nhưng có thể đẩy `medium` xuống `low` |
 
@@ -306,7 +329,7 @@ npm run build
 npm run test:reco
 ```
 
-`test:reco` 382/382. Bản chụp hành vi §20:
+`test:reco` 389/389. Bản chụp hành vi §20:
 
 ```bash
 UPDATE_ENGINE_SNAPSHOT=1 npm run test:reco
