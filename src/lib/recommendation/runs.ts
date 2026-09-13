@@ -25,6 +25,8 @@
 
 import { canonicalJson, fingerprint, fingerprintOf } from "./fingerprint.ts";
 import { indexDataset } from "./indexes.ts";
+import { datasetAt } from "./temporal.ts";
+import { historyCutoff } from "./offer-history.ts";
 import { ENGINE_VERSION, recommend } from "./engine.ts";
 import { RULE_VERSION } from "./rules.ts";
 import type { OfferHistoryPoint } from "./offer-history.ts";
@@ -137,6 +139,32 @@ export function executeRun(input: RunInput, meta: RunMeta): ExecutedRun {
   const data = throughJson(input.data);
   const history = throughJson(historyEntries(input.offerHistory));
   const knownAt = input.knownAt ?? null;
+
+  // Bộ dữ liệu phải ĐÃ cắt theo đúng `asOf`/`knownAt` bản ghi sẽ khai — cắt lại
+  // lần nữa phải ra y hệt. Không kiểm thì một người gọi truyền bộ CHƯA cắt, bản
+  // ghi nói "biết tới ngày X" trong khi engine đã đọc cả đính chính nhập sau X,
+  // và không phép so nào về sau phát hiện được: dấu vân tay khớp chính cái bộ
+  // sai đó (vòng rà Phase 4).
+  // Cùng lý do cho lịch sử offer: nó là THAM SỐ, và một điểm ghi sau ngày cắt
+  // (hay một `until` biết trước lần ghi kế tiếp) là tương lai lọt vào §12.
+  const cutoff = historyCutoff(input.asOf, knownAt);
+  for (const entry of history.value) {
+    for (const point of entry.points) {
+      if (point.at > cutoff || (point.until !== null && point.until > cutoff)) {
+        throw new Error(
+          `executeRun: lịch sử offer của ${entry.productId} có mốc sau ngày cắt ${cutoff} ` +
+            `(${point.at}${point.until === null ? "" : ` → ${point.until}`}) — nạp bằng loadOfferHistory của đúng hai ngày đó.`,
+        );
+      }
+    }
+  }
+  const recut = canonicalJson(datasetAt(data.value, input.asOf, knownAt === null ? {} : { knownAt }));
+  if (recut !== data.canonical) {
+    throw new Error(
+      `executeRun: bộ dữ liệu chưa được cắt theo asOf ${input.asOf}` +
+        `${knownAt === null ? "" : ` / knownAt ${knownAt}`} — truyền datasetAt(...) của đúng hai ngày đó.`,
+    );
+  }
 
   const run = recommend({
     state: state.value,

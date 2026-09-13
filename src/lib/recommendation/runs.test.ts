@@ -160,6 +160,42 @@ test("§20 — chạy lại với NHẦM bộ dữ liệu là LỖI, không ph�
   assert.throws(() => replayRun(record, other), /không phải bộ/);
 });
 
+test("§20 — bộ dữ liệu / lịch sử offer CHƯA cắt theo asOf/knownAt bản ghi khai là lỗi, không phải một lượt chạy", () => {
+  // Không kiểm thì bản ghi nói "biết tới ngày X" trong khi engine đã đọc cả
+  // dòng nhập sau X — và dấu vân tay khớp chính cái bộ sai đó.
+  // Một phí mới hiệu lực SAU ngày chạy, và một đính chính nhập SAU knownAt.
+  const fee = DATA.productFees[0];
+  const future = { ...fee, id: `${fee.id}_future` as never, effectiveFrom: "2027-01-01" };
+  const late = { ...fee, id: `${fee.id}_late` as never, recordedAt: "2026-09-08" };
+  const uncut: RecommendationDataset = { ...DATA, productFees: [...DATA.productFees, future] };
+  assert.notEqual(fingerprint(datasetAt(uncut, ASOF)), fingerprint(uncut), "tiền đề: cắt theo asOf bỏ dòng tương lai");
+  assert.throws(() => executeRun({ state: beginnerNoCards, data: uncut, asOf: ASOF }, { id: "x", createdAt: ASOF }), /chưa được cắt/);
+
+  const corrected: RecommendationDataset = { ...DATA, productFees: [...DATA.productFees.filter((row) => row.id !== fee.id), late] };
+  const knownAt = "2026-09-07";
+  assert.notEqual(fingerprint(datasetAt(corrected, ASOF, { knownAt })), fingerprint(corrected), "tiền đề: knownAt bỏ đính chính nhập sau");
+  assert.throws(
+    () => executeRun({ state: beginnerNoCards, data: corrected, asOf: ASOF, knownAt }, { id: "x", createdAt: ASOF }),
+    /chưa được cắt/,
+  );
+  // Bộ đã cắt đúng thì chạy bình thường.
+  assert.doesNotThrow(() => executeRun({ state: beginnerNoCards, data: DATA, asOf: ASOF }, { id: "x", createdAt: ASOF }));
+
+  // Lịch sử offer cũng vậy: một mức ghi sau ngày chạy, hay một `until` mà
+  // lượt chạy lúc ấy chưa thể biết, là tương lai lọt vào §12.
+  const cobalt = productIdFor("amex-cobalt") as string;
+  const withFuture = [...SAMPLE_HISTORY.slice(0, 2), { ...SAMPLE_HISTORY[2], until: "2026-10-01", endCensored: false }];
+  assert.throws(
+    () => execute(aeroplanHeavy, { offerHistory: new Map([[cobalt, withFuture]]) }),
+    /lịch sử offer .* sau ngày cắt/,
+  );
+  // knownAt sớm hơn một mức đã ghi thì mức đó cũng là "chưa biết".
+  assert.throws(
+    () => execute(aeroplanHeavy, { knownAt: "2026-05-01", data: datasetAt(offlineDataset(), ASOF, { knownAt: "2026-05-01" }), offerHistory: new Map([[cobalt, SAMPLE_HISTORY]]) }),
+    /lịch sử offer .* sau ngày cắt/,
+  );
+});
+
 test("§20 — hồ sơ hay lịch sử offer trong bản ghi bị sửa là LỖI KHO, không phải hồi quy", () => {
   // Hai thứ này nằm ngay trong bản ghi nên hỏng cùng nó — một migration đổi
   // kiểu một trường, một người sửa tay. Chạy lại trên đầu vào đã đổi thì kết
