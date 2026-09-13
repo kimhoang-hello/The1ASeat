@@ -216,13 +216,32 @@ export function bestCurrencyNeedVia(
   programId: PointsProgramId | null,
   asOf: string,
 ): number {
-  if (programId === null) return 0;
+  return bestCurrencyNeedDetail(needs, ix, programId, asOf).need;
+}
+
+/**
+ * Như `bestCurrencyNeedVia`, kèm chương trình ĐÃ cho con số đó — chính nó hay
+ * một đích qua chặng chuyển. Không có trường này thì ghi chú chỉ nói "nhu cầu
+ * đồng tiền, kể cả qua chặng chuyển", và admin không biết điểm đến từ nhu cầu
+ * Aeroplan® hay nhu cầu Avios® (vòng rà Phase 4).
+ */
+export function bestCurrencyNeedDetail(
+  needs: Needs,
+  ix: DatasetIndex,
+  programId: PointsProgramId | null,
+  asOf: string,
+): { need: number; via: PointsProgramId | null } {
+  if (programId === null) return { need: 0, via: null };
   let best = currencyNeed(needs, programId);
-  if (!isFlexibleInPractice(ix, programId, asOf)) return best;
+  let via: PointsProgramId | null = null;
+  if (!isFlexibleInPractice(ix, programId, asOf)) return { need: best, via };
   for (const path of activeAt(ix.pathsBySource.get(programId) ?? [], asOf)) {
     if (path.requiresTier !== null) continue;
-    const via = currencyNeed(needs, path.destinationProgramId) * 0.85;
-    if (via > best) best = via;
+    const reached = currencyNeed(needs, path.destinationProgramId) * 0.85;
+    if (reached > best) {
+      best = reached;
+      via = path.destinationProgramId;
+    }
   }
-  return best;
+  return { need: best, via };
 }

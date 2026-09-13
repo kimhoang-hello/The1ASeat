@@ -17,7 +17,7 @@
  */
 
 import { centsPerPoint } from "../portfolio.ts";
-import { offerQualityScore } from "../offer-quality.ts";
+import { earnFitComponent, offerQualityComponent, spendFitComponent } from "./shared.ts";
 import { component, relativeTo } from "./weights.ts";
 import { transferDestinationCount } from "./context.ts";
 import type { ScoreComponent } from "../engine-types.ts";
@@ -30,21 +30,25 @@ import type { CandidateFacts, ScoringContext } from "./context.ts";
  * hay không có tài khoản": người giữ 2,000 điểm Avios® và người giữ 200,000
  * điểm Avios® đều "đã có Avios®", mà nhu cầu của họ khác hẳn nhau.
  */
-function newExposure(candidate: CandidateFacts, ctx: ScoringContext): number {
+function newExposure(candidate: CandidateFacts, ctx: ScoringContext): { raw: number; note: string } {
   const programId = candidate.product.pointsProgramId;
-  if (programId === null) return 0;
-  if (ctx.portfolio.knownValueCents <= 0) return 1;
+  if (programId === null) return { raw: 0, note: "thẻ không kiếm đồng tiền nào" };
+  if (ctx.portfolio.knownValueCents <= 0) return { raw: 1, note: "danh mục chưa có giá trị đã biết nào" };
   const entry = ctx.portfolio.direct.get(programId);
-  if (entry === undefined || entry.kind !== "known") return 1;
+  if (entry === undefined || entry.kind !== "known") {
+    return { raw: 1, note: `chưa có số dư đã biết ở ${programId}` };
+  }
   const cpp = centsPerPoint(ctx.ix, programId, ctx.asOf);
-  if (cpp === null) return 1;
-  return Math.max(0, 1 - (entry.points * cpp) / ctx.portfolio.knownValueCents);
+  if (cpp === null) return { raw: 1, note: `${programId} chưa có định giá` };
+  const share = (entry.points * cpp) / ctx.portfolio.knownValueCents;
+  return { raw: Math.max(0, 1 - share), note: `1 − tỷ trọng ${programId} đã có ${share.toFixed(2)}` };
 }
 
 export function scoreDiversify(
   candidate: CandidateFacts,
   ctx: ScoringContext,
 ): ScoreComponent[] {
+  const exposure = newExposure(candidate, ctx);
   const destinations = transferDestinationCount(
     ctx.ix,
     candidate.product.pointsProgramId,
@@ -62,23 +66,18 @@ export function scoreDiversify(
   }
 
   return [
-    component("new_currency_exposure", 0.35, newExposure(candidate, ctx), "đồng tiền người dùng chưa có nhiều"),
+    component("new_currency_exposure", 0.35, exposure.raw, exposure.note),
     component(
       "transfer_flexibility",
       0.25,
       relativeTo(destinations, maxDestinations),
-      "số chương trình đồng tiền này chuyển thẳng tới được",
+      `chuyển thẳng tới ${destinations} chương trình ÷ nhiều nhất bộ dữ liệu ${maxDestinations}`,
     ),
     // §10.3 gọi nó "Earn Fit", §10.1 gọi "Long-term Earn Fit" — CÙNG một phép
     // đo. Một khái niệm, một khoá: hai tên khác nhau cho cùng một dòng sẽ làm
     // bảng giải thích của §19 trông như hai thứ khác nhau.
-    component(
-      "long_term_earn_fit",
-      0.15,
-      relativeTo(candidate.earn.annualValueCents, ctx.scale.maxEarnAnnualCents),
-      "giá trị tích điểm một năm",
-    ),
-    component("offer_quality", 0.1, offerQualityScore(candidate.offer, ctx.climate), "§11"),
-    component("spend_fit", 0.1, candidate.suitability.minSpendFit ?? 0.5, "§13"),
+    earnFitComponent(0.15, candidate, ctx),
+    offerQualityComponent(0.1, candidate, ctx),
+    spendFitComponent(0.1, candidate),
   ];
 }

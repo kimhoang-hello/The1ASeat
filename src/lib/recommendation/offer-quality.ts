@@ -456,12 +456,25 @@ export function offerClimate(facts: readonly OfferFacts[]): OfferClimate {
  * thành phần còn lại của §10 thay vì bị loại khỏi bảng.
  */
 export function offerQualityScore(fact: OfferFacts, climate: OfferClimate): number {
+  return offerQuality(fact, climate).score;
+}
+
+/**
+ * Điểm §11 KÈM năm vế của nó, và câu ghi chú dựng từ CHÍNH năm vế đó.
+ *
+ * Thành phần `offer_quality` nặng 10–25% điểm của mọi bảng §10, mà ghi chú cũ
+ * chỉ nói "§11 offer quality": admin thấy `raw=0.636` và không biết nó là giá
+ * trị bonus, percentile lịch sử hay hiệu quả chi tiêu — ba câu trả lời dẫn tới
+ * ba chỗ sửa khác nhau (vòng rà Phase 4).
+ */
+export function offerQuality(fact: OfferFacts, climate: OfferClimate): { score: number; note: string } {
   // `bonusKind: "none"` là một dòng offer THẬT nói rằng thẻ này KHÔNG có
   // welcome bonus — National Bank® và hai thẻ Wealthsimple® đang vậy. Chỉ
   // kiểm `active === null` thì chúng lọt qua và nhận ~0.4 điểm offer từ những
   // giá trị trung tính, cộng hiệu quả chi tiêu TỐI ĐA vì chúng không đòi chi
   // gì. Tức là được thưởng cho việc không có gì để thưởng.
-  if (fact.active === null || fact.active.offer.bonusKind === "none") return 0;
+  if (fact.active === null) return { score: 0, note: "§11: không có offer đang chạy" };
+  if (fact.active.offer.bonusKind === "none") return { score: 0, note: "§11: thẻ không có welcome bonus" };
 
   const value = fact.usableValueCents ?? fact.fullValueCents ?? 0;
   const valueScore = climate.maxUsableValueCents > 0 ? value / climate.maxUsableValueCents : 0;
@@ -485,13 +498,17 @@ export function offerQualityScore(fact: OfferFacts, climate: OfferClimate): numb
   const feeScore =
     value <= 0 ? 0 : Math.max(0, 1 - fact.firstYearFeeCents / value);
 
-  return clamp01(
-    0.3 * clamp01(valueScore) +
-      0.25 * clamp01(percentileScore) +
-      0.15 * clamp01(usableScore) +
-      0.2 * clamp01(efficiencyScore) +
-      0.1 * clamp01(feeScore),
-  );
+  const parts = [
+    ["giá trị", 0.3, clamp01(valueScore), ""],
+    ["percentile", 0.25, clamp01(percentileScore), fact.historicalPercentile === null ? " (chưa có lịch sử)" : ""],
+    ["dùng được", 0.15, clamp01(usableScore), fact.usableRatio === null ? " (chưa biết)" : ""],
+    ["hiệu quả chi", 0.2, clamp01(efficiencyScore), required === null ? " (không mốc chi)" : ""],
+    ["phí/giá trị", 0.1, clamp01(feeScore), ""],
+  ] as const;
+  return {
+    score: clamp01(parts.reduce((sum, [, weight, raw]) => sum + weight * raw, 0)),
+    note: `§11: ${parts.map(([label, weight, raw, why]) => `${label} ${raw.toFixed(2)}×${weight}${why}`).join(" · ")}`,
+  };
 }
 
 export function clamp01(value: number): number {

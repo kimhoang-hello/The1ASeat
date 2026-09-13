@@ -181,6 +181,11 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * kiện (dữ liệu nguồn, đầu vào người dùng, hay engine chưa mô hình hoá). Không
  * đổi thứ hạng; đổi hình dạng đầu ra, nên tăng số.
  *
+ * 4.17.0 — ghi chú của bảng điểm §19 mang CON SỐ ĐẦU VÀO: năm vế của §11, chương
+ * trình mà `currency_fit` đọc (kể cả qua chặng chuyển), hai thừa số của
+ * `diversification`, mẫu số tầm với. Bốn thành phần dùng chung ở nhiều bảng
+ * nay là một hàm (`scoring/shared.ts`). Không đổi một chữ số điểm nào.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -193,7 +198,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.16.0";
+export const ENGINE_VERSION = "4.17.0";
 
 export interface RecommendInput {
   state: UserState;

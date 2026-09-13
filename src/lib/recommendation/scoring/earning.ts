@@ -22,9 +22,8 @@
  * hai lần.
  */
 
-import { bestCurrencyNeedVia } from "../needs.ts";
-import { offerQualityScore } from "../offer-quality.ts";
-import { component, relativeTo } from "./weights.ts";
+import { currencyFitComponent, earnFitComponent, offerQualityComponent, spendFitComponent } from "./shared.ts";
+import { component } from "./weights.ts";
 import type { ScoreComponent } from "../engine-types.ts";
 import type { CandidateFacts, ScoringContext } from "./context.ts";
 
@@ -40,20 +39,17 @@ export function scoreEarning(
     annual <= 0 ? 0.5 : Math.max(0, 1 - candidate.offer.ongoingFeeCents / annual);
 
   return [
+    earnFitComponent(0.4, candidate, ctx),
+    currencyFitComponent(0.2, candidate, ctx),
+    offerQualityComponent(0.15, candidate, ctx),
+    spendFitComponent(0.1, candidate),
     component(
-      "long_term_earn_fit",
-      0.4,
-      relativeTo(annual, ctx.scale.maxEarnAnnualCents),
-      "giá trị tích điểm một năm trên chi tiêu đã khai",
+      "fee_drag",
+      0.1,
+      feeDrag,
+      annual <= 0
+        ? "chưa tính được phần tích mỗi năm — 0.5 trung tính"
+        : `1 − phí $${Math.round(candidate.offer.ongoingFeeCents / 100)} ÷ tích $${Math.round(annual / 100)}/năm`,
     ),
-    component(
-      "currency_fit",
-      0.2,
-      bestCurrencyNeedVia(ctx.needs, ctx.ix, candidate.product.pointsProgramId, ctx.asOf),
-      "nhu cầu đồng tiền, kể cả qua chặng chuyển",
-    ),
-    component("offer_quality", 0.15, offerQualityScore(candidate.offer, ctx.climate), "§11"),
-    component("spend_fit", 0.1, candidate.suitability.minSpendFit ?? 0.5, "§13"),
-    component("fee_drag", 0.1, feeDrag, "phí thường niên so với phần tích được mỗi năm"),
   ];
 }

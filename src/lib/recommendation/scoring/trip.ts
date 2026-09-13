@@ -24,9 +24,9 @@
  */
 
 import { bestCurrencyNeedVia } from "../needs.ts";
-import { offerQualityScore } from "../offer-quality.ts";
+import { offerQualityComponent, spendFitComponent } from "./shared.ts";
 import { tripCoverage } from "../strategies.ts";
-import { flexibilityReach } from "../portfolio.ts";
+import { flexibilityReach, flexibilityScale } from "../portfolio.ts";
 import { activeAt } from "../temporal.ts";
 import { component, relativeTo } from "./weights.ts";
 import { bonusPointsToward } from "./context.ts";
@@ -152,30 +152,27 @@ export function scoreTrip(candidate: CandidateFacts, ctx: ScoringContext): Score
   // có chặng nào trong dữ liệu không giữ được lựa chọn nào cho ai cả.
   // Theo TẦM VỚI, không theo có/không: một đồng tiền chuyển được tới đúng một
   // hãng nội địa giữ lại ít lựa chọn hơn hẳn một đồng tiền tới được năm nơi.
-  const flexibilityRaw =
-    programId === null ? 0.3 : 0.3 + 0.7 * flexibilityReach(ctx.ix, programId, ctx.asOf);
+  const reach = programId === null ? null : flexibilityReach(ctx.ix, programId, ctx.asOf);
+  const flexibilityRaw = reach === null ? 0.3 : 0.3 + 0.7 * reach;
+  // Mẫu số của tầm với là chương trình với tới NHIỀU đích nhất — thường chẳng
+  // dính gì tới thẻ này, nên phải nói tên nó ra (xem `flexibilityScale`).
+  const scale = flexibilityScale(ctx.ix, ctx.asOf);
+  const flexibilityNote =
+    reach === null
+      ? "thẻ không kiếm đồng tiền nào — 0.3 sàn"
+      : `0.3 + 0.7 × tầm với ${reach.toFixed(2)} (mẫu số ${scale.best} đích của ${scale.programs.join(", ")})`;
 
   return [
     component("trip_currency_utility", 0.35, utility.raw, utility.note),
     component("points_gap_reduction", 0.2, gapRaw, gapNote),
-    component(
-      "offer_quality",
-      0.15,
-      offerQualityScore(candidate.offer, ctx.climate),
-      "§11 offer quality",
-    ),
-    component(
-      "spend_fit",
-      0.1,
-      candidate.suitability.minSpendFit ?? 0.5,
-      "§13 mốc chi; 0.5 khi chưa biết sức dồn",
-    ),
-    component("flexibility_value", 0.1, flexibilityRaw, "đồng tiền chuyển được giữ lại lựa chọn"),
+    offerQualityComponent(0.15, candidate, ctx),
+    spendFitComponent(0.1, candidate),
+    component("flexibility_value", 0.1, flexibilityRaw, flexibilityNote),
     component(
       "travel_benefits",
       0.05,
       relativeTo(candidate.travelBenefitCount, ctx.scale.maxTravelBenefitCount),
-      "quyền lợi hàng không/sân bay TĂNG THÊM",
+      `${candidate.travelBenefitCount} quyền lợi hàng không/sân bay TĂNG THÊM ÷ nhiều nhất ${ctx.scale.maxTravelBenefitCount}`,
     ),
   ];
 }
