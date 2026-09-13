@@ -378,7 +378,8 @@ export function renderRunReport(record: RecommendationRunRecord, options: RunRep
       const inputs = goal.confidenceInputs;
       out.push(
         `  hạng nhất ${score(inputs.topScore)} · hạng nhì ${score(inputs.secondScore)} · ${inputs.rivalCount} đối thủ` +
-          ` · dữ kiện cũ nhất ${inputs.oldestVerifiedAt ?? "—"}`,
+          ` · dữ kiện cũ nhất ${inputs.oldestVerifiedAt ?? "—"}` +
+          (inputs.oldestVerifiedRow ? ` (${inputs.oldestVerifiedRow.table} ${inputs.oldestVerifiedRow.id})` : ""),
       );
       for (const note of c.notes) out.push(`  • ${note}`);
     }

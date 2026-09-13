@@ -18,7 +18,7 @@
  * `Date.now`, không có LLM.
  */
 
-import { analyzePortfolio, topEcosystemShare } from "./portfolio.ts";
+import { analyzePortfolio, isOpenToEveryone, topEcosystemShare } from "./portfolio.ts";
 import { normalize } from "./normalize.ts";
 import { generateStrategies, tripCoverage } from "./strategies.ts";
 import { computeNeeds } from "./needs.ts";
@@ -63,6 +63,7 @@ import type {
   Candidate,
   GoalContext,
   GoalTrace,
+  OldestVerified,
   Recommendation,
   RecommendationRun,
   ScoreComponent,
@@ -131,6 +132,12 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * [0, min(1, điểm/sàn)] chứ không phải [cận dưới, 1] (1 điểm từng được 50%);
  * `bestProgram`/`accessible` là chương trình QUYẾT ĐỊNH tỷ lệ phủ.
  *
+ * 4.6.0 — vòng Codex 6: `tripCoverage` viết lại thành MỘT phép đánh giá
+ * (mỗi chương trình một khoảng phủ [lo, hi], lấy điểm giữa) và MỘT phép
+ * chọn — sau ba bản vá nhánh-riêng liên tiếp mà nhánh nào cũng quên một giá
+ * trị. `directPoints` theo đúng chương trình được chọn; `pointsGapTypical`
+ * chỉ nói khi tỷ lệ phủ chắc chắn; độ tươi §29 bỏ chặng đòi hạng thành viên.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -143,7 +150,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.5.0";
+export const ENGINE_VERSION = "4.6.0";
 
 export interface RecommendInput {
   state: UserState;
@@ -248,31 +255,41 @@ function travelBenefitCount(
  * `dataFreshness = 1`, và độ tin cậy "cao" được cấp cho một khuyến nghị dựng
  * trên số cũ.
  */
-function oldestVerifiedAt(
+function oldestVerified(
   products: readonly Product[],
   data: RecommendationDataset,
   ix: DatasetIndex,
   asOf: string,
   goalStrategies: readonly AwardStrategy[],
-): string | null {
-  let oldest: string | null = null;
-  const consider = (day: string | undefined) => {
-    if (day === undefined) return;
-    if (oldest === null || day < oldest) oldest = day;
+): OldestVerified | null {
+  // Trả về CẢ DÒNG, không chỉ ngày: "độ tin cậy thấp vì dữ kiện cũ 2,442
+  // ngày" mà không nói dữ kiện NÀO là một lời giải thích admin không sửa được
+  // gì (vòng Codex 6). Hoà ngày thì giữ dòng gặp trước — thứ tự quét cố định.
+  let oldest: OldestVerified | null = null;
+  const consider = (table: string, row: { id: string; verifiedAt?: string }) => {
+    if (row.verifiedAt === undefined) return;
+    if (oldest === null || row.verifiedAt < oldest.verifiedAt) {
+      oldest = { table, id: row.id, verifiedAt: row.verifiedAt };
+    }
   };
   for (const product of products) {
-    for (const row of activeAt(ix.offersByProduct.get(product.id) ?? [], asOf)) consider(row.verifiedAt);
-    for (const row of activeAt(ix.feesByProduct.get(product.id) ?? [], asOf)) consider(row.verifiedAt);
-    for (const row of activeAt(ix.ratesByProduct.get(product.id) ?? [], asOf)) consider(row.verifiedAt);
-    for (const row of activeAt(ix.benefitsByProduct.get(product.id) ?? [], asOf)) consider(row.verifiedAt);
-    for (const row of activeAt(ix.rulesByProduct.get(product.id) ?? [], asOf)) consider(row.verifiedAt);
+    for (const row of activeAt(ix.offersByProduct.get(product.id) ?? [], asOf)) consider("offers", row);
+    for (const row of activeAt(ix.feesByProduct.get(product.id) ?? [], asOf)) consider("product_fees", row);
+    for (const row of activeAt(ix.ratesByProduct.get(product.id) ?? [], asOf)) consider("earning_rates", row);
+    for (const row of activeAt(ix.benefitsByProduct.get(product.id) ?? [], asOf)) consider("product_benefits", row);
+    for (const row of activeAt(ix.rulesByProduct.get(product.id) ?? [], asOf)) consider("eligibility_rules", row);
   }
-  for (const row of activeAt(data.programValuations, asOf)) consider(row.verifiedAt);
-  for (const row of activeAt(data.transferPaths, asOf)) consider(row.verifiedAt);
+  for (const row of activeAt(data.programValuations, asOf)) consider("program_valuations", row);
+  // Chỉ chặng engine DÙNG — không đòi hạng thành viên (`isOpenToEveryone`).
+  // Chặng Elite không vào phép tính nào, nên nó cũ tới đâu cũng không làm
+  // khuyến nghị kém tươi đi; cùng lý do award strategy chỉ tính chặng đang hỏi.
+  for (const row of activeAt(data.transferPaths, asOf)) {
+    if (isOpenToEveryone(row.requiresTier)) consider("transfer_paths", row);
+  }
   // Award strategy CHỈ của chặng đang hỏi. Quét cả bảng thì một chiến lược cũ
   // cho một vùng chẳng liên quan cũng kéo `dataFreshness` xuống, và một khuyến
   // nghị hoàn toàn tươi bị hạ độ tin cậy vì dữ liệu nó không hề đọc.
-  for (const strategy of goalStrategies) consider(strategy.verifiedAt);
+  for (const strategy of goalStrategies) consider("award_strategies", strategy);
   return oldest;
 }
 
@@ -426,7 +443,7 @@ export function recommend(input: RecommendInput): RecommendationRun {
     const noAction = buildNoNewCardCandidate(facts, ctx);
     const ranked = rankCandidates([...cardCandidates, noAction]);
 
-    const oldest = oldestVerifiedAt(
+    const oldest = oldestVerified(
       normalized.universe,
       data,
       ix,
@@ -438,7 +455,7 @@ export function recommend(input: RecommendInput): RecommendationRun {
       goal,
       userGaps: normalized.userGaps,
       dataGaps: normalized.dataGaps,
-      oldestVerifiedAt: oldest,
+      oldestVerifiedAt: oldest?.verifiedAt ?? null,
       asOf,
     });
 
@@ -475,7 +492,8 @@ export function recommend(input: RecommendInput): RecommendationRun {
         topScore: ranked[0]?.score ?? null,
         secondScore: ranked[1]?.score ?? null,
         rivalCount: Math.max(0, ranked.length - 1),
-        oldestVerifiedAt: oldest,
+        oldestVerifiedAt: oldest?.verifiedAt ?? null,
+        oldestVerifiedRow: oldest === null ? null : { table: oldest.table, id: oldest.id },
       },
     });
 
@@ -519,21 +537,28 @@ export function recommend(input: RecommendInput): RecommendationRun {
         tripNeedHigh: need?.high ?? null,
         // `null` = CHƯA BIẾT. Cả ba con số dưới đây đi thẳng vào lời giải
         // thích của người đọc, nên một số 0 bịa ở đây là một câu sai về TIỀN.
-        directPoints:
-          need === null || need.programs.length === 0
-            ? null
-            : need.programs.reduce<number | null>((best, programId) => {
-                const entry = portfolio.direct.get(programId);
-                if (entry?.kind !== "known") return best;
-                return best === null ? entry.points : Math.max(best, entry.points);
-              }, null),
+        // Điểm nằm SẴN trong CHÍNH chương trình quyết định tỷ lệ phủ — cùng
+        // lựa chọn với `accessiblePoints` và `pointsGapTypical`. Bản trước lấy
+        // cực đại qua mọi chương trình, nên in ra "có sẵn 190,400 (Asia
+        // Miles®) · tiếp cận 130,200 (AAdvantage®) · thiếu 9,800" — ba con số
+        // về hai chương trình khác nhau trong một câu (vòng Codex 6).
+        directPoints: (() => {
+          const programId = covered?.bestProgram ?? null;
+          if (programId === null) return null;
+          const entry = portfolio.direct.get(programId);
+          if (entry?.kind === "known") return entry.points;
+          // Không có dòng số dư nào: 0 nếu người dùng ĐÃ khai hết số dư, chưa
+          // biết nếu chưa khai — mảng rỗng chưa khai không phải "không có điểm".
+          if (entry === undefined) return portfolio.balancesUndeclared ? null : 0;
+          return null;
+        })(),
         accessiblePoints: accessible,
         accessiblePointsIsLowerBound: covered?.accessibleIsLowerBound ?? false,
-        // Khoảng cách chỉ nói được khi số điểm là con số CHẮC CHẮN. Có một số
-        // dư `null` góp vào thì `accessible` là cận dưới, và "còn thiếu
-        // 140,000" dựng trên một cận dưới là một con số chính xác giả.
+        // Khoảng cách chỉ nói được khi TỶ LỆ PHỦ là con số chắc chắn — không
+        // số dư nào chưa biết, không chương trình nào chỉ biết giá sàn. "Còn
+        // thiếu 140,000" dựng trên một ước lượng là một con số chính xác giả.
         pointsGapTypical:
-          bestRow?.typical == null || accessible === null || covered?.accessibleIsLowerBound === true
+          bestRow?.typical == null || accessible === null || covered?.coverageKnown !== true
             ? null
             : Math.max(0, bestRow.typical - accessible),
         topEcosystemShare: topEcosystemShare(portfolio),

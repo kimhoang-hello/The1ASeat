@@ -120,119 +120,81 @@ export function tripCoverage(
    */
   extra?: (programId: PointsProgramId) => number,
 ): TripCoverage {
-  const rows = need?.byProgram ?? [];
-  let coverage: number | null = null;
-  /**
-   * Tỷ lệ phủ quyết định: cực đại qua các chương trình, mỗi chương trình tự
-   * lấy điểm giữa khi CHÍNH nó có nguồn chưa biết. Người dùng chỉ cần MỘT
-   * chương trình đủ để đặt vé, nên cực đại là đúng phép.
+  /*
+   * MỘT phép đánh giá cho mọi chương trình, rồi MỘT phép chọn — mọi giá trị
+   * trả về đi ra từ đúng lựa chọn đó.
+   *
+   * Sáu vòng review liên tiếp (Phase 3 vòng 1–2, Phase 4 vòng 3–6) đều hỏng
+   * ở cùng một chỗ: mỗi loại "chưa biết" (số dư chưa biết, giá chỉ biết sàn,
+   * bonus cộng thêm) được vá bằng một nhánh riêng, và nhánh nào cũng quên cập
+   * nhật một giá trị mà nhánh kia cập nhật — `bestProgram` đi một đường, tỷ
+   * lệ phủ đi đường khác, `extra` vào nhánh này mà không vào nhánh kia.
+   *
+   * Nay mỗi chương trình có một KHOẢNG phủ `[lo, hi]`:
+   *
+   *   giá cố định, số dư đã biết  → [điểm/trần, điểm/trần]
+   *   giá cố định, số dư chưa biết → [điểm/trần, 1]
+   *   chỉ biết giá sàn, đã biết    → [0, min(1, điểm/sàn)]   (giá ≥ sàn, không trần)
+   *   chỉ biết giá sàn, chưa biết  → [0, 1]
+   *
+   * Tỷ lệ phủ quyết định của chương trình là ĐIỂM GIỮA khoảng đó (quy ước
+   * "chưa biết = trung tính" engine đã dùng), và chương trình thắng là chương
+   * trình có điểm giữa cao nhất — người dùng chỉ cần MỘT chương trình đủ.
+   * Thiếu thừa số chuyến đi (số người, khứ hồi) thì chương trình không vào
+   * phép đo — đó là chỗ trống của CHUYẾN ĐI, không của chương trình.
    */
-  let decision: number | null = null;
-  let bestDecision: number | null = null;
-  let bestOwn: number | null = null;
-  let bestProgram: PointsProgramId | null = null;
-  let accessible: number | null = null;
-  let lowerBound = false;
-  let coversTypical = false;
+  interface Evaluated {
+    programId: PointsProgramId;
+    total: number;
+    lo: number;
+    hi: number;
+    mid: number;
+    balanceUnknown: boolean;
+  }
+  const evaluated: Evaluated[] = [];
   const unpricedHeld: PointsProgramId[] = [];
+  let coversTypical = false;
 
-  // BA giá trị trả về phải nói về CÙNG MỘT chương trình.
-  //
-  // Bản trước giữ `accessible` là cực đại toàn cục trong khi `bestProgram` đi
-  // theo tỷ lệ phủ — hai đại lượng chọn độc lập nhau, nên chúng tách ra ngay
-  // khi chương trình nhiều điểm nhất không phải chương trình phủ tốt nhất:
-  // 130,000 dặm AAdvantage® (phủ 93%) cộng 200,000 Asia Miles® chọn
-  // AAdvantage® nhưng trả về 200,000 điểm, và tầng sau báo khoảng cách bằng 0
-  // thay vì 10,000. Cùng loại mâu thuẫn mà khoảng GỘP từng gây ra, chỉ ở một
-  // chỗ khác.
-  //
-  // Thứ tự cố định: `byProgram` đã sắp theo id ở `trip-need.ts`, và phép so
-  // `>` bên dưới giữ chương trình ĐẦU TIÊN khi hoà.
-  for (const row of rows) {
-    if (row.high === null || row.high <= 0) {
-      // Không tra được cận trên. Bỏ qua trong phép đo là ĐÚNG — không thể tính
-      // tỷ lệ phủ khi không biết mẫu số — nhưng nếu người dùng CÓ điểm ở đây
-      // thì im lặng bỏ qua là biến một chỗ chưa biết thành một kết luận: "bạn
-      // phủ 0%". Ghi lại để tầng sau thôi nói con số chính xác.
-      //
-      // Đọc GIÁ GỐC (một người, một chiều) chứ không đọc `row.high` đã nhân:
-      // thiếu số người hay thiếu khứ hồi cũng làm `high` thành null, và khi đó
-      // MỌI chương trình trông như "chưa định giá" — kể cả những chương trình
-      // có bảng giá cố định đầy đủ. Phân biệt hai chuyện: thiếu THỪA SỐ là
-      // chuyện của chuyến đi, thiếu GIÁ là chuyện của chương trình.
-      if (row.perPassengerOneWayHigh === null) {
-        const held = accessibleFor(state, ix, row.programId, asOf);
-        if (held.total > 0 || held.hasUnknownSource) {
-          unpricedHeld.push(row.programId);
-          // Chỉ biết giá SÀN: giá thật ≥ sàn, không có trần. Nên phần phủ của
-          // chương trình này nằm trong [0, min(1, điểm / sàn)] — không phải
-          // [cận dưới, 1]. Một điểm Aeroplan® trên chuyến sàn 170,000 phủ tối
-          // đa 1/170,000, và bản trước cho nó 50% (vòng Codex 5, P1). Số dư
-          // chưa biết thì trần là 1.
-          if (row.low !== null && row.low > 0) {
-            const total = held.total + (extra?.(row.programId) ?? 0);
-            const hi = held.hasUnknownSource ? 1 : Math.min(1, total / row.low);
-            if (decision === null || hi / 2 > decision) decision = hi / 2;
-          }
-        }
-      }
-      continue;
-    }
+  for (const row of need?.byProgram ?? []) {
     const reach = accessibleFor(state, ix, row.programId, asOf);
-    // Số dư chưa biết ở BẤT KỲ chương trình nào định giá được chặng đều làm cả
-    // kết luận thành cận dưới — KHÔNG chỉ ở chương trình thắng cuộc.
-    //
-    // Bản trước chỉ ghi cờ của người thắng, và nó thủng ngay ở ca đơn giản
-    // nhất: người có một tài khoản Aeroplan® không nhớ số dư, mọi chương trình
-    // cùng phủ 0%, nên người thắng là chương trình ĐẦU TIÊN theo id
-    // (`aadvantage` — không có dòng số dư nào, tức không có gì chưa biết). Sự
-    // chưa biết của Aeroplan® biến mất, và engine báo "còn thiếu đúng 140,000
-    // điểm" cho một người nó không biết đang có bao nhiêu.
     const total = reach.total + (extra?.(row.programId) ?? 0);
-    if (reach.hasUnknownSource) lowerBound = true;
+    const priced = row.high !== null && row.high > 0;
+    // Đọc GIÁ GỐC (một người, một chiều) để phân biệt "chỉ biết sàn" với
+    // "thiếu thừa số": thiếu số người cũng làm `row.high` thành null, và khi
+    // đó mọi chương trình trông như chưa định giá.
+    const floorOnly = !priced && row.perPassengerOneWayHigh === null && row.low !== null && row.low > 0;
+    if (!priced && !floorOnly) continue;
+    // Chỉ để TRÌNH BÀY: chương trình người dùng có điểm mà engine chỉ biết sàn.
+    if (floorOnly && (reach.total > 0 || reach.hasUnknownSource)) unpricedHeld.push(row.programId);
     // Cận dưới đã vượt giá điển hình thì con số thật càng vượt.
     if (row.typical !== null && total >= row.typical) coversTypical = true;
-    const own = Math.min(1, total / row.high);
-    // Số dư chưa biết: phần phủ nằm trong [own, 1] — lấy điểm giữa.
-    const ownDecision = reach.hasUnknownSource && own < 1 ? own + (1 - own) / 2 : own;
-    if (decision === null || ownDecision > decision) decision = ownDecision;
-    if (coverage === null || own > coverage) coverage = own;
-    // `bestProgram` + `accessible` là chương trình QUYẾT ĐỊNH tỷ lệ phủ, chọn
-    // trong CÙNG vòng lặp với nó — không phải chương trình có cận dưới cao
-    // nhất. Chọn theo cận dưới thì MR chưa biết (quyết định 50% qua Aeroplan®)
-    // đi kèm `bestProgram: "aadvantage", accessible: 0` (vòng Codex 5).
-    if (
-      bestDecision === null ||
-      ownDecision > bestDecision ||
-      (ownDecision === bestDecision && own > (bestOwn ?? -1))
-    ) {
-      bestDecision = ownDecision;
-      bestOwn = own;
-      bestProgram = row.programId;
-      accessible = total;
-    }
+
+    const lo = priced ? Math.min(1, total / (row.high as number)) : 0;
+    const hi = reach.hasUnknownSource
+      ? 1
+      : priced
+        ? lo
+        : Math.min(1, total / (row.low as number));
+    evaluated.push({
+      programId: row.programId,
+      total,
+      lo,
+      hi,
+      mid: lo + (hi - lo) / 2,
+      balanceUnknown: reach.hasUnknownSource,
+    });
   }
 
-  // Không chương trình nào tính được giá (thiếu thừa số, hoặc toàn giá động):
-  // `coverage` là CHƯA BIẾT, không phải 0. Vẫn trả về chương trình nhiều điểm
-  // nhất để các tầng sau có chỗ bám — và `accessible` đi kèm đúng chương trình
-  // đó.
-  if (bestProgram === null) {
-    for (const row of rows) {
-      const reach = accessibleFor(state, ix, row.programId, asOf);
-      if (reach.hasUnknownSource) lowerBound = true;
-      if (bestProgram === null || reach.total > (accessible ?? -1)) {
-        accessible = reach.total;
-        bestProgram = row.programId;
-      }
-    }
+  // `byProgram` đã sắp theo id ở `trip-need.ts`: hoà thì giữ chương trình ĐẦU
+  // TIÊN, sau khi ưu tiên cận dưới cao hơn (chắc chắn hơn).
+  let best: Evaluated | null = null;
+  for (const row of evaluated) {
+    if (best === null || row.mid > best.mid || (row.mid === best.mid && row.lo > best.lo)) best = row;
   }
 
-  // KHÔNG có chương trình nào để hỏi (chặng chưa định giá, hoặc thiếu thừa
-  // số): `accessible` là CHƯA BIẾT, không phải 0. Trả 0 ở đây là chỗ luật
-  // trống-≠-bằng-không thủng ngay tại biên giới đầu ra — `japanTripFunded` có
-  // 200,000 điểm Membership Rewards® mà bản trước xuất ra `accessiblePoints: 0`.
-  if (bestProgram === null) {
+  // KHÔNG chương trình nào để hỏi (chặng chưa định giá, hoặc thiếu thừa số):
+  // tỷ lệ phủ và điểm tiếp cận được đều CHƯA BIẾT, không phải 0.
+  if (best === null) {
     return {
       coverage: null,
       coverageLowerBound: null,
@@ -245,20 +207,21 @@ export function tripCoverage(
     };
   }
 
-  // Số dư chưa biết góp vào thì `coverage` là cận DƯỚI. Phủ ĐỦ vẫn kết luận
-  // được (cận dưới đã đủ thì thật sự đủ), nhưng CHƯA đủ thì không được nói
-  // thiếu bao nhiêu — xem `engine.ts`.
-  // Một chương trình có điểm mà không định giá nổi cũng làm kết luận thành
-  // cận dưới: người dùng có thể đang phủ tốt hơn con số này.
-  const isLowerBound = lowerBound || unpricedHeld.length > 0;
+  const floor = Math.max(...evaluated.map((row) => row.lo));
   return {
-    coverage: decision,
-    coverageLowerBound: coverage,
-    coverageKnown: coverage !== null && (coverage >= 1 || !isLowerBound),
+    coverage: best.mid,
+    // Phần CHẮC CHẮN, qua mọi chương trình — sàn của mọi câu "đã đủ".
+    coverageLowerBound: floor,
+    // Con số chắc chắn khi đã chắc đủ, hoặc khi không chương trình nào còn
+    // khoảng mở: không có số dư chưa biết, không có giá chỉ biết sàn.
+    coverageKnown: floor >= 1 || evaluated.every((row) => row.lo === row.hi),
     coversTypical,
-    bestProgram,
-    accessible,
-    accessibleIsLowerBound: isLowerBound,
+    bestProgram: best.programId,
+    accessible: best.total,
+    // Riêng về SỐ DƯ của chương trình được chọn. Giá chỉ biết sàn là một bất
+    // định khác — nó nằm ở `coverageKnown` và `unpricedHeldPrograms`, không
+    // được mượn cờ này (vòng Codex 6).
+    accessibleIsLowerBound: best.balanceUnknown,
     unpricedHeldPrograms: unpricedHeld.sort(),
   };
 }

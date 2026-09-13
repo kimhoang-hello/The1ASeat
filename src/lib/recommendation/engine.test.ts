@@ -1759,7 +1759,11 @@ test("§6 — chương trình CÓ ĐIỂM mà không định giá nổi ⇒ thô
 
   const covered = tripCoverage(vietnamTripFunded, IX, ASOF, need);
   assert.deepEqual(covered.unpricedHeldPrograms, [AEROPLAN]);
-  assert.equal(covered.accessibleIsLowerBound, true);
+  // Bất định ở GIÁ, không ở SỐ DƯ (260,000 là con số đã biết) — Phase 4 tách
+  // hai thứ: `coverageKnown` nói tỷ lệ phủ là ước lượng, còn
+  // `accessibleIsLowerBound` chỉ nói về số dư (vòng Codex 6).
+  assert.equal(covered.coverageKnown, false);
+  assert.equal(covered.accessibleIsLowerBound, false);
 
   const result = run({ ...vietnamTripFunded, goals: [premium] }).results[0];
   assert.equal(result.numbers.pointsGapTypical, null, "vẫn nói một khoảng cách chính xác");

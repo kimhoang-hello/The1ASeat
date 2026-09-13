@@ -477,3 +477,71 @@ test("chương trình đi kèm tỷ lệ phủ là chương trình QUYẾT ĐỊ
   assert.notEqual(cover.bestProgram, "aadvantage");
   assert.equal(cover.coverage, 0.5);
 });
+
+/* ================================================================== *
+ * Vòng Codex 6 — mọi giá trị của tỷ lệ phủ ra từ CÙNG một lựa chọn
+ * ================================================================== */
+
+function premiumVietnam(balances: { programId: string; balance: number | null }[]) {
+  const state = structuredClone(vietnamTripFunded);
+  state.goals = state.goals.map((goal) => (goal.type === "trip" ? { ...goal, cabin: "premium_economy" } : goal));
+  state.balances = balances.map((row) => ({ ...state.balances[0], programId: row.programId as never, balance: row.balance }));
+  return execute(state).record;
+}
+
+test("giá SÀN: welcome bonus vẫn được tính cho người chưa có điểm nào", () => {
+  // Nhân vật này đang giữ thẻ TD® Aeroplan®, nên thử trên CIBC® Aeroplan®.
+  const record = premiumVietnam([]);
+  const card = ranking(record).find((row) => row.candidate.productSlug === "cibc-aeroplan-visa-infinite")!;
+  const gap = card.candidate.components.find((c) => c.key === "points_gap_reduction")!;
+  assert.ok(gap.raw > 0, `${gap.raw} — ${gap.note}`);
+  // Giá sàn: bonus B trên sàn S góp tối đa nửa phần B/S — không bao giờ hơn.
+  assert.ok(gap.raw <= 0.5, gap.note);
+});
+
+test("giá SÀN: chương trình quyết định đi kèm ĐÚNG số điểm của nó, và cờ cận dưới chỉ nói về số dư", () => {
+  const record = premiumVietnam([{ programId: "aeroplan", balance: 260_000 }]);
+  const cover = record.derivedState.goals[0].tripCoverage!;
+  assert.equal(cover.bestProgram, "aeroplan");
+  assert.equal(cover.accessible, 260_000);
+  assert.equal(cover.coverageKnown, false, "giá chỉ biết sàn ⇒ tỷ lệ phủ là ước lượng");
+  assert.equal(cover.accessibleIsLowerBound, false, "260,000 là số dư ĐÃ BIẾT");
+  const numbers = record.outputSnapshot.results[0].numbers;
+  assert.equal(numbers.directPoints, 260_000);
+  assert.equal(numbers.accessiblePoints, 260_000);
+  assert.equal(numbers.pointsGapTypical, null);
+});
+
+test("ba con số in ra nói về CÙNG một chương trình", () => {
+  // 130,200 AAdvantage® phủ 93% chuyến Việt Nam business; 190,400 Asia Miles®
+  // phủ 80%. Bản trước in "có sẵn 190,400 · tiếp cận 130,200 · thiếu 9,800".
+  const state = structuredClone(vietnamTripFunded);
+  state.balances = [
+    { ...state.balances[0], programId: "aadvantage" as never, balance: 130_200 },
+    { ...state.balances[0], programId: "asia-miles" as never, balance: 190_400 },
+  ];
+  const record = execute(state).record;
+  const cover = record.derivedState.goals[0].tripCoverage!;
+  const numbers = record.outputSnapshot.results[0].numbers;
+  assert.equal(numbers.accessiblePoints, cover.accessible);
+  assert.equal(numbers.directPoints, cover.accessible, `${cover.bestProgram}: có sẵn ≠ tiếp cận`);
+});
+
+test("độ tươi §29 nói ra DÒNG cũ nhất, và bỏ qua chặng engine không dùng", () => {
+  const tier = DATA.transferPaths.find((path) => path.requiresTier !== null)!;
+  const open = DATA.transferPaths.find((path) => path.requiresTier === null)!;
+  const age = (id: string): RecommendationDataset => ({
+    ...DATA,
+    transferPaths: DATA.transferPaths.map((path) => (path.id === id ? { ...path, verifiedAt: "2020-01-01" } : path)),
+  });
+  const base = execute(vietnamTripFunded).record;
+  const staleTier = execute(vietnamTripFunded, { data: age(tier.id) }).record;
+  const staleOpen = execute(vietnamTripFunded, { data: age(open.id) }).record;
+  const fresh = (r: RecommendationRunRecord) => r.outputSnapshot.results[0].confidence.dataFreshness;
+  assert.equal(fresh(staleTier), fresh(base), "chặng Elite cũ không được làm khuyến nghị kém tươi");
+  assert.equal(fresh(staleOpen), 0);
+  assert.deepEqual(staleOpen.derivedState.goals[0].confidenceInputs.oldestVerifiedRow, {
+    table: "transfer_paths",
+    id: open.id,
+  });
+});

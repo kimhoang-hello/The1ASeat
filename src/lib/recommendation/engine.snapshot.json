@@ -1,5 +1,5 @@
 {
-  "engineVersion": "4.5.0",
+  "engineVersion": "4.6.0",
   "datasetFingerprint": "298326-8e32ed48bcd1fdd7",
   "runs": [
     {
@@ -155,7 +155,7 @@
         "tripNeedLow": 110000,
         "tripNeedTypical": 120000,
         "tripNeedHigh": 238000,
-        "directPoints": null,
+        "directPoints": 0,
         "accessiblePoints": 200000,
         "accessiblePointsIsLowerBound": false,
         "pointsGapTypical": 0,

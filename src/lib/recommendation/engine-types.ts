@@ -568,6 +568,15 @@ export interface ConfidenceInputs {
   secondScore: number | null;
   rivalCount: number;
   oldestVerifiedAt: string | null;
+  /** Dòng dữ liệu CŨ NHẤT mà lượt chạy dựa vào — thứ cần kiểm lại khi độ tươi thấp. */
+  oldestVerifiedRow: { table: string; id: string } | null;
+}
+
+/** Bản ghi có `verifiedAt` cũ nhất trong những gì lượt chạy đọc (§29 độ tươi). */
+export interface OldestVerified {
+  table: string;
+  id: string;
+  verifiedAt: string;
 }
 
 export interface GoalTrace {

@@ -44,7 +44,7 @@ import type { AccessibleBalance, BalanceKnowledge, PortfolioAnalysis } from "./e
  * nhờ lời hứa đó; bỏ ra thì engine ước lượng THIẾU và cùng lắm là khuyên thừa
  * một thẻ. Bỏ ra.
  */
-function isOpenToEveryone(requiresTier: string | null): boolean {
+export function isOpenToEveryone(requiresTier: string | null): boolean {
   return requiresTier === null;
 }
 

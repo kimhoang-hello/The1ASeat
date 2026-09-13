@@ -19,6 +19,7 @@
  */
 
 import { activeAt } from "./temporal.ts";
+import { isOpenToEveryone } from "./portfolio.ts";
 import { candidateKey, type PipelineStage } from "./run-diff.ts";
 import type { RecommendationRunRecord } from "./runs.ts";
 import type { AwardStrategy, DataGap, RecommendationDataset, Temporal } from "./types.ts";
@@ -279,12 +280,13 @@ export function provenanceFor(
   // chương trình đặt vé, tầm với linh hoạt, và phần "đổ vào hệ sinh thái"
   // của §16 Rule 3. Một tỷ lệ chuyển sai đổi thứ hạng mà không chạm dòng nào
   // của chính thẻ.
-  // Chỉ chặng KHÔNG đòi hạng thành viên — engine bỏ mọi chặng có
-  // `requiresTier` ở mọi phép tính (bonus quy đổi, tầm với, phủ chuyến đi,
-  // tập trung danh mục). Ghi chúng ra là chỉ admin tới dòng engine không đọc.
+  // Chỉ chặng KHÔNG đòi hạng thành viên — CÙNG phép lọc (`isOpenToEveryone`)
+  // mà mọi phép tính điểm của engine dùng (bonus quy đổi, tầm với, phủ chuyến
+  // đi, tập trung danh mục) và mà độ tươi §29 dùng. Độ tươi của cả lượt chạy
+  // truy riêng ở `ConfidenceInputs.oldestVerifiedRow`.
   const sources = new Set<string>([...programs, ...walletPrograms]);
   for (const path of activeAt(dataset.transferPaths, asOf)) {
-    if (path.requiresTier === null && sources.has(path.sourceProgramId as string)) {
+    if (isOpenToEveryone(path.requiresTier) && sources.has(path.sourceProgramId as string)) {
       rows.push(provenanceRow("transfer_paths", path));
     }
   }
