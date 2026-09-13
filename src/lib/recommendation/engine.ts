@@ -18,8 +18,9 @@
  * `Date.now`, không có LLM.
  */
 
-import { analyzePortfolio, isOpenToEveryone, topEcosystemShare } from "./portfolio.ts";
-import { goalReadsEarn, normalize } from "./normalize.ts";
+import { analyzePortfolio, topEcosystemShare } from "./portfolio.ts";
+import { normalize } from "./normalize.ts";
+import { buildReadSet, goalReadsEarn, oldestVerified, scopeDataGaps } from "./read-set.ts";
 import { generateStrategies, tripCoverage } from "./strategies.ts";
 import { computeNeeds } from "./needs.ts";
 import { evaluateEligibility } from "./eligibility.ts";
@@ -49,9 +50,8 @@ import {
 } from "./trace.ts";
 import type { DatasetIndex } from "./indexes.ts";
 import type {
-  AwardStrategy,
   BenefitId,
-  Product,
+  DataGap,
   ProductId,
   RecommendationDataset,
 } from "./types.ts";
@@ -63,7 +63,6 @@ import type {
   Candidate,
   GoalContext,
   GoalTrace,
-  OldestVerified,
   Recommendation,
   RecommendationRun,
   ScoreComponent,
@@ -157,6 +156,10 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * điểm khi mục tiêu đọc chúng) và vào chỗ trống `base_earn_rate_unknown` —
  * `NO_NEW_CARD` đọc chúng qua `walletEarnCoverage`.
  *
+ * 4.12.0 — vòng Codex 12: độ tươi và chỗ trống theo sản phẩm đo trên ĐÚNG
+ * những dòng lượt chạy đọc (`read-set.ts`): thêm trần tích điểm, bỏ định giá
+ * của chương trình vắng mặt, bỏ offer/phí của thẻ không chọn được.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -169,7 +172,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.11.0";
+export const ENGINE_VERSION = "4.12.0";
 
 export interface RecommendInput {
   state: UserState;
@@ -271,70 +274,6 @@ function travelBenefitCount(
     count += 1;
   }
   return count;
-}
-
-/**
- * Ngày kiểm lại cũ nhất trong các bản ghi lượt chạy này dựa vào (§29 độ tươi).
- *
- * Phải quét MỌI loại bản ghi thứ hạng phụ thuộc vào, không chỉ offer và phí.
- * Định giá điểm nhân vào mọi điểm số, tỷ lệ tích điểm quyết định `earn_fit`,
- * chặng chuyển quyết định điểm tiếp cận được, award strategy quyết định số
- * điểm chuyến đi cần. Chỉ nhìn offer thì một bộ định giá cũ hai năm vẫn cho
- * `dataFreshness = 1`, và độ tin cậy "cao" được cấp cho một khuyến nghị dựng
- * trên số cũ.
- */
-function oldestVerified(
-  products: readonly Product[],
-  /**
-   * Thẻ ĐANG GIỮ: engine đọc quyền lợi của chúng (quyền lợi trùng, §16 Rule
-   * 6) và — khi mục tiêu đọc tỷ lệ tích điểm — tỷ lệ của chúng
-   * (`walletEarnCoverage`). Không đọc offer, phí hay điều kiện của chúng.
-   */
-  held: readonly Product[],
-  data: RecommendationDataset,
-  ix: DatasetIndex,
-  asOf: string,
-  goalStrategies: readonly AwardStrategy[],
-  /** Mục tiêu có đọc tỷ lệ tích điểm không — xem `goalReadsEarn`. */
-  readsEarn: boolean,
-): OldestVerified | null {
-  // Trả về CẢ DÒNG, không chỉ ngày: "độ tin cậy thấp vì dữ kiện cũ 2,442
-  // ngày" mà không nói dữ kiện NÀO là một lời giải thích admin không sửa được
-  // gì (vòng Codex 6). Hoà ngày thì giữ dòng gặp trước — thứ tự quét cố định.
-  let oldest: OldestVerified | null = null;
-  const consider = (table: string, row: { id: string; verifiedAt?: string }) => {
-    if (row.verifiedAt === undefined) return;
-    if (oldest === null || row.verifiedAt < oldest.verifiedAt) {
-      oldest = { table, id: row.id, verifiedAt: row.verifiedAt };
-    }
-  };
-  for (const product of products) {
-    for (const row of activeAt(ix.offersByProduct.get(product.id) ?? [], asOf)) consider("offers", row);
-    for (const row of activeAt(ix.feesByProduct.get(product.id) ?? [], asOf)) consider("product_fees", row);
-    if (readsEarn) {
-      for (const row of activeAt(ix.ratesByProduct.get(product.id) ?? [], asOf)) consider("earning_rates", row);
-    }
-    for (const row of activeAt(ix.benefitsByProduct.get(product.id) ?? [], asOf)) consider("product_benefits", row);
-    for (const row of activeAt(ix.rulesByProduct.get(product.id) ?? [], asOf)) consider("eligibility_rules", row);
-  }
-  for (const product of held) {
-    if (readsEarn) {
-      for (const row of activeAt(ix.ratesByProduct.get(product.id) ?? [], asOf)) consider("earning_rates", row);
-    }
-    for (const row of activeAt(ix.benefitsByProduct.get(product.id) ?? [], asOf)) consider("product_benefits", row);
-  }
-  for (const row of activeAt(data.programValuations, asOf)) consider("program_valuations", row);
-  // Chỉ chặng engine DÙNG — không đòi hạng thành viên (`isOpenToEveryone`).
-  // Chặng Elite không vào phép tính nào, nên nó cũ tới đâu cũng không làm
-  // khuyến nghị kém tươi đi; cùng lý do award strategy chỉ tính chặng đang hỏi.
-  for (const row of activeAt(data.transferPaths, asOf)) {
-    if (isOpenToEveryone(row.requiresTier)) consider("transfer_paths", row);
-  }
-  // Award strategy CHỈ của chặng đang hỏi. Quét cả bảng thì một chiến lược cũ
-  // cho một vùng chẳng liên quan cũng kéo `dataFreshness` xuống, và một khuyến
-  // nghị hoàn toàn tươi bị hạ độ tin cậy vì dữ liệu nó không hề đọc.
-  for (const strategy of goalStrategies) consider("award_strategies", strategy);
-  return oldest;
 }
 
 function scoreFor(
@@ -445,6 +384,12 @@ export function recommend(input: RecommendInput): RecommendationRun {
   const scale = buildScale(selectable);
 
   const goalTraces: GoalTrace[] = [];
+  const goalDataGapSets: DataGap[][] = [];
+  // Chương trình có dòng số dư khác 0 — portfolio và phép phủ chuyến đi đọc
+  // chúng. Cùng quy ước với chỗ trống bảng giá ở `normalize.ts`.
+  const balancePrograms = [...portfolio.direct]
+    .filter(([, knowledge]) => knowledge.kind !== "known" || knowledge.points !== 0)
+    .map(([programId]) => programId as string);
   const results: Recommendation[] = normalized.goals.map((goal, goalIndex) => {
     const strategies = generateStrategies({ state, ix, asOf, portfolio, goal, climate });
     const needs = computeNeeds({ state, data, ix, asOf, portfolio, goal, strategies });
@@ -487,20 +432,24 @@ export function recommend(input: RecommendInput): RecommendationRun {
     const noAction = buildNoNewCardCandidate(facts, ctx);
     const ranked = rankCandidates([...cardCandidates, noAction]);
 
-    const oldest = oldestVerified(
-      normalized.universe,
-      portfolio.heldProducts,
-      data,
-      ix,
-      asOf,
-      goal.tripNeed?.strategies ?? [],
-      goalReadsEarn(goal, state, ix, asOf),
-    );
+    // Đúng những dòng lượt chạy ĐÃ ĐỌC cho mục tiêu này — một câu trả lời cho
+    // cả độ tươi lẫn chỗ trống theo sản phẩm. Xem `read-set.ts`.
+    const read = buildReadSet({
+      universe: normalized.universe,
+      scored: selectable.map((row) => row.product),
+      held: portfolio.heldProducts,
+      readsEarn: goalReadsEarn(goal, state, ix, asOf),
+      balancePrograms: balancePrograms,
+      awardStrategies: goal.tripNeed?.strategies ?? [],
+    });
+    const oldest = oldestVerified(read, data, ix, asOf);
+    const goalDataGaps = scopeDataGaps(normalized.goalGaps[goalIndex].dataGaps, read);
+    goalDataGapSets.push(goalDataGaps);
     const confidence = computeConfidence({
       ranked,
       goal,
       userGaps: normalized.goalGaps[goalIndex].userGaps,
-      dataGaps: normalized.goalGaps[goalIndex].dataGaps,
+      dataGaps: goalDataGaps,
       oldestVerifiedAt: oldest?.verifiedAt ?? null,
       asOf,
     });
@@ -542,7 +491,7 @@ export function recommend(input: RecommendInput): RecommendationRun {
         oldestVerifiedRow: oldest === null ? null : { table: oldest.table, id: oldest.id },
       },
       userGaps: normalized.goalGaps[goalIndex].userGaps,
-      dataGaps: normalized.goalGaps[goalIndex].dataGaps,
+      dataGaps: goalDataGaps,
     });
 
     return {
@@ -671,7 +620,22 @@ export function recommend(input: RecommendInput): RecommendationRun {
     followUp,
     reasonCodes: mergeReasonCodes(runReasons),
     warnings: mergeWarnings(runWarnings),
-    dataGaps: normalized.dataGaps,
+    // Hợp chỗ trống của các mục tiêu, giữ thứ tự của `normalize`. Không có
+    // mục tiêu nào thì không có gì được chấm — lọc theo tập ứng viên chọn được.
+    dataGaps:
+      goalDataGapSets.length === 0
+        ? scopeDataGaps(
+            normalized.dataGaps,
+            buildReadSet({
+              universe: normalized.universe,
+              scored: selectable.map((row) => row.product),
+              held: portfolio.heldProducts,
+              readsEarn: true,
+              balancePrograms,
+              awardStrategies: [],
+            }),
+          )
+        : normalized.dataGaps.filter((gap) => goalDataGapSets.some((set) => set.includes(gap))),
     userGaps: normalized.userGaps,
     derived: {
       universe: normalized.universe.map((product) => product.id),

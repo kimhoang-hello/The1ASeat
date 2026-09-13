@@ -788,3 +788,57 @@ test("tỷ lệ tích điểm của THẺ ĐANG GIỮ cũng là thứ engine đ�
   assert.ok(record.derivedState.excluded.some((row) => row.productId === product.id && row.reason === "already_held"));
   assert.ok(record.outputSnapshot.dataGaps.some((gap) => gap.subjectId === product.id && gap.kind === "base_earn_rate_unknown"));
 });
+
+/* ================================================================== *
+ * Vòng Codex 12 — độ tươi và chỗ trống đo trên ĐÚNG những gì đã đọc
+ * ================================================================== */
+
+function staleRow<K extends "earningCaps" | "programValuations" | "offers">(table: K, id: string): RecommendationDataset {
+  return {
+    ...DATA,
+    [table]: (DATA[table] as { id: string }[]).map((row) => (row.id === id ? { ...row, verifiedAt: "2020-01-01" } : row)),
+  } as RecommendationDataset;
+}
+
+test("trần tích điểm là dữ liệu engine đọc: trần CŨ làm kém tươi", () => {
+  const cobalt = productIdFor("amex-cobalt");
+  const capId = DATA.earningRates.find((row) => row.productId === cobalt && row.capId !== null)!.capId!;
+  const record = execute(beginnerNoCards, { data: staleRow("earningCaps", capId as string) }).record;
+  assert.deepEqual(record.derivedState.goals[0].confidenceInputs.oldestVerifiedRow, { table: "earning_caps", id: capId });
+  assert.equal(record.outputSnapshot.results[0].confidence.dataFreshness, 0);
+});
+
+test("định giá của chương trình KHÔNG có mặt trong phép tính không làm kém tươi", () => {
+  // Người mới: không số dư, không thẻ. Chọn một chương trình mà không thẻ chọn
+  // được nào kiếm hay thưởng bằng nó.
+  const { record: base } = execute(beginnerNoCards);
+  const used = new Set<string>();
+  for (const row of base.derivedState.candidates.filter((c) => c.selectable)) {
+    for (const program of row.earn.programs) used.add(program);
+    const offer = DATA.offers.find((o) => o.id === row.offer.activeOfferId);
+    if (offer?.bonusCurrencyId != null) used.add(offer.bonusCurrencyId);
+  }
+  const unused = DATA.programValuations.find((row) => !used.has(row.programId as string))!;
+  assert.ok(unused !== undefined, "tiền đề: có một định giá không ai dùng");
+  const stale = execute(beginnerNoCards, { data: staleRow("programValuations", unused.id as string) }).record;
+  assert.equal(
+    stale.outputSnapshot.results[0].confidence.dataFreshness,
+    base.outputSnapshot.results[0].confidence.dataFreshness,
+  );
+});
+
+test("offer của thẻ người dùng ĐÃ TỪ CHỐI không trừ độ tin cậy", () => {
+  // `vietnamTripFunded` nói không với thẻ doanh nghiệp: Amex® Bonvoy® Business
+  // bị loại ở tầng phù hợp, nên offer (và chỗ trống điều khoản) của nó không
+  // đi vào phép tính nào.
+  const product = productIdFor("amex-marriott-bonvoy-business");
+  const { record } = execute(vietnamTripFunded);
+  assert.ok(record.derivedState.excluded.some((row) => row.productId === product && row.stage === "suitability"));
+  assert.ok(!record.outputSnapshot.dataGaps.some((gap) => gap.kind === "offer_terms_unknown" && gap.subjectId.includes(product as string)));
+  const offer = DATA.offers.find((row) => row.productId === product)!;
+  const stale = execute(vietnamTripFunded, { data: staleRow("offers", offer.id as string) }).record;
+  assert.equal(
+    stale.outputSnapshot.results[0].confidence.dataFreshness,
+    record.outputSnapshot.results[0].confidence.dataFreshness,
+  );
+});

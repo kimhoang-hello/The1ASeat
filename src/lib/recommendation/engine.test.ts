@@ -156,7 +156,7 @@ test("§16 Rule 7 — mã nguồn engine không nhắc tới `affiliateAvailable
     "scoring/weights.ts", "scoring/context.ts", "scoring/next-card.ts",
     "scoring/trip.ts", "scoring/diversify.ts", "scoring/earning.ts",
     // Phase 4: chạy BÊN TRONG `recommend()`, nên cùng luật với 21 file kia.
-    "trace.ts",
+    "trace.ts", "read-set.ts",
   ]);
   for (const name of files) {
     if (!ENGINE_FILES.has(name)) continue;
@@ -2303,7 +2303,7 @@ test("KHÔNG có hack theo sản phẩm trong logic chung", async () => {
     "explain.ts", "offer-quality.ts", "earn-fit.ts", "benefit-fit.ts", "trip-need.ts",
     "scoring/weights.ts", "scoring/context.ts", "scoring/next-card.ts",
     "scoring/trip.ts", "scoring/diversify.ts", "scoring/earning.ts",
-    "trace.ts",
+    "trace.ts", "read-set.ts",
   ];
   const { readFile } = await import("node:fs/promises");
   for (const name of ENGINE_FILES) {

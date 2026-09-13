@@ -982,6 +982,7 @@ kiện/phù hợp, chấm điểm, luật, hay xếp hạng.
 | `run-diff.ts` | So hai lượt chạy theo 14 tầng; `explainChange` đổi từng yếu tố một |
 | `debug.ts` | `explainProduct`, `compareCandidates`, `scoreBreakdown`, `provenanceFor` |
 | `sensitivity.ts` | §30 đo bằng thực nghiệm: câu hỏi nào lấp vào đổi được người thắng |
+| `read-set.ts` | Lượt chạy ĐÃ ĐỌC những dòng nào — một câu trả lời cho độ tươi và chỗ trống §29 |
 | `debug-render.ts` | Trình bày — dùng chung cho CLI và trang admin |
 | `acceptance.test.ts` | Test A–J của §32, mỗi kỳ vọng thành một con số đỏ được |
 
@@ -1083,7 +1084,7 @@ hiệu của chính hàm đó chạy hai lần (không bonus / có bonus).
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # 345 test: chi tiêu, bất biến, vòng đời, quy mô, người dùng, engine, Phase 4, Test A–J
+npm run test:reco         # 348 test: chi tiêu, bất biến, vòng đời, quy mô, người dùng, engine, Phase 4, Test A–J
 npm run reco:debug        # debugger §22 dòng lệnh — xem mục Phase 4
 ```
 

@@ -20,7 +20,7 @@ import { asArray, heldProductIds, primaryGoal, resolveTripGoal } from "./user.ts
 import { userGaps } from "./user-gaps.ts";
 import { tripNeedFor } from "./trip-need.ts";
 import { currentProductIds } from "./portfolio.ts";
-import { tripCoverage } from "./strategies.ts";
+import { touchesAny } from "./read-set.ts";
 import type { DatasetIndex } from "./indexes.ts";
 import type { DataGap, Product, RecommendationDataset } from "./types.ts";
 import type { Goal, UserDataGap, UserState } from "./user-types.ts";
@@ -110,41 +110,6 @@ export function universeVerdicts(
     .map((product) => ({ product, reason: reasonFor(product) }));
 }
 
-/**
- * Điểm số của mục tiêu này có đọc tỷ lệ tích điểm không.
- *
- * Ba bảng §10 đọc (thẻ tiếp theo, tích điểm, đa dạng hoá); bảng chuyến đi thì
- * KHÔNG — trừ khi chặng chưa tính được tỷ lệ phủ, vì khi đó `NO_NEW_CARD` rơi
- * về so tích điểm của ví với thẻ mới (`walletEarnCoverage` ở `rank.ts`).
- *
- * MỘT hàm cho mọi chỗ hỏi câu này: chỗ trống dữ liệu (§29 độ đầy đủ) và độ
- * tươi (§29 độ tươi) từng trả lời khác nhau — vá bên này thì một tỷ lệ tích
- * điểm cũ không ai đọc vẫn hạ độ tin cậy của chuyến đi từ `high` xuống
- * `medium` qua bên kia (vòng Codex 10).
- */
-export function goalReadsEarn(goal: GoalContext, state: UserState, ix: DatasetIndex, asOf: string): boolean {
-  return goal.goal.type !== "trip" || tripCoverage(state, ix, asOf, goal.tripNeed).coverage === null;
-}
-
-/**
- * `subjectId` của chỗ trống thuộc về một trong các sản phẩm này — chính sản
- * phẩm, hoặc một offer của nó. So bằng ĐƯỜNG BIÊN, không bằng `includes` trần:
- * `prd_amex-aeroplan` là chuỗi con của `prd_amex-aeroplan-reserve`, nên phép so
- * lỏng gán chỗ trống của thẻ này cho thẻ kia.
- */
-function touchesAny(productIds: Iterable<string>, subjectId: string): boolean {
-  for (const productId of productIds) {
-    if (
-      subjectId === productId ||
-      subjectId.startsWith(`${productId}_`) ||
-      subjectId.includes(`_${productId}_`)
-    ) {
-      return true;
-    }
-  }
-  return false;
-}
-
 /** Chỗ trống của lớp dữ liệu mà lượt chạy này thật sự chạm tới. */
 function relevantDataGaps(
   data: RecommendationDataset,
@@ -156,18 +121,6 @@ function relevantDataGaps(
   state: UserState,
 ): DataGap[] {
   const inPlay = new Set(universe.map((product) => product.id as string));
-  const held = heldProductIds(state);
-  /**
-   * Tỷ lệ tích điểm có đi vào điểm số của mục tiêu nào không.
-   *
-   * Ba bảng §10 đọc nó (thẻ tiếp theo, tích điểm, đa dạng hoá); bảng chuyến
-   * đi thì KHÔNG — trừ khi chặng chưa tính được tỷ lệ phủ, vì khi đó
-   * `NO_NEW_CARD` rơi về so tích điểm của ví với thẻ mới. Tỷ lệ nền chưa biết
-   * của một thẻ không được trừ độ tin cậy của một chuyến đi đã định giá mà
-   * không phép tính nào của nó đọc tỷ lệ đó (vòng Codex 9). Không có mục tiêu
-   * nào thì giữ như cũ: không có gì để chấm, và danh sách chỉ để trình bày.
-   */
-  const earnMatters = goals.length === 0 || goals.some((goal) => goalReadsEarn(goal, state, ix, asOf));
 
   /** Cặp vùng người dùng THẬT SỰ hỏi, dạng `ORIGIN|DESTINATION`. */
   const routesAsked = new Set(
@@ -235,18 +188,15 @@ function relevantDataGaps(
   return data.gaps
     .filter((gap) => {
       switch (gap.kind) {
-        case "base_earn_rate_unknown":
-          // Tỷ lệ tích điểm được đọc cho ỨNG VIÊN và cho THẺ ĐANG GIỮ
-          // (`walletEarnCoverage` của `NO_NEW_CARD` so ví với thẻ mới) — và
-          // chỉ khi mục tiêu đọc tỷ lệ tích điểm (`goalReadsEarn`). Bỏ sót thẻ
-          // đang giữ thì tỷ lệ nền chưa biết của chính thẻ làm `NO_NEW_CARD`
-          // mất 0.38 điểm "ví đã lo" không trừ đồng độ tin cậy nào (vòng
-          // Codex 11).
-          return earnMatters && touchesAny([...inPlay, ...held], gap.subjectId);
         case "offer_terms_unknown":
+        case "base_earn_rate_unknown":
         case "eligibility_unknown":
-          // Offer và điều kiện chỉ được đọc cho thẻ ỨNG VIÊN.
-          return touchesAny(inPlay, gap.subjectId);
+          // Chỗ trống THEO SẢN PHẨM: ở đây chỉ loại những sản phẩm không có
+          // mặt ở đâu trong lượt chạy (không phải ứng viên, không đang giữ).
+          // Tập engine THẬT SỰ đọc — thẻ chọn được, thẻ đang giữ, và mục tiêu
+          // có đọc tỷ lệ tích điểm không — chỉ biết được sau khi xét điều
+          // kiện, nên `read-set.ts` lọc tiếp, ở MỘT chỗ duy nhất.
+          return touchesAny([...inPlay, ...heldProductIds(state)], gap.subjectId);
         case "award_route_uncovered":
           // CHỈ chặng người dùng hỏi. Báo ra mọi vùng chưa có dữ liệu cho một
           // chuyến Canada–Việt Nam đã có giá là nói với họ rằng khuyến nghị
