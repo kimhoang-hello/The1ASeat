@@ -33,6 +33,10 @@ export interface PostOffer {
 export const POST_OFFER_DEADLINES: Record<string, PostOffer> = {
   // "Từ 04/08 đến 03/09/2026" — nguyên văn trong thân bài.
   "marriott-bonvoy-transfer-bonus-30-amex-mr": { endsOn: "2026-09-03", cta: "transferBonuses" },
+  // "Booking từ ngày 10/9/2026 đến 11/1/2027" — hạn chót là ngày ĐẶT vé, không
+  // phải ngày bay (bay được tới 31/12/2027). Sau ngày đó bài hết giá trị dù
+  // chuyến bay đã đặt vẫn còn phía trước.
+  "aeroplan-giam-15-points-air-canada-flight-rewards": { endsOn: "2027-01-11", cta: "creditCards" },
 };
 
 /**
