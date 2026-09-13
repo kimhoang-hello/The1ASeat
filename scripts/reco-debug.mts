@@ -36,7 +36,7 @@ import * as FIXTURE_EXPORTS from "../src/lib/recommendation/data/user-fixtures.t
 import { repoOfferHistory } from "../src/lib/recommendation/offer-history-source.ts";
 import { historyCutoff } from "../src/lib/recommendation/offer-history.ts";
 import { executeRun, inputOf, replayRun, type RecommendationRunRecord } from "../src/lib/recommendation/runs.ts";
-import { compareCandidates, explainProduct, findRanked } from "../src/lib/recommendation/debug.ts";
+import { compareCandidates, explainProduct, findRanked, goalIndexError } from "../src/lib/recommendation/debug.ts";
 import { applyAssignments } from "../src/lib/recommendation/debug-input.ts";
 import { diffRecords, explainChange } from "../src/lib/recommendation/run-diff.ts";
 import {
@@ -179,6 +179,10 @@ async function main() {
     case "run": {
       const ref = rest[0] ?? die("thiếu <hồ sơ>");
       const executed = freshRun(stateFrom(ref));
+      if (flag("goal") !== undefined) {
+        const goalError = goalIndexError(executed.record, Number(flag("goal")));
+        if (goalError !== null) die(goalError);
+      }
       if (flag("json") === "true") {
         console.log(JSON.stringify(executed.record, null, 2));
       } else {
@@ -209,6 +213,8 @@ async function main() {
       if (ref === undefined || a === undefined || b === undefined) die("cần: compare <hồ sơ|run-id> <A> <B>");
       const { record } = await loadSubject(ref);
       const goalIndex = Number(flag("goal") ?? 0);
+      const goalError = goalIndexError(record, goalIndex);
+      if (goalError !== null) die(goalError);
       const find = (key: string) =>
         findRanked(record, key, goalIndex) ??
         die(`"${key}" không nằm trong bảng xếp hạng — dùng \`why\` để xem nó dừng ở đâu`);

@@ -401,12 +401,7 @@ export function explainProduct(
 ): ProductExplanation {
   const goalIndex = options.goalIndex ?? 0;
   const derived = record.derivedState;
-  // Mục tiêu KHÔNG tồn tại khác với lượt chạy KHÔNG có mục tiêu. Gộp hai ca thì
-  // hỏi mục tiêu số 99 của một lượt chạy một mục tiêu nhận câu trả lời "chưa
-  // có mục tiêu nào" — sai về chính lượt chạy (vòng Codex 8).
-  if (derived.goals.length > 0 && (!Number.isInteger(goalIndex) || goalIndex < 0 || goalIndex >= derived.goals.length)) {
-    throw new RangeError(`goalIndex ${goalIndex} ngoài phạm vi: lượt chạy có ${derived.goals.length} mục tiêu`);
-  }
+  assertGoalIndex(record, goalIndex);
   const goal: GoalTrace | undefined = derived.goals[goalIndex];
   const ranking = goal?.ranking ?? [];
   const winner = ranking[0]?.candidate ?? null;
@@ -499,14 +494,40 @@ export function explainProduct(
 }
 
 /**
+ * `null` khi `goalIndex` hợp lệ cho lượt chạy này, ngược lại là lời báo lỗi.
+ *
+ * MỘT phép kiểm cho mọi cửa vào debugger (explain, compare, báo cáo, CLI,
+ * trang admin): mục tiêu KHÔNG TỒN TẠI khác với lượt chạy KHÔNG CÓ mục tiêu,
+ * và mỗi cửa từng tự đoán — hỏi mục tiêu số 99 thì cửa này nói "chưa có mục
+ * tiêu nào", cửa kia nói "thẻ không nằm trong bảng" (vòng Codex 8 và 9).
+ * Lượt chạy không có mục tiêu chỉ nhận số 0: câu trả lời cho nó là
+ * `not_ranked_no_goal`, không phải một lỗi.
+ */
+export function goalIndexError(record: RecommendationRunRecord, goalIndex: number): string | null {
+  const count = record.derivedState.goals.length;
+  const max = Math.max(0, count - 1);
+  if (!Number.isInteger(goalIndex) || goalIndex < 0 || goalIndex > max) {
+    return `mục tiêu số ${goalIndex} không có: lượt chạy có ${count} mục tiêu`;
+  }
+  return null;
+}
+
+function assertGoalIndex(record: RecommendationRunRecord, goalIndex: number): void {
+  const error = goalIndexError(record, goalIndex);
+  if (error !== null) throw new RangeError(error);
+}
+
+/**
  * Một ứng viên trong bảng xếp hạng của một mục tiêu, theo slug, id hoặc
- * `NO_NEW_CARD`. `null` khi nó không được xếp hạng — `explainProduct` nói vì sao.
+ * `NO_NEW_CARD`. `null` khi nó không được xếp hạng — `explainProduct` nói vì
+ * sao. Mục tiêu không tồn tại là LỖI, không phải "không có trong bảng".
  */
 export function findRanked(
   record: RecommendationRunRecord,
   ref: string,
   goalIndex = 0,
 ): Candidate | null {
+  assertGoalIndex(record, goalIndex);
   const ranking = record.derivedState.goals[goalIndex]?.ranking ?? [];
   const row =
     ref === "NO_NEW_CARD"

@@ -17,6 +17,7 @@
 
 import {
   compareCandidates,
+  goalIndexError,
   scoreBreakdown,
   type CandidateComparison,
   type ProductExplanation,
@@ -135,6 +136,11 @@ export interface RunReportOptions {
 
 export function renderRunReport(record: RecommendationRunRecord, options: RunReportOptions = {}): string {
   const out: string[] = [];
+  if (options.goalIndex !== undefined) {
+    const error = goalIndexError(record, options.goalIndex);
+    // Không im lặng in một báo cáo KHÔNG có mục tiêu nào được chọn.
+    if (error !== null) return `✗ ${error}`;
+  }
   const input = record.inputSnapshot;
   const state = input.state;
   const derived = record.derivedState;

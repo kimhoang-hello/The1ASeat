@@ -100,6 +100,13 @@ const QUESTION_PRIORITY: Partial<Record<UserDataGap["kind"], number>> = {
 export interface FollowUpInput {
   gaps: readonly UserDataGap[];
   ranked: readonly Candidate[];
+  /**
+   * Bảng của TỪNG mục tiêu khi nhiều mục tiêu hoà nhau chạy song song. Vắng
+   * thì chỉ có `ranked`. Mọi bộ lọc bên dưới hỏi "có mục tiêu NÀO…": thẻ
+   * doanh nghiệp thắng ở mục tiêu thứ hai vẫn là lý do để hỏi về thẻ doanh
+   * nghiệp (vòng Codex 9).
+   */
+  rankings?: readonly (readonly Candidate[])[];
   /** Id các sản phẩm là thẻ DOANH NGHIỆP — xem `nextQuestion`. */
   businessProductIds?: ReadonlySet<string>;
   /**
@@ -154,8 +161,9 @@ const URGENT = -1;
  *     không đổi được gì, và hỏi nó là tiêu mất suất câu hỏi duy nhất.
  */
 export function nextQuestion(input: FollowUpInput): FollowUpQuestion | null {
-  const eligibilityUncertain = input.ranked.some(
-    (candidate) => candidate.eligibility?.status === "unknown",
+  const rankings = input.rankings ?? [input.ranked];
+  const eligibilityUncertain = rankings.some((ranked) =>
+    ranked.some((candidate) => candidate.eligibility?.status === "unknown"),
   );
   // Hỏi về thẻ doanh nghiệp khi và chỉ khi một thẻ doanh nghiệp đang trong
   // bảng. Bản đầu suy điều đó từ mã `ELIGIBILITY_UNCERTAIN` — một mã dùng
@@ -163,9 +171,11 @@ export function nextQuestion(input: FollowUpInput): FollowUpQuestion | null {
   // thiếu thông tin thu nhập, và im lặng khi một thẻ doanh nghiệp đủ điều kiện
   // đang đứng đầu.
   const businessIds = input.businessProductIds ?? new Set<string>();
-  const businessCandidateInPlay = input.ranked
-    .slice(0, 5)
-    .some((candidate) => candidate.productId !== null && businessIds.has(candidate.productId));
+  const businessCandidateInPlay = rankings.some((ranked) =>
+    ranked
+      .slice(0, 5)
+      .some((candidate) => candidate.productId !== null && businessIds.has(candidate.productId)),
+  );
 
   const usable = input.gaps.filter((gap) => {
     if (QUESTION_PRIORITY[gap.kind] === undefined) return false;
@@ -181,10 +191,10 @@ export function nextQuestion(input: FollowUpInput): FollowUpQuestion | null {
 
   if (usable.length === 0) return null;
 
-  // Thẻ thắng cuộc đang dựa vào một dữ kiện chưa ai hỏi thì hỏi CHÍNH nó.
-  const winner = input.ranked[0];
+  // Thẻ thắng cuộc đang dựa vào một dữ kiện chưa ai hỏi thì hỏi CHÍNH nó —
+  // người thắng của MỌI mục tiêu đang chạy.
   const urgent = new Set<UserDataGap["kind"]>();
-  if (winner !== undefined) {
+  for (const winner of rankings.map((ranked) => ranked[0]).filter((row) => row !== undefined)) {
     // Phí cao mà chưa khai ngưỡng: `suitability.ts` đã hạ điểm và phát mã, và
     // câu hỏi này là thứ duy nhất biến phỏng đoán đó thành một câu trả lời.
     if (winner.reasonCodes.includes("ANNUAL_FEE_HIGH_TOLERANCE_UNKNOWN")) {

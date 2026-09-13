@@ -153,6 +153,7 @@ export {
   compareCandidates,
   explainProduct,
   findRanked,
+  goalIndexError,
   provenanceFor,
   scoreBreakdown,
   type CandidateComparison,

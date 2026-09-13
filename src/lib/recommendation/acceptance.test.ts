@@ -20,7 +20,8 @@ import { offlineDataset } from "./data/index.ts";
 import { datasetAt } from "./temporal.ts";
 import { executeRun, type RecommendationRunRecord } from "./runs.ts";
 import { candidateKey, explainChange } from "./run-diff.ts";
-import { compareCandidates, explainProduct } from "./debug.ts";
+import { compareCandidates, explainProduct, findRanked } from "./debug.ts";
+import { renderRunReport } from "./debug-render.ts";
 import { STRATEGY_TYPES } from "./reason-codes.ts";
 import { productIdFor } from "./data/products.ts";
 import {
@@ -33,6 +34,7 @@ import {
   lowSpendCapacity,
   nearlyEmpty,
   vietnamTripFunded,
+  vietnamTripShortfall,
 } from "./data/user-fixtures.ts";
 import type { OfferHistoryPoint } from "./offer-history.ts";
 import type { RecommendationDataset } from "./types.ts";
@@ -653,7 +655,81 @@ test("phép đo §30 và phép so lượt chạy nhìn người thắng của M�
 
 test("hỏi một mục tiêu KHÔNG tồn tại là lỗi, không phải 'lượt chạy chưa có mục tiêu'", () => {
   const { record } = execute(beginnerNoCards);
-  assert.throws(() => explainProduct(record, "amex-green", { goalIndex: 99 }), /ngoài phạm vi/);
+  assert.throws(() => explainProduct(record, "amex-green", { goalIndex: 99 }), /không có/);
+  assert.throws(() => findRanked(record, "amex-green", 99), /không có/);
+  assert.match(renderRunReport(record, { goalIndex: 99 }), /không có/);
   const noGoal = execute({ ...beginnerNoCards, goals: [] }).record;
   assert.equal(explainProduct(noGoal, "amex-green").outcome, "not_ranked_no_goal");
+  // Lượt chạy KHÔNG có mục tiêu chỉ nhận số 0 — số 99 vẫn là lỗi (vòng Codex 9).
+  assert.throws(() => explainProduct(noGoal, "amex-green", { goalIndex: 99 }), /không có/);
+});
+
+/* ================================================================== *
+ * Vòng Codex 9 — chỗ trống thuộc về ĐÚNG mục tiêu đang chạy
+ * ================================================================== */
+
+test("chuyến đi ưu tiên THẤP hơn không được làm nhiễm độ tin cậy lẫn câu hỏi §30", () => {
+  const base = structuredClone(vietnamTripFunded);
+  const trip = base.goals.find((goal) => goal.type === "trip")!;
+  const withTrip = (patch: Record<string, unknown>): UserState => ({
+    ...base,
+    goals: [
+      { type: "next_card", id: "goal_a_next" as never, userId: base.profile.id, priority: 1, createdAt: ASOF },
+      { ...trip, ...patch, priority: 2 } as never,
+    ],
+  });
+  const a = execute(withTrip({})).record;
+  const b = execute(withTrip({ passengers: null })).record;
+  assert.equal(b.outputSnapshot.goalResolution, "resolved");
+  assert.equal(b.outputSnapshot.results[0].goalType, "next_card");
+  assert.equal(b.outputSnapshot.results[0].confidence.dataCompleteness, a.outputSnapshot.results[0].confidence.dataCompleteness);
+  assert.ok(!b.outputSnapshot.userGaps.some((gap) => gap.kind.startsWith("trip_")));
+  assert.notEqual(b.outputSnapshot.followUp?.gapKind, "trip_passengers_unknown");
+});
+
+test("tỷ lệ tích điểm chưa biết không trừ độ tin cậy của một chuyến đi ĐÃ định giá", () => {
+  const record = execute(vietnamTripFunded).record;
+  const goal = record.derivedState.goals[0];
+  assert.ok(goal.tripCoverage?.coverage !== null, "tiền đề: chặng đã định giá");
+  assert.ok(!record.outputSnapshot.dataGaps.some((gap) => gap.kind === "base_earn_rate_unknown"));
+  // Còn "thẻ tiếp theo" thì CÓ đọc tỷ lệ tích điểm — chỗ trống phải ở đó.
+  const nextCard = execute(beginnerNoCards).record;
+  assert.ok(nextCard.outputSnapshot.dataGaps.some((gap) => gap.kind === "base_earn_rate_unknown"));
+});
+
+test("§30 xét thẻ doanh nghiệp đang thắng ở mục tiêu THỨ HAI", () => {
+  // "Thẻ tiếp theo" (đứng trước theo id) không có thẻ doanh nghiệp nào trong
+  // top 5; chuyến Việt Nam còn thiếu điểm thì Amex® Business Gold đứng đầu.
+  // Bộ lọc cũ chỉ nhìn bảng của mục tiêu đầu nên không xét câu hỏi đó.
+  const state = structuredClone(vietnamTripShortfall);
+  const trip = state.goals.find((goal) => goal.type === "trip")!;
+  state.goals = [
+    { ...trip, priority: null },
+    { type: "next_card", id: "goal_a_next" as never, userId: state.profile.id, priority: null, createdAt: ASOF },
+  ];
+  state.profile.businessCardsAllowed = null;
+  state.profile.hasBusiness = null;
+  const record = execute(state).record;
+  const top5 = (goalType: string) =>
+    record.derivedState.goals
+      .find((goal) => goal.goalType === goalType)!
+      .ranking.filter((row) => row.visibility !== "no_action")
+      .slice(0, 5)
+      .some((row) => row.candidate.productSlug?.includes("business") ?? false);
+  assert.equal(record.derivedState.goals[0].goalType, "next_card");
+  assert.equal(top5("next_card"), false, "tiền đề: mục tiêu đầu không có thẻ doanh nghiệp");
+  assert.equal(top5("trip"), true, "tiền đề: mục tiêu thứ hai có");
+  assert.ok(
+    record.derivedState.followUpProbes.some((p) => p.gapKind === "business_cards_preference_unknown"),
+    "§30 không xét câu hỏi thẻ doanh nghiệp",
+  );
+});
+
+test("lượt chạy HAI mục tiêu lưu, chạy lại ra đúng từng chữ số", async () => {
+  const { record, dataset } = execute(tiedGoals({ passengers: null }));
+  const { replayRun } = await import("./runs.ts");
+  const back = JSON.parse(JSON.stringify(record)) as RecommendationRunRecord;
+  const replay = replayRun(back, dataset);
+  assert.equal(replay.identical, true);
+  assert.equal(back.outputSnapshot.results.length, 2);
 });

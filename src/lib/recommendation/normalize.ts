@@ -20,6 +20,7 @@ import { asArray, primaryGoal, resolveTripGoal } from "./user.ts";
 import { userGaps } from "./user-gaps.ts";
 import { tripNeedFor } from "./trip-need.ts";
 import { currentProductIds } from "./portfolio.ts";
+import { tripCoverage } from "./strategies.ts";
 import type { DatasetIndex } from "./indexes.ts";
 import type { DataGap, Product, RecommendationDataset } from "./types.ts";
 import type { Goal, UserDataGap, UserState } from "./user-types.ts";
@@ -117,8 +118,25 @@ function relevantDataGaps(
   heldBalancePrograms: readonly string[],
   ix: DatasetIndex,
   asOf: string,
+  state: UserState,
 ): DataGap[] {
   const inPlay = new Set(universe.map((product) => product.id as string));
+  /**
+   * Tỷ lệ tích điểm có đi vào điểm số của mục tiêu nào không.
+   *
+   * Ba bảng §10 đọc nó (thẻ tiếp theo, tích điểm, đa dạng hoá); bảng chuyến
+   * đi thì KHÔNG — trừ khi chặng chưa tính được tỷ lệ phủ, vì khi đó
+   * `NO_NEW_CARD` rơi về so tích điểm của ví với thẻ mới. Tỷ lệ nền chưa biết
+   * của một thẻ không được trừ độ tin cậy của một chuyến đi đã định giá mà
+   * không phép tính nào của nó đọc tỷ lệ đó (vòng Codex 9). Không có mục tiêu
+   * nào thì giữ như cũ: không có gì để chấm, và danh sách chỉ để trình bày.
+   */
+  const earnMatters =
+    goals.length === 0 ||
+    goals.some(
+      (goal) =>
+        goal.goal.type !== "trip" || tripCoverage(state, ix, asOf, goal.tripNeed).coverage === null,
+    );
 
   /** Cặp vùng người dùng THẬT SỰ hỏi, dạng `ORIGIN|DESTINATION`. */
   const routesAsked = new Set(
@@ -186,8 +204,10 @@ function relevantDataGaps(
   return data.gaps
     .filter((gap) => {
       switch (gap.kind) {
-        case "offer_terms_unknown":
         case "base_earn_rate_unknown":
+          if (!earnMatters) return false;
+        // fallthrough — cùng phép so đường biên sản phẩm bên dưới.
+        case "offer_terms_unknown":
         case "eligibility_unknown":
           // `subjectId` của ba loại này là một sản phẩm hoặc một offer của nó.
           // So bằng ĐƯỜNG BIÊN, không bằng `includes` trần: `prd_amex-aeroplan`
@@ -270,8 +290,15 @@ export function normalize(
   const heldBalancePrograms = asArray(state.balances)
     .filter((row) => row?.programId != null && row.balance !== 0)
     .map((row) => row.programId as string);
-  const allUserGaps = userGaps(state);
   const goalIds = new Set(goals.map((goal) => goal.goal.id as string));
+  // Chỗ trống `trip_*` mang `subject` là `GoalId`. Của một mục tiêu KHÔNG chạy
+  // trong lượt này (ưu tiên thấp hơn) thì không thuộc về lượt chạy: nó không
+  // đổi được khuyến nghị nào đang hiện ra, nên không được trừ độ tin cậy và
+  // không được chiếm suất câu hỏi §30 (vòng Codex 9, P1 — "hỏi số người của
+  // một chuyến đi không ai đang xét").
+  const allUserGaps = userGaps(state).filter(
+    (gap) => !gap.kind.startsWith("trip_") || goalIds.has(gap.subject),
+  );
 
   return {
     asOf,
@@ -285,19 +312,21 @@ export function normalize(
       row.reason === null ? [] : [{ product: row.product, reason: row.reason }],
     ),
     userGaps: allUserGaps,
-    dataGaps: relevantDataGaps(data, universe, goals, heldBalancePrograms, ix, asOf),
+    dataGaps: relevantDataGaps(data, universe, goals, heldBalancePrograms, ix, asOf, state),
     goalGaps: goals.map((goal) => ({
       // Chỗ trống `trip_*` mang `subject` là `GoalId` (hợp đồng ở
       // `UserDataGap`): của mục tiêu KHÁC trong lượt chạy thì không thuộc về
       // mục tiêu này. Mọi chỗ trống khác là của hồ sơ, thuộc về mọi mục tiêu.
+      // Và `goal_priority_ambiguous` là bất định của LƯỢT CHẠY (đã nằm ở
+      // `goalResolution`), không phải thiếu dữ liệu của từng khuyến nghị —
+      // đếm nó vào đây là trừ độ tin cậy của mọi mục tiêu vì chúng hoà nhau.
       userGaps: allUserGaps.filter(
         (gap) =>
-          !gap.kind.startsWith("trip_") ||
-          gap.subject === (goal.goal.id as string) ||
-          !goalIds.has(gap.subject),
+          gap.kind !== "goal_priority_ambiguous" &&
+          (!gap.kind.startsWith("trip_") || gap.subject === (goal.goal.id as string)),
       ),
       // CÙNG hàm với phần hợp — chỉ khác là hỏi cho đúng một mục tiêu.
-      dataGaps: relevantDataGaps(data, universe, [goal], heldBalancePrograms, ix, asOf),
+      dataGaps: relevantDataGaps(data, universe, [goal], heldBalancePrograms, ix, asOf, state),
     })),
   };
 }

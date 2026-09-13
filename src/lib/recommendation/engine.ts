@@ -145,6 +145,11 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * 4.8.0 — vòng Codex 8: hai mục tiêu hoà nhau — độ tin cậy mỗi mục tiêu chỉ
  * đọc chỗ trống CỦA NÓ; phép đo §30 nhìn người thắng của MỌI mục tiêu.
  *
+ * 4.9.0 — vòng Codex 9: chỗ trống `trip_*` của mục tiêu KHÔNG chạy trong lượt
+ * này bị bỏ; `goal_priority_ambiguous` không trừ độ tin cậy từng mục tiêu;
+ * tỷ lệ tích điểm chưa biết chỉ tính khi một mục tiêu thật sự đọc nó; §30
+ * lọc câu hỏi theo bảng của MỌI mục tiêu.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -157,7 +162,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.8.0";
+export const ENGINE_VERSION = "4.9.0";
 
 export interface RecommendInput {
   state: UserState;
@@ -617,6 +622,7 @@ export function recommend(input: RecommendInput): RecommendationRun {
       results[0]?.primaryAction === undefined
         ? []
         : [results[0].primaryAction, ...results[0].alternatives],
+    rankings: results.map((result) => [result.primaryAction, ...result.alternatives]),
     // Câu hỏi "có xét thẻ doanh nghiệp không" chỉ đáng hỏi khi một thẻ
     // DOANH NGHIỆP đang thật sự trong bảng. Suy nó từ mã `ELIGIBILITY_UNCERTAIN`
     // là suy sai cả hai chiều: hỏi khi một thẻ thường có thu nhập chưa rõ,
