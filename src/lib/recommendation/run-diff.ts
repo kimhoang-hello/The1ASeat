@@ -409,9 +409,10 @@ export interface ChangeExplanation {
   swaps: FactorSwap[] | null;
 }
 
+/** Người thắng của MỌI mục tiêu, nối lại — xem `winnerKey` ở `engine.ts`. */
 function winnerOf(record: RecommendationRunRecord): string | null {
-  const first = record.outputSnapshot.results[0];
-  return first === undefined ? null : candidateKey(first.primaryAction);
+  const results = record.outputSnapshot.results;
+  return results.length === 0 ? null : results.map((result) => candidateKey(result.primaryAction)).join(" | ");
 }
 
 /**

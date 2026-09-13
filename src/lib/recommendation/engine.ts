@@ -142,6 +142,9 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * mở rộng cận trên của khoảng phủ (`TripNeedByProgram.floor`), và tỷ lệ phủ
  * là số đo khi cực đại các cận dưới đã bằng cực đại các cận trên.
  *
+ * 4.8.0 — vòng Codex 8: hai mục tiêu hoà nhau — độ tin cậy mỗi mục tiêu chỉ
+ * đọc chỗ trống CỦA NÓ; phép đo §30 nhìn người thắng của MỌI mục tiêu.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -154,7 +157,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.7.0";
+export const ENGINE_VERSION = "4.8.0";
 
 export interface RecommendInput {
   state: UserState;
@@ -173,13 +176,22 @@ export interface RecommendInput {
   probeFollowUps?: boolean;
 }
 
-/** Khoá người thắng cho phép đo §30 — id sản phẩm, hoặc `NO_NEW_CARD`. */
+/**
+ * Khoá người thắng cho phép đo §30 — người thắng của MỌI mục tiêu, nối lại.
+ *
+ * Không chỉ mục tiêu đầu: hai mục tiêu hoà nhau chạy song song, và câu trả
+ * lời "1 người" lật người thắng của CHUYẾN ĐI (mục tiêu thứ hai) mà phép đo
+ * cũ vẫn ghi 0/3 vì chỉ nhìn "thẻ tiếp theo" (vòng Codex 8).
+ */
 function winnerKey(results: readonly Recommendation[]): string | null {
-  const first = results[0];
-  if (first === undefined) return null;
-  return first.primaryAction.kind === "no_new_card"
-    ? "NO_NEW_CARD"
-    : (first.primaryAction.productId as string);
+  if (results.length === 0) return null;
+  return results
+    .map((result) =>
+      result.primaryAction.kind === "no_new_card"
+        ? "NO_NEW_CARD"
+        : (result.primaryAction.productId as string),
+    )
+    .join(" | ");
 }
 
 /**
@@ -405,7 +417,7 @@ export function recommend(input: RecommendInput): RecommendationRun {
   const scale = buildScale(selectable);
 
   const goalTraces: GoalTrace[] = [];
-  const results: Recommendation[] = normalized.goals.map((goal) => {
+  const results: Recommendation[] = normalized.goals.map((goal, goalIndex) => {
     const strategies = generateStrategies({ state, ix, asOf, portfolio, goal, climate });
     const needs = computeNeeds({ state, data, ix, asOf, portfolio, goal, strategies });
     const ctx: ScoringContext = { state, ix, asOf, needs, portfolio, goal, climate, scale };
@@ -457,8 +469,8 @@ export function recommend(input: RecommendInput): RecommendationRun {
     const confidence = computeConfidence({
       ranked,
       goal,
-      userGaps: normalized.userGaps,
-      dataGaps: normalized.dataGaps,
+      userGaps: normalized.goalGaps[goalIndex].userGaps,
+      dataGaps: normalized.goalGaps[goalIndex].dataGaps,
       oldestVerifiedAt: oldest?.verifiedAt ?? null,
       asOf,
     });

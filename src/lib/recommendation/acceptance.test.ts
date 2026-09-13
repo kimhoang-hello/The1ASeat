@@ -606,3 +606,54 @@ test("phần CHẮC CHẮN đã bằng phần CÓ THỂ thì tỷ lệ phủ là
   assert.equal(numbers.pointsGapTypical, Math.max(0, aa.typical! - 80_000));
   assert.ok(!record.outputSnapshot.results[0].strategies.some((s) => s.reasonCodes.includes("POINTS_COVERAGE_UNKNOWN")));
 });
+
+/* ================================================================== *
+ * Vòng Codex 8 — hai mục tiêu hoà nhau chạy song song
+ * ================================================================== */
+
+/** "Thẻ tiếp theo" hoà ưu tiên với chuyến Việt Nam; `tripPatch` sửa chuyến đi. */
+function tiedGoals(tripPatch: Record<string, unknown> = {}): UserState {
+  const state = structuredClone(vietnamTripFunded);
+  const trip = state.goals.find((goal) => goal.type === "trip")!;
+  state.goals = [
+    { ...trip, ...tripPatch, priority: null } as never,
+    { type: "next_card", id: "goal_a_next" as never, userId: state.profile.id, priority: null, createdAt: ASOF },
+  ];
+  return state;
+}
+
+test("chỗ trống của CHUYẾN ĐI không kéo độ tin cậy của mục tiêu 'thẻ tiếp theo'", () => {
+  const full = execute(tiedGoals()).record;
+  const vague = execute(tiedGoals({ passengers: null, roundTrip: null })).record;
+  const nextCard = (r: RecommendationRunRecord) =>
+    r.outputSnapshot.results.find((result) => result.goalType === "next_card")!;
+  assert.equal(full.outputSnapshot.goalResolution, "ambiguous");
+  assert.equal(nextCard(vague).primaryAction.productSlug, nextCard(full).primaryAction.productSlug);
+  assert.equal(nextCard(vague).confidence.dataCompleteness, nextCard(full).confidence.dataCompleteness);
+  // Còn chuyến đi thì PHẢI kém chắc chắn hơn.
+  const trip = (r: RecommendationRunRecord) => r.outputSnapshot.results.find((result) => result.goalType === "trip")!;
+  assert.ok(trip(vague).confidence.goalSpecificity < trip(full).confidence.goalSpecificity);
+});
+
+test("phép đo §30 và phép so lượt chạy nhìn người thắng của MỌI mục tiêu", () => {
+  const vague = execute(tiedGoals({ passengers: null })).record;
+  const full = execute(tiedGoals({ passengers: 1 })).record;
+  const tripWinner = (r: RecommendationRunRecord) =>
+    candidateKey(r.outputSnapshot.results.find((result) => result.goalType === "trip")!.primaryAction);
+  // Ca của vòng Codex 8: điền "1 người" lật người thắng của CHUYẾN ĐI. Không
+  // lật thì bài này không kiểm gì — nên đòi nó lật, không `if`.
+  assert.notEqual(tripWinner(vague), tripWinner(full), "tiền đề của bài test không còn đúng");
+  const probe = vague.derivedState.followUpProbes.find((p) => p.gapKind === "trip_passengers_unknown");
+  assert.ok(probe !== undefined && probe.flips > 0, "phép đo chỉ nhìn mục tiêu đầu");
+  const change = explainChange(vague, full);
+  assert.notEqual(change.winner.before, change.winner.after);
+  // Và khoá người thắng mang đủ HAI mục tiêu.
+  assert.equal(explainChange(vague, vague).winner.before?.split(" | ").length, 2);
+});
+
+test("hỏi một mục tiêu KHÔNG tồn tại là lỗi, không phải 'lượt chạy chưa có mục tiêu'", () => {
+  const { record } = execute(beginnerNoCards);
+  assert.throws(() => explainProduct(record, "amex-green", { goalIndex: 99 }), /ngoài phạm vi/);
+  const noGoal = execute({ ...beginnerNoCards, goals: [] }).record;
+  assert.equal(explainProduct(noGoal, "amex-green").outcome, "not_ranked_no_goal");
+});

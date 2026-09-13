@@ -90,7 +90,11 @@ export async function runDebugger(request: DebuggerRequest): Promise<DebuggerRes
   const inputIssues = validateUserState(state, base.dataset).map(
     (issue) => `${issue.level} · ${issue.entity}: ${issue.message}`,
   );
-  const goalIndex = Number.isInteger(request.goalIndex) && request.goalIndex >= 0 ? request.goalIndex : 0;
+  const goalCount = base.record.derivedState.goals.length;
+  const goalIndex = request.goalIndex;
+  if (!Number.isInteger(goalIndex) || goalIndex < 0 || (goalCount > 0 && goalIndex >= goalCount)) {
+    return { ...EMPTY, inputIssues, error: `mục tiêu số ${goalIndex} không có: lượt chạy có ${goalCount} mục tiêu` };
+  }
   const response: DebuggerResponse = {
     ...EMPTY,
     inputIssues,

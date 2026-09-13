@@ -197,7 +197,11 @@ async function main() {
       if (ref === undefined || product === undefined) die("cần: why <hồ sơ|run-id> <slug|NO_NEW_CARD>");
       const { record, dataset } = await loadSubject(ref);
       const goalIndex = Number(flag("goal") ?? 0);
-      console.log(renderProductExplanation(explainProduct(record, product, { goalIndex, dataset })));
+      try {
+        console.log(renderProductExplanation(explainProduct(record, product, { goalIndex, dataset })));
+      } catch (error) {
+        die((error as Error).message);
+      }
       return;
     }
     case "compare": {

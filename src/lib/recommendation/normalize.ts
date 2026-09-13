@@ -38,6 +38,17 @@ export interface NormalizedInput {
   universeExclusions: { product: Product; reason: UniverseExclusionReason }[];
   userGaps: UserDataGap[];
   dataGaps: DataGap[];
+  /**
+   * Chỗ trống THUỘC VỀ từng mục tiêu, cùng thứ tự với `goals` — thứ §29 đọc
+   * cho độ tin cậy của CHÍNH mục tiêu đó.
+   *
+   * Hai mục tiêu hoà ưu tiên chạy song song, và bản trước đưa cho mỗi mục
+   * tiêu TOÀN BỘ chỗ trống của lượt chạy: bỏ trống số người của chuyến đi làm
+   * độ tin cậy của mục tiêu "thẻ tiếp theo" tụt 0.649 → 0.531 trong khi người
+   * thắng và điểm của nó không nhúc nhích (vòng Codex 8). `userGaps`/`dataGaps`
+   * ở trên vẫn là HỢP của cả lượt chạy — cho §30 và cho đầu ra.
+   */
+  goalGaps: { userGaps: UserDataGap[]; dataGaps: DataGap[] }[];
 }
 
 /**
@@ -248,6 +259,19 @@ export function normalize(
 
   const verdicts = universeVerdicts(state, data, ix, asOf);
   const universe = verdicts.filter((row) => row.reason === null).map((row) => row.product);
+  // Chương trình người dùng ĐANG có số dư — kể cả những chương trình không
+  // có thẻ nào trong bộ dữ liệu.
+  //
+  // `balance: 0` KHÔNG tính: nó là câu trả lời "đã hỏi, không có điểm nào"
+  // (luật trống-≠-bằng-không ở mức DÒNG, README Phase 2). Không đồng điểm nào
+  // của chương trình đó tham gia phép tính, nên khai thiếu bảng giá của nó là
+  // hạ độ tin cậy vì một thứ không ảnh hưởng gì. `balance: null` thì NGƯỢC
+  // LẠI — có tài khoản, chưa biết bao nhiêu, tức số điểm đó có thể đang tham gia.
+  const heldBalancePrograms = asArray(state.balances)
+    .filter((row) => row?.programId != null && row.balance !== 0)
+    .map((row) => row.programId as string);
+  const allUserGaps = userGaps(state);
+  const goalIds = new Set(goals.map((goal) => goal.goal.id as string));
 
   return {
     asOf,
@@ -260,25 +284,20 @@ export function normalize(
     universeExclusions: verdicts.flatMap((row) =>
       row.reason === null ? [] : [{ product: row.product, reason: row.reason }],
     ),
-    userGaps: userGaps(state),
-    dataGaps: relevantDataGaps(
-      data,
-      universe,
-      goals,
-      // Chương trình người dùng ĐANG có số dư — kể cả những chương trình không
-      // có thẻ nào trong bộ dữ liệu.
-      //
-      // `balance: 0` KHÔNG tính: nó là câu trả lời "đã hỏi, không có điểm nào"
-      // (luật trống-≠-bằng-không ở mức DÒNG, README Phase 2). Không đồng điểm
-      // nào của chương trình đó tham gia phép tính, nên khai thiếu bảng giá
-      // của nó là hạ độ tin cậy vì một thứ không ảnh hưởng gì.
-      // `balance: null` thì NGƯỢC LẠI — có tài khoản, chưa biết bao nhiêu, tức
-      // số điểm đó có thể đang tham gia.
-      asArray(state.balances)
-        .filter((row) => row?.programId != null && row.balance !== 0)
-        .map((row) => row.programId as string),
-      ix,
-      asOf,
-    ),
+    userGaps: allUserGaps,
+    dataGaps: relevantDataGaps(data, universe, goals, heldBalancePrograms, ix, asOf),
+    goalGaps: goals.map((goal) => ({
+      // Chỗ trống `trip_*` mang `subject` là `GoalId` (hợp đồng ở
+      // `UserDataGap`): của mục tiêu KHÁC trong lượt chạy thì không thuộc về
+      // mục tiêu này. Mọi chỗ trống khác là của hồ sơ, thuộc về mọi mục tiêu.
+      userGaps: allUserGaps.filter(
+        (gap) =>
+          !gap.kind.startsWith("trip_") ||
+          gap.subject === (goal.goal.id as string) ||
+          !goalIds.has(gap.subject),
+      ),
+      // CÙNG hàm với phần hợp — chỉ khác là hỏi cho đúng một mục tiêu.
+      dataGaps: relevantDataGaps(data, universe, [goal], heldBalancePrograms, ix, asOf),
+    })),
   };
 }

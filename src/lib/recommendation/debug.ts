@@ -401,6 +401,12 @@ export function explainProduct(
 ): ProductExplanation {
   const goalIndex = options.goalIndex ?? 0;
   const derived = record.derivedState;
+  // Mục tiêu KHÔNG tồn tại khác với lượt chạy KHÔNG có mục tiêu. Gộp hai ca thì
+  // hỏi mục tiêu số 99 của một lượt chạy một mục tiêu nhận câu trả lời "chưa
+  // có mục tiêu nào" — sai về chính lượt chạy (vòng Codex 8).
+  if (derived.goals.length > 0 && (!Number.isInteger(goalIndex) || goalIndex < 0 || goalIndex >= derived.goals.length)) {
+    throw new RangeError(`goalIndex ${goalIndex} ngoài phạm vi: lượt chạy có ${derived.goals.length} mục tiêu`);
+  }
   const goal: GoalTrace | undefined = derived.goals[goalIndex];
   const ranking = goal?.ranking ?? [];
   const winner = ranking[0]?.candidate ?? null;
