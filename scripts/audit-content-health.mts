@@ -241,17 +241,23 @@ for (const c of cards) {
 // gác), `applyUrl` đi thẳng vào `href` của nút Apply và vào JSON-LD, không qua
 // cửa nào. Ô nhập trong Contentful là chuỗi tự do nên đây là chỗ duy nhất nói
 // được câu đó.
+//
+// Đòi `^https?:\/\/` bằng KÝ TỰ, không chỉ đòi `new URL(raw).protocol` — xem
+// chú thích ở `safeApplyUrl` trong `lib/content/contentful.ts`. `new URL()`
+// không có base tự thêm `//` cho `https:finlywealth.com/x`, nên phép kiểm cũ
+// gật đầu cho một chuỗi mà trình duyệt (phân tích CÓ base là trang đang đứng)
+// lại giải ra một URL NỘI BỘ 404 — đúng lỗ hổng mà cửa này sinh ra để bắt,
+// nhưng đang lọt qua chính nó.
 for (const c of cards) {
   const raw = str(c, "applyUrl") ?? "";
-  let scheme = "";
-  try {
-    scheme = new URL(raw).protocol;
-  } catch {
-    problems.push(`thẻ "${str(c, "slug")}" có applyUrl không phải URL hợp lệ: ${raw}`);
+  if (!/^https?:\/\//i.test(raw.trim())) {
+    problems.push(`thẻ "${str(c, "slug")}" có applyUrl không bắt đầu bằng http(s)://: ${raw}`);
     continue;
   }
-  if (scheme !== "https:" && scheme !== "http:") {
-    problems.push(`thẻ "${str(c, "slug")}" có applyUrl dùng scheme "${scheme}" thay vì http(s): ${raw}`);
+  try {
+    new URL(raw.trim());
+  } catch {
+    problems.push(`thẻ "${str(c, "slug")}" có applyUrl không phải URL hợp lệ: ${raw}`);
   }
 }
 

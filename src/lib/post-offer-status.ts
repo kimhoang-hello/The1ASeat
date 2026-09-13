@@ -33,6 +33,10 @@ export interface PostOffer {
 export const POST_OFFER_DEADLINES: Record<string, PostOffer> = {
   // "Từ 04/08 đến 03/09/2026" — nguyên văn trong thân bài.
   "marriott-bonvoy-transfer-bonus-30-amex-mr": { endsOn: "2026-09-03", cta: "transferBonuses" },
+  // "Booking từ ngày 10/9/2026 đến 11/1/2027" — hạn chót là ngày ĐẶT vé, không
+  // phải ngày bay (bay được tới 31/12/2027). Sau ngày đó bài hết giá trị dù
+  // chuyến bay đã đặt vẫn còn phía trước.
+  "aeroplan-giam-15-points-air-canada-flight-rewards": { endsOn: "2027-01-11", cta: "creditCards" },
 };
 
 /**
@@ -44,6 +48,10 @@ export const POSTS_WITHOUT_DEADLINE: Record<string, string> = {
   // (120 ngày, 153 ngày), không có một ngày chốt chung nào cho cả bài.
   "top-hisa-promo-lai-suat-cao-canada-thang-8-2026":
     "promo tính theo số ngày kể từ lúc mở tài khoản, không có ngày chốt",
+  // Bài News về thẻ Mỹ. "31/12/2026" trong thân bài là ngày 3X grocery/dining
+  // hạ về 2X, không phải hạn welcome offer — Chase không công bố ngày kết thúc.
+  "chase-aeroplan-card-refresh-115000-points-25k-status":
+    "welcome offer không có ngày kết thúc công bố; 31/12/2026 là hạn earn rate 3X grocery/dining",
 };
 
 export interface OfferStatus extends PostOffer {

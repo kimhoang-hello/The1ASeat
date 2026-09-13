@@ -38,7 +38,7 @@ export const START_HERE_PUBLISHED = true;
  * và duyệt bản preview** — cùng ngày.
  *
  * Bật cờ là công bố: 13 URL vào lại sitemap, mục "Bay về Việt Nam" hiện lại
- * trong menu Công cụ điểm thưởng, khối "đi tiếp" của Award Flight Finder có
+ * trong menu Miles & Points, khối "đi tiếp" của Award Flight Finder có
  * lại đường sang, `noindex` được gỡ và dải báo nháp biến mất — tất cả cùng
  * một lúc, không cần sửa chỗ nào khác.
  */
@@ -52,7 +52,7 @@ export const VIETNAM_ROUTES_PUBLISHED = true;
  * **bật lại cùng ngày sau khi tác giả duyệt** — cùng lúc với bảng kỷ lục chung
  * (xem mục `gameHighScore` trong CONTENTFUL.md).
  *
- * Bật cờ là công bố: mục hiện trong menu Công cụ điểm thưởng (cả desktop lẫn
+ * Bật cờ là công bố: mục hiện trong menu Miles & Points (cả desktop lẫn
  * mobile), vào sitemap, vào ô tìm kiếm, `noindex` được gỡ và dải báo nháp biến
  * mất — tất cả cùng một lúc, không cần sửa chỗ nào khác.
  */

@@ -268,13 +268,28 @@ function toPost(entry: Entry<PostSkeleton, undefined>): BlogPost {
  * thứ cửa này sinh ra để chặn. `undefined` buộc mọi chỗ render phải xử lý.
  *
  * Không ném vì một link hỏng không đáng làm sập cả trang thẻ.
+ *
+ * Đòi `^https?:\/\/` bằng KÝ TỰ trên chuỗi gốc, không chỉ đòi `new URL()` chạy
+ * được — `new URL()` (không có base) hiểu cả `https:finlywealth.com/x` và
+ * `https:/finlywealth.com/x` là https hợp lệ và trả `protocol: "https:"`, vì
+ * WHATWG tự thêm `//` cho scheme đặc biệt khi PHÂN TÍCH ĐỘC LẬP. Nhưng trình
+ * duyệt lại phân tích chuỗi này làm `href` với BASE là trang đang đứng (vì nó
+ * thiếu `//` nên bị coi là tham chiếu tương đối), ra
+ * `https://ghe1a.com/credit-cards/finlywealth.com/x` — một URL NỘI BỘ 404,
+ * trong khi cửa kiểm này đã gật đầu cho nó đi qua như một link ngoài hợp lệ.
+ * Nút Apply vẫn bắn `apply_clicked` và `check-rebates` vẫn coi đây là link
+ * FinlyWealth thật. Cùng lớp lỗi "một chuỗi đọc được nhiều cách khác nhau" đã
+ * vá ba lần ở `safeHref`/`relForUrl` — xem AGENTS.md.
  */
 function safeApplyUrl(url: string, slug: string): string | undefined {
-  try {
-    const scheme = new URL(url.trim()).protocol;
-    if (scheme === "https:" || scheme === "http:") return url.trim();
-  } catch {
-    // Rơi xuống dưới.
+  const trimmed = url.trim();
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      new URL(trimmed);
+      return trimmed;
+    } catch {
+      // Rơi xuống dưới.
+    }
   }
   console.warn(`[content] thẻ "${slug}" có applyUrl không phải http(s), đã bỏ: ${url}`);
   return undefined;
