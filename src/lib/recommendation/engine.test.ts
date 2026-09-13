@@ -34,6 +34,7 @@ import { candidateUniverse, normalize } from "./normalize.ts";
 import { REASON_CODES, WARNING_CODES } from "./reason-codes.ts";
 import { nextQuestion } from "./explain.ts";
 import { SCORABLE_WEIGHT } from "./scoring/weights.ts";
+import { SPEC_WEIGHTS } from "./spec-weights.ts";
 import {
   resolveTripGoal,
   usableBalance,
@@ -157,7 +158,7 @@ test("§16 Rule 7 — mã nguồn engine không nhắc tới `affiliateAvailable
     "scoring/trip.ts", "scoring/diversify.ts", "scoring/earning.ts", "scoring/shared.ts",
     // Phase 4: chạy BÊN TRONG `recommend()` (§30 thăm dò cũng vậy), nên cùng
     // luật với 21 file kia.
-    "trace.ts", "read-set.ts", "sensitivity.ts", "rule-shapes.ts",
+    "trace.ts", "read-set.ts", "sensitivity.ts", "rule-shapes.ts", "spec-weights.ts",
   ]);
   for (const name of files) {
     if (!ENGINE_FILES.has(name)) continue;
@@ -211,24 +212,8 @@ test("§10 — mỗi loại mục tiêu dùng bộ thành phần KHÁC NHAU", ()
 test("§10 — trọng số đúng như spec viết, và cộng lại đúng 0.95", () => {
   // Con số của spec, không phải con số sau chuẩn hoá. Bảng in ra cho admin
   // phải khớp §10 tới từng phần trăm.
-  const expected: Record<string, Record<string, number>> = {
-    trip: {
-      trip_currency_utility: 0.35, points_gap_reduction: 0.2, offer_quality: 0.15,
-      spend_fit: 0.1, flexibility_value: 0.1, travel_benefits: 0.05,
-    },
-    next_card: {
-      offer_quality: 0.25, spend_fit: 0.2, long_term_earn_fit: 0.15,
-      currency_fit: 0.15, benefits_fit: 0.1, diversification: 0.1,
-    },
-    diversify: {
-      new_currency_exposure: 0.35, transfer_flexibility: 0.25,
-      long_term_earn_fit: 0.15, offer_quality: 0.1, spend_fit: 0.1,
-    },
-    earn_points: {
-      long_term_earn_fit: 0.4, currency_fit: 0.2, offer_quality: 0.15,
-      spend_fit: 0.1, fee_drag: 0.1,
-    },
-  };
+  // Bảng dùng CHUNG với debugger — xem `spec-weights.ts`.
+  const expected: Record<string, Record<string, number>> = SPEC_WEIGHTS;
   const samples: [string, UserState][] = [
     ["trip", vietnamTripShortfall],
     ["next_card", beginnerNoCards],
@@ -2329,7 +2314,7 @@ test("KHÔNG có hack theo sản phẩm trong logic chung", async () => {
     "explain.ts", "offer-quality.ts", "earn-fit.ts", "benefit-fit.ts", "trip-need.ts",
     "scoring/weights.ts", "scoring/context.ts", "scoring/next-card.ts",
     "scoring/trip.ts", "scoring/diversify.ts", "scoring/earning.ts", "scoring/shared.ts",
-    "trace.ts", "read-set.ts", "sensitivity.ts", "rule-shapes.ts",
+    "trace.ts", "read-set.ts", "sensitivity.ts", "rule-shapes.ts", "spec-weights.ts",
   ];
   const { readFile } = await import("node:fs/promises");
   for (const name of ENGINE_FILES) {

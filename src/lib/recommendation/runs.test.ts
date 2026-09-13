@@ -35,6 +35,7 @@ import {
   renderChangeExplanation,
   renderProductExplanation,
   renderRunReport,
+  renderScoreTable,
 } from "./debug-render.ts";
 import { productIdFor } from "./data/products.ts";
 import {
@@ -48,7 +49,8 @@ import {
 } from "./data/user-fixtures.ts";
 import type { OfferHistoryPoint } from "./offer-history.ts";
 import type { RecommendationDataset } from "./types.ts";
-import type { UserState } from "./user-types.ts";
+import { amountRange, type UserState } from "./user-types.ts";
+import { validateDataset } from "./validate.ts";
 
 const ASOF = "2026-09-08";
 const DATA = datasetAt(offlineDataset(), ASOF);
@@ -662,7 +664,7 @@ test("so lượt chạy — đổi NGƯỠNG PHÍ thì tầng tính khác đầu
   const strict = structuredClone(aeroplanHeavy);
   strict.profile.annualFeeTolerancePerCard = 0;
   const b = execute(strict).record;
-  assert.equal(firstComputedDivergence(diffRecords(a, b))?.stage, "eligibility_suitability");
+  assert.equal(firstComputedDivergence(diffRecords(a, b))?.stage, "suitability");
 });
 
 test("§20 — 'vì sao đổi': đổi TỪNG yếu tố một chỉ ra đúng yếu tố đã đổi kết quả", () => {
@@ -712,8 +714,8 @@ test("mọi tầng của dây chuyền đều có trong phép so", () => {
   // mà không ai thấy. Danh sách phải đúng thứ tự nhân quả của `engine.ts`.
   assert.deepEqual([...PIPELINE_STAGES], [
     "source_data", "user_input", "normalization", "portfolio_analysis",
-    "candidate_facts", "eligibility_suitability", "offer_climate",
-    "strategy_generation", "needs_calculation", "scoring", "rules", "ranking",
+    "candidate_facts", "eligibility", "suitability", "offer_climate",
+    "strategy_generation", "needs_calculation", "scoring", "rules", "editorial", "ranking",
     "final_recommendation", "confidence",
   ]);
 });
@@ -954,4 +956,95 @@ test("so lượt chạy — lưới an toàn: bản ghi khác ở chỗ chưa á
   changed.derivedState.goals[0].goalId = "goal_khac" as never;
   const diffs = diffRecords(record, changed);
   assert.equal(firstComputedDivergence(diffs)?.stage, "unmapped");
+});
+
+/* ================================================================== *
+ * Diễn tập "khuyến nghị này sai" — chẩn đoán từ MỘT lượt chạy
+ * ================================================================== */
+
+test("thẻ đã xếp hạng: 'do' nói NGUỒN của khoảng cách, không mặc định là engine", () => {
+  // Người mới gõ thu nhập $6,000 thay vì $60,000: TD® Aeroplan® VI thua vì
+  // cửa điều kiện chưa chắc — một vế chưa khai, vế kia trượt với con số đã gõ.
+  const state = structuredClone(beginnerNoCards);
+  state.profile.annualPersonalIncome = amountRange(6_000, 8_000);
+  const { record } = execute(state);
+  const e = explainProduct(record, "td-aeroplan-visa-infinite");
+  assert.notEqual(e.outcome, "primary", "tiền đề: TD® không thắng");
+  assert.deepEqual(e.drivenBy, ["user_input"]);
+  const line = e.explainingLines.find((row) => row.layer === "eligibility")!;
+  assert.ok(line.sources.some((row) => row.detail.includes("minimum_personal_income") && row.detail.includes("TRƯỢT")));
+  assert.ok(line.sources.some((row) => row.detail.includes("minimum_household_income")));
+  // Và thẻ bị ẩn nói bị ẩn bởi ai.
+  if (e.ranked?.hiddenBy != null) assert.match(renderProductExplanation(e), /bị ẩn bởi:/);
+});
+
+test("lỗi dữ liệu nguồn hiện ngay trên lượt chạy bị khiếu nại (validator trên bộ dữ liệu của nó)", () => {
+  // Bonus Amex® Green gõ thừa một số 0 ở thành phần offer.
+  const green = productIdFor("amex-green") as string;
+  const data = {
+    ...DATA,
+    offerComponents: DATA.offerComponents.map((c) => (c.offerId.startsWith(`offer_${green}`) ? { ...c, pointsAmount: (c.pointsAmount ?? 0) * 10 } : c)),
+  };
+  const { record, dataset } = execute(beginnerNoCards, { data });
+  const report = renderRunReport(record, { dataset });
+  assert.match(report, /kiểm dữ liệu: ✗ 1 LỖI/);
+  const e = explainProduct(record, "amex-green", { dataset });
+  assert.ok(e.dataIssues!.some((issue) => issue.level === "error" && issue.message.includes("vượt headlineBonus")));
+  assert.equal(e.drivenBy.includes("source_data"), true);
+  // Bộ dữ liệu sạch thì báo cáo nói sạch.
+  assert.match(renderRunReport(execute(beginnerNoCards).record, { dataset: DATA }), /kiểm dữ liệu: ✓ không lỗi/);
+});
+
+test("validator cảnh báo ngưỡng thu nhập bất thường (gõ thừa số 0), không cảnh báo dữ liệu thật", () => {
+  const rule = DATA.eligibilityRules.find((r) => r.ruleType === "minimum_personal_income" && Number(r.value) === 60_000)!;
+  const typo = { ...DATA, eligibilityRules: DATA.eligibilityRules.map((r) => (r.id === rule.id ? { ...r, value: 600_000 } : r)) };
+  assert.ok(validateDataset(typo, ASOF).some((issue) => issue.message.includes(rule.id as string) && issue.message.includes("vượt mốc hợp lý")));
+  assert.ok(!validateDataset(DATA, ASOF).some((issue) => issue.message.includes("vượt mốc hợp lý")));
+});
+
+test("phân tích danh mục in các dòng cấu thành, và tự cộng lại — engine cộng sai thì báo cáo nói ra", () => {
+  const { record } = execute(aeroplanHeavy);
+  const valued = record.derivedState.portfolio.valued;
+  assert.ok(valued.some((row) => row.programId === "amex-mr" && row.reach > 0), "tiền đề: MR chuyển được");
+  assert.ok(!renderRunReport(record).includes("KHÁC con số engine"));
+  // Giả lập engine cộng sai: độ linh hoạt ghi 0 trong khi các dòng nói khác.
+  const broken = structuredClone(record);
+  broken.derivedState.portfolio.flexibilityScore = 0;
+  assert.match(renderRunReport(broken), /KHÁC con số engine in ở trên ⇒ lỗi ở PHÂN TÍCH DANH MỤC/);
+});
+
+test("bảng điểm đánh dấu trọng số lệch bảng §10 của spec", () => {
+  const { record } = execute(beginnerNoCards);
+  const top = record.derivedState.goals[0].ranking.find((row) => row.candidate.kind === "open_card")!.candidate;
+  assert.ok(!renderScoreTable(top, "next_card").includes("TRỌNG SỐ LỆCH"));
+  const skewed = structuredClone(top);
+  skewed.components.find((c) => c.key === "offer_quality")!.weight = 0.45;
+  assert.match(renderScoreTable(skewed, "next_card"), /offer_quality.*TRỌNG SỐ LỆCH §10\.1 \(0\.25\)/);
+});
+
+test("so lượt chạy: điều kiện và phù hợp là HAI tầng; luật §16 và biên tập §17 là HAI tầng", () => {
+  const { record } = execute(aeroplanHeavy);
+  const editorial = structuredClone(record);
+  editorial.derivedState.goals[0].ranking[0].candidate.adjustments.push({ rule: "ED_test", layer: "editorial", delta: 0.08, reasonCode: null });
+  assert.equal(firstComputedDivergence(diffRecords(record, editorial))?.stage, "editorial");
+  const rule = structuredClone(record);
+  const adjusted = rule.derivedState.goals[0].ranking.find((row) => row.candidate.adjustments.some((a) => a.layer === "rules"))!;
+  adjusted.candidate.adjustments.find((a) => a.layer === "rules")!.delta -= 0.01;
+  assert.equal(firstComputedDivergence(diffRecords(record, rule))?.stage, "rules");
+  const eligibility = structuredClone(record);
+  eligibility.derivedState.candidates[0].eligibility.status = "ineligible";
+  assert.equal(firstComputedDivergence(diffRecords(record, eligibility))?.stage, "eligibility");
+  const suitability = structuredClone(record);
+  suitability.derivedState.candidates[0].suitability.penalty = 0.5;
+  assert.equal(firstComputedDivergence(diffRecords(record, suitability))?.stage, "suitability");
+});
+
+test("so lượt chạy — CHỈ version khác thì lưới an toàn không báo động giả", () => {
+  // Chạy lại một lượt cũ dưới version mới mà không tầng tính nào khác: phép so
+  // từng báo "khác ở trường chưa ánh xạ: output.engineVersion".
+  const { record } = execute(aeroplanHeavy);
+  const newer = structuredClone(record);
+  newer.engineVersion = "9.9.9";
+  newer.outputSnapshot.engineVersion = "9.9.9";
+  assert.equal(firstComputedDivergence(diffRecords(record, newer)), null);
 });

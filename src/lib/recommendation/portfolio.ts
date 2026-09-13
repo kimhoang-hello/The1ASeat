@@ -318,6 +318,7 @@ export function analyzePortfolio(
     ),
   ].sort();
 
+  const valued: PortfolioAnalysis["valued"] = [];
   for (const programId of programIds) {
     const known = balanceKnowledge(state, programId);
     if (known.kind !== "known") {
@@ -341,7 +342,9 @@ export function analyzePortfolio(
     // (một đích) không linh hoạt bằng một danh mục toàn Membership Rewards®
     // (năm đích), và `PORTFOLIO_LACKS_FLEXIBILITY` phải phân biệt được hai ca
     // đó — chúng dẫn tới hai lời khuyên khác nhau.
-    flexibleValueCents += valueCents * flexibilityReach(ix, programId, asOf);
+    const reach = flexibilityReach(ix, programId, asOf);
+    flexibleValueCents += valueCents * reach;
+    valued.push({ programId, points: known.points, centsPerPoint: cpp, valueCents, reach });
 
     for (const [ecosystem, share] of ecosystemShares(program, ix, asOf)) {
       byEcosystem.set(ecosystem, (byEcosystem.get(ecosystem) ?? 0) + valueCents * share);
@@ -372,6 +375,7 @@ export function analyzePortfolio(
   return {
     direct,
     knownValueCents,
+    valued,
     hasUnknownBalance,
     balancesUndeclared: state.declared?.balances !== true,
     cardsUndeclared: state.declared?.cards !== true,

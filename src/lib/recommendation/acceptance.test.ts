@@ -1126,7 +1126,7 @@ test("so lượt chạy — thẻ trượt luật cứng làm mất chỗ trốn
   assert.deepEqual(after.outputSnapshot.userGaps, before.outputSnapshot.userGaps, "tiền đề: chỗ trống người dùng đứng yên");
   const gapsOf = (r: RecommendationRunRecord) => r.outputSnapshot.dataGaps.map((gap) => `${gap.kind}:${gap.subjectId}`).join("|");
   assert.notEqual(gapsOf(after), gapsOf(before), "tiền đề: chỗ trống của lượt chạy đổi");
-  assert.equal(firstComputedDivergence(diffRecords(before, after))?.stage, "eligibility_suitability");
+  assert.equal(firstComputedDivergence(diffRecords(before, after))?.stage, "eligibility");
 });
 
 /* ================================================================== *

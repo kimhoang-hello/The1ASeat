@@ -222,6 +222,11 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * `WELCOME_BONUS_UNAVAILABLE`); offer có cửa bonus chưa chắc góp nửa trọng số
  * vào trung vị percentile của thị trường (`WAIT_FOR_BETTER_OFFER`).
  *
+ * 4.24.0 — diễn tập "khuyến nghị này sai": `derived.portfolio.valued` ghi
+ * từng số dư đã định giá và tầm với của nó — những dòng mà giá trị và độ linh
+ * hoạt cộng từ đó, để báo cáo tự cộng lại và bắt lỗi phân tích danh mục trên
+ * MỘT lượt chạy. Không đổi một chữ số điểm.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -234,7 +239,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.23.0";
+export const ENGINE_VERSION = "4.24.0";
 
 export interface RecommendInput {
   state: UserState;

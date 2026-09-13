@@ -94,12 +94,14 @@ export const PIPELINE_STAGES = [
   "normalization",
   "portfolio_analysis",
   "candidate_facts",
-  "eligibility_suitability",
+  "eligibility",
+  "suitability",
   "offer_climate",
   "strategy_generation",
   "needs_calculation",
   "scoring",
   "rules",
+  "editorial",
   "ranking",
   "final_recommendation",
   "confidence",
@@ -114,11 +116,13 @@ export const STAGE_LABELS: Record<PipelineStage, string> = {
   portfolio_analysis: "Phân tích danh mục §7",
   strategy_generation: "Sinh chiến lược §8",
   needs_calculation: "Tính nhu cầu §9",
-  eligibility_suitability: "Điều kiện / phù hợp §14",
+  eligibility: "Điều kiện §14 (ngân hàng có nhận không)",
+  suitability: "Phù hợp §14 (người dùng có nên/muốn không)",
   candidate_facts: "Dữ kiện ứng viên (offer §11–12, tích điểm, quyền lợi)",
   offer_climate: "Thang đo chung của tập chọn được (thị trường offer, thang điểm)",
   scoring: "Chấm điểm theo ý định §10",
-  rules: "Luật §16 + biên tập §17",
+  rules: "Luật §16 (code)",
+  editorial: "Biên tập §17 (dữ liệu biên tập, RULE_VERSION)",
   ranking: "Xếp hạng §18",
   final_recommendation: "Khuyến nghị cuối",
   confidence: "Độ tin cậy §29 + câu hỏi tiếp §30",
@@ -209,17 +213,30 @@ export function stageValue(record: RecommendationRunRecord, stage: PipelineStage
         ({ goal, index }) => goalKey(goal, index),
         ({ goal }) => goal.needs,
       );
-    case "eligibility_suitability":
+    // Điều kiện và phù hợp là HAI tầng: §14 tách chúng vì hai người sửa khác
+    // nhau (luật ngân hàng / câu trả lời của người dùng). Chung một tầng thì
+    // phép so nói "§14 khác" và admin phải đọc đường dẫn để biết cái nào.
+    case "eligibility":
       return {
         excluded: keyed(
-          derived.excluded.filter((row) => row.stage !== "universe"),
+          derived.excluded.filter((row) => row.stage === "eligibility"),
           (row) => row.productSlug,
           (row) => row,
         ),
+        verdicts: keyed(derived.candidates, (row) => row.productSlug, (row) => row.eligibility),
+      };
+    case "suitability":
+      return {
+        excluded: keyed(
+          derived.excluded.filter((row) => row.stage === "suitability"),
+          (row) => row.productSlug,
+          (row) => row,
+        ),
+        // `selectable` cần CẢ hai phán quyết — nó thuộc tầng sau của hai.
         verdicts: keyed(
           derived.candidates,
           (row) => row.productSlug,
-          (row) => ({ eligibility: row.eligibility, suitability: row.suitability, selectable: row.selectable }),
+          (row) => ({ suitability: row.suitability, selectable: row.selectable }),
         ),
       };
     case "offer_climate":
@@ -266,10 +283,27 @@ export function stageValue(record: RecommendationRunRecord, stage: PipelineStage
             // Mã và cảnh báo của ứng viên được GỘP ở đây (luật + điều kiện + phù
             // hợp + offer + quyền lợi), cho MỌI ứng viên kể cả thẻ bị ẩn.
             (row) => ({
-              adjustments: keyed(row.candidate.adjustments, (a) => a.rule, (a) => a),
+              adjustments: keyed(
+                row.candidate.adjustments.filter((a) => a.layer !== "editorial"),
+                (a) => a.rule,
+                (a) => a,
+              ),
               reasonCodes: row.candidate.reasonCodes,
               warnings: row.candidate.warnings,
             }),
+          ),
+      );
+    // Biên tập §17 tách khỏi luật §16: luật là CODE, biên tập là DỮ LIỆU một
+    // người gõ vào (`RULE_VERSION`) — hai chỗ sửa, hai người chịu trách nhiệm.
+    case "editorial":
+      return keyed(
+        derived.goals.map((goal, index) => ({ goal, index })),
+        ({ goal, index }) => goalKey(goal, index),
+        ({ goal }) =>
+          keyed(
+            goal.ranking,
+            (row) => candidateKey(row.candidate),
+            (row) => keyed(row.candidate.adjustments.filter((a) => a.layer === "editorial"), (a) => a.rule, (a) => a),
           ),
       );
     case "ranking":
@@ -371,10 +405,18 @@ export function diffRecords(
     (row) => row.changed && row.stage !== "source_data" && row.stage !== "user_input",
   );
   if (!computedChanged) {
-    const whole = deepDiff(
-      { derived: before.derivedState, output: before.outputSnapshot },
-      { derived: after.derivedState, output: after.outputSnapshot },
-    );
+    // Bỏ siêu dữ liệu của đầu ra: version và ngày chạy đã có ở phần đầu phép
+    // so (và ngày chạy ở tầng dữ liệu nguồn). Không bỏ thì chạy lại một lượt
+    // cũ dưới version mới luôn "khác ở trường chưa ánh xạ: engineVersion" —
+    // một lời báo động giả đúng lúc admin cần biết khuyến nghị có tái lập không.
+    const content = (record: RecommendationRunRecord) => {
+      const { engineVersion: _v, ruleVersion: _r, asOf: _a, ...rest } = record.outputSnapshot;
+      void _v;
+      void _r;
+      void _a;
+      return { derived: record.derivedState, output: rest };
+    };
+    const whole = deepDiff(content(before), content(after));
     if (whole.length > 0) {
       diffs.push({
         stage: "unmapped",

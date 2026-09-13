@@ -17,17 +17,21 @@
 
 import {
   compareCandidates,
+  dataIssues,
   eligibilityUnknownCauses,
   goalIndexError,
   scoreBreakdown,
   type CandidateComparison,
   type EligibilityUnknownCause,
+  type LineSource,
   type ProductExplanation,
 } from "./debug.ts";
 import { candidateKey, STAGE_LABELS, type ChangeExplanation, type StageDiff } from "./run-diff.ts";
 import type { RecommendationRunRecord } from "./runs.ts";
 import type { Candidate, GoalTrace } from "./engine-types.ts";
 import type { EstimatedAmount } from "./user-types.ts";
+import type { RecommendationDataset } from "./types.ts";
+import { SPEC_WEIGHTS, WEIGHT_SOURCE } from "./spec-weights.ts";
 
 const INT = new Intl.NumberFormat("en-US");
 
@@ -92,8 +96,14 @@ function goalLabel(goal: GoalTrace): string {
  * Bảng điểm
  * ------------------------------------------------------------------ */
 
-export function renderScoreTable(candidate: Candidate): string {
+export function renderScoreTable(candidate: Candidate, goalType: string | null = null): string {
   const table = scoreBreakdown(candidate);
+  // Đối chiếu trọng số với bảng §10 (chỉ thẻ, không phải NO_NEW_CARD — bảng
+  // của nó là lựa chọn của engine, `rank.ts`).
+  const spec =
+    candidate.kind === "open_card" && goalType !== null && goalType in SPEC_WEIGHTS
+      ? (SPEC_WEIGHTS as Record<string, Record<string, number>>)[goalType]
+      : null;
   const lines = [
     `  ${pad(candidateKey(candidate), 40)} điểm cuối ${score(candidate.score)}`,
     // Nói ra phép chuẩn hoá — xem `ScoreBreakdown.totalWeight`.
@@ -106,8 +116,13 @@ export function renderScoreTable(candidate: Candidate): string {
   // luật, nên bảng đọc như thể luật đã nằm trong điểm nền.
   const isBase = (layer: string, key: string) => layer === "scoring" || key === "base_clamp";
   for (const line of table.lines.filter((line) => isBase(line.layer, line.key))) {
+    const expected = spec?.[line.key];
+    const mismatch =
+      spec !== null && line.layer === "scoring" && (expected === undefined || Math.abs((line.weight ?? 0) - expected) > 1e-12)
+        ? `  ⚠︎ TRỌNG SỐ LỆCH ${WEIGHT_SOURCE[goalType as keyof typeof WEIGHT_SOURCE]} (${expected ?? "không có trong bảng"})`
+        : "";
     const detail =
-      line.layer === "scoring" ? `w=${line.weight?.toFixed(2)} raw=${line.raw?.toFixed(3)}  ${line.note ?? ""}` : "";
+      line.layer === "scoring" ? `w=${line.weight?.toFixed(2)} raw=${line.raw?.toFixed(3)}  ${line.note ?? ""}${mismatch}` : "";
     lines.push(row(line.layer, line.key, signed(line.effect), detail));
   }
   lines.push(row("", "= điểm nền", ` ${score(table.baseScore)}`, ""));
@@ -146,6 +161,8 @@ export interface RunReportOptions {
   goalIndex?: number;
   /** Số dòng bảng xếp hạng. Mặc định: tất cả. */
   rankingLimit?: number;
+  /** Bộ dữ liệu của lượt chạy — có thì báo cáo mở đầu bằng kết quả validator trên nó. */
+  dataset?: RecommendationDataset;
 }
 
 export function renderRunReport(record: RecommendationRunRecord, options: RunReportOptions = {}): string {
@@ -169,6 +186,17 @@ export function renderRunReport(record: RecommendationRunRecord, options: RunRep
     `vân tay: dữ liệu ${input.datasetFingerprint} · lịch sử offer ${input.offerHistoryFingerprint} · ` +
       `người dùng ${input.stateFingerprint}`,
   );
+
+  if (options.dataset !== undefined) {
+    const issues = dataIssues(options.dataset, input.asOf);
+    const errors = issues.filter((issue) => issue.level === "error");
+    out.push(
+      errors.length === 0
+        ? `kiểm dữ liệu: ✓ không lỗi (${issues.length} cảnh báo) trên đúng bộ dữ liệu lượt chạy đã đọc`
+        : `kiểm dữ liệu: ✗ ${errors.length} LỖI trên bộ dữ liệu lượt chạy đã đọc — nghi DỮ LIỆU NGUỒN trước tiên:`,
+    );
+    for (const issue of errors.slice(0, 8)) out.push(`  ✗ ${issue.entity}: ${issue.message}`);
+  }
 
   /* ---- Đầu vào ---------------------------------------------------- */
   out.push(heading(null, "Đầu vào (hồ sơ giả / hồ sơ thật)"));
@@ -260,6 +288,23 @@ export function renderRunReport(record: RecommendationRunRecord, options: RunRep
     `  giá trị đã biết ${money(portfolio.knownValueCents)}${portfolio.hasUnknownBalance ? " (CẬN DƯỚI — có số dư chưa biết)" : ""}` +
       ` · linh hoạt ${pct(portfolio.flexibilityScore)}`,
   );
+  // Các dòng mà hai con số trên cộng từ đó, và phép cộng lại NGAY ĐÂY: engine
+  // cộng sai thì báo cáo tự nói ra, không cần một lượt mốc để so.
+  const valued = portfolio.valued ?? [];
+  for (const row of valued) {
+    out.push(
+      `    ${pad(row.programId, 16)} ${int(row.points)} × ${row.centsPerPoint.toFixed(2)}¢ = ${money(row.valueCents)} · tầm với ${row.reach.toFixed(2)}`,
+    );
+  }
+  if (valued.length > 0) {
+    const total = valued.reduce((sum, row) => sum + row.valueCents, 0);
+    const flexible = total > 0 ? Math.min(1, valued.reduce((sum, row) => sum + row.valueCents * row.reach, 0) / total) : 0;
+    if (Math.abs(total - portfolio.knownValueCents) > 0.5 || Math.abs(flexible - portfolio.flexibilityScore) > 1e-9) {
+      out.push(
+        `  ⚠︎ cộng lại từ các dòng trên: ${money(total)} · linh hoạt ${pct(flexible)} — KHÁC con số engine in ở trên ⇒ lỗi ở PHÂN TÍCH DANH MỤC`,
+      );
+    }
+  }
   out.push(
     `  tập trung: ${
       portfolio.concentration.length === 0
@@ -357,9 +402,9 @@ export function renderRunReport(record: RecommendationRunRecord, options: RunRep
     /* ---- 8. Bảng điểm -------------------------------------------- */
     out.push(heading(8, `Score breakdown — bảng điểm §19 [mục tiêu ${index}]`));
     const winner = goal.ranking[0]?.candidate;
-    if (winner !== undefined) out.push(renderScoreTable(winner));
+    if (winner !== undefined) out.push(renderScoreTable(winner, goal.goalType));
     const noAction = goal.ranking.find((row) => row.candidate.kind === "no_new_card")?.candidate;
-    if (noAction !== undefined && noAction !== winner) out.push(renderScoreTable(noAction));
+    if (noAction !== undefined && noAction !== winner) out.push(renderScoreTable(noAction, goal.goalType));
     const runnerUp = goal.ranking[1]?.candidate;
     if (winner !== undefined && runnerUp !== undefined) {
       out.push("\n  vì sao người thắng đứng trên hạng nhì:");
@@ -473,6 +518,13 @@ export function renderRunReport(record: RecommendationRunRecord, options: RunRep
  * Thẻ X đi tới đâu
  * ------------------------------------------------------------------ */
 
+const LINE_SOURCE_TEXT: Record<LineSource, string> = {
+  user_input: "ĐẦU VÀO người dùng",
+  source_data: "DỮ LIỆU NGUỒN",
+  engine: "ENGINE (phép tính / luật trong code)",
+  editorial: "BIÊN TẬP §17",
+};
+
 const SOURCE_TEXT: Record<EligibilityUnknownCause["source"], string> = {
   source_data: "DỮ LIỆU NGUỒN",
   user_input: "ĐẦU VÀO người dùng",
@@ -504,12 +556,34 @@ export function renderProductExplanation(explanation: ProductExplanation): strin
   out.push(`═══ ${explanation.key}${explanation.productName ? ` — ${explanation.productName}` : ""} ═══`);
   out.push(`kết cục: ${OUTCOME_TEXT[explanation.outcome]}`);
   out.push(`quyết định ở tầng: ${STAGE_LABELS[explanation.decidedAt]}`);
-  out.push(`do: ${explanation.drivenBy.join(" + ")}`);
+  out.push(`do: ${explanation.drivenBy.map((source) => LINE_SOURCE_TEXT[source]).join(" + ")}`);
+  if (explanation.ranked?.hiddenBy != null) out.push(`bị ẩn bởi: ${explanation.ranked.hiddenBy} (cùng họ, điểm cao hơn)`);
+  // CÂU TRẢ LỜI trước, bằng chứng sau: dòng nào giải thích khoảng cách với
+  // đối thủ, và mỗi dòng đọc từ đâu — admin biết nên sửa dữ liệu, hỏi lại
+  // người dùng, hay mở code, mà không phải tự suy từ bảng điểm.
+  if (explanation.explainingLines.length > 0 && explanation.versus !== null) {
+    const v = explanation.versus;
+    out.push(
+      heading(null, explanation.outcome === "primary" ? `Vì sao thắng ${v.b} (${signed(v.gap)})` : `Vì sao thua ${v.b} (${signed(v.gap)})`),
+    );
+    for (const line of explanation.explainingLines) {
+      out.push(`  ${pad(line.layer, 12)} ${pad(line.key, 30)} ${signed(line.delta)}`);
+      for (const row of line.sources) out.push(`      ← ${LINE_SOURCE_TEXT[row.source]}: ${row.detail}`);
+      if (line.weightMismatch !== null) {
+        out.push(`      ⚠︎ trọng số ${line.weightMismatch.actual} ≠ ${line.weightMismatch.expected} của ${line.weightMismatch.table}`);
+      }
+    }
+  }
 
   if (explanation.excluded !== null) {
     const e = explanation.excluded;
     out.push(heading(null, "Cửa đã chặn"));
     out.push(`  ${e.stage}: ${e.stage === "universe" ? (UNIVERSE_TEXT[e.reason] ?? e.reason) : e.reason}`);
+  }
+
+  if (explanation.dataIssues !== null && explanation.dataIssues.length > 0) {
+    out.push(heading(null, "Validator trên dữ liệu của thẻ này"));
+    for (const issue of explanation.dataIssues) out.push(`  ${issue.level === "error" ? "✗ LỖI" : "⚠︎"} ${issue.entity}: ${issue.message}`);
   }
 
   const facts = explanation.facts;
@@ -560,7 +634,7 @@ export function renderProductExplanation(explanation: ProductExplanation): strin
     const r = explanation.ranked;
     out.push(heading(null, "Xếp hạng"));
     out.push(`  hạng ${r.rank} · ${r.visibility}${r.hiddenBy === null ? "" : ` — nhường chỗ cho ${r.hiddenBy}`}`);
-    out.push(renderScoreTable(r.candidate));
+    out.push(renderScoreTable(r.candidate, explanation.goalType));
   }
   if (explanation.versus !== null) {
     out.push(heading(null, explanation.outcome === "primary" ? "So với hạng nhì" : "So với người thắng"));

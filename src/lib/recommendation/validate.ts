@@ -1,6 +1,9 @@
 import { INCOMPLETE_OFFERS, UNQUOTABLE_AWARD_PROGRAMS } from "./data/index.ts";
 import { isActiveAt, isAvailableAt } from "./temporal.ts";
 import { RULE_SHAPES } from "./rule-shapes.ts";
+
+/** Mốc hợp lý của ngưỡng thu nhập thẻ tiêu dùng Canada — cao nhất hôm nay là $200,000. */
+const INCOME_SANITY_CAP = 300_000;
 import type { RecommendationDataset, Temporal } from "./types.ts";
 
 /**
@@ -937,6 +940,18 @@ export function validateDataset(
    */
 
   for (const rule of data.eligibilityRules) {
+    // Ngưỡng thu nhập HỢP LỆ về dạng mà bất thường về cỡ — thẻ tiêu dùng cao
+    // nhất ở Canada đòi $200,000. Một số 0 gõ thừa ($600,000) không làm luật
+    // sai dạng, nó làm thẻ bị phạt "điều kiện chưa chắc" và debugger quy nhầm
+    // cho khoảng thu nhập của người dùng (vòng rà "khuyến nghị này sai").
+    // Cảnh báo, không lỗi: một thẻ private-banking thật có thể vượt mốc.
+    if (rule.ruleType.endsWith("_income") && typeof rule.value === "number" && rule.value > INCOME_SANITY_CAP) {
+      issues.push({
+        level: "warning",
+        entity: "eligibility_rules",
+        message: `${rule.id}: ngưỡng thu nhập $${rule.value.toLocaleString("en-US")} vượt mốc hợp lý $${INCOME_SANITY_CAP.toLocaleString("en-US")} — kiểm lại nguồn, có thể gõ thừa số 0`,
+      });
+    }
     const shape = RULE_SHAPES[rule.ruleType];
     if (shape === undefined) {
       issues.push({

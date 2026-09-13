@@ -50,6 +50,7 @@ export function snapshotPortfolio(portfolio: PortfolioAnalysis): PortfolioSnapsh
     cardsUndeclared: portfolio.cardsUndeclared,
     concentration: portfolio.concentration.map((row) => ({ ...row })),
     flexibilityScore: portfolio.flexibilityScore,
+    valued: portfolio.valued.map((row) => ({ ...row })),
     earnedPrograms: [...portfolio.earnedPrograms].sort(),
     heldProductIds: portfolio.heldProducts.map((product) => product.id).sort(),
   };

@@ -97,7 +97,7 @@ export async function runDebugger(request: DebuggerRequest): Promise<DebuggerRes
   const response: DebuggerResponse = {
     ...EMPTY,
     inputIssues,
-    report: renderRunReport(base.record),
+    report: renderRunReport(base.record, { dataset: base.dataset }),
     rankedKeys: (base.record.derivedState.goals[goalIndex]?.ranking ?? []).map((row) =>
       row.candidate.kind === "no_new_card" ? "NO_NEW_CARD" : (row.candidate.productSlug ?? "?"),
     ),

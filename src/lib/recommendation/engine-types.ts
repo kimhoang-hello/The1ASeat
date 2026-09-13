@@ -105,6 +105,14 @@ export interface PortfolioAnalysis {
   concentration: EcosystemExposure[];
   /** Tỷ trọng giá trị nằm ở chương trình chuyển được. 0..1. */
   flexibilityScore: number;
+  /**
+   * Từng số dư ĐÃ ĐỊNH GIÁ và tầm với của nó — những dòng mà
+   * `knownValueCents` và `flexibilityScore` cộng từ đó. Không có chúng thì
+   * báo cáo chỉ in "amex-mr 50,000 · linh hoạt 0%", và admin phải thuộc lòng
+   * Membership Rewards® chuyển được mới thấy con số đó vô lý (vòng rà "khuyến
+   * nghị này sai").
+   */
+  valued: { programId: PointsProgramId; points: number; centsPerPoint: number; valueCents: number; reach: number }[];
   /** Chương trình các thẻ ĐANG GIỮ kiếm ra. */
   earnedPrograms: Set<PointsProgramId>;
   heldProducts: Product[];
@@ -519,6 +527,7 @@ export interface PortfolioSnapshot {
   cardsUndeclared: boolean;
   concentration: EcosystemExposure[];
   flexibilityScore: number;
+  valued: PortfolioAnalysis["valued"];
   earnedPrograms: PointsProgramId[];
   heldProductIds: ProductId[];
 }

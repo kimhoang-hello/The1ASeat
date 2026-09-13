@@ -178,7 +178,9 @@ async function main() {
     }
     case "run": {
       const ref = rest[0] ?? die("thiếu <hồ sơ>");
-      const executed = freshRun(stateFrom(ref));
+      // `run <run-id>` in lại báo cáo của một lượt ĐÃ LƯU — lượt bị khiếu nại
+      // là lượt cũ, không phải một lượt chạy mới trên hồ sơ đó.
+      const executed = await loadSubject(ref);
       if (flag("goal") !== undefined) {
         const goalError = goalIndexError(executed.record, Number(flag("goal")));
         if (goalError !== null) die(goalError);
@@ -190,10 +192,11 @@ async function main() {
           renderRunReport(executed.record, {
             goalIndex: flag("goal") === undefined ? undefined : Number(flag("goal")),
             rankingLimit: flag("top") === undefined ? undefined : Number(flag("top")),
+            dataset: executed.dataset,
           }),
         );
       }
-      if (flag("save") === "true") await save(executed.record, executed.dataset);
+      if (flag("save") === "true" && !ref.startsWith("run_")) await save(executed.record, executed.dataset);
       return;
     }
     case "why": {
@@ -257,6 +260,17 @@ async function main() {
         console.log("✓ chạy lại ra ĐÚNG bản đã lưu — đầu ra và derived state khớp tới từng chữ số");
         return;
       }
+      const stages = diffRecords(record, result.replayed);
+      const computed = stages.filter((row) => row.changed && row.stage !== "source_data" && row.stage !== "user_input");
+      if (!result.regression && computed.length === 0) {
+        // Version đổi nhưng không tầng tính nào khác sau khi căn lược đồ: khuyến
+        // nghị, điểm, lời giải thích tái lập NGUYÊN VẸN dưới engine mới.
+        console.log("✓ version đổi nhưng KHÔNG tầng tính nào khác — khuyến nghị tái lập nguyên vẹn (chỉ lược đồ bản ghi đổi)");
+        if (!result.resultVerified) {
+          console.log("  ⚠︎ bản ghi trước 4.19.0 không có dấu vân tay kết quả — không chứng minh được kho còn nguyên");
+        }
+        return;
+      }
       console.log(
         result.regression
           ? "✗ HỒI QUY: version không đổi mà kết quả đổi — engine không còn tất định (§35)"
@@ -267,7 +281,7 @@ async function main() {
       if (!result.resultVerified) {
         console.log("  ⚠︎ bản ghi trước 4.19.0 không có dấu vân tay kết quả — một phần khác biệt có thể do kho, không do engine");
       }
-      console.log(renderStageDiffs(diffRecords(record, result.replayed)));
+      console.log(renderStageDiffs(stages));
       if (result.regression) process.exit(1);
       return;
     }

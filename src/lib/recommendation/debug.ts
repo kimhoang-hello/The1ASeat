@@ -25,6 +25,8 @@ import { candidateKey, type PipelineStage } from "./run-diff.ts";
 import type { RecommendationRunRecord } from "./runs.ts";
 import type { RuleUnknownCause } from "./eligibility.ts";
 import { gateRuleIds } from "./legacy.ts";
+import { validateDataset, type ValidationIssue } from "./validate.ts";
+import { SPEC_WEIGHTS, WEIGHT_SOURCE } from "./spec-weights.ts";
 import type { AwardStrategy, DataGap, PointsProgramId, RecommendationDataset, Temporal } from "./types.ts";
 import type {
   AdjustmentLayer,
@@ -184,6 +186,184 @@ export function eligibilityUnknownCauses(
     out.push({ source: CAUSE_SOURCE[rule.unknownCause], detail: `${rule.ruleType}: ${CAUSE_TEXT[rule.unknownCause]}` });
   }
   return out;
+}
+
+/* ------------------------------------------------------------------ *
+ * Dữ liệu của lượt chạy có qua được validator không
+ * ------------------------------------------------------------------ */
+
+/**
+ * Lỗi/cảnh báo của validator trên ĐÚNG bộ dữ liệu lượt chạy đã đọc — lọc về
+ * một sản phẩm nếu có `productId`.
+ *
+ * Validator đã có luật "thành phần offer không vượt headline", nhưng nó chỉ
+ * chạy ở `audit:reco-data`: admin đọc một khuyến nghị sai vì bonus gõ thừa một
+ * số 0 thấy "headline 15,000 · giá trị $2,700" và phải tự nhẩm tỷ giá mới nhận
+ * ra (vòng rà "khuyến nghị này sai"). Nay nó hiện ngay chỗ admin đang nhìn.
+ */
+export function dataIssues(
+  dataset: RecommendationDataset,
+  asOf: string,
+  productId: string | null = null,
+): ValidationIssue[] {
+  const issues = validateDataset(dataset, asOf);
+  if (productId === null) return issues;
+  // So ĐƯỜNG BIÊN: `prd_amex-aeroplan` là tiền tố của `prd_amex-aeroplan-reserve`.
+  const pattern = new RegExp(`${productId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![a-z0-9-])`);
+  return issues.filter((issue) => pattern.test(issue.message));
+}
+
+/* ------------------------------------------------------------------ *
+ * Một dòng của bảng điểm đọc từ ĐÂU
+ * ------------------------------------------------------------------ */
+
+/** Nguồn một dòng đọc — cũng là người phải sửa nếu dòng đó sai. */
+export type LineSource = "user_input" | "source_data" | "engine" | "editorial";
+
+export interface SourcedLine extends ComparisonLine {
+  sources: { source: LineSource; detail: string }[];
+  /** Trọng số lệch bảng §10 — chỉ với dòng chấm điểm của bảng spec. */
+  weightMismatch: { actual: number; expected: number; table: string } | null;
+}
+
+/**
+ * Thành phần chấm điểm đọc dữ kiện nào. Viết tay — nhưng viết MỘT lần ở đây,
+ * để admin không phải mở từng file `scoring/*.ts` mới biết `spend_fit` sai
+ * thì sửa câu trả lời của người dùng hay sửa mốc chi của offer (vòng rà
+ * "khuyến nghị này sai").
+ */
+const COMPONENT_SOURCES: Record<string, { source: LineSource; detail: string }[]> = {
+  offer_quality: [{ source: "source_data", detail: "offer, thành phần offer, lịch sử offer" }],
+  spend_fit: [
+    { source: "user_input", detail: "sức dồn chi 3 tháng" },
+    { source: "source_data", detail: "mốc chi của offer" },
+  ],
+  long_term_earn_fit: [
+    { source: "user_input", detail: "hồ sơ chi tiêu" },
+    { source: "source_data", detail: "tỷ lệ tích điểm, trần, định giá" },
+  ],
+  currency_fit: [
+    { source: "engine", detail: "nhu cầu đồng tiền §9" },
+    { source: "user_input", detail: "mục tiêu, số dư" },
+  ],
+  benefits_fit: [
+    { source: "source_data", detail: "quyền lợi của thẻ" },
+    { source: "user_input", detail: "thẻ đang giữ (quyền lợi trùng)" },
+  ],
+  travel_benefits: [
+    { source: "source_data", detail: "quyền lợi của thẻ" },
+    { source: "user_input", detail: "thẻ đang giữ (quyền lợi trùng)" },
+  ],
+  diversification: [
+    { source: "engine", detail: "phân tích danh mục §7 + nhu cầu §9" },
+    { source: "user_input", detail: "số dư" },
+  ],
+  new_currency_exposure: [
+    { source: "engine", detail: "phân tích danh mục §7" },
+    { source: "user_input", detail: "số dư" },
+  ],
+  transfer_flexibility: [{ source: "source_data", detail: "chặng chuyển điểm" }],
+  flexibility_value: [{ source: "source_data", detail: "chặng chuyển điểm (tầm với)" }],
+  trip_currency_utility: [{ source: "source_data", detail: "award strategy của chặng, chặng chuyển" }],
+  points_gap_reduction: [
+    { source: "source_data", detail: "award strategy, offer" },
+    { source: "user_input", detail: "chuyến đi, số dư" },
+  ],
+  fee_drag: [
+    { source: "source_data", detail: "phí thường niên" },
+    { source: "user_input", detail: "hồ sơ chi tiêu" },
+  ],
+  points_already_sufficient: [
+    { source: "user_input", detail: "số dư" },
+    { source: "source_data", detail: "award strategy" },
+  ],
+  portfolio_already_covers: [
+    { source: "user_input", detail: "thẻ đang giữ, chi tiêu" },
+    { source: "source_data", detail: "tỷ lệ tích điểm / chặng" },
+  ],
+  no_reachable_candidate: [{ source: "engine", detail: "điều kiện + mốc chi của cả tập ứng viên" }],
+  offer_climate_weak: [{ source: "source_data", detail: "lịch sử offer của cả tập" }],
+};
+
+/** Luật §16 đọc đầu vào nào. `S_`/`E_` là luật áp phán quyết §14 đã có. */
+const RULE_SOURCES: Record<string, { source: LineSource; detail: string }[]> = {
+  R1_points_already_sufficient: [{ source: "user_input", detail: "số dư" }],
+  R2_keep_points_flexible: [{ source: "source_data", detail: "chặng chuyển điểm" }],
+  R3_portfolio_concentration: [{ source: "user_input", detail: "số dư (tỷ trọng một hệ sinh thái)" }],
+  R4_minimum_spend_pressure: [
+    { source: "user_input", detail: "sức dồn chi 3 tháng" },
+    { source: "source_data", detail: "mốc chi của offer" },
+  ],
+  R6_duplicate_benefits: [
+    { source: "user_input", detail: "thẻ đang giữ" },
+    { source: "source_data", detail: "quyền lợi của thẻ" },
+  ],
+};
+
+const SUITABILITY_SOURCES: Record<string, { source: LineSource; detail: string }[]> = {
+  ANNUAL_FEE_ABOVE_STATED_TOLERANCE: [
+    { source: "user_input", detail: "ngưỡng phí người dùng khai" },
+    { source: "source_data", detail: "phí thường niên" },
+  ],
+  ANNUAL_FEE_HIGH_TOLERANCE_UNKNOWN: [
+    { source: "user_input", detail: "CHƯA khai ngưỡng phí" },
+    { source: "source_data", detail: "phí thường niên (so trung vị)" },
+  ],
+  UPGRADE_WITHIN_HELD_FAMILY: [{ source: "user_input", detail: "thẻ đang giữ cùng họ" }],
+};
+
+/**
+ * Gắn nguồn cho từng dòng của một phép so. `facts` là dữ kiện của ứng viên A
+ * (người đang được hỏi "vì sao"); dòng điều kiện/phù hợp đọc nguyên nhân từ
+ * CHÍNH phán quyết của nó, không đoán.
+ */
+export function sourceLines(
+  comparison: CandidateComparison,
+  facts: CandidateFactsSnapshot | null,
+  goalType: string | null,
+  candidate: Candidate | null,
+): SourcedLine[] {
+  const table = goalType !== null && goalType in SPEC_WEIGHTS ? (SPEC_WEIGHTS as Record<string, Record<string, number>>)[goalType] : null;
+  return comparison.lines.map((line) => {
+    let sources: SourcedLine["sources"] = [];
+    if (line.layer === "scoring") {
+      sources = COMPONENT_SOURCES[line.key] ?? [{ source: "engine", detail: "thành phần chấm điểm" }];
+    } else if (line.layer === "eligibility") {
+      sources = facts === null ? [] : eligibilityUnknownCauses(facts.eligibility).map(({ source, detail }) => ({ source, detail }));
+      // Nhóm HOẶC ra `unknown` khi một vế chưa biết VÀ vế kia trượt — vế trượt
+      // là nửa còn lại của câu trả lời: "thu nhập cá nhân khai $6,000 trượt
+      // ngưỡng $60,000" là nơi một lỗi gõ lộ ra.
+      if (facts !== null) {
+        const unknownGroups = new Set(
+          facts.eligibility.rules
+            .filter((rule) => rule.outcome === "unknown" && rule.ruleGroup !== null && rule.scope === "application")
+            .map((rule) => rule.ruleGroup),
+        );
+        for (const rule of facts.eligibility.rules) {
+          if (rule.outcome === "fail" && rule.ruleGroup !== null && unknownGroups.has(rule.ruleGroup)) {
+            sources.push({ source: "user_input", detail: `${rule.ruleType} ${rule.operator} ${JSON.stringify(rule.value)}: TRƯỢT với câu trả lời đã khai (vế còn lại của nhóm HOẶC)` });
+          }
+        }
+      }
+      if (sources.length === 0) sources = [{ source: "engine", detail: "luật áp phán quyết điều kiện" }];
+    } else if (line.layer === "suitability") {
+      sources = (facts?.suitability.reasonCodes ?? []).flatMap((code) => SUITABILITY_SOURCES[code] ?? []);
+      if (sources.length === 0) sources = [{ source: "engine", detail: "hệ số phạt phù hợp" }];
+    } else if (line.layer === "rules") {
+      sources = [{ source: "engine", detail: `luật §16 ${line.key}` }, ...(RULE_SOURCES[line.key] ?? [])];
+    } else if (line.layer === "editorial") {
+      sources = [{ source: "editorial", detail: `luật biên tập ${line.key}` }];
+    } else {
+      sources = [{ source: "engine", detail: "kẹp điểm về [0, 1]" }];
+    }
+    const weight = candidate?.components.find((c) => c.key === line.key)?.weight;
+    const expected = table?.[line.key];
+    const weightMismatch =
+      line.layer === "scoring" && table !== null && weight !== undefined && expected !== undefined && Math.abs(weight - expected) > 1e-12
+        ? { actual: weight, expected, table: WEIGHT_SOURCE[goalType as keyof typeof WEIGHT_SOURCE] }
+        : null;
+    return { ...line, sources, weightMismatch };
+  });
 }
 
 /* ------------------------------------------------------------------ *
@@ -406,8 +586,8 @@ export type ProductOutcome =
 export const OUTCOME_STAGE: Record<ProductOutcome, PipelineStage> = {
   not_in_dataset: "source_data",
   excluded_universe: "normalization",
-  excluded_suitability: "eligibility_suitability",
-  excluded_eligibility: "eligibility_suitability",
+  excluded_suitability: "suitability",
+  excluded_eligibility: "eligibility",
   not_ranked_no_goal: "normalization",
   primary: "ranking",
   alternative: "ranking",
@@ -437,7 +617,20 @@ export interface ProductExplanation {
    * luật điều kiện thì đây là CẢ HAI (luật ở dữ liệu, câu trả lời ở người
    * dùng) — bảng `eligibility.rules` đặt chúng cạnh nhau để admin phân xử.
    */
-  drivenBy: ("user_input" | "source_data" | "engine")[];
+  drivenBy: LineSource[];
+  /** Loại mục tiêu — bảng trọng số §10 nào để đối chiếu. */
+  goalType: string | null;
+  /**
+   * Những dòng GIẢI THÍCH khoảng cách với đối thủ (người thắng, hay hạng nhì
+   * nếu đây là người thắng), mỗi dòng gắn nguồn nó đọc. Là tập nhỏ nhất các
+   * dòng lớn nhất cùng chiều với khoảng cách mà cộng lại đã vượt nó — thứ
+   * `drivenBy` của thẻ đã xếp hạng đọc ra. Bản trước gán mọi thẻ đã xếp hạng
+   * cho "engine", nên một thẻ thua vì người dùng CHƯA khai thu nhập hộ được
+   * báo là "quyết định ở tầng xếp hạng, do engine" (vòng rà "khuyến nghị này sai").
+   */
+  explainingLines: SourcedLine[];
+  /** Mọi dòng của phép so, có nguồn và đối chiếu trọng số §10. */
+  versusSourced: SourcedLine[];
   excluded: ExcludedProduct | null;
   facts: CandidateFactsSnapshot | null;
   ranked: RankedCandidate | null;
@@ -447,6 +640,8 @@ export interface ProductExplanation {
   versusNoAction: CandidateComparison | null;
   /** Chỗ trống của lớp dữ liệu chạm vào đúng sản phẩm này. */
   dataGaps: DataGap[];
+  /** Validator trên bộ dữ liệu của lượt chạy, về sản phẩm này — `null` khi không có bộ dữ liệu. */
+  dataIssues: ValidationIssue[] | null;
   provenance: ProvenanceRow[] | null;
 }
 
@@ -549,6 +744,22 @@ export function explainProduct(
       ? null
       : compareCandidates(candidate, noAction);
 
+  const goalType = goal?.goalType ?? null;
+  const versusSourced = versus === null ? [] : sourceLines(versus, facts, goalType, candidate);
+  const explainingLines: SourcedLine[] = [];
+  if (versus !== null && versus.gap !== 0) {
+    const direction = Math.sign(versus.gap);
+    let covered = 0;
+    for (const line of [...versusSourced].filter((row) => Math.sign(row.delta) === direction).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))) {
+      explainingLines.push(line);
+      covered += Math.abs(line.delta);
+      if (covered >= Math.abs(versus.gap)) break;
+    }
+  }
+  if (ranked !== null && explainingLines.length > 0) {
+    drivenBy = [...new Set(explainingLines.flatMap((line) => line.sources.map((row) => row.source)))];
+  }
+
   return {
     key: ref,
     productId,
@@ -557,12 +768,16 @@ export function explainProduct(
     outcome,
     decidedAt: OUTCOME_STAGE[outcome],
     drivenBy,
+    goalType,
+    explainingLines,
+    versusSourced,
     excluded,
     facts,
     ranked,
     versus,
     versusNoAction,
     dataGaps,
+    dataIssues: options.dataset === undefined || productId === null ? null : dataIssues(options.dataset, record.inputSnapshot.asOf, productId),
     provenance:
       facts === null || options.dataset === undefined
         ? null
