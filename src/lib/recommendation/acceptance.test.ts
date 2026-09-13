@@ -762,3 +762,29 @@ test("'vì sao thẻ X' chỉ kể chỗ trống mà mục tiêu đó ĐÃ tính
   assert.ok(dataset.gaps.some((gap) => gap.kind === "base_earn_rate_unknown" && gap.subjectId === e.productId), "tiền đề: bộ thô có chỗ trống này");
   assert.ok(!e.dataGaps.some((gap) => gap.kind === "base_earn_rate_unknown"));
 });
+
+test("tỷ lệ tích điểm của THẺ ĐANG GIỮ cũng là thứ engine đọc (vòng Codex 11)", () => {
+  // `NO_NEW_CARD` so tích điểm của VÍ với thẻ mới. Chuyến đi thiếu số người
+  // (chưa định giá được) thì mục tiêu đọc tỷ lệ tích điểm — kể cả của thẻ
+  // TD® Aeroplan® người này đang giữ.
+  const state = structuredClone(vietnamTripFunded);
+  state.goals = state.goals.map((goal) => (goal.type === "trip" ? { ...goal, passengers: null } : goal));
+  const held = productIdFor("td-aeroplan-visa-infinite");
+  const rate = DATA.earningRates.find((row) => row.productId === held)!;
+  const data: RecommendationDataset = {
+    ...DATA,
+    earningRates: DATA.earningRates.map((row) => (row.id === rate.id ? { ...row, verifiedAt: "2020-01-01" } : row)),
+  };
+  const stale = execute(state, { data }).record.derivedState.goals[0].confidenceInputs;
+  assert.deepEqual(stale.oldestVerifiedRow, { table: "earning_rates", id: rate.id });
+
+  // Và tỷ lệ nền CHƯA BIẾT của thẻ đang giữ là một chỗ trống của lượt chạy.
+  const holder = structuredClone(beginnerNoCards);
+  const unknownRate = DATA.gaps.find((gap) => gap.kind === "base_earn_rate_unknown")!;
+  const product = DATA.products.find((row) => row.id === unknownRate.subjectId)!;
+  holder.cards = [{ ...vietnamTripFunded.cards[0], userId: holder.profile.id, productId: product.id, status: "active" }];
+  holder.declared = { ...holder.declared, cards: true };
+  const record = execute(holder).record;
+  assert.ok(record.derivedState.excluded.some((row) => row.productId === product.id && row.reason === "already_held"));
+  assert.ok(record.outputSnapshot.dataGaps.some((gap) => gap.subjectId === product.id && gap.kind === "base_earn_rate_unknown"));
+});

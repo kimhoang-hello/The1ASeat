@@ -1083,7 +1083,7 @@ hiệu của chính hàm đó chạy hai lần (không bonus / có bonus).
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # 344 test: chi tiêu, bất biến, vòng đời, quy mô, người dùng, engine, Phase 4, Test A–J
+npm run test:reco         # 345 test: chi tiêu, bất biến, vòng đời, quy mô, người dùng, engine, Phase 4, Test A–J
 npm run reco:debug        # debugger §22 dòng lệnh — xem mục Phase 4
 ```
 

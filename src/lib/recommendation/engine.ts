@@ -153,6 +153,10 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * 4.10.0 — vòng Codex 10: độ tươi §29 chỉ quét tỷ lệ tích điểm khi mục tiêu
  * thật sự đọc chúng (`goalReadsEarn`, cùng hàm với chỗ trống dữ liệu).
  *
+ * 4.11.0 — vòng Codex 11: thẻ ĐANG GIỮ vào độ tươi (quyền lợi, và tỷ lệ tích
+ * điểm khi mục tiêu đọc chúng) và vào chỗ trống `base_earn_rate_unknown` —
+ * `NO_NEW_CARD` đọc chúng qua `walletEarnCoverage`.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -165,7 +169,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.10.0";
+export const ENGINE_VERSION = "4.11.0";
 
 export interface RecommendInput {
   state: UserState;
@@ -281,6 +285,12 @@ function travelBenefitCount(
  */
 function oldestVerified(
   products: readonly Product[],
+  /**
+   * Thẻ ĐANG GIỮ: engine đọc quyền lợi của chúng (quyền lợi trùng, §16 Rule
+   * 6) và — khi mục tiêu đọc tỷ lệ tích điểm — tỷ lệ của chúng
+   * (`walletEarnCoverage`). Không đọc offer, phí hay điều kiện của chúng.
+   */
+  held: readonly Product[],
   data: RecommendationDataset,
   ix: DatasetIndex,
   asOf: string,
@@ -306,6 +316,12 @@ function oldestVerified(
     }
     for (const row of activeAt(ix.benefitsByProduct.get(product.id) ?? [], asOf)) consider("product_benefits", row);
     for (const row of activeAt(ix.rulesByProduct.get(product.id) ?? [], asOf)) consider("eligibility_rules", row);
+  }
+  for (const product of held) {
+    if (readsEarn) {
+      for (const row of activeAt(ix.ratesByProduct.get(product.id) ?? [], asOf)) consider("earning_rates", row);
+    }
+    for (const row of activeAt(ix.benefitsByProduct.get(product.id) ?? [], asOf)) consider("product_benefits", row);
   }
   for (const row of activeAt(data.programValuations, asOf)) consider("program_valuations", row);
   // Chỉ chặng engine DÙNG — không đòi hạng thành viên (`isOpenToEveryone`).
@@ -473,6 +489,7 @@ export function recommend(input: RecommendInput): RecommendationRun {
 
     const oldest = oldestVerified(
       normalized.universe,
+      portfolio.heldProducts,
       data,
       ix,
       asOf,

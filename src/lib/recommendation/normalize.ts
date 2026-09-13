@@ -16,7 +16,7 @@
  */
 
 import { activeAt, isAvailableAt } from "./temporal.ts";
-import { asArray, primaryGoal, resolveTripGoal } from "./user.ts";
+import { asArray, heldProductIds, primaryGoal, resolveTripGoal } from "./user.ts";
 import { userGaps } from "./user-gaps.ts";
 import { tripNeedFor } from "./trip-need.ts";
 import { currentProductIds } from "./portfolio.ts";
@@ -126,6 +126,25 @@ export function goalReadsEarn(goal: GoalContext, state: UserState, ix: DatasetIn
   return goal.goal.type !== "trip" || tripCoverage(state, ix, asOf, goal.tripNeed).coverage === null;
 }
 
+/**
+ * `subjectId` của chỗ trống thuộc về một trong các sản phẩm này — chính sản
+ * phẩm, hoặc một offer của nó. So bằng ĐƯỜNG BIÊN, không bằng `includes` trần:
+ * `prd_amex-aeroplan` là chuỗi con của `prd_amex-aeroplan-reserve`, nên phép so
+ * lỏng gán chỗ trống của thẻ này cho thẻ kia.
+ */
+function touchesAny(productIds: Iterable<string>, subjectId: string): boolean {
+  for (const productId of productIds) {
+    if (
+      subjectId === productId ||
+      subjectId.startsWith(`${productId}_`) ||
+      subjectId.includes(`_${productId}_`)
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /** Chỗ trống của lớp dữ liệu mà lượt chạy này thật sự chạm tới. */
 function relevantDataGaps(
   data: RecommendationDataset,
@@ -137,6 +156,7 @@ function relevantDataGaps(
   state: UserState,
 ): DataGap[] {
   const inPlay = new Set(universe.map((product) => product.id as string));
+  const held = heldProductIds(state);
   /**
    * Tỷ lệ tích điểm có đi vào điểm số của mục tiêu nào không.
    *
@@ -216,20 +236,17 @@ function relevantDataGaps(
     .filter((gap) => {
       switch (gap.kind) {
         case "base_earn_rate_unknown":
-          if (!earnMatters) return false;
-        // fallthrough — cùng phép so đường biên sản phẩm bên dưới.
+          // Tỷ lệ tích điểm được đọc cho ỨNG VIÊN và cho THẺ ĐANG GIỮ
+          // (`walletEarnCoverage` của `NO_NEW_CARD` so ví với thẻ mới) — và
+          // chỉ khi mục tiêu đọc tỷ lệ tích điểm (`goalReadsEarn`). Bỏ sót thẻ
+          // đang giữ thì tỷ lệ nền chưa biết của chính thẻ làm `NO_NEW_CARD`
+          // mất 0.38 điểm "ví đã lo" không trừ đồng độ tin cậy nào (vòng
+          // Codex 11).
+          return earnMatters && touchesAny([...inPlay, ...held], gap.subjectId);
         case "offer_terms_unknown":
         case "eligibility_unknown":
-          // `subjectId` của ba loại này là một sản phẩm hoặc một offer của nó.
-          // So bằng ĐƯỜNG BIÊN, không bằng `includes` trần: `prd_amex-aeroplan`
-          // là chuỗi con của `prd_amex-aeroplan-reserve`, nên phép so lỏng gán
-          // chỗ trống của thẻ này cho thẻ kia.
-          return [...inPlay].some(
-            (productId) =>
-              gap.subjectId === productId ||
-              gap.subjectId.startsWith(`${productId}_`) ||
-              gap.subjectId.includes(`_${productId}_`),
-          );
+          // Offer và điều kiện chỉ được đọc cho thẻ ỨNG VIÊN.
+          return touchesAny(inPlay, gap.subjectId);
         case "award_route_uncovered":
           // CHỈ chặng người dùng hỏi. Báo ra mọi vùng chưa có dữ liệu cho một
           // chuyến Canada–Việt Nam đã có giá là nói với họ rằng khuyến nghị
