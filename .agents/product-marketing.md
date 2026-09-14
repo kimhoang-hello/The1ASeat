@@ -166,8 +166,9 @@ thời gian học một hệ thống phức tạp rồi không dùng được.
 
 **Words to use:** Miles & Points, welcome offer, welcome bonus, elevated offer,
 transfer bonus, transfer partner, award, redemption, surcharge, annual fee,
-apply, register, credit score, hạng thương gia, hạng nhất, điểm thưởng, đổi điểm,
-tích điểm. (Giữ nguyên tiếng Anh các thuật ngữ trên trong câu tiếng Việt.)
+apply, credit score, hạng thương gia, hạng nhất, điểm thưởng, đổi điểm,
+tích điểm. (Giữ nguyên tiếng Anh các thuật ngữ trên trong câu tiếng Việt;
+riêng "register" thì viết "đăng ký", chốt 30/08/2026.)
 
 **Words to avoid:** "Dặm bay" thay cho miles trong ngữ cảnh chương trình; dịch
 cứng "phần thưởng chuyến bay"; giọng hype kiểu "bí mật không ai nói cho bạn";

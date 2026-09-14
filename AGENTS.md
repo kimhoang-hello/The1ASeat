@@ -11,7 +11,8 @@ mỗi lần, không nhớ gì giữa các phiên). Ghi lại để không phải
 ## Không nhận xét về
 
 - **Câu chữ tiếng Việt, giọng văn, thuật ngữ.** Có luật riêng: xưng "bạn"; giữ
-  nguyên tiếng Anh các từ "transfer bonus", "welcome offer", "register"; dấu
+  nguyên tiếng Anh các từ "transfer bonus", "welcome offer"; riêng "register"
+  thì dịch thành "đăng ký" (chốt 30/08/2026, xem `src/lib/rewrite-offer.ts`); dấu
   phẩy ngăn nghìn (110,000 chứ không phải 110.000); `$` trần nghĩa là CAD.
 - **Tính đúng sai của số liệu thẻ** — chỉ đối chiếu được với trang ngân hàng,
   không phải việc của review code.
