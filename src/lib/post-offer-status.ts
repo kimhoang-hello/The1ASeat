@@ -37,6 +37,9 @@ export const POST_OFFER_DEADLINES: Record<string, PostOffer> = {
   // phải ngày bay (bay được tới 31/12/2027). Sau ngày đó bài hết giá trị dù
   // chuyến bay đã đặt vẫn còn phía trước.
   "aeroplan-giam-15-points-air-canada-flight-rewards": { endsOn: "2027-01-11", cta: "creditCards" },
+  // RBC ghi "October 16, 2026 (11:59 pm (PST))" — cùng ngày với `expiresAt`
+  // của entry transferBonus `rbc-avion-to-cathay-asiamiles`.
+  "asia-miles-transfer-bonus-15-rbc-avion": { endsOn: "2026-10-16", cta: "transferBonuses" },
 };
 
 /**
