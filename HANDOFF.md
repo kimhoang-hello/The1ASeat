@@ -18,7 +18,7 @@ Tài liệu module: [`src/lib/recommendation/README.md`](src/lib/recommendation/
 | 2 | Hồ sơ người dùng, thẻ, số dư, goals | ✅ |
 | 3 | Engine (Portfolio Analyzer → Ranking) | ✅ |
 | 4 | `recommendation_runs` + Debugger + Test A–J | ✅ |
-| 5 | **Frontend UX** | ⬅️ **BẮT ĐẦU Ở ĐÂY** — chặn bởi quyết định database (§3). Phán quyết cuối Phase 4: **READY FOR PHASE 5 WITH KNOWN RISKS** (§7) |
+| 5 | **Frontend UX** | ⬅️ **ĐANG LÀM** trên nhánh `wt/reco-phase5`. Database đã chốt (§3); kho MySQL + CI xong (§4 việc 1–3). Phán quyết cuối Phase 4: **READY FOR PHASE 5 WITH KNOWN RISKS** (§7) |
 | 6 | LLM giải thích | ⛔ |
 
 Phase 4: **đã merge vào `main` ngày 13/09/2026** (nhánh `wt/reco-phase4`,
@@ -125,44 +125,51 @@ POST trực tiếp. Bản build production trả 404 (đã kiểm).
 
 ---
 
-## 3. Quyết định DATABASE — nay CHẶN Phase 5
+## 3. Database — ĐÃ CHỐT: MySQL của Hostinger (15/09/2026)
 
-Phase 4 cố ý không chọn: nó chỉ ghi lượt chạy của admin, và kho file đủ cho
-việc đó. Phase 5 có người dùng thật — hồ sơ, thẻ, số dư, và bản ghi §20 của
-họ — nên không đi tiếp được mà không có chỗ lưu.
+Bảng so lúc chọn (số đo thật: một lượt chạy 180–220 KB JSON; ước 100–300 người
+dùng công cụ/tháng × ~5 lượt chạy):
 
-Hai interface đã sẵn và đã chạy với HAI backend mỗi cái:
-
-- `UserDataSource` (`user-source.ts`) — hiện chỉ có ĐỌC; Phase 5 thêm ghi.
-- `RunStore` (`run-store.ts`) — chỉ thêm; bộ nhớ + file. Bản database là
-  thêm một file: `saveDataset` (khoá = dấu vân tay, nổ khi va chạm),
-  `saveRun` (từ chối id trùng), `getRun`, `listRuns`.
-
-| Lựa chọn | Được | Mất |
+| Lựa chọn | Chi phí | Ghi chú |
 | --- | --- | --- |
-| Postgres có quản lý (Supabase/Neon) | spec viết sẵn bằng Postgres (`jsonb`); JSONB nén tự động (một lượt chạy ~170 KB, dữ liệu ~300 KB mỗi dấu vân tay) | thêm một nhà cung cấp, một bộ secret |
-| MySQL của Hostinger | cùng nhà cung cấp site đang dùng | kiểu `JSON` kém `jsonb`; phải kiểm gói hosting có kèm không |
-| SQLite trên đĩa Hostinger | không thêm gì | đĩa không hứa sống qua một lần deploy — loại |
+| Neon Postgres (mình đề xuất) | Free → Launch ~$1–3/tháng | jsonb nén 5.1× (đo bằng PGlite); không có vùng Canada |
+| Supabase Postgres | Pro $25/tháng | Free tự pause sau 1 tuần + không backup |
+| **MySQL Hostinger — user chọn** | **$0** | cùng nhà cung cấp, chung máy với site (`localhost`) |
 
-Mình nghiêng về Postgres có quản lý, nhưng đây là quyết định chi phí/hạ tầng
-của user.
+**Đừng đề xuất đổi lại** — user đã so và chốt.
 
----
+Đã làm (nhánh `wt/reco-phase5`): `mysql.ts` (pool, schema, migration tự chạy),
+`run-store-mysql.ts`, `user-store-mysql.ts`, cửa ghi `UserStateStore` trong
+`user-source.ts`, `stores.test.ts` chạy MỌI bài hợp đồng trên MỌI backend. Chi
+tiết + năm quyết định thiết kế: README module, mục "Phase 5".
+
+**Còn chờ user** (mình không vào được hPanel):
+
+1. hPanel → Databases → tạo database + user MySQL.
+2. Gắn vào app Node.js (nút "Connect database", hoặc tự đặt `DATABASE_URL` /
+   `DB_*` trong Environment variables — xem `.env.example`) rồi Redeploy.
+3. Cho mình credentials (hoặc bật Remote MySQL cho IP nhà) để chạy
+   `SELECT VERSION()` — rồi đổi image `mariadb:11.4` trong `ci.yml` cho khớp.
+
+Chưa có database thì site vẫn chạy: `recoDatabaseFromEnv()` trả `null`, tầng
+trang quyết định chạy-không-lưu hay báo lỗi.
 
 ## 4. Phase 5 phải xây gì (§35)
 
 ### Việc đầu tiên, theo thứ tự
 
-1. **Chốt database** (§3) — không có nó thì không lưu được hồ sơ và lượt chạy
-   của người dùng thật, và mọi thứ dưới đây dựa vào việc lưu.
-2. **Chặn deploy hỏng.** Repo KHÔNG có CI chạy test; Hostinger tự deploy mỗi
+1. ✅ **Chốt database** (§3) — MySQL của Hostinger.
+2. 🟡 **Chặn deploy hỏng.** `.github/workflows/ci.yml` nay chạy `tsc`, `lint`,
+   `test:reco` (kèm MariaDB) và `test:jobs` trên mỗi push — BÁO, chưa CHẶN.
+   Còn thiếu vế chặn thật (hook `pre-push` hoặc deploy qua nhánh) — cần user
+   quyết vì nó đổi cách mọi phiên push lên `main`. Bối cảnh: repo từng KHÔNG có CI chạy test; Hostinger tự deploy mỗi
    lần push lên `main` (xem `DEPLOY.md`, `.github/workflows/deploy.yml` chỉ là
    workflow tay không dùng). Nên một bản build làm sai engine mà quên tăng
    `ENGINE_VERSION` sẽ lên production và ghi lượt chạy dưới nhãn version cũ —
    lỗ duy nhất `replay` không tự bịt được (diễn tập, §1). Tối thiểu: workflow
    chạy `tsc`, `lint`, `test:reco` trên mỗi push (báo, không chặn được
    Hostinger); chặn thật cần hook `pre-push` hoặc đổi sang deploy qua nhánh.
-3. **Viết backend database cho hai interface đã sẵn** — `RunStore`
+3. ✅ **Viết backend database cho hai interface đã sẵn** — `RunStore`
    (`run-store.ts`: `saveDataset` theo dấu vân tay, `saveRun` từ chối id
    trùng, `getRun`, `listRuns`) và phần GHI của `UserDataSource`. Chạy CÙNG
    bộ test của bản bộ nhớ / bản file (`runs.test.ts`) trên backend mới.
@@ -320,7 +327,8 @@ stage theo đường dẫn cụ thể.
 
 | Chỗ | Ảnh hưởng |
 | --- | --- |
-| Chưa có database | **Chặn Phase 5** — xem §3 |
+| Database production chưa tạo | Kho MySQL đã viết + test trên MariaDB 11.4; phiên bản Hostinger chưa kiểm — xem §3 "Còn chờ user" |
+| Xoá dữ liệu theo yêu cầu người dùng | Kho lượt chạy CHỈ THÊM và chép nguyên trạng thái người dùng; chưa có đường xoá một người. Hồ sơ không có tên/email nên rủi ro thấp, nhưng Phase 5 phải quyết trước khi mở đăng nhập |
 | Award chart phủ 3/4 cặp vùng | `CANADA_US → EUROPE` còn trống; `flexiblePointsSufficient` bay châu Âu nên Test H phải dựng lại trên chặng Nhật |
 | Percentile lịch sử gần như luôn `null` | Nhật ký từ 29/08/2026; §12 hiện là tín hiệu chết — Test I dùng lịch sử tổng hợp |
 | §30 đo bằng câu trả lời ĐIỂN HÌNH | Nói được "câu này CÓ THỂ đổi kết quả", không chứng minh "KHÔNG thể". `cards/balances_undeclared` không đo được, giữ chỗ theo bảng tĩnh |

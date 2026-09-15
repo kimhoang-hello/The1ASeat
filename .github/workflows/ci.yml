@@ -1,0 +1,65 @@
+name: CI
+
+# Kiểm kiểu, lint và test engine khuyến nghị trên MỌI lần push.
+#
+# Vì sao cần: Hostinger tự deploy mỗi lần push lên `main` (DEPLOY.md) và
+# KHÔNG chạy test nào. Một bản build làm sai engine mà quên tăng
+# `ENGINE_VERSION` sẽ lên production rồi ghi lượt chạy của người dùng thật
+# dưới nhãn version cũ — lỗ duy nhất `replay` không tự bịt được (HANDOFF §1,
+# diễn tập 13/09/2026). Bài bản chụp §20 trong `test:reco` là thứ đỏ lên khi
+# kết quả đổi mà version đứng yên.
+#
+# Workflow này BÁO chứ KHÔNG CHẶN được deploy: Hostinger kéo `main` độc lập
+# với GitHub Actions. Chặn thật cần hook `pre-push` hoặc deploy qua một nhánh
+# riêng — xem HANDOFF.
+#
+# MariaDB chạy như service để `stores.test.ts` kiểm backend MySQL của kho —
+# đúng backend production dùng. Thiếu biến `RECO_TEST_MYSQL_URL` trong CI là
+# test tự nổ, để các bài MySQL không bao giờ lặng lẽ bị bỏ qua ở đây.
+#
+# Không đọc secret nào — repo PUBLIC, và workflow chạy cả trên nhánh lạ.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      mariadb:
+        # Đổi cho khớp `SELECT VERSION()` trên database Hostinger khi đã có
+        # credentials — phiên bản production chưa kiểm được lúc viết.
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: test
+          MARIADB_DATABASE: ghe1a_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+    env:
+      RECO_TEST_MYSQL_URL: mysql://root:test@127.0.0.1:3306/ghe1a_test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx tsc --noEmit
+
+      - run: npm run lint
+
+      - run: npm run test:reco
+
+      - run: npm run test:jobs

@@ -40,7 +40,13 @@ export {
 } from "./user.ts";
 export { userGaps } from "./user-gaps.ts";
 export { validateUserState } from "./user-validate.ts";
-export { inMemoryUserStore, type UserDataSource } from "./user-source.ts";
+export {
+  inMemoryUserStore,
+  UserStateConflictError,
+  type StoredUserState,
+  type UserDataSource,
+  type UserStateStore,
+} from "./user-source.ts";
 
 /* Phase 3 — engine.
  *
@@ -119,9 +125,10 @@ export {
 
 /* Phase 4 — `recommendation_runs` (§20) và debugger (§22).
  *
- * `run-store-fs.ts` CỐ Ý vắng mặt: nó import `node:fs`, và mọi thứ ở file này
- * có thể bị một client component kéo vào bundle trình duyệt. Chỗ nào cần kho
- * file thì import thẳng nó, ở phía server. */
+ * `run-store-fs.ts` và ba file MySQL (`mysql.ts`, `run-store-mysql.ts`,
+ * `user-store-mysql.ts`) CỐ Ý vắng mặt: chúng import `node:fs` / `mysql2`, và
+ * mọi thứ ở file này có thể bị một client component kéo vào bundle trình
+ * duyệt. Chỗ nào cần kho thật thì import thẳng nó, ở phía server. */
 export { canonicalJson, fingerprint } from "./fingerprint.ts";
 export {
   executeRun,

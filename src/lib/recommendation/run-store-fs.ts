@@ -10,27 +10,27 @@
  * bởi HỆ ĐIỀU HÀNH, không bởi một phép kiểm tồn tại rồi mới ghi (hai tiến
  * trình cùng kiểm thì cùng thấy "chưa có").
  *
+ * HỆ THỐNG FILE CÓ THỂ KHÔNG PHÂN BIỆT HOA THƯỜNG (APFS mặc định của macOS):
+ * `Run_A.json` và `run_a.json` là MỘT file. Nên mọi lần đọc đối chiếu `id`
+ * trong bản ghi với id được hỏi, và một lần lưu đụng file của id khác thì nổ
+ * đích danh — kho này không được trả về lượt chạy của người khác. Hai kho kia
+ * lưu được cả hai id; kho này từ chối id thứ hai (xem `stores.test.ts`).
+ *
  * KHÔNG phải kho production. Site deploy lên Hostinger, và đĩa ở đó không hứa
- * sống sót qua một lần deploy. Đây là kho của admin trên máy mình; kho thật
- * cho người dùng thật là quyết định database — xem HANDOFF.
+ * sống sót qua một lần deploy. Đây là kho của admin trên máy mình; kho của
+ * người dùng thật là `run-store-mysql.ts`.
  */
 
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { checkedDataset, newestFirst, summarize, type RunStore } from "./run-store.ts";
+import { checkedDataset, checkedRunKeys, newestFirst, summarize, type RunStore } from "./run-store.ts";
+import { checkStoreKey } from "./store-keys.ts";
 import type { RecommendationDataset } from "./types.ts";
 import type { RecommendationRunRecord } from "./runs.ts";
 
-/**
- * Id đi vào tên file NGUYÊN VẸN — chỉ nhận ký tự an toàn, không cho `..` trèo
- * ra ngoài, và KHÔNG thay ký tự nào: thay `:` bằng `_` là để hai id khác nhau
- * rơi vào cùng một file, và `getRun` trả về lượt chạy của người khác.
- */
+/** Id đi vào tên file NGUYÊN VẸN — luật chung của mọi kho, xem `store-keys.ts`. */
 function safeName(value: string): string {
-  if (!/^[A-Za-z0-9_.-]{1,128}$/.test(value) || value.includes("..")) {
-    throw new Error(`id không hợp lệ cho kho file: ${JSON.stringify(value)}`);
-  }
-  return value;
+  return checkStoreKey(value, "id");
 }
 
 async function readJson<T>(file: string): Promise<T | null> {
@@ -65,21 +65,29 @@ export function fileRunStore(dir: string): RunStore {
       return readJson<RecommendationDataset>(path.join(datasetsDir, `${safeName(fingerprint)}.json`));
     },
     async saveRun(record) {
+      checkedRunKeys(record);
       await mkdir(runsDir, { recursive: true });
       const file = path.join(runsDir, `${safeName(record.id)}.json`);
       try {
         await writeFile(file, `${JSON.stringify(record)}\n`, { encoding: "utf8", flag: "wx" });
       } catch (error) {
-        if ((error as NodeJS.ErrnoException).code === "EEXIST") {
-          throw new Error(`saveRun: lượt chạy ${record.id} đã có — kho chỉ thêm, không ghi đè`);
+        if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+        const existing = await readJson<RecommendationRunRecord>(file);
+        if (existing !== null && existing.id !== record.id) {
+          throw new Error(
+            `saveRun: ${record.id} rơi vào CÙNG file với lượt chạy ${existing.id} — hệ thống file không phân biệt hoa thường`,
+          );
         }
-        throw error;
+        throw new Error(`saveRun: lượt chạy ${record.id} đã có — kho chỉ thêm, không ghi đè`);
       }
     },
     async getRun(id) {
-      return readJson<RecommendationRunRecord>(path.join(runsDir, `${safeName(id)}.json`));
+      const record = await readJson<RecommendationRunRecord>(path.join(runsDir, `${safeName(id)}.json`));
+      // File của một id khác hoa thường — với id được hỏi, lượt chạy này không tồn tại.
+      return record !== null && record.id !== id ? null : record;
     },
     async listRuns(filter = {}) {
+      if (filter.userId !== undefined) checkStoreKey(filter.userId, "userId");
       let names: string[];
       try {
         names = (await readdir(runsDir)).filter((name) => name.endsWith(".json"));

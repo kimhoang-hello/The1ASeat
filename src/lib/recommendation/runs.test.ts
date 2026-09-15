@@ -9,9 +9,6 @@
 
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import path from "node:path";
 
 import { offlineDataset } from "./data/index.ts";
 import { datasetAt } from "./temporal.ts";
@@ -19,8 +16,6 @@ import { indexDataset } from "./indexes.ts";
 import { ENGINE_VERSION, recommend } from "./engine.ts";
 import { canonicalJson, fingerprint } from "./fingerprint.ts";
 import { executeRun, inputOf, replayRun, type RecommendationRunRecord } from "./runs.ts";
-import { inMemoryRunStore } from "./run-store.ts";
-import { fileRunStore } from "./run-store-fs.ts";
 import {
   candidateKey,
   deepDiff,
@@ -105,32 +100,8 @@ test("§20 — derived state đi qua JSON NGUYÊN VẸN: không Map, không Set,
   }
 });
 
-test("§20 — mọi nhân vật chạy lại từ KHO FILE ra đúng từng chữ số", async () => {
-  // Kho file đi qua JSON THẬT trên đĩa — đúng chỗ Map, undefined, -0 biến
-  // dạng. Kho bộ nhớ không bắt được những thứ đó.
-  const dir = await mkdtemp(path.join(tmpdir(), "reco-runs-"));
-  try {
-    const store = fileRunStore(dir);
-    for (const state of ALL_STATES) {
-      const { record, dataset } = execute(state, {
-        offerHistory: new Map([[productIdFor("amex-cobalt") as string, SAMPLE_HISTORY]]),
-      });
-      await store.saveDataset(record.inputSnapshot.datasetFingerprint, dataset);
-      await store.saveRun(record);
-      const loaded = await store.getRun(record.id);
-      const snapshot = await store.getDataset(record.inputSnapshot.datasetFingerprint);
-      assert.ok(loaded !== null && snapshot !== null);
-      const replay = replayRun(loaded, snapshot);
-      assert.ok(replay.identical, `chạy lại ${record.id} không khớp`);
-      assert.equal(replay.regression, false);
-    }
-    // Bộ dữ liệu lưu MỘT lần dù mười bảy lượt chạy cùng đọc nó.
-    const { readdir } = await import("node:fs/promises");
-    assert.equal((await readdir(path.join(dir, "datasets"))).length, 1);
-  } finally {
-    await rm(dir, { recursive: true, force: true });
-  }
-});
+// Lưu rồi chạy lại qua KHO THẬT — cùng mọi luật khác của kho — nằm ở
+// `stores.test.ts`, chạy trên cả ba backend.
 
 const SAMPLE_HISTORY: OfferHistoryPoint[] = [
   { at: "2026-01-01", until: "2026-03-01", startCensored: true, endCensored: false, label: "10,000 điểm", amount: 10_000, unit: "points" },
@@ -370,54 +341,6 @@ test("§20 — bản ghi mang ĐỦ các cột của spec", () => {
   assert.equal(record.dataSnapshotAt, ASOF);
   assert.equal(record.inputSnapshot.datasetFingerprint, fingerprint(DATA));
   assert.ok(!("derived" in record.outputSnapshot), "derived phải ở cột riêng");
-});
-
-/* ================================================================== *
- * Kho: chỉ thêm
- * ================================================================== */
-
-test("kho — lượt chạy KHÔNG bị ghi đè, ở cả hai backend", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "reco-runs-"));
-  try {
-    for (const store of [inMemoryRunStore(), fileRunStore(dir)]) {
-      const { record } = execute(vietnamTripFunded);
-      await store.saveRun(record);
-      await assert.rejects(store.saveRun({ ...record, createdAt: "khác" }), /không ghi đè/);
-      const back = await store.getRun(record.id);
-      assert.equal(back?.createdAt, record.createdAt, "bản đã lưu phải còn nguyên");
-    }
-  } finally {
-    await rm(dir, { recursive: true, force: true });
-  }
-});
-
-test("kho — bộ dữ liệu khoá theo NỘI DUNG: khoá sai là lỗi", async () => {
-  for (const store of [inMemoryRunStore()]) {
-    const other = { ...DATA, offers: DATA.offers.slice(1) };
-    await assert.rejects(store.saveDataset(fingerprint(DATA), other), /không phải dấu vân tay/);
-  }
-});
-
-test("kho — bản trong bộ nhớ trả về BẢN SAO", async () => {
-  const store = inMemoryRunStore();
-  const { record } = execute(vietnamTripFunded);
-  await store.saveRun(record);
-  const first = await store.getRun(record.id);
-  first!.outputSnapshot.results[0].primaryAction.score = -1;
-  const second = await store.getRun(record.id);
-  assert.notEqual(second!.outputSnapshot.results[0].primaryAction.score, -1);
-});
-
-test("kho file — id lạ không trèo ra ngoài thư mục, và không bị đổi tên", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "reco-runs-"));
-  try {
-    const store = fileRunStore(dir);
-    for (const bad of ["../x", "a/b", "a:b", ""]) {
-      await assert.rejects(store.getRun(bad), /không hợp lệ/, JSON.stringify(bad));
-    }
-  } finally {
-    await rm(dir, { recursive: true, force: true });
-  }
 });
 
 /* ================================================================== *

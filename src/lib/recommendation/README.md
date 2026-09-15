@@ -339,16 +339,14 @@ người dùng mã hoá kết quả thì engine ở Phase 3 hết tất định.
 | `user.ts` | Phép đọc mà viết tay ở chỗ gọi thì sai âm thầm (`everHeld`, `unallocatedMonthly`, `resolveTripGoal`, `compareToThreshold`) |
 | `user-gaps.ts` | Suy ra chỗ chưa biết, máy đọc được |
 | `user-validate.ts` | Ở database thì đây là FK + CHECK |
-| `user-source.ts` | `UserDataSource` — cửa duy nhất engine đọc trạng thái người dùng |
+| `user-source.ts` | `UserDataSource` — cửa duy nhất engine đọc trạng thái người dùng; `UserStateStore` — cửa ghi (Phase 5) |
 | `data/user-fixtures.ts` | 13 nhân vật: bộ test §32 + 12 kiểu người dùng khác hẳn nhau |
 
-### Chưa chọn database, và không cần chọn để làm xong Phase 2
+### Chỗ lưu: chọn ở Phase 5, không phải Phase 2
 
-Bàn giao Phase 1 để ngỏ câu hỏi chỗ lưu. Nó là quyết định hạ tầng/chi phí, còn
-việc Phase 2 thật sự phải làm là **mô hình** — mô hình không đổi theo chỗ lưu.
-`UserDataSource` chỉ có ĐỌC: Phase 3 chỉ đọc, còn phần ghi dính chặt vào
-transaction, migration và quyền truy cập của một backend cụ thể, nên dựng sẵn
-bây giờ là đoán hình dạng của thứ chưa tồn tại.
+Phase 2 chỉ dựng **mô hình** — mô hình không đổi theo chỗ lưu — và để
+`UserDataSource` chỉ có ĐỌC. Phase 5 thêm phần ghi (`UserStateStore`) khi đã
+chốt database: MySQL của Hostinger (xem mục Phase 5 bên dưới).
 
 `inMemoryUserStore` trả về **bản sao**. Database nào cũng trả bản sao; trả object
 gốc thì engine lỡ tay sửa sẽ chạy đúng ở đây và hỏng khi đổi backend.
@@ -978,7 +976,7 @@ kiện/phù hợp, chấm điểm, luật, hay xếp hạng.
 | `trace.ts` | `derived_state`: danh mục, nhu cầu, thẻ bị loại + lý do, bảng xếp hạng ĐẦY ĐỦ |
 | `runs.ts` | Bản ghi §20 (`executeRun`), chạy lại (`replayRun`) |
 | `fingerprint.ts` | Một phép băm nội dung cho cả bản chụp test lẫn kho |
-| `run-store.ts` / `run-store-fs.ts` | Kho chỉ thêm — bộ nhớ và file (`.reco-runs/`) |
+| `run-store.ts` / `run-store-fs.ts` | Kho chỉ thêm — bộ nhớ và file (`.reco-runs/`); bản MySQL ở Phase 5 |
 | `run-diff.ts` | So hai lượt chạy theo 14 tầng; `explainChange` đổi từng yếu tố một |
 | `debug.ts` | `explainProduct`, `compareCandidates`, `scoreBreakdown`, `provenanceFor` |
 | `sensitivity.ts` | §30 đo bằng thực nghiệm: câu hỏi nào lấp vào đổi được người thắng |
@@ -1071,7 +1069,7 @@ hiệu của chính hàm đó chạy hai lần (không bonus / có bonus).
 ### Giới hạn, nói thẳng
 
 - Kho file là của admin trên máy mình. Kho production cho người dùng thật là
-  quyết định database — chưa chọn (xem HANDOFF).
+  bản MySQL — xem mục Phase 5.
 - Câu trả lời thử của §30 là giá trị ĐIỂN HÌNH: "câu này CÓ THỂ đổi kết quả",
   không chứng minh "nó KHÔNG thể". `cards_undeclared` / `balances_undeclared`
   không đo được (không có "thẻ đang giữ điển hình") nên giữ chỗ theo bảng tĩnh.
@@ -1080,11 +1078,56 @@ hiệu của chính hàm đó chạy hai lần (không bonus / có bonus).
 - Chạy lại một bản ghi của engine CŨ chỉ dùng được engine HÔM NAY: nó tách
   được tác động của lần đổi version, không dựng lại được engine cũ.
 
+## Phase 5 — kho cho người dùng thật (MySQL của Hostinger)
+
+User chốt MySQL của Hostinger ngày 15/09/2026: $0, cùng nhà cung cấp, chung
+máy với site. Phiên bản thật (Hostinger chạy MariaDB) chưa kiểm được lúc viết,
+nên SQL nằm trong tập con chung MariaDB 10.6+ / MySQL 8, không hàm JSON nào.
+
+| File | Vai trò |
+| --- | --- |
+| `mysql.ts` | Pool dùng chung, cấu hình từ env (`DATABASE_URL` hoặc `DB_*` của Hostinger), schema + migration tự chạy lúc kết nối đầu |
+| `run-store-mysql.ts` | `RunStore` thứ ba — bản ghi §20 nguyên vẹn (gzip) + cột tóm tắt cho `listRuns` |
+| `user-store-mysql.ts` | `UserStateStore` — một dòng mỗi người, ghi có điều kiện theo `version` |
+| `store-keys.ts` | MỘT luật khoá cho mọi kho |
+| `stores.test.ts` | Hợp đồng kho — MỌI bài chạy trên MỌI backend |
+
+Năm quyết định, mỗi cái có một bài đỏ khi gỡ nó ra (đã kiểm ngược):
+
+1. **Cột khoá `ascii_bin` tường minh.** Collation mặc định của MariaDB 11 là
+   `utf8mb4_uca1400_ai_ci`: `Run_A` và `run_a` là cùng một khoá chính.
+2. **`sql_mode` đặt lại mỗi kết nối** (STRICT_ALL_TABLES, UTC). Không strict thì
+   id dài bị cắt im lặng thành id của người khác — và mặc định của server
+   production không kiểm được từ đây.
+3. **Ghi trạng thái có điều kiện bằng chính câu UPDATE** (`WHERE version = ?`),
+   không đọc-rồi-ghi: hai tab cùng trả lời thì tab chậm được báo
+   `UserStateConflictError` thay vì lặng lẽ xoá câu trả lời của tab kia.
+4. **Migration chạy lại được.** DDL của MySQL không nằm trong giao dịch; mỗi câu
+   `IF NOT EXISTS` nên lần gãy giữa chừng đi tiếp được. `GET_LOCK` cho hai tiến
+   trình khởi động cùng lúc.
+5. **Nén ở app.** Một lượt chạy ~200 KB JSON, gzip ~19 KB; MariaDB không nén
+   LONGTEXT hộ (Postgres jsonb nén 5.1× — đo 15/09/2026, lúc so lựa chọn).
+
+Trạng thái người dùng là MỘT khối JSON mỗi người, không phải năm bảng như §4:
+engine đọc, bảng câu hỏi ghi, validator kiểm đúng một khối. Lịch sử không mất —
+mỗi lượt chạy chép nguyên trạng thái nó đọc vào `input_snapshot`. Kho không chạy
+`validateUserState` (nó cần bộ dữ liệu của một ngày); người gọi kiểm TRƯỚC khi ghi.
+
+Viết bài hợp đồng lộ ra một lỗi CÓ SẴN của kho file: APFS của macOS không phân
+biệt hoa thường, nên `getRun("run_a")` từng trả về lượt chạy của `Run_A`. Nay
+kho file đối chiếu `id` khi đọc và nổ đích danh khi lưu đụng file của id khác.
+
+Chạy test MySQL cục bộ: `colima start`, rồi
+`docker run -d --name ghe1a-mariadb-test -e MARIADB_ROOT_PASSWORD=test -e MARIADB_DATABASE=ghe1a_test -p 33306:3306 mariadb:11.4`.
+CI (`.github/workflows/ci.yml`) chạy MariaDB như service và NỔ nếu thiếu
+`RECO_TEST_MYSQL_URL`, để backend production không bao giờ lặng lẽ bị bỏ qua.
+
 ## Chạy gì
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # 389 test: chi tiêu, bất biến, vòng đời, quy mô, người dùng, engine, Phase 4, Test A–J
+npm run test:reco         # 432 test: chi tiêu, bất biến, vòng đời, quy mô, người dùng, engine, Phase 4, Test A–J, kho
+RECO_TEST_MYSQL_URL=mysql://root:test@127.0.0.1:33306/ghe1a_test npm run test:reco   # kèm backend MySQL
 npm run reco:debug        # debugger §22 dòng lệnh — xem mục Phase 4
 ```
 

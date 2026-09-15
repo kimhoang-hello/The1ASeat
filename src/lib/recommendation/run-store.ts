@@ -22,6 +22,7 @@
  */
 
 import { canonicalJson, fingerprintOf } from "./fingerprint.ts";
+import { checkStoreKey } from "./store-keys.ts";
 import type { RecommendationDataset } from "./types.ts";
 import type { RecommendationRunRecord } from "./runs.ts";
 
@@ -71,12 +72,22 @@ export function summarize(record: RecommendationRunRecord): RunSummary {
  * backend ghi thẳng, khỏi băm hai lần.
  */
 export function checkedDataset(fingerprint: string, dataset: RecommendationDataset): string {
+  checkStoreKey(fingerprint, "dấu vân tay");
   const canonical = canonicalJson(dataset);
   const actual = fingerprintOf(canonical);
   if (actual !== fingerprint) {
     throw new Error(`saveDataset: khoá ${fingerprint} không phải dấu vân tay của nội dung (${actual})`);
   }
   return canonical;
+}
+
+/**
+ * Khoá của một bản ghi — kiểm ở MỌI backend, kể cả bộ nhớ: một id kho này
+ * nhận mà kho kia từ chối là bản ghi không chuyển được giữa hai kho.
+ */
+export function checkedRunKeys(record: RecommendationRunRecord): void {
+  checkStoreKey(record.id, "id lượt chạy");
+  if (record.userId !== null) checkStoreKey(record.userId, "userId");
 }
 
 /** Sắp mới nhất trước, hoà thì theo id — thứ tự cố định cho cùng một kho. */
@@ -104,18 +115,22 @@ export function inMemoryRunStore(): RunStore {
       datasets.set(fingerprint, canonical);
     },
     async getDataset(fingerprint) {
+      checkStoreKey(fingerprint, "dấu vân tay");
       const raw = datasets.get(fingerprint);
       return raw === undefined ? null : (JSON.parse(raw) as RecommendationDataset);
     },
     async saveRun(record) {
+      checkedRunKeys(record);
       if (runs.has(record.id)) throw new Error(`saveRun: lượt chạy ${record.id} đã có — kho chỉ thêm, không ghi đè`);
       runs.set(record.id, JSON.stringify(record));
     },
     async getRun(id) {
+      checkStoreKey(id, "id lượt chạy");
       const raw = runs.get(id);
       return raw === undefined ? null : (JSON.parse(raw) as RecommendationRunRecord);
     },
     async listRuns(filter = {}) {
+      if (filter.userId !== undefined) checkStoreKey(filter.userId, "userId");
       const all = [...runs.values()]
         .map((raw) => summarize(JSON.parse(raw) as RecommendationRunRecord))
         .filter((row) => filter.userId === undefined || row.userId === filter.userId)
