@@ -126,6 +126,11 @@ interface Migration {
    * chừng để lại nửa schema. Nên mỗi câu phải chạy lại được (`IF NOT EXISTS`)
    * — lần chạy sau đi tiếp từ chỗ gãy thay vì nổ ở câu đầu. Lưu ý cho migration
    * về sau: `ADD COLUMN IF NOT EXISTS` chỉ MariaDB có, MySQL 8 thì không.
+   *
+   * Một migration đã chạy trên database THẬT thì ĐÓNG BĂNG: sửa nó tại chỗ thì
+   * database đó đã ghi sổ id này và không bao giờ nhận phần sửa. Đổi schema là
+   * thêm migration mới. (Migration 1 được sửa tại chỗ một lần, 15/09/2026, khi
+   * chưa có database bền nào chạy nó.)
    */
   statements: string[];
 }
