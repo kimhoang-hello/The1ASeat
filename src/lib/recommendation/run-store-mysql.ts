@@ -15,7 +15,7 @@ import { promisify } from "node:util";
 import { gunzip, gzip } from "node:zlib";
 import type { RowDataPacket } from "mysql2/promise";
 import { isDuplicateKey, type RecoDatabase } from "./mysql.ts";
-import { checkedDataset, checkedRunKeys, summarize, type RunStore, type RunSummary } from "./run-store.ts";
+import { checkedDataset, checkedRunKeys, checkListFilter, summarize, type RunStore, type RunSummary } from "./run-store.ts";
 import { checkStoreKey } from "./store-keys.ts";
 import type { RecommendationDataset } from "./types.ts";
 import type { RecommendationRunRecord } from "./runs.ts";
@@ -97,10 +97,7 @@ export function mysqlRunStore(db: RecoDatabase): RunStore {
       return rows.length === 0 ? null : readBody<RecommendationRunRecord>(rows[0].body as Buffer);
     },
     async listRuns(filter = {}) {
-      if (filter.userId !== undefined) checkStoreKey(filter.userId, "userId");
-      if (filter.limit !== undefined && !(Number.isSafeInteger(filter.limit) && filter.limit >= 0)) {
-        throw new Error(`listRuns: limit phải là số nguyên không âm (nhận ${filter.limit})`);
-      }
+      checkListFilter(filter);
       await db.ready();
       // Cột `_bin` so theo mã ký tự — cùng thứ tự với phép so chuỗi của
       // `newestFirst` trên mọi `createdAt` ISO, nên ba backend trả cùng một

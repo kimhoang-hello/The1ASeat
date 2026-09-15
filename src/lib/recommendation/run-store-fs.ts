@@ -23,7 +23,7 @@
 
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { checkedDataset, checkedRunKeys, newestFirst, summarize, type RunStore } from "./run-store.ts";
+import { checkedDataset, checkedRunKeys, checkListFilter, newestFirst, summarize, type RunStore } from "./run-store.ts";
 import { checkStoreKey } from "./store-keys.ts";
 import type { RecommendationDataset } from "./types.ts";
 import type { RecommendationRunRecord } from "./runs.ts";
@@ -87,7 +87,7 @@ export function fileRunStore(dir: string): RunStore {
       return record !== null && record.id !== id ? null : record;
     },
     async listRuns(filter = {}) {
-      if (filter.userId !== undefined) checkStoreKey(filter.userId, "userId");
+      checkListFilter(filter);
       let names: string[];
       try {
         names = (await readdir(runsDir)).filter((name) => name.endsWith(".json"));

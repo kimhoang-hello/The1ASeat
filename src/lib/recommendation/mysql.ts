@@ -32,22 +32,35 @@ export interface RecoDatabase {
 
 /**
  * Cấu hình từ biến môi trường. `DATABASE_URL` trước; không có thì bộ `DB_*`
- * mà nút "Connect database" của Hostinger gắn cho app Node.js. `null` = chưa
- * cấu hình — người gọi quyết định đó là lỗi hay là "chạy không lưu".
+ * mà nút "Connect database" của Hostinger gắn cho app Node.js.
+ *
+ * `null` CHỈ khi không có biến database nào — người gọi quyết định đó là lỗi
+ * hay là "chạy không lưu". Khai MỘT PHẦN (gõ nhầm tên `DB_NAME`, cổng không phải
+ * số) là LỖI: trả `null` ở đó là lặng lẽ tắt việc lưu lượt chạy của người dùng
+ * thật vì một lỗi đánh máy trong hPanel (Codex vòng 1).
  */
-export function mysqlConfigFromEnv(env: NodeJS.ProcessEnv = process.env): string | PoolOptions | null {
+export function mysqlConfigFromEnv(env: Record<string, string | undefined> = process.env): string | PoolOptions | null {
   if (env.DATABASE_URL) return env.DATABASE_URL;
-  if (env.DB_HOST && env.DB_USER && env.DB_NAME) {
-    return {
-      host: env.DB_HOST,
-      port: env.DB_PORT ? Number(env.DB_PORT) : 3306,
-      user: env.DB_USER,
-      password: env.DB_PASSWORD ?? "",
-      database: env.DB_NAME,
-    };
+  const present = DB_VARS.filter((name) => env[name] !== undefined && env[name] !== "");
+  if (present.length === 0) return null;
+  const missing = (["DB_HOST", "DB_USER", "DB_NAME"] as const).filter((name) => !env[name]);
+  if (missing.length > 0) {
+    throw new Error(`Cấu hình database thiếu ${missing.join(", ")} (đã có ${present.join(", ")})`);
   }
-  return null;
+  const port = env.DB_PORT ? Number(env.DB_PORT) : 3306;
+  if (!Number.isInteger(port) || port <= 0 || port > 65535) {
+    throw new Error(`DB_PORT không phải cổng hợp lệ: ${JSON.stringify(env.DB_PORT)}`);
+  }
+  return {
+    host: env.DB_HOST,
+    port,
+    user: env.DB_USER,
+    password: env.DB_PASSWORD ?? "",
+    database: env.DB_NAME,
+  };
 }
+
+const DB_VARS = ["DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME"] as const;
 
 /**
  * Tập con có ở cả MariaDB lẫn MySQL 8 (MySQL 8 từ chối `NO_AUTO_CREATE_USER`).

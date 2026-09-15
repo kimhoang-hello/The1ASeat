@@ -104,7 +104,9 @@ export function inMemoryUserStore(states: UserState[] = []): UserStateStore {
     states.map((state) => [state.profile.id as string, { state, version: 1 }]),
   );
   const read = (userId: string): StoredUserState | null => {
-    const found = byId.get(userId);
+    // Cùng luật khoá với bản MySQL: id lạ nổ ở đây như ở production, không
+    // lặng lẽ thành "không có người này" chỉ trong test (Codex vòng 1).
+    const found = byId.get(checkStoreKey(userId, "userId"));
     return found === undefined ? null : { state: structuredClone(found.state), version: found.version };
   };
   return {

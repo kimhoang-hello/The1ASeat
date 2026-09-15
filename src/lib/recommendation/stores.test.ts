@@ -27,7 +27,7 @@ import { offlineDataset } from "./data/index.ts";
 import { productIdFor } from "./data/products.ts";
 import { USER_FIXTURES, aeroplanHeavy, vietnamTripFunded } from "./data/user-fixtures.ts";
 import { canonicalJson, fingerprint } from "./fingerprint.ts";
-import { openRecoDatabase, type RecoDatabase } from "./mysql.ts";
+import { mysqlConfigFromEnv, openRecoDatabase, type RecoDatabase } from "./mysql.ts";
 import type { OfferHistoryPoint } from "./offer-history.ts";
 import { inMemoryRunStore, summarize, type RunStore } from "./run-store.ts";
 import { fileRunStore } from "./run-store-fs.ts";
@@ -287,6 +287,9 @@ for (const backend of RUN_BACKENDS) {
     assert.deepEqual(await store.listRuns({ userId: "u_khong_co" }), []);
     // PAD SPACE: không kiểm thì "u_1 " lọc ra lượt chạy của "u_1" trên MySQL.
     await assert.rejects(store.listRuns({ userId: "u_1 " }), /không hợp lệ/);
+    for (const limit of [-1, 1.5, Number.NaN]) {
+      await assert.rejects(store.listRuns({ limit }), /limit/, String(limit));
+    }
   });
 }
 
@@ -358,10 +361,13 @@ for (const backend of USER_BACKENDS) {
     assert.equal(await store.getUserState(vietnamTripFunded.profile.id), null);
   });
 
-  t("không có người dùng này thì trả null", async () => {
+  t("không có người dùng này thì trả null; id lạ thì NỔ, không phải null", async () => {
     const store = await backend.make();
     assert.equal(await store.getUserState("u_khong_co"), null);
     assert.equal(await store.getStoredUserState("u_khong_co"), null);
+    for (const bad of ["a b", "u_1 ", "x".repeat(129)]) {
+      await assert.rejects(store.getUserState(bad), /không hợp lệ/, JSON.stringify(bad));
+    }
   });
 
   t("trả về BẢN SAO", async () => {
@@ -422,4 +428,23 @@ test("MySQL — migration chạy lại được: lần hai không đổi gì, l�
   } finally {
     await again.close();
   }
+});
+
+test("cấu hình database: không biến nào thì null, khai MỘT PHẦN thì nổ — không lặng lẽ tắt việc lưu", () => {
+  assert.equal(mysqlConfigFromEnv({}), null);
+  assert.equal(mysqlConfigFromEnv({ DB_HOST: "", DB_NAME: "" }), null);
+  assert.equal(mysqlConfigFromEnv({ DATABASE_URL: "mysql://u:p@localhost/db" }), "mysql://u:p@localhost/db");
+  assert.deepEqual(mysqlConfigFromEnv({ DB_HOST: "localhost", DB_USER: "u", DB_PASSWORD: "p", DB_NAME: "db" }), {
+    host: "localhost",
+    port: 3306,
+    user: "u",
+    password: "p",
+    database: "db",
+  });
+  assert.throws(() => mysqlConfigFromEnv({ DB_HOST: "localhost", DB_USER: "u", DB_PASSWORD: "p" }), /thiếu DB_NAME/);
+  assert.throws(() => mysqlConfigFromEnv({ DB_PASSWORD: "p" }), /thiếu DB_HOST, DB_USER, DB_NAME/);
+  assert.throws(
+    () => mysqlConfigFromEnv({ DB_HOST: "localhost", DB_USER: "u", DB_NAME: "db", DB_PORT: "33o6" }),
+    /DB_PORT/,
+  );
 });

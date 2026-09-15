@@ -90,6 +90,18 @@ export function checkedRunKeys(record: RecommendationRunRecord): void {
   if (record.userId !== null) checkStoreKey(record.userId, "userId");
 }
 
+/**
+ * Bộ lọc của `listRuns` — kiểm ở MỌI backend. Bản bộ nhớ/file từng nhận
+ * `limit: -1` rồi `slice(0, -1)` bỏ mất dòng cuối, còn bản MySQL nổ: cùng một
+ * lời gọi, hai kết quả tuỳ kho (Codex vòng 1, Phase 5).
+ */
+export function checkListFilter(filter: { userId?: string; limit?: number }): void {
+  if (filter.userId !== undefined) checkStoreKey(filter.userId, "userId");
+  if (filter.limit !== undefined && !(Number.isSafeInteger(filter.limit) && filter.limit >= 0)) {
+    throw new Error(`listRuns: limit phải là số nguyên không âm (nhận ${filter.limit})`);
+  }
+}
+
 /** Sắp mới nhất trước, hoà thì theo id — thứ tự cố định cho cùng một kho. */
 export function newestFirst(a: RunSummary, b: RunSummary): number {
   if (a.createdAt !== b.createdAt) return a.createdAt < b.createdAt ? 1 : -1;
@@ -130,7 +142,7 @@ export function inMemoryRunStore(): RunStore {
       return raw === undefined ? null : (JSON.parse(raw) as RecommendationRunRecord);
     },
     async listRuns(filter = {}) {
-      if (filter.userId !== undefined) checkStoreKey(filter.userId, "userId");
+      checkListFilter(filter);
       const all = [...runs.values()]
         .map((raw) => summarize(JSON.parse(raw) as RecommendationRunRecord))
         .filter((row) => filter.userId === undefined || row.userId === filter.userId)
