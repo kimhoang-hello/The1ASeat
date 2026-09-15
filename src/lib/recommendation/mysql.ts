@@ -74,6 +74,10 @@ export function openRecoDatabase(config: string | PoolOptions): RecoDatabase {
   const base: PoolOptions = typeof config === "string" ? { uri: config } : config;
   const pool = createPool({
     ...base,
+    // Reset lúc trả kết nối về pool đưa biến phiên về mặc định của server, mà
+    // sự kiện "connection" chỉ nổ cho kết nối MỚI — STRICT/UTC mất từ lần mượn
+    // thứ hai (Codex vòng 2). Cấm hẳn, kể cả khi cấu hình truyền vào bật nó.
+    resetOnRelease: false,
     charset: "utf8mb4",
     // Gói Business cho 75 kết nối mỗi user database, chung cho mọi tiến trình
     // của site. Năm là đủ cho lượt ghi một-câu-trả-lời-một-lượt-chạy.
@@ -168,7 +172,9 @@ export const MIGRATIONS: readonly Migration[] = [
         inserted_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
         PRIMARY KEY (id),
         KEY reco_runs_by_user (user_id, created_at, id),
-        KEY reco_runs_by_time (created_at, id)
+        KEY reco_runs_by_time (created_at, id),
+        -- Lượt chạy thiếu bộ dữ liệu không chạy lại được (luật 3 của RunStore).
+        CONSTRAINT reco_runs_dataset FOREIGN KEY (dataset_fingerprint) REFERENCES reco_datasets (fingerprint)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin`,
       // Chỉ bản MỚI NHẤT của mỗi người. Lịch sử không mất: mỗi lượt chạy chép
       // nguyên trạng thái nó đã đọc vào `input_snapshot`.

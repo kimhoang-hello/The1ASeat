@@ -15,7 +15,15 @@ import { promisify } from "node:util";
 import { gunzip, gzip } from "node:zlib";
 import type { RowDataPacket } from "mysql2/promise";
 import { isDuplicateKey, type RecoDatabase } from "./mysql.ts";
-import { checkedDataset, checkedRunKeys, checkListFilter, summarize, type RunStore, type RunSummary } from "./run-store.ts";
+import {
+  checkedDataset,
+  checkedRunKeys,
+  checkListFilter,
+  missingDatasetError,
+  summarize,
+  type RunStore,
+  type RunSummary,
+} from "./run-store.ts";
 import { checkStoreKey } from "./store-keys.ts";
 import type { RecommendationDataset } from "./types.ts";
 import type { RecommendationRunRecord } from "./runs.ts";
@@ -87,6 +95,7 @@ export function mysqlRunStore(db: RecoDatabase): RunStore {
         if (isDuplicateKey(error)) {
           throw new Error(`saveRun: lượt chạy ${record.id} đã có — kho chỉ thêm, không ghi đè`);
         }
+        if ((error as { code?: string })?.code === "ER_NO_REFERENCED_ROW_2") throw missingDatasetError(record);
         throw error;
       }
     },

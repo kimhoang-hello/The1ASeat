@@ -21,9 +21,17 @@
  * người dùng thật là `run-store-mysql.ts`.
  */
 
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { checkedDataset, checkedRunKeys, checkListFilter, newestFirst, summarize, type RunStore } from "./run-store.ts";
+import {
+  checkedDataset,
+  checkedRunKeys,
+  checkListFilter,
+  missingDatasetError,
+  newestFirst,
+  summarize,
+  type RunStore,
+} from "./run-store.ts";
 import { checkStoreKey } from "./store-keys.ts";
 import type { RecommendationDataset } from "./types.ts";
 import type { RecommendationRunRecord } from "./runs.ts";
@@ -66,6 +74,11 @@ export function fileRunStore(dir: string): RunStore {
     },
     async saveRun(record) {
       checkedRunKeys(record);
+      try {
+        await access(path.join(datasetsDir, `${safeName(record.inputSnapshot.datasetFingerprint)}.json`));
+      } catch {
+        throw missingDatasetError(record);
+      }
       await mkdir(runsDir, { recursive: true });
       const file = path.join(runsDir, `${safeName(record.id)}.json`);
       try {

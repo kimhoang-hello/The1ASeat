@@ -11,7 +11,7 @@
  * lựa chọn database nào. Chọn backend cho dữ liệu người dùng là quyết định
  * riêng; interface này đủ hẹp để một bản Postgres/MySQL chỉ là thêm một file.
  *
- * HAI LUẬT, cưỡng chế ở MỌI backend:
+ * BA LUẬT, cưỡng chế ở MỌI backend:
  *
  *  1. **Lượt chạy không bị ghi đè.** `saveRun` với một `id` đã có là LỖI.
  *     Sửa một lượt chạy cũ là xoá bằng chứng của đúng câu hỏi §20 sinh ra để
@@ -19,6 +19,12 @@
  *  2. **Bộ dữ liệu khoá theo nội dung.** `saveDataset` tính lại dấu vân tay và
  *     từ chối nếu không khớp khoá được đưa vào; trùng khoá mà khác nội dung
  *     (va chạm băm) cũng là LỖI, không phải một lần ghi đè im lặng.
+ *  3. **Bộ dữ liệu có trước lượt chạy.** `saveRun` từ chối bản ghi mà bộ dữ
+ *     liệu của nó chưa nằm trong kho: lượt chạy thiếu bộ dữ liệu vẫn đọc được
+ *     nhưng KHÔNG BAO GIỜ chạy lại được, và đó đúng là thứ Phase 5 lưu mọi lượt
+ *     chạy để có (Codex vòng 2, Phase 5). Bộ dữ liệu không bao giờ bị xoá, nên
+ *     "kiểm có rồi mới ghi" không có kẽ hở ở bản bộ nhớ/file; bản MySQL dùng
+ *     khoá ngoại. Dùng `persistRun` để khỏi phải nhớ thứ tự.
  */
 
 import { canonicalJson, fingerprintOf } from "./fingerprint.ts";
@@ -81,6 +87,22 @@ export function checkedDataset(fingerprint: string, dataset: RecommendationDatas
   return canonical;
 }
 
+/** Lưu MỘT lượt chạy đúng thứ tự: bộ dữ liệu trước, bản ghi sau. */
+export async function persistRun(
+  store: RunStore,
+  executed: { record: RecommendationRunRecord; dataset: RecommendationDataset },
+): Promise<void> {
+  await store.saveDataset(executed.record.inputSnapshot.datasetFingerprint, executed.dataset);
+  await store.saveRun(executed.record);
+}
+
+export function missingDatasetError(record: RecommendationRunRecord): Error {
+  return new Error(
+    `saveRun: bộ dữ liệu ${record.inputSnapshot.datasetFingerprint} của lượt chạy ${record.id} chưa có trong kho — ` +
+      "lưu saveDataset trước (hoặc dùng persistRun), không thì lượt chạy không bao giờ chạy lại được",
+  );
+}
+
 /**
  * Khoá của một bản ghi — kiểm ở MỌI backend, kể cả bộ nhớ: một id kho này
  * nhận mà kho kia từ chối là bản ghi không chuyển được giữa hai kho.
@@ -133,6 +155,7 @@ export function inMemoryRunStore(): RunStore {
     },
     async saveRun(record) {
       checkedRunKeys(record);
+      if (!datasets.has(record.inputSnapshot.datasetFingerprint)) throw missingDatasetError(record);
       if (runs.has(record.id)) throw new Error(`saveRun: lượt chạy ${record.id} đã có — kho chỉ thêm, không ghi đè`);
       runs.set(record.id, JSON.stringify(record));
     },

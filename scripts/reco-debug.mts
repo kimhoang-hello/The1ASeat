@@ -47,6 +47,7 @@ import {
   renderStageDiffs,
 } from "../src/lib/recommendation/debug-render.ts";
 import { fileRunStore } from "../src/lib/recommendation/run-store-fs.ts";
+import { persistRun } from "../src/lib/recommendation/run-store.ts";
 import { todayInSiteZone } from "../src/lib/format-date.ts";
 import type { OfferHistoryPoint } from "../src/lib/recommendation/offer-history.ts";
 import type { RecommendationDataset } from "../src/lib/recommendation/types.ts";
@@ -150,8 +151,7 @@ async function loadSubject(ref: string): Promise<{ record: RecommendationRunReco
 }
 
 async function save(record: RecommendationRunRecord, dataset: RecommendationDataset) {
-  await store.saveDataset(record.inputSnapshot.datasetFingerprint, dataset);
-  await store.saveRun(record);
+  await persistRun(store, { record, dataset });
   console.log(`\n✓ đã lưu ${record.id} vào .reco-runs/`);
 }
 

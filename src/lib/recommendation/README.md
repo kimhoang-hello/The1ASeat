@@ -1092,7 +1092,7 @@ nên SQL nằm trong tập con chung MariaDB 10.6+ / MySQL 8, không hàm JSON n
 | `store-keys.ts` | MỘT luật khoá cho mọi kho |
 | `stores.test.ts` | Hợp đồng kho — MỌI bài chạy trên MỌI backend |
 
-Năm quyết định, mỗi cái có một bài đỏ khi gỡ nó ra (đã kiểm ngược):
+Bảy quyết định, mỗi cái có một bài đỏ khi gỡ nó ra (đã kiểm ngược):
 
 1. **Cột khoá `ascii_bin` tường minh.** Collation mặc định của MariaDB 11 là
    `utf8mb4_uca1400_ai_ci`: `Run_A` và `run_a` là cùng một khoá chính.
@@ -1107,6 +1107,11 @@ Năm quyết định, mỗi cái có một bài đỏ khi gỡ nó ra (đã ki�
    trình khởi động cùng lúc.
 5. **Nén ở app.** Một lượt chạy ~200 KB JSON, gzip ~19 KB; MariaDB không nén
    LONGTEXT hộ (Postgres jsonb nén 5.1× — đo 15/09/2026, lúc so lựa chọn).
+6. **Bộ dữ liệu có trước lượt chạy** — luật 3 của `RunStore`, ở MỌI backend
+   (MySQL bằng khoá ngoại). Lượt chạy thiếu bộ dữ liệu đọc được mà không bao
+   giờ chạy lại được. Lưu bằng `persistRun(store, executed)`.
+7. **`resetOnRelease` bị cấm.** Reset trả biến phiên về mặc định server, mà lệnh
+   đầu phiên chỉ chạy cho kết nối mới — STRICT mất từ lần mượn thứ hai.
 
 Trạng thái người dùng là MỘT khối JSON mỗi người, không phải năm bảng như §4:
 engine đọc, bảng câu hỏi ghi, validator kiểm đúng một khối. Lịch sử không mất —
@@ -1126,7 +1131,7 @@ CI (`.github/workflows/ci.yml`) chạy MariaDB như service và NỔ nếu thi�
 
 ```
 npm run audit:reco-data   # toàn vẹn nội bộ + đối chiếu Contentful + drift nguồn
-npm run test:reco         # 432 test: chi tiêu, bất biến, vòng đời, quy mô, người dùng, engine, Phase 4, Test A–J, kho
+npm run test:reco         # 437 test: chi tiêu, bất biến, vòng đời, quy mô, người dùng, engine, Phase 4, Test A–J, kho
 RECO_TEST_MYSQL_URL=mysql://root:test@127.0.0.1:33306/ghe1a_test npm run test:reco   # kèm backend MySQL
 npm run reco:debug        # debugger §22 dòng lệnh — xem mục Phase 4
 ```

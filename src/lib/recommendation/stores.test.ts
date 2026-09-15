@@ -27,9 +27,10 @@ import { offlineDataset } from "./data/index.ts";
 import { productIdFor } from "./data/products.ts";
 import { USER_FIXTURES, aeroplanHeavy, vietnamTripFunded } from "./data/user-fixtures.ts";
 import { canonicalJson, fingerprint } from "./fingerprint.ts";
+import type { PoolOptions } from "mysql2/promise";
 import { mysqlConfigFromEnv, openRecoDatabase, type RecoDatabase } from "./mysql.ts";
 import type { OfferHistoryPoint } from "./offer-history.ts";
-import { inMemoryRunStore, summarize, type RunStore } from "./run-store.ts";
+import { inMemoryRunStore, persistRun, summarize, type RunStore } from "./run-store.ts";
 import { fileRunStore } from "./run-store-fs.ts";
 import { mysqlRunStore } from "./run-store-mysql.ts";
 import { executeRun, replayRun } from "./runs.ts";
@@ -77,13 +78,13 @@ after(async () => {
 });
 
 /** Một database MỚI cho mỗi kho: `listRuns` của bài này không được thấy lượt chạy của bài kia. */
-async function freshMysql(): Promise<RecoDatabase> {
+async function freshMysql(options: PoolOptions = {}): Promise<RecoDatabase> {
   const name = `ghe1a_reco_test_${process.pid}_${(counter += 1)}`;
   const admin = await createConnection(MYSQL_URL!);
   await admin.query(`CREATE DATABASE \`${name}\``);
   const url = new URL(MYSQL_URL!);
   url.pathname = `/${name}`;
-  const db = openRecoDatabase(url.toString());
+  const db = openRecoDatabase({ ...options, uri: url.toString() });
   cleanups.push(async () => {
     await db.close();
     await admin.query(`DROP DATABASE IF EXISTS \`${name}\``);
@@ -165,14 +166,20 @@ const USER_BACKENDS: UserBackend[] = [
 
 for (const backend of RUN_BACKENDS) {
   const t = (name: string, fn: () => Promise<void>) => test(`kho lượt chạy [${backend.name}] — ${name}`, { skip: backend.skip }, fn);
+  /** Kho đã có bộ dữ liệu mà mọi `execute()` đọc — luật 3: bộ dữ liệu trước. */
+  const seeded = async () => {
+    const made = await backend.make();
+    await made.store.saveDataset(fingerprint(DATA), DATA);
+    return made;
+  };
 
   t("mọi nhân vật (cả hồ sơ hỏng) lưu rồi chạy lại ra ĐÚNG từng chữ số", async () => {
     // Đi qua kho THẬT — đúng chỗ Map, undefined, -0 và nén/giải nén biến dạng.
     const { store, datasetCount } = await backend.make();
     for (const state of [...USER_FIXTURES, ...BROKEN]) {
-      const { record, dataset } = execute(state);
-      await store.saveDataset(record.inputSnapshot.datasetFingerprint, dataset);
-      await store.saveRun(record);
+      const executed = execute(state);
+      const { record } = executed;
+      await persistRun(store, executed);
       const loaded = await store.getRun(record.id);
       const snapshot = await store.getDataset(record.inputSnapshot.datasetFingerprint);
       assert.ok(loaded !== null && snapshot !== null);
@@ -187,7 +194,7 @@ for (const backend of RUN_BACKENDS) {
   });
 
   t("lượt chạy KHÔNG bị ghi đè, và bản đã lưu còn nguyên", async () => {
-    const { store } = await backend.make();
+    const { store } = await seeded();
     const { record } = execute(vietnamTripFunded);
     await store.saveRun(record);
     await assert.rejects(store.saveRun({ ...record, createdAt: "khác" }), /không ghi đè/);
@@ -195,7 +202,7 @@ for (const backend of RUN_BACKENDS) {
   });
 
   t("hai lần lưu CÙNG LÚC một id: đúng một lần qua", async () => {
-    const { store } = await backend.make();
+    const { store } = await seeded();
     const { record } = execute(vietnamTripFunded);
     const results = await Promise.allSettled([store.saveRun(record), store.saveRun({ ...record, createdAt: "2027-01-01T00:00:00.000Z" })]);
     assert.equal(results.filter((r) => r.status === "fulfilled").length, 1);
@@ -208,7 +215,7 @@ for (const backend of RUN_BACKENDS) {
     // macOS cũng vậy: không khai `_bin` / không đối chiếu id thì hai id này là
     // một khoá, và `getRun` đưa bản ghi của người này cho người kia. Kho được
     // phép lưu cả hai, hoặc từ chối id thứ hai — nói ra — nhưng không được lẫn.
-    const { store } = await backend.make();
+    const { store } = await seeded();
     const a = execute(vietnamTripFunded, { id: "Run_Case" }).record;
     const b = execute(aeroplanHeavy, { id: "run_case" }).record;
     await store.saveRun(a);
@@ -226,12 +233,20 @@ for (const backend of RUN_BACKENDS) {
   });
 
   t("id lạ bị từ chối — không trèo thư mục, không bị cắt, không bị đệm", async () => {
-    const { store } = await backend.make();
+    const { store } = await seeded();
     for (const bad of ["../x", "a/b", "a:b", "", "a ", " a", "a..b", "x".repeat(129)]) {
       await assert.rejects(store.getRun(bad), /không hợp lệ/, JSON.stringify(bad));
       await assert.rejects(store.saveRun(execute(vietnamTripFunded, { id: bad }).record), /không hợp lệ/, JSON.stringify(bad));
     }
     await assert.rejects(store.saveRun(execute(vietnamTripFunded, { userId: "u 1" }).record), /không hợp lệ/);
+  });
+
+  t("lượt chạy mà bộ dữ liệu CHƯA có trong kho bị từ chối — nó sẽ không bao giờ chạy lại được", async () => {
+    const { store } = await backend.make();
+    const { record } = execute(vietnamTripFunded);
+    await assert.rejects(store.saveRun(record), /chưa có trong kho/);
+    assert.equal(await store.getRun(record.id), null, "không được để lại bản ghi mồ côi");
+    assert.deepEqual(await store.listRuns(), []);
   });
 
   t("không có thì trả null", async () => {
@@ -241,7 +256,7 @@ for (const backend of RUN_BACKENDS) {
   });
 
   t("trả về BẢN SAO", async () => {
-    const { store } = await backend.make();
+    const { store } = await seeded();
     const { record } = execute(vietnamTripFunded);
     await store.saveRun(record);
     const first = await store.getRun(record.id);
@@ -269,7 +284,7 @@ for (const backend of RUN_BACKENDS) {
   });
 
   t("listRuns: mới nhất trước, hoà thì theo id, lọc theo người, cắt theo limit, tóm tắt đúng", async () => {
-    const { store } = await backend.make();
+    const { store } = await seeded();
     const records = [
       execute(vietnamTripFunded, { id: "r_a", createdAt: "2026-09-12T10:00:00.000Z", userId: "u_1" }).record,
       execute(aeroplanHeavy, { id: "r_b", createdAt: "2026-09-12T11:00:00.000Z", userId: "u_2" }).record,
@@ -404,6 +419,18 @@ test("MySQL — mọi kết nối của pool chạy STRICT và UTC, bất kể m
     const row = (rows as Array<{ mode: string; tz: string }>)[0];
     assert.match(row.mode, /STRICT_ALL_TABLES/);
     assert.equal(row.tz, "+00:00");
+    connection.release();
+  }
+});
+
+test("MySQL — kết nối MƯỢN LẠI vẫn STRICT, kể cả khi cấu hình bật reset lúc trả về pool", { skip: SKIP_MYSQL }, async () => {
+  // Reset đưa biến phiên về mặc định server, mà lệnh đầu phiên chỉ chạy cho
+  // kết nối MỚI. Một kết nối duy nhất: lần mượn thứ hai chắc chắn là nó.
+  const db = await freshMysql({ resetOnRelease: true, connectionLimit: 1 });
+  for (let round = 0; round < 2; round += 1) {
+    const connection = await db.pool.getConnection();
+    const [rows] = await connection.query("SELECT @@SESSION.sql_mode AS mode");
+    assert.match((rows as Array<{ mode: string }>)[0].mode, /STRICT_ALL_TABLES/, `lần mượn ${round + 1}`);
     connection.release();
   }
 });
