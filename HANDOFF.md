@@ -143,13 +143,13 @@ dùng công cụ/tháng × ~5 lượt chạy):
 `user-source.ts`, `stores.test.ts` chạy MỌI bài hợp đồng trên MỌI backend. Chi
 tiết + năm quyết định thiết kế: README module, mục "Phase 5".
 
-**Còn chờ user** (mình không vào được hPanel):
-
-1. hPanel → Databases → tạo database + user MySQL.
-2. Gắn vào app Node.js (nút "Connect database", hoặc tự đặt `DATABASE_URL` /
-   `DB_*` trong Environment variables — xem `.env.example`) rồi Redeploy.
-3. Cho mình credentials (hoặc bật Remote MySQL cho IP nhà) để chạy
-   `SELECT VERSION()` — rồi đổi image `mariadb:11.4` trong `ci.yml` cho khớp.
+**Database production đã tạo (15/09/2026):** `u867954911_Ghe1A`, user
+`u867954911_ghe1a`, MariaDB 11.8.9 — thông số server ở README module, mục Phase
+5. Biến `DB_HOST`/`DB_PORT`/`DB_USER`/`DB_NAME` đã đặt trong hPanel;
+`DB_PASSWORD` do user tự dán. CI chạy MariaDB 11.8 với `sql_mode` và collation
+giống production. **Chưa trang nào dùng kho** — kết nối thật từ app lần đầu sẽ
+được kiểm khi tầng trang gọi `recoDatabaseFromEnv()`; nếu `localhost` không vào
+được thì thử `srv1718.hstgr.io` (cần thêm IP của app ở Remote MySQL).
 
 Chưa có database thì site vẫn chạy: `recoDatabaseFromEnv()` trả `null`, tầng
 trang quyết định chạy-không-lưu hay báo lỗi.

@@ -31,9 +31,9 @@ jobs:
     timeout-minutes: 15
     services:
       mariadb:
-        # Đổi cho khớp `SELECT VERSION()` trên database Hostinger khi đã có
-        # credentials — phiên bản production chưa kiểm được lúc viết.
-        image: mariadb:11.4
+        # Khớp production: Hostinger chạy MariaDB 11.8.9 (đọc trong
+        # phpMyAdmin 15/09/2026). Đổi cùng lúc với server thật.
+        image: mariadb:11.8
         env:
           MARIADB_ROOT_PASSWORD: test
           MARIADB_DATABASE: ghe1a_test
@@ -55,6 +55,16 @@ jobs:
           cache: npm
 
       - run: npm ci
+
+      # Server production KHÔNG strict (`sql_mode` = NO_AUTO_CREATE_USER,
+      # NO_ENGINE_SUBSTITUTION) và collation mặc định không phân biệt hoa
+      # thường. Dựng lại đúng mặc định đó, để bài "kết nối nào cũng STRICT"
+      # kiểm được lệnh đầu phiên của app chứ không phải mặc định của image.
+      - name: Mặc định MariaDB giống production
+        run: >-
+          docker exec ${{ job.services.mariadb.id }} mariadb -uroot -ptest -e
+          "SET GLOBAL sql_mode='NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION';
+          SET GLOBAL collation_server='utf8mb4_unicode_ci';"
 
       - run: npx tsc --noEmit
 

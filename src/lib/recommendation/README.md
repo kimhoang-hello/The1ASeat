@@ -1081,8 +1081,17 @@ hiệu của chính hàm đó chạy hai lần (không bonus / có bonus).
 ## Phase 5 — kho cho người dùng thật (MySQL của Hostinger)
 
 User chốt MySQL của Hostinger ngày 15/09/2026: $0, cùng nhà cung cấp, chung
-máy với site. Phiên bản thật (Hostinger chạy MariaDB) chưa kiểm được lúc viết,
-nên SQL nằm trong tập con chung MariaDB 10.6+ / MySQL 8, không hàm JSON nào.
+máy với site. SQL nằm trong tập con chung MariaDB 10.6+ / MySQL 8, không hàm
+JSON nào.
+
+Server production (đọc trong phpMyAdmin 15/09/2026): **MariaDB 11.8.9**,
+`sql_mode` = `NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION` (KHÔNG strict),
+`collation_server` = `utf8mb4_unicode_ci` (không phân biệt hoa thường),
+`wsrep_on` = OFF (không Galera, `GET_LOCK` dùng được), `max_allowed_packet` 1 GB.
+Database `u867954911_Ghe1A`, user `u867954911_ghe1a`; app đọc bộ `DB_*` với
+`DB_HOST=localhost`. Host cho kết nối từ xa (phải thêm IP ở Remote MySQL):
+`srv1718.hstgr.io`. Nút "Connect database" của app Node.js chỉ có Supabase và
+MongoDB Atlas — biến môi trường đặt tay.
 
 | File | Vai trò |
 | --- | --- |
@@ -1123,7 +1132,8 @@ biệt hoa thường, nên `getRun("run_a")` từng trả về lượt chạy c�
 kho file đối chiếu `id` khi đọc và nổ đích danh khi lưu đụng file của id khác.
 
 Chạy test MySQL cục bộ: `colima start`, rồi
-`docker run -d --name ghe1a-mariadb-test -e MARIADB_ROOT_PASSWORD=test -e MARIADB_DATABASE=ghe1a_test -p 33306:3306 mariadb:11.4`.
+`docker run -d --name ghe1a-mariadb-test -e MARIADB_ROOT_PASSWORD=test -e MARIADB_DATABASE=ghe1a_test -p 33306:3306 mariadb:11.8`,
+rồi đặt `sql_mode`/`collation_server` như production (xem `ci.yml`).
 CI (`.github/workflows/ci.yml`) chạy MariaDB như service và NỔ nếu thiếu
 `RECO_TEST_MYSQL_URL`, để backend production không bao giờ lặng lẽ bị bỏ qua.
 
