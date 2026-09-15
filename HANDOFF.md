@@ -18,7 +18,7 @@ Tài liệu module: [`src/lib/recommendation/README.md`](src/lib/recommendation/
 | 2 | Hồ sơ người dùng, thẻ, số dư, goals | ✅ |
 | 3 | Engine (Portfolio Analyzer → Ranking) | ✅ |
 | 4 | `recommendation_runs` + Debugger + Test A–J | ✅ |
-| 5 | **Frontend UX** | ⬅️ **ĐANG LÀM** trên nhánh `wt/reco-phase5`. Database đã chốt (§3); kho MySQL + CI xong (§4 việc 1–3). Phán quyết cuối Phase 4: **READY FOR PHASE 5 WITH KNOWN RISKS** (§7) |
+| 5 | **Frontend UX** | ⬅️ **ĐANG LÀM**. Database đã chốt và đã tạo (§3); kho MySQL + CI đã merge `main` 15/09/2026 (§4 việc 1–3). Phán quyết cuối Phase 4: **READY FOR PHASE 5 WITH KNOWN RISKS** (§7) |
 | 6 | LLM giải thích | ⛔ |
 
 Phase 4: **đã merge vào `main` ngày 13/09/2026** (nhánh `wt/reco-phase4`,
@@ -138,7 +138,7 @@ dùng công cụ/tháng × ~5 lượt chạy):
 
 **Đừng đề xuất đổi lại** — user đã so và chốt.
 
-Đã làm (nhánh `wt/reco-phase5`): `mysql.ts` (pool, schema, migration tự chạy),
+Đã làm (merge `main` 15/09/2026): `mysql.ts` (pool, schema, migration tự chạy),
 `run-store-mysql.ts`, `user-store-mysql.ts`, cửa ghi `UserStateStore` trong
 `user-source.ts`, `stores.test.ts` chạy MỌI bài hợp đồng trên MỌI backend. Chi
 tiết + năm quyết định thiết kế: README module, mục "Phase 5".
