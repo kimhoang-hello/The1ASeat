@@ -18,7 +18,7 @@ Tài liệu module: [`src/lib/recommendation/README.md`](src/lib/recommendation/
 | 2 | Hồ sơ người dùng, thẻ, số dư, goals | ✅ |
 | 3 | Engine (Portfolio Analyzer → Ranking) | ✅ |
 | 4 | `recommendation_runs` + Debugger + Test A–J | ✅ |
-| 5 | **Frontend UX** | ⬅️ **ĐANG LÀM**. Database đã chốt và đã tạo (§3); kho MySQL + CI đã merge `main` 15/09/2026 (§4 việc 1–3). Phán quyết cuối Phase 4: **READY FOR PHASE 5 WITH KNOWN RISKS** (§7) |
+| 5 | **Frontend UX** | ⬅️ **ĐANG LÀM**. Database đã chốt và đã tạo (§3); kho MySQL + CI đã merge `main` 15/09/2026; trang gợi ý `/credit-cards/goi-y` dựng xong 16/09/2026 trên `wt/reco-phase5`, còn sau cờ `RECOMMENDER_PUBLISHED` (§4 việc 1–4, 6). Phán quyết cuối Phase 4: **READY FOR PHASE 5 WITH KNOWN RISKS** (§7) |
 | 6 | LLM giải thích | ⛔ |
 
 Phase 4: **đã merge vào `main` ngày 13/09/2026** (nhánh `wt/reco-phase4`,
@@ -185,6 +185,40 @@ trang quyết định chạy-không-lưu hay báo lỗi.
    `ENGINE_VERSION`, chạy lại bản chụp, và cân nhắc một vòng Codex: các bản vá
    vòng 21 và buổi diễn tập chưa được Codex kiểm lại (§1).
 
+### Trang gợi ý — đã dựng (16/09/2026)
+
+`/credit-cards/goi-y`, sau cờ `RECOMMENDER_PUBLISHED` (còn `false`: noindex +
+dải báo nháp, không link từ đâu). Code ở `src/lib/recommender/` (thuần, có
+test) và `src/components/recommender/` + `src/app/credit-cards/goi-y/`.
+
+| File | Vai trò |
+| --- | --- |
+| `questions.ts` | Một chỗ trống của engine → một câu hỏi tiếng Việt; `applyAnswerChecked` áp câu trả lời RỒI kiểm validator |
+| `copy.ts` | Mã lý do/cảnh báo/thành phần điểm → câu tiếng Việt (`Record`, thiếu là lỗi biên dịch) |
+| `present.ts` | Bản ghi §20 → nội dung trang; `answeredRows` là bảng "mình dựa vào những gì", mỗi dòng sửa được |
+| `follow-up.ts` | "Bỏ qua" gọi lại CHÍNH `nextQuestion` của engine với danh sách đã lọc |
+| `session.ts` | Cookie ẩn danh 128 bit → hồ sơ + mọi lượt chạy trong MySQL |
+| `path.ts` | Đặt chỗ slug `goi-y` (canh ở build + `check-rebates`, như `so-sanh`) |
+
+Quyết định đáng nhớ:
+
+- **Không có bảng câu hỏi cố định.** Trang hỏi đúng `run.followUp`; thứ tự là
+  việc của §30. Câu GÁC CỔNG hỏi trước khi hiện kết quả, câu còn lại hiện cạnh
+  kết quả.
+- **Server Action + form thuần**, chạy được khi không có JavaScript.
+- **Khoá câu hỏi đi ra URL mang `:toi`**, không mang id phiên — id đó là bearer
+  token của cả hồ sơ.
+- **Cờ affiliate đọc từ link sắp render**, không từ bản chụp; thứ tự và lý do
+  thì lấy nguyên từ bản ghi (test đổi cờ affiliate của mọi thẻ và đòi trang
+  nói y hệt).
+- **Mỗi lần trả lời = một lượt chạy được lưu**; `runId` hiện dưới mỗi kết quả
+  để một khiếu nại tra được bằng `reco:debug`.
+
+Còn lại của Phase 5: gắn lối vào (trang thẻ, `/bat-dau`, ô tìm kiếm), event
+GA4 cho phễu (mới chỉ có `apply_clicked` với `placement=recommender_primary`),
+đăng nhập admin trước khi bật `RECO_DEBUGGER` (§4 việc 5), và kiểm CDN trước
+khi bật cờ.
+
 ### Phạm vi
 
 adaptive questionnaire · result page · alternatives · warnings · confidence ·
@@ -328,6 +362,8 @@ stage theo đường dẫn cụ thể.
 | Chỗ | Ảnh hưởng |
 | --- | --- |
 | Database production chưa tạo | Kho MySQL đã viết + test trên MariaDB 11.4; phiên bản Hostinger chưa kiểm — xem §3 "Còn chờ user" |
+| Cookie "đã bỏ qua" có trần 64 câu | Hồ sơ nhiều thẻ đã đóng + đủ hạng mục chi tiêu có thể sinh tới 79 câu hỏi được; từ câu 65 câu cũ bị đẩy ra và có thể được hỏi lại. Cookie khi đó ~3,3 KB (trần trình duyệt 4 KB). Chưa gặp ở người dùng thật — Codex vòng 2 nêu, cố ý không dựng thêm hạ tầng |
+| `x-forwarded-for` giả được | Trần tạo hồ sơ mới theo IP có thể bị lách; đã thêm trần chung cho cả site (500/giờ). Không có gì chống được bot có chủ đích ngoài hai trần đó |
 | Xoá dữ liệu theo yêu cầu người dùng | Kho lượt chạy CHỈ THÊM và chép nguyên trạng thái người dùng; chưa có đường xoá một người. Hồ sơ không có tên/email nên rủi ro thấp, nhưng Phase 5 phải quyết trước khi mở đăng nhập |
 | Award chart phủ 3/4 cặp vùng | `CANADA_US → EUROPE` còn trống; `flexiblePointsSufficient` bay châu Âu nên Test H phải dựng lại trên chặng Nhật |
 | Percentile lịch sử gần như luôn `null` | Nhật ký từ 29/08/2026; §12 hiện là tín hiệu chết — Test I dùng lịch sử tổng hợp |
