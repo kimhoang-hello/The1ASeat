@@ -1667,14 +1667,22 @@ contentful-write` trả rỗng, trong khi `gh secret list` (cấp repo) chỉ th
 `EXPIRE_OFFERS_SECRET`/`SYNC_VIDEOS_SECRET`. Workflow chạy đúng (checkout,
 `npm ci`, vào tới bước gọi script) nhưng cả ba biến môi trường đều RỖNG, nên
 `scripts/check-rebates.mts` thoát ngay ở dòng kiểm biến môi trường đầu tiên.
-Đã xảy ra ở MỌI lượt chạy theo lịch từ 10/09/2026 13:04 UTC (5/5 lượt liên
-tiếp tính tới 12/09/2026 12:19 UTC) — tức audit rebate thẻ tín dụng VÀ
-`bestCardsProseDrift()` (cũng chạy trong route này) không thực sự chạy qua CI
-suốt ~3 ngày, dù chạy tay bằng `.env.local` (như lượt kiểm toàn diện này) vẫn
-cho kết quả sạch. KHÔNG tự sửa bằng cách đẩy giá trị từ `.env.local` vào
-`gh secret set --env` — đó là thay đổi cấu hình bảo mật của GitHub, không phải
-sửa code, và nằm ngoài phạm vi tự động được cho phép. Cần bạn vào GitHub
-(Settings → Environments → `contentful-write`) thêm lại ba secret đó.
+Đã xảy ra ở MỌI lượt chạy theo lịch từ 10/09/2026 13:04 UTC tới 15/09/2026
+22:59 UTC (mọi lượt liên tiếp trong khoảng đó) — tức audit rebate thẻ tín dụng
+VÀ `bestCardsProseDrift()` (cũng chạy trong route này) không thực sự chạy qua
+CI suốt ~5 ngày rưỡi, dù chạy tay bằng `.env.local` vẫn cho kết quả sạch.
+
+**Đã sửa 15/09/2026.** Lúc phát hiện, mình (Claude) không tự set secret vì đó
+là thay đổi cấu hình bảo mật GitHub; đã báo lại và hỏi trước. Bạn xác nhận cho
+làm luôn (`gh` CLI đã đăng nhập sẵn với quyền `repo`, không cần đăng nhập
+thêm) — đã set cả ba secret vào environment `contentful-write` bằng `gh secret
+set --env`, giá trị đọc từ `.env.local`, không in ra terminal/log. Chạy tay
+`gh workflow run check-rebates.yml` xác nhận job xanh trở lại (26s, kiểm 10
+thẻ, không lệch số nào). **Bài học cho lần dựng environment tiếp theo:** tạo
+environment với branch policy KHÔNG tự động có nghĩa là secret đã ở trong đó —
+đây là hai bước riêng, và bước sau (thêm secret) đã bị bỏ sót hôm 09/09/2026
+lúc dựng. Sau khi tạo một environment mới, luôn `gh secret list --env <tên>`
+để xác nhận secret thực sự nằm trong đó trước khi coi là xong.
 
 ## Đo đạc GA4 (13/09/2026) — đừng đề xuất lại
 
