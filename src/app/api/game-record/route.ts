@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 
+import { bodyTooLarge } from "@/lib/rate-limit";
 import {
   GAME_RECORD_TAG,
   MAX_NAME_LENGTH,
@@ -58,6 +59,12 @@ export async function GET() {
  * chặn thật sự, không phụ thuộc vào việc đoán đúng header.
  */
 const WRITES_PER_TOKEN = 3;
+// Payload chỉ có token (~70 ký tự), điểm và tên (≤ MAX_NAME_LENGTH SAU khi
+// dọn — chuỗi THÔ trước khi dọn thì không có trần, xem `cleanPlayerName`).
+// Đây là lớp chặn body lớn DUY NHẤT của route này: parse xảy ra ở dòng đầu
+// `POST`, TRƯỚC cả hai lớp rate limit bên dưới — xem `bodyTooLarge` trong
+// lib/rate-limit.ts.
+const MAX_BODY_BYTES = 4 * 1024;
 /** Trần cứng cho bảng đếm token. Vượt trần thì bỏ những mục hết hạn trước, còn
  *  thiếu thì bỏ luôn mục sắp hết hạn nhất — mất vài phép đếm còn hơn để một
  *  vòng bơm token đẩy tiến trình tới hết bộ nhớ. */
@@ -161,6 +168,10 @@ function serialize<T>(work: () => Promise<T>): Promise<T> {
 
 export async function POST(request: NextRequest) {
   const now = Date.now();
+
+  if (bodyTooLarge(request, MAX_BODY_BYTES)) {
+    return NextResponse.json({ message: "bad_json" }, { status: 413 });
+  }
 
   let body: unknown;
   try {

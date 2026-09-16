@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { bodyTooLarge, clientIp, rateLimit } from "@/lib/rate-limit";
 import { emailParagraphStyle, escapeHtml } from "@/lib/subscriber-email";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -13,6 +13,10 @@ const MAX_MESSAGE = 5000;
 
 const LIMIT = 5;
 const WINDOW_MS = 60 * 60 * 1000;
+
+// Rộng rãi cho MAX_MESSAGE (5000 ký tự, tới 4 byte/ký tự UTF-8) cộng các
+// field khác và overhead JSON — xem `bodyTooLarge` trong lib/rate-limit.ts.
+const MAX_BODY_BYTES = 32 * 1024;
 
 /**
  * Hạn giờ cho lượt gọi Resend. `fetch` không có timeout mặc định, nên Resend
@@ -55,6 +59,10 @@ export async function POST(request: Request) {
       { error: "rate_limited" },
       { status: 429, headers: { "Retry-After": String(limit.retryAfter) } },
     );
+  }
+
+  if (bodyTooLarge(request, MAX_BODY_BYTES)) {
+    return NextResponse.json({ error: "invalid_body" }, { status: 413 });
   }
 
   let body: unknown;

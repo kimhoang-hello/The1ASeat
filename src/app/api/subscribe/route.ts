@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { clientIp, emailKey, rateLimit } from "@/lib/rate-limit";
+import { bodyTooLarge, clientIp, emailKey, rateLimit } from "@/lib/rate-limit";
 import { SITE_URL, emailParagraphStyle, renderSubscriberEmailHtml } from "@/lib/subscriber-email";
 import { START_HERE_PUBLISHED } from "@/lib/feature-flags";
 
@@ -9,6 +9,10 @@ const MAX_EMAIL_LENGTH = 254; // RFC 5321
 // second address for the family, and nothing beyond that.
 const LIMIT = 5;
 const WINDOW_MS = 60 * 60 * 1000;
+
+// Payload chỉ có một địa chỉ email (tối đa MAX_EMAIL_LENGTH) — xem
+// `bodyTooLarge` trong lib/rate-limit.ts.
+const MAX_BODY_BYTES = 2 * 1024;
 
 /**
  * Xô thứ hai, khoá theo ĐỊA CHỈ ĐÍCH thay vì theo IP.
@@ -56,6 +60,10 @@ export async function POST(request: Request) {
       { error: "rate_limited" },
       { status: 429, headers: { "Retry-After": String(limit.retryAfter) } },
     );
+  }
+
+  if (bodyTooLarge(request, MAX_BODY_BYTES)) {
+    return NextResponse.json({ error: "invalid_body" }, { status: 413 });
   }
 
   let email: unknown;
