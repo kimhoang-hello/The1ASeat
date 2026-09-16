@@ -39,6 +39,7 @@ import { mysqlUserStore } from "@/lib/recommendation/user-store-mysql";
 import { recoDatabaseFromEnv } from "@/lib/recommendation/mysql";
 import { UserStateConflictError, type StoredUserState } from "@/lib/recommendation/user-source";
 import { rateLimit } from "@/lib/rate-limit";
+import { mysqlExplanationStore, type ExplanationStore } from "@/lib/recommender/explain-store";
 
 export const USER_COOKIE = "g1a_reco";
 export const SKIP_COOKIE = "g1a_reco_skip";
@@ -269,4 +270,33 @@ export async function runForDisplay(
     }
   }
   return runAndSave(userId, stored.state);
+}
+
+/* ------------------------------------------------------------------ *
+ * Lời giải thích Phase 6
+ * ------------------------------------------------------------------ */
+
+/**
+ * Trần gọi Claude cho lời giải thích.
+ *
+ * Mỗi lượt chạy chỉ cần MỘT lần gọi (bản đã lưu được đọc lại), nên trần theo
+ * lượt chạy chỉ chặn vòng lặp F5 khi mô hình đang lỗi đường truyền — lỗi đó
+ * không được lưu nên mỗi lần mở trang lại thử. Trần chung giới hạn hoá đơn khi
+ * có ai bấm hàng loạt: quá trần thì trang dùng bảng tra, không ai thấy lỗi.
+ */
+const EXPLAIN_CALLS_PER_RUN_PER_HOUR = 3;
+const EXPLAIN_CALLS_SITE_WIDE_PER_HOUR = 300;
+
+export function explanationStore(): ExplanationStore | null {
+  const db = recoDatabaseFromEnv();
+  return db === null ? null : mysqlExplanationStore(db);
+}
+
+export function allowExplanationCall(runId: string): boolean {
+  // Trần chung kiểm SAU trần theo lượt chạy: lượt đã bị chặn không được ăn vào
+  // phần của người khác.
+  return (
+    rateLimit(`reco:explain:${runId}`, EXPLAIN_CALLS_PER_RUN_PER_HOUR, 60 * 60 * 1000).ok &&
+    rateLimit("reco:explain:all", EXPLAIN_CALLS_SITE_WIDE_PER_HOUR, 60 * 60 * 1000).ok
+  );
 }

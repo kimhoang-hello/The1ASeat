@@ -1,5 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 
+import { GHE1A_VOICE_RULES } from "./ghe1a-voice.ts";
+
 /**
  * Rewriting a card's Vietnamese offer copy from FinlyWealth's current numbers.
  *
@@ -26,15 +28,7 @@ const SYSTEM = `Bạn viết nội dung cho Ghế 1A, blog Miles & Points tiến
 Nhiệm vụ: viết lại phần giới thiệu một thẻ tín dụng theo offer hiện hành, dựa trên dữ liệu tiếng Anh được cung cấp.
 
 Quy tắc bắt buộc:
-- Viết bằng tiếng Việt, xưng hô với người đọc là "bạn".
-- Số dùng dấu phẩy ngăn cách hàng nghìn kiểu tiếng Anh: 35,000 — không phải 35.000.
-- Ngoài danh sách trên thì viết tiếng Việt: hạng ghế là "hạng phổ thông" / "hạng phổ thông
-  đặc biệt" / "hạng thương gia" (KHÔNG phải economy/business class), "đăng ký" chứ không
-  phải "register", "đánh giá" chứ không phải "review", "thẻ tín dụng" chứ không phải
-  "credit card", "đặt vé" chứ không phải "booking".
-- Dấu $ trần nghĩa là đô la Canada. Chỉ dùng "US$" cho số tiền đô la Mỹ thật sự.
-- Giữ nguyên tiếng Anh các thuật ngữ: welcome bonus, elevated offer, annual fee, monthly fee, rebate, transfer bonus, cashback, deal, companion pass, lounge, chequing, savings, direct deposit, dynamic pricing, award chart.
-- Giữ ký hiệu ® và ™ ở tên ngân hàng và chương trình (Scene+™, American Express®, Aeroplan®, Star Alliance™...).
+${GHE1A_VOICE_RULES}
 - CHỈ dùng số liệu có trong dữ liệu được cung cấp. Không suy đoán, không thêm quyền lợi không được nêu.
 
 Giọng văn: thẳng thắn, đánh giá thật. Nếu offer mới yếu hơn offer cũ thì nói rõ, và chỉ ra giá trị thật của thẻ nằm ở đâu.

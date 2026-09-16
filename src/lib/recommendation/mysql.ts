@@ -197,6 +197,32 @@ export const MIGRATIONS: readonly Migration[] = [
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin`,
     ],
   },
+  {
+    id: 2,
+    name: "lời giải thích Phase 6 (§28) — câu đã hiện, theo lượt chạy",
+    statements: [
+      // Một dòng cho mỗi (lượt chạy, mục tiêu, payload) — payload đổi khi offer
+      // trên Contentful đổi trong ngày, xem `explainPrimaryAction`. `body` là
+      // bản ghi nguyên vẹn (payload gửi đi, JSON nhận về, câu đã hiện); các cột
+      // còn lại là bản sao để lọc. Vài KB một dòng — không nén.
+      //
+      // Khoá ngoại tới `reco_runs`: một lời giải thích không có lượt chạy đứng
+      // sau là một câu không tra ngược được về quyết định nó kể lại.
+      `CREATE TABLE IF NOT EXISTS reco_explanations (
+        run_id VARCHAR(128) ${KEY} NOT NULL,
+        goal_index TINYINT UNSIGNED NOT NULL,
+        payload_fingerprint VARCHAR(64) ${KEY} NOT NULL,
+        status VARCHAR(16) NOT NULL,
+        model VARCHAR(64) NOT NULL,
+        prompt_version VARCHAR(32) NOT NULL,
+        created_at VARCHAR(40) NOT NULL,
+        body MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+        inserted_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (run_id, goal_index, payload_fingerprint),
+        CONSTRAINT reco_explanations_run FOREIGN KEY (run_id) REFERENCES reco_runs (id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin`,
+    ],
+  },
 ];
 
 const LOCK = "ghe1a_reco_migrate";

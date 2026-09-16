@@ -28,7 +28,7 @@ import { productIdFor } from "./data/products.ts";
 import { USER_FIXTURES, aeroplanHeavy, vietnamTripFunded } from "./data/user-fixtures.ts";
 import { canonicalJson, fingerprint } from "./fingerprint.ts";
 import type { PoolOptions } from "mysql2/promise";
-import { mysqlConfigFromEnv, openRecoDatabase, type RecoDatabase } from "./mysql.ts";
+import { MIGRATIONS, mysqlConfigFromEnv, openRecoDatabase, type RecoDatabase } from "./mysql.ts";
 import type { OfferHistoryPoint } from "./offer-history.ts";
 import { inMemoryRunStore, persistRun, summarize, type RunStore } from "./run-store.ts";
 import { fileRunStore } from "./run-store-fs.ts";
@@ -450,7 +450,12 @@ test("MySQL — migration chạy lại được: lần hai không đổi gì, l�
   try {
     await again.ready();
     const [rows] = await again.pool.query("SELECT id FROM reco_schema_migrations ORDER BY id");
-    assert.deepEqual((rows as Array<{ id: number }>).map((row) => Number(row.id)), [1]);
+    // Mọi migration, không phải một danh sách viết tay: thêm migration mới thì
+    // bài này phải kiểm luôn nó chạy lại được.
+    assert.deepEqual(
+      (rows as Array<{ id: number }>).map((row) => Number(row.id)),
+      MIGRATIONS.map((migration) => migration.id),
+    );
     assert.deepEqual(await mysqlUserStore(again).getUserState(vietnamTripFunded.profile.id), normalized(vietnamTripFunded));
   } finally {
     await again.close();

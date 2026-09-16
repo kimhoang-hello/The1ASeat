@@ -349,3 +349,25 @@ export const CONFIDENCE_REASON: Record<
   goalSpecificity: "vì mục tiêu còn chung chung",
   scoreSeparation: "vì hai lựa chọn đầu gần như ngang nhau",
 };
+
+/**
+ * Bốn cách "chưa mở thẻ" thắng, bốn câu khác nhau.
+ *
+ * `nothing_fits` là ca dễ nói sai nhất: người dùng đặt ngưỡng phí $0 và thu
+ * nhập chưa tới ngưỡng thẻ nào — ví họ KHÔNG đủ gì cả, nên câu "ví bạn đã đủ"
+ * vừa sai vừa làm họ tưởng không cần làm gì nữa.
+ *
+ * Nằm ở đây chứ không trong component: lời giải thích Phase 6 đưa CHÍNH câu
+ * này cho Claude làm dữ kiện, nên trang và prompt không được giữ hai bản.
+ */
+export const NO_CARD_SENTENCE: Record<string, string> = {
+  points_sufficient:
+    "Số điểm bạn đang có đã đủ cho mục tiêu này — mở thêm thẻ lúc này không rút ngắn được gì.",
+  portfolio_covers:
+    "Ví hiện tại của bạn đã che được nhu cầu này, nên thẻ mới không thêm được bao nhiêu.",
+  offers_weak:
+    "Offer của những thẻ đáng mở đang ở vùng thấp — đợi thêm một thời gian thì được nhiều hơn.",
+  nothing_fits:
+    "Chưa thẻ nào vừa với điều kiện bạn đặt ra (ngưỡng phí, điều kiện của ngân hàng). Nới một trong hai là danh sách mở ra ngay.",
+  default: "Mở thêm thẻ lúc này chưa mang lại gì đáng kể cho mục tiêu của bạn.",
+};

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { getCreditCardOffers } from "@/lib/content";
 import { RECOMMENDER_PUBLISHED } from "@/lib/feature-flags";
@@ -16,8 +17,9 @@ import {
 } from "@/lib/recommender/session";
 import { resetRecommendation } from "@/app/credit-cards/goi-y/actions";
 import { PageHeader } from "@/components/layout/page-header";
+import { ExplainedWhy } from "@/components/recommender/explanation";
 import { QuestionCard } from "@/components/recommender/question-card";
-import { Result } from "@/components/recommender/result";
+import { DeterministicWhy, Result } from "@/components/recommender/result";
 import { StartPanel } from "@/components/recommender/start-panel";
 import { JsonLd } from "@/components/seo/json-ld";
 import { breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
@@ -227,7 +229,18 @@ async function Body({ editKey }: { editKey: string | null }) {
   const upfront = question !== null && followUp !== null && asksForAttention(followUp);
 
   return (
-    <Result view={view} answered={answeredRows(stored.state, dataset)}>
+    <Result
+      view={view}
+      answered={answeredRows(stored.state, dataset)}
+      // Phase 6: lời giải thích của Claude CHỈ thay khối "vì sao hợp". Kết quả,
+      // cảnh báo, độ chắc chắn, nút đăng ký đã hiện xong trước khi nó tới, và
+      // mọi nhánh hỏng của nó dựng lại đúng khối bảng tra (fallback).
+      why={
+        <Suspense fallback={<DeterministicWhy action={view.primary} />}>
+          <ExplainedWhy view={view} dataset={dataset} />
+        </Suspense>
+      }
+    >
       {question !== null &&
         (upfront ? (
           <QuestionCard

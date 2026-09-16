@@ -5,6 +5,7 @@ import { CheckCircle, Info, Warning } from "@phosphor-icons/react/ssr";
 import { resetRecommendation } from "@/app/credit-cards/goi-y/actions";
 import { ApplyButton } from "@/components/ui/apply-button";
 import type { ActionView, AnsweredRow, ResultView } from "@/lib/recommender/present";
+import { NO_CARD_SENTENCE } from "@/lib/recommender/copy";
 import { formatPoints, formatPointsRange } from "@/lib/recommender/present";
 
 /**
@@ -24,15 +25,22 @@ export function Result({
   view,
   answered,
   children,
+  why,
 }: {
   view: ResultView;
   answered: AnsweredRow[];
   /** Thẻ câu hỏi tiếp theo — trang quyết định có hay không. */
   children?: React.ReactNode;
+  /**
+   * Khối "vì sao hợp với bạn" thay cho bản bảng tra — Phase 6 truyền lời giải
+   * thích của Claude (bọc `<Suspense>`) vào đây. Vắng thì trang là trang Phase 5
+   * nguyên vẹn: đó là đường chạy khi không có LLM.
+   */
+  why?: React.ReactNode;
 }) {
   return (
     <div className="space-y-5">
-      <PrimaryCard action={view.primary} confidence={view.confidence} warnings={view.warnings} />
+      <PrimaryCard action={view.primary} confidence={view.confidence} warnings={view.warnings} why={why} />
 
       {view.trip && <TripNumbers trip={view.trip} />}
 
@@ -62,36 +70,18 @@ export function Result({
   );
 }
 
-/**
- * Bốn cách "chưa mở thẻ" thắng, bốn câu khác nhau.
- *
- * `nothing_fits` là ca dễ nói sai nhất: người dùng đặt ngưỡng phí $0 và thu
- * nhập chưa tới ngưỡng thẻ nào — ví họ KHÔNG đủ gì cả, nên câu "ví bạn đã đủ"
- * vừa sai vừa làm họ tưởng không cần làm gì nữa.
- */
-const NO_CARD_SENTENCE: Record<string, string> = {
-  points_sufficient:
-    "Số điểm bạn đang có đã đủ cho mục tiêu này — mở thêm thẻ lúc này không rút ngắn được gì.",
-  portfolio_covers:
-    "Ví hiện tại của bạn đã che được nhu cầu này, nên thẻ mới không thêm được bao nhiêu.",
-  offers_weak:
-    "Offer của những thẻ đáng mở đang ở vùng thấp — đợi thêm một thời gian thì được nhiều hơn.",
-  nothing_fits:
-    "Chưa thẻ nào vừa với điều kiện bạn đặt ra (ngưỡng phí, điều kiện của ngân hàng). Nới một trong hai là danh sách mở ra ngay.",
-  default: "Mở thêm thẻ lúc này chưa mang lại gì đáng kể cho mục tiêu của bạn.",
-};
-
 function PrimaryCard({
   action,
   confidence,
   warnings,
+  why,
 }: {
   action: ActionView;
   confidence: ResultView["confidence"];
   /** Nằm TRONG thẻ này, ngay trên nút đăng ký — không phải một khối ở dưới. */
   warnings: string[];
+  why?: React.ReactNode;
 }) {
-  const good = action.reasons.filter((row) => row.tone === "good");
   const rest = action.reasons.filter((row) => row.tone !== "good");
   return (
     <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
@@ -138,23 +128,7 @@ function PrimaryCard({
         </div>
       )}
 
-      {good.length > 0 && (
-        <ul className="mt-4 space-y-2">
-          {good.map((row) => (
-            <li key={row.text} className="flex gap-2 text-base leading-relaxed text-foreground/90">
-              <CheckCircle size={20} weight="fill" className="mt-0.5 shrink-0 text-emerald-600" />
-              {row.text}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {good.length === 0 && action.strengths.length > 0 && (
-        <p className="mt-4 text-base leading-relaxed text-foreground/90">
-          Thẻ này lên đầu nhờ {action.strengths.join(" và ")} — không phải nhờ một đặc điểm nổi bật
-          nào, mà nhờ tổng thể.
-        </p>
-      )}
+      {why ?? <DeterministicWhy action={action} />}
 
       {rest.length > 0 && (
         <ul className="mt-3 space-y-2">
@@ -240,6 +214,38 @@ function PrimaryCard({
       )}
     </section>
   );
+}
+
+/**
+ * "Vì sao hợp với bạn" bằng bảng tra — bản Phase 5, và là đường lui của Phase 6.
+ *
+ * Mọi nhánh hỏng của lời giải thích LLM (tắt, timeout, bị cửa kiểm từ chối,
+ * không lưu được) đều dựng lại ĐÚNG khối này, nên trang không bao giờ thiếu phần
+ * giải thích vì LLM.
+ */
+export function DeterministicWhy({ action }: { action: ActionView }) {
+  const good = action.reasons.filter((row) => row.tone === "good");
+  if (good.length > 0) {
+    return (
+      <ul className="mt-4 space-y-2">
+        {good.map((row) => (
+          <li key={row.text} className="flex gap-2 text-base leading-relaxed text-foreground/90">
+            <CheckCircle size={20} weight="fill" className="mt-0.5 shrink-0 text-emerald-600" />
+            {row.text}
+          </li>
+        ))}
+      </ul>
+    );
+  }
+  if (action.strengths.length > 0) {
+    return (
+      <p className="mt-4 text-base leading-relaxed text-foreground/90">
+        Thẻ này lên đầu nhờ {action.strengths.join(" và ")} — không phải nhờ một đặc điểm nổi bật
+        nào, mà nhờ tổng thể.
+      </p>
+    );
+  }
+  return null;
 }
 
 function AlternativeRow({ action }: { action: ActionView }) {
