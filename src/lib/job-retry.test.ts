@@ -38,7 +38,7 @@ test("4xx thì KHÔNG chạy lại — chạy lại mười lượt vẫn ra đ�
 test("FinlyWealth đổi markup thì KHÔNG chạy lại — cần người sửa rebateFromTitle", () => {
   assert.equal(isTransient(new Error("no <title> on the page")), false);
   assert.equal(
-    isTransient(new Error("no rebate in title: Scotiabank Gold American Express")),
+    isTransient(new Error("no rebate in title: Scotiabank Gold American Express®")),
     false,
   );
 });

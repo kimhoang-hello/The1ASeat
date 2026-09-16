@@ -628,9 +628,9 @@ export function recommend(input: RecommendInput): RecommendationRun {
         // thích của người đọc, nên một số 0 bịa ở đây là một câu sai về TIỀN.
         // Điểm nằm SẴN trong CHÍNH chương trình quyết định tỷ lệ phủ — cùng
         // lựa chọn với `accessiblePoints` và `pointsGapTypical`. Bản trước lấy
-        // cực đại qua mọi chương trình, nên in ra "có sẵn 190,400 (Asia
-        // Miles®) · tiếp cận 130,200 (AAdvantage®) · thiếu 9,800" — ba con số
-        // về hai chương trình khác nhau trong một câu (vòng Codex 6).
+        // cực đại qua mọi chương trình, nên in ra "có sẵn 190,400
+        // (Asia Miles®) · tiếp cận 130,200 (AAdvantage®) · thiếu 9,800" — ba
+        // con số về hai chương trình khác nhau trong một câu (vòng Codex 6).
         directPoints: (() => {
           const programId = covered?.bestProgram ?? null;
           if (programId === null) return null;

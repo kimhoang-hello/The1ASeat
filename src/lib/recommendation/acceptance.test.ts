@@ -1089,7 +1089,7 @@ test("'vì sao thẻ X' kể cả chặng chuyển của chương trình ĐẶT 
   const base = execute(beginnerNoCards).record;
   const { record, dataset } = execute(beginnerNoCards, { data });
   const cobalt = (r: RecommendationRunRecord) => ranking(r).find((row) => row.candidate.productSlug === "amex-cobalt")!.candidate.score;
-  assert.notEqual(cobalt(record), cobalt(base), "tiền đề: chặng Avios® đổi điểm của Cobalt");
+  assert.notEqual(cobalt(record), cobalt(base), "tiền đề: chặng Avios® đổi điểm của Cobalt®");
   const rows = explainProduct(record, "amex-cobalt", { dataset }).provenance ?? [];
   assert.ok(rows.some((row) => row.table === "transfer_paths" && row.id.startsWith("tp_test_avios_")));
 
