@@ -213,6 +213,25 @@ export const WARNING_TEXT: Record<WarningCode, string> = {
   CARDS_UNDECLARED: "Bạn chưa khai thẻ đang giữ, nên gợi ý có thể trùng thẻ bạn đã có.",
 };
 
+/**
+ * Mã lý do và mã cảnh báo nói CÙNG một chuyện.
+ *
+ * Engine cố ý phát cả hai (một cái giải thích thứ hạng, một cái là điều phải
+ * biết trước khi hành động), nhưng trên trang chúng thành hai câu gần giống
+ * nhau cách nhau ba dòng. Cảnh báo thắng: nó nằm trong khối "đọc kỹ trước khi
+ * đăng ký", đúng chỗ người đọc cần thấy.
+ */
+export const REASON_COVERED_BY_WARNING: Partial<Record<ReasonCode, WarningCode>> = {
+  ELIGIBILITY_UNCERTAIN: "ELIGIBILITY_NOT_VERIFIABLE",
+  WELCOME_BONUS_UNAVAILABLE: "WELCOME_BONUS_BLOCKED_BY_PAST_CARD",
+  WELCOME_BONUS_UNCERTAIN: "WELCOME_BONUS_NOT_VERIFIABLE",
+  MIN_SPEND_TOO_HIGH: "SPEND_REQUIREMENT_LIKELY_UNSUITABLE",
+  ANNUAL_FEE_ABOVE_TOLERANCE: "ANNUAL_FEE_ABOVE_STATED_TOLERANCE",
+  AWARD_PRICE_IS_FLOOR_ONLY: "AWARD_PRICE_FLOOR_ONLY",
+  TRIP_ROUTE_NOT_PRICED: "AWARD_ROUTE_NOT_IN_DATASET",
+  OFFER_TERMS_UNKNOWN: "OFFER_TERMS_INCOMPLETE",
+};
+
 /** Cách tiếp cận (§8) — hiện ở phần "cách tính" cho người đọc kỹ. */
 export const STRATEGY_TEXT: Record<StrategyType, string> = {
   USE_EXISTING_POINTS: "Dùng số điểm đang có",
@@ -281,6 +300,36 @@ export const CONFIDENCE_LABEL: Record<ConfidenceLevel, string> = {
   high: "Chắc chắn",
   medium: "Tương đối chắc",
   low: "Còn nhiều chỗ chưa chắc",
+};
+
+/**
+ * Nhãn độ chắc chắn theo NGUYÊN NHÂN, không theo mức.
+ *
+ * Mức một mình nói sai: hai thẻ hay nhất chênh nhau 0.02 điểm cũng kéo độ tin
+ * cậy xuống `low`, và người đọc thấy "Còn nhiều chỗ chưa chắc" thì hiểu là
+ * công cụ không biết gì — trong khi sự thật là CẢ HAI đều tốt. Một trạng thái
+ * tốt bị viết như một lời thú nhận.
+ */
+export const CONFIDENCE_BY_CAUSE: Record<
+  "dataCompleteness" | "dataFreshness" | "goalSpecificity" | "scoreSeparation",
+  { label: string; sentence: string }
+> = {
+  scoreSeparation: {
+    label: "Hai lựa chọn ngang nhau",
+    sentence: "Thẻ đứng đầu và thẻ kế tiếp gần như ngang điểm — chọn cái nào cũng hợp lý.",
+  },
+  dataCompleteness: {
+    label: "Còn thiếu thông tin",
+    sentence: "Trả lời thêm vài câu là gợi ý này chắc hơn hẳn.",
+  },
+  dataFreshness: {
+    label: "Dữ liệu cần kiểm lại",
+    sentence: "Vài dòng dữ liệu đã lâu chưa kiểm lại, nên đối chiếu với trang của ngân hàng trước khi đăng ký.",
+  },
+  goalSpecificity: {
+    label: "Mục tiêu còn chung chung",
+    sentence: "Nói rõ hơn bạn muốn gì (chuyến bay nào, loại điểm nào) thì mình chọn sát hơn.",
+  },
 };
 
 /**

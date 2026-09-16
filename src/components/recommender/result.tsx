@@ -32,23 +32,7 @@ export function Result({
 }) {
   return (
     <div className="space-y-5">
-      <PrimaryCard action={view.primary} confidence={view.confidence} />
-
-      {view.warnings.length > 0 && (
-        <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
-          <h2 className="flex items-center gap-2 font-display text-lg font-bold text-foreground">
-            <Warning size={20} weight="bold" className="text-amber-700" />
-            Lưu ý trước khi quyết định
-          </h2>
-          <ul className="mt-3 space-y-2">
-            {view.warnings.map((warning) => (
-              <li key={warning} className="text-base leading-relaxed text-foreground/90">
-                {warning}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <PrimaryCard action={view.primary} confidence={view.confidence} warnings={view.warnings} />
 
       {view.trip && <TripNumbers trip={view.trip} />}
 
@@ -78,12 +62,34 @@ export function Result({
   );
 }
 
+/**
+ * Bốn cách "chưa mở thẻ" thắng, bốn câu khác nhau.
+ *
+ * `nothing_fits` là ca dễ nói sai nhất: người dùng đặt ngưỡng phí $0 và thu
+ * nhập chưa tới ngưỡng thẻ nào — ví họ KHÔNG đủ gì cả, nên câu "ví bạn đã đủ"
+ * vừa sai vừa làm họ tưởng không cần làm gì nữa.
+ */
+const NO_CARD_SENTENCE: Record<string, string> = {
+  points_sufficient:
+    "Số điểm bạn đang có đã đủ cho mục tiêu này — mở thêm thẻ lúc này không rút ngắn được gì.",
+  portfolio_covers:
+    "Ví hiện tại của bạn đã che được nhu cầu này, nên thẻ mới không thêm được bao nhiêu.",
+  offers_weak:
+    "Offer của những thẻ đáng mở đang ở vùng thấp — đợi thêm một thời gian thì được nhiều hơn.",
+  nothing_fits:
+    "Chưa thẻ nào vừa với điều kiện bạn đặt ra (ngưỡng phí, điều kiện của ngân hàng). Nới một trong hai là danh sách mở ra ngay.",
+  default: "Mở thêm thẻ lúc này chưa mang lại gì đáng kể cho mục tiêu của bạn.",
+};
+
 function PrimaryCard({
   action,
   confidence,
+  warnings,
 }: {
   action: ActionView;
   confidence: ResultView["confidence"];
+  /** Nằm TRONG thẻ này, ngay trên nút đăng ký — không phải một khối ở dưới. */
+  warnings: string[];
 }) {
   const good = action.reasons.filter((row) => row.tone === "good");
   const rest = action.reasons.filter((row) => row.tone !== "good");
@@ -96,10 +102,12 @@ function PrimaryCard({
 
       <p className="mt-2 text-base leading-relaxed text-foreground/90">
         {action.kind === "no_new_card"
-          ? "Ví hiện tại của bạn đã đủ cho mục tiêu này — mở thêm thẻ lúc này không đổi được gì đáng kể."
-          : action.minSpendPer90Days === null
-            ? "Mở thẻ này là bước đáng làm tiếp theo."
-            : `Mở thẻ này, rồi chi khoảng $${action.minSpendPer90Days.toLocaleString("en-US")} trong 3 tháng đầu để nhận trọn welcome bonus.`}
+          ? NO_CARD_SENTENCE[action.noCardReason ?? "default"]
+          : action.welcomeBonusBlocked
+            ? "Mở thẻ này cho tỷ lệ tích điểm và quyền lợi của nó — welcome bonus thì bạn không nhận được nữa, vì đã từng giữ thẻ."
+            : action.minSpendPer90Days === null
+              ? "Mở thẻ này là bước đáng làm tiếp theo."
+              : `Mở thẻ này, rồi chi khoảng $${action.minSpendPer90Days.toLocaleString("en-US")} trong 3 tháng đầu để nhận trọn welcome bonus.`}
       </p>
 
       {action.kind === "open_card" && (
@@ -114,7 +122,7 @@ function PrimaryCard({
             />
           )}
           <dl className="grid flex-1 grid-cols-2 gap-3 text-sm">
-            {action.welcomeBonus && (
+            {action.welcomeBonus && !action.welcomeBonusBlocked && (
               <div>
                 <dt className="text-muted-foreground">Welcome bonus</dt>
                 <dd className="font-semibold text-foreground">{action.welcomeBonus}</dd>
@@ -159,12 +167,6 @@ function PrimaryCard({
         </ul>
       )}
 
-      {action.eligibilityUncertain && (
-        <p className="mt-3 text-sm text-muted-foreground">
-          Mình chưa kiểm được hết điều kiện của ngân hàng — ngân hàng vẫn là bên quyết định duyệt.
-        </p>
-      )}
-
       {action.kind === "no_new_card" && (
         <ul className="mt-4 space-y-2 text-base leading-relaxed text-foreground/90">
           <li>
@@ -186,6 +188,22 @@ function PrimaryCard({
             — chuyển điểm đúng đợt khuyến mãi lợi hơn mở thêm thẻ.
           </li>
         </ul>
+      )}
+
+      {warnings.length > 0 && (
+        <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
+          <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-amber-900">
+            <Warning size={18} weight="bold" />
+            Đọc kỹ trước khi đăng ký
+          </p>
+          <ul className="mt-2 space-y-1.5">
+            {warnings.map((warning) => (
+              <li key={warning} className="text-base leading-relaxed text-amber-950">
+                {warning}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       <p className="mt-4 text-sm text-muted-foreground">
@@ -266,10 +284,15 @@ function TripNumbers({ trip }: { trip: NonNullable<ResultView["trip"]> }) {
         {trip.passengers ? `, ${trip.passengers} người` : ""}
         {trip.roundTrip === null ? "" : trip.roundTrip ? ", khứ hồi" : ", một chiều"}.
       </p>
-      {nothingKnown ? (
+      {trip.routeNotPriced ? (
         <p className="mt-3 text-base leading-relaxed text-foreground/80">
-          Mình chưa tính được số điểm cần vì còn thiếu{" "}
-          {trip.missing.map((row) => row.label).join(", ")}.
+          Chặng này chưa có trong award chart của site, nên mình chưa nói được nó tốn bao nhiêu
+          điểm — trả lời thêm câu nào cũng không ra con số. Gợi ý thẻ bên trên vẫn dựa trên loại
+          điểm bạn sẽ cần.
+        </p>
+      ) : nothingKnown ? (
+        <p className="mt-3 text-base leading-relaxed text-foreground/80">
+          Mình chưa tính được số điểm cần vì còn thiếu <MissingLinks trip={trip} />.
         </p>
       ) : (
       <dl className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -296,30 +319,37 @@ function TripNumbers({ trip }: { trip: NonNullable<ResultView["trip"]> }) {
         </div>
       </dl>
       )}
-      {trip.missing.length > 0 && (
+      {!nothingKnown && trip.missing.length > 0 && !trip.routeNotPriced && (
         <p className="mt-3 text-sm text-muted-foreground">
-          Trả lời thêm{" "}
-          {trip.missing.map((row, index) => (
-            <span key={row.questionKey}>
-              {index > 0 && ", "}
-              <Link
-                href={`/credit-cards/goi-y?sua=${encodeURIComponent(row.questionKey)}`}
-                className="font-semibold text-primary underline underline-offset-4"
-              >
-                {row.label}
-              </Link>
-            </span>
-          ))}{" "}
-          là con số chính xác hơn hẳn.
+          Con số sẽ sát hơn nếu bạn nói thêm <MissingLinks trip={trip} />.
         </p>
       )}
-      {trip.coverage !== null && (
+      {trip.coverage !== null && !trip.routeNotPriced && (
         <p className="mt-3 text-sm text-muted-foreground">
           Điểm hiện tại phủ khoảng {Math.round(trip.coverage * 100)}% chuyến này
           {trip.coverageIsEstimate ? " — con số này là ước lượng vì còn chỗ chưa biết." : "."}
         </p>
       )}
     </section>
+  );
+}
+
+/** Những thừa số còn thiếu của chuyến đi, mỗi cái là một đường tới đúng câu hỏi đó. */
+function MissingLinks({ trip }: { trip: NonNullable<ResultView["trip"]> }) {
+  return (
+    <>
+      {trip.missing.map((row, index) => (
+        <span key={row.questionKey}>
+          {index > 0 && (index === trip.missing.length - 1 ? " và " : ", ")}
+          <Link
+            href={`/credit-cards/goi-y?sua=${encodeURIComponent(row.questionKey)}`}
+            className="font-semibold text-primary underline underline-offset-4"
+          >
+            {row.label}
+          </Link>
+        </span>
+      ))}
+    </>
   );
 }
 
@@ -402,8 +432,8 @@ function HowItWorks({ view }: { view: ResultView }) {
         </tbody>
       </table>
       <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-        Dữ liệu thẻ tính đến {view.asOf}. Mã lượt gợi ý: <code>{view.runId}</code> — gửi mã này cho
-        mình nếu bạn thấy kết quả sai, mình tra lại được đúng lượt tính của bạn.
+        Dữ liệu thẻ tính đến {view.asOf}. Mã tra cứu: <code>{view.runId}</code> — gửi mã này cho
+        mình nếu bạn thấy kết quả sai, mình xem lại được đúng lượt tính của bạn.
       </p>
     </details>
   );

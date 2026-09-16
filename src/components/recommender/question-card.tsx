@@ -58,14 +58,28 @@ export function QuestionCard({
         )}
 
         {spec.input.type === "cards" && (
-          <div className="space-y-5">
+          <div className="space-y-4">
+            {/* Lối ra NGẮN NHẤT nằm trên đầu: phần lớn người mới không có thẻ
+                nào, và bắt họ cuộn qua 34 thẻ (68 ô tick) để tới nút "xong" là
+                bắt họ trả giá cho trường hợp của người khác. */}
+            <button
+              type="submit"
+              className="w-full cursor-pointer rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
+            >
+              Mình chưa có thẻ nào &rarr;
+            </button>
             <p className="text-sm text-muted-foreground">
-              Chọn cả thẻ đang giữ lẫn thẻ từng giữ rồi đóng. Không có thẻ nào thì cứ bấm nút bên
-              dưới.
+              Có rồi thì mở ngân hàng tương ứng và tick thẻ của bạn — cả thẻ đang giữ lẫn thẻ từng
+              giữ rồi đóng.
             </p>
             {spec.input.groups.map((group) => (
-              <fieldset key={group.issuer}>
-                <legend className="text-sm font-semibold text-foreground">{group.issuer}</legend>
+              <details key={group.issuer} className="rounded-xl border border-border px-4 py-3">
+                <summary className="cursor-pointer text-base font-semibold text-foreground">
+                  {group.issuer}
+                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                    {group.cards.length} thẻ
+                  </span>
+                </summary>
                 <ul className="mt-2 space-y-1.5">
                   {group.cards.map((card) => (
                     <li
@@ -86,16 +100,22 @@ export function QuestionCard({
                     </li>
                   ))}
                 </ul>
-              </fieldset>
+              </details>
             ))}
-            <SubmitRow label="Xong, chưa có thẻ nào khác" />
+            <SubmitRow label="Xong" />
           </div>
         )}
 
         {spec.input.type === "programs" && (
           <div className="space-y-4">
+            <button
+              type="submit"
+              className="w-full cursor-pointer rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
+            >
+              Mình chưa có điểm ở đâu cả &rarr;
+            </button>
             <p className="text-sm text-muted-foreground">
-              Chọn nơi bạn đang có điểm. Chưa có chỗ nào thì bấm thẳng nút bên dưới.
+              Có rồi thì tick những chương trình bạn đang có tài khoản.
             </p>
             <ul className="grid gap-1.5 sm:grid-cols-2">
               {spec.input.programs.map((program) => (

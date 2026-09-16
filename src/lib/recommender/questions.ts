@@ -439,7 +439,7 @@ export function questionFor(
       return {
         ...base,
         title: "Thu nhập cá nhân một năm của bạn khoảng bao nhiêu?",
-        help: "Vài thẻ có ngưỡng thu nhập tối thiểu. Mình chỉ cần khoảng, không cần con số chính xác.",
+        help: "Vài thẻ có ngưỡng thu nhập tối thiểu (thấp nhất $15,000, cao nhất $150,000). Mình chỉ cần khoảng, không cần con số chính xác.",
         input: {
           type: "choice",
           name: "answer",
@@ -457,7 +457,7 @@ export function questionFor(
       return {
         ...base,
         title: "Thu nhập của cả hộ gia đình một năm khoảng bao nhiêu?",
-        help: "Nhiều thẻ nhận vế này thay cho thu nhập cá nhân — nên nó có thể mở ra những thẻ vừa bị loại.",
+        help: "Điều kiện của ngân hàng Canada thường là \"thu nhập cá nhân $X HOẶC hộ gia đình $Y\" — vài thẻ cao cấp đòi $200,000 của cả hộ. Trả lời câu này có thể mở ra những thẻ đang bị loại.",
         input: {
           type: "choice",
           name: "answer",

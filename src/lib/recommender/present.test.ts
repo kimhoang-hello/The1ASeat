@@ -13,6 +13,7 @@ import test from "node:test";
 import type { CreditCardOffer } from "../content/types.ts";
 import { offlineDataset } from "../recommendation/data/index.ts";
 import {
+  advancedCollector,
   aeroplanHeavy,
   beginnerNoCards,
   japanTripFunded,
@@ -201,15 +202,29 @@ test("số của chuyến đi lấy đúng con số bản ghi đã lưu", () => 
   assert.equal(view.trip.accessibleIsLowerBound, numbers.accessiblePointsIsLowerBound);
 });
 
-test("độ chắc chắn nói ra YẾU TỐ thấp nhất, không chỉ mức", () => {
+test("độ chắc chắn nói ra NGUYÊN NHÂN sửa được, không phải chỉ một mức", () => {
   const record = runFor(beginnerNoCards);
   const view = presentRun(record, DATA, offersFor(DATA));
   assert.ok(view !== null);
   assert.equal(view.confidence.level, record.outputSnapshot.results[0].confidence.level);
-  assert.ok(view.confidence.sentence.length > 0);
-  if (view.confidence.level !== "high") {
-    assert.match(view.confidence.sentence, /vì /);
-  }
+  // Nhãn không bao giờ chỉ là một mức trừu tượng: nó phải nói ra chuyện gì.
+  assert.ok(view.confidence.label.length > 0);
+  assert.ok(view.confidence.sentence.length > 20);
+  assert.notEqual(view.confidence.label, "Còn nhiều chỗ chưa chắc");
+});
+
+test("hồ sơ mới khai rất ít thì độ chắc chắn nói 'còn thiếu thông tin', không nói 'hai thẻ ngang nhau'", () => {
+  // Trên bộ dữ liệu này khoảng cách điểm gần như luôn là yếu tố thấp nhất, nên
+  // lấy yếu tố thấp nhất một cách máy móc thì MỌI người đều nhận cùng một câu
+  // — kể cả người chưa trả lời gì, tức đúng người sửa được nó bằng một cú bấm.
+  const bare = structuredClone(beginnerNoCards);
+  bare.declared = { cards: false, balances: false };
+  bare.spend = null;
+  bare.profile.annualPersonalIncome = null;
+  bare.profile.annualFeeTolerancePerCard = null;
+  const view = presentRun(runFor(bare), DATA, offersFor(DATA));
+  assert.ok(view !== null);
+  assert.equal(view.confidence.label, "Còn thiếu thông tin");
 });
 
 test("mục tiêu không có trong bản ghi thì trả null, không nổ", () => {
@@ -250,4 +265,18 @@ test("bảng 'mình đang dựa vào những gì' kể ĐỦ mọi câu đã tr�
   for (const key of shown) {
     assert.ok(questionFromKey(key, state, CTX) !== null, `khoá sửa không mở được: ${key}`);
   }
+});
+
+test("thẻ mà người dùng KHÔNG còn nhận được welcome bonus thì không hứa welcome bonus", () => {
+  // Amex® once-in-a-lifetime: thẻ vẫn có thể là lựa chọn đúng (tỷ lệ tích
+  // điểm, quyền lợi), nhưng câu "chi $X để nhận trọn welcome bonus" là một lời
+  // hứa ngân hàng sẽ không giữ.
+  const view = presentRun(runFor(advancedCollector), DATA, offersFor(DATA));
+  assert.ok(view !== null);
+  const blocked = [view.primary, ...view.alternatives].find((row) => row.welcomeBonusBlocked);
+  assert.ok(blocked !== undefined, "nhân vật này phải có ít nhất một thẻ bị chặn bonus");
+  assert.equal(
+    blocked.reasons.some((row) => row.text.includes("Mốc chi để nhận bonus")),
+    false,
+  );
 });

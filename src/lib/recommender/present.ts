@@ -27,8 +27,9 @@ import type { GoalType, UserState } from "../recommendation/user-types.ts";
 import {
   COMPONENT_LABEL,
   COMPONENT_STRENGTH,
+  CONFIDENCE_BY_CAUSE,
   CONFIDENCE_LABEL,
-  CONFIDENCE_REASON,
+  REASON_COVERED_BY_WARNING,
   REASON_TEXT,
   STRATEGY_TEXT,
   WARNING_TEXT,
@@ -87,11 +88,36 @@ export interface ActionView {
    * không được in $0 ở đó.
    */
   minSpendPer90Days: number | null;
+  /**
+   * Vì sao "chưa mở thẻ" lại thắng — chỉ có ở ứng viên `no_new_card`.
+   *
+   * Bốn lý do khác hẳn nhau: đã đủ điểm, ví đã che được nhu cầu, thị trường
+   * offer đang thấp, hoặc KHÔNG THẺ NÀO với tới được (điều kiện và ngưỡng phí
+   * của chính người dùng). In chung một câu "ví bạn đã đủ" cho cả bốn là nói
+   * sai với người thứ tư — họ không đủ gì cả, chỉ là chưa có lựa chọn nào hợp.
+   */
+  noCardReason: "points_sufficient" | "portfolio_covers" | "offers_weak" | "nothing_fits" | null;
+  /**
+   * Người này KHÔNG nhận được welcome bonus của thẻ (Amex® once-in-a-lifetime).
+   *
+   * Thẻ vẫn có thể là lựa chọn đúng — vì tỷ lệ tích điểm, vì quyền lợi — nhưng
+   * câu "chi $2,959 trong 3 tháng để nhận trọn welcome bonus" thì thành một lời
+   * hứa ngân hàng sẽ không giữ.
+   */
+  welcomeBonusBlocked: boolean;
 }
 
 export interface TripNumbersView {
   /** Những thừa số còn thiếu, kèm khoá câu hỏi để hỏi thẳng. */
   missing: { label: string; questionKey: string }[];
+  /**
+   * Chặng này CHƯA CÓ trong award chart của site.
+   *
+   * Khác hẳn "còn thiếu vài câu trả lời": người dùng trả lời thêm bao nhiêu
+   * câu cũng không ra con số. Nói nhầm hai thứ này là bắt họ điền một form vô
+   * ích rồi vẫn không có kết quả.
+   */
+  routeNotPriced: boolean;
   destination: string;
   cabin: string | null;
   passengers: number | null;
@@ -136,10 +162,17 @@ const TONE_ORDER = { good: 0, caution: 1, info: 2 } as const;
  * nhưng không bao giờ được thấy nó mà không có phần "nhưng". Cả hai nhóm nằm
  * trên cùng một danh sách, không có nhóm nào gập lại.
  */
-export function reasonsOf(codes: readonly ReasonCode[]): ReasonText[] {
+export function reasonsOf(
+  codes: readonly ReasonCode[],
+  /** Cảnh báo sẽ hiện ở khối riêng — lý do trùng nội dung với chúng thì bỏ. */
+  warnings: readonly WarningCode[] = [],
+): ReasonText[] {
+  const shownWarnings = new Set(warnings);
   const seen = new Set<string>();
   const rows: ReasonText[] = [];
   for (const code of codes) {
+    const twin = REASON_COVERED_BY_WARNING[code];
+    if (twin !== undefined && shownWarnings.has(twin)) continue;
     const row = REASON_TEXT[code];
     if (row === undefined || seen.has(row.text)) continue;
     seen.add(row.text);
@@ -184,11 +217,32 @@ function lookup(record: RecommendationRunRecord, offers: readonly CreditCardOffe
   };
 }
 
+/** Dòng điểm nào đưa `NO_NEW_CARD` lên đầu — bảng điểm riêng của nó ở `rank.ts`. */
+function noCardReasonOf(candidate: Candidate): ActionView["noCardReason"] {
+  const top = [...candidate.components]
+    .filter((row) => row.contribution > 0)
+    .sort((a, b) => b.contribution - a.contribution)[0];
+  switch (top?.key) {
+    case "points_already_sufficient":
+      return "points_sufficient";
+    case "portfolio_already_covers":
+      return "portfolio_covers";
+    case "offer_climate_weak":
+      return "offers_weak";
+    case "no_reachable_candidate":
+      return "nothing_fits";
+    default:
+      return null;
+  }
+}
+
 function actionOf(
   candidate: Candidate,
   cards: CardLookup,
   /** Lý do của hành động chính — để lựa chọn thay thế nói ra chỗ KHÁC. */
   primaryReasons: ReadonlySet<string> = new Set(),
+  /** Cảnh báo cấp lượt chạy, để không nói lại chúng dưới dạng lý do. */
+  runWarnings: readonly WarningCode[] = [],
 ): ActionView {
   const slug = candidate.productSlug;
   const offer = slug === null ? undefined : cards.offers.get(slug);
@@ -210,7 +264,7 @@ function actionOf(
       offer?.applyUrl === undefined
         ? null
         : { url: offer.applyUrl, affiliate: isReferralUrl(offer.applyUrl) },
-    reasons: reasonsOf(candidate.reasonCodes),
+    reasons: reasonsOf(candidate.reasonCodes, [...candidate.warnings, ...runWarnings]),
     warnings: warningsOf(candidate.warnings),
     score: candidate.score,
     components: candidate.components.map((row) => ({
@@ -220,13 +274,37 @@ function actionOf(
       contribution: row.contribution,
     })),
     eligibilityUncertain: candidate.eligibility?.status === "unknown",
-    lead: reasonsOf(candidate.reasonCodes).find((row) => !primaryReasons.has(row.text))?.text ?? null,
-    strengths: [...candidate.components]
-      .filter((row) => row.contribution > 0 && row.key !== "editorial")
-      .sort((a, b) => b.contribution - a.contribution)
-      .slice(0, 2)
-      .map((row) => COMPONENT_STRENGTH[row.key]),
+    // Câu của lựa chọn thay thế ưu tiên vế CẦN CÂN NHẮC: một thẻ $799 hiện ra
+    // dưới dòng "kiếm điểm linh hoạt" trong khi điều người đọc cần biết là
+    // "phí cao hơn mức bạn nói" thì dòng đó đang bán hàng.
+    lead: (() => {
+      const own = reasonsOf(candidate.reasonCodes, [...candidate.warnings, ...runWarnings]).filter(
+        (row) => !primaryReasons.has(row.text),
+      );
+      return (own.find((row) => row.tone === "caution") ?? own[0])?.text ?? null;
+    })(),
+    // Điểm mạnh chỉ nói ra những dòng THẬT SỰ mạnh, và chỉ cho thẻ.
+    //
+    // Hai bộ lọc, mỗi cái vá một câu nói dối: dòng dưới 0.6 không phải "điểm
+    // mạnh" (nó chỉ là dòng đóng góp nhiều nhất trong một bảng yếu), và
+    // `spend_fit` bằng 1 theo QUY ƯỚC khi offer không có mốc chi nào biết được
+    // — in "mốc chi vừa sức bạn" ở đó là khẳng định một thứ chưa ai biết.
+    strengths:
+      candidate.kind === "no_new_card"
+        ? []
+        : [...candidate.components]
+            .filter((row) => row.raw >= 0.6 && row.contribution > 0 && row.key !== "editorial")
+            .filter(
+              (row) =>
+                row.key !== "spend_fit" ||
+                (slug !== null && cards.facts.get(slug)?.minSpendPer90Days != null),
+            )
+            .sort((a, b) => b.contribution - a.contribution)
+            .slice(0, 2)
+            .map((row) => COMPONENT_STRENGTH[row.key]),
     minSpendPer90Days: slug === null ? null : (cards.facts.get(slug)?.minSpendPer90Days ?? null),
+    noCardReason: candidate.kind === "no_new_card" ? noCardReasonOf(candidate) : null,
+    welcomeBonusBlocked: candidate.eligibility?.welcomeOfferBlocked === true,
   };
 }
 
@@ -258,6 +336,7 @@ function tripView(record: RecommendationRunRecord, index: number): TripNumbersVi
   }
   return {
     missing,
+    routeNotPriced: (result.warnings as string[]).includes("AWARD_ROUTE_NOT_IN_DATASET"),
     destination: REGION_LABEL[trip.destinationRegion],
     cabin: trip.cabin === null ? null : CABIN_LABEL[trip.cabin],
     passengers: trip.passengers,
@@ -280,23 +359,57 @@ function tripView(record: RecommendationRunRecord, index: number): TripNumbersVi
  * Độ chắc chắn
  * ------------------------------------------------------------------ */
 
-function confidenceSentence(factors: {
-  dataCompleteness: number;
-  dataFreshness: number;
-  goalSpecificity: number;
-  scoreSeparation: number;
-  level: "high" | "medium" | "low";
-}): string {
-  if (factors.level === "high") return "Mình có đủ thông tin cho kết luận này.";
-  const weakest = (
+/**
+ * Độ chắc chắn: nói NGUYÊN NHÂN NÀO NGƯỜI DÙNG LÀM GÌ ĐƯỢC, rồi mới tới nguyên
+ * nhân yếu nhất về mặt số học.
+ *
+ * Trên bộ dữ liệu hiện tại, `scoreSeparation` gần như luôn là yếu tố thấp nhất
+ * — các thẻ tốt ở Canada chênh nhau rất ít. Nếu chỉ lấy yếu tố thấp nhất thì
+ * MỌI hồ sơ đều nhận đúng một câu "hai lựa chọn ngang nhau", kể cả người chưa
+ * khai gì — và câu đó che mất thứ họ sửa được ngay: trả lời thêm.
+ */
+function confidenceOf(
+  factors: {
+    dataCompleteness: number;
+    dataFreshness: number;
+    goalSpecificity: number;
+    scoreSeparation: number;
+    level: "high" | "medium" | "low";
+  },
+  hasFollowUp: boolean,
+): { level: "high" | "medium" | "low"; label: string; sentence: string } {
+  if (factors.level === "high") {
+    return {
+      level: factors.level,
+      label: CONFIDENCE_LABEL.high,
+      sentence: "Mình có đủ thông tin cho kết luận này.",
+    };
+  }
+  const WEAK = 0.75;
+  const weak = (
     [
       ["dataCompleteness", factors.dataCompleteness],
-      ["scoreSeparation", factors.scoreSeparation],
       ["goalSpecificity", factors.goalSpecificity],
       ["dataFreshness", factors.dataFreshness],
+      ["scoreSeparation", factors.scoreSeparation],
     ] as const
-  ).reduce((low, row) => (row[1] < low[1] ? row : low));
-  return `Chưa chắc chắn hoàn toàn ${CONFIDENCE_REASON[weakest[0]]}.`;
+  )
+    .filter(([, value]) => value < WEAK)
+    .sort((a, b) => a[1] - b[1]);
+
+  // Còn câu để hỏi và dữ liệu còn thiếu → nói điều đó trước: đó là thứ người
+  // đọc bấm một cái là sửa được.
+  const actionable = hasFollowUp && factors.dataCompleteness < WEAK ? "dataCompleteness" : null;
+  const lead = actionable ?? weak[0]?.[0] ?? "scoreSeparation";
+  const tied = lead !== "scoreSeparation" && factors.scoreSeparation < WEAK;
+  const base = CONFIDENCE_BY_CAUSE[lead];
+  return {
+    level: factors.level,
+    label: base.label,
+    sentence: tied
+      ? `${base.sentence} Hai thẻ đứng đầu cũng đang gần như ngang điểm nhau.`
+      : base.sentence,
+  };
 }
 
 /* ------------------------------------------------------------------ *
@@ -320,7 +433,8 @@ export function presentRun(
   const result = record.outputSnapshot.results[goalIndex];
   if (result === undefined) return null;
   const cards = lookup(record, offers);
-  const primary = actionOf(result.primaryAction, cards);
+  const runWarnings = [...result.warnings, ...record.outputSnapshot.warnings];
+  const primary = actionOf(result.primaryAction, cards, new Set(), runWarnings);
   const primaryReasons = new Set(primary.reasons.map((row) => row.text));
   const noActionIsPrimary = result.primaryAction.kind === "no_new_card";
 
@@ -332,18 +446,25 @@ export function presentRun(
     goalTitle: GOAL_TITLE[result.goalType],
     strategy: STRATEGY_TEXT[result.strategy.strategy],
     primary,
-    alternatives: result.alternatives
-      .slice(0, MAX_ALTERNATIVES)
-      .map((row) => actionOf(row, cards, primaryReasons)),
+    // Mỗi lựa chọn thay thế phải nói một câu KHÁC nhau: ba dòng giống hệt dưới
+    // ba cái tên không giúp ai chọn. Câu đã dùng thì thẻ sau lấy câu kế tiếp.
+    alternatives: (() => {
+      const used = new Set(primaryReasons);
+      return result.alternatives.slice(0, MAX_ALTERNATIVES).map((row) => {
+        const view = actionOf(row, cards, used, runWarnings);
+        if (view.lead !== null) used.add(view.lead);
+        return view;
+      });
+    })(),
     // "Chưa mở thẻ nào" luôn là một ứng viên (§16 Rule 8), nên nó luôn hiện ra
     // — như một lựa chọn thật, không phải như một dòng chữ an ủi ở cuối trang.
-    noAction: noActionIsPrimary ? null : actionOf(result.noAction, cards, primaryReasons),
-    warnings: warningsOf([...result.warnings, ...record.outputSnapshot.warnings]),
-    confidence: {
-      level: result.confidence.level,
-      label: CONFIDENCE_LABEL[result.confidence.level],
-      sentence: confidenceSentence(result.confidence),
-    },
+    noAction: noActionIsPrimary ? null : actionOf(result.noAction, cards, primaryReasons, runWarnings),
+    // Cảnh báo trùng câu với một lý do đã hiện ngay trên thẻ thì bỏ: người đọc
+    // gặp đúng một câu hai lần, và khối "lưu ý" loãng đi vì nó.
+    warnings: warningsOf(runWarnings).filter(
+      (text) => !primary.reasons.some((reason) => reason.text === text),
+    ),
+    confidence: confidenceOf(result.confidence, record.outputSnapshot.followUp !== null),
     trip: tripView(record, goalIndex),
   };
 }
