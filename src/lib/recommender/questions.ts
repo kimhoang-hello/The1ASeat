@@ -106,6 +106,62 @@ export function questionKey(kind: UserDataGap["kind"], subject: string): string 
   return `${kind}:${subject}`;
 }
 
+/**
+ * Loại chỗ trống hợp lệ, kiểm được LÚC CHẠY.
+ *
+ * `key` đi qua URL (`?sua=…`) và qua form, tức là qua tay người lạ. Một phép ép
+ * kiểu `as` không kiểm gì cả: `"linh-tinh:x"` sẽ lọt vào `questionFor`, rơi hết
+ * mọi nhánh `switch` và trả về `undefined` — thứ mà chỗ gọi đọc là "có câu
+ * hỏi", rồi trang nổ (Codex vòng 1, Phase 5 UI).
+ *
+ * `Record<…, true>` chứ không phải mảng: thêm một `kind` trong Phase 2 mà quên
+ * ở đây là lỗi biên dịch nêu đích danh.
+ */
+const QUESTION_KINDS: Record<UserDataGap["kind"], true> = {
+  goal_missing: true,
+  goal_priority_ambiguous: true,
+  spend_profile_missing: true,
+  monthly_total_unknown: true,
+  spend_category_unknown: true,
+  minimum_spend_capacity_unknown: true,
+  annual_fee_tolerance_unknown: true,
+  business_cards_preference_unknown: true,
+  business_ownership_unknown: true,
+  personal_income_unknown: true,
+  household_income_unknown: true,
+  personal_income_declined: true,
+  household_income_declined: true,
+  student_status_unknown: true,
+  country_unknown: true,
+  cards_undeclared: true,
+  balances_undeclared: true,
+  point_balance_amount_unknown: true,
+  card_closed_date_unknown: true,
+  trip_cabin_unknown: true,
+  trip_passengers_unknown: true,
+  trip_dates_unknown: true,
+  trip_flexibility_unknown: true,
+  trip_round_trip_unknown: true,
+};
+
+export function isQuestionKind(value: string): value is UserDataGap["kind"] {
+  return Object.hasOwn(QUESTION_KINDS, value);
+}
+
+/** `kind:subject` → câu hỏi, đã kiểm cả hai vế. `null` = khoá lạ hoặc không hỏi được. */
+export function questionFromKey(
+  key: string,
+  state: UserState,
+  ctx: QuestionContext,
+): QuestionSpec | null {
+  const separator = key.indexOf(":");
+  if (separator < 1) return null;
+  const kind = key.slice(0, separator);
+  const subject = key.slice(separator + 1);
+  if (!isQuestionKind(kind) || subject.length === 0) return null;
+  return questionFor({ kind, subject }, state, ctx);
+}
+
 /* ------------------------------------------------------------------ *
  * Chữ cho từ vựng của lớp dữ liệu
  * ------------------------------------------------------------------ */
@@ -449,14 +505,16 @@ export function questionFor(
       return {
         ...base,
         title: "Chuyến này bay mấy người?",
-        help: "Số điểm cần nhân thẳng với số người, nên đây là con số đổi kết quả nhiều nhất.",
+        help: "Số điểm cần nhân THẲNG với số người, nên đây là con số đổi kết quả nhiều nhất. Gõ đúng số người, kể cả khi đông.",
+        // Số chính xác, không phải dải: "6 trở lên" ghi thành 6 sẽ tính thiếu
+        // điểm cho một đoàn bảy người — và tính thiếu ở đây làm engine kết
+        // luận "bạn đủ điểm rồi" (Codex vòng 1, Phase 5 UI).
         input: {
-          type: "choice",
+          type: "number",
           name: "answer",
-          options: [1, 2, 3, 4, 5, 6].map((n) => ({
-            value: String(n),
-            label: n === 6 ? "6 người trở lên" : `${n} người`,
-          })),
+          min: 1,
+          max: 12,
+          placeholder: "ví dụ 2",
         },
       };
 
@@ -653,6 +711,34 @@ const BAD = (what: string): ApplyResult => ({ ok: false, error: `Câu trả lờ
  * gọi, với bộ dữ liệu của đúng ngày chạy. Ở đây chỉ từ chối những giá trị
  * không thuộc danh sách lựa chọn: form gửi lên là thứ ai cũng sửa được.
  */
+/**
+ * Áp câu trả lời RỒI kiểm hồ sơ với bộ dữ liệu của ngày chạy.
+ *
+ * Phải là một hàm, và phải là hàm mà tầng trang gọi: một câu trả lời hợp lệ
+ * đứng riêng vẫn dựng được hồ sơ MÂU THUẪN (đổi thu nhập cá nhân lên trên
+ * khoảng hộ gia đình đã khai). Ghi hồ sơ đó xuống database rồi mới phát hiện
+ * thì người dùng kẹt: mọi lần mở trang sau đó đều nổ trên chính hàng đã lưu
+ * (Codex vòng 1, Phase 5 UI).
+ */
+export function applyAnswerChecked(
+  state: UserState,
+  spec: QuestionSpec,
+  form: AnswerForm,
+  ctx: QuestionContext,
+  validate: (state: UserState) => { level: string; message: string }[],
+): ApplyResult {
+  const applied = applyAnswer(state, spec, form, ctx);
+  if (!applied.ok) return applied;
+  const errors = validate(applied.state).filter((issue) => issue.level === "error");
+  if (errors.length > 0) {
+    return {
+      ok: false,
+      error: `Câu trả lời này mâu thuẫn với thông tin bạn đã khai: ${errors[0].message}`,
+    };
+  }
+  return applied;
+}
+
 export function applyAnswer(
   state: UserState,
   spec: QuestionSpec,
@@ -826,7 +912,7 @@ export function applyAnswer(
       const goal = tripGoalOf(next, spec.subject);
       if (goal === null) return BAD("chuyến đi");
       const passengers = Number(answer);
-      if (!Number.isInteger(passengers) || passengers < 1 || passengers > 6) return BAD("số người");
+      if (!Number.isInteger(passengers) || passengers < 1 || passengers > 12) return BAD("số người");
       goal.passengers = passengers;
       return { ok: true, state: next };
     }

@@ -19,15 +19,14 @@ import { redirect } from "next/navigation";
 
 import { todayInSiteZone } from "@/lib/format-date";
 import { rateLimit } from "@/lib/rate-limit";
-import type { UserState } from "@/lib/recommendation";
+import { validateUserState, type UserState } from "@/lib/recommendation";
 import type { AnswerForm } from "@/lib/recommender/questions";
 import {
-  applyAnswer,
+  applyAnswerChecked,
   goalFrom,
   newUserState,
-  questionFor,
+  questionFromKey,
   type QuestionContext,
-  type QuestionSpec,
 } from "@/lib/recommender/questions";
 import {
   clearSession,
@@ -67,14 +66,6 @@ function answerForm(formData: FormData): AnswerForm {
     },
     getAll: (name) => formData.getAll(name).filter((value): value is string => typeof value === "string"),
   };
-}
-
-function specFromKey(key: string, state: UserState, ctx: QuestionContext): QuestionSpec | null {
-  const separator = key.indexOf(":");
-  if (separator < 1) return null;
-  const kind = key.slice(0, separator) as QuestionSpec["kind"];
-  const subject = key.slice(separator + 1);
-  return questionFor({ kind, subject }, state, ctx);
 }
 
 /**
@@ -122,18 +113,19 @@ export async function answerQuestion(formData: FormData): Promise<void> {
 
   const key = String(formData.get("question") ?? "");
   const ctx = await context();
-  const spec = specFromKey(key, stored.state, ctx);
+  const spec = questionFromKey(key, stored.state, ctx);
   if (spec === null) fail("Câu hỏi này không còn nữa — thử lại giúp mình.");
 
   const form = answerForm(formData);
-  const applied = applyAnswer(stored.state, spec, form, ctx);
+  const validate = (candidate: UserState) => validateUserState(candidate, ctx.dataset);
+  const applied = applyAnswerChecked(stored.state, spec, form, ctx, validate);
   if (!applied.ok) fail(applied.error);
 
   // Xung đột version = hai tab cùng trả lời. Áp LẠI đúng câu trả lời này lên
   // bản mới nhất thay vì bắt người dùng làm lại; câu trả lời của tab kia vẫn
   // còn nguyên.
   const saved = await saveState(userId, stored.version, applied.state, (current) => {
-    const retry = applyAnswer(current, spec, form, ctx);
+    const retry = applyAnswerChecked(current, spec, form, ctx, validate);
     return retry.ok ? retry.state : null;
   });
   if (saved === null) fail("Không lưu được câu trả lời — thử lại giúp mình.");

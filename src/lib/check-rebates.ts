@@ -3,6 +3,10 @@ import { fetchContentfulCreditCardOffers } from "@/lib/content/contentful";
 import { fetchFinlyWealthRebate, finlyWealthRebateUrl } from "@/lib/finlywealth";
 import { RESERVED_SLUG, slugClashMessage } from "@/lib/card-compare";
 import {
+  RECOMMENDER_RESERVED_SLUG,
+  recommenderSlugClashMessage,
+} from "@/lib/recommender/path";
+import {
   BEST_CARDS_RESERVED_SLUG,
   bestCardsProseDrift,
   bestCardsSlugClashMessage,
@@ -126,6 +130,11 @@ export async function runCheckRebates({
   // vẫn trỏ tới đúng đường dẫn đó.
   if (published.has(BEST_CARDS_RESERVED_SLUG)) {
     errors.push({ slug: BEST_CARDS_RESERVED_SLUG, message: bestCardsSlugClashMessage() });
+  }
+
+  // Đoạn tĩnh thứ ba: công cụ gợi ý thẻ.
+  if (published.has(RECOMMENDER_RESERVED_SLUG)) {
+    errors.push({ slug: RECOMMENDER_RESERVED_SLUG, message: recommenderSlugClashMessage() });
   }
 
   // Bốn trang "Các thẻ tốt nhất" là đoạn văn viết tay nói về mười thẻ khác.

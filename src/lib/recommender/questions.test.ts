@@ -20,6 +20,9 @@ import { validateUserState } from "../recommendation/user-validate.ts";
 import type { UserDataGap, UserState } from "../recommendation/user-types.ts";
 import {
   applyAnswer,
+  applyAnswerChecked,
+  isQuestionKind,
+  questionFromKey,
   goalFrom,
   newUserState,
   questionFor,
@@ -56,8 +59,10 @@ function answerSets(spec: QuestionSpec): Record<string, string | string[]>[] {
       return spec.input.options
         .filter((option) => option.terminal !== true)
         .map((option) => ({ answer: option.value }));
-    case "number":
-      return [{ answer: "0" }, { answer: "60000" }, { answer: String(spec.input.max) }];
+    case "number": {
+      const { min, max } = spec.input;
+      return [{ answer: String(min) }, { answer: String(Math.min(max, 2)) }, { answer: String(max) }];
+    }
     case "month":
       return [{ month: spec.input.months[0].value }, { month: spec.input.months.at(-1)!.value }];
     case "cards": {
@@ -289,5 +294,43 @@ test("một phiên trả lời hết mọi câu sẽ DỪNG, và hồ sơ cuối
     }
     const errors = validateUserState(state, DATA).filter((issue) => issue.level === "error");
     assert.deepEqual(errors.map((issue) => issue.message), []);
+  }
+});
+
+test("khoá câu hỏi lạ bị từ chối trước khi dựng câu hỏi", () => {
+  // `?sua=` đi qua URL, và form đi qua mạng: cả hai đều là chuỗi người lạ gõ.
+  const state = stateWithGoal("next_card");
+  for (const key of ["", ":", "linh-tinh:x", "goal_missing", "goal_missing:", "__proto__:x"]) {
+    assert.equal(questionFromKey(key, state, CTX), null, JSON.stringify(key));
+  }
+  assert.ok(questionFromKey("cards_undeclared:u_test", state, CTX) !== null);
+  assert.equal(isQuestionKind("cards_undeclared"), true);
+  assert.equal(isQuestionKind("toString"), false);
+});
+
+test("câu trả lời hợp lệ mà MÂU THUẪN với câu đã khai thì bị chặn TRƯỚC khi lưu", () => {
+  // Thu nhập hộ gia đình không thể thấp hơn thu nhập cá nhân — validator từ
+  // chối. Ghi xuống database rồi mới phát hiện thì mọi lần mở trang sau đều
+  // nổ trên chính hàng đã lưu.
+  const state = stateWithGoal("next_card");
+  state.profile.annualHouseholdIncome = { low: 60_000, high: 80_000 };
+  const spec = questionFor({ kind: "personal_income_unknown", subject: "u_test" }, state, CTX);
+  assert.ok(spec !== null);
+  const validate = (candidate: UserState) => validateUserState(candidate, DATA);
+  const blocked = applyAnswerChecked(state, spec, form({ answer: "150000-" }), CTX, validate);
+  assert.equal(blocked.ok, false);
+  const fine = applyAnswerChecked(state, spec, form({ answer: "0-60000" }), CTX, validate);
+  assert.equal(fine.ok, true);
+});
+
+test("số người bay ghi ĐÚNG con số, không dồn về một trần", () => {
+  const state = stateWithGoal("trip:SEA_VIETNAM");
+  const spec = questionFor({ kind: "trip_passengers_unknown", subject: "g_1" }, state, CTX);
+  assert.ok(spec !== null && spec.input.type === "number");
+  for (const count of [1, 5, 9]) {
+    const applied = applyAnswer(state, spec, form({ answer: String(count) }), CTX);
+    assert.ok(applied.ok);
+    const goal = applied.state.goals[0];
+    assert.equal(goal.type === "trip" && goal.passengers, count);
   }
 });

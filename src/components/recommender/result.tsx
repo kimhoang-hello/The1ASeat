@@ -94,6 +94,14 @@ function PrimaryCard({
         {action.kind === "no_new_card" ? "Chưa cần mở thẻ mới" : action.name}
       </h2>
 
+      <p className="mt-2 text-base leading-relaxed text-foreground/90">
+        {action.kind === "no_new_card"
+          ? "Ví hiện tại của bạn đã đủ cho mục tiêu này — mở thêm thẻ lúc này không đổi được gì đáng kể."
+          : action.minSpendPer90Days === null
+            ? "Mở thẻ này là bước đáng làm tiếp theo."
+            : `Mở thẻ này, rồi chi khoảng $${action.minSpendPer90Days.toLocaleString("en-US")} trong 3 tháng đầu để nhận trọn welcome bonus.`}
+      </p>
+
       {action.kind === "open_card" && (
         <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start">
           {action.image && (
@@ -155,6 +163,29 @@ function PrimaryCard({
         <p className="mt-3 text-sm text-muted-foreground">
           Mình chưa kiểm được hết điều kiện của ngân hàng — ngân hàng vẫn là bên quyết định duyệt.
         </p>
+      )}
+
+      {action.kind === "no_new_card" && (
+        <ul className="mt-4 space-y-2 text-base leading-relaxed text-foreground/90">
+          <li>
+            <Link
+              href="/award-flight-finder"
+              className="font-semibold text-primary underline underline-offset-4"
+            >
+              Tra chặng bay
+            </Link>{" "}
+            xem số điểm bạn có đổi được gì.
+          </li>
+          <li>
+            <Link
+              href="/transfer-bonuses"
+              className="font-semibold text-primary underline underline-offset-4"
+            >
+              Theo dõi transfer bonus
+            </Link>{" "}
+            — chuyển điểm đúng đợt khuyến mãi lợi hơn mở thêm thẻ.
+          </li>
+        </ul>
       )}
 
       <p className="mt-4 text-sm text-muted-foreground">

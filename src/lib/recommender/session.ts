@@ -123,12 +123,22 @@ export async function skippedQuestions(): Promise<Set<string>> {
   return new Set(raw.split("|").filter((key) => key.length > 0 && key.length < 80));
 }
 
+/**
+ * Trần của danh sách đã bỏ qua.
+ *
+ * Phải LỚN HƠN số câu hỏi engine có thể đặt ra (hôm nay: 21 chỗ trống hỏi
+ * được, trong đó 17 hạng mục chi tiêu). Trần nhỏ hơn thì câu bị đẩy ra khỏi
+ * danh sách sẽ được hỏi lại, và người bỏ qua đủ lâu rơi vào một vòng lặp
+ * (Codex vòng 1, Phase 5 UI). Cookie ở mức này khoảng 2 KB — dưới trần 4 KB
+ * của trình duyệt.
+ */
+const MAX_SKIPPED = 64;
+
 export async function skipQuestion(key: string): Promise<void> {
   const jar = await cookies();
   const current = await skippedQuestions();
   current.add(key);
-  // Trần để cookie không phình vô hạn; bỏ câu cũ nhất trước.
-  const kept = [...current].slice(-20);
+  const kept = [...current].slice(-MAX_SKIPPED);
   jar.set(SKIP_COOKIE, kept.join("|"), {
     httpOnly: true,
     sameSite: "lax",

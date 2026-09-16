@@ -10,6 +10,11 @@ import { CardImage, applyOverlay } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
 import { CardNextSteps } from "@/components/credit-cards/card-next-steps";
 import { assertNoSlugClash } from "@/lib/card-compare";
+import { assertNoSlugClash as assertNoClash } from "@/lib/compare";
+import {
+  RECOMMENDER_RESERVED_SLUG,
+  recommenderSlugClashMessage,
+} from "@/lib/recommender/path";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { EditorsTake } from "@/components/credit-cards/editors-take";
 import { OfferStats } from "@/components/credit-cards/offer-stats";
@@ -39,6 +44,8 @@ export async function generateStaticParams() {
   // làm hỏng deploy ngay — đúng lúc còn sửa được, thay vì im lặng mất trang
   // chi tiết của thẻ đó trên production.
   assertNoSlugClash(offers);
+  // Đoạn tĩnh thứ ba dưới `/credit-cards`, cùng cửa hậu: công cụ gợi ý.
+  assertNoClash(offers, RECOMMENDER_RESERVED_SLUG, recommenderSlugClashMessage());
   return offers.map((offer) => ({ slug: offer.slug }));
 }
 

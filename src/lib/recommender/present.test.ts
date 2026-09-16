@@ -23,11 +23,51 @@ import { executeRun } from "../recommendation/runs.ts";
 import { datasetAt } from "../recommendation/temporal.ts";
 import type { RecommendationDataset } from "../recommendation/types.ts";
 import type { UserState } from "../recommendation/user-types.ts";
+import { userGaps } from "../recommendation/user-gaps.ts";
 import { REASON_TEXT, WARNING_TEXT } from "./copy.ts";
-import { presentRun, reasonsOf } from "./present.ts";
+import { answeredRows, presentRun, reasonsOf } from "./present.ts";
+import {
+  applyAnswer,
+  goalFrom,
+  newUserState,
+  questionFor,
+  questionFromKey,
+  type AnswerForm,
+  type QuestionContext,
+  type QuestionSpec,
+} from "./questions.ts";
 
 const ASOF = "2026-09-08";
 const DATA = datasetAt(offlineDataset(), ASOF);
+
+const CTX: QuestionContext = { dataset: DATA, today: ASOF };
+
+function stateWithGoal(value: string): UserState {
+  const state = newUserState("u_test", ASOF, "CA");
+  const goal = goalFrom(value, "u_test", ASOF);
+  assert.ok(goal !== null);
+  state.goals = [goal];
+  return state;
+}
+
+/** Một câu trả lời hợp lệ bất kỳ cho mỗi loại câu hỏi. */
+function answerFor(spec: QuestionSpec): AnswerForm {
+  const values: Record<string, string | string[]> =
+    spec.input.type === "choice"
+      ? { answer: (spec.input.options.find((option) => option.terminal !== true) ?? spec.input.options[0]).value }
+      : spec.input.type === "number"
+        ? { answer: String(Math.max(spec.input.min, 2)) }
+        : spec.input.type === "month"
+          ? { month: spec.input.months[0].value }
+          : spec.input.type === "cards"
+            ? { holding: [spec.input.groups[0].cards[0].value], closed: [spec.input.groups[0].cards[1].value] }
+            : { programs: [spec.input.programs[0].value] };
+  return {
+    get: (name) => (typeof values[name] === "string" ? (values[name] as string) : null),
+    getAll: (name) => (Array.isArray(values[name]) ? (values[name] as string[]) : []),
+  };
+}
+
 
 /** Entry Contentful tối thiểu cho mỗi thẻ — đủ để dựng nút và ảnh. */
 function offersFor(data: RecommendationDataset): CreditCardOffer[] {
@@ -168,4 +208,36 @@ test("độ chắc chắn nói ra YẾU TỐ thấp nhất, không chỉ mức",
 test("mục tiêu không có trong bản ghi thì trả null, không nổ", () => {
   const record = runFor(beginnerNoCards);
   assert.equal(presentRun(record, DATA, offersFor(DATA), 7), null);
+});
+
+test("bảng 'mình đang dựa vào những gì' kể ĐỦ mọi câu đã trả lời, và sửa được", () => {
+  // Một câu trả lời engine có đọc mà bảng không kể ra là một câu người dùng
+  // bấm nhầm rồi không sửa được — cách duy nhất còn lại là làm lại từ đầu
+  // (Codex vòng 1, Phase 5 UI).
+  let state = stateWithGoal("trip:SEA_VIETNAM");
+  const answered = new Set<string>();
+  for (let step = 0; step < 60; step += 1) {
+    const gap = userGaps(state).find((row) => questionFor(row, state, CTX) !== null);
+    if (gap === undefined) break;
+    const spec = questionFor(gap, state, CTX);
+    assert.ok(spec !== null);
+    const applied = applyAnswer(state, spec, answerFor(spec), CTX);
+    assert.ok(applied.ok, `${spec.key}: ${applied.ok ? "" : applied.error}`);
+    answered.add(spec.key);
+    state = applied.state;
+  }
+
+  const rows = answeredRows(state, DATA);
+  const shown = new Set(rows.map((row) => row.questionKey).filter((key): key is string => key !== null));
+  for (const key of answered) {
+    // `spend_profile_missing` và `monthly_total_unknown` ghi vào CÙNG một
+    // trường (tổng chi tiêu tháng): câu đầu hỏi khi chưa có phần chi tiêu nào,
+    // câu sau khi đã có. Bảng chỉ cần một dòng, và dòng đó mở ra câu sửa đúng.
+    const shownKey = key.replace("spend_profile_missing:", "monthly_total_unknown:");
+    assert.ok(shown.has(shownKey), `bảng không kể ra câu đã trả lời: ${key}`);
+  }
+  // Và mọi khoá in ra phải mở lại được thành một câu hỏi thật.
+  for (const key of shown) {
+    assert.ok(questionFromKey(key, state, CTX) !== null, `khoá sửa không mở được: ${key}`);
+  }
 });

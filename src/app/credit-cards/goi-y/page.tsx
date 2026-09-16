@@ -6,7 +6,7 @@ import { RECOMMENDER_PUBLISHED } from "@/lib/feature-flags";
 import { todayInSiteZone } from "@/lib/format-date";
 import { followUpAfterSkips } from "@/lib/recommender/follow-up";
 import { answeredRows, presentRun } from "@/lib/recommender/present";
-import { questionFor, type QuestionSpec } from "@/lib/recommender/questions";
+import { questionFor, questionFromKey } from "@/lib/recommender/questions";
 import {
   currentUserId,
   loadState,
@@ -157,7 +157,7 @@ async function Body({ editKey }: { editKey: string | null }) {
 
   // Người dùng bấm "Sửa" trên một dòng đã trả lời: hỏi lại đúng câu đó, không
   // phải câu engine đang muốn hỏi.
-  const edit = editKey === null ? null : specFromKey(editKey, stored.state, ctx);
+  const edit = editKey === null ? null : questionFromKey(editKey, stored.state, ctx);
   if (edit !== null) {
     return (
       <>
@@ -196,19 +196,5 @@ async function Body({ editKey }: { editKey: string | null }) {
         />
       )}
     </Result>
-  );
-}
-
-function specFromKey(
-  key: string,
-  state: Parameters<typeof questionFor>[1],
-  ctx: Parameters<typeof questionFor>[2],
-): QuestionSpec | null {
-  const separator = key.indexOf(":");
-  if (separator < 1) return null;
-  return questionFor(
-    { kind: key.slice(0, separator) as QuestionSpec["kind"], subject: key.slice(separator + 1) },
-    state,
-    ctx,
   );
 }
