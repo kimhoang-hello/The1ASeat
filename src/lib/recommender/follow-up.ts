@@ -21,6 +21,7 @@ import type { FollowUpQuestion } from "../recommendation/engine-types.ts";
 import type { RecommendationRunRecord } from "../recommendation/runs.ts";
 import type { RecommendationDataset } from "../recommendation/types.ts";
 import { questionKey } from "./questions.ts";
+import type { UserDataGap } from "../recommendation/user-types.ts";
 
 /**
  * Câu hỏi tiếp theo còn lại sau khi bỏ những câu người dùng đã bỏ qua.
@@ -63,4 +64,37 @@ export function followUpAfterSkips(
     // đúng hành vi khi engine chạy không có phép đo.
     measure: (gap) => probes.get(questionKey(gap.kind, gap.subject)) ?? null,
   });
+}
+
+/**
+ * Câu hỏi này có đáng CHẶN sự chú ý của người đọc không?
+ *
+ * `basis` của engine nói ra chính điều đó (§30):
+ *
+ *  - `gatekeeper` — đổi được cả tập ứng viên (bạn đang giữ thẻ nào, có điểm ở
+ *    đâu). Hỏi trước, luôn.
+ *  - `measured` / `urgent` — đã ĐO được là đổi được người thắng, hoặc người
+ *    thắng đang dựa vào đúng dữ kiện đó.
+ *  - `priority` — KHÔNG phép đo nào nói nó đổi được gì; nó chỉ nằm cao trong
+ *    bảng ưu tiên tĩnh. Đo trên 15 nhân vật mẫu: 8 người bị hỏi một câu như
+ *    vậy, 6 trong đó là thu nhập hộ gia đình.
+ *
+ * Câu `priority` vẫn có giá trị — nó nâng độ đầy đủ dữ liệu của §29 — nhưng nó
+ * không được chiếm chỗ của một câu hỏi thật. Trang đẩy nó xuống khối "muốn
+ * chắc hơn", gập lại.
+ *
+ * NGOẠI LỆ: dữ kiện của chuyến đi (hạng ghế, số người, khứ hồi, ngày bay). Kể
+ * cả khi chúng không đổi THỨ HẠNG, chúng đổi thứ người dùng tới đây để xem —
+ * số điểm chuyến bay cần. Thiếu một thừa số là cả ba con số kia không tính
+ * được.
+ */
+const TRIP_FACTS = new Set<UserDataGap["kind"]>([
+  "trip_cabin_unknown",
+  "trip_passengers_unknown",
+  "trip_round_trip_unknown",
+  "trip_dates_unknown",
+]);
+
+export function asksForAttention(question: FollowUpQuestion): boolean {
+  return question.basis !== "priority" || TRIP_FACTS.has(question.gapKind);
 }

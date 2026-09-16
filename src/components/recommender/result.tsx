@@ -301,7 +301,7 @@ function TripNumbers({ trip }: { trip: NonNullable<ResultView["trip"]> }) {
       ) : (
       <dl className="mt-4 grid gap-3 sm:grid-cols-3">
         <div>
-          <dt className="text-sm text-muted-foreground">Cần khoảng</dt>
+          <dt className="text-sm text-muted-foreground">Cần khoảng (ước lượng)</dt>
           <dd className="font-display text-lg font-bold text-foreground">
             {need === null ? "Chưa tính được" : `${need} điểm`}
           </dd>
@@ -436,6 +436,13 @@ function HowItWorks({ view }: { view: ResultView }) {
         </tbody>
       </table>
       <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+        <strong className="text-foreground">Số nào là số chắc, số nào là ước lượng:</strong> welcome
+        bonus, phí thường niên và mốc chi chép từ trang của ngân hàng
+        {view.dataVerifiedAt ? ` (dòng cũ nhất mình dùng ở đây kiểm ngày ${view.dataVerifiedAt})` : ""};
+        số điểm một chuyến bay cần là khoảng ước lượng theo award chart và đổi theo ngày bay; phần
+        &ldquo;bạn với tới được&rdquo; phụ thuộc chính con số bạn khai.
+      </p>
+      <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
         Dữ liệu thẻ tính đến {view.asOf}. Mã tra cứu: <code>{view.runId}</code> — gửi mã này cho
         mình nếu bạn thấy kết quả sai, mình xem lại được đúng lượt tính của bạn.
       </p>

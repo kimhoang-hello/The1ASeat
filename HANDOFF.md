@@ -214,6 +214,14 @@ Quyết định đáng nhớ:
 - **Mỗi lần trả lời = một lượt chạy được lưu**; `runId` hiện dưới mỗi kết quả
   để một khiếu nại tra được bằng `reco:debug`.
 
+**Rà hiệu quả thông tin (16/09/2026).** Đo `derived.followUpProbes` trên cả 15
+nhân vật mẫu: 8/15 bị hỏi một câu mà KHÔNG phép đo nào nói là đổi được người
+thắng (6 trong đó là thu nhập hộ gia đình). Nay câu `basis === "priority"` rơi
+xuống khối gập "muốn chắc hơn" (`asksForAttention`), trừ dữ kiện chuyến đi —
+chúng không đổi thứ hạng nhưng đổi chính con số người dùng tới đây để xem. Câu
+đo được nhiều nhất là chi tiêu theo hạng mục (31 lần đổi được người thắng trên
+186 lần đo).
+
 Còn lại của Phase 5: gắn lối vào (trang thẻ, `/bat-dau`, ô tìm kiếm), event
 GA4 cho phễu (mới chỉ có `apply_clicked` với `placement=recommender_primary`),
 đăng nhập admin trước khi bật `RECO_DEBUGGER` (§4 việc 5), và kiểm CDN trước

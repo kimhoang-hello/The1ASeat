@@ -4,7 +4,7 @@ import Link from "next/link";
 import { getCreditCardOffers } from "@/lib/content";
 import { RECOMMENDER_PUBLISHED } from "@/lib/feature-flags";
 import { todayInSiteZone } from "@/lib/format-date";
-import { followUpAfterSkips } from "@/lib/recommender/follow-up";
+import { asksForAttention, followUpAfterSkips } from "@/lib/recommender/follow-up";
 import { answeredRows, presentRun } from "@/lib/recommender/present";
 import { questionFor, questionFromKey } from "@/lib/recommender/questions";
 import {
@@ -222,18 +222,35 @@ async function Body({ editKey }: { editKey: string | null }) {
     return <QuestionCard spec={question} lead="Câu hỏi nền" />;
   }
 
+  // Câu KHÔNG đo được là đổi kết quả thì không chiếm chỗ của một câu hỏi thật:
+  // nó nằm trong khối gập "muốn chắc hơn" — xem `asksForAttention`.
+  const upfront = question !== null && followUp !== null && asksForAttention(followUp);
+
   return (
     <Result view={view} answered={answeredRows(stored.state, dataset)}>
-      {question !== null && (
-        <QuestionCard
-          spec={question}
-          lead={
-            followUp?.basis === "measured"
-              ? "Câu này có thể ĐỔI thẻ được gợi ý"
-              : "Trả lời thêm để chắc hơn"
-          }
-        />
-      )}
+      {question !== null &&
+        (upfront ? (
+          <QuestionCard
+            spec={question}
+            lead={
+              followUp?.basis === "measured"
+                ? "Câu này có thể ĐỔI thẻ được gợi ý"
+                : "Một câu nữa thôi"
+            }
+          />
+        ) : (
+          <details className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+            <summary className="cursor-pointer font-display text-lg font-bold text-foreground">
+              Muốn chắc hơn? Trả lời thêm một câu
+            </summary>
+            <p className="mt-2 text-base leading-relaxed text-foreground/80">
+              Câu này không đổi thẻ mình đang gợi ý, nhưng nó lấp một chỗ mình còn chưa biết.
+            </p>
+            <div className="mt-4">
+              <QuestionCard spec={question} />
+            </div>
+          </details>
+        ))}
     </Result>
   );
 }

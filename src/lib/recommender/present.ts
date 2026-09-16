@@ -147,6 +147,14 @@ export interface ResultView {
   warnings: string[];
   confidence: { level: "high" | "medium" | "low"; label: string; sentence: string };
   trip: TripNumbersView | null;
+  /**
+   * Ngày kiểm của dòng dữ liệu CŨ NHẤT mà lượt chạy này dựa vào.
+   *
+   * Phân biệt "số mình tự ước lượng" với "số chép từ trang của ngân hàng và
+   * kiểm ngày nào" là việc của trang: người đọc sắp mang con số này đi quyết
+   * định tiền bạc, và một con số không có ngày thì không kiểm lại được.
+   */
+  dataVerifiedAt: string | null;
 }
 
 /* ------------------------------------------------------------------ *
@@ -476,6 +484,7 @@ export function presentRun(
     ),
     confidence: confidenceOf(result.confidence, record.outputSnapshot.followUp !== null),
     trip: tripView(record, goalIndex),
+    dataVerifiedAt: record.derivedState.goals[goalIndex]?.confidenceInputs.oldestVerifiedAt ?? null,
   };
 }
 

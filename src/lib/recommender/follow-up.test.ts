@@ -9,11 +9,15 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { offlineDataset } from "../recommendation/data/index.ts";
-import { beginnerNoCards, japanTripFunded } from "../recommendation/data/user-fixtures.ts";
+import {
+  beginnerNoCards,
+  japanTripFunded,
+  USER_FIXTURES,
+} from "../recommendation/data/user-fixtures.ts";
 import { executeRun } from "../recommendation/runs.ts";
 import { datasetAt } from "../recommendation/temporal.ts";
 import type { UserState } from "../recommendation/user-types.ts";
-import { followUpAfterSkips } from "./follow-up.ts";
+import { asksForAttention, followUpAfterSkips } from "./follow-up.ts";
 import { questionKey } from "./questions.ts";
 
 const ASOF = "2026-09-08";
@@ -68,4 +72,60 @@ test("thứ tự vẫn là thứ tự của engine: câu ĐO ĐƯỢC lên trư�
     (probe) => probe.gapKind === next.gapKind && probe.subject === next.subject,
   );
   assert.ok(stillMeasured || next.basis === "gatekeeper", "câu tiếp theo rơi khỏi tầng đo được");
+});
+
+test("câu được chọn là câu ĐO ĐƯỢC cao nhất — engine không hỏi câu rẻ hơn", () => {
+  let measured = 0;
+  for (const state of USER_FIXTURES) {
+    const record = runFor(state);
+    const follow = record.outputSnapshot.followUp;
+    if (follow?.basis !== "measured") continue;
+    measured += 1;
+    const share = (probe: { flips: number; valid: number }) =>
+      probe.valid === 0 ? 0 : probe.flips / probe.valid;
+    const best = Math.max(...record.derivedState.followUpProbes.map(share), 0);
+    const chosen = record.derivedState.followUpProbes.find(
+      (probe) => probe.gapKind === follow.gapKind && probe.subject === follow.subject,
+    );
+    assert.ok(chosen !== undefined);
+    assert.ok(
+      share(chosen) + 1e-9 >= best,
+      `${state.profile.id}: hỏi ${follow.gapKind} (${share(chosen).toFixed(2)}) trong khi có câu ${best.toFixed(2)}`,
+    );
+  }
+  assert.ok(measured > 0, "không nhân vật nào có câu đo được — bài này đang kiểm rỗng");
+});
+
+test("câu KHÔNG đổi được kết quả thì không chiếm chỗ câu hỏi chính", () => {
+  // `priority` = không phép đo nào nói nó đổi được gì. Nó vẫn đáng hỏi (độ đầy
+  // đủ dữ liệu §29), nhưng thuộc khối gập "muốn chắc hơn".
+  assert.equal(
+    asksForAttention({
+      gapKind: "household_income_unknown",
+      subject: "u",
+      reason: "",
+      basis: "priority",
+      flipShare: null,
+    }),
+    false,
+  );
+  for (const basis of ["measured", "urgent", "gatekeeper"] as const) {
+    assert.equal(
+      asksForAttention({ gapKind: "cards_undeclared", subject: "u", reason: "", basis, flipShare: null }),
+      true,
+      basis,
+    );
+  }
+  // Dữ kiện chuyến đi là ngoại lệ: không đổi thứ hạng nhưng đổi chính con số
+  // người dùng tới đây để xem.
+  assert.equal(
+    asksForAttention({
+      gapKind: "trip_passengers_unknown",
+      subject: "g_1",
+      reason: "",
+      basis: "priority",
+      flipShare: null,
+    }),
+    true,
+  );
 });
