@@ -249,9 +249,13 @@ function AlternativeRow({ action }: { action: ActionView }) {
     action.lead ??
     (action.kind === "no_new_card"
       ? "Giữ nguyên ví hiện tại và đợi thêm cũng là một lựa chọn."
-      : action.welcomeBonus
+      : // Không lấy welcome bonus làm câu giới thiệu cho thẻ người dùng KHÔNG
+        // còn nhận được nó — đó đúng là câu quảng cáo sai đối tượng.
+        action.welcomeBonus && !action.welcomeBonusBlocked
         ? `Welcome bonus ${action.welcomeBonus}${action.annualFee ? `, phí ${action.annualFee}` : ""}`
-        : null);
+        : action.welcomeBonusBlocked
+          ? "Bạn từng giữ thẻ này nên sẽ không có welcome bonus."
+          : null);
   return (
     <div className="rounded-xl border border-border px-4 py-3">
       <p className="text-base font-semibold text-foreground">

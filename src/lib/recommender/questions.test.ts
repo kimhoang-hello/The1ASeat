@@ -367,3 +367,24 @@ test("khoá đi ra URL KHÔNG mang id phiên", () => {
   // Và khoá đó vẫn mở đúng câu hỏi của chính người đang đăng nhập.
   assert.ok(questionFromKey(key, state, CTX) !== null);
 });
+
+test('nút "chưa có gì" thắng mọi ô đã tick trong cùng form', () => {
+  // Nút nằm cùng form với danh sách, nên trình duyệt vẫn gửi các ô đang tick.
+  // Không có cờ ghi đè thì máy chủ lưu đúng những thẻ người dùng vừa đổi ý bỏ.
+  const state = stateWithGoal("next_card");
+  const cards = questionFor({ kind: "cards_undeclared", subject: "u_test" }, state, CTX);
+  assert.ok(cards !== null && cards.input.type === "cards");
+  const someCard = cards.input.groups[0].cards[0].value;
+  const applied = applyAnswer(state, cards, form({ none: "1", holding: [someCard] }), CTX);
+  assert.ok(applied.ok);
+  assert.deepEqual(applied.state.cards, []);
+  assert.equal(applied.state.declared.cards, true);
+
+  const balances = questionFor({ kind: "balances_undeclared", subject: "u_test" }, state, CTX);
+  assert.ok(balances !== null && balances.input.type === "programs");
+  const program = balances.input.programs[0].value;
+  const noPoints = applyAnswer(state, balances, form({ none: "1", programs: [program] }), CTX);
+  assert.ok(noPoints.ok);
+  assert.deepEqual(noPoints.state.balances, []);
+  assert.equal(noPoints.state.declared.balances, true);
+});

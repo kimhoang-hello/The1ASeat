@@ -787,8 +787,11 @@ export function applyAnswer(
     }
 
     case "cards_undeclared": {
-      const holding = form.getAll("holding");
-      const closed = form.getAll("closed");
+      // Nút "Mình chưa có thẻ nào" gửi cờ `none`: câu trả lời là KHÔNG CÓ GÌ,
+      // kể cả khi vài ô còn đang tick trong cùng form.
+      const none = form.get("none") === "1";
+      const holding = none ? [] : form.getAll("holding");
+      const closed = none ? [] : form.getAll("closed");
       const bySlug = new Map(ctx.dataset.products.map((product) => [product.slug, product]));
       const cards: UserCard[] = [];
       for (const [list, status] of [
@@ -818,7 +821,7 @@ export function applyAnswer(
     }
 
     case "balances_undeclared": {
-      const programs = form.getAll("programs");
+      const programs = form.get("none") === "1" ? [] : form.getAll("programs");
       const known = new Set(ctx.dataset.pointsPrograms.map((row) => row.id as string));
       const seen = new Set<string>();
       const balances = [];

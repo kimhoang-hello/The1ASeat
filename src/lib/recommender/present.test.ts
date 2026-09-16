@@ -25,7 +25,7 @@ import { datasetAt } from "../recommendation/temporal.ts";
 import type { RecommendationDataset } from "../recommendation/types.ts";
 import type { UserState } from "../recommendation/user-types.ts";
 import { userGaps } from "../recommendation/user-gaps.ts";
-import { REASON_TEXT, WARNING_TEXT } from "./copy.ts";
+import { REASON_COVERED_BY_WARNING, REASON_TEXT, WARNING_TEXT } from "./copy.ts";
 import { answeredRows, presentRun, reasonsOf } from "./present.ts";
 import {
   applyAnswer,
@@ -279,4 +279,33 @@ test("thẻ mà người dùng KHÔNG còn nhận được welcome bonus thì kh
     blocked.reasons.some((row) => row.text.includes("Mốc chi để nhận bonus")),
     false,
   );
+});
+
+test("lựa chọn thay thế GIỮ vế cảnh báo của nó — khối cảnh báo chỉ có ở thẻ chính", () => {
+  // Bỏ lý do trùng cảnh báo chỉ đúng với thẻ chính, nơi khối cảnh báo hiện ra.
+  // Làm vậy với hàng thay thế là xoá vế cảnh báo duy nhất của nó — hàng đó
+  // không có chỗ nào khác để nói.
+  let checked = 0;
+  for (const state of [beginnerNoCards, aeroplanHeavy, vietnamTripShortfall, advancedCollector]) {
+    const record = runFor(state);
+    const view = presentRun(record, DATA, offersFor(DATA));
+    assert.ok(view !== null);
+    const result = record.outputSnapshot.results[0];
+    result.alternatives.slice(0, 3).forEach((candidate, index) => {
+      // Mã lý do có "anh em song sinh" bên phía cảnh báo — đúng những mã bị lọc
+      // nếu người viết quên rằng hàng thay thế không hiện cảnh báo.
+      for (const code of REASON_CODES) {
+        const warning = REASON_COVERED_BY_WARNING[code];
+        if (warning === undefined) continue;
+        if (!candidate.reasonCodes.includes(code)) continue;
+        if (!result.warnings.includes(warning)) continue;
+        checked += 1;
+        assert.ok(
+          view.alternatives[index].reasons.some((row) => row.text === REASON_TEXT[code].text),
+          `${candidate.productSlug}: mất câu "${code}" vì cảnh báo của THẺ KHÁC`,
+        );
+      }
+    });
+  }
+  assert.ok(checked > 0, "không ca nào chạm tới cặp lý do/cảnh báo — bài này đang kiểm rỗng");
 });

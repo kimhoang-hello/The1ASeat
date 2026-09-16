@@ -62,8 +62,14 @@ export function QuestionCard({
             {/* Lối ra NGẮN NHẤT nằm trên đầu: phần lớn người mới không có thẻ
                 nào, và bắt họ cuộn qua 34 thẻ (68 ô tick) để tới nút "xong" là
                 bắt họ trả giá cho trường hợp của người khác. */}
+            {/* `none` là cờ ghi đè: nút này nằm CÙNG form với các ô tick, nên
+                nếu người dùng tick vài thẻ rồi đổi ý bấm vào đây, các ô đã tick
+                vẫn được gửi lên. Cờ nói với máy chủ rằng câu trả lời là "không
+                có gì", bất kể ô nào đang tick (Codex, vòng UX). */}
             <button
               type="submit"
+              name="none"
+              value="1"
               className="w-full cursor-pointer rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
             >
               Mình chưa có thẻ nào &rarr;
@@ -110,6 +116,8 @@ export function QuestionCard({
           <div className="space-y-4">
             <button
               type="submit"
+              name="none"
+              value="1"
               className="w-full cursor-pointer rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
             >
               Mình chưa có điểm ở đâu cả &rarr;

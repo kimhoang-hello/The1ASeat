@@ -241,8 +241,16 @@ function actionOf(
   cards: CardLookup,
   /** Lý do của hành động chính — để lựa chọn thay thế nói ra chỗ KHÁC. */
   primaryReasons: ReadonlySet<string> = new Set(),
-  /** Cảnh báo cấp lượt chạy, để không nói lại chúng dưới dạng lý do. */
-  runWarnings: readonly WarningCode[] = [],
+  /**
+   * Cảnh báo SẼ ĐƯỢC HIỆN cho chính hành động này — chỉ hành động chính có.
+   *
+   * Chỉ bỏ lý do trùng với cảnh báo khi cảnh báo đó thật sự xuất hiện trên
+   * màn hình. Lựa chọn thay thế không có khối cảnh báo, nên bỏ lý do ở đó là
+   * xoá vế cảnh báo duy nhất của nó: một thẻ người dùng từng giữ sẽ mất câu
+   * "bạn không nhận được welcome bonus" rồi rơi xuống câu quảng cáo chính con
+   * số bonus đó (Codex, vòng UX).
+   */
+  shownWarnings: readonly WarningCode[] = [],
 ): ActionView {
   const slug = candidate.productSlug;
   const offer = slug === null ? undefined : cards.offers.get(slug);
@@ -264,7 +272,7 @@ function actionOf(
       offer?.applyUrl === undefined
         ? null
         : { url: offer.applyUrl, affiliate: isReferralUrl(offer.applyUrl) },
-    reasons: reasonsOf(candidate.reasonCodes, [...candidate.warnings, ...runWarnings]),
+    reasons: reasonsOf(candidate.reasonCodes, shownWarnings),
     warnings: warningsOf(candidate.warnings),
     score: candidate.score,
     components: candidate.components.map((row) => ({
@@ -278,7 +286,7 @@ function actionOf(
     // dưới dòng "kiếm điểm linh hoạt" trong khi điều người đọc cần biết là
     // "phí cao hơn mức bạn nói" thì dòng đó đang bán hàng.
     lead: (() => {
-      const own = reasonsOf(candidate.reasonCodes, [...candidate.warnings, ...runWarnings]).filter(
+      const own = reasonsOf(candidate.reasonCodes, shownWarnings).filter(
         (row) => !primaryReasons.has(row.text),
       );
       return (own.find((row) => row.tone === "caution") ?? own[0])?.text ?? null;
@@ -451,14 +459,16 @@ export function presentRun(
     alternatives: (() => {
       const used = new Set(primaryReasons);
       return result.alternatives.slice(0, MAX_ALTERNATIVES).map((row) => {
-        const view = actionOf(row, cards, used, runWarnings);
+        // KHÔNG truyền cảnh báo: hàng thay thế không có khối cảnh báo nào để
+        // truyền sang.
+        const view = actionOf(row, cards, used);
         if (view.lead !== null) used.add(view.lead);
         return view;
       });
     })(),
     // "Chưa mở thẻ nào" luôn là một ứng viên (§16 Rule 8), nên nó luôn hiện ra
     // — như một lựa chọn thật, không phải như một dòng chữ an ủi ở cuối trang.
-    noAction: noActionIsPrimary ? null : actionOf(result.noAction, cards, primaryReasons, runWarnings),
+    noAction: noActionIsPrimary ? null : actionOf(result.noAction, cards, primaryReasons),
     // Cảnh báo trùng câu với một lý do đã hiện ngay trên thẻ thì bỏ: người đọc
     // gặp đúng một câu hai lần, và khối "lưu ý" loãng đi vì nó.
     warnings: warningsOf(runWarnings).filter(
