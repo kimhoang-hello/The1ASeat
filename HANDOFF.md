@@ -1,7 +1,10 @@
-# Bàn giao: Recommendation Engine — bắt đầu Phase 5
+# Bàn giao: Recommendation Engine — bắt đầu Phase 6
 
-Trạng thái **13/09/2026**. Phase 1–4 đã xong. Đọc file này là đủ để làm tiếp
-Phase 5, không cần lịch sử chat.
+Trạng thái **16/09/2026**. Phase 1–5 đã xong và đã merge `main`. Đọc file này
+là đủ để làm tiếp Phase 6 (LLM giải thích), không cần lịch sử chat.
+
+Bắt đầu ở **§6**. Trước khi công bố công cụ cho người đọc thì xem **§9** —
+có hai việc kiểm bắt buộc chưa làm.
 
 Spec đầy đủ: [`docs/recommendation-engine-v1.md`](docs/recommendation-engine-v1.md).
 Mọi tham chiếu "§n" trỏ vào nó.
@@ -18,8 +21,8 @@ Tài liệu module: [`src/lib/recommendation/README.md`](src/lib/recommendation/
 | 2 | Hồ sơ người dùng, thẻ, số dư, goals | ✅ |
 | 3 | Engine (Portfolio Analyzer → Ranking) | ✅ |
 | 4 | `recommendation_runs` + Debugger + Test A–J | ✅ |
-| 5 | **Frontend UX** | ⬅️ **ĐANG LÀM**. Database đã chốt và đã tạo (§3); kho MySQL + CI đã merge `main` 15/09/2026; trang gợi ý `/credit-cards/goi-y` dựng xong 16/09/2026 trên `wt/reco-phase5`, còn sau cờ `RECOMMENDER_PUBLISHED` (§4 việc 1–4, 6). Phán quyết cuối Phase 4: **READY FOR PHASE 5 WITH KNOWN RISKS** (§7) |
-| 6 | LLM giải thích | ⛔ |
+| 5 | **Frontend UX** | ✅ **XONG 16/09/2026**, đã merge `main`. Trang `/credit-cards/goi-y` còn sau cờ `RECOMMENDER_PUBLISHED` (chưa công bố). Xem §5. Phán quyết Phase 5: **READY FOR PHASE 6 WITH KNOWN RISKS** (§9) |
+| 6 | **LLM giải thích** (§28) | ⬅️ **BẮT ĐẦU Ở ĐÂY** — xem §6 |
 
 Phase 4: **đã merge vào `main` ngày 13/09/2026** (nhánh `wt/reco-phase4`,
 29 commit), 21 vòng Codex, **389 test**,
@@ -29,7 +32,7 @@ khi viết lại thành một phép đánh giá), phạm vi chỗ trống khi nh
 hoà nhau (vòng 8→11, dừng khi "mục tiêu có đọc X không" thành một hàm), và
 độ tươi §29 (vòng 12→14, dừng khi `read-set.ts` gắn mỗi luật với một phép
 tính). Từ vòng 14, Codex tách phát hiện thành nhóm A (sai khuyến nghị — chặn)
-và nhóm B (độ chính xác §29 — ghi ở §7). Sau vòng rà theo spec (4.16–4.23)
+và nhóm B (độ chính xác §29 — ghi ở §9). Sau vòng rà theo spec (4.16–4.23)
 user dừng cross-check Codex; vòng 21 là vòng cuối, mọi phát hiện của nó đã vá
 và kiểm ngược — **các bản vá của vòng 21 chưa được Codex kiểm lại**.
 
@@ -185,7 +188,7 @@ trang quyết định chạy-không-lưu hay báo lỗi.
    `ENGINE_VERSION`, chạy lại bản chụp, và cân nhắc một vòng Codex: các bản vá
    vòng 21 và buổi diễn tập chưa được Codex kiểm lại (§1).
 
-### Trang gợi ý — đã dựng (16/09/2026)
+## 5. Trang gợi ý — đã dựng (16/09/2026)
 
 `/credit-cards/goi-y`, sau cờ `RECOMMENDER_PUBLISHED` (còn `false`: noindex +
 dải báo nháp, không link từ đâu). Code ở `src/lib/recommender/` (thuần, có
@@ -227,7 +230,63 @@ GA4 cho phễu (mới chỉ có `apply_clicked` với `placement=recommender_pri
 đăng nhập admin trước khi bật `RECO_DEBUGGER` (§4 việc 5), và kiểm CDN trước
 khi bật cờ.
 
-### Phạm vi
+## 6. Phase 6 — LLM giải thích (§28)
+
+**Phase 6 KHÔNG được đổi khuyến nghị.** Engine đã chọn thẻ, đã xếp hạng, đã
+phát mã; Phase 6 chỉ viết lại phần giải thích cho mượt hơn. Spec §28 liệt kê
+bảy điều cấm, và cả bảy đều là "đừng bịa": đừng đổi khuyến nghị, đừng bịa điều
+kiện ngân hàng, đừng bịa chỗ trống vé thưởng, đừng hứa được duyệt, đừng nói
+điểm đảm bảo có vé, chỉ giải thích bằng dữ kiện được đưa, và **phân biệt rõ số
+ước lượng với số đã kiểm**.
+
+### Thứ đã sẵn để LLM ăn vào
+
+Trang hôm nay dựng câu bằng bảng tra (`src/lib/recommender/copy.ts`). Đầu vào
+của Phase 6 không phải hồ sơ người dùng, mà là `ResultView` trong
+[`present.ts`](src/lib/recommender/present.ts) — thứ đã lọc sẵn:
+
+| Trường | Là gì |
+| --- | --- |
+| `primary` / `alternatives` / `noAction` | Tên thẻ, điểm, mã lý do đã dịch, mốc chi, cờ affiliate |
+| `warnings` | Câu người đọc phải biết TRƯỚC khi hành động |
+| `confidence` | Mức + nguyên nhân (đã chọn theo cái người dùng sửa được) |
+| `trip` | Khoảng điểm cần, điểm với tới được, phần thiếu, cờ `coverageIsEstimate` |
+| `dataVerifiedAt` | Ngày kiểm của dòng dữ liệu cũ nhất — vế "verified" của §28 |
+| `runId` | Mã tra cứu, để một lời giải thích sai tra ngược được về đúng lượt chạy |
+
+Repo đã có sẵn đường gọi Claude: [`rewrite-offer.ts`](src/lib/rewrite-offer.ts)
+(SDK `@anthropic-ai/sdk`, `ANTHROPIC_API_KEY` chỉ nằm trên server Hostinger,
+không có ở GitHub). Giọng và quy ước số của site nằm ngay trong prompt của nó —
+dùng lại, đừng viết prompt thứ hai nói cùng một chuyện.
+
+### Bốn việc đầu tiên, theo thứ tự
+
+1. **Chốt phạm vi câu chữ LLM được viết.** Đề xuất: CHỈ đoạn "vì sao thẻ này
+   hợp với bạn" của hành động chính. Tên thẻ, con số, cảnh báo, độ chắc chắn và
+   nút đăng ký giữ nguyên bảng tra — chúng là chỗ một câu bịa gây thiệt hại
+   thật.
+2. **Kiểm chứng đầu ra trước khi hiển thị.** Mọi con số trong câu LLM viết phải
+   xuất hiện trong `ResultView` được đưa vào; không khớp thì rơi về câu bảng
+   tra. Đây là phép kiểm rẻ nhất chống bịa số, và nó chạy được trong test.
+3. **Lưu câu đã hiển thị cùng `runId`.** Cùng lý do §20 lưu lượt chạy: một
+   khiếu nại "câu này sai" phải tra được đúng câu người dùng đã đọc, không phải
+   câu sinh lại hôm nay.
+4. **Đường lui khi LLM hỏng.** Hết quota, timeout, trả về rỗng → trang vẫn phải
+   hiện đủ kết quả bằng bảng tra. Trang hôm nay đã chạy được không cần LLM, nên
+   đừng để Phase 6 biến nó thành phụ thuộc.
+
+### Ba cạm bẫy đã thấy trước
+
+- **Đừng để LLM xếp lại thứ tự.** Đưa cho nó danh sách đã xếp, và chỉ nhận về
+  đoạn văn cho MỘT ứng viên mỗi lần gọi.
+- **Đừng đưa hồ sơ thô.** Đưa `ResultView` — nó không chứa id phiên, không chứa
+  số dư từng dòng, và đó là ranh giới giữ cho log của nhà cung cấp LLM không
+  thành một bản sao hồ sơ tài chính của người đọc.
+- **"Ước lượng" phải sống sót qua LLM.** Trang hiện ghi "Cần khoảng (ước
+  lượng)" và ngày kiểm dữ liệu; một đoạn văn mượt mà bỏ mất hai chữ đó là đúng
+  thứ §28 cấm.
+
+### Phạm vi Phase 5 (đã xong)
 
 adaptive questionnaire · result page · alternatives · warnings · confidence ·
 affiliate CTA. Tiêu chí: không bắt điền đủ, thiếu thì hỏi một câu tiếp
@@ -247,7 +306,7 @@ Những thứ đã có sẵn cho nó:
 
 ---
 
-## 5. Sáu luật không được phá
+## 7. Sáu luật không được phá
 
 1. **Affiliate không bao giờ ảnh hưởng thứ hạng** (§16 Rule 7).
 2. **Điểm tín dụng không phải điều kiện cứng** (§3.10).
@@ -268,7 +327,7 @@ Cộng một luật Phase 4:
 
 ---
 
-## 6. Cạm bẫy — mới từ Phase 4
+## 8. Cạm bẫy — mới từ Phase 4
 
 **Chạy debugger lên nhân vật mẫu NGAY khi dựng xong.** Mọi lỗi engine của
 Phase 4 đều xanh qua 272 test cũ; ba cái đầu lộ ra khi đọc bảng in ra.
@@ -284,7 +343,7 @@ kiểu; nay nó là hiệu `tripCoverage(có bonus) − tripCoverage(không bonu
 **Nhiều mục tiêu hoà nhau là một ca Phase 3 chưa ai thử.** 15 nhân vật mẫu
 đều một mục tiêu, và bản chụp §20 chỉ ghi `results[0]` — nên bốn lỗi phạm
 vi chỗ trống sống qua mọi test. Test hai mục tiêu nay ở `acceptance.test.ts`;
-bản chụp vẫn chưa khoá chúng (xem §7).
+bản chụp vẫn chưa khoá chúng (xem §9).
 
 **"Chưa biết" có HÌNH DẠNG.** Số dư chưa biết: phủ trong [cận dưới, 1]. Giá
 chỉ biết sàn: phủ trong [0, điểm/sàn]. Hai thứ cùng tên "chưa biết" mà hai
@@ -365,11 +424,13 @@ stage theo đường dẫn cụ thể.
 
 ---
 
-## 7. Rủi ro và giới hạn đã biết
+## 9. Rủi ro và giới hạn đã biết
 
 | Chỗ | Ảnh hưởng |
 | --- | --- |
 | Database production chưa tạo | Kho MySQL đã viết + test trên MariaDB 11.4; phiên bản Hostinger chưa kiểm — xem §3 "Còn chờ user" |
+| **Chưa kiểm CDN trên production** | Trang gợi ý trả kết quả RIÊNG từng người và đọc cookie. Trước khi bật `RECOMMENDER_PUBLISHED`: mở trang bằng HAI trình duyệt khác nhau trên ghe1a.com và xác nhận mỗi bên thấy hồ sơ của chính mình. Next đã gắn `Cache-Control: no-cache` (nó ghi đè cả header khai trong `next.config.ts`), nhưng edge của Hostinger thì chưa ai kiểm |
+| Chưa có lối vào và chưa đo được phễu | Trang chưa được link từ đâu (đúng ý đồ khi còn cờ), và mới chỉ có `apply_clicked` với `placement=recommender_primary` — chưa có event cho "bắt đầu", "trả lời", "bỏ qua" |
 | Cookie "đã bỏ qua" có trần 64 câu | Hồ sơ nhiều thẻ đã đóng + đủ hạng mục chi tiêu có thể sinh tới 79 câu hỏi được; từ câu 65 câu cũ bị đẩy ra và có thể được hỏi lại. Cookie khi đó ~3,3 KB (trần trình duyệt 4 KB). Chưa gặp ở người dùng thật — Codex vòng 2 nêu, cố ý không dựng thêm hạ tầng |
 | `x-forwarded-for` giả được | Trần tạo hồ sơ mới theo IP có thể bị lách; đã thêm trần chung cho cả site (500/giờ). Không có gì chống được bot có chủ đích ngoài hai trần đó |
 | Xoá dữ liệu theo yêu cầu người dùng | Kho lượt chạy CHỈ THÊM và chép nguyên trạng thái người dùng; chưa có đường xoá một người. Hồ sơ không có tên/email nên rủi ro thấp, nhưng Phase 5 phải quyết trước khi mở đăng nhập |
@@ -393,7 +454,7 @@ stage theo đường dẫn cụ thể.
 
 ---
 
-## 8. Chạy gì
+## 10. Chạy gì
 
 ```bash
 npx tsc --noEmit
@@ -411,7 +472,12 @@ npm run build
 npm run test:reco
 ```
 
-`test:reco` 389/389. Bản chụp hành vi §20:
+```bash
+npm run test:recommender
+```
+
+`test:reco` 436/436 (thêm `RECO_TEST_MYSQL_URL` để chạy cả backend MySQL) và
+`test:recommender` 34/34 cho lớp giao diện. Bản chụp hành vi §20:
 
 ```bash
 UPDATE_ENGINE_SNAPSHOT=1 npm run test:reco
@@ -426,7 +492,7 @@ cả hai đứng yên mà kết quả đổi → hồi quy. Dấu vân tay nay d
 
 ---
 
-## 9. Quy ước của repo
+## 11. Quy ước của repo
 
 - **Tự commit và push lên `origin main`** sau khi build/lint xanh — chỉ trên
   `main`; nhánh `wt/*` merge vào `main` là việc phải hỏi. Đẩy từ worktree
