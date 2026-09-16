@@ -85,7 +85,7 @@ function offersFor(data: RecommendationDataset): CreditCardOffer[] {
     editorsTake: "",
     keyBenefits: [],
     elevatedBonus: false,
-    applyUrl: `https://example.com/apply/${product.slug}`,
+    applyUrl: `https://www.finlywealth.com/apply/${product.slug}`,
   }));
 }
 
@@ -145,7 +145,8 @@ test("hành động chính và các lựa chọn khác lấy NGUYÊN thứ tự 
 });
 
 test("affiliate KHÔNG đổi gì ngoài chính cái nút đăng ký", () => {
-  // Dữ liệu y hệt, chỉ khác cờ hoa hồng của MỌI thẻ.
+  // Dữ liệu y hệt, chỉ khác chỗ link apply có hoa hồng hay không — và cờ
+  // affiliate đọc từ CHÍNH link sắp render, nên đây là đúng cặp so.
   const withAffiliate: RecommendationDataset = {
     ...DATA,
     products: DATA.products.map((product) => ({ ...product, affiliateAvailable: true })),
@@ -154,12 +155,18 @@ test("affiliate KHÔNG đổi gì ngoài chính cái nút đăng ký", () => {
     ...DATA,
     products: DATA.products.map((product) => ({ ...product, affiliateAvailable: false })),
   };
+  const plainOffers = offersFor(DATA).map((offer) => ({
+    ...offer,
+    applyUrl: `https://www.rbcroyalbank.com/apply/${offer.slug}`,
+  }));
   for (const state of [beginnerNoCards, aeroplanHeavy, vietnamTripShortfall]) {
     const a = presentRun(runFor(state, withAffiliate), withAffiliate, offersFor(withAffiliate));
-    const b = presentRun(runFor(state, without), without, offersFor(without));
+    const b = presentRun(runFor(state, without), without, plainOffers);
     assert.ok(a !== null && b !== null);
     const strip = (view: typeof a) =>
-      JSON.stringify(view, (key, value) => (key === "affiliate" || key === "runId" ? undefined : value));
+      JSON.stringify(view, (key, value) =>
+        key === "affiliate" || key === "runId" || key === "url" ? undefined : value,
+      );
     assert.equal(strip(a), strip(b), "trang đổi theo hoa hồng");
     assert.equal(a.primary.apply?.affiliate, true);
     assert.equal(b.primary.apply?.affiliate, false);
@@ -233,7 +240,10 @@ test("bảng 'mình đang dựa vào những gì' kể ĐỦ mọi câu đã tr�
     // `spend_profile_missing` và `monthly_total_unknown` ghi vào CÙNG một
     // trường (tổng chi tiêu tháng): câu đầu hỏi khi chưa có phần chi tiêu nào,
     // câu sau khi đã có. Bảng chỉ cần một dòng, và dòng đó mở ra câu sửa đúng.
-    const shownKey = key.replace("spend_profile_missing:", "monthly_total_unknown:");
+    // Khoá in ra URL giấu id phiên đi (`:toi`) — xem `publicQuestionKey`.
+    const shownKey = key
+      .replace("spend_profile_missing:", "monthly_total_unknown:")
+      .replace(`:${state.profile.id}`, ":toi");
     assert.ok(shown.has(shownKey), `bảng không kể ra câu đã trả lời: ${key}`);
   }
   // Và mọi khoá in ra phải mở lại được thành một câu hỏi thật.

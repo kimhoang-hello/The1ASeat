@@ -102,8 +102,29 @@ export type ApplyResult =
   | { ok: true; state: UserState }
   | { ok: false; error: string };
 
+/**
+ * Chủ thể của những câu hỏi về CHÍNH người dùng.
+ *
+ * `userGaps` đặt `subject = profile.id` cho các câu hồ sơ, mà `profile.id`
+ * chính là id phiên nằm trong cookie — thứ mở được toàn bộ hồ sơ. Đưa nó vào
+ * `?sua=` là gửi id đó vào lịch sử trình duyệt, access log và Google Analytics
+ * (Codex vòng 2, Phase 5 UI). Khoá dùng ngoài giao diện vì vậy mang chữ "toi",
+ * và `questionFromKey` dịch ngược lại bằng hồ sơ đang đăng nhập — người khác
+ * cầm URL cũng chỉ mở được hồ sơ của chính họ.
+ */
+export const SELF_SUBJECT = "toi";
+
 export function questionKey(kind: UserDataGap["kind"], subject: string): string {
   return `${kind}:${subject}`;
+}
+
+/** Khoá AN TOÀN để đặt lên URL: chủ thể là chính người dùng thì giấu id đi. */
+export function publicQuestionKey(
+  kind: UserDataGap["kind"],
+  subject: string,
+  userId: string,
+): string {
+  return questionKey(kind, subject === userId ? SELF_SUBJECT : subject);
 }
 
 /**
@@ -157,7 +178,8 @@ export function questionFromKey(
   const separator = key.indexOf(":");
   if (separator < 1) return null;
   const kind = key.slice(0, separator);
-  const subject = key.slice(separator + 1);
+  const raw = key.slice(separator + 1);
+  const subject = raw === SELF_SUBJECT ? (state.profile.id as string) : raw;
   if (!isQuestionKind(kind) || subject.length === 0) return null;
   return questionFor({ kind, subject }, state, ctx);
 }
@@ -731,9 +753,11 @@ export function applyAnswerChecked(
   if (!applied.ok) return applied;
   const errors = validate(applied.state).filter((issue) => issue.level === "error");
   if (errors.length > 0) {
+    // KHÔNG kèm câu của validator: nó chứa chính con số thu nhập / chi tiêu,
+    // và thông báo lỗi đi qua query string (lịch sử trình duyệt, log, GA).
     return {
       ok: false,
-      error: `Câu trả lời này mâu thuẫn với thông tin bạn đã khai: ${errors[0].message}`,
+      error: "Câu trả lời này mâu thuẫn với một câu bạn đã trả lời trước đó. Sửa câu kia trước nhé.",
     };
   }
   return applied;
@@ -855,24 +879,31 @@ export function applyAnswer(
     }
 
     case "personal_income_unknown": {
+      // Cờ "từ chối" và con số là HAI VẾ của cùng một câu trả lời: validator
+      // cấm khai cả hai. Đổi ý phải xoá vế kia, nếu không người dùng kẹt vĩnh
+      // viễn ở câu này (Codex vòng 2, Phase 5 UI).
       if (answer === "decline") {
         next.profile.personalIncomeDeclined = true;
+        next.profile.annualPersonalIncome = null;
         return { ok: true, state: next };
       }
       const amount = bandByValue(INCOME, answer);
       if (amount === null) return BAD("thu nhập");
       next.profile.annualPersonalIncome = amount;
+      next.profile.personalIncomeDeclined = false;
       return { ok: true, state: next };
     }
 
     case "household_income_unknown": {
       if (answer === "decline") {
         next.profile.householdIncomeDeclined = true;
+        next.profile.annualHouseholdIncome = null;
         return { ok: true, state: next };
       }
       const amount = bandByValue(INCOME, answer);
       if (amount === null) return BAD("thu nhập hộ gia đình");
       next.profile.annualHouseholdIncome = amount;
+      next.profile.householdIncomeDeclined = false;
       return { ok: true, state: next };
     }
 

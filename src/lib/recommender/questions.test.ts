@@ -22,6 +22,7 @@ import {
   applyAnswer,
   applyAnswerChecked,
   isQuestionKind,
+  publicQuestionKey,
   questionFromKey,
   goalFrom,
   newUserState,
@@ -333,4 +334,36 @@ test("số người bay ghi ĐÚNG con số, không dồn về một trần", ()
     const goal = applied.state.goals[0];
     assert.equal(goal.type === "trip" && goal.passengers, count);
   }
+});
+
+test("đổi ý về câu thu nhập: cờ 'không muốn trả lời' và con số không bao giờ cùng tồn tại", () => {
+  // Validator cấm khai cả hai. Không xoá vế kia khi đổi ý thì người dùng kẹt
+  // vĩnh viễn ở đúng câu này (Codex vòng 2, Phase 5 UI).
+  const state = stateWithGoal("next_card");
+  const spec = questionFor({ kind: "personal_income_unknown", subject: "u_test" }, state, CTX);
+  assert.ok(spec !== null);
+  const declined = applyAnswer(state, spec, form({ answer: "decline" }), CTX);
+  assert.ok(declined.ok);
+  assert.equal(declined.state.profile.personalIncomeDeclined, true);
+  assert.equal(declined.state.profile.annualPersonalIncome, null);
+
+  const changed = applyAnswer(declined.state, spec, form({ answer: "80000-150000" }), CTX);
+  assert.ok(changed.ok);
+  assert.equal(changed.state.profile.personalIncomeDeclined, false);
+  assert.deepEqual(changed.state.profile.annualPersonalIncome, { low: 80_000, high: 150_000 });
+  assert.deepEqual(
+    validateUserState(changed.state, DATA).filter((issue) => issue.level === "error"),
+    [],
+  );
+});
+
+test("khoá đi ra URL KHÔNG mang id phiên", () => {
+  // `profile.id` chính là id trong cookie: lọt vào URL là lọt vào lịch sử
+  // trình duyệt, access log và Google Analytics.
+  const state = stateWithGoal("next_card");
+  const key = publicQuestionKey("annual_fee_tolerance_unknown", "u_test", "u_test");
+  assert.equal(key, "annual_fee_tolerance_unknown:toi");
+  assert.ok(!key.includes("u_test"));
+  // Và khoá đó vẫn mở đúng câu hỏi của chính người đang đăng nhập.
+  assert.ok(questionFromKey(key, state, CTX) !== null);
 });

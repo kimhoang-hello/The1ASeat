@@ -14,6 +14,7 @@ import {
   runForDisplay,
   skippedQuestions,
 } from "@/lib/recommender/session";
+import { resetRecommendation } from "@/app/credit-cards/goi-y/actions";
 import { PageHeader } from "@/components/layout/page-header";
 import { QuestionCard } from "@/components/recommender/question-card";
 import { Result } from "@/components/recommender/result";
@@ -26,6 +27,13 @@ import { breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
  *
  * LUÔN ĐỘNG. Trang đọc cookie và hồ sơ trong database, nên nó không được cache:
  * một bản HTML dùng chung là kết quả của người này hiện ra cho người kia.
+ *
+ * Next tự gắn `Cache-Control: no-cache, must-revalidate` cho route động, và nó
+ * ghi đè cả header khai trong `next.config.ts` — nên KHÔNG có cách nào khai
+ * thêm một lớp bảo vệ ở đó (đã thử: header của config không tới được response
+ * này). Lớp còn lại là CDN: trước khi bật `RECOMMENDER_PUBLISHED`, phải mở
+ * trang bằng hai trình duyệt khác nhau trên production và xác nhận mỗi bên
+ * thấy hồ sơ của chính mình.
  *
  * Ba trạng thái, theo đúng thứ tự:
  *
@@ -131,6 +139,27 @@ function OutsideCanadaNotice() {
   );
 }
 
+function BrokenProfileNotice() {
+  return (
+    <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+      <h2 className="font-display text-lg font-bold text-foreground">
+        Hồ sơ cũ của bạn không chạy lại được
+      </h2>
+      <p className="mt-2 text-base leading-relaxed text-foreground/90">
+        Có thể do dữ liệu thẻ đã đổi kể từ lần trước. Bắt đầu lại giúp mình — chỉ mất vài câu.
+      </p>
+      <form action={resetRecommendation} className="mt-4">
+        <button
+          type="submit"
+          className="inline-block cursor-pointer rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
+        >
+          Làm lại từ đầu &rarr;
+        </button>
+      </form>
+    </section>
+  );
+}
+
 async function Body({ editKey }: { editKey: string | null }) {
   if (!recommenderStorageReady()) {
     return (
@@ -147,7 +176,17 @@ async function Body({ editKey }: { editKey: string | null }) {
   const stored = userId === null ? null : await loadState(userId);
   if (userId === null || stored === null) return <StartPanel />;
 
-  const { record, dataset } = await runForDisplay(userId, stored);
+  let run;
+  try {
+    run = await runForDisplay(userId, stored);
+  } catch (error) {
+    // Hồ sơ trong kho không chạy được (dữ liệu cũ, một trường đã đổi nghĩa).
+    // Người dùng phải còn đường ra: không có khối này thì mọi lần mở trang đều
+    // nổ TRƯỚC khi nút "Làm lại từ đầu" kịp hiện (Codex vòng 2).
+    console.error("[goi-y] không chạy được hồ sơ đã lưu", error);
+    return <BrokenProfileNotice />;
+  }
+  const { record, dataset } = run;
   const offers = await getCreditCardOffers();
   const view = presentRun(record, dataset, offers);
   if (view === null) return <StartPanel />;

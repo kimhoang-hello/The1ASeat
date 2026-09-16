@@ -13,13 +13,13 @@
  * CTA giữ nguyên từng chữ.
  */
 
+import { isReferralUrl } from "../affiliate-links.ts";
 import type { CreditCardOffer } from "../content/types.ts";
 import type { Candidate } from "../recommendation/engine-types.ts";
 import type { RecommendationRunRecord } from "../recommendation/runs.ts";
 import type { ReasonCode, WarningCode } from "../recommendation/reason-codes.ts";
 import type {
   PointsProgramId,
-  Product,
   RecommendationDataset,
   SpendCategory,
 } from "../recommendation/types.ts";
@@ -34,7 +34,13 @@ import {
   WARNING_TEXT,
   type ReasonText,
 } from "./copy.ts";
-import { CABIN_LABEL, CATEGORY_LABEL, REGION_LABEL } from "./questions.ts";
+import {
+  CABIN_LABEL,
+  CATEGORY_LABEL,
+  publicQuestionKey,
+  questionKey,
+  REGION_LABEL,
+} from "./questions.ts";
 
 export interface ActionView {
   kind: "open_card" | "no_new_card";
@@ -160,19 +166,13 @@ export function warningsOf(codes: readonly WarningCode[]): string[] {
 
 interface CardLookup {
   offers: Map<string, CreditCardOffer>;
-  products: Map<string, Product>;
   /** Dữ kiện offer engine ĐÃ ĐỌC, theo slug — nguồn của con số mốc chi. */
   facts: Map<string, { minSpendPer90Days: number | null }>;
 }
 
-function lookup(
-  record: RecommendationRunRecord,
-  dataset: RecommendationDataset,
-  offers: readonly CreditCardOffer[],
-): CardLookup {
+function lookup(record: RecommendationRunRecord, offers: readonly CreditCardOffer[]): CardLookup {
   return {
     offers: new Map(offers.map((offer) => [offer.slug, offer])),
-    products: new Map(dataset.products.map((product) => [product.slug, product])),
     facts: new Map(
       record.derivedState.candidates.map((row) => [
         row.productSlug,
@@ -192,7 +192,6 @@ function actionOf(
 ): ActionView {
   const slug = candidate.productSlug;
   const offer = slug === null ? undefined : cards.offers.get(slug);
-  const product = slug === null ? undefined : cards.products.get(slug);
   return {
     kind: candidate.kind,
     slug,
@@ -203,10 +202,14 @@ function actionOf(
     // CHỖ DUY NHẤT đọc affiliate. Không có link apply thì không có nút — và
     // `affiliateAvailable` chỉ đổi thuộc tính `rel`, không đổi việc có nút hay
     // không (thẻ nào cũng đáng có đường đăng ký).
+    // Cờ affiliate đọc từ CHÍNH link sắp render, không từ bản chụp: bản ghi có
+    // thể là của sáng nay, còn link thì lấy từ Contentful lúc này. Một link
+    // vừa đổi thành link có hoa hồng mà bản chụp nói "không" sẽ ra một nút
+    // thiếu `rel="sponsored"` và thiếu câu disclosure (Codex vòng 2).
     apply:
       offer?.applyUrl === undefined
         ? null
-        : { url: offer.applyUrl, affiliate: product?.affiliateAvailable ?? false },
+        : { url: offer.applyUrl, affiliate: isReferralUrl(offer.applyUrl) },
     reasons: reasonsOf(candidate.reasonCodes),
     warnings: warningsOf(candidate.warnings),
     score: candidate.score,
@@ -316,7 +319,7 @@ export function presentRun(
 ): ResultView | null {
   const result = record.outputSnapshot.results[goalIndex];
   if (result === undefined) return null;
-  const cards = lookup(record, dataset, offers);
+  const cards = lookup(record, offers);
   const primary = actionOf(result.primaryAction, cards);
   const primaryReasons = new Set(primary.reasons.map((row) => row.text));
   const noActionIsPrimary = result.primaryAction.kind === "no_new_card";
@@ -390,6 +393,9 @@ function amountText(amount: { low: number; high: number | null } | null): string
  */
 export function answeredRows(state: UserState, dataset: RecommendationDataset): AnsweredRow[] {
   const rows: AnsweredRow[] = [];
+  const id = state.profile.id as string;
+  /** Câu hỏi về chính người dùng — khoá không mang id phiên. */
+  const self = (kind: Parameters<typeof publicQuestionKey>[0]) => publicQuestionKey(kind, id, id);
   const goal = state.goals[0];
   if (goal !== undefined) {
     rows.push({
@@ -403,16 +409,16 @@ export function answeredRows(state: UserState, dataset: RecommendationDataset): 
   }
   if (goal?.type === "trip") {
     if (goal.cabin !== null) {
-      rows.push({ label: "Hạng ghế", value: CABIN_LABEL[goal.cabin], questionKey: `trip_cabin_unknown:${goal.id}` });
+      rows.push({ label: "Hạng ghế", value: CABIN_LABEL[goal.cabin], questionKey: questionKey("trip_cabin_unknown", goal.id as string) });
     }
     if (goal.passengers !== null) {
-      rows.push({ label: "Số người", value: `${goal.passengers}`, questionKey: `trip_passengers_unknown:${goal.id}` });
+      rows.push({ label: "Số người", value: `${goal.passengers}`, questionKey: questionKey("trip_passengers_unknown", goal.id as string) });
     }
     if (goal.roundTrip !== null) {
       rows.push({
         label: "Loại vé",
         value: goal.roundTrip ? "Khứ hồi" : "Một chiều",
-        questionKey: `trip_round_trip_unknown:${goal.id}`,
+        questionKey: questionKey("trip_round_trip_unknown", goal.id as string),
       });
     }
     if (goal.flexibility !== null) {
@@ -421,14 +427,14 @@ export function answeredRows(state: UserState, dataset: RecommendationDataset): 
         value: { low: "Cố định", medium: "Xê dịch được vài ngày", high: "Rất linh hoạt" }[
           goal.flexibility
         ],
-        questionKey: `trip_flexibility_unknown:${goal.id}`,
+        questionKey: questionKey("trip_flexibility_unknown", goal.id as string),
       });
     }
     if (goal.travelStart !== null) {
       rows.push({
         label: "Thời gian bay",
         value: `Tháng ${Number(goal.travelStart.slice(5, 7))}/${goal.travelStart.slice(0, 4)}`,
-        questionKey: `trip_dates_unknown:${goal.id}`,
+        questionKey: questionKey("trip_dates_unknown", goal.id as string),
       });
     }
   }
@@ -444,14 +450,14 @@ export function answeredRows(state: UserState, dataset: RecommendationDataset): 
     rows.push({
       label: "Thẻ đang giữ",
       value: held.length === 0 ? "Chưa có thẻ nào" : held.join(", "),
-      questionKey: `cards_undeclared:${state.profile.id}`,
+      questionKey: self("cards_undeclared"),
     });
     const closed = named((card) => card.status !== "active");
     if (closed.length > 0) {
       rows.push({
         label: "Thẻ từng giữ",
         value: closed.join(", "),
-        questionKey: `cards_undeclared:${state.profile.id}`,
+        questionKey: self("cards_undeclared"),
       });
     }
     // Năm đóng thẻ đổi được cửa welcome bonus, nên nó phải sửa được — mỗi thẻ
@@ -461,7 +467,7 @@ export function answeredRows(state: UserState, dataset: RecommendationDataset): 
       rows.push({
         label: `Năm đóng ${nameOf(card.productId as string) ?? "thẻ"}`,
         value: card.closedDate.slice(0, 4),
-        questionKey: `card_closed_date_unknown:${card.id}`,
+        questionKey: questionKey("card_closed_date_unknown", card.id as string),
       });
     }
   }
@@ -472,7 +478,7 @@ export function answeredRows(state: UserState, dataset: RecommendationDataset): 
         state.balances.length === 0
           ? "Chưa có điểm nào"
           : state.balances.map((row) => programName(dataset, row.programId)).join(", "),
-      questionKey: `balances_undeclared:${state.profile.id}`,
+      questionKey: self("balances_undeclared"),
     });
     // Mỗi số dư ĐÃ KHAI một dòng riêng: con số đó quyết định "còn thiếu bao
     // nhiêu điểm", nên gõ nhầm một chữ số phải sửa được mà không phải khai lại
@@ -482,7 +488,7 @@ export function answeredRows(state: UserState, dataset: RecommendationDataset): 
       rows.push({
         label: `Số điểm ${programName(dataset, row.programId)}`,
         value: formatPoints(row.balance),
-        questionKey: `point_balance_amount_unknown:${row.programId}`,
+        questionKey: questionKey("point_balance_amount_unknown", row.programId as string),
       });
     }
   }
@@ -491,7 +497,7 @@ export function answeredRows(state: UserState, dataset: RecommendationDataset): 
     rows.push({
       label: "Dồn được trong 3 tháng",
       value: capacity,
-      questionKey: `minimum_spend_capacity_unknown:${state.profile.id}`,
+      questionKey: self("minimum_spend_capacity_unknown"),
     });
   }
   const monthly = amountText(state.spend?.monthlyTotal ?? null);
@@ -499,7 +505,7 @@ export function answeredRows(state: UserState, dataset: RecommendationDataset): 
     rows.push({
       label: "Chi tiêu mỗi tháng",
       value: monthly,
-      questionKey: `monthly_total_unknown:${state.profile.id}`,
+      questionKey: self("monthly_total_unknown"),
     });
   }
   // Chi tiêu theo hạng mục: engine hỏi từng hạng mục một, nên sửa cũng từng
@@ -510,7 +516,7 @@ export function answeredRows(state: UserState, dataset: RecommendationDataset): 
     rows.push({
       label: `Chi cho ${CATEGORY_LABEL[category as SpendCategory]}`,
       value: text,
-      questionKey: `spend_category_unknown:${category}`,
+      questionKey: questionKey("spend_category_unknown", category as string),
     });
   }
   const income = amountText(state.profile.annualPersonalIncome);
@@ -518,7 +524,7 @@ export function answeredRows(state: UserState, dataset: RecommendationDataset): 
     rows.push({
       label: "Thu nhập cá nhân",
       value: income ?? "Không muốn trả lời",
-      questionKey: `personal_income_unknown:${state.profile.id}`,
+      questionKey: self("personal_income_unknown"),
     });
   }
   const household = amountText(state.profile.annualHouseholdIncome);
@@ -526,7 +532,7 @@ export function answeredRows(state: UserState, dataset: RecommendationDataset): 
     rows.push({
       label: "Thu nhập hộ gia đình",
       value: household ?? "Không muốn trả lời",
-      questionKey: `household_income_unknown:${state.profile.id}`,
+      questionKey: self("household_income_unknown"),
     });
   }
   const fee = state.profile.annualFeeTolerancePerCard;
@@ -534,7 +540,7 @@ export function answeredRows(state: UserState, dataset: RecommendationDataset): 
     rows.push({
       label: "Phí thường niên chấp nhận",
       value: fee >= 10_000 ? "Bao nhiêu cũng được nếu đáng" : `Tới $${fee.toLocaleString("en-US")}`,
-      questionKey: `annual_fee_tolerance_unknown:${state.profile.id}`,
+      questionKey: self("annual_fee_tolerance_unknown"),
     });
   }
   const yesNo = (value: boolean) => (value ? "Có" : "Không");
@@ -542,21 +548,21 @@ export function answeredRows(state: UserState, dataset: RecommendationDataset): 
     rows.push({
       label: "Xét thẻ doanh nghiệp",
       value: yesNo(state.profile.businessCardsAllowed),
-      questionKey: `business_cards_preference_unknown:${state.profile.id}`,
+      questionKey: self("business_cards_preference_unknown"),
     });
   }
   if (state.profile.hasBusiness !== null) {
     rows.push({
       label: "Có doanh nghiệp / tự doanh",
       value: yesNo(state.profile.hasBusiness),
-      questionKey: `business_ownership_unknown:${state.profile.id}`,
+      questionKey: self("business_ownership_unknown"),
     });
   }
   if (state.profile.isStudent !== null) {
     rows.push({
       label: "Đang là sinh viên",
       value: yesNo(state.profile.isStudent),
-      questionKey: `student_status_unknown:${state.profile.id}`,
+      questionKey: self("student_status_unknown"),
     });
   }
   return rows;

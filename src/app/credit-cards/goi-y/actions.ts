@@ -87,8 +87,12 @@ export async function startRecommendation(formData: FormData): Promise<void> {
   // dùng chung một khoá, tức trần thành trần toàn site — chặt hơn, không lỏng
   // hơn.
   const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  const limit = rateLimit(`reco:start:${ip}`, 30, 60 * 60 * 1000);
-  if (!limit.ok) fail("Công cụ đang bận. Thử lại sau vài phút giúp mình.");
+  // HAI trần: theo IP, và một trần chung cho cả site. `x-forwarded-for` là
+  // header client tự đặt được (AGENTS.md), nên trần theo IP một mình chỉ chặn
+  // người dùng thật; trần chung đặt giới hạn cho cả kịch bản xoay IP giả.
+  const perIp = rateLimit(`reco:start:${ip}`, 30, 60 * 60 * 1000);
+  const siteWide = rateLimit("reco:start:all", 500, 60 * 60 * 1000);
+  if (!perIp.ok || !siteWide.ok) fail("Công cụ đang bận. Thử lại sau vài phút giúp mình.");
 
   const today = todayInSiteZone();
   const userId = await startUserId();
