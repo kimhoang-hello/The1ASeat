@@ -1,0 +1,171 @@
+/**
+ * Hợp đồng của lớp trình bày.
+ *
+ * Bài quan trọng nhất là bài affiliate: bật/tắt cờ `affiliateAvailable` của MỌI
+ * thẻ rồi đòi trang nói y hệt, trừ đúng cái nút "Đăng ký ngay". Test F ở engine
+ * canh Rule 7 cho THỨ HẠNG; bài này canh chỗ còn lại — nơi thứ hạng đã đúng mà
+ * trang vẫn có thể lặng lẽ ưu ái thẻ có hoa hồng.
+ */
+
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import type { CreditCardOffer } from "../content/types.ts";
+import { offlineDataset } from "../recommendation/data/index.ts";
+import {
+  aeroplanHeavy,
+  beginnerNoCards,
+  japanTripFunded,
+  vietnamTripShortfall,
+} from "../recommendation/data/user-fixtures.ts";
+import { REASON_CODES, WARNING_CODES } from "../recommendation/reason-codes.ts";
+import { executeRun } from "../recommendation/runs.ts";
+import { datasetAt } from "../recommendation/temporal.ts";
+import type { RecommendationDataset } from "../recommendation/types.ts";
+import type { UserState } from "../recommendation/user-types.ts";
+import { REASON_TEXT, WARNING_TEXT } from "./copy.ts";
+import { presentRun, reasonsOf } from "./present.ts";
+
+const ASOF = "2026-09-08";
+const DATA = datasetAt(offlineDataset(), ASOF);
+
+/** Entry Contentful tối thiểu cho mỗi thẻ — đủ để dựng nút và ảnh. */
+function offersFor(data: RecommendationDataset): CreditCardOffer[] {
+  return data.products.map((product) => ({
+    slug: product.slug,
+    name: product.name,
+    issuer: "Ngân hàng",
+    image: `/${product.slug}.png`,
+    cardImage: `/${product.slug}-card.png`,
+    country: "CA" as const,
+    annualFee: "$120",
+    cardType: "travel",
+    welcomeBonus: "60,000 điểm",
+    headline: "",
+    editorsTake: "",
+    keyBenefits: [],
+    elevatedBonus: false,
+    applyUrl: `https://example.com/apply/${product.slug}`,
+  }));
+}
+
+let counter = 0;
+function runFor(state: UserState, data: RecommendationDataset = DATA) {
+  counter += 1;
+  return executeRun(
+    { state, data, asOf: ASOF },
+    { id: `run_present_${counter}`, createdAt: "2026-09-08T12:00:00.000Z", userId: "u_test" },
+  ).record;
+}
+
+test("mọi mã của engine đều có câu tiếng Việt, không mã nào lọt ra trang", () => {
+  for (const code of REASON_CODES) {
+    assert.ok(REASON_TEXT[code].text.trim().length > 0, `${code}: câu rỗng`);
+    assert.ok(!REASON_TEXT[code].text.includes(code), `${code}: câu còn chứa chính mã`);
+  }
+  for (const code of WARNING_CODES) {
+    assert.ok(WARNING_TEXT[code].trim().length > 0, `${code}: câu rỗng`);
+    assert.ok(!WARNING_TEXT[code].includes(code), `${code}: câu còn chứa chính mã`);
+  }
+});
+
+test("lý do xếp theo ủng hộ → cần cân nhắc → ngữ cảnh, và không lặp", () => {
+  const rows = reasonsOf([
+    "ELIGIBILITY_UNCERTAIN",
+    "MIN_SPEND_TOO_HIGH",
+    "CURRENT_OFFER_STRONG",
+    "CURRENT_OFFER_STRONG",
+  ]);
+  assert.deepEqual(
+    rows.map((row) => row.tone),
+    ["good", "caution", "info"],
+  );
+});
+
+test("hành động chính và các lựa chọn khác lấy NGUYÊN thứ tự của bản ghi", () => {
+  for (const state of [beginnerNoCards, aeroplanHeavy, japanTripFunded, vietnamTripShortfall]) {
+    const record = runFor(state);
+    const view = presentRun(record, DATA, offersFor(DATA));
+    assert.ok(view !== null);
+    const result = record.outputSnapshot.results[0];
+    assert.equal(view.primary.slug, result.primaryAction.productSlug);
+    assert.deepEqual(
+      view.alternatives.map((row) => row.slug),
+      result.alternatives.slice(0, 3).map((row) => row.productSlug),
+    );
+    // `NO_NEW_CARD` luôn có mặt: hoặc là hành động chính, hoặc là một lựa chọn
+    // đứng riêng — không bao giờ biến mất (§16 Rule 8).
+    if (result.primaryAction.kind === "no_new_card") {
+      assert.equal(view.noAction, null);
+      assert.equal(view.primary.kind, "no_new_card");
+    } else {
+      assert.equal(view.noAction?.kind, "no_new_card");
+    }
+  }
+});
+
+test("affiliate KHÔNG đổi gì ngoài chính cái nút đăng ký", () => {
+  // Dữ liệu y hệt, chỉ khác cờ hoa hồng của MỌI thẻ.
+  const withAffiliate: RecommendationDataset = {
+    ...DATA,
+    products: DATA.products.map((product) => ({ ...product, affiliateAvailable: true })),
+  };
+  const without: RecommendationDataset = {
+    ...DATA,
+    products: DATA.products.map((product) => ({ ...product, affiliateAvailable: false })),
+  };
+  for (const state of [beginnerNoCards, aeroplanHeavy, vietnamTripShortfall]) {
+    const a = presentRun(runFor(state, withAffiliate), withAffiliate, offersFor(withAffiliate));
+    const b = presentRun(runFor(state, without), without, offersFor(without));
+    assert.ok(a !== null && b !== null);
+    const strip = (view: typeof a) =>
+      JSON.stringify(view, (key, value) => (key === "affiliate" || key === "runId" ? undefined : value));
+    assert.equal(strip(a), strip(b), "trang đổi theo hoa hồng");
+    assert.equal(a.primary.apply?.affiliate, true);
+    assert.equal(b.primary.apply?.affiliate, false);
+  }
+});
+
+test("thẻ không có link đăng ký thì KHÔNG có nút, và trang vẫn dựng", () => {
+  const record = runFor(beginnerNoCards);
+  const view = presentRun(record, DATA, offersFor(DATA).map((offer) => ({ ...offer, applyUrl: undefined })));
+  assert.ok(view !== null);
+  assert.equal(view.primary.apply, null);
+  assert.ok(view.primary.name.length > 0);
+});
+
+test("thẻ chưa có entry Contentful: vẫn có tên và lý do, chỉ thiếu ảnh và nút", () => {
+  const record = runFor(beginnerNoCards);
+  const view = presentRun(record, DATA, []);
+  assert.ok(view !== null);
+  assert.equal(view.primary.image, null);
+  assert.equal(view.primary.apply, null);
+  assert.ok(view.primary.reasons.length > 0);
+});
+
+test("số của chuyến đi lấy đúng con số bản ghi đã lưu", () => {
+  const record = runFor(vietnamTripShortfall);
+  const view = presentRun(record, DATA, offersFor(DATA));
+  assert.ok(view !== null && view.trip !== null);
+  const numbers = record.outputSnapshot.results[0].numbers;
+  assert.equal(view.trip.needTypical, numbers.tripNeedTypical);
+  assert.equal(view.trip.accessible, numbers.accessiblePoints);
+  assert.equal(view.trip.gap, numbers.pointsGapTypical);
+  assert.equal(view.trip.accessibleIsLowerBound, numbers.accessiblePointsIsLowerBound);
+});
+
+test("độ chắc chắn nói ra YẾU TỐ thấp nhất, không chỉ mức", () => {
+  const record = runFor(beginnerNoCards);
+  const view = presentRun(record, DATA, offersFor(DATA));
+  assert.ok(view !== null);
+  assert.equal(view.confidence.level, record.outputSnapshot.results[0].confidence.level);
+  assert.ok(view.confidence.sentence.length > 0);
+  if (view.confidence.level !== "high") {
+    assert.match(view.confidence.sentence, /vì /);
+  }
+});
+
+test("mục tiêu không có trong bản ghi thì trả null, không nổ", () => {
+  const record = runFor(beginnerNoCards);
+  assert.equal(presentRun(record, DATA, offersFor(DATA), 7), null);
+});

@@ -57,3 +57,18 @@ export const VIETNAM_ROUTES_PUBLISHED = true;
  * mất — tất cả cùng một lúc, không cần sửa chỗ nào khác.
  */
 export const CATCH_THE_POINTS_PUBLISHED = true;
+
+/**
+ * Công cụ gợi ý thẻ (`/credit-cards/goi-y`) — mặt trước của recommendation
+ * engine. Dựng 15/09/2026.
+ *
+ * Bật cờ là công bố: bỏ `noindex`, bỏ dải báo nháp, và cho phép link tới nó từ
+ * trang thẻ và trang "Bắt đầu ở đây". Trong lúc còn tắt, trang vẫn chạy thật
+ * (kể cả lưu hồ sơ người dùng vào database) để tác giả thử trên chính bản
+ * deploy — chỉ là không ai tình cờ vào được.
+ *
+ * TRƯỚC KHI BẬT: kiểm trên production rằng CDN của Hostinger KHÔNG cache trang
+ * này. Trang đọc cookie và trả kết quả riêng cho từng người; một bản HTML dùng
+ * chung là kết quả của người này hiện ra cho người kia.
+ */
+export const RECOMMENDER_PUBLISHED = false;

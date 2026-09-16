@@ -72,4 +72,6 @@ jobs:
 
       - run: npm run test:reco
 
+      - run: npm run test:recommender
+
       - run: npm run test:jobs

@@ -142,7 +142,7 @@ export {
   type RunInput,
   type RunMeta,
 } from "./runs.ts";
-export { inMemoryRunStore, type RunStore, type RunSummary } from "./run-store.ts";
+export { inMemoryRunStore, persistRun, type RunStore, type RunSummary } from "./run-store.ts";
 export {
   PIPELINE_STAGES,
   STAGE_LABELS,

@@ -89,10 +89,25 @@ export default function PrivacyPage() {
         </li>
       </ul>
 
+      <h2>Công cụ gợi ý thẻ</h2>
+      <p>
+        Nếu bạn dùng công cụ gợi ý thẻ, những câu bạn trả lời (mục tiêu, thẻ đang giữ, khoảng chi
+        tiêu, khoảng thu nhập, điểm đang có) được lưu trên máy chủ của chúng tôi cùng một mã ngẫu
+        nhiên đặt trong cookie của trình duyệt bạn. <strong>Không có tên, email hay số tài khoản
+        nào</strong> — công cụ không hỏi và cũng không có chỗ để điền chúng.
+      </p>
+      <p>
+        Mỗi lượt gợi ý được lưu lại kèm chính những con số đã dùng để tính, để khi bạn báo kết quả
+        sai thì chúng tôi tra lại được đúng lượt đó. Bấm &ldquo;Làm lại từ đầu&rdquo; trong công cụ
+        sẽ xoá mã ngẫu nhiên khỏi trình duyệt bạn; muốn xoá hẳn phần dữ liệu đã lưu, nhắn cho chúng
+        tôi qua trang liên hệ kèm mã lượt gợi ý hiện dưới mỗi kết quả.
+      </p>
+
       <h2>Cookie và cách từ chối</h2>
       <p>
-        Trang dùng cookie cho hai việc: thống kê truy cập (Google Analytics) và player YouTube
-        nhúng trong bài. Chúng tôi không dùng cookie để hiển thị quảng cáo cá nhân hoá.
+        Trang dùng cookie cho ba việc: thống kê truy cập (Google Analytics), player YouTube nhúng
+        trong bài, và ghi nhớ phiên của công cụ gợi ý thẻ nếu bạn dùng nó. Chúng tôi không dùng
+        cookie để hiển thị quảng cáo cá nhân hoá.
       </p>
       <p>
         Bạn có thể chặn hoặc xoá cookie trong cài đặt trình duyệt bất cứ lúc nào. Riêng Google
