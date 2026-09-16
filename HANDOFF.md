@@ -22,7 +22,7 @@ Tài liệu module: [`src/lib/recommendation/README.md`](src/lib/recommendation/
 | 3 | Engine (Portfolio Analyzer → Ranking) | ✅ |
 | 4 | `recommendation_runs` + Debugger + Test A–J | ✅ |
 | 5 | **Frontend UX** | ✅ **XONG 16/09/2026**, đã merge `main`. Trang `/credit-cards/goi-y` còn sau cờ `RECOMMENDER_PUBLISHED` (chưa công bố). Xem §5. Phán quyết Phase 5: **READY FOR PHASE 6 WITH KNOWN RISKS** (§9) |
-| 6 | **LLM giải thích** (§28) | ⬅️ **BẮT ĐẦU Ở ĐÂY** — xem §6 |
+| 6 | **LLM giải thích** (§28) | ✅ **DỰNG XONG 16/09/2026** trên nhánh `wt/reco-phase6` (chưa merge `main`). Xem §6 |
 
 Phase 4: **đã merge vào `main` ngày 13/09/2026** (nhánh `wt/reco-phase4`,
 29 commit), 21 vòng Codex, **389 test**,
@@ -231,6 +231,26 @@ GA4 cho phễu (mới chỉ có `apply_clicked` với `placement=recommender_pri
 khi bật cờ.
 
 ## 6. Phase 6 — LLM giải thích (§28)
+
+**Đã làm (16/09/2026)** — chi tiết + quyết định: README module, mục "Phase 6".
+Bốn việc đầu tiên bên dưới đều đã xong: phạm vi CHỈ là khối "vì sao hợp" của
+hành động chính; cửa kiểm (`explain-check.ts`) chạy trước khi hiện; câu lưu vào
+`reco_explanations` cùng `runId` trước khi hiện; mọi nhánh hỏng rơi về bảng tra
+trong `<Suspense>`. `test:recommender` thêm `explain.test.ts` (cả bài kho trên
+MariaDB 11.8).
+
+**Chưa làm / còn chờ:**
+
+- **Chưa gọi Claude thật lần nào.** Máy dev không có `ANTHROPIC_API_KEY`; luồng
+  đầu-cuối chỉ kiểm bằng server giả API. Lần chạy thật đầu tiên trên production
+  (trang còn sau cờ) phải đọc `reco_explanations`: tỷ lệ `rejected` và
+  `problems` cho biết cửa kiểm có từ chối oan hay prompt cần chỉnh.
+- **Tỷ lệ từ chối chưa đo.** Luật gốc của cửa kiểm (chữ phải lấy từ dữ kiện)
+  chặt có chủ ý. Nếu Claude thật bị từ chối phần lớn các lượt, trang vẫn đúng
+  (bảng tra) nhưng Phase 6 thành vô dụng — chỉnh prompt hoặc nới `CONNECTIVES`,
+  đừng nới luật gốc.
+- Chưa có công cụ debugger đọc `reco_explanations` — hôm nay tra bằng SQL.
+
 
 **Phase 6 KHÔNG được đổi khuyến nghị.** Engine đã chọn thẻ, đã xếp hạng, đã
 phát mã; Phase 6 chỉ viết lại phần giải thích cho mượt hơn. Spec §28 liệt kê

@@ -201,7 +201,7 @@ test("câu văn tự nhiên trộn nhiều dữ kiện vẫn qua", () => {
     payload,
     {
       sentences: [
-        { text: `Chuyến bay bạn nhắm cần khoảng ${range}, theo ước lượng của mình từ award chart.`, facts: ["trip_need", "trip"], basis: "estimate" },
+        { text: `Chuyến bay bạn khai cần khoảng ${range}, theo ước lượng của mình từ award chart.`, facts: ["trip_need", "trip"], basis: "estimate" },
         { text: fact(payload, "strategy").text, facts: ["strategy"], basis: "editorial" },
       ],
     },
@@ -220,9 +220,16 @@ test("cửa kiểm chặn từng điều cấm của §28", () => {
   const firstNeed = numbersIn(need.text).at(-1)!;
   const otherCard = DATA.products.find((product) => !card.facts.some((row) => row.text.includes(product.name)) && product.name !== card.action.name)!;
 
+  // Ngân hàng viết tắt KHÁC ngân hàng của thẻ chính — "TD", "RBC", "BMO".
+  const otherIssuer = ["TD", "RBC", "BMO"].find((acronym) => !JSON.stringify(card).includes(acronym))!;
   const view = viewFor(beginnerNoCards);
   const blocked = explanationPayload({ ...view, primary: { ...view.primary, welcomeBonusBlocked: true } });
   const reason = card.facts.find((row) => row.basis === "editorial" && row.id !== "goal")!;
+  const focus = explanationPayload({ ...view, strategy: "Tập trung tìm chỗ trống" });
+  const cobaltProduct = DATA.products.find((product) => product.slug === "amex-cobalt")!;
+  const goldName = DATA.products.find((product) => product.slug === "amex-gold-rewards")!.name;
+  const cobalt = explanationPayload({ ...view, primary: { ...view.primary, name: cobaltProduct.name } });
+  const cobaltReason = cobalt.facts.find((row) => row.basis === "editorial" && row.id !== "goal")!.id;
 
   const cases: Array<{ name: string; payload: ExplanationPayload; draft: unknown; expect: RegExp }> = [
     { name: "số bịa", payload: card, draft: one("Welcome bonus hiện hành của thẻ: 90,000 điểm.", ["bonus"], "verified"), expect: /con số không có/ },
@@ -232,6 +239,7 @@ test("cửa kiểm chặn từng điều cấm của §28", () => {
     { name: "ước lượng đội lốt dữ kiện", payload: trip, draft: one(need.text, ["trip_need"], "verified"), expect: /nhãn "verified"/ },
     { name: "ước lượng không nói ra", payload: trip, draft: one(`Chuyến này cần ${need.text.slice(need.text.lastIndexOf(":") + 2)}`, ["trip_need"], "estimate"), expect: /không nói ra là ước lượng/ },
     { name: "chọn thẻ khác", payload: card, draft: one(`Nếu muốn, ${otherCard.name} cũng đáng cân nhắc.`, [reason.id], "editorial"), expect: /nhắc tên không có/ },
+    { name: "chọn thẻ khác bằng tên viết tắt", payload: card, draft: one(`Nếu thích ${otherIssuer} thì cũng được.`, [reason.id], "editorial"), expect: new RegExp(`nhắc tên không có trong dữ kiện: .*${otherIssuer.toLowerCase()}`) },
     { name: "hứa được duyệt", payload: card, draft: one("Hồ sơ của bạn gần như chắc được duyệt.", [reason.id], "editorial"), expect: /được duyệt/ },
     { name: "hứa chắc chắn", payload: trip, draft: one("Với số điểm ước lượng này bạn chắc chắn có chuyến đi.", ["trip_need"], "estimate"), expect: /hứa chắc chắn/ },
     { name: "đảm bảo", payload: card, draft: one("Thẻ này đảm bảo bạn có vé.", [reason.id], "editorial"), expect: /hứa chắc chắn/ },
@@ -243,6 +251,12 @@ test("cửa kiểm chặn từng điều cấm của §28", () => {
     { name: "số kiểu Việt Nam", payload: card, draft: one("Welcome bonus hiện hành của thẻ: 60.000 điểm.", ["bonus"], "verified"), expect: /sai quy ước|con số không có/ },
     { name: "số viết bằng chữ", payload: card, draft: one("Welcome bonus là sáu mươi nghìn điểm.", ["bonus"], "verified"), expect: /bằng chữ/ },
     { name: "bonus bị chặn mà vẫn hứa", payload: blocked, draft: one("Mở thẻ này bạn sẽ nhận được welcome bonus.", ["bonus_blocked"], "verified"), expect: /bonus bị chặn/ },
+    // Bốn câu Codex vòng 1 viết để lách danh sách cụm cấm — mỗi câu nói điều
+    // không có trong dữ kiện mà không chạm cụm nào.
+    { name: "hứa bonus bị chặn không dùng chữ 'nhận'", payload: blocked, draft: one("Welcome bonus sẽ được cộng vào tài khoản của bạn.", ["bonus_blocked"], "verified"), expect: /bonus bị chặn/ },
+    { name: "nói ngược cảnh báo", payload: card, draft: one("Offer này còn lâu mới hết hạn.", ["goal"], "editorial"), expect: /chữ không có trong dữ kiện trích: .*lâu/ },
+    { name: "biến lời khuyên 'tìm chỗ trống' thành chỗ trống có thật", payload: focus, draft: one("Bạn có chỗ trống cho chuyến bay này.", ["strategy"], "editorial"), expect: /chỗ trống/ },
+    { name: "thẻ khác cùng ngân hàng, tên toàn từ chung", payload: cobalt, draft: one(`${goldName} cũng là một lựa chọn cho bạn.`, [cobaltReason], "editorial"), expect: /nhắc tên không có trong dữ kiện: .*gold/ },
     { name: "quá nhiều câu", payload: card, draft: { sentences: Array.from({ length: 5 }, () => ({ text: bonus.text, facts: ["bonus"], basis: "verified" })) }, expect: /có 5 câu/ },
     { name: "sai hình dạng", payload: card, draft: { text: "Thẻ này hợp với bạn." }, expect: /hình dạng/ },
   ];
@@ -286,8 +300,10 @@ function harness(model: ExplanationModel | null, overrides: Partial<ExplainDeps>
   return { store, deps, logs, calls: () => calls };
 }
 
-const GOOD: ExplanationModel = async (payload) => echo(payload, (rows) => rows.slice(0, 2));
-const LIAR: ExplanationModel = async () => one("Thẻ này đảm bảo bạn được duyệt.", ["goal"], "editorial");
+/** Mô hình giả: trả `output` như Claude, dưới tên mô hình đã phục vụ. */
+const served = (output: unknown, model = "claude-opus-5") => ({ output, model });
+const GOOD: ExplanationModel = async (payload) => served(echo(payload, (rows) => rows.slice(0, 2)));
+const LIAR: ExplanationModel = async () => served(one("Thẻ này đảm bảo bạn được duyệt.", ["goal"], "editorial"));
 
 test("câu qua cửa kiểm được LƯU rồi mới hiện; lần sau đọc kho, không gọi lại mô hình", async () => {
   const view = viewFor(beginnerNoCards);
@@ -336,7 +352,7 @@ test("mọi nhánh hỏng đều rơi về bảng tra", async () => {
   assert.ok((await explainPrimaryAction(input, flaky.deps)) !== null);
 
   // JSON trả về sai hình dạng.
-  assert.equal(await explainPrimaryAction(input, harness(async () => "not json").deps), null);
+  assert.equal(await explainPrimaryAction(input, harness(async () => served("not json")).deps), null);
 
   // Quá trần chi phí → không gọi.
   const capped = harness(GOOD, { allowCall: () => false });
@@ -373,7 +389,7 @@ test("hai lần mở trang cùng lúc: cả hai hiện ĐÚNG bản được lư
   let turn = 0;
   const h = harness(async (payload) => {
     turn += 1;
-    return turn === 1 ? echo(payload, (rows) => rows.slice(0, 1)) : echo(payload, (rows) => rows.slice(0, 2));
+    return served(turn === 1 ? echo(payload, (rows) => rows.slice(0, 1)) : echo(payload, (rows) => rows.slice(0, 2)));
   });
   const [a, b] = await Promise.all([explainPrimaryAction(input, h.deps), explainPrimaryAction(input, h.deps)]);
   assert.ok(a !== null && b !== null);
@@ -390,7 +406,7 @@ test("offer đổi trong ngày → payload mới, lời giải thích mới; câ
     offersFor(DATA).map((offer) => ({ ...offer, welcomeBonus: "80,000 điểm" })),
   )!;
   // Mô hình kể lại đúng dữ kiện welcome bonus — thứ vừa đổi.
-  const h = harness(async (payload) => echo(payload, (rows) => rows.filter((row) => row.id === "bonus")));
+  const h = harness(async (payload) => served(echo(payload, (rows) => rows.filter((row) => row.id === "bonus"))));
   const first = await explainPrimaryAction({ runId: record.id, goalIndex: 0, payload: explanationPayload(before) }, h.deps);
   const second = await explainPrimaryAction({ runId: record.id, goalIndex: 0, payload: explanationPayload(after) }, h.deps);
   assert.ok(first !== null && second !== null);
@@ -405,7 +421,7 @@ test("LLM hỏng kiểu nào cũng không đổi được kết quả: presentRu
     const record = recordFor(state).record;
     const before = JSON.stringify(presentRun(record, DATA, offersFor(DATA)));
     const view = presentRun(record, DATA, offersFor(DATA))!;
-    for (const model of [GOOD, LIAR, async () => ({ sentences: [], primary: "amex-cobalt" })]) {
+    for (const model of [GOOD, LIAR, async () => served({ sentences: [], primary: "amex-cobalt" })]) {
       await explainPrimaryAction({ runId: view.runId, goalIndex: 0, payload: explanationPayload(view) }, harness(model).deps);
     }
     assert.equal(JSON.stringify(view), before);

@@ -19,7 +19,13 @@ import Anthropic from "@anthropic-ai/sdk";
 
 import { GHE1A_VOICE_RULES } from "../ghe1a-voice.ts";
 import { fingerprint } from "../recommendation/fingerprint.ts";
-import { checkExplanation, MAX_SENTENCES, type ExplanationDraft, type KnownNames } from "./explain-check.ts";
+import {
+  checkExplanation,
+  CONNECTIVES,
+  MAX_SENTENCES,
+  type ExplanationDraft,
+  type KnownNames,
+} from "./explain-check.ts";
 import type { ExplanationPayload } from "./explain-payload.ts";
 import type { ExplanationStore, StoredExplanation } from "./explain-store.ts";
 
@@ -50,11 +56,12 @@ ${GHE1A_VOICE_RULES}
 - Không nhắc lại và không nói ngược các mục trong "cautions" — trang in chúng nguyên văn ngay bên dưới lời giải thích của bạn.
 
 Cách trả lời:
+- CHỈ dùng chữ có trong chính các dữ kiện câu đó trích, trong tên hành động chính, hoặc trong danh sách từ nối sau: ${[...CONNECTIVES].join(", ")}. Việc của bạn là chọn dữ kiện, nối và sắp chúng thành câu tự nhiên — không thêm ý, không thêm từ phủ định hay so sánh nào dữ kiện không có. Gọi người đọc là "bạn" thay cho "người dùng".
 - 2 đến ${MAX_SENTENCES} câu, mỗi câu một ý, mỗi câu dưới 45 từ. Mở bằng lý do quan trọng nhất với mục tiêu của người đọc.
 - Mỗi câu ghi "facts": id của MỌI dữ kiện câu đó dựa vào.
 - Mỗi câu ghi "basis" theo dữ kiện yếu nhất nó trích: có dữ kiện "estimate" → "estimate"; không có estimate nhưng có "editorial" → "editorial"; chỉ toàn "verified" → "verified".
 - Câu có basis "estimate" phải nói rõ bằng chữ đó là ước lượng ("ước lượng", "khoảng"…).
-- Nói "mình" khi nhắc tới Ghế 1A, "bạn" khi nói với người đọc. Giọng thẳng thắn, không quảng cáo.`;
+- Nói "mình" khi nhắc tới Ghế 1A. Giọng thẳng thắn, không quảng cáo.`;
 
 const SCHEMA = {
   type: "object",
@@ -83,7 +90,14 @@ const SCHEMA = {
  * Là một hàm tiêm vào chứ không phải lời gọi SDK viết cứng, để test chạy được
  * mọi nhánh — kể cả Claude trả về câu bịa — mà không cần mạng hay API key.
  */
-export type ExplanationModel = (payload: ExplanationPayload) => Promise<unknown>;
+export type ExplanationModel = (payload: ExplanationPayload) => Promise<{
+  output: unknown;
+  /**
+   * Mô hình ĐÃ trả lời — khác `EXPLANATION_MODEL` khi fallback phía server chạy.
+   * Bản ghi phải nói đúng ai viết câu, nhất là ở đúng ca bị từ chối (Codex vòng 1).
+   */
+  model: string;
+}>;
 
 /**
  * Trang chờ lời giải thích trong `<Suspense>`: người đọc đã thấy bản bảng tra.
@@ -115,7 +129,7 @@ export function anthropicExplanationModel(client = new Anthropic()): Explanation
     if (response.stop_reason === "max_tokens") throw new Error("hết max_tokens");
     const text = response.content.find((block) => block.type === "text")?.text;
     if (!text) throw new Error(`không có chữ (stop_reason: ${response.stop_reason})`);
-    return JSON.parse(text) as unknown;
+    return { output: JSON.parse(text) as unknown, model: response.model };
   };
 }
 
@@ -178,8 +192,9 @@ export async function explainPrimaryAction(
   if (model === null || !deps.allowCall()) return null;
 
   let raw: unknown;
+  let servedBy: string;
   try {
-    raw = await model(input.payload);
+    ({ output: raw, model: servedBy } = await model(input.payload));
   } catch (error) {
     log(`mô hình hỏng cho ${input.runId}`, error);
     return null;
@@ -191,7 +206,7 @@ export async function explainPrimaryAction(
     goalIndex: input.goalIndex,
     payloadFingerprint,
     status: checked.ok ? "shown" : "rejected",
-    model: EXPLANATION_MODEL,
+    model: servedBy,
     promptVersion: EXPLANATION_PROMPT_VERSION,
     createdAt: deps.now(),
     payload: input.payload,

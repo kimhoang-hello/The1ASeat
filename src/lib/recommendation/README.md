@@ -1137,6 +1137,67 @@ rồi đặt `sql_mode`/`collation_server` như production (xem `ci.yml`).
 CI (`.github/workflows/ci.yml`) chạy MariaDB như service và NỔ nếu thiếu
 `RECO_TEST_MYSQL_URL`, để backend production không bao giờ lặng lẽ bị bỏ qua.
 
+## Phase 6 — lời giải thích bằng LLM (§28)
+
+**LLM là lớp kể lại, không phải lớp quyết định.** Engine không biết Phase 6 tồn
+tại: không file nào trong thư mục này (cũng như `present.ts`, `copy.ts`,
+`questions.ts`, `follow-up.ts`, `result.tsx`) import lớp LLM — `explain.test.ts`
+quét mã nguồn canh chuyện đó. Gỡ Phase 6 thì trang là trang Phase 5 nguyên vẹn.
+
+Code ở `src/lib/recommender/explain-*.ts`, component `explanation.tsx`:
+
+| File | Vai trò |
+| --- | --- |
+| `explain-payload.ts` | `ResultView` → dữ kiện có id và nhãn `verified` / `estimate` / `editorial`. Thuần. Không hồ sơ, không `runId`, không lựa chọn khác, không điểm số, không affiliate |
+| `explain-check.ts` | Cửa kiểm chạy TRƯỚC khi hiện. Luật gốc: MỌI âm tiết của câu phải có trong chính dữ kiện được trích hoặc trong `CONNECTIVES` (từ nối đóng, không phủ định/so sánh/chắc chắn). Lưới phụ: id có thật, nhãn = nhãn yếu nhất, ước lượng phải nói ra, số nằm trong dữ kiện trích, không tên thẻ/ngân hàng/chương trình lạ (kể cả viết tắt), cụm từ cấm, bonus bị chặn |
+| `explain-llm.ts` | Prompt + gọi `claude-opus-5` (effort thấp, JSON schema, fallback phía server, timeout 20 s, không retry) + `explainPrimaryAction`: kho → mô hình → cửa kiểm → LƯU → hiện |
+| `explain-store.ts` | `reco_explanations` (migration 2), chỉ thêm, khoá (runId, goal, dấu vân tay payload) |
+
+Quyết định đáng nhớ:
+
+- **Chỉ khối "vì sao hợp với bạn" của hành động chính.** Tên thẻ, con số,
+  cảnh báo, điều cần cân nhắc, độ chắc chắn, nút đăng ký vẫn là bảng tra.
+  Độ chắc chắn cố ý KHÔNG vào dữ kiện: diễn đạt lại nó rất dễ trượt thành
+  "chắc chắn được".
+- **Trượt một luật là bỏ cả đoạn**, không lọc bớt câu. Bản bị từ chối vẫn được
+  lưu (kèm JSON thô và lý do) và không sinh lại cho cùng khoá — mỗi lần thử là
+  tiền. Lỗi đường truyền thì không lưu, lần mở trang sau thử lại trong trần
+  3 lần/lượt chạy/giờ và 300 lần/giờ toàn site.
+- **Lưu trước khi hiện; không có kho thì không hiện câu nào của Claude.** Khiếu
+  nại "câu này sai" → `listForRun(runId)` trả đúng câu người đọc đã thấy.
+- **Dấu vân tay payload nằm trong khoá** vì welcome bonus và phí đọc từ
+  Contentful LÚC HIỂN THỊ: offer đổi trong ngày thì câu cũ nhắc số cũ không
+  được hiện cạnh số mới.
+- **Trang không chờ LLM.** `<Suspense>` với fallback là `DeterministicWhy` —
+  đúng khối Phase 5; mọi nhánh hỏng dựng lại chính khối đó.
+- Bật khi server có `ANTHROPIC_API_KEY`; tắt hẳn bằng `RECO_LLM_EXPLAIN=0`.
+- Luật giọng văn dùng chung với `rewrite-offer.ts` nằm ở `src/lib/ghe1a-voice.ts`
+  (prompt của `expire-offers` giữ nguyên từng byte khi tách).
+
+**Vì sao có luật gốc (Codex vòng 1).** Bản đầu chỉ có danh sách cụm cấm, và
+Codex viết bốn câu lọt qua: "Welcome bonus sẽ được cộng vào tài khoản" (bonus bị
+chặn), "Offer này còn lâu mới hết hạn" (ngược cảnh báo), "Chặng này có chỗ
+trống" (miễn trừ cụm "chỗ trống" của hướng đi "tìm chỗ trống"), "American
+Express® Gold Rewards Card" khi thẻ chính là Cobalt (mọi từ riêng bị coi là từ
+chung). Vá từng cụm là vòng lặp "bản vá đẻ ra lỗi" của Phase 2–4; đo ở gốc thì
+cả bốn cần chữ mà dữ kiện không có. Cái giá: Claude chỉ được chọn, nối và sắp
+chữ của dữ kiện — **tỷ lệ từ chối thật chưa đo** (§6 bàn giao).
+
+`model` trong bản ghi là mô hình ĐÃ trả lời (`response.model`), không phải mô
+hình được hỏi — fallback phía server đổi được nó.
+
+KHÔNG BẮT ĐƯỢC (ghi ở đầu `explain-check.ts`): sắp lại đúng chữ của dữ kiện
+thành nghĩa khác — dời chữ "không" của một dữ kiện sang vế khác, ghép hai dữ
+kiện thành một quan hệ nhân quả không ai nói. Cửa kiểm là lưới bắt BỊA, không
+phải bằng chứng câu văn đúng.
+
+Kiểm ngược đã làm: gỡ từng luật (chữ phải có trong dữ kiện, ước lượng, con số,
+nhãn, tên lạ, tên viết tắt, bonus bị chặn, cụm từ cấm) → `explain.test.ts` đỏ ở
+cả tám. Đầu-cuối trên `next dev` +
+MariaDB 11.8 + server giả API Anthropic: SDK gửi đúng `model`/`effort`/schema/
+`fallbacks`, payload không có dữ liệu cá nhân, câu được lưu rồi mới hiện, tải
+lại không gọi mô hình lần hai.
+
 ## Chạy gì
 
 ```

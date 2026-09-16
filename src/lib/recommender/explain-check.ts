@@ -21,12 +21,25 @@
  *  6. Cụm từ cấm: hứa được duyệt, hứa chắc chắn có vé / chỗ trống, bịa điều
  *     kiện (điểm tín dụng, thu nhập tối thiểu), trấn an ngược cảnh báo, so sánh
  *     tuyệt đối, affiliate và link.
- *  7. Welcome bonus bị chặn thì không câu nào được nói người dùng nhận nó.
+ *  7. Welcome bonus bị chặn thì câu nào nhắc bonus cũng phải trích dữ kiện
+ *     `bonus_blocked` và mang chữ "không".
+ *  8. MỌI âm tiết trong câu phải có trong chính các dữ kiện được trích, trong tên
+ *     hành động chính, hoặc trong `CONNECTIVES` — danh sách từ nối ĐÓNG, không có
+ *     từ phủ định, so sánh, chắc chắn hay thời gian.
  *
- * KHÔNG BẮT ĐƯỢC, ghi ra để không ai tưởng cửa này kín: số viết bằng chữ ngoài
- * danh sách chặn, một câu đúng từng chữ số mà sai nghĩa ("chỉ cần chi $1,500"
- * khi mốc thật là $1,500 cho MỖI tháng), và một nhận định sai giọng nhưng không
- * chạm luật nào. Đây là lưới bắt BỊA, không phải bằng chứng câu văn đúng.
+ * Luật 8 là luật gốc, bảy luật kia là lưới phụ. Codex vòng 1 chỉ ra rằng một
+ * danh sách cụm từ cấm không bao giờ đủ: "Welcome bonus sẽ được cộng vào tài
+ * khoản", "Offer này còn lâu mới hết hạn", "Chặng này có chỗ trống" đều nói điều
+ * không có trong dữ kiện mà không chạm cụm nào. Cả ba cần những chữ ("cộng",
+ * "lâu", "chặng") mà dữ kiện được trích không có — nên buộc câu chỉ được GHÉP
+ * và SẮP LẠI chữ của dữ kiện là đóng cả lớp lỗi "nói thêm điều chưa ai kiểm",
+ * thay vì vá từng cách diễn đạt. Cái giá: câu bớt tự do. Dữ kiện đã là câu tiếng
+ * Việt đúng giọng site, nên việc còn lại của Claude là chọn, nối và sắp.
+ *
+ * KHÔNG BẮT ĐƯỢC, ghi ra để không ai tưởng cửa này kín: sắp lại đúng những chữ
+ * của dữ kiện thành nghĩa khác — dời chữ "không" của một dữ kiện sang vế khác,
+ * hay ghép vế của hai dữ kiện thành một quan hệ nhân quả không ai nói. Đây là
+ * lưới bắt BỊA, không phải bằng chứng câu văn đúng.
  */
 
 import type { ExplanationPayload, FactBasis } from "./explain-payload.ts";
@@ -90,10 +103,9 @@ interface Ban {
   pattern: RegExp;
   why: string;
   /**
-   * Cho qua khi CHÍNH cụm đó có trong một dữ kiện — ví dụ lý do
-   * `FOCUS_ON_AWARD_AVAILABILITY` nói "tìm chỗ trống". Không đặt cho những điều
-   * cấm tuyệt đối (hứa được duyệt): dữ kiện độ tin cậy có nhắc chữ "chấp thuận"
-   * đúng để nói điều ngược lại.
+   * Cho qua khi CHÍNH cụm đó có trong một dữ kiện MÀ CÂU NÀY TRÍCH. Không đặt
+   * cho những điều cấm tuyệt đối (hứa được duyệt, chỗ trống vé thưởng): một dữ
+   * kiện nhắc tới chúng thường là để nói điều ngược lại.
    */
   allowIfInFacts?: boolean;
 }
@@ -106,7 +118,10 @@ const BANS: Ban[] = [
   { pattern: /100%/u, why: "hứa chắc chắn", allowIfInFacts: true },
   { pattern: /(?<!chưa )(?<!không )(?<!độ )(?<!mức )chắc chắn/u, why: "hứa chắc chắn" },
   // §28: "Do not invent award availability."
-  { pattern: /còn ghế|còn chỗ|ghế trống|chỗ trống|còn vé|có sẵn vé|săn được vé|đặt được vé|availability/u, why: "nói về chỗ trống vé thưởng", allowIfInFacts: true },
+  // KHÔNG miễn theo dữ kiện: hướng đi "Tập trung tìm chỗ trống" là lời khuyên
+  // đi tìm, và miễn cụm "chỗ trống" cho nó là cho qua "chặng này có chỗ trống"
+  // (Codex vòng 1). Chỉ "tìm chỗ trống" — việc phải làm — được nói.
+  { pattern: /(?<!tìm )(?:chỗ trống|ghế trống)|còn ghế|còn chỗ|còn vé|có sẵn vé|săn được vé|đặt được vé|availability/u, why: "nói về chỗ trống vé thưởng" },
   // §28: "Do not invent eligibility requirements."
   { pattern: /điểm tín dụng|credit score|điểm credit|thu nhập tối thiểu|yêu cầu thu nhập|lịch sử tín dụng/u, why: "nêu điều kiện mở thẻ không có trong dữ kiện", allowIfInFacts: true },
   // Trấn an ngược cảnh báo.
@@ -127,8 +142,12 @@ const BANS: Ban[] = [
  */
 const ESTIMATE_MARKERS = /ước lượng|ước tính|khoảng|xấp xỉ|dự kiến/u;
 
-/** Welcome bonus bị chặn: câu nào nói người dùng nhận nó là nói ngược cảnh báo. */
-const CLAIMS_BONUS = /(?<!không )(?<!không thể )(?<!chẳng )nhận (?:được |trọn |đủ )*(?:welcome bonus|bonus)/u;
+/**
+ * Welcome bonus bị chặn: bắt theo CHỦ ĐỀ, không theo động từ. Bản đầu bắt
+ * "nhận … bonus" và để lọt "Welcome bonus sẽ được cộng vào tài khoản" (Codex
+ * vòng 1) — có vô số cách hứa một khoản bonus mà không dùng chữ "nhận".
+ */
+const MENTIONS_BONUS = /bonus|điểm thưởng chào mừng/u;
 
 /* ------------------------------------------------------------------ *
  * Tên riêng
@@ -140,19 +159,54 @@ const CLAIMS_BONUS = /(?<!không )(?<!không thể )(?<!chẳng )nhận (?:đư�
  */
 const COMMON_NAME_WORDS = new Set(
   [
+    // Hạng thẻ ("Gold", "Platinum", "Business") cố ý KHÔNG có ở đây: "American
+    // Express Gold Rewards Card" từng lọt qua khi thẻ chính là Cobalt, vì mọi từ
+    // còn lại đều bị coi là từ chung (Codex vòng 1). Câu tiếng Việt của site
+    // không dùng những chữ đó ngoài tên thẻ.
     "card", "visa", "infinite", "privilege", "mastercard", "world", "elite", "the", "and", "for",
-    "rewards", "reward", "travel", "points", "point", "cash", "back", "cashback", "plus", "premium",
-    "business", "bank", "first", "class", "welcome", "bonus", "offer", "transfer", "annual", "fee",
-    "miles", "mile", "high", "interest", "no", "fee", "student", "value", "select", "preferred",
-    "classic", "signature", "platinum", "gold", "card®", "de", "la", "le", "of",
+    "rewards", "reward", "travel", "points", "point", "cash", "back", "cashback", "plus",
+    "welcome", "bonus", "offer", "transfer", "annual", "fee", "miles", "mile", "no", "de", "la",
+    "le", "of",
   ].map(norm),
 );
 
+/**
+ * Từ nối được dùng thêm ngoài chữ của dữ kiện (luật 8).
+ *
+ * Tiêu chí vào danh sách: nối hoặc trỏ, không tự mang một khẳng định. Cố ý
+ * KHÔNG có: phủ định ("không", "chưa", "chẳng"), so sánh ("hơn", "nhất"), chắc
+ * chắn ("chắc", "luôn", "đảm"), thời gian ("lâu", "sớm", "ngay"), số lượng
+ * ("nhiều", "ít"), đánh giá ("đáng", "tốt", "rất"). Những chữ đó chỉ được dùng
+ * khi chính dữ kiện được trích có chúng.
+ */
+export const CONNECTIVES: ReadonlySet<string> = new Set(
+  [
+    "mình", "bạn", "vì", "nên", "do", "nhờ", "này", "đó", "đây", "ấy", "là", "và", "với", "của",
+    "cho", "để", "thì", "mà", "nhưng", "còn", "cũng", "vẫn", "đã", "đang", "sẽ", "được", "có",
+    "một", "các", "những", "thẻ", "điểm", "hợp", "phù", "mục", "tiêu", "gợi", "ý", "lựa", "chọn",
+    "lý", "chính", "ở", "trên", "trong", "khi", "nếu", "tức", "tiếp", "theo", "bước", "mở", "giúp",
+    "như", "vậy", "thế", "ra", "vào", "từ", "về", "tới", "đến", "phần", "chuyến", "bay", "hướng",
+    "đi", "số", "loại", "đúng", "khoảng", "ước", "lượng", "tính", "kèm", "cùng", "hiện", "riêng",
+    "rồi", "nữa", "việc", "điều", "đầu", "tháng", "ngày", "kiểm",
+  ].map(norm),
+);
+
+/** Âm tiết của một đoạn chữ. "Ghế 1A" là tên site, bỏ ra trước. */
+function syllablesOf(text: string): string[] {
+  return norm(text).replace(/ghế 1a/gu, " ").match(/\p{L}+/gu) ?? [];
+}
+
 function nameWords(name: string): string[] {
-  return norm(name)
+  // Chữ viết tắt VIẾT HOA của ngân hàng ("TD", "RBC", "BMO") ngắn hơn 4 ký tự
+  // mà vẫn là tên riêng rõ nhất — bỏ chúng thì "thẻ TD lợi hơn" lọt qua. Từ
+  // thường ngắn thì bỏ: chúng trùng chữ tiếng Việt và tiếng Anh thông dụng.
+  return name
+    .normalize("NFC")
     .replace(/[®™*+]/g, " ")
     .split(/[^\p{L}\p{N}]+/u)
-    .filter((word) => word.length >= 4 && !/^\d+$/.test(word) && !COMMON_NAME_WORDS.has(word));
+    .filter((word) => word.length >= 4 || (word.length >= 2 && /^\p{Lu}+$/u.test(word)))
+    .map(norm)
+    .filter((word) => !/^\d+$/.test(word) && !COMMON_NAME_WORDS.has(word));
 }
 
 function containsWord(text: string, word: string): boolean {
@@ -252,17 +306,27 @@ export function checkExplanation(
     const foreign = [...foreignWords].filter((word) => containsWord(text, word));
     if (foreign.length > 0) problems.push(`${label}: nhắc tên không có trong dữ kiện: ${foreign.join(", ")}`);
 
-    // 6. Cụm từ cấm.
+    // 6. Cụm từ cấm — miễn chỉ theo dữ kiện CÂU NÀY trích.
+    const citedText = norm(facts.map((fact) => fact.text).join(" "));
     for (const ban of BANS) {
       const match = text.match(ban.pattern);
       if (match === null) continue;
-      if (ban.allowIfInFacts && allFactText.includes(match[0])) continue;
+      if (ban.allowIfInFacts && citedText.includes(match[0])) continue;
       problems.push(`${label}: ${ban.why} ("${match[0]}")`);
     }
 
-    // 7. Bonus bị chặn.
-    if (blocked && CLAIMS_BONUS.test(text)) {
-      problems.push(`${label}: nói người dùng nhận welcome bonus trong khi bonus bị chặn`);
+    // 7. Bonus bị chặn: nhắc bonus thì phải là câu nói KHÔNG nhận được nó.
+    if (blocked && MENTIONS_BONUS.test(text) && !(cited.includes("bonus_blocked") && /không/u.test(text))) {
+      problems.push(`${label}: nhắc welcome bonus trong khi bonus bị chặn`);
+    }
+
+    // 8. Chữ phải lấy từ dữ kiện được trích.
+    const grounded = new Set([...syllablesOf(payload.action.name), ...facts.flatMap((fact) => syllablesOf(fact.text))]);
+    const ungrounded = [...new Set(syllablesOf(sentence.text))].filter(
+      (word) => !grounded.has(word) && !CONNECTIVES.has(word),
+    );
+    if (ungrounded.length > 0) {
+      problems.push(`${label}: dùng chữ không có trong dữ kiện trích: ${ungrounded.join(", ")}`);
     }
   });
 
