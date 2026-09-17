@@ -1204,6 +1204,16 @@ trên `next dev` + MariaDB: LLM giả trả rác hoặc văn tự do ("mở Amer
 Platinum, chắc chắn được duyệt") → trang GIỐNG HỆT từng dòng trang tắt LLM, cùng
 `runId`; bản dựng hợp lệ → chỉ khối "vì sao hợp" khác; không lượt chạy mới nào.
 
+Codex vòng đối kháng sau đó bới thêm 7 chỗ, đã vá: lý do "ủng hộ" của `no_new_card`
+bị bỏ khỏi payload (luật "đủ mọi lý do" không canh gì ở đó); điểm mạnh
+`points_gap_reduction` mang nhãn Nhận định; ký tự vô hình (`\u200b`) lọt qua
+`cleanValue`; "còn thiếu 10,000" cạnh "phủ được cả chuyến"; và ba chỗ ở CHÍNH
+trang Phase 5 — ô "Cần khoảng" in một đầu khoảng như con số chắc, "Còn thiếu 0
+điểm", "phủ khoảng 140%" (nay `formatNeed` dùng chung cho ô số và mệnh đề).
+Câu viết sẵn cũng được sửa tại nguồn (`copy.ts`): lý do dựng trên ước lượng tự
+nói "theo ước lượng", bỏ hai lời hứa tương lai ("đợi thêm thì được nhiều hơn",
+"nới một điều kiện là danh sách mở ra ngay").
+
 Cố ý KHÔNG vá: chuỗi Contentful (welcome bonus, phí) là dữ liệu biên tập, hiện
 nguyên văn như ở trang Phase 5 — nó chỉ đi qua mô hình như dữ liệu, và mô hình
 không viết lại được nó.

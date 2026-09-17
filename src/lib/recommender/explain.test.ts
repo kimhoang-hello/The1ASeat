@@ -29,6 +29,7 @@ import {
   beginnerNoCards,
   japanTripShortfall,
   USER_FIXTURES,
+  vietnamTripFunded,
   vietnamTripShortfall,
 } from "../recommendation/data/user-fixtures.ts";
 import { openRecoDatabase, type RecoDatabase } from "../recommendation/mysql.ts";
@@ -61,8 +62,8 @@ import {
   type ExplanationStore,
   type StoredExplanation,
 } from "./explain-store.ts";
-import { REASON_TEXT } from "./copy.ts";
-import { presentRun, type ResultView } from "./present.ts";
+import { COMPONENT_STRENGTH, NO_CARD_SENTENCE, REASON_TEXT } from "./copy.ts";
+import { formatNeed, presentRun, type ResultView } from "./present.ts";
 
 const ASOF = "2026-09-08";
 const DATA = datasetAt(offlineDataset(), ASOF);
@@ -367,7 +368,7 @@ test("lý do dựa trên ƯỚC LƯỢNG ('đã đủ điểm', 'tìm chỗ tr�
   });
   const reasons = withReasons.facts.filter((fact) => fact.role === "reason");
   assert.deepEqual(reasons.map((fact) => fact.basis), ["estimate", "estimate", "estimate", "editorial"]);
-  for (const fact of reasons.slice(0, 3)) assert.match(fact.text, /^theo ước lượng của mình, /u);
+  for (const fact of reasons.slice(0, 3)) assert.match(fact.text, /^theo ước lượng/u);
 
   // "Chưa mở thẻ vì đã đủ điểm" cũng là kết luận từ ước lượng.
   const sufficient = explanationPayload({ ...view, primary: { ...view.primary, kind: "no_new_card", noCardReason: "points_sufficient" } });
@@ -379,6 +380,51 @@ test("lý do dựa trên ƯỚC LƯỢNG ('đã đủ điểm', 'tìm chỗ tr�
   const result = checkExplanation(withReasons, { sentences: reasonSentences(withReasons) });
   assert.ok(result.ok, result.ok ? "" : result.problems.join("; "));
   assert.equal(renderExplanation(withReasons, result.draft)[0].basis, "estimate");
+});
+
+test("vòng Codex rà đối kháng: lý do của 'chưa mở thẻ', điểm mạnh ước lượng, ký tự vô hình, hai ước lượng mâu thuẫn, câu hứa tương lai", () => {
+  // `vietnamTripFunded`: engine gắn lý do cho "chưa mở thẻ" — chúng phải vào payload và bị bắt buộc.
+  const funded = viewFor(vietnamTripFunded);
+  assert.equal(funded.primary.kind, "no_new_card");
+  const fundedPayload = explanationPayload(funded);
+  const goodCount = funded.primary.reasons.filter((row) => row.tone === "good").length;
+  assert.ok(goodCount > 0, "fixture không còn lý do ủng hộ — bài không chạy");
+  assert.equal(fundedPayload.facts.filter((fact) => fact.id.startsWith("reason_")).length, goodCount);
+  const onlySummary = checkExplanation(fundedPayload, { sentences: [{ lead: "why_wait", facts: ["no_card"] }] });
+  assert.equal(onlySummary.ok, false);
+  if (!onlySummary.ok) assert.match(onlySummary.problems.join("; "), /bỏ sót lý do của engine: reason_1/);
+  for (const fact of fundedPayload.facts) {
+    if (/đã đủ|đủ điểm/u.test(fact.text)) assert.equal(fact.basis, "estimate", `${fact.id}: ${fact.text}`);
+  }
+
+  const base = viewFor(japanTripShortfall);
+  assert.ok(base.trip !== null);
+  const strength = explanationPayload({
+    ...base,
+    primary: { ...base.primary, reasons: [], strengths: [COMPONENT_STRENGTH.points_gap_reduction, COMPONENT_STRENGTH.transfer_flexibility] },
+  }).facts.filter((fact) => fact.id.startsWith("strength_"));
+  assert.deepEqual(strength.map((fact) => fact.basis), ["estimate", "editorial"]);
+  assert.match(strength[0].text, /^theo ước lượng/u);
+
+  const invisible = explanationPayload({ ...base, primary: { ...base.primary, annualFee: "\u200b\ufeff \u00a0", welcomeBonus: "\u200b" } });
+  assert.ok(!invisible.facts.some((fact) => fact.id === "fee" || fact.id === "bonus"), "ký tự vô hình thành dữ kiện");
+  const mixed = explanationPayload({ ...base, primary: { ...base.primary, welcomeBonus: "60,000\u200b điểm\u2060" } });
+  assert.equal(mixed.facts.find((fact) => fact.id === "bonus")?.text, "welcome bonus hiện hành là 60,000 điểm");
+
+  const contradictory = explanationPayload({ ...base, trip: { ...base.trip, gap: 10_000, coverage: 1.4 } });
+  assert.ok(contradictory.facts.some((fact) => fact.id === "trip_gap"));
+  assert.ok(!contradictory.facts.some((fact) => fact.id === "trip_coverage"), "vừa 'còn thiếu' vừa 'phủ được cả chuyến'");
+
+  // Câu viết sẵn không hứa tương lai hay kết quả engine không đo được.
+  for (const text of [...Object.values(NO_CARD_SENTENCE), ...Object.values(REASON_TEXT).map((row) => row.text)]) {
+    assert.ok(!/thì lợi hơn|được nhiều hơn|mở ra ngay|chắc chắn|đảm bảo/u.test(text), `câu viết sẵn nói quá: ${text}`);
+  }
+
+  // Ô số trên trang và mệnh đề dùng CHUNG một cách nói khoảng điểm.
+  assert.equal(formatNeed(60_000, null), "ít nhất 60,000 điểm (chưa biết mức cao nhất)");
+  assert.equal(formatNeed(null, 90_000), "tối đa 90,000 điểm (chưa biết mức thấp nhất)");
+  assert.equal(formatNeed(60_000, 60_000), "60,000 điểm");
+  assert.equal(formatNeed(null, null), null);
 });
 
 test("payload thiếu hoặc mơ hồ: không mệnh đề rỗng, không số dựng sai nghĩa, không đầu khoảng bị giấu", () => {
@@ -415,8 +461,8 @@ test("payload thiếu hoặc mơ hồ: không mệnh đề rỗng, không số d
   assert.equal(texts(explanationPayload(variants["offer bẩn"])).fee, "phí thường niên là $599");
   assert.equal(texts(explanationPayload(variants["đủ điểm dư"])).trip_gap, undefined);
   assert.match(texts(explanationPayload(variants["đủ điểm dư"])).trip_coverage, /phủ được cả chuyến này/u);
-  assert.match(texts(explanationPayload(variants["chỉ biết sàn"])).trip_need, /ít nhất khoảng 60,000 điểm \(chưa biết mức cao nhất\)/u);
-  assert.match(texts(explanationPayload(variants["chỉ biết trần"])).trip_need, /tối đa khoảng 90,000 điểm/u);
+  assert.match(texts(explanationPayload(variants["chỉ biết sàn"])).trip_need, /cần ít nhất 60,000 điểm \(chưa biết mức cao nhất\)/u);
+  assert.match(texts(explanationPayload(variants["chỉ biết trần"])).trip_need, /cần tối đa 90,000 điểm \(chưa biết mức thấp nhất\)/u);
   assert.equal(texts(explanationPayload(variants["chuyến trống"])).trip, "bạn muốn bay Nhật Bản");
 });
 

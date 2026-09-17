@@ -81,9 +81,12 @@ export const REASON_TEXT: Record<ReasonCode, ReasonText> = {
 
   POINTS_ALREADY_SUFFICIENT: {
     tone: "good",
-    text: "Số điểm bạn đang với tới được đã đủ cho chuyến này.",
+    // "Theo ước lượng": kết luận dựng trên phần phủ ước lượng (giá award chart
+    // là một khoảng, số dư do người dùng khai) — nói như dữ kiện là biến ước
+    // lượng thành lời bảo đảm (rà đối kháng Phase 6, 17/09/2026).
+    text: "Theo ước lượng của mình, số điểm bạn đang với tới được đã đủ cho chuyến này.",
   },
-  POINTS_GAP_LARGE: { tone: "info", text: "Bạn còn thiếu hơn một nửa số điểm cần." },
+  POINTS_GAP_LARGE: { tone: "info", text: "Theo ước lượng, bạn còn thiếu hơn một nửa số điểm cần." },
   TRIP_PROGRAM_MATCH: {
     tone: "good",
     text: "Thẻ này kiếm (hoặc chuyển được) đúng loại điểm dùng cho chặng bạn muốn bay.",
@@ -168,11 +171,13 @@ export const REASON_TEXT: Record<ReasonCode, ReasonText> = {
   },
   WAIT_FOR_BETTER_OFFER: {
     tone: "good",
-    text: "Offer của những thẻ đáng mở đang ở vùng thấp — đợi thêm thì lợi hơn.",
+    // Không hứa tương lai: engine đo offer HÔM NAY so với lịch sử, không đo
+    // được đợt offer sau có cao hơn không.
+    text: "Offer của những thẻ đáng mở đang ở vùng thấp so với lịch sử của chính chúng — lúc này chưa phải lúc tốt để mở.",
   },
   FOCUS_ON_AWARD_AVAILABILITY: {
     tone: "good",
-    text: "Bạn đủ điểm rồi; việc khó còn lại là tìm chỗ trống, không phải kiếm thêm điểm.",
+    text: "Theo ước lượng của mình, bạn đã đủ điểm; việc khó còn lại là tìm chỗ trống, không phải kiếm thêm điểm.",
   },
 
   GOAL_AMBIGUOUS: {
@@ -362,12 +367,12 @@ export const CONFIDENCE_REASON: Record<
  */
 export const NO_CARD_SENTENCE: Record<string, string> = {
   points_sufficient:
-    "Số điểm bạn đang có đã đủ cho mục tiêu này — mở thêm thẻ lúc này không rút ngắn được gì.",
+    "Theo ước lượng của mình, số điểm bạn đang có đã đủ cho mục tiêu này — mở thêm thẻ lúc này không rút ngắn được gì.",
   portfolio_covers:
     "Ví hiện tại của bạn đã che được nhu cầu này, nên thẻ mới không thêm được bao nhiêu.",
   offers_weak:
-    "Offer của những thẻ đáng mở đang ở vùng thấp — đợi thêm một thời gian thì được nhiều hơn.",
+    "Offer của những thẻ đáng mở đang ở vùng thấp so với lịch sử của chính chúng — lúc này chưa phải lúc tốt để mở thêm thẻ.",
   nothing_fits:
-    "Chưa thẻ nào vừa với điều kiện bạn đặt ra (ngưỡng phí, điều kiện của ngân hàng). Nới một trong hai là danh sách mở ra ngay.",
+    "Chưa thẻ nào vừa với điều kiện bạn đặt ra (ngưỡng phí, điều kiện của ngân hàng). Nới một trong hai thì mình tính lại được.",
   default: "Mở thêm thẻ lúc này chưa mang lại gì đáng kể cho mục tiêu của bạn.",
 };

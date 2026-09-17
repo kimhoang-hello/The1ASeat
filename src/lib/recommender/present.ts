@@ -502,12 +502,21 @@ export function formatPoints(points: number): string {
   return points.toLocaleString("en-US");
 }
 
-/** Khoảng điểm "120,000 – 180,000", hoặc một số khi hai đầu bằng nhau. */
-export function formatPointsRange(low: number | null, high: number | null): string | null {
-  if (low === null && high === null) return null;
-  if (low === null) return formatPoints(high as number);
-  if (high === null || high === low) return formatPoints(low);
-  return `${formatPoints(low)} – ${formatPoints(high)}`;
+/**
+ * Số điểm một chuyến bay cần, nói ĐÚNG cái đã biết.
+ *
+ * Chỉ biết một đầu thì nói ra là đầu nào: "60,000" trần cho một chặng chỉ biết
+ * giá sàn là nói thấp đi con số thật (rà đối kháng Phase 6, 17/09/2026). Dùng
+ * chung cho ô số trên trang và mệnh đề của lời giải thích — hai chỗ không được
+ * nói hai chuyện.
+ */
+export function formatNeed(low: number | null, high: number | null): string | null {
+  if (low !== null && high !== null) {
+    return low === high ? `${formatPoints(low)} điểm` : `${formatPoints(low)} – ${formatPoints(high)} điểm`;
+  }
+  if (low !== null) return `ít nhất ${formatPoints(low)} điểm (chưa biết mức cao nhất)`;
+  if (high !== null) return `tối đa ${formatPoints(high)} điểm (chưa biết mức thấp nhất)`;
+  return null;
 }
 
 export function programName(dataset: RecommendationDataset, id: PointsProgramId): string {

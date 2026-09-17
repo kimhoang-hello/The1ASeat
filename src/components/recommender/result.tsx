@@ -6,7 +6,7 @@ import { resetRecommendation } from "@/app/credit-cards/goi-y/actions";
 import { ApplyButton } from "@/components/ui/apply-button";
 import type { ActionView, AnsweredRow, ResultView } from "@/lib/recommender/present";
 import { NO_CARD_SENTENCE } from "@/lib/recommender/copy";
-import { formatPoints, formatPointsRange } from "@/lib/recommender/present";
+import { formatNeed, formatPoints } from "@/lib/recommender/present";
 
 /**
  * Trang kết quả, xếp theo đúng thứ tự người đọc cần:
@@ -281,7 +281,7 @@ function AlternativeRow({ action }: { action: ActionView }) {
 }
 
 function TripNumbers({ trip }: { trip: NonNullable<ResultView["trip"]> }) {
-  const need = formatPointsRange(trip.needLow, trip.needHigh);
+  const need = formatNeed(trip.needLow, trip.needHigh);
   // Thiếu một thừa số (hạng ghế, số người, khứ hồi) thì cả ba ô đều là "chưa
   // tính được" — ba lần nói cùng một điều. Nói một lần, và nói phải làm gì.
   const nothingKnown = need === null && trip.accessible === null;
@@ -309,7 +309,7 @@ function TripNumbers({ trip }: { trip: NonNullable<ResultView["trip"]> }) {
         <div>
           <dt className="text-sm text-muted-foreground">Cần khoảng (ước lượng)</dt>
           <dd className="font-display text-lg font-bold text-foreground">
-            {need === null ? "Chưa tính được" : `${need} điểm`}
+            {need === null ? "Chưa tính được" : need}
           </dd>
         </div>
         <div>
@@ -324,7 +324,7 @@ function TripNumbers({ trip }: { trip: NonNullable<ResultView["trip"]> }) {
         <div>
           <dt className="text-sm text-muted-foreground">Còn thiếu</dt>
           <dd className="font-display text-lg font-bold text-foreground">
-            {trip.gap === null ? "Chưa tính được" : `${formatPoints(trip.gap)} điểm`}
+            {trip.gap === null ? "Chưa tính được" : trip.gap === 0 ? "Không thiếu" : `${formatPoints(trip.gap)} điểm`}
           </dd>
         </div>
       </dl>
@@ -336,7 +336,10 @@ function TripNumbers({ trip }: { trip: NonNullable<ResultView["trip"]> }) {
       )}
       {trip.coverage !== null && !trip.routeNotPriced && (
         <p className="mt-3 text-sm text-muted-foreground">
-          Điểm hiện tại phủ khoảng {Math.round(trip.coverage * 100)}% chuyến này
+          {/* Engine để phần phủ vượt 1 khi số dư dư ra; "phủ khoảng 140%" đọc như lời hứa dư dả. */}
+          {trip.coverage >= 1
+            ? "Điểm hiện tại phủ được cả chuyến này"
+            : `Điểm hiện tại phủ khoảng ${Math.round(trip.coverage * 100)}% chuyến này`}
           {trip.coverageIsEstimate ? " — con số này là ước lượng vì còn chỗ chưa biết." : "."}
         </p>
       )}
