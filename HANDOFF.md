@@ -247,8 +247,11 @@ kho trên MariaDB 11.8).
   phải đọc `reco_explanations`: tỷ lệ `rejected`, và đọc cột chữ đã ghép xem có
   đáng giữ Phase 6 không so với bảng tra.
 - Chưa có công cụ debugger đọc `reco_explanations` — hôm nay tra bằng SQL.
-- Các bản vá Codex vòng 2 → thiết kế ghép câu: xem kết quả vòng 3 trong lịch sử
-  commit nhánh.
+- **Lỗi có sẵn từ Phase 5, chưa sửa:** câu đầu thẻ chính (`result.tsx`) ghi "chi
+  khoảng $X trong 3 tháng đầu để nhận trọn welcome bonus" bằng con số QUY ĐỔI
+  mỗi 90 ngày — sai với offer có nhiều mốc (vd. $3,000/90 ngày + $12,000/365
+  ngày). Phase 6 đã bỏ con số này khỏi dữ kiện của LLM (Codex vòng 3).
+- Codex 4 vòng: vòng 4 kết luận "CÒN CHẶN PUSH: KHÔNG".
 
 ### Thứ đã sẵn để LLM ăn vào
 
