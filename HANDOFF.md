@@ -252,6 +252,11 @@ kho trên MariaDB 11.8).
   mỗi 90 ngày — sai với offer có nhiều mốc (vd. $3,000/90 ngày + $12,000/365
   ngày). Phase 6 đã bỏ con số này khỏi dữ kiện của LLM (Codex vòng 3).
 - Codex 4 vòng: vòng 4 kết luận "CÒN CHẶN PUSH: KHÔNG".
+- **Rà đối kháng 17/09/2026** (mô hình coi như thù địch, payload thiếu/bẩn): 13
+  lỗi thật tìm ra và vá qua 3 vòng Codex, vòng cuối "CÒN CHẶN PUSH: KHÔNG".
+  Chi tiết: README module, mục Phase 6. Bài học: không viết được chữ, mô hình
+  vẫn làm trang nói lệch bằng IM LẶNG (bỏ lý do) và THỨ TỰ; và lỗi nói quá
+  thường nằm ở câu viết sẵn của bảng tra, không ở lớp LLM.
 
 ### Thứ đã sẵn để LLM ăn vào
 
