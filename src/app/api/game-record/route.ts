@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 
+import { CATCH_THE_POINTS_PUBLISHED } from "@/lib/feature-flags";
 import { bodyTooLarge } from "@/lib/rate-limit";
 import {
   GAME_RECORD_TAG,
@@ -31,6 +32,8 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  if (!CATCH_THE_POINTS_PUBLISHED) return new NextResponse(null, { status: 404 });
+
   // Phát token TRƯỚC khi đọc Contentful, không phải sau.
   //
   // Game gọi GET ngay lúc bấm "Bắt đầu chơi", và server kiểm điểm bằng cách so
@@ -167,6 +170,8 @@ function serialize<T>(work: () => Promise<T>): Promise<T> {
 }
 
 export async function POST(request: NextRequest) {
+  if (!CATCH_THE_POINTS_PUBLISHED) return new NextResponse(null, { status: 404 });
+
   const now = Date.now();
 
   if (bodyTooLarge(request, MAX_BODY_BYTES)) {

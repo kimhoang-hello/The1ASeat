@@ -56,8 +56,9 @@ export const VIETNAM_ROUTES_PUBLISHED = true;
  * mobile), vào sitemap, vào ô tìm kiếm, `noindex` được gỡ và dải báo nháp biến
  * mất — tất cả cùng một lúc, không cần sửa chỗ nào khác.
  *
- * **Tắt lại 17/09/2026** theo yêu cầu tác giả: trang vẫn vào được bằng URL trực
- * tiếp (kèm `noindex` và dải báo nháp), nhưng rời menu, sitemap và ô tìm kiếm.
+ * **Tắt lại 17/09/2026** theo yêu cầu tác giả, và chặn hẳn: khác các cờ khác,
+ * cờ này tắt là trang, file tĩnh `/games/catch-the-points/*` và
+ * `/api/game-record` đều trả 404 — không vào được kể cả bằng URL trực tiếp.
  */
 export const CATCH_THE_POINTS_PUBLISHED = false;
 

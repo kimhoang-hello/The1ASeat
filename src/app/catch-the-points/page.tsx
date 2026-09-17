@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
 import { CatchThePointsFrame } from "@/components/games/catch-the-points-frame";
 import { PageHeader } from "@/components/layout/page-header";
@@ -29,6 +30,12 @@ export const metadata: Metadata = {
 export const revalidate = 3600;
 
 export default function CatchThePointsPage() {
+  // Chưa công bố thì trả 404 thật, không chỉ ẩn khỏi menu: tác giả chốt
+  // 17/09/2026 rằng không ai được vào kể cả bằng URL trực tiếp. File tĩnh của
+  // game và API kỷ lục bị chặn cùng cờ — xem `next.config.ts` và
+  // `api/game-record/route.ts`.
+  if (!CATCH_THE_POINTS_PUBLISHED) notFound();
+
   return (
     <>
       <JsonLd
