@@ -26,7 +26,7 @@ import type { RecommendationDataset } from "../recommendation/types.ts";
 import type { UserState } from "../recommendation/user-types.ts";
 import { userGaps } from "../recommendation/user-gaps.ts";
 import { REASON_COVERED_BY_WARNING, REASON_TEXT, WARNING_TEXT } from "./copy.ts";
-import { answeredRows, presentRun, reasonsOf } from "./present.ts";
+import { answeredRows, presentRun, reasonsOf, spendSentenceOf } from "./present.ts";
 import {
   applyAnswer,
   goalFrom,
@@ -308,4 +308,90 @@ test("lựa chọn thay thế GIỮ vế cảnh báo của nó — khối cảnh
     });
   }
   assert.ok(checked > 0, "không ca nào chạm tới cặp lý do/cảnh báo — bài này đang kiểm rỗng");
+});
+
+/* ------------------------------------------------------------------ *
+ * Câu "mở thẻ rồi chi bao nhiêu"
+ * ------------------------------------------------------------------ */
+
+function componentsOf(slug: string) {
+  const product = DATA.products.find((row) => row.slug === slug);
+  assert.ok(product !== undefined, `thiếu thẻ ${slug}`);
+  const offer = DATA.offers.find((row) => row.productId === product.id);
+  assert.ok(offer !== undefined, `thiếu offer của ${slug}`);
+  return { offer, components: DATA.offerComponents.filter((row) => row.offerId === offer.id) };
+}
+
+test("offer nhiều mốc liệt kê ĐÚNG từng mốc và thời hạn, không hứa \"nhận trọn\" bằng con số quy đổi", () => {
+  // TD® Aeroplan® Visa Infinite*: $3,000/90 ngày RỒI $12,000/12 tháng. Con số
+  // quy về 90 ngày là $3,000 — in nó thành "chi $3,000 trong 3 tháng đầu để
+  // nhận trọn welcome bonus" là bỏ mất nửa bonus.
+  const { offer, components } = componentsOf("td-aeroplan-visa-infinite");
+  assert.equal(offer.spendPerNinetyDays, 3000, "dữ liệu đổi — bài này cần một offer nhiều mốc khác");
+  const sentence = spendSentenceOf(components);
+  assert.ok(sentence !== null);
+  assert.ok(sentence.includes("$3,000 trong 90 ngày đầu"), sentence);
+  assert.ok(sentence.includes("tổng cộng $12,000 trong 12 tháng đầu"), sentence);
+  assert.ok(sentence.includes("giữ thẻ"), sentence);
+  assert.ok(!sentence.includes("nhận trọn"), sentence);
+  assert.ok(!sentence.includes("3 tháng đầu"), sentence);
+});
+
+test("mốc mở muộn nói \"thêm\" (tiền không dùng lại được), và điều kiện không phải chi tiêu vẫn được kể", () => {
+  const reserve = spendSentenceOf(componentsOf("amex-aeroplan-reserve").components);
+  assert.ok(reserve?.includes("$7,500 trong 90 ngày đầu, rồi chi thêm $2,500 trong tháng thứ 13"), reserve ?? "null");
+
+  const platinum = spendSentenceOf(componentsOf("amex-platinum").components);
+  assert.ok(platinum?.includes("tháng 15–17"), platinum ?? "null");
+  assert.ok(!platinum?.includes("nhận trọn"), platinum ?? "null");
+});
+
+test("offer đúng MỘT mốc chi, không phần nào trả muộn, mới được hứa \"nhận trọn\" — với thời hạn thật", () => {
+  // TD® First Class: $7,500 trong 180 ngày. Con số quy đổi là $3,750 — câu
+  // cũ in "$3,750 trong 3 tháng đầu", một điều khoản không tồn tại.
+  const { offer, components } = componentsOf("td-first-class-travel-visa-infinite");
+  assert.equal(offer.spendPerNinetyDays, 3750);
+  assert.equal(
+    spendSentenceOf(components),
+    "Mở thẻ này, rồi chi $7,500 trong 180 ngày đầu, để nhận trọn welcome bonus.",
+  );
+  // Mỗi chu kỳ sao kê là một mốc riêng — nói theo chu kỳ, không cộng dồn.
+  assert.ok(
+    spendSentenceOf(componentsOf("amex-cobalt").components)?.includes("$750 mỗi chu kỳ sao kê, suốt 12 chu kỳ đầu"),
+  );
+  assert.equal(spendSentenceOf([]), null);
+});
+
+test("câu mốc chi trên trang chỉ in số tiền có thật trong điều khoản, và chỉ hứa \"trọn\" khi offer một mốc", () => {
+  let checked = 0;
+  let multi = 0;
+  for (const state of [beginnerNoCards, aeroplanHeavy, vietnamTripShortfall, japanTripFunded, advancedCollector]) {
+    const record = runFor(state);
+    const view = presentRun(record, DATA, offersFor(DATA));
+    assert.ok(view !== null);
+    for (const action of [view.primary, ...view.alternatives]) {
+      if (action.slug === null) continue;
+      const facts = record.derivedState.candidates.find((row) => row.productSlug === action.slug);
+      assert.ok(facts !== undefined);
+      const components = DATA.offerComponents.filter((row) => facts.offer.componentIds.includes(row.id));
+      if (action.minSpendPer90Days === null) {
+        assert.equal(action.spendSentence, null, `${action.slug}: hứa mốc chi khi engine không dựng được mốc nào`);
+        continue;
+      }
+      assert.ok(action.spendSentence !== null, `${action.slug}: có mốc chi mà không có câu`);
+      checked += 1;
+      const real = new Set(
+        components.flatMap((row) => (row.spendRequirement === null ? [] : [`$${row.spendRequirement.toLocaleString("en-US")}`])),
+      );
+      for (const amount of action.spendSentence.match(/\$[\d,]+/g) ?? []) {
+        assert.ok(real.has(amount), `${action.slug}: "${amount}" không có trong điều khoản — ${action.spendSentence}`);
+      }
+      const spendRows = components.filter((row) => row.spendRequirement !== null);
+      if (spendRows.length > 1) multi += 1;
+      if (action.spendSentence.includes("nhận trọn")) {
+        assert.equal(spendRows.length, 1, `${action.slug}: hứa "nhận trọn" với offer nhiều mốc`);
+      }
+    }
+  }
+  assert.ok(checked > 0 && multi > 0, "không ca nào chạm tới offer nhiều mốc — bài này đang kiểm rỗng");
 });
