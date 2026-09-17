@@ -215,6 +215,9 @@ test("mọi bản dựng hợp lệ trên 15 nhân vật mẫu chỉ ghép ra ch
   for (const state of USER_FIXTURES) {
     const payload = explanationPayload(viewFor(state));
     const factNumbers = new Set(payload.facts.flatMap((fact) => numbersIn(fact.text)));
+    // Mốc chi là con số QUY ĐỔI, không phải điều khoản — không được thành "Dữ kiện" (Codex vòng 3).
+    // (Lý do "mốc chi nằm trong khả năng bạn khai" thì được — nó không mang con số.)
+    assert.ok(!payload.facts.some((fact) => /mốc chi.*\$/u.test(fact.text)), `${state.profile.id}: mốc chi quy đổi lọt vào payload`);
     for (const fact of payload.facts) {
       assert.ok(!fact.text.endsWith("."), `${fact.id}: mệnh đề còn dấu chấm cuối`);
       if (fact.basis === "estimate") assert.match(fact.text, /ước lượng/, `${fact.id}: ước lượng không tự nói ra`);
@@ -248,6 +251,9 @@ test("mọi bản dựng hợp lệ trên 15 nhân vật mẫu chỉ ghép ra ch
     }
   }
   assert.ok(checked > 100, `chỉ kiểm ${checked} câu — bài không phủ`);
+  // Câu dẫn không khẳng định nhân quả: mã "ủng hộ" là điều đã cân nhắc, không
+  // phải lúc nào cũng là nguyên nhân (Codex vòng 3: "lý do: số điểm đã đủ").
+  for (const key of LEAD_KEYS) assert.ok(!/\bvì\b|lý do|nhờ/u.test(LEADS[key].text), `câu dẫn ${key} khẳng định nhân quả`);
   assert.ok(estimates > 0, "không câu nào ghép dữ kiện ước lượng — bài nhãn không chạy");
 });
 

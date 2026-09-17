@@ -31,10 +31,18 @@
 
 import type { ExplanationFact, ExplanationPayload, FactBasis, FactRole } from "./explain-payload.ts";
 
-/** Câu dẫn: chữ hiện ra, loại hành động được dùng, và vai của dữ kiện nó giới thiệu. */
+/**
+ * Câu dẫn: chữ hiện ra, loại hành động được dùng, và vai của dữ kiện nó giới thiệu.
+ *
+ * Câu dẫn KHÔNG khẳng định nhân quả ("vì", "lý do"). Mã "ủng hộ" của engine là
+ * điều nó đã cân nhắc, không phải lúc nào cũng là nguyên nhân: một thẻ vẫn được
+ * gợi ý khi mang `POINTS_ALREADY_SUFFICIENT`, và "Lý do mình gợi ý thẻ này: số
+ * điểm đã đủ" là đảo nghĩa (Codex vòng 3). Trang Phase 5 cũng chỉ liệt kê chúng
+ * dưới tên thẻ — lớp LLM không được nói mạnh hơn bảng tra.
+ */
 export const LEADS = {
-  why_card: { text: "Lý do mình gợi ý thẻ này:", action: "open_card", roles: ["reason"] },
-  why_wait: { text: "Lý do mình nghĩ bạn chưa cần mở thẻ mới:", action: "no_new_card", roles: ["reason"] },
+  why_card: { text: "Những điểm mình cân nhắc cho thẻ này:", action: "open_card", roles: ["reason"] },
+  why_wait: { text: "Những điểm mình cân nhắc:", action: "no_new_card", roles: ["reason"] },
   also: { text: "Thêm nữa:", action: null, roles: ["reason"] },
   cost: { text: "Về offer và chi phí:", action: "open_card", roles: ["offer"] },
   trip: { text: "Về chuyến bay:", action: null, roles: ["trip"] },

@@ -16,7 +16,7 @@
  *
  * BA NHÃN, và vì sao mỗi dữ kiện mang nhãn đó:
  *
- *  `verified`  — chép từ trang của ngân hàng (welcome bonus, phí, mốc chi) kèm
+ *  `verified`  — chép từ trang của ngân hàng (welcome bonus, phí thường niên) kèm
  *                ngày kiểm, hoặc điều CHÍNH người dùng đã khai (chuyến bay).
  *  `estimate`  — số engine tự tính mà chưa ai kiểm được: điểm một chuyến bay
  *                cần, điểm với tới được, phần thiếu, phần phủ. Mệnh đề của
@@ -43,9 +43,9 @@ import { formatPoints, formatPointsRange, type ResultView } from "./present.ts";
 export type FactBasis = "verified" | "estimate" | "editorial";
 
 /**
- * Dữ kiện nói về CHUYỆN GÌ — quyết định câu dẫn nào được giới thiệu nó. "Mình
- * gợi ý thẻ này vì…" chỉ được đứng trước một lý do engine đã phát ra, không
- * trước phí thường niên: ghép sai vai là tự dựng một quan hệ nhân quả.
+ * Dữ kiện nói về CHUYỆN GÌ — quyết định câu dẫn nào được giới thiệu nó. "Những
+ * điểm mình cân nhắc cho thẻ này:" chỉ đứng trước điều engine đã cân nhắc, không
+ * trước phí thường niên: ghép sai vai là dựng một quan hệ không ai nói.
  */
 export type FactRole = "reason" | "offer" | "trip" | "context";
 
@@ -118,14 +118,10 @@ export function explanationPayload(view: ResultView): ExplanationPayload {
       if (action.welcomeBonus !== null) {
         add("bonus", "verified", "offer", `welcome bonus hiện hành là ${action.welcomeBonus}`);
       }
-      if (action.minSpendPer90Days !== null) {
-        add(
-          "min_spend",
-          "verified",
-          "offer",
-          `mốc chi để nhận trọn welcome bonus là $${action.minSpendPer90Days.toLocaleString("en-US")} trong 3 tháng`,
-        );
-      }
+      // KHÔNG có mốc chi: `minSpendPer90Days` là con số QUY ĐỔI về mỗi 90 ngày
+      // để so với sức dồn chi tiêu, không phải điều khoản. Một offer đòi $3,000
+      // trong 90 ngày VÀ $12,000 trong 365 ngày thì "nhận trọn bonus với $3,000
+      // trong 3 tháng" là sai — mà lại mang nhãn "Dữ kiện" (Codex vòng 3).
     }
     if (action.annualFee !== null) {
       add("fee", "verified", "offer", `phí thường niên là ${action.annualFee}`);
