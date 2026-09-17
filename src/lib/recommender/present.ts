@@ -503,6 +503,20 @@ export function formatPoints(points: number): string {
 }
 
 /**
+ * Câu nói phần phủ chuyến đi, hoặc `null` khi không nên nói.
+ *
+ * Hai luật, dùng chung cho trang và lời giải thích (rà đối kháng Phase 6):
+ * phần phủ ≥ 1 thì không in phần trăm vượt 100 ("phủ khoảng 140%" đọc như lời
+ * hứa dư dả); và phần phủ ≥ 1 mà vẫn còn thiếu điểm là hai ước lượng mâu thuẫn
+ * — giữ con số thiếu, bỏ câu phủ.
+ */
+export function coverageStatement(trip: Pick<TripNumbersView, "coverage" | "gap">): string | null {
+  if (trip.coverage === null || trip.coverage < 0) return null;
+  if (trip.coverage >= 1) return trip.gap !== null && trip.gap > 0 ? null : "điểm hiện tại phủ được cả chuyến này";
+  return `điểm hiện tại phủ khoảng ${Math.round(trip.coverage * 100)}% chuyến này`;
+}
+
+/**
  * Số điểm một chuyến bay cần, nói ĐÚNG cái đã biết.
  *
  * Chỉ biết một đầu thì nói ra là đầu nào: "60,000" trần cho một chặng chỉ biết

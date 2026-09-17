@@ -6,7 +6,7 @@ import { resetRecommendation } from "@/app/credit-cards/goi-y/actions";
 import { ApplyButton } from "@/components/ui/apply-button";
 import type { ActionView, AnsweredRow, ResultView } from "@/lib/recommender/present";
 import { NO_CARD_SENTENCE } from "@/lib/recommender/copy";
-import { formatNeed, formatPoints } from "@/lib/recommender/present";
+import { coverageStatement, formatNeed, formatPoints } from "@/lib/recommender/present";
 
 /**
  * Trang kết quả, xếp theo đúng thứ tự người đọc cần:
@@ -334,12 +334,10 @@ function TripNumbers({ trip }: { trip: NonNullable<ResultView["trip"]> }) {
           Con số sẽ sát hơn nếu bạn nói thêm <MissingLinks trip={trip} />.
         </p>
       )}
-      {trip.coverage !== null && !trip.routeNotPriced && (
+      {coverageStatement(trip) !== null && !trip.routeNotPriced && (
         <p className="mt-3 text-sm text-muted-foreground">
-          {/* Engine để phần phủ vượt 1 khi số dư dư ra; "phủ khoảng 140%" đọc như lời hứa dư dả. */}
-          {trip.coverage >= 1
-            ? "Điểm hiện tại phủ được cả chuyến này"
-            : `Điểm hiện tại phủ khoảng ${Math.round(trip.coverage * 100)}% chuyến này`}
+          {/* Cùng luật với lời giải thích: không phần trăm vượt 100, không "phủ cả chuyến" cạnh "còn thiếu". */}
+          {asSentenceStart(coverageStatement(trip) as string)}
           {trip.coverageIsEstimate ? " — con số này là ước lượng vì còn chỗ chưa biết." : "."}
         </p>
       )}
@@ -457,4 +455,8 @@ function HowItWorks({ view }: { view: ResultView }) {
       </p>
     </details>
   );
+}
+
+function asSentenceStart(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }

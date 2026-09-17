@@ -39,7 +39,7 @@
 
 import type { ReasonCode } from "../recommendation/reason-codes.ts";
 import { COMPONENT_STRENGTH, NO_CARD_SENTENCE } from "./copy.ts";
-import { formatNeed, formatPoints, type ResultView } from "./present.ts";
+import { coverageStatement, formatNeed, formatPoints, type ResultView } from "./present.ts";
 
 /**
  * Lý do "ủng hộ" mà engine suy ra từ một ƯỚC LƯỢNG (phần phủ chuyến đi).
@@ -237,22 +237,8 @@ export function explanationPayload(view: ResultView): ExplanationPayload {
       if (trip.gap !== null && trip.gap > 0) {
         add("trip_gap", "estimate", "trip", `theo ước lượng, bạn còn thiếu khoảng ${formatPoints(trip.gap)} điểm`);
       }
-      // Phần phủ ≥ 1 mà vẫn còn thiếu điểm là hai ước lượng mâu thuẫn nhau
-      // (điểm giữa khoảng giá so với mức điển hình). Giữ con số thiếu, bỏ câu
-      // "phủ được cả chuyến" — thà nói thận trọng (Codex, rà đối kháng).
-      const contradicts = trip.coverage !== null && trip.coverage >= 1 && trip.gap !== null && trip.gap > 0;
-      if (trip.coverage !== null && trip.coverage >= 0 && !contradicts) {
-        // Engine để phần phủ vượt 1 khi số dư dư ra; "phủ khoảng 140% chuyến
-        // này" đọc như một lời hứa dư dả dựng trên ước lượng.
-        add(
-          "trip_coverage",
-          "estimate",
-          "trip",
-          trip.coverage >= 1
-            ? "theo ước lượng, điểm hiện tại phủ được cả chuyến này"
-            : `theo ước lượng, điểm hiện tại phủ khoảng ${Math.round(trip.coverage * 100)}% chuyến này`,
-        );
-      }
+      const coverage = coverageStatement(trip);
+      if (coverage !== null) add("trip_coverage", "estimate", "trip", `theo ước lượng, ${coverage}`);
     }
   }
 

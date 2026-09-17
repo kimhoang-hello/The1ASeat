@@ -63,7 +63,7 @@ import {
   type StoredExplanation,
 } from "./explain-store.ts";
 import { COMPONENT_STRENGTH, NO_CARD_SENTENCE, REASON_TEXT } from "./copy.ts";
-import { formatNeed, presentRun, type ResultView } from "./present.ts";
+import { coverageStatement, formatNeed, presentRun, type ResultView } from "./present.ts";
 
 const ASOF = "2026-09-08";
 const DATA = datasetAt(offlineDataset(), ASOF);
@@ -411,13 +411,16 @@ test("vòng Codex rà đối kháng: lý do của 'chưa mở thẻ', điểm m�
   const mixed = explanationPayload({ ...base, primary: { ...base.primary, welcomeBonus: "60,000\u200b điểm\u2060" } });
   assert.equal(mixed.facts.find((fact) => fact.id === "bonus")?.text, "welcome bonus hiện hành là 60,000 điểm");
 
+  assert.equal(coverageStatement({ gap: 10_000, coverage: 1.4 }), null, "trang và payload phải cùng bỏ câu phủ mâu thuẫn");
+  assert.equal(coverageStatement({ gap: 0, coverage: 1.4 }), "điểm hiện tại phủ được cả chuyến này");
+  assert.equal(coverageStatement({ gap: null, coverage: 0.456 }), "điểm hiện tại phủ khoảng 46% chuyến này");
   const contradictory = explanationPayload({ ...base, trip: { ...base.trip, gap: 10_000, coverage: 1.4 } });
   assert.ok(contradictory.facts.some((fact) => fact.id === "trip_gap"));
   assert.ok(!contradictory.facts.some((fact) => fact.id === "trip_coverage"), "vừa 'còn thiếu' vừa 'phủ được cả chuyến'");
 
   // Câu viết sẵn không hứa tương lai hay kết quả engine không đo được.
   for (const text of [...Object.values(NO_CARD_SENTENCE), ...Object.values(REASON_TEXT).map((row) => row.text)]) {
-    assert.ok(!/thì lợi hơn|được nhiều hơn|mở ra ngay|chắc chắn|đảm bảo/u.test(text), `câu viết sẵn nói quá: ${text}`);
+    assert.ok(!/thì lợi hơn|được nhiều hơn|mở ra ngay|chắc chắn|đảm bảo|\bnới\b/u.test(text), `câu viết sẵn nói quá: ${text}`);
   }
 
   // Ô số trên trang và mệnh đề dùng CHUNG một cách nói khoảng điểm.

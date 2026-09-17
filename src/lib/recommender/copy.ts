@@ -373,6 +373,8 @@ export const NO_CARD_SENTENCE: Record<string, string> = {
   offers_weak:
     "Offer của những thẻ đáng mở đang ở vùng thấp so với lịch sử của chính chúng — lúc này chưa phải lúc tốt để mở thêm thẻ.",
   nothing_fits:
-    "Chưa thẻ nào vừa với điều kiện bạn đặt ra (ngưỡng phí, điều kiện của ngân hàng). Nới một trong hai thì mình tính lại được.",
+    // Không khuyên "nới" gì: điều kiện của ngân hàng không phải thứ người dùng
+    // đặt ra hay nới được (Codex, rà đối kháng Phase 6).
+    "Chưa thẻ nào vừa với hồ sơ của bạn lúc này — vướng ngưỡng phí bạn đặt ra hoặc điều kiện mở thẻ của ngân hàng.",
   default: "Mở thêm thẻ lúc này chưa mang lại gì đáng kể cho mục tiêu của bạn.",
 };
