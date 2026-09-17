@@ -1183,6 +1183,31 @@ Quyết định đáng nhớ:
   khối Phase 5; mọi nhánh hỏng dựng lại chính khối đó.
 - `model` trong bản ghi là mô hình ĐÃ trả lời (`response.model`).
 
+**Rà đối kháng 17/09/2026 — mô hình coi như thù địch.** Không có đường nào để
+viết chữ, nên mọi tấn công còn lại là bằng IM LẶNG, THỨ TỰ và dữ liệu vào xấu.
+Sáu lớp lỗi tìm ra và đã vá:
+
+| Tấn công | Vá |
+| --- | --- |
+| Bỏ hết lý do của engine, chỉ giữ chi phí/hướng đi — trang mất phần giải thích | MỌI dữ kiện vai `reason` bắt buộc; câu đầu phải là câu dẫn lý do; `also` chỉ sau nó; câu dẫn lý do đúng một lần |
+| "Về offer và chi phí: phí $799" cho người không nhận được bonus | Dùng dữ kiện `offer` thì bắt buộc kèm `bonus_blocked` |
+| "Số điểm bạn với tới được đã đủ cho chuyến này" mang nhãn Nhận định | `POINTS_ALREADY_SUFFICIENT`, `FOCUS_ON_AWARD_AVAILABILITY`, `POINTS_GAP_LARGE` và "chưa mở thẻ vì đủ điểm" mang nhãn Ước lượng + "theo ước lượng của mình" (`ReasonRow.code` trong `present.ts`) |
+| Chỉ biết giá sàn mà ghi "cần khoảng 60,000 điểm" | "ít nhất khoảng … (chưa biết mức cao nhất)" / "tối đa khoảng …" |
+| "Còn thiếu khoảng 0 điểm", "phủ khoảng 140%" | Bỏ dòng thiếu 0; phần phủ ≥ 1 thành "phủ được cả chuyến này" |
+| Chuỗi Contentful rỗng/xuống dòng/dấu chấm cuối → "phí thường niên là" | `cleanValue`: gộp khoảng trắng, bỏ dấu cuối, rỗng thì không có dữ kiện |
+
+Canh bằng test: fuzz 6,000 bản dựng thù địch có seed (không ném; bản nào qua cũng
+đủ lý do, đúng thứ tự, chỉ ghép chữ viết sẵn), 10 biến thể payload thiếu/bẩn, và
+danh sách import cho phép của lớp LLM (component chỉ lấy `explanationStore` +
+`allowExplanationCall` từ `session.ts`). Kiểm ngược 12/12 luật mới. Đầu-cuối
+trên `next dev` + MariaDB: LLM giả trả rác hoặc văn tự do ("mở American Express
+Platinum, chắc chắn được duyệt") → trang GIỐNG HỆT từng dòng trang tắt LLM, cùng
+`runId`; bản dựng hợp lệ → chỉ khối "vì sao hợp" khác; không lượt chạy mới nào.
+
+Cố ý KHÔNG vá: chuỗi Contentful (welcome bonus, phí) là dữ liệu biên tập, hiện
+nguyên văn như ở trang Phase 5 — nó chỉ đi qua mô hình như dữ liệu, và mô hình
+không viết lại được nó.
+
 Giới hạn còn lại: câu ghép từ mệnh đề đọc kém mượt hơn văn viết tay, và một mệnh
 đề viết sẵn SAI thì sai ở mọi lượt — nhưng đó là lỗi bảng tra, sửa một chỗ, test
 thấy được.

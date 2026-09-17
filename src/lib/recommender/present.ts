@@ -43,6 +43,15 @@ import {
   REGION_LABEL,
 } from "./questions.ts";
 
+/**
+ * Một lý do đã dịch, KÈM mã gốc. Trang chỉ đọc `text`/`tone`; mã có mặt để lớp
+ * giải thích Phase 6 biết lý do nào dựng trên ƯỚC LƯỢNG ("đã đủ điểm") mà không
+ * phải đoán ngược từ câu chữ.
+ */
+export interface ReasonRow extends ReasonText {
+  code: ReasonCode;
+}
+
 export interface ActionView {
   kind: "open_card" | "no_new_card";
   slug: string | null;
@@ -53,7 +62,7 @@ export interface ActionView {
   annualFee: string | null;
   /** Link đăng ký, và link đó có phải link affiliate không. */
   apply: { url: string; affiliate: boolean } | null;
-  reasons: ReasonText[];
+  reasons: ReasonRow[];
   warnings: string[];
   /** Cho phần "cách tính" — người đọc kỹ mới mở ra. */
   score: number;
@@ -174,17 +183,17 @@ export function reasonsOf(
   codes: readonly ReasonCode[],
   /** Cảnh báo sẽ hiện ở khối riêng — lý do trùng nội dung với chúng thì bỏ. */
   warnings: readonly WarningCode[] = [],
-): ReasonText[] {
+): ReasonRow[] {
   const shownWarnings = new Set(warnings);
   const seen = new Set<string>();
-  const rows: ReasonText[] = [];
+  const rows: ReasonRow[] = [];
   for (const code of codes) {
     const twin = REASON_COVERED_BY_WARNING[code];
     if (twin !== undefined && shownWarnings.has(twin)) continue;
     const row = REASON_TEXT[code];
     if (row === undefined || seen.has(row.text)) continue;
     seen.add(row.text);
-    rows.push(row);
+    rows.push({ ...row, code });
   }
   return rows.sort((a, b) => TONE_ORDER[a.tone] - TONE_ORDER[b.tone]);
 }

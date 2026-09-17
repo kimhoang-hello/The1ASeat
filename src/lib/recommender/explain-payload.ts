@@ -37,8 +37,53 @@
  * vẫn cho ra đúng trang Phase 5.
  */
 
+import type { ReasonCode } from "../recommendation/reason-codes.ts";
 import { NO_CARD_SENTENCE } from "./copy.ts";
-import { formatPoints, formatPointsRange, type ResultView } from "./present.ts";
+import { formatPoints, type ResultView } from "./present.ts";
+
+/**
+ * Lý do "ủng hộ" mà engine suy ra từ một ƯỚC LƯỢNG (phần phủ chuyến đi).
+ *
+ * Câu của chúng nói như dữ kiện — "số điểm bạn đang với tới được đã đủ cho
+ * chuyến này" — mà gốc là điểm giữa của một khoảng giá award chart và số dư
+ * người dùng tự khai. Để nhãn "Nhận định" trên câu đó là biến ước lượng thành lời
+ * bảo đảm (rà đối kháng 17/09/2026). Nên chúng mang nhãn `estimate` và tự nói
+ * "theo ước lượng của mình".
+ */
+const ESTIMATE_REASONS: ReadonlySet<ReasonCode> = new Set<ReasonCode>([
+  "POINTS_ALREADY_SUFFICIENT",
+  "FOCUS_ON_AWARD_AVAILABILITY",
+  "POINTS_GAP_LARGE",
+]);
+
+const ESTIMATE_PREFIX = "theo ước lượng của mình, ";
+
+/**
+ * Chuỗi Contentful → giá trị đặt được sau "là". `null` khi rỗng: một mệnh đề
+ * "phí thường niên là" không có gì phía sau là một câu hỏng trên trang, và
+ * không có giá trị thì không có dữ kiện.
+ */
+function cleanValue(value: string | null): string | null {
+  if (value === null) return null;
+  const flat = value.replace(/\s+/gu, " ").trim().replace(/[.;,:]+$/u, "").trim();
+  return flat === "" ? null : asClause(flat);
+}
+
+/**
+ * Khoảng điểm chuyến bay cần, nói ĐÚNG cái đã biết.
+ *
+ * `formatPointsRange` của trang in một con số khi chỉ biết một đầu — "cần
+ * khoảng 60,000 điểm" cho một chặng chỉ biết giá sàn là nói thấp đi con số thật
+ * (rà đối kháng 17/09/2026). Ở đây một đầu thiếu thì nói ra là đầu nào.
+ */
+function needText(low: number | null, high: number | null): string | null {
+  if (low !== null && high !== null) {
+    return low === high ? `khoảng ${formatPoints(low)} điểm` : `khoảng ${formatPoints(low)} – ${formatPoints(high)} điểm`;
+  }
+  if (low !== null) return `ít nhất khoảng ${formatPoints(low)} điểm (chưa biết mức cao nhất)`;
+  if (high !== null) return `tối đa khoảng ${formatPoints(high)} điểm (chưa biết mức thấp nhất)`;
+  return null;
+}
 
 export type FactBasis = "verified" | "estimate" | "editorial";
 
@@ -83,7 +128,7 @@ export function vietnameseDate(iso: string): string {
  * cuối để câu dẫn tự đóng câu.
  */
 export function asClause(sentence: string): string {
-  const trimmed = sentence.trim().replace(/\.$/u, "");
+  const trimmed = sentence.replace(/\s+/gu, " ").trim().replace(/\.$/u, "");
   const [first, second] = [...trimmed];
   if (first === undefined) return trimmed;
   const acronym = second !== undefined && second !== second.toLowerCase();
@@ -97,14 +142,25 @@ export function explanationPayload(view: ResultView): ExplanationPayload {
     facts.push({ id, basis, role, text: asClause(text) });
 
   if (action.kind === "no_new_card") {
-    add("no_card", "editorial", "reason", NO_CARD_SENTENCE[action.noCardReason ?? "default"]);
+    // "Đã đủ điểm" là kết luận từ phần phủ ƯỚC LƯỢNG — cùng lý do như `ESTIMATE_REASONS`.
+    const sufficient = action.noCardReason === "points_sufficient";
+    const sentence = NO_CARD_SENTENCE[action.noCardReason ?? "default"];
+    add("no_card", sufficient ? "estimate" : "editorial", "reason", sufficient ? ESTIMATE_PREFIX + asClause(sentence) : sentence);
   } else {
-    action.reasons
-      .filter((row) => row.tone === "good")
-      .forEach((row, index) => add(`reason_${index + 1}`, "editorial", "reason", row.text));
-    action.strengths.forEach((row, index) =>
-      add(`strength_${index + 1}`, "editorial", "reason", `bảng điểm của thẻ mạnh ở phần ${row}`),
-    );
+    const good = action.reasons.filter((row) => row.tone === "good");
+    good.forEach((row, index) =>
+        ESTIMATE_REASONS.has(row.code)
+          ? add(`reason_${index + 1}`, "estimate", "reason", ESTIMATE_PREFIX + asClause(row.text))
+          : add(`reason_${index + 1}`, "editorial", "reason", row.text),
+      );
+    // Điểm mạnh chỉ khi KHÔNG có lý do "ủng hộ" nào — đúng như `DeterministicWhy`.
+    // Mọi dữ kiện vai `reason` đều bắt buộc có mặt trong bản dựng, nên tập này
+    // phải là đúng tập khối bảng tra sẽ hiện, không hơn.
+    if (good.length === 0) {
+      action.strengths.forEach((row, index) =>
+        add(`strength_${index + 1}`, "editorial", "reason", `bảng điểm của thẻ mạnh ở phần ${row}`),
+      );
+    }
     // Bonus bị chặn thì con số bonus KHÔNG vào payload — không có mệnh đề nào
     // để ghép thành lời hứa.
     if (action.welcomeBonusBlocked) {
@@ -115,17 +171,15 @@ export function explanationPayload(view: ResultView): ExplanationPayload {
         "theo điều khoản của ngân hàng và những thẻ bạn đã khai, bạn không nhận được welcome bonus của thẻ này",
       );
     } else {
-      if (action.welcomeBonus !== null) {
-        add("bonus", "verified", "offer", `welcome bonus hiện hành là ${action.welcomeBonus}`);
-      }
+      const bonus = cleanValue(action.welcomeBonus);
+      if (bonus !== null) add("bonus", "verified", "offer", `welcome bonus hiện hành là ${bonus}`);
       // KHÔNG có mốc chi: `minSpendPer90Days` là con số QUY ĐỔI về mỗi 90 ngày
       // để so với sức dồn chi tiêu, không phải điều khoản. Một offer đòi $3,000
       // trong 90 ngày VÀ $12,000 trong 365 ngày thì "nhận trọn bonus với $3,000
       // trong 3 tháng" là sai — mà lại mang nhãn "Dữ kiện" (Codex vòng 3).
     }
-    if (action.annualFee !== null) {
-      add("fee", "verified", "offer", `phí thường niên là ${action.annualFee}`);
-    }
+    const fee = cleanValue(action.annualFee);
+    if (fee !== null) add("fee", "verified", "offer", `phí thường niên là ${fee}`);
     if (action.eligibilityUncertain) {
       add(
         "eligibility_unknown",
@@ -143,7 +197,7 @@ export function explanationPayload(view: ResultView): ExplanationPayload {
     const parts = [
       trip.destination,
       trip.cabin?.toLowerCase() ?? null,
-      trip.passengers === null ? null : `${trip.passengers} người`,
+      trip.passengers === null || trip.passengers < 1 ? null : `${trip.passengers} người`,
       trip.roundTrip === null ? null : trip.roundTrip ? "khứ hồi" : "một chiều",
     ].filter((part): part is string => part !== null);
     add("trip", "verified", "trip", `bạn muốn bay ${parts.join(", ")}`);
@@ -155,13 +209,13 @@ export function explanationPayload(view: ResultView): ExplanationPayload {
         "chặng này chưa có trong award chart của site, nên mình chưa tính được số điểm cần",
       );
     } else {
-      const need = formatPointsRange(trip.needLow, trip.needHigh);
+      const need = needText(trip.needLow, trip.needHigh);
       if (need !== null) {
         add(
           "trip_need",
           "estimate",
           "trip",
-          `theo ước lượng từ award chart, chuyến này cần khoảng ${need} điểm, và con số đổi theo ngày bay`,
+          `theo ước lượng từ award chart, chuyến này cần ${need}, và con số đổi theo ngày bay`,
         );
       }
       if (trip.accessible !== null) {
@@ -172,15 +226,20 @@ export function explanationPayload(view: ResultView): ExplanationPayload {
           `theo ước lượng từ số dư bạn khai, bạn với tới được ${trip.accessibleIsLowerBound ? "ít nhất " : ""}${formatPoints(trip.accessible)} điểm`,
         );
       }
-      if (trip.gap !== null) {
+      // Thiếu 0 điểm không phải "còn thiếu khoảng 0 điểm" — phần phủ nói chuyện đó.
+      if (trip.gap !== null && trip.gap > 0) {
         add("trip_gap", "estimate", "trip", `theo ước lượng, bạn còn thiếu khoảng ${formatPoints(trip.gap)} điểm`);
       }
-      if (trip.coverage !== null) {
+      if (trip.coverage !== null && trip.coverage >= 0) {
+        // Engine để phần phủ vượt 1 khi số dư dư ra; "phủ khoảng 140% chuyến
+        // này" đọc như một lời hứa dư dả dựng trên ước lượng.
         add(
           "trip_coverage",
           "estimate",
           "trip",
-          `theo ước lượng, điểm hiện tại phủ khoảng ${Math.round(trip.coverage * 100)}% chuyến này`,
+          trip.coverage >= 1
+            ? "theo ước lượng, điểm hiện tại phủ được cả chuyến này"
+            : `theo ước lượng, điểm hiện tại phủ khoảng ${Math.round(trip.coverage * 100)}% chuyến này`,
         );
       }
     }

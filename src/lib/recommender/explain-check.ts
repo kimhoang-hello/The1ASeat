@@ -19,8 +19,10 @@
  *
  * Phần còn lại Claude quyết định được — và là lý do nó có mặt — là CHỌN dữ kiện
  * nào đáng nói với mục tiêu này, GOM chúng thành câu và SẮP thứ tự. Cửa kiểm
- * dưới đây chỉ canh chuyện đó đúng hình dạng: id có thật, câu dẫn hợp với loại
- * hành động, vai của dữ kiện hợp với câu dẫn, không lặp.
+ * dưới đây canh chuyện đó đúng hình dạng — id có thật, câu dẫn hợp với loại
+ * hành động, vai của dữ kiện hợp với câu dẫn, không lặp, câu dẫn đúng thứ tự —
+ * và canh luôn những gì im lặng cũng làm sai được: mọi lý do của engine phải
+ * có mặt và mở đầu đoạn, chi phí không được hiện thiếu dữ kiện bonus bị chặn.
  *
  * Lịch sử: hai bản đầu cho Claude viết tự do rồi kiểm chữ (cụm từ cấm, rồi "mọi
  * âm tiết phải có trong dữ kiện"). Codex vòng 1 và 2 viết được câu qua cả hai:
@@ -113,12 +115,22 @@ export function checkExplanation(payload: ExplanationPayload, raw: unknown): Che
 
   const byId = new Map(payload.facts.map((fact) => [fact.id, fact]));
   const used = new Set<string>();
+  let whySeen = false;
 
   draft.sentences.forEach((sentence, index) => {
     const label = `câu ${index + 1}`;
     const lead = LEADS[sentence.lead];
     if (lead.action !== null && lead.action !== payload.action.kind) {
       problems.push(`${label}: câu dẫn "${sentence.lead}" không dùng cho hành động ${payload.action.kind}`);
+    }
+    // Thứ tự câu dẫn. "Thêm nữa:" mở đầu đoạn văn, hay hai câu "Những điểm mình
+    // cân nhắc" liền nhau, đọc như có một đoạn bị cắt mất.
+    if (sentence.lead === "why_card" || sentence.lead === "why_wait") {
+      if (whySeen) problems.push(`${label}: câu dẫn "${sentence.lead}" chỉ dùng một lần`);
+      whySeen = true;
+    }
+    if (sentence.lead === "also" && !whySeen) {
+      problems.push(`${label}: "also" phải đứng sau câu dẫn lý do`);
     }
     if (sentence.facts.length === 0 || sentence.facts.length > MAX_FACTS_PER_SENTENCE) {
       problems.push(`${label}: có ${sentence.facts.length} dữ kiện, cần 1–${MAX_FACTS_PER_SENTENCE}`);
@@ -138,6 +150,26 @@ export function checkExplanation(payload: ExplanationPayload, raw: unknown): Che
       used.add(id);
     }
   });
+
+  // Lý do của engine KHÔNG được lọc bớt. Bản dựng thay chỗ khối "vì sao hợp"
+  // của bảng tra, nên bỏ một lý do là xoá nó khỏi trang — mô hình chỉ còn giữ
+  // chi phí hay hướng đi, và người đọc mất phần giải thích engine đã đưa ra
+  // (rà đối kháng 17/09/2026). Mô hình quyết định THỨ TỰ và CÁCH GOM, không
+  // quyết định lý do nào được nói.
+  const reasons = payload.facts.filter((fact) => fact.role === "reason");
+  const missingReasons = reasons.filter((fact) => !used.has(fact.id)).map((fact) => fact.id);
+  if (missingReasons.length > 0) problems.push(`bỏ sót lý do của engine: ${missingReasons.join(", ")}`);
+  const first = draft.sentences[0]?.lead;
+  if (reasons.length > 0 && first !== undefined && first !== "why_card" && first !== "why_wait") {
+    problems.push(`câu đầu phải là câu dẫn lý do, đang là "${first}"`);
+  }
+
+  // Nói chi phí mà không nói bonus bị chặn là nửa sự thật: "Về offer và chi
+  // phí: phí thường niên là $799" cho một người không nhận được welcome bonus.
+  const offerShown = payload.facts.some((fact) => fact.role === "offer" && used.has(fact.id));
+  if (offerShown && byId.has("bonus_blocked") && !used.has("bonus_blocked")) {
+    problems.push("nói về offer và chi phí mà bỏ dữ kiện bonus_blocked");
+  }
 
   return problems.length === 0 ? { ok: true, draft } : { ok: false, problems };
 }

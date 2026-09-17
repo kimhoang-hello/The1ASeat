@@ -43,6 +43,7 @@ import {
   LEAD_KEYS,
   LEADS,
   MAX_FACTS_PER_SENTENCE,
+  MAX_SENTENCES,
   renderExplanation,
   type ExplanationDraft,
   type LeadKey,
@@ -60,6 +61,7 @@ import {
   type ExplanationStore,
   type StoredExplanation,
 } from "./explain-store.ts";
+import { REASON_TEXT } from "./copy.ts";
 import { presentRun, type ResultView } from "./present.ts";
 
 const ASOF = "2026-09-08";
@@ -101,35 +103,48 @@ function viewFor(state: UserState): ResultView {
   return view;
 }
 
-/**
- * Mọi bản dựng "ngoan": mỗi câu dẫn hợp lệ với hành động, nhận mọi tổ hợp liên
- * tiếp tối đa 3 dữ kiện đúng vai. Không phải vét cạn tổ hợp, nhưng phủ mọi câu
- * dẫn × mọi dữ kiện × mọi độ dài câu.
- */
-function validSentences(payload: ExplanationPayload): ExplanationDraft["sentences"] {
+/** Câu lý do bắt buộc: mọi dữ kiện vai `reason`, gói 3 một, câu đầu dùng câu dẫn lý do. */
+function reasonSentences(payload: ExplanationPayload): ExplanationDraft["sentences"] {
+  const why: LeadKey = payload.action.kind === "open_card" ? "why_card" : "why_wait";
+  const ids = payload.facts.filter((fact) => fact.role === "reason").map((fact) => fact.id);
   const rows: ExplanationDraft["sentences"] = [];
+  for (let start = 0; start < ids.length; start += MAX_FACTS_PER_SENTENCE) {
+    rows.push({ lead: start === 0 ? why : "also", facts: ids.slice(start, start + MAX_FACTS_PER_SENTENCE) });
+  }
+  return rows;
+}
+
+/**
+ * Mọi câu TUỲ CHỌN hợp lệ (offer/trip/context): mỗi câu dẫn hợp với hành động,
+ * mọi đoạn liên tiếp tối đa 3 dữ kiện đúng vai. Không vét cạn tổ hợp, nhưng phủ
+ * mọi câu dẫn × mọi dữ kiện × mọi độ dài câu.
+ */
+function optionalSentences(payload: ExplanationPayload): ExplanationDraft["sentences"] {
+  const rows: ExplanationDraft["sentences"] = [];
+  const blocked = payload.facts.some((fact) => fact.id === "bonus_blocked");
   for (const lead of LEAD_KEYS) {
     const spec = LEADS[lead];
+    if ((spec.roles as readonly string[]).includes("reason")) continue;
     if (spec.action !== null && spec.action !== payload.action.kind) continue;
     const facts = payload.facts.filter((fact) => (spec.roles as readonly string[]).includes(fact.role));
     for (let start = 0; start < facts.length; start += 1) {
       for (let size = 1; size <= MAX_FACTS_PER_SENTENCE && start + size <= facts.length; size += 1) {
-        rows.push({ lead, facts: facts.slice(start, start + size).map((fact) => fact.id) });
+        const ids = facts.slice(start, start + size).map((fact) => fact.id);
+        if (blocked && lead === "cost" && !ids.includes("bonus_blocked")) continue;
+        rows.push({ lead, facts: ids });
       }
     }
   }
   return rows;
 }
 
-/** Bản dựng mô hình "ngoan nhất" sẽ trả: câu dẫn lý do + mọi lý do. */
+/** Bản dựng mô hình "ngoan nhất" sẽ trả: mọi lý do, rồi hướng đi. */
 function goodDraft(payload: ExplanationPayload): ExplanationDraft {
-  const lead: LeadKey = payload.action.kind === "open_card" ? "why_card" : "why_wait";
-  const reasons = payload.facts.filter((fact) => fact.role === "reason").slice(0, 3);
   const context = payload.facts.filter((fact) => fact.role === "context").slice(0, 1);
   return {
     sentences: [
-      ...(reasons.length > 0 ? [{ lead, facts: reasons.map((fact) => fact.id) }] : []),
-      { lead: "context" as const, facts: context.map((fact) => fact.id) },
+      ...reasonSentences(payload),
+      ...(context.length > 0 ? [{ lead: "context" as const, facts: context.map((fact) => fact.id) }] : []),
     ],
   };
 }
@@ -222,32 +237,45 @@ test("mọi bản dựng hợp lệ trên 15 nhân vật mẫu chỉ ghép ra ch
       assert.ok(!fact.text.endsWith("."), `${fact.id}: mệnh đề còn dấu chấm cuối`);
       if (fact.basis === "estimate") assert.match(fact.text, /ước lượng/, `${fact.id}: ước lượng không tự nói ra`);
     }
-    for (const sentence of validSentences(payload)) {
-      const draft = { sentences: [sentence] };
+    const base = reasonSentences(payload);
+    const drafts = [
+      { sentences: base },
+      ...optionalSentences(payload)
+        .filter(() => base.length < MAX_SENTENCES)
+        .map((sentence) => ({ sentences: [...base, sentence] })),
+    ];
+    for (const draft of drafts) {
       const result = checkExplanation(payload, draft);
+      if (draft.sentences.length === 0) continue;
       assert.ok(result.ok, `${state.profile.id}: bản dựng hợp lệ bị từ chối — ${result.ok ? "" : result.problems.join("; ")}`);
-      const [rendered] = renderExplanation(payload, result.draft);
-      checked += 1;
-
-      // Chữ = câu dẫn + đúng các mệnh đề, không hơn.
-      const facts = sentence.facts.map((id) => payload.facts.find((fact) => fact.id === id)!);
-      assert.ok(rendered.text.startsWith(`${LEADS[sentence.lead].text} `));
-      for (const fact of facts) assert.ok(rendered.text.includes(fact.text));
-      for (const value of numbersIn(rendered.text)) {
-        assert.ok(factNumbers.has(value), `${state.profile.id}: số ${value} không có trong dữ kiện`);
-      }
-      for (const name of otherNames(payload)) {
-        assert.ok(!rendered.text.includes(name), `${state.profile.id}: câu nhắc thẻ khác ${name}`);
-      }
-      if (facts.some((fact) => fact.basis === "estimate")) {
-        estimates += 1;
-        assert.equal(rendered.basis, "estimate");
-        assert.match(rendered.text, /ước lượng/);
-      } else if (facts.some((fact) => fact.basis === "editorial")) {
-        assert.equal(rendered.basis, "editorial");
-      } else {
-        assert.equal(rendered.basis, "verified");
-      }
+      renderExplanation(payload, result.draft).forEach((rendered, index) => {
+        const sentence = result.draft.sentences[index];
+        checked += 1;
+        // Chữ = câu dẫn + đúng các mệnh đề, không hơn.
+        const facts = sentence.facts.map((id) => payload.facts.find((fact) => fact.id === id)!);
+        assert.ok(rendered.text.startsWith(`${LEADS[sentence.lead].text} `));
+        const body = rendered.text.slice(LEADS[sentence.lead].text.length + 1, -1);
+        assert.equal(
+          body.split(/; |, | và /u).join(""),
+          facts.map((fact) => fact.text).join("").split(/; |, | và /u).join(""),
+          `${state.profile.id}: chữ ghép ra có phần không thuộc mệnh đề nào`,
+        );
+        for (const value of numbersIn(rendered.text)) {
+          assert.ok(factNumbers.has(value), `${state.profile.id}: số ${value} không có trong dữ kiện`);
+        }
+        for (const name of otherNames(payload)) {
+          assert.ok(!rendered.text.includes(name), `${state.profile.id}: câu nhắc thẻ khác ${name}`);
+        }
+        if (facts.some((fact) => fact.basis === "estimate")) {
+          estimates += 1;
+          assert.equal(rendered.basis, "estimate");
+          assert.match(rendered.text, /ước lượng/);
+        } else if (facts.some((fact) => fact.basis === "editorial")) {
+          assert.equal(rendered.basis, "editorial");
+        } else {
+          assert.equal(rendered.basis, "verified");
+        }
+      });
     }
   }
   assert.ok(checked > 100, `chỉ kiểm ${checked} câu — bài không phủ`);
@@ -264,6 +292,7 @@ test("cửa kiểm chặn bản dựng sai hình dạng; chữ mô hình tự vi
   const view = viewFor(beginnerNoCards);
   const wait = explanationPayload({ ...view, primary: { ...view.primary, kind: "no_new_card", noCardReason: "offers_weak" } });
   const reason = card.facts.find((fact) => fact.role === "reason")!.id;
+  const blocked = explanationPayload({ ...view, primary: { ...view.primary, welcomeBonusBlocked: true } });
 
   const cases: Array<{ name: string; payload: ExplanationPayload; draft: unknown; expect: RegExp }> = [
     { name: "dữ kiện không có", payload: card, draft: { sentences: [{ lead: "why_card", facts: ["bonus_elevated"] }] }, expect: /không có: bonus_elevated/ },
@@ -278,6 +307,14 @@ test("cửa kiểm chặn bản dựng sai hình dạng; chữ mô hình tự vi
     { name: "không câu nào", payload: card, draft: { sentences: [] }, expect: /có 0 câu/ },
     { name: "câu dẫn tự đặt", payload: card, draft: { sentences: [{ lead: "Chắc chắn bạn được duyệt, vì", facts: [reason] }] }, expect: /hình dạng/ },
     { name: "chữ tự do thay vì cấu trúc", payload: card, draft: { sentences: [{ text: "Bạn sẽ nhận được welcome bonus." }] }, expect: /hình dạng/ },
+    // Tấn công bằng IM LẶNG và THỨ TỰ (rà đối kháng 17/09/2026) — không cần
+    // viết chữ nào vẫn làm trang nói lệch.
+    { name: "bỏ hết lý do, chỉ giữ chi phí", payload: card, draft: { sentences: [{ lead: "cost", facts: ["fee"] }] }, expect: /bỏ sót lý do của engine/ },
+    { name: "chỉ giữ hướng đi", payload: card, draft: { sentences: [{ lead: "context", facts: ["strategy"] }] }, expect: /bỏ sót lý do.*câu đầu phải là câu dẫn lý do/ },
+    { name: "chi phí lên trước lý do", payload: card, draft: { sentences: [{ lead: "cost", facts: ["fee"] }, ...reasonSentences(card)] }, expect: /câu đầu phải là câu dẫn lý do, đang là "cost"/ },
+    { name: "'Thêm nữa' mở đầu đoạn", payload: card, draft: { sentences: reasonSentences(card).map((row) => ({ ...row, lead: "also" })) }, expect: /"also" phải đứng sau/ },
+    { name: "hai câu dẫn lý do", payload: card, draft: { sentences: [...reasonSentences(card), { lead: "why_card", facts: ["strategy"] }] }, expect: /chỉ dùng một lần/ },
+    { name: "chi phí mà giấu bonus bị chặn", payload: blocked, draft: { sentences: [...reasonSentences(blocked), { lead: "cost", facts: ["fee"] }] }, expect: /bỏ dữ kiện bonus_blocked/ },
   ];
   for (const row of cases) {
     const result = checkExplanation(row.payload, row.draft);
@@ -294,7 +331,7 @@ test("cửa kiểm chặn bản dựng sai hình dạng; chữ mô hình tự vi
     "Chặng này có chỗ trống.",
   ];
   const result = checkExplanation(card, {
-    sentences: [{ lead: "why_card", facts: [reason], text: smuggled[0] }],
+    sentences: goodDraft(card).sentences.map((row) => ({ ...row, text: smuggled[0] })),
     note: smuggled.slice(1).join(" "),
   });
   assert.ok(result.ok);
@@ -308,10 +345,148 @@ test("bonus bị chặn: con số bonus không có trong payload, nên không b�
   assert.ok(blocked.facts.some((fact) => fact.id === "bonus_blocked"));
   assert.ok(!blocked.facts.some((fact) => fact.id === "bonus" || fact.id === "min_spend"));
   assert.ok(!JSON.stringify(blocked).includes("60,000"));
-  for (const sentence of validSentences(blocked)) {
-    const [rendered] = renderExplanation(blocked, { sentences: [sentence] });
-    assert.ok(!/nhận trọn|hiện hành là/.test(rendered.text), rendered.text);
+  for (const sentence of optionalSentences(blocked)) {
+    for (const rendered of renderExplanation(blocked, { sentences: [...reasonSentences(blocked), sentence] })) {
+      assert.ok(!/nhận trọn|hiện hành là/.test(rendered.text), rendered.text);
+    }
   }
+});
+
+test("lý do dựa trên ƯỚC LƯỢNG ('đã đủ điểm', 'tìm chỗ trống', 'thiếu hơn nửa') mang nhãn Ước lượng, không phải Nhận định", () => {
+  const view = viewFor(beginnerNoCards);
+  const estimateCodes = ["POINTS_ALREADY_SUFFICIENT", "FOCUS_ON_AWARD_AVAILABILITY", "POINTS_GAP_LARGE"] as const;
+  const withReasons = explanationPayload({
+    ...view,
+    primary: {
+      ...view.primary,
+      reasons: [
+        ...estimateCodes.map((code) => ({ code, tone: "good" as const, text: REASON_TEXT[code].text })),
+        { code: "FLEXIBLE_CURRENCY_VALUABLE" as const, tone: "good" as const, text: REASON_TEXT.FLEXIBLE_CURRENCY_VALUABLE.text },
+      ],
+    },
+  });
+  const reasons = withReasons.facts.filter((fact) => fact.role === "reason");
+  assert.deepEqual(reasons.map((fact) => fact.basis), ["estimate", "estimate", "estimate", "editorial"]);
+  for (const fact of reasons.slice(0, 3)) assert.match(fact.text, /^theo ước lượng của mình, /u);
+
+  // "Chưa mở thẻ vì đã đủ điểm" cũng là kết luận từ ước lượng.
+  const sufficient = explanationPayload({ ...view, primary: { ...view.primary, kind: "no_new_card", noCardReason: "points_sufficient" } });
+  assert.equal(sufficient.facts.find((fact) => fact.id === "no_card")?.basis, "estimate");
+  const weak = explanationPayload({ ...view, primary: { ...view.primary, kind: "no_new_card", noCardReason: "offers_weak" } });
+  assert.equal(weak.facts.find((fact) => fact.id === "no_card")?.basis, "editorial");
+
+  // Nhãn của CÂU ghép đi theo: câu mang lý do "đã đủ điểm" hiện nhãn Ước lượng.
+  const result = checkExplanation(withReasons, { sentences: reasonSentences(withReasons) });
+  assert.ok(result.ok, result.ok ? "" : result.problems.join("; "));
+  assert.equal(renderExplanation(withReasons, result.draft)[0].basis, "estimate");
+});
+
+test("payload thiếu hoặc mơ hồ: không mệnh đề rỗng, không số dựng sai nghĩa, không đầu khoảng bị giấu", () => {
+  const base = viewFor(japanTripShortfall);
+  assert.ok(base.trip !== null);
+  const variants: Record<string, ResultView> = {
+    "offer null": { ...base, primary: { ...base.primary, welcomeBonus: null, annualFee: null } },
+    "offer rỗng": { ...base, primary: { ...base.primary, welcomeBonus: "   ", annualFee: "" } },
+    "offer bẩn": { ...base, primary: { ...base.primary, welcomeBonus: "Lên đến 70,000 điểm.\n", annualFee: " $599. " } },
+    "đủ điểm dư": { ...base, trip: { ...base.trip, gap: 0, coverage: 1.4 } },
+    "chỉ biết sàn": { ...base, trip: { ...base.trip, needLow: 60_000, needHigh: null } },
+    "chỉ biết trần": { ...base, trip: { ...base.trip, needLow: null, needHigh: 90_000 } },
+    "chuyến trống": { ...base, trip: { ...base.trip, cabin: null, passengers: null, roundTrip: null, needLow: null, needHigh: null, needTypical: null, accessible: null, gap: null, coverage: null } },
+    "không lý do": { ...base, primary: { ...base.primary, reasons: [], strengths: [] } },
+    "chưa mở thẻ, không rõ vì sao": { ...base, primary: { ...base.primary, kind: "no_new_card", noCardReason: null } },
+    "không ngày kiểm": { ...base, dataVerifiedAt: null },
+  };
+  const texts = (payload: ExplanationPayload) => Object.fromEntries(payload.facts.map((fact) => [fact.id, fact.text]));
+  for (const [name, view] of Object.entries(variants)) {
+    const payload = explanationPayload(view);
+    for (const fact of payload.facts) {
+      assert.ok(fact.text.trim() !== "" && !/undefined|null|NaN|\s{2}|\n|\s$|là$|\.$/u.test(fact.text), `${name} ${fact.id}: ${JSON.stringify(fact.text)}`);
+      assert.ok(!/thiếu khoảng 0 điểm|\d{3,}%/u.test(fact.text), `${name} ${fact.id}: ${fact.text}`);
+    }
+    // Bản dựng tối thiểu vẫn hợp lệ và ghép được — không có biến thể nào làm hàm ném.
+    const draft = goodDraft(payload);
+    if (draft.sentences.length > 0) {
+      const result = checkExplanation(payload, draft);
+      assert.ok(result.ok, `${name}: ${result.ok ? "" : result.problems.join("; ")}`);
+      renderExplanation(payload, result.draft);
+    }
+  }
+  assert.ok(!("bonus" in texts(explanationPayload(variants["offer rỗng"]))), "chuỗi rỗng thành dữ kiện");
+  assert.equal(texts(explanationPayload(variants["offer bẩn"])).fee, "phí thường niên là $599");
+  assert.equal(texts(explanationPayload(variants["đủ điểm dư"])).trip_gap, undefined);
+  assert.match(texts(explanationPayload(variants["đủ điểm dư"])).trip_coverage, /phủ được cả chuyến này/u);
+  assert.match(texts(explanationPayload(variants["chỉ biết sàn"])).trip_need, /ít nhất khoảng 60,000 điểm \(chưa biết mức cao nhất\)/u);
+  assert.match(texts(explanationPayload(variants["chỉ biết trần"])).trip_need, /tối đa khoảng 90,000 điểm/u);
+  assert.equal(texts(explanationPayload(variants["chuyến trống"])).trip, "bạn muốn bay Nhật Bản");
+});
+
+test("fuzz mô hình thù địch: 6,000 bản dựng ngẫu nhiên — không ném, bản nào qua cũng đủ lý do, đúng thứ tự, chỉ ghép chữ viết sẵn", () => {
+  let seed = 20260917;
+  const random = () => (seed = (seed * 1103515245 + 12345) % 2 ** 31) / 2 ** 31;
+  const pick = <T,>(items: readonly T[]) => items[Math.floor(random() * items.length)];
+  let passed = 0;
+  for (const state of USER_FIXTURES) {
+    const payload = explanationPayload(viewFor(state));
+    const ids = [...payload.facts.map((fact) => fact.id), "bonus", "min_spend", "reason_99", "", "__proto__", "constructor"];
+    const leads = [...LEAD_KEYS, "why", "", "toString", "__proto__"];
+    const allowed = new Set([...Object.values(LEADS).map((lead) => lead.text), ...payload.facts.map((fact) => fact.text)]);
+    for (let i = 0; i < 400; i += 1) {
+      // Một nửa số bản dựng xuất phát từ bản ngoan rồi bị làm hỏng một chỗ — ngẫu
+      // nhiên thuần gần như không bao giờ qua được, nên không kiểm được gì.
+      const seedDraft = random() < 0.5 ? structuredClone(goodDraft(payload)).sentences : [];
+      const sentences: unknown[] = seedDraft.map((row) => ({ ...row, text: "Bạn chắc chắn được duyệt." }));
+      const mutations = Math.floor(random() * 3);
+      for (let m = 0; m < mutations; m += 1) {
+        const roll = random();
+        if (roll < 0.3) sentences.push({ lead: pick(leads), facts: Array.from({ length: Math.floor(random() * 4) }, () => pick(ids)) });
+        else if (roll < 0.5 && sentences.length > 0) sentences.splice(Math.floor(random() * sentences.length), 1);
+        else if (roll < 0.7 && sentences.length > 1) sentences.reverse();
+        else if (sentences.length > 0) (sentences[0] as { lead: string }).lead = pick(leads);
+      }
+      const draft = random() < 0.05 ? pick([null, "x", [], { sentences: "x" }, { sentences: [null] }]) : { sentences };
+      const result = checkExplanation(payload, draft);
+      if (!result.ok) continue;
+      passed += 1;
+      const rendered = renderExplanation(payload, result.draft);
+      const usedReasons = new Set(result.draft.sentences.flatMap((row) => row.facts));
+      for (const fact of payload.facts.filter((row) => row.role === "reason")) {
+        assert.ok(usedReasons.has(fact.id), `${state.profile.id}: bản qua cửa kiểm bỏ lý do ${fact.id}`);
+      }
+      assert.ok(["why_card", "why_wait"].includes(result.draft.sentences[0].lead), `${state.profile.id}: câu đầu không phải lý do`);
+      for (const row of rendered) {
+        assert.ok(!row.text.includes("được duyệt"), `${state.profile.id}: chữ mô hình lọt ra trang`);
+        const lead = [...allowed].find((text) => row.text.startsWith(`${text} `));
+        assert.ok(lead !== undefined, `${state.profile.id}: câu không mở bằng câu dẫn có sẵn: ${row.text}`);
+      }
+    }
+  }
+  assert.ok(passed > 500, `chỉ ${passed} bản dựng qua cửa kiểm — fuzz không chạm được nhánh ghép chữ`);
+});
+
+test("lớp LLM không chạm được vào đường chọn khuyến nghị: import chỉ trong danh sách cho phép", async () => {
+  const root = path.resolve(import.meta.dirname, "..", "..");
+  const allowed: Record<string, RegExp> = {
+    "lib/recommender/explain-payload.ts": /^(\.\.\/recommendation\/reason-codes\.ts|\.\/copy\.ts|\.\/present\.ts)$/,
+    "lib/recommender/explain-check.ts": /^\.\/explain-payload\.ts$/,
+    "lib/recommender/explain-llm.ts": /^(@anthropic-ai\/sdk|\.\.\/recommendation\/fingerprint\.ts|\.\/explain-(check|payload|store)\.ts)$/,
+    "lib/recommender/explain-store.ts": /^(mysql2\/promise|\.\.\/recommendation\/(mysql|store-keys)\.ts|\.\/explain-(check|payload)\.ts)$/,
+    "components/recommender/explanation.tsx": /^@\/(components\/recommender\/result|lib\/recommender\/(explain-payload|explain-llm|present|session))$/,
+  };
+  for (const [file, pattern] of Object.entries(allowed)) {
+    const source = await readFile(path.join(root, file), "utf8");
+    for (const match of source.matchAll(/from\s+["']([^"']+)["']/g)) {
+      assert.match(match[1], pattern, `${file} import ${match[1]} — ngoài danh sách cho phép`);
+    }
+  }
+  // Từ `session.ts` component chỉ được lấy kho lời giải thích và trần chi phí —
+  // không `runAndSave`, `saveState`, hay bất kỳ thứ gì ghi lượt chạy/hồ sơ.
+  const component = await readFile(path.join(root, "components/recommender/explanation.tsx"), "utf8");
+  const fromSession = component.match(/import\s*\{([^}]*)\}\s*from\s*["']@\/lib\/recommender\/session["']/)?.[1] ?? "";
+  assert.deepEqual(fromSession.split(",").map((name) => name.trim()).filter(Boolean).sort(), ["allowExplanationCall", "explanationStore"]);
+  // Trang gọi engine TRƯỚC và độc lập: lời giải thích chỉ nhận `view` đã dựng xong.
+  const page = await readFile(path.join(root, "app/credit-cards/goi-y/page.tsx"), "utf8");
+  assert.match(page, /<ExplainedWhy view=\{view\} \/>/);
+  assert.ok(page.indexOf("runForDisplay(") < page.indexOf("<ExplainedWhy"), "lời giải thích dựng trước khi có lượt chạy");
 });
 
 /* ------------------------------------------------------------------ *
@@ -467,12 +642,12 @@ test("offer đổi trong ngày → payload mới, bản dựng mới; chữ cũ 
   const record = recordFor(beginnerNoCards).record;
   const before = presentRun(record, DATA, offersFor(DATA))!;
   const after = presentRun(record, DATA, offersFor(DATA).map((offer) => ({ ...offer, welcomeBonus: "80,000 điểm" })))!;
-  const h = harness(async () => served({ sentences: [{ lead: "cost", facts: ["bonus"] }] }));
+  const h = harness(async (payload) => served({ sentences: [...reasonSentences(payload), { lead: "cost", facts: ["bonus"] }] }));
   const first = await explainPrimaryAction(inputFor(before), h.deps);
   const second = await explainPrimaryAction(inputFor(after), h.deps);
   assert.ok(first !== null && second !== null);
-  assert.match(first.sentences[0].text, /60,000/);
-  assert.match(second.sentences[0].text, /80,000/);
+  assert.match(first.sentences.at(-1)!.text, /60,000/);
+  assert.match(second.sentences.at(-1)!.text, /80,000/);
   assert.equal(h.calls(), 2);
   assert.equal((await h.store.listForRun(record.id)).length, 2);
 });
