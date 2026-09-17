@@ -237,7 +237,7 @@ async function Body({ editKey }: { editKey: string | null }) {
       // mọi nhánh hỏng của nó dựng lại đúng khối bảng tra (fallback).
       why={
         <Suspense fallback={<DeterministicWhy action={view.primary} />}>
-          <ExplainedWhy view={view} dataset={dataset} />
+          <ExplainedWhy view={view} />
         </Suspense>
       }
     >

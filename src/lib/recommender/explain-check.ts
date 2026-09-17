@@ -1,226 +1,80 @@
 /**
- * Cửa kiểm lời giải thích Claude viết — chạy TRƯỚC khi một chữ nào tới trang.
+ * Kiểm bản dựng của Claude và ghép nó thành câu — chạy TRƯỚC khi một chữ nào
+ * tới trang.
  *
- * Prompt dặn bảy điều cấm của §28; file này là chỗ THI HÀNH chúng. Câu nào
- * trượt một luật thì CẢ lời giải thích bị bỏ và trang dùng câu của bảng tra
- * (Phase 5). Không vá, không lọc bớt câu hỏng: một đoạn văn bị cắt mất câu giữa
- * có thể đổi nghĩa, và "rơi về bảng tra" là đường lui đã đủ tốt.
+ * Claude trả về CẤU TRÚC, không trả về chữ:
  *
- * Mỗi luật chặn một điều cấm cụ thể:
+ *   { sentences: [{ lead: "why_card", facts: ["reason_1", "strength_1"] }, …] }
  *
- *  1. Mỗi câu trích dữ kiện CÓ THẬT (id nằm trong payload).
- *  2. Nhãn của câu = nhãn YẾU NHẤT trong các dữ kiện nó trích
- *     (verified < editorial < estimate). Câu trích một ước lượng không được
- *     tự nhận là dữ kiện đã kiểm.
- *  3. Câu mang nhãn ước lượng phải NÓI ra điều đó bằng chữ ("ước lượng",
- *     "khoảng"…) — chữ "ước lượng" phải sống sót qua LLM (bàn giao, cạm bẫy 3).
- *  4. Mọi con số trong câu phải có trong CHÍNH các dữ kiện câu đó trích — chặn
- *     số bịa, và chặn mượn số ước lượng vào một câu "đã kiểm".
- *  5. Không nhắc tên sản phẩm hay chương trình điểm nào không có trong dữ kiện
- *     — chặn "chọn thẻ khác" và chặn bịa đường chuyển điểm.
- *  6. Cụm từ cấm: hứa được duyệt, hứa chắc chắn có vé / chỗ trống, bịa điều
- *     kiện (điểm tín dụng, thu nhập tối thiểu), trấn an ngược cảnh báo, so sánh
- *     tuyệt đối, affiliate và link.
- *  7. Welcome bonus bị chặn thì câu nào nhắc bonus cũng phải trích dữ kiện
- *     `bonus_blocked` và mang chữ "không".
- *  8. MỌI âm tiết trong câu phải có trong chính các dữ kiện được trích, trong tên
- *     hành động chính, hoặc trong `CONNECTIVES` — danh sách từ nối ĐÓNG, không có
- *     từ phủ định, so sánh, chắc chắn hay thời gian.
+ * `lead` là một khoá trong `LEADS` (danh sách câu dẫn đóng), `facts` là id dữ
+ * kiện trong payload. Chữ trên trang = câu dẫn + các mệnh đề viết sẵn của
+ * `explain-payload.ts`, ghép bằng code. Nên những điều §28 cấm không cần một
+ * luật riêng để chặn — chúng KHÔNG CÓ CÁCH NÀO để viết ra:
  *
- * Luật 8 là luật gốc, bảy luật kia là lưới phụ. Codex vòng 1 chỉ ra rằng một
- * danh sách cụm từ cấm không bao giờ đủ: "Welcome bonus sẽ được cộng vào tài
- * khoản", "Offer này còn lâu mới hết hạn", "Chặng này có chỗ trống" đều nói điều
- * không có trong dữ kiện mà không chạm cụm nào. Cả ba cần những chữ ("cộng",
- * "lâu", "chặng") mà dữ kiện được trích không có — nên buộc câu chỉ được GHÉP
- * và SẮP LẠI chữ của dữ kiện là đóng cả lớp lỗi "nói thêm điều chưa ai kiểm",
- * thay vì vá từng cách diễn đạt. Cái giá: câu bớt tự do. Dữ kiện đã là câu tiếng
- * Việt đúng giọng site, nên việc còn lại của Claude là chọn, nối và sắp.
+ *  - đổi khuyến nghị, nhắc thẻ khác: không mệnh đề nào mang tên thẻ khác;
+ *  - bịa điều kiện, chỗ trống vé thưởng, hứa duyệt, số liệu: không có chữ tự do;
+ *  - biến ước lượng thành dữ kiện: nhãn do code tính từ dữ kiện, và mệnh đề ước
+ *    lượng tự mang chữ "ước lượng";
+ *  - nói ngược cảnh báo: cảnh báo in bằng bảng tra, Claude không chạm tới.
  *
- * KHÔNG BẮT ĐƯỢC, ghi ra để không ai tưởng cửa này kín: sắp lại đúng những chữ
- * của dữ kiện thành nghĩa khác — dời chữ "không" của một dữ kiện sang vế khác,
- * hay ghép vế của hai dữ kiện thành một quan hệ nhân quả không ai nói. Đây là
- * lưới bắt BỊA, không phải bằng chứng câu văn đúng.
+ * Phần còn lại Claude quyết định được — và là lý do nó có mặt — là CHỌN dữ kiện
+ * nào đáng nói với mục tiêu này, GOM chúng thành câu và SẮP thứ tự. Cửa kiểm
+ * dưới đây chỉ canh chuyện đó đúng hình dạng: id có thật, câu dẫn hợp với loại
+ * hành động, vai của dữ kiện hợp với câu dẫn, không lặp.
+ *
+ * Lịch sử: hai bản đầu cho Claude viết tự do rồi kiểm chữ (cụm từ cấm, rồi "mọi
+ * âm tiết phải có trong dữ kiện"). Codex vòng 1 và 2 viết được câu qua cả hai:
+ * "Welcome bonus sẽ được cộng vào tài khoản", "Phí thường niên: $3,000; mốc chi:
+ * $120" (đổi chỗ hai số thật), "Bạn sẽ nhận được welcome bonus; ngân hàng không
+ * từ chối". Kiểm CHỮ không chứng minh được NGHĨA — nên bỏ chữ tự do.
  */
 
-import type { ExplanationPayload, FactBasis } from "./explain-payload.ts";
+import type { ExplanationFact, ExplanationPayload, FactBasis, FactRole } from "./explain-payload.ts";
+
+/** Câu dẫn: chữ hiện ra, loại hành động được dùng, và vai của dữ kiện nó giới thiệu. */
+export const LEADS = {
+  why_card: { text: "Lý do mình gợi ý thẻ này:", action: "open_card", roles: ["reason"] },
+  why_wait: { text: "Lý do mình nghĩ bạn chưa cần mở thẻ mới:", action: "no_new_card", roles: ["reason"] },
+  also: { text: "Thêm nữa:", action: null, roles: ["reason"] },
+  cost: { text: "Về offer và chi phí:", action: "open_card", roles: ["offer"] },
+  trip: { text: "Về chuyến bay:", action: null, roles: ["trip"] },
+  context: { text: "Để bạn nắm rõ:", action: null, roles: ["context"] },
+} as const satisfies Record<
+  string,
+  { text: string; action: ExplanationPayload["action"]["kind"] | null; roles: readonly FactRole[] }
+>;
+
+export type LeadKey = keyof typeof LEADS;
+
+export const LEAD_KEYS = Object.keys(LEADS) as LeadKey[];
 
 export interface ExplanationSentence {
-  text: string;
+  lead: LeadKey;
   facts: string[];
-  basis: FactBasis;
 }
 
 export interface ExplanationDraft {
   sentences: ExplanationSentence[];
 }
 
-/** Tên riêng engine biết — lấy từ bộ dữ liệu, không viết tay. */
-export interface KnownNames {
-  products: string[];
-  programs: string[];
+/** Một câu đã ghép, sẵn để hiện. */
+export interface RenderedSentence {
+  text: string;
+  basis: FactBasis;
 }
 
 export type CheckResult = { ok: true; draft: ExplanationDraft } | { ok: false; problems: string[] };
 
 export const MIN_SENTENCES = 1;
 export const MAX_SENTENCES = 4;
-const MAX_SENTENCE_LENGTH = 320;
+export const MAX_FACTS_PER_SENTENCE = 3;
 
 const BASIS_RANK: Record<FactBasis, number> = { verified: 0, editorial: 1, estimate: 2 };
 
-/** Chữ thường + NFC + gộp khoảng trắng, để so cụm từ không vấp dạng Unicode. */
-function norm(text: string): string {
-  return text.normalize("NFC").toLowerCase().replace(/\s+/g, " ");
-}
-
-/* ------------------------------------------------------------------ *
- * Con số
- * ------------------------------------------------------------------ */
-
-/**
- * Mọi con số trong một đoạn chữ, theo GIÁ TRỊ.
- *
- * Cùng quy ước với `rewrite-offer.ts`: phẩy ngăn nghìn, chấm thập phân. Khác ở
- * chỗ ở đây lấy MỌI con số, kể cả số nhỏ ("3 tháng", "45%", "2 người") — lời
- * giải thích ngắn và dữ kiện có đủ mọi số nó cần, nên không có lý do cho số nhỏ
- * nào đứng ngoài dữ kiện.
- */
-const NUMBER = /\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?/g;
-
-export function numbersIn(text: string): number[] {
-  // "Ghế 1A" là tên site, không phải một con số người đọc mang đi quyết định.
-  return [...text.replace(/ghế 1a/giu, "").matchAll(NUMBER)].map((match) => Number(match[0].replace(/,/g, "")));
-}
-
-/** "60.000" kiểu Việt Nam, "60k" — hiện sai trên trang dù đúng giá trị. */
-const MISFORMATTED_NUMBER = /\d\.\d{3}(?!\d)|\d\s?[kK](?![\p{L}])/u;
-
-/* ------------------------------------------------------------------ *
- * Cụm từ cấm
- * ------------------------------------------------------------------ */
-
-interface Ban {
-  pattern: RegExp;
-  why: string;
-  /**
-   * Cho qua khi CHÍNH cụm đó có trong một dữ kiện MÀ CÂU NÀY TRÍCH. Không đặt
-   * cho những điều cấm tuyệt đối (hứa được duyệt, chỗ trống vé thưởng): một dữ
-   * kiện nhắc tới chúng thường là để nói điều ngược lại.
-   */
-  allowIfInFacts?: boolean;
-}
-
-const BANS: Ban[] = [
-  // §28: "Do not claim approval likelihood."
-  { pattern: /được duyệt|duyệt hồ sơ|tỷ lệ duyệt|khả năng duyệt|dễ duyệt|chấp thuận|approv/u, why: "nói về khả năng được duyệt" },
-  // §28: "Do not say points guarantee a trip."
-  { pattern: /đảm bảo|bảo đảm|guarantee/u, why: "hứa chắc chắn" },
-  { pattern: /100%/u, why: "hứa chắc chắn", allowIfInFacts: true },
-  { pattern: /(?<!chưa )(?<!không )(?<!độ )(?<!mức )chắc chắn/u, why: "hứa chắc chắn" },
-  // §28: "Do not invent award availability."
-  // KHÔNG miễn theo dữ kiện: hướng đi "Tập trung tìm chỗ trống" là lời khuyên
-  // đi tìm, và miễn cụm "chỗ trống" cho nó là cho qua "chặng này có chỗ trống"
-  // (Codex vòng 1). Chỉ "tìm chỗ trống" — việc phải làm — được nói.
-  { pattern: /(?<!tìm )(?:chỗ trống|ghế trống)|còn ghế|còn chỗ|còn vé|có sẵn vé|săn được vé|đặt được vé|availability/u, why: "nói về chỗ trống vé thưởng" },
-  // §28: "Do not invent eligibility requirements."
-  { pattern: /điểm tín dụng|credit score|điểm credit|thu nhập tối thiểu|yêu cầu thu nhập|lịch sử tín dụng/u, why: "nêu điều kiện mở thẻ không có trong dữ kiện", allowIfInFacts: true },
-  // Trấn an ngược cảnh báo.
-  { pattern: /không có rủi ro|không rủi ro|yên tâm|không cần lo|dễ dàng đạt|chắc đạt/u, why: "trấn an ngược cảnh báo" },
-  // So sánh tuyệt đối — kiểm được chỉ khi so với mọi thẻ trên site (memory
-  // "câu so sánh tuyệt đối"), và thứ hạng là việc của engine, không của câu văn.
-  { pattern: /tốt nhất|cao nhất|hời nhất|rẻ nhất|mạnh nhất|đáng nhất|số một|nhất thị trường/u, why: "so sánh tuyệt đối" },
-  // Affiliate không bao giờ vào lời giải thích (§16 Rule 7).
-  { pattern: /hoa hồng|affiliate|rebate|finlywealth|referral/u, why: "nhắc affiliate" },
-  { pattern: /https?:|www\.|\.com\b|\.ca\b/u, why: "chứa link" },
-  // Số viết bằng chữ né được cửa kiểm số.
-  { pattern: /nghìn|ngàn|triệu|mươi/u, why: "viết số bằng chữ", allowIfInFacts: true },
-];
-
-/**
- * Chữ phải có trong câu mang nhãn ước lượng. Rộng có chủ ý: mục đích là người
- * đọc thấy con số KHÔNG chắc, không phải bắt Claude dùng đúng một từ.
- */
-const ESTIMATE_MARKERS = /ước lượng|ước tính|khoảng|xấp xỉ|dự kiến/u;
-
-/**
- * Welcome bonus bị chặn: bắt theo CHỦ ĐỀ, không theo động từ. Bản đầu bắt
- * "nhận … bonus" và để lọt "Welcome bonus sẽ được cộng vào tài khoản" (Codex
- * vòng 1) — có vô số cách hứa một khoản bonus mà không dùng chữ "nhận".
- */
-const MENTIONS_BONUS = /bonus|điểm thưởng chào mừng/u;
-
-/* ------------------------------------------------------------------ *
- * Tên riêng
- * ------------------------------------------------------------------ */
-
-/**
- * Từ chung trong tên thẻ — xuất hiện trong câu văn bình thường, hoặc chung cho
- * quá nhiều thẻ để nói lên thẻ nào. Chặn chúng là từ chối oan.
- */
-const COMMON_NAME_WORDS = new Set(
-  [
-    // Hạng thẻ ("Gold", "Platinum", "Business") cố ý KHÔNG có ở đây: "American
-    // Express Gold Rewards Card" từng lọt qua khi thẻ chính là Cobalt, vì mọi từ
-    // còn lại đều bị coi là từ chung (Codex vòng 1). Câu tiếng Việt của site
-    // không dùng những chữ đó ngoài tên thẻ.
-    "card", "visa", "infinite", "privilege", "mastercard", "world", "elite", "the", "and", "for",
-    "rewards", "reward", "travel", "points", "point", "cash", "back", "cashback", "plus",
-    "welcome", "bonus", "offer", "transfer", "annual", "fee", "miles", "mile", "no", "de", "la",
-    "le", "of",
-  ].map(norm),
-);
-
-/**
- * Từ nối được dùng thêm ngoài chữ của dữ kiện (luật 8).
- *
- * Tiêu chí vào danh sách: nối hoặc trỏ, không tự mang một khẳng định. Cố ý
- * KHÔNG có: phủ định ("không", "chưa", "chẳng"), so sánh ("hơn", "nhất"), chắc
- * chắn ("chắc", "luôn", "đảm"), thời gian ("lâu", "sớm", "ngay"), số lượng
- * ("nhiều", "ít"), đánh giá ("đáng", "tốt", "rất"). Những chữ đó chỉ được dùng
- * khi chính dữ kiện được trích có chúng.
- */
-export const CONNECTIVES: ReadonlySet<string> = new Set(
-  [
-    "mình", "bạn", "vì", "nên", "do", "nhờ", "này", "đó", "đây", "ấy", "là", "và", "với", "của",
-    "cho", "để", "thì", "mà", "nhưng", "còn", "cũng", "vẫn", "đã", "đang", "sẽ", "được", "có",
-    "một", "các", "những", "thẻ", "điểm", "hợp", "phù", "mục", "tiêu", "gợi", "ý", "lựa", "chọn",
-    "lý", "chính", "ở", "trên", "trong", "khi", "nếu", "tức", "tiếp", "theo", "bước", "mở", "giúp",
-    "như", "vậy", "thế", "ra", "vào", "từ", "về", "tới", "đến", "phần", "chuyến", "bay", "hướng",
-    "đi", "số", "loại", "đúng", "khoảng", "ước", "lượng", "tính", "kèm", "cùng", "hiện", "riêng",
-    "rồi", "nữa", "việc", "điều", "đầu", "tháng", "ngày", "kiểm",
-  ].map(norm),
-);
-
-/** Âm tiết của một đoạn chữ. "Ghế 1A" là tên site, bỏ ra trước. */
-function syllablesOf(text: string): string[] {
-  return norm(text).replace(/ghế 1a/gu, " ").match(/\p{L}+/gu) ?? [];
-}
-
-function nameWords(name: string): string[] {
-  // Chữ viết tắt VIẾT HOA của ngân hàng ("TD", "RBC", "BMO") ngắn hơn 4 ký tự
-  // mà vẫn là tên riêng rõ nhất — bỏ chúng thì "thẻ TD lợi hơn" lọt qua. Từ
-  // thường ngắn thì bỏ: chúng trùng chữ tiếng Việt và tiếng Anh thông dụng.
-  return name
-    .normalize("NFC")
-    .replace(/[®™*+]/g, " ")
-    .split(/[^\p{L}\p{N}]+/u)
-    .filter((word) => word.length >= 4 || (word.length >= 2 && /^\p{Lu}+$/u.test(word)))
-    .map(norm)
-    .filter((word) => !/^\d+$/.test(word) && !COMMON_NAME_WORDS.has(word));
-}
-
-function containsWord(text: string, word: string): boolean {
-  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, "u").test(text);
-}
-
-/* ------------------------------------------------------------------ *
- * Kiểm
- * ------------------------------------------------------------------ */
-
 /**
  * Hình dạng của thứ Claude trả về — kiểm lại dù đã có JSON schema: schema chặn
- * lúc sinh, còn hàm này nhận cả bản đọc lại từ kho.
+ * lúc sinh, còn hàm này nhận cả bản đọc lại từ kho. Trường thừa (một `text` tự
+ * viết chẳng hạn) bị BỎ, không bao giờ tới trang.
  */
 export function asDraft(value: unknown): ExplanationDraft | null {
   if (typeof value !== "object" || value === null) return null;
@@ -229,21 +83,19 @@ export function asDraft(value: unknown): ExplanationDraft | null {
   const rows: ExplanationSentence[] = [];
   for (const row of sentences) {
     if (typeof row !== "object" || row === null) return null;
-    const { text, facts, basis } = row as Record<string, unknown>;
-    if (typeof text !== "string" || !Array.isArray(facts) || !facts.every((id) => typeof id === "string")) return null;
-    if (basis !== "verified" && basis !== "estimate" && basis !== "editorial") return null;
-    rows.push({ text, facts: facts as string[], basis });
+    const { lead, facts } = row as Record<string, unknown>;
+    if (typeof lead !== "string" || !Object.hasOwn(LEADS, lead)) return null;
+    if (!Array.isArray(facts) || !facts.every((id) => typeof id === "string")) return null;
+    rows.push({ lead: lead as LeadKey, facts: facts as string[] });
   }
   return { sentences: rows };
 }
 
-export function checkExplanation(
-  payload: ExplanationPayload,
-  raw: unknown,
-  names: KnownNames,
-): CheckResult {
+export function checkExplanation(payload: ExplanationPayload, raw: unknown): CheckResult {
   const draft = asDraft(raw);
-  if (draft === null) return { ok: false, problems: ["không đúng hình dạng { sentences: [{ text, facts, basis }] }"] };
+  if (draft === null) {
+    return { ok: false, problems: [`không đúng hình dạng { sentences: [{ lead: ${LEAD_KEYS.join(" | ")}, facts: [id] }] }`] };
+  }
 
   const problems: string[] = [];
   const count = draft.sentences.length;
@@ -252,83 +104,73 @@ export function checkExplanation(
   }
 
   const byId = new Map(payload.facts.map((fact) => [fact.id, fact]));
-  const allFactText = norm([payload.action.name, ...payload.facts.map((fact) => fact.text)].join(" "));
-  const nameNumbers = new Set(numbersIn(payload.action.name));
-
-  // Từ "riêng" của mọi tên sản phẩm/chương trình, trừ những từ dữ kiện đã
-  // dùng: câu văn được nhắc tên thẻ chính và chương trình có trong dữ kiện,
-  // không được nhắc cái nào khác.
-  const foreignWords = new Set(
-    [...names.products, ...names.programs]
-      .flatMap(nameWords)
-      .filter((word) => !containsWord(allFactText, word)),
-  );
-  const blocked = payload.facts.some((fact) => fact.id === "bonus_blocked");
+  const used = new Set<string>();
 
   draft.sentences.forEach((sentence, index) => {
     const label = `câu ${index + 1}`;
-    const text = norm(sentence.text);
-    if (text.trim().length === 0) {
-      problems.push(`${label}: rỗng`);
-      return;
+    const lead = LEADS[sentence.lead];
+    if (lead.action !== null && lead.action !== payload.action.kind) {
+      problems.push(`${label}: câu dẫn "${sentence.lead}" không dùng cho hành động ${payload.action.kind}`);
     }
-    if (sentence.text.length > MAX_SENTENCE_LENGTH) problems.push(`${label}: dài quá ${MAX_SENTENCE_LENGTH} ký tự`);
-
-    // 1. Trích dữ kiện có thật.
-    const cited = [...new Set(sentence.facts)];
-    if (cited.length === 0) problems.push(`${label}: không trích dữ kiện nào`);
-    const unknown = cited.filter((id) => !byId.has(id));
-    if (unknown.length > 0) problems.push(`${label}: trích dữ kiện không có: ${unknown.join(", ")}`);
-    const facts = cited.flatMap((id) => byId.get(id) ?? []);
-    if (facts.length === 0) return;
-
-    // 2. Nhãn = nhãn yếu nhất.
-    const weakest = facts.reduce<FactBasis>(
-      (acc, fact) => (BASIS_RANK[fact.basis] > BASIS_RANK[acc] ? fact.basis : acc),
-      "verified",
-    );
-    if (sentence.basis !== weakest) {
-      problems.push(`${label}: nhãn "${sentence.basis}" nhưng dữ kiện trích là "${weakest}"`);
+    if (sentence.facts.length === 0 || sentence.facts.length > MAX_FACTS_PER_SENTENCE) {
+      problems.push(`${label}: có ${sentence.facts.length} dữ kiện, cần 1–${MAX_FACTS_PER_SENTENCE}`);
     }
-
-    // 3. Ước lượng phải nói ra.
-    if (weakest === "estimate" && !ESTIMATE_MARKERS.test(text)) {
-      problems.push(`${label}: dựa trên ước lượng mà không nói ra là ước lượng`);
-    }
-
-    // 4. Con số phải có trong CHÍNH dữ kiện được trích.
-    const allowed = new Set([...nameNumbers, ...facts.flatMap((fact) => numbersIn(fact.text))]);
-    const invented = [...new Set(numbersIn(sentence.text))].filter((value) => !allowed.has(value));
-    if (invented.length > 0) problems.push(`${label}: con số không có trong dữ kiện trích: ${invented.join(", ")}`);
-    if (MISFORMATTED_NUMBER.test(sentence.text)) problems.push(`${label}: số viết sai quy ước của site`);
-
-    // 5. Tên riêng lạ.
-    const foreign = [...foreignWords].filter((word) => containsWord(text, word));
-    if (foreign.length > 0) problems.push(`${label}: nhắc tên không có trong dữ kiện: ${foreign.join(", ")}`);
-
-    // 6. Cụm từ cấm — miễn chỉ theo dữ kiện CÂU NÀY trích.
-    const citedText = norm(facts.map((fact) => fact.text).join(" "));
-    for (const ban of BANS) {
-      const match = text.match(ban.pattern);
-      if (match === null) continue;
-      if (ban.allowIfInFacts && citedText.includes(match[0])) continue;
-      problems.push(`${label}: ${ban.why} ("${match[0]}")`);
-    }
-
-    // 7. Bonus bị chặn: nhắc bonus thì phải là câu nói KHÔNG nhận được nó.
-    if (blocked && MENTIONS_BONUS.test(text) && !(cited.includes("bonus_blocked") && /không/u.test(text))) {
-      problems.push(`${label}: nhắc welcome bonus trong khi bonus bị chặn`);
-    }
-
-    // 8. Chữ phải lấy từ dữ kiện được trích.
-    const grounded = new Set([...syllablesOf(payload.action.name), ...facts.flatMap((fact) => syllablesOf(fact.text))]);
-    const ungrounded = [...new Set(syllablesOf(sentence.text))].filter(
-      (word) => !grounded.has(word) && !CONNECTIVES.has(word),
-    );
-    if (ungrounded.length > 0) {
-      problems.push(`${label}: dùng chữ không có trong dữ kiện trích: ${ungrounded.join(", ")}`);
+    for (const id of sentence.facts) {
+      const fact = byId.get(id);
+      if (fact === undefined) {
+        problems.push(`${label}: dữ kiện không có: ${id}`);
+        continue;
+      }
+      if (!(lead.roles as readonly FactRole[]).includes(fact.role)) {
+        problems.push(`${label}: dữ kiện ${id} (${fact.role}) không đi được sau câu dẫn "${sentence.lead}"`);
+      }
+      // Một dữ kiện nói hai lần là một đoạn văn độn chữ — và là dấu hiệu mô
+      // hình không làm đúng việc chọn lọc.
+      if (used.has(id)) problems.push(`${label}: dữ kiện ${id} đã dùng ở câu trước`);
+      used.add(id);
     }
   });
 
   return problems.length === 0 ? { ok: true, draft } : { ok: false, problems };
+}
+
+/**
+ * Bản đã qua cửa kiểm → câu hiện trên trang. Hàm thuần: cùng payload và cùng
+ * bản dựng thì cùng chữ, nên bản lưu trong kho dựng lại đúng câu người đọc thấy.
+ *
+ * Ném khi bản dựng chưa qua `checkExplanation` — gọi sai thứ tự là lỗi lập
+ * trình, không phải một nhánh để trang xử lý.
+ */
+export function renderExplanation(payload: ExplanationPayload, draft: ExplanationDraft): RenderedSentence[] {
+  const byId = new Map(payload.facts.map((fact) => [fact.id, fact]));
+  return draft.sentences.map((sentence) => {
+    const facts = sentence.facts.map((id) => {
+      const fact = byId.get(id);
+      if (fact === undefined) throw new Error(`renderExplanation: dữ kiện ${id} không có — chưa qua cửa kiểm`);
+      return fact;
+    });
+    return { text: `${LEADS[sentence.lead].text} ${joinClauses(facts)}.`, basis: weakestBasis(facts) };
+  });
+}
+
+/**
+ * Nhãn của câu = nhãn YẾU NHẤT trong các dữ kiện nó ghép (verified < editorial
+ * < estimate). Do code tính, không do mô hình khai.
+ */
+export function weakestBasis(facts: readonly ExplanationFact[]): FactBasis {
+  return facts.reduce<FactBasis>(
+    (acc, fact) => (BASIS_RANK[fact.basis] > BASIS_RANK[acc] ? fact.basis : acc),
+    "verified",
+  );
+}
+
+/**
+ * Nối mệnh đề. Mệnh đề nào đã có dấu phẩy thì nối bằng chấm phẩy — "và" giữa
+ * hai mệnh đề nhiều vế đọc ra một câu không biết vế nào đi với vế nào.
+ */
+function joinClauses(facts: readonly ExplanationFact[]): string {
+  const clauses = facts.map((fact) => fact.text);
+  if (clauses.length === 1) return clauses[0];
+  if (clauses.some((clause) => clause.includes(","))) return clauses.join("; ");
+  return `${clauses.slice(0, -1).join(", ")} và ${clauses.at(-1)}`;
 }

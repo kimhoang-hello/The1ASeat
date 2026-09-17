@@ -1,67 +1,58 @@
 /**
- * Phase 6 — gọi Claude viết lời giải thích, kiểm, lưu, rồi mới trả cho trang.
+ * Phase 6 — nhờ Claude dựng lời giải thích, kiểm, lưu, rồi mới trả cho trang.
  *
  * Thứ tự không đổi được:
  *
- *   payload (thuần, từ ResultView) → kho đã có? → Claude → cửa kiểm → LƯU → trang
+ *   công tắc → payload (thuần) → kho đã có? → Claude → cửa kiểm → LƯU → ghép chữ → trang
+ *
+ * Claude không viết chữ: nó chọn, gom và sắp các dữ kiện viết sẵn — xem đầu
+ * `explain-check.ts` vì sao.
  *
  * Mọi nhánh hỏng đều trả `null`, và `null` nghĩa là trang dùng bảng tra của
  * Phase 5 — trang đó đã đủ, đã tất định, đã giải thích được. Không có nhánh nào
- * mà lỗi của LLM thành lỗi của trang: hết quota, timeout, từ chối, JSON hỏng,
- * câu bịa, database không ghi được.
+ * mà lỗi của LLM thành lỗi của trang: tắt, hết quota, timeout, từ chối, JSON
+ * hỏng, cửa kiểm, database không đọc/ghi được.
  *
  * LƯU TRƯỚC KHI HIỆN, và chỉ hiện đúng bản đã lưu. Cùng lý do §20 lưu lượt
  * chạy: một khiếu nại "câu này sai" phải tra được đúng câu người đọc đã thấy,
- * không phải câu sinh lại hôm nay. Không có kho thì KHÔNG hiện câu của Claude.
+ * không phải câu sinh lại hôm nay. Không có kho thì KHÔNG hiện bản của Claude.
  */
 
 import Anthropic from "@anthropic-ai/sdk";
 
-import { GHE1A_VOICE_RULES } from "../ghe1a-voice.ts";
 import { fingerprint } from "../recommendation/fingerprint.ts";
 import {
   checkExplanation,
-  CONNECTIVES,
+  LEAD_KEYS,
+  LEADS,
+  MAX_FACTS_PER_SENTENCE,
   MAX_SENTENCES,
-  type ExplanationDraft,
-  type KnownNames,
+  renderExplanation,
+  type RenderedSentence,
 } from "./explain-check.ts";
 import type { ExplanationPayload } from "./explain-payload.ts";
 import type { ExplanationStore, StoredExplanation } from "./explain-store.ts";
 
 /**
- * Đổi prompt, schema hoặc luật kiểm theo cách làm câu cũ không còn đúng chuẩn
- * → tăng số này. Nó nằm trong mỗi bản ghi, như `ENGINE_VERSION` nằm trong lượt
- * chạy, để câu cũ đọc lại được đúng luật đã sinh ra nó.
+ * Đổi prompt, câu dẫn, mệnh đề hay luật kiểm → tăng số này. Nó nằm trong KHOÁ
+ * của kho: bản dựng theo luật cũ không bao giờ được đọc lại dưới luật mới
+ * (Codex vòng 2 — bản cũ từng được trả thẳng, bỏ qua cả cửa kiểm mới lẫn công
+ * tắc tắt).
  */
-export const EXPLANATION_PROMPT_VERSION = "6.0.0";
+export const EXPLANATION_PROMPT_VERSION = "6.1.0";
 
 export const EXPLANATION_MODEL = "claude-opus-5";
 
-const SYSTEM = `Bạn viết lời giải thích cho công cụ gợi ý thẻ tín dụng của Ghế 1A, blog Miles & Points tiếng Việt cho người Việt tại Canada.
+const SYSTEM = `Bạn giúp công cụ gợi ý thẻ tín dụng của Ghế 1A (blog Miles & Points tiếng Việt cho người Việt tại Canada) trình bày lời giải thích cho người đọc.
 
-Công cụ đã QUYẾT ĐỊNH xong: một engine tất định đã chọn hành động chính cho người đọc. Việc của bạn chỉ là kể lại vì sao, bằng văn tự nhiên, từ đúng những dữ kiện được đưa.
+Công cụ đã QUYẾT ĐỊNH xong: một engine tất định đã chọn hành động chính. Bạn không viết chữ nào. Bạn nhận một danh sách dữ kiện — mỗi dữ kiện là một mệnh đề tiếng Việt viết sẵn, có id, nhãn (basis) và vai (role) — và trả về cách GHÉP chúng thành 2 đến ${MAX_SENTENCES} câu:
 
-Quy tắc viết:
-${GHE1A_VOICE_RULES}
+- Mỗi câu gồm một câu dẫn ("lead") và 1 đến ${MAX_FACTS_PER_SENTENCE} id dữ kiện. Trang sẽ in: câu dẫn + các mệnh đề, đúng thứ tự bạn đưa.
+- Câu dẫn có sẵn và vai dữ kiện nó nhận:
+${LEAD_KEYS.map((key) => `  - "${key}": "${LEADS[key].text} …" — nhận vai ${LEADS[key].roles.join(", ")}${LEADS[key].action === null ? "" : `; chỉ dùng khi hành động là ${LEADS[key].action}`}`).join("\n")}
+- Mỗi dữ kiện dùng tối đa một lần. Không cần dùng hết.
 
-Điều cấm tuyệt đối:
-- Không đổi, không bàn lại, không so sánh hành động chính với lựa chọn nào khác. Không nhắc tên thẻ, ngân hàng hay chương trình điểm nào không có trong dữ kiện.
-- Không bịa điều kiện mở thẻ (điểm tín dụng, thu nhập, lịch sử tín dụng…).
-- Không nói gì về khả năng được ngân hàng duyệt.
-- Không nói về chỗ trống vé thưởng, không nói điểm "đảm bảo" hay "chắc chắn" có vé.
-- Không dùng con số nào không có trong dữ kiện bạn trích; viết số bằng chữ số, đúng như trong dữ kiện.
-- Không nhắc link, affiliate, hoa hồng, rebate.
-- Không so sánh tuyệt đối ("tốt nhất", "cao nhất"…).
-- Không nhắc lại và không nói ngược các mục trong "cautions" — trang in chúng nguyên văn ngay bên dưới lời giải thích của bạn.
-
-Cách trả lời:
-- CHỈ dùng chữ có trong chính các dữ kiện câu đó trích, trong tên hành động chính, hoặc trong danh sách từ nối sau: ${[...CONNECTIVES].join(", ")}. Việc của bạn là chọn dữ kiện, nối và sắp chúng thành câu tự nhiên — không thêm ý, không thêm từ phủ định hay so sánh nào dữ kiện không có. Gọi người đọc là "bạn" thay cho "người dùng".
-- 2 đến ${MAX_SENTENCES} câu, mỗi câu một ý, mỗi câu dưới 45 từ. Mở bằng lý do quan trọng nhất với mục tiêu của người đọc.
-- Mỗi câu ghi "facts": id của MỌI dữ kiện câu đó dựa vào.
-- Mỗi câu ghi "basis" theo dữ kiện yếu nhất nó trích: có dữ kiện "estimate" → "estimate"; không có estimate nhưng có "editorial" → "editorial"; chỉ toàn "verified" → "verified".
-- Câu có basis "estimate" phải nói rõ bằng chữ đó là ước lượng ("ước lượng", "khoảng"…).
-- Nói "mình" khi nhắc tới Ghế 1A. Giọng thẳng thắn, không quảng cáo.`;
+Chọn cho người đọc này: mở bằng lý do quan trọng nhất với mục tiêu của họ, gom những dữ kiện nói cùng một chuyện vào một câu, bỏ dữ kiện không thêm gì. Đọc lại các mệnh đề sẽ được ghép để câu ra tự nhiên.`;
 
 const SCHEMA = {
   type: "object",
@@ -71,11 +62,10 @@ const SCHEMA = {
       items: {
         type: "object",
         properties: {
-          text: { type: "string" },
+          lead: { type: "string", enum: LEAD_KEYS },
           facts: { type: "array", items: { type: "string" } },
-          basis: { type: "string", enum: ["verified", "estimate", "editorial"] },
         },
-        required: ["text", "facts", "basis"],
+        required: ["lead", "facts"],
         additionalProperties: false,
       },
     },
@@ -88,13 +78,13 @@ const SCHEMA = {
  * Một lần gọi mô hình: payload vào, JSON (chưa kiểm) ra. Ném khi hỏng.
  *
  * Là một hàm tiêm vào chứ không phải lời gọi SDK viết cứng, để test chạy được
- * mọi nhánh — kể cả Claude trả về câu bịa — mà không cần mạng hay API key.
+ * mọi nhánh — kể cả mô hình trả về rác — mà không cần mạng hay API key.
  */
 export type ExplanationModel = (payload: ExplanationPayload) => Promise<{
   output: unknown;
   /**
    * Mô hình ĐÃ trả lời — khác `EXPLANATION_MODEL` khi fallback phía server chạy.
-   * Bản ghi phải nói đúng ai viết câu, nhất là ở đúng ca bị từ chối (Codex vòng 1).
+   * Bản ghi phải nói đúng ai dựng câu, nhất là ở đúng ca bị từ chối (Codex vòng 1).
    */
   model: string;
 }>;
@@ -112,8 +102,8 @@ export function anthropicExplanationModel(client = new Anthropic()): Explanation
         model: EXPLANATION_MODEL,
         max_tokens: 8000,
         system: SYSTEM,
-        // Việc ngắn, dữ kiện đã có sẵn: effort thấp giữ độ trễ ở mức một trang
-        // web chịu được. Cửa kiểm, không phải effort, là thứ giữ câu đúng.
+        // Việc chọn và sắp, không phải việc viết: effort thấp giữ độ trễ ở mức
+        // một trang web chịu được.
         output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } },
         // Bị từ chối thì để API chạy lại trên mô hình dự phòng; vẫn từ chối
         // thì rơi về bảng tra như mọi lỗi khác.
@@ -133,17 +123,21 @@ export function anthropicExplanationModel(client = new Anthropic()): Explanation
   };
 }
 
-/** Bật khi server có key, trừ khi tắt hẳn bằng `RECO_LLM_EXPLAIN=0`. */
+/**
+ * `null` = Phase 6 TẮT. Tắt khi server không có key, hoặc khi đặt
+ * `RECO_LLM_EXPLAIN=0` — và tắt nghĩa là tắt cả bản ĐÃ LƯU (xem
+ * `explainPrimaryAction`), để công tắc dùng được như một nút dừng khẩn.
+ */
 export function explanationModelFromEnv(): ExplanationModel | null {
   if (process.env.RECO_LLM_EXPLAIN === "0" || !process.env.ANTHROPIC_API_KEY) return null;
   return anthropicExplanationModel();
 }
 
 export interface ExplainDeps {
-  /** `null` = không có kho → không hiện câu của Claude (xem đầu file). */
+  /** `null` = không có kho → không hiện bản của Claude (xem đầu file). */
   store: ExplanationStore | null;
+  /** `null` = Phase 6 tắt → không gọi mô hình VÀ không đọc bản đã lưu. */
   model: ExplanationModel | null;
-  names: KnownNames;
   /** Cửa trần chi phí — `false` thì không gọi mô hình, không ghi gì. */
   allowCall: () => boolean;
   now: () => string;
@@ -151,20 +145,22 @@ export interface ExplainDeps {
 }
 
 export interface ShownExplanation {
-  sentences: ExplanationDraft["sentences"];
+  sentences: RenderedSentence[];
   dataVerifiedAt: string | null;
 }
 
 /**
  * Lời giải thích cho HÀNH ĐỘNG CHÍNH của một lượt chạy, hoặc `null` = dùng bảng tra.
  *
- * Khoá lưu là (runId, goalIndex, dấu vân tay payload). Dấu vân tay có mặt vì
- * payload đọc welcome bonus và phí từ Contentful LÚC HIỂN THỊ (như `present.ts`):
- * cùng một lượt chạy, offer đổi trong ngày thì payload đổi, và câu cũ nhắc con
- * số cũ không được hiện cạnh con số mới.
+ * Khoá lưu là (runId, goalIndex, dấu vân tay payload, version prompt). Dấu vân
+ * tay có mặt vì payload đọc welcome bonus và phí từ Contentful LÚC HIỂN THỊ (như
+ * `present.ts`): cùng một lượt chạy, offer đổi trong ngày thì payload đổi, và
+ * bản cũ nhắc con số cũ không được hiện cạnh con số mới.
  *
- * Bản bị cửa kiểm từ chối cũng được lưu, và KHÔNG sinh lại cho cùng khoá: một
- * payload đã làm Claude bịa một lần thì lần sau nhiều khả năng bịa tiếp, và mỗi
+ * Bản đọc từ kho CŨNG đi lại qua cửa kiểm trước khi hiện: kho là dữ liệu, không
+ * phải lời bảo đảm.
+ *
+ * Bản bị cửa kiểm từ chối cũng được lưu, và KHÔNG sinh lại cho cùng khoá: mỗi
  * lần thử là tiền thật. Lỗi đường truyền (timeout, quota) thì không lưu — lần
  * mở trang sau thử lại, trong trần của `allowCall`.
  */
@@ -174,22 +170,32 @@ export async function explainPrimaryAction(
 ): Promise<ShownExplanation | null> {
   const { store, model } = deps;
   const log = deps.log ?? ((message, error) => console.error(`[goi-y/explain] ${message}`, error ?? ""));
-  if (store === null) return null;
-  const payloadFingerprint = fingerprint(input.payload);
-  const shown = (row: StoredExplanation) =>
-    row.status === "shown" && row.draft !== null
-      ? { sentences: row.draft.sentences, dataVerifiedAt: row.payload.dataVerifiedAt }
-      : null;
+  if (store === null || model === null) return null;
+  const key = {
+    runId: input.runId,
+    goalIndex: input.goalIndex,
+    payloadFingerprint: fingerprint(input.payload),
+    promptVersion: EXPLANATION_PROMPT_VERSION,
+  };
+  const shown = (row: StoredExplanation): ShownExplanation | null => {
+    if (row.status !== "shown") return null;
+    const checked = checkExplanation(input.payload, row.draft);
+    if (!checked.ok) {
+      log(`bản đã lưu cho ${input.runId} không qua cửa kiểm hiện hành: ${checked.problems.join("; ")}`);
+      return null;
+    }
+    return { sentences: renderExplanation(input.payload, checked.draft), dataVerifiedAt: input.payload.dataVerifiedAt };
+  };
 
   try {
-    const existing = await store.get(input.runId, input.goalIndex, payloadFingerprint);
+    const existing = await store.get(key);
     if (existing !== null) return shown(existing);
   } catch (error) {
     log("không đọc được kho lời giải thích", error);
     return null;
   }
 
-  if (model === null || !deps.allowCall()) return null;
+  if (!deps.allowCall()) return null;
 
   let raw: unknown;
   let servedBy: string;
@@ -200,21 +206,19 @@ export async function explainPrimaryAction(
     return null;
   }
 
-  const checked = checkExplanation(input.payload, raw, deps.names);
+  const checked = checkExplanation(input.payload, raw);
   const row: StoredExplanation = {
-    runId: input.runId,
-    goalIndex: input.goalIndex,
-    payloadFingerprint,
+    ...key,
     status: checked.ok ? "shown" : "rejected",
     model: servedBy,
-    promptVersion: EXPLANATION_PROMPT_VERSION,
     createdAt: deps.now(),
     payload: input.payload,
     draft: checked.ok ? checked.draft : null,
+    rendered: checked.ok ? renderExplanation(input.payload, checked.draft) : null,
     raw,
     problems: checked.ok ? [] : checked.problems,
   };
-  if (!checked.ok) log(`cửa kiểm từ chối lời giải thích cho ${input.runId}: ${checked.problems.join("; ")}`);
+  if (!checked.ok) log(`cửa kiểm từ chối bản dựng cho ${input.runId}: ${checked.problems.join("; ")}`);
 
   try {
     // Hai lần mở trang cùng lúc cùng sinh: kho giữ bản ghi TRƯỚC, và cả hai

@@ -1,5 +1,4 @@
 import { DeterministicWhy } from "@/components/recommender/result";
-import type { RecommendationDataset } from "@/lib/recommendation";
 import type { FactBasis } from "@/lib/recommender/explain-payload";
 import { explanationPayload, vietnameseDate } from "@/lib/recommender/explain-payload";
 import { explainPrimaryAction, explanationModelFromEnv } from "@/lib/recommender/explain-llm";
@@ -14,22 +13,12 @@ import { allowExplanationCall, explanationStore } from "@/lib/recommender/sessio
  * với fallback là `DeterministicWhy`, nên người đọc thấy kết quả đầy đủ ngay,
  * và câu của Claude (nếu qua được cửa kiểm) thay vào khi tới.
  */
-export async function ExplainedWhy({
-  view,
-  dataset,
-}: {
-  view: ResultView;
-  dataset: RecommendationDataset;
-}) {
+export async function ExplainedWhy({ view }: { view: ResultView }) {
   const shown = await explainPrimaryAction(
     { runId: view.runId, goalIndex: 0, payload: explanationPayload(view) },
     {
       store: explanationStore(),
       model: explanationModelFromEnv(),
-      names: {
-        products: dataset.products.map((product) => product.name),
-        programs: dataset.pointsPrograms.map((program) => program.name),
-      },
       allowCall: () => allowExplanationCall(view.runId),
       now: () => new Date().toISOString(),
     },
@@ -49,7 +38,8 @@ export async function ExplainedWhy({
         ))}
       </ul>
       <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-        Đoạn trên do AI viết lại từ kết quả tính của mình — AI không chọn thẻ và không xếp thứ tự.{" "}
+        AI chọn và sắp các ý trên từ kết quả tính của mình; mọi câu chữ đều viết sẵn — AI không
+        chọn thẻ, không xếp thứ tự và không tự viết chữ nào.{" "}
         <strong className="text-foreground">Dữ kiện</strong>: chép từ trang của ngân hàng
         {shown.dataVerifiedAt ? ` (kiểm ngày ${vietnameseDate(shown.dataVerifiedAt)})` : ""} hoặc từ chính điều bạn
         khai. <strong className="text-foreground">Ước lượng</strong>: số mình tự tính, đổi theo ngày

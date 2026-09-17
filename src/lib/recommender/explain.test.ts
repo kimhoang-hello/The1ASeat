@@ -7,11 +7,12 @@
  *  1. Ranh giới — không file nào của engine hay lớp trình bày import Phase 6;
  *     payload là hàm thuần của `ResultView`, không mang hồ sơ, không mang
  *     affiliate, không mang lựa chọn khác.
- *  2. Cửa kiểm — Claude viết câu bịa theo từng điều cấm của §28, và từng câu
- *     phải bị chặn. Đồng thời câu CHÉP ĐÚNG dữ kiện của cả 15 nhân vật mẫu phải
- *     qua: một cửa kiểm từ chối oan thì trang lặng lẽ không bao giờ dùng LLM.
+ *  2. Cấu trúc — Claude không viết chữ. MỌI bản dựng qua được cửa kiểm, trên cả
+ *     15 nhân vật mẫu, chỉ ghép ra chữ của câu dẫn + mệnh đề viết sẵn: không số
+ *     lạ, không tên thẻ khác, ước lượng luôn mang nhãn và chữ "ước lượng". Mọi
+ *     thứ mô hình tự viết thêm bị bỏ trước khi tới trang.
  *  3. Đường lui — mọi nhánh hỏng trả `null` (= bảng tra), câu hiện ra luôn là
- *     câu đã lưu, và không có kho thì không hiện câu nào của Claude.
+ *     câu đã lưu, công tắc tắt cả bản đã lưu, và không có kho thì không hiện.
  *
  * Không gọi mạng: mô hình là một hàm tiêm vào.
  */
@@ -37,8 +38,21 @@ import { executeRun } from "../recommendation/runs.ts";
 import { datasetAt } from "../recommendation/temporal.ts";
 import type { RecommendationDataset } from "../recommendation/types.ts";
 import type { UserState } from "../recommendation/user-types.ts";
-import { checkExplanation, numbersIn, type ExplanationDraft, type KnownNames } from "./explain-check.ts";
-import { explainPrimaryAction, type ExplainDeps, type ExplanationModel } from "./explain-llm.ts";
+import {
+  checkExplanation,
+  LEAD_KEYS,
+  LEADS,
+  MAX_FACTS_PER_SENTENCE,
+  renderExplanation,
+  type ExplanationDraft,
+  type LeadKey,
+} from "./explain-check.ts";
+import {
+  EXPLANATION_PROMPT_VERSION,
+  explainPrimaryAction,
+  type ExplainDeps,
+  type ExplanationModel,
+} from "./explain-llm.ts";
 import { explanationPayload, type ExplanationPayload } from "./explain-payload.ts";
 import {
   inMemoryExplanationStore,
@@ -50,10 +64,6 @@ import { presentRun, type ResultView } from "./present.ts";
 
 const ASOF = "2026-09-08";
 const DATA = datasetAt(offlineDataset(), ASOF);
-const NAMES: KnownNames = {
-  products: DATA.products.map((product) => product.name),
-  programs: DATA.pointsPrograms.map((program) => program.name),
-};
 
 function offersFor(data: RecommendationDataset, affiliate = true): CreditCardOffer[] {
   return data.products.map((product) => ({
@@ -91,18 +101,43 @@ function viewFor(state: UserState): ResultView {
   return view;
 }
 
-/** Câu chép NGUYÊN dữ kiện — thứ một mô hình ngoan nhất có thể viết. */
-function echo(payload: ExplanationPayload, pick: (facts: ExplanationPayload["facts"]) => ExplanationPayload["facts"]): ExplanationDraft {
+/**
+ * Mọi bản dựng "ngoan": mỗi câu dẫn hợp lệ với hành động, nhận mọi tổ hợp liên
+ * tiếp tối đa 3 dữ kiện đúng vai. Không phải vét cạn tổ hợp, nhưng phủ mọi câu
+ * dẫn × mọi dữ kiện × mọi độ dài câu.
+ */
+function validSentences(payload: ExplanationPayload): ExplanationDraft["sentences"] {
+  const rows: ExplanationDraft["sentences"] = [];
+  for (const lead of LEAD_KEYS) {
+    const spec = LEADS[lead];
+    if (spec.action !== null && spec.action !== payload.action.kind) continue;
+    const facts = payload.facts.filter((fact) => (spec.roles as readonly string[]).includes(fact.role));
+    for (let start = 0; start < facts.length; start += 1) {
+      for (let size = 1; size <= MAX_FACTS_PER_SENTENCE && start + size <= facts.length; size += 1) {
+        rows.push({ lead, facts: facts.slice(start, start + size).map((fact) => fact.id) });
+      }
+    }
+  }
+  return rows;
+}
+
+/** Bản dựng mô hình "ngoan nhất" sẽ trả: câu dẫn lý do + mọi lý do. */
+function goodDraft(payload: ExplanationPayload): ExplanationDraft {
+  const lead: LeadKey = payload.action.kind === "open_card" ? "why_card" : "why_wait";
+  const reasons = payload.facts.filter((fact) => fact.role === "reason").slice(0, 3);
+  const context = payload.facts.filter((fact) => fact.role === "context").slice(0, 1);
   return {
-    sentences: pick(payload.facts).map((fact) => ({ text: fact.text, facts: [fact.id], basis: fact.basis })),
+    sentences: [
+      ...(reasons.length > 0 ? [{ lead, facts: reasons.map((fact) => fact.id) }] : []),
+      { lead: "context" as const, facts: context.map((fact) => fact.id) },
+    ],
   };
 }
 
-function fact(payload: ExplanationPayload, id: string) {
-  const row = payload.facts.find((candidate) => candidate.id === id);
-  assert.ok(row, `thiếu dữ kiện ${id}`);
-  return row;
-}
+const numbersIn = (text: string) =>
+  [...text.replace(/ghế 1a/giu, "").matchAll(/\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?/g)].map((match) =>
+    Number(match[0].replace(/,/g, "")),
+  );
 
 /* ------------------------------------------------------------------ *
  * 1. Ranh giới
@@ -126,7 +161,7 @@ test("gỡ LLM: engine và lớp trình bày không import Phase 6 hay SDK của
   }
 });
 
-test("payload là hàm thuần của ResultView, không đổi view, không mang hồ sơ hay lựa chọn khác", () => {
+test("payload là hàm thuần của ResultView, không đổi view, không mang hồ sơ, lựa chọn khác hay cảnh báo", () => {
   for (const state of [beginnerNoCards, japanTripShortfall, vietnamTripShortfall]) {
     const executed = recordFor(state);
     const view = presentRun(executed.record, DATA, offersFor(DATA));
@@ -144,6 +179,9 @@ test("payload là hàm thuần của ResultView, không đổi view, không mang
     for (const alternative of view.alternatives) {
       if (alternative.name === view.primary.name) continue;
       assert.ok(!json.includes(alternative.name), `payload nhắc lựa chọn khác: ${alternative.name}`);
+    }
+    for (const warning of view.warnings) {
+      assert.ok(!json.includes(warning), `cảnh báo lọt vào tay LLM: ${warning}`);
     }
   }
 });
@@ -165,117 +203,110 @@ test("affiliate không chạm tới payload: bật/tắt cờ và link của m�
   }
 });
 
-test("mọi dữ kiện mang đúng một nhãn, và dữ kiện ước lượng tự nói mình là ước lượng", () => {
-  for (const state of USER_FIXTURES) {
-    const payload = explanationPayload(viewFor(state));
-    const ids = payload.facts.map((row) => row.id);
-    assert.equal(new Set(ids).size, ids.length, "id dữ kiện trùng");
-    for (const row of payload.facts) {
-      if (row.basis === "estimate") assert.match(row.text, /ước lượng/);
-    }
-  }
-});
-
 /* ------------------------------------------------------------------ *
- * 2. Cửa kiểm
+ * 2. Cấu trúc
  * ------------------------------------------------------------------ */
 
-test("câu chép đúng dữ kiện của cả 15 nhân vật mẫu đều QUA cửa kiểm", () => {
+test("mọi bản dựng hợp lệ trên 15 nhân vật mẫu chỉ ghép ra chữ viết sẵn — không số lạ, không thẻ khác, ước lượng luôn có nhãn", () => {
+  const otherNames = (payload: ExplanationPayload) =>
+    DATA.products.map((product) => product.name).filter((name) => name !== payload.action.name);
   let estimates = 0;
+  let checked = 0;
   for (const state of USER_FIXTURES) {
     const payload = explanationPayload(viewFor(state));
-    estimates += payload.facts.filter((row) => row.basis === "estimate").length;
-    for (const draft of [echo(payload, (rows) => rows.slice(0, 4)), echo(payload, (rows) => rows.slice(-4))]) {
-      const result = checkExplanation(payload, draft, NAMES);
-      assert.ok(result.ok, `${state.profile.id}: ${result.ok ? "" : result.problems.join("; ")}`);
+    const factNumbers = new Set(payload.facts.flatMap((fact) => numbersIn(fact.text)));
+    for (const fact of payload.facts) {
+      assert.ok(!fact.text.endsWith("."), `${fact.id}: mệnh đề còn dấu chấm cuối`);
+      if (fact.basis === "estimate") assert.match(fact.text, /ước lượng/, `${fact.id}: ước lượng không tự nói ra`);
+    }
+    for (const sentence of validSentences(payload)) {
+      const draft = { sentences: [sentence] };
+      const result = checkExplanation(payload, draft);
+      assert.ok(result.ok, `${state.profile.id}: bản dựng hợp lệ bị từ chối — ${result.ok ? "" : result.problems.join("; ")}`);
+      const [rendered] = renderExplanation(payload, result.draft);
+      checked += 1;
+
+      // Chữ = câu dẫn + đúng các mệnh đề, không hơn.
+      const facts = sentence.facts.map((id) => payload.facts.find((fact) => fact.id === id)!);
+      assert.ok(rendered.text.startsWith(`${LEADS[sentence.lead].text} `));
+      for (const fact of facts) assert.ok(rendered.text.includes(fact.text));
+      for (const value of numbersIn(rendered.text)) {
+        assert.ok(factNumbers.has(value), `${state.profile.id}: số ${value} không có trong dữ kiện`);
+      }
+      for (const name of otherNames(payload)) {
+        assert.ok(!rendered.text.includes(name), `${state.profile.id}: câu nhắc thẻ khác ${name}`);
+      }
+      if (facts.some((fact) => fact.basis === "estimate")) {
+        estimates += 1;
+        assert.equal(rendered.basis, "estimate");
+        assert.match(rendered.text, /ước lượng/);
+      } else if (facts.some((fact) => fact.basis === "editorial")) {
+        assert.equal(rendered.basis, "editorial");
+      } else {
+        assert.equal(rendered.basis, "verified");
+      }
     }
   }
-  assert.ok(estimates > 0, "không nhân vật nào có dữ kiện ước lượng — bài nhãn không chạy");
+  assert.ok(checked > 100, `chỉ kiểm ${checked} câu — bài không phủ`);
+  assert.ok(estimates > 0, "không câu nào ghép dữ kiện ước lượng — bài nhãn không chạy");
 });
 
-test("câu văn tự nhiên trộn nhiều dữ kiện vẫn qua", () => {
-  const payload = explanationPayload(viewFor(japanTripShortfall));
-  const need = fact(payload, "trip_need");
-  const range = need.text.slice(need.text.lastIndexOf(":") + 2, -1);
-  const result = checkExplanation(
-    payload,
-    {
-      sentences: [
-        { text: `Chuyến bay bạn khai cần khoảng ${range}, theo ước lượng của mình từ award chart.`, facts: ["trip_need", "trip"], basis: "estimate" },
-        { text: fact(payload, "strategy").text, facts: ["strategy"], basis: "editorial" },
-      ],
-    },
-    NAMES,
-  );
-  assert.ok(result.ok, result.ok ? "" : result.problems.join("; "));
-});
-
-/** Mỗi ca: một câu bịa theo đúng một điều cấm → phải bị chặn, và chặn vì đúng lý do. */
-test("cửa kiểm chặn từng điều cấm của §28", () => {
+test("cửa kiểm chặn bản dựng sai hình dạng; chữ mô hình tự viết không bao giờ tới trang", () => {
   const card = explanationPayload(viewFor(beginnerNoCards));
   assert.equal(card.action.kind, "open_card");
   const trip = explanationPayload(viewFor(japanTripShortfall));
-  const bonus = fact(card, "bonus");
-  const need = fact(trip, "trip_need");
-  const firstNeed = numbersIn(need.text).at(-1)!;
-  const otherCard = DATA.products.find((product) => !card.facts.some((row) => row.text.includes(product.name)) && product.name !== card.action.name)!;
-
-  // Ngân hàng viết tắt KHÁC ngân hàng của thẻ chính — "TD", "RBC", "BMO".
-  const otherIssuer = ["TD", "RBC", "BMO"].find((acronym) => !JSON.stringify(card).includes(acronym))!;
   const view = viewFor(beginnerNoCards);
-  const blocked = explanationPayload({ ...view, primary: { ...view.primary, welcomeBonusBlocked: true } });
-  const reason = card.facts.find((row) => row.basis === "editorial" && row.id !== "goal")!;
-  const focus = explanationPayload({ ...view, strategy: "Tập trung tìm chỗ trống" });
-  const cobaltProduct = DATA.products.find((product) => product.slug === "amex-cobalt")!;
-  const goldName = DATA.products.find((product) => product.slug === "amex-gold-rewards")!.name;
-  const cobalt = explanationPayload({ ...view, primary: { ...view.primary, name: cobaltProduct.name } });
-  const cobaltReason = cobalt.facts.find((row) => row.basis === "editorial" && row.id !== "goal")!.id;
+  const wait = explanationPayload({ ...view, primary: { ...view.primary, kind: "no_new_card", noCardReason: "offers_weak" } });
+  const reason = card.facts.find((fact) => fact.role === "reason")!.id;
 
   const cases: Array<{ name: string; payload: ExplanationPayload; draft: unknown; expect: RegExp }> = [
-    { name: "số bịa", payload: card, draft: one("Welcome bonus hiện hành của thẻ: 90,000 điểm.", ["bonus"], "verified"), expect: /con số không có/ },
-    { name: "số của dữ kiện KHÁC", payload: trip, draft: one(`Phí thường niên đi kèm ${firstNeed.toLocaleString("en-US")} điểm.`, ["trip"], "verified"), expect: /con số không có/ },
-    { name: "dữ kiện không có", payload: card, draft: one(bonus.text, ["bonus_elevated"], "verified"), expect: /không có: bonus_elevated/ },
-    { name: "không trích gì", payload: card, draft: one(bonus.text, [], "verified"), expect: /không trích/ },
-    { name: "ước lượng đội lốt dữ kiện", payload: trip, draft: one(need.text, ["trip_need"], "verified"), expect: /nhãn "verified"/ },
-    { name: "ước lượng không nói ra", payload: trip, draft: one(`Chuyến này cần ${need.text.slice(need.text.lastIndexOf(":") + 2)}`, ["trip_need"], "estimate"), expect: /không nói ra là ước lượng/ },
-    { name: "chọn thẻ khác", payload: card, draft: one(`Nếu muốn, ${otherCard.name} cũng đáng cân nhắc.`, [reason.id], "editorial"), expect: /nhắc tên không có/ },
-    { name: "chọn thẻ khác bằng tên viết tắt", payload: card, draft: one(`Nếu thích ${otherIssuer} thì cũng được.`, [reason.id], "editorial"), expect: new RegExp(`nhắc tên không có trong dữ kiện: .*${otherIssuer.toLowerCase()}`) },
-    { name: "hứa được duyệt", payload: card, draft: one("Hồ sơ của bạn gần như chắc được duyệt.", [reason.id], "editorial"), expect: /được duyệt/ },
-    { name: "hứa chắc chắn", payload: trip, draft: one("Với số điểm ước lượng này bạn chắc chắn có chuyến đi.", ["trip_need"], "estimate"), expect: /hứa chắc chắn/ },
-    { name: "đảm bảo", payload: card, draft: one("Thẻ này đảm bảo bạn có vé.", [reason.id], "editorial"), expect: /hứa chắc chắn/ },
-    { name: "bịa chỗ trống", payload: trip, draft: one("Chặng này còn ghế thưởng, theo ước lượng của mình.", ["trip_need"], "estimate"), expect: /chỗ trống/ },
-    { name: "bịa điều kiện", payload: card, draft: one("Bạn cần điểm tín dụng tốt để mở thẻ này.", [reason.id], "editorial"), expect: /điều kiện mở thẻ/ },
-    { name: "trấn an ngược cảnh báo", payload: card, draft: one("Bạn cứ yên tâm, mốc chi không có gì khó.", [reason.id], "editorial"), expect: /trấn an/ },
-    { name: "so sánh tuyệt đối", payload: card, draft: one("Đây là thẻ tốt nhất cho bạn.", [reason.id], "editorial"), expect: /tuyệt đối/ },
-    { name: "affiliate", payload: card, draft: one("Đăng ký qua link để mình nhận hoa hồng.", [reason.id], "editorial"), expect: /affiliate/ },
-    { name: "số kiểu Việt Nam", payload: card, draft: one("Welcome bonus hiện hành của thẻ: 60.000 điểm.", ["bonus"], "verified"), expect: /sai quy ước|con số không có/ },
-    { name: "số viết bằng chữ", payload: card, draft: one("Welcome bonus là sáu mươi nghìn điểm.", ["bonus"], "verified"), expect: /bằng chữ/ },
-    { name: "bonus bị chặn mà vẫn hứa", payload: blocked, draft: one("Mở thẻ này bạn sẽ nhận được welcome bonus.", ["bonus_blocked"], "verified"), expect: /bonus bị chặn/ },
-    // Bốn câu Codex vòng 1 viết để lách danh sách cụm cấm — mỗi câu nói điều
-    // không có trong dữ kiện mà không chạm cụm nào.
-    { name: "hứa bonus bị chặn không dùng chữ 'nhận'", payload: blocked, draft: one("Welcome bonus sẽ được cộng vào tài khoản của bạn.", ["bonus_blocked"], "verified"), expect: /bonus bị chặn/ },
-    { name: "nói ngược cảnh báo", payload: card, draft: one("Offer này còn lâu mới hết hạn.", ["goal"], "editorial"), expect: /chữ không có trong dữ kiện trích: .*lâu/ },
-    { name: "biến lời khuyên 'tìm chỗ trống' thành chỗ trống có thật", payload: focus, draft: one("Bạn có chỗ trống cho chuyến bay này.", ["strategy"], "editorial"), expect: /chỗ trống/ },
-    { name: "thẻ khác cùng ngân hàng, tên toàn từ chung", payload: cobalt, draft: one(`${goldName} cũng là một lựa chọn cho bạn.`, [cobaltReason], "editorial"), expect: /nhắc tên không có trong dữ kiện: .*gold/ },
-    { name: "quá nhiều câu", payload: card, draft: { sentences: Array.from({ length: 5 }, () => ({ text: bonus.text, facts: ["bonus"], basis: "verified" })) }, expect: /có 5 câu/ },
-    { name: "sai hình dạng", payload: card, draft: { text: "Thẻ này hợp với bạn." }, expect: /hình dạng/ },
+    { name: "dữ kiện không có", payload: card, draft: { sentences: [{ lead: "why_card", facts: ["bonus_elevated"] }] }, expect: /không có: bonus_elevated/ },
+    { name: "phí thường niên làm lý do", payload: card, draft: { sentences: [{ lead: "why_card", facts: ["fee"] }] }, expect: /fee \(offer\) không đi được/ },
+    { name: "ước lượng dưới câu dẫn lý do", payload: trip, draft: { sentences: [{ lead: "also", facts: ["trip_need"] }] }, expect: /trip_need \(trip\)/ },
+    { name: "'gợi ý thẻ' khi kết quả là chưa mở thẻ", payload: wait, draft: { sentences: [{ lead: "why_card", facts: ["no_card"] }] }, expect: /không dùng cho hành động no_new_card/ },
+    { name: "'chưa cần mở thẻ' khi kết quả là mở thẻ", payload: card, draft: { sentences: [{ lead: "why_wait", facts: [reason] }] }, expect: /không dùng cho hành động open_card/ },
+    { name: "một dữ kiện nói hai lần", payload: card, draft: { sentences: [{ lead: "why_card", facts: [reason] }, { lead: "also", facts: [reason] }] }, expect: /đã dùng ở câu trước/ },
+    { name: "câu không dữ kiện", payload: card, draft: { sentences: [{ lead: "why_card", facts: [] }] }, expect: /có 0 dữ kiện/ },
+    { name: "câu quá nhiều dữ kiện", payload: card, draft: { sentences: [{ lead: "context", facts: ["strategy", "strategy", "strategy", "strategy"] }] }, expect: /có 4 dữ kiện/ },
+    { name: "quá nhiều câu", payload: card, draft: { sentences: Array.from({ length: 5 }, () => ({ lead: "context", facts: ["strategy"] })) }, expect: /có 5 câu/ },
+    { name: "không câu nào", payload: card, draft: { sentences: [] }, expect: /có 0 câu/ },
+    { name: "câu dẫn tự đặt", payload: card, draft: { sentences: [{ lead: "Chắc chắn bạn được duyệt, vì", facts: [reason] }] }, expect: /hình dạng/ },
+    { name: "chữ tự do thay vì cấu trúc", payload: card, draft: { sentences: [{ text: "Bạn sẽ nhận được welcome bonus." }] }, expect: /hình dạng/ },
   ];
-
   for (const row of cases) {
-    const result = checkExplanation(row.payload, row.draft, NAMES);
+    const result = checkExplanation(row.payload, row.draft);
     assert.equal(result.ok, false, `${row.name}: lọt qua cửa kiểm`);
     if (!result.ok) assert.match(result.problems.join("; "), row.expect, `${row.name}: chặn sai lý do — ${result.problems.join("; ")}`);
   }
 
-  // Nói ĐÚNG cảnh báo thì không bị chặn nhầm.
-  const honest = checkExplanation(blocked, one("Bạn sẽ không nhận được welcome bonus của thẻ này.", ["bonus_blocked"], "verified"), NAMES);
-  assert.ok(honest.ok, honest.ok ? "" : honest.problems.join("; "));
-  assert.ok(!JSON.stringify(blocked).includes("60,000"), "bonus bị chặn mà con số bonus vẫn vào payload");
+  // Những câu Codex vòng 1–2 dùng để lách cửa kiểm chữ: đi kèm một bản dựng
+  // HỢP LỆ, chúng bị bỏ ở `asDraft` và không bao giờ có mặt trong chữ ghép ra.
+  const smuggled = [
+    "Welcome bonus sẽ được cộng vào tài khoản của bạn.",
+    "Phí thường niên: $3,000; mốc chi để nhận trọn welcome bonus: $120.",
+    "Bạn sẽ nhận được welcome bonus của thẻ này; ngân hàng không từ chối.",
+    "Chặng này có chỗ trống.",
+  ];
+  const result = checkExplanation(card, {
+    sentences: [{ lead: "why_card", facts: [reason], text: smuggled[0] }],
+    note: smuggled.slice(1).join(" "),
+  });
+  assert.ok(result.ok);
+  const rendered = JSON.stringify(renderExplanation(card, result.draft));
+  for (const text of smuggled) assert.ok(!rendered.includes(text), `chữ mô hình tự viết lọt ra trang: ${text}`);
 });
 
-function one(text: string, facts: string[], basis: string) {
-  return { sentences: [{ text, facts, basis }] };
-}
+test("bonus bị chặn: con số bonus không có trong payload, nên không bản dựng nào hứa được nó", () => {
+  const view = viewFor(beginnerNoCards);
+  const blocked = explanationPayload({ ...view, primary: { ...view.primary, welcomeBonusBlocked: true } });
+  assert.ok(blocked.facts.some((fact) => fact.id === "bonus_blocked"));
+  assert.ok(!blocked.facts.some((fact) => fact.id === "bonus" || fact.id === "min_spend"));
+  assert.ok(!JSON.stringify(blocked).includes("60,000"));
+  for (const sentence of validSentences(blocked)) {
+    const [rendered] = renderExplanation(blocked, { sentences: [sentence] });
+    assert.ok(!/nhận trọn|hiện hành là/.test(rendered.text), rendered.text);
+  }
+});
 
 /* ------------------------------------------------------------------ *
  * 3. Đường lui và lưu trữ
@@ -291,7 +322,6 @@ function harness(model: ExplanationModel | null, overrides: Partial<ExplainDeps>
       calls += 1;
       return model(payload);
     },
-    names: NAMES,
     allowCall: () => true,
     now: () => "2026-09-16T10:00:00.000Z",
     log: (message) => logs.push(message),
@@ -302,43 +332,44 @@ function harness(model: ExplanationModel | null, overrides: Partial<ExplainDeps>
 
 /** Mô hình giả: trả `output` như Claude, dưới tên mô hình đã phục vụ. */
 const served = (output: unknown, model = "claude-opus-5") => ({ output, model });
-const GOOD: ExplanationModel = async (payload) => served(echo(payload, (rows) => rows.slice(0, 2)));
-const LIAR: ExplanationModel = async () => served(one("Thẻ này đảm bảo bạn được duyệt.", ["goal"], "editorial"));
+const GOOD: ExplanationModel = async (payload) => served(goodDraft(payload));
+const BROKEN: ExplanationModel = async () => served({ sentences: [{ lead: "why_card", facts: ["bonus_elevated"] }] });
 
-test("câu qua cửa kiểm được LƯU rồi mới hiện; lần sau đọc kho, không gọi lại mô hình", async () => {
+const inputFor = (view: ResultView) => ({ runId: view.runId, goalIndex: 0, payload: explanationPayload(view) });
+
+test("bản qua cửa kiểm được LƯU cùng chữ đã ghép rồi mới hiện; lần sau đọc kho, không gọi lại mô hình", async () => {
   const view = viewFor(beginnerNoCards);
-  const input = { runId: view.runId, goalIndex: 0, payload: explanationPayload(view) };
-  const h = harness(GOOD);
+  const input = inputFor(view);
+  const h = harness(async (payload) => served(goodDraft(payload), "claude-fallback-model"));
   const first = await explainPrimaryAction(input, h.deps);
   assert.ok(first !== null);
   const stored = await h.store.listForRun(view.runId);
   assert.equal(stored.length, 1);
   assert.equal(stored[0].status, "shown");
-  assert.deepEqual(stored[0].draft?.sentences, first.sentences, "câu hiện ra khác câu đã lưu");
+  assert.equal(stored[0].model, "claude-fallback-model", "bản ghi phải mang mô hình ĐÃ trả lời");
+  assert.equal(stored[0].promptVersion, EXPLANATION_PROMPT_VERSION);
+  assert.deepEqual(stored[0].rendered, first.sentences, "chữ hiện ra khác chữ đã lưu");
   assert.deepEqual(await explainPrimaryAction(input, h.deps), first);
   assert.equal(h.calls(), 1);
 });
 
-test("câu bịa bị từ chối: trang dùng bảng tra, bản từ chối được lưu kèm lý do, không sinh lại", async () => {
+test("bản dựng hỏng bị từ chối: trang dùng bảng tra, bản từ chối được lưu kèm lý do, không sinh lại", async () => {
   const view = viewFor(beginnerNoCards);
-  const input = { runId: view.runId, goalIndex: 0, payload: explanationPayload(view) };
-  const h = harness(LIAR);
+  const input = inputFor(view);
+  const h = harness(BROKEN);
   assert.equal(await explainPrimaryAction(input, h.deps), null);
   const [row] = await h.store.listForRun(view.runId);
   assert.equal(row.status, "rejected");
   assert.equal(row.draft, null);
+  assert.equal(row.rendered, null);
   assert.ok(row.problems.length > 0);
-  assert.deepEqual(row.raw, one("Thẻ này đảm bảo bạn được duyệt.", ["goal"], "editorial"));
+  assert.deepEqual(row.raw, { sentences: [{ lead: "why_card", facts: ["bonus_elevated"] }] });
   assert.equal(await explainPrimaryAction(input, h.deps), null);
   assert.equal(h.calls(), 1);
 });
 
 test("mọi nhánh hỏng đều rơi về bảng tra", async () => {
-  const view = viewFor(japanTripShortfall);
-  const input = { runId: view.runId, goalIndex: 0, payload: explanationPayload(view) };
-
-  // Không có mô hình (không key / RECO_LLM_EXPLAIN=0).
-  assert.equal(await explainPrimaryAction(input, harness(null).deps), null);
+  const input = inputFor(viewFor(japanTripShortfall));
 
   // Mô hình ném (timeout, quota, từ chối) → không lưu, lần sau thử lại.
   let fail = true;
@@ -347,11 +378,11 @@ test("mọi nhánh hỏng đều rơi về bảng tra", async () => {
     return GOOD(payload);
   });
   assert.equal(await explainPrimaryAction(input, flaky.deps), null);
-  assert.equal((await flaky.store.listForRun(view.runId)).length, 0);
+  assert.equal((await flaky.store.listForRun(input.runId)).length, 0);
   fail = false;
   assert.ok((await explainPrimaryAction(input, flaky.deps)) !== null);
 
-  // JSON trả về sai hình dạng.
+  // JSON sai hình dạng.
   assert.equal(await explainPrimaryAction(input, harness(async () => served("not json")).deps), null);
 
   // Quá trần chi phí → không gọi.
@@ -359,56 +390,80 @@ test("mọi nhánh hỏng đều rơi về bảng tra", async () => {
   assert.equal(await explainPrimaryAction(input, capped.deps), null);
   assert.equal(capped.calls(), 0);
 
-  // Không có kho → không gọi mô hình, không hiện câu nào của Claude.
+  // Không có kho → không gọi mô hình, không hiện bản nào của Claude.
   const noStore = harness(GOOD, { store: null });
   assert.equal(await explainPrimaryAction(input, noStore.deps), null);
   assert.equal(noStore.calls(), 0);
 
-  // Kho ghi hỏng → không hiện câu chưa lưu.
-  const broken: ExplanationStore = {
+  // Kho ghi hỏng → không hiện bản chưa lưu.
+  const cannotWrite: ExplanationStore = {
     ...inMemoryExplanationStore(),
     save: async () => {
       throw new Error("database xuống");
     },
   };
-  assert.equal(await explainPrimaryAction(input, harness(GOOD, { store: broken }).deps), null);
+  assert.equal(await explainPrimaryAction(input, harness(GOOD, { store: cannotWrite }).deps), null);
 
   // Kho đọc hỏng.
-  const unreadable: ExplanationStore = {
+  const cannotRead: ExplanationStore = {
     ...inMemoryExplanationStore(),
     get: async () => {
       throw new Error("database xuống");
     },
   };
-  assert.equal(await explainPrimaryAction(input, harness(GOOD, { store: unreadable }).deps), null);
+  assert.equal(await explainPrimaryAction(input, harness(GOOD, { store: cannotRead }).deps), null);
+});
+
+test("công tắc tắt (không key / RECO_LLM_EXPLAIN=0) tắt cả bản ĐÃ LƯU, không chỉ lượt gọi mới", async () => {
+  const input = inputFor(viewFor(beginnerNoCards));
+  const on = harness(GOOD);
+  assert.ok((await explainPrimaryAction(input, on.deps)) !== null);
+  const off = { ...on.deps, model: null };
+  assert.equal(await explainPrimaryAction(input, off), null);
+});
+
+test("bản đã lưu đi lại qua cửa kiểm hiện hành; bản của version prompt khác không được đọc", async () => {
+  const input = inputFor(viewFor(beginnerNoCards));
+  const h = harness(GOOD);
+  assert.ok((await explainPrimaryAction(input, h.deps)) !== null);
+  const [row] = await h.store.listForRun(input.runId);
+
+  // Bản "shown" GHÉP ĐƯỢC chữ nhưng sai luật hiện hành ("chưa cần mở thẻ" cho
+  // kết quả mở thẻ) — chỉ lần kiểm lại lúc đọc mới chặn được nó.
+  const stale = harness(GOOD);
+  const reason = input.payload.facts.find((fact) => fact.role === "reason")!.id;
+  await stale.store.save({ ...row, draft: { sentences: [{ lead: "why_wait", facts: [reason] }] } });
+  assert.equal(await explainPrimaryAction(input, stale.deps), null);
+  assert.equal(stale.calls(), 0, "bản lưu hỏng không được đổi thành một lượt gọi mới cùng khoá");
+
+  // Bản của version cũ: khoá khác → dựng lại theo luật hiện hành.
+  const old = harness(GOOD);
+  await old.store.save({ ...row, promptVersion: "6.0.0" });
+  assert.ok((await explainPrimaryAction(input, old.deps)) !== null);
+  assert.equal(old.calls(), 1);
 });
 
 test("hai lần mở trang cùng lúc: cả hai hiện ĐÚNG bản được lưu trước", async () => {
-  const view = viewFor(beginnerNoCards);
-  const input = { runId: view.runId, goalIndex: 0, payload: explanationPayload(view) };
+  const input = inputFor(viewFor(beginnerNoCards));
   let turn = 0;
   const h = harness(async (payload) => {
     turn += 1;
-    return served(turn === 1 ? echo(payload, (rows) => rows.slice(0, 1)) : echo(payload, (rows) => rows.slice(0, 2)));
+    const draft = goodDraft(payload);
+    return served(turn === 1 ? draft : { sentences: draft.sentences.slice(0, 1) });
   });
   const [a, b] = await Promise.all([explainPrimaryAction(input, h.deps), explainPrimaryAction(input, h.deps)]);
   assert.ok(a !== null && b !== null);
   assert.deepEqual(a, b);
-  assert.equal((await h.store.listForRun(view.runId)).length, 1);
+  assert.equal((await h.store.listForRun(input.runId)).length, 1);
 });
 
-test("offer đổi trong ngày → payload mới, lời giải thích mới; câu cũ nhắc số cũ không hiện nữa", async () => {
+test("offer đổi trong ngày → payload mới, bản dựng mới; chữ cũ nhắc số cũ không hiện nữa", async () => {
   const record = recordFor(beginnerNoCards).record;
   const before = presentRun(record, DATA, offersFor(DATA))!;
-  const after = presentRun(
-    record,
-    DATA,
-    offersFor(DATA).map((offer) => ({ ...offer, welcomeBonus: "80,000 điểm" })),
-  )!;
-  // Mô hình kể lại đúng dữ kiện welcome bonus — thứ vừa đổi.
-  const h = harness(async (payload) => served(echo(payload, (rows) => rows.filter((row) => row.id === "bonus"))));
-  const first = await explainPrimaryAction({ runId: record.id, goalIndex: 0, payload: explanationPayload(before) }, h.deps);
-  const second = await explainPrimaryAction({ runId: record.id, goalIndex: 0, payload: explanationPayload(after) }, h.deps);
+  const after = presentRun(record, DATA, offersFor(DATA).map((offer) => ({ ...offer, welcomeBonus: "80,000 điểm" })))!;
+  const h = harness(async () => served({ sentences: [{ lead: "cost", facts: ["bonus"] }] }));
+  const first = await explainPrimaryAction(inputFor(before), h.deps);
+  const second = await explainPrimaryAction(inputFor(after), h.deps);
   assert.ok(first !== null && second !== null);
   assert.match(first.sentences[0].text, /60,000/);
   assert.match(second.sentences[0].text, /80,000/);
@@ -416,13 +471,13 @@ test("offer đổi trong ngày → payload mới, lời giải thích mới; câ
   assert.equal((await h.store.listForRun(record.id)).length, 2);
 });
 
-test("LLM hỏng kiểu nào cũng không đổi được kết quả: presentRun sau mọi lượt giải thích y hệt trước", async () => {
+test("mô hình trả gì cũng không đổi được kết quả: presentRun sau mọi lượt giải thích y hệt trước", async () => {
   for (const state of USER_FIXTURES) {
     const record = recordFor(state).record;
     const before = JSON.stringify(presentRun(record, DATA, offersFor(DATA)));
     const view = presentRun(record, DATA, offersFor(DATA))!;
-    for (const model of [GOOD, LIAR, async () => served({ sentences: [], primary: "amex-cobalt" })]) {
-      await explainPrimaryAction({ runId: view.runId, goalIndex: 0, payload: explanationPayload(view) }, harness(model).deps);
+    for (const model of [GOOD, BROKEN, async () => served({ sentences: [], primary: "amex-cobalt", ranking: [] })]) {
+      await explainPrimaryAction(inputFor(view), harness(model).deps);
     }
     assert.equal(JSON.stringify(view), before);
     assert.equal(JSON.stringify(presentRun(record, DATA, offersFor(DATA))), before);
@@ -493,24 +548,29 @@ for (const backend of BACKENDS) {
   test(`kho lời giải thích (${backend.name}): chỉ thêm, trùng khoá trả bản cũ, liệt kê theo lượt chạy`, { skip: backend.skip }, async () => {
     const { store, ensureRun } = await backend.make();
     const view = await ensureRun(beginnerNoCards);
-    const h = harness(GOOD, { store });
-    const shown = await explainPrimaryAction({ runId: view.runId, goalIndex: 0, payload: explanationPayload(view) }, h.deps);
+    const shown = await explainPrimaryAction(inputFor(view), harness(GOOD, { store }).deps);
     assert.ok(shown !== null);
 
     const [row] = await store.listForRun(view.runId);
     assert.equal(row.status, "shown");
-    assert.deepEqual(await store.get(row.runId, row.goalIndex, row.payloadFingerprint), row);
+    assert.deepEqual(await store.get(row), row);
 
     // Trùng khoá: không ghi đè, trả bản đã có.
-    const imposter: StoredExplanation = { ...row, status: "rejected", draft: null, problems: ["ghi đè"] };
+    const imposter: StoredExplanation = { ...row, status: "rejected", draft: null, rendered: null, problems: ["ghi đè"] };
     assert.deepEqual(await store.save(imposter), row);
     assert.deepEqual(await store.listForRun(view.runId), [row]);
 
-    // "shown" mà không có câu → từ chối ở biên.
+    // Version khác là khoá khác.
+    const next = await store.save({ ...row, promptVersion: "9.9.9" });
+    assert.equal(next.promptVersion, "9.9.9");
+    assert.equal((await store.listForRun(view.runId)).length, 2);
+
+    // "shown" mà không có bản dựng hay chữ đã ghép → từ chối ở biên.
     await assert.rejects(store.save({ ...row, payloadFingerprint: "fp_other", draft: null }));
+    await assert.rejects(store.save({ ...row, payloadFingerprint: "fp_other", rendered: null }));
     // Khoá lạ.
-    await assert.rejects(store.get("../etc", 0, row.payloadFingerprint));
-    assert.equal(await store.get(row.runId, 1, row.payloadFingerprint), null);
+    await assert.rejects(store.get({ ...row, runId: "../etc" }));
+    assert.equal(await store.get({ ...row, goalIndex: 1 }), null);
   });
 }
 
