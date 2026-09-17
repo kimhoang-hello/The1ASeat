@@ -55,8 +55,11 @@ export const VIETNAM_ROUTES_PUBLISHED = true;
  * Bật cờ là công bố: mục hiện trong menu Miles & Points (cả desktop lẫn
  * mobile), vào sitemap, vào ô tìm kiếm, `noindex` được gỡ và dải báo nháp biến
  * mất — tất cả cùng một lúc, không cần sửa chỗ nào khác.
+ *
+ * **Tắt lại 17/09/2026** theo yêu cầu tác giả: trang vẫn vào được bằng URL trực
+ * tiếp (kèm `noindex` và dải báo nháp), nhưng rời menu, sitemap và ô tìm kiếm.
  */
-export const CATCH_THE_POINTS_PUBLISHED = true;
+export const CATCH_THE_POINTS_PUBLISHED = false;
 
 /**
  * Công cụ gợi ý thẻ (`/credit-cards/goi-y`) — mặt trước của recommendation
