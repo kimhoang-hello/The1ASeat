@@ -11,18 +11,24 @@
  */
 export function PageHeader({
   eyebrow,
+  badge,
   title,
   subtitle,
 }: {
   eyebrow?: string;
+  /** Nhãn đứng cạnh eyebrow — hôm nay chỉ có `<BetaBadge />`. */
+  badge?: React.ReactNode;
   title: string;
   subtitle?: string;
 }) {
   return (
     <div className="border-b border-border bg-secondary px-4 py-12 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-page">
-        {eyebrow && (
-          <p className="text-xs font-semibold tracking-wide text-primary">{eyebrow}</p>
+        {(eyebrow || badge) && (
+          <p className="flex items-center gap-2 text-xs font-semibold tracking-wide text-primary">
+            {eyebrow}
+            {badge}
+          </p>
         )}
         {/* text-balance so a title like "Thẻ Tín Dụng Đáng Chú Ý" does not
             wrap with its last character stranded alone on the second line. */}

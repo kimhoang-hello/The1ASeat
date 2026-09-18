@@ -12,6 +12,7 @@ import { RebateChip } from "@/components/ui/hot-tip";
 import { ApplyButton } from "@/components/ui/apply-button";
 import { isReferralUrl } from "@/lib/affiliate-links";
 import { JsonLd } from "@/components/seo/json-ld";
+import { BetaBadge } from "@/components/ui/beta-badge";
 import { RECOMMENDER_PUBLISHED } from "@/lib/feature-flags";
 import { RECOMMENDER_PATH } from "@/lib/recommender/path";
 import { PointsProgramLinks } from "@/components/credit-cards/points-program-links";
@@ -132,9 +133,7 @@ export default async function CreditCardsPage({
             <span>
               <span className="flex items-center gap-2 font-display font-bold text-foreground">
                 {reco("bandTitle")}
-                <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-foreground/70">
-                  {reco("beta")}
-                </span>
+                <BetaBadge />
               </span>
               <span className="mt-0.5 block text-sm text-muted-foreground">{reco("bandBody")}</span>
             </span>

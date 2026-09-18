@@ -17,12 +17,16 @@ import {
 } from "@/lib/recommender/session";
 import { resetRecommendation } from "@/app/credit-cards/goi-y/actions";
 import { PageHeader } from "@/components/layout/page-header";
+import { BetaBadge } from "@/components/ui/beta-badge";
 import { ExplainedWhy } from "@/components/recommender/explanation";
 import { QuestionCard } from "@/components/recommender/question-card";
 import { DeterministicWhy, Result } from "@/components/recommender/result";
 import { StartPanel } from "@/components/recommender/start-panel";
 import { JsonLd } from "@/components/seo/json-ld";
 import { breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
+import { t as translate } from "@/lib/t";
+
+const nav = translate("nav");
 
 /**
  * Gợi ý thẻ theo hoàn cảnh của từng người — mặt trước của recommendation engine.
@@ -89,14 +93,16 @@ export default async function RecommenderPage({ searchParams }: PageProps) {
           không ai ngoài mình nên đọc; đã công bố thì nó là bản BETA — người đọc
           có quyền biết công cụ còn mới và mình vẫn đang chỉnh, và biết gửi mã
           tra cứu ở cuối trang khi thấy kết quả sai. */}
-      <p className="border-b border-amber-300 bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-900 sm:px-6 lg:px-8">
+      <p className="flex flex-wrap items-center justify-center gap-2 border-b border-amber-300 bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-900 sm:px-6 lg:px-8">
+        <BetaBadge className="bg-amber-100 text-amber-900" />
         {RECOMMENDER_PUBLISHED
-          ? "Bản Beta — công cụ còn mới và mình vẫn đang chỉnh. Thấy kết quả sai thì gửi mã tra cứu ở cuối trang cho mình."
+          ? "Công cụ còn mới và mình vẫn đang chỉnh. Thấy kết quả sai thì gửi mã tra cứu ở cuối trang cho mình."
           : "Bản nháp — công cụ đang thử, nội dung có thể đổi."}
       </p>
       <JsonLd data={jsonLd} />
       <PageHeader
-        eyebrow="THẺ TÍN DỤNG · BETA"
+        eyebrow={nav("creditCards").toUpperCase()}
+        badge={<BetaBadge />}
         title="Gợi ý thẻ cho hoàn cảnh của bạn"
         subtitle="Trả lời vài câu. Mình chỉ hỏi những gì thật sự đổi được kết quả, và nói thẳng khi câu trả lời là chưa nên mở thẻ nào."
       />

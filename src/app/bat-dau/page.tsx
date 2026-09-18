@@ -13,6 +13,7 @@ import { RECOMMENDER_PUBLISHED, START_HERE_PUBLISHED } from "@/lib/feature-flags
 import { FOUNDATION_SLUGS, foundationPosts, missingFoundationSlugs } from "@/lib/start-here";
 
 import { PageHeader } from "@/components/layout/page-header";
+import { BetaBadge } from "@/components/ui/beta-badge";
 import { NewsletterForm } from "@/components/home/newsletter-form";
 import { StartHereRouter } from "@/components/home/start-here-router";
 import { StartHereLink } from "@/components/home/start-here-link";
@@ -312,7 +313,7 @@ export default async function StartHerePage() {
                   người công cụ này dành cho. */}
               {RECOMMENDER_PUBLISHED && (
                 <StepLink href={RECOMMENDER_PATH} step={2} target="recommender">
-                  {tReco("startHereLink")}
+                  {tReco("startHereLink")} <BetaBadge className="ml-1 align-middle" />
                 </StepLink>
               )}
               <StepLink href="/credit-cards" step={2} target="credit-cards">

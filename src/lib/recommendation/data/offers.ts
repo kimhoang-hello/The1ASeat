@@ -276,7 +276,7 @@ const OFFER_SEEDS: OfferSeed[] = [
         points: 50000,
         spend: 24000,
         windowDays: 365,
-        note: "Chi $24,000 trong 12 tháng, nhận ở mốc kỷ niệm 1 năm",
+        note: "Chi $24,000 trong 12 tháng, nhận ở mốc anniversary 1 năm",
       },
     ],
   },

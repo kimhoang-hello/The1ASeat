@@ -85,7 +85,9 @@ function PrimaryCard({
   const rest = action.reasons.filter((row) => row.tone !== "good");
   return (
     <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
-      <p className="text-xs font-semibold uppercase tracking-wide text-primary">Bước tiếp theo</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+        {action.kind === "no_new_card" ? "Gợi ý cho bạn" : "Thẻ gợi ý cho bạn"}
+      </p>
       <h2 className="mt-1 font-display text-2xl font-extrabold text-foreground sm:text-3xl">
         {action.kind === "no_new_card" ? "Chưa cần mở thẻ mới" : action.name}
       </h2>

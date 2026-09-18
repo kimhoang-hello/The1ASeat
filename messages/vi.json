@@ -36,7 +36,7 @@
     "vietnamRoutes": "Về Sài Gòn, Hà Nội, Đà Nẵng tốn bao nhiêu điểm",
     "catchThePoints": "Mini-game 45 giây: hứng điểm, né phí",
     "bestCards": "Thẻ tốt nhất theo từng mục đích, chọn sẵn kèm lý do",
-    "cardRecommender": "Bản Beta · trả lời vài câu, mình gợi ý bước tiếp theo"
+    "cardRecommender": "Trả lời vài câu, mình gợi ý bước tiếp theo"
   },
   "banner": {
     "eyebrow": "ELEVATED OFFER",
@@ -618,6 +618,6 @@
     "bandTitle": "Chưa biết nên mở thẻ nào?",
     "bandBody": "Trả lời vài câu, mình gợi ý bước tiếp theo — kể cả khi câu trả lời là chưa nên mở thẻ nào.",
     "bandCta": "Xem gợi ý cho bạn",
-    "startHereLink": "Gợi ý thẻ theo hoàn cảnh của bạn (Beta)"
+    "startHereLink": "Gợi ý thẻ theo hoàn cảnh của bạn"
   }
 }

@@ -347,7 +347,7 @@ export function spendSentenceOf(components: readonly OfferComponent[]): string |
     (component) => component.componentType === "anniversary" || component.windowStartsAfterDays > 0,
   );
   const keepCard = paidLater
-    ? " Phần bonus trả từ mốc kỷ niệm trở đi chỉ về khi bạn còn giữ thẻ tới lúc đó."
+    ? " Phần bonus trả từ mốc anniversary trở đi chỉ về khi bạn còn giữ thẻ tới lúc đó."
     : "";
   // Mọi mốc cùng một thời hạn (CIBC® Aventura®: cả hai "trong 4 kỳ sao kê đầu
   // tiên") thì nói thời hạn MỘT lần ở cuối. Lặp lại y nguyên cụm đó sau mỗi

@@ -63,7 +63,9 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     // với `award-charts.ts`.
     id: id<PointsProgramId>("avios"),
     slug: "avios",
-    name: "Avios®",
+    // Tên hiện cho người đọc lấy hãng phổ biến nhất ở Canada làm mốc — "Avios®"
+    // trần thì người mới không biết đó là điểm của hãng nào (user chốt 18/09/2026).
+    name: "British Airways® Avios®",
     programType: "airline",
     transferable: false,
     calculatorProgramId: null,
