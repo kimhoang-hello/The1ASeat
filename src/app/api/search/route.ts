@@ -12,10 +12,12 @@ import type { SearchItem } from "@/lib/search";
 import {
   BANK_ACCOUNTS_PUBLISHED,
   CATCH_THE_POINTS_PUBLISHED,
+  RECOMMENDER_PUBLISHED,
   START_HERE_PUBLISHED,
   VIETNAM_ROUTES_PUBLISHED,
 } from "@/lib/feature-flags";
 import { COMPARE_PATH } from "@/lib/card-compare";
+import { RECOMMENDER_PATH } from "@/lib/recommender/path";
 import { BEST_CARDS_BASE, BEST_CARDS_CATEGORIES, bestCardsPath } from "@/lib/best-cards";
 import { CATCH_THE_POINTS_PATH } from "@/lib/catch-the-points-path";
 import { BANK_COMPARE_PATH } from "@/lib/bank-compare";
@@ -73,6 +75,16 @@ const PAGES: SearchItem[] = [
   // cho tài khoản ngân hàng và các trang chặng: gõ đúng tên một mục ("thẻ
   // Aeroplan tốt nhất") mà chỉ có trang tổng trong chỉ mục thì kết quả trả về
   // không phải trang người đọc muốn tới.
+  ...(RECOMMENDER_PUBLISHED
+    ? [
+        {
+          title: nav("cardRecommender"),
+          href: RECOMMENDER_PATH,
+          kind: "page" as const,
+          keywords: "gợi ý nên mở thẻ nào thẻ nào hợp tư vấn chọn thẻ recommend",
+        },
+      ]
+    : []),
   {
     title: nav("bestCards"),
     href: BEST_CARDS_BASE,

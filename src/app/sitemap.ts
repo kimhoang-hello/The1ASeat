@@ -8,6 +8,7 @@ import {
 } from "@/lib/blog-categories";
 import { absoluteUrl } from "@/lib/seo";
 import { COMPARE_PATH } from "@/lib/card-compare";
+import { RECOMMENDER_PATH } from "@/lib/recommender/path";
 import {
   BEST_CARDS_BASE,
   BEST_CARDS_CATEGORIES,
@@ -20,6 +21,7 @@ import { BANK_ACCOUNTS, bankAccountPath } from "@/lib/bank-accounts";
 import {
   BANK_ACCOUNTS_PUBLISHED,
   CATCH_THE_POINTS_PUBLISHED,
+  RECOMMENDER_PUBLISHED,
   START_HERE_PUBLISHED,
   VIETNAM_ROUTES_PUBLISHED,
 } from "@/lib/feature-flags";
@@ -120,6 +122,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // về đây, nên liệt kê từng tổ hợp là tự nộp cho Google hàng trăm URL trùng
     // nội dung.
     { url: absoluteUrl(COMPARE_PATH), changeFrequency: "weekly", priority: 0.6 },
+    // Trang gợi ý: bản KHÔNG có hồ sơ (màn hình chọn mục tiêu) là thứ Google
+    // thấy và là thứ đáng index — kết quả thì riêng từng người và trang tự
+    // `no-store`. Không khai `lastModified`: chữ trên màn hình đó nằm trong
+    // repo, không đổi theo entry thẻ nào.
+    ...(RECOMMENDER_PUBLISHED
+      ? ([{ url: absoluteUrl(RECOMMENDER_PATH), changeFrequency: "monthly" as const, priority: 0.7 }] satisfies MetadataRoute.Sitemap)
+      : []),
     ...(BANK_ACCOUNTS_PUBLISHED
       ? ([
           { url: absoluteUrl("/bank-accounts"), changeFrequency: "weekly", priority: 0.8 },
