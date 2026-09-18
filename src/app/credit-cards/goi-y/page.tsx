@@ -96,7 +96,7 @@ export default async function RecommenderPage({ searchParams }: PageProps) {
       <p className="flex flex-wrap items-center justify-center gap-2 border-b border-amber-300 bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-900 sm:px-6 lg:px-8">
         <BetaBadge className="bg-amber-100 text-amber-900" />
         {RECOMMENDER_PUBLISHED
-          ? "Công cụ còn mới và mình vẫn đang chỉnh. Thấy kết quả sai thì gửi mã tra cứu ở cuối trang cho mình."
+          ? "Công cụ còn mới và mình vẫn đang chỉnh."
           : "Bản nháp — công cụ đang thử, nội dung có thể đổi."}
       </p>
       <JsonLd data={jsonLd} />
