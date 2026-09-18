@@ -186,7 +186,7 @@ export function explanationPayload(view: ResultView): ExplanationPayload {
       // trong 3 tháng" là sai — mà lại mang nhãn "Dữ kiện" (Codex vòng 3).
     }
     const fee = cleanValue(action.annualFee);
-    if (fee !== null) add("fee", "verified", "offer", `phí thường niên là ${fee}`);
+    if (fee !== null) add("fee", "verified", "offer", `annual fee là ${fee}`);
     if (action.eligibilityUncertain) {
       add(
         "eligibility_unknown",
@@ -230,7 +230,7 @@ export function explanationPayload(view: ResultView): ExplanationPayload {
           "trip_reach",
           "estimate",
           "trip",
-          `theo ước lượng từ số dư bạn khai, bạn với tới được ${trip.accessibleIsLowerBound ? "ít nhất " : ""}${formatPoints(trip.accessible)} điểm`,
+          `theo ước lượng từ số dư bạn khai, bạn gom được ${trip.accessibleIsLowerBound ? "ít nhất " : ""}${formatPoints(trip.accessible)} điểm`,
         );
       }
       // Thiếu 0 điểm không phải "còn thiếu khoảng 0 điểm" — phần phủ nói chuyện đó.

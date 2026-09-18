@@ -79,7 +79,7 @@ export async function startRecommendation(formData: FormData): Promise<void> {
   const goalValue = String(formData.get("goal") ?? "");
   const inCanada = String(formData.get("canada") ?? "");
   if (inCanada !== "yes") redirect(`${PATH}?ngoai-canada=1`);
-  if (goalValue === "") fail("Chọn giúp mình một mục tiêu trước đã.");
+  if (goalValue === "") fail("Chọn một mục tiêu trước đã.");
 
   // Một người mở trang = một hồ sơ mới trong database. Trần theo IP là thứ
   // duy nhất chặn được kịch bản tạo hàng loạt hồ sơ rỗng. Sau CDN của
@@ -92,7 +92,7 @@ export async function startRecommendation(formData: FormData): Promise<void> {
   // người dùng thật; trần chung đặt giới hạn cho cả kịch bản xoay IP giả.
   const perIp = rateLimit(`reco:start:${ip}`, 30, 60 * 60 * 1000);
   const siteWide = rateLimit("reco:start:all", 500, 60 * 60 * 1000);
-  if (!perIp.ok || !siteWide.ok) fail("Công cụ đang bận. Thử lại sau vài phút giúp mình.");
+  if (!perIp.ok || !siteWide.ok) fail("Công cụ đang bận, thử lại sau vài phút.");
 
   const today = todayInSiteZone();
   const userId = await startUserId();
@@ -118,7 +118,7 @@ export async function answerQuestion(formData: FormData): Promise<void> {
   const key = String(formData.get("question") ?? "");
   const ctx = await context();
   const spec = questionFromKey(key, stored.state, ctx);
-  if (spec === null) fail("Câu hỏi này không còn nữa — thử lại giúp mình.");
+  if (spec === null) fail("Câu hỏi này không còn nữa — tải lại trang rồi thử lại.");
 
   const form = answerForm(formData);
   const validate = (candidate: UserState) => validateUserState(candidate, ctx.dataset);
@@ -132,7 +132,7 @@ export async function answerQuestion(formData: FormData): Promise<void> {
     const retry = applyAnswerChecked(current, spec, form, ctx, validate);
     return retry.ok ? retry.state : null;
   });
-  if (saved === null) fail("Không lưu được câu trả lời — thử lại giúp mình.");
+  if (saved === null) fail("Không lưu được câu trả lời — thử lại lần nữa.");
 
   // Trả lời rồi thì câu đó thôi nằm trong danh sách đã bỏ qua (người dùng vừa
   // bấm "Sửa" trên chính nó).

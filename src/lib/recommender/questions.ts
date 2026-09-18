@@ -414,7 +414,7 @@ export function questionFor(
       return {
         ...base,
         title: "Trong 3 tháng tới, bạn dồn được khoảng bao nhiêu chi tiêu sang một thẻ mới?",
-        help: "Đây KHÔNG phải tổng chi tiêu của bạn — chỉ phần thật sự quẹt được bằng thẻ mới. Nó quyết định welcome bonus có khả thi hay chỉ là lời hứa.",
+        help: "Đây không phải tổng chi tiêu của bạn — chỉ phần thật sự quẹt được bằng thẻ mới. Nó quyết định welcome bonus có khả thi hay chỉ là con số trên giấy.",
         input: { type: "choice", name: "answer", options: bandOptions(CAPACITY_3M) },
       };
 
@@ -469,7 +469,7 @@ export function questionFor(
     case "annual_fee_tolerance_unknown":
       return {
         ...base,
-        title: "Một thẻ có phí thường niên tới bao nhiêu thì bạn còn chấp nhận?",
+        title: "Annual fee tới bao nhiêu thì bạn còn chấp nhận cho một thẻ?",
         help: "Phí cao thường đi kèm quyền lợi lớn hơn, nhưng chỉ đáng khi bạn dùng tới. Trả lời để mình khỏi gợi ý thứ bạn không muốn.",
         input: {
           type: "choice",
@@ -575,7 +575,7 @@ export function questionFor(
       return {
         ...base,
         title: "Bạn định bay khoảng tháng nào?",
-        help: "Để mình biết bạn còn bao nhiêu thời gian đạt mốc chi của welcome offer.",
+        help: "Để mình biết bạn còn bao nhiêu thời gian đạt mức spend của welcome offer.",
         input: { type: "month", months: monthOptions(ctx.today) },
       };
 
@@ -757,7 +757,7 @@ export function applyAnswerChecked(
     // và thông báo lỗi đi qua query string (lịch sử trình duyệt, log, GA).
     return {
       ok: false,
-      error: "Câu trả lời này mâu thuẫn với một câu bạn đã trả lời trước đó. Sửa câu kia trước nhé.",
+      error: "Câu trả lời này ngược với một câu bạn đã trả lời trước đó — sửa câu đó trước đã.",
     };
   }
   return applied;

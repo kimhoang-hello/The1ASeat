@@ -152,7 +152,7 @@ function BrokenProfileNotice() {
         Hồ sơ cũ của bạn không chạy lại được
       </h2>
       <p className="mt-2 text-base leading-relaxed text-foreground/90">
-        Có thể do dữ liệu thẻ đã đổi kể từ lần trước. Bắt đầu lại giúp mình — chỉ mất vài câu.
+        Có thể do dữ liệu thẻ đã đổi kể từ lần trước. Làm lại từ đầu thì chỉ mất vài câu.
       </p>
       <form action={resetRecommendation} className="mt-4">
         <button
@@ -172,7 +172,7 @@ function StorageDownNotice() {
     <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
       <h2 className="font-display text-lg font-bold text-foreground">Công cụ đang tạm nghỉ</h2>
       <p className="mt-2 text-base leading-relaxed text-foreground/90">
-        Chỗ lưu hồ sơ chưa sẵn sàng, nên mình chưa chạy gợi ý được. Thử lại sau giúp mình.
+        Chỗ lưu hồ sơ đang không vào được, nên mình chưa chạy gợi ý được. Thử lại sau nhé.
       </p>
     </section>
   );
@@ -264,7 +264,7 @@ async function Body({ editKey }: { editKey: string | null }) {
             spec={question}
             lead={
               followUp?.basis === "measured"
-                ? "Câu này có thể ĐỔI thẻ được gợi ý"
+                ? "Câu này có thể đổi thẻ mình đang gợi ý"
                 : "Một câu nữa thôi"
             }
           />

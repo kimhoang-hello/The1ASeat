@@ -118,7 +118,7 @@ function PrimaryCard({
             )}
             {action.annualFee && (
               <div>
-                <dt className="text-muted-foreground">Phí thường niên</dt>
+                <dt className="text-muted-foreground">Annual fee</dt>
                 <dd className="font-semibold text-foreground">{action.annualFee}</dd>
               </div>
             )}
@@ -179,8 +179,7 @@ function PrimaryCard({
       )}
 
       <p className="mt-4 text-sm text-muted-foreground">
-        Độ chắc chắn: <strong className="text-foreground">{confidence.label}</strong>.{" "}
-        {confidence.sentence}
+        <strong className="text-foreground">{confidence.label}</strong>. {confidence.sentence}
       </p>
 
       {action.kind === "open_card" && (
@@ -311,7 +310,7 @@ function TripNumbers({ trip }: { trip: NonNullable<ResultView["trip"]> }) {
           </dd>
         </div>
         <div>
-          <dt className="text-sm text-muted-foreground">Bạn với tới được</dt>
+          <dt className="text-sm text-muted-foreground">Bạn gom được</dt>
           <dd className="font-display text-lg font-bold text-foreground">
             {trip.accessible === null ? "Chưa biết" : `${formatPoints(trip.accessible)} điểm`}
             {trip.accessibleIsLowerBound && (
@@ -442,10 +441,10 @@ function HowItWorks({ view }: { view: ResultView }) {
       </table>
       <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
         <strong className="text-foreground">Số nào là số chắc, số nào là ước lượng:</strong> welcome
-        bonus, phí thường niên và mốc chi chép từ trang của ngân hàng
+        bonus, annual fee và mức spend chép từ trang của ngân hàng
         {view.dataVerifiedAt ? ` (dòng cũ nhất mình dùng ở đây kiểm ngày ${view.dataVerifiedAt})` : ""};
         số điểm một chuyến bay cần là khoảng ước lượng theo award chart và đổi theo ngày bay; phần
-        &ldquo;bạn với tới được&rdquo; phụ thuộc chính con số bạn khai.
+        &ldquo;bạn gom được&rdquo; phụ thuộc chính con số bạn khai.
       </p>
       <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
         Dữ liệu thẻ tính đến {view.asOf}. Mã tra cứu: <code>{view.runId}</code> — gửi mã này cho

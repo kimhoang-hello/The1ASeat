@@ -438,7 +438,17 @@ function actionOf(
       offer?.applyUrl === undefined
         ? null
         : { url: offer.applyUrl, affiliate: isReferralUrl(offer.applyUrl) },
-    reasons: reasonsOf(candidate.reasonCodes, shownWarnings),
+    // Câu đầu thẻ "chưa mở thẻ" đã nói "số điểm bạn đang có đã đủ" (xem
+    // `NO_CARD_SENTENCE`), nên để `POINTS_ALREADY_SUFFICIENT` lại trong danh
+    // sách lý do là in gần y hệt một câu hai lần.
+    reasons: reasonsOf(candidate.reasonCodes, shownWarnings).filter(
+      (row) =>
+        !(
+          candidate.kind === "no_new_card" &&
+          row.code === "POINTS_ALREADY_SUFFICIENT" &&
+          noCardReasonOf(candidate) === "points_sufficient"
+        ),
+    ),
     warnings: warningsOf(candidate.warnings),
     score: candidate.score,
     components: candidate.components.map((row) => ({
@@ -491,7 +501,7 @@ const GOAL_TITLE: Record<GoalType, string> = {
   next_card: "Thẻ nên mở tiếp theo",
   trip: "Chuyến bay bạn đang nhắm",
   earn_points: "Tích thêm điểm hằng ngày",
-  diversify: "Đa dạng hoá điểm",
+  diversify: "Trải điểm ra nhiều chương trình",
 };
 
 function tripView(record: RecommendationRunRecord, index: number): TripNumbersView | null {
@@ -557,7 +567,7 @@ function confidenceOf(
     return {
       level: factors.level,
       label: CONFIDENCE_LABEL.high,
-      sentence: "Mình có đủ thông tin cho kết luận này.",
+      sentence: "Không còn chỗ nào mình phải đoán.",
     };
   }
   const WEAK = 0.75;
@@ -817,7 +827,7 @@ export function answeredRows(state: UserState, dataset: RecommendationDataset): 
   const capacity = amountText(state.spend?.minimumSpendCapacity3m ?? null);
   if (capacity !== null) {
     rows.push({
-      label: "Dồn được trong 3 tháng",
+      label: "Spend dồn được trong 3 tháng",
       value: capacity,
       questionKey: self("minimum_spend_capacity_unknown"),
     });
@@ -825,7 +835,7 @@ export function answeredRows(state: UserState, dataset: RecommendationDataset): 
   const monthly = amountText(state.spend?.monthlyTotal ?? null);
   if (monthly !== null) {
     rows.push({
-      label: "Chi tiêu mỗi tháng",
+      label: "Spend mỗi tháng",
       value: monthly,
       questionKey: self("monthly_total_unknown"),
     });
@@ -860,7 +870,7 @@ export function answeredRows(state: UserState, dataset: RecommendationDataset): 
   const fee = state.profile.annualFeeTolerancePerCard;
   if (fee !== null) {
     rows.push({
-      label: "Phí thường niên chấp nhận",
+      label: "Annual fee chấp nhận được",
       value: fee >= 10_000 ? "Bao nhiêu cũng được nếu đáng" : `Tới $${fee.toLocaleString("en-US")}`,
       questionKey: self("annual_fee_tolerance_unknown"),
     });

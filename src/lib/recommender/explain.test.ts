@@ -461,7 +461,7 @@ test("payload thiếu hoặc mơ hồ: không mệnh đề rỗng, không số d
     }
   }
   assert.ok(!("bonus" in texts(explanationPayload(variants["offer rỗng"]))), "chuỗi rỗng thành dữ kiện");
-  assert.equal(texts(explanationPayload(variants["offer bẩn"])).fee, "phí thường niên là $599");
+  assert.equal(texts(explanationPayload(variants["offer bẩn"])).fee, "annual fee là $599");
   assert.equal(texts(explanationPayload(variants["đủ điểm dư"])).trip_gap, undefined);
   assert.match(texts(explanationPayload(variants["đủ điểm dư"])).trip_coverage, /phủ được cả chuyến này/u);
   assert.match(texts(explanationPayload(variants["chỉ biết sàn"])).trip_need, /cần ít nhất 60,000 điểm \(chưa biết mức cao nhất\)/u);

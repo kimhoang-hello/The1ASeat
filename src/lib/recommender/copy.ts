@@ -51,7 +51,7 @@ export const REASON_TEXT: Record<ReasonCode, ReasonText> = {
   OFFER_ENDING_SOON: { tone: "caution", text: "Offer này sắp hết hạn." },
   OFFER_TERMS_UNKNOWN: {
     tone: "info",
-    text: "Điều khoản offer chưa đầy đủ, nên chưa rõ phải chi bao nhiêu mới nhận đủ bonus.",
+    text: "Điều khoản offer chưa đầy đủ, nên chưa rõ phải spend bao nhiêu mới nhận đủ bonus.",
   },
   WELCOME_BONUS_UNAVAILABLE: {
     tone: "caution",
@@ -64,19 +64,19 @@ export const REASON_TEXT: Record<ReasonCode, ReasonText> = {
 
   MIN_SPEND_GOOD_FIT: {
     tone: "good",
-    text: "Mốc chi để nhận bonus nằm trong khả năng bạn khai.",
+    text: "Mức spend để nhận bonus nằm trong khả năng bạn khai.",
   },
   MIN_SPEND_TIGHT: {
     tone: "caution",
-    text: "Mốc chi sát với mức bạn dồn được — đạt được, nhưng không dư dả.",
+    text: "Mức spend sát với mức bạn dồn được — đạt được, nhưng không dư dả.",
   },
   MIN_SPEND_TOO_HIGH: {
     tone: "caution",
-    text: "Mốc chi cao hơn mức bạn dồn được trong 3 tháng.",
+    text: "Mức spend cao hơn mức bạn dồn được trong 3 tháng.",
   },
   MIN_SPEND_CAPACITY_UNKNOWN: {
     tone: "info",
-    text: "Mình chưa biết bạn dồn được bao nhiêu chi tiêu sang thẻ mới trong 3 tháng.",
+    text: "Mình chưa biết bạn dồn được bao nhiêu spend sang thẻ mới trong 3 tháng.",
   },
 
   POINTS_ALREADY_SUFFICIENT: {
@@ -84,7 +84,7 @@ export const REASON_TEXT: Record<ReasonCode, ReasonText> = {
     // "Theo ước lượng": kết luận dựng trên phần phủ ước lượng (giá award chart
     // là một khoảng, số dư do người dùng khai) — nói như dữ kiện là biến ước
     // lượng thành lời bảo đảm (rà đối kháng Phase 6, 17/09/2026).
-    text: "Theo ước lượng của mình, số điểm bạn đang với tới được đã đủ cho chuyến này.",
+    text: "Theo ước lượng của mình, số điểm bạn gom được đã đủ cho chuyến này.",
   },
   POINTS_GAP_LARGE: { tone: "info", text: "Theo ước lượng, bạn còn thiếu hơn một nửa số điểm cần." },
   TRIP_PROGRAM_MATCH: {
@@ -106,7 +106,7 @@ export const REASON_TEXT: Record<ReasonCode, ReasonText> = {
 
   PORTFOLIO_CONCENTRATED: {
     tone: "info",
-    text: "Điểm của bạn đang dồn phần lớn vào một hệ sinh thái.",
+    text: "Điểm của bạn đang dồn gần hết vào một chương trình.",
   },
   PORTFOLIO_LACKS_FLEXIBILITY: {
     tone: "info",
@@ -153,12 +153,12 @@ export const REASON_TEXT: Record<ReasonCode, ReasonText> = {
   },
   ANNUAL_FEE_ABOVE_TOLERANCE: {
     tone: "caution",
-    text: "Phí năm đầu cao hơn mức bạn nói là chấp nhận được.",
+    text: "Annual fee năm đầu cao hơn mức bạn nói là chấp nhận được.",
   },
-  ANNUAL_FEE_WAIVED_FIRST_YEAR: { tone: "good", text: "Miễn phí thường niên năm đầu." },
+  ANNUAL_FEE_WAIVED_FIRST_YEAR: { tone: "good", text: "Miễn annual fee năm đầu." },
   ANNUAL_FEE_HIGH_TOLERANCE_UNKNOWN: {
     tone: "info",
-    text: "Phí thẻ này cao hơn mức thường gặp, mà bạn chưa nói mình chịu được tới đâu.",
+    text: "Annual fee thẻ này cao hơn mức thường gặp, mà bạn chưa nói mình chịu được tới đâu.",
   },
   UPGRADE_WITHIN_HELD_FAMILY: {
     tone: "info",
@@ -197,9 +197,9 @@ export const REASON_TEXT: Record<ReasonCode, ReasonText> = {
  */
 export const WARNING_TEXT: Record<WarningCode, string> = {
   SPEND_REQUIREMENT_LIKELY_UNSUITABLE:
-    "Nhiều khả năng bạn không kịp đạt mốc chi của welcome offer này.",
-  ANNUAL_FEE_ABOVE_STATED_TOLERANCE: "Phí năm đầu vượt ngưỡng phí bạn đã khai.",
-  SECOND_YEAR_FEE_APPLIES: "Năm đầu được miễn phí, nhưng từ năm thứ hai phí thường niên vẫn tính.",
+    "Nhiều khả năng bạn không kịp đạt mức spend của welcome offer này.",
+  ANNUAL_FEE_ABOVE_STATED_TOLERANCE: "Annual fee năm đầu vượt mức bạn đã khai.",
+  SECOND_YEAR_FEE_APPLIES: "Năm đầu được miễn annual fee, nhưng từ năm thứ hai vẫn tính như thường.",
   WELCOME_BONUS_BLOCKED_BY_PAST_CARD:
     "Bạn từng giữ thẻ này, nên theo điều khoản bạn sẽ không nhận được welcome bonus.",
   WELCOME_BONUS_NOT_VERIFIABLE:
@@ -242,7 +242,7 @@ export const STRATEGY_TEXT: Record<StrategyType, string> = {
   USE_EXISTING_POINTS: "Dùng số điểm đang có",
   EARN_FLEXIBLE_POINTS: "Tích thêm điểm linh hoạt",
   EARN_SPECIFIC_CURRENCY: "Tích đúng loại điểm chuyến đi cần",
-  DIVERSIFY: "Đa dạng hoá chương trình điểm",
+  DIVERSIFY: "Trải điểm ra nhiều chương trình",
   WAIT_FOR_BETTER_OFFER: "Đợi offer tốt hơn",
   OPEN_CARD: "Mở thêm một thẻ",
   FOCUS_ON_AVAILABILITY: "Tập trung tìm chỗ trống",
@@ -253,23 +253,23 @@ export const STRATEGY_TEXT: Record<StrategyType, string> = {
 /** Tên từng dòng điểm (§10) — bảng "cách tính". */
 export const COMPONENT_LABEL: Record<ScoreComponentKey, string> = {
   offer_quality: "Welcome offer đang tốt tới đâu",
-  spend_fit: "Mốc chi có vừa sức bạn không",
+  spend_fit: "Mức spend có vừa sức bạn không",
   long_term_earn_fit: "Tích điểm hằng ngày",
   currency_fit: "Đúng loại điểm bạn cần",
   benefits_fit: "Quyền lợi thêm được",
-  diversification: "Đa dạng hoá danh mục",
+  diversification: "Điểm đỡ dồn một chỗ",
   trip_currency_utility: "Dùng được cho chuyến đi",
   points_gap_reduction: "Rút ngắn khoảng còn thiếu",
   flexibility_value: "Điểm linh hoạt",
   travel_benefits: "Quyền lợi du lịch",
   new_currency_exposure: "Chương trình điểm mới",
   transfer_flexibility: "Chuyển điểm được nhiều nơi",
-  fee_drag: "Phí kéo lại",
+  fee_drag: "Annual fee so với nhóm",
   editorial: "Điều chỉnh biên tập",
   points_already_sufficient: "Điểm đã đủ",
-  portfolio_already_covers: "Danh mục đã che được nhu cầu",
-  no_reachable_candidate: "Không thẻ nào với tới được",
-  offer_climate_weak: "Thị trường offer đang yếu",
+  portfolio_already_covers: "Ví hiện tại đã lo được",
+  no_reachable_candidate: "Không thẻ nào vừa điều kiện",
+  offer_climate_weak: "Offer trên thị trường đang yếu",
 };
 
 /**
@@ -282,29 +282,29 @@ export const COMPONENT_LABEL: Record<ScoreComponentKey, string> = {
  */
 export const COMPONENT_STRENGTH: Record<ScoreComponentKey, string> = {
   offer_quality: "welcome offer đang mạnh",
-  spend_fit: "mốc chi vừa sức bạn",
+  spend_fit: "mức spend vừa sức bạn",
   long_term_earn_fit: "tỷ lệ tích điểm hằng ngày",
   currency_fit: "đúng loại điểm bạn cần",
   benefits_fit: "quyền lợi thêm được",
-  diversification: "giúp danh mục đỡ dồn một chỗ",
+  diversification: "giúp điểm đỡ dồn một chỗ",
   trip_currency_utility: "đúng loại điểm cho chuyến bay của bạn",
   points_gap_reduction: "rút ngắn được khoảng còn thiếu",
   flexibility_value: "điểm linh hoạt",
   travel_benefits: "quyền lợi du lịch",
   new_currency_exposure: "mở ra một chương trình điểm mới",
   transfer_flexibility: "chuyển điểm được sang nhiều hãng",
-  fee_drag: "phí thấp so với những thẻ cùng nhóm",
+  fee_drag: "annual fee thấp so với những thẻ cùng nhóm",
   editorial: "điều chỉnh biên tập",
   points_already_sufficient: "điểm bạn có đã đủ",
-  portfolio_already_covers: "ví hiện tại đã che được nhu cầu",
-  no_reachable_candidate: "chưa thẻ nào với tới được",
-  offer_climate_weak: "thị trường offer đang yếu",
+  portfolio_already_covers: "ví hiện tại đã lo được việc này",
+  no_reachable_candidate: "chưa thẻ nào vừa điều kiện của bạn",
+  offer_climate_weak: "offer trên thị trường đang yếu",
 };
 
 export const CONFIDENCE_LABEL: Record<ConfidenceLevel, string> = {
-  high: "Chắc chắn",
-  medium: "Tương đối chắc",
-  low: "Còn nhiều chỗ chưa chắc",
+  high: "Đủ thông tin",
+  medium: "Tạm đủ thông tin",
+  low: "Còn thiếu thông tin",
 };
 
 /**
@@ -369,12 +369,12 @@ export const NO_CARD_SENTENCE: Record<string, string> = {
   points_sufficient:
     "Theo ước lượng của mình, số điểm bạn đang có đã đủ cho mục tiêu này — mở thêm thẻ lúc này không rút ngắn được gì.",
   portfolio_covers:
-    "Ví hiện tại của bạn đã che được nhu cầu này, nên thẻ mới không thêm được bao nhiêu.",
+    "Ví hiện tại của bạn đã lo được việc này, nên thẻ mới không thêm được bao nhiêu.",
   offers_weak:
     "Offer của những thẻ đáng mở đang ở vùng thấp so với lịch sử của chính chúng — lúc này chưa phải lúc tốt để mở thêm thẻ.",
   nothing_fits:
     // Không khuyên "nới" gì: điều kiện của ngân hàng không phải thứ người dùng
     // đặt ra hay nới được (Codex, rà đối kháng Phase 6).
-    "Chưa thẻ nào vừa với hồ sơ của bạn lúc này — vướng ngưỡng phí bạn đặt ra hoặc điều kiện mở thẻ của ngân hàng.",
+    "Chưa thẻ nào vừa với hồ sơ của bạn lúc này — vướng mức annual fee bạn đặt ra hoặc điều kiện mở thẻ của ngân hàng.",
   default: "Mở thêm thẻ lúc này chưa mang lại gì đáng kể cho mục tiêu của bạn.",
 };
