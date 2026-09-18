@@ -95,9 +95,7 @@ function PrimaryCard({
           ? NO_CARD_SENTENCE[action.noCardReason ?? "default"]
           : action.welcomeBonusBlocked
             ? "Mở thẻ này cho tỷ lệ tích điểm và quyền lợi của nó — welcome bonus thì bạn không nhận được nữa, vì đã từng giữ thẻ."
-            : action.minSpendPer90Days === null
-              ? "Mở thẻ này là bước đáng làm tiếp theo."
-              : `Mở thẻ này, rồi chi khoảng $${action.minSpendPer90Days.toLocaleString("en-US")} trong 3 tháng đầu để nhận trọn welcome bonus.`}
+            : (action.spendSentence ?? "Mở thẻ này là bước đáng làm tiếp theo.")}
       </p>
 
       {action.kind === "open_card" && (

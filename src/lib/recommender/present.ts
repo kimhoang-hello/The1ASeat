@@ -18,7 +18,9 @@ import type { CreditCardOffer } from "../content/types.ts";
 import type { Candidate } from "../recommendation/engine-types.ts";
 import type { RecommendationRunRecord } from "../recommendation/runs.ts";
 import type { ReasonCode, WarningCode } from "../recommendation/reason-codes.ts";
+import { requiredSpendOf } from "../recommendation/spend.ts";
 import type {
+  OfferComponent,
   PointsProgramId,
   RecommendationDataset,
   SpendCategory,
@@ -89,14 +91,22 @@ export interface ActionView {
    */
   strengths: string[];
   /**
-   * Mốc chi để nhận trọn welcome bonus, quy về 90 ngày (đô la).
+   * Mốc chi của toàn bộ offer, QUY ĐỔI về 90 ngày (đô la) — con số engine đem
+   * so với sức dồn chi tiêu.
    *
-   * Đây là VIỆC PHẢI LÀM sau khi mở thẻ, và là con số quyết định một welcome
-   * bonus có thật hay chỉ là con số quảng cáo. `null` = offer không có mốc chi
-   * nào dựng được từ dữ liệu — KHÁC với "không đòi chi tiêu gì", nên trang
-   * không được in $0 ở đó.
+   * KHÔNG phải điều khoản và KHÔNG được in cho người đọc như một lời hứa:
+   * TD® Aeroplan® Visa Infinite* đòi $3,000/90 ngày RỒI $12,000/12 tháng, và
+   * con số quy đổi của nó ($3,000) nói như thể chi $3,000 là đủ. Câu cho người
+   * đọc nằm ở `spendSentence`. `null` = offer không có mốc chi nào dựng được —
+   * KHÁC với "không đòi chi tiêu gì".
    */
   minSpendPer90Days: number | null;
+  /**
+   * Câu "việc phải làm sau khi mở thẻ", liệt kê ĐÚNG các mốc chi và thời hạn
+   * của offer. `null` khi không dựng được mốc nào — trang khi đó không hứa gì
+   * về welcome bonus. Xem `spendSentenceOf`.
+   */
+  spendSentence: string | null;
   /**
    * Vì sao "chưa mở thẻ" lại thắng — chỉ có ở ứng viên `no_new_card`.
    *
@@ -217,21 +227,149 @@ export function warningsOf(codes: readonly WarningCode[]): string[] {
 interface CardLookup {
   offers: Map<string, CreditCardOffer>;
   /** Dữ kiện offer engine ĐÃ ĐỌC, theo slug — nguồn của con số mốc chi. */
-  facts: Map<string, { minSpendPer90Days: number | null }>;
+  facts: Map<string, { minSpendPer90Days: number | null; spendSentence: string | null }>;
 }
 
-function lookup(record: RecommendationRunRecord, offers: readonly CreditCardOffer[]): CardLookup {
+function lookup(
+  record: RecommendationRunRecord,
+  dataset: RecommendationDataset,
+  offers: readonly CreditCardOffer[],
+): CardLookup {
+  const components = new Map(dataset.offerComponents.map((row) => [row.id as string, row]));
   return {
     offers: new Map(offers.map((offer) => [offer.slug, offer])),
     facts: new Map(
-      record.derivedState.candidates.map((row) => [
-        row.productSlug,
-        // Mốc của TOÀN BỘ offer, không phải của phần người này với tới được:
-        // câu "chi bao nhiêu để nhận trọn bonus" hỏi về con số thứ nhất.
-        { minSpendPer90Days: row.offer.fullRequiredPerNinetyDays },
-      ]),
+      record.derivedState.candidates.map((row) => {
+        // Đúng những thành phần engine đã đọc (id ghi trong bản ghi), tra trong
+        // đúng bộ dữ liệu của lượt chạy. Thiếu một id là không kể được trọn
+        // điều khoản — thà không nói gì còn hơn nói thiếu một mốc.
+        const own = row.offer.componentIds.map((id) => components.get(id));
+        const complete = own.every((component) => component !== undefined);
+        return [
+          row.productSlug,
+          {
+            // Mốc của TOÀN BỘ offer, không phải của phần người này với tới được.
+            minSpendPer90Days: row.offer.fullRequiredPerNinetyDays,
+            spendSentence: complete ? spendSentenceOf(own as OfferComponent[]) : null,
+          },
+        ];
+      }),
     ),
   };
+}
+
+/* ------------------------------------------------------------------ *
+ * Điều khoản chi tiêu của welcome bonus
+ * ------------------------------------------------------------------ */
+
+const usd = (amount: number) => `$${amount.toLocaleString("en-US")}`;
+
+/**
+ * Thời hạn một cửa sổ, nói theo cách điều khoản nói.
+ *
+ * `spendWindowText` thắng con số ngày mỗi khi có: số ngày ở những mốc đó là
+ * quy đổi của engine ("4 kỳ sao kê đầu tiên" → 120 ngày), và in quy đổi ra
+ * trang là đúng cái lỗi câu này sinh ra để sửa.
+ */
+function periodOf(from: number, days: number, text: string | null = null): string {
+  if (text !== null && text.trim().length > 0) return text.trim();
+  if (from === 0) {
+    return days % 365 === 0 ? `trong ${(days / 365) * 12} tháng đầu` : `trong ${days} ngày đầu`;
+  }
+  // Cửa sổ mở muộn (Amex®: "tháng thứ 13", "tháng 15–17"): đếm theo tháng
+  // kể từ ngày mở thẻ.
+  const first = Math.round((from / 365) * 12) + 1;
+  const last = Math.max(first, Math.round(((from + days) / 365) * 12));
+  return first === last ? `trong tháng thứ ${first}` : `trong khoảng tháng ${first}–${last}`;
+}
+
+/**
+ * Câu "mở thẻ rồi làm gì" dựng từ CHÍNH các thành phần offer, không từ con số
+ * quy đổi `minSpendPer90Days`.
+ *
+ * Con số quy đổi là thước đo sức dồn — mốc NẶNG NHẤT sau khi chia về 90 ngày.
+ * In nó thành "chi $X trong 3 tháng đầu để nhận trọn welcome bonus" là hứa
+ * sai với mọi offer nhiều mốc: TD® Aeroplan® Visa Infinite* quy ra $3,000,
+ * trong khi 25,000 trong 50,000 điểm nằm sau mốc $12,000 trong 12 tháng.
+ *
+ * Chỉ nói "nhận trọn" khi offer có ĐÚNG MỘT mốc chi và không phần nào trả
+ * muộn. Nhiều mốc thì liệt kê từng mốc với thời hạn thật, theo thứ tự người
+ * dùng gặp. Cửa sổ chồng nhau dùng chung tiền (xem `totalSpend` ở
+ * `spend.ts`), nên mốc chứa trọn một mốc trước nói "tổng cộng"; mốc rời hẳn
+ * phía sau nói "thêm".
+ */
+export function spendSentenceOf(components: readonly OfferComponent[]): string | null {
+  const ordered = [...components].sort((a, b) => a.sequence - b.sequence);
+  const windows: { from: number; to: number }[] = [];
+  /** `period` tách riêng để gộp được khi mọi mốc cùng một thời hạn. */
+  const steps: { text: string; period: string | null }[] = [];
+  let spendSteps = 0;
+  for (const component of ordered) {
+    const from = component.windowStartsAfterDays;
+    const days = component.spendWindowDays ?? 90;
+    const needed = requiredSpendOf(component);
+    if (needed === null) {
+      // Điều kiện không phải chi tiêu nhưng mở muộn (Amex®: quẹt một giao dịch
+      // ở tháng 15–17) vẫn là một mốc người đọc phải biết.
+      if (from > 0 && component.componentType !== "fee_waiver") {
+        const note = component.conditionText?.trim();
+        steps.push({
+          text: note
+            ? note.charAt(0).toLocaleLowerCase("vi") + note.slice(1)
+            : `một điều kiện riêng ${periodOf(from, days, component.spendWindowText)}`,
+          period: null,
+        });
+      }
+      continue;
+    }
+    spendSteps += 1;
+    const to = from + days;
+    if (component.componentType === "monthly_spend") {
+      const per = usd(component.spendRequirement as number);
+      steps.push({
+        text: `chi ${per} mỗi chu kỳ sao kê, suốt ${component.repeatCount ?? 1} chu kỳ đầu`,
+        period: null,
+      });
+    } else {
+      const containsEarlier = windows.some((w) => w.from >= from && w.to <= to);
+      const afterAll = windows.length > 0 && windows.every((w) => w.to <= from);
+      const prefix = containsEarlier ? "tổng cộng " : afterAll ? "thêm " : "";
+      steps.push({
+        text: `chi ${prefix}${usd(needed)}`,
+        period: periodOf(from, days, component.spendWindowText),
+      });
+    }
+    windows.push({ from, to });
+  }
+  if (spendSteps === 0) return null;
+
+  const paidLater = ordered.some(
+    (component) => component.componentType === "anniversary" || component.windowStartsAfterDays > 0,
+  );
+  const keepCard = paidLater
+    ? " Phần bonus trả từ mốc kỷ niệm trở đi chỉ về khi bạn còn giữ thẻ tới lúc đó."
+    : "";
+  // Mọi mốc cùng một thời hạn (CIBC® Aventura®: cả hai "trong 4 kỳ sao kê đầu
+  // tiên") thì nói thời hạn MỘT lần ở cuối. Lặp lại y nguyên cụm đó sau mỗi
+  // con số làm câu đọc như máy đọc, và tệ hơn: nó trông như hai thời hạn khác
+  // nhau vừa tình cờ giống nhau.
+  const shared = steps[0].period;
+  const sharedPeriod =
+    shared !== null && steps.every((step) => step.period === shared) ? shared : null;
+  const parts = steps.map((step) =>
+    step.period === null || step.period === sharedPeriod ? step.text : `${step.text} ${step.period}`,
+  );
+  const tail = sharedPeriod === null ? "" : ` ${sharedPeriod}`;
+
+  if (parts.length === 1) {
+    // Một mốc chi mà vẫn còn phần trả muộn (thưởng gia hạn): nói đúng việc
+    // phải làm, không hứa "trọn".
+    return paidLater
+      ? `Mở thẻ này, rồi ${parts[0]}${tail}.${keepCard}`
+      : `Mở thẻ này, rồi ${parts[0]}${tail}, để nhận trọn welcome bonus.`;
+  }
+  const list = `${parts.slice(0, -1).join(", ")}, rồi ${parts[parts.length - 1]}`;
+  return `Mở thẻ này. Welcome bonus trả theo từng mốc: ${list}${tail}.${keepCard}`;
 }
 
 /**
@@ -339,6 +477,7 @@ function actionOf(
             .slice(0, 2)
             .map((row) => COMPONENT_STRENGTH[row.key]),
     minSpendPer90Days: slug === null ? null : (cards.facts.get(slug)?.minSpendPer90Days ?? null),
+    spendSentence: slug === null ? null : (cards.facts.get(slug)?.spendSentence ?? null),
     noCardReason: candidate.kind === "no_new_card" ? noCardReasonOf(candidate) : null,
     welcomeBonusBlocked: candidate.eligibility?.welcomeOfferBlocked === true,
   };
@@ -468,7 +607,7 @@ export function presentRun(
 ): ResultView | null {
   const result = record.outputSnapshot.results[goalIndex];
   if (result === undefined) return null;
-  const cards = lookup(record, offers);
+  const cards = lookup(record, dataset, offers);
   const runWarnings = [...result.warnings, ...record.outputSnapshot.warnings];
   const primary = actionOf(result.primaryAction, cards, new Set(), runWarnings);
   const primaryReasons = new Set(primary.reasons.map((row) => row.text));

@@ -55,6 +55,10 @@ type ComponentSeed = {
   cash?: number;
   spend?: number;
   windowDays?: number;
+  /** Thời hạn nói bằng lời điều khoản, khi `windowDays` chỉ là quy đổi gần
+   *  đúng ("4 kỳ sao kê đầu tiên" ≈ 120 ngày). Xem `OfferComponent.spendWindowText`.
+   *  Viết trọn cụm trạng ngữ, đúng dạng trang sẽ in: "trong 4 kỳ sao kê đầu tiên". */
+  windowText?: string;
   /** Cửa sổ mở ra sau bao nhiêu ngày kể từ lúc mở thẻ. Bỏ trống = mở ngay.
    *  Xem `OfferComponent.windowStartsAfterDays` — đây là chỗ phân biệt mốc
    *  "trong 12 tháng" (vẫn tính từ ngày mở thẻ) với mốc "ở tháng thứ 13". */
@@ -173,11 +177,24 @@ const OFFER_SEEDS: OfferSeed[] = [
     feeFirstYear: 0,
     components: [
       { type: "first_purchase", points: 15000 },
-      // "4 kỳ sao kê đầu tiên" ≈ 120 ngày. Là ƯỚC LƯỢNG: kỳ sao kê không phải
-      // 30 ngày và kỳ đầu thường ngắn hơn, nên con số này chỉ để so tương đối
-      // với sức chi của người dùng, không bao giờ đem ra trước mặt họ.
-      { type: "spend_threshold", points: 30000, spend: 3000, windowDays: 120 },
-      { type: "spend_threshold", points: 15000, spend: 5000, windowDays: 120 },
+      // "4 kỳ sao kê đầu tiên" ≈ 120 ngày. `windowDays` là ƯỚC LƯỢNG, chỉ để
+      // so tương đối với sức chi của người dùng; `windowText` là câu được đem
+      // ra trước mặt họ. $5,000 là tổng chi tích luỹ, đã gồm $3,000 ở mốc
+      // trước ("after $5,000 in net purchases" — Contentful, kiểm 17/09/2026).
+      {
+        type: "spend_threshold",
+        points: 30000,
+        spend: 3000,
+        windowDays: 120,
+        windowText: "trong 4 kỳ sao kê đầu tiên",
+      },
+      {
+        type: "spend_threshold",
+        points: 15000,
+        spend: 5000,
+        windowDays: 120,
+        windowText: "trong 4 kỳ sao kê đầu tiên",
+      },
       { type: "fee_waiver", cash: 139 },
     ],
   },
@@ -303,8 +320,21 @@ const OFFER_SEEDS: OfferSeed[] = [
     feeFirstYear: 0,
     components: [
       { type: "first_purchase", points: 15000 },
-      { type: "spend_threshold", points: 30000, spend: 3000, windowDays: 120 },
-      { type: "spend_threshold", points: 15000, spend: 5000, windowDays: 120 },
+      // Cùng điều khoản với bản Gold ở trên — xem ghi chú ở đó.
+      {
+        type: "spend_threshold",
+        points: 30000,
+        spend: 3000,
+        windowDays: 120,
+        windowText: "trong 4 kỳ sao kê đầu tiên",
+      },
+      {
+        type: "spend_threshold",
+        points: 15000,
+        spend: 5000,
+        windowDays: 120,
+        windowText: "trong 4 kỳ sao kê đầu tiên",
+      },
       { type: "fee_waiver", cash: 139 },
     ],
   },
@@ -688,6 +718,7 @@ export const OFFER_COMPONENTS: OfferComponent[] = OFFER_SEEDS.flatMap((seed) =>
     cashAmount: c.cash ?? null,
     spendRequirement: c.spend ?? null,
     spendWindowDays: c.windowDays ?? null,
+    spendWindowText: c.windowText ?? null,
     windowStartsAfterDays: c.startsAfterDays ?? 0,
     repeatCount: c.repeat ?? null,
     conditionText: c.note ?? null,
