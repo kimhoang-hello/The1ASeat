@@ -219,7 +219,10 @@ export const REGION_LABEL: Record<TripRegion, string> = {
   CANADA_US: "trong Canada / Mỹ",
   EUROPE: "châu Âu",
   JAPAN: "Nhật Bản",
-  EAST_ASIA: "Đông Á (Hàn, Đài, Hong Kong…)",
+  // Kê thẳng bốn điểm đến thay vì "Đông Á": vùng này CÓ Trung Quốc, và cái
+  // tên cũ giấu mất điều đó — Hong Kong còn là chỗ đẻ ra con số rẻ nhất của cả
+  // vùng (Asia Miles® 27,000 economy, vì HKG là hub của chính Cathay).
+  EAST_ASIA: "Hàn – Đài – Trung – Hong Kong",
   SEA_VIETNAM: "Việt Nam / Đông Nam Á",
 };
 
@@ -613,7 +616,7 @@ export const GOAL_OPTIONS: ChoiceOption[] = [
   { value: "next_card", label: "Tìm thẻ nên mở tiếp theo", hint: "Kể cả khi câu trả lời là chưa nên mở thẻ nào" },
   { value: "trip:SEA_VIETNAM", label: "Gom điểm bay về Việt Nam" },
   { value: "trip:JAPAN", label: "Gom điểm bay đi Nhật" },
-  { value: "trip:EAST_ASIA", label: "Gom điểm bay đi Đông Á" },
+  { value: "trip:EAST_ASIA", label: "Gom điểm bay đi Hàn – Đài – Trung – Hong Kong" },
   { value: "trip:EUROPE", label: "Gom điểm bay đi châu Âu" },
   { value: "trip:CANADA_US", label: "Gom điểm bay trong Canada / Mỹ" },
   { value: "earn_points", label: "Tích thêm điểm từ chi tiêu hằng ngày" },
