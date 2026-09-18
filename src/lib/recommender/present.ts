@@ -255,8 +255,15 @@ function lookup(
 
 const usd = (amount: number) => `$${amount.toLocaleString("en-US")}`;
 
-/** Thời hạn một cửa sổ, nói theo cách điều khoản nói. */
-function periodOf(from: number, days: number): string {
+/**
+ * Thời hạn một cửa sổ, nói theo cách điều khoản nói.
+ *
+ * `spendWindowText` thắng con số ngày mỗi khi có: số ngày ở những mốc đó là
+ * quy đổi của engine ("4 kỳ sao kê đầu tiên" → 120 ngày), và in quy đổi ra
+ * trang là đúng cái lỗi câu này sinh ra để sửa.
+ */
+function periodOf(from: number, days: number, text: string | null = null): string {
+  if (text !== null && text.trim().length > 0) return text.trim();
   if (from === 0) {
     return days % 365 === 0 ? `trong ${(days / 365) * 12} tháng đầu` : `trong ${days} ngày đầu`;
   }
@@ -285,7 +292,8 @@ function periodOf(from: number, days: number): string {
 export function spendSentenceOf(components: readonly OfferComponent[]): string | null {
   const ordered = [...components].sort((a, b) => a.sequence - b.sequence);
   const windows: { from: number; to: number }[] = [];
-  const steps: string[] = [];
+  /** `period` tách riêng để gộp được khi mọi mốc cùng một thời hạn. */
+  const steps: { text: string; period: string | null }[] = [];
   let spendSteps = 0;
   for (const component of ordered) {
     const from = component.windowStartsAfterDays;
@@ -296,24 +304,32 @@ export function spendSentenceOf(components: readonly OfferComponent[]): string |
       // ở tháng 15–17) vẫn là một mốc người đọc phải biết.
       if (from > 0 && component.componentType !== "fee_waiver") {
         const note = component.conditionText?.trim();
-        steps.push(
-          note ? note.charAt(0).toLocaleLowerCase("vi") + note.slice(1) : `một điều kiện riêng ${periodOf(from, days)}`,
-        );
+        steps.push({
+          text: note
+            ? note.charAt(0).toLocaleLowerCase("vi") + note.slice(1)
+            : `một điều kiện riêng ${periodOf(from, days, component.spendWindowText)}`,
+          period: null,
+        });
       }
       continue;
     }
     spendSteps += 1;
     const to = from + days;
-    let amount: string;
     if (component.componentType === "monthly_spend") {
-      amount = `${usd(component.spendRequirement as number)} mỗi chu kỳ sao kê, suốt ${component.repeatCount ?? 1} chu kỳ đầu`;
+      const per = usd(component.spendRequirement as number);
+      steps.push({
+        text: `chi ${per} mỗi chu kỳ sao kê, suốt ${component.repeatCount ?? 1} chu kỳ đầu`,
+        period: null,
+      });
     } else {
       const containsEarlier = windows.some((w) => w.from >= from && w.to <= to);
       const afterAll = windows.length > 0 && windows.every((w) => w.to <= from);
       const prefix = containsEarlier ? "tổng cộng " : afterAll ? "thêm " : "";
-      amount = `${prefix}${usd(needed)} ${periodOf(from, days)}`;
+      steps.push({
+        text: `chi ${prefix}${usd(needed)}`,
+        period: periodOf(from, days, component.spendWindowText),
+      });
     }
-    steps.push(`chi ${amount}`);
     windows.push({ from, to });
   }
   if (spendSteps === 0) return null;
@@ -324,15 +340,27 @@ export function spendSentenceOf(components: readonly OfferComponent[]): string |
   const keepCard = paidLater
     ? " Phần bonus trả từ mốc kỷ niệm trở đi chỉ về khi bạn còn giữ thẻ tới lúc đó."
     : "";
-  if (steps.length === 1) {
+  // Mọi mốc cùng một thời hạn (CIBC® Aventura®: cả hai "trong 4 kỳ sao kê đầu
+  // tiên") thì nói thời hạn MỘT lần ở cuối. Lặp lại y nguyên cụm đó sau mỗi
+  // con số làm câu đọc như máy đọc, và tệ hơn: nó trông như hai thời hạn khác
+  // nhau vừa tình cờ giống nhau.
+  const shared = steps[0].period;
+  const sharedPeriod =
+    shared !== null && steps.every((step) => step.period === shared) ? shared : null;
+  const parts = steps.map((step) =>
+    step.period === null || step.period === sharedPeriod ? step.text : `${step.text} ${step.period}`,
+  );
+  const tail = sharedPeriod === null ? "" : ` ${sharedPeriod}`;
+
+  if (parts.length === 1) {
     // Một mốc chi mà vẫn còn phần trả muộn (thưởng gia hạn): nói đúng việc
     // phải làm, không hứa "trọn".
     return paidLater
-      ? `Mở thẻ này, rồi ${steps[0]}.${keepCard}`
-      : `Mở thẻ này, rồi ${steps[0]}, để nhận trọn welcome bonus.`;
+      ? `Mở thẻ này, rồi ${parts[0]}${tail}.${keepCard}`
+      : `Mở thẻ này, rồi ${parts[0]}${tail}, để nhận trọn welcome bonus.`;
   }
-  const list = `${steps.slice(0, -1).join(", ")}, rồi ${steps[steps.length - 1]}`;
-  return `Mở thẻ này. Welcome bonus trả theo từng mốc: ${list}.${keepCard}`;
+  const list = `${parts.slice(0, -1).join(", ")}, rồi ${parts[parts.length - 1]}`;
+  return `Mở thẻ này. Welcome bonus trả theo từng mốc: ${list}${tail}.${keepCard}`;
 }
 
 /** Dòng điểm nào đưa `NO_NEW_CARD` lên đầu — bảng điểm riêng của nó ở `rank.ts`. */

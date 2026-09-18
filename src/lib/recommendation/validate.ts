@@ -1094,6 +1094,22 @@ export function validateDataset(
         });
       }
     }
+    // Lời điều khoản không thay được con số: engine vẫn phải có ngày để quy về
+    // 90 ngày, và một mốc chỉ có chữ là một mốc engine không đọc được.
+    if (component.spendWindowText !== null && component.spendWindowDays === null) {
+      issues.push({
+        level: "error",
+        entity: "offer_components",
+        message: `${component.id}: có spendWindowText nhưng không có spendWindowDays để quy đổi`,
+      });
+    }
+    if (component.spendWindowText !== null && component.spendWindowText.trim() === "") {
+      issues.push({
+        level: "error",
+        entity: "offer_components",
+        message: `${component.id}: spendWindowText rỗng — để null nếu số ngày chính là điều khoản`,
+      });
+    }
     if (component.windowStartsAfterDays < 0) {
       issues.push({
         level: "error",

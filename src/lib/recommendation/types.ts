@@ -616,6 +616,20 @@ export interface OfferComponent {
   spendRequirement: number | null;
   spendWindowDays: number | null;
   /**
+   * Thời hạn của mốc này NÓI BẰNG LỜI ĐIỀU KHOẢN — chỉ đặt khi
+   * `spendWindowDays` là một QUY ĐỔI gần đúng, không phải con số nhà phát hành
+   * viết ra.
+   *
+   * CIBC® Aventura® đòi chi "trong 4 kỳ sao kê đầu tiên". Kỳ sao kê không dài
+   * 30 ngày và kỳ đầu thường ngắn hơn, nên 120 ngày là con số engine tự quy ra
+   * để so với sức chi 3 tháng — đủ tốt cho một phép so, nhưng đem in cho người
+   * đọc là bịa ra một điều khoản ngân hàng không hề viết. Hai nghĩa đó phải
+   * nằm ở hai trường: một cái để TÍNH, một cái để NÓI.
+   *
+   * `null` = số ngày chính là điều khoản, trang in thẳng được.
+   */
+  spendWindowText: string | null;
+  /**
    * Cửa sổ chi tiêu của thành phần này MỞ RA sau bao nhiêu ngày kể từ lúc mở
    * thẻ. `0` = mở ngay.
    *

@@ -163,3 +163,20 @@ test("offer nối tiếp nhau theo thời gian là hợp lệ; chồng nhau là 
     "hai offer chồng thời gian phải là lỗi",
   );
 });
+
+test("mốc có spendWindowText thì vẫn phải có số ngày để engine quy đổi", () => {
+  // Hai trường, hai việc: `spendWindowDays` để TÍNH, `spendWindowText` để NÓI.
+  // Chỉ có chữ là một mốc engine không đọc được; `validateDataset` chặn ca đó,
+  // bài này canh chính bộ dữ liệu đang dùng.
+  const withText = data.offerComponents.filter((row) => row.spendWindowText !== null);
+  assert.ok(withText.length > 0, "không mốc nào khai lời điều khoản — bài này đang kiểm rỗng");
+  for (const row of withText) {
+    assert.notEqual(row.spendWindowDays, null, `${row.id}: có chữ mà không có ngày`);
+    assert.ok((row.spendWindowText as string).trim().length > 0, `${row.id}: chữ rỗng`);
+    assert.equal(
+      row.spendWindowText,
+      (row.spendWindowText as string).trim(),
+      `${row.id}: thừa khoảng trắng — chuỗi này ghép thẳng vào câu trên trang`,
+    );
+  }
+});

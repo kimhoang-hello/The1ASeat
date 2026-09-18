@@ -395,3 +395,33 @@ test("câu mốc chi trên trang chỉ in số tiền có thật trong điều k
   }
   assert.ok(checked > 0 && multi > 0, "không ca nào chạm tới offer nhiều mốc — bài này đang kiểm rỗng");
 });
+
+test("mốc khai lời điều khoản thì trang nói lời đó, KHÔNG nói số ngày quy đổi", () => {
+  // CIBC® Aventura®: "4 kỳ sao kê đầu tiên". 120 ngày là con số engine tự quy
+  // ra để so với sức chi — in nó là bịa một điều khoản ngân hàng không viết.
+  for (const slug of ["cibc-aventura-visa-infinite", "cibc-aventura-gold-visa"]) {
+    const { components } = componentsOf(slug);
+    const spoken = components.filter((row) => row.spendWindowText !== null);
+    assert.equal(spoken.length, 2, `${slug}: dữ liệu đổi — bài này cần mốc khai lời điều khoản`);
+    const sentence = spendSentenceOf(components);
+    assert.ok(sentence !== null);
+    assert.ok(sentence.includes("trong 4 kỳ sao kê đầu tiên"), sentence);
+    assert.ok(!sentence.includes("120 ngày"), sentence);
+    assert.ok(sentence.includes("tổng cộng $5,000"), sentence);
+  }
+
+  // Và luật chung: không mốc nào khai lời điều khoản mà trang vẫn in số ngày
+  // của nó.
+  for (const offer of DATA.offers) {
+    const components = DATA.offerComponents.filter((row) => row.offerId === offer.id);
+    const sentence = spendSentenceOf(components);
+    if (sentence === null) continue;
+    for (const row of components) {
+      if (row.spendWindowText === null || row.spendRequirement === null) continue;
+      assert.ok(
+        !sentence.includes(`${row.spendWindowDays} ngày`),
+        `${offer.id}: in số ngày quy đổi thay vì "${row.spendWindowText}" — ${sentence}`,
+      );
+    }
+  }
+});
