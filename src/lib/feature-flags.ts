@@ -76,8 +76,10 @@ export const CATCH_THE_POINTS_PUBLISHED = false;
  * chung là kết quả của người này hiện ra cho người kia. Kiểm luôn app vào được
  * MySQL (`recoDatabaseFromEnv`) — không có kho thì trang chỉ hiện "tạm nghỉ".
  *
+ * BẬT 17/09/2026 — bản Beta. User chốt công bố kèm nhãn Beta, chỉnh dần sau.
+ *
  * BẬT CỜ MỞ BA NGÕ CÙNG LÚC: dòng "Gợi ý thẻ" trong dropdown Thẻ tín dụng, dải
  * đầu trang `/credit-cards`, và một dòng ở bước 2 của `/bat-dau`. Cả ba mang
  * nhãn Beta, và trang tự đổi dải "bản nháp" thành dải Beta cho người đọc.
  */
-export const RECOMMENDER_PUBLISHED = false;
+export const RECOMMENDER_PUBLISHED = true;
