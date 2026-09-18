@@ -104,7 +104,7 @@ export default async function RecommenderPage({ searchParams }: PageProps) {
         eyebrow={nav("creditCards").toUpperCase()}
         badge={<BetaBadge />}
         title="Gợi ý thẻ cho hoàn cảnh của bạn"
-        subtitle="Trả lời vài câu hỏi để mình đưa gợi ý cho bạn về thẻ nào tiếp theo phù hợp với bạn."
+        subtitle="Trả lời vài câu hỏi để mình đưa gợi ý về thẻ nào tiếp theo phù hợp với bạn."
       />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
