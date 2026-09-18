@@ -35,7 +35,7 @@ export default async function TransferBonusesPage() {
 
   return (
     <>
-      <PageHeader eyebrow={bonuses_t("eyebrow")} title={bonuses_t("title")} />
+      <PageHeader eyebrow={bonuses_t("pageEyebrow")} title={bonuses_t("title")} />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-page overflow-hidden rounded-2xl border border-border">

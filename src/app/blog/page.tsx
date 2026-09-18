@@ -70,7 +70,7 @@ export default async function BlogPage({
   return (
     <>
       <JsonLd data={jsonLd} />
-      <PageHeader eyebrow={posts_t("eyebrow")} title={posts_t("title")} />
+      <PageHeader eyebrow={posts_t("pageEyebrow")} title={posts_t("title")} />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-page">

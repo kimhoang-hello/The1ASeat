@@ -109,10 +109,11 @@
     "noValueLabel": "Không có",
     "yes": "Có",
     "no": "Không",
-    "emptyCta": "Xem tất cả thẻ"
+    "emptyCta": "Xem tất cả thẻ",
+    "pageEyebrow": "THẺ TÍN DỤNG"
   },
   "bankAccounts": {
-    "eyebrow": "TÀI KHOẢN NGÂN HÀNG",
+    "eyebrow": "NGÂN HÀNG",
     "draftNotice": "Trang nháp — chưa công bố. Số liệu đang được rà lại và sẽ còn thêm ngân hàng.",
     "title": "Tài Khoản Ngân Hàng Ở Canada",
     "subtitle": "So sánh tài khoản chi tiêu và tiết kiệm: welcome bonus đang chạy, monthly fee, cách được miễn phí và lãi suất.",
@@ -174,7 +175,8 @@
     "offerCtaCreditCards": "Xem elevated offer đang chạy",
     "offerCtaBankAccounts": "Xem tài khoản ngân hàng đang có bonus",
     "cardInPost": "THẺ NHẮC TỚI TRONG BÀI",
-    "tocTitle": "Trong bài này"
+    "tocTitle": "Trong bài này",
+    "pageEyebrow": "BLOG"
   },
   "bonuses": {
     "eyebrow": "CẬP NHẬT THƯỜNG XUYÊN",
@@ -184,7 +186,8 @@
     "partner": "Đối tác",
     "expires": "Hết hạn",
     "browsing": "Đang xem {shown}/{total} offer",
-    "emptyCta": "Xem tỷ lệ transfer thường ngày"
+    "emptyCta": "Xem tỷ lệ transfer thường ngày",
+    "pageEyebrow": "MILES & POINTS"
   },
   "calculator": {
     "eyebrow": "MILES & POINTS",
@@ -315,7 +318,8 @@
     "breadcrumbCatchThePoints": "Mini-game: Catch The Points",
     "bestCardsTitle": "Các thẻ tốt nhất Canada",
     "bestCardsDescription": "Thẻ tín dụng tốt nhất Canada theo từng mục đích: offers đang chạy, travel, Aeroplan® và thẻ cho người mới.",
-    "breadcrumbBestCards": "Các thẻ tốt nhất"
+    "breadcrumbBestCards": "Các thẻ tốt nhất",
+    "categoryEyebrow": "BLOG"
   },
   "awardCharts": {
     "eyebrow": "MILES & POINTS",
@@ -377,7 +381,7 @@
     "feederOnlyShort": "Cần nối chuyến nội địa"
   },
   "compare": {
-    "eyebrow": "MILES & POINTS",
+    "eyebrow": "THẺ TÍN DỤNG",
     "title": "So Sánh Thẻ",
     "subtitle": "Chọn hai hoặc ba thẻ để đặt cạnh nhau: welcome bonus, annual fee, rebate và quyền lợi, cùng một hàng cho dễ so.",
     "metaTitle": "So sánh thẻ tín dụng Canada cạnh nhau",
@@ -467,7 +471,7 @@
     "routerNewcomerNote": "Chưa có credit history thì bắt đầu từ đâu"
   },
   "bankCompare": {
-    "eyebrow": "MILES & POINTS",
+    "eyebrow": "NGÂN HÀNG",
     "title": "So Sánh Tài Khoản",
     "subtitle": "Chọn hai hoặc ba tài khoản để đặt cạnh nhau: welcome bonus, monthly fee và cách được miễn, lãi suất, rebate và quyền lợi.",
     "metaTitle": "So sánh tài khoản ngân hàng Canada cạnh nhau",
@@ -530,7 +534,7 @@
     "relatedTitle": "Bài viết liên quan"
   },
   "awardRoutes": {
-    "eyebrow": "BAY VỀ VIỆT NAM",
+    "eyebrow": "MILES & POINTS",
     "hubTitle": "Bay từ Canada về Việt Nam bằng điểm",
     "hubSubtitle": "Mười hai chặng, sáu chương trình, số điểm thật — tra trước khi chuyển điểm đi đâu.",
     "hubIntro1": "Câu hỏi hầu như ai cũng hỏi trước tiên là \"về Việt Nam tốn bao nhiêu điểm\". Câu trả lời thật thì phụ thuộc ba thứ: bạn bay từ thành phố nào ở Canada, về sân bay nào, và bạn đang giữ loại điểm gì. Mỗi trang dưới đây trả lời trọn cả ba cho đúng một chặng.",
@@ -589,7 +593,7 @@
     "noteFiction": "Tên chương trình, phí và devaluation trong game chỉ để chơi cho vui. Số liệu thật nằm ở các công cụ bên dưới."
   },
   "bestCards": {
-    "eyebrow": "CÁC THẺ TỐT NHẤT",
+    "eyebrow": "THẺ TÍN DỤNG",
     "hubTitle": "Các thẻ tốt nhất Canada",
     "hubSubtitle": "Bốn câu hỏi hay được hỏi nhất, mỗi câu một trang trả lời — thẻ nào, vì sao, và hợp với ai.",
     "hubIntro1": "Trang Thẻ tín dụng liệt kê mọi thẻ Ghế 1A đang theo dõi và để bạn tự lọc. Những trang dưới đây làm việc ngược lại: mình chọn sẵn, nói rõ vì sao chọn và ai thì không nên chọn.",

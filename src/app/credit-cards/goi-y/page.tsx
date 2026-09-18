@@ -96,7 +96,7 @@ export default async function RecommenderPage({ searchParams }: PageProps) {
       </p>
       <JsonLd data={jsonLd} />
       <PageHeader
-        eyebrow="Công cụ · Beta"
+        eyebrow="THẺ TÍN DỤNG · BETA"
         title="Gợi ý thẻ cho hoàn cảnh của bạn"
         subtitle="Trả lời vài câu. Mình chỉ hỏi những gì thật sự đổi được kết quả, và nói thẳng khi câu trả lời là chưa nên mở thẻ nào."
       />
