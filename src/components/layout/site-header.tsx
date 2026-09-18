@@ -28,6 +28,7 @@ import {
   type Icon,
 } from "@phosphor-icons/react";
 import { SiteSearch } from "@/components/layout/site-search";
+import { BetaBadge } from "@/components/ui/beta-badge";
 import { COMPARE_PATH } from "@/lib/card-compare";
 import { RECOMMENDER_PATH } from "@/lib/recommender/path";
 // Từ `bank-compare-path`, KHÔNG phải `bank-compare`: header là Client
@@ -48,6 +49,8 @@ type NavLink = {
   label: string;
   description: string;
   icon: Icon;
+  /** Dòng của một trang còn là bản thử — hiện nhãn BETA cạnh tên. */
+  beta?: boolean;
   /**
    * Dòng này còn sáng khi người đọc đang ở một trang CON của nó.
    *
@@ -202,11 +205,12 @@ function MenuItem({
       </span>
       <span className="min-w-0">
         <span
-          className={`block font-semibold ${compact ? "text-sm" : "text-[0.9375rem]"} ${
+          className={`flex items-center gap-2 font-semibold ${compact ? "text-sm" : "text-[0.9375rem]"} ${
             active ? "text-primary" : "text-foreground"
           }`}
         >
           {link.label}
+          {link.beta && <BetaBadge className={active ? "bg-primary/10 text-primary" : ""} />}
         </span>
         {!compact && (
           <span className="block text-xs text-muted-foreground">{link.description}</span>
@@ -445,6 +449,7 @@ export function SiteHeader() {
           label: nav("cardRecommender"),
           description: tMenu("cardRecommender"),
           icon: Compass,
+          beta: true,
         },
       ]
     : [];
