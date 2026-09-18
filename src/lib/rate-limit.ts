@@ -172,3 +172,27 @@ export function clientIp(request: Request): string {
 export function emailKey(email: string): string {
   return createHash("sha256").update(EMAIL_SALT).update(email.toLowerCase()).digest("hex");
 }
+
+/**
+ * Body khai `Content-Length` lớn hơn `maxBytes` — hỏi TRƯỚC khi gọi
+ * `request.json()`.
+ *
+ * Ba route công khai (`/api/contact`, `/api/subscribe`, `/api/game-record`)
+ * đều gọi `request.json()` mà không có trần kích thước nào — Route Handler
+ * của Next (khác `bodyParser.sizeLimit` của Pages Router cũ) không tự đặt
+ * trần body. Payload hợp lệ của cả ba đều dưới vài chục KB, nên một body vài
+ * chục MB không phục vụ mục đích nào ngoài buộc server tốn bộ nhớ/CPU đọc và
+ * parse nó — với `/api/game-record`, việc đó xảy ra TRƯỚC cả hai lớp rate
+ * limit (xem chú thích ở route đó), nên ở route này đây là lớp chặn DUY NHẤT.
+ *
+ * CHỈ chặn được client trung thực khai đúng `Content-Length`. Một client cố ý
+ * dùng chunked encoding (không khai header đó) hoặc khai sai vẫn gửi được một
+ * body lớn — chặn triệt để cần đọc `request.body` bằng reader có trần byte
+ * thật sự, cùng loại việc AGENTS.md đã ghi là "cần một phiên riêng" cho
+ * `api/revalidate`. Đây là lớp rẻ, chặn ca phổ biến nhất, không phải lớp
+ * cuối cùng.
+ */
+export function bodyTooLarge(request: Request, maxBytes: number): boolean {
+  const length = Number(request.headers.get("content-length"));
+  return Number.isFinite(length) && length > maxBytes;
+}

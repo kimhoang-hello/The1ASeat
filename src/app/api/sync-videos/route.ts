@@ -386,29 +386,54 @@ function slugify(title: string, maxLength = MAX_SLUG): string {
 }
 
 /**
- * Id đó đã có ai đó dùng chưa.
+ * Có bài viết/video nào đang giữ đúng slug này chưa — hỏi bằng GIÁ TRỊ trường
+ * `slug`, không suy từ quy ước đặt `sys.id`.
  *
- * Vòng lọc trùng ở trên so theo `videoUrl`, nên nó KHÔNG thấy những entry
- * không có trường đó — tức là mọi bài viết chữ. Một video tên "Know Your
- * Minimum" trùng slug với bài viết cùng tên là đủ để `PUT` trả 409 và video
- * ấy không bao giờ lên được site, dù job có chạy lại bao nhiêu lần. Hỏi trước
- * một lượt (chỉ tốn thêm một request, và chỉ khi thật sự sắp tạo entry mới)
- * rồi đổi sang id mang videoId thì lượt sau tự đi tiếp.
+ * Bản trước hỏi `entries/post-<slug>` (coi id `post-<slug>` bận nghĩa là slug
+ * đó bận), dựa trên giả định MỌI entry blogPost đều mang `sys.id` theo đúng
+ * quy ước của chính job này. Giả định đó sai với phần lớn bài viết trên site:
+ * kiểm tại nguồn 16/09/2026, 23/43 bài (viết tay qua Contentful UI, `sys.id`
+ * do Contentful tự sinh hoặc trùng slug LÚC TẠO) có `sys.id` KHÔNG khớp
+ * `post-<slug hiện tại>` — một số bài còn đổi slug sau khi tạo, mà `sys.id`
+ * thì không đổi được nên hai chuỗi càng lệch xa nhau theo thời gian. Với 23
+ * bài đó, `entries/post-<slug>` luôn trả 404 dù slug đã có người dùng, nên
+ * `uniqueSlug` tưởng slug còn trống và job đi tạo entry mới — bị Contentful
+ * chặn ở bước ghi vì `slug` là "Short text (unique)" (xem CONTENTFUL.md),
+ * nhưng job đỏ vì một lý do người trực không đoán được từ thông báo cũ.
+ * Hỏi thẳng bằng `fields.slug=<slug>` bắt đúng MỌI entry đang giữ giá trị đó,
+ * bất kể `sys.id` là gì — kể cả những entry job này từng tạo ra (chúng luôn
+ * tự đặt `fields.slug` khớp phần slug trong `sys.id`, nên vẫn được bắt như cũ).
+ *
+ * CMA trả bản DRAFT, không phải bản đang phục vụ (xem AGENTS.md) — nếu một
+ * bài đang publish với slug X mà draft CHƯA publish đã đổi field đó sang Y,
+ * hàm này sẽ không thấy X qua CMA dù CDA vẫn đang phục vụ nó. Chấp nhận: nếu
+ * điều đó xảy ra đúng lúc, `slugTaken` sẽ trả `false` sai, nhưng bước GHI ở
+ * dưới vẫn bị chính "Short text (unique)" của Contentful chặn (nó xét MỌI
+ * entry, không riêng bản published) — job đỏ như trước khi có hàm này, không
+ * âm thầm tạo entry trùng. Đóng hẳn khe này cần thêm một lượt đọc CDA và gộp
+ * hai nguồn, một việc rộng hơn phạm vi lượt vá này.
  */
-async function entryExists(
-  entryId: string,
-  cmaBase: string,
-  authHeaders: Record<string, string>,
-): Promise<boolean> {
+async function slugTaken(slug: string, cmaBase: string, authHeaders: Record<string, string>): Promise<boolean> {
   // `fetchWithRetry` chứ không phải `fetch` trần, VÌ ĐÂY LÀ GET. Nó không ghi
   // gì nên chạy lại là vô hại, và ba lượt thử vốn đã có sẵn đúng cho loại lỗi
   // thoáng qua: một cái 429/503 hoặc một lượt hết giờ đủ làm cả job đỏ trong
   // khi lượt sau đã trả 200. Khác hẳn hai lượt PUT ở `createEntry` — xem chú
   // thích ở đó, chúng CỐ Ý chỉ chạy một lượt.
-  const res = await fetchWithRetry(`${cmaBase}/entries/${entryId}`, { headers: authHeaders }, "check entry");
-  if (res.status === 404) return false;
-  if (!res.ok) throw new Error(`check entry failed: ${res.status} ${await res.text()}`);
-  return true;
+  const res = await fetchWithRetry(
+    `${cmaBase}/entries?content_type=blogPost&fields.slug=${encodeURIComponent(slug)}&limit=1`,
+    { headers: authHeaders },
+    "check slug",
+  );
+  if (!res.ok) throw new Error(`check slug failed: ${res.status} ${await res.text()}`);
+  const data = (await res.json()) as { items?: unknown[] };
+  // Response 200 nhưng thiếu hẳn `items` (hoặc kiểu sai) là dữ liệu HỎNG, không
+  // phải "chưa ai dùng slug này" — gộp hai ca đó thì một response méo mở khoá
+  // cho job tạo entry trùng, đúng lỗi mà hàm này sinh ra để chặn. Ném để đường
+  // gọi fail closed, cùng nguyên tắc `fetchVideoUrlsByState` đã áp cho `total`.
+  if (!Array.isArray(data.items)) {
+    throw new Error(`check slug: response không có items hợp lệ (${JSON.stringify(data.items)})`);
+  }
+  return data.items.length > 0;
 }
 
 const HOTEL_KEYWORDS = [
@@ -445,20 +470,21 @@ async function uniqueSlug(
   authHeaders: Record<string, string>,
 ): Promise<string> {
   const base = slugify(video.title);
-  if (!(await entryExists(`${ENTRY_ID_PREFIX}${base}`, cmaBase, authHeaders))) return base;
+  if (!(await slugTaken(base, cmaBase, authHeaders))) return base;
 
   const suffix = `-${video.videoId}`;
   const stem = base.slice(0, MAX_SLUG - suffix.length).replace(/-+$/g, "");
   const fallback = `${stem}${suffix}`;
-  // Phải hỏi cả id dự phòng, không chỉ id gốc. `videoId` là duy nhất theo
-  // video nên id này gần như chắc chắn trống — nhưng "gần như" mà không kiểm
-  // thì lượt PUT vẫn 409 và job đỏ mãi, đúng cái vòng lặp mà hàm này sinh ra
-  // để cắt. Nếu nó cũng bận thì không còn tên nào tự nghĩ ra được: ném kèm
-  // đúng hai id đã thử, để người trực biết phải xoá hoặc đổi cái nào.
-  if (await entryExists(`${ENTRY_ID_PREFIX}${fallback}`, cmaBase, authHeaders)) {
+  // Phải hỏi cả slug dự phòng, không chỉ slug gốc. `videoId` là duy nhất theo
+  // video nên slug này gần như chắc chắn trống — nhưng "gần như" mà không
+  // kiểm thì lượt ghi vẫn bị Contentful chặn vì trùng `slug` và job đỏ mãi,
+  // đúng cái vòng lặp mà hàm này sinh ra để cắt. Nếu nó cũng bận thì không còn
+  // tên nào tự nghĩ ra được: ném kèm đúng hai slug đã thử, để người trực biết
+  // phải xoá hoặc đổi cái nào.
+  if (await slugTaken(fallback, cmaBase, authHeaders)) {
     throw new Error(
-      `cả hai id đều đã có trong Contentful: "${ENTRY_ID_PREFIX}${base}" và ` +
-        `"${ENTRY_ID_PREFIX}${fallback}" — xoá hoặc đổi slug entry đang chiếm chỗ`,
+      `cả hai slug đều đã có người dùng trong Contentful: "${base}" và ` +
+        `"${fallback}" — xoá hoặc đổi slug entry đang chiếm chỗ`,
     );
   }
   return fallback;

@@ -55,8 +55,12 @@ export const VIETNAM_ROUTES_PUBLISHED = true;
  * Bật cờ là công bố: mục hiện trong menu Miles & Points (cả desktop lẫn
  * mobile), vào sitemap, vào ô tìm kiếm, `noindex` được gỡ và dải báo nháp biến
  * mất — tất cả cùng một lúc, không cần sửa chỗ nào khác.
+ *
+ * **Tắt lại 17/09/2026** theo yêu cầu tác giả, và chặn hẳn: khác các cờ khác,
+ * cờ này tắt là trang, file tĩnh `/games/catch-the-points/*` và
+ * `/api/game-record` đều trả 404 — không vào được kể cả bằng URL trực tiếp.
  */
-export const CATCH_THE_POINTS_PUBLISHED = true;
+export const CATCH_THE_POINTS_PUBLISHED = false;
 
 /**
  * Công cụ gợi ý thẻ (`/credit-cards/goi-y`) — mặt trước của recommendation

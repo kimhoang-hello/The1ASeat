@@ -1736,3 +1736,97 @@ lúc dựng. Sau khi tạo một environment mới, luôn `gh secret list --env 
   trong text) trong khi thực tế cả hai đều giảm (mũi tên đỏ) — chỉ phát hiện
   ra khi Codex tính chéo `312/331` ra số âm và mình đi zoom lại ảnh gốc để
   xác nhận màu mũi tên.
+
+## Kiểm toàn diện định kỳ 16/09/2026 — đừng đề xuất lại
+
+Mọi gate xanh (lint, tsc, build, 10 audit, 3 test suite, `npm audit` 0 lỗ
+hổng) trước khi Codex rà. `node_modules` thiếu `mysql2` sau merge Phase 5 làm
+`tsc` đỏ giả — `npm install` là đủ, không phải lỗi code.
+
+**`audit:trademarks` báo giả 26 chỗ vì một comment bị ngắt dòng** — "Asia" cuối
+dòng, "Miles®)" đầu dòng sau trong `src/lib/recommendation/engine.ts`, script
+học nhầm "Miles" đứng một mình là thương hiệu (cùng lớp lỗi đã ghi 09/09/2026).
+Đã nối lại dòng, và tiện tay thêm ® vào hai chuỗi test còn thiếu
+(`job-retry.test.ts`, `acceptance.test.ts`) — cả hai chỉ là chuỗi mô tả, không
+ảnh hưởng logic đang kiểm.
+
+**Codex rà theo thứ tự hậu quả, tìm 3 lỗi thật — cả ba đã vá, một cái cần vá
+lại sau khi chính Codex bác bản vá đầu:**
+
+- **`sync-videos`: `uniqueSlug` giả định SAI rằng mọi entry blogPost mang
+  `sys.id` theo quy ước `post-<slug>` của chính job này.** Kiểm tại nguồn
+  16/09/2026 qua CMA thật: **23/43 bài (53%) không khớp** — phần lớn là bài
+  viết tay qua Contentful UI, `sys.id` do Contentful tự sinh hoặc trùng slug
+  LÚC TẠO rồi sau đó tác giả đổi slug (mà `sys.id` không đổi được nên hai
+  chuỗi lệch dần). Với 23 bài đó, `entries/post-<slug>` luôn trả 404 dù slug
+  đã có người dùng — `uniqueSlug` tưởng còn trống, job đi tạo entry mới, bị
+  Contentful chặn ở bước ghi vì `slug` là "Short text (unique)" (xem
+  CONTENTFUL.md), và job đỏ vì lý do người trực không đoán được từ thông báo
+  cũ. Đã đo trực tiếp bằng CMA thật trước và sau khi vá (slug
+  `asia-miles-transfer-bonus-15-rbc-avion`, `sys.id` trùng hệt slug không có
+  tiền tố `post-`): bản cũ trả `entryExists("post-...")===false` (SAI), bản vá
+  `slugTaken(...)===true` (ĐÚNG). Sửa bằng cách hỏi thẳng
+  `fields.slug=<slug>` qua CMA thay vì suy từ `sys.id` — bắt đúng MỌI entry
+  đang giữ giá trị đó, kể cả những entry job này từng tạo (chúng luôn tự đặt
+  `fields.slug` khớp phần slug trong `sys.id`, nên vẫn được bắt như cũ, không
+  hồi quy ca gốc).
+  **Vòng Codex bác bản vá bắt được một lỗi fail-open thật trong bản vá đầu:**
+  `slugTaken` ban đầu viết `Array.isArray(data.items) && data.items.length >
+  0` — một response CMA méo (200 nhưng thiếu hẳn `items`) làm biểu thức đó ra
+  `false`, tức "chưa ai dùng slug này", mở khoá cho đúng lỗi vừa vá. Sửa: tách
+  riêng, ném lỗi khi `!Array.isArray(data.items)` (fail closed), chỉ trả
+  `false`/`true` khi response đúng hình dạng — cùng nguyên tắc
+  `fetchVideoUrlsByState` đã áp cho `total`.
+  **Khe hở CÒN LẠI, cố ý CHƯA vá (Codex chỉ ra, đã cân nhắc):** `slugTaken`
+  đọc qua CMA (bản DRAFT), không phải CDA (bản đang phục vụ). Nếu một bài
+  đang publish với slug X mà draft CHƯA publish đã đổi field đó sang Y,
+  `slugTaken(X)` sẽ trả `false` sai. Không nguy hiểm hơn tình trạng TRƯỚC lượt
+  vá này: bước GHI vẫn bị chính "Short text (unique)" của Contentful chặn (nó
+  xét MỌI entry bất kể trạng thái publish), nên hậu quả tệ nhất vẫn là job đỏ
+  cần người nhìn, không phải tạo entry trùng âm thầm. Đóng hẳn cần thêm một
+  lượt đọc CDA và gộp hai nguồn — rộng hơn phạm vi lượt vá này, để dành nếu
+  thực sự gặp lại.
+
+- **`game-record.ts`: `roundTokenAgeMs` cho token dư hậu tố vẫn qua được chữ
+  ký hợp lệ, vô hiệu hạn mức 3 lượt/token.** `[payload, mac] =
+  token.split(".")` chỉ lấy hai phần tử ĐẦU của mảng — token dạng
+  `"<payload>.<mac>.<rác>"` vẫn tách ra đúng `payload`/`mac` gốc (phần rác bị
+  destructuring bỏ qua) nên `timingSafeEqual` vẫn khớp. Nhưng
+  `game-record/route.ts` dùng CẢ CHUỖI (kể cả phần rác) làm khoá Map của
+  `overTokenLimit`, nên mỗi hậu tố khác nhau mở một ngân sách 3 lượt ghi MỚI
+  trên cùng một token thật — vô hiệu lớp được chính comment trong file gọi là
+  "lớp làm việc thật" (lớp IP 60/giờ vẫn còn, nhưng đó chỉ là lưới an toàn rộng
+  tay). Đã kiểm chứng độc lập bằng script tách rời logic ký/so token (không
+  qua path alias `@/lib`): bản cũ cho `<token>.rac` vẫn ra tuổi token hợp lệ,
+  bản vá (đòi `token.split(".").length === 2`) trả `null` đúng. Payload và MAC
+  hợp lệ không bao giờ chứa dấu chấm nên token chuẩn không bị từ chối oan.
+  Vòng Codex bác bản vá xác nhận ĐÚNG, không tìm thêm được vấn đề.
+
+- **Ba route công khai (`game-record`, `contact`, `subscribe`) gọi
+  `request.json()` mà không có trần kích thước body nào.** Route Handler của
+  Next (khác `bodyParser.sizeLimit` của Pages Router cũ) không tự đặt trần.
+  Với `game-record`, việc này nghiêm trọng hơn hẳn hai route kia vì
+  parse xảy ra TRƯỚC cả hai lớp rate limit của chính route đó (thứ tự đó là
+  CỐ Ý — xem comment tại chỗ — nhưng không ai tính tới việc parse tốn tài
+  nguyên bất kể thứ tự). Đã thêm `bodyTooLarge()` trong `lib/rate-limit.ts`
+  (kiểm header `Content-Length` trước khi parse) và áp vào cả ba route, mức
+  trần theo đúng hình dạng payload từng route (4KB/2KB/32KB).
+  **Đây CHỈ là fast-path cho client trung thực, KHÔNG phải giới hạn chống DoS
+  triệt để — Codex bác đúng chỗ này.** `bodyTooLarge` chỉ tin `Content-Length`
+  do client tự khai; một client dùng chunked encoding, bỏ hẳn header đó, hoặc
+  khai thấp hơn thực tế vẫn đi thẳng vào `request.json()` với một body lớn.
+  Đóng triệt để cần một reader tự đếm byte thực đọc được (không tin header) và
+  `reader.cancel()` khi vượt trần — cùng loại việc đã ghi là "cần một phiên
+  riêng" cho `api/revalidate` (mục "Việc còn nợ" phía trên). Không mở rộng
+  trong lượt vá này vì đây là ba route khác, cần thiết kế + kiểm chứng riêng,
+  không phải một dòng sửa kèm theo.
+  **`api/revalidate` CŨNG thiếu trần này** (đã có `jobAuthResponse` chặn
+  trước, nên không phải bề mặt ẩn danh — nhưng vẫn là endpoint public-facing
+  đọc POST JSON không trần byte/thời gian). Chưa vá, gộp chung vào việc "đọc
+  body không có hạn giờ" đã ghi ở mục "Việc còn nợ" phía trên — cùng route,
+  cùng phiên sửa sau này.
+
+Ba bản vá đã qua lại một vòng Codex bác bỏ (2 BẢN VÁ HỎNG ban đầu, 1 ĐÚNG),
+vòng đó bắt được lỗi fail-open thật trong `slugTaken` (đã sửa) và xác nhận
+giới hạn thật của `bodyTooLarge` (đã ghi rõ, không mở rộng). `lint`, `tsc`,
+`build`, `test:jobs`, `test:game` đều xanh sau bản vá cuối.

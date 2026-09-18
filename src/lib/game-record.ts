@@ -74,7 +74,16 @@ export function issueRoundToken(now = Date.now()): string | null {
 export function roundTokenAgeMs(token: unknown, now = Date.now()): number | null {
   const key = signingKey();
   if (!key || typeof token !== "string") return null;
-  const [payload, mac] = token.split(".");
+  // Đúng HAI phần, không phải "lấy hai phần đầu". `[a, b] = token.split(".")`
+  // vẫn khớp chữ ký hợp lệ khi token là `"<payload>.<mac>.<rác>"` — phần dư bị
+  // destructuring bỏ qua, nên `isPlausibleRound` gật đầu với token đó y hệt
+  // bản gốc. Nhưng route dùng CẢ CHUỖI (kể cả phần rác) làm khoá của
+  // `overTokenLimit`, nên mỗi hậu tố khác nhau mở một ngân sách 3 lượt ghi
+  // mới trên cùng một token thật — vô hiệu lớp chặn theo token, thứ được ghi
+  // rõ là "lớp làm việc thật" ở `game-record/route.ts`.
+  const parts = token.split(".");
+  if (parts.length !== 2) return null;
+  const [payload, mac] = parts;
   if (!payload || !mac) return null;
 
   const expected = Buffer.from(sign(payload, key));
