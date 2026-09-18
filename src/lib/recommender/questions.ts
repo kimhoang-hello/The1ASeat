@@ -614,11 +614,11 @@ export function questionFor(
  */
 export const GOAL_OPTIONS: ChoiceOption[] = [
   { value: "next_card", label: "Tìm thẻ nên mở tiếp theo", hint: "Kể cả khi câu trả lời là chưa nên mở thẻ nào" },
-  { value: "trip:SEA_VIETNAM", label: "Gom điểm bay về Việt Nam" },
-  { value: "trip:JAPAN", label: "Gom điểm bay đi Nhật" },
-  { value: "trip:EAST_ASIA", label: "Gom điểm bay đi Hàn – Đài – Trung – Hong Kong" },
-  { value: "trip:EUROPE", label: "Gom điểm bay đi châu Âu" },
-  { value: "trip:CANADA_US", label: "Gom điểm bay trong Canada / Mỹ" },
+  { value: "trip:SEA_VIETNAM", label: "Tích điểm bay về Việt Nam" },
+  { value: "trip:JAPAN", label: "Tích điểm bay đi Nhật" },
+  { value: "trip:EAST_ASIA", label: "Tích điểm bay đi Hàn – Đài – Trung – Hong Kong" },
+  { value: "trip:EUROPE", label: "Tích điểm bay đi châu Âu" },
+  { value: "trip:CANADA_US", label: "Tích điểm bay trong Canada / Mỹ" },
   { value: "earn_points", label: "Tích thêm điểm từ chi tiêu hằng ngày" },
   { value: "diversify", label: "Điểm đang dồn một chỗ, muốn đa dạng hơn" },
 ];
