@@ -53,7 +53,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   ...pageMetadata({
-    title: "Gợi ý thẻ tín dụng theo hoàn cảnh của bạn",
+    title: "Gợi ý thẻ tín dụng cho mục tiêu của bạn",
     description:
       "Trả lời vài câu hỏi để mình đưa gợi ý về thẻ nào tiếp theo phù hợp với bạn.",
     path: "/credit-cards/goi-y",
@@ -103,7 +103,7 @@ export default async function RecommenderPage({ searchParams }: PageProps) {
       <PageHeader
         eyebrow={nav("creditCards").toUpperCase()}
         badge={<BetaBadge />}
-        title="Gợi ý thẻ cho hoàn cảnh của bạn"
+        title="Gợi ý thẻ cho mục tiêu của bạn"
         subtitle="Trả lời vài câu hỏi để mình đưa gợi ý về thẻ nào tiếp theo phù hợp với bạn."
       />
 
