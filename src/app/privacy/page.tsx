@@ -53,9 +53,13 @@ export default function PrivacyPage() {
         và không được lưu lâu dài.
       </p>
       <p>
-        Chúng tôi <strong>không</strong> thu thập số thẻ tín dụng, số tài khoản ngân hàng, điểm tín
-        dụng, thu nhập hay bất kỳ thông tin tài chính nào của bạn. Không có chỗ nào trên trang yêu
-        cầu những thông tin đó.
+        Chúng tôi <strong>không</strong> thu thập số thẻ tín dụng, số tài khoản ngân hàng hay điểm
+        tín dụng của bạn. Không có chỗ nào trên trang yêu cầu những thông tin đó.
+      </p>
+      <p>
+        Ngoại lệ duy nhất là <strong>công cụ gợi ý thẻ</strong>: nó hỏi KHOẢNG thu nhập, KHOẢNG chi
+        tiêu và số điểm bạn đang có, vì không có những con số đó thì không tính được gợi ý nào.
+        Chúng được lưu ẩn danh — xem mục &ldquo;Công cụ gợi ý thẻ&rdquo; bên dưới.
       </p>
 
       <h2>Dịch vụ bên thứ ba chúng tôi dùng</h2>
@@ -87,6 +91,12 @@ export default function PrivacyPage() {
         <li>
           <strong>Hostinger</strong> — hạ tầng lưu trữ website và log máy chủ.
         </li>
+        <li>
+          <strong>Anthropic (Claude)</strong> — viết lại lời giải thích trong công cụ gợi ý thẻ và
+          phần giới thiệu offer của các trang thẻ. Với công cụ gợi ý, thứ được gửi đi là những câu
+          kết quả đã dựng sẵn (tên thẻ, welcome bonus, phí, số điểm chuyến bay ước lượng) —
+          <strong>không</strong> gửi mã phiên, không gửi từng dòng số dư, không gửi thu nhập.
+        </li>
       </ul>
 
       <h2>Công cụ gợi ý thẻ</h2>
@@ -100,7 +110,8 @@ export default function PrivacyPage() {
         Mỗi lượt gợi ý được lưu lại kèm chính những con số đã dùng để tính, để khi bạn báo kết quả
         sai thì chúng tôi tra lại được đúng lượt đó. Bấm &ldquo;Làm lại từ đầu&rdquo; trong công cụ
         sẽ xoá mã ngẫu nhiên khỏi trình duyệt bạn; muốn xoá hẳn phần dữ liệu đã lưu, nhắn cho chúng
-        tôi qua trang liên hệ kèm mã lượt gợi ý hiện dưới mỗi kết quả.
+        tôi qua trang liên hệ kèm mã lượt gợi ý hiện dưới mỗi kết quả. Chúng tôi xoá hồ sơ đó cùng
+        mọi lượt gợi ý và lời giải thích của nó trong vòng 30 ngày.
       </p>
 
       <h2>Cookie và cách từ chối</h2>

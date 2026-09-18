@@ -443,6 +443,28 @@ stage theo đường dẫn cụ thể.
 
 ---
 
+## 8b. Rà production-readiness (17/09/2026)
+
+Trace cả hệ Phase 1–6 + Codex một vòng. **Đã vá:**
+
+| Lỗ | Vá |
+| --- | --- |
+| `reco:debug` chỉ đọc `.reco-runs`, không đọc được lượt chạy THẬT trong MySQL — mã tra cứu người dùng gửi không tra được | có biến database thì tìm run-id ở cả hai kho; `--save` vẫn chỉ ghi file |
+| Trang in "số điểm bạn đang có đã đủ" ở mức phủ 0.976 (`u_japan_funded`) | câu đó chỉ nói khi engine phát `POINTS_ALREADY_SUFFICIENT` |
+| 7 offer elevated có `expiresAt` trên Contentful mà seed engine không có `endDate` — engine chấm điểm offer đã chết mãi mãi | thêm `endDate` cho 7 offer; `audit:reco-data` nay so **welcome bonus** và **thời hạn** giữa Contentful ↔ seed (trước chỉ so slug/phí/rebate) |
+| `/privacy` nói "không thu thập thu nhập" trong khi công cụ hỏi khoảng thu nhập; Anthropic không có trong danh sách nhà cung cấp | sửa cả hai chỗ |
+| Lời hứa "xoá khi bạn yêu cầu" không có đường thực thi | `npm run reco:forget -- <user-id|run-id> [--confirm]` |
+| Database khai biến mà không vào được → trang 500 cho người đã có hồ sơ | bắt lỗi, hiện "Công cụ đang tạm nghỉ" |
+
+**Đo được:** engine 28 ms/lượt (gồm ~30 lượt đo §30); bản ghi §20 ~203 KB JSON
+(~16 KB nén trong MySQL); TTFB trang kết quả 33–64 ms trên bản production;
+`Cache-Control: private, no-store`; `/admin/reco-debugger` trả 404 khi không có
+cờ. Replay 15/15 lượt ra đúng từng chữ số; affiliate bật/tắt cho đầu ra engine y
+hệt trên cả 15 nhân vật; NO_NEW_CARD có mặt ở mọi mục tiêu; mọi thẻ ngừng bán →
+`NO_NEW_CARD`; 100,000 MR® với tới 100,000 ở từng đích, không cộng dồn (§7).
+
+---
+
 ## 9. Rủi ro và giới hạn đã biết
 
 | Chỗ | Ảnh hưởng |

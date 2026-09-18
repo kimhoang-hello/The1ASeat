@@ -65,6 +65,9 @@ interface ContentfulCard {
   name: string;
   annualFeeVi?: string;
   rebateVi?: string;
+  welcomeBonusVi?: string;
+  elevatedBonus?: boolean;
+  expiresAt?: string;
 }
 
 async function fetchContentfulCards(): Promise<ContentfulCard[] | null> {
@@ -100,6 +103,22 @@ function feeIn(text: string | undefined): number | undefined {
   if (!text) return undefined;
   const match = text.match(/^\$([\d,]+(?:\.\d+)?)/);
   return match ? Number(match[1].replace(/,/g, "")) : undefined;
+}
+
+/**
+ * Mọi con số ≥ 1,000 trong `welcomeBonusVi` ("60,000 điểm Membership Rewards®"
+ * → [60000]; "Lên đến 70,000 điểm + $100" → [70000]).
+ *
+ * Trả về một TẬP vì biên tập viên viết nhiều dạng: một con số, một khoảng, hoặc
+ * điểm cộng tiền. Chỉ cần con số của seed nằm trong tập là hai bên nói cùng một
+ * welcome bonus. Số nhỏ ("5% cashback", "4 lần lounge") không phải bonus điểm
+ * nên bỏ.
+ */
+function bonusNumbersIn(text: string | undefined): number[] {
+  if (!text) return [];
+  return [...text.matchAll(/\d{1,3}(?:,\d{3})+|\d{4,}/g)]
+    .map((match) => Number(match[0].replace(/,/g, "")))
+    .filter((value) => value >= 1000);
 }
 
 /** Số đô trong `rebateVi` ("$140" → 140). Cùng quy ước dấu phẩy ngăn nghìn
@@ -393,6 +412,70 @@ if (cards === null) {
     // Contentful — đỏ mãi trong khi dữ liệu hiện tại đúng, tức một audit dạy
     // người đọc nó bỏ qua chính nó.
     const offer = liveOfferFor(product.id);
+
+    /*
+     * WELCOME BONUS — con số engine XẾP HẠNG bằng, so với con số trang thẻ HỨA.
+     *
+     * Trước bản này audit chỉ so slug, phí và rebate. Nhưng bonus của engine
+     * nằm trong seed (`offers.ts` + `offerComponents`), còn con số người đọc
+     * thấy đến từ Contentful — nên một lần hạ offer trên Contentful làm engine
+     * tiếp tục xếp hạng theo bonus CŨ, im lặng tuyệt đối: không test nào, không
+     * audit nào đỏ (rà production 17/09/2026). Đây là đúng lớp lỗi audit này
+     * sinh ra để bắt, chỉ là trước đó bỏ sót cột quan trọng nhất.
+     */
+    const seedBonus = offer?.headlineBonus ?? undefined;
+    const liveBonuses = bonusNumbersIn(card.welcomeBonusVi);
+    if (offer === undefined) {
+      warnings.push(`[contentful] ${card.slug}: không có đúng một offer còn hiệu lực hôm nay, không đối chiếu bonus được`);
+    } else if (card.welcomeBonusVi === undefined || card.welcomeBonusVi.trim() === "") {
+      if (seedBonus != null) {
+        errors.push(
+          `[contentful] ${card.slug}: seed có welcome bonus ${seedBonus.toLocaleString("en-US")} nhưng Contentful để trống welcomeBonusVi`,
+        );
+      }
+    } else if (liveBonuses.length === 0) {
+      // Bonus không phải điểm (cashback, đêm khách sạn) thì không có con số nào
+      // để so — nói ra chứ không im.
+      warnings.push(
+        `[contentful] ${card.slug}: welcomeBonusVi không có con số nào ≥ 1,000 ("${card.welcomeBonusVi}"), không đối chiếu được`,
+      );
+    } else if (seedBonus == null) {
+      errors.push(
+        `[contentful] ${card.slug}: Contentful nói welcome bonus ${liveBonuses.join(" / ")} nhưng seed không có headlineBonus`,
+      );
+    } else if (!liveBonuses.includes(seedBonus)) {
+      errors.push(
+        `[contentful] ${card.slug}: headlineBonus seed là ${seedBonus.toLocaleString("en-US")}, ` +
+          `Contentful nói ${liveBonuses.map((n) => n.toLocaleString("en-US")).join(" / ")} ("${card.welcomeBonusVi}") — ` +
+          `engine đang xếp hạng bằng con số seed`,
+      );
+    }
+
+    /*
+     * THỜI HẠN — `expiresAt` của Contentful (offer elevated) so với `endDate`
+     * của seed. Contentful nói offer hết ngày X mà seed không biết thì engine
+     * còn chấm điểm một offer đã chết.
+     */
+    const liveExpiry = card.expiresAt?.slice(0, 10);
+    const seedExpiry = offer?.endDate ?? undefined;
+    // `elevatedBonus: false` + còn `expiresAt`: job `expire-offers` GIỮ ngày cũ
+    // khi hạ thẻ khỏi tab elevated (xem AGENTS.md), nên đó là ngày SÓT, không
+    // phải hạn của offer đang chạy. Nói ra, đừng đỏ.
+    if (liveExpiry !== undefined && card.elevatedBonus !== true) {
+      warnings.push(
+        `[contentful] ${card.slug}: còn expiresAt ${liveExpiry} nhưng elevatedBonus=false — ngày sót, không đối chiếu`,
+      );
+    } else if (liveExpiry !== undefined && seedExpiry === undefined) {
+      errors.push(
+        `[contentful] ${card.slug}: Contentful nói offer hết ngày ${liveExpiry} nhưng seed không có endDate — ` +
+          `engine sẽ chấm điểm offer này mãi`,
+      );
+    } else if (liveExpiry !== undefined && seedExpiry !== liveExpiry) {
+      errors.push(`[contentful] ${card.slug}: endDate seed là ${seedExpiry}, Contentful nói ${liveExpiry}`);
+    } else if (liveExpiry !== undefined && liveExpiry < TODAY) {
+      errors.push(`[contentful] ${card.slug}: offer đã hết hạn ${liveExpiry} mà vẫn còn hiệu lực trong seed`);
+    }
+
     const seedRebate = offer?.annualFeeRebate ?? undefined;
     const liveRebate = rebateIn(card.rebateVi);
     if (seedRebate !== liveRebate) {

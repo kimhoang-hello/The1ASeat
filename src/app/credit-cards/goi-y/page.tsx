@@ -162,20 +162,33 @@ function BrokenProfileNotice() {
   );
 }
 
+/** Không có chỗ lưu — hoặc chưa cấu hình, hoặc database không vào được. */
+function StorageDownNotice() {
+  return (
+    <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+      <h2 className="font-display text-lg font-bold text-foreground">Công cụ đang tạm nghỉ</h2>
+      <p className="mt-2 text-base leading-relaxed text-foreground/90">
+        Chỗ lưu hồ sơ chưa sẵn sàng, nên mình chưa chạy gợi ý được. Thử lại sau giúp mình.
+      </p>
+    </section>
+  );
+}
+
 async function Body({ editKey }: { editKey: string | null }) {
-  if (!recommenderStorageReady()) {
-    return (
-      <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
-        <h2 className="font-display text-lg font-bold text-foreground">Công cụ đang tạm nghỉ</h2>
-        <p className="mt-2 text-base leading-relaxed text-foreground/90">
-          Chỗ lưu hồ sơ chưa sẵn sàng, nên mình chưa chạy gợi ý được. Thử lại sau giúp mình.
-        </p>
-      </section>
-    );
-  }
+  if (!recommenderStorageReady()) return <StorageDownNotice />;
 
   const userId = await currentUserId();
-  const stored = userId === null ? null : await loadState(userId);
+  // Database có biến môi trường KHÁC với database vào được: sai mật khẩu, server
+  // đang xuống, hết kết nối. `recommenderStorageReady()` chỉ kiểm biến, nên nếu
+  // không bắt ở đây thì người đã có hồ sơ nhận trang 500 thay vì câu "tạm nghỉ"
+  // (rà production 17/09/2026).
+  let stored;
+  try {
+    stored = userId === null ? null : await loadState(userId);
+  } catch (error) {
+    console.error("[goi-y] không đọc được hồ sơ từ database", error);
+    return <StorageDownNotice />;
+  }
   if (userId === null || stored === null) return <StartPanel />;
 
   let run;

@@ -187,6 +187,7 @@ const OFFER_SEEDS: OfferSeed[] = [
     headline: 50000,
     currency: "scene-plus",
     startDate: "2026-09-07",
+    endDate: "2026-11-01",
     rebate: 200,
     components: [],
     incomplete:
@@ -331,6 +332,7 @@ const OFFER_SEEDS: OfferSeed[] = [
     headline: 110000,
     currency: "bonvoy",
     startDate: "2026-09-07",
+    endDate: "2026-09-22",
     components: [],
     incomplete: "Nội dung site không nêu mốc chi của welcome bonus này.",
   },
@@ -389,6 +391,7 @@ const OFFER_SEEDS: OfferSeed[] = [
     headline: 100000,
     currency: "avion",
     startDate: "2026-09-07",
+    endDate: "2026-11-25",
     components: [
       {
         type: "first_purchase",
@@ -437,6 +440,7 @@ const OFFER_SEEDS: OfferSeed[] = [
     headline: 70000,
     currency: "viporter",
     startDate: "2026-09-07",
+    endDate: "2026-10-31",
     feeFirstYear: 0,
     rebate: 200,
     components: [
@@ -465,6 +469,7 @@ const OFFER_SEEDS: OfferSeed[] = [
     headline: 110000,
     currency: "bonvoy",
     startDate: "2026-09-07",
+    endDate: "2026-09-22",
     components: [],
     incomplete: "Nội dung site không nêu mốc chi của welcome bonus này.",
   },
@@ -489,6 +494,7 @@ const OFFER_SEEDS: OfferSeed[] = [
     headline: 70000,
     currency: "avion",
     startDate: "2026-09-07",
+    endDate: "2026-11-25",
     components: [
       { type: "first_purchase", points: 35000, windowDays: 60, note: "Khi đơn được duyệt" },
       { type: "spend_threshold", points: 20000, spend: 5000, windowDays: 180 },
@@ -501,6 +507,7 @@ const OFFER_SEEDS: OfferSeed[] = [
     headline: 70000,
     currency: "avion",
     startDate: "2026-09-07",
+    endDate: "2026-11-25",
     components: [
       { type: "first_purchase", points: 35000, windowDays: 60, note: "Khi đơn được duyệt" },
       { type: "spend_threshold", points: 20000, spend: 5000, windowDays: 180 },

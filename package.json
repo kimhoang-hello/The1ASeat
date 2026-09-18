@@ -21,6 +21,7 @@
     "audit:best-cards": "tsx scripts/audit-best-cards.mts",
     "audit:card-mentions": "tsx scripts/audit-card-mentions.mts",
     "record:offer-history": "tsx scripts/record-offer-history.mts",
+    "reco:forget": "tsx scripts/reco-forget.mts",
     "reco:debug": "tsx scripts/reco-debug.mts",
     "job:check-rebates": "tsx scripts/check-rebates.mts",
     "captions": "bash scripts/burned-captions.sh",
