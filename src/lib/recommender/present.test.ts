@@ -17,6 +17,7 @@ import {
   aeroplanHeavy,
   beginnerNoCards,
   japanTripFunded,
+  vietnamTripFunded,
   vietnamTripShortfall,
 } from "../recommendation/data/user-fixtures.ts";
 import { REASON_CODES, WARNING_CODES } from "../recommendation/reason-codes.ts";
@@ -143,6 +144,31 @@ test("hành động chính và các lựa chọn khác lấy NGUYÊN thứ tự 
       assert.equal(view.noAction?.kind, "no_new_card");
     }
   }
+});
+
+test("'đã đủ điểm' chỉ nói khi engine nói — phủ 97.6% không được thành 'đủ'", () => {
+  // `japanTripFunded`: NO_NEW_CARD với dòng điểm `points_already_sufficient`
+  // đóng góp nhiều nhất ở mức phủ 0.976, mà engine KHÔNG phát
+  // `POINTS_ALREADY_SUFFICIENT` (và vì thế cũng không phát cảnh báo điểm hết
+  // hạn). Trang từng in "số điểm bạn đang có đã đủ cho mục tiêu này".
+  const record = runFor(japanTripFunded);
+  const view = presentRun(record, DATA, offersFor(DATA));
+  assert.ok(view !== null);
+  const action = view.primary.kind === "no_new_card" ? view.primary : view.noAction;
+  assert.ok(action !== null);
+  const candidate = record.outputSnapshot.results[0].primaryAction;
+  assert.equal(candidate.kind, "no_new_card");
+  assert.ok(!candidate.reasonCodes.includes("POINTS_ALREADY_SUFFICIENT"));
+  assert.notEqual(action.noCardReason, "points_sufficient");
+
+  // Có mã thì nói được — và engine phát mã đó cùng lúc với cảnh báo hết hạn.
+  const funded = runFor(vietnamTripFunded);
+  const fundedView = presentRun(funded, DATA, offersFor(DATA));
+  const fundedCandidate = funded.outputSnapshot.results[0].primaryAction;
+  assert.ok(fundedCandidate.reasonCodes.includes("POINTS_ALREADY_SUFFICIENT"));
+  assert.ok(fundedCandidate.warnings.includes("POINTS_EXPIRY_NOT_MODELLED"));
+  const fundedAction = fundedView!.primary.kind === "no_new_card" ? fundedView!.primary : fundedView!.noAction;
+  assert.equal(fundedAction!.noCardReason, "points_sufficient");
 });
 
 test("affiliate KHÔNG đổi gì ngoài chính cái nút đăng ký", () => {

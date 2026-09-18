@@ -22,6 +22,13 @@
  * Lượt chạy `--save` vào `.reco-runs/` (gitignore), kèm bản chụp bộ dữ liệu
  * theo dấu vân tay — nên `replay` và `diff` chạy lại đúng thế giới lúc đó dù
  * dữ liệu trong repo đã đổi.
+ *
+ * LƯỢT CHẠY CỦA NGƯỜI DÙNG THẬT nằm trong MySQL, không nằm ở `.reco-runs`. Có
+ * biến database (`DATABASE_URL` hoặc bộ `DB_*`) thì `run-id` được tìm ở CẢ hai
+ * kho — file trước, rồi MySQL — nên một khiếu nại kèm mã tra cứu in trên trang
+ * `/credit-cards/goi-y` dùng được ngay với `why`, `replay`, `diff`, `what-if`.
+ * Không có biến thì công cụ chạy y như trước, chỉ đọc file. `--save` LUÔN ghi
+ * ra file: kho lượt chạy thật chỉ thêm, và không được nhận lượt chạy thử.
  */
 
 import { randomUUID } from "node:crypto";
@@ -47,7 +54,9 @@ import {
   renderStageDiffs,
 } from "../src/lib/recommendation/debug-render.ts";
 import { fileRunStore } from "../src/lib/recommendation/run-store-fs.ts";
-import { persistRun } from "../src/lib/recommendation/run-store.ts";
+import { mysqlRunStore } from "../src/lib/recommendation/run-store-mysql.ts";
+import { recoDatabaseFromEnv } from "../src/lib/recommendation/mysql.ts";
+import { persistRun, type RunStore, type RunSummary } from "../src/lib/recommendation/run-store.ts";
 import { todayInSiteZone } from "../src/lib/format-date.ts";
 import type { OfferHistoryPoint } from "../src/lib/recommendation/offer-history.ts";
 import type { RecommendationDataset } from "../src/lib/recommendation/types.ts";
@@ -55,6 +64,26 @@ import type { UserState } from "../src/lib/recommendation/user-types.ts";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const store = fileRunStore(path.join(ROOT, ".reco-runs"));
+
+/**
+ * Kho lượt chạy THẬT, nếu máy này có biến database. `null` = chỉ có file.
+ *
+ * Mở lười (lúc dùng) để mọi lệnh không chạm database — `fixtures`, `run <hồ
+ * sơ>` không cần kết nối nào.
+ */
+let liveStore: RunStore | null | undefined;
+function live(): RunStore | null {
+  if (liveStore === undefined) {
+    const db = recoDatabaseFromEnv();
+    liveStore = db === null ? null : mysqlRunStore(db);
+  }
+  return liveStore;
+}
+
+/** Đóng pool để tiến trình thoát được sau khi đã chạm MySQL. */
+async function closeLive() {
+  if (liveStore != null) await recoDatabaseFromEnv()?.close();
+}
 
 /* ---- Tham số ------------------------------------------------------ */
 
@@ -140,11 +169,22 @@ function freshRun(state: UserState, overrides: { asOf?: string } = {}) {
 /** `<hồ sơ|run-id>` → bản ghi + bộ dữ liệu của CHÍNH nó. */
 async function loadSubject(ref: string): Promise<{ record: RecommendationRunRecord; dataset: RecommendationDataset }> {
   if (ref.startsWith("run_")) {
-    const record = await store.getRun(ref);
-    if (record === null) die(`không có lượt chạy ${ref} trong .reco-runs — xem \`list\``);
-    const dataset = await store.getDataset(record.inputSnapshot.datasetFingerprint);
-    if (dataset === null) die(`thiếu bản chụp bộ dữ liệu ${record.inputSnapshot.datasetFingerprint}`);
-    return { record, dataset };
+    // File trước, MySQL sau: lượt chạy thử của chính mình ưu tiên, còn mã tra
+    // cứu của người dùng thật thì chỉ có ở MySQL.
+    for (const [name, source] of [["file", store], ["MySQL", live()]] as const) {
+      if (source === null) continue;
+      const record = await source.getRun(ref);
+      if (record === null) continue;
+      const dataset = await source.getDataset(record.inputSnapshot.datasetFingerprint);
+      if (dataset === null) die(`thiếu bản chụp bộ dữ liệu ${record.inputSnapshot.datasetFingerprint} (kho ${name})`);
+      if (name === "MySQL") console.log(`(lượt chạy thật, đọc từ MySQL)`);
+      return { record, dataset };
+    }
+    die(
+      live() === null
+        ? `không có lượt chạy ${ref} trong .reco-runs — xem \`list\`. Lượt chạy của người dùng thật nằm trong MySQL: đặt DATABASE_URL hoặc bộ DB_* rồi chạy lại.`
+        : `không có lượt chạy ${ref} trong .reco-runs lẫn MySQL — xem \`list\``,
+    );
   }
   const executed = freshRun(stateFrom(ref));
   return { record: executed.record, dataset: executed.dataset };
@@ -167,11 +207,20 @@ async function main() {
       return;
     }
     case "list": {
-      const rows = await store.listRuns({ limit: Number(flag("limit") ?? 30) });
+      const limit = Number(flag("limit") ?? 30);
+      const sources: Array<[string, RunStore]> = [["file", store]];
+      const db = live();
+      if (db !== null) sources.push(["MySQL", db]);
+      const rows: Array<RunSummary & { source: string }> = [];
+      for (const [name, source] of sources) {
+        for (const row of await source.listRuns({ limit })) rows.push({ ...row, source: name });
+      }
+      // Mới nhất trước, gộp hai kho — cùng phép so chuỗi ISO mà kho dùng.
+      rows.sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
       if (rows.length === 0) console.log("chưa có lượt chạy nào — `run <hồ sơ> --save` để lưu");
-      for (const row of rows) {
+      for (const row of rows.slice(0, limit)) {
         console.log(
-          `${row.id}  ${row.createdAt}  asOf ${row.asOf}  engine ${row.engineVersion}  → ${row.primary} (${row.confidence})`,
+          `${row.id}  ${row.createdAt}  asOf ${row.asOf}  engine ${row.engineVersion}  → ${row.primary} (${row.confidence})  [${row.source}]`,
         );
       }
       return;
@@ -304,3 +353,4 @@ async function main() {
 }
 
 await main();
+await closeLive();

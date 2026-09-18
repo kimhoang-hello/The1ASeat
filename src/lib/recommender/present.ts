@@ -234,10 +234,21 @@ function lookup(record: RecommendationRunRecord, offers: readonly CreditCardOffe
   };
 }
 
-/** Dòng điểm nào đưa `NO_NEW_CARD` lên đầu — bảng điểm riêng của nó ở `rank.ts`. */
+/**
+ * Dòng điểm nào đưa `NO_NEW_CARD` lên đầu — bảng điểm riêng của nó ở `rank.ts`.
+ *
+ * "ĐÃ ĐỦ ĐIỂM" chỉ được nói khi ENGINE nói, tức khi có mã
+ * `POINTS_ALREADY_SUFFICIENT` (phủ ≥ 1, và chính lúc đó engine cũng phát cảnh
+ * báo điểm hết hạn). Dòng `points_already_sufficient` có thể là dòng đóng góp
+ * NHIỀU NHẤT ở mức phủ 0.976 — `u_japan_funded` là đúng ca đó — và câu "số điểm
+ * bạn đang có đã đủ cho mục tiêu này" ở mức 97.6% là nói người đọc đủ điểm khi
+ * họ còn thiếu, lại không kèm cảnh báo nào (rà production 17/09/2026).
+ */
 function noCardReasonOf(candidate: Candidate): ActionView["noCardReason"] {
+  const sufficient = candidate.reasonCodes.includes("POINTS_ALREADY_SUFFICIENT");
+  if (sufficient) return "points_sufficient";
   const top = [...candidate.components]
-    .filter((row) => row.contribution > 0)
+    .filter((row) => row.contribution > 0 && row.key !== "points_already_sufficient")
     .sort((a, b) => b.contribution - a.contribution)[0];
   switch (top?.key) {
     case "points_already_sufficient":

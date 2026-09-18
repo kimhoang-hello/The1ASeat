@@ -627,7 +627,7 @@ test("nhận diện hạng chịu được dấu câu và không bắt nhầm t�
 
   assert.ok(check("Chỉ Avion® Elite"));
   assert.ok(check("(Chỉ Avion® Elite)"), "dấu ngoặc dính liền vẫn phải bắt được");
-  assert.ok(check("Only: Avion Elite"), "dấu hai chấm dính liền vẫn phải bắt được");
+  assert.ok(check("Only: Avion® Elite"), "dấu hai chấm dính liền vẫn phải bắt được");
   assert.ok(!check("Mọi hạng Avion®"), "câu nói KHÔNG hạn chế thì đừng cảnh báo");
   assert.ok(!check("Cần chỉnh sửa sau"), "'chỉ' nằm trong một từ khác thì không tính");
 });
