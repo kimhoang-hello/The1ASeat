@@ -55,7 +55,7 @@ export const metadata: Metadata = {
   ...pageMetadata({
     title: "Gợi ý thẻ tín dụng theo hoàn cảnh của bạn",
     description:
-      "Trả lời vài câu, Ghế 1A gợi ý bước tiếp theo: nên mở thẻ nào, hay chưa cần mở thẻ nào cả.",
+      "Trả lời vài câu hỏi để mình đưa gợi ý về thẻ nào tiếp theo phù hợp với bạn.",
     path: "/credit-cards/goi-y",
   }),
   // Công cụ còn là bản nháp thì không cho Google index — cùng cách làm với
