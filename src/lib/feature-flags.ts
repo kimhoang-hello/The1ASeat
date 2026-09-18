@@ -73,6 +73,11 @@ export const CATCH_THE_POINTS_PUBLISHED = false;
  *
  * TRƯỚC KHI BẬT: kiểm trên production rằng CDN của Hostinger KHÔNG cache trang
  * này. Trang đọc cookie và trả kết quả riêng cho từng người; một bản HTML dùng
- * chung là kết quả của người này hiện ra cho người kia.
+ * chung là kết quả của người này hiện ra cho người kia. Kiểm luôn app vào được
+ * MySQL (`recoDatabaseFromEnv`) — không có kho thì trang chỉ hiện "tạm nghỉ".
+ *
+ * BẬT CỜ MỞ BA NGÕ CÙNG LÚC: dòng "Gợi ý thẻ" trong dropdown Thẻ tín dụng, dải
+ * đầu trang `/credit-cards`, và một dòng ở bước 2 của `/bat-dau`. Cả ba mang
+ * nhãn Beta, và trang tự đổi dải "bản nháp" thành dải Beta cho người đọc.
  */
 export const RECOMMENDER_PUBLISHED = false;

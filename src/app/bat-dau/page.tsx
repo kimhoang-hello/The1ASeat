@@ -7,8 +7,9 @@ import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
 import { isElevatedLive } from "@/lib/credit-card-state";
 import { categoryPath, getCategories } from "@/lib/blog-categories";
 import { COMPARE_PATH } from "@/lib/card-compare";
+import { RECOMMENDER_PATH } from "@/lib/recommender/path";
 import { creditCardsPath } from "@/lib/card-points-programs";
-import { START_HERE_PUBLISHED } from "@/lib/feature-flags";
+import { RECOMMENDER_PUBLISHED, START_HERE_PUBLISHED } from "@/lib/feature-flags";
 import { FOUNDATION_SLUGS, foundationPosts, missingFoundationSlugs } from "@/lib/start-here";
 
 import { PageHeader } from "@/components/layout/page-header";
@@ -20,6 +21,7 @@ import { pageMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import { t as translate } from "@/lib/t";
 
 const t = translate("startHere");
+const tReco = translate("recommender");
 
 /**
  * Đường vào cho người mới.
@@ -305,6 +307,14 @@ export default async function StartHerePage() {
             body={t("step2Body", { cards: offers.length, elevated })}
           >
             <ul className="space-y-2">
+              {/* Gợi ý thẻ đứng đầu bước này: người đang đọc "Bắt đầu ở đây"
+                  theo định nghĩa là người chưa biết chọn thẻ nào, tức đúng
+                  người công cụ này dành cho. */}
+              {RECOMMENDER_PUBLISHED && (
+                <StepLink href={RECOMMENDER_PATH} step={2} target="recommender">
+                  {tReco("startHereLink")}
+                </StepLink>
+              )}
               <StepLink href="/credit-cards" step={2} target="credit-cards">
                 {t("step2LinkCards")}
               </StepLink>

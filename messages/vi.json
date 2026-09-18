@@ -17,7 +17,8 @@
     "bankAccounts": "Ngân hàng",
     "vietnamRoutes": "Bay về Việt Nam",
     "catchThePoints": "Mini-game: Catch The Points",
-    "bestCards": "Các thẻ tốt nhất"
+    "bestCards": "Các thẻ tốt nhất",
+    "cardRecommender": "Gợi ý thẻ"
   },
   "navMenu": {
     "cardsAll": "Toàn bộ thẻ đang theo dõi",
@@ -34,7 +35,8 @@
     "compare": "Đặt hai, ba thẻ cạnh nhau và xem chúng khác nhau ở đâu",
     "vietnamRoutes": "Về Sài Gòn, Hà Nội, Đà Nẵng tốn bao nhiêu điểm",
     "catchThePoints": "Mini-game 45 giây: hứng điểm, né phí",
-    "bestCards": "Thẻ tốt nhất theo từng mục đích, chọn sẵn kèm lý do"
+    "bestCards": "Thẻ tốt nhất theo từng mục đích, chọn sẵn kèm lý do",
+    "cardRecommender": "Bản Beta · trả lời vài câu, mình gợi ý bước tiếp theo"
   },
   "banner": {
     "eyebrow": "ELEVATED OFFER",
@@ -606,5 +608,12 @@
     "verifiedNote": "Số liệu trên trang này đọc trực tiếp từ trang của từng thẻ lúc bạn mở trang. Offer thay đổi thường xuyên — luôn kiểm lại điều kiện trên trang của ngân hàng trước khi apply.",
     "cardCount": "{count} thẻ",
     "categoryCount": "{count} mục"
+  },
+  "recommender": {
+    "beta": "Beta",
+    "bandTitle": "Chưa biết nên mở thẻ nào?",
+    "bandBody": "Trả lời vài câu, mình gợi ý bước tiếp theo — kể cả khi câu trả lời là chưa nên mở thẻ nào.",
+    "bandCta": "Xem gợi ý cho bạn",
+    "startHereLink": "Gợi ý thẻ theo hoàn cảnh của bạn (Beta)"
   }
 }

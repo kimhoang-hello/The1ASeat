@@ -12,6 +12,8 @@ import { RebateChip } from "@/components/ui/hot-tip";
 import { ApplyButton } from "@/components/ui/apply-button";
 import { isReferralUrl } from "@/lib/affiliate-links";
 import { JsonLd } from "@/components/seo/json-ld";
+import { RECOMMENDER_PUBLISHED } from "@/lib/feature-flags";
+import { RECOMMENDER_PATH } from "@/lib/recommender/path";
 import { PointsProgramLinks } from "@/components/credit-cards/points-program-links";
 import { CardSortSelect } from "@/components/credit-cards/sort-select";
 import { BEST_CARDS_BASE, BEST_CARDS_CATEGORIES } from "@/lib/best-cards";
@@ -27,6 +29,7 @@ import { pageMetadata, absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
 
 const offers_t = t("offers");
 const best = t("bestCards");
+const reco = t("recommender");
 const seo = t("seo");
 
 export const metadata: Metadata = pageMetadata({
@@ -117,6 +120,28 @@ export default async function CreditCardsPage({
             `rounded-full` biến chúng thành ba khối tròn cao 76px ở màn 320px
             (56px ở 375px — tức gần như mọi điện thoại). Xuống dòng thành hai
             hàng pill là đúng hình dạng của nó. */}
+        {/* Cửa vào CÔNG CỤ GỢI Ý, đứng trên cả dải biên tập.
+            Ba cửa trên trang này xếp theo mức người đọc đã biết mình cần gì:
+            chưa biết (gợi ý) → muốn xem bảng xếp của Ghế 1A (tốt nhất) → đã có
+            danh sách (bộ lọc bên dưới). */}
+        {RECOMMENDER_PUBLISHED && (
+          <Link
+            href={RECOMMENDER_PATH}
+            className="mx-auto mb-3 flex max-w-page items-center justify-between gap-3 rounded-2xl border border-border bg-card px-5 py-4 transition-colors hover:border-primary"
+          >
+            <span>
+              <span className="flex items-center gap-2 font-display font-bold text-foreground">
+                {reco("bandTitle")}
+                <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-foreground/70">
+                  {reco("beta")}
+                </span>
+              </span>
+              <span className="mt-0.5 block text-sm text-muted-foreground">{reco("bandBody")}</span>
+            </span>
+            <span className="shrink-0 text-sm font-semibold text-primary">{reco("bandCta")} &rarr;</span>
+          </Link>
+        )}
+
         {/* Cửa vào phần biên tập, đứng TRÊN bộ lọc.
             Trang này để người đã biết mình tìm gì tự lọc; ai chưa biết thì bộ
             lọc không giúp được gì cả, và trước dải này họ không có đường nào

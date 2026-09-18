@@ -15,6 +15,7 @@ import {
   CreditCard,
   GameController,
   List,
+  Compass,
   Newspaper,
   PaperPlaneTilt,
   Percent,
@@ -28,6 +29,7 @@ import {
 } from "@phosphor-icons/react";
 import { SiteSearch } from "@/components/layout/site-search";
 import { COMPARE_PATH } from "@/lib/card-compare";
+import { RECOMMENDER_PATH } from "@/lib/recommender/path";
 // Từ `bank-compare-path`, KHÔNG phải `bank-compare`: header là Client
 // Component trong layout gốc, mà `bank-compare` import cả `BANK_ACCOUNTS` —
 // đi đường đó là mọi trang tải thêm ~19 KB gzip dữ liệu ngân hàng.
@@ -35,6 +37,7 @@ import { BANK_COMPARE_PATH } from "@/lib/bank-compare-path";
 import {
   BANK_ACCOUNTS_PUBLISHED,
   CATCH_THE_POINTS_PUBLISHED,
+  RECOMMENDER_PUBLISHED,
   VIETNAM_ROUTES_PUBLISHED,
 } from "@/lib/feature-flags";
 import { t } from "@/lib/t";
@@ -427,6 +430,25 @@ export function SiteHeader() {
     icon: Scales,
   };
 
+  /*
+   * Gợi ý thẻ đứng TRƯỚC "Các thẻ tốt nhất" và "So sánh thẻ".
+   *
+   * Ba dòng này phục vụ ba người khác nhau, và thứ tự là thứ nói ra điều đó:
+   * người chưa biết mình muốn thẻ nào (gợi ý) → người muốn xem bảng xếp của
+   * Ghế 1A (tốt nhất) → người đã có danh sách trong đầu (so sánh). Đảo lại thì
+   * dòng đầu menu là dòng đòi người đọc đã biết mình cần gì.
+   */
+  const recommenderLinks: NavLink[] = RECOMMENDER_PUBLISHED
+    ? [
+        {
+          href: RECOMMENDER_PATH,
+          label: nav("cardRecommender"),
+          description: tMenu("cardRecommender"),
+          icon: Compass,
+        },
+      ]
+    : [];
+
   const bankLinks: NavLink[] = BANK_ACCOUNTS_PUBLISHED
     ? [
         {
@@ -546,7 +568,7 @@ export function SiteHeader() {
   // Nhóm "Thẻ tín dụng" trong menu mobile không có đường kẻ để chia hai phía
   // như dropdown desktop — nên ở đây hai nhóm nối làm một, và thứ tự (So sánh
   // trước, Ngân hàng sau) là thứ giữ cho hai menu đọc ra cùng một trình tự.
-  const cardExtraLinks: NavLink[] = [bestCardsLink, compareLink, ...bankLinks];
+  const cardExtraLinks: NavLink[] = [...recommenderLinks, bestCardsLink, compareLink, ...bankLinks];
 
   const bankActive = bankLinks.some(
     (link) => pathname === link.href || pathname.startsWith(`${link.href}/`),
@@ -635,7 +657,7 @@ export function SiteHeader() {
             label={nav("creditCards")}
             basePath="/credit-cards"
             links={cardLinks}
-            groupLinks={[bestCardsLink, compareLink]}
+            groupLinks={[...recommenderLinks, bestCardsLink, compareLink]}
             extraLinks={bankLinks}
             active={cardsMenuActive}
             width="w-80"

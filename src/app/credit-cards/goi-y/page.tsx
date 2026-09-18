@@ -85,14 +85,18 @@ export default async function RecommenderPage({ searchParams }: PageProps) {
 
   return (
     <>
-      {!RECOMMENDER_PUBLISHED && (
-        <p className="border-b border-amber-300 bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-900 sm:px-6 lg:px-8">
-          Bản nháp — công cụ đang thử, nội dung có thể đổi.
-        </p>
-      )}
+      {/* Hai trạng thái, hai câu khác nhau. Còn sau cờ thì đây là bản nháp
+          không ai ngoài mình nên đọc; đã công bố thì nó là bản BETA — người đọc
+          có quyền biết công cụ còn mới và mình vẫn đang chỉnh, và biết gửi mã
+          tra cứu ở cuối trang khi thấy kết quả sai. */}
+      <p className="border-b border-amber-300 bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-900 sm:px-6 lg:px-8">
+        {RECOMMENDER_PUBLISHED
+          ? "Bản Beta — công cụ còn mới và mình vẫn đang chỉnh. Thấy kết quả sai thì gửi mã tra cứu ở cuối trang cho mình."
+          : "Bản nháp — công cụ đang thử, nội dung có thể đổi."}
+      </p>
       <JsonLd data={jsonLd} />
       <PageHeader
-        eyebrow="Công cụ"
+        eyebrow="Công cụ · Beta"
         title="Gợi ý thẻ cho hoàn cảnh của bạn"
         subtitle="Trả lời vài câu. Mình chỉ hỏi những gì thật sự đổi được kết quả, và nói thẳng khi câu trả lời là chưa nên mở thẻ nào."
       />

@@ -465,6 +465,31 @@ hệt trên cả 15 nhân vật; NO_NEW_CARD có mặt ở mọi mục tiêu; m�
 
 ---
 
+## 8c. Ngõ vào và nhãn Beta (17/09/2026)
+
+Trang mang tên **"Gợi ý thẻ"**. Ba ngõ, tất cả sau cờ `RECOMMENDER_PUBLISHED`:
+
+| Ngõ | Chỗ |
+| --- | --- |
+| Dropdown "Thẻ tín dụng", dòng ĐẦU (trên "Các thẻ tốt nhất" và "So sánh thẻ") | `site-header.tsx` → `recommenderLinks` |
+| Dải đầu trang `/credit-cards`, trên dải "Các thẻ tốt nhất" | `app/credit-cards/page.tsx` |
+| Bước 2 của `/bat-dau`, dòng đầu | `app/bat-dau/page.tsx` |
+
+Thứ tự ba cửa trên trang `/credit-cards` xếp theo mức người đọc đã biết mình cần
+gì: chưa biết (gợi ý) → muốn bảng xếp của Ghế 1A (tốt nhất) → đã có danh sách
+(bộ lọc). Cố ý KHÔNG có: mục top-level trên header (mọi công cụ của site đều
+nằm trong dropdown), dải thứ hai trên trang chủ (đã có dải `/bat-dau`), footer.
+
+**Nhãn Beta** hiện ở bốn chỗ: viên pill trên dải `/credit-cards`, "(Beta)" trong
+dòng ở `/bat-dau`, "Bản Beta ·" trong mô tả dòng menu, và eyebrow "Công cụ ·
+Beta" + dải vàng trên chính trang. Dải đó tự đổi câu: còn sau cờ thì "bản
+nháp", đã công bố thì "Bản Beta — … gửi mã tra cứu ở cuối trang".
+
+Chưa làm (ngõ ưu tiên 2): ô tìm kiếm, cuối mỗi trang thẻ, `tot-nhat`/`so-sanh`,
+và event GA4 cho phễu.
+
+---
+
 ## 9. Rủi ro và giới hạn đã biết
 
 | Chỗ | Ảnh hưởng |
