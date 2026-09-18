@@ -257,7 +257,7 @@ function AlternativeRow({ action }: { action: ActionView }) {
       : // Không lấy welcome bonus làm câu giới thiệu cho thẻ người dùng KHÔNG
         // còn nhận được nó — đó đúng là câu quảng cáo sai đối tượng.
         action.welcomeBonus && !action.welcomeBonusBlocked
-        ? `Welcome bonus ${action.welcomeBonus}${action.annualFee ? `, phí ${action.annualFee}` : ""}`
+        ? `Welcome bonus ${action.welcomeBonus}${action.annualFee ? `, annual fee ${action.annualFee}` : ""}`
         : action.welcomeBonusBlocked
           ? "Bạn từng giữ thẻ này nên sẽ không có welcome bonus."
           : null);
