@@ -15,11 +15,11 @@ export function StartPanel() {
     <form action={startRecommendation} className="space-y-5">
       <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
         <h2 className="font-display text-xl font-bold text-foreground sm:text-2xl">
-          Bạn đang muốn làm gì?
+          Mục tiêu của bạn là gì?
         </h2>
         <p className="mt-2 text-base leading-relaxed text-foreground/80">
-          Chọn một việc. Mình chỉ hỏi thêm khi câu trả lời thật sự đổi được gợi ý — thường là ba tới
-          năm câu.
+          Chọn một mục tiêu. Mình chỉ hỏi thêm khi câu trả lời thật sự đổi được gợi ý — thường là ba
+          tới năm câu.
         </p>
 
         <label className="mt-5 flex items-start gap-2.5 rounded-xl border border-border px-4 py-3 text-base text-foreground">

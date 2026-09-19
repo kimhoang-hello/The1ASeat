@@ -363,7 +363,7 @@ export function questionFor(
     case "goal_missing":
       return {
         ...base,
-        title: "Bạn đang muốn làm gì?",
+        title: "Mục tiêu của bạn là gì?",
         help: "Mình chấm điểm thẻ theo đúng mục tiêu này, nên nó quyết định mọi thứ phía sau.",
         input: { type: "choice", name: "answer", options: GOAL_OPTIONS },
       };
