@@ -65,7 +65,10 @@ export function NewsletterForm({
       if (!res.ok) throw new Error("subscribe failed");
       // Chỉ bắn sau khi server nhận thật. Bắn lúc submit thì đếm cả lần gõ sai
       // email lẫn lần rate-limit bị chặn, và con số đó không dùng được.
-      sendGAEvent("event", "newsletter_subscribed", { source });
+      // Tên tham số KHÔNG được là `source`: giá trị đó lọt vào Session
+      // source/medium của GA4 (dòng "hero / (not set)"). Cơ chế vì sao một số
+      // event mở ra phiên riêng mang nguồn ấy thì chưa rõ.
+      sendGAEvent("event", "newsletter_subscribed", { newsletter_source: source });
       setStatus("submitted");
     } catch {
       setStatus("error");

@@ -361,7 +361,7 @@ có câu "grep lại" ở trên.)
 - **Ba tầng đo, đừng bỏ tầng nào.** Ngã ba bắn `start_here_goal` kèm `goal`;
   mọi link trong bốn bước bắn `start_here_step` kèm `step` + `target`
   (`components/home/start-here-link.tsx`); `NewsletterForm` bắn
-  `newsletter_subscribed` kèm `source` SAU khi `res.ok`. Không có số thì cả
+  `newsletter_subscribed` kèm `newsletter_source` (KHÔNG phải `source`, xem mục 20/09) SAU khi `res.ok`. Không có số thì cả
   trang này lẫn câu hỏi "có cần wizard không" đều không kiểm chứng được. Quyết
   theo số phiên đủ lớn, không theo lịch.
 - **`NewsletterForm` có prop `source` BẮT BUỘC, không mặc định.** Form đứng ở
@@ -1830,3 +1830,41 @@ Ba bản vá đã qua lại một vòng Codex bác bỏ (2 BẢN VÁ HỎNG ban 
 vòng đó bắt được lỗi fail-open thật trong `slugTaken` (đã sửa) và xác nhận
 giới hạn thật của `bodyTooLarge` (đã ghi rõ, không mở rộng). `lint`, `tsc`,
 `build`, `test:jobs`, `test:game` đều xanh sau bản vá cuối.
+
+## Đo đạc GA4 (20/09/2026) — đừng đề xuất lại
+
+- **Tham số event `source` LỌT VÀO Session source/medium của GA4.** Bằng chứng có
+  đối chứng: event thử `source=verify_hero_param_20260913` sinh dòng
+  `verify_hero_param_20260913 / (not set)` trong bảng nguồn; dòng `hero / (not set)`
+  (2 phiên/tuần) là do `NewsletterForm` gửi `source: "hero"`. Phép thử 13/09 chỉ
+  kiểm `tid` (đúng là không bị ghi đè) nên bỏ sót. Đã đổi sang `newsletter_source`
+  (`newsletter-form.tsx`). Cơ chế vì sao một số event mở ra phiên riêng: CHƯA RÕ —
+  đừng viết "đẻ phiên". GA4 Admin cần đăng ký custom dimension `newsletter_source`
+  (dimension cũ `source` ngừng nhận dữ liệu). Cả `medium`/`campaign`/`term`/`content`
+  cũng nên coi là tên nguy hiểm.
+- **Quy tắc kiểm đếm đôi `CardSpotlight` ở mục 13/09 nay SAI một nửa.** Sau bản vá
+  `730a859`, click khối thẻ hợp lệ mang `placement=post_body` + slug THẺ, nên tổng
+  `post_body` lớn hơn tổng dòng Product dạng slug-bài là BÌNH THƯỜNG. Kiểm bằng cách
+  khác: trên một trang blog, một click khối thẻ chỉ được ra MỘT event (slug thẻ),
+  không kèm event mang slug bài. Tuần 13–19/09: N=1, đạt.
+- **Trang `/credit-cards/goi-y` có thể bắn `page_view` mỗi bước.** Server Action →
+  `redirect(PATH)` → Next `replaceState`; Enhanced measurement của stream
+  `Ghế 1A` đang bật "Page changes based on browser history events". 550 view / 9.3
+  view-mỗi-người của tuần 13–19/09 rất có thể là view theo bước. Chưa xác nhận bằng
+  DebugView. Đừng dùng số view của trang này làm độ phổ biến; engagement time thì
+  không bị nhân đôi bởi page_view.
+- **Báo cáo *Queries* của GA4-Search Console KHÔNG phải tổng.** Nó chỉ thấy query
+  không bị Google ẩn (tuần 13–19/09: 16 click / 47 impression, trong khi tổng thật
+  ở báo cáo *Google organic search traffic* (`r=search-traffic`) là 27 / 110).
+  Không suy "click phi thương hiệu" từ Queries; dùng landing `/` làm chỉ báo brand.
+- **`catch-the-points / game` = 2 GA user quay lại** (0 người mới), 31–39 phiên/tuần,
+  không phải luồng người chơi; chưa biết vì sao họ giữ nguồn đó dù UTM đã gỡ.
+- **Ngày cuối của cửa sổ (19/09) chưa settle** và chứa cả phần thừa của bảng nguồn.
+  Luôn đọc thêm cửa sổ bỏ ngày cuối; "cộng khớp" không đồng nghĩa "đã settle".
+- **Đọc GA4 bằng URL:** `apply_clicked` theo Product = `seldim` gồm
+  `["unifiedScreenClass","customDimensionsGroup2Slot01"]` (Slot02 = Placement,
+  Slot03 = Newsletter source) trên `all-pages-and-screens`, kèm `_r..dataFilters` là
+  `[{"type":1,"fieldName":"eventName","evaluationType":1,"expressionList":
+  ["apply_clicked"],"complement":false,"isCaseSensitive":true,"expression":""}]`.
+  Slot chỉ chạy khi đi CẶP với một dimension chuẩn. Lọc theo nguồn: `fieldName`
+  `sessionSourceMedium`. Báo cáo tổng Search Console: `r=search-traffic&collectionId=search-console`.
