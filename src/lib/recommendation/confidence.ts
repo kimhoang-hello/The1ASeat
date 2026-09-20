@@ -40,7 +40,7 @@ const BLOCKING_USER_GAPS: ReadonlySet<UserDataGap["kind"]> = new Set([
 ]);
 
 /** Số `DataGap["kind"]` mà lớp dữ liệu có thể phát ra — xem `types.ts`. */
-const DATA_GAP_KINDS = 6;
+const DATA_GAP_KINDS = 7;
 
 /** Số ngày kể từ `verifiedAt` mà một dữ kiện còn coi là tươi. */
 const FRESH_DAYS = 90;
@@ -107,6 +107,12 @@ function goalSpecificity(goal: GoalContext): { value: number; note: string } {
           // hơn một mục tiêu có tên chương trình.
           { value: 0.6, note: "chưa chỉ định chương trình đích" }
         : { value: 0.9, note: "có chương trình đích cụ thể" };
+    case "cash":
+      // Hẹp như một mục tiêu có tên chương trình, nhưng hẹp theo ĐƯỜNG RA:
+      // "rút ra tiền" loại thẳng điểm hàng không và điểm khách sạn khỏi câu
+      // trả lời, không cần hỏi thêm câu nào. Chưa bằng 0.9 vì trong số đồng
+      // điểm còn lại vẫn còn chỗ để chọn sai.
+      return { value: 0.85, note: "mục tiêu rõ đường ra: quy điểm thành tiền" };
     case "diversify":
       return { value: 0.8, note: "mục tiêu đa dạng hoá đọc trực tiếp từ danh mục" };
     case "next_card":

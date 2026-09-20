@@ -75,6 +75,15 @@ export interface ReadSet {
   held: ReadonlySet<string>;
   /** Tỷ lệ tích điểm (và trần) có thật sự đi vào phép tính — xem đầu file. */
   readsEarn: boolean;
+  /**
+   * Lượt chạy có đọc cột định giá TIỀN MẶT không — chỉ mục tiêu `cash` đọc.
+   *
+   * Cùng luật với `readsEarn`, và sinh ra vì cùng một cái bẫy ở mức nhỏ hơn:
+   * mỗi đồng điểm nay có tới hai dòng định giá, và nếu độ tươi §29 đếm cả hai
+   * thì một tỷ lệ rút-tiền cũ sẽ hạ độ tin cậy của một lượt chạy CHUYẾN ĐI —
+   * vì một con số lượt chạy đó không hề đọc.
+   */
+  readsCashValuation: boolean;
   /** Chương trình có số dư BIẾT và khác 0 — những số dư duy nhất nhân với định giá. */
   valuedBalancePrograms: ReadonlySet<string>;
   /** Award strategy của CHẶNG đang hỏi, đúng những dòng `tripNeed` đã đọc. */
@@ -89,6 +98,8 @@ export function buildReadSet(input: {
   held: readonly Product[];
   /** `goalReadsEarn` của mục tiêu — hoặc `true` khi chỉ dựng thang đo chung. */
   goalReadsEarn: boolean;
+  /** Mục tiêu có hỏi tới tiền mặt không — `valuationModeFor(goal) === "cash"`. */
+  goalReadsCash: boolean;
   /** Người dùng có hồ sơ chi tiêu — không có thì `earnFitFor` không đọc dòng nào. */
   spendKnown: boolean;
   /** Người dùng đã khai ngưỡng phí — có thì trung vị phí không được dùng. */
@@ -106,6 +117,7 @@ export function buildReadSet(input: {
     scored,
     held: new Set(input.held.map((product) => product.id as string)),
     readsEarn: input.goalReadsEarn && input.spendKnown,
+    readsCashValuation: input.goalReadsCash,
     valuedBalancePrograms: new Set(input.valuedBalancePrograms),
     awardStrategies: input.awardStrategies,
   };
@@ -212,7 +224,10 @@ export function oldestVerified(
   // định giá AAdvantage® cũ không làm kém tươi một lượt chạy không có đồng
   // AAdvantage® nào (vòng Codex 12).
   for (const row of activeAt(data.programValuations, asOf)) {
-    if (valued.has(row.programId as string)) consider("program_valuations", row);
+    if (!valued.has(row.programId as string)) continue;
+    // Và chỉ KIỂU ĐỔI lượt chạy này thật sự đọc — xem `readsCashValuation`.
+    if (row.redemption === "cash" && !read.readsCashValuation) continue;
+    consider("program_valuations", row);
   }
   for (const strategy of read.awardStrategies) consider("award_strategies", strategy);
   return oldest;

@@ -655,9 +655,39 @@ cộng lại **0.95**, không phải 1.0: 5% còn lại là "Editorial Adjustmen
 có mặt, nên tỷ lệ giữa các thành phần giữ nguyên và điểm vẫn nằm trên thang
 0..1 — thang mà `NO_NEW_CARD` cũng dùng.
 
-`scoring/earning.ts` là bảng DUY NHẤT không có trong spec (§10 nêu tên hàm
-nhưng không cho trọng số). Nó nói ra điều đó ngay đầu file thay vì trông giống
-ba bảng có nguồn.
+`scoring/earning.ts` và `scoring/cash.ts` là hai bảng không có trong spec: §10
+nêu tên hàm cho ý định thứ nhất nhưng không cho trọng số, còn ý định thứ hai
+thì spec không biết tới. Cả hai nói ra điều đó ngay đầu file thay vì trông
+giống ba bảng có nguồn, và `WEIGHT_SOURCE` lặp lại cho debugger.
+
+### Mục tiêu `cash`: một đồng điểm có hai giá
+
+"Tích điểm quy đổi được thành tiền" không phải `earn_points` hẹp lại — nó ràng
+buộc **đường ra**, không ràng buộc chương trình. Và nó lộ ra một chỗ mô hình cũ
+nói dối: `program_valuations` từng có đúng MỘT con số cho mỗi đồng điểm, con số
+đó là giá trị TỐT NHẤT (thường là vé), và dùng nó để trả lời "rút ra tiền được
+bao nhiêu" là tâng giá trị lên — im lặng, bằng một con số thật.
+
+Nên định giá nay có `redemption: "best" | "cash"`, và `PointsProgram.cashOut`
+nói chương trình có đường ra tiền hay không — **ba** trạng thái, vì "đã kiểm và
+không có" (Aeroplan®) khác hẳn "chưa ai kiểm". Vế thứ ba sinh ra `DataGap`
+`cash_out_unknown` và mã `CASH_VALUE_UNPRICED`, và chúng chỉ nổ khi lượt chạy
+THẬT SỰ hỏi tới tiền mặt.
+
+Hôm nay **không chương trình nào** còn `unknown` — Membership Rewards® và
+Avion® đã có tỷ lệ từ 20/09/2026. Nhưng nhánh đó ở lại, và nó ở lại vì một lý
+do đắt: suốt bốn vòng rà, mỗi tầng đọc "chưa biết" thành "$0" là một lần
+engine nói với người giữ 40,000 Membership Rewards® rằng họ không có gì. Chỗ
+nào tính bằng tiền mà gặp một đồng điểm chưa tra thì phải TRUNG TÍNH và nói ra,
+không được chấm 0 — `scoring/cash.ts` (`fee_drag`), `portfolio.ts`
+(`hasUnknownBalance`) và `rules.ts` (`CASH_VALUE_UNPRICED`) đều có một dòng
+riêng cho việc đó, và test dựng bộ dữ liệu tổng hợp để nhánh ấy không chết
+lặng lẽ.
+
+`cashOut` không suy được từ `programType`: `fixed_value` chứa cả Scene+™ (1 cent
+vào sao kê) lẫn VIPorter® (chỉ đổi được vé Porter®). `validate.ts` cưỡng chế hai
+bảng đi cùng nhau theo cả hai chiều — khai `redeemable` mà thiếu dòng định giá
+là lỗi, và một dòng định giá `cash` mồ côi cũng là lỗi.
 
 ### Ba lỗi bới ra được khi ĐỌC KẾT QUẢ CHẠY, không phải khi viết code
 

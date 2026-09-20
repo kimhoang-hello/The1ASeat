@@ -543,7 +543,13 @@ export function validateDataset(
     "offers",
   );
   checkNoOverlap(data.productFees, (row) => row.productId, "product_fees");
-  checkNoOverlap(data.programValuations, (row) => row.programId, "program_valuations");
+  // Danh tính logic của một dòng định giá là (chương trình, KIỂU ĐỔI) — một
+  // đồng điểm có giá đổi vé và giá rút tiền cùng lúc, và đó là hợp lệ.
+  checkNoOverlap(
+    data.programValuations,
+    (row) => `${row.programId}|${row.redemption}`,
+    "program_valuations",
+  );
   checkNoOverlap(data.transferPaths, (row) => `${row.sourceProgramId}->${row.destinationProgramId}`, "transfer_paths");
   checkNoOverlap(data.productBenefits, (row) => `${row.productId}|${row.benefitId}`, "product_benefits");
   // Tỷ lệ tích điểm: khoá gồm cả nhóm merchant, vì hai dòng cùng hạng mục khác
@@ -605,8 +611,51 @@ export function validateDataset(
   // đáng 0 — im lặng loại mọi thẻ kiếm nó — hoặc phải tự bịa một giá trị, tức
   // logic nghiệp vụ rơi ra khỏi dữ liệu vào code.
   const programIdsWithValuation = new Set(
-    data.programValuations.filter((row) => isActiveAt(row, asOf)).map((row) => row.programId as string),
+    data.programValuations
+      .filter((row) => row.redemption === "best" && isActiveAt(row, asOf))
+      .map((row) => row.programId as string),
   );
+  // Chương trình khai rút ra tiền được thì PHẢI có dòng `cash`, và ngược lại.
+  //
+  // Hai vế của cùng một dữ kiện sống ở hai bảng, nên thiếu phép kiểm này thì
+  // chúng trôi khỏi nhau lặng lẽ: khai `redeemable` mà quên dòng định giá làm
+  // `centsPerPoint(..., "cash")` trả `null`, và mục tiêu "quy điểm ra tiền"
+  // đối xử với đồng điểm đó y như Aeroplan® — đúng thứ `CashOutStatus` sinh ra
+  // để khỏi phải đoán. Chiều kia thì tệ hơn: một dòng `cash` mồ côi là một giá
+  // engine sẽ dùng cho một chương trình vừa được khai là không rút được.
+  const cashValuationPrograms = new Set(
+    data.programValuations
+      .filter((row) => row.redemption === "cash" && isActiveAt(row, asOf))
+      .map((row) => row.programId as string),
+  );
+  // BỎ QUA hẳn khi bộ dữ liệu không có DÒNG CASH NÀO còn hiệu lực.
+  //
+  // Đó là hình dạng của một bản dựng lại QUÁ KHỨ: cả cột `cash` vào kho cùng
+  // một ngày (`CASH_RECORDED_ON`), nên `datasetAt(..., { knownAt })` trước
+  // ngày đó cắt sạch chúng — trong khi `cashOut` là trường tĩnh trên chương
+  // trình, không có trục thời gian, nên nó vẫn nói "redeemable". Báo lỗi ở
+  // đây là dội 6 lỗi dữ liệu giả lên màn hình admin đang mở một lượt chạy
+  // của tháng trước (vòng Codex 7).
+  //
+  // Vẫn bắt được ca thật: quên MỘT dòng trong khi các dòng khác còn đó.
+  const cashColumnExists = cashValuationPrograms.size > 0;
+  for (const program of cashColumnExists ? data.pointsPrograms : []) {
+    const hasCash = cashValuationPrograms.has(program.id as string);
+    if (program.cashOut === "redeemable" && !hasCash) {
+      issues.push({
+        level: "error",
+        entity: "program_valuations",
+        message: `${program.slug}: cashOut "redeemable" nhưng không có định giá cash nào còn hiệu lực ${asOf}`,
+      });
+    }
+    if (program.cashOut !== "redeemable" && hasCash) {
+      issues.push({
+        level: "error",
+        entity: "program_valuations",
+        message: `${program.slug}: có định giá cash nhưng cashOut là "${program.cashOut}"`,
+      });
+    }
+  }
   for (const valuation of data.programValuations) {
     if (valuation.centsPerPoint <= 0) {
       issues.push({

@@ -250,6 +250,10 @@ export function stageValue(record: RecommendationRunRecord, stage: PipelineStage
           (row) => ({
             offer: row.offer,
             earn: row.earn,
+            // Cùng tầng với hai dòng trên: chúng là CÙNG một dữ kiện đo bằng
+            // thước khác, dựng ở cùng chỗ và đổi vì cùng lý do.
+            offerCash: row.offerCash,
+            earnCash: row.earnCash,
             benefits: row.benefits,
             travelBenefitCount: row.travelBenefitCount,
           }),

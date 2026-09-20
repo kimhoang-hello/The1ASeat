@@ -501,6 +501,7 @@ const GOAL_TITLE: Record<GoalType, string> = {
   next_card: "Thẻ nên mở tiếp theo",
   trip: "Chuyến bay bạn đang nhắm",
   earn_points: "Tích thêm điểm hằng ngày",
+  cash: "Tích điểm quy đổi được thành tiền",
   diversify: "Trải điểm ra nhiều chương trình",
 };
 

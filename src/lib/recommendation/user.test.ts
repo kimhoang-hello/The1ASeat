@@ -35,6 +35,7 @@ import { validateUserState } from "./user-validate.ts";
 import {
   amountRange,
   exactAmount,
+  GOAL_TYPES,
   isExactAmount,
   typicalAmount,
   type UserCardId,
@@ -1171,10 +1172,13 @@ test("kiểu 11+12: mục tiêu cụ thể và mục tiêu mơ hồ đều biể
   assert.ok(!gapKinds(vagueEarner).some((kind) => kind.startsWith("trip_")));
 });
 
-test("cả bốn loại mục tiêu đều có nhân vật dùng tới", () => {
-  // Hai hàm chấm điểm của §10 từng chưa có lấy một đầu vào để chạy thử.
+test("MỌI loại mục tiêu đều có nhân vật dùng tới", () => {
+  // Hai hàm chấm điểm của §10 từng chưa có lấy một đầu vào để chạy thử. So với
+  // `GOAL_TYPES` chứ không với một danh sách chép tay: thêm một ý định mới mà
+  // quên nhân vật thì hàm chấm điểm của nó không bao giờ chạy trong test nào,
+  // và danh sách chép tay sẽ được sửa theo cho xanh lại.
   const used = new Set(USER_FIXTURES.flatMap((state) => state.goals.map((goal) => goal.type)));
-  assert.deepEqual([...used].sort(), ["diversify", "earn_points", "next_card", "trip"]);
+  assert.deepEqual([...used].sort(), [...GOAL_TYPES].sort());
 });
 
 test("không hỏi thứ không ai dùng: tỉnh bang không sinh chỗ trống", () => {

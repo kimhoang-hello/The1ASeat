@@ -89,6 +89,7 @@ function goalLabel(goal: GoalTrace): string {
     );
   }
   if (g.type === "earn_points") return `tích điểm${g.targetProgramId === null ? "" : ` (${g.targetProgramId})`}`;
+  if (g.type === "cash") return "tích điểm quy ra tiền";
   return g.type;
 }
 
@@ -284,8 +285,16 @@ export function renderRunReport(record: RecommendationRunRecord, options: RunRep
             .join(", ")
     }`,
   );
+  // THƯỚC nói ra ngay trên con số. `derived.portfolio` luôn đo bằng giá trị
+  // CAO NHẤT đổi được (một lượt chạy có thể mang hai mục tiêu khác thước
+  // nhau, nên bản mô tả ví phải có đúng một thước), trong khi
+  // `numbers.topEcosystemShare` của một mục tiêu `cash` đo bằng tiền mặt. Hai
+  // con số đó đứng cách nhau vài dòng trong cùng một báo cáo, và không dán
+  // nhãn thì chúng trông như một phép tính sai chứ không như hai câu hỏi khác
+  // nhau (vòng Codex 4).
   out.push(
-    `  giá trị đã biết ${money(portfolio.knownValueCents)}${portfolio.hasUnknownBalance ? " (CẬN DƯỚI — có số dư chưa biết)" : ""}` +
+    `  giá trị đã biết ${money(portfolio.knownValueCents)} (thước: giá trị cao nhất đổi được)` +
+      `${portfolio.hasUnknownBalance ? " · CẬN DƯỚI — có số dư chưa biết" : ""}` +
       ` · linh hoạt ${pct(portfolio.flexibilityScore)}`,
   );
   // Các dòng mà hai con số trên cộng từ đó, và phép cộng lại NGAY ĐÂY: engine
@@ -623,6 +632,24 @@ export function renderProductExplanation(explanation: ProductExplanation): strin
         ` · dùng được ${money(o.usableValueCents)} · mốc/90 ngày $${int(o.fullRequiredPerNinetyDays)}` +
         ` · percentile ${o.historicalPercentile ?? "—"} (${o.historyPoints} điểm lịch sử)${o.termsUnknown ? " · ĐIỀU KHOẢN CHƯA BIẾT" : ""}`,
     );
+    // Thước TIỀN MẶT, in ra ngay dưới thước đổi vé và CHỈ khi hai bên lệch
+    // nhau: với mục tiêu `cash`, đây mới là hai con số engine chấm điểm trên,
+    // và không in thì bảng này trả lời "vì sao thẻ này thắng" bằng những con
+    // số nó không dùng. Bằng nhau thì im — thêm một dòng lặp lại vào mọi thẻ
+    // của mọi lượt chạy là làm loãng đúng chỗ cần đọc nhanh.
+    // Vắng ở bản ghi cũ — im lặng bỏ qua, KHÔNG nổ. Xem `CandidateFactsSnapshot`.
+    const cashOffer = facts.offerCash?.fullValueCents;
+    const cashEarn = facts.earnCash?.annualValueCents;
+    if (
+      cashOffer !== undefined &&
+      cashEarn !== undefined &&
+      (cashOffer !== o.fullValueCents || cashEarn !== facts.earn.annualValueCents)
+    ) {
+      out.push(
+        `  QUY RA TIỀN: bonus ${money(cashOffer)} · dùng được ${money(facts.offerCash?.usableValueCents ?? null)}` +
+          ` · tích/năm ${money(cashEarn)}`,
+      );
+    }
     out.push(
       `  tích điểm/năm ${money(facts.earn.annualValueCents)}${facts.earn.fromStatedCategories ? "" : " (trên chi tiêu CHƯA phân bổ)"}` +
         ` · quyền lợi thêm ${facts.benefits.incrementalCount}/${facts.benefits.totalCount} (${money(facts.benefits.incrementalCashCents)})` +

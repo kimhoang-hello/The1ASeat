@@ -223,12 +223,51 @@ export type PointsProgramType =
   | "fixed_value" // TD Rewards®, CIBC Aventura® — quy ra tiền vé theo bảng cố định
   | "cash_back";
 
+/**
+ * ĐỔI ĐIỂM THEO KIỂU NÀO — một đồng điểm có nhiều giá, không có một giá.
+ *
+ * `best` là giá trị cao nhất đổi được (thường là vé máy bay) — con số mọi hàm
+ * chấm điểm dùng mặc định. `cash` là giá khi rút ra TIỀN: trả vào sao kê, trừ
+ * thẳng một giao dịch, đổi ra tiền chợ.
+ *
+ * Hai con số này lệch nhau, và lệch theo hướng nguy hiểm: TD Rewards® đáng
+ * 0.5 cent khi đổi vé qua Expedia® For TD và chỉ 0.25 cent khi trả vào sao kê
+ * (400 điểm = $1, trang "Pay Off Purchases" của TD). Dùng con số `best` để trả
+ * lời câu hỏi "điểm này rút ra tiền được bao nhiêu" là tâng thẻ lên gấp đôi —
+ * và tâng một cách hoàn toàn im lặng, vì cả hai đều là những con số THẬT.
+ */
+export type RedemptionMode = "best" | "cash";
+
+/**
+ * Chương trình này có đường ra TIỀN không.
+ *
+ * Ba trạng thái chứ không phải hai, cùng lý do với `BalanceKnowledge`: "đã
+ * kiểm và không có" khác hẳn "chưa ai kiểm". Thiếu vế thứ ba thì một chương
+ * trình chưa tra cứu trông y hệt Aeroplan® — đồng điểm không bao giờ rút ra
+ * tiền được — và mục tiêu "quy điểm ra tiền" sẽ loại nó bằng một dữ kiện chưa
+ * ai xác lập.
+ *
+ * `redeemable` = có, và tỷ lệ nằm ở `program_valuations` với
+ * `redemption: "cash"`. `validate.ts` cưỡng chế hai vế đó đi cùng nhau.
+ */
+export type CashOutStatus = "redeemable" | "none" | "unknown";
+
 export interface PointsProgram {
   id: PointsProgramId;
   slug: string;
   name: string;
   programType: PointsProgramType;
   transferable: boolean;
+  /**
+   * Điểm này rút ra tiền được không — xem `CashOutStatus`.
+   *
+   * Ở ĐÂY chứ không suy từ `programType`: `fixed_value` gồm cả Scene+™ (1 cent
+   * trả vào sao kê) lẫn VIPorter® (chỉ đổi được vé Porter®). Suy từ loại
+   * chương trình là đoán, và đoán sai ở đây thì mục tiêu "quy điểm ra tiền"
+   * hoặc khuyên một đồng điểm không rút ra tiền được, hoặc bỏ qua một đồng
+   * điểm rút được.
+   */
+  cashOut: CashOutStatus;
   /**
    * KHÔNG có định giá ở đây — xem `program_valuations`.
    *
@@ -281,6 +320,15 @@ export interface PointsProgram {
 export interface ProgramValuation extends Temporal, Sourced {
   id: ProgramValuationId;
   programId: PointsProgramId;
+  /**
+   * Định giá này nói về KIỂU ĐỔI nào — xem `RedemptionMode`.
+   *
+   * Danh tính logic của một dòng định giá là (chương trình, kiểu đổi, khoảng
+   * thời gian), không phải (chương trình, khoảng thời gian). Thiếu trường này
+   * thì hai giá của cùng một đồng điểm là hai dòng chồng thời gian, và
+   * `centsPerPoint` trả về dòng nào tuỳ thứ tự trong mảng.
+   */
+  redemption: RedemptionMode;
   centsPerPoint: number;
 }
 
@@ -978,7 +1026,8 @@ export interface DataGap {
     | "offer_terms_unknown" // offer có headline nhưng không rõ mốc chi
     | "base_earn_rate_unknown" // thẻ chưa có tỷ lệ cho chi tiêu thông thường
     | "eligibility_unknown" // chưa biết điều kiện riêng của thẻ này
-    | "transfer_paths_unmodelled"; // chương trình chuyển được nhưng chưa dựng chặng
+    | "transfer_paths_unmodelled" // chương trình chuyển được nhưng chưa dựng chặng
+    | "cash_out_unknown"; // chưa tra được đồng điểm này rút ra tiền theo tỷ lệ nào
   /** Id của thực thể liên quan — sản phẩm, chương trình, offer. */
   subjectId: string;
   /** Vì sao còn trống. Dành cho NGƯỜI đọc; engine dùng `kind`. */

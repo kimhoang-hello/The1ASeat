@@ -7,6 +7,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { offlineDataset } from "./data/index.ts";
+import { datasetAt } from "./temporal.ts";
 import { validateDataset } from "./validate.ts";
 import type { Product, RecommendationDataset } from "./types.ts";
 
@@ -179,4 +180,70 @@ test("mốc có spendWindowText thì vẫn phải có số ngày để engine qu
       `${row.id}: thừa khoảng trắng — chuỗi này ghép thẳng vào câu trên trang`,
     );
   }
+});
+
+/* ------------------------------------------------------------------ *
+ * Định giá theo KIỂU ĐỔI (`RedemptionMode`)
+ * ------------------------------------------------------------------ */
+
+test("khai cashOut 'redeemable' mà thiếu dòng định giá cash là LỖI", () => {
+  // Hai vế của cùng một dữ kiện sống ở hai bảng. Thiếu phép kiểm này thì
+  // `centsPerPoint(..., "cash")` trả `null` cho một chương trình vừa được khai
+  // là rút ra tiền được, và mục tiêu `cash` đối xử với nó như Aeroplan®.
+  const broken: RecommendationDataset = {
+    ...data,
+    programValuations: data.programValuations.filter(
+      (row) => !(row.redemption === "cash" && (row.programId as string) === "scene-plus"),
+    ),
+  };
+  const errors = validateDataset(broken).filter((i) => i.level === "error");
+  assert.ok(errors.some((e) => e.message.includes("cashOut \"redeemable\"")), JSON.stringify(errors));
+});
+
+test("dòng định giá cash MỒ CÔI cũng là LỖI", () => {
+  // Chiều ngược lại, và là chiều tệ hơn: một giá engine sẽ dùng cho một
+  // chương trình vừa được khai là không rút ra tiền được.
+  const orphan = data.programValuations.find((row) => row.redemption === "cash")!;
+  const broken: RecommendationDataset = {
+    ...data,
+    programValuations: [
+      ...data.programValuations,
+      {
+        ...orphan,
+        id: `${orphan.id}_orphan` as typeof orphan.id,
+        programId: "aeroplan" as typeof orphan.programId,
+      },
+    ],
+  };
+  const errors = validateDataset(broken).filter((i) => i.level === "error");
+  assert.ok(errors.some((e) => e.message.includes("cashOut là \"none\"")), JSON.stringify(errors));
+});
+
+test("mỗi chương trình có ĐÚNG MỘT định giá 'best' còn hiệu lực", () => {
+  // Thêm cột kiểu đổi không được làm loãng phép kiểm cũ: cột `best` vẫn phải
+  // phủ mọi chương trình, vì nó là con số mọi mục tiêu khác nhân vào.
+  const best = data.programValuations.filter((row) => row.redemption === "best");
+  assert.deepEqual(
+    best.map((row) => row.programId as string).sort(),
+    data.pointsPrograms.map((p) => p.id as string).sort(),
+  );
+});
+
+test("dựng lại QUÁ KHỨ (trước ngày có cột cash) không sinh lỗi dữ liệu giả", () => {
+  // Vòng Codex 7: cả cột `cash` vào kho cùng một ngày, nên một bản dựng lại
+  // cho ngày trước đó cắt sạch chúng — trong khi `cashOut` là trường tĩnh,
+  // vẫn nói "redeemable". Không có phép bỏ qua thì admin mở một lượt chạy của
+  // tháng trước sẽ thấy 6 lỗi dữ liệu không có thật.
+  const past = datasetAt(data, "2026-09-10", { knownAt: "2026-09-10" });
+  assert.equal(
+    past.programValuations.filter((row) => row.redemption === "cash").length,
+    0,
+    "tiền đề: bản dựng lại này phải KHÔNG còn dòng cash nào",
+  );
+  assert.ok(
+    past.pointsPrograms.some((program) => program.cashOut === "redeemable"),
+    "tiền đề: và `cashOut` vẫn nói redeemable, vì nó không có trục thời gian",
+  );
+  const errors = validateDataset(past, "2026-09-10").filter((issue) => issue.level === "error");
+  assert.deepEqual(errors.filter((issue) => issue.message.includes("cash")), []);
 });

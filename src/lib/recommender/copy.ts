@@ -120,6 +120,12 @@ export const REASON_TEXT: Record<ReasonCode, ReasonText> = {
     tone: "good",
     text: "Thẻ này mở ra một chương trình điểm bạn chưa có.",
   },
+  CASH_VALUE_UNPRICED: {
+    tone: "caution",
+    text:
+      "Mình chưa tra được loại điểm của thẻ này rút ra tiền mặt theo tỷ lệ nào, nên phần tích điểm " +
+      "của nó đang được tính bằng 0 — chưa chắc là thấp, chỉ là chưa có số.",
+  },
 
   EXISTING_BENEFIT_DUPLICATION: {
     tone: "caution",

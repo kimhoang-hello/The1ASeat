@@ -620,6 +620,11 @@ export const GOAL_OPTIONS: ChoiceOption[] = [
   { value: "trip:EUROPE", label: "Tích điểm bay đi châu Âu" },
   { value: "trip:CANADA_US", label: "Tích điểm bay trong Canada / Mỹ" },
   { value: "earn_points", label: "Tích thêm điểm từ chi tiêu hằng ngày" },
+  {
+    value: "cash",
+    label: "Tích điểm có thể quy đổi thành tiền",
+    hint: "Điểm trả thẳng vào sao kê hoặc trừ vào một giao dịch, không phải đổi vé",
+  },
   { value: "diversify", label: "Điểm đang dồn một chỗ, muốn đa dạng hơn" },
 ];
 
@@ -675,6 +680,7 @@ export function goalFrom(value: string, userId: string, now: string): Goal | nul
   const shared = { id, userId: userId as UserId, priority: 1, createdAt: now };
   if (value === "next_card") return { ...shared, type: "next_card" };
   if (value === "earn_points") return { ...shared, type: "earn_points", targetProgramId: null };
+  if (value === "cash") return { ...shared, type: "cash" };
   if (value === "diversify") return { ...shared, type: "diversify" };
   if (value.startsWith("trip:")) {
     const region = value.slice("trip:".length);

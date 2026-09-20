@@ -29,8 +29,14 @@ import {
   holdsNow,
   usableBalance,
 } from "./user.ts";
-import type { DatasetIndex } from "./indexes.ts";
-import type { PointsProgram, PointsProgramId, Product, ProductId } from "./types.ts";
+import { valuationKey, type DatasetIndex } from "./indexes.ts";
+import type {
+  PointsProgram,
+  PointsProgramId,
+  Product,
+  ProductId,
+  RedemptionMode,
+} from "./types.ts";
 import type { UserState } from "./user-types.ts";
 import type { AccessibleBalance, BalanceKnowledge, PortfolioAnalysis } from "./engine-types.ts";
 
@@ -144,13 +150,23 @@ export function flexibilityScale(
   return { best, programs: programs.sort() };
 }
 
-/** Định giá đang hiệu lực của một chương trình, `null` khi chưa có dòng nào. */
+/**
+ * Định giá đang hiệu lực của một chương trình, `null` khi chưa có dòng nào.
+ *
+ * `mode` mặc định `"best"` — giá trị cao nhất đồng điểm đó đổi được, đúng con
+ * số mọi phép tính cũ đang dùng. `"cash"` hỏi một câu KHÁC: rút ra tiền thì
+ * được bao nhiêu. Chỉ chương trình có `cashOut: "redeemable"` mới có dòng đó,
+ * nên `null` ở chế độ này KHÔNG có nghĩa là "chưa định giá" — nó nghĩa là
+ * chương trình này không rút ra tiền được, hoặc chưa ai kiểm. Hai ca đó phân
+ * biệt bằng `PointsProgram.cashOut`, và chỗ gọi phải đọc nó.
+ */
 export function centsPerPoint(
   ix: DatasetIndex,
   programId: PointsProgramId,
   asOf: string,
+  mode: RedemptionMode = "best",
 ): number | null {
-  const rows = ix.valuationsByProgram.get(programId) ?? [];
+  const rows = ix.valuationsByProgram.get(valuationKey(programId, mode)) ?? [];
   const row = oneActiveAt(rows, asOf);
   return row?.centsPerPoint ?? null;
 }
@@ -296,6 +312,22 @@ export function analyzePortfolio(
   state: UserState,
   ix: DatasetIndex,
   asOf: string,
+  /**
+   * Định giá số dư theo KIỂU ĐỔI nào — xem `RedemptionMode`.
+   *
+   * §7 đo danh mục bằng GIÁ TRỊ, và giá trị phụ thuộc người này định làm gì
+   * với đống điểm. Người hỏi "quy điểm ra tiền" mà đang giữ 100,000 Aeroplan®
+   * thì theo thước đổi vé họ có $1,900 dồn 100% vào một chỗ — và engine trả
+   * lời `DIVERSIFY`, tức khuyên họ trải một tài sản ra, trong khi với mục
+   * tiêu của họ tài sản đó đáng $0 và câu trả lời đúng là `BUILD_POINTS`
+   * (vòng Codex 2 của mục tiêu này, mục 3).
+   *
+   * Chương trình không rút ra tiền được thì `centsPerPoint` trả `null` ở chế
+   * độ này, và số dư của nó rơi ra khỏi phép đo GIÁ TRỊ đúng nhánh
+   * "chưa có định giá" đã có sẵn — nó vẫn nằm trong `direct` như một số dư đã
+   * biết, chỉ là không góp đồng nào vào một câu hỏi tính bằng tiền.
+   */
+  mode: RedemptionMode = "best",
 ): PortfolioAnalysis {
   const direct = new Map<PointsProgramId, BalanceKnowledge>();
   let knownValueCents = 0;
@@ -329,12 +361,23 @@ export function analyzePortfolio(
     direct.set(programId, known);
 
     const program = ix.programById.get(programId);
-    const cpp = centsPerPoint(ix, programId, asOf);
+    const cpp = centsPerPoint(ix, programId, asOf, mode);
     // Chương trình lạ hoặc chưa có định giá: đếm là CÓ số dư (dòng `direct` ở
     // trên) nhưng không đưa vào phép đo tập trung. Gán một định giá mặc định ở
     // đây là bịa ra một con số rồi lấy chính nó kết luận danh mục nghiêng đi
     // đâu — xem `typicalAmount` của khoảng mở, cùng một cái bẫy.
-    if (program === undefined || cpp === null) continue;
+    if (program === undefined || cpp === null) {
+      // NHƯNG: ở chế độ `cash`, "không có dòng định giá" gộp hai ca khác hẳn
+      // nhau. Aeroplan® (`cashOut: "none"`) đã kiểm và biết không rút ra tiền
+      // được — số dư đó đáng $0 cho câu hỏi này, và bỏ qua là đúng. Membership
+      // Rewards® (`cashOut: "unknown"`) thì CHƯA AI KIỂM: bỏ qua lặng lẽ biến
+      // 40,000 điểm thành "bạn không có gì", đúng thứ "trống ≠ bằng không" cấm
+      // — và nó im lặng tuyệt đối, vì `knownValueCents` vẫn ra một con số
+      // trông bình thường. Bật cờ để §29 hạ độ tin cậy và để engine nói được
+      // "có một khoản mình không định giá nổi" (vòng Codex 3, mục 3).
+      if (mode === "cash" && program?.cashOut === "unknown") hasUnknownBalance = true;
+      continue;
+    }
 
     const valueCents = known.points * cpp;
     knownValueCents += valueCents;

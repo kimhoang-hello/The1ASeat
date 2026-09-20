@@ -24,7 +24,12 @@ import { centsPerPoint } from "./portfolio.ts";
 import { statedCategories, unallocatedMonthly } from "./user.ts";
 import { typicalAmount } from "./user-types.ts";
 import type { DatasetIndex } from "./indexes.ts";
-import type { EarningRate, PointsProgramId, SpendCategory } from "./types.ts";
+import type {
+  EarningRate,
+  PointsProgramId,
+  RedemptionMode,
+  SpendCategory,
+} from "./types.ts";
 import type { UserSpendProfile } from "./user-types.ts";
 
 export interface EarnFit {
@@ -62,6 +67,14 @@ export function earnFitFor(
   spend: UserSpendProfile | null,
   ix: DatasetIndex,
   asOf: string,
+  /**
+   * Quy điểm tích được ra tiền theo KIỂU ĐỔI nào — xem `RedemptionMode`.
+   *
+   * `"cash"` làm mọi đồng điểm không rút ra tiền được đóng góp 0, và đó là
+   * đúng: với mục tiêu "quy điểm ra tiền", 5x Membership Rewards® trên tiền ăn
+   * uống không phải là $X mỗi năm cho tới khi biết rút ra được bao nhiêu.
+   */
+  mode: RedemptionMode = "best",
 ): EarnFit {
   const rates = activeAt(ix.ratesByProduct.get(productId) ?? [], asOf);
   const programs = [...new Set(rates.map((rate) => rate.pointsProgramId))].sort() as PointsProgramId[];
@@ -155,7 +168,7 @@ export function earnFitFor(
     }
 
     for (const entry of entries) {
-      const cpp = centsPerPoint(ix, entry.programId, asOf);
+      const cpp = centsPerPoint(ix, entry.programId, asOf, mode);
       if (cpp === null) continue;
       // Phần TRONG trần, ở tỷ lệ thưởng.
       let points = entry.points * scale;

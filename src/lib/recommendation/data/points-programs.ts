@@ -5,9 +5,23 @@ import {
   type PointsProgramId,
   type ProgramValuation,
   type ProgramValuationId,
+  type RedemptionMode,
 } from "../types.ts";
 
 const VALUED_ON = "2026-09-07";
+
+/**
+ * Ngày cột định giá TIỀN MẶT được đưa vào kho.
+ *
+ * Tách khỏi `VALUED_ON` vì `recordedAt` và `effectiveFrom` là HAI TRỤC khác
+ * nhau (xem `Temporal` / `Sourced`): tỷ lệ 1 cent của Scene+™ đã đúng từ lâu
+ * — nên `effectiveFrom` vẫn là `VALUED_ON` và một lượt chạy dựng lại cho ngày
+ * 10/09 vẫn có giá để đọc — nhưng mình chỉ BIẾT nó ngày 20/09. Ghi
+ * `recordedAt` là `VALUED_ON` sẽ làm `datasetAt(..., { knownAt })` cho một
+ * lượt chạy của quá khứ đọc được một dòng chưa tồn tại lúc đó, đúng thứ
+ * `recordedAt` sinh ra để chặn.
+ */
+const CASH_RECORDED_ON = "2026-09-20";
 
 /**
  * Các chương trình điểm engine cần biết ở V1.
@@ -30,6 +44,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     name: "Amex Membership Rewards®",
     programType: "flexible_bank",
     transferable: true,
+    cashOut: "redeemable",
     calculatorProgramId: "amex-mr",
     cardFilterProgramId: "amex-mr",
     awardChartProgramId: null,
@@ -41,6 +56,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     name: "RBC Avion®",
     programType: "flexible_bank",
     transferable: true,
+    cashOut: "redeemable",
     calculatorProgramId: "rbc-avion",
     cardFilterProgramId: "avion",
     awardChartProgramId: null,
@@ -52,6 +68,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     name: "Air Canada® Aeroplan®",
     programType: "airline",
     transferable: false,
+    cashOut: "none",
     calculatorProgramId: "aeroplan",
     cardFilterProgramId: "aeroplan",
     awardChartProgramId: "aeroplan",
@@ -68,6 +85,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     name: "British Airways® Avios®",
     programType: "airline",
     transferable: false,
+    cashOut: "none",
     calculatorProgramId: null,
     cardFilterProgramId: null,
     awardChartProgramId: null,
@@ -79,6 +97,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     name: "Air France KLM® Flying Blue®",
     programType: "airline",
     transferable: false,
+    cashOut: "none",
     calculatorProgramId: null,
     cardFilterProgramId: null,
     awardChartProgramId: null,
@@ -90,6 +109,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     name: "Cathay Pacific® Asia Miles®",
     programType: "airline",
     transferable: false,
+    cashOut: "none",
     calculatorProgramId: null,
     cardFilterProgramId: null,
     awardChartProgramId: "asia-miles",
@@ -101,6 +121,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     name: "American Airlines® AAdvantage®",
     programType: "airline",
     transferable: false,
+    cashOut: "none",
     calculatorProgramId: null,
     cardFilterProgramId: null,
     awardChartProgramId: "aadvantage",
@@ -112,6 +133,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     name: "Marriott Bonvoy®",
     programType: "hotel",
     transferable: true,
+    cashOut: "none",
     calculatorProgramId: null,
     cardFilterProgramId: "bonvoy",
     awardChartProgramId: null,
@@ -123,6 +145,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     name: "Scene+™",
     programType: "fixed_value",
     transferable: false,
+    cashOut: "redeemable",
     calculatorProgramId: null,
     cardFilterProgramId: "scene-plus",
     awardChartProgramId: null,
@@ -136,6 +159,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     name: "TD Rewards®",
     programType: "fixed_value",
     transferable: false,
+    cashOut: "redeemable",
     calculatorProgramId: null,
     cardFilterProgramId: "td-rewards",
     awardChartProgramId: null,
@@ -147,6 +171,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     name: "CIBC Aventura®",
     programType: "fixed_value",
     transferable: false,
+    cashOut: "redeemable",
     calculatorProgramId: null,
     cardFilterProgramId: "aventura",
     awardChartProgramId: null,
@@ -158,6 +183,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     name: "WestJet® Rewards",
     programType: "fixed_value",
     transferable: false,
+    cashOut: "none",
     calculatorProgramId: null,
     cardFilterProgramId: "westjet",
     awardChartProgramId: null,
@@ -169,6 +195,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     name: "VIPorter®",
     programType: "fixed_value",
     transferable: false,
+    cashOut: "none",
     calculatorProgramId: null,
     cardFilterProgramId: "viporter",
     awardChartProgramId: null,
@@ -180,6 +207,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     name: "United® MileagePlus®",
     programType: "airline",
     transferable: false,
+    cashOut: "none",
     calculatorProgramId: null,
     cardFilterProgramId: "mileageplus",
     awardChartProgramId: null,
@@ -191,6 +219,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     name: "À la carte™",
     programType: "fixed_value",
     transferable: false,
+    cashOut: "none",
     calculatorProgramId: null,
     cardFilterProgramId: "a-la-carte",
     awardChartProgramId: null,
@@ -210,6 +239,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     name: "Cash back",
     programType: "cash_back",
     transferable: false,
+    cashOut: "redeemable",
     calculatorProgramId: null,
     cardFilterProgramId: "cash-back",
     awardChartProgramId: null,
@@ -231,6 +261,12 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
  */
 type Valuation = {
   programId: string;
+  /**
+   * Vắng = `"best"`. Viết ra chỉ ở dòng tiền mặt, để bảng dưới đọc được bằng
+   * mắt: dòng nào không nói gì là dòng giá trị cao nhất, đúng như trước khi có
+   * kiểu đổi.
+   */
+  redemption?: RedemptionMode;
   centsPerPoint: number;
   /**
    * `verified` cho điểm GIÁ CỐ ĐỊNH: TD Rewards đổi 200 điểm ăn $1 tiền vé là
@@ -261,21 +297,60 @@ const VALUATIONS: Valuation[] = [
   { programId: "mileageplus", centsPerPoint: 1.4, confidence: "editorial" },
   { programId: "a-la-carte", centsPerPoint: 1.0, confidence: "verified" },
   { programId: "cash-back", centsPerPoint: 1, confidence: "verified" },
+
+  /* ---- Giá khi RÚT RA TIỀN (`redemption: "cash"`) -------------------- *
+   *
+   * Chỉ chương trình có `cashOut: "redeemable"` mới có dòng ở đây, và
+   * `validate.ts` cưỡng chế chiều ngược lại: khai `redeemable` mà không có
+   * dòng nào là lỗi. Năm dòng đầu là con số user chốt 20/09/2026.
+   *
+   * Bốn dòng điểm-giá-cố-định trùng đúng giá `best` của chính chúng; hai dòng
+   * đầu thì KHÔNG, và chúng là lý do cột này tồn tại: Membership Rewards®
+   * đáng 1.8 cent khi đổi vé và đúng 1 cent khi trả vào sao kê, Avion® là
+   * 1.6 và 1. Một cột định giá duy nhất buộc phải nói dối một trong hai câu
+   * hỏi.
+   *
+   * Membership Rewards® và Avion® vào bảng ngày 20/09/2026 (user chốt, 100
+   * điểm = $1 cả hai). Trước đó chúng mang `cashOut: "unknown"` — và chính ca
+   * đó lộ ra rằng một đồng điểm chưa tra khác hẳn một đồng điểm đã tra và
+   * biết không rút được. Nhánh xử lý `unknown` vẫn còn nguyên trong engine
+   * cho chương trình sau này, dù hôm nay không ai rơi vào nó.
+   *
+   * Và tỷ lệ rút tiền sẽ còn lệch nữa. Trang "Pay Off Purchases" của TD ghi 400 điểm = $1 cho
+   * giao dịch thường (0.25 cent) và 225 điểm = $1 cho giao dịch du lịch
+   * (0.44 cent) — không đường nào ra đúng 0.5 cent; 200 điểm = $1 là tỷ lệ
+   * ĐỔI VÉ qua Expedia® For TD. Trang "Payment with Points" của CIBC ghi
+   * 4,000 Aventura® = $25 (0.625 cent) khi trả vào sao kê, còn 100 điểm = $1
+   * là tỷ lệ của Shopping with Points (trừ thẳng một giao dịch đang chờ).
+   * Con số ở đây là đường user chốt 20/09/2026; hai dòng đó để `editorial`
+   * chứ không `verified` đúng vì chúng chưa khớp trang chính chủ nào.
+   */
+  { programId: "amex-mr", redemption: "cash", centsPerPoint: 1.0, confidence: "editorial" },
+  { programId: "avion", redemption: "cash", centsPerPoint: 1.0, confidence: "editorial" },
+  { programId: "scene-plus", redemption: "cash", centsPerPoint: 1.0, confidence: "verified" },
+  { programId: "aventura", redemption: "cash", centsPerPoint: 1.0, confidence: "editorial" },
+  { programId: "td-rewards", redemption: "cash", centsPerPoint: 0.5, confidence: "editorial" },
+  // Đồng tiền giả: một "điểm" LÀ một cent, nên rút ra tiền không mất gì.
+  { programId: "cash-back", redemption: "cash", centsPerPoint: 1, confidence: "verified" },
 ];
 
 export const PROGRAM_VALUATIONS: ProgramValuation[] = VALUATIONS.map((v) => ({
+  // KIỂU ĐỔI vào id: nếu không, dòng tiền mặt và dòng giá tốt nhất của cùng
+  // một chương trình dùng chung một id, và `checkUniqueIds` bắt ngay — nhưng
+  // chỉ vì phép kiểm đó tồn tại. Id tự phân biệt thì không phụ thuộc vào nó.
   // Khoá bằng `id` của chương trình, KHÔNG bằng `slug`: hai thứ đó khác nhau
   // ở ít nhất một chương trình (`bonvoy` vs `marriott-bonvoy`), và dùng nhầm
   // slug làm khoá ngoại thì dòng định giá trỏ vào hư không — validator bắt
   // được ngay, nhưng chỉ vì phép kiểm khoá ngoại tồn tại.
-  id: makeId<ProgramValuationId>("val", v.programId, VALUED_ON),
+  id: makeId<ProgramValuationId>("val", v.programId, v.redemption ?? "best", VALUED_ON),
   programId: id<PointsProgramId>(v.programId),
+  redemption: v.redemption ?? "best",
   centsPerPoint: v.centsPerPoint,
   effectiveFrom: VALUED_ON,
   effectiveTo: null,
   sourceUrl: v.sourceUrl ?? null,
   sourceKind: v.confidence === "verified" ? "issuer" : "ghe1a",
-  verifiedAt: VALUED_ON,
-  recordedAt: VALUED_ON,
+  verifiedAt: v.redemption === "cash" ? CASH_RECORDED_ON : VALUED_ON,
+  recordedAt: v.redemption === "cash" ? CASH_RECORDED_ON : VALUED_ON,
   confidence: v.confidence,
 }));

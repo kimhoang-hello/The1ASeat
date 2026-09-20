@@ -100,5 +100,19 @@ export function deriveGaps(data: RecommendationDataset): DataGap[] {
     });
   }
 
+  // Đồng điểm chưa tra được đường ra tiền. `cashOut: "none"` KHÔNG phải chỗ
+  // trống — nó là một kết luận đã kiểm, y như `UNQUOTABLE_AWARD_PROGRAMS` ở
+  // đầu file. Chỉ `"unknown"` mới là chỗ chưa ai làm.
+  for (const program of data.pointsPrograms) {
+    if (program.cashOut !== "unknown") continue;
+    gaps.push({
+      kind: "cash_out_unknown",
+      subjectId: program.id,
+      reason:
+        "Chưa tra được tỷ lệ khi rút đồng điểm này ra tiền, nên mục tiêu quy " +
+        "điểm thành tiền phải chấm nó bằng một mức giữa thay vì bằng con số thật.",
+    });
+  }
+
   return gaps;
 }

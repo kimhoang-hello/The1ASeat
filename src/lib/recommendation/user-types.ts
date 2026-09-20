@@ -364,7 +364,7 @@ export interface UserPointBalance {
  * §5 goals
  * ------------------------------------------------------------------ */
 
-export const GOAL_TYPES = ["next_card", "earn_points", "diversify", "trip"] as const;
+export const GOAL_TYPES = ["next_card", "earn_points", "cash", "diversify", "trip"] as const;
 export type GoalType = (typeof GOAL_TYPES)[number];
 
 interface GoalBase {
@@ -384,6 +384,24 @@ export interface NextCardGoal extends GoalBase {
 export interface EarnPointsGoal extends GoalBase {
   type: "earn_points";
   targetProgramId: PointsProgramId | null;
+}
+
+/**
+ * "Tôi muốn điểm quy đổi được thành TIỀN."
+ *
+ * Khác `earn_points` ở chỗ nó ràng buộc ĐƯỜNG RA, không ràng buộc chương
+ * trình: người hỏi câu này không quan tâm điểm tên gì, họ quan tâm nó có trả
+ * vào sao kê được không. Nên nó không có `targetProgramId` — chỉ định một
+ * chương trình là trả lời hộ họ một câu họ cố ý không hỏi.
+ *
+ * VÌ SAO KHÔNG GÁN `earn_points` với `targetProgramId: "cash-back"`: làm vậy
+ * thì Scene+™ và Aventura® — hai đồng điểm rút ra tiền đúng 1 cent — chỉ còn
+ * là "chương trình khác đích", ăn 0.1 nhu cầu, trong khi chúng trả lời chính
+ * xác câu đang hỏi. Và vì `cash-back` không có chặng chuyển nào, mọi thẻ Scotia
+ * và CIBC sẽ rơi xuống đáy bảng vì một chi tiết của mô hình dữ liệu.
+ */
+export interface CashGoal extends GoalBase {
+  type: "cash";
 }
 
 /** "Danh mục của tôi đang dồn hết vào một chỗ." */
@@ -443,7 +461,7 @@ export interface TripGoal extends GoalBase {
   flexibility: "low" | "medium" | "high" | null;
 }
 
-export type Goal = NextCardGoal | EarnPointsGoal | DiversifyGoal | TripGoal;
+export type Goal = NextCardGoal | EarnPointsGoal | CashGoal | DiversifyGoal | TripGoal;
 
 /* ------------------------------------------------------------------ *
  * Trạng thái người dùng

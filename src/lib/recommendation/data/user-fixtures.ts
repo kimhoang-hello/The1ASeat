@@ -598,6 +598,38 @@ export const vagueEarner: UserState = {
 };
 
 /* ------------------------------------------------------------------ *
+ * Mục tiêu QUY ĐIỂM RA TIỀN
+ * ------------------------------------------------------------------ */
+
+/**
+ * "Tôi không bay đi đâu cả, tôi muốn điểm trả vào sao kê."
+ *
+ * Nhân vật duy nhất dùng `cash`, và là đầu vào duy nhất `scoring/cash.ts` có
+ * để chạy thử — cùng lý do `vagueEarner` tồn tại.
+ *
+ * CÓ SỐ DƯ Ở MỘT ĐỒNG ĐIỂM LINH HOẠT (Membership Rewards®) là phần đáng giá
+ * của nhân vật này: nó rút ra tiền đúng 1 cent, y hệt Scene+™, trong khi giá
+ * ĐỔI VÉ của nó cao gần gấp đôi. Nên nó là ca kiểm xem engine có thật sự đổi
+ * thước hay không — một engine còn đọc giá đổi vé sẽ xếp nó trên những đồng
+ * điểm ngang giá tiền mặt.
+ */
+export const cashSeeker: UserState = {
+  profile: profileOf("u_cash", { annualFeeTolerancePerCard: 120 }),
+  spend: spendOf("u_cash", {
+    monthlyTotal: exactAmount(4_000),
+    byCategory: {
+      grocery: exactAmount(1_200),
+      everything_else: exactAmount(2_800),
+    },
+    minimumSpendCapacity3m: exactAmount(3_000),
+  }),
+  cards: [],
+  balances: [balanceOf("u_cash", AMEX_MR, 40_000)],
+  goals: [goalOf("u_cash", { type: "cash", priority: 1 })],
+  declared: { cards: true, balances: true },
+};
+
+/* ------------------------------------------------------------------ *
  * Test C / D chạy được — cùng tình huống, trên chặng ĐÃ CÓ dữ liệu
  * ------------------------------------------------------------------ */
 
@@ -709,6 +741,7 @@ export const USER_FIXTURES: UserState[] = [
   advancedCollector,
   highSpendLowCapacity,
   vagueEarner,
+  cashSeeker,
   vietnamTripFunded,
   vietnamTripShortfall,
 ];

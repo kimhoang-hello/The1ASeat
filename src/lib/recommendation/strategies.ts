@@ -337,7 +337,11 @@ export function generateStrategies(input: StrategyInput): StrategyScore[] {
     add("BUILD_POINTS", 0.5);
   } else {
     add("USE_EXISTING_POINTS", hasBalances ? 0.35 : 0);
-    add("BUILD_POINTS", goal.goal.type === "earn_points" ? 0.8 : hasBalances ? 0.3 : 0.6);
+    // `cash` đi cùng `earn_points` ở đây: cả hai đều là "tích thêm", khác nhau
+    // ở chỗ tích ĐỒNG TIỀN NÀO — và chỗ khác nhau đó được trả lời ở tầng nhu
+    // cầu đồng tiền (`needs.ts`), không phải ở tầng cách tiếp cận.
+    const building = goal.goal.type === "earn_points" || goal.goal.type === "cash";
+    add("BUILD_POINTS", building ? 0.8 : hasBalances ? 0.3 : 0.6);
   }
 
   /* ---- Điểm linh hoạt -------------------------------------------- */
@@ -350,9 +354,16 @@ export function generateStrategies(input: StrategyInput): StrategyScore[] {
     "EARN_FLEXIBLE_POINTS",
     goal.goal.type === "diversify"
       ? Math.max(0.7, flexibilityGap)
-      : multiProgramRoute
-        ? Math.max(0.6, flexibilityGap)
-        : flexibilityGap * 0.8,
+      : // Điểm linh hoạt là giá trị của việc CHUYỂN được sang hãng bay. Người
+        // muốn rút ra tiền không đi qua đường đó: một đồng điểm chuyển tới năm
+        // hãng mà không trả vào sao kê được thì linh hoạt bằng không với họ.
+        // Không hạ hẳn về 0 — danh mục cứng nhắc vẫn là một điểm yếu thật, chỉ
+        // là điểm yếu của một câu hỏi khác.
+        goal.goal.type === "cash"
+        ? flexibilityGap * 0.3
+        : multiProgramRoute
+          ? Math.max(0.6, flexibilityGap)
+          : flexibilityGap * 0.8,
     ...(flexibilityGap > 1 - LOW_FLEXIBILITY_THRESHOLD
       ? (["PORTFOLIO_LACKS_FLEXIBILITY"] as ReasonCode[])
       : []),
@@ -361,9 +372,14 @@ export function generateStrategies(input: StrategyInput): StrategyScore[] {
   /* ---- Một đồng tiền cụ thể --------------------------------------- */
   const namedTarget = goal.goal.type === "earn_points" && goal.goal.targetProgramId !== null;
   const singleProgramRoute = (need?.programs.length ?? 0) === 1;
+  // `cash` không nêu tên một chương trình, nhưng nó nêu một NHÓM hẹp và đóng:
+  // bốn đồng điểm rút ra tiền được, giữa mười sáu. Xếp nó ngang mục tiêu rộng
+  // (0.25) là bỏ qua chính chỗ nó thu hẹp; xếp bằng `namedTarget` (1) là nói
+  // nó đã chốt một chương trình, điều nó cố ý không làm.
+  const cashGoal = goal.goal.type === "cash";
   add(
     "EARN_SPECIFIC_CURRENCY",
-    namedTarget ? 1 : singleProgramRoute ? 0.75 : isTrip ? 0.5 : 0.25,
+    namedTarget ? 1 : cashGoal ? 0.7 : singleProgramRoute ? 0.75 : isTrip ? 0.5 : 0.25,
     ...(isTrip && need !== null && need.programs.length > 0
       ? (["TRIP_PROGRAM_MATCH"] as ReasonCode[])
       : []),

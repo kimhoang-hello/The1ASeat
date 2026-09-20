@@ -145,6 +145,22 @@ function relevantDataGaps(
    *     riêng trong bộ dữ liệu — mất hẳn chỗ trống đó, nên engine lặng lẽ bỏ
    *     qua số điểm của họ mà KHÔNG hạ độ tin cậy.
    */
+  /**
+   * Đồng tiền một mục tiêu TIỀN MẶT đụng tới: đồng tiền của các thẻ ứng viên,
+   * cộng những chương trình người dùng đang có số dư.
+   *
+   * Cả hai vế đều cần. Vế đầu là thứ engine sắp khuyên; vế sau là thứ họ đã
+   * cầm trong tay, và "điểm bạn đang có rút ra được bao nhiêu" là câu hỏi đầu
+   * tiên của chính mục tiêu này.
+   */
+  const cashProgramsInPlay = new Set<string>();
+  if (goals.some((goal) => goal.goal.type === "cash")) {
+    for (const product of universe) {
+      if (product.pointsProgramId !== null) cashProgramsInPlay.add(product.pointsProgramId as string);
+    }
+    for (const row of heldBalancePrograms) cashProgramsInPlay.add(row);
+  }
+
   const tripGoals = goals.filter((goal) => goal.goal.type === "trip");
   const programsInPlay = new Set<string>();
   if (tripGoals.length > 0) {
@@ -210,6 +226,13 @@ function relevantDataGaps(
           // Chặng chuyển ảnh hưởng mọi ý định: chúng quyết định điểm tiếp cận
           // được, độ linh hoạt và phép đo tập trung.
           return true;
+        case "cash_out_unknown":
+          // CHỈ khi có mục tiêu hỏi tới tiền mặt, và chỉ với đồng điểm đang
+          // trong cuộc. Không có mục tiêu đó thì "chưa biết rút ra bao nhiêu"
+          // không ảnh hưởng gì tới kết quả — báo ra là hạ độ tin cậy vì một
+          // chỗ trống engine chưa đọc tới, đúng cái bẫy `no_award_chart` đã
+          // vấp một lần.
+          return cashProgramsInPlay.has(gap.subjectId);
       }
     })
     .sort((a, b) =>

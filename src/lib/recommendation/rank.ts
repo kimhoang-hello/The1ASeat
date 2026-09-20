@@ -29,6 +29,7 @@ import { component, assembleScore } from "./scoring/weights.ts";
 import { earnFitFor } from "./earn-fit.ts";
 import { activeAt } from "./temporal.ts";
 import type { PointsProgramId } from "./types.ts";
+import { valuationModeFor } from "./scoring/context.ts";
 import type { CandidateFacts, ScoringContext } from "./scoring/context.ts";
 import type { Candidate, ScoreComponent } from "./engine-types.ts";
 import type { ReasonCode, WarningCode } from "./reason-codes.ts";
@@ -51,12 +52,20 @@ function walletEarnCoverage(
   candidates: readonly CandidateFacts[],
   ctx: ScoringContext,
 ): { raw: number; note: string } {
+  // CÙNG thước cho hai vế. Mục tiêu "quy điểm ra tiền" đo thẻ mới bằng giá rút
+  // tiền, nên ví hiện tại cũng phải đo bằng giá đó — trộn hai thước lại là so
+  // một ví tính theo giá đổi vé với những thẻ tính theo giá rút tiền, và tỷ số
+  // vẫn ra một con số trông bình thường.
+  const cash = valuationModeFor(ctx.goal) === "cash";
   let bestHeld = 0;
   for (const product of ctx.portfolio.heldProducts) {
-    bestHeld = Math.max(bestHeld, earnFitFor(product.id, ctx.state.spend, ctx.ix, ctx.asOf).annualValueCents);
+    const fit = earnFitFor(product.id, ctx.state.spend, ctx.ix, ctx.asOf, cash ? "cash" : "best");
+    bestHeld = Math.max(bestHeld, fit.annualValueCents);
   }
   let bestNew = 0;
-  for (const candidate of candidates) bestNew = Math.max(bestNew, candidate.earn.annualValueCents);
+  for (const candidate of candidates) {
+    bestNew = Math.max(bestNew, (cash ? candidate.earnCash : candidate.earn).annualValueCents);
+  }
 
   if (ctx.portfolio.heldProducts.length === 0) {
     return { raw: 0, note: "chưa giữ thẻ nào, nên ví hiện tại không lo được gì" };

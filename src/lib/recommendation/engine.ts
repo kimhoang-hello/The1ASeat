@@ -30,10 +30,11 @@ import { benefitFitFor, heldBenefitKeys } from "./benefit-fit.ts";
 import { offerClimate, offerFacts } from "./offer-quality.ts";
 import { activeAt } from "./temporal.ts";
 import { assembleScore } from "./scoring/weights.ts";
-import { buildScale } from "./scoring/context.ts";
+import { buildScale, valuationModeFor } from "./scoring/context.ts";
 import { scoreNextCard } from "./scoring/next-card.ts";
 import { scoreTrip, tripGain } from "./scoring/trip.ts";
 import { scoreDiversify } from "./scoring/diversify.ts";
+import { scoreCash } from "./scoring/cash.ts";
 import { scoreEarning } from "./scoring/earning.ts";
 import { RULE_VERSION, applyRules } from "./rules.ts";
 import { buildNoNewCardCandidate, finalScore, rankCandidates } from "./rank.ts";
@@ -227,6 +228,16 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * hoạt cộng từ đó, để báo cáo tự cộng lại và bắt lỗi phân tích danh mục trên
  * MỘT lượt chạy. Không đổi một chữ số điểm.
  *
+ * 4.25.0 — mục tiêu `cash` ("quy điểm ra tiền"), và cùng với nó là luật:
+ * MỖI PHÉP TÍNH CÓ ĐƠN VỊ TIỀN PHẢI DÙNG THƯỚC CỦA MỤC TIÊU. Ba chỗ còn đo
+ * bằng giá đổi vé (vòng Codex 2 của mục tiêu này): §11 quy welcome bonus
+ * (bonus 70,000 Aeroplan® từng ăn 25% bảng điểm của một người hỏi về tiền
+ * mặt, bằng một khoản $1,330 họ không bao giờ thấy), thị trường offer đem so,
+ * và §7 phân tích danh mục (100,000 Aeroplan® từng làm engine trả
+ * `DIVERSIFY` cho người mà số dư đó đáng $0). Mục tiêu cũ KHÔNG đổi kết quả —
+ * thước của chúng vẫn là `best` — nhưng `analyzePortfolio` nay nhận `mode`,
+ * nên version phải tăng: §20 nói về MỌI đầu vào.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -239,7 +250,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.24.0";
+export const ENGINE_VERSION = "4.25.0";
 
 export interface RecommendInput {
   state: UserState;
@@ -348,9 +359,10 @@ function scoreFor(
   candidate: CandidateFacts,
   ctx: ScoringContext,
 ): ScoreComponent[] {
-  // §10: bốn ý định, BỐN hàm. Không có nhánh mặc định — thêm một `GoalType`
-  // vào Phase 2 mà quên hàm chấm điểm ở đây là lỗi biên dịch, không phải một
-  // khuyến nghị lặng lẽ chạy bằng bảng trọng số của ý định khác.
+  // §10: bốn ý định, BỐN hàm — nay năm, `cash` thêm sau spec. Không có nhánh
+  // mặc định: thêm một `GoalType` mà quên hàm chấm điểm ở đây là lỗi biên
+  // dịch, không phải một khuyến nghị lặng lẽ chạy bằng bảng trọng số của ý
+  // định khác.
   switch (goal.goal.type) {
     case "trip":
       return scoreTrip(candidate, ctx);
@@ -358,6 +370,8 @@ function scoreFor(
       return scoreDiversify(candidate, ctx);
     case "earn_points":
       return scoreEarning(candidate, ctx);
+    case "cash":
+      return scoreCash(candidate, ctx);
     case "next_card":
       return scoreNextCard(candidate, ctx);
   }
@@ -401,12 +415,19 @@ export function recommend(input: RecommendInput): RecommendationRun {
 
   /* ---- Dữ kiện từng ứng viên (không phụ thuộc mục tiêu) ------------ */
   const facts: CandidateFacts[] = normalized.universe.map((product) => {
-    const offer = offerFacts(product, ix, asOf, capacity, history.get(product.id) ?? []);
+    const rows = history.get(product.id) ?? [];
+    const offer = offerFacts(product, ix, asOf, capacity, rows);
     const eligibility = evaluateEligibility(product.id, state, ix, asOf, unknownRequirements);
     return {
       product,
       offer,
+      // Dựng cho MỌI lượt chạy, cùng lý do với `earnCash` ngay dưới.
+      offerCash: offerFacts(product, ix, asOf, capacity, rows, "cash"),
       earn: earnFitFor(product.id, state.spend, ix, asOf),
+      // Dựng cho MỌI lượt chạy, không chỉ khi có mục tiêu `cash`: dữ kiện ứng
+      // viên cố ý không phụ thuộc mục tiêu (xem `CandidateFacts`), và một hồ
+      // sơ có hai mục tiêu thì tập dữ kiện phải giống hệt nhau ở cả hai.
+      earnCash: earnFitFor(product.id, state.spend, ix, asOf, "cash"),
       benefits: benefitFitFor(product.id, heldKeys, ix, asOf),
       eligibility,
       suitability: evaluateSuitability({
@@ -455,11 +476,21 @@ export function recommend(input: RecommendInput): RecommendationRun {
   // bonus 1,000,000 điểm không nhận được từng kéo thấp §11 của mọi thẻ (vòng
   // rà sau Codex 20).
   const obtainable = selectable.filter((row) => !row.eligibility.welcomeOfferBlocked);
+  const climateWeights = obtainable.map((row) => (row.eligibility.welcomeOfferUncertain ? 0.5 : 1));
   const climate = offerClimate(
     obtainable.map((row) => row.offer),
-    obtainable.map((row) => (row.eligibility.welcomeOfferUncertain ? 0.5 : 1)),
+    climateWeights,
   );
-  const scale = buildScale(selectable);
+  // Cùng thị trường, đo bằng tiền mặt — mẫu số của §11 cho mục tiêu `cash`.
+  // Dựng trên CÙNG tập `obtainable` và cùng trọng số, nếu không thì hai thước
+  // khác nhau ở cả tử lẫn mẫu và không còn so được với nhau.
+  const climateCash = offerClimate(
+    obtainable.map((row) => row.offerCash),
+    climateWeights,
+  );
+  // Có ai trong lượt chạy này hỏi tới tiền mặt không — xem `buildScale`.
+  const readsCash = normalized.goals.some((goal) => valuationModeFor(goal) === "cash");
+  const scale = buildScale(selectable, readsCash);
 
   const goalTraces: GoalTrace[] = [];
   const goalDataGapSets: DataGap[][] = [];
@@ -471,9 +502,33 @@ export function recommend(input: RecommendInput): RecommendationRun {
     .map(([programId]) => programId as string);
   const feeToleranceKnown = state.profile?.annualFeeTolerancePerCard != null;
   const results: Recommendation[] = normalized.goals.map((goal, goalIndex) => {
-    const strategies = generateStrategies({ state, ix, asOf, portfolio, goal, climate });
-    const needs = computeNeeds({ state, data, ix, asOf, portfolio, goal, strategies });
-    const ctx: ScoringContext = { state, ix, asOf, needs, portfolio, goal, climate, scale };
+    // Danh mục đo bằng thước của MỤC TIÊU. `portfolio` ở trên (thước `best`)
+    // vẫn là bản mô tả ví để chụp vào `derived` và để lọc thẻ đang giữ — những
+    // thứ không đổi theo mục tiêu. Nhưng mọi phép tính có ĐƠN VỊ TIỀN —
+    // tập trung, độ linh hoạt, "bạn đã có bao nhiêu rồi" — phải dùng cùng một
+    // đơn vị với câu hỏi đang hỏi.
+    const goalPortfolio =
+      valuationModeFor(goal) === "cash" ? analyzePortfolio(state, ix, asOf, "cash") : portfolio;
+    const strategies = generateStrategies({
+      state,
+      ix,
+      asOf,
+      portfolio: goalPortfolio,
+      goal,
+      climate,
+    });
+    const needs = computeNeeds({ state, data, ix, asOf, portfolio: goalPortfolio, goal, strategies });
+    const ctx: ScoringContext = {
+      state,
+      ix,
+      asOf,
+      needs,
+      portfolio: goalPortfolio,
+      goal,
+      climate,
+      climateCash,
+      scale,
+    };
 
     const cardCandidates: Candidate[] = selectable.map((candidate) => {
       const components = scoreFor(goal, candidate, ctx);
@@ -531,6 +586,11 @@ export function recommend(input: RecommendInput): RecommendationRun {
       scored: selectable.map((row) => row.product),
       held: portfolio.heldProducts,
       goalReadsEarn: goalReadsEarn(goal, state, ix, asOf),
+      // Mức MỤC TIÊU. `buildScale` chỉ nạp `maxEarnCashCents` khi lượt chạy
+      // có mục tiêu tiền mặt, và chỉ bảng điểm của mục tiêu đó đọc nó — nên
+      // một lượt "chuyến đi + tiền mặt" không được để dòng định giá tiền mặt
+      // kéo tụt độ tươi của vế chuyến đi (vòng Codex 4 sửa vòng Codex 3).
+      goalReadsCash: valuationModeFor(goal) === "cash",
       spendKnown: state.spend != null,
       feeToleranceKnown,
       valuedBalancePrograms,
@@ -650,8 +710,16 @@ export function recommend(input: RecommendInput): RecommendationRun {
           bestRow?.typical == null || accessible === null || covered?.coverageKnown !== true
             ? null
             : Math.max(0, bestRow.typical - accessible),
-        topEcosystemShare: topEcosystemShare(portfolio),
-        flexibilityScore: portfolio.flexibilityScore,
+        // Đo trên danh mục theo THƯỚC CỦA MỤC TIÊU, cùng bản phân tích mà
+        // `needs` và `strategies` vừa đọc. Dùng `portfolio` (thước `best`) ở
+        // đây thì con số hiện ra cho người đọc nói một chuyện còn lý do dẫn
+        // tới khuyến nghị dựng trên một chuyện khác — và chúng lệch nhau
+        // nhiều nhất đúng ở ca đáng ngờ nhất (người giữ toàn điểm hàng không
+        // mà hỏi về tiền mặt). `derived.portfolio` vẫn là thước `best`: nó mô
+        // tả CÁI VÍ, một thứ không đổi theo mục tiêu, và một lượt chạy có thể
+        // mang hai mục tiêu khác thước nhau.
+        topEcosystemShare: topEcosystemShare(goalPortfolio),
+        flexibilityScore: goalPortfolio.flexibilityScore,
       },
       confidence,
     };
@@ -728,6 +796,8 @@ export function recommend(input: RecommendInput): RecommendationRun {
               scored: selectable.map((row) => row.product),
               held: [],
               goalReadsEarn: true,
+              // Không mục tiêu nào thì không ai hỏi tới tiền mặt.
+              goalReadsCash: false,
               spendKnown: state.spend != null,
               feeToleranceKnown,
               valuedBalancePrograms,
@@ -744,7 +814,7 @@ export function recommend(input: RecommendInput): RecommendationRun {
       climate: { ...climate },
       scale: { ...scale },
       candidates: facts.map((row) =>
-snapshotFacts(row, selectableIds.has(row.product.id as string)),
+snapshotFacts(row, selectableIds.has(row.product.id as string), readsCash),
       ),
       goals: goalTraces,
       followUpProbes,

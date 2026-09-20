@@ -15,6 +15,7 @@ import { bestCurrencyNeedDetail } from "../needs.ts";
 import { offerQuality } from "../offer-quality.ts";
 import { component, relativeTo } from "./weights.ts";
 import type { ScoreComponent } from "../engine-types.ts";
+import { valuationModeFor } from "./context.ts";
 import type { CandidateFacts, ScoringContext } from "./context.ts";
 
 const dollars = (cents: number) => `$${Math.round(cents / 100).toLocaleString("en-US")}`;
@@ -31,7 +32,14 @@ const dollars = (cents: number) => `$${Math.round(cents / 100).toLocaleString("e
  * `points_gap_reduction` — và mức phạt cố định bỏ đi.
  */
 export function offerQualityComponent(weight: number, candidate: CandidateFacts, ctx: ScoringContext): ScoreComponent {
-  const offer = offerQuality(candidate.offer, ctx.climate);
+  // Đo bằng thước của MỤC TIÊU — cùng luật với `earnFitComponent`. Mục tiêu
+  // `cash` đọc bonus đã quy ra tiền mặt, và đọc luôn thị trường offer đo bằng
+  // tiền mặt: so một offer tính theo tiền với mốc "offer lớn nhất" tính theo
+  // giá đổi vé là chia hai đơn vị khác nhau.
+  const cash = valuationModeFor(ctx.goal) === "cash";
+  const offer = cash
+    ? offerQuality(candidate.offerCash, ctx.climateCash)
+    : offerQuality(candidate.offer, ctx.climate);
   if (candidate.eligibility.welcomeOfferBlocked) {
     return component("offer_quality", weight, 0, "§11: welcome bonus BỊ CHẶN với người dùng này — không có gì để chấm");
   }
@@ -62,16 +70,29 @@ export function spendFitComponent(weight: number, candidate: CandidateFacts): Sc
   return component("spend_fit", weight, fit ?? 0.5, note);
 }
 
+/**
+ * Giá trị tích điểm một năm, so với thẻ cao nhất trong tập ứng viên.
+ *
+ * ĐO BẰNG ĐỒNG TIỀN NÀO là do mục tiêu quyết định (`valuationModeFor`): mục
+ * tiêu "quy điểm ra tiền" đọc cột tiền mặt, mọi mục tiêu khác đọc cột giá trị
+ * cao nhất. Không tách thành hai hàm vì đây vẫn là MỘT khái niệm — "thẻ này
+ * tích được bao nhiêu mỗi năm" — chỉ khác ở chỗ tính bằng thước nào; hai hàm
+ * là hai chỗ để trôi khỏi nhau.
+ */
 export function earnFitComponent(weight: number, candidate: CandidateFacts, ctx: ScoringContext): ScoreComponent {
-  const annual = candidate.earn.annualValueCents;
-  const max = ctx.scale.maxEarnAnnualCents;
+  const cash = valuationModeFor(ctx.goal) === "cash";
+  const annual = (cash ? candidate.earnCash : candidate.earn).annualValueCents;
+  const max = cash ? ctx.scale.maxEarnCashCents : ctx.scale.maxEarnAnnualCents;
+  const unit = cash ? " rút ra tiền" : "";
   return component(
     "long_term_earn_fit",
     weight,
     relativeTo(annual, max),
     max <= 0
-      ? "chưa tính được giá trị tích điểm của thẻ nào (chưa khai chi tiêu)"
-      : `tích ${dollars(annual)}/năm ÷ cao nhất tập ứng viên ${dollars(max)}`,
+      ? cash
+        ? "không thẻ nào trong tập ứng viên tích ra đồng điểm rút được tiền (hoặc chưa khai chi tiêu)"
+        : "chưa tính được giá trị tích điểm của thẻ nào (chưa khai chi tiêu)"
+      : `tích${unit} ${dollars(annual)}/năm ÷ cao nhất tập ứng viên ${dollars(max)}`,
   );
 }
 

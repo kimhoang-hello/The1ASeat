@@ -15,7 +15,7 @@
 
 import { activeAt } from "../temporal.ts";
 import type { DatasetIndex } from "../indexes.ts";
-import type { PointsProgramId, Product } from "../types.ts";
+import type { PointsProgramId, Product, RedemptionMode } from "../types.ts";
 import type { UserState } from "../user-types.ts";
 import type { BenefitFit } from "../benefit-fit.ts";
 import type { EarnFit } from "../earn-fit.ts";
@@ -31,7 +31,24 @@ import type {
 export interface CandidateFacts {
   product: Product;
   offer: OfferFacts;
+  /**
+   * CÙNG offer, nhưng welcome bonus quy ra TIỀN MẶT — xem `offerFacts(mode)`.
+   *
+   * Dựng cạnh `offer` vì lý do y hệt `earnCash`: §11 là 25% bảng điểm của mục
+   * tiêu `cash`, và để nó đọc giá đổi vé thì một bonus Aeroplan® ăn điểm bằng
+   * một khoản tiền người dùng không bao giờ thấy.
+   */
+  offerCash: OfferFacts;
   earn: EarnFit;
+  /**
+   * CÙNG phép tính tích điểm, nhưng quy ra TIỀN MẶT (`redemption: "cash"`).
+   *
+   * Dựng sẵn cạnh `earn` chứ không tính trong vòng lặp chấm điểm, cùng lý do
+   * với cả file này: một hàm chấm điểm tự tính lấy sẽ quét lại `ratesByProduct`
+   * cho mỗi thẻ, và — tệ hơn — hai chỗ sẽ trả lời hơi khác nhau về cùng một
+   * con số. Mọi mục tiêu đều mang nó; chỉ mục tiêu `cash` đọc tới.
+   */
+  earnCash: EarnFit;
   benefits: BenefitFit;
   eligibility: EligibilityVerdict;
   suitability: SuitabilityVerdict;
@@ -41,6 +58,11 @@ export interface CandidateFacts {
 
 export interface ScoringScale {
   maxEarnAnnualCents: number;
+  /** Mẫu số của `long_term_earn_fit` khi mục tiêu hỏi bằng tiền mặt. Thang
+   *  RIÊNG: dùng chung mẫu số với `best` thì mọi thẻ đều tụt xuống gần 0 và
+   *  thành phần này thôi xếp hạng được — trong khi câu hỏi vẫn là "thẻ nào
+   *  rút ra nhiều tiền nhất", một câu vẫn trả lời được. */
+  maxEarnCashCents: number;
   maxBenefitCashCents: number;
   maxBenefitCount: number;
   maxTravelBenefitCount: number;
@@ -55,22 +77,53 @@ export interface ScoringContext {
   portfolio: PortfolioAnalysis;
   goal: GoalContext;
   climate: OfferClimate;
+  /** Thị trường offer đo bằng TIỀN MẶT — mẫu số của §11 khi mục tiêu là `cash`.
+   *  Thang riêng, cùng lý do với `maxEarnCashCents`. */
+  climateCash: OfferClimate;
   scale: ScoringScale;
 }
 
-export function buildScale(candidates: readonly CandidateFacts[]): ScoringScale {
+/**
+ * Mục tiêu này hỏi giá trị theo kiểu đổi nào.
+ *
+ * MỘT hàm cho cả `scoring/*` lẫn `rank.ts`: ứng viên `NO_NEW_CARD` được chấm
+ * trên một bảng khác, và nếu nó đo ví hiện tại bằng giá đổi vé trong khi các
+ * thẻ được đo bằng giá rút tiền thì hai bên thôi so sánh được — mà điểm vẫn ra
+ * một con số trông bình thường.
+ */
+export function valuationModeFor(goal: GoalContext): RedemptionMode {
+  return goal.goal.type === "cash" ? "cash" : "best";
+}
+
+export function buildScale(
+  candidates: readonly CandidateFacts[],
+  /**
+   * Lượt chạy này có mục tiêu nào hỏi tới tiền mặt không.
+   *
+   * `false` thì `maxEarnCashCents` để 0 — KHÔNG phải vì nó bằng 0, mà vì
+   * không ai đọc nó. Tính rồi cất vào `derived` một con số dựng từ những dòng
+   * định giá mà lượt chạy không dùng sẽ làm §29 phải đếm chúng vào độ tươi,
+   * và một tỷ lệ rút-tiền cũ hạ độ tin cậy của một chuyến đi (vòng Codex 4).
+   */
+  readsCash: boolean,
+): ScoringScale {
   let maxEarnAnnualCents = 0;
+  let maxEarnCashCents = 0;
   let maxBenefitCashCents = 0;
   let maxBenefitCount = 0;
   let maxTravelBenefitCount = 0;
   for (const candidate of candidates) {
     maxEarnAnnualCents = Math.max(maxEarnAnnualCents, candidate.earn.annualValueCents);
+    if (readsCash) {
+      maxEarnCashCents = Math.max(maxEarnCashCents, candidate.earnCash.annualValueCents);
+    }
     maxBenefitCashCents = Math.max(maxBenefitCashCents, candidate.benefits.incrementalCashCents);
     maxBenefitCount = Math.max(maxBenefitCount, candidate.benefits.incrementalCount);
     maxTravelBenefitCount = Math.max(maxTravelBenefitCount, candidate.travelBenefitCount);
   }
   return {
     maxEarnAnnualCents,
+    maxEarnCashCents,
     maxBenefitCashCents,
     maxBenefitCount,
     maxTravelBenefitCount,

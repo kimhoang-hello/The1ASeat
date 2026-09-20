@@ -11,6 +11,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { offlineDataset } from "./data/index.ts";
+import { deriveGaps } from "./gaps.ts";
+import { validateDataset } from "./validate.ts";
 import { activeAt, datasetAt } from "./temporal.ts";
 import { indexDataset } from "./indexes.ts";
 import { ENGINE_VERSION, recommend } from "./engine.ts";
@@ -55,6 +57,7 @@ import {
   highSpendLowCapacity,
   japanTripFunded,
   japanTripShortfall,
+  cashSeeker,
   lowSpendCapacity,
   studentStarter,
   vagueEarner,
@@ -198,15 +201,20 @@ test("§10 — mỗi loại mục tiêu dùng bộ thành phần KHÁC NHAU", ()
   const nextCard = keysFor(beginnerNoCards);
   const diversify = keysFor(advancedCollector);
   const earning = keysFor(vagueEarner);
+  const cash = keysFor(cashSeeker);
 
   assert.ok(trip.has("trip_currency_utility"), "trip phải có trip_currency_utility");
   assert.ok(!nextCard.has("trip_currency_utility"), "next_card KHÔNG được có nó");
   assert.ok(diversify.has("new_currency_exposure"));
   assert.ok(earning.has("fee_drag"), "chỉ ý định tích điểm mới có fee_drag");
+  assert.ok(cash.has("fee_drag"), "phí LÀ tiền — ý định quy ra tiền phải có fee_drag");
   assert.ok(!nextCard.has("fee_drag"));
-  // Bốn bộ khoá phải thật sự khác nhau, không chỉ khác tên.
+  assert.ok(!cash.has("benefits_fit"), "người hỏi về tiền không được chấm bằng phòng chờ sân bay");
+  // Năm bộ khoá phải thật sự khác nhau, không chỉ khác tên. `cash` và
+  // `earn_points` dùng CÙNG bộ khoá nhưng khác TRỌNG SỐ, nên chúng được phân
+  // biệt ở test trọng số ngay dưới, không ở đây.
   const sets = [trip, nextCard, diversify, earning].map((s) => [...s].sort().join(","));
-  assert.equal(new Set(sets).size, 4, "bốn ý định phải cho bốn bảng khác nhau");
+  assert.equal(new Set(sets).size, 4, "bốn ý định của spec phải cho bốn bảng khác nhau");
 });
 
 test("§10 — trọng số đúng như spec viết, và cộng lại đúng 0.95", () => {
@@ -219,6 +227,7 @@ test("§10 — trọng số đúng như spec viết, và cộng lại đúng 0.9
     ["next_card", beginnerNoCards],
     ["diversify", advancedCollector],
     ["earn_points", vagueEarner],
+    ["cash", cashSeeker],
   ];
   for (const [label, state] of samples) {
     const components = run(state).results[0].primaryAction.components;
@@ -2442,4 +2451,382 @@ test("Test C/D của §32 nay CHẠY trên dữ liệu thật, không còn bị 
     "20K điểm cho 2 người phải còn thiếu rất nhiều",
   );
   assert.ok(short.reasonCodes.includes("POINTS_GAP_LARGE"));
+});
+
+/* ================================================================== *
+ * Mục tiêu `cash` — "tích điểm quy đổi được thành tiền"
+ * ================================================================== */
+
+/**
+ * Bộ dữ liệu y hệt, nhưng MỘT chương trình bị đẩy về `cashOut: "unknown"`.
+ *
+ * Từ 20/09/2026 không chương trình thật nào còn `unknown` — Membership
+ * Rewards® và Avion® đã có tỷ lệ. Nhưng nhánh xử lý `unknown` vẫn sống trong
+ * engine cho chương trình sau này, và một nhánh không test nào chạm tới là
+ * một nhánh sẽ hỏng lặng lẽ đúng ngày có người thêm chương trình mới. Dựng ca
+ * đó bằng tay thay vì chờ dữ liệu thật rơi vào nó.
+ */
+function datasetWithUnknownCashOut(slug: string): { data: typeof DATA; ix: typeof IX } {
+  const program = DATA.pointsPrograms.find((row) => row.slug === slug);
+  assert.ok(program !== undefined, `không có chương trình ${slug}`);
+  assert.equal(program.cashOut, "redeemable", "tiền đề: phải bắt đầu từ một chương trình ĐÃ tra");
+  const data = {
+    ...DATA,
+    pointsPrograms: DATA.pointsPrograms.map((row) =>
+      row.slug === slug ? { ...row, cashOut: "unknown" as const } : row,
+    ),
+    // Bỏ luôn dòng định giá tiền mặt của nó — `validate.ts` đòi hai vế đi
+    // cùng nhau, và một bộ dữ liệu test tự mâu thuẫn thì không chứng minh
+    // được gì.
+    programValuations: DATA.programValuations.filter(
+      (row) => !(row.redemption === "cash" && row.programId === program.id),
+    ),
+  };
+  // Chỗ trống được SUY RA từ dữ liệu (`deriveGaps`), nên đổi dữ liệu mà bê
+  // nguyên `gaps` cũ là dựng một bộ tự mâu thuẫn: chương trình khai `unknown`
+  // mà không có dòng `cash_out_unknown` nào.
+  const withGaps = { ...data, gaps: deriveGaps(data) };
+  // Bộ dữ liệu dựng tay vẫn phải HỢP LỆ. Không kiểm thì một ca test có thể
+  // "chứng minh" một hành vi trên một bộ dữ liệu mà engine thật không bao giờ
+  // gặp — và nó sẽ xanh mãi, kể cả sau khi luật dữ liệu đổi.
+  assert.deepEqual(
+    validateDataset(withGaps).filter((issue) => issue.level === "error"),
+    [],
+  );
+  return { data: withGaps, ix: indexDataset(withGaps) };
+}
+
+/** `run`, nhưng trên một bộ dữ liệu khác — xem `datasetWithUnknownCashOut`. */
+function runWith(state: UserState, data: typeof DATA, ix: typeof IX): RecommendationRun {
+  return recommend({ state, data, ix, asOf: ASOF });
+}
+
+/** Nhu cầu đồng tiền của mục tiêu đầu tiên, tra theo id chương trình. */
+function currencyNeedsOf(state: UserState, output: RecommendationRun = run(state)): Map<string, number> {
+  const rows = output.derived.goals[0].needs.currency;
+  return new Map(rows.map((row) => [row.programId as string, row.need]));
+}
+
+test("cash — nhu cầu đồng tiền đi theo TỶ LỆ RÚT RA TIỀN, không theo giá đổi vé", () => {
+  const needs = currencyNeedsOf(cashSeeker);
+  const cashCpp = (slug: string) => {
+    const program = DATA.pointsPrograms.find((p) => p.slug === slug)!;
+    return centsPerPoint(IX, program.id, ASOF, "cash");
+  };
+  const need = (slug: string) => {
+    const program = DATA.pointsPrograms.find((p) => p.slug === slug)!;
+    return needs.get(program.id as string)!;
+  };
+
+  // Tỷ lệ thật trong bộ dữ liệu, đọc lại ở đây để test nói cùng một ngôn ngữ
+  // với dữ liệu thay vì chốt cứng một con số sẽ lệch ở lần devalue sau.
+  assert.ok(cashCpp("cash-back")! > cashCpp("td-rewards")!, "tiền đề: hai tỷ lệ phải khác nhau");
+  assert.ok(need("cash-back") > need("td-rewards"), "đồng điểm rút được nhiều tiền hơn phải cần hơn");
+  // Tỷ lệ bằng nhau thì nhu cầu bằng nhau — kể cả khi giá ĐỔI VÉ của chúng
+  // khác nhau một trời một vực (Membership Rewards® 1.8 vs Scene+™ 1.0).
+  assert.equal(need("amex-mr"), need("scene-plus"));
+  // Aeroplan® KHÔNG rút ra tiền được (`cashOut: "none"`) — đã kiểm, nên nó
+  // rơi xuống mức sàn, không phải mức giữa.
+  assert.ok(need("aeroplan") <= 0.05, `aeroplan phải ở mức sàn, đang ${need("aeroplan")}`);
+  assert.ok(need("marriott-bonvoy") <= 0.05);
+});
+test("cash — chỗ trống 'chưa biết rút ra bao nhiêu' CHỈ nổ khi có ai hỏi tới tiền", () => {
+  // Hôm nay không chương trình thật nào còn `unknown`, nên ca này dựng tay.
+  const { data, ix } = datasetWithUnknownCashOut("scene-plus");
+  const kinds = (state: UserState) => runWith(state, data, ix).dataGaps.map((gap) => gap.kind);
+  assert.ok(kinds(cashSeeker).includes("cash_out_unknown"));
+  // Cùng bộ dữ liệu, cùng chương trình `unknown` — nhưng không mục tiêu nào
+  // đọc tới, nên báo ra là hạ độ tin cậy vì một thứ không ảnh hưởng kết quả
+  // (đúng cái bẫy `no_award_chart` đã vấp một lần).
+  assert.ok(!kinds(vagueEarner).includes("cash_out_unknown"));
+  assert.ok(!kinds(beginnerNoCards).includes("cash_out_unknown"));
+  // Và trên bộ dữ liệu THẬT thì không ai rơi vào nó.
+  assert.ok(!run(cashSeeker).dataGaps.some((gap) => gap.kind === "cash_out_unknown"));
+});
+test("cash — cột định giá mới KHÔNG đụng vào con số các mục tiêu khác đang dùng", () => {
+  // `centsPerPoint` không truyền mode phải trả về ĐÚNG giá trị cũ. Đây là
+  // phép chặn hồi quy im lặng: đổi mặc định sang "cash" thì mọi mục tiêu khác
+  // đổi thứ hạng mà không test nào khác đỏ ngay.
+  for (const program of DATA.pointsPrograms) {
+    const best = DATA.programValuations.find(
+      (row) => row.programId === program.id && row.redemption === "best" && row.effectiveTo === null,
+    );
+    assert.equal(centsPerPoint(IX, program.id, ASOF), best!.centsPerPoint, program.slug);
+  }
+});
+
+test("cash — thẻ tích ra đồng điểm không rút được tiền thì giá trị năm BẰNG 0", () => {
+  // Cùng một thẻ, hai thước: `best` nói nó tích ra tiền, `cash` nói không.
+  // Đây là chỗ `earnFitFor(mode)` thật sự đổi câu trả lời, chứ không chỉ đổi
+  // đơn vị.
+  const aeroplanCard = productIdFor("td-aeroplan-visa-infinite");
+  const best = earnFitFor(aeroplanCard, cashSeeker.spend, IX, ASOF);
+  const cash = earnFitFor(aeroplanCard, cashSeeker.spend, IX, ASOF, "cash");
+  assert.ok(best.annualValueCents > 0, "tiền đề: thẻ này có tích ra giá trị");
+  assert.equal(cash.annualValueCents, 0);
+});
+
+test("cash — chưa khai chi tiêu thì điểm SÁT NHAU, và thẻ rút được tiền vẫn đứng trên", () => {
+  // Trạng thái ngay sau màn hình đầu: có mục tiêu, chưa có gì khác. Lúc này
+  // 35% `long_term_earn_fit` bằng 0 cho MỌI thẻ (không tính được), nên thứ
+  // hạng gần như chỉ còn `offer_quality` và `currency_fit`.
+  //
+  // Test này khoá đúng chỗ đó: hai thành phần còn lại phải đủ để giữ đồng
+  // điểm rút được tiền đứng trên đồng điểm chỉ đổi được vé. Và điểm phải SÁT
+  // NHAU — đó là tín hiệu §29/§30 dùng để hạ độ tin cậy và đi hỏi câu chi
+  // tiêu, chứ không phải một thứ hạng chắc chắn dựng trên một bảng trống.
+  const fresh: UserState = { ...cashSeeker, spend: null, balances: [] };
+  const output = run(fresh);
+  const cards = output.derived.goals[0].ranking
+    .map((row) => row.candidate)
+    .filter((c) => c.kind === "open_card");
+  const programOf = (productId: string) =>
+    DATA.products.find((p) => (p.id as string) === productId)?.pointsProgramId as string | null;
+  const cashable = new Set(
+    DATA.pointsPrograms.filter((p) => p.cashOut === "redeemable").map((p) => p.id as string),
+  );
+
+  const topFive = cards.slice(0, 5).map((c) => programOf(c.productId as string));
+  for (const programId of topFive) {
+    assert.ok(programId !== null && cashable.has(programId), `đồng điểm không rút ra tiền được lọt top 5: ${programId}`);
+  }
+  const spread = cards[0].score - cards[4].score;
+  assert.ok(spread < 0.1, `điểm phải sát nhau khi chưa khai chi tiêu, đang cách ${spread}`);
+  // Và đây mới là hành vi thật sự quan trọng: điểm sát nhau thì engine phải
+  // ĐI HỎI, không phải chốt một thứ hạng dựng trên một bảng còn trống.
+  assert.ok(output.followUp !== null, "phải còn câu để hỏi khi chưa khai chi tiêu");
+});
+
+/* ---- Ba phản ví dụ của vòng Codex 2 ------------------------------- */
+
+test("cash — bonus ĐỔI VÉ không được nhấc thẻ lên trên 'chưa mở thẻ nào'", () => {
+  // Phản ví dụ vòng Codex 2 mục 1: §11 chiếm 25% bảng điểm của mục tiêu này,
+  // và lúc nó còn quy bonus ra tiền bằng định giá `best` thì TD® Aeroplan®
+  // Platinum — một thẻ tích ra ĐÚNG $0 rút được — vẫn đạt 0.2957 và đứng trên
+  // `NO_NEW_CARD` (0.2458), bằng một khoản $1,330 người hỏi câu này không bao
+  // giờ thấy.
+  //
+  // Chỉ xét đồng điểm ĐÃ KIỂM và biết không rút ra tiền được. Đồng điểm
+  // `unknown` (Membership Rewards®, Avion®) được phép đứng trên `NO_NEW_CARD`
+  // — chưa ai chứng minh chúng vô dụng với mục tiêu này, và test ngay dưới
+  // khoá đúng chỗ chúng được đứng.
+  const fresh: UserState = { ...cashSeeker, spend: null, balances: [] };
+  const output = run(fresh);
+  const noAction = output.results[0].noAction.score;
+  const noCashOut = new Set(
+    DATA.pointsPrograms.filter((p) => p.cashOut === "none").map((p) => p.id as string),
+  );
+
+  let checked = 0;
+  for (const row of output.derived.goals[0].ranking) {
+    const candidate = row.candidate;
+    if (candidate.kind !== "open_card") continue;
+    const programId = DATA.products.find((p) => p.id === candidate.productId)?.pointsProgramId;
+    if (programId == null || !noCashOut.has(programId as string)) continue;
+    checked += 1;
+    assert.ok(
+      candidate.score <= noAction,
+      `${candidate.productSlug} (đồng điểm KHÔNG rút ra tiền được) ${candidate.score} > NO_NEW_CARD ${noAction}`,
+    );
+  }
+  assert.ok(checked > 0, "tiền đề: phải có thẻ tích ra đồng điểm không rút được tiền trong bảng");
+});
+
+test("cash — 100,000 Aeroplan® KHÔNG làm engine khuyên đa dạng hoá", () => {
+  // Phản ví dụ vòng Codex 2 mục 3: §7 định giá số dư bằng `best` thì 100,000
+  // Aeroplan® là $1,900 dồn 100% một chỗ → `DIVERSIFY` thắng, tức engine
+  // khuyên trải ra một tài sản mà với mục tiêu này đáng $0. Đo bằng thước của
+  // mục tiêu thì số dư đó không tồn tại, và câu trả lời đúng là đi tích.
+  const holder: UserState = {
+    ...cashSeeker,
+    balances: [{ userId: cashSeeker.profile.id, programId: AEROPLAN, balance: 100_000, updatedAt: ASOF }],
+  };
+  const result = run(holder).results[0];
+  assert.notEqual(result.strategy.strategy, "DIVERSIFY");
+  assert.equal(result.strategy.strategy, "BUILD_POINTS");
+});
+
+test("cash — chưa kiểm đứng GIỮA đã-kiểm-không và mọi đồng điểm đã kiểm rút được", () => {
+  // Phản ví dụ vòng Codex 2 mục 2: nếu "chưa kiểm" đứng trên một đồng điểm đã
+  // tra và biết rút được ít, thì THIẾU DỮ LIỆU thành lợi thế — engine thưởng
+  // cho việc chưa làm việc. Nếu nó tụt xuống ngang "đã kiểm và không rút
+  // được" thì engine khẳng định một điều chưa ai xác lập. Hai vế cùng lúc.
+  const { data, ix } = datasetWithUnknownCashOut("scene-plus");
+  const needs = currencyNeedsOf(cashSeeker, runWith(cashSeeker, data, ix));
+
+  const known = data.pointsPrograms.filter((p) => p.cashOut === "redeemable");
+  const unknown = data.pointsPrograms.filter((p) => p.cashOut === "unknown");
+  const none = data.pointsPrograms.filter((p) => p.cashOut === "none");
+  assert.ok(known.length > 0 && unknown.length > 0 && none.length > 0, "tiền đề: có đủ ba loại");
+
+  const worstKnown = Math.min(...known.map((p) => needs.get(p.id as string)!));
+  const bestNone = Math.max(...none.map((p) => needs.get(p.id as string)!));
+  for (const program of unknown) {
+    const value = needs.get(program.id as string)!;
+    assert.ok(value < worstKnown, `${program.slug} (chưa kiểm) ${value} ≥ đã kiểm thấp nhất ${worstKnown}`);
+    assert.ok(value > bestNone, `${program.slug} (chưa kiểm) ${value} ≤ đã kiểm-không ${bestNone}`);
+  }
+});
+test("cash — số dư CHƯA ĐỊNH GIÁ ĐƯỢC không được biến thành 'bạn không có gì'", () => {
+  // Vòng Codex 3 mục 3. Một đồng điểm `cashOut: "unknown"` không có tỷ lệ để
+  // nhân, nên nó rơi ra khỏi `knownValueCents` — và nếu rơi ra LẶNG LẼ thì
+  // engine kết luận người này không có gì, trong khi thật ra có một khoản nó
+  // không định giá nổi.
+  const { ix } = datasetWithUnknownCashOut("scene-plus");
+  const sceneProgram = DATA.pointsPrograms.find((p) => p.slug === "scene-plus")!;
+  const holder: UserState = {
+    ...cashSeeker,
+    balances: [{ userId: cashSeeker.profile.id, programId: sceneProgram.id, balance: 50_000, updatedAt: ASOF }],
+  };
+  const best = analyzePortfolio(holder, ix, ASOF);
+  const cash = analyzePortfolio(holder, ix, ASOF, "cash");
+  assert.ok(best.knownValueCents > 0, "tiền đề: ở thước đổi vé thì số dư này có giá");
+  assert.equal(cash.knownValueCents, 0, "ở thước tiền mặt thì chưa định giá được");
+  assert.equal(cash.hasUnknownBalance, true, "và phải NÓI RA là chưa định giá được");
+
+  // Đồng điểm ĐÃ KIỂM và biết không rút ra tiền được thì KHÔNG bật cờ: đó là
+  // một dữ kiện, không phải chỗ trống.
+  const aeroplanOnly: UserState = {
+    ...cashSeeker,
+    balances: [{ userId: cashSeeker.profile.id, programId: AEROPLAN, balance: 100_000, updatedAt: ASOF }],
+  };
+  assert.equal(analyzePortfolio(aeroplanOnly, IX, ASOF, "cash").hasUnknownBalance, false);
+});
+test("cash — welcome bonus quy ra tiền, và nói ra khi KHÔNG quy được", () => {
+  // Vòng Codex 3 mục 1: test cũ chỉ kiểm thứ hạng cuối, nên không chứng minh
+  // được §11 đã đổi thước. Đây đọc thẳng con số §11 dựng trên.
+  const aeroplanCard = DATA.products.find((p) => p.slug === "td-aeroplan-visa-infinite")!;
+  const cashCard = DATA.products.find((p) => p.slug === "scotiabank-momentum-visa-infinite-plus")!;
+  const facts = (product: typeof aeroplanCard, mode: "best" | "cash") =>
+    offerFacts(product, IX, ASOF, null, [], mode);
+
+  assert.ok((facts(aeroplanCard, "best").fullValueCents ?? 0) > 0, "tiền đề: bonus Aeroplan® có giá đổi vé");
+  assert.equal(facts(aeroplanCard, "cash").fullValueCents, 0, "và ĐÚNG $0 khi hỏi về tiền mặt");
+  // Thẻ cashback thì hai thước nói cùng một chuyện — bonus của nó VỐN là tiền.
+  assert.equal(
+    facts(cashCard, "cash").fullValueCents,
+    facts(cashCard, "best").fullValueCents,
+  );
+});
+test("cash — KHÔNG thưởng điểm cho việc chuyển được sang hãng bay", () => {
+  // Vòng Codex 3: §16 Rule 2 cộng tới +0.03 theo tầm với của đồng điểm. Tầm
+  // với là quyền đổi sang hãng bay, và người hỏi câu này vừa nói họ không
+  // định làm vậy — thưởng nó là cộng điểm cho Membership Rewards® vì năm hãng
+  // đối tác đúng lúc engine còn chưa biết nó rút ra tiền được bao nhiêu.
+  const output = run(cashSeeker);
+  for (const row of output.derived.goals[0].ranking) {
+    assert.ok(
+      !row.candidate.adjustments.some((adj) => adj.rule === "R2_keep_points_flexible"),
+      `${row.candidate.productSlug} vẫn nhận thưởng tầm với ở mục tiêu tiền mặt`,
+    );
+  }
+  // Và luật đó vẫn sống ở mục tiêu khác — test này không được là một phép
+  // kiểm luôn xanh.
+  const other = run(vagueEarner);
+  assert.ok(
+    other.derived.goals[0].ranking.some((row) =>
+      row.candidate.adjustments.some((adj) => adj.rule === "R2_keep_points_flexible"),
+    ),
+  );
+});
+
+/* ---- Phản ví dụ vòng Codex 4 -------------------------------------- */
+
+test("cash — mã 'chưa tra được' CHỈ gắn cho đồng điểm chưa tra, và không phạt", () => {
+  // Vòng Codex 4 mục 7: phải loại trừ được khả năng MỌI thẻ đều mang mã, và
+  // phải chứng minh mã không kéo theo hình phạt (điểm đã bằng 0 sẵn vì không
+  // có tỷ lệ để nhân — phạt thêm là phạt hai lần).
+  const { data, ix } = datasetWithUnknownCashOut("scene-plus");
+  const unknownProgram = data.pointsPrograms.find((p) => p.cashOut === "unknown")!.id as string;
+  const output = runWith(cashSeeker, data, ix);
+  const programOf = (productId: string) =>
+    data.products.find((p) => (p.id as string) === productId)?.pointsProgramId ?? null;
+
+  let sawUnknown = false;
+  let sawKnown = false;
+  for (const row of output.derived.goals[0].ranking) {
+    const candidate = row.candidate;
+    if (candidate.kind !== "open_card") continue;
+    const isUnknown = programOf(candidate.productId as string) === unknownProgram;
+    const tagged = candidate.reasonCodes.includes("CASH_VALUE_UNPRICED");
+    if (isUnknown) {
+      sawUnknown = true;
+      assert.ok(tagged, `${candidate.productSlug}: đồng điểm chưa tra mà không có mã`);
+      assert.ok(
+        !candidate.adjustments.some((adj) => adj.reasonCode === "CASH_VALUE_UNPRICED"),
+        `${candidate.productSlug}: mã này KHÔNG được kèm hình phạt`,
+      );
+    } else {
+      sawKnown = true;
+      assert.ok(!tagged, `${candidate.productSlug} (đồng điểm đã tra) không được mang mã này`);
+    }
+  }
+  assert.ok(sawUnknown && sawKnown, "tiền đề: bảng phải có cả hai loại");
+
+  // Mục tiêu khác thì không bao giờ thấy mã này — kể cả trên cùng bộ dữ liệu.
+  for (const row of runWith(vagueEarner, data, ix).derived.goals[0].ranking) {
+    assert.ok(!row.candidate.reasonCodes.includes("CASH_VALUE_UNPRICED"));
+  }
+  // Và bộ dữ liệu THẬT hôm nay không sinh mã này cho ai.
+  for (const row of run(cashSeeker).derived.goals[0].ranking) {
+    assert.ok(!row.candidate.reasonCodes.includes("CASH_VALUE_UNPRICED"));
+  }
+});
+test("cash — 'chưa tính được' khác 'tính được, ra $0' ở fee_drag", () => {
+  // Vòng Codex 4: gộp hai ca vào cùng một 0.5 trung tính thì thẻ phí $139
+  // tích ra ĐÚNG $0 tiền mặt vẫn được cộng điểm.
+  const dragOf = (state: UserState, slug: string) => {
+    const productId = productIdFor(slug);
+    const row = run(state)
+      .derived.goals[0].ranking.find((entry) => entry.candidate.productId === productId);
+    return row?.candidate.components.find((c) => c.key === "fee_drag")?.raw ?? null;
+  };
+
+  // Đã khai chi tiêu: thẻ Aeroplan® có phí, tích ra $0 tiền mặt → 0.
+  assert.equal(dragOf(cashSeeker, "td-aeroplan-visa-infinite"), 0);
+  // Chưa khai chi tiêu: cùng thẻ đó → 0.5 trung tính, vì chưa ai biết gì.
+  const noSpend: UserState = { ...cashSeeker, spend: null };
+  assert.equal(dragOf(noSpend, "td-aeroplan-visa-infinite"), 0.5);
+});
+
+/* ---- Phản ví dụ vòng Codex 5 -------------------------------------- */
+
+test("cash — đồng điểm CHƯA TRA không bị fee_drag chấm như đồng điểm đã biết vô dụng", () => {
+  // Vòng Codex 5 mục C, và là lỗi do CHÍNH bản vá vòng 4 sinh ra: một thẻ
+  // tích ra giá trị thật ở thước đổi vé nhưng $0 ở thước tiền mặt VÌ CHƯA AI
+  // TRA đồng điểm của nó, bị chấm 0 — mức nặng nhất bảng này biết. Đó là đọc
+  // "chưa biết" thành "đã biết là không", đúng cái lỗi mục tiêu này sinh ra
+  // để khỏi mắc.
+  const { data, ix } = datasetWithUnknownCashOut("aventura");
+  const dragOf = (state: UserState, slug: string, from = { data, ix }) => {
+    const productId = productIdFor(slug);
+    const row = runWith(state, from.data, from.ix)
+      .derived.goals[0].ranking.find((entry) => entry.candidate.productId === productId);
+    return row?.candidate.components.find((c) => c.key === "fee_drag")?.raw ?? null;
+  };
+
+  // Thẻ Aventura® có phí, tích ra giá trị thật, và đồng điểm của nó vừa bị
+  // đẩy về "chưa tra".
+  const card = "cibc-aventura-visa-infinite";
+  assert.ok(earnFitFor(productIdFor(card), cashSeeker.spend, ix, ASOF).annualValueCents > 0);
+  assert.equal(dragOf(cashSeeker, card), 0.5, "chưa tra được thì TRUNG TÍNH");
+  // Còn đồng điểm ĐÃ KIỂM và biết không rút được thì vẫn phải bị chấm 0 —
+  // nếu không, bản vá này đã nuốt luôn phép phân biệt vòng 4 dựng ra.
+  assert.equal(dragOf(cashSeeker, "td-aeroplan-visa-infinite"), 0);
+});
+test("lượt chạy KHÔNG hỏi tới tiền mặt thì bản ghi không mang con số tiền mặt nào", () => {
+  // Vòng Codex 5 mục A: §29 cố ý không đếm dòng định giá cash vào độ tươi của
+  // một lượt chạy không đọc chúng. Nếu bản ghi vẫn cất `offerCash`/`earnCash`
+  // thì hai thứ nói hai chuyện khác nhau về cùng một lượt chạy — và bản ghi
+  // là thứ dùng để dựng lại, nên nó là thứ nói dối lâu hơn.
+  const plain = run(vagueEarner);
+  assert.ok(plain.derived.candidates.length > 0);
+  for (const row of plain.derived.candidates) {
+    assert.equal(row.offerCash, undefined, `${row.productSlug} mang offerCash thừa`);
+    assert.equal(row.earnCash, undefined, `${row.productSlug} mang earnCash thừa`);
+  }
+  // Và lượt chạy CÓ hỏi thì phải mang đủ — test này không được là phép kiểm
+  // "luôn vắng".
+  const cash = run(cashSeeker);
+  assert.ok(cash.derived.candidates.every((row) => row.offerCash !== undefined && row.earnCash !== undefined));
 });

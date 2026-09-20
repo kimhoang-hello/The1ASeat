@@ -73,19 +73,43 @@ export function snapshotNeeds(needs: Needs): NeedsSnapshot {
   };
 }
 
-export function snapshotFacts(facts: CandidateFacts, selectable: boolean): CandidateFactsSnapshot {
-  const { active, ...offer } = facts.offer;
+/** Bỏ `active` (object lồng) và thay bằng id — dạng lưu được của `OfferFacts`. */
+function offerSnapshot(facts: CandidateFacts["offer"]): CandidateFactsSnapshot["offer"] {
+  const { active, ...rest } = facts;
+  return {
+    ...rest,
+    activeOfferId: active === null ? null : (active.offer.id as string),
+    componentIds: active === null ? [] : active.components.map((row) => row.id as string),
+  };
+}
+
+export function snapshotFacts(
+  facts: CandidateFacts,
+  selectable: boolean,
+  /**
+   * Lượt chạy này có mục tiêu nào hỏi tới tiền mặt không.
+   *
+   * `false` thì bản ghi KHÔNG mang `offerCash`/`earnCash`. Chúng vẫn được
+   * tính (rẻ, và giữ tầng chấm điểm khỏi phải xử lý trường vắng), nhưng lưu
+   * chúng vào một lượt chạy không ai đọc tới là cất một con số dựng từ những
+   * dòng định giá mà §29 vừa cố ý không đếm vào độ tươi — bản ghi và phép đo
+   * độ tươi sẽ nói hai chuyện khác nhau (vòng Codex 5).
+   */
+  includeCash: boolean,
+): CandidateFactsSnapshot {
   return {
     productId: facts.product.id,
     productSlug: facts.product.slug,
     productName: facts.product.name,
     selectable,
-    offer: {
-      ...offer,
-      activeOfferId: active === null ? null : (active.offer.id as string),
-      componentIds: active === null ? [] : active.components.map((row) => row.id as string),
-    },
+    offer: offerSnapshot(facts.offer),
     earn: { ...facts.earn, programs: [...facts.earn.programs] },
+    ...(includeCash
+      ? {
+          offerCash: offerSnapshot(facts.offerCash),
+          earnCash: { ...facts.earnCash, programs: [...facts.earnCash.programs] },
+        }
+      : {}),
     benefits: { ...facts.benefits },
     travelBenefitCount: facts.travelBenefitCount,
     eligibility: facts.eligibility,

@@ -15,6 +15,7 @@ import type {
   ProgramValuation,
   ProductFee,
   RecommendationDataset,
+  RedemptionMode,
   TransferPath,
 } from "./types.ts";
 
@@ -49,6 +50,9 @@ export interface DatasetIndex {
    *  khuyên hai hạng cùng lúc, và để tụt xuống hạng thấp hơn khi người dùng
    *  không đủ điều kiện hạng cao. */
   productsByFamily: ReadonlyMap<string, Product[]>;
+  /** Khoá là `valuationKey(programId, redemption)` — MỘT đồng điểm có nhiều
+   *  giá, xem `RedemptionMode`. Tra bằng `programId` trần sẽ luôn trượt, và
+   *  đó là điều mong muốn: nó buộc chỗ gọi nói ra mình đang hỏi giá nào. */
   valuationsByProgram: ReadonlyMap<string, ProgramValuation[]>;
 
   feesByProduct: ReadonlyMap<string, ProductFee[]>;
@@ -88,6 +92,14 @@ function groupBy<T>(rows: readonly T[], key: (row: T) => string): Map<string, T[
   return map;
 }
 
+/** Khoá tra định giá. Cùng lý do với `routeKey` bên dưới, và thêm một lý do
+ *  nữa: khoá trần `programId` từng đúng, nên một chỗ gọi quên kiểu đổi vẫn
+ *  biên dịch được — hàm này làm nó trượt map thay vì trả về giá của kiểu đổi
+ *  khác. */
+export function valuationKey(programId: string, redemption: RedemptionMode): string {
+  return `${programId}|${redemption}`;
+}
+
 /** Khoá tra award strategy. Một hàm chứ không phải nối chuỗi tại chỗ, để chỗ
  *  dựng và chỗ tra không bao giờ lệch nhau về thứ tự hay dấu ngăn. */
 export function routeKey(origin: string, destination: string, cabin: string): string {
@@ -108,7 +120,9 @@ export function indexDataset(data: RecommendationDataset): DatasetIndex {
         (row) => row.familyId as string,
       )].map(([key, rows]) => [key, [...rows].sort((a, b) => (a.tierRank ?? 0) - (b.tierRank ?? 0))]),
     ),
-    valuationsByProgram: groupBy(data.programValuations, (row) => row.programId),
+    valuationsByProgram: groupBy(data.programValuations, (row) =>
+      valuationKey(row.programId, row.redemption),
+    ),
 
     feesByProduct: groupBy(data.productFees, (row) => row.productId),
     availabilityByProduct: new Map(

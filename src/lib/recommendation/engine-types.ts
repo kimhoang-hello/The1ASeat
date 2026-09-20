@@ -587,6 +587,22 @@ export interface CandidateFactsSnapshot {
   selectable: boolean;
   offer: OfferFactsSnapshot;
   earn: EarnFit;
+  /**
+   * CÙNG hai dữ kiện đó, đo bằng thước TIỀN MẶT — những con số mục tiêu `cash`
+   * thật sự chấm điểm trên.
+   *
+   * Phải có mặt, vì không có chúng thì bảng debug in ra `offer` và `earn` của
+   * thước đổi vé cho một khuyến nghị dựng trên thước khác — và câu hỏi
+   * "vì sao thẻ này thắng" được trả lời bằng những con số engine không dùng
+   * (vòng Codex 3). Dựng cho MỌI lượt chạy, cùng lý do với chính `earnCash`.
+   *
+   * TUỲ CHỌN vì bản ghi lưu từ ENGINE_VERSION ≤ 4.24 không có chúng, và
+   * `reco_runs` là kho CHỈ-THÊM: báo cáo "vì sao thẻ X" vẫn phải mở được một
+   * lượt chạy của tháng trước. Đọc bắt buộc ở đây làm đúng cái nút đó nổ
+   * `TypeError` trên mọi bản ghi cũ (vòng Codex 4).
+   */
+  offerCash?: OfferFactsSnapshot;
+  earnCash?: EarnFit;
   benefits: BenefitFit;
   travelBenefitCount: number;
   eligibility: EligibilityVerdict;

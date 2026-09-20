@@ -7,8 +7,9 @@
  * dòng với bảng này (vòng rà "khuyến nghị này sai").
  *
  * `earn_points` KHÔNG có trong spec — spec chỉ nêu tên hàm; trọng số là lựa
- * chọn của engine (xem đầu `scoring/earning.ts`). Nó nằm đây để debugger nói
- * được "đây là bảng của engine, không phải của spec".
+ * chọn của engine (xem đầu `scoring/earning.ts`). `cash` thì spec không nêu cả
+ * tên hàm: nó ra đời cùng cột định giá `cash` (`RedemptionMode`). Cả hai nằm
+ * đây để debugger nói được "đây là bảng của engine, không phải của spec".
  */
 
 export const SPEC_WEIGHTS = {
@@ -28,6 +29,10 @@ export const SPEC_WEIGHTS = {
     long_term_earn_fit: 0.4, currency_fit: 0.2, offer_quality: 0.15,
     spend_fit: 0.1, fee_drag: 0.1,
   },
+  cash: {
+    long_term_earn_fit: 0.35, offer_quality: 0.25, currency_fit: 0.15,
+    fee_drag: 0.1, spend_fit: 0.1,
+  },
 } as const satisfies Record<string, Record<string, number>>;
 
 /** Bảng nào là của spec, bảng nào là lựa chọn của engine. */
@@ -36,4 +41,5 @@ export const WEIGHT_SOURCE: Record<keyof typeof SPEC_WEIGHTS, string> = {
   next_card: "§10.1",
   diversify: "§10.3",
   earn_points: "engine (spec không cho trọng số)",
+  cash: "engine (ý định thêm sau spec)",
 };

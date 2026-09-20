@@ -29,6 +29,15 @@ import type { PointsProgramId, RecommendationDataset } from "./types.ts";
 import type { UserState } from "./user-types.ts";
 import type { GoalContext, Needs, PortfolioAnalysis, StrategyScore } from "./engine-types.ts";
 
+/**
+ * Nhu cầu của một đồng điểm ĐÃ KIỂM và biết là không rút ra tiền được.
+ *
+ * Cùng mức sàn với đồng tiền lạc đề ở mục tiêu chuyến đi, và cùng lý do: nó
+ * không trả lời được câu đang hỏi, nhưng nó vẫn là một đồng điểm có giá — hạ
+ * hẳn về 0 là nói Aeroplan® vô giá trị, một câu sai ở mọi ngữ cảnh khác.
+ */
+const CASH_FLOOR_NEED = 0.05;
+
 export interface NeedsInput {
   state: UserState;
   data: RecommendationDataset;
@@ -79,6 +88,44 @@ export function computeNeeds(input: NeedsInput): Needs {
 
   /* ---- Nhu cầu về đồng tiền --------------------------------------- */
   const currency = new Map<PointsProgramId, number>();
+  /**
+   * Tỷ lệ rút-ra-tiền TỐT NHẤT trong bảng — mẫu số của mục tiêu `cash`.
+   *
+   * Chuẩn hoá theo bảng chứ không theo một hằng số (ví dụ "1 cent = 1.0"): nếu
+   * ngày nào đó không còn đồng điểm nào rút được trọn 1 cent, thang điểm vẫn
+   * phải phân biệt được 0.625 với 0.25. Một hằng số thì ép cả hai xuống thấp
+   * cùng lúc và làm thành phần này thôi xếp hạng.
+   */
+  let maxCashCpp = 0;
+  let minCashCpp = Infinity;
+  for (const program of data.pointsPrograms) {
+    const cpp = centsPerPoint(ix, program.id, asOf, "cash");
+    if (cpp === null) continue;
+    maxCashCpp = Math.max(maxCashCpp, cpp);
+    minCashCpp = Math.min(minCashCpp, cpp);
+  }
+  /**
+   * Nhu cầu của một đồng điểm CHƯA AI KIỂM đường ra tiền (`cashOut: "unknown"`).
+   *
+   * Hai thứ tự phải giữ cùng lúc, và con số này là chỗ duy nhất giữ được cả hai:
+   *
+   *   sàn (đã kiểm, KHÔNG rút được)  <  chưa kiểm  <  mọi đồng điểm đã kiểm và
+   *                                                   biết rút được
+   *
+   * Vế trái vì "chưa biết" không được rơi xuống ngang "đã biết là không" —
+   * engine sẽ khẳng định một điều chưa ai xác lập, đúng thứ `CashOutStatus`
+   * sinh ra để khỏi phải làm. Vế phải vì chiều ngược lại cũng sai: một đồng
+   * điểm đã tra và biết rút được 0.5 cent phải đứng trên một đồng điểm chưa ai
+   * tra, nếu không thì THIẾU DỮ LIỆU thành một lợi thế và engine thưởng cho
+   * việc chưa làm việc (vòng Codex 2 của mục tiêu này, mục 2).
+   *
+   * Điểm giữa của hai mốc đó, và cả hai mốc đều đọc từ dữ liệu — không có hằng
+   * số nào ở đây là ý kiến của ai. `cash_out_unknown` nói ra chỗ trống này
+   * trong chính lượt chạy, và cách sửa THẬT là đi tra tỷ lệ, không phải chỉnh
+   * con số này.
+   */
+  const unknownCashNeed =
+    minCashCpp === Infinity ? CASH_FLOOR_NEED : (CASH_FLOOR_NEED + minCashCpp / maxCashCpp) / 2;
   const tripPrograms = goal.tripNeed?.programs ?? [];
   const tripGap =
     goal.tripNeed === null
@@ -127,6 +174,40 @@ export function computeNeeds(input: NeedsInput): Needs {
         } else {
           need = program.id === target ? 1 : reaches(ix, program.id, target, asOf) ? 0.8 : 0.1;
         }
+        break;
+      }
+      case "cash": {
+        // Đo bằng CHÍNH tỷ lệ rút ra tiền, chia cho tỷ lệ tốt nhất đang có
+        // trong bảng. Không đo bằng `programType`: `fixed_value` gồm cả
+        // Scene+™ (1 cent vào sao kê) lẫn VIPorter® (chỉ đổi được vé Porter®),
+        // và gộp hai thứ đó lại là trả lời câu hỏi bằng một cái nhãn thay vì
+        // bằng con số người dùng sẽ nhận.
+        if (maxCashCpp <= 0) {
+          // KHÔNG đồng điểm nào trong bảng có tỷ lệ rút tiền. Đó là một chỗ
+          // trống của LỚP DỮ LIỆU, không phải câu trả lời "không đồng điểm nào
+          // hữu ích" — và hạ tất cả xuống sàn cùng lúc thì thẻ thắng cuộc được
+          // chọn bằng những thành phần còn lại, tức bằng tiếng ồn. Rơi về đúng
+          // công thức của mục tiêu rộng, y như nhánh `trip` khi chặng chưa có
+          // giá, và để §29 hạ độ tin cậy.
+          need = clamp01(
+            0.5 * (0.7 + 0.3 * flexibilityReach(ix, program.id, asOf)) + 0.5 * (1 - share),
+          );
+          break;
+        }
+        const cash = centsPerPoint(ix, program.id, asOf, "cash");
+        if (cash !== null) {
+          need = clamp01(cash / maxCashCpp);
+          break;
+        }
+        // Không có dòng định giá cash — hai ca KHÁC HẲN nhau (xem `CashOutStatus`).
+        // "Đã kiểm, không rút được" là một dữ kiện: Aeroplan® không trả lời
+        // được câu đang hỏi, cho nó mức sàn 0.05 như đồng tiền lạc đề ở mục
+        // tiêu chuyến đi. "Chưa ai kiểm" thì cho mức giữa: hạ nó xuống sàn là
+        // biến một chỗ trống của lớp dữ liệu thành một phán quyết về đồng
+        // điểm, và ở đây chỗ trống đó đang che Membership Rewards® — đồng điểm
+        // nhiều thẻ mạnh nhất Canada kiếm ra. §29 hạ độ tin cậy, §30 đi hỏi;
+        // không chỗ nào trong hai chỗ đó là ở đây.
+        need = program.cashOut === "unknown" ? unknownCashNeed : CASH_FLOOR_NEED;
         break;
       }
       case "diversify":

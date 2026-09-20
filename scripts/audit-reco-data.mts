@@ -191,8 +191,14 @@ for (const program of RECO_PROGRAMS) {
   }
   // Định giá nay nằm ở `program_valuations` và có hiệu lực theo thời gian, nên
   // so bản CÒN HIỆU LỰC HÔM NAY với con số của trang calculator.
+  // CHỈ dòng `best`: trang calculator nói về giá trị cao nhất của một đồng
+  // điểm, không nói về giá khi rút ra tiền. Bỏ phép lọc này thì hai dòng của
+  // cùng một chương trình làm `oneActiveAt` trả `undefined`, và audit báo
+  // "không có định giá" cho đúng những chương trình vừa được thêm giá thứ hai.
   const valuation = oneActiveAt(
-    PROGRAM_VALUATIONS.filter((row) => (row.programId as string) === (program.id as string)),
+    PROGRAM_VALUATIONS.filter(
+      (row) => (row.programId as string) === (program.id as string) && row.redemption === "best",
+    ),
     TODAY,
   );
   if (valuation === undefined) {

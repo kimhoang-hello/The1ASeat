@@ -53,6 +53,7 @@ export const REASON_CODES = [
   "PORTFOLIO_LACKS_FLEXIBILITY",
   "FLEXIBLE_CURRENCY_VALUABLE",
   "NEW_CURRENCY_EXPOSURE",
+  "CASH_VALUE_UNPRICED",
 
   /* Quyền lợi */
   "EXISTING_BENEFIT_DUPLICATION",
@@ -120,6 +121,8 @@ export const REASON_CODE_NOTES: Record<ReasonCode, string> = {
   FLEXIBLE_CURRENCY_VALUABLE:
     "scoring/trip.ts, scoring/diversify.ts — thẻ kiếm điểm chuyển được, nên giữ được lựa chọn (§16 Rule 2).",
   NEW_CURRENCY_EXPOSURE: "scoring/diversify.ts — thẻ mở ra một chương trình người dùng chưa có.",
+  CASH_VALUE_UNPRICED:
+    "rules.ts — mục tiêu `cash`, và đồng điểm của thẻ này có `cashOut: \"unknown\"`: chưa ai tra tỷ lệ rút ra tiền. Giá trị tích mỗi năm và giá trị welcome bonus của nó vì thế ĐỀU bằng 0 trong bảng điểm — không phải vì thẻ tệ, mà vì chưa có số để nhân. Không có mã này thì con số 0 đó trông y hệt con số 0 của một đồng điểm đã kiểm và biết không rút được (vòng Codex 3).",
 
   EXISTING_BENEFIT_DUPLICATION:
     "benefits.ts (engine) — quyền lợi trùng CẢ benefitId LẪN provider với thẻ đang giữ (§16 Rule 6).",

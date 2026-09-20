@@ -23,7 +23,7 @@ import { centsPerPoint } from "./portfolio.ts";
 import { activeAt } from "./temporal.ts";
 import { requiredSpendOf, spendPerNinetyDays, spendWindowsOf } from "./spend.ts";
 import type { DatasetIndex } from "./indexes.ts";
-import type { OfferComponent, Product } from "./types.ts";
+import type { OfferComponent, Product, RedemptionMode } from "./types.ts";
 import type { EstimatedAmount } from "./user-types.ts";
 import type { OfferHistoryPoint } from "./offer-history.ts";
 import type { OfferUnit } from "../offer-history.ts";
@@ -298,6 +298,17 @@ export function offerFacts(
   asOf: string,
   capacity: EstimatedAmount | null,
   history: readonly OfferHistoryPoint[],
+  /**
+   * Quy welcome bonus ra tiền theo KIỂU ĐỔI nào — xem `RedemptionMode`.
+   *
+   * §11 cân một offer bằng GIÁ TRỊ của nó, và giá trị đó phụ thuộc người đọc
+   * định làm gì với đống điểm. Bonus 70,000 Aeroplan® đáng $1,330 với người
+   * đi đổi vé và đáng ĐÚNG $0 với người hỏi "điểm này rút ra tiền được bao
+   * nhiêu" — và nếu §11 chỉ biết con số thứ nhất thì thẻ Aeroplan® ăn trọn
+   * 25% bảng điểm của mục tiêu `cash` bằng một khoản tiền không tồn tại (vòng
+   * Codex 2 của mục tiêu này, mục 1).
+   */
+  mode: RedemptionMode = "best",
 ): OfferFacts {
   const reasonCodes: ReasonCode[] = [];
   const warnings: WarningCode[] = [];
@@ -326,8 +337,13 @@ export function offerFacts(
   }
 
   const { offer, components } = active;
+  // `null` ở chế độ `cash` nghĩa là đồng tiền của bonus KHÔNG rút ra tiền
+  // được (hoặc chưa ai kiểm) — và `componentValueCents` đọc `cpp === null`
+  // đúng như "không quy ra tiền được", nên các thành phần điểm về 0 còn thành
+  // phần tiền mặt (fee waiver, bonus tiền) vẫn được tính. Đó là câu trả lời
+  // đúng, không phải một chỗ trống.
   const cpp =
-    offer.bonusCurrencyId === null ? null : centsPerPoint(ix, offer.bonusCurrencyId, asOf);
+    offer.bonusCurrencyId === null ? null : centsPerPoint(ix, offer.bonusCurrencyId, asOf, mode);
 
   // Nếu offer KHÔNG khai phí năm đầu thì thành phần `fee_waiver` là chỗ duy
   // nhất ưu đãi đó được ghi, và bỏ nó đi là đánh mất một lợi ích thật. Chỉ bỏ

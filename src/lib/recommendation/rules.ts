@@ -22,6 +22,7 @@ import { CONCENTRATION_THRESHOLD, tripCoverage } from "./strategies.ts";
 import { flexibilityReach } from "./portfolio.ts";
 import { activeAt } from "./temporal.ts";
 import type { PointsProgramId } from "./types.ts";
+import { valuationModeFor } from "./scoring/context.ts";
 import type { CandidateFacts, ScoringContext } from "./scoring/context.ts";
 import type { ScoreAdjustment } from "./engine-types.ts";
 import type { ReasonCode, WarningCode } from "./reason-codes.ts";
@@ -143,7 +144,15 @@ export function applyRules(input: RuleInput): RuleOutcome {
   // và luật này im lặng.
   const programId = candidate.product.pointsProgramId;
   const bookNow = ctx.goal.trip?.travelStart != null && ctx.goal.trip.flexibility === "low";
-  const reach = programId === null ? 0 : flexibilityReach(ctx.ix, programId, ctx.asOf);
+  // Mục tiêu "quy điểm ra tiền" KHÔNG đi qua chặng chuyển: tầm với của một
+  // đồng điểm là quyền đổi sang hãng bay, và người hỏi câu này vừa nói họ
+  // không định làm vậy. Thưởng nó ở đây là cộng điểm cho Membership Rewards®
+  // vì năm hãng đối tác, đúng lúc engine còn chưa biết nó rút ra tiền được
+  // bao nhiêu (vòng Codex 3). `strategies.ts` đã hạ `EARN_FLEXIBLE_POINTS`
+  // cho cùng mục tiêu vì cùng lý do — hai chỗ phải nói một chuyện.
+  const cashGoal = valuationModeFor(ctx.goal) === "cash";
+  const reach =
+    programId === null || cashGoal ? 0 : flexibilityReach(ctx.ix, programId, ctx.asOf);
   if (reach > 0 && !bookNow) {
     // Thưởng theo TẦM VỚI: Avion® (một đích) không giữ lại cùng lượng lựa chọn
     // như Membership Rewards® (năm đích), nên không được cùng một khoản thưởng.
@@ -154,6 +163,17 @@ export function applyRules(input: RuleInput): RuleOutcome {
       reasonCode: "FLEXIBLE_CURRENCY_VALUABLE",
     });
     reasonCodes.push("FLEXIBLE_CURRENCY_VALUABLE");
+  }
+
+  /* ---- Đồng điểm chưa ai tra đường ra tiền ------------------------ */
+  // KHÔNG phải một hình phạt — không có `adjustments` nào ở đây. Điểm của thẻ
+  // đã bằng 0 ở `long_term_earn_fit` và `offer_quality` rồi, vì không có tỷ
+  // lệ nào để nhân. Mã này chỉ nói ra VÌ SAO nó bằng 0, để con số đó không
+  // trông giống con số 0 của một đồng điểm đã kiểm và biết không rút ra tiền
+  // được. Phạt thêm ở đây là phạt hai lần cho cùng một chỗ trống.
+  if (cashGoal && programId !== null) {
+    const program = ctx.ix.programById.get(programId);
+    if (program?.cashOut === "unknown") reasonCodes.push("CASH_VALUE_UNPRICED");
   }
 
   /* ---- Rule 3 — tập trung danh mục -------------------------------- */
