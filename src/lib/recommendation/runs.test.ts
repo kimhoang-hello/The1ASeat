@@ -893,7 +893,14 @@ test("thẻ đã xếp hạng: 'do' nói NGUỒN của khoảng cách, không m�
   const { record } = execute(state);
   const e = explainProduct(record, "td-aeroplan-visa-infinite");
   assert.notEqual(e.outcome, "primary", "tiền đề: TD® không thắng");
-  assert.deepEqual(e.drivenBy, ["user_input"]);
+  // `drivenBy` đọc ra từ CÁC DÒNG giải thích khoảng cách, nên nó không được là
+  // `["engine"]` — đó là mặc định bài này sinh ra để chặn. Bao nhiêu dòng thì
+  // tuỳ khoảng cách rộng bao nhiêu: từ 4.26.0 `earn_fit` đúng hơn nên khoảng
+  // cách rộng thêm và một dòng chấm điểm nữa được kể, mang theo `source_data`.
+  // Khoá cứng đúng một phần tử là khoá vào cỡ của khoảng cách, không vào điều
+  // bài này nói.
+  assert.ok(!e.drivenBy.includes("engine"), "không được mặc định về 'engine'");
+  assert.ok(e.drivenBy.includes("user_input"), "con số người dùng gõ phải được kể");
   const line = e.explainingLines.find((row) => row.layer === "eligibility")!;
   assert.ok(line.sources.some((row) => row.detail.includes("minimum_personal_income") && row.detail.includes("TRƯỢT")));
   assert.ok(line.sources.some((row) => row.detail.includes("minimum_household_income")));

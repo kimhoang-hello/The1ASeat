@@ -316,7 +316,7 @@ test("Test I — offer đổi từ YẾU sang GẦN ĐỈNH lịch sử: thứ h
   assert.equal(why.lines[0].key, "offer_quality", "thành phần đổi nhiều nhất phải là chất lượng offer");
 });
 
-test("Test J — thiếu dữ liệu, hai thẻ gần hoà: độ tin cậy THẤP, và câu hỏi tiếp theo ĐỔI ĐƯỢC kết quả", () => {
+test("Test J — thiếu dữ liệu, hai thẻ gần hoà: độ tin cậy THẤP, và câu hỏi tiếp theo NÓI ĐÚNG mình đo được hay không", () => {
   for (const state of [beginnerNoCards, nearlyEmpty]) {
     const { record } = execute(state);
     const rows = ranking(record);
@@ -326,21 +326,41 @@ test("Test J — thiếu dữ liệu, hai thẻ gần hoà: độ tin cậy TH�
 
     const followUp = record.outputSnapshot.followUp;
     assert.ok(followUp !== null, "phải có câu hỏi tiếp theo");
-    // "highest-value": §30 đã đo từng câu bằng câu trả lời thử, và câu được
-    // chọn phải đổi được người thắng NHIỀU NHẤT trong số các câu đo được.
     const probes = record.derivedState.followUpProbes;
     const chosen = probes.find((p) => p.gapKind === followUp.gapKind && p.subject === followUp.subject);
-    assert.ok(chosen !== undefined && chosen.flips > 0, `${state.profile.id}: câu ${followUp.gapKind} không đổi được gì`);
-    const best = Math.max(...probes.map((p) => p.flips / p.valid));
-    assert.equal(chosen.flips / chosen.valid, best);
-    // Và bản ghi NÓI RA vì sao nó được chọn — không phải để admin tự suy từ
-    // bảng phép đo (vòng rà Phase 4).
-    assert.equal(followUp.basis, "measured");
-    assert.equal(followUp.flipShare, chosen.flips / chosen.valid);
+    assert.ok(chosen !== undefined, `${state.profile.id}: câu đã chọn phải có trong bảng phép đo`);
+
     // Không câu trả lời thử nào được tính mà làm hồ sơ mâu thuẫn với chính nó.
     for (const probe of probes) {
       for (const outcome of probe.outcomes) if (outcome.invalid) assert.equal(outcome.flipsWinner, false);
     }
+
+    // §30 chỉ hứa "câu đáng giá NHẤT", chứ không hứa rằng một câu đáng giá
+    // luôn tồn tại — và bản ghi phải nói ra mình đang ở vế nào. Trước 4.26.0
+    // `u_beginner` luôn rơi vào vế đo được, nhưng đó là hệ quả của một lỗi:
+    // `earn_fit` bỏ hẳn chi tiêu theo hạng mục của thẻ chỉ có tỷ lệ nền, nên
+    // thứ hạng mỏng manh và câu nào cũng lật được. Sửa xong, hồ sơ này đã khai
+    // đủ $2,000 tổng tháng nên mọi câu hạng mục còn lại đều mâu thuẫn, và
+    // thu nhập hộ không cứu được thẻ nào — không còn câu nào lật được thật.
+    //
+    // Bài kiểm ĐÚNG là phép tương đương, y như bài "chặng chưa có giá" bên
+    // dưới: `measured` khi và chỉ khi phép đo thật sự thấy lật.
+    const anyFlips = probes.some((p) => p.flips > 0);
+    assert.equal(followUp.basis === "measured", anyFlips, `${state.profile.id}: basis không khớp phép đo`);
+
+    if (!anyFlips) {
+      assert.equal(followUp.flipShare, null, "không đo được thì không được in ra một tỷ lệ");
+      continue;
+    }
+
+    // "highest-value": câu được chọn phải đổi được người thắng NHIỀU NHẤT
+    // trong số các câu đo được.
+    assert.ok(chosen.flips > 0, `${state.profile.id}: câu ${followUp.gapKind} không đổi được gì`);
+    const best = Math.max(...probes.map((p) => p.flips / p.valid));
+    assert.equal(chosen.flips / chosen.valid, best);
+    // Và bản ghi NÓI RA vì sao nó được chọn — không phải để admin tự suy từ
+    // bảng phép đo (vòng rà Phase 4).
+    assert.equal(followUp.flipShare, chosen.flips / chosen.valid);
 
     // Và phép đo đó là THẬT: trả lời đúng câu đã chọn bằng câu trả lời thử
     // làm lật kết quả, chạy lại, người thắng đổi.

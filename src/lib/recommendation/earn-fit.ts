@@ -4,7 +4,8 @@
  * Đây là vế "long-term earn fit" của §10.1 và "earn fit" của §10.3 — thứ phân
  * biệt một thẻ đáng giữ lâu với một thẻ chỉ đáng mở lấy bonus rồi đóng.
  *
- * BA CHỖ DỄ SAI, cả ba đã ghi trong README của Phase 1:
+ * BỐN CHỖ DỄ SAI — ba chỗ đầu đã ghi trong README của Phase 1, chỗ thứ tư là
+ * một lỗi có thật đã chạy suốt từ Phase 1:
  *
  *  1. **Trần dùng chung.** `EarningRate.capId` TRỎ vào một `EarningCap`, và
  *     nhiều dòng tỷ lệ dùng chung một trần. TD® Cash Back có một trần
@@ -17,6 +18,12 @@
  *  3. **Chi tiêu chưa phân bổ ≠ 0.** Người khai tổng $2,000 và siêu thị $800
  *     chưa nói gì về mười sáu hạng mục còn lại. Phần dôi ra được tính theo tỷ
  *     lệ `everything_else` — cận DƯỚI của giá trị thật, chứ không phải bỏ đi.
+ *  4. **Hạng mục không có dòng riêng cũng rơi về `everything_else`.** Đây là
+ *     cùng một luật với chỗ 3, chỉ ở phía bên kia: chỗ 3 nói về hạng mục
+ *     người dùng CHƯA khai, chỗ này nói về hạng mục thẻ KHÔNG có tỷ lệ riêng.
+ *     Bỏ qua chúng làm thẻ chỉ có tỷ lệ nền (RBC Avion® Visa Platinum®, Amex®
+ *     Green) mất trắng phần chi tiêu đã khai theo hạng mục — $336/năm thay vì
+ *     $480 trên hồ sơ $1,200 siêu thị + $2,800 còn lại.
  */
 
 import { activeAt } from "./temporal.ts";
@@ -126,8 +133,19 @@ export function earnFitFor(
     }[]
   >();
 
+  // Tỷ lệ nền của chính thẻ này — chỗ mọi hạng mục KHÔNG có dòng riêng rơi về.
+  const fallbackRate = baseRateFor(rates, "everything_else");
+
   for (const [category, annualSpend] of annualByCategory) {
-    const rate = baseRateFor(rates, category);
+    // Thẻ không có dòng riêng cho hạng mục này thì chi tiêu đó vẫn kiếm được
+    // điểm — ở tỷ lệ nền. BỎ nó đi là một lỗi đã có thật: thẻ CHỈ có tỷ lệ nền
+    // (RBC Avion® Visa Platinum®, Amex® Green) mất trắng phần chi tiêu người
+    // dùng đã khai theo hạng mục, nên hồ sơ $1,200 siêu thị + $2,800 còn lại
+    // ra $336/năm thay vì $480 — và mọi mục tiêu đọc `earn_fit` đều lệch theo.
+    //
+    // `restrictedTo !== null` cũng rơi vào đây: dòng giới hạn không phân tích
+    // được (xem chú thích 2 đầu file), và tỷ lệ nền là cận DƯỚI đúng của nó.
+    const rate = baseRateFor(rates, category) ?? fallbackRate;
     if (rate === null) continue;
     const key = rate.capId === null ? null : (rate.capId as string);
     const list = byCap.get(key) ?? [];

@@ -238,6 +238,18 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * thước của chúng vẫn là `best` — nhưng `analyzePortfolio` nay nhận `mode`,
  * nên version phải tăng: §20 nói về MỌI đầu vào.
  *
+ * 4.26.0 — **lỗi từ Phase 1**, tách khỏi mục tiêu `cash` vì nó ảnh hưởng MỌI
+ * mục tiêu: `earnFitFor` bỏ hẳn hạng mục nào thẻ không có dòng tỷ lệ riêng,
+ * thay vì cho nó rơi về tỷ lệ nền `everything_else` của chính thẻ đó. Thẻ chỉ
+ * có tỷ lệ nền (RBC Avion® Visa Platinum®, Amex® Green, Wealthsimple®) mất
+ * trắng phần chi tiêu người dùng đã khai theo hạng mục — hồ sơ $1,200 siêu
+ * thị + $2,800 còn lại ra $336/năm thay vì $480. `candidate_facts` của MỌI
+ * lượt chạy có hồ sơ chi tiêu đều đổi, nên dấu vân tay lượt chạy đổi theo;
+ * nhưng THỨ HẠNG chỉ đổi được ở bốn mục tiêu đọc `long_term_earn_fit` —
+ * `next_card`, `diversify`, `earn_points`, `cash`. `trip` (§10.2) không đọc
+ * nó, và bản chụp xác nhận: `u_japan_gap` và `u_vn_gap` đổi dấu vân tay mà
+ * giữ nguyên người thắng lẫn điểm.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -250,7 +262,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.25.0";
+export const ENGINE_VERSION = "4.26.0";
 
 export interface RecommendInput {
   state: UserState;

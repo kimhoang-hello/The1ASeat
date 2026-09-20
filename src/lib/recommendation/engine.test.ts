@@ -952,6 +952,41 @@ test("trần tích điểm: `points` và `spend` so với đại lượng CÙNG 
   );
 });
 
+test("hạng mục KHÔNG có dòng tỷ lệ riêng vẫn ăn tỷ lệ nền của thẻ", () => {
+  // Lỗi có thật từ Phase 1: vòng lặp `earnFitFor` gọi `baseRateFor(category)`
+  // rồi `continue` khi không có dòng nào — nên thẻ CHỈ có tỷ lệ nền bỏ trắng
+  // toàn bộ chi tiêu người dùng đã khai theo hạng mục.
+  //
+  // `cashSeeker` khai $1,200 siêu thị + $2,800 còn lại trên tổng $4,000. Với
+  // RBC Avion® Visa Platinum® (chỉ `everything_else` 1x), bản cũ chỉ tính
+  // $2,800 → $336/năm thay vì $480.
+  const spend = cashSeeker.spend;
+  assert.ok(spend !== null);
+
+  for (const slug of ["rbc-avion-visa-platinum", "amex-green"]) {
+    const productId = productIdFor(slug);
+    const rates = activeAt(IX.ratesByProduct.get(productId) ?? [], ASOF);
+    assert.deepEqual(
+      [...new Set(rates.map((row) => row.category))],
+      ["everything_else"],
+      `${slug} không còn là thẻ chỉ có tỷ lệ nền — đổi ca kiểm, đừng đổi luật`,
+    );
+
+    const base = rates[0];
+    assert.equal(base.capId, null, `${slug}: ca kiểm này giả định tỷ lệ nền không trần`);
+    const cpp = centsPerPoint(IX, base.pointsProgramId, ASOF);
+    assert.ok(cpp !== null);
+
+    // TỔNG chi tiêu năm, không phải riêng phần `everything_else`.
+    const expected = 4_000 * 12 * base.multiplier * cpp;
+    const fit = earnFitFor(productId, spend, IX, ASOF);
+    assert.ok(
+      Math.abs(fit.annualValueCents - expected) < 1,
+      `${slug}: ${fit.annualValueCents} ≠ ${expected} — chi tiêu theo hạng mục bị bỏ`,
+    );
+  }
+});
+
 /* ================================================================== *
  * Vòng review Codex — bốn lỗi P1
  * ================================================================== */
@@ -2233,8 +2268,25 @@ test("một thay đổi đầu vào cho thay đổi HIỂU ĐƯỢC, không hỗ
   // có thật (đủ sức đạt mốc chi của một hạng thẻ cao hơn).
   const flips = runs.filter((row, i) => i > 0 && row.winner !== runs[i - 1].winner).length;
   assert.ok(flips <= 4, `người thắng đổi ${flips} lần trên 9 bước — hỗn loạn`);
-  // Đầu dải phải là "chưa cần thẻ": dồn $500 thì không bonus nào với tới.
-  assert.equal(runs[0].winner, null, "dồn $500 mà vẫn khuyên mở thẻ");
+  // Đầu dải: dồn $500 thì không welcome bonus nào với tới, nên KHÔNG thẻ nào
+  // sống bằng bonus được khuyên. Nhưng "không bonus nào với tới" ≠ "không thẻ
+  // nào đáng mở": thẻ KHÔNG CÓ bonus không đọc con số này, và giá trị của nó
+  // là tỷ lệ tích điểm dài hạn. Wealthsimple® Visa Infinite Privilege® (2%
+  // trên mọi thứ, không bonus) kiếm $480/năm trên $2,000/tháng của người này
+  // — nhiều hơn phí $240, và sức dồn chi ba tháng không nói gì về điều đó.
+  //
+  // Trước 4.26.0 nó KHÔNG thắng ở đây, nhưng vì một lỗi: `earn_fit` bỏ hẳn
+  // $1,200/tháng người này đã khai theo hạng mục, nên thẻ chỉ có tỷ lệ nền
+  // kiếm $192 — thua phí. Bài kiểm cũ khoá đúng con số sai đó.
+  const first = runs[0].winner;
+  if (first !== null) {
+    const offer = activeAt(IX.offersByProduct.get(productIdFor(first)) ?? [], ASOF)[0];
+    assert.equal(
+      offer?.bonusKind ?? "none",
+      "none",
+      `dồn $500 mà vẫn khuyên một thẻ sống bằng welcome bonus: ${first}`,
+    );
+  }
 });
 
 test("một chỉ số CỰC ĐOAN không đè bẹp được phù hợp", () => {
