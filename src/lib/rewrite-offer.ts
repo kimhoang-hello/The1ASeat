@@ -32,7 +32,7 @@ Quy tắc bắt buộc:
   đặc biệt" / "hạng thương gia" (KHÔNG phải economy/business class), "đăng ký" chứ không
   phải "register", "đánh giá" chứ không phải "review", "thẻ tín dụng" chứ không phải
   "credit card", "đặt vé" chứ không phải "booking".
-- Dấu $ trần nghĩa là đô la Canada. Chỉ dùng "US$" cho số tiền đô la Mỹ thật sự.
+- Dấu $ trần nghĩa là đô la Canada. Số tiền đô la Mỹ thật sự viết dạng "$X USD" (ví dụ "$1,000 USD"), không viết "US$".
 - Giữ nguyên tiếng Anh các thuật ngữ: welcome bonus, elevated offer, annual fee, monthly fee, rebate, transfer bonus, cashback, deal, companion pass, lounge, chequing, savings, direct deposit, dynamic pricing, award chart.
 - Giữ ký hiệu ® và ™ ở tên ngân hàng và chương trình (Scene+™, American Express®, Aeroplan®, Star Alliance™...).
 - CHỈ dùng số liệu có trong dữ liệu được cung cấp. Không suy đoán, không thêm quyền lợi không được nêu.

@@ -60,8 +60,8 @@ dừng ở "thẻ này có 70,000 điểm".
 - Quy mô hiện tại: 23 thẻ tín dụng Canada, ~28 bài viết/video chia 4 chuyên mục,
   6 chương trình hàng không trong Award Flight Finder.
 - Quy ước nội dung bắt buộc: thêm ®/™ cho tên ngân hàng và chương trình thật;
-  số dùng dấu phẩy ngăn nghìn kiểu Anh (`110,000`); `$` mặc định là CAD (chỉ dùng
-  `US$` khi thật sự là USD); giữ nguyên tiếng Anh các thuật ngữ như welcome offer,
+  số dùng dấu phẩy ngăn nghìn kiểu Anh (`110,000`); `$` mặc định là CAD; số tiền đô Mỹ viết
+  `$X USD` (ví dụ `$95 USD`), không viết `US$`; giữ nguyên tiếng Anh các thuật ngữ như welcome offer,
   transfer bonus, award, register.
 - Bảng dữ liệu rộng (Award Flight Finder, Transfer Partners) **phải đọc được trên
   màn hình nhỏ** — đây là ràng buộc sản phẩm, không phải tuỳ chọn thiết kế.
