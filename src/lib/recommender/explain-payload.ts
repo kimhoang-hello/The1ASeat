@@ -39,7 +39,7 @@
 
 import type { ReasonCode } from "../recommendation/reason-codes.ts";
 import { COMPONENT_STRENGTH, NO_CARD_SENTENCE } from "./copy.ts";
-import { coverageStatement, formatNeed, formatPoints, type ResultView } from "./present.ts";
+import { coverageStatement, formatNeed, formatPoints, vietnameseDate, type ResultView } from "./present.ts";
 
 /**
  * Lý do "ủng hộ" mà engine suy ra từ một ƯỚC LƯỢNG (phần phủ chuyến đi).
@@ -113,11 +113,8 @@ export interface ExplanationPayload {
   dataVerifiedAt: string | null;
 }
 
-/** "2026-09-16" → "16/09/2026", cách site viết ngày. */
-export function vietnameseDate(iso: string): string {
-  const [year, month, day] = iso.slice(0, 10).split("-");
-  return `${day}/${month}/${year}`;
-}
+// Nằm ở `present.ts` để trang Phase 5 dùng được mà không import lớp LLM.
+export { vietnameseDate };
 
 /**
  * Câu hoàn chỉnh của bảng tra → mệnh đề đứng sau câu dẫn.

@@ -6,7 +6,7 @@ import { resetRecommendation } from "@/app/credit-cards/goi-y/actions";
 import { ApplyButton } from "@/components/ui/apply-button";
 import type { ActionView, AnsweredRow, ResultView } from "@/lib/recommender/present";
 import { NO_CARD_SENTENCE } from "@/lib/recommender/copy";
-import { coverageStatement, formatNeed, formatPoints } from "@/lib/recommender/present";
+import { coverageStatement, formatNeed, formatPoints, vietnameseDate } from "@/lib/recommender/present";
 
 /**
  * Trang kết quả, xếp theo đúng thứ tự người đọc cần:
@@ -328,6 +328,17 @@ function TripNumbers({ trip }: { trip: NonNullable<ResultView["trip"]> }) {
         </div>
       </dl>
       )}
+      {!nothingKnown && need !== null && trip.accessible === null && !trip.routeNotPriced && (
+        <p className="mt-3 text-sm text-muted-foreground">
+          <Link
+            href={`/credit-cards/goi-y?sua=${encodeURIComponent("balances_undeclared:toi")}`}
+            className="font-semibold text-primary underline underline-offset-4"
+          >
+            Khai điểm bạn đang có
+          </Link>{" "}
+          để mình tính phần còn thiếu.
+        </p>
+      )}
       {!nothingKnown && trip.missing.length > 0 && !trip.routeNotPriced && (
         <p className="mt-3 text-sm text-muted-foreground">
           Con số sẽ sát hơn nếu bạn nói thêm <MissingLinks trip={trip} />.
@@ -405,6 +416,7 @@ function AnsweredPanel({ rows }: { rows: AnsweredRow[] }) {
  * phải đọc thứ mình không cần.
  */
 function HowItWorks({ view }: { view: ResultView }) {
+  const percents = wholePercents(view.primary.components.map((row) => row.weight));
   return (
     <details className="rounded-2xl border border-border bg-card p-5 sm:p-6">
       <summary className="cursor-pointer font-display text-lg font-bold text-foreground">
@@ -423,15 +435,25 @@ function HowItWorks({ view }: { view: ResultView }) {
           </tr>
         </thead>
         <tbody>
-          {view.primary.components.map((row) => (
+          {view.primary.components.map((row, index) => (
             <tr key={row.label} className="border-b border-border/60">
               <td className="py-2 text-foreground">{row.label}</td>
               <td className="py-2 text-right text-muted-foreground">
-                {Math.round(row.weight * 100)}%
+                {percents[index]}%
               </td>
               <td className="py-2 text-right text-foreground">{row.raw.toFixed(2)}</td>
             </tr>
           ))}
+          {Math.abs(view.primary.adjustment) >= 0.0005 && (
+            <tr className="border-b border-border/60">
+              <td className="py-2 text-foreground">Điều chỉnh theo luật của công cụ</td>
+              <td />
+              <td className="py-2 text-right text-foreground">
+                {view.primary.adjustment > 0 ? "+" : "−"}
+                {Math.abs(view.primary.adjustment).toFixed(3)}
+              </td>
+            </tr>
+          )}
           <tr>
             <td className="py-2 font-semibold text-foreground">Tổng</td>
             <td />
@@ -444,16 +466,35 @@ function HowItWorks({ view }: { view: ResultView }) {
       <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
         <strong className="text-foreground">Số nào là số chắc, số nào là ước lượng:</strong> welcome
         bonus, annual fee và mức spend chép từ trang của ngân hàng
-        {view.dataVerifiedAt ? ` (dòng cũ nhất mình dùng ở đây kiểm ngày ${view.dataVerifiedAt})` : ""};
+        {view.dataVerifiedAt
+          ? ` (dòng cũ nhất mình dùng ở đây kiểm ngày ${vietnameseDate(view.dataVerifiedAt)})`
+          : ""};
         số điểm một chuyến bay cần là khoảng ước lượng theo award chart và đổi theo ngày bay; phần
         &ldquo;bạn gom được&rdquo; phụ thuộc chính con số bạn khai.
       </p>
       <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-        Dữ liệu thẻ tính đến {view.asOf}. Mã tra cứu: <code>{view.runId}</code> — gửi mã này cho
+        Dữ liệu thẻ tính đến {vietnameseDate(view.asOf)}. Mã tra cứu: <code>{view.runId}</code> — gửi mã này cho
         mình nếu bạn thấy kết quả sai, mình xem lại được đúng lượt tính của bạn.
       </p>
     </details>
   );
+}
+
+/**
+ * Phần trăm nguyên cộng ĐÚNG 100 (chia phần dư lớn nhất). Làm tròn từng dòng
+ * thì sáu dòng 26/21/16/16/11/11 cộng ra 101%.
+ */
+function wholePercents(shares: number[]): number[] {
+  const raw = shares.map((share) => share * 100);
+  const floors = raw.map(Math.floor);
+  let left = Math.round(raw.reduce((sum, value) => sum + value, 0)) - floors.reduce((sum, value) => sum + value, 0);
+  const order = raw.map((value, index) => ({ index, rest: value - floors[index] })).sort((a, b) => b.rest - a.rest);
+  for (const { index } of order) {
+    if (left <= 0) break;
+    floors[index] += 1;
+    left -= 1;
+  }
+  return floors;
 }
 
 function asSentenceStart(text: string): string {

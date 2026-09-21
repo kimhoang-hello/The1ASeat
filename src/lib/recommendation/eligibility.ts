@@ -210,7 +210,8 @@ export function evaluateEligibility(
   function verdictOf(groups: Map<string, EligibilityRule[]>, failed: string[], unknownIds: string[]): RuleOutcome {
     let sawUnknown = false;
     for (const [, group] of [...groups].sort((a, b) => (a[0] < b[0] ? -1 : 1))) {
-      const outcomes = group.map((rule) => evaluateRule(rule, state).outcome);
+      const evaluations = group.map((rule) => evaluateRule(rule, state));
+      const outcomes = evaluations.map((evaluation) => evaluation.outcome);
       const combined = combineGroup(outcomes);
       if (combined === "fail") {
         failed.push(...group.map((rule) => rule.id as string));
@@ -223,7 +224,13 @@ export function evaluateEligibility(
             .filter((_row, index) => outcomes[index] === "unknown")
             .map((rule) => rule.id as string),
         );
-        if (group.some((rule) => rule.ruleType.endsWith("_income"))) {
+        // CHỈ khi khoảng người dùng khai BẮC QUA ngưỡng — đúng nghĩa câu "nằm
+        // ngay quanh ngưỡng" trên trang. Bản trước gắn mã này cho MỌI nhóm thu
+        // nhập chưa biết, nên người khai $80–150K cá nhân (dưới hẳn $200,000
+        // của Avion® Visa Infinite Privilege) mà chưa khai thu nhập hộ được
+        // bảo là "có thể đạt" — cái chưa biết là vế hộ gia đình, và
+        // ELIGIBILITY_UNCERTAIN đã nói đúng điều đó.
+        if (evaluations.some((evaluation) => evaluation.unknownCause === "user_range_straddles")) {
           if (!reasonCodes.includes("INCOME_MAY_NOT_QUALIFY")) {
             reasonCodes.push("INCOME_MAY_NOT_QUALIFY");
           }

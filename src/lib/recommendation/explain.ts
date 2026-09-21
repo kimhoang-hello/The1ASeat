@@ -14,6 +14,7 @@ import { REASON_CODES, WARNING_CODES } from "./reason-codes.ts";
 import type { ReasonCode, WarningCode } from "./reason-codes.ts";
 import type { Candidate, FollowUpQuestion, ScoreComponent } from "./engine-types.ts";
 import type { UserDataGap } from "./user-types.ts";
+import { SPEND_CATEGORIES } from "./types.ts";
 
 const REASON_ORDER = new Map(REASON_CODES.map((code, index) => [code, index]));
 const WARNING_ORDER = new Map(WARNING_CODES.map((code, index) => [code, index]));
@@ -242,8 +243,19 @@ export function nextQuestion(input: FollowUpInput): FollowUpQuestion | null {
     const pa = urgent.has(a.kind) ? URGENT : (QUESTION_PRIORITY[a.kind] as number);
     const pb = urgent.has(b.kind) ? URGENT : (QUESTION_PRIORITY[b.kind] as number);
     if (pa !== pb) return pa - pb;
-    // Cùng loại thì theo `subject`: hai hạng mục chi tiêu chưa biết phải cho
-    // ra cùng một câu hỏi ở mọi lượt chạy.
+    // Cùng loại thì phá hoà cố định: hai hạng mục chi tiêu chưa biết phải cho
+    // ra cùng một câu hỏi ở mọi lượt chạy. Hạng mục theo thứ tự của
+    // `SPEND_CATEGORIES` (phổ biến trước) chứ không theo chữ cái — theo chữ
+    // cái thì "drugstore" thắng "grocery" và trang hỏi chi tiêu nhà thuốc
+    // trước chi tiêu siêu thị.
+    if (a.kind === "spend_category_unknown" && b.kind === "spend_category_unknown") {
+      const order = (subject: string) => {
+        const index = (SPEND_CATEGORIES as readonly string[]).indexOf(subject);
+        return index === -1 ? SPEND_CATEGORIES.length : index;
+      };
+      const diff = order(a.subject) - order(b.subject);
+      if (diff !== 0) return diff;
+    }
     return a.subject < b.subject ? -1 : a.subject > b.subject ? 1 : 0;
   })[0];
 

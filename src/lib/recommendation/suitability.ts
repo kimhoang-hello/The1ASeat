@@ -40,6 +40,9 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * vượt 1 và chạm 0 ở gấp đôi sức dồn. Trên 1 là vùng §13 gọi là "strong
  * penalty" — thẻ còn trong bảng, nhưng phải rất nổi trội ở chỗ khác mới thắng.
  */
+/** Mốc chi từ 70% sức dồn điển hình trở lên là "sát" (reason-codes.ts). */
+const TIGHT_FROM_RATIO = 0.7;
+
 export function minimumSpendFit(required: number, capacity: number): number {
   if (capacity <= 0) return 0;
   const ratio = required / capacity;
@@ -177,7 +180,10 @@ export function evaluateSuitability(input: SuitabilityInput): SuitabilityVerdict
       warnings.push("SPEND_REQUIREMENT_LIKELY_UNSUITABLE");
     } else if (verdict === "straddles") {
       reasonCodes.push("MIN_SPEND_TIGHT");
-    } else if (minSpendFit >= 0.9) {
+    } else if (required <= TIGHT_FROM_RATIO * typicalAmount(capacity)) {
+      // Nhãn đọc TỶ LỆ, không đọc `minSpendFit`: ngưỡng 0.9 trên đường cong
+      // rơi vào tỷ lệ ~0.54, nên mốc cần 56% sức dồn (Avion®: $2,500/quý trên
+      // $3,000–6,000) bị gọi là "sát, không dư dả".
       reasonCodes.push("MIN_SPEND_GOOD_FIT");
     } else {
       reasonCodes.push("MIN_SPEND_TIGHT");

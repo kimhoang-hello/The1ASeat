@@ -238,6 +238,16 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * thước của chúng vẫn là `best` — nhưng `analyzePortfolio` nay nhận `mode`,
  * nên version phải tăng: §20 nói về MỌI đầu vào.
  *
+ * 4.27.0 — hai MÃ LÝ DO nói sai trên trang, điểm số và thứ hạng không đổi.
+ * `INCOME_MAY_NOT_QUALIFY` ("nằm ngay quanh ngưỡng") từng gắn cho MỌI nhóm
+ * thu nhập chưa biết — kể cả người khai $80–150K với thẻ đòi $200,000, nơi cái
+ * chưa biết là vế hộ gia đình; nay chỉ khi khoảng khai BẮC QUA ngưỡng.
+ * `MIN_SPEND_GOOD_FIT` từng đọc `minSpendFit >= 0.9` (tỷ lệ ~0.54) thay vì
+ * 70% sức dồn như `reason-codes.ts` ghi, nên mốc cần 56% sức dồn bị gọi là
+ * "sát, không dư dả". Thêm: §30 phá hoà giữa hạng mục chi tiêu theo thứ tự
+ * `SPEND_CATEGORIES` thay vì chữ cái (từng hỏi "drugstore" trước "grocery") —
+ * đổi `followUp`, không đổi thứ hạng.
+ *
  * 4.26.0 — **lỗi từ Phase 1**, tách khỏi mục tiêu `cash` vì nó ảnh hưởng MỌI
  * mục tiêu: `earnFitFor` bỏ hẳn hạng mục nào thẻ không có dòng tỷ lệ riêng,
  * thay vì cho nó rơi về tỷ lệ nền `everything_else` của chính thẻ đó. Thẻ chỉ
@@ -262,7 +272,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.26.0";
+export const ENGINE_VERSION = "4.27.0";
 
 export interface RecommendInput {
   state: UserState;

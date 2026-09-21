@@ -350,7 +350,8 @@ test("đổi ý về câu thu nhập: cờ 'không muốn trả lời' và con s
   const changed = applyAnswer(declined.state, spec, form({ answer: "80000-150000" }), CTX);
   assert.ok(changed.ok);
   assert.equal(changed.state.profile.personalIncomeDeclined, false);
-  assert.deepEqual(changed.state.profile.annualPersonalIncome, { low: 80_000, high: 150_000 });
+  // Nấc thu nhập mở ở đầu trên: "$80,000 – $150,000" không chạm ngưỡng $150,000.
+  assert.deepEqual(changed.state.profile.annualPersonalIncome, { low: 80_000, high: 149_999 });
   assert.deepEqual(
     validateUserState(changed.state, DATA).filter((issue) => issue.level === "error"),
     [],
@@ -387,4 +388,75 @@ test('nút "chưa có gì" thắng mọi ô đã tick trong cùng form', () => {
   assert.ok(noPoints.ok);
   assert.deepEqual(noPoints.state.balances, []);
   assert.equal(noPoints.state.declared.balances, true);
+});
+
+test("?loi= chỉ in câu lỗi trang tự phát ra — không in chữ tuỳ ý, không chép giá trị form", async () => {
+  const { knownError, RECO_ERROR } = await import("./errors.ts");
+  assert.equal(knownError("Gọi 1-800-xxx để nhận thưởng"), null);
+  assert.equal(knownError(null), null);
+  for (const message of Object.values(RECO_ERROR)) assert.equal(knownError(message), message);
+
+  // Câu lỗi THẬT của `applyAnswer` phải qua được danh sách — kể cả khi form
+  // gửi slug bịa: câu lỗi không được mang slug đó theo.
+  const state = stateWithGoal("next_card");
+  const spec = questionFor({ kind: "cards_undeclared", subject: "u_test" }, state, CTX);
+  assert.ok(spec !== null);
+  const result = applyAnswer(state, spec, form({ holding: ["<b>bia</b>"] }), CTX);
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.ok(!result.error.includes("bia"), result.error);
+    assert.equal(knownError(result.error), result.error);
+  }
+});
+
+test("nấc thu nhập trùng MỌI ngưỡng thu nhập trong dữ liệu: không câu trả lời nào bắc qua ngưỡng", async () => {
+  const { compareToThreshold } = await import("../recommendation/user.ts");
+  const cases = [
+    { kind: "personal_income_unknown", ruleType: "minimum_personal_income", field: "annualPersonalIncome" },
+    { kind: "household_income_unknown", ruleType: "minimum_household_income", field: "annualHouseholdIncome" },
+  ] as const;
+  for (const { kind, ruleType, field } of cases) {
+    const state = stateWithGoal("next_card");
+    const spec = questionFor({ kind, subject: "u_test" }, state, CTX);
+    assert.ok(spec !== null && spec.input.type === "choice");
+    const thresholds = DATA.eligibilityRules
+      .filter((rule) => rule.ruleType === ruleType && rule.severity === "hard" && Number(rule.value) > 0)
+      .map((rule) => Number(rule.value));
+    assert.ok(thresholds.length > 0);
+    for (const option of spec.input.options.filter((row) => row.value !== "decline")) {
+      const applied = applyAnswer(state, spec, form({ answer: option.value }), CTX);
+      assert.ok(applied.ok, `${kind} ${option.value}`);
+      const amount = applied.state.profile[field];
+      assert.ok(amount != null);
+      for (const threshold of thresholds) {
+        assert.notEqual(
+          compareToThreshold(amount, threshold),
+          "straddles",
+          `${kind}: "${option.label}" bắc qua ngưỡng $${threshold}`,
+        );
+      }
+    }
+  }
+  // Câu giúp nói đúng ngưỡng cao nhất có thật, không phải một con số chép tay.
+  const personal = questionFor({ kind: "personal_income_unknown", subject: "u_test" }, stateWithGoal("next_card"), CTX);
+  const top = Math.max(
+    ...DATA.eligibilityRules
+      .filter((rule) => rule.ruleType === "minimum_personal_income")
+      .map((rule) => Number(rule.value)),
+  );
+  assert.ok(personal?.help.includes(`$${top.toLocaleString("en-US")}`), personal?.help);
+});
+
+test("nhãn nấc thu nhập khớp đúng khoảng lưu (người thu nhập đúng ngưỡng không bấm nhầm nấc dưới)", () => {
+  const state = stateWithGoal("next_card");
+  const spec = questionFor({ kind: "personal_income_unknown", subject: "u_test" }, state, CTX);
+  assert.ok(spec !== null && spec.input.type === "choice");
+  for (const option of spec.input.options.filter((row) => row.value !== "decline")) {
+    const applied = applyAnswer(state, spec, form({ answer: option.value }), CTX);
+    assert.ok(applied.ok);
+    const amount = applied.state.profile.annualPersonalIncome!;
+    if (amount.high !== null && amount.low > 0) {
+      assert.ok(option.label.endsWith(`$${amount.high.toLocaleString("en-US")}`), `${option.label} ≠ ${JSON.stringify(amount)}`);
+    }
+  }
 });
