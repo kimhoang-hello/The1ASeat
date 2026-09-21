@@ -145,27 +145,70 @@ test("ngày đóng không rõ mà ĐỔI được người thắng ⇒ §30 hỏ
   assert.equal(outcome.followUp?.basis, "measured");
 });
 
-test("Scotiabank® đếm MỌI thẻ cá nhân của ngân hàng, và đang giữ là trượt", () => {
-  const gold = productIdFor("scotiabank-gold-amex");
+test("Scotia Momentum® đếm MỌI thẻ cá nhân Scotiabank®, và đang giữ là trượt", () => {
+  const momentum = productIdFor("scotiabank-momentum-visa-infinite-plus");
   // Đang giữ Passport mở từ 2018: luật `held` — mở từ bao giờ cũng không cứu.
   const holdingOther = japanProfile([card("scotiabank-passport-visa-infinite", "active", "2018-01-01", null)]);
-  assert.equal(evaluateEligibility(gold, holdingOther, IX, ASOF).welcomeOfferBlocked, true);
+  assert.equal(evaluateEligibility(momentum, holdingOther, IX, ASOF).welcomeOfferBlocked, true);
   // Đóng 25 tháng trước: ngoài cửa sổ 2 năm.
   const closedLongAgo = japanProfile([card("scotiabank-passport-visa-infinite", "closed", "2018-01-01", "2024-08-01")]);
-  assert.equal(evaluateEligibility(gold, closedLongAgo, IX, ASOF).welcomeOfferBlocked, false);
-  assert.equal(evaluateEligibility(gold, closedLongAgo, IX, ASOF).welcomeOfferUncertain, false);
+  assert.equal(evaluateEligibility(momentum, closedLongAgo, IX, ASOF).welcomeOfferBlocked, false);
+  assert.equal(evaluateEligibility(momentum, closedLongAgo, IX, ASOF).welcomeOfferUncertain, false);
   // Thẻ ngân hàng KHÁC không tính.
   const otherBank = japanProfile([card("td-aeroplan-visa-infinite", "active", "2026-09-01", null)]);
-  assert.equal(evaluateEligibility(gold, otherBank, IX, ASOF).welcomeOfferBlocked, false);
+  assert.equal(evaluateEligibility(momentum, otherBank, IX, ASOF).welcomeOfferBlocked, false);
 });
 
-test("TD® First Class: mở HOẶC đóng trong 12 tháng đều mất bonus", () => {
-  const fct = productIdFor("td-first-class-travel-visa-infinite");
-  const closedRecently = japanProfile([card("td-first-class-travel-visa-infinite", "closed", "2015-01-01", "2026-02-01")]);
-  assert.equal(evaluateEligibility(fct, closedRecently, IX, ASOF).welcomeOfferBlocked, true);
-  const clear = japanProfile([card("td-first-class-travel-visa-infinite", "closed", "2015-01-01", "2025-02-01")]);
-  assert.equal(evaluateEligibility(fct, clear, IX, ASOF).welcomeOfferBlocked, false);
-  assert.equal(evaluateEligibility(fct, clear, IX, ASOF).welcomeOfferUncertain, false);
+test("user chốt 21/09/2026: Aventura®, Scotiabank® Scene+™, TD Rewards KHÔNG có cửa sổ thời gian", () => {
+  // Footnote ghi 12/24 tháng, nhưng thực tế vẫn nhận bonus — đừng thêm lại.
+  const recent = japanProfile([
+    card("scotiabank-passport-visa-infinite", "active", "2026-08-01", null),
+    card("cibc-aventura-gold-visa", "closed", "2026-01-01", "2026-06-30"),
+    card("td-first-class-travel-visa-infinite", "closed", "2026-02-01", "2026-07-31"),
+  ]);
+  for (const slug of [
+    "scotiabank-gold-amex",
+    "scotiabank-passport-visa-infinite",
+    "scotiabank-scene-plus-visa-students",
+    "cibc-aventura-gold-visa",
+    "cibc-aventura-visa-infinite",
+    "td-first-class-travel-visa-infinite",
+  ]) {
+    const verdict = evaluateEligibility(productIdFor(slug), recent, IX, ASOF);
+    assert.equal(verdict.welcomeOfferBlocked, false, slug);
+    assert.equal(verdict.welcomeOfferUncertain, false, slug);
+  }
+});
+
+test("ma trận luật N tháng khớp đúng quyết định đã chốt", () => {
+  // Gỡ nhầm hay thêm lại một luật đều phải đỏ ở đây — kể cả National Bank,
+  // thẻ duy nhất không có test hành vi riêng.
+  const rows = DATA.eligibilityRules
+    .filter((rule) => rule.ruleType === "previous_cardholder_within_months")
+    .map((rule) => {
+      const slug = DATA.products.find((product) => product.id === rule.productId)?.slug;
+      return `${slug} ${rule.value} ${rule.lookback?.anchor}`;
+    })
+    .sort();
+  assert.deepEqual(rows, [
+    "national-bank-world-elite-mastercard 24 held",
+    "scotiabank-momentum-visa-infinite-plus 24 held",
+    "td-aeroplan-visa-infinite 12 opened",
+    "td-aeroplan-visa-infinite-privilege 12 opened",
+    "td-aeroplan-visa-platinum 12 opened",
+    "td-cash-back-visa-infinite 12 opened_or_closed",
+  ]);
+});
+
+test("TD® Cash Back: mở HOẶC đóng trong 12 tháng đều mất bonus", () => {
+  const cashBack = productIdFor("td-cash-back-visa-infinite");
+  const closedRecently = japanProfile([card("td-cash-back-visa-infinite", "closed", "2015-01-01", "2026-02-01")]);
+  assert.equal(evaluateEligibility(cashBack, closedRecently, IX, ASOF).welcomeOfferBlocked, true);
+  const openedRecently = japanProfile([card("td-cash-back-visa-infinite", "closed", "2026-01-01", null)]);
+  assert.equal(evaluateEligibility(cashBack, openedRecently, IX, ASOF).welcomeOfferBlocked, true);
+  const clear = japanProfile([card("td-cash-back-visa-infinite", "closed", "2015-01-01", "2025-02-01")]);
+  assert.equal(evaluateEligibility(cashBack, clear, IX, ASOF).welcomeOfferBlocked, false);
+  assert.equal(evaluateEligibility(cashBack, clear, IX, ASOF).welcomeOfferUncertain, false);
 });
 
 test("chưa khai thẻ nào ⇒ luật N tháng là CHƯA BIẾT, không phải qua", () => {
@@ -197,18 +240,18 @@ test("§30 thử tháng đóng thẻ bằng CHÍNH phép dịch của trang", ()
 });
 
 test("tháng đóng thẻ ghi ngày MUỘN NHẤT — tháng 12 không bao giờ lọt ra ngoài cửa sổ", () => {
-  // Bản hỏi NĂM ghi "2024" thành 30/06/2024: người đóng Scotiabank® tháng
+  // Bản hỏi NĂM ghi "2024" thành 30/06/2024: người đóng thẻ Scotiabank® tháng
   // 12/2024 bị đọc là ngoài cửa sổ 24 tháng (cắt 21/09/2024) và được hứa bonus.
   assert.equal(closedDateFromAnswer("2024-12", ASOF), "2024-12-31");
   assert.equal(closedDateFromAnswer("2026-09", ASOF), ASOF, "không ghi một ngày trong tương lai");
   assert.equal(closedDateFromAnswer("2024-09", ASOF), "2024-09-30", "tháng cắt: nghiêng về phía trong cửa sổ");
   assert.equal(closedDateFromAnswer("2023-08", ASOF), null, "tháng ngoài danh sách");
   assert.equal(closedDateFromAnswer("2024", ASOF), null, "câu trả lời kiểu năm cũ");
-  const gold = productIdFor("scotiabank-gold-amex");
+  const momentum = productIdFor("scotiabank-momentum-visa-infinite-plus");
   const december = japanProfile([
     card("scotiabank-passport-visa-infinite", "closed", null, closedDateFromAnswer("2024-12", ASOF)),
   ]);
-  assert.equal(evaluateEligibility(gold, december, IX, ASOF).welcomeOfferBlocked, true);
+  assert.equal(evaluateEligibility(momentum, december, IX, ASOF).welcomeOfferBlocked, true);
   // Tháng cắt của TD® (09/2025): cuối tháng nằm SAU ngày cắt 21/09/2025, nên
   // không được suy "đã mở trước ngày cắt" — vẫn chưa biết.
   const cutoffMonth = japanProfile([

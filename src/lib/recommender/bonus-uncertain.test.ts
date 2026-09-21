@@ -13,7 +13,7 @@ import test from "node:test";
 
 import type { CreditCardOffer } from "../content/types.ts";
 import { offlineDataset } from "../recommendation/data/index.ts";
-import { studentStarter } from "../recommendation/data/user-fixtures.ts";
+import { cashSeeker } from "../recommendation/data/user-fixtures.ts";
 import { executeRun } from "../recommendation/runs.ts";
 import { datasetAt } from "../recommendation/temporal.ts";
 import type { RecommendationDataset } from "../recommendation/types.ts";
@@ -22,7 +22,7 @@ import { checkExplanation, MAX_FACTS_PER_SENTENCE } from "./explain-check.ts";
 import { explanationPayload } from "./explain-payload.ts";
 import { alternativeBonusLead, openCardSentence, presentRun } from "./present.ts";
 
-// Luật Scotiabank® "24 tháng" có hiệu lực từ ngày đọc điều khoản.
+// Luật "24 tháng" của Scotia Momentum® có hiệu lực từ ngày đọc điều khoản.
 const ASOF = "2026-09-21";
 const DATA = datasetAt(offlineDataset(), ASOF);
 
@@ -55,13 +55,13 @@ function viewFor(state: UserState) {
   return view;
 }
 
-// Sinh viên CHƯA khai thẻ từng giữ: Scotiabank® loại mọi người từng giữ thẻ
-// Scotiabank® trong 24 tháng, nên bonus của thẻ đứng đầu là chưa biết.
-const undeclared: UserState = { ...studentStarter, declared: { ...studentStarter.declared, cards: false } };
+// Người tìm hoàn tiền CHƯA khai thẻ từng giữ: Scotia Momentum® loại mọi người
+// từng giữ thẻ Scotiabank® trong 24 tháng, nên bonus của thẻ đứng đầu là chưa biết.
+const undeclared: UserState = { ...cashSeeker, declared: { ...cashSeeker.declared, cards: false } };
 
 test("bonus chưa chắc: trang và Phase 6 đều phải nói ra", () => {
   const view = viewFor(undeclared);
-  assert.equal(view.primary.slug, "scotiabank-scene-plus-visa-students", "tiền đề: thẻ Scotiabank® đứng đầu");
+  assert.equal(view.primary.slug, "scotiabank-momentum-visa-infinite-plus", "tiền đề: thẻ Scotia Momentum® đứng đầu");
   assert.equal(view.primary.welcomeBonusUncertain, true);
   assert.equal(view.primary.welcomeBonusBlocked, false);
   // Chữ người đọc thấy: không "nhận trọn", có "chưa chắc".
@@ -89,8 +89,8 @@ test("bonus chưa chắc: trang và Phase 6 đều phải nói ra", () => {
 });
 
 test("đã khai thẻ và không vướng luật nào ⇒ không gắn cờ chưa chắc", () => {
-  const view = viewFor(studentStarter);
-  assert.equal(view.primary.slug, "scotiabank-scene-plus-visa-students");
+  const view = viewFor(cashSeeker);
+  assert.equal(view.primary.slug, "scotiabank-momentum-visa-infinite-plus");
   assert.equal(view.primary.welcomeBonusUncertain, false);
   assert.doesNotMatch(openCardSentence(view.primary), /chưa chắc/);
   assert.ok(!explanationPayload(view).facts.some((fact) => fact.id === "bonus_uncertain"));

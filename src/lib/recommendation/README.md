@@ -401,10 +401,14 @@ ngân hàng (21/09/2026), `sourceKind: "issuer"`:
 | Thẻ | Cửa sổ | Mốc (`anchor`) | Thẻ được tính |
 | --- | --- | --- | --- |
 | TD® Aeroplan® (Platinum, Infinite, Infinite Privilege) | 12 tháng | `opened` | cả họ TD® Aeroplan® |
-| TD® First Class, TD® Cash Back Visa Infinite | 12 tháng | `opened_or_closed` | chính thẻ đó |
-| CIBC® Aventura® (Gold, Visa Infinite) | 12 tháng | `opened_or_closed` | cả họ Aventura® |
-| Scotiabank® (Gold Amex, Passport, Momentum®, Scene+ sinh viên) | 24 tháng | `held` | mọi thẻ cá nhân Scotiabank® |
+| TD® Cash Back Visa Infinite | 12 tháng | `opened_or_closed` | chính thẻ đó |
+| Scotia Momentum® Visa Infinite | 24 tháng | `held` | mọi thẻ cá nhân Scotiabank® |
 | National Bank World Elite® | 24 tháng | `held` | mọi thẻ cá nhân National Bank |
+
+CIBC® Aventura®, Scotiabank® Scene+™ (Gold American Express®, Passport, Scene+™
+sinh viên) và TD Rewards (First Class Travel®) CÓ ghi cửa sổ 12/24 tháng trong
+footnote, nhưng user chốt 21/09/2026 là thực tế vẫn nhận bonus bất kể mở thẻ
+trước đó bao lâu — nên KHÔNG có luật. Đừng thêm lại từ footnote.
 
 BMO® VIPorter và United® Neo không có cửa sổ — "từng giữ" là mất, nên dùng
 `previous_cardholder_excluded` như Amex®.
