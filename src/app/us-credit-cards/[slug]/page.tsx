@@ -150,6 +150,7 @@ export default async function UsCreditCardDetailPage({
               offer={card}
               cardType={card.cardType}
               elevatedBonusLabel={offers("elevatedBonus")}
+              expiresOnLabel={offers("expiresOn")}
             />
           </div>
 

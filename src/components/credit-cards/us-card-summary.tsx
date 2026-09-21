@@ -58,6 +58,7 @@ export function UsCardSummary({
           offer={card}
           cardType={card.cardType}
           elevatedBonusLabel={offers_t("elevatedBonus")}
+          expiresOnLabel={offers_t("expiresOn")}
         />
 
         {/* `wrap-anywhere`: tên thẻ Mỹ dài ("Bank of America® Premium

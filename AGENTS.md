@@ -1237,6 +1237,9 @@ hỏng"; bốn cái sửa, hai cái không.
 
 ## Mục Thẻ Mỹ `/us-credit-cards` (21/09/2026) — CHƯA CÔNG BỐ
 
+Chờ user: link affiliate cho từng thẻ, và bài hướng dẫn thẻ Mỹ. Chưa có hai thứ
+đó thì không bật cờ, không merge vào `main`.
+
 Mục riêng cho người Canada muốn mở thẻ US. Cờ `US_CARDS_PUBLISHED` (tắt): trang
 vào được bằng URL, `noindex`, dải báo nháp; bật cờ là hiện "🇺🇸 Thẻ Mỹ" trên menu
 (desktop + mobile), vào sitemap và ô tìm kiếm.
@@ -1246,10 +1249,16 @@ vào được bằng URL, `noindex`, dải báo nháp; bật cờ là hiện "�
   lại nguyên `CardImage`/`CardBadges`/`OfferStats`/`EditorsTake`/`ApplyButton`,
   nhưng KHÔNG BAO GIỜ đi qua `getCreditCardOffers()` — trang Canada, so sánh,
   gợi ý, best-cards, sitemap thẻ Canada không phải học cách lọc chúng ra.
-- **Số liệu mẫu:** cả 9 thẻ đang `needsVerification: true`. Bật cờ thì
-  `getUsCreditCards()` tự bỏ chúng (trang chi tiết `dynamicParams = false` → 404).
-  Muốn công bố: đối chiếu từng thẻ với trang ngân hàng, đặt `verifiedOn` +
-  `needsVerification: false`, thêm ảnh thẻ (`cardImage`), rồi mới bật cờ.
+- **Số liệu:** 9 thẻ đối chiếu trực tiếp với trang ngân hàng ngày 21/09/2026
+  (`verifiedOn`), ảnh thẻ chính thức trong `public/images/us-cards/` — trừ Bilt
+  Palladium Card (Bilt chỉ đăng card art dạng video). Bilt Mastercard® cũ không
+  còn trên bilt.com; hiện là ba thẻ Blue/Obsidian/Palladium. `applyUrl` đang là
+  trang ngân hàng, link affiliate user gửi sau. Offer Mỹ đổi thường xuyên và không
+  có job nào canh như `check-rebates` — phải rà tay. Delta SkyMiles® Gold có
+  `expiresAt` 04/11/2026: qua ngày đó huy hiệu hết hạn tự ẩn nhưng welcome bonus
+  cũ vẫn nằm trên thẻ, phải sửa tay.
+- **Thẻ còn `needsVerification: true`** (nếu sau này thêm thẻ mẫu) tự bị bỏ khi
+  bật cờ (trang chi tiết `dynamicParams = false` → 404).
 - **Tiền:** "$95 USD", không phải "$95" (`$` trần = CAD). Số tiền là SỐ trong dữ
   liệu, chuỗi dựng bằng `formatUsd`; `npm run test:us-cards` bắt mọi `$X` viết tay
   thiếu ` USD`.

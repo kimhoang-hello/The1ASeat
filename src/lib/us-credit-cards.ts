@@ -18,13 +18,11 @@
 // nên không có chỗ nào quên được chữ USD. Chuỗi viết tay (quyền lợi, ghi chú)
 // thì `us-credit-cards.test.ts` canh: mọi `$X` phải có ` USD` đi sau.
 //
-// ⚠︎ SỐ LIỆU MẪU. Mọi thẻ dưới đây mang `needsVerification: true`: welcome
-// bonus, điều kiện chi tiêu, annual fee và các câu trả lời "Góc nhìn từ Canada"
-// là giá trị để dựng và thử giao diện, CHƯA đối chiếu với trang ngân hàng.
-// Trong lúc `US_CARDS_PUBLISHED` còn tắt, trang hiện chúng kèm nhãn "Số liệu
-// mẫu"; bật cờ lên thì `getUsCreditCards()` tự bỏ mọi thẻ còn cờ này — không
-// có đường nào để số liệu mẫu hiện ra như offer thật trước người đọc.
-// Đuôi `.ts` để `node --test` import thẳng được file này (xem test đi kèm).
+// SỐ LIỆU: đối chiếu với trang chính thức của ngân hàng ngày 21/09/2026 (xem
+// ghi chú nguồn ngay trên `US_CARD_DATA`). Thẻ nào còn là số liệu mẫu thì
+// mang `needsVerification: true`: trong lúc `US_CARDS_PUBLISHED` còn tắt, trang
+// hiện chúng kèm nhãn "Số liệu mẫu"; bật cờ lên thì `getUsCreditCards()` tự
+// bỏ chúng — không có đường nào để số liệu mẫu hiện ra như offer thật.
 import type { CreditCardOffer } from "./content/types.ts";
 import { US_CARDS_PUBLISHED } from "./feature-flags.ts";
 import { US_CARDS_BASE } from "./us-cards-path.ts";
@@ -127,6 +125,8 @@ type UsCardData = {
   annualFeeUsd: number;
   annualFeeNote?: string;
   rewardsCurrency: string;
+  /** Hạn của welcome offer (YYYY-MM-DD), khi ngân hàng công bố. */
+  expiresAt?: string;
   headline: string;
   editorsTake: string;
   keyBenefits: string[];
@@ -172,6 +172,12 @@ const ADDRESS_USUALLY: CanadianAnswer = {
   note: "Đơn online đòi địa chỉ ở Mỹ. Địa chỉ nhận hàng (mailbox) có được chấp nhận hay không là tuỳ ngân hàng.",
 };
 
+// Nguồn: trang sản phẩm chính thức của từng ngân hàng, đọc trực tiếp ngày
+// 21/09/2026 (URL chính là `applyUrl` của thẻ). Welcome offer Mỹ đổi thường
+// xuyên và nhiều offer của American Express® là "as high as" — con số ghi ở
+// đây là mức cao nhất trang công bố, không phải mức mọi người đều nhận.
+const VERIFIED = "2026-09-21";
+
 const US_CARD_DATA: UsCardData[] = [
   {
     slug: "chase-sapphire-preferred",
@@ -180,21 +186,24 @@ const US_CARD_DATA: UsCardData[] = [
     category: "travel",
     business: false,
     featured: true,
+    cardImage: "/images/us-cards/chase-sapphire-preferred.png",
     welcomeBonus: "75,000 điểm Ultimate Rewards®",
     minimumSpendUsd: 5_000,
     offerPeriod: "3 tháng đầu",
     annualFeeUsd: 95,
     rewardsCurrency: "Ultimate Rewards®",
     headline:
-      "Thẻ travel nhập môn quen thuộc ở Mỹ: annual fee thấp, điểm Ultimate Rewards® chuyển được sang Aeroplan®.",
+      "Thẻ travel annual fee thấp của Chase®: nhân điểm ở du lịch và ăn uống, điểm Ultimate Rewards® chuyển được sang Aeroplan®.",
     editorsTake:
-      "Nội dung mẫu. Nếu bạn đã có US credit history, đây thường là thẻ Chase® đầu tiên đáng cân nhắc: phí thấp, điểm chuyển được sang nhiều hãng bay và khách sạn.",
+      "Với người đã có US credit history, đây là cửa vào hệ điểm Ultimate Rewards® với phí $95 USD. Điểm chuyển được sang Aeroplan® nên vẫn dùng tốt cho chuyến bay xuất phát từ Canada, và credit phí NEXUS™ là điểm cộng cho người hay qua biên giới.",
     keyBenefits: [
-      "Nhân điểm cho du lịch, ăn uống và dịch vụ streaming",
-      "Chuyển điểm 1:1 sang đối tác hàng không và khách sạn",
-      "Bảo hiểm chuyến đi và bảo hiểm xe thuê",
+      "5x điểm khi đặt qua Chase® Travel; 3x ở nhà hàng, trạm xăng, streaming và siêu thị online; 2x ở du lịch khác",
+      "Credit khách sạn tới $100 USD mỗi năm khi đặt qua Chase® Travel",
+      "Credit phí Global Entry, TSA PreCheck® hoặc NEXUS™ tới $120 USD, 4 năm một lần",
+      "Chuyển điểm sang 10 hãng bay (có Aeroplan®) và 3 chương trình khách sạn",
+      "Không phí giao dịch ngoại tệ",
     ],
-    tags: ["Travel", "Chuyển điểm", "Không phí ngoại tệ"],
+    tags: ["Travel", "Chuyển điểm", "Credit NEXUS™"],
     canada: {
       itin: {
         short: "Tuỳ trường hợp",
@@ -208,11 +217,12 @@ const US_CARD_DATA: UsCardData[] = [
         note: "Ultimate Rewards® chuyển được sang Aeroplan®, nên điểm dùng được cho chuyến bay xuất phát từ Canada.",
       },
       watchOut:
-        "Chase® có luật 5/24: đã mở từ 5 thẻ (của mọi ngân hàng Mỹ) trong 24 tháng thì gần như bị từ chối.",
+        "Chase® thường từ chối người đã mở từ 5 thẻ (của mọi ngân hàng) trong 24 tháng — luật \"5/24\" không có trong điều khoản nhưng được nhiều người xác nhận. Welcome bonus cũng không dành cho người đang có thẻ này.",
     },
     applyUrl: "https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred",
-    lastUpdated: "2026-09-21",
-    needsVerification: true,
+    lastUpdated: VERIFIED,
+    verifiedOn: VERIFIED,
+    needsVerification: false,
   },
   {
     slug: "amex-gold-us",
@@ -221,25 +231,27 @@ const US_CARD_DATA: UsCardData[] = [
     category: "travel",
     business: false,
     featured: true,
-    welcomeBonus: "60,000 điểm Membership Rewards®",
-    minimumSpendUsd: 6_000,
+    cardImage: "/images/us-cards/amex-gold-us.png",
+    welcomeBonus: "Lên đến 100,000 điểm Membership Rewards®",
+    minimumSpendUsd: 8_000,
     offerPeriod: "6 tháng đầu",
     annualFeeUsd: 325,
     rewardsCurrency: "Membership Rewards®",
     headline:
-      "Bản Mỹ của thẻ Gold: nhân điểm cao ở nhà hàng và siêu thị Mỹ, điểm Membership Rewards® chuyển sang Aeroplan®.",
+      "Bản Mỹ của thẻ Gold: 4x điểm ở nhà hàng và siêu thị Mỹ, điểm Membership Rewards® chuyển được sang Aeroplan®.",
     editorsTake:
-      "Nội dung mẫu. Thẻ American Express® Mỹ thường là cửa dễ nhất cho người đang có thẻ American Express® Canada, nhờ chương trình chuyển quan hệ thẻ giữa các nước.",
+      "Thẻ American Express® Mỹ thường là cửa dễ nhất cho người đang có thẻ American Express® Canada. Welcome offer là \"lên đến\": American Express® chỉ báo mức của bạn sau khi apply, trước khi bạn nhận thẻ. Các credit hằng tháng chỉ đáng tiền nếu bạn tiêu ở Mỹ thường xuyên.",
     keyBenefits: [
-      "Nhân điểm cao ở nhà hàng và siêu thị tại Mỹ",
-      "Credit hằng tháng cho ăn uống",
-      "Chuyển điểm sang đối tác hàng không và khách sạn",
+      "4x điểm ở nhà hàng toàn cầu (tới $50,000 USD/năm) và siêu thị Mỹ (tới $25,000 USD/năm)",
+      "5x điểm khách sạn trả trước và 3x vé máy bay qua AmexTravel.com",
+      "Credit ăn uống $120 USD, Uber Cash $120 USD, Resy $100 USD và Dunkin' $84 USD mỗi năm (phải đăng ký)",
+      "Chuyển điểm sang đối tác hàng không, có Aeroplan®",
     ],
     tags: ["Ăn uống", "Chuyển điểm", "Không phí ngoại tệ"],
     canada: {
       itin: {
         short: "Tuỳ trường hợp",
-        note: "Người đang có thẻ American Express® Canada có thể xin thẻ Mỹ qua chương trình Global Transfer mà không cần SSN — điều kiện cụ thể phải xem lúc apply.",
+        note: "Người đang có thẻ American Express® Canada có thể xin thẻ Mỹ qua chương trình Global Transfer — điều kiện cụ thể phải xem lúc apply.",
       },
       usCreditHistory: {
         short: "Không nhất thiết",
@@ -255,11 +267,12 @@ const US_CARD_DATA: UsCardData[] = [
         note: "Membership Rewards® Mỹ chuyển được sang Aeroplan® và nhiều hãng bay khác.",
       },
       watchOut:
-        "Welcome bonus của American Express® Mỹ thường chỉ nhận được một lần cho mỗi thẻ trong đời.",
+        "Mức welcome offer khác nhau theo từng người và bạn có thể không đủ điều kiện nhận. Credit ăn uống, Uber và Dunkin' chỉ dùng được ở Mỹ.",
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/gold-card/",
-    lastUpdated: "2026-09-21",
-    needsVerification: true,
+    lastUpdated: VERIFIED,
+    verifiedOn: VERIFIED,
+    needsVerification: false,
   },
   {
     slug: "capital-one-venture-x",
@@ -268,59 +281,65 @@ const US_CARD_DATA: UsCardData[] = [
     category: "travel",
     business: false,
     featured: true,
+    cardImage: "/images/us-cards/capital-one-venture-x.png",
     welcomeBonus: "75,000 miles Capital One®",
     minimumSpendUsd: 4_000,
     offerPeriod: "3 tháng đầu",
     annualFeeUsd: 395,
     rewardsCurrency: "Capital One® Miles",
     headline:
-      "Thẻ travel cao cấp của Capital One®: credit du lịch hằng năm, lounge, và miles chuyển được sang Aeroplan®.",
+      "Thẻ travel cao cấp của Capital One®: credit du lịch $300 USD mỗi năm, lounge, và miles chuyển được sang Aeroplan®.",
     editorsTake:
-      "Nội dung mẫu. Credit du lịch và điểm thưởng năm gần như bù lại annual fee, nếu bạn đặt vé qua cổng du lịch của Capital One®.",
+      "Credit du lịch $300 USD cộng 10,000 miles mỗi năm gia hạn bù lại phần lớn annual fee — nếu bạn đặt vé qua Capital One® Travel. 2x miles cho mọi chi tiêu làm nó dễ dùng hơn các thẻ chia hạng mục.",
     keyBenefits: [
-      "Credit du lịch hằng năm khi đặt qua cổng Capital One®",
-      "Điểm thưởng mỗi năm gia hạn thẻ",
-      "Vào lounge Capital One® và Priority Pass",
+      "Credit du lịch $300 USD mỗi năm khi đặt qua Capital One® Travel",
+      "10,000 miles mỗi năm gia hạn, bắt đầu từ năm thứ hai",
+      "10x khách sạn và thuê xe, 5x vé máy bay qua Capital One® Travel; 2x mọi chi tiêu khác",
+      "Vào Capital One® Lounge và hơn 1,300 lounge Priority Pass",
+      "Credit Global Entry hoặc TSA PreCheck® tới $120 USD",
     ],
     tags: ["Lounge", "Chuyển điểm", "Không phí ngoại tệ"],
     canada: {
       itin: {
         short: "Tuỳ trường hợp",
-        note: "Capital One® nhận đơn có ITIN theo báo cáo của người dùng, nhưng thẻ cao cấp như Venture X vẫn đòi hồ sơ tín dụng tốt.",
+        note: "Capital One® không công bố điều kiện cho người dùng ITIN, và thẻ cao cấp như Venture X yêu cầu hồ sơ tín dụng tốt.",
       },
       usCreditHistory: HISTORY_USUALLY,
       usAddress: ADDRESS_USUALLY,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: {
         short: "Có",
-        note: "Capital One® Miles chuyển được sang Aeroplan®.",
+        note: "Capital One® Miles chuyển 1:1 sang Aeroplan®.",
       },
       watchOut: "Capital One® kéo báo cáo tín dụng từ cả ba credit bureau khi xét đơn.",
     },
     applyUrl: "https://www.capitalone.com/credit-cards/venture-x/",
-    lastUpdated: "2026-09-21",
-    needsVerification: true,
+    lastUpdated: VERIFIED,
+    verifiedOn: VERIFIED,
+    needsVerification: false,
   },
   {
     slug: "citi-strata-premier",
-    name: "Citi® Strata Premier℠ Card",
+    name: "Citi Strata Premier® Card",
     issuerId: "citi",
     category: "travel",
     business: false,
     featured: false,
+    cardImage: "/images/us-cards/citi-strata-premier.webp",
     welcomeBonus: "60,000 điểm ThankYou®",
     minimumSpendUsd: 4_000,
     offerPeriod: "3 tháng đầu",
     annualFeeUsd: 95,
     rewardsCurrency: "ThankYou® Points",
     headline:
-      "Thẻ travel annual fee thấp của Citi®, nhân điểm rộng ở vé máy bay, khách sạn, nhà hàng, siêu thị và xăng.",
+      "Thẻ travel annual fee thấp của Citi®: 3x điểm ở vé máy bay, khách sạn, nhà hàng, siêu thị và xăng.",
     editorsTake:
-      "Nội dung mẫu. Hợp với người muốn thêm một hệ điểm chuyển được sang các hãng bay ngoài liên minh Star Alliance®.",
+      "Hợp với người muốn thêm một hệ điểm chuyển được sang hãng bay ngoài Star Alliance®, như AAdvantage® hay Cathay. Điểm ThankYou® không chuyển được sang Aeroplan®.",
     keyBenefits: [
-      "Nhân điểm ở vé máy bay, khách sạn, nhà hàng, siêu thị và xăng",
-      "Credit khách sạn hằng năm",
-      "Chuyển điểm sang đối tác hàng không",
+      "10x điểm khách sạn, thuê xe và vé tham quan qua cititravel.com",
+      "3x điểm ở vé máy bay, khách sạn khác, nhà hàng, siêu thị, trạm xăng và sạc xe điện",
+      "Giảm $100 USD mỗi năm cho một lần ở khách sạn từ $500 USD, đặt qua cititravel.com",
+      "Chuyển điểm sang American Airlines®, Cathay, EVA Air®, Virgin Atlantic và các đối tác khác",
     ],
     tags: ["Travel", "Chuyển điểm", "Không phí ngoại tệ"],
     canada: {
@@ -333,50 +352,59 @@ const US_CARD_DATA: UsCardData[] = [
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: {
         short: "Tuỳ chặng bay",
-        note: "ThankYou® không chuyển sang Aeroplan®, nhưng có các đối tác như Flying Blue® và Turkish Airlines.",
+        note: "Không chuyển sang Aeroplan®. Dùng tốt nếu bạn bay American Airlines® hoặc oneworld® từ các sân bay Mỹ gần biên giới.",
       },
-      watchOut: "Citi® giới hạn welcome bonus theo số thẻ Citi® đã mở gần đây — đọc điều khoản trước khi apply.",
+      watchOut:
+        "Không nhận welcome bonus nếu đang có hoặc từng có thẻ Citi Strata Premier® hay Citi Premier®.",
     },
     applyUrl: "https://www.citi.com/credit-cards/citi-strata-premier-credit-card",
-    lastUpdated: "2026-09-21",
-    needsVerification: true,
+    lastUpdated: VERIFIED,
+    verifiedOn: VERIFIED,
+    needsVerification: false,
   },
   {
-    slug: "bilt-mastercard",
-    name: "Bilt Mastercard®",
+    slug: "bilt-palladium",
+    name: "Bilt Palladium Card",
     issuerId: "bilt",
     category: "travel",
     business: false,
     featured: false,
-    annualFeeUsd: 0,
+    welcomeBonus: "50,000 điểm Bilt + Gold Status",
+    minimumSpendUsd: 4_000,
+    offerPeriod: "90 ngày đầu (không tính tiền nhà)",
+    annualFeeUsd: 495,
     rewardsCurrency: "Bilt Points",
     headline:
-      "Thẻ không annual fee tích điểm khi trả tiền thuê nhà, và điểm Bilt chuyển được sang Aeroplan®.",
+      "Thẻ cao cấp nhất của Bilt: tích điểm cả khi trả tiền thuê nhà hoặc tiền mortgage, và điểm Bilt chuyển được sang Aeroplan®.",
     editorsTake:
-      "Nội dung mẫu. Thẻ này bán cách tích điểm chứ không bán welcome bonus — hợp nhất với người đang thuê nhà ở Mỹ.",
+      "Bilt hiện có ba thẻ: Blue, Obsidian và Palladium. Palladium là thẻ duy nhất có welcome bonus bằng điểm; hai thẻ kia tặng Bilt Cash. Chỉ đáng nhìn tới nếu bạn trả tiền nhà ở Mỹ.",
     keyBenefits: [
-      "Tích điểm khi trả tiền thuê nhà",
-      "Nhân điểm vào ngày 1 hằng tháng",
-      "Chuyển điểm sang đối tác hàng không và khách sạn",
+      "Tích tới 1.25x điểm khi trả tiền thuê nhà hoặc mortgage, không mất phí giao dịch",
+      "2x điểm mọi chi tiêu khác",
+      "Credit khách sạn $400 USD mỗi năm qua Bilt Travel, cộng $200 USD Bilt Cash mỗi năm",
+      "Priority Pass",
+      "Chuyển điểm 1:1 sang Aeroplan®",
     ],
-    tags: ["Không annual fee", "Tiền nhà", "Chuyển điểm"],
+    tags: ["Tiền nhà", "Lounge", "Chuyển điểm"],
     canada: {
       itin: {
-        short: "Tuỳ trường hợp",
-        note: "Điều kiện cho người dùng ITIN chưa rõ.",
+        short: "Chưa rõ",
+        note: "Bilt không công bố điều kiện cho người dùng ITIN.",
       },
       usCreditHistory: HISTORY_USUALLY,
       usAddress: ADDRESS_USUALLY,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: {
         short: "Có",
-        note: "Bilt Points chuyển được sang Aeroplan®.",
+        note: "Bilt Points chuyển 1:1 sang Aeroplan®.",
       },
-      watchOut: "Phải có số giao dịch tối thiểu mỗi kỳ sao kê thì mới được tính điểm.",
+      watchOut:
+        "Điểm tiền nhà phụ thuộc chi tiêu thường ngày: tiêu dưới 25% số tiền nhà trong kỳ sao kê thì chỉ nhận 250 điểm cho khoản tiền nhà đó.",
     },
     applyUrl: "https://www.bilt.com/card",
-    lastUpdated: "2026-09-21",
-    needsVerification: true,
+    lastUpdated: VERIFIED,
+    verifiedOn: VERIFIED,
+    needsVerification: false,
   },
   {
     slug: "bank-of-america-premium-rewards",
@@ -385,38 +413,42 @@ const US_CARD_DATA: UsCardData[] = [
     category: "travel",
     business: false,
     featured: false,
+    cardImage: "/images/us-cards/bank-of-america-premium-rewards.png",
     welcomeBonus: "60,000 điểm",
     minimumSpendUsd: 4_000,
     offerPeriod: "90 ngày đầu",
     annualFeeUsd: 95,
     rewardsCurrency: "Bank of America® Points",
     headline:
-      "Thẻ travel của Bank of America®: điểm quy thẳng ra tiền, có credit du lịch hằng năm.",
+      "Thẻ travel của Bank of America®: 2x du lịch và ăn uống, 1.5x mọi thứ khác, điểm quy thẳng ra tiền.",
     editorsTake:
-      "Nội dung mẫu. Điểm không chuyển được sang hãng bay, nên thẻ này hợp với người muốn đơn giản hơn là người săn vé thương gia.",
+      "Điểm không chuyển được sang hãng bay, nên thẻ này hợp với người muốn đơn giản — welcome bonus 60,000 điểm tương đương $600 USD — hơn là người săn vé thương gia.",
     keyBenefits: [
-      "Credit du lịch hằng năm",
-      "Credit phí TSA PreCheck® hoặc Global Entry",
-      "Điểm quy ra tiền, không có hạn",
+      "2x điểm ở du lịch và ăn uống, 1.5x mọi chi tiêu khác, không giới hạn",
+      "Credit phụ phí hãng bay tới $100 USD mỗi năm (hành lý, chọn ghế, lounge)",
+      "Credit TSA PreCheck® hoặc Global Entry tới $100 USD, 4 năm một lần",
+      "Không phí giao dịch ngoại tệ",
     ],
     tags: ["Travel", "Quy ra tiền", "Không phí ngoại tệ"],
     canada: {
       itin: {
         short: "Tuỳ trường hợp",
-        note: "Bank of America® thường yêu cầu mở tài khoản ngân hàng trước — điều kiện ITIN chưa rõ.",
+        note: "Bank of America® không công bố điều kiện cho người dùng ITIN.",
       },
       usCreditHistory: HISTORY_USUALLY,
       usAddress: ADDRESS_USUALLY,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: {
         short: "Hạn chế",
-        note: "Điểm chỉ quy ra tiền hoặc credit du lịch, không chuyển được sang Aeroplan®.",
+        note: "Điểm chỉ quy ra tiền, credit thẻ hoặc đặt qua BofA Travel — không chuyển được sang Aeroplan®.",
       },
-      watchOut: "Bank of America® có luật riêng về số thẻ mở trong 12–24 tháng.",
+      watchOut:
+        "Điểm quy ra tiền vào tài khoản Bank of America® — tiện nhất khi bạn có tài khoản ngân hàng ở Mỹ.",
     },
     applyUrl: "https://www.bankofamerica.com/credit-cards/products/premium-rewards-credit-card/",
-    lastUpdated: "2026-09-21",
-    needsVerification: true,
+    lastUpdated: VERIFIED,
+    verifiedOn: VERIFIED,
+    needsVerification: false,
   },
   {
     slug: "delta-skymiles-gold-amex",
@@ -425,20 +457,23 @@ const US_CARD_DATA: UsCardData[] = [
     category: "airline",
     business: false,
     featured: false,
-    welcomeBonus: "50,000 miles Delta SkyMiles®",
-    minimumSpendUsd: 2_000,
+    cardImage: "/images/us-cards/delta-skymiles-gold-amex.png",
+    welcomeBonus: "Lên đến 80,000 miles Delta SkyMiles® + $250 USD",
+    minimumSpendUsd: 3_000,
     offerPeriod: "6 tháng đầu",
     annualFeeUsd: 150,
     annualFeeNote: "năm đầu $0 USD",
     rewardsCurrency: "Delta SkyMiles®",
+    expiresAt: "2026-11-04",
     headline:
-      "Thẻ hãng bay Delta® của American Express®: hành lý ký gửi miễn phí và miles Delta SkyMiles®.",
+      "Thẻ hãng bay Delta® của American Express®: hành lý ký gửi miễn phí và giảm 15% khi đổi vé bằng miles.",
     editorsTake:
-      "Nội dung mẫu. Chỉ đáng giữ nếu bạn hay bay Delta® từ các sân bay gần biên giới Canada.",
+      "Offer hiện tại có thêm statement credit $250 USD cùng điều kiện chi tiêu, và năm đầu không mất phí. Chỉ đáng giữ lâu nếu bạn hay bay Delta® từ các sân bay Mỹ gần biên giới.",
     keyBenefits: [
-      "Hành lý ký gửi đầu tiên miễn phí trên chuyến Delta®",
-      "Nhân miles khi mua vé Delta®, ăn uống và siêu thị Mỹ",
-      "Ưu tiên lên máy bay",
+      "Hành lý ký gửi đầu tiên miễn phí trên chuyến Delta®, thêm kiện thứ hai trên chuyến nội địa Mỹ",
+      "Giảm 15% khi đổi vé Delta® bằng miles trên delta.com (TakeOff 15)",
+      "2x miles ở nhà hàng, siêu thị Mỹ và khi mua trực tiếp với Delta®",
+      "Credit chuyến bay $200 USD sau khi chi $10,000 USD trong một năm",
     ],
     tags: ["Hành lý miễn phí", "Delta®", "Không phí ngoại tệ"],
     canada: {
@@ -456,11 +491,13 @@ const US_CARD_DATA: UsCardData[] = [
         short: "Tuỳ chặng bay",
         note: "Delta SkyMiles® dùng được cho chuyến Delta® và đối tác SkyTeam, không chuyển sang Aeroplan®.",
       },
-      watchOut: "Delta SkyMiles® không có award chart cố định — giá vé đổi bằng miles thay đổi theo ngày.",
+      watchOut:
+        "Delta SkyMiles® không có award chart cố định — số miles cho một vé thay đổi theo ngày. Welcome offer là \"lên đến\" và có thể khác theo từng người.",
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-gold-american-express-card/",
-    lastUpdated: "2026-09-21",
-    needsVerification: true,
+    lastUpdated: VERIFIED,
+    verifiedOn: VERIFIED,
+    needsVerification: false,
   },
   {
     slug: "marriott-bonvoy-boundless",
@@ -469,19 +506,21 @@ const US_CARD_DATA: UsCardData[] = [
     category: "hotel",
     business: false,
     featured: false,
+    cardImage: "/images/us-cards/marriott-bonvoy-boundless.png",
     welcomeBonus: "3 Free Night Awards",
     minimumSpendUsd: 3_000,
     offerPeriod: "3 tháng đầu",
     annualFeeUsd: 95,
     rewardsCurrency: "Marriott Bonvoy®",
     headline:
-      "Thẻ khách sạn Marriott Bonvoy® của Chase®: một đêm miễn phí mỗi năm gia hạn thẻ.",
+      "Thẻ khách sạn Marriott Bonvoy® của Chase®: 3 đêm miễn phí khi mở thẻ, thêm một đêm mỗi năm gia hạn.",
     editorsTake:
-      "Nội dung mẫu. Đêm miễn phí hằng năm thường đáng hơn annual fee nếu bạn ở Marriott Bonvoy® ít nhất một lần mỗi năm.",
+      "Mỗi Free Night Award dùng được ở khách sạn tới 50,000 điểm/đêm. Đêm miễn phí hằng năm thường đáng hơn $95 USD annual fee nếu bạn ở Marriott Bonvoy® ít nhất một lần mỗi năm.",
     keyBenefits: [
-      "Một Free Night Award mỗi năm gia hạn thẻ",
-      "Hạng Silver Elite tự động",
-      "Nhân điểm ở khách sạn Marriott Bonvoy®",
+      "Free Night Award (tới 35,000 điểm) mỗi năm gia hạn thẻ",
+      "Hạng Silver Elite tự động và 15 Elite Night Credits mỗi năm",
+      "6x điểm ở khách sạn Marriott Bonvoy®; 3x ở siêu thị, trạm xăng và nhà hàng (tới $6,000 USD/năm)",
+      "Credit hãng bay tới $100 USD tới 30/06/2027",
     ],
     tags: ["Hotel", "Đêm miễn phí", "Không phí ngoại tệ"],
     canada: {
@@ -494,13 +533,15 @@ const US_CARD_DATA: UsCardData[] = [
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: {
         short: "Có",
-        note: "Marriott Bonvoy® là một chương trình chung, nên điểm từ thẻ Mỹ dùng được ở khách sạn Canada.",
+        note: "Marriott Bonvoy® là một chương trình chung, nên điểm và đêm miễn phí từ thẻ Mỹ dùng được ở khách sạn Canada.",
       },
-      watchOut: "Thẻ này chịu luật 5/24 của Chase®, và Marriott Bonvoy® có luật riêng về việc nhận bonus giữa các thẻ Marriott Bonvoy®.",
+      watchOut:
+        "Thẻ này cũng chịu luật 5/24 của Chase®, và Marriott Bonvoy® giới hạn việc nhận bonus giữa các thẻ Marriott Bonvoy® khác nhau.",
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/marriott-bonvoy/boundless",
-    lastUpdated: "2026-09-21",
-    needsVerification: true,
+    lastUpdated: VERIFIED,
+    verifiedOn: VERIFIED,
+    needsVerification: false,
   },
   {
     slug: "chase-ink-business-preferred",
@@ -509,19 +550,21 @@ const US_CARD_DATA: UsCardData[] = [
     category: "travel",
     business: true,
     featured: false,
-    welcomeBonus: "90,000 điểm Ultimate Rewards®",
+    cardImage: "/images/us-cards/chase-ink-business-preferred.png",
+    welcomeBonus: "100,000 điểm Ultimate Rewards®",
     minimumSpendUsd: 8_000,
     offerPeriod: "3 tháng đầu",
     annualFeeUsd: 95,
     rewardsCurrency: "Ultimate Rewards®",
     headline:
-      "Thẻ doanh nghiệp của Chase®: welcome bonus lớn, nhân điểm ở quảng cáo, internet và điện thoại.",
+      "Thẻ doanh nghiệp của Chase®: 100,000 điểm Ultimate Rewards®, 3x ở du lịch, vận chuyển, quảng cáo và internet.",
     editorsTake:
-      "Nội dung mẫu. Chỉ dành cho người có doanh nghiệp đăng ký ở Mỹ — đọc kỹ phần Góc nhìn từ Canada trước khi cân nhắc.",
+      "Welcome bonus cao nhất trong ba thẻ Chase® trên trang này, nhưng chỉ dành cho người có doanh nghiệp ở Mỹ. Điểm cùng hệ Ultimate Rewards® với Sapphire Preferred® nên chuyển được sang Aeroplan®.",
     keyBenefits: [
-      "Nhân điểm ở quảng cáo, internet, điện thoại và du lịch",
-      "Bảo hiểm điện thoại di động",
-      "Điểm chuyển sang đối tác của Ultimate Rewards®",
+      "3x điểm ở du lịch, vận chuyển, quảng cáo mạng xã hội và internet/điện thoại (tới $150,000 USD/năm)",
+      "Thẻ nhân viên miễn phí",
+      "Chuyển điểm sang đối tác của Ultimate Rewards®, có Aeroplan®",
+      "Không phí giao dịch ngoại tệ",
     ],
     tags: ["Business", "Chuyển điểm", "Không phí ngoại tệ"],
     canada: {
@@ -539,11 +582,12 @@ const US_CARD_DATA: UsCardData[] = [
         short: "Có",
         note: "Ultimate Rewards® chuyển được sang Aeroplan®.",
       },
-      watchOut: "Doanh nghiệp đăng ký ở Canada không dùng được cho thẻ này.",
+      watchOut: "Không nhận welcome bonus nếu đã từng có thẻ này.",
     },
     applyUrl: "https://creditcards.chase.com/business-credit-cards/ink/business-preferred",
-    lastUpdated: "2026-09-21",
-    needsVerification: true,
+    lastUpdated: VERIFIED,
+    verifiedOn: VERIFIED,
+    needsVerification: false,
   },
 ];
 
@@ -563,6 +607,7 @@ function toOffer(card: UsCardData): UsCreditCardOffer {
     editorsTake: card.editorsTake,
     keyBenefits: card.keyBenefits,
     elevatedBonus: false,
+    expiresAt: card.expiresAt,
     applyUrl: card.applyUrl,
     updatedAt: card.lastUpdated,
     us: {
