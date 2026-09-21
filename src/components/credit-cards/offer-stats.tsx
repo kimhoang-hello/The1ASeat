@@ -25,9 +25,13 @@ const offers = translate("offers");
  * trượt — cả câu 44 ký tự rơi vào ô số nhỏ bên phải, xuống hai dòng. Cùng dạng
  * số mà `moneyAtStart` bên `credit-card-sort.ts` vẫn luôn đọc được, nên trước
  * bản vá này hai hàm hiểu cùng một chuỗi theo hai kiểu khác nhau.
+ *
+ * ` USD` được nhận từ 21/09/2026 cho thẻ Mỹ ("$95 USD/năm"): `$` trần trên site
+ * là đô Canada, nên phí thẻ Mỹ luôn mang chữ USD — và không nhận nó thì cả câu
+ * có ghi chú trong ngoặc lại rơi vào ô số.
  */
 export function splitAnnualFee(annualFee: string): { amount: string; note?: string } {
-  const match = /^(\$[\d,]+(?:\.\d+)?\/năm|Miễn phí)\s*(?:\((.+)\))?$/.exec(annualFee.trim());
+  const match = /^(\$[\d,]+(?:\.\d+)?(?: USD)?\/năm|Miễn phí)\s*(?:\((.+)\))?$/.exec(annualFee.trim());
   if (!match) return { amount: annualFee };
   return { amount: match[1], note: match[2] };
 }

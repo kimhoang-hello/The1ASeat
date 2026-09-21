@@ -14,8 +14,10 @@ import {
   CATCH_THE_POINTS_PUBLISHED,
   RECOMMENDER_PUBLISHED,
   START_HERE_PUBLISHED,
+  US_CARDS_PUBLISHED,
   VIETNAM_ROUTES_PUBLISHED,
 } from "@/lib/feature-flags";
+import { US_CARDS_BASE, getUsCreditCards, usCardPath } from "@/lib/us-credit-cards";
 import { COMPARE_PATH } from "@/lib/card-compare";
 import { RECOMMENDER_PATH } from "@/lib/recommender/path";
 import { BEST_CARDS_BASE, BEST_CARDS_CATEGORIES, bestCardsPath } from "@/lib/best-cards";
@@ -235,6 +237,29 @@ const VIETNAM_ROUTE_ITEMS: SearchItem[] = VIETNAM_ROUTES_PUBLISHED
     }))
   : [];
 
+/**
+ * Trang tổng Thẻ Mỹ và từng thẻ. `meta` mang chữ "Thẻ Mỹ" để trong kết quả
+ * tìm kiếm, thẻ Mỹ không lẫn với thẻ Canada cùng ngân hàng (gõ "American
+ * Express" ra cả hai).
+ */
+const US_CARD_ITEMS: SearchItem[] = US_CARDS_PUBLISHED
+  ? [
+      {
+        title: nav("usCards"),
+        href: US_CARDS_BASE,
+        kind: "page" as const,
+        keywords: "thẻ mỹ us credit card itin credit history hoa kỳ",
+      },
+      ...getUsCreditCards().map((card) => ({
+        title: card.name,
+        href: usCardPath(card.slug),
+        kind: "card" as const,
+        meta: `${nav("usCards")} · ${card.issuer}`,
+        keywords: "thẻ mỹ us card",
+      })),
+    ]
+  : [];
+
 export async function GET() {
   const [posts, offers] = await Promise.all([getPosts(), getCreditCardOffers()]);
 
@@ -261,6 +286,7 @@ export async function GET() {
       kind: "card" as const,
       meta: `${offer.issuer} ${offer.cardType}`,
     })),
+    ...US_CARD_ITEMS,
     ...VIETNAM_ROUTE_ITEMS,
     ...categoryItems,
     ...BANK_ACCOUNT_ITEMS,

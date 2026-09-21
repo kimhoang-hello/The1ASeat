@@ -78,11 +78,19 @@ export function CardImage({
           />
         </div>
       ) : (
-        <MediaPlaceholder
-          icon={placeholderIcon && isPlaceholderIcon(placeholderIcon) ? placeholderIcon : "credit-card"}
-          tone="tan"
-          className="absolute inset-0 rounded-[inherit]"
-        />
+        // Bọc trong cùng lớp `absolute inset-0` như nhánh ảnh thật, không
+        // truyền `absolute` thẳng vào `MediaPlaceholder`: component đó tự mang
+        // `relative`, hai lớp vị trí chọi nhau và `relative` thắng — ô giữ chỗ
+        // co lại còn cao đúng 40px của icon, để trống phần còn lại của khung.
+        // Không thẻ Canada nào thiếu ảnh nên lỗi này nằm im tới khi thẻ Mỹ
+        // (chưa có ảnh) dùng tới nhánh này.
+        <div className="absolute inset-0 overflow-hidden rounded-[inherit]">
+          <MediaPlaceholder
+            icon={placeholderIcon && isPlaceholderIcon(placeholderIcon) ? placeholderIcon : "credit-card"}
+            tone="tan"
+            className="h-full w-full"
+          />
+        </div>
       )}
       {badge}
       {applyUrl && (

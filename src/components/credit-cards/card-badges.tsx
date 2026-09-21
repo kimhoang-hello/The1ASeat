@@ -1,6 +1,9 @@
 import type { CreditCardOffer } from "@/lib/content";
 import { formatDate, hasExpired } from "@/lib/format-date";
 import { isElevatedLive } from "@/lib/credit-card-state";
+import { t } from "@/lib/t";
+
+const usCards = t("usCards");
 
 export function CardBadges({
   offer,
@@ -20,9 +23,16 @@ export function CardBadges({
           + {elevatedBonusLabel}
         </span>
       )}
-      {/* Không còn huy hiệu "CA": Ghế 1A chỉ viết về thẻ Canada, nên nó gắn
-          giống hệt nhau lên mọi thẻ và không phân biệt được gì. `offer.country`
-          vẫn nằm trong dữ liệu cho schema và cho lúc có thêm thị trường khác. */}
+      {/* Không có huy hiệu "CA": Canada là mặc định của site, nên nó gắn giống
+          hệt nhau lên mọi thẻ và không phân biệt được gì. Thẻ MỸ thì ngược lại
+          — đứng một mình trên trang chi tiết hay trong kết quả tìm kiếm, huy
+          hiệu này là thứ duy nhất nói ngay rằng đây không phải thẻ mở được ở
+          Canada. */}
+      {offer.country === "US" && (
+        <span className="rounded-full border border-border bg-secondary px-2.5 py-0.5 text-xs font-semibold text-foreground/80">
+          {usCards("usBadge")}
+        </span>
+      )}
       <span className="text-xs font-medium text-muted-foreground">{cardType}</span>
       {/* Ngày đã qua thì không in ra. `expire-offers` cố ý GIỮ `expiresAt` khi
           lượt viết lại copy hỏng, để lượt sau còn tìm thấy thẻ mà thử lại —

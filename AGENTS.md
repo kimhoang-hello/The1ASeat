@@ -1235,6 +1235,38 @@ hỏng"; bốn cái sửa, hai cái không.
   Visa Infinite* / Gold Visa*" bỏ chữ "Card"). Phép kiểm vẫn bắt được ca chính
   — chữ trong tiêu đề không có trong tên thẻ NÀO. Ghi lại làm giới hạn đã biết.
 
+## Mục Thẻ Mỹ `/us-credit-cards` (21/09/2026) — CHƯA CÔNG BỐ
+
+Mục riêng cho người Canada muốn mở thẻ US. Cờ `US_CARDS_PUBLISHED` (tắt): trang
+vào được bằng URL, `noindex`, dải báo nháp; bật cờ là hiện "🇺🇸 Thẻ Mỹ" trên menu
+(desktop + mobile), vào sitemap và ô tìm kiếm.
+
+- **Dữ liệu nằm trong repo** (`src/lib/us-credit-cards.ts`), không ở Contentful.
+  Thẻ Mỹ mang đúng kiểu `CreditCardOffer` (`country: "US"`) + khối `us`, nên dùng
+  lại nguyên `CardImage`/`CardBadges`/`OfferStats`/`EditorsTake`/`ApplyButton`,
+  nhưng KHÔNG BAO GIỜ đi qua `getCreditCardOffers()` — trang Canada, so sánh,
+  gợi ý, best-cards, sitemap thẻ Canada không phải học cách lọc chúng ra.
+- **Số liệu mẫu:** cả 9 thẻ đang `needsVerification: true`. Bật cờ thì
+  `getUsCreditCards()` tự bỏ chúng (trang chi tiết `dynamicParams = false` → 404).
+  Muốn công bố: đối chiếu từng thẻ với trang ngân hàng, đặt `verifiedOn` +
+  `needsVerification: false`, thêm ảnh thẻ (`cardImage`), rồi mới bật cờ.
+- **Tiền:** "$95 USD", không phải "$95" (`$` trần = CAD). Số tiền là SỐ trong dữ
+  liệu, chuỗi dựng bằng `formatUsd`; `npm run test:us-cards` bắt mọi `$X` viết tay
+  thiếu ` USD`.
+- **Bài hướng dẫn `choi-the-my-tu-canada` chưa có.** Nháp: nút "Xem hướng dẫn"
+  vẫn hiện (trỏ vào URL sẽ có). Đã công bố mà bài chưa có: mọi nút đó tự ẩn
+  (`usCardsGuideHref`).
+- **Menu 1024px:** sáu mục cách 28px không vừa — chữ gãy hai dòng. Khi cờ bật,
+  nav dùng `gap-3` dưới `xl`. Cờ tắt thì class giữ nguyên `gap-7`.
+- **Lỗi cũ lộ ra:** `CardImage` truyền `absolute` vào `MediaPlaceholder` vốn tự
+  mang `relative` → ô giữ chỗ co còn 40px. Không thẻ Canada nào thiếu ảnh nên nó
+  nằm im tới hôm nay; đã sửa bằng lớp bọc `absolute inset-0`.
+- **Trademark:** tên tự đánh ® trên thẻ Mỹ dạy `audit:trademarks` thương hiệu mới
+  và làm lộ chỗ viết trần trong nội dung Canada ("Priority Pass™" → 11 chỗ,
+  "SkyTeam®" → 5 chỗ). Viết trần như nội dung Canada đang viết; "Capital One®
+  Venture X Card" cũng rút gọn vì "Rewards" là cụm báo nhầm có sẵn (12 chỗ tồn
+  đọng trước khi làm mục này).
+
 ## Chạy gì trước khi kết luận
 
 ```

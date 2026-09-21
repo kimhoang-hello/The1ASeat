@@ -1,6 +1,7 @@
 import type { CreditCardOffer } from "./content";
 import { absoluteUrl } from "./seo";
 import { SITE_URL } from "./subscriber-email";
+import { usCardPath } from "./us-credit-cards";
 
 /**
  * schema.org/CreditCard for one offer. Shared between the /credit-cards list
@@ -11,7 +12,11 @@ import { SITE_URL } from "./subscriber-email";
  * fabricated markup.
  */
 export function creditCardJsonLd(offer: CreditCardOffer) {
-  const url = absoluteUrl(`/credit-cards/${offer.slug}`);
+  // Thẻ Mỹ sống ở mục riêng — `@id` phải trỏ đúng trang của nó, không phải
+  // một `/credit-cards/<slug>` không tồn tại.
+  const url = absoluteUrl(
+    offer.country === "US" ? usCardPath(offer.slug) : `/credit-cards/${offer.slug}`,
+  );
 
   return {
     "@type": "CreditCard",

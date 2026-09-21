@@ -39,8 +39,10 @@ import {
   BANK_ACCOUNTS_PUBLISHED,
   CATCH_THE_POINTS_PUBLISHED,
   RECOMMENDER_PUBLISHED,
+  US_CARDS_PUBLISHED,
   VIETNAM_ROUTES_PUBLISHED,
 } from "@/lib/feature-flags";
+import { US_CARDS_BASE } from "@/lib/us-cards-path";
 import { t } from "@/lib/t";
 
 /** A menu entry: an icon, what it is, and what is behind it in one line. */
@@ -585,6 +587,11 @@ export function SiteHeader() {
   const cardsRowActive =
     cardsActive && pathname !== COMPARE_PATH && !isNavLinkActive(bestCardsLink, pathname);
   const blogActive = pathname === "/blog" || pathname.startsWith("/blog/");
+  // Mục riêng chứ không phải một dòng trong dropdown Thẻ tín dụng: thẻ Mỹ là
+  // một thị trường khác, và nằm chung menu với thẻ Canada thì người đọc dễ
+  // tưởng đó là thẻ mở được ở Canada. Link thẳng, không dropdown — mục này
+  // chỉ có một trang tổng, các bộ lọc nằm ngay trên trang.
+  const usCardsActive = pathname === US_CARDS_BASE || pathname.startsWith(`${US_CARDS_BASE}/`);
   const toolsActive = toolsLinks.some((link) => pathname === link.href);
 
   const navRef = useRef<HTMLElement>(null);
@@ -651,7 +658,15 @@ export function SiteHeader() {
           {site("name")}
         </Link>
 
-        <nav ref={navRef} className="hidden items-center gap-7 lg:flex">
+        {/* Mục "Thẻ Mỹ" là mục thứ sáu, và ở 1024px sáu mục cách nhau 28px
+            không còn vừa: chữ từng mục gãy làm hai dòng, nút "Đăng ký bản tin"
+            cũng vậy (đo 21/09/2026). Khoảng cách 12px dưới `xl` trả lại đủ
+            chỗ; từ `xl` thanh rộng thừa nên giữ 28px như cũ. Gắn theo cờ để
+            menu năm mục hiện tại không đổi một pixel nào trước ngày công bố. */}
+        <nav
+          ref={navRef}
+          className={`hidden items-center lg:flex ${US_CARDS_PUBLISHED ? "gap-3 xl:gap-7" : "gap-7"}`}
+        >
           {/* The logo already goes home, but that is a convention rather than a
               label — the nav says so in words. */}
           <Link href="/" className={navItemClassName(pathname === "/")}>
@@ -669,6 +684,12 @@ export function SiteHeader() {
             pathname={pathname}
             onNavigate={closeParentDropdown}
           />
+
+          {US_CARDS_PUBLISHED && (
+            <Link href={US_CARDS_BASE} className={navItemClassName(usCardsActive)}>
+              {nav("usCards")}
+            </Link>
+          )}
 
           <TypeDropdown
             label={nav("blog")}
@@ -775,6 +796,16 @@ export function SiteHeader() {
                 />
               ))}
             </MobileSection>
+
+            {US_CARDS_PUBLISHED && (
+              <Link
+                href={US_CARDS_BASE}
+                onClick={() => setOpen(false)}
+                className={mobileItemClassName(usCardsActive)}
+              >
+                {nav("usCards")}
+              </Link>
+            )}
 
             <MobileSection label={nav("blog")} active={blogActive}>
               <Suspense

@@ -23,8 +23,10 @@ import {
   CATCH_THE_POINTS_PUBLISHED,
   RECOMMENDER_PUBLISHED,
   START_HERE_PUBLISHED,
+  US_CARDS_PUBLISHED,
   VIETNAM_ROUTES_PUBLISHED,
 } from "@/lib/feature-flags";
+import { US_CARDS_BASE, getUsCreditCards, usCardPath } from "@/lib/us-credit-cards";
 import { foundationLastModified } from "@/lib/start-here";
 import { VIETNAM_ROUTES, VIETNAM_ROUTES_BASE, vietnamRoutePath } from "@/lib/award-routes";
 
@@ -141,6 +143,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             priority: 0.7,
           })),
         ] as const)
+      : []),
+    // Mục Thẻ Mỹ. `getUsCreditCards()` đã tự bỏ thẻ còn số liệu mẫu khi mục
+    // công bố, nên không trang nào của số liệu chưa kiểm lọt vào đây.
+    // `lastModified` là ngày sửa dữ liệu trong repo của chính thẻ đó.
+    ...(US_CARDS_PUBLISHED
+      ? ([
+          {
+            url: absoluteUrl(US_CARDS_BASE),
+            lastModified: latestDate(getUsCreditCards().map((card) => card.us.lastUpdated)),
+            changeFrequency: "weekly" as const,
+            priority: 0.8,
+          },
+          ...getUsCreditCards().map((card) => ({
+            url: absoluteUrl(usCardPath(card.slug)),
+            lastModified: validDate(card.us.lastUpdated),
+            changeFrequency: "weekly" as const,
+            priority: 0.7,
+          })),
+        ] satisfies MetadataRoute.Sitemap)
       : []),
     { url: absoluteUrl("/blog"), lastModified: newestPost, changeFrequency: "daily", priority: 0.9 },
     { url: absoluteUrl("/transfer-bonuses"), changeFrequency: "daily", priority: 0.8 },

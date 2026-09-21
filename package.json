@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:game": "node --test games/catch-the-points/tests/*.js",
+    "test:us-cards": "node --test --experimental-strip-types src/lib/us-credit-cards.test.ts",
     "test:reco": "node --test --experimental-strip-types src/lib/recommendation/*.test.ts",
     "test:recommender": "node --test --experimental-strip-types src/lib/recommender/*.test.ts",
     "test:jobs": "node --test --experimental-strip-types src/lib/job-retry.test.ts",
