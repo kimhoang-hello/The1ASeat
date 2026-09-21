@@ -38,7 +38,7 @@ export const US_CARDS_LIST_ANCHOR = "tat-ca-the-my";
  * đã công bố mà bài chưa có thì các nút "Xem hướng dẫn" tự ẩn, không dẫn
  * người đọc tới trang 404.
  */
-export const US_CARDS_GUIDE_SLUG = "choi-the-my-tu-canada";
+export const US_CARDS_GUIDE_SLUG = "apply-us-credit-card-tu-canada";
 
 export type UsIssuerId =
   | "amex"

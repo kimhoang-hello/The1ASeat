@@ -1266,9 +1266,8 @@ vào được bằng URL, `noindex`, dải báo nháp; bật cờ là hiện "�
 - **Tiền:** "$95 USD", không phải "$95" (`$` trần = CAD). Số tiền là SỐ trong dữ
   liệu, chuỗi dựng bằng `formatUsd`; `npm run test:us-cards` bắt mọi `$X` viết tay
   thiếu ` USD`.
-- **Bài hướng dẫn `choi-the-my-tu-canada` chưa có.** Nháp: nút "Xem hướng dẫn"
-  vẫn hiện (trỏ vào URL sẽ có). Đã công bố mà bài chưa có: mọi nút đó tự ẩn
-  (`usCardsGuideHref`).
+- **Bài hướng dẫn:** `apply-us-credit-card-tu-canada` (đã publish 21/09/2026).
+  Nếu bài bị gỡ, mọi nút "Xem hướng dẫn" tự ẩn khi cờ bật (`usCardsGuideHref`).
 - **Menu 1024px:** sáu mục cách 28px không vừa — chữ gãy hai dòng. Khi cờ bật,
   nav dùng `gap-3` dưới `xl`. Cờ tắt thì class giữ nguyên `gap-7`.
 - **Lỗi cũ lộ ra:** `CardImage` truyền `absolute` vào `MediaPlaceholder` vốn tự
