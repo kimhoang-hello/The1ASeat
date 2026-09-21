@@ -88,3 +88,11 @@ test("link lọc luôn nhảy về danh sách", () => {
   );
   assert.equal(usCardsListPath({ filter: "all" }), "/us-credit-cards#tat-ca-the-my");
 });
+
+// Elevated chỉ được bật khi ngân hàng công bố hạn offer. Thiếu `expiresAt` thì
+// thẻ nằm trong mục "Elevated Offers" mãi mãi, kể cả khi offer đã về mức thường.
+test("thẻ elevated phải có ngày hết hạn", () => {
+  for (const card of ALL_US_CARDS) {
+    if (card.elevatedBonus) assert.ok(card.expiresAt, card.slug);
+  }
+});

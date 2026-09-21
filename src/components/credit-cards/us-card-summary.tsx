@@ -21,35 +21,18 @@ const us = translate("usCards");
  * - Nút là "Xem chi tiết", không phải "Apply ngay": khối "Góc nhìn từ Canada"
  *   (ITIN, US address, credit history) nằm ở trang chi tiết, và người Canada
  *   cần đọc nó trước khi bấm sang trang ngân hàng Mỹ.
- *
- * `stacked`: ảnh nằm trên thay vì bên trái — cho lưới ba cột của mục "Elevated
- * Offers", nơi mỗi cột quá hẹp cho bố cục ngang.
  */
-export function UsCardSummary({
-  card,
-  stacked = false,
-}: {
-  card: UsCreditCardOffer;
-  stacked?: boolean;
-}) {
+export function UsCardSummary({ card }: { card: UsCreditCardOffer }) {
   const requirement = spendRequirement(card);
   const href = usCardPath(card.slug);
 
   return (
-    <article
-      className={`flex flex-col gap-5 rounded-2xl border border-border bg-card p-5 ${
-        stacked ? "" : "sm:flex-row"
-      }`}
-    >
+    <article className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5 sm:flex-row">
       <CardImage
         image={card.cardImage}
         name={card.name}
         placeholderIcon={card.image}
-        className={
-          stacked
-            ? "h-36 w-full shrink-0 rounded-xl"
-            : "h-32 w-full shrink-0 self-start rounded-xl sm:h-32 sm:w-40 xl:h-36 xl:w-44"
-        }
+        className="h-32 w-full shrink-0 self-start rounded-xl sm:h-32 sm:w-40 xl:h-36 xl:w-44"
         sizes="176px"
       />
 

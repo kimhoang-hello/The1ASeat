@@ -91,7 +91,6 @@ export type UsCardDetails = {
   currency: "USD";
   category: UsCardCategory;
   business: boolean;
-  featured: boolean;
   rewardsCurrency: string;
   annualFeeUsd: number;
   /** Điều kiện nhận welcome bonus. Vắng khi thẻ không có welcome bonus. */
@@ -116,7 +115,13 @@ type UsCardData = {
   issuerId: UsIssuerId;
   category: UsCardCategory;
   business: boolean;
-  featured: boolean;
+  /**
+   * Offer đang cao hơn mức thường — CHỈ bật khi chính trang ngân hàng ghi offer
+   * có thời hạn ("Limited Time Offer", "Offer ends…"), kèm `expiresAt`. Mục
+   * "Elevated Offers" trên trang tổng lấy đúng những thẻ này, cùng luật
+   * `isElevatedLive` với thẻ Canada: qua `expiresAt` là tự rời mục.
+   */
+  elevatedBonus: boolean;
   cardImage?: string;
   /** Như `welcomeBonus` của thẻ Canada: "75,000 điểm Ultimate Rewards®". */
   welcomeBonus?: string;
@@ -185,7 +190,7 @@ const US_CARD_DATA: UsCardData[] = [
     issuerId: "chase",
     category: "travel",
     business: false,
-    featured: true,
+    elevatedBonus: false,
     cardImage: "/images/us-cards/chase-sapphire-preferred.png",
     welcomeBonus: "75,000 điểm Ultimate Rewards®",
     minimumSpendUsd: 5_000,
@@ -230,7 +235,7 @@ const US_CARD_DATA: UsCardData[] = [
     issuerId: "amex",
     category: "travel",
     business: false,
-    featured: true,
+    elevatedBonus: false,
     cardImage: "/images/us-cards/amex-gold-us.png",
     welcomeBonus: "Lên đến 100,000 điểm Membership Rewards®",
     minimumSpendUsd: 8_000,
@@ -280,7 +285,7 @@ const US_CARD_DATA: UsCardData[] = [
     issuerId: "capital-one",
     category: "travel",
     business: false,
-    featured: true,
+    elevatedBonus: false,
     cardImage: "/images/us-cards/capital-one-venture-x.png",
     welcomeBonus: "75,000 miles Capital One®",
     minimumSpendUsd: 4_000,
@@ -324,7 +329,7 @@ const US_CARD_DATA: UsCardData[] = [
     issuerId: "citi",
     category: "travel",
     business: false,
-    featured: false,
+    elevatedBonus: false,
     cardImage: "/images/us-cards/citi-strata-premier.webp",
     welcomeBonus: "60,000 điểm ThankYou®",
     minimumSpendUsd: 4_000,
@@ -368,7 +373,7 @@ const US_CARD_DATA: UsCardData[] = [
     issuerId: "bilt",
     category: "travel",
     business: false,
-    featured: false,
+    elevatedBonus: false,
     welcomeBonus: "50,000 điểm Bilt + Gold Status",
     minimumSpendUsd: 4_000,
     offerPeriod: "90 ngày đầu (không tính tiền nhà)",
@@ -412,7 +417,7 @@ const US_CARD_DATA: UsCardData[] = [
     issuerId: "bank-of-america",
     category: "travel",
     business: false,
-    featured: false,
+    elevatedBonus: false,
     cardImage: "/images/us-cards/bank-of-america-premium-rewards.png",
     welcomeBonus: "60,000 điểm",
     minimumSpendUsd: 4_000,
@@ -456,7 +461,7 @@ const US_CARD_DATA: UsCardData[] = [
     issuerId: "amex",
     category: "airline",
     business: false,
-    featured: false,
+    elevatedBonus: true,
     cardImage: "/images/us-cards/delta-skymiles-gold-amex.png",
     welcomeBonus: "Lên đến 80,000 miles Delta SkyMiles® + $250 USD",
     minimumSpendUsd: 3_000,
@@ -505,7 +510,7 @@ const US_CARD_DATA: UsCardData[] = [
     issuerId: "chase",
     category: "hotel",
     business: false,
-    featured: false,
+    elevatedBonus: false,
     cardImage: "/images/us-cards/marriott-bonvoy-boundless.png",
     welcomeBonus: "3 Free Night Awards",
     minimumSpendUsd: 3_000,
@@ -549,7 +554,7 @@ const US_CARD_DATA: UsCardData[] = [
     issuerId: "chase",
     category: "travel",
     business: true,
-    featured: false,
+    elevatedBonus: false,
     cardImage: "/images/us-cards/chase-ink-business-preferred.png",
     welcomeBonus: "100,000 điểm Ultimate Rewards®",
     minimumSpendUsd: 8_000,
@@ -606,7 +611,7 @@ function toOffer(card: UsCardData): UsCreditCardOffer {
     headline: card.headline,
     editorsTake: card.editorsTake,
     keyBenefits: card.keyBenefits,
-    elevatedBonus: false,
+    elevatedBonus: card.elevatedBonus,
     expiresAt: card.expiresAt,
     applyUrl: card.applyUrl,
     updatedAt: card.lastUpdated,
@@ -615,7 +620,6 @@ function toOffer(card: UsCardData): UsCreditCardOffer {
       currency: "USD",
       category: card.category,
       business: card.business,
-      featured: card.featured,
       rewardsCurrency: card.rewardsCurrency,
       annualFeeUsd: card.annualFeeUsd,
       minimumSpendUsd: card.minimumSpendUsd,

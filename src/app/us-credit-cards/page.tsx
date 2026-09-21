@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { JsonLd } from "@/components/seo/json-ld";
 import { UsCardSummary } from "@/components/credit-cards/us-card-summary";
 import { US_CARDS_PUBLISHED } from "@/lib/feature-flags";
+import { isElevatedLive } from "@/lib/credit-card-state";
 import {
   US_CARDS_BASE,
   US_CARDS_LIST_ANCHOR,
@@ -63,7 +64,10 @@ export default async function UsCreditCardsPage({
   const [{ type, issuer }, guideHref] = await Promise.all([searchParams, usCardsGuideHref()]);
   const cards = getUsCreditCards();
 
-  const featured = cards.filter((card) => card.us.featured).slice(0, 3);
+  // Cùng luật với tab "Elevated offers" của `/credit-cards`: cờ elevated VÀ
+  // chưa qua `expiresAt`. Không có thẻ nào thì cả mục ẩn — một tiêu đề
+  // "Elevated Offers" trên danh sách thẻ offer thường là nói sai.
+  const elevated = cards.filter(isElevatedLive);
 
   const activeFilter = usCardFilter(type);
   const filterCards = cards.filter((card) => matchesUsCardFilter(card, activeFilter));
@@ -159,14 +163,15 @@ export default async function UsCreditCardsPage({
             </Link>
           )}
 
-          {featured.length > 0 && (
+          {elevated.length > 0 && (
             <div className="mt-12">
               <SectionHeading>{us("featuredTitle")}</SectionHeading>
-              {/* Ba cột từ `lg` với thẻ dựng đứng; bố cục ngang của danh sách
-                  cần ~36rem mỗi thẻ nên chỉ vừa hai cột. */}
-              <div className="mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-                {featured.map((card) => (
-                  <UsCardSummary key={card.slug} card={card} stacked />
+              {/* Cùng lưới và cùng thẻ ngang với danh sách bên dưới: mục này
+                  thường chỉ có một hai thẻ, và ba cột thẻ dựng đứng với một
+                  thẻ duy nhất để trống hai phần ba bề ngang. */}
+              <div className="mt-6 grid gap-5 xl:grid-cols-2">
+                {elevated.map((card) => (
+                  <UsCardSummary key={card.slug} card={card} />
                 ))}
               </div>
             </div>
