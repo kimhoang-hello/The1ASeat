@@ -22,8 +22,8 @@ const us = translate("usCards");
  *   (ITIN, US address, credit history) nằm ở trang chi tiết, và người Canada
  *   cần đọc nó trước khi bấm sang trang ngân hàng Mỹ.
  *
- * `stacked`: ảnh nằm trên thay vì bên trái — cho lưới ba cột của mục "Offers
- * đáng chú ý", nơi mỗi cột quá hẹp cho bố cục ngang.
+ * `stacked`: ảnh nằm trên thay vì bên trái — cho lưới ba cột của mục "Elevated
+ * Offers", nơi mỗi cột quá hẹp cho bố cục ngang.
  */
 export function UsCardSummary({
   card,
