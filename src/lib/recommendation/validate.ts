@@ -1057,6 +1057,81 @@ export function validateDataset(
         message: `${rule.id}: ngưỡng thu nhập âm`,
       });
     }
+    // `lookback` đi cùng ĐÚNG một loại luật, theo cả hai chiều: thiếu nó thì
+    // engine không biết đếm mốc nào trên thẻ nào (ra `rule_not_understood`,
+    // thẻ bị phạt "chưa chắc" vì lỗi dữ liệu); thừa nó ở loại khác là một phạm
+    // vi không ai đọc, trông như đã khai mà không có tác dụng gì.
+    const windowed = rule.ruleType === "previous_cardholder_within_months";
+    const category = rule.ruleType === "previous_cardholder_same_category";
+    const lookback = rule.lookback ?? null;
+    if ((windowed || category) !== (lookback !== null)) {
+      issues.push({
+        level: "error",
+        entity: "eligibility_rules",
+        message:
+          windowed || category
+            ? `${rule.id}: ${rule.ruleType} thiếu lookback (mốc + thẻ được tính)`
+            : `${rule.id}: lookback chỉ dành cho previous_cardholder_within_months / _same_category`,
+      });
+    }
+    if (category && lookback !== null && (lookback.anchor !== "held" || rule.value !== true)) {
+      issues.push({
+        level: "error",
+        entity: "eligibility_rules",
+        message: `${rule.id}: previous_cardholder_same_category phải là anchor held, value true`,
+      });
+    }
+    if ((windowed || category) && lookback !== null) {
+      // Loại luật này chỉ NÓI về welcome bonus. `application` sẽ gạch cả thẻ
+      // khỏi danh sách vì một lần đóng thẻ; `soft` thì làm luật vô tác dụng —
+      // cả hai đều qua được mọi phép kiểm dạng giá trị ở trên (vòng Codex 1).
+      if (rule.scope !== "welcome_offer" || rule.severity !== "hard") {
+        issues.push({
+          level: "error",
+          entity: "eligibility_rules",
+          message: `${rule.id}: ${rule.ruleType} phải là scope welcome_offer, severity hard`,
+        });
+      }
+      if (windowed && (typeof rule.value !== "number" || !Number.isInteger(rule.value) || rule.value <= 0)) {
+        issues.push({
+          level: "error",
+          entity: "eligibility_rules",
+          message: `${rule.id}: số tháng phải là số nguyên dương`,
+        });
+      }
+      if (!["opened", "opened_or_closed", "held"].includes(lookback.anchor)) {
+        issues.push({
+          level: "error",
+          entity: "eligibility_rules",
+          message: `${rule.id}: lookback.anchor "${lookback.anchor}" không hợp lệ`,
+        });
+      }
+      // Điều khoản luôn đếm CHÍNH thẻ đang mở — thiếu nó là quên chính ca hay
+      // gặp nhất: mở lại đúng thẻ vừa đóng.
+      if (!lookback.productIds.includes(rule.productId)) {
+        issues.push({
+          level: "error",
+          entity: "eligibility_rules",
+          message: `${rule.id}: lookback.productIds phải gồm chính thẻ của luật`,
+        });
+      }
+      if (new Set(lookback.productIds).size !== lookback.productIds.length) {
+        issues.push({
+          level: "error",
+          entity: "eligibility_rules",
+          message: `${rule.id}: lookback.productIds có phần tử trùng`,
+        });
+      }
+      for (const productId of lookback.productIds) {
+        if (!productIds.has(productId)) {
+          issues.push({
+            level: "error",
+            entity: "eligibility_rules",
+            message: `${rule.id}: lookback trỏ tới sản phẩm không tồn tại ${productId}`,
+          });
+        }
+      }
+    }
   }
 
   // Một con số không có đơn vị là một con số không so được với gì. Đơn vị nằm

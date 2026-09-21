@@ -55,11 +55,13 @@ export const REASON_TEXT: Record<ReasonCode, ReasonText> = {
   },
   WELCOME_BONUS_UNAVAILABLE: {
     tone: "caution",
-    text: "Bạn từng giữ thẻ này, nên theo điều khoản sẽ không nhận được welcome bonus.",
+    // Không còn chỉ là "thẻ này": Scotiabank® tính MỌI thẻ cá nhân của ngân
+    // hàng, TD® tính cả họ Aeroplan®, Aeroplan® tính thẻ cùng loại ở mọi ngân hàng.
+    text: "Theo điều khoản, những thẻ bạn đã từng giữ khiến bạn không nhận được welcome bonus của thẻ này.",
   },
   WELCOME_BONUS_UNCERTAIN: {
     tone: "info",
-    text: "Chưa chắc bạn còn nhận được welcome bonus — mình chưa biết bạn từng giữ những thẻ nào.",
+    text: "Chưa chắc bạn còn nhận được welcome bonus — điều khoản tính theo thẻ bạn từng giữ và lúc bạn mở hay đóng thẻ, mà mình chưa đủ thông tin đó.",
   },
 
   MIN_SPEND_GOOD_FIT: {
@@ -207,9 +209,9 @@ export const WARNING_TEXT: Record<WarningCode, string> = {
   ANNUAL_FEE_ABOVE_STATED_TOLERANCE: "Annual fee năm đầu vượt mức bạn đã khai.",
   SECOND_YEAR_FEE_APPLIES: "Năm đầu được miễn annual fee, nhưng từ năm thứ hai vẫn tính như thường.",
   WELCOME_BONUS_BLOCKED_BY_PAST_CARD:
-    "Bạn từng giữ thẻ này, nên theo điều khoản bạn sẽ không nhận được welcome bonus.",
+    "Theo điều khoản, những thẻ bạn đã từng giữ khiến bạn không nhận được welcome bonus của thẻ này.",
   WELCOME_BONUS_NOT_VERIFIABLE:
-    "Mình chưa kiểm được bạn còn đủ điều kiện nhận welcome bonus hay không — bạn chưa khai thẻ từng giữ.",
+    "Mình chưa kiểm được bạn còn đủ điều kiện nhận welcome bonus hay không — cần biết bạn từng giữ thẻ nào và mở/đóng khi nào.",
   ELIGIBILITY_NOT_VERIFIABLE:
     "Mình chưa kiểm được hết điều kiện của ngân hàng với thông tin hiện có. Ngân hàng vẫn là bên quyết định.",
   AWARD_ROUTE_NOT_IN_DATASET: "Chặng bay này chưa có trong award chart của site.",

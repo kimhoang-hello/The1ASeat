@@ -177,6 +177,16 @@ export function explanationPayload(view: ResultView): ExplanationPayload {
     } else {
       const bonus = cleanValue(action.welcomeBonus);
       if (bonus !== null) add("bonus", "verified", "offer", `welcome bonus hiện hành là ${bonus}`);
+      // Chưa kiểm được người này còn nhận bonus không: con số vẫn là dữ kiện
+      // về OFFER, nhưng nói nó mà không kèm câu này là hứa trọn bonus.
+      if (bonus !== null && action.welcomeBonusUncertain) {
+        add(
+          "bonus_uncertain",
+          "editorial",
+          "offer",
+          "chưa chắc bạn còn nhận được welcome bonus này, vì điều khoản tính theo thẻ bạn từng giữ và lúc bạn mở hay đóng thẻ",
+        );
+      }
       // KHÔNG có mốc chi: `minSpendPer90Days` là con số QUY ĐỔI về mỗi 90 ngày
       // để so với sức dồn chi tiêu, không phải điều khoản. Một offer đòi $3,000
       // trong 90 ngày VÀ $12,000 trong 365 ngày thì "nhận trọn bonus với $3,000

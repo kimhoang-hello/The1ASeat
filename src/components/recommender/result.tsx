@@ -6,7 +6,15 @@ import { resetRecommendation } from "@/app/credit-cards/goi-y/actions";
 import { ApplyButton } from "@/components/ui/apply-button";
 import type { ActionView, AnsweredRow, ResultView } from "@/lib/recommender/present";
 import { NO_CARD_SENTENCE } from "@/lib/recommender/copy";
-import { coverageStatement, formatNeed, formatPoints, vietnameseDate } from "@/lib/recommender/present";
+import {
+  alternativeBonusLead,
+  BONUS_UNCERTAIN_NOTE,
+  coverageStatement,
+  formatNeed,
+  formatPoints,
+  openCardSentence,
+  vietnameseDate,
+} from "@/lib/recommender/present";
 
 /**
  * Trang kết quả, xếp theo đúng thứ tự người đọc cần:
@@ -95,9 +103,7 @@ function PrimaryCard({
       <p className="mt-2 text-base leading-relaxed text-foreground/90">
         {action.kind === "no_new_card"
           ? NO_CARD_SENTENCE[action.noCardReason ?? "default"]
-          : action.welcomeBonusBlocked
-            ? "Mở thẻ này cho tỷ lệ tích điểm và quyền lợi của nó — welcome bonus thì bạn không nhận được nữa, vì đã từng giữ thẻ."
-            : (action.spendSentence ?? "Mở thẻ này là bước đáng làm tiếp theo.")}
+          : openCardSentence(action)}
       </p>
 
       {action.kind === "open_card" && (
@@ -115,7 +121,12 @@ function PrimaryCard({
             {action.welcomeBonus && !action.welcomeBonusBlocked && (
               <div>
                 <dt className="text-muted-foreground">Welcome bonus</dt>
-                <dd className="font-semibold text-foreground">{action.welcomeBonus}</dd>
+                <dd className="font-semibold text-foreground">
+                  {action.welcomeBonus}
+                  {action.welcomeBonusUncertain && (
+                    <span className="block text-xs font-normal text-muted-foreground">{BONUS_UNCERTAIN_NOTE}</span>
+                  )}
+                </dd>
               </div>
             )}
             {action.annualFee && (
@@ -254,13 +265,7 @@ function AlternativeRow({ action }: { action: ActionView }) {
     action.lead ??
     (action.kind === "no_new_card"
       ? "Giữ nguyên ví hiện tại và đợi thêm cũng là một lựa chọn."
-      : // Không lấy welcome bonus làm câu giới thiệu cho thẻ người dùng KHÔNG
-        // còn nhận được nó — đó đúng là câu quảng cáo sai đối tượng.
-        action.welcomeBonus && !action.welcomeBonusBlocked
-        ? `Welcome bonus ${action.welcomeBonus}${action.annualFee ? `, annual fee ${action.annualFee}` : ""}`
-        : action.welcomeBonusBlocked
-          ? "Bạn từng giữ thẻ này nên sẽ không có welcome bonus."
-          : null);
+      : alternativeBonusLead(action));
   return (
     <div className="rounded-xl border border-border px-4 py-3">
       <p className="text-base font-semibold text-foreground">

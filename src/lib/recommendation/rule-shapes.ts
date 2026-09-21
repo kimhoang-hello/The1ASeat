@@ -18,6 +18,9 @@ export const RULE_SHAPES: Readonly<
   residency: { value: "string", operators: ["eq", "in", "not_in"] },
   existing_cardholder_excluded: { value: "boolean", operators: ["eq"] },
   previous_cardholder_excluded: { value: "boolean", operators: ["eq"] },
+  // `value` = số tháng; `lte` = mốc cách asOf KHÔNG QUÁ chừng ấy tháng thì trượt.
+  previous_cardholder_within_months: { value: "number", operators: ["lte"] },
+  previous_cardholder_same_category: { value: "boolean", operators: ["eq"] },
   business_required: { value: "boolean", operators: ["eq"] },
   student_status_required: { value: "boolean", operators: ["eq"] },
   banking_relationship_required: { value: "string", operators: ["eq"] },

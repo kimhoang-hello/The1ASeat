@@ -122,6 +122,67 @@ export function lastClosed(state: UserState, productId: ProductId): ClosureLooku
   return { kind: "closed", date: latest };
 }
 
+/**
+ * Câu hỏi "đóng thẻ khi nào": các lựa chọn và cách dịch câu trả lời thành
+ * NGÀY. Một chỗ duy nhất cho cả trang (`recommender/questions.ts`) lẫn phép
+ * thử của §30 (`sensitivity.ts`) — thử bằng một phép dịch khác trang là đo một
+ * câu hỏi không ai được hỏi.
+ *
+ * Hỏi THÁNG, không hỏi NĂM. Bản hỏi năm ghi mọi năm cũ thành 30/06, và luật
+ * "trong 24 tháng qua" đọc ngày đó như ngày thật: người đóng Scotiabank® tháng
+ * 12/2024, trả lời "2024", được kết luận ngoài cửa sổ và được hứa bonus ngân
+ * hàng sẽ từ chối (vòng Codex 1, 21/09/2026). Một năm luôn có thể nằm vắt qua
+ * ngày cắt; một tháng thì chỉ trong đúng tháng cắt.
+ *
+ * Ngày ghi là ngày MUỘN NHẤT câu trả lời cho phép — cuối tháng, không quá hôm
+ * nay. Nghiêng về phía "không hứa": luật đếm ngày đóng thấy thẻ còn trong cửa
+ * sổ lâu nhất có thể, và phép suy "đóng trước ngày cắt ⇒ mở trước ngày cắt"
+ * chỉ chạy khi cả tháng đã nằm trước ngày cắt. Sai số còn lại chỉ có một
+ * chiều (chặn nhầm người đóng đầu tháng cắt) và không quá một tháng.
+ */
+export const CLOSED_MONTHS_BACK = 36;
+export const CLOSED_EARLIER = "earlier";
+
+function shiftMonth(year: number, month: number, by: number): [number, number] {
+  const index = year * 12 + (month - 1) + by;
+  return [Math.floor(index / 12), (index % 12) + 1];
+}
+
+function monthEnd(year: number, month: number): string {
+  const last = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return `${year}-${String(month).padStart(2, "0")}-${String(last).padStart(2, "0")}`;
+}
+
+/** Tháng này và `CLOSED_MONTHS_BACK` tháng trước, mới nhất trước, rồi "trước đó". */
+export function closedMonthChoices(today: string): { value: string; label: string }[] {
+  const [year, month] = today.split("-").map(Number);
+  const rows = Array.from({ length: CLOSED_MONTHS_BACK + 1 }, (_, i) => {
+    const [y, m] = shiftMonth(year, month, -i);
+    return { value: `${y}-${String(m).padStart(2, "0")}`, label: `Tháng ${m}/${y}` };
+  });
+  const [ey, em] = shiftMonth(year, month, -CLOSED_MONTHS_BACK);
+  rows.push({ value: CLOSED_EARLIER, label: `Trước tháng ${em}/${ey}` });
+  return rows;
+}
+
+/**
+ * Câu trả lời → `closedDate`, hoặc `null` khi câu trả lời không thuộc danh
+ * sách. "Trước đó" ghi ngày cuối của tháng liền trước tháng sớm nhất được
+ * liệt kê — ngoài mọi cửa sổ hiện có (dài nhất 24 tháng); luật nào dài hơn
+ * `CLOSED_MONTHS_BACK` thì phải nới danh sách này trước.
+ */
+export function closedDateFromAnswer(answer: string, today: string): string | null {
+  const [year, month] = today.split("-").map(Number);
+  if (answer === CLOSED_EARLIER) {
+    const [y, m] = shiftMonth(year, month, -CLOSED_MONTHS_BACK - 1);
+    return monthEnd(y, m);
+  }
+  if (!closedMonthChoices(today).some((row) => row.value === answer)) return null;
+  const [y, m] = answer.split("-").map(Number);
+  const end = monthEnd(y, m);
+  return end > today ? today : end;
+}
+
 /* ------------------------------------------------------------------ *
  * Chi tiêu
  * ------------------------------------------------------------------ */

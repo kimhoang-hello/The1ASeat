@@ -134,6 +134,14 @@ export interface ActionView {
    * hứa ngân hàng sẽ không giữ.
    */
   welcomeBonusBlocked: boolean;
+  /**
+   * CHƯA BIẾT người này còn nhận được welcome bonus không — luật "trong N
+   * tháng qua" gặp thẻ đã đóng không rõ ngày, hoặc chưa khai thẻ từng giữ.
+   * Luôn `false` khi `welcomeBonusBlocked`. Engine chỉ tính nửa phần bonus,
+   * nên thẻ vẫn có thể đứng đầu — và khi đó trang KHÔNG được in con số bonus
+   * như một điều chắc chắn (vòng Codex 1, 21/09/2026).
+   */
+  welcomeBonusUncertain: boolean;
 }
 
 export interface TripNumbersView {
@@ -511,6 +519,8 @@ function actionOf(
     spendSentence: slug === null ? null : (cards.facts.get(slug)?.spendSentence ?? null),
     noCardReason: candidate.kind === "no_new_card" ? noCardReasonOf(candidate) : null,
     welcomeBonusBlocked: candidate.eligibility?.welcomeOfferBlocked === true,
+    welcomeBonusUncertain:
+      candidate.eligibility?.welcomeOfferBlocked !== true && candidate.eligibility?.welcomeOfferUncertain === true,
   };
 }
 
@@ -684,6 +694,38 @@ export function presentRun(
   };
 }
 
+/*
+ * Câu chữ về welcome bonus trên thẻ gợi ý. Nằm ở đây — hàm thuần — chứ không
+ * viết thẳng trong `result.tsx`, để test khoá được đúng chữ người đọc thấy:
+ * bản đầu của cờ `welcomeBonusUncertain` chỉ có trong component, và gỡ nó đi
+ * thì không test nào đỏ (vòng Codex 3, 21/09/2026).
+ */
+export const BONUS_UNCERTAIN_NOTE = "chưa chắc bạn nhận được";
+
+/** Câu mở đầu của thẻ gợi ý chính (hành động `open_card`). */
+export function openCardSentence(action: ActionView): string {
+  if (action.welcomeBonusBlocked) {
+    return "Mở thẻ này cho tỷ lệ tích điểm và quyền lợi của nó — welcome bonus thì bạn không nhận được, vì những thẻ bạn đã từng giữ.";
+  }
+  // Không dùng `spendSentence` ("… để nhận trọn welcome bonus"): đó là lời
+  // hứa cho một bonus mình chưa kiểm được.
+  if (action.welcomeBonusUncertain) {
+    return "Mở thẻ này là bước đáng làm tiếp theo — nhưng chưa chắc bạn còn nhận được welcome bonus, xem lưu ý bên dưới.";
+  }
+  return action.spendSentence ?? "Mở thẻ này là bước đáng làm tiếp theo.";
+}
+
+/**
+ * Câu giới thiệu của một thẻ thay thế khi engine không kèm lý do riêng.
+ * Không lấy welcome bonus làm câu giới thiệu cho thẻ người dùng KHÔNG còn nhận
+ * được nó — đó đúng là câu quảng cáo sai đối tượng.
+ */
+export function alternativeBonusLead(action: ActionView): string | null {
+  if (action.welcomeBonusBlocked) return "Theo điều khoản, thẻ bạn từng giữ khiến bạn không có welcome bonus.";
+  if (!action.welcomeBonus) return null;
+  return `Welcome bonus ${action.welcomeBonus}${action.welcomeBonusUncertain ? ` (${BONUS_UNCERTAIN_NOTE})` : ""}${action.annualFee ? `, annual fee ${action.annualFee}` : ""}`;
+}
+
 /** Số điểm, dấu phẩy ngăn nghìn — quy ước số của site. */
 export function formatPoints(points: number): string {
   return points.toLocaleString("en-US");
@@ -822,13 +864,14 @@ export function answeredRows(state: UserState, dataset: RecommendationDataset): 
         questionKey: self("cards_undeclared"),
       });
     }
-    // Năm đóng thẻ đổi được cửa welcome bonus, nên nó phải sửa được — mỗi thẻ
-    // một dòng, vì mỗi thẻ là một câu hỏi riêng.
+    // Tháng đóng thẻ đổi được cửa welcome bonus, nên nó phải sửa được — mỗi
+    // thẻ một dòng, vì mỗi thẻ là một câu hỏi riêng.
     for (const card of state.cards) {
       if (card.status === "active" || card.closedDate === null) continue;
+      const [year, month] = card.closedDate.split("-").map(Number);
       rows.push({
-        label: `Năm đóng ${nameOf(card.productId as string) ?? "thẻ"}`,
-        value: card.closedDate.slice(0, 4),
+        label: `Tháng đóng ${nameOf(card.productId as string) ?? "thẻ"}`,
+        value: `${month}/${year}`,
         questionKey: questionKey("card_closed_date_unknown", card.id as string),
       });
     }

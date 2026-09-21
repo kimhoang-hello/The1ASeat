@@ -41,6 +41,7 @@ import type {
   UserState,
 } from "../recommendation/user-types.ts";
 import { amountRange } from "../recommendation/user-types.ts";
+import { closedDateFromAnswer, closedMonthChoices } from "../recommendation/user.ts";
 
 /* ------------------------------------------------------------------ *
  * Kiểu
@@ -370,15 +371,6 @@ function monthOptions(today: string): ChoiceOption[] {
   return rows;
 }
 
-/** Năm đóng thẻ — 10 năm gần nhất, mới nhất trước. */
-function closedYearOptions(today: string): ChoiceOption[] {
-  const year = Number(today.slice(0, 4));
-  return Array.from({ length: 10 }, (_, i) => ({
-    value: String(year - i),
-    label: String(year - i),
-  }));
-}
-
 /**
  * Câu hỏi cho một chỗ trống — `null` khi chỗ trống đó KHÔNG hỏi được.
  *
@@ -630,13 +622,10 @@ export function questionFor(
     case "card_closed_date_unknown":
       return {
         ...base,
-        title: `Bạn đóng thẻ ${cardName(state, ctx, gap.subject)} vào năm nào?`,
-        help: "Vài ngân hàng chỉ chặn welcome bonus trong một số tháng sau khi đóng, nên năm đóng có thể mở lại bonus cho bạn.",
-        input: {
-          type: "choice",
-          name: "answer",
-          options: closedYearOptions(ctx.today),
-        },
+        title: `Bạn đóng thẻ ${cardName(state, ctx, gap.subject)} vào tháng nào?`,
+        help: "Vài ngân hàng chỉ chặn welcome bonus trong 12 hoặc 24 tháng sau khi đóng, nên tháng đóng có thể mở lại bonus cho bạn. Không nhớ chính xác thì chọn tháng muộn nhất có thể.",
+        // Tháng, không phải năm — xem `closedMonthChoices`.
+        input: { type: "month", months: closedMonthChoices(ctx.today) },
       };
 
     // Người dùng đã từ chối: §30 cố ý không hỏi lại.
@@ -802,7 +791,7 @@ const BAD_SUBJECTS = [
   "loại vé",
   "mức linh hoạt",
   "tháng bay",
-  "năm đóng thẻ",
+  "tháng đóng thẻ",
   "câu hỏi này không trả lời được",
 ] as const;
 
@@ -1071,13 +1060,10 @@ export function applyAnswer(
     case "card_closed_date_unknown": {
       const card = next.cards.find((row) => row.id === spec.subject);
       if (card === undefined) return BAD("thẻ");
-      const year = Number(answer);
-      const thisYear = Number(ctx.today.slice(0, 4));
-      if (!Number.isInteger(year) || year < thisYear - 9 || year > thisYear) return BAD("năm đóng thẻ");
-      // Giữa năm: người dùng chỉ nhớ năm, và cả hai đầu năm đều là một lời
-      // khẳng định mạnh hơn thứ họ vừa nói. Ngày mở thẻ thì để trống — không
-      // suy ra được.
-      card.closedDate = year === thisYear ? ctx.today : `${year}-06-30`;
+      const closedDate = closedDateFromAnswer(form.get("month") ?? "", ctx.today);
+      if (closedDate === null) return BAD("tháng đóng thẻ");
+      // Ngày mở thì để trống — không suy ra được.
+      card.closedDate = closedDate;
       return { ok: true, state: next };
     }
 
