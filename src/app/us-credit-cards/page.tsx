@@ -19,7 +19,7 @@ import {
   usIssuerId,
   type UsCardFilter,
 } from "@/lib/us-credit-cards";
-import { usCardsGuideHref, usCardsGuides } from "@/lib/us-cards-guide";
+import { beginnerGuideHref, usCardsGuides } from "@/lib/us-cards-guide";
 import { creditCardJsonLd } from "@/lib/credit-card-schema";
 import { t } from "@/lib/t";
 import { pageMetadata, absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
@@ -62,13 +62,10 @@ export default async function UsCreditCardsPage({
 }: {
   searchParams: Promise<{ type?: string; issuer?: string }>;
 }) {
-  // Dải trên cùng trỏ ĐÚNG bài cho người mới (xem `usCardsGuideHref`); khối
+  // Dải trên cùng trỏ ĐÚNG bài cho người mới (xem `beginnerGuideHref`); khối
   // cuối trang liệt kê mọi bài đang phục vụ.
-  const [{ type, issuer }, guides, beginnerHref] = await Promise.all([
-    searchParams,
-    usCardsGuides(),
-    usCardsGuideHref(),
-  ]);
+  const [{ type, issuer }, guides] = await Promise.all([searchParams, usCardsGuides()]);
+  const beginnerHref = beginnerGuideHref(guides);
   const cards = getUsCreditCards();
 
   // Cùng luật với tab "Elevated offers" của `/credit-cards`: cờ elevated VÀ

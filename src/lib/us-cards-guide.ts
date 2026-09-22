@@ -34,7 +34,11 @@ export async function usCardsGuides(): Promise<UsCardsGuide[]> {
  * bài hướng dẫn thanh toán, không trả lời câu hỏi người đọc vừa đọc. Không có
  * bài đầu thì nút ẩn, còn danh sách nhiều bài vẫn hiện những bài còn lại.
  */
-export async function usCardsGuideHref(): Promise<string | undefined> {
-  const guides = await usCardsGuides();
+export function beginnerGuideHref(guides: UsCardsGuide[]): string | undefined {
   return guides.find((guide) => guide.slug === US_CARDS_GUIDE_SLUGS[0])?.href;
+}
+
+/** Cùng bài, cho chỗ chỉ cần một link và không cần cả danh sách. */
+export async function usCardsGuideHref(): Promise<string | undefined> {
+  return beginnerGuideHref(await usCardsGuides());
 }
