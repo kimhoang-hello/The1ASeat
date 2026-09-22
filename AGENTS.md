@@ -1277,6 +1277,13 @@ vào được bằng URL, `noindex`, dải báo nháp; bật cờ là hiện "�
   của trang cao 9,059px — 86%, khoảng 9.5 màn; thủ phạm là danh sách 9 thẻ dài
   5,800px. Nay ở 1,955px. Không đưa lên đầu trang: dải một dòng dưới hero đã
   nói cùng một chuyện và trỏ cùng một bài.
+- **Nhãn Beta (22/09/2026):** giống công cụ Gợi ý thẻ — dải full-bleed trên
+  `PageHeader` (`UsCardsBetaNotice`, hai câu: nháp / đã công bố), nhãn cạnh
+  eyebrow của `PageHeader`, và nhãn trong menu. Nhãn ở nav desktop chỉ hiện từ
+  `xl` và `hidden` phải nằm ở SPAN BỌC: `BetaBadge` tự mang `inline-block`, hai
+  utility cùng `display` thì thứ tự trong file CSS quyết định chứ không phải
+  thứ tự trong chuỗi class — truyền thẳng `hidden` vào `className` thì nhãn vẫn
+  hiện ở 1024px và hàng nav gãy chữ hai dòng.
 - **Menu 1024px:** sáu mục cách 28px không vừa — chữ gãy hai dòng. Khi cờ bật,
   nav dùng `gap-3` dưới `xl`. Cờ tắt thì class giữ nguyên `gap-7`.
 - **Lỗi cũ lộ ra:** `CardImage` truyền `absolute` vào `MediaPlaceholder` vốn tự

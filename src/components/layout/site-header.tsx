@@ -686,8 +686,26 @@ export function SiteHeader() {
           />
 
           {US_CARDS_PUBLISHED && (
-            <Link href={US_CARDS_BASE} className={navItemClassName(usCardsActive)}>
+            <Link
+              href={US_CARDS_BASE}
+              // `xl:gap-1.5`, không phải `gap-1.5`: nhãn Beta chỉ hiện từ `xl`,
+              // còn dưới đó 6px thừa đủ làm hàng nav 1024px gãy chữ hai dòng.
+              className={`flex items-center whitespace-nowrap xl:gap-1.5 ${navItemClassName(usCardsActive)}`}
+            >
               {nav("usCards")}
+              {/* Nhãn chỉ hiện từ `xl`: ở 1024px hàng nav sáu mục còn đúng 18px
+                  dư, thêm một viên pill là chữ gãy hai dòng. Mục vẫn mang nhãn
+                  Beta ở menu mobile, ở dải đầu trang và ở chính tiêu đề trang.
+
+                  `hidden` nằm ở SPAN BỌC, không truyền vào `className` của
+                  `BetaBadge`: component đó tự mang `inline-block`, và hai
+                  utility cùng thuộc tính `display` thì thứ tự trong file CSS
+                  quyết định — không phải thứ tự viết trong chuỗi class. Truyền
+                  thẳng `hidden` vào, nhãn vẫn hiện ở 1024px và hàng nav gãy
+                  chữ; cùng cái bẫy `MediaPlaceholder` đã vấp. */}
+              <span className="hidden xl:inline-block">
+                <BetaBadge className={usCardsActive ? "bg-primary/10 text-primary" : ""} />
+              </span>
             </Link>
           )}
 
@@ -801,9 +819,10 @@ export function SiteHeader() {
               <Link
                 href={US_CARDS_BASE}
                 onClick={() => setOpen(false)}
-                className={mobileItemClassName(usCardsActive)}
+                className={`flex items-center gap-2 ${mobileItemClassName(usCardsActive)}`}
               >
                 {nav("usCards")}
+                <BetaBadge className={usCardsActive ? "bg-primary/10 text-primary" : "bg-card"} />
               </Link>
             )}
 

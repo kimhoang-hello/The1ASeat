@@ -3,6 +3,8 @@ import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { JsonLd } from "@/components/seo/json-ld";
 import { UsCardSummary } from "@/components/credit-cards/us-card-summary";
+import { UsCardsBetaNotice } from "@/components/credit-cards/us-beta-notice";
+import { BetaBadge } from "@/components/ui/beta-badge";
 import { StepLink } from "@/components/ui/next-steps";
 import { US_CARDS_PUBLISHED } from "@/lib/feature-flags";
 import { isElevatedLive } from "@/lib/credit-card-state";
@@ -134,17 +136,18 @@ export default async function UsCreditCardsPage({
 
   return (
     <>
+      {/* Trên cả PageHeader, như dải Beta của công cụ Gợi ý thẻ. */}
+      <UsCardsBetaNotice />
       <JsonLd data={jsonLd} />
-      <PageHeader eyebrow={us("eyebrow")} title={us("title")} subtitle={us("subtitle")} />
+      <PageHeader
+        eyebrow={us("eyebrow")}
+        badge={<BetaBadge />}
+        title={us("title")}
+        subtitle={us("subtitle")}
+      />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-page">
-          {!US_CARDS_PUBLISHED && (
-            <p className="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
-              {us("draftNotice")}
-            </p>
-          )}
-
           {/* Lối vào cho người mới — cùng hình dạng với dải "Gợi ý thẻ" đầu
               trang `/credit-cards`: một dòng, không phải một khối nội dung.
               Trang này để tìm thẻ; phần kiến thức chỉ cần một cửa. */}

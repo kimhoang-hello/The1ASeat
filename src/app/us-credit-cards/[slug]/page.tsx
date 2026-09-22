@@ -7,6 +7,7 @@ import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { EditorsTake } from "@/components/credit-cards/editors-take";
 import { OfferStats } from "@/components/credit-cards/offer-stats";
 import { CanadianPerspective } from "@/components/credit-cards/canadian-perspective";
+import { UsCardsBetaNotice } from "@/components/credit-cards/us-beta-notice";
 import { ApplyButton } from "@/components/ui/apply-button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { isReferralUrl } from "@/lib/affiliate-links";
@@ -103,116 +104,114 @@ export default async function UsCreditCardDetailPage({
   };
 
   return (
-    <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8 xl:max-w-[68rem]">
-      <JsonLd data={jsonLd} />
-      <Link href={US_CARDS_BASE} className="text-sm font-semibold text-primary hover:underline">
-        &larr; {us("viewAll")}
-      </Link>
+    <>
+      {/* Dải Beta chạy hết bề ngang nên phải đứng NGOÀI `article`, như trang tổng. */}
+      <UsCardsBetaNotice />
+      <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8 xl:max-w-[68rem]">
+        <JsonLd data={jsonLd} />
+        <Link href={US_CARDS_BASE} className="text-sm font-semibold text-primary hover:underline">
+          &larr; {us("viewAll")}
+        </Link>
 
-      {!US_CARDS_PUBLISHED && (
-        <p className="mt-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
-          {us("draftNotice")}
-        </p>
-      )}
+        <div className="xl:grid xl:grid-cols-[22rem_minmax(0,1fr)] xl:gap-12">
+          <div className="mt-6 xl:sticky xl:top-24 xl:self-start">
+            <CardImage
+              image={card.cardImage}
+              name={card.name}
+              placeholderIcon={card.image}
+              className="h-56 w-full rounded-2xl"
+              {...applyOverlay(card.applyUrl, "us_card_detail", card.slug)}
+              preload
+            />
 
-      <div className="xl:grid xl:grid-cols-[22rem_minmax(0,1fr)] xl:gap-12">
-        <div className="mt-6 xl:sticky xl:top-24 xl:self-start">
-          <CardImage
-            image={card.cardImage}
-            name={card.name}
-            placeholderIcon={card.image}
-            className="h-56 w-full rounded-2xl"
-            {...applyOverlay(card.applyUrl, "us_card_detail", card.slug)}
-            preload
-          />
+            {card.applyUrl && (
+              <div className="mt-6 hidden xl:block">
+                <ApplyButton
+                  href={card.applyUrl}
+                  affiliate={isReferralUrl(card.applyUrl)}
+                  placement="us_card_detail_rail"
+                  product={card.slug}
+                  className="w-full text-center"
+                />
+                {isReferralUrl(card.applyUrl) && (
+                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                    {offers("applyAffiliateNote")}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
 
-          {card.applyUrl && (
-            <div className="mt-6 hidden xl:block">
+          <div className="min-w-0">
+            <div className="mt-6">
+              <CardBadges
+                offer={card}
+                cardType={card.cardType}
+                elevatedBonusLabel={offers("elevatedBonus")}
+                expiresOnLabel={offers("expiresOn")}
+              />
+            </div>
+
+            <h1 className="mt-2 wrap-anywhere font-display text-3xl font-extrabold text-foreground">
+              {card.name}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {card.issuer} · {us("rewardsCurrency")}: {card.us.rewardsCurrency}
+            </p>
+
+            <OfferStats offer={card} className="mt-4" />
+            {requirement && (
+              <p className="mt-3 text-sm text-foreground/90">
+                <span className="font-semibold text-foreground">{us("requirementLabel")}:</span>{" "}
+                {requirement}
+              </p>
+            )}
+
+            <p className="mt-4 text-lg leading-relaxed text-foreground/90">{card.headline}</p>
+
+            <EditorsTake editorsTake={card.editorsTake} className="mt-6" />
+
+            <h2 className="mt-8 font-display text-xl font-bold text-foreground">
+              {offers("keyBenefits")}
+            </h2>
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-foreground/90">
+              {card.keyBenefits.map((benefit) => (
+                <li key={benefit}>{benefit}</li>
+              ))}
+            </ul>
+
+            <CanadianPerspective perspective={card.us.canada} guideHref={guideHref} className="mt-8" />
+
+            {card.applyUrl && (
               <ApplyButton
                 href={card.applyUrl}
                 affiliate={isReferralUrl(card.applyUrl)}
-                placement="us_card_detail_rail"
+                className="mt-8"
+                placement="us_card_detail"
                 product={card.slug}
-                className="w-full text-center"
               />
-              {isReferralUrl(card.applyUrl) && (
-                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                  {offers("applyAffiliateNote")}
-                </p>
-              )}
-            </div>
-          )}
-        </div>
+            )}
 
-        <div className="min-w-0">
-          <div className="mt-6">
-            <CardBadges
-              offer={card}
-              cardType={card.cardType}
-              elevatedBonusLabel={offers("elevatedBonus")}
-              expiresOnLabel={offers("expiresOn")}
-            />
-          </div>
-
-          <h1 className="mt-2 wrap-anywhere font-display text-3xl font-extrabold text-foreground">
-            {card.name}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {card.issuer} · {us("rewardsCurrency")}: {card.us.rewardsCurrency}
-          </p>
-
-          <OfferStats offer={card} className="mt-4" />
-          {requirement && (
-            <p className="mt-3 text-sm text-foreground/90">
-              <span className="font-semibold text-foreground">{us("requirementLabel")}:</span>{" "}
-              {requirement}
+            <p
+              className={`mt-4 text-xs ${
+                card.us.needsVerification ? "font-medium text-amber-700" : "text-muted-foreground"
+              }`}
+            >
+              {card.us.verifiedOn
+                ? us("verifiedOn", { date: formatDate(card.us.verifiedOn) })
+                : us("sampleNote", { date: formatDate(card.us.lastUpdated) })}
             </p>
-          )}
 
-          <p className="mt-4 text-lg leading-relaxed text-foreground/90">{card.headline}</p>
+            <OfferDisclosure className="mt-8" />
 
-          <EditorsTake editorsTake={card.editorsTake} className="mt-6" />
-
-          <h2 className="mt-8 font-display text-xl font-bold text-foreground">
-            {offers("keyBenefits")}
-          </h2>
-          <ul className="mt-3 list-disc space-y-2 pl-5 text-foreground/90">
-            {card.keyBenefits.map((benefit) => (
-              <li key={benefit}>{benefit}</li>
-            ))}
-          </ul>
-
-          <CanadianPerspective perspective={card.us.canada} guideHref={guideHref} className="mt-8" />
-
-          {card.applyUrl && (
-            <ApplyButton
-              href={card.applyUrl}
-              affiliate={isReferralUrl(card.applyUrl)}
-              className="mt-8"
-              placement="us_card_detail"
-              product={card.slug}
-            />
-          )}
-
-          <p
-            className={`mt-4 text-xs ${
-              card.us.needsVerification ? "font-medium text-amber-700" : "text-muted-foreground"
-            }`}
-          >
-            {card.us.verifiedOn
-              ? us("verifiedOn", { date: formatDate(card.us.verifiedOn) })
-              : us("sampleNote", { date: formatDate(card.us.lastUpdated) })}
-          </p>
-
-          <OfferDisclosure className="mt-8" />
-
-          <p className="mt-10 border-t border-border pt-4 text-xs text-muted-foreground">
-            <Link href="/" className="underline">
-              {common("backHome")}
-            </Link>
-          </p>
+            <p className="mt-10 border-t border-border pt-4 text-xs text-muted-foreground">
+              <Link href="/" className="underline">
+                {common("backHome")}
+              </Link>
+            </p>
+          </div>
         </div>
-      </div>
-    </article>
+      </article>
+    </>
   );
 }
