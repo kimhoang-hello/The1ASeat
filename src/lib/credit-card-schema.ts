@@ -76,6 +76,20 @@ function shortAnnualFee(annualFee: string): string {
   return annualFee.split(/ \(| — |;/)[0].trim();
 }
 
+/**
+ * Vị trí cuối cùng của `sep` trước `limit` mà cắt ở đó không chẻ đôi một tên
+ * riêng. Dấu phẩy nằm TRONG tên thì chữ sau nó viết hoa ("The Ritz-Carlton,
+ * Toronto"); dấu phẩy ngăn hai vế của headline thì chữ sau viết thường
+ * ("…, hoàn đến 6 điểm/$1"). Số "$1,500" không dính vì không có dấu cách.
+ */
+function lastClauseBreak(text: string, sep: string, limit: number): number {
+  let at = text.lastIndexOf(sep, limit);
+  while (at > 0 && sep === ", " && /\p{Lu}/u.test(text.charAt(at + sep.length))) {
+    at = text.lastIndexOf(sep, at - 1);
+  }
+  return at;
+}
+
 function endSentence(text: string): string {
   const trimmed = text.replace(/[\s,;:—-]+$/, "");
   return /[.!?…]$/.test(trimmed) ? trimmed : `${trimmed}.`;
@@ -97,7 +111,7 @@ export function creditCardMetaDescription(offer: CreditCardOffer): string {
 
   if (text.length > META_DESCRIPTION_MAX) {
     const cut = Math.max(
-      ...CLAUSE_BREAKS.map((sep) => text.lastIndexOf(sep, META_DESCRIPTION_MAX - 1)),
+      ...CLAUSE_BREAKS.map((sep) => lastClauseBreak(text, sep, META_DESCRIPTION_MAX - 1)),
     );
     text =
       cut > META_DESCRIPTION_MIN
