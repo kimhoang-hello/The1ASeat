@@ -1266,8 +1266,12 @@ vào được bằng URL, `noindex`, dải báo nháp; bật cờ là hiện "�
 - **Tiền:** "$95 USD", không phải "$95" (`$` trần = CAD). Số tiền là SỐ trong dữ
   liệu, chuỗi dựng bằng `formatUsd`; `npm run test:us-cards` bắt mọi `$X` viết tay
   thiếu ` USD`.
-- **Bài hướng dẫn:** `apply-us-credit-card-tu-canada` (đã publish 21/09/2026).
-  Nếu bài bị gỡ, mọi nút "Xem hướng dẫn" tự ẩn khi cờ bật (`usCardsGuideHref`).
+- **Bài hướng dẫn:** `US_CARDS_GUIDE_SLUGS` (theo thứ tự nên đọc) — 22/09/2026
+  có hai bài: `apply-us-credit-card-tu-canada` và
+  `thanh-toan-us-credit-card-nhu-the-nao`. Khối "🇨🇦 Mới Chơi Thẻ Mỹ?" liệt kê
+  cả danh sách bằng `StepLink`, tiêu đề và mô tả đọc thẳng từ Contentful; dải
+  đầu trang chỉ trỏ bài ĐẦU. Bài nào unpublish thì tự rơi khỏi danh sách, hết
+  bài thì cả khối ẩn. Thêm bài mới = thêm slug, không sửa JSX.
 - **Menu 1024px:** sáu mục cách 28px không vừa — chữ gãy hai dòng. Khi cờ bật,
   nav dùng `gap-3` dưới `xl`. Cờ tắt thì class giữ nguyên `gap-7`.
 - **Lỗi cũ lộ ra:** `CardImage` truyền `absolute` vào `MediaPlaceholder` vốn tự

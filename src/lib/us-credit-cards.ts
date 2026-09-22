@@ -33,12 +33,17 @@ export { US_CARDS_BASE };
 export const US_CARDS_LIST_ANCHOR = "tat-ca-the-my";
 
 /**
- * Bài hướng dẫn chơi thẻ Mỹ từ Canada (ITIN → thẻ US đầu tiên → US credit
- * history). CHƯA CÓ lúc dựng trang này. Trang tự kiểm bài có tồn tại không:
- * đã công bố mà bài chưa có thì các nút "Xem hướng dẫn" tự ẩn, không dẫn
- * người đọc tới trang 404.
+ * Các bài hướng dẫn chơi thẻ Mỹ từ Canada, theo thứ tự người mới nên đọc.
+ * Bài ĐẦU TIÊN là bài mặc định của mọi nút "Xem hướng dẫn".
+ *
+ * Slug chứ không phải id: trang tự tìm chúng trong Contentful lúc render, nên
+ * một bài bị unpublish thì link tự biến mất thay vì thành 404 (xem
+ * `usCardsGuides`). Thêm bài mới thì thêm slug vào đây, không phải sửa JSX.
  */
-export const US_CARDS_GUIDE_SLUG = "apply-us-credit-card-tu-canada";
+export const US_CARDS_GUIDE_SLUGS = [
+  "apply-us-credit-card-tu-canada",
+  "thanh-toan-us-credit-card-nhu-the-nao",
+];
 
 export type UsIssuerId =
   | "amex"

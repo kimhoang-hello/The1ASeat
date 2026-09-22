@@ -3,6 +3,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { JsonLd } from "@/components/seo/json-ld";
 import { UsCardSummary } from "@/components/credit-cards/us-card-summary";
+import { StepLink } from "@/components/ui/next-steps";
 import { US_CARDS_PUBLISHED } from "@/lib/feature-flags";
 import { isElevatedLive } from "@/lib/credit-card-state";
 import {
@@ -18,7 +19,7 @@ import {
   usIssuerId,
   type UsCardFilter,
 } from "@/lib/us-credit-cards";
-import { usCardsGuideHref } from "@/lib/us-cards-guide";
+import { usCardsGuides } from "@/lib/us-cards-guide";
 import { creditCardJsonLd } from "@/lib/credit-card-schema";
 import { t } from "@/lib/t";
 import { pageMetadata, absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
@@ -61,7 +62,9 @@ export default async function UsCreditCardsPage({
 }: {
   searchParams: Promise<{ type?: string; issuer?: string }>;
 }) {
-  const [{ type, issuer }, guideHref] = await Promise.all([searchParams, usCardsGuideHref()]);
+  const [{ type, issuer }, guides] = await Promise.all([searchParams, usCardsGuides()]);
+  // Bài đầu là bài cho người mới bắt đầu — dải trên cùng chỉ cần một cửa.
+  const [firstGuide] = guides;
   const cards = getUsCreditCards();
 
   // Cùng luật với tab "Elevated offers" của `/credit-cards`: cờ elevated VÀ
@@ -144,9 +147,9 @@ export default async function UsCreditCardsPage({
           {/* Lối vào cho người mới — cùng hình dạng với dải "Gợi ý thẻ" đầu
               trang `/credit-cards`: một dòng, không phải một khối nội dung.
               Trang này để tìm thẻ; phần kiến thức chỉ cần một cửa. */}
-          {guideHref && (
+          {firstGuide && (
             <Link
-              href={guideHref}
+              href={firstGuide.href}
               className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card px-5 py-4 transition-colors hover:border-primary"
             >
               <span>
@@ -289,7 +292,7 @@ export default async function UsCreditCardsPage({
 
           {/* Đặt SAU danh sách: người tới trang này trước hết để tìm thẻ. Ai
               xem xong mà chưa biết bắt đầu từ đâu thì gặp khối này đúng lúc. */}
-          {guideHref && (
+          {guides.length > 0 && (
             <div className="mt-14 rounded-2xl border border-border bg-secondary p-6 sm:p-8">
               <SectionHeading>{us("newcomerTitle")}</SectionHeading>
               <p className="mt-3 max-w-2xl leading-relaxed text-foreground/90">{us("newcomerBody")}</p>
@@ -311,12 +314,20 @@ export default async function UsCreditCardsPage({
                 )}
               </ol>
 
-              <Link
-                href={guideHref}
-                className="mt-6 inline-block cursor-pointer rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
-              >
-                {us("newcomerCta")} &rarr;
-              </Link>
+              {/* Danh sách bài, không phải một nút: từ 22/09/2026 đã có hai bài
+                  hướng dẫn, và một nút "Đọc hướng dẫn" giấu mất bài thứ hai.
+                  Tiêu đề và mô tả đọc thẳng từ Contentful — cùng khối
+                  `StepLink` mà bảy trang khác đang dùng cho phần "đi tiếp". */}
+              <ul className="mt-6 space-y-2">
+                {guides.map((guide) => (
+                  <StepLink
+                    key={guide.slug}
+                    href={guide.href}
+                    label={guide.title}
+                    description={guide.excerpt}
+                  />
+                ))}
+              </ul>
             </div>
           )}
         </div>
