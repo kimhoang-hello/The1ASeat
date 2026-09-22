@@ -34,9 +34,18 @@ const best = translate("bestCards");
 export function CardSpotlight({
   card,
   placement,
+  nameAs: NameTag = "h3",
 }: {
   card: CreditCardOffer;
   placement: string;
+  /**
+   * `h3` trên trang "Các thẻ tốt nhất": thẻ nằm dưới `h2` của từng mục, đúng
+   * một bậc. Trong thân bài viết thì KHÔNG phải heading: khối thẻ có thể đứng
+   * ngay sau đoạn mở bài, trước mọi `h2`, và một `h3` ở đó nhảy thẳng từ `h1`
+   * — đo 22/09/2026 ở hai bài Cobalt và Marriott. Tên thẻ trong bài là chú
+   * thích bên lề, không phải một mục của bài.
+   */
+  nameAs?: "h3" | "p";
 }) {
   return (
     // `data-affiliate-self-tracked`: cả ảnh lẫn nút Apply bên dưới tự bắn
@@ -76,11 +85,11 @@ export function CardSpotlight({
           expiresOnLabel={offers_t("expiresOn")}
         />
 
-        <h3 className="mt-1.5 font-display text-base font-bold text-foreground">
+        <NameTag className="mt-1.5 font-display text-base font-bold text-foreground">
           <Link href={`/credit-cards/${card.slug}`} className="cursor-pointer hover:text-primary">
             {card.name}
           </Link>
-        </h3>
+        </NameTag>
 
         <OfferStats offer={card} className="mt-3" />
 

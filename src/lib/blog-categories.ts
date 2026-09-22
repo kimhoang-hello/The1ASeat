@@ -92,6 +92,26 @@ const CATEGORY_DESCRIPTIONS: Record<string, string> = {
     "Tin mới trong thế giới Miles & Points: chương trình nào vừa devalue, hãng nào đổi award chart, ngân hàng nào đổi điều kiện — và nên phản ứng thế nào.",
 };
 
+/**
+ * Tiêu đề tìm kiếm của trang chuyên mục. Tên chuyên mục trần ("Tips",
+ * "News" — 13 ký tự kể cả đuôi site) không nói trang này về cái gì, và với
+ * Google một tiêu đề như thế trông như trang lỗi. Chỉ đổi `<title>`: H1 trên
+ * trang vẫn là tên chuyên mục. Giữ mỗi dòng dưới 51 ký tự để cộng đuôi
+ * " | Ghế 1A" vẫn nằm trong 60.
+ */
+const CATEGORY_TITLES: Record<string, string> = {
+  "Khách sạn": "Review khách sạn đổi điểm thưởng",
+  "Đánh giá": "Review hạng thương gia & hạng nhất",
+  "Kiến thức": "Kiến thức Miles & Points cho người mới",
+  Deals: "Deal điểm thưởng: transfer bonus, mua điểm",
+  Tips: "Tips Miles & Points: thẻ tín dụng & award seat",
+  News: "Tin Miles & Points: devaluation, award chart",
+};
+
+export function categoryTitle(category: BlogCategory): string {
+  return CATEGORY_TITLES[category.name] ?? `${category.name} — Blog Miles & Points`;
+}
+
 export function categoryDescription(category: BlogCategory): string {
   return (
     CATEGORY_DESCRIPTIONS[category.name] ??

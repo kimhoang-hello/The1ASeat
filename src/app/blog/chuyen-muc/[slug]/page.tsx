@@ -9,6 +9,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import {
   categoryDescription,
   categoryPath,
+  categoryTitle,
   findCategory,
   getCategories,
   postsInCategory,
@@ -38,7 +39,7 @@ export async function generateMetadata({
   if (!category) return {};
 
   return pageMetadata({
-    title: category.name,
+    title: categoryTitle(category),
     description: categoryDescription(category),
     path: categoryPath(category.slug),
   });
