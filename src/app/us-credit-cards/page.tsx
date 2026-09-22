@@ -19,7 +19,7 @@ import {
   usIssuerId,
   type UsCardFilter,
 } from "@/lib/us-credit-cards";
-import { usCardsGuides } from "@/lib/us-cards-guide";
+import { usCardsGuideHref, usCardsGuides } from "@/lib/us-cards-guide";
 import { creditCardJsonLd } from "@/lib/credit-card-schema";
 import { t } from "@/lib/t";
 import { pageMetadata, absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
@@ -62,9 +62,13 @@ export default async function UsCreditCardsPage({
 }: {
   searchParams: Promise<{ type?: string; issuer?: string }>;
 }) {
-  const [{ type, issuer }, guides] = await Promise.all([searchParams, usCardsGuides()]);
-  // Bài đầu là bài cho người mới bắt đầu — dải trên cùng chỉ cần một cửa.
-  const [firstGuide] = guides;
+  // Dải trên cùng trỏ ĐÚNG bài cho người mới (xem `usCardsGuideHref`); khối
+  // cuối trang liệt kê mọi bài đang phục vụ.
+  const [{ type, issuer }, guides, beginnerHref] = await Promise.all([
+    searchParams,
+    usCardsGuides(),
+    usCardsGuideHref(),
+  ]);
   const cards = getUsCreditCards();
 
   // Cùng luật với tab "Elevated offers" của `/credit-cards`: cờ elevated VÀ
@@ -147,9 +151,9 @@ export default async function UsCreditCardsPage({
           {/* Lối vào cho người mới — cùng hình dạng với dải "Gợi ý thẻ" đầu
               trang `/credit-cards`: một dòng, không phải một khối nội dung.
               Trang này để tìm thẻ; phần kiến thức chỉ cần một cửa. */}
-          {firstGuide && (
+          {beginnerHref && (
             <Link
-              href={firstGuide.href}
+              href={beginnerHref}
               className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card px-5 py-4 transition-colors hover:border-primary"
             >
               <span>

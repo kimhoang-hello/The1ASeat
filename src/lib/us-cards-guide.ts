@@ -25,8 +25,16 @@ export async function usCardsGuides(): Promise<UsCardsGuide[]> {
   });
 }
 
-/** Bài mặc định của các nút "Xem hướng dẫn" — bài đầu trong danh sách. */
+/**
+ * Bài cho NGƯỜI MỚI — `US_CARDS_GUIDE_SLUGS[0]`, và chỉ bài đó.
+ *
+ * Mọi nút "Xem hướng dẫn" đều đứng cạnh chữ nói về ITIN, thẻ US đầu tiên và US
+ * credit history, nên chúng phải trỏ đúng bài ấy. Lấy `guides[0]` sau khi lọc
+ * thì bài đầu bị unpublish là các nút đó lặng lẽ tụt xuống bài kế — hôm nay là
+ * bài hướng dẫn thanh toán, không trả lời câu hỏi người đọc vừa đọc. Không có
+ * bài đầu thì nút ẩn, còn danh sách nhiều bài vẫn hiện những bài còn lại.
+ */
 export async function usCardsGuideHref(): Promise<string | undefined> {
-  const [first] = await usCardsGuides();
-  return first?.href;
+  const guides = await usCardsGuides();
+  return guides.find((guide) => guide.slug === US_CARDS_GUIDE_SLUGS[0])?.href;
 }
