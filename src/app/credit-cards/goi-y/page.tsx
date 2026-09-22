@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { getCreditCardOffers } from "@/lib/content";
 import { RECOMMENDER_PUBLISHED } from "@/lib/feature-flags";
 import { todayInSiteZone } from "@/lib/format-date";
+import { knownError } from "@/lib/recommender/errors";
 import { asksForAttention, followUpAfterSkips } from "@/lib/recommender/follow-up";
 import { answeredRows, presentRun } from "@/lib/recommender/present";
 import { questionFor, questionFromKey } from "@/lib/recommender/questions";
@@ -13,6 +14,7 @@ import {
   loadState,
   recommenderStorageReady,
   runForDisplay,
+  RunLimitError,
   skippedQuestions,
 } from "@/lib/recommender/session";
 import { resetRecommendation } from "@/app/credit-cards/goi-y/actions";
@@ -73,7 +75,7 @@ function first(value: string | string[] | undefined): string | null {
 
 export default async function RecommenderPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const error = first(params.loi);
+  const error = knownError(first(params.loi));
   const outsideCanada = first(params["ngoai-canada"]) !== null;
   const editKey = first(params.sua);
 
@@ -172,6 +174,17 @@ function BrokenProfileNotice() {
   );
 }
 
+function RunLimitNotice({ message }: { message: string }) {
+  return (
+    <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+      <h2 className="font-display text-lg font-bold text-foreground">Nghỉ tay một lúc nhé</h2>
+      <p className="mt-2 text-base leading-relaxed text-foreground/90">
+        {message} Câu trả lời của bạn vẫn được giữ nguyên.
+      </p>
+    </section>
+  );
+}
+
 /** Không có chỗ lưu — hoặc chưa cấu hình, hoặc database không vào được. */
 function StorageDownNotice() {
   return (
@@ -205,6 +218,9 @@ async function Body({ editKey }: { editKey: string | null }) {
   try {
     run = await runForDisplay(userId, stored);
   } catch (error) {
+    // Quá trần lượt chạy không phải hồ sơ hỏng: bảo người dùng "làm lại từ
+    // đầu" ở đây là bắt họ vứt hồ sơ vì một giới hạn sẽ tự hết.
+    if (error instanceof RunLimitError) return <RunLimitNotice message={error.message} />;
     // Hồ sơ trong kho không chạy được (dữ liệu cũ, một trường đã đổi nghĩa).
     // Người dùng phải còn đường ra: không có khối này thì mọi lần mở trang đều
     // nổ TRƯỚC khi nút "Làm lại từ đầu" kịp hiện (Codex vòng 2).

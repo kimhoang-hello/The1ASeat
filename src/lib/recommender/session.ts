@@ -39,6 +39,7 @@ import { mysqlUserStore } from "@/lib/recommendation/user-store-mysql";
 import { recoDatabaseFromEnv } from "@/lib/recommendation/mysql";
 import { UserStateConflictError, type StoredUserState } from "@/lib/recommendation/user-source";
 import { rateLimit } from "@/lib/rate-limit";
+import { RECO_ERROR } from "@/lib/recommender/errors";
 import { mysqlExplanationStore, type ExplanationStore } from "@/lib/recommender/explain-store";
 
 export const USER_COOKIE = "g1a_reco";
@@ -55,6 +56,18 @@ const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
  * bấm lại liên tục mà không chặn ai dùng bình thường.
  */
 const RUN_LIMIT_PER_HOUR = 80;
+
+/**
+ * Quá trần lượt chạy. Lớp riêng để trang và Server Action nói đúng câu này với
+ * người dùng — bản trước để nó rơi vào nhánh "hồ sơ hỏng" trên trang và thành
+ * trang lỗi 500 trong Server Action.
+ */
+export class RunLimitError extends Error {
+  constructor() {
+    super(RECO_ERROR.runLimit);
+    this.name = "RunLimitError";
+  }
+}
 
 export class NoDatabaseError extends Error {
   constructor() {
@@ -227,7 +240,7 @@ function runId(): string {
  */
 export async function runAndSave(userId: string, state: UserState): Promise<RunContext> {
   const limit = rateLimit(`reco:run:${userId}`, RUN_LIMIT_PER_HOUR, 60 * 60 * 1000);
-  if (!limit.ok) throw new Error("Bạn vừa chạy quá nhiều lượt gợi ý — thử lại sau một lúc.");
+  if (!limit.ok) throw new RunLimitError();
 
   const { runs } = stores();
   const { data, asOf } = await currentDataset();

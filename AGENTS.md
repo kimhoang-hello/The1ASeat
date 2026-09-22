@@ -1916,3 +1916,30 @@ giới hạn thật của `bodyTooLarge` (đã ghi rõ, không mở rộng). `li
   ["apply_clicked"],"complement":false,"isCaseSensitive":true,"expression":""}]`.
   Slot chỉ chạy khi đi CẶP với một dimension chuẩn. Lọc theo nguồn: `fieldName`
   `sessionSourceMedium`. Báo cáo tổng Search Console: `r=search-traffic&collectionId=search-console`.
+
+## Luật welcome bonus theo cửa sổ thời gian (21/09/2026) — đừng đề xuất lại
+
+Chi tiết: `src/lib/recommendation/README.md`, mục "Luật welcome bonus theo cửa sổ
+thời gian". Điều khoản đọc thẳng trên trang ngân hàng ngày 21/09/2026.
+
+- **Aeroplan® là once-in-a-lifetime THEO LOẠI THẺ, xuyên ngân hàng — user chốt.**
+  `previous_cardholder_same_category` trả `fail`, không phải `unknown`. Đừng đề
+  xuất hạ về "chưa chắc" vì câu "may not be issued" trong footnote TD®/CIBC®.
+- **Ba `anchor` là ba cách đọc điều khoản khác nhau, không gộp.** TD® Aeroplan® đếm
+  ngày MỞ; TD® Cash Back đếm mở HOẶC đóng; Scotia Momentum® và National Bank đếm
+  việc GIỮ (đang giữ là trượt).
+- **CIBC® Aventura®, Scotiabank® Scene+™, TD Rewards KHÔNG có luật thời gian —
+  user chốt 21/09/2026** dù footnote ghi 12/24 tháng: thực tế vẫn nhận bonus. Đừng
+  đề xuất thêm lại từ footnote.
+- **Phạm vi chỉ gồm thẻ có trong kho** (Scotiabank® "mọi thẻ cá nhân" = bốn thẻ
+  trên site, chỉ Momentum® còn luật; TD® Aeroplan® Business không đếm được). Giới hạn chung của việc khai
+  thẻ; cố ý không biến mọi offer thành "chưa chắc" để bù.
+- Nhân viên Scotiabank®,
+  chủ thẻ chính/phụ của NBC, 10,000 điểm năm của Passport — cố ý chưa mô hình hoá.
+- **Câu hỏi đóng thẻ hỏi THÁNG, ghi ngày muộn nhất** (`closedDateFromAnswer`).
+  Đừng quay lại hỏi năm: năm ghi thành 30/06 từng làm một lần đóng tháng 12 lọt
+  khỏi cửa sổ 24 tháng. Câu trả lời năm đã lưu (15–21/09) xoá bằng
+  `npx tsx scripts/reco-migrate-closed-year.mts --confirm` một lần sau deploy.
+- **Bonus `unknown` không được in như chắc chắn**: `welcomeBonusUncertain` trên
+  `ActionView`, câu chữ ở `openCardSentence`/`alternativeBonusLead` (present.ts),
+  dữ kiện `bonus_uncertain` bắt buộc đi kèm `bonus` ở Phase 6.

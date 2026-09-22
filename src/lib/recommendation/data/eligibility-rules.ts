@@ -3,8 +3,9 @@ import {
   type EligibilityRule,
   type EligibilityRuleId,
   type EligibilityRuleType,
+  type RuleLookback,
 } from "../types.ts";
-import { productIdFor } from "./products.ts";
+import { PRODUCTS, productIdFor } from "./products.ts";
 
 /**
  * Điều kiện mở thẻ.
@@ -56,6 +57,17 @@ type RuleSeed = {
   to?: string;
   /** Ngày kiểm lại. Vắng thì lấy `from`. ĐỘC LẬP với ngày vào kho. */
   verifiedAt?: string;
+  /**
+   * Chỉ cho `previous_cardholder_within_months`: mốc nào, và SLUG các thẻ được
+   * tính — xem `RuleLookback`.
+   */
+  lookback?: { anchor: RuleLookback["anchor"]; slugs: string[] };
+  /**
+   * Trang điều khoản GỐC của nhà phát hành. Vắng thì nguồn là trang thẻ trên
+   * ghe1a.com — đúng cho các dòng suy từ nội dung site, SAI cho luật đọc thẳng
+   * từ footnote ngân hàng: người kiểm lại phải được trỏ tới đúng chỗ đã đọc.
+   */
+  source?: string;
 };
 
 /**
@@ -82,6 +94,129 @@ const AMEX_ONCE_IN_A_LIFETIME: RuleSeed = {
   scope: "welcome_offer",
 };
 
+/*
+ * Luật "không có welcome bonus nếu … trong N tháng qua" — đọc THẲNG từ
+ * footnote offer trên trang ngân hàng ngày 21/09/2026, không qua blog thứ
+ * cấp. Lỗi dẫn tới chúng: hồ sơ khai "từng giữ TD® Aeroplan® Visa Infinite,
+ * đã đóng, không rõ ngày" được khuyên chính thẻ đó với trọn 50,000 điểm và
+ * không một dòng cảnh báo, vì trước đây chỉ Amex® có luật "từng giữ".
+ *
+ * Kiểm rồi mà KHÔNG có luật dạng này (đừng thêm khi chưa đọc lại điều khoản):
+ *   - RBC® (Avion®, WestJet): chỉ loại người CHUYỂN từ thẻ RBC khác sang —
+ *     mô hình người dùng không có "chuyển thẻ", mở mới thì không bị loại.
+ *     WestJet loại chủ thẻ cũ khỏi companion voucher, không khỏi điểm thưởng.
+ *   - CIBC® Aeroplan®: không có cửa sổ tháng — chỉ dẫn điều khoản chung của
+ *     Aeroplan®, mô hình hoá riêng ở `AEROPLAN_CATEGORIES` bên dưới.
+ *   - Wealthsimple: không có welcome bonus.
+ *
+ * Footnote CÓ ghi cửa sổ nhưng user chốt 21/09/2026 là thực tế KHÔNG áp —
+ * "vẫn nhận được bonus bất kể đã mở thẻ đó trong bao lâu trước đó":
+ *   - CIBC® Aventura® (Gold, Visa Infinite): "opened, transferred or cancelled
+ *     another Aventura card within the last 12 months".
+ *   - Scotiabank® Scene+™ (Gold American Express®, Passport Visa Infinite,
+ *     Scene+™ Visa sinh viên): "… cardholders of a Scotiabank personal credit
+ *     card in the past 2 years".
+ *   - TD Rewards (TD® First Class Travel® Visa Infinite): "activated and/or
+ *     closed … in the last 12 months".
+ * Đừng thêm lại từ footnote. Scotia Momentum® (cash back, không phải Scene+™)
+ * và TD® Cash Back nằm ngoài câu chốt đó nên vẫn giữ luật.
+ */
+const RULES_CHECKED_ON = "2026-09-21";
+
+/** Mọi thẻ trong họ `family` của `products.ts`, gồm cả thẻ đang xét. */
+function familySlugs(family: string): string[] {
+  const familyId = `fam_${family}`;
+  const slugs = PRODUCTS.filter((product) => (product.familyId as string | null) === familyId).map((p) => p.slug);
+  if (slugs.length === 0) throw new Error(`Không có họ thẻ "${family}" trong data/products.ts`);
+  return slugs;
+}
+
+/** Mọi thẻ CÁ NHÂN (kể cả thẻ sinh viên) của một nhà phát hành. */
+function personalIssuerSlugs(issuer: string): string[] {
+  const slugs = PRODUCTS.filter(
+    (product) => (product.issuerId as string) === issuer && product.personalOrBusiness !== "business",
+  ).map((p) => p.slug);
+  if (slugs.length === 0) throw new Error(`Không có thẻ cá nhân nào của "${issuer}" trong data/products.ts`);
+  return slugs;
+}
+
+function withinMonths(
+  months: number,
+  anchor: RuleLookback["anchor"],
+  slugs: string[],
+  source: string,
+): RuleSeed {
+  return {
+    type: "previous_cardholder_within_months",
+    value: months,
+    severity: "hard",
+    scope: "welcome_offer",
+    lookback: { anchor, slugs },
+    source,
+    from: RULES_CHECKED_ON,
+  };
+}
+
+// "(ii) not have opened any TD-Aeroplan Visa Card account (e.g., Platinum,
+// Infinite, Infinite Privilege or Business) in the last 12 months." Đếm theo
+// ngày MỞ: đóng tháng trước mà mở từ ba năm trước thì vẫn được bonus. Bản
+// Business không có trong kho nên không liệt kê được.
+const TD_AEROPLAN_12M = (page: string) =>
+  withinMonths(12, "opened", familySlugs("td-aeroplan"), `https://www.td.com/ca/en/personal-banking/products/credit-cards/aeroplan/${page}`);
+
+// "Individuals who are currently or were previously primary or secondary
+// cardholders of a Scotiabank personal credit card in the past 2 years,
+// including those that switch from an existing Scotiabank personal credit
+// card … are not eligible" — MỌI thẻ cá nhân của Scotiabank®, không riêng thẻ này.
+const SCOTIABANK_24M = (page: string) =>
+  withinMonths(24, "held", personalIssuerSlugs("scotiabank"), `https://www.scotiabank.com/ca/en/personal/credit-cards/${page}`);
+
+
+/*
+ * Điều khoản chung Aeroplan® (mục "New Card Bonus Provisions", đọc 21/09/2026):
+ * "a Member may be granted a maximum of one New Card Bonus for each type of
+ * Aeroplan Credit Card that the Member becomes a holder of, regardless of
+ * issuer (e.g., entry, core, premium, core small business, premium small
+ * business, or any other card that has a substantially similar level of
+ * benefits)". TD® và CIBC® đều dẫn nó trong footnote offer.
+ *
+ * Tức once-in-a-lifetime theo LOẠI thẻ, xuyên ngân hàng (user chốt
+ * 21/09/2026: "Tất cả các thẻ Aeroplan offer là once-in-a-lifetime"). Từng giữ
+ * TD® Aeroplan® Visa Infinite thì mất bonus của CHÍNH nó, của CIBC® Aeroplan®
+ * Visa Infinite lẫn American Express® Aeroplan® — cùng loại "core" — dù đóng
+ * từ bao giờ. Luật 12 tháng của TD® vẫn cần: nó chặn XUYÊN loại trong cùng
+ * ngân hàng (mở Platinum tháng trước thì mất bonus Infinite).
+ *
+ * Phân loại theo mức quyền lợi (phí, lounge, hành lý), không theo `tier` của
+ * họ thẻ: họ Amex® chỉ có hai hạng nên `tier` không so được giữa các họ.
+ */
+const AEROPLAN_TERMS = "https://www.aircanada.com/ca/en/aco/home/aeroplan/legal/terms-and-conditions.html";
+const AEROPLAN_CATEGORIES: Record<string, string[]> = {
+  entry: ["td-aeroplan-visa-platinum", "cibc-aeroplan-visa"],
+  core: ["td-aeroplan-visa-infinite", "cibc-aeroplan-visa-infinite", "amex-aeroplan"],
+  premium: ["td-aeroplan-visa-infinite-privilege", "cibc-aeroplan-visa-infinite-privilege", "amex-aeroplan-reserve"],
+  premium_small_business: ["amex-aeroplan-business-reserve"],
+};
+
+function aeroplanCategoryRule(slug: string): RuleSeed {
+  const category = Object.values(AEROPLAN_CATEGORIES).find((slugs) => slugs.includes(slug));
+  if (category === undefined) throw new Error(`"${slug}" chưa được xếp loại thẻ Aeroplan®`);
+  return {
+    type: "previous_cardholder_same_category",
+    value: true,
+    severity: "hard",
+    scope: "welcome_offer",
+    lookback: { anchor: "held", slugs: category },
+    source: AEROPLAN_TERMS,
+    from: RULES_CHECKED_ON,
+  };
+}
+
+/** Luật trọn đời, nguồn là footnote của ngân hàng (không phải nội dung site). */
+function lifetimeFromIssuer(source: string): RuleSeed {
+  return { ...AMEX_ONCE_IN_A_LIFETIME, source, from: RULES_CHECKED_ON };
+}
+
 const BY_PRODUCT: Record<string, RuleSeed[]> = {
   // Amex® ghi rõ người ĐANG hoặc TỪNG giữ thẻ không đủ điều kiện nhận welcome
   // bonus. Đây là luật quyết định nhất trong cả file với người đã chơi điểm
@@ -90,7 +225,10 @@ const BY_PRODUCT: Record<string, RuleSeed[]> = {
   "amex-gold-rewards": [AMEX_ONCE_IN_A_LIFETIME],
   "amex-cobalt": [AMEX_ONCE_IN_A_LIFETIME],
 
-  "scotiabank-momentum-visa-infinite-plus": income(60000, 100000),
+  "scotiabank-momentum-visa-infinite-plus": [
+    ...income(60000, 100000),
+    SCOTIABANK_24M("visa/momentum-infinite-card.html"),
+  ],
   "cibc-aventura-gold-visa": [
     { type: "minimum_household_income", value: 15000, severity: "hard" },
   ],
@@ -99,8 +237,11 @@ const BY_PRODUCT: Record<string, RuleSeed[]> = {
     { type: "student_status_required", value: true, severity: "hard" },
   ],
   "westjet-rbc-world-elite-mastercard": income(80000, 150000),
-  "td-aeroplan-visa-infinite-privilege": income(150000, 200000),
-  "td-aeroplan-visa-infinite": income(60000, 100000),
+  "td-aeroplan-visa-infinite-privilege": [
+    ...income(150000, 200000),
+    TD_AEROPLAN_12M("aeroplan-visa-infinite-privilege-card"),
+  ],
+  "td-aeroplan-visa-infinite": [...income(60000, 100000), TD_AEROPLAN_12M("aeroplan-visa-infinite-card")],
   "td-first-class-travel-visa-infinite": income(60000, 100000),
   "cibc-aventura-visa-infinite": income(60000, 100000),
   "amex-aeroplan-business-reserve": [
@@ -109,18 +250,45 @@ const BY_PRODUCT: Record<string, RuleSeed[]> = {
   "amex-marriott-bonvoy-business": [
     { type: "business_required", value: true, severity: "hard" },
   ],
-  "national-bank-world-elite-mastercard": income(80000, 150000),
-  "td-cash-back-visa-infinite": income(60000, 100000),
+  // "you must not currently hold, or have held a National Bank Mastercard
+  // credit card in the past 24 months." — mọi thẻ Mastercard® cá nhân của NBC.
+  "national-bank-world-elite-mastercard": [
+    ...income(80000, 150000),
+    withinMonths(
+      24,
+      "held",
+      personalIssuerSlugs("national-bank"),
+      "https://www.nbc.ca/personal/mastercard-credit-cards/world-elite.html",
+    ),
+  ],
+  // "This offer is not available customers who have activated and/or closed a
+  // TD Cash Back Visa Infinite Account in the last 12 months."
+  "td-cash-back-visa-infinite": [
+    ...income(60000, 100000),
+    withinMonths(
+      12,
+      "opened_or_closed",
+      ["td-cash-back-visa-infinite"],
+      "https://www.td.com/ca/en/personal-banking/products/credit-cards/cash-back/cash-back-visa-infinite-card",
+    ),
+  ],
   "wealthsimple-visa-infinite-privilege": income(150000, 200000),
   "rbc-avion-visa-infinite-privilege": income(200000, 200000),
   "td-aeroplan-visa-platinum": [
     { type: "minimum_personal_income", value: 0, severity: "hard" },
+    TD_AEROPLAN_12M("aeroplan-visa-platinum-card"),
   ],
   "amex-aeroplan": [
     { type: "minimum_personal_income", value: 0, severity: "hard" },
     AMEX_ONCE_IN_A_LIFETIME,
   ],
-  "bmo-viporter-world-elite-mastercard": income(80000, 150000),
+  // "This offer is not available to current or former cardholders who
+  // reinstate a closed account or open a new account for the same card during
+  // the Offer Period." — không có cửa sổ tháng: TỪNG giữ là mất bonus.
+  "bmo-viporter-world-elite-mastercard": [
+    ...income(80000, 150000),
+    lifetimeFromIssuer("https://www.bmo.com/popups/main/personal/credit-cards/terms-and-conditions-en.html#footnote-112"),
+  ],
   // Scotiabank® Gold: gói ngân hàng làm MIỄN PHÍ thường niên, nó KHÔNG phải
   // điều kiện để được duyệt thẻ. Trước đây nó nằm ở đây dưới dạng một câu
   // tiếng Việt trong `value` — vừa sai chỗ (đây là bảng điều kiện mở thẻ),
@@ -136,9 +304,15 @@ const BY_PRODUCT: Record<string, RuleSeed[]> = {
   // Cùng lý do với Scotiabank® Gold ngay trên.
   "wealthsimple-visa-infinite-plus": [],
 
-  // Nội dung site chưa nói gì về điều kiện của hai thẻ dưới. Để trống — xem
-  // chú thích đầu file: trống nghĩa là chưa biết, không phải không yêu cầu.
-  "united-mileageplus-neo-world-elite-mastercard": [],
+  // Nội dung site chưa nói gì về điều kiện MỞ THẺ của hai thẻ dưới — luật
+  // của United® Neo chỉ nói về welcome bonus (`scope: "welcome_offer"`), nên
+  // `eligibility_unknown` vẫn đúng: trống nghĩa là chưa biết, không phải
+  // không yêu cầu.
+  // "Limited one-time offer for new customers who have not opened a United
+  // Neo World Elite Mastercard before the date of application approval."
+  "united-mileageplus-neo-world-elite-mastercard": [
+    lifetimeFromIssuer("https://www.neofinancial.com/credit-cards/neo-united-mastercard"),
+  ],
   "scotiabank-passport-visa-infinite": [],
 
   "amex-platinum": [AMEX_ONCE_IN_A_LIFETIME],
@@ -166,7 +340,11 @@ const CANADIAN_RESIDENCY: RuleSeed = { type: "residency", value: "CA", severity:
 
 export const ELIGIBILITY_RULES: EligibilityRule[] = Object.entries(BY_PRODUCT).flatMap(
   ([slug, seeds]) =>
-    [CANADIAN_RESIDENCY, ...seeds].map((seed) => ({
+    [
+      CANADIAN_RESIDENCY,
+      ...seeds,
+      ...(Object.values(AEROPLAN_CATEGORIES).flat().includes(slug) ? [aeroplanCategoryRule(slug)] : []),
+    ].map((seed) => ({
       // Dựng từ nội dung + ngày hiệu lực, không từ vị trí trong mảng. Một sản
       // phẩm có thể có hai luật cùng `type` (thu nhập cá nhân và hộ gia đình
       // là hai `type` khác nhau, nhưng `residency` thì chỉ một) — validator
@@ -177,7 +355,9 @@ export const ELIGIBILITY_RULES: EligibilityRule[] = Object.entries(BY_PRODUCT).f
       operator:
         seed.type === "minimum_personal_income" || seed.type === "minimum_household_income"
           ? ("gte" as const)
-          : ("eq" as const),
+          : seed.type === "previous_cardholder_within_months"
+            ? ("lte" as const)
+            : ("eq" as const),
       value: seed.value,
       severity: seed.severity ?? "unknown",
       scope: seed.scope ?? "application",
@@ -185,10 +365,13 @@ export const ELIGIBILITY_RULES: EligibilityRule[] = Object.entries(BY_PRODUCT).f
       // ra thì mọi luật thu nhập của cả site rơi vào một nhóm HOẶC khổng lồ,
       // và đạt điều kiện của một thẻ bất kỳ thành đạt điều kiện của tất cả.
       ruleGroup: seed.group ? `${slug}-${seed.group}` : null,
+      lookback: seed.lookback
+        ? { anchor: seed.lookback.anchor, productIds: seed.lookback.slugs.map(productIdFor) }
+        : null,
       effectiveFrom: seed.from ?? VERIFIED_ON,
       effectiveTo: seed.to ?? null,
-      sourceUrl: `https://ghe1a.com/credit-cards/${slug}`,
-      sourceKind: "ghe1a",
+      sourceUrl: seed.source ?? `https://ghe1a.com/credit-cards/${slug}`,
+      sourceKind: seed.source ? ("issuer" as const) : ("ghe1a" as const),
       verifiedAt: seed.verifiedAt ?? seed.from ?? VERIFIED_ON,
       recordedAt: seed.from ?? RECORDED_ON,
       confidence: "verified",

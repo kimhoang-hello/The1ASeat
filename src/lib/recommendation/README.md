@@ -389,7 +389,58 @@ chối. Dùng `holdsNow` / `everHeld` / `everHeldProductIds`.
 
 Thẻ đã đóng mà không rõ ngày đóng sinh `card_closed_date_unknown`: luật "không có
 bonus nếu từng giữ trong N tháng qua" không đánh giá được, và mặc định là đủ điều
-kiện lại hứa một khoản bonus không có thật. `lastClosed` trả về **ba** trạng thái
+kiện lại hứa một khoản bonus không có thật.
+
+### Luật welcome bonus theo cửa sổ thời gian
+
+`previous_cardholder_within_months` (`scope: "welcome_offer"`, `value` = số
+tháng, `lte`) cùng trường `EligibilityRule.lookback` — `null` ở mọi loại luật
+khác, validator cưỡng chế cả hai chiều. Đọc thẳng từ footnote offer trên trang
+ngân hàng (21/09/2026), `sourceKind: "issuer"`:
+
+| Thẻ | Cửa sổ | Mốc (`anchor`) | Thẻ được tính |
+| --- | --- | --- | --- |
+| TD® Aeroplan® (Platinum, Infinite, Infinite Privilege) | 12 tháng | `opened` | cả họ TD® Aeroplan® |
+| TD® Cash Back Visa Infinite | 12 tháng | `opened_or_closed` | chính thẻ đó |
+| Scotia Momentum® Visa Infinite | 24 tháng | `held` | mọi thẻ cá nhân Scotiabank® |
+| National Bank World Elite® | 24 tháng | `held` | mọi thẻ cá nhân National Bank |
+
+CIBC® Aventura®, Scotiabank® Scene+™ (Gold American Express®, Passport, Scene+™
+sinh viên) và TD Rewards (First Class Travel®) CÓ ghi cửa sổ 12/24 tháng trong
+footnote, nhưng user chốt 21/09/2026 là thực tế vẫn nhận bonus bất kể mở thẻ
+trước đó bao lâu — nên KHÔNG có luật. Đừng thêm lại từ footnote.
+
+BMO® VIPorter và United® Neo không có cửa sổ — "từng giữ" là mất, nên dùng
+`previous_cardholder_excluded` như Amex®.
+
+Aeroplan® thì once-in-a-lifetime theo LOẠI thẻ, xuyên ngân hàng — điều khoản
+chung: "a maximum of one New Card Bonus for each type of Aeroplan Credit Card …,
+regardless of issuer". `previous_cardholder_same_category` (`value: true`,
+`anchor: "held"`, không cửa sổ) đếm `AEROPLAN_CATEGORIES` trong
+`eligibility-rules.ts`: entry (TD® Platinum, CIBC® Aeroplan® Visa), core (TD®/CIBC®
+Visa Infinite, American Express® Aeroplan®), premium (hai bản Visa Infinite
+Privilege, Aeroplan® Reserve), premium small business. Từng giữ TD® Aeroplan®
+Visa Infinite thì mất bonus của cả CIBC® Aeroplan® Visa Infinite — đúng hồ sơ
+của lỗi 21/09/2026, chỉ đổi ngân hàng. Luật 12 tháng của TD® vẫn cần cho phần
+XUYÊN loại trong cùng họ (mở Platinum tháng trước ⇒ mất bonus Infinite). RBC® chỉ loại người CHUYỂN thẻ (mô
+hình không có) — chưa mô hình hoá; lý do ghi trong `eligibility-rules.ts`.
+
+Giới hạn đã biết: chỉ thẻ có trong kho mới khai được, nên "mọi thẻ cá nhân
+Scotiabank®" thực ra là bốn thẻ trên site, và TD® Aeroplan® Business không đếm
+được. Câu trả lời "năm đóng thẻ" cũ (`YYYY-06-30`, 15–21/09/2026) phải xoá bằng
+`scripts/reco-migrate-closed-year.mts` một lần sau deploy.
+
+Ba mốc là ba cách đọc KHÁC nhau của điều khoản, và gộp chúng sai theo cả hai
+chiều: đọc TD như `held` là giấu một bonus có thật (đóng tháng trước nhưng mở
+từ ba năm trước vẫn được), đọc Scotiabank® như `opened` là hứa một bonus ngân
+hàng sẽ từ chối (đang giữ thẻ mở từ 2018 vẫn trượt). Thiếu ngày là `unknown`
+(`user_field_missing`), không bao giờ là qua — trừ một suy luận chắc chắn: đóng
+trước ngày cắt thì cũng đã mở trước ngày cắt. Đó là cách câu hỏi "đóng tháng nào"
+của §30 trả lời được luật đếm theo ngày mở. Câu đó hỏi THÁNG, không hỏi năm, và
+ghi ngày MUỘN NHẤT của tháng (`closedDateFromAnswer` trong `user.ts`): bản hỏi năm
+ghi "2024" thành 30/06/2024, và người đóng Scotiabank® tháng 12/2024 bị đọc là
+ngoài cửa sổ 24 tháng. `answersFor` của §30 dịch bằng chính hàm đó (tháng này,
+18 tháng trước, "trước đó"). `lastClosed` trả về **ba** trạng thái
 (`never_closed` / `closed` / `unknown`) và chuyển sang `unknown` khi CHỈ MỘT quãng
 thiếu ngày — trả về ngày đã biết ở đó là trình bày một ngày cũ như thể nó là lần
 đóng gần nhất.

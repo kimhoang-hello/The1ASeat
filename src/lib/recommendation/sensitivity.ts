@@ -22,7 +22,7 @@
  * ngược sẽ là một vòng `engine → sensitivity → engine`.
  */
 
-import { asArray, isObject } from "./user.ts";
+import { asArray, closedDateFromAnswer, closedMonthChoices, isObject } from "./user.ts";
 import type { PointsProgramId, SpendCategory } from "./types.ts";
 import type { EstimatedAmount, UserDataGap, UserSpendProfile, UserState } from "./user-types.ts";
 
@@ -60,15 +60,34 @@ function tripGoal(state: UserState, goalId: string) {
  *
  * Vắng mặt CÓ CHỦ Ý: `*_income_declined` (thử lấp là thử đúng điều người dùng
  * vừa từ chối nói — cùng lý do §30 không hỏi lại), những chỗ trống cần một
- * NGÀY cụ thể, và mục tiêu (không có "mục tiêu điển hình" nào).
+ * NGÀY cụ thể mà không suy được từ ngày chạy, và mục tiêu (không có "mục tiêu điển hình" nào).
  *
  * `cards_undeclared` / `balances_undeclared` cũng vắng: câu trả lời có giá trị
  * là "tôi đang giữ thẻ X", và không có thẻ X điển hình nào. Thử "chỉ có chừng
  * này" thì gần như không bao giờ đổi được gì — và đem kết quả đó ra kết luận
  * câu hỏi vô giá trị là sai. Chúng giữ chỗ theo bảng ưu tiên tĩnh.
  */
-export function answersFor(gap: UserDataGap): Answer[] {
+export function answersFor(gap: UserDataGap, asOf?: string): Answer[] {
   switch (gap.kind) {
+    case "card_closed_date_unknown": {
+      // Cần NGÀY của lượt chạy: "tháng trước" chỉ có nghĩa so với hôm nay.
+      // Dịch bằng CHÍNH hàm trang dùng (`closedDateFromAnswer`). Ba câu trả
+      // lời lộ được cả cửa sổ 12 lẫn 24 tháng: tháng này (trong cả hai), 18
+      // tháng trước (ngoài 12, trong 24), và "trước đó" (ngoài mọi cửa sổ).
+      if (asOf === undefined) return [];
+      const choices = closedMonthChoices(asOf);
+      return [choices[0], choices[18], choices[choices.length - 1]].map((choice) => {
+        const day = closedDateFromAnswer(choice.value, asOf) as string;
+        return {
+          label: `đóng ${choice.label.toLowerCase()}`,
+          apply: (s: UserState) => {
+            for (const card of asArray(s.cards)) {
+              if (card?.id === gap.subject) card.closedDate = day;
+            }
+          },
+        };
+      });
+    }
     case "personal_income_unknown":
       return [
         { label: "$30,000–40,000", apply: (s) => void (s.profile.annualPersonalIncome = band(30_000, 40_000)) },
@@ -157,7 +176,6 @@ export function answersFor(gap: UserDataGap): Answer[] {
     case "balances_undeclared":
     case "personal_income_declined":
     case "household_income_declined":
-    case "card_closed_date_unknown":
     case "trip_dates_unknown":
     case "trip_flexibility_unknown":
       return [];
@@ -213,8 +231,10 @@ export function probeGap(
    * sơ không thể có — lật người thắng, nên §30 chọn hỏi hạng mục đó.
    */
   errorsOf: (state: UserState) => ReadonlySet<string>,
+  /** Ngày của lượt chạy — chỉ những câu trả lời thử về NGÀY cần tới. */
+  asOf?: string,
 ): GapProbe | null {
-  const answers = answersFor(gap);
+  const answers = answersFor(gap, asOf);
   if (answers.length === 0 || !isObject(state.profile)) return null;
   const before = errorsOf(state);
   const outcomes: ProbeOutcome[] = answers.map((answer) => {

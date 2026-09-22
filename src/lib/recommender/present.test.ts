@@ -451,3 +451,23 @@ test("mốc khai lời điều khoản thì trang nói lời đó, KHÔNG nói s
     }
   }
 });
+
+test("chưa khai số dư: khối chuyến bay KHÔNG in 'gom được 0 điểm · còn thiếu · phủ 0%'", () => {
+  // `japanTripFunded` có số dư thật; bỏ hẳn phần đã khai là đúng hồ sơ của người
+  // bấm "Bỏ qua" ở câu "có điểm ở chương trình nào".
+  const skipped: UserState = {
+    ...japanTripFunded,
+    balances: [],
+    declared: { ...japanTripFunded.declared, balances: false },
+  };
+  const view = presentRun(runFor(skipped), DATA, offersFor(DATA));
+  assert.ok(view?.trip != null);
+  assert.ok(view.trip.needLow !== null, "tiền đề: chặng đã định giá, số điểm cần có mặt");
+  assert.equal(view.trip.accessible, null);
+  assert.equal(view.trip.gap, null);
+  assert.equal(view.trip.coverage, null);
+
+  // Chiều ngược lại: đã khai thì con số vẫn hiện.
+  const funded = presentRun(runFor(japanTripFunded), DATA, offersFor(DATA));
+  assert.ok(funded?.trip?.accessible != null);
+});

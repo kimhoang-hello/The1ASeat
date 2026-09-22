@@ -39,7 +39,7 @@
 
 import type { ReasonCode } from "../recommendation/reason-codes.ts";
 import { COMPONENT_STRENGTH, NO_CARD_SENTENCE } from "./copy.ts";
-import { coverageStatement, formatNeed, formatPoints, type ResultView } from "./present.ts";
+import { coverageStatement, formatNeed, formatPoints, vietnameseDate, type ResultView } from "./present.ts";
 
 /**
  * Lý do "ủng hộ" mà engine suy ra từ một ƯỚC LƯỢNG (phần phủ chuyến đi).
@@ -113,11 +113,8 @@ export interface ExplanationPayload {
   dataVerifiedAt: string | null;
 }
 
-/** "2026-09-16" → "16/09/2026", cách site viết ngày. */
-export function vietnameseDate(iso: string): string {
-  const [year, month, day] = iso.slice(0, 10).split("-");
-  return `${day}/${month}/${year}`;
-}
+// Nằm ở `present.ts` để trang Phase 5 dùng được mà không import lớp LLM.
+export { vietnameseDate };
 
 /**
  * Câu hoàn chỉnh của bảng tra → mệnh đề đứng sau câu dẫn.
@@ -180,6 +177,16 @@ export function explanationPayload(view: ResultView): ExplanationPayload {
     } else {
       const bonus = cleanValue(action.welcomeBonus);
       if (bonus !== null) add("bonus", "verified", "offer", `welcome bonus hiện hành là ${bonus}`);
+      // Chưa kiểm được người này còn nhận bonus không: con số vẫn là dữ kiện
+      // về OFFER, nhưng nói nó mà không kèm câu này là hứa trọn bonus.
+      if (bonus !== null && action.welcomeBonusUncertain) {
+        add(
+          "bonus_uncertain",
+          "editorial",
+          "offer",
+          "chưa chắc bạn còn nhận được welcome bonus này, vì điều khoản tính theo thẻ bạn từng giữ và lúc bạn mở hay đóng thẻ",
+        );
+      }
       // KHÔNG có mốc chi: `minSpendPer90Days` là con số QUY ĐỔI về mỗi 90 ngày
       // để so với sức dồn chi tiêu, không phải điều khoản. Một offer đòi $3,000
       // trong 90 ngày VÀ $12,000 trong 365 ngày thì "nhận trọn bonus với $3,000

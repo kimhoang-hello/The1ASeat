@@ -238,6 +238,16 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * thước của chúng vẫn là `best` — nhưng `analyzePortfolio` nay nhận `mode`,
  * nên version phải tăng: §20 nói về MỌI đầu vào.
  *
+ * 4.27.0 — hai MÃ LÝ DO nói sai trên trang, điểm số và thứ hạng không đổi.
+ * `INCOME_MAY_NOT_QUALIFY` ("nằm ngay quanh ngưỡng") từng gắn cho MỌI nhóm
+ * thu nhập chưa biết — kể cả người khai $80–150K với thẻ đòi $200,000, nơi cái
+ * chưa biết là vế hộ gia đình; nay chỉ khi khoảng khai BẮC QUA ngưỡng.
+ * `MIN_SPEND_GOOD_FIT` từng đọc `minSpendFit >= 0.9` (tỷ lệ ~0.54) thay vì
+ * 70% sức dồn như `reason-codes.ts` ghi, nên mốc cần 56% sức dồn bị gọi là
+ * "sát, không dư dả". Thêm: §30 phá hoà giữa hạng mục chi tiêu theo thứ tự
+ * `SPEND_CATEGORIES` thay vì chữ cái (từng hỏi "drugstore" trước "grocery") —
+ * đổi `followUp`, không đổi thứ hạng.
+ *
  * 4.26.0 — **lỗi từ Phase 1**, tách khỏi mục tiêu `cash` vì nó ảnh hưởng MỌI
  * mục tiêu: `earnFitFor` bỏ hẳn hạng mục nào thẻ không có dòng tỷ lệ riêng,
  * thay vì cho nó rơi về tỷ lệ nền `everything_else` của chính thẻ đó. Thẻ chỉ
@@ -249,6 +259,19 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * `next_card`, `diversify`, `earn_points`, `cash`. `trip` (§10.2) không đọc
  * nó, và bản chụp xác nhận: `u_japan_gap` và `u_vn_gap` đổi dấu vân tay mà
  * giữ nguyên người thắng lẫn điểm.
+ *
+ * 4.28.0 — luật welcome bonus theo CỬA SỔ THỜI GIAN
+ * (`previous_cardholder_within_months`), đọc từ điều khoản gốc của TD®,
+ * CIBC® Aventura®, Scotiabank® và National Bank; thêm luật trọn đời cho BMO®
+ * VIPorter và United® Neo, và luật once-in-a-lifetime THEO LOẠI THẺ của
+ * Aeroplan® (`previous_cardholder_same_category`: entry/core/premium, xuyên
+ * ngân hàng). Trước đây chỉ Amex® có luật "từng giữ", nên hồ sơ
+ * từng giữ TD® Aeroplan® Visa Infinite (đã đóng, không rõ ngày) được khuyên
+ * CHÍNH thẻ đó với trọn 50,000 điểm (test end-to-end 21/09/2026). Không rõ
+ * ngày = `unknown`, không phải qua; §30 nay THỬ được câu tháng đóng thẻ (ba câu
+ * trả lời theo ngày chạy) thay vì bỏ qua nó, và câu đó hỏi THÁNG thay vì năm
+ * (năm ghi thành 30/06 từng làm một lần đóng tháng 12 lọt ra ngoài cửa sổ). Thứ hạng đổi với mọi hồ sơ có thẻ
+ * đã đóng cùng họ/cùng ngân hàng.
  *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
@@ -262,7 +285,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.26.0";
+export const ENGINE_VERSION = "4.28.0";
 
 export interface RecommendInput {
   state: UserState;
@@ -759,6 +782,7 @@ export function recommend(input: RecommendInput): RecommendationRun {
                   .filter((issue) => issue.level === "error")
                   .map((issue) => `${issue.entity}|${issue.message}`),
               ),
+            asOf,
           );
           if (probe === null) return null;
           followUpProbes.push(probe);

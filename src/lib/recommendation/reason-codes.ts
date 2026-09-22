@@ -95,9 +95,9 @@ export const REASON_CODE_NOTES: Record<ReasonCode, string> = {
   OFFER_TERMS_UNKNOWN:
     "offer-quality.ts — offer có headline nhưng không có component nào, tức mức DÙNG ĐƯỢC chưa biết (DataGap offer_terms_unknown).",
   WELCOME_BONUS_UNAVAILABLE:
-    "eligibility.ts — luật scope welcome_offer chặn (Amex® once-in-a-lifetime). Thẻ vẫn mở được, bonus thì không.",
+    "eligibility.ts — luật scope welcome_offer chặn (Amex® once-in-a-lifetime, hoặc mở/đóng/giữ thẻ trong N tháng qua). Thẻ vẫn mở được, bonus thì không.",
   WELCOME_BONUS_UNCERTAIN:
-    "eligibility.ts — cửa welcome bonus CHƯA BIẾT (vd. chưa khai thẻ từng giữ). rules.ts trừ nửa mức của WELCOME_BONUS_UNAVAILABLE.",
+    "eligibility.ts — cửa welcome bonus CHƯA BIẾT (vd. chưa khai thẻ từng giữ, hoặc thẻ đã đóng mà không rõ ngày với luật N tháng). rules.ts trừ nửa mức của WELCOME_BONUS_UNAVAILABLE.",
 
   MIN_SPEND_GOOD_FIT: "suitability.ts — mốc chi 90 ngày ≤ 70% sức dồn người dùng khai (§13).",
   MIN_SPEND_TIGHT: "suitability.ts — mốc chi nằm trong khoảng 70–100% sức dồn.",
@@ -194,9 +194,9 @@ export const WARNING_CODE_NOTES: Record<WarningCode, string> = {
   SECOND_YEAR_FEE_APPLIES:
     "suitability.ts — offer miễn phí năm đầu nhưng phí thường niên vẫn tới ở năm thứ hai.",
   WELCOME_BONUS_BLOCKED_BY_PAST_CARD:
-    "eligibility.ts — everHeld + luật once-in-a-lifetime. Không phải 'từng đóng' mà là TỪNG GIỮ.",
+    "eligibility.ts — everHeld + luật once-in-a-lifetime (Amex®, BMO®, Neo, loại thẻ Aeroplan®), hoặc luật N tháng (previous_cardholder_within_months) trượt. Thẻ gây chặn có thể là thẻ KHÁC cùng họ/cùng ngân hàng.",
   WELCOME_BONUS_NOT_VERIFIABLE:
-    "eligibility.ts — thiếu dữ liệu người dùng cho luật welcome bonus (thường là danh sách thẻ chưa khai).",
+    "eligibility.ts — thiếu dữ liệu người dùng cho luật welcome bonus (danh sách thẻ chưa khai, hoặc ngày mở/đóng của thẻ luật N tháng đếm).",
   ELIGIBILITY_NOT_VERIFIABLE: "eligibility.ts — thiếu dữ liệu người dùng cho một luật cứng.",
   AWARD_ROUTE_NOT_IN_DATASET: "trip-need.ts — cặp vùng chưa có award strategy nào.",
   AWARD_PRICE_FLOOR_ONLY: "trip-need.ts — chỉ có mức sàn của định giá động.",

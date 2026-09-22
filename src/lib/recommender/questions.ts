@@ -41,6 +41,7 @@ import type {
   UserState,
 } from "../recommendation/user-types.ts";
 import { amountRange } from "../recommendation/user-types.ts";
+import { closedDateFromAnswer, closedMonthChoices } from "../recommendation/user.ts";
 
 /* ------------------------------------------------------------------ *
  * Kiểu
@@ -248,15 +249,23 @@ interface Band {
 
 const money = (n: number) => `$${n.toLocaleString("en-US")}`;
 
-function bands(edges: number[]): Band[] {
+/**
+ * `exclusiveHigh`: nấc "Dưới $60,000" lưu thành [0, 59,999] chứ không phải
+ * [0, 60,000]. Dùng cho thu nhập, nơi mỗi nấc là một ngưỡng "tối thiểu $X" của
+ * ngân hàng: khoảng chạm đúng $X là BẮC QUA ngưỡng (`compareToThreshold`), nên
+ * người khai "dưới $60,000" không bao giờ được kết luận là chưa đạt $60,000.
+ */
+function bands(edges: number[], { exclusiveHigh = false } = {}): Band[] {
   const rows: Band[] = [];
   for (let i = 0; i < edges.length; i += 1) {
     const low = i === 0 ? 0 : edges[i - 1];
     const high = edges[i];
     rows.push({
       value: `${low}-${high}`,
-      label: i === 0 ? `Dưới ${money(high)}` : `${money(low)} – ${money(high)}`,
-      amount: amountRange(low, high),
+      // Nhãn phải nói đúng khoảng lưu: "$60,000 – $79,999", không phải "– $80,000"
+      // — người thu nhập đúng $80,000 bấm vào đó sẽ bị coi là DƯỚI ngưỡng $80,000.
+      label: i === 0 ? `Dưới ${money(high)}` : `${money(low)} – ${money(exclusiveHigh ? high - 1 : high)}`,
+      amount: amountRange(low, exclusiveHigh ? high - 1 : high),
     });
   }
   const last = edges[edges.length - 1];
@@ -266,7 +275,35 @@ function bands(edges: number[]): Band[] {
 
 const MONTHLY_SPEND = bands([1_000, 2_500, 5_000, 10_000]);
 const CAPACITY_3M = bands([1_500, 3_000, 6_000, 12_000]);
-const INCOME = bands([60_000, 80_000, 150_000]);
+/**
+ * Nấc thu nhập dựng từ CHÍNH các ngưỡng trong dữ liệu thẻ, riêng cho cá nhân và
+ * hộ gia đình.
+ *
+ * Nấc không trùng ngưỡng thì câu trả lời không bao giờ gỡ được điều kiện: bản
+ * trước dùng chung [60K, 80K, 150K] cho cả hai câu, nên người khai "$150,000
+ * trở lên" mãi BẮC QUA ngưỡng $200,000 của Avion® Visa Infinite Privilege, còn
+ * hộ gia đình "$80,000 – $150,000" bắc qua ngưỡng $100,000 của cả loạt thẻ
+ * Visa Infinite.
+ */
+const FALLBACK_INCOME_EDGES = [60_000, 80_000, 150_000];
+
+function incomeEdges(
+  ctx: QuestionContext,
+  ruleType: "minimum_personal_income" | "minimum_household_income",
+): number[] {
+  const edges = new Set<number>();
+  for (const rule of ctx.dataset.eligibilityRules) {
+    if (rule.ruleType !== ruleType || rule.severity !== "hard") continue;
+    const value = Number(rule.value);
+    if (Number.isFinite(value) && value > 0) edges.add(value);
+  }
+  return edges.size === 0 ? FALLBACK_INCOME_EDGES : [...edges].sort((a, b) => a - b);
+}
+
+const personalIncomeBands = (ctx: QuestionContext) =>
+  bands(incomeEdges(ctx, "minimum_personal_income"), { exclusiveHigh: true });
+const householdIncomeBands = (ctx: QuestionContext) =>
+  bands(incomeEdges(ctx, "minimum_household_income"), { exclusiveHigh: true });
 const CATEGORY_SPEND: Band[] = [
   { value: "0", label: "Gần như không chi", amount: amountRange(0, 0) },
   ...bands([200, 500, 1_000]),
@@ -334,15 +371,6 @@ function monthOptions(today: string): ChoiceOption[] {
   return rows;
 }
 
-/** Năm đóng thẻ — 10 năm gần nhất, mới nhất trước. */
-function closedYearOptions(today: string): ChoiceOption[] {
-  const year = Number(today.slice(0, 4));
-  return Array.from({ length: 10 }, (_, i) => ({
-    value: String(year - i),
-    label: String(year - i),
-  }));
-}
-
 /**
  * Câu hỏi cho một chỗ trống — `null` khi chỗ trống đó KHÔNG hỏi được.
  *
@@ -403,7 +431,12 @@ export function questionFor(
       return {
         ...base,
         title: `Bạn đang có khoảng bao nhiêu điểm ${programName(ctx, gap.subject)}?`,
-        help: "Con số này quyết định bạn còn thiếu bao nhiêu cho chuyến bay — gõ áng chừng cũng được.",
+        // Câu "còn thiếu bao nhiêu cho chuyến bay" chỉ đúng khi có mục tiêu
+        // chuyến bay; với "thẻ tiếp theo" hay "quy điểm ra tiền" nó nói về một
+        // chuyến bay người dùng chưa từng nhắc.
+        help: state.goals.some((goal) => goal.type === "trip")
+          ? "Con số này quyết định bạn còn thiếu bao nhiêu cho chuyến bay — gõ áng chừng cũng được."
+          : "Số điểm đang có quyết định bạn cần thêm loại điểm nào — gõ áng chừng cũng được.",
         input: {
           type: "number",
           name: "answer",
@@ -438,17 +471,19 @@ export function questionFor(
         input: { type: "choice", name: "answer", options: bandOptions(CATEGORY_SPEND) },
       };
 
-    case "personal_income_unknown":
+    case "personal_income_unknown": {
+      const edges = incomeEdges(ctx, "minimum_personal_income");
       return {
         ...base,
         title: "Thu nhập cá nhân một năm của bạn khoảng bao nhiêu?",
-        help: "Vài thẻ có ngưỡng thu nhập tối thiểu (thấp nhất $15,000, cao nhất $150,000). Mình chỉ cần khoảng, không cần con số chính xác.",
+        help: `Vài thẻ có ngưỡng thu nhập tối thiểu (thấp nhất ${money(edges[0])}, cao nhất ${money(edges[edges.length - 1])}). Mình chỉ cần khoảng, không cần con số chính xác.`,
         input: {
           type: "choice",
           name: "answer",
-          options: [...bandOptions(INCOME), { value: "decline", label: "Không muốn trả lời" }],
+          options: [...bandOptions(personalIncomeBands(ctx)), { value: "decline", label: "Không muốn trả lời" }],
         },
       };
+    }
 
     case "household_income_unknown": {
       // Điều kiện thu nhập của ngân hàng Canada nối bằng HOẶC, và vế hộ gia
@@ -456,7 +491,9 @@ export function questionFor(
       // nên bỏ hẳn những lựa chọn đó khỏi danh sách thay vì để người dùng bấm
       // vào rồi nhận lỗi.
       const personalLow = state.profile.annualPersonalIncome?.low ?? 0;
-      const options = INCOME.filter((row) => row.amount.high === null || row.amount.high >= personalLow);
+      const options = householdIncomeBands(ctx).filter(
+        (row) => row.amount.high === null || row.amount.high >= personalLow,
+      );
       return {
         ...base,
         title: "Thu nhập của cả hộ gia đình một năm khoảng bao nhiêu?",
@@ -585,13 +622,10 @@ export function questionFor(
     case "card_closed_date_unknown":
       return {
         ...base,
-        title: `Bạn đóng thẻ ${cardName(state, ctx, gap.subject)} vào năm nào?`,
-        help: "Vài ngân hàng chỉ chặn welcome bonus trong một số tháng sau khi đóng, nên năm đóng có thể mở lại bonus cho bạn.",
-        input: {
-          type: "choice",
-          name: "answer",
-          options: closedYearOptions(ctx.today),
-        },
+        title: `Bạn đóng thẻ ${cardName(state, ctx, gap.subject)} vào tháng nào?`,
+        help: "Vài ngân hàng chỉ chặn welcome bonus trong 12 hoặc 24 tháng sau khi đóng, nên tháng đóng có thể mở lại bonus cho bạn. Không nhớ chính xác thì chọn tháng muộn nhất có thể.",
+        // Tháng, không phải năm — xem `closedMonthChoices`.
+        input: { type: "month", months: closedMonthChoices(ctx.today) },
       };
 
     // Người dùng đã từ chối: §30 cố ý không hỏi lại.
@@ -733,7 +767,42 @@ function tripGoalOf(state: UserState, goalId: string): TripGoal | null {
   return goal?.type === "trip" ? goal : null;
 }
 
-const BAD = (what: string): ApplyResult => ({ ok: false, error: `Câu trả lời không hợp lệ: ${what}` });
+/**
+ * Chủ ngữ của câu "không hợp lệ" — danh sách ĐÓNG, không bao giờ chép giá trị
+ * form gửi lên. Câu lỗi đi qua `?loi=` rồi in lên trang, và trang chỉ in những
+ * câu nó biết trước (`KNOWN_ERRORS`); một câu mang slug do người ngoài gõ vào
+ * là một câu trang không nhận ra — và là chỗ chèn chữ tuỳ ý lên ghe1a.com.
+ */
+const BAD_SUBJECTS = [
+  "mục tiêu",
+  "nước cư trú",
+  "thẻ",
+  "chương trình điểm",
+  "số điểm",
+  "mức chi tiêu",
+  "hạng mục chi tiêu",
+  "thu nhập",
+  "thu nhập hộ gia đình",
+  "ngưỡng phí",
+  "lựa chọn có/không",
+  "chuyến đi",
+  "hạng ghế",
+  "số người",
+  "loại vé",
+  "mức linh hoạt",
+  "tháng bay",
+  "tháng đóng thẻ",
+  "câu hỏi này không trả lời được",
+] as const;
+
+const badMessage = (what: string) => `Câu trả lời không hợp lệ: ${what}`;
+const BAD = (what: (typeof BAD_SUBJECTS)[number]): ApplyResult => ({ ok: false, error: badMessage(what) });
+
+export const CONFLICTING_ANSWER =
+  "Câu trả lời này ngược với một câu bạn đã trả lời trước đó — sửa câu đó trước đã.";
+
+/** Mọi câu lỗi `applyAnswer` / `applyAnswerChecked` có thể trả về. */
+export const ANSWER_ERRORS: readonly string[] = [...BAD_SUBJECTS.map(badMessage), CONFLICTING_ANSWER];
 
 /**
  * Áp một câu trả lời lên hồ sơ. KHÔNG sửa `state` được truyền vào.
@@ -764,10 +833,7 @@ export function applyAnswerChecked(
   if (errors.length > 0) {
     // KHÔNG kèm câu của validator: nó chứa chính con số thu nhập / chi tiêu,
     // và thông báo lỗi đi qua query string (lịch sử trình duyệt, log, GA).
-    return {
-      ok: false,
-      error: "Câu trả lời này ngược với một câu bạn đã trả lời trước đó — sửa câu đó trước đã.",
-    };
+    return { ok: false, error: CONFLICTING_ANSWER };
   }
   return applied;
 }
@@ -809,7 +875,7 @@ export function applyAnswer(
       ] as const) {
         for (const slug of list) {
           const product = bySlug.get(slug);
-          if (product === undefined) return BAD(`thẻ "${slug}"`);
+          if (product === undefined) return BAD("thẻ");
           // Cùng một thẻ vừa đang giữ vừa đã đóng: giữ vế ĐANG GIỮ. Hai dòng
           // đang-giữ cho một sản phẩm là lỗi validator, và "đang giữ" là câu
           // trả lời mạnh hơn.
@@ -835,7 +901,7 @@ export function applyAnswer(
       const seen = new Set<string>();
       const balances = [];
       for (const programId of programs) {
-        if (!known.has(programId)) return BAD(`chương trình "${programId}"`);
+        if (!known.has(programId)) return BAD("chương trình điểm");
         if (seen.has(programId)) continue;
         seen.add(programId);
         balances.push({
@@ -899,7 +965,7 @@ export function applyAnswer(
         next.profile.annualPersonalIncome = null;
         return { ok: true, state: next };
       }
-      const amount = bandByValue(INCOME, answer);
+      const amount = bandByValue(personalIncomeBands(ctx), answer);
       if (amount === null) return BAD("thu nhập");
       next.profile.annualPersonalIncome = amount;
       next.profile.personalIncomeDeclined = false;
@@ -912,7 +978,7 @@ export function applyAnswer(
         next.profile.annualHouseholdIncome = null;
         return { ok: true, state: next };
       }
-      const amount = bandByValue(INCOME, answer);
+      const amount = bandByValue(householdIncomeBands(ctx), answer);
       if (amount === null) return BAD("thu nhập hộ gia đình");
       next.profile.annualHouseholdIncome = amount;
       next.profile.householdIncomeDeclined = false;
@@ -994,13 +1060,10 @@ export function applyAnswer(
     case "card_closed_date_unknown": {
       const card = next.cards.find((row) => row.id === spec.subject);
       if (card === undefined) return BAD("thẻ");
-      const year = Number(answer);
-      const thisYear = Number(ctx.today.slice(0, 4));
-      if (!Number.isInteger(year) || year < thisYear - 9 || year > thisYear) return BAD("năm đóng thẻ");
-      // Giữa năm: người dùng chỉ nhớ năm, và cả hai đầu năm đều là một lời
-      // khẳng định mạnh hơn thứ họ vừa nói. Ngày mở thẻ thì để trống — không
-      // suy ra được.
-      card.closedDate = year === thisYear ? ctx.today : `${year}-06-30`;
+      const closedDate = closedDateFromAnswer(form.get("month") ?? "", ctx.today);
+      if (closedDate === null) return BAD("tháng đóng thẻ");
+      // Ngày mở thì để trống — không suy ra được.
+      card.closedDate = closedDate;
       return { ok: true, state: next };
     }
 

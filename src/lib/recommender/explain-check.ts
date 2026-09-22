@@ -170,6 +170,10 @@ export function checkExplanation(payload: ExplanationPayload, raw: unknown): Che
   if (offerShown && byId.has("bonus_blocked") && !used.has("bonus_blocked")) {
     problems.push("nói về offer và chi phí mà bỏ dữ kiện bonus_blocked");
   }
+  // Cùng lý do, nửa còn lại: nói con số bonus mà giấu việc chưa chắc nhận được.
+  if (used.has("bonus") && byId.has("bonus_uncertain") && !used.has("bonus_uncertain")) {
+    problems.push("nói con số welcome bonus mà bỏ dữ kiện bonus_uncertain");
+  }
 
   return problems.length === 0 ? { ok: true, draft } : { ok: false, problems };
 }

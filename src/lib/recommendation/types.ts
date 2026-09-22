@@ -906,6 +906,8 @@ export type EligibilityRuleType =
   | "residency"
   | "existing_cardholder_excluded" // đang giữ thẻ này thì không có welcome bonus
   | "previous_cardholder_excluded" // từng giữ — Amex® "once in a lifetime"
+  | "previous_cardholder_within_months" // mở/đóng/giữ thẻ trong N tháng qua — xem `RuleLookback`
+  | "previous_cardholder_same_category" // từng giữ thẻ CÙNG LOẠI, ngân hàng nào cũng vậy — Aeroplan® once-in-a-lifetime
   | "business_required"
   | "student_status_required"
   | "banking_relationship_required";
@@ -941,6 +943,41 @@ export interface EligibilityRule extends Temporal, Sourced {
    * `null` = luật đứng một mình, phải đạt.
    */
   ruleGroup: string | null;
+  /**
+   * Chỉ cho `previous_cardholder_within_months` (`value` = số tháng) và
+   * `previous_cardholder_same_category` (`value` = true, `anchor` = `held`,
+   * không có cửa sổ) — `null` ở mọi loại khác. Validator cưỡng chế cả hai chiều.
+   */
+  lookback: RuleLookback | null;
+}
+
+/**
+ * Luật "không có welcome bonus nếu … trong N tháng qua" — dạng các ngân hàng
+ * Canada ngoài Amex® dùng. Hai thứ mà một boolean "từng giữ" không nói được:
+ *
+ * `anchor` — MỐC NÀO rơi vào cửa sổ, và điều khoản gốc KHÁC NHAU thật:
+ *   `opened`           — "not have opened any TD-Aeroplan Visa Card account …
+ *                        in the last 12 months" (TD® Aeroplan®). Đóng thẻ
+ *                        tháng trước mà mở từ ba năm trước thì VẪN được bonus.
+ *   `opened_or_closed` — "activated and/or closed … in the last 12 months"
+ *                        (TD® First Class, Cash Back), "opened, transferred or
+ *                        cancelled another Aventura card" (CIBC®).
+ *   `held`             — "currently or were previously … cardholders … in the
+ *                        past 2 years" (Scotiabank®, National Bank). Đang giữ
+ *                        là trượt, dù mở từ bao giờ.
+ *   Gộp ba cách đọc làm một thì sai theo cả hai chiều: đọc TD như `held` là
+ *   giấu một bonus người đó nhận được; đọc Scotiabank® như `opened` là hứa một
+ *   bonus ngân hàng sẽ từ chối.
+ *
+ * `productIds` — thẻ NÀO được tính, luôn gồm chính thẻ này. Điều khoản hiếm
+ * khi chỉ nói về một thẻ: TD đếm cả họ Aeroplan®, Scotiabank® đếm MỌI thẻ cá
+ * nhân của ngân hàng. Liệt kê tường minh chứ không suy từ họ/nhà phát hành lúc
+ * chạy: phạm vi là thứ điều khoản NÓI, và nó không trùng khít với cách mình
+ * gom họ thẻ.
+ */
+export interface RuleLookback {
+  anchor: "opened" | "opened_or_closed" | "held";
+  productIds: ProductId[];
 }
 
 /* ------------------------------------------------------------------ *

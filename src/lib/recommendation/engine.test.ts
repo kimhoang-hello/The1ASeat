@@ -340,6 +340,29 @@ test("§14 — khoảng thu nhập BẮC QUA ngưỡng là `unknown`, không ph�
   assert.ok(verdict.reasonCodes.includes("INCOME_MAY_NOT_QUALIFY"));
 });
 
+test("§14 — cá nhân DƯỚI HẲN ngưỡng, hộ gia đình chưa khai: chưa biết, nhưng KHÔNG 'quanh ngưỡng'", () => {
+  // Trang đọc INCOME_MAY_NOT_QUALIFY thành "khoảng thu nhập bạn khai nằm ngay
+  // quanh ngưỡng". Người khai $80–150K cá nhân với thẻ đòi $200,000 thì không
+  // quanh ngưỡng nào cả — cái chưa biết là vế hộ gia đình.
+  const state: UserState = {
+    ...beginnerNoCards,
+    profile: {
+      ...beginnerNoCards.profile,
+      annualPersonalIncome: { low: 80_000, high: 150_000 },
+      annualHouseholdIncome: null,
+    },
+  };
+  const verdict = evaluateEligibility(
+    productIdFor("rbc-avion-visa-infinite-privilege"),
+    state,
+    IX,
+    ASOF,
+  );
+  assert.equal(verdict.status, "unknown");
+  assert.ok(verdict.reasonCodes.includes("ELIGIBILITY_UNCERTAIN"));
+  assert.ok(!verdict.reasonCodes.includes("INCOME_MAY_NOT_QUALIFY"));
+});
+
 test("§14 — vế HOẶC của thu nhập: cá nhân trượt, hộ gia đình đạt ⇒ ĐỦ điều kiện", () => {
   // `lowSpendCapacity` khai 45–55K cá nhân (dưới $60,000) và 110–130K hộ gia
   // đình (trên $100,000). Đọc hai dòng đó như phép VÀ là loại thẳng đúng
@@ -2112,6 +2135,22 @@ test("§30 — thẻ thắng cuộc phụ thuộc dữ kiện nào thì hỏi CH
   assert.equal(question?.gapKind, "annual_fee_tolerance_unknown");
 });
 
+test("§30 — hạng mục chi tiêu HOÀ nhau: hỏi hạng mục phổ biến trước, không theo chữ cái", () => {
+  // Bốn hạng mục cùng đổi được người thắng 2/3 lần thử; phá hoà theo chữ cái
+  // làm trang hỏi "nhà thuốc" trước "siêu thị".
+  const winner = run(beginnerNoCards).results[0].primaryAction;
+  const question = nextQuestion({
+    gaps: ["travel", "drugstore", "grocery", "gas"].map((subject) => ({
+      kind: "spend_category_unknown" as const,
+      subject,
+      reason: "",
+    })),
+    ranked: [winner],
+    measure: () => 2 / 3,
+  });
+  assert.equal(question?.subject, "grocery");
+});
+
 test("điều khoản offer CHƯA BIẾT ≠ offer KHÔNG đòi chi tiêu", () => {
   // Cả hai đều cho `spendPerNinetyDays === null`, và bản trước chấm cả hai
   // bằng 1.0 — mức phù hợp TỐI ĐA. Nghĩa là engine nói "thẻ này dễ đạt bonus"
@@ -2138,6 +2177,30 @@ test("điều khoản offer CHƯA BIẾT ≠ offer KHÔNG đòi chi tiêu", () =
   });
   assert.equal(verdict.minSpendFit, null, "điều khoản chưa biết mà vẫn chấm là vừa sức");
   assert.ok(verdict.reasonCodes.includes("OFFER_TERMS_UNKNOWN"));
+});
+
+test("§13 — mốc chi cần 56% sức dồn là VỪA SỨC, không phải 'sát'", () => {
+  // Avion® Visa Infinite: $5,000 trong 180 ngày = $2,500 mỗi 90 ngày, người
+  // dùng dồn được $3,000–6,000. Bản trước gắn nhãn theo `minSpendFit >= 0.9`,
+  // tức tỷ lệ ~0.54 — trang nói "sát, không dư dả" với một mốc dưới cả đầu
+  // thấp của khoảng khai.
+  const product = DATA.products.find((p) => p.slug === "rbc-avion-visa-infinite")!;
+  const verdictFor = (capacity: { low: number; high: number }) =>
+    evaluateSuitability({
+      product,
+      state: beginnerNoCards,
+      facts: offerFacts(product, IX, ASOF, capacity, []),
+      capacity,
+      ix: IX,
+      asOf: ASOF,
+      heldProducts: [],
+      medianFeeCents: 13_900,
+    });
+  const roomy = verdictFor({ low: 3_000, high: 6_000 });
+  assert.ok(roomy.reasonCodes.includes("MIN_SPEND_GOOD_FIT"), roomy.reasonCodes.join(","));
+  // Chiều ngược lại: 80% sức dồn điển hình thì đúng là sát.
+  const tight = verdictFor({ low: 3_000, high: 3_250 });
+  assert.ok(tight.reasonCodes.includes("MIN_SPEND_TIGHT"), tight.reasonCodes.join(","));
 });
 
 test("NO_NEW_CARD không được chấm bằng một chương trình CHỌN BỪA", () => {

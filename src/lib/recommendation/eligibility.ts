@@ -22,8 +22,8 @@ import { activeAt } from "./temporal.ts";
 import { compareToThreshold, everHeld, holdsNow, asArray } from "./user.ts";
 import type { DatasetIndex } from "./indexes.ts";
 import { RULE_SHAPES } from "./rule-shapes.ts";
-import type { EligibilityRule, ProductId } from "./types.ts";
-import type { UserState } from "./user-types.ts";
+import type { EligibilityRule, ProductId, RuleLookback } from "./types.ts";
+import type { UserCard, UserState } from "./user-types.ts";
 import type { EligibilityVerdict } from "./engine-types.ts";
 import type { ReasonCode, WarningCode } from "./reason-codes.ts";
 
@@ -95,7 +95,62 @@ function operatorUnderstood(rule: EligibilityRule): boolean {
   return RULE_SHAPES[rule.ruleType]?.operators.includes(rule.operator) ?? false;
 }
 
-function evaluateRule(rule: EligibilityRule, state: UserState): RuleEvaluation {
+/**
+ * Ngày cách `day` đúng `months` tháng lịch về trước; ngày cuối tháng thì kẹp
+ * (31/03 lùi một tháng là 28/02, không phải 03/03).
+ */
+export function monthsBefore(day: string, months: number): string {
+  const [year, month, date] = day.split("-").map(Number);
+  const index = year * 12 + (month - 1) - months;
+  const y = Math.floor(index / 12);
+  const m = index - y * 12;
+  const last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+  return `${String(y).padStart(4, "0")}-${String(m + 1).padStart(2, "0")}-${String(Math.min(date, last)).padStart(2, "0")}`;
+}
+
+type WindowHit = "hit" | "clear" | "unknown";
+
+function eitherHit(a: WindowHit, b: WindowHit): WindowHit {
+  if (a === "hit" || b === "hit") return "hit";
+  return a === "clear" && b === "clear" ? "clear" : "unknown";
+}
+
+/**
+ * MỘT thẻ người dùng từng giữ có rơi vào cửa sổ của luật không.
+ *
+ * Mốc nằm ĐÚNG ngày cắt thì tính là trong cửa sổ: nghiêng về phía "không hứa
+ * bonus", vì hứa sai tốn của người đọc một đơn mở thẻ, còn thận trọng sai chỉ
+ * tốn một câu cảnh báo.
+ *
+ * Thiếu ngày thì `unknown`, KHÔNG BAO GIỜ `clear` — trừ một suy luận chắc
+ * chắn: thẻ đã đóng TRƯỚC ngày cắt thì cũng đã mở trước ngày cắt. Đó là cách
+ * câu hỏi "đóng tháng nào" (thứ duy nhất §30 hỏi) trả lời được luật TD® vốn đếm
+ * theo ngày MỞ.
+ */
+function cardInWindow(card: UserCard, lookback: RuleLookback, cutoff: string): WindowHit {
+  const current = holdsNow(card);
+  const closed = current ? null : card.closedDate;
+  const closedHit: WindowHit = current ? "clear" : closed == null ? "unknown" : closed >= cutoff ? "hit" : "clear";
+  const openedHit: WindowHit =
+    card.openedDate != null
+      ? card.openedDate >= cutoff
+        ? "hit"
+        : "clear"
+      : closed != null && closed < cutoff
+        ? "clear"
+        : "unknown";
+  switch (lookback.anchor) {
+    case "opened":
+      return openedHit;
+    case "opened_or_closed":
+      return eitherHit(openedHit, closedHit);
+    case "held":
+      // Đang giữ = đang là chủ thẻ ngay trong cửa sổ, mở từ bao giờ cũng vậy.
+      return current ? "hit" : closedHit;
+  }
+}
+
+function evaluateRule(rule: EligibilityRule, state: UserState, asOf: string): RuleEvaluation {
   const profile = state.profile;
   if (!operatorUnderstood(rule)) return unknown("rule_not_understood");
   switch (rule.ruleType) {
@@ -137,6 +192,39 @@ function evaluateRule(rule: EligibilityRule, state: UserState): RuleEvaluation {
         return known("fail");
       }
       return state.declared?.cards === true ? known("pass") : unknown("user_field_missing");
+    case "previous_cardholder_within_months": {
+      const lookback = rule.lookback;
+      const months = Number(rule.value);
+      if (lookback == null || lookback.productIds.length === 0 || !Number.isInteger(months) || months <= 0) {
+        return unknown("rule_not_understood");
+      }
+      const counted = new Set<string>(lookback.productIds);
+      const cutoff = monthsBefore(asOf, months);
+      const hits = asArray(state.cards)
+        .filter((card) => card != null && counted.has(card.productId as string) && everHeld(card))
+        .map((card) => cardInWindow(card, lookback, cutoff));
+      if (hits.includes("hit")) return known("fail");
+      // Từng giữ mà không rõ ngày: đây là ca của lỗi 21/09/2026 — TD® Aeroplan®
+      // Visa Infinite đã đóng, không rõ ngày, và engine hứa trọn 50,000 điểm.
+      // Không đánh giá được thì §29 hạ độ tin cậy và §30 hỏi tháng đóng thẻ.
+      if (hits.includes("unknown")) return unknown("user_field_missing");
+      return state.declared?.cards === true ? known("pass") : unknown("user_field_missing");
+    }
+    case "previous_cardholder_same_category": {
+      // Điều khoản Aeroplan®: "a maximum of one New Card Bonus for each type of
+      // Aeroplan Credit Card …, regardless of issuer" — once-in-a-lifetime theo
+      // LOẠI thẻ, xuyên ngân hàng (user chốt 21/09/2026). Từng giữ thẻ cùng
+      // loại ở bất kỳ ngân hàng nào là mất bonus, như luật trọn đời của Amex®.
+      const lookback = rule.lookback;
+      if (lookback == null || lookback.productIds.length === 0 || rule.value !== true) {
+        return unknown("rule_not_understood");
+      }
+      const counted = new Set<string>(lookback.productIds);
+      if (asArray(state.cards).some((card) => card != null && counted.has(card.productId as string) && everHeld(card))) {
+        return known("fail");
+      }
+      return state.declared?.cards === true ? known("pass") : unknown("user_field_missing");
+    }
     case "banking_relationship_required":
       // Mô hình người dùng không khai quan hệ ngân hàng — §31 không hỏi, nên
       // không có trường nào để đọc. `unknown` là câu trả lời đúng; trả `pass`
@@ -210,7 +298,8 @@ export function evaluateEligibility(
   function verdictOf(groups: Map<string, EligibilityRule[]>, failed: string[], unknownIds: string[]): RuleOutcome {
     let sawUnknown = false;
     for (const [, group] of [...groups].sort((a, b) => (a[0] < b[0] ? -1 : 1))) {
-      const outcomes = group.map((rule) => evaluateRule(rule, state).outcome);
+      const evaluations = group.map((rule) => evaluateRule(rule, state, asOf));
+      const outcomes = evaluations.map((evaluation) => evaluation.outcome);
       const combined = combineGroup(outcomes);
       if (combined === "fail") {
         failed.push(...group.map((rule) => rule.id as string));
@@ -223,7 +312,13 @@ export function evaluateEligibility(
             .filter((_row, index) => outcomes[index] === "unknown")
             .map((rule) => rule.id as string),
         );
-        if (group.some((rule) => rule.ruleType.endsWith("_income"))) {
+        // CHỈ khi khoảng người dùng khai BẮC QUA ngưỡng — đúng nghĩa câu "nằm
+        // ngay quanh ngưỡng" trên trang. Bản trước gắn mã này cho MỌI nhóm thu
+        // nhập chưa biết, nên người khai $80–150K cá nhân (dưới hẳn $200,000
+        // của Avion® Visa Infinite Privilege) mà chưa khai thu nhập hộ được
+        // bảo là "có thể đạt" — cái chưa biết là vế hộ gia đình, và
+        // ELIGIBILITY_UNCERTAIN đã nói đúng điều đó.
+        if (evaluations.some((evaluation) => evaluation.unknownCause === "user_range_straddles")) {
           if (!reasonCodes.includes("INCOME_MAY_NOT_QUALIFY")) {
             reasonCodes.push("INCOME_MAY_NOT_QUALIFY");
           }
@@ -284,7 +379,7 @@ export function evaluateEligibility(
       severity: rule.severity,
       scope: rule.scope,
       ruleGroup: rule.ruleGroup,
-      ...evaluateRule(rule, state),
+      ...evaluateRule(rule, state, asOf),
     })),
   };
 }

@@ -68,7 +68,17 @@ export interface ActionView {
   warnings: string[];
   /** Cho phần "cách tính" — người đọc kỹ mới mở ra. */
   score: number;
+  /**
+   * Trọng số đã chia lại cho TỔNG trọng số các dòng (cộng đủ 100%). Engine chừa
+   * 5% cho `editorial` mà không có dòng nào, nên in trọng số thô là bảng cộng
+   * ra 95%.
+   */
   components: { label: string; weight: number; raw: number; contribution: number }[];
+  /**
+   * Điểm cuối trừ điểm nền — các luật phạt/thưởng sau công thức. Không in dòng
+   * này thì "Tổng" không khớp các dòng bên trên.
+   */
+  adjustment: number;
   /** Ngân hàng có thể vẫn từ chối — nói ra khi engine chưa kiểm được điều kiện. */
   eligibilityUncertain: boolean;
   /**
@@ -124,6 +134,14 @@ export interface ActionView {
    * hứa ngân hàng sẽ không giữ.
    */
   welcomeBonusBlocked: boolean;
+  /**
+   * CHƯA BIẾT người này còn nhận được welcome bonus không — luật "trong N
+   * tháng qua" gặp thẻ đã đóng không rõ ngày, hoặc chưa khai thẻ từng giữ.
+   * Luôn `false` khi `welcomeBonusBlocked`. Engine chỉ tính nửa phần bonus,
+   * nên thẻ vẫn có thể đứng đầu — và khi đó trang KHÔNG được in con số bonus
+   * như một điều chắc chắn (vòng Codex 1, 21/09/2026).
+   */
+  welcomeBonusUncertain: boolean;
 }
 
 export interface TripNumbersView {
@@ -298,6 +316,12 @@ function periodOf(from: number, days: number, text: string | null = null): strin
  * `spend.ts`), nên mốc chứa trọn một mốc trước nói "tổng cộng"; mốc rời hẳn
  * phía sau nói "thêm".
  */
+/** "2026-09-07" → "07/09/2026" — ngày in cho người đọc, không in dạng ISO. */
+export function vietnameseDate(iso: string): string {
+  const [year, month, day] = iso.slice(0, 10).split("-");
+  return `${day}/${month}/${year}`;
+}
+
 export function spendSentenceOf(components: readonly OfferComponent[]): string | null {
   const ordered = [...components].sort((a, b) => a.sequence - b.sequence);
   const windows: { from: number; to: number }[] = [];
@@ -451,12 +475,17 @@ function actionOf(
     ),
     warnings: warningsOf(candidate.warnings),
     score: candidate.score,
-    components: candidate.components.map((row) => ({
-      label: COMPONENT_LABEL[row.key],
-      weight: row.weight,
-      raw: row.raw,
-      contribution: row.contribution,
-    })),
+    components: (() => {
+      const total = candidate.components.reduce((sum, row) => sum + row.weight, 0);
+      const share = (value: number) => (total > 0 ? value / total : 0);
+      return candidate.components.map((row) => ({
+        label: COMPONENT_LABEL[row.key],
+        weight: share(row.weight),
+        raw: row.raw,
+        contribution: share(row.contribution),
+      }));
+    })(),
+    adjustment: candidate.score - candidate.baseScore,
     eligibilityUncertain: candidate.eligibility?.status === "unknown",
     // Câu của lựa chọn thay thế ưu tiên vế CẦN CÂN NHẮC: một thẻ $799 hiện ra
     // dưới dòng "kiếm điểm linh hoạt" trong khi điều người đọc cần biết là
@@ -490,6 +519,8 @@ function actionOf(
     spendSentence: slug === null ? null : (cards.facts.get(slug)?.spendSentence ?? null),
     noCardReason: candidate.kind === "no_new_card" ? noCardReasonOf(candidate) : null,
     welcomeBonusBlocked: candidate.eligibility?.welcomeOfferBlocked === true,
+    welcomeBonusUncertain:
+      candidate.eligibility?.welcomeOfferBlocked !== true && candidate.eligibility?.welcomeOfferUncertain === true,
   };
 }
 
@@ -511,6 +542,7 @@ function tripView(record: RecommendationRunRecord, index: number): TripNumbersVi
   const trip = trace?.goal.trip;
   if (trip == null || result === undefined) return null;
   const coverage = trace.tripCoverage;
+  const balancesUndeclared = (record.outputSnapshot.warnings as string[]).includes("BALANCES_UNDECLARED");
   const goalId = trace.goalId ?? "";
   const missing: { label: string; questionKey: string }[] = [];
   if (trip.cabin === null) missing.push({ label: "hạng ghế", questionKey: `trip_cabin_unknown:${goalId}` });
@@ -530,10 +562,14 @@ function tripView(record: RecommendationRunRecord, index: number): TripNumbersVi
     needLow: result.numbers.tripNeedLow,
     needTypical: result.numbers.tripNeedTypical,
     needHigh: result.numbers.tripNeedHigh,
-    accessible: result.numbers.accessiblePoints,
-    accessibleIsLowerBound: result.numbers.accessiblePointsIsLowerBound,
-    gap: result.numbers.pointsGapTypical,
-    coverage: coverage?.coverage ?? null,
+    // Chưa khai số dư (bỏ qua câu "có điểm ở đâu"): engine xếp hạng như thể 0
+    // điểm, nhưng trang KHÔNG được in "gom được 0 điểm · còn thiếu X · phủ 0%"
+    // — ba câu khẳng định dựng trên một câu người dùng chưa trả lời, ngay dưới
+    // cảnh báo "bạn chưa khai điểm đang có".
+    accessible: balancesUndeclared ? null : result.numbers.accessiblePoints,
+    accessibleIsLowerBound: balancesUndeclared ? false : result.numbers.accessiblePointsIsLowerBound,
+    gap: balancesUndeclared ? null : result.numbers.pointsGapTypical,
+    coverage: balancesUndeclared ? null : (coverage?.coverage ?? null),
     // "Ước lượng" nói ra rằng con số phủ là điểm giữa của một khoảng — số dư
     // chưa biết, hoặc chương trình chỉ công bố giá sàn. Trình bày nó như một
     // con số chắc chắn là đúng lỗi §29 sinh ra để tránh.
@@ -658,6 +694,38 @@ export function presentRun(
   };
 }
 
+/*
+ * Câu chữ về welcome bonus trên thẻ gợi ý. Nằm ở đây — hàm thuần — chứ không
+ * viết thẳng trong `result.tsx`, để test khoá được đúng chữ người đọc thấy:
+ * bản đầu của cờ `welcomeBonusUncertain` chỉ có trong component, và gỡ nó đi
+ * thì không test nào đỏ (vòng Codex 3, 21/09/2026).
+ */
+export const BONUS_UNCERTAIN_NOTE = "chưa chắc bạn nhận được";
+
+/** Câu mở đầu của thẻ gợi ý chính (hành động `open_card`). */
+export function openCardSentence(action: ActionView): string {
+  if (action.welcomeBonusBlocked) {
+    return "Mở thẻ này cho tỷ lệ tích điểm và quyền lợi của nó — welcome bonus thì bạn không nhận được, vì những thẻ bạn đã từng giữ.";
+  }
+  // Không dùng `spendSentence` ("… để nhận trọn welcome bonus"): đó là lời
+  // hứa cho một bonus mình chưa kiểm được.
+  if (action.welcomeBonusUncertain) {
+    return "Mở thẻ này là bước đáng làm tiếp theo — nhưng chưa chắc bạn còn nhận được welcome bonus, xem lưu ý bên dưới.";
+  }
+  return action.spendSentence ?? "Mở thẻ này là bước đáng làm tiếp theo.";
+}
+
+/**
+ * Câu giới thiệu của một thẻ thay thế khi engine không kèm lý do riêng.
+ * Không lấy welcome bonus làm câu giới thiệu cho thẻ người dùng KHÔNG còn nhận
+ * được nó — đó đúng là câu quảng cáo sai đối tượng.
+ */
+export function alternativeBonusLead(action: ActionView): string | null {
+  if (action.welcomeBonusBlocked) return "Theo điều khoản, thẻ bạn từng giữ khiến bạn không có welcome bonus.";
+  if (!action.welcomeBonus) return null;
+  return `Welcome bonus ${action.welcomeBonus}${action.welcomeBonusUncertain ? ` (${BONUS_UNCERTAIN_NOTE})` : ""}${action.annualFee ? `, annual fee ${action.annualFee}` : ""}`;
+}
+
 /** Số điểm, dấu phẩy ngăn nghìn — quy ước số của site. */
 export function formatPoints(points: number): string {
   return points.toLocaleString("en-US");
@@ -714,6 +782,9 @@ function amountText(amount: { low: number; high: number | null } | null): string
   const money = (n: number) => `$${n.toLocaleString("en-US")}`;
   if (amount.high === null) return `${money(amount.low)} trở lên`;
   if (amount.high === amount.low) return money(amount.low);
+  // In lại đúng nhãn người dùng đã bấm (xem `bands` trong questions.ts): nấc
+  // đầu "Dưới $60,000" lưu thành [0, 59,999].
+  if (amount.low === 0) return `Dưới ${money(amount.high % 1000 === 999 ? amount.high + 1 : amount.high)}`;
   return `${money(amount.low)} – ${money(amount.high)}`;
 }
 
@@ -793,13 +864,14 @@ export function answeredRows(state: UserState, dataset: RecommendationDataset): 
         questionKey: self("cards_undeclared"),
       });
     }
-    // Năm đóng thẻ đổi được cửa welcome bonus, nên nó phải sửa được — mỗi thẻ
-    // một dòng, vì mỗi thẻ là một câu hỏi riêng.
+    // Tháng đóng thẻ đổi được cửa welcome bonus, nên nó phải sửa được — mỗi
+    // thẻ một dòng, vì mỗi thẻ là một câu hỏi riêng.
     for (const card of state.cards) {
       if (card.status === "active" || card.closedDate === null) continue;
+      const [year, month] = card.closedDate.split("-").map(Number);
       rows.push({
-        label: `Năm đóng ${nameOf(card.productId as string) ?? "thẻ"}`,
-        value: card.closedDate.slice(0, 4),
+        label: `Tháng đóng ${nameOf(card.productId as string) ?? "thẻ"}`,
+        value: `${month}/${year}`,
         questionKey: questionKey("card_closed_date_unknown", card.id as string),
       });
     }
