@@ -218,6 +218,57 @@ export default async function UsCreditCardsPage({
 
           {/* `scroll-mt`: mọi link lọc nhảy về `#tat-ca-the-my`, và thanh điều
               hướng dính trên cùng sẽ che mất tiêu đề mục nếu thiếu nó. */}
+          {/* Đứng TRƯỚC danh sách đầy đủ, không phải sau nó. Đo trên màn
+              375px ngày 22/09/2026: sau danh sách, khối này bắt đầu ở 7,771px
+              trên trang cao 9,059px — 86% chiều dài, khoảng 9.5 màn điện
+              thoại, tức gần như không ai đọc tới. Thủ phạm là danh sách 9 thẻ
+              dài 5,800px, không phải thứ tự các khối.
+
+              Vẫn không đưa lên đầu trang: dải một dòng ngay dưới hero đã nói
+              đúng chuyện này và trỏ đúng bài này, nên hai khối sẽ lặp nhau
+              trong cùng một màn — và trang này trước hết để tìm thẻ. Ở đây
+              người đọc đã đi qua Elevated Offers và hàng ngân hàng rồi. */}
+          {guides.length > 0 && (
+            <div className="mt-14 rounded-2xl border border-border bg-secondary p-6 sm:p-8">
+              <SectionHeading>{us("newcomerTitle")}</SectionHeading>
+              <p className="mt-3 max-w-2xl leading-relaxed text-foreground/90">{us("newcomerBody")}</p>
+
+              {/* Mũi tên đi SAU chip, không phải trước chip kế tiếp: ở màn
+                  375px hàng này xuống ba dòng, và mũi tên đứng đầu dòng trông
+                  như một gạch đầu dòng lạc chỗ. */}
+              <ol className="mt-5 flex flex-wrap items-center gap-2 text-sm font-semibold text-foreground">
+                {(["journeyCanada", "journeyItin", "journeyFirstCard", "journeyCredit"] as const).map(
+                  (key, index, keys) => (
+                    <li key={key} className="flex items-center gap-2">
+                      <span className="rounded-full border border-border bg-card px-3 py-1.5">
+                        {us(key)}
+                      </span>
+                      {index < keys.length - 1 && (
+                        <span aria-hidden className="text-muted-foreground">
+                          &rarr;
+                        </span>
+                      )}
+                    </li>
+                  ),
+                )}
+              </ol>
+
+              {/* Danh sách bài, không phải một nút: từ 22/09/2026 đã có hai bài
+                  hướng dẫn, và một nút "Đọc hướng dẫn" giấu mất bài thứ hai.
+                  Tiêu đề và mô tả đọc thẳng từ Contentful — cùng khối
+                  `StepLink` mà bảy trang khác đang dùng cho phần "đi tiếp". */}
+              <ul className="mt-6 space-y-2">
+                {guides.map((guide) => (
+                  <StepLink
+                    key={guide.slug}
+                    href={guide.href}
+                    label={guide.title}
+                    description={guide.excerpt}
+                  />
+                ))}
+              </ul>
+            </div>
+          )}
           <div id={US_CARDS_LIST_ANCHOR} className="mt-14 scroll-mt-36">
             <SectionHeading>{us("allTitle")}</SectionHeading>
 
@@ -291,46 +342,6 @@ export default async function UsCreditCardsPage({
             </div>
           </div>
 
-          {/* Đặt SAU danh sách: người tới trang này trước hết để tìm thẻ. Ai
-              xem xong mà chưa biết bắt đầu từ đâu thì gặp khối này đúng lúc. */}
-          {guides.length > 0 && (
-            <div className="mt-14 rounded-2xl border border-border bg-secondary p-6 sm:p-8">
-              <SectionHeading>{us("newcomerTitle")}</SectionHeading>
-              <p className="mt-3 max-w-2xl leading-relaxed text-foreground/90">{us("newcomerBody")}</p>
-
-              <ol className="mt-5 flex flex-wrap items-center gap-2 text-sm font-semibold text-foreground">
-                {(["journeyCanada", "journeyItin", "journeyFirstCard", "journeyCredit"] as const).map(
-                  (key, index) => (
-                    <li key={key} className="flex items-center gap-2">
-                      {index > 0 && (
-                        <span aria-hidden className="text-muted-foreground">
-                          &rarr;
-                        </span>
-                      )}
-                      <span className="rounded-full border border-border bg-card px-3 py-1.5">
-                        {us(key)}
-                      </span>
-                    </li>
-                  ),
-                )}
-              </ol>
-
-              {/* Danh sách bài, không phải một nút: từ 22/09/2026 đã có hai bài
-                  hướng dẫn, và một nút "Đọc hướng dẫn" giấu mất bài thứ hai.
-                  Tiêu đề và mô tả đọc thẳng từ Contentful — cùng khối
-                  `StepLink` mà bảy trang khác đang dùng cho phần "đi tiếp". */}
-              <ul className="mt-6 space-y-2">
-                {guides.map((guide) => (
-                  <StepLink
-                    key={guide.slug}
-                    href={guide.href}
-                    label={guide.title}
-                    description={guide.excerpt}
-                  />
-                ))}
-              </ul>
-            </div>
-          )}
         </div>
       </section>
     </>

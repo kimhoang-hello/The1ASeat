@@ -1272,6 +1272,11 @@ vào được bằng URL, `noindex`, dải báo nháp; bật cờ là hiện "�
   cả danh sách bằng `StepLink`, tiêu đề và mô tả đọc thẳng từ Contentful; dải
   đầu trang chỉ trỏ bài ĐẦU. Bài nào unpublish thì tự rơi khỏi danh sách, hết
   bài thì cả khối ẩn. Thêm bài mới = thêm slug, không sửa JSX.
+- **Thứ tự khối (đo 22/09/2026):** khối "🇨🇦 Mới Chơi Thẻ Mỹ?" đứng TRƯỚC
+  "Tất Cả Thẻ Mỹ". Đặt sau danh sách thì trên màn 375px nó bắt đầu ở 7,771px
+  của trang cao 9,059px — 86%, khoảng 9.5 màn; thủ phạm là danh sách 9 thẻ dài
+  5,800px. Nay ở 1,955px. Không đưa lên đầu trang: dải một dòng dưới hero đã
+  nói cùng một chuyện và trỏ cùng một bài.
 - **Menu 1024px:** sáu mục cách 28px không vừa — chữ gãy hai dòng. Khi cờ bật,
   nav dùng `gap-3` dưới `xl`. Cờ tắt thì class giữ nguyên `gap-7`.
 - **Lỗi cũ lộ ra:** `CardImage` truyền `absolute` vào `MediaPlaceholder` vốn tự
