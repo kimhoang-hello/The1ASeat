@@ -44,7 +44,7 @@ export function cardSortId(value: string | undefined): CardSortId {
  * đầu chuỗi bằng `^` chứ không quét cả câu, nếu không thẻ $139 sẽ được xếp như
  * thẻ $50.
  *
- * Không dùng `splitAnnualFee` của OfferStats: hàm đó cố ý nhận dạng hẹp để
+ * Không dùng `splitAnnualFee` (`lib/annual-fee.ts`): hàm đó cố ý nhận dạng hẹp để
  * quyết định có tách phần ghi chú xuống dòng nhỏ hay không, nên với dạng có
  * "— miễn năm đầu" nó trả nguyên câu. Đúng cho việc hiển thị, nhưng ở đây thì
  * năm thẻ sẽ mất số và rơi xuống cuối danh sách.
@@ -95,8 +95,12 @@ export function sortOffers(offers: CreditCardOffer[], sort: CardSortId): CreditC
       case "fee": {
         // Thẻ không đọc được phí xuống cuối, nên `Infinity` chứ không phải -1.
         const value = (offer: CreditCardOffer) => moneyAtStart(offer.annualFee) ?? Infinity;
-        const diff = value(a) - value(b);
-        return diff !== 0 ? diff : byName(a, b);
+        // Không trừ thẳng: hai thẻ cùng không đọc được phí cho
+        // `Infinity - Infinity = NaN`, bộ so sánh trả NaN và thứ tự theo tên
+        // không bao giờ chạy.
+        const va = value(a);
+        const vb = value(b);
+        return va !== vb ? (va < vb ? -1 : 1) : byName(a, b);
       }
       case "expiring": {
         const a1 = liveExpiry(a);

@@ -2597,8 +2597,8 @@ test("Test C/D của §32 nay CHẠY trên dữ liệu thật, không còn bị 
 /**
  * Bộ dữ liệu y hệt, nhưng MỘT chương trình bị đẩy về `cashOut: "unknown"`.
  *
- * Từ 20/09/2026 không chương trình thật nào còn `unknown` — Membership
- * Rewards® và Avion® đã có tỷ lệ. Nhưng nhánh xử lý `unknown` vẫn sống trong
+ * Từ 20/09/2026 không chương trình thật nào còn `unknown` —
+ * Membership Rewards® và Avion® đã có tỷ lệ. Nhưng nhánh xử lý `unknown` vẫn sống trong
  * engine cho chương trình sau này, và một nhánh không test nào chạm tới là
  * một nhánh sẽ hỏng lặng lẽ đúng ngày có người thêm chương trình mới. Dựng ca
  * đó bằng tay thay vì chờ dữ liệu thật rơi vào nó.

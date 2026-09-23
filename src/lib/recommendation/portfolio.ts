@@ -369,8 +369,8 @@ export function analyzePortfolio(
     if (program === undefined || cpp === null) {
       // NHƯNG: ở chế độ `cash`, "không có dòng định giá" gộp hai ca khác hẳn
       // nhau. Aeroplan® (`cashOut: "none"`) đã kiểm và biết không rút ra tiền
-      // được — số dư đó đáng $0 cho câu hỏi này, và bỏ qua là đúng. Membership
-      // Rewards® (`cashOut: "unknown"`) thì CHƯA AI KIỂM: bỏ qua lặng lẽ biến
+      // được — số dư đó đáng $0 cho câu hỏi này, và bỏ qua là đúng.
+      // Membership Rewards® (`cashOut: "unknown"`) thì CHƯA AI KIỂM: bỏ qua lặng lẽ biến
       // 40,000 điểm thành "bạn không có gì", đúng thứ "trống ≠ bằng không" cấm
       // — và nó im lặng tuyệt đối, vì `knownValueCents` vẫn ra một con số
       // trông bình thường. Bật cờ để §29 hạ độ tin cậy và để engine nói được
