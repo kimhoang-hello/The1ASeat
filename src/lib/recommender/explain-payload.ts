@@ -220,7 +220,10 @@ export function explanationPayload(view: ResultView): ExplanationPayload {
         "trip_not_priced",
         "editorial",
         "trip",
-        "chặng này chưa có trong award chart của site, nên mình chưa tính được số điểm cần",
+        // Cùng câu với khối chuyến bay: có hạng ghế thì có thể chỉ HẠNG đó chưa có giá.
+        trip.cabin
+          ? `chặng này, ${trip.cabin.toLowerCase()}, chưa có trong award chart của site, nên mình chưa tính được số điểm cần`
+          : "chặng này chưa có trong award chart của site, nên mình chưa tính được số điểm cần",
       );
     } else {
       const need = formatNeed(trip.needLow, trip.needHigh);

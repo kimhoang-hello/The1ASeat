@@ -11,13 +11,14 @@ import test from "node:test";
 import { offlineDataset } from "../recommendation/data/index.ts";
 import {
   beginnerNoCards,
+  flexiblePointsSufficient,
   japanTripFunded,
   USER_FIXTURES,
 } from "../recommendation/data/user-fixtures.ts";
 import { executeRun } from "../recommendation/runs.ts";
 import { datasetAt } from "../recommendation/temporal.ts";
 import type { UserState } from "../recommendation/user-types.ts";
-import { asksForAttention, followUpAfterSkips } from "./follow-up.ts";
+import { asksForAttention, followUpAfterSkips, presentForPage } from "./follow-up.ts";
 import { questionKey } from "./questions.ts";
 
 const ASOF = "2026-09-08";
@@ -128,4 +129,49 @@ test("câu KHÔNG đổi được kết quả thì không chiếm chỗ câu h�
     }),
     true,
   );
+});
+
+test("chặng chưa có giá: không hỏi hạng ghế, số người, khứ hồi — trang đã nói trả lời cũng không ra số", () => {
+  // Rà trang gợi ý 22/09/2026: bay châu Âu, khối chuyến bay nói "trả lời thêm
+  // câu nào cũng không ra con số", ngay trên câu "Chuyến này bay mấy người?".
+  const goal = flexiblePointsSufficient.goals[0];
+  assert.ok(goal.type === "trip" && goal.destinationRegion === "EUROPE");
+  const state: UserState = {
+    ...flexiblePointsSufficient,
+    goals: [{ ...goal, cabin: null, passengers: null, roundTrip: null }],
+  };
+  const record = runFor(state);
+  const priceFactors = new Set(["trip_cabin_unknown", "trip_passengers_unknown", "trip_round_trip_unknown"]);
+  assert.ok(
+    record.outputSnapshot.userGaps.some((gap) => priceFactors.has(gap.kind)),
+    "hồ sơ này phải còn thiếu thừa số giá, nếu không bài test không canh gì",
+  );
+  const skipped = new Set<string>();
+  for (let i = 0; i < 40; i += 1) {
+    const next = followUpAfterSkips(record, DATA, skipped, true);
+    if (next === null) break;
+    assert.ok(!priceFactors.has(next.gapKind), `vẫn hỏi ${next.gapKind} cho một chặng chưa có giá`);
+    skipped.add(questionKey(next.gapKind, next.subject));
+  }
+});
+
+test("bỏ qua hết câu hỏi: trang không còn bảo 'trả lời thêm vài câu'", () => {
+  // Codex, rà 22/09/2026: độ chắc chắn đọc câu hỏi GỐC của engine, không phải
+  // câu còn lại sau khi bỏ qua.
+  const bare = structuredClone(beginnerNoCards);
+  bare.declared = { cards: false, balances: false };
+  bare.spend = null;
+  bare.profile.annualPersonalIncome = null;
+  bare.profile.annualFeeTolerancePerCard = null;
+  const record = runFor(bare);
+  assert.match(presentForPage(record, DATA, [], new Set()).view!.confidence.sentence, /Trả lời thêm/);
+  const skipped = new Set<string>();
+  for (let i = 0; i < 40; i += 1) {
+    const next = followUpAfterSkips(record, DATA, skipped);
+    if (next === null) break;
+    skipped.add(questionKey(next.gapKind, next.subject));
+  }
+  const page = presentForPage(record, DATA, [], skipped);
+  assert.equal(page.followUp, null);
+  assert.doesNotMatch(page.view!.confidence.sentence, /Trả lời thêm/);
 });

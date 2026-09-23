@@ -30,6 +30,7 @@ import {
   COMPONENT_LABEL,
   COMPONENT_STRENGTH,
   CONFIDENCE_BY_CAUSE,
+  CONFIDENCE_NO_QUESTION_LEFT,
   CONFIDENCE_LABEL,
   REASON_COVERED_BY_WARNING,
   REASON_TEXT,
@@ -226,6 +227,14 @@ export function reasonsOf(
   return rows.sort((a, b) => TONE_ORDER[a.tone] - TONE_ORDER[b.tone]);
 }
 
+/** Cảnh báo mà khối "Chuyến bay của bạn" đã nói ra — xem `presentRun`. */
+const TRIP_BLOCK_WARNINGS: ReadonlySet<WarningCode> = new Set<WarningCode>([
+  "TRIP_CABIN_UNKNOWN",
+  "TRIP_PASSENGERS_UNKNOWN",
+  "TRIP_ROUND_TRIP_UNKNOWN",
+  "AWARD_ROUTE_NOT_IN_DATASET",
+]);
+
 export function warningsOf(codes: readonly WarningCode[]): string[] {
   const seen = new Set<string>();
   const rows: string[] = [];
@@ -412,15 +421,21 @@ function noCardReasonOf(candidate: Candidate): ActionView["noCardReason"] {
   const top = [...candidate.components]
     .filter((row) => row.contribution > 0 && row.key !== "points_already_sufficient")
     .sort((a, b) => b.contribution - a.contribution)[0];
+  // Hai câu dưới là câu KHẲNG ĐỊNH, nên phải có đúng điều kiện của nó, không
+  // chỉ là dòng đóng góp nhiều nhất: `offer_climate_weak` = 0.5 là "không biết"
+  // (trung tính), còn engine chỉ coi thị trường là yếu từ ngưỡng của chính nó
+  // (`WAIT_FOR_BETTER_OFFER`); `no_reachable_candidate` là TỶ LỆ ứng viên bị
+  // chặn, và "chưa thẻ nào vừa" chỉ đúng khi tỷ lệ đó là tất cả — không thì
+  // câu đó đứng ngay trên một danh sách thẻ thay thế (Codex, rà trang 22/09/2026).
   switch (top?.key) {
     case "points_already_sufficient":
       return "points_sufficient";
     case "portfolio_already_covers":
       return "portfolio_covers";
     case "offer_climate_weak":
-      return "offers_weak";
+      return candidate.reasonCodes.includes("WAIT_FOR_BETTER_OFFER") ? "offers_weak" : null;
     case "no_reachable_candidate":
-      return "nothing_fits";
+      return top.raw >= 1 ? "nothing_fits" : null;
     default:
       return null;
   }
@@ -536,6 +551,12 @@ const GOAL_TITLE: Record<GoalType, string> = {
   diversify: "Trải điểm ra nhiều chương trình",
 };
 
+/** Chặng của mục tiêu chuyến đi chưa có award chart — trang và câu hỏi tiếp theo cùng đọc chỗ này. */
+export function routeNotPricedOf(record: RecommendationRunRecord, goalIndex = 0): boolean {
+  const result = record.outputSnapshot.results[goalIndex];
+  return result !== undefined && (result.warnings as string[]).includes("AWARD_ROUTE_NOT_IN_DATASET");
+}
+
 function tripView(record: RecommendationRunRecord, index: number): TripNumbersView | null {
   const trace = record.derivedState.goals[index];
   const result = record.outputSnapshot.results[index];
@@ -554,7 +575,7 @@ function tripView(record: RecommendationRunRecord, index: number): TripNumbersVi
   }
   return {
     missing,
-    routeNotPriced: (result.warnings as string[]).includes("AWARD_ROUTE_NOT_IN_DATASET"),
+    routeNotPriced: routeNotPricedOf(record, index),
     destination: REGION_LABEL[trip.destinationRegion],
     cabin: trip.cabin === null ? null : CABIN_LABEL[trip.cabin],
     passengers: trip.passengers,
@@ -624,7 +645,12 @@ function confidenceOf(
   const actionable = hasFollowUp && factors.dataCompleteness < WEAK ? "dataCompleteness" : null;
   const lead = actionable ?? weak[0]?.[0] ?? "scoreSeparation";
   const tied = lead !== "scoreSeparation" && factors.scoreSeparation < WEAK;
-  const base = CONFIDENCE_BY_CAUSE[lead];
+  // Hết câu để hỏi (người dùng đã bỏ qua hết) thì "trả lời thêm vài câu" là
+  // bảo họ làm một việc trang không còn cho làm (Codex, rà trang 22/09/2026).
+  const base =
+    lead === "dataCompleteness" && !hasFollowUp
+      ? { ...CONFIDENCE_BY_CAUSE.dataCompleteness, sentence: CONFIDENCE_NO_QUESTION_LEFT }
+      : CONFIDENCE_BY_CAUSE[lead];
   return {
     level: factors.level,
     label: base.label,
@@ -651,11 +677,17 @@ export function presentRun(
   dataset: RecommendationDataset,
   offers: readonly CreditCardOffer[],
   goalIndex = 0,
+  /**
+   * Trang còn hiện câu hỏi nào không — sau khi trừ những câu người dùng đã bỏ
+   * qua (`followUpAfterSkips`). Mặc định là câu engine chọn.
+   */
+  hasFollowUp = record.outputSnapshot.followUp !== null,
 ): ResultView | null {
   const result = record.outputSnapshot.results[goalIndex];
   if (result === undefined) return null;
   const cards = lookup(record, dataset, offers);
   const runWarnings = [...result.warnings, ...record.outputSnapshot.warnings];
+  const trip = tripView(record, goalIndex);
   const primary = actionOf(result.primaryAction, cards, new Set(), runWarnings);
   const primaryReasons = new Set(primary.reasons.map((row) => row.text));
   const noActionIsPrimary = result.primaryAction.kind === "no_new_card";
@@ -685,11 +717,15 @@ export function presentRun(
     noAction: noActionIsPrimary ? null : actionOf(result.noAction, cards, primaryReasons),
     // Cảnh báo trùng câu với một lý do đã hiện ngay trên thẻ thì bỏ: người đọc
     // gặp đúng một câu hai lần, và khối "lưu ý" loãng đi vì nó.
-    warnings: warningsOf(runWarnings).filter(
-      (text) => !primary.reasons.some((reason) => reason.text === text),
-    ),
-    confidence: confidenceOf(result.confidence, record.outputSnapshot.followUp !== null),
-    trip: tripView(record, goalIndex),
+    //
+    // Chỗ trống của CHUYẾN ĐI cũng bỏ: khối "Chuyến bay của bạn" ngay bên dưới
+    // đã nói đúng điều đó kèm đường tới câu hỏi, còn khối này là "đọc kỹ trước
+    // khi đăng ký" — chưa biết số người không phải điều kiện của ngân hàng.
+    warnings: warningsOf(
+      runWarnings.filter((code) => trip === null || !TRIP_BLOCK_WARNINGS.has(code)),
+    ).filter((text) => !primary.reasons.some((reason) => reason.text === text)),
+    confidence: confidenceOf(result.confidence, hasFollowUp),
+    trip,
     dataVerifiedAt: record.derivedState.goals[goalIndex]?.confidenceInputs.oldestVerifiedAt ?? null,
   };
 }

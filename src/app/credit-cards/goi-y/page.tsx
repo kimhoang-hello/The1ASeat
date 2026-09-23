@@ -6,8 +6,8 @@ import { getCreditCardOffers } from "@/lib/content";
 import { RECOMMENDER_PUBLISHED } from "@/lib/feature-flags";
 import { todayInSiteZone } from "@/lib/format-date";
 import { knownError } from "@/lib/recommender/errors";
-import { asksForAttention, followUpAfterSkips } from "@/lib/recommender/follow-up";
-import { answeredRows, presentRun } from "@/lib/recommender/present";
+import { asksForAttention, presentForPage } from "@/lib/recommender/follow-up";
+import { answeredRows } from "@/lib/recommender/present";
 import { questionFor, questionFromKey } from "@/lib/recommender/questions";
 import {
   currentUserId,
@@ -228,12 +228,12 @@ async function Body({ editKey }: { editKey: string | null }) {
     return <BrokenProfileNotice />;
   }
   const { record, dataset } = run;
+  const skipped = await skippedQuestions();
   const offers = await getCreditCardOffers();
-  const view = presentRun(record, dataset, offers);
+  const { view, followUp } = presentForPage(record, dataset, offers, skipped);
   if (view === null) return <StartPanel />;
 
   const ctx = { dataset, today: todayInSiteZone() };
-  const skipped = await skippedQuestions();
 
   // Người dùng bấm "Sửa" trên một dòng đã trả lời: hỏi lại đúng câu đó, không
   // phải câu engine đang muốn hỏi.
@@ -250,7 +250,6 @@ async function Body({ editKey }: { editKey: string | null }) {
     );
   }
 
-  const followUp = followUpAfterSkips(record, dataset, skipped);
   const question =
     followUp === null
       ? null

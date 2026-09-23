@@ -66,14 +66,32 @@ export interface ChoiceOption {
 
 export type QuestionInput =
   | { type: "choice"; name: "answer"; options: ChoiceOption[] }
-  /** Danh sách thẻ, chọn nhiều: `holding` (đang giữ) và `closed` (đã đóng). */
-  | { type: "cards"; groups: { issuer: string; cards: ChoiceOption[] }[] }
-  /** Danh sách chương trình điểm, chọn nhiều: `programs`. */
-  | { type: "programs"; programs: ChoiceOption[] }
-  /** Một con số nguyên — số điểm. */
-  | { type: "number"; name: "answer"; min: number; max: number; placeholder: string }
-  /** Tháng/năm: `month` (YYYY-MM). */
-  | { type: "month"; months: ChoiceOption[] };
+  /**
+   * Danh sách thẻ, chọn nhiều: `holding` (đang giữ) và `closed` (đã đóng).
+   *
+   * `holding`/`closed` là slug ĐÃ khai — form tick sẵn chúng. Câu trả lời thay
+   * CẢ danh sách, nên bấm "Sửa" mà form trống thì tick thêm một thẻ là xoá im
+   * lặng mọi thẻ khai trước đó.
+   */
+  | {
+      type: "cards";
+      groups: { issuer: string; cards: ChoiceOption[] }[];
+      holding: string[];
+      closed: string[];
+    }
+  /** Danh sách chương trình điểm, chọn nhiều: `programs`. `selected` = đã khai, cùng lý do như trên. */
+  | { type: "programs"; programs: ChoiceOption[]; selected: string[] }
+  /** Một con số nguyên — số điểm. `current` = câu trả lời đang lưu, khi đang sửa. */
+  | {
+      type: "number";
+      name: "answer";
+      min: number;
+      max: number;
+      placeholder: string;
+      current: number | null;
+    }
+  /** Tháng/năm: `month` (YYYY-MM). `current` = lựa chọn đang lưu — không có nó, `<select>` gửi lên dòng ĐẦU TIÊN. */
+  | { type: "month"; months: ChoiceOption[]; current: string | null };
 
 export interface QuestionSpec {
   /** `kind:subject` — id ổn định, đi qua form và qua danh sách đã bỏ qua. */
@@ -343,6 +361,17 @@ function productOptions(ctx: QuestionContext): { issuer: string; cards: ChoiceOp
     .sort((a, b) => a.issuer.localeCompare(b.issuer, "vi"));
 }
 
+/** Slug của những thẻ đã khai, tách theo trạng thái — để form tick sẵn khi sửa. */
+function declaredCards(state: UserState, ctx: QuestionContext): { holding: string[]; closed: string[] } {
+  const slugOf = new Map(ctx.dataset.products.map((product) => [product.id as string, product.slug]));
+  const pick = (status: UserCard["status"]) =>
+    state.cards
+      .filter((card) => card.status === status)
+      .map((card) => slugOf.get(card.productId as string))
+      .filter((slug): slug is string => slug !== undefined);
+  return state.declared.cards ? { holding: pick("active"), closed: pick("closed") } : { holding: [], closed: [] };
+}
+
 function programOptions(ctx: QuestionContext): ChoiceOption[] {
   return [...ctx.dataset.pointsPrograms]
     .map((program) => ({ value: program.id as string, label: program.name }))
@@ -357,6 +386,23 @@ function cardName(state: UserState, ctx: QuestionContext, cardId: string): strin
   const card = state.cards.find((row) => row.id === cardId);
   const product = ctx.dataset.products.find((row) => row.id === card?.productId);
   return product?.name ?? "thẻ này";
+}
+
+/**
+ * Ngày đã lưu → lựa chọn tháng tương ứng, để `<select>` mở ra đúng câu trả lời
+ * cũ khi người dùng bấm "Sửa". Ngày cũ hơn mọi tháng liệt kê rơi vào dòng cuối
+ * nếu dòng đó là "trước tháng …" (danh sách tháng đóng thẻ); ngoài danh sách
+ * thì `null` — chọn bừa một dòng là ghi đè im lặng.
+ */
+function storedMonth(date: string | null | undefined, months: ChoiceOption[]): string | null {
+  if (typeof date !== "string") return null;
+  const month = date.slice(0, 7);
+  if (months.some((row) => row.value === month)) return month;
+  const last = months.at(-1);
+  const earliestListed = months.at(-2)?.value;
+  return last !== undefined && !/^\d{4}-\d{2}$/.test(last.value) && earliestListed !== undefined && month < earliestListed
+    ? last.value
+    : null;
 }
 
 /** 18 tháng tới — đủ xa cho một chuyến bay bằng điểm, đủ gần để còn nghĩa. */
@@ -415,8 +461,8 @@ export function questionFor(
       return {
         ...base,
         title: "Bạn đang có thẻ nào rồi?",
-        help: "Không biết bạn có gì thì mình có thể gợi ý đúng cái thẻ bạn đang cầm trong ví — và welcome bonus thì mỗi người chỉ nhận một lần.",
-        input: { type: "cards", groups: productOptions(ctx) },
+        help: "Không biết bạn có gì thì mình có thể gợi ý đúng cái thẻ bạn đang cầm trong ví — và nhiều ngân hàng không cho nhận lại welcome bonus nếu bạn từng giữ thẻ đó.",
+        input: { type: "cards", groups: productOptions(ctx), ...declaredCards(state, ctx) },
       };
 
     case "balances_undeclared":
@@ -424,7 +470,11 @@ export function questionFor(
         ...base,
         title: "Bạn đang có điểm ở chương trình nào?",
         help: "Chỉ cần chọn tên chương trình. Số điểm cụ thể mình chỉ hỏi khi nó thật sự đổi kết quả.",
-        input: { type: "programs", programs: programOptions(ctx) },
+        input: {
+          type: "programs",
+          programs: programOptions(ctx),
+          selected: state.declared.balances ? state.balances.map((row) => row.programId as string) : [],
+        },
       };
 
     case "point_balance_amount_unknown":
@@ -443,6 +493,7 @@ export function questionFor(
           min: 0,
           max: 10_000_000,
           placeholder: "ví dụ 60000",
+          current: state.balances.find((row) => row.programId === gap.subject)?.balance ?? null,
         },
       };
 
@@ -577,6 +628,7 @@ export function questionFor(
           min: 1,
           max: 12,
           placeholder: "ví dụ 2",
+          current: tripGoalOf(state, gap.subject)?.passengers ?? null,
         },
       };
 
@@ -616,7 +668,10 @@ export function questionFor(
         ...base,
         title: "Bạn định bay khoảng tháng nào?",
         help: "Để mình biết bạn còn bao nhiêu thời gian đạt mức spend của welcome offer.",
-        input: { type: "month", months: monthOptions(ctx.today) },
+        input: (() => {
+          const months = monthOptions(ctx.today);
+          return { type: "month", months, current: storedMonth(tripGoalOf(state, gap.subject)?.travelStart, months) };
+        })(),
       };
 
     case "card_closed_date_unknown":
@@ -625,7 +680,11 @@ export function questionFor(
         title: `Bạn đóng thẻ ${cardName(state, ctx, gap.subject)} vào tháng nào?`,
         help: "Vài ngân hàng chỉ chặn welcome bonus trong 12 hoặc 24 tháng sau khi đóng, nên tháng đóng có thể mở lại bonus cho bạn. Không nhớ chính xác thì chọn tháng muộn nhất có thể.",
         // Tháng, không phải năm — xem `closedMonthChoices`.
-        input: { type: "month", months: closedMonthChoices(ctx.today) },
+        input: (() => {
+          const months = closedMonthChoices(ctx.today);
+          const closedDate = state.cards.find((row) => row.id === gap.subject)?.closedDate;
+          return { type: "month", months, current: storedMonth(closedDate, months) };
+        })(),
       };
 
     // Người dùng đã từ chối: §30 cố ý không hỏi lại.
@@ -868,6 +927,7 @@ export function applyAnswer(
       const holding = none ? [] : form.getAll("holding");
       const closed = none ? [] : form.getAll("closed");
       const bySlug = new Map(ctx.dataset.products.map((product) => [product.slug, product]));
+      const stored = next.cards;
       const cards: UserCard[] = [];
       for (const [list, status] of [
         [holding, "active"],
@@ -880,6 +940,14 @@ export function applyAnswer(
           // đang-giữ cho một sản phẩm là lỗi validator, và "đang giữ" là câu
           // trả lời mạnh hơn.
           if (cards.some((row) => row.productId === product.id)) continue;
+          // Thẻ đã khai với CÙNG trạng thái thì giữ nguyên dòng cũ: ngày mở /
+          // ngày đóng người dùng trả lời ở các câu sau nằm trên dòng đó, và
+          // bấm "Sửa" để thêm một thẻ không được xoá chúng.
+          const previous = stored.find((row) => row.productId === product.id && row.status === status);
+          if (previous !== undefined) {
+            cards.push(previous);
+            continue;
+          }
           cards.push({
             id: `uc_${product.slug}` as UserCardId,
             userId: next.profile.id,
@@ -904,6 +972,13 @@ export function applyAnswer(
         if (!known.has(programId)) return BAD("chương trình điểm");
         if (seen.has(programId)) continue;
         seen.add(programId);
+        // Chương trình đã khai thì giữ số dư đã nhập — tick lại để thêm một
+        // chương trình khác không được đưa con số đó về "chưa biết".
+        const previous = next.balances.find((row) => row.programId === programId);
+        if (previous !== undefined) {
+          balances.push(previous);
+          continue;
+        }
         balances.push({
           userId: next.profile.id,
           programId: programId as PointsProgramId,

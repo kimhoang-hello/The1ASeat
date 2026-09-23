@@ -21,6 +21,7 @@ import { activeAt } from "./temporal.ts";
 import { routeKey } from "./indexes.ts";
 import { usablePassengers, usableRoundTrip } from "./user.ts";
 import type { DatasetIndex } from "./indexes.ts";
+import { CABINS } from "./types.ts";
 import type { AwardStrategy, PointsProgramId } from "./types.ts";
 import type { ResolvedTripGoal } from "./user.ts";
 import type { TripNeed } from "./engine-types.ts";
@@ -78,6 +79,19 @@ export function tripNeedFor(
 ): TripNeed {
   const warnings: WarningCode[] = [];
   const reasonCodes: ReasonCode[] = [];
+
+  // Cặp vùng không có chiến lược nào ở BẤT KỲ hạng ghế nào: nói ngay là chưa
+  // định giá được. Kiểm hạng ghế trước thì trang hỏi "bay hạng nào?" như thể
+  // trả lời xong sẽ ra con số — rồi mới nói chặng này không có giá, và vẫn hỏi
+  // tiếp số người, khứ hồi (rà trang gợi ý 22/09/2026, CANADA_US → EUROPE).
+  const routePricedInSomeCabin = CABINS.some(
+    (cabin) =>
+      activeAt(ix.strategiesByRoute.get(routeKey(trip.originRegion, trip.destinationRegion, cabin)) ?? [], asOf)
+        .length > 0,
+  );
+  if (!routePricedInSomeCabin) {
+    return emptyNeed(["TRIP_ROUTE_NOT_PRICED"], ["AWARD_ROUTE_NOT_IN_DATASET"]);
+  }
 
   if (trip.cabin == null) {
     // Không có hạng ghế thì không có khoá tra. Đoán `economy` ở đây là chia số

@@ -25,6 +25,8 @@ export function QuestionCard({
   lead?: string;
   skippable?: boolean;
 }) {
+  const holding = new Set(spec.input.type === "cards" ? spec.input.holding : []);
+  const closed = new Set(spec.input.type === "cards" ? spec.input.closed : []);
   return (
     <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
       {lead && <p className="text-xs font-semibold uppercase tracking-wide text-primary">{lead}</p>}
@@ -79,7 +81,15 @@ export function QuestionCard({
               giữ rồi đóng.
             </p>
             {spec.input.groups.map((group) => (
-              <details key={group.issuer} className="rounded-xl border border-border px-4 py-3">
+              <details
+                key={group.issuer}
+                // Đang sửa thì ngân hàng có thẻ đã khai mở sẵn: thẻ tick sẵn mà
+                // nằm trong khối gập thì người dùng không thấy nó còn đó.
+                open={group.cards.some(
+                  (card) => holding.has(card.value) || closed.has(card.value),
+                )}
+                className="rounded-xl border border-border px-4 py-3"
+              >
                 <summary className="cursor-pointer text-base font-semibold text-foreground">
                   {group.issuer}
                   <span className="ml-2 text-sm font-normal text-muted-foreground">
@@ -95,11 +105,23 @@ export function QuestionCard({
                       <span className="text-base text-foreground">{card.label}</span>
                       <span className="flex gap-4">
                         <label className="flex items-center gap-1.5 text-sm text-foreground/80">
-                          <input type="checkbox" name="holding" value={card.value} className="size-4" />
+                          <input
+                            type="checkbox"
+                            name="holding"
+                            value={card.value}
+                            defaultChecked={holding.has(card.value)}
+                            className="size-4"
+                          />
                           Đang giữ
                         </label>
                         <label className="flex items-center gap-1.5 text-sm text-foreground/80">
-                          <input type="checkbox" name="closed" value={card.value} className="size-4" />
+                          <input
+                            type="checkbox"
+                            name="closed"
+                            value={card.value}
+                            defaultChecked={closed.has(card.value)}
+                            className="size-4"
+                          />
                           Đã đóng
                         </label>
                       </span>
@@ -129,7 +151,13 @@ export function QuestionCard({
               {spec.input.programs.map((program) => (
                 <li key={program.value}>
                   <label className="flex items-center gap-2 rounded-xl border border-border px-3 py-2.5 text-base text-foreground">
-                    <input type="checkbox" name="programs" value={program.value} className="size-4" />
+                    <input
+                      type="checkbox"
+                      name="programs"
+                      value={program.value}
+                      defaultChecked={spec.input.type === "programs" && spec.input.selected.includes(program.value)}
+                      className="size-4"
+                    />
                     {program.label}
                   </label>
                 </li>
@@ -149,6 +177,7 @@ export function QuestionCard({
               max={spec.input.max}
               step={1}
               required
+              defaultValue={spec.input.current ?? undefined}
               placeholder={spec.input.placeholder}
               className="w-40 rounded-lg border border-border bg-white px-3 py-2.5 text-base outline-none focus:ring-2 focus:ring-primary"
             />
@@ -161,6 +190,7 @@ export function QuestionCard({
             <select
               name="month"
               required
+              defaultValue={spec.input.current ?? undefined}
               className="rounded-lg border border-border bg-white px-3 py-2.5 text-base outline-none focus:ring-2 focus:ring-primary"
             >
               {spec.input.months.map((month) => (

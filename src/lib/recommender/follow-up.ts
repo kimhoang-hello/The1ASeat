@@ -20,6 +20,8 @@ import { nextQuestion } from "../recommendation/explain.ts";
 import type { FollowUpQuestion } from "../recommendation/engine-types.ts";
 import type { RecommendationRunRecord } from "../recommendation/runs.ts";
 import type { RecommendationDataset } from "../recommendation/types.ts";
+import type { CreditCardOffer } from "../content/types.ts";
+import { presentRun, routeNotPricedOf, type ResultView } from "./present.ts";
 import { questionKey } from "./questions.ts";
 import type { UserDataGap } from "../recommendation/user-types.ts";
 
@@ -31,8 +33,24 @@ import type { UserDataGap } from "../recommendation/user-types.ts";
 export function followUpAfterSkips(
   record: RecommendationRunRecord,
   dataset: RecommendationDataset,
-  skipped: ReadonlySet<string>,
+  skippedByUser: ReadonlySet<string>,
+  /**
+   * Chặng bay chưa có giá (`AWARD_ROUTE_NOT_IN_DATASET`). Hạng ghế, số người,
+   * khứ hồi chỉ là thừa số của số điểm chuyến bay cần — không có giá thì trả
+   * lời gì cũng không ra con số, và trang đã nói đúng câu đó ngay trên câu hỏi.
+   * Coi chúng như đã bỏ qua. Ngày bay và độ linh hoạt thì KHÔNG: luật "đặt
+   * ngay" (`rules.ts`) vẫn đọc chúng.
+   */
+  routeNotPriced = false,
 ): FollowUpQuestion | null {
+  const skipped = routeNotPriced
+    ? new Set([
+        ...skippedByUser,
+        ...record.outputSnapshot.userGaps
+          .filter((gap) => PRICE_FACTORS.has(gap.kind))
+          .map((gap) => questionKey(gap.kind, gap.subject)),
+      ])
+    : skippedByUser;
   const original = record.outputSnapshot.followUp;
   if (original === null) return null;
   if (!skipped.has(questionKey(original.gapKind, original.subject))) return original;
@@ -93,6 +111,30 @@ const TRIP_FACTS = new Set<UserDataGap["kind"]>([
   "trip_passengers_unknown",
   "trip_round_trip_unknown",
   "trip_dates_unknown",
+]);
+
+/**
+ * Kết quả + câu hỏi tiếp theo, đúng như trang hiện ra.
+ *
+ * Một hàm, không phải hai lời gọi ở trang: độ chắc chắn nói "trả lời thêm vài
+ * câu" chỉ khi trang CÒN câu để hỏi sau khi trừ những câu đã bỏ qua — và nối
+ * sai hai lời gọi đó ở trang là lỗi không test nào thấy (Codex, rà 22/09/2026).
+ */
+export function presentForPage(
+  record: RecommendationRunRecord,
+  dataset: RecommendationDataset,
+  offers: readonly CreditCardOffer[],
+  skipped: ReadonlySet<string>,
+): { view: ResultView | null; followUp: FollowUpQuestion | null } {
+  const followUp = followUpAfterSkips(record, dataset, skipped, routeNotPricedOf(record));
+  return { followUp, view: presentRun(record, dataset, offers, 0, followUp !== null) };
+}
+
+/** Thừa số của số điểm chuyến bay cần — xem `routeNotPriced` ở trên. */
+const PRICE_FACTORS = new Set<UserDataGap["kind"]>([
+  "trip_cabin_unknown",
+  "trip_passengers_unknown",
+  "trip_round_trip_unknown",
 ]);
 
 export function asksForAttention(question: FollowUpQuestion): boolean {

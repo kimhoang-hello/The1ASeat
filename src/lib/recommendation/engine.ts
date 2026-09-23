@@ -273,6 +273,12 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * (năm ghi thành 30/06 từng làm một lần đóng tháng 12 lọt ra ngoài cửa sổ). Thứ hạng đổi với mọi hồ sơ có thẻ
  * đã đóng cùng họ/cùng ngân hàng.
  *
+ * 4.29.0 — cặp vùng KHÔNG có award strategy nào ở mọi hạng ghế trả
+ * `AWARD_ROUTE_NOT_IN_DATASET` ngay, trước khi đòi hạng ghế. Trước đây hồ sơ
+ * bay châu Âu chưa chọn hạng ghế nhận `TRIP_CABIN_UNKNOWN`, và trang hỏi hạng
+ * ghế như thể trả lời xong sẽ ra số điểm. Chỉ đổi mã lý do/cảnh báo của mục
+ * tiêu chuyến đi tới vùng chưa định giá; không đổi điểm số.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -285,7 +291,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.28.0";
+export const ENGINE_VERSION = "4.29.0";
 
 export interface RecommendInput {
   state: UserState;
