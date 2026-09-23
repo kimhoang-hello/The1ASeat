@@ -80,8 +80,12 @@ function withClosedProduct(base: RecommendationDataset): RecommendationDataset {
     productAvailability: base.productAvailability.map((row) =>
       row.productId === original.id ? { ...row, effectiveTo: CLOSED_ON } : row,
     ),
+    // Offer đã đóng trước CLOSED_ON giữ nguyên — kéo nó ra tới CLOSED_ON là
+    // chồng lên offer kế nhiệm.
     offers: base.offers.map((row) =>
-      row.productId === original.id ? { ...row, effectiveTo: CLOSED_ON } : row,
+      row.productId === original.id && (row.effectiveTo === null || row.effectiveTo > CLOSED_ON)
+        ? { ...row, effectiveTo: CLOSED_ON }
+        : row,
     ),
   };
 }

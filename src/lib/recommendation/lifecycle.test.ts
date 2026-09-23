@@ -35,8 +35,11 @@ function errorsIn(data: RecommendationDataset, asOf = TODAY): string[] {
 }
 
 /** Đóng một bản ghi lại vào ngày `on`, đúng cách người biên tập phải làm. */
+// Không kéo dài bản ghi đã đóng sớm hơn: "đóng thẻ ngày X" với một offer đã
+// hết từ trước là giữ nguyên nó, không phải mở nó ra tới X rồi chồng lên offer
+// kế nhiệm (Amex® Green có hai offer nối tiếp từ 22/09/2026).
 function close<T extends { effectiveTo: string | null }>(row: T, on: string): T {
-  return { ...row, effectiveTo: on };
+  return { ...row, effectiveTo: row.effectiveTo !== null && row.effectiveTo < on ? row.effectiveTo : on };
 }
 
 test("bộ dữ liệu nền không lỗi", () => {
@@ -1097,7 +1100,7 @@ test("thẻ NGỪNG RỒI MỞ LẠI: hai quãng, cả hai còn nguyên", () => 
     ],
     // Ngừng nhận đơn thì offer phải đóng theo — nhưng chỉ trong quãng đóng.
     offers: BASE.offers.map((o) =>
-      o.productId === product.id ? { ...o, effectiveTo: "2026-11-30" } : o,
+      o.productId === product.id ? close(o, "2026-11-30") : o,
     ),
   };
   assert.deepEqual(errorsIn(relaunched, "2026-12-15"), [], "trong quãng đóng phải hợp lệ");
@@ -1148,7 +1151,7 @@ test("offer không được kéo dài xuyên qua quãng thẻ ngừng nhận đ�
   const fixed = {
     ...gapped,
     offers: BASE.offers.map((o) =>
-      o.productId === product.id ? { ...o, effectiveTo: "2026-11-30" } : o,
+      o.productId === product.id ? close(o, "2026-11-30") : o,
     ),
   };
   assert.deepEqual(errorsIn(fixed, "2027-06-01"), []);
