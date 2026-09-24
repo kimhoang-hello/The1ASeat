@@ -1010,7 +1010,7 @@ const US_CARD_DATA: UsCardData[] = [
   },
   {
     slug: "chase-sapphire-reserve-business",
-    name: "Sapphire Reserve for Business℠ Card",
+    name: "Chase Sapphire Reserve® for Business Card",
     issuerId: "chase",
     category: "travel",
     business: true,
