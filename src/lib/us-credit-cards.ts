@@ -201,6 +201,28 @@ const ADDRESS_USUALLY: CanadianAnswer = {
 const VERIFIED = "2026-09-21";
 /** Đợt thẻ thêm ngày 23/09/2026 — thẻ phổ biến của các ngân hàng lớn. */
 const VERIFIED_2 = "2026-09-23";
+/** Đợt thẻ thêm ngày 24/09/2026. */
+const VERIFIED_3 = "2026-09-24";
+
+/**
+ * Hai thẻ Ink không annual fee trả thưởng bằng "cash back", nhưng đó thực chất
+ * là điểm Ultimate Rewards® tính theo tỷ lệ 1 điểm = 1 cent. Ai đang giữ thêm
+ * một thẻ Chase® có quyền chuyển điểm — Sapphire Preferred®, Sapphire Reserve®
+ * hay Ink Business Preferred® — thì gộp được số điểm đó về thẻ kia rồi chuyển
+ * sang đối tác. Không có thẻ đó thì cash back chỉ là tiền.
+ */
+const INK_CONVERT_NOTE =
+  "Cash back của thẻ này thực chất là điểm Ultimate Rewards®: gộp được sang thẻ Chase® có quyền chuyển điểm (Sapphire Preferred®, Sapphire Reserve® hoặc Ink Business Preferred®) rồi chuyển tiếp sang đối tác như Aeroplan®.";
+
+const INK_FTF: CanadianAnswer = {
+  short: "Có — 3%",
+  note: "Theo bảng phí của Chase®: 3% mỗi giao dịch quy ra đô la Mỹ. Đừng dùng thẻ này khi quẹt ở Canada.",
+};
+
+const INK_POINTS_FROM_CANADA: CanadianAnswer = {
+  short: "Có, nếu ghép thẻ",
+  note: "Tự nó chỉ quy ra tiền. Gộp điểm sang Sapphire Preferred®, Sapphire Reserve® hoặc Ink Business Preferred® thì chuyển được sang Aeroplan®.",
+};
 
 const US_CARD_DATA: UsCardData[] = [
   {
@@ -901,12 +923,14 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Thẻ doanh nghiệp không annual fee của Chase®: 1.5% cash back cho mọi chi tiêu.",
     editorsTake:
-      "Không annual fee mà welcome bonus $750 USD. Cash back thực chất là điểm Ultimate Rewards®: giữ thêm một thẻ Sapphire® thì chúng chuyển được sang Aeroplan®. Lưu ý thẻ này CÓ phí giao dịch ngoại tệ 3%.",
+      "Không annual fee mà welcome bonus $750 USD. " +
+      INK_CONVERT_NOTE +
+      " Lưu ý thẻ này CÓ phí giao dịch ngoại tệ 3%.",
     keyBenefits: [
       "1.5% cash back cho mọi chi tiêu, không giới hạn",
       "Không annual fee",
       "Thẻ nhân viên miễn phí",
-      "Điểm gộp được với thẻ Sapphire® hoặc Ink Preferred® để chuyển sang đối tác",
+      "Cash back quy đổi được sang điểm Ultimate Rewards® nếu có thẻ Chase® đủ điều kiện",
     ],
     tags: ["Business", "Không annual fee", "Có phí ngoại tệ"],
     canada: {
@@ -916,19 +940,56 @@ const US_CARD_DATA: UsCardData[] = [
       },
       usCreditHistory: HISTORY_USUALLY,
       usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
-      foreignTransactionFee: {
-        short: "Có — 3%",
-        note: "Theo bảng phí của Chase®: 3% mỗi giao dịch quy ra đô la Mỹ. Đừng dùng thẻ này khi quẹt ở Canada.",
-      },
-      pointsFromCanada: {
-        short: "Có, nếu ghép thẻ",
-        note: "Tự nó chỉ quy ra tiền; ghép với Sapphire® hoặc Ink Preferred® thì chuyển được sang Aeroplan®.",
-      },
+      foreignTransactionFee: INK_FTF,
+      pointsFromCanada: INK_POINTS_FROM_CANADA,
       watchOut: "Thẻ này chịu luật 5/24 của Chase®, và doanh nghiệp đăng ký ở Canada không dùng được.",
     },
     applyUrl: "https://creditcards.chase.com/business-credit-cards/ink/unlimited",
     lastUpdated: VERIFIED_2,
     verifiedOn: VERIFIED_2,
+    needsVerification: false,
+  },
+  {
+    slug: "chase-ink-business-cash",
+    name: "Ink Business Cash® Credit Card",
+    issuerId: "chase",
+    category: "travel",
+    business: true,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/chase-ink-business-cash.png",
+    welcomeBonus: "$750 USD cash back",
+    minimumSpendUsd: 6_000,
+    offerPeriod: "3 tháng đầu",
+    annualFeeUsd: 0,
+    rewardsCurrency: "Ultimate Rewards®",
+    headline:
+      "Thẻ doanh nghiệp không annual fee của Chase®: 5% cash back ở văn phòng phẩm, internet, cable và điện thoại.",
+    editorsTake:
+      "Cùng welcome bonus $750 USD và cùng annual fee $0 USD với Ink Business Unlimited®, khác ở chỗ nhân theo hạng mục thay vì đều 1.5%. " +
+      INK_CONVERT_NOTE +
+      " Lưu ý thẻ này CÓ phí giao dịch ngoại tệ 3%.",
+    keyBenefits: [
+      "5% cash back ở văn phòng phẩm và dịch vụ internet, cable, điện thoại (tới $25,000 USD mỗi năm gia hạn thẻ)",
+      "2% cash back ở trạm xăng và nhà hàng (tới $25,000 USD mỗi năm gia hạn thẻ)",
+      "Không annual fee, thẻ nhân viên miễn phí",
+      "Cash back quy đổi được sang điểm Ultimate Rewards® nếu có thẻ Chase® đủ điều kiện",
+    ],
+    tags: ["Business", "Không annual fee", "Có phí ngoại tệ"],
+    canada: {
+      itin: {
+        short: "Tuỳ trường hợp",
+        note: "Doanh nghiệp cần EIN; người đứng tên vẫn cần SSN hoặc ITIN.",
+      },
+      usCreditHistory: HISTORY_USUALLY,
+      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      foreignTransactionFee: INK_FTF,
+      pointsFromCanada: INK_POINTS_FROM_CANADA,
+      watchOut:
+        "Thẻ này chịu luật 5/24 của Chase®, và welcome bonus không dành cho người đã từng có bất kỳ thẻ doanh nghiệp Chase® không annual fee nào.",
+    },
+    applyUrl: "https://creditcards.chase.com/business-credit-cards/ink/cash",
+    lastUpdated: VERIFIED_3,
+    verifiedOn: VERIFIED_3,
     needsVerification: false,
   },
 ];

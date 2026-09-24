@@ -1249,9 +1249,12 @@ vào được bằng URL, `noindex`, dải báo nháp; bật cờ là hiện "�
   lại nguyên `CardImage`/`CardBadges`/`OfferStats`/`EditorsTake`/`ApplyButton`,
   nhưng KHÔNG BAO GIỜ đi qua `getCreditCardOffers()` — trang Canada, so sánh,
   gợi ý, best-cards, sitemap thẻ Canada không phải học cách lọc chúng ra.
-- **Số liệu:** 16 thẻ đối chiếu trực tiếp với trang ngân hàng — 9 thẻ ngày
-  21/09/2026, 7 thẻ phổ biến của các ngân hàng lớn thêm ngày 23/09/2026
-  (`verifiedOn`). Ảnh thẻ chính thức trong `public/images/us-cards/` — đủ cả 16 thẻ từ
+- **Số liệu:** 17 thẻ đối chiếu trực tiếp với trang ngân hàng — 9 thẻ ngày
+  21/09/2026, 7 thẻ phổ biến của các ngân hàng lớn thêm ngày 23/09/2026 và
+  Ink Business Cash® ngày 24/09/2026 (`verifiedOn`). Hai thẻ Ink không annual
+  fee dùng chung `INK_CONVERT_NOTE`: cash back của chúng là điểm Ultimate
+  Rewards® gộp được sang thẻ Chase® có quyền chuyển điểm — câu này nằm một chỗ
+  để hai thẻ không nói khác nhau. Ảnh thẻ chính thức trong `public/images/us-cards/` — đủ cả 16 thẻ từ
   24/09/2026. Bilt chỉ đăng card art dạng `.webm`, KHÔNG có PNG: ảnh lấy bằng
   `ffmpeg -c:v libvpx-vp9 -i <file>.webm -frames:v 1 -pix_fmt rgba`. Phải khai
   `-c:v libvpx-vp9` thì mới ra nền trong suốt — decoder mặc định trả `yuv420p`
