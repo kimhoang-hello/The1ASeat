@@ -1249,25 +1249,20 @@ vào được bằng URL, `noindex`, dải báo nháp; bật cờ là hiện "�
   lại nguyên `CardImage`/`CardBadges`/`OfferStats`/`EditorsTake`/`ApplyButton`,
   nhưng KHÔNG BAO GIỜ đi qua `getCreditCardOffers()` — trang Canada, so sánh,
   gợi ý, best-cards, sitemap thẻ Canada không phải học cách lọc chúng ra.
-- **Số liệu:** 17 thẻ đối chiếu trực tiếp với trang ngân hàng — 9 thẻ ngày
-  21/09/2026, 7 thẻ phổ biến của các ngân hàng lớn thêm ngày 23/09/2026 và
-  Ink Business Cash® ngày 24/09/2026 (`verifiedOn`). Hai thẻ Ink không annual
-  fee dùng chung `INK_CONVERT_NOTE`: cash back của chúng là điểm Ultimate
-  Rewards® gộp được sang thẻ Chase® có quyền chuyển điểm — câu này nằm một chỗ
-  để hai thẻ không nói khác nhau. Ảnh thẻ chính thức trong `public/images/us-cards/` — đủ cả 16 thẻ từ
-  24/09/2026. Bilt chỉ đăng card art dạng `.webm`, KHÔNG có PNG: ảnh lấy bằng
-  `ffmpeg -c:v libvpx-vp9 -i <file>.webm -frames:v 1 -pix_fmt rgba`. Phải khai
-  `-c:v libvpx-vp9` thì mới ra nền trong suốt — decoder mặc định trả `yuv420p`
-  và nền thành đen đặc. `applyUrl` đang là trang
-  ngân hàng, link affiliate user gửi sau. Offer Mỹ đổi thường xuyên và không có
-  job nào canh như `check-rebates` — phải rà tay. Hai thẻ mang `expiresAt`:
-  Delta SkyMiles® Gold (04/11/2026) và Hilton Honors American Express® Card
-  (13/01/2027).
-- **Chưa thêm được:** thẻ cash back (Freedom Unlimited®, Savor, Blue Cash
-  Preferred®, BoA Customized Cash) — không khớp bốn bộ lọc Travel/Airline/
-  Hotel/Business, muốn thêm phải thêm chip "Cash back". Hai thẻ Citi® (Double
-  Cash, AAdvantage® Platinum Select®) cũng chưa thêm: trang Citi® KHÔNG render
-  số welcome bonus (chỉ ra "Earn $ cash back bonus"), không có số thật để chép.
+- **Số liệu:** 36 thẻ, tất cả đối chiếu trực tiếp với trang ngân hàng
+  (`verifiedOn`): 9 thẻ 21/09, 7 thẻ 23/09, phần còn lại 24/09/2026 theo yêu
+  cầu "thêm tất cả thẻ theo hệ điểm" — Chase® (UR + Bonvoy + Hyatt),
+  American Express® (MR + Bonvoy + Hilton, ĐÃ BỎ các thẻ Delta), Bank of
+  America® (chỉ Atmos™ Rewards, đã bỏ Premium Rewards®). Ảnh thẻ chính thức
+  cho cả 36. Offer Mỹ đổi thường xuyên và không có job nào canh như
+  `check-rebates` — phải rà tay. Bảy thẻ mang `expiresAt`, sớm nhất là hai thẻ
+  Marriott Bonvoy® của American Express® (30/09/2026).
+- **Citi® CHƯA LÀM ĐƯỢC.** Trang Citi® không render số welcome bonus, mức chi
+  tiêu và annual fee cho browser này — chỉ ra "Earn $ cash back bonus after
+  spending $ in the first months". Đúng một ngoại lệ là Citi Strata Premier®
+  (đọc được 21/09). Đã thử: chờ 15 giây, mở mục "Important Pricing &
+  Information", đọc trang view-all. Không bịa số từ nguồn cấp hai — cần số thì
+  hỏi user mở trang bằng browser của họ.
 - **Phí ngoại tệ không mặc định là 0:** Ink Business Unlimited® có 3% (đọc từ
   bảng Pricing & Terms của Chase®, không phải trang sản phẩm). Mỗi thẻ mới phải
   mở trang `sites.chase.com/.../pricingandterms` hoặc bảng phí của hãng mà kiểm.
