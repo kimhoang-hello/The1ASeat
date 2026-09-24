@@ -1249,14 +1249,22 @@ vào được bằng URL, `noindex`, dải báo nháp; bật cờ là hiện "�
   lại nguyên `CardImage`/`CardBadges`/`OfferStats`/`EditorsTake`/`ApplyButton`,
   nhưng KHÔNG BAO GIỜ đi qua `getCreditCardOffers()` — trang Canada, so sánh,
   gợi ý, best-cards, sitemap thẻ Canada không phải học cách lọc chúng ra.
-- **Số liệu:** 9 thẻ đối chiếu trực tiếp với trang ngân hàng ngày 21/09/2026
-  (`verifiedOn`), ảnh thẻ chính thức trong `public/images/us-cards/` — trừ Bilt
-  Palladium Card (Bilt chỉ đăng card art dạng video). Bilt Mastercard® cũ không
-  còn trên bilt.com; hiện là ba thẻ Blue/Obsidian/Palladium. `applyUrl` đang là
-  trang ngân hàng, link affiliate user gửi sau. Offer Mỹ đổi thường xuyên và không
-  có job nào canh như `check-rebates` — phải rà tay. Delta SkyMiles® Gold có
-  `expiresAt` 04/11/2026: qua ngày đó huy hiệu hết hạn tự ẩn nhưng welcome bonus
-  cũ vẫn nằm trên thẻ, phải sửa tay.
+- **Số liệu:** 16 thẻ đối chiếu trực tiếp với trang ngân hàng — 9 thẻ ngày
+  21/09/2026, 7 thẻ phổ biến của các ngân hàng lớn thêm ngày 23/09/2026
+  (`verifiedOn`). Ảnh thẻ chính thức trong `public/images/us-cards/`, trừ Bilt
+  Palladium Card (Bilt chỉ đăng card art dạng video). `applyUrl` đang là trang
+  ngân hàng, link affiliate user gửi sau. Offer Mỹ đổi thường xuyên và không có
+  job nào canh như `check-rebates` — phải rà tay. Hai thẻ mang `expiresAt`:
+  Delta SkyMiles® Gold (04/11/2026) và Hilton Honors American Express® Card
+  (13/01/2027).
+- **Chưa thêm được:** thẻ cash back (Freedom Unlimited®, Savor, Blue Cash
+  Preferred®, BoA Customized Cash) — không khớp bốn bộ lọc Travel/Airline/
+  Hotel/Business, muốn thêm phải thêm chip "Cash back". Hai thẻ Citi® (Double
+  Cash, AAdvantage® Platinum Select®) cũng chưa thêm: trang Citi® KHÔNG render
+  số welcome bonus (chỉ ra "Earn $ cash back bonus"), không có số thật để chép.
+- **Phí ngoại tệ không mặc định là 0:** Ink Business Unlimited® có 3% (đọc từ
+  bảng Pricing & Terms của Chase®, không phải trang sản phẩm). Mỗi thẻ mới phải
+  mở trang `sites.chase.com/.../pricingandterms` hoặc bảng phí của hãng mà kiểm.
 - **Thẻ còn `needsVerification: true`** (nếu sau này thêm thẻ mẫu) tự bị bỏ khi
   bật cờ (trang chi tiết `dynamicParams = false` → 404).
 - **"🔥 Elevated Offers"** lấy thẻ `elevatedBonus` + chưa qua `expiresAt`

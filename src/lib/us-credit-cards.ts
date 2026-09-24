@@ -42,6 +42,7 @@ export const US_CARDS_LIST_ANCHOR = "tat-ca-the-my";
  */
 export const US_CARDS_GUIDE_SLUGS = [
   "apply-us-credit-card-tu-canada",
+  "mo-chase-bank-account-tu-canada",
   "thanh-toan-us-credit-card-nhu-the-nao",
 ];
 
@@ -187,6 +188,8 @@ const ADDRESS_USUALLY: CanadianAnswer = {
 // xuyên và nhiều offer của American Express® là "as high as" — con số ghi ở
 // đây là mức cao nhất trang công bố, không phải mức mọi người đều nhận.
 const VERIFIED = "2026-09-21";
+/** Đợt thẻ thêm ngày 23/09/2026 — thẻ phổ biến của các ngân hàng lớn. */
+const VERIFIED_2 = "2026-09-23";
 
 const US_CARD_DATA: UsCardData[] = [
   {
@@ -597,6 +600,323 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: "https://creditcards.chase.com/business-credit-cards/ink/business-preferred",
     lastUpdated: VERIFIED,
     verifiedOn: VERIFIED,
+    needsVerification: false,
+  },
+  {
+    slug: "chase-sapphire-reserve",
+    name: "Chase Sapphire Reserve® Card",
+    issuerId: "chase",
+    category: "travel",
+    business: false,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/chase-sapphire-reserve.png",
+    welcomeBonus: "100,000 điểm Ultimate Rewards®",
+    minimumSpendUsd: 6_000,
+    offerPeriod: "3 tháng đầu",
+    annualFeeUsd: 795,
+    annualFeeNote: "thẻ phụ $195 USD/năm",
+    rewardsCurrency: "Ultimate Rewards®",
+    headline:
+      "Thẻ travel cao cấp của Chase®: 8x điểm qua Chase® Travel, credit du lịch $300 USD và lounge Priority Pass.",
+    editorsTake:
+      "Annual fee $795 USD chỉ đáng nếu bạn thật sự dùng hết credit du lịch $300 USD và các credit khách sạn. Điểm cùng hệ với Sapphire Preferred® nên vẫn chuyển được sang Aeroplan®.",
+    keyBenefits: [
+      "8x điểm khi đặt qua Chase® Travel, 4x vé máy bay và khách sạn đặt thẳng với hãng, 3x ăn uống",
+      "Credit du lịch tới $300 USD mỗi năm gia hạn thẻ",
+      "Credit khách sạn tới $500 USD mỗi năm cho các khách sạn thuộc The Edit℠",
+      "Chuyển điểm sang đối tác của Ultimate Rewards®, có Aeroplan®",
+      "Không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Travel", "Lounge", "Chuyển điểm"],
+    canada: {
+      itin: {
+        short: "Tuỳ trường hợp",
+        note: "Chase® không công bố điều kiện cho người dùng ITIN.",
+      },
+      usCreditHistory: HISTORY_USUALLY,
+      usAddress: ADDRESS_USUALLY,
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: {
+        short: "Có",
+        note: "Ultimate Rewards® chuyển được sang Aeroplan®.",
+      },
+      watchOut:
+        "Cũng chịu luật 5/24 của Chase®, và phần lớn giá trị nằm ở các credit chỉ dùng được khi đặt qua hệ thống của Chase®.",
+    },
+    applyUrl: "https://creditcards.chase.com/rewards-credit-cards/sapphire/reserve",
+    lastUpdated: VERIFIED_2,
+    verifiedOn: VERIFIED_2,
+    needsVerification: false,
+  },
+  {
+    slug: "amex-platinum-us",
+    name: "American Express® Platinum Card",
+    issuerId: "amex",
+    category: "travel",
+    business: false,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/amex-platinum-us.png",
+    welcomeBonus: "Lên đến 175,000 điểm Membership Rewards®",
+    minimumSpendUsd: 12_000,
+    offerPeriod: "6 tháng đầu",
+    annualFeeUsd: 895,
+    rewardsCurrency: "Membership Rewards®",
+    headline:
+      "Bản Mỹ của thẻ Platinum: 5x điểm vé máy bay và khách sạn, mạng lưới lounge rộng nhất trong các thẻ American Express®.",
+    editorsTake:
+      "Welcome offer là \"lên đến\" và mức chi tiêu $12,000 USD trong 6 tháng là cao nhất trong các thẻ ở đây. Điểm Membership Rewards® Mỹ chuyển được sang Aeroplan® như bản Canada.",
+    keyBenefits: [
+      "5x điểm vé máy bay đặt thẳng với hãng hoặc qua American Express Travel® (tới $500,000 USD/năm)",
+      "5x điểm khách sạn trả trước qua American Express Travel®",
+      "Vào The Global Lounge Collection®, gồm Centurion® Lounge",
+      "Chuyển điểm sang đối tác hàng không, có Aeroplan®",
+    ],
+    tags: ["Lounge", "Chuyển điểm", "Không phí ngoại tệ"],
+    canada: {
+      itin: {
+        short: "Tuỳ trường hợp",
+        note: "Người đang có thẻ American Express® Canada có thể xin thẻ Mỹ qua chương trình Global Transfer.",
+      },
+      usCreditHistory: {
+        short: "Không nhất thiết",
+        note: "Qua Global Transfer, American Express® xét cả lịch sử thẻ American Express® ở Canada.",
+      },
+      usAddress: { short: "Cần", note: "Thẻ và thư gửi về địa chỉ ở Mỹ." },
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: {
+        short: "Có",
+        note: "Membership Rewards® Mỹ chuyển được sang Aeroplan® và nhiều hãng bay khác.",
+      },
+      watchOut:
+        "Phần lớn credit hằng năm chỉ dùng được ở Mỹ, nên giá trị thật với người sống ở Canada thấp hơn con số American Express® quảng cáo.",
+    },
+    applyUrl: "https://www.americanexpress.com/us/credit-cards/card/platinum/",
+    lastUpdated: VERIFIED_2,
+    verifiedOn: VERIFIED_2,
+    needsVerification: false,
+  },
+  {
+    slug: "capital-one-venture",
+    name: "Capital One® Venture Card",
+    issuerId: "capital-one",
+    category: "travel",
+    business: false,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/capital-one-venture.png",
+    welcomeBonus: "75,000 miles Capital One® + $300 USD credit",
+    minimumSpendUsd: 4_000,
+    offerPeriod: "3 tháng đầu",
+    annualFeeUsd: 95,
+    rewardsCurrency: "Capital One® Miles",
+    headline:
+      "Bản annual fee thấp của Venture X: 2x miles cho mọi chi tiêu, miles chuyển được sang Aeroplan®.",
+    editorsTake:
+      "Cùng hệ miles với Venture X nhưng phí $95 USD thay vì $395 USD, đổi lại không có lounge. Capital One® đang chạy thêm credit khách sạn $300 USD nhưng không công bố ngày kết thúc — kiểm lại trên trang trước khi apply.",
+    keyBenefits: [
+      "2x miles cho mọi chi tiêu, không giới hạn",
+      "5x miles khách sạn và thuê xe đặt qua Capital One® Travel",
+      "Credit $300 USD cho khách sạn và nhà thuê qua Capital One® Travel trong năm đầu (offer giới hạn thời gian)",
+      "Không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Travel", "Chuyển điểm", "Không phí ngoại tệ"],
+    canada: {
+      itin: {
+        short: "Tuỳ trường hợp",
+        note: "Capital One® không công bố điều kiện cho người dùng ITIN.",
+      },
+      usCreditHistory: HISTORY_USUALLY,
+      usAddress: ADDRESS_USUALLY,
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: {
+        short: "Có",
+        note: "Capital One® Miles chuyển 1:1 sang Aeroplan®.",
+      },
+      watchOut: "Capital One® kéo báo cáo tín dụng từ cả ba credit bureau khi xét đơn.",
+    },
+    applyUrl: "https://www.capitalone.com/credit-cards/venture/",
+    lastUpdated: VERIFIED_2,
+    verifiedOn: VERIFIED_2,
+    needsVerification: false,
+  },
+  {
+    slug: "united-explorer",
+    name: "United℠ Explorer Card",
+    issuerId: "chase",
+    category: "airline",
+    business: false,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/united-explorer.png",
+    welcomeBonus: "Lên đến 60,000 miles United MileagePlus®",
+    minimumSpendUsd: 3_000,
+    offerPeriod: "3 tháng đầu",
+    annualFeeUsd: 150,
+    annualFeeNote: "năm đầu $0 USD",
+    rewardsCurrency: "United MileagePlus®",
+    headline:
+      "Thẻ hãng bay United® của Chase®: hành lý ký gửi miễn phí, 2 lượt vào United Club℠ mỗi năm.",
+    editorsTake:
+      "50,000 miles sau khi chi $3,000 USD trong 3 tháng, cộng 10,000 miles nữa nếu thêm thẻ phụ trong 3 tháng đầu. United® là đối tác Star Alliance® nên miles dùng được cho chặng Air Canada®.",
+    keyBenefits: [
+      "Hành lý ký gửi đầu tiên miễn phí cho bạn và một người cùng chuyến",
+      "2 lượt vào United Club℠ mỗi năm",
+      "Ưu tiên lên máy bay trên chuyến United®",
+      "Không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Hành lý miễn phí", "United®", "Không phí ngoại tệ"],
+    canada: {
+      itin: {
+        short: "Tuỳ trường hợp",
+        note: "Giống các thẻ Chase® khác.",
+      },
+      usCreditHistory: HISTORY_USUALLY,
+      usAddress: ADDRESS_USUALLY,
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: {
+        short: "Tuỳ chặng bay",
+        note: "United MileagePlus® không chuyển sang Aeroplan®, nhưng dùng được cho chuyến Air Canada® và các hãng Star Alliance® khác.",
+      },
+      watchOut: "Thẻ này chịu luật 5/24 của Chase®.",
+    },
+    applyUrl: "https://creditcards.chase.com/travel-credit-cards/united/united-explorer",
+    lastUpdated: VERIFIED_2,
+    verifiedOn: VERIFIED_2,
+    needsVerification: false,
+  },
+  {
+    slug: "world-of-hyatt",
+    name: "World of Hyatt® Credit Card",
+    issuerId: "chase",
+    category: "hotel",
+    business: false,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/world-of-hyatt.png",
+    welcomeBonus: "Lên đến 60,000 điểm World of Hyatt®",
+    minimumSpendUsd: 3_000,
+    offerPeriod: "3 tháng đầu",
+    annualFeeUsd: 95,
+    rewardsCurrency: "World of Hyatt®",
+    headline:
+      "Thẻ khách sạn World of Hyatt® của Chase®: một đêm miễn phí mỗi năm và 5 tier qualifying nights.",
+    editorsTake:
+      "30,000 điểm sau khi chi $3,000 USD trong 3 tháng, cộng tối đa 30,000 điểm nữa từ chi tiêu 6 tháng đầu. Điểm World of Hyatt® thường đổi ra giá trị cao nhất trong các chương trình khách sạn lớn.",
+    keyBenefits: [
+      "Một đêm miễn phí (hạng 1–4) mỗi năm gia hạn thẻ",
+      "5 tier qualifying nights mỗi năm, cộng 2 nights cho mỗi $5,000 USD chi tiêu",
+      "Tới 9x điểm ở khách sạn thuộc World of Hyatt®",
+      "Không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Hotel", "Đêm miễn phí", "Không phí ngoại tệ"],
+    canada: {
+      itin: {
+        short: "Tuỳ trường hợp",
+        note: "Giống các thẻ Chase® khác.",
+      },
+      usCreditHistory: HISTORY_USUALLY,
+      usAddress: ADDRESS_USUALLY,
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: {
+        short: "Có",
+        note: "World of Hyatt® là chương trình toàn cầu, điểm dùng được ở khách sạn Canada và mọi nơi khác.",
+      },
+      watchOut: "Thẻ này chịu luật 5/24 của Chase®; Hyatt® có ít khách sạn ở Canada hơn Marriott Bonvoy®.",
+    },
+    applyUrl: "https://creditcards.chase.com/travel-credit-cards/world-of-hyatt-credit-card",
+    lastUpdated: VERIFIED_2,
+    verifiedOn: VERIFIED_2,
+    needsVerification: false,
+  },
+  {
+    slug: "hilton-honors-amex",
+    name: "Hilton Honors American Express® Card",
+    issuerId: "amex",
+    category: "hotel",
+    business: false,
+    elevatedBonus: true,
+    expiresAt: "2027-01-13",
+    cardImage: "/images/us-cards/hilton-honors-amex.png",
+    welcomeBonus: "70,000 điểm Hilton Honors® + 1 Free Night Reward",
+    minimumSpendUsd: 2_000,
+    offerPeriod: "6 tháng đầu",
+    annualFeeUsd: 0,
+    rewardsCurrency: "Hilton Honors®",
+    headline:
+      "Thẻ khách sạn không annual fee: 7x điểm ở khách sạn Hilton® và hạng Silver tự động.",
+    editorsTake:
+      "American Express® đang chạy offer giới hạn thời gian tới 13/01/2027: thêm một Free Night Reward bên cạnh 70,000 điểm. Không annual fee nên thẻ này không tốn gì để giữ.",
+    keyBenefits: [
+      "7x điểm ở khách sạn và resort thuộc Hilton®",
+      "5x điểm ở nhà hàng, siêu thị và trạm xăng tại Mỹ",
+      "Hạng Hilton Honors™ Silver tự động",
+      "Không annual fee",
+    ],
+    tags: ["Hotel", "Không annual fee", "Không phí ngoại tệ"],
+    canada: {
+      itin: {
+        short: "Tuỳ trường hợp",
+        note: "Giống các thẻ American Express® Mỹ khác — người đang có thẻ American Express® Canada có thể đi qua Global Transfer.",
+      },
+      usCreditHistory: {
+        short: "Không nhất thiết",
+        note: "Qua Global Transfer, American Express® xét cả lịch sử thẻ American Express® ở Canada.",
+      },
+      usAddress: { short: "Cần" },
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: {
+        short: "Có",
+        note: "Hilton Honors® là chương trình toàn cầu; điểm dùng được ở khách sạn Canada.",
+      },
+      watchOut:
+        "Điểm Hilton Honors® có giá trị mỗi điểm thấp hơn nhiều so với Aeroplan® hay World of Hyatt® — cần rất nhiều điểm cho một đêm.",
+    },
+    applyUrl: "https://www.americanexpress.com/us/credit-cards/card/hilton-honors/",
+    lastUpdated: VERIFIED_2,
+    verifiedOn: VERIFIED_2,
+    needsVerification: false,
+  },
+  {
+    slug: "chase-ink-business-unlimited",
+    name: "Ink Business Unlimited® Credit Card",
+    issuerId: "chase",
+    category: "travel",
+    business: true,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/chase-ink-business-unlimited.png",
+    welcomeBonus: "$750 USD cash back",
+    minimumSpendUsd: 6_000,
+    offerPeriod: "3 tháng đầu",
+    annualFeeUsd: 0,
+    rewardsCurrency: "Ultimate Rewards®",
+    headline:
+      "Thẻ doanh nghiệp không annual fee của Chase®: 1.5% cash back cho mọi chi tiêu.",
+    editorsTake:
+      "Không annual fee mà welcome bonus $750 USD. Cash back thực chất là điểm Ultimate Rewards®: giữ thêm một thẻ Sapphire® thì chúng chuyển được sang Aeroplan®. Lưu ý thẻ này CÓ phí giao dịch ngoại tệ 3%.",
+    keyBenefits: [
+      "1.5% cash back cho mọi chi tiêu, không giới hạn",
+      "Không annual fee",
+      "Thẻ nhân viên miễn phí",
+      "Điểm gộp được với thẻ Sapphire® hoặc Ink Preferred® để chuyển sang đối tác",
+    ],
+    tags: ["Business", "Không annual fee", "Có phí ngoại tệ"],
+    canada: {
+      itin: {
+        short: "Tuỳ trường hợp",
+        note: "Doanh nghiệp cần EIN; người đứng tên vẫn cần SSN hoặc ITIN.",
+      },
+      usCreditHistory: HISTORY_USUALLY,
+      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      foreignTransactionFee: {
+        short: "Có — 3%",
+        note: "Theo bảng phí của Chase®: 3% mỗi giao dịch quy ra đô la Mỹ. Đừng dùng thẻ này khi quẹt ở Canada.",
+      },
+      pointsFromCanada: {
+        short: "Có, nếu ghép thẻ",
+        note: "Tự nó chỉ quy ra tiền; ghép với Sapphire® hoặc Ink Preferred® thì chuyển được sang Aeroplan®.",
+      },
+      watchOut: "Thẻ này chịu luật 5/24 của Chase®, và doanh nghiệp đăng ký ở Canada không dùng được.",
+    },
+    applyUrl: "https://creditcards.chase.com/business-credit-cards/ink/unlimited",
+    lastUpdated: VERIFIED_2,
+    verifiedOn: VERIFIED_2,
     needsVerification: false,
   },
 ];
