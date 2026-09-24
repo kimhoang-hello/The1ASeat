@@ -229,6 +229,26 @@ const HILTON_FROM_CANADA: CanadianAnswer = {
   note: "Hilton Honors® là chương trình toàn cầu; điểm dùng được ở khách sạn Canada.",
 };
 
+const BOA_ITIN: CanadianAnswer = {
+  short: "Tuỳ trường hợp",
+  note: "Bank of America® không công bố điều kiện cho người dùng ITIN.",
+};
+
+/**
+ * Bank of America® KHÔNG in mức phí giao dịch ngoại tệ trên trang sản phẩm của
+ * hai thẻ Atmos™ rẻ hơn — bảng phí đầy đủ chỉ hiện trong luồng apply. Thẻ
+ * Summit thì trang nói thẳng là không có, nên chỉ hai thẻ kia để ngỏ.
+ */
+const BOA_FTF_UNKNOWN: CanadianAnswer = {
+  short: "Chưa rõ",
+  note: "Trang sản phẩm của Bank of America® không công bố mức phí này; kiểm lại trong bảng phí lúc apply trước khi dùng thẻ ngoài nước Mỹ.",
+};
+
+const ATMOS_FROM_CANADA: CanadianAnswer = {
+  short: "Tuỳ chặng bay",
+  note: "Atmos™ Rewards là chương trình gộp của Alaska Airlines® và Hawaiian Airlines®; điểm dùng cho chuyến của hai hãng này và đối tác oneworld®, không chuyển sang Aeroplan®.",
+};
+
 const CHASE_ITIN: CanadianAnswer = {
   short: "Tuỳ trường hợp",
   note: "Chase® không công bố điều kiện cho người dùng ITIN.",
@@ -481,50 +501,6 @@ const US_CARD_DATA: UsCardData[] = [
         "Điểm tiền nhà phụ thuộc chi tiêu thường ngày: tiêu dưới 25% số tiền nhà trong kỳ sao kê thì chỉ nhận 250 điểm cho khoản tiền nhà đó.",
     },
     applyUrl: "https://www.bilt.com/card",
-    lastUpdated: VERIFIED,
-    verifiedOn: VERIFIED,
-    needsVerification: false,
-  },
-  {
-    slug: "bank-of-america-premium-rewards",
-    name: "Bank of America® Premium Rewards® Credit Card",
-    issuerId: "bank-of-america",
-    category: "travel",
-    business: false,
-    elevatedBonus: false,
-    cardImage: "/images/us-cards/bank-of-america-premium-rewards.png",
-    welcomeBonus: "60,000 điểm",
-    minimumSpendUsd: 4_000,
-    offerPeriod: "90 ngày đầu",
-    annualFeeUsd: 95,
-    rewardsCurrency: "Bank of America® Points",
-    headline:
-      "Thẻ travel của Bank of America®: 2x du lịch và ăn uống, 1.5x mọi thứ khác, điểm quy thẳng ra tiền.",
-    editorsTake:
-      "Điểm không chuyển được sang hãng bay, nên thẻ này hợp với người muốn đơn giản — welcome bonus 60,000 điểm tương đương $600 USD — hơn là người săn vé thương gia.",
-    keyBenefits: [
-      "2x điểm ở du lịch và ăn uống, 1.5x mọi chi tiêu khác, không giới hạn",
-      "Credit phụ phí hãng bay tới $100 USD mỗi năm (hành lý, chọn ghế, lounge)",
-      "Credit TSA PreCheck® hoặc Global Entry tới $100 USD, 4 năm một lần",
-      "Không phí giao dịch ngoại tệ",
-    ],
-    tags: ["Travel", "Quy ra tiền", "Không phí ngoại tệ"],
-    canada: {
-      itin: {
-        short: "Tuỳ trường hợp",
-        note: "Bank of America® không công bố điều kiện cho người dùng ITIN.",
-      },
-      usCreditHistory: HISTORY_USUALLY,
-      usAddress: ADDRESS_USUALLY,
-      foreignTransactionFee: NO_FTF,
-      pointsFromCanada: {
-        short: "Hạn chế",
-        note: "Điểm chỉ quy ra tiền, credit thẻ hoặc đặt qua BofA Travel — không chuyển được sang Aeroplan®.",
-      },
-      watchOut:
-        "Điểm quy ra tiền vào tài khoản Bank of America® — tiện nhất khi bạn có tài khoản ngân hàng ở Mỹ.",
-    },
-    applyUrl: "https://www.bankofamerica.com/credit-cards/products/premium-rewards-credit-card/",
     lastUpdated: VERIFIED,
     verifiedOn: VERIFIED,
     needsVerification: false,
@@ -1650,6 +1626,120 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/hilton-honors/",
+    lastUpdated: VERIFIED_3,
+    verifiedOn: VERIFIED_3,
+    needsVerification: false,
+  },
+  {
+    slug: "atmos-rewards-summit",
+    name: "Atmos™ Rewards Summit Visa Infinite® Credit Card",
+    issuerId: "bank-of-america",
+    category: "airline",
+    business: false,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/atmos-summit.png",
+    welcomeBonus: "70,000 điểm Atmos™ Rewards + Global Companion Award 25,000 điểm",
+    minimumSpendUsd: 3_000,
+    offerPeriod: "90 ngày đầu",
+    annualFeeUsd: 395,
+    rewardsCurrency: "Atmos™ Rewards",
+    headline:
+      "Thẻ cao cấp của chương trình Atmos™ Rewards (Alaska Airlines® và Hawaiian Airlines®): Global Companion Award mỗi năm và lounge Alaska®.",
+    editorsTake:
+      "Bank of America® ghi đây là offer giới hạn thời gian nhưng không công bố ngày kết thúc. Global Companion Award 25,000 điểm mỗi năm gia hạn là thứ bù lại phần lớn annual fee nếu bạn bay Alaska Airlines® hoặc Hawaiian Airlines®.",
+    keyBenefits: [
+      "Global Companion Award 25,000 điểm mỗi năm gia hạn thẻ",
+      "3 điểm mỗi $1 USD ở nhà hàng, giao dịch ngoại tệ và vé Alaska Airlines®/Hawaiian Airlines®",
+      "Vào Alaska Lounge®",
+      "Không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Airline", "Companion award", "Không phí ngoại tệ"],
+    canada: {
+      itin: BOA_ITIN,
+      usCreditHistory: HISTORY_USUALLY,
+      usAddress: ADDRESS_USUALLY,
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: ATMOS_FROM_CANADA,
+      watchOut:
+        "Chương trình Atmos™ Rewards là bản gộp của Alaska Airlines® và Hawaiian Airlines® — điều khoản còn mới, đọc kỹ trước khi tính đường đổi điểm dài hạn.",
+    },
+    applyUrl: "https://www.bankofamerica.com/credit-cards/products/alaska-airlines-infinite-credit-card/",
+    lastUpdated: VERIFIED_3,
+    verifiedOn: VERIFIED_3,
+    needsVerification: false,
+  },
+  {
+    slug: "atmos-rewards-ascent",
+    name: "Atmos™ Rewards Ascent Visa Signature® Credit Card",
+    issuerId: "bank-of-america",
+    category: "airline",
+    business: false,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/atmos-ascent.png",
+    welcomeBonus: "50,000 điểm Atmos™ Rewards + Companion Fare $99 USD",
+    minimumSpendUsd: 1_500,
+    offerPeriod: "90 ngày đầu",
+    annualFeeUsd: 95,
+    rewardsCurrency: "Atmos™ Rewards",
+    headline:
+      "Bản kế nhiệm của thẻ Alaska Airlines® Visa: Companion Fare $99 USD mỗi năm và hành lý ký gửi miễn phí.",
+    editorsTake:
+      "Mức chi tiêu $1,500 USD trong 90 ngày là thấp nhất trong nhóm thẻ hãng bay ở đây. Companion Fare hằng năm đòi chi $6,000 USD trong năm trước đó mới nhận được.",
+    keyBenefits: [
+      "Companion Fare $99 USD (cộng thuế phí từ $23 USD) mỗi năm gia hạn, sau khi chi $6,000 USD trong năm",
+      "Hành lý ký gửi miễn phí và ưu tiên lên máy bay cho tối đa 6 người cùng đặt chỗ",
+      "3 điểm mỗi $1 USD cho vé Alaska Airlines® và Hawaiian Airlines®",
+      "2 điểm ở xăng, sạc xe điện, streaming và giao thông địa phương",
+    ],
+    tags: ["Airline", "Companion fare", "Hành lý miễn phí"],
+    canada: {
+      itin: BOA_ITIN,
+      usCreditHistory: HISTORY_USUALLY,
+      usAddress: ADDRESS_USUALLY,
+      foreignTransactionFee: BOA_FTF_UNKNOWN,
+      pointsFromCanada: ATMOS_FROM_CANADA,
+      watchOut:
+        "Companion Fare chỉ dùng cho chuyến của Alaska Airlines® và Hawaiian Airlines® trong Bắc Mỹ.",
+    },
+    applyUrl: "https://www.bankofamerica.com/credit-cards/products/alaska-airlines-credit-card/",
+    lastUpdated: VERIFIED_3,
+    verifiedOn: VERIFIED_3,
+    needsVerification: false,
+  },
+  {
+    slug: "atmos-rewards-business",
+    name: "Atmos™ Rewards Visa Signature® Business Card",
+    issuerId: "bank-of-america",
+    category: "airline",
+    business: true,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/atmos-business.png",
+    welcomeBonus: "70,000 điểm Atmos™ Rewards + Companion Fare $99 USD",
+    minimumSpendUsd: 4_000,
+    offerPeriod: "90 ngày đầu",
+    annualFeeUsd: 70,
+    annualFeeNote: "thêm $25 USD/năm cho mỗi thẻ",
+    rewardsCurrency: "Atmos™ Rewards",
+    headline:
+      "Bản doanh nghiệp của thẻ Atmos™ Rewards: annual fee thấp nhất trong nhóm, Companion Fare hằng năm.",
+    editorsTake:
+      "Phí công ty $70 USD cộng $25 USD mỗi thẻ — rẻ nhất trong các thẻ hãng bay ở đây. Cùng Companion Fare và hành lý miễn phí như bản cá nhân.",
+    keyBenefits: [
+      "Companion Fare $99 USD (cộng thuế phí từ $23 USD) mỗi năm gia hạn, sau khi chi $6,000 USD trong năm",
+      "Hành lý ký gửi miễn phí và ưu tiên lên máy bay",
+      "3 điểm mỗi $1 USD cho vé Alaska Airlines® và Hawaiian Airlines®",
+      "2 điểm ở xăng, sạc xe điện, vận chuyển và giao thông địa phương",
+    ],
+    tags: ["Airline", "Business", "Companion fare"],
+    canada: {
+      itin: BOA_ITIN,
+      usCreditHistory: HISTORY_USUALLY,
+      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      foreignTransactionFee: BOA_FTF_UNKNOWN,
+      pointsFromCanada: ATMOS_FROM_CANADA,
+      watchOut: "Phí thẻ tính theo từng thẻ nhân viên, khác với thẻ doanh nghiệp của Chase® và American Express®.",
+    },
+    applyUrl: "https://business.bankofamerica.com/en/credit-cards/atmos-rewards",
     lastUpdated: VERIFIED_3,
     verifiedOn: VERIFIED_3,
     needsVerification: false,

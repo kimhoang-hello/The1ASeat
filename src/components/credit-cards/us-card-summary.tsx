@@ -44,9 +44,14 @@ export function UsCardSummary({ card }: { card: UsCreditCardOffer }) {
           expiresOnLabel={offers_t("expiresOn")}
         />
 
-        {/* `wrap-anywhere`: tên thẻ Mỹ dài ("Bank of America® Premium
-            Rewards® Credit Card"), và ở màn 320px một từ không ngắt được đẩy
-            cả trang trượt ngang — cùng cái bẫy trang Ngân hàng đã gặp. */}
+        {/* `wrap-anywhere`: tên thẻ Mỹ rất dài, và ở màn 320px một từ không
+            ngắt được đẩy cả trang trượt ngang — cùng cái bẫy trang Ngân hàng
+            đã gặp.
+
+            Đừng viết ví dụ tên thẻ ở đây và đừng để tên thẻ bị NGẮT DÒNG trong
+            comment: `audit:trademarks` học thương hiệu bằng cách lùi về trước
+            dấu ®, nên một dòng mở đầu bằng tên chương trình điểm kèm dấu ® sẽ
+            dạy nó rằng chính từ đó là một thương hiệu — và nó đi báo nhầm 12 chỗ trong nội dung Canada. */}
         <h3 className="mt-1.5 wrap-anywhere font-display text-lg font-bold text-foreground">
           <Link href={href} className="cursor-pointer hover:text-primary">
             {card.name}
