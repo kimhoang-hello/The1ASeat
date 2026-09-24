@@ -39,7 +39,7 @@ import type { ExplanationStore, StoredExplanation } from "./explain-store.ts";
  * (Codex vòng 2 — bản cũ từng được trả thẳng, bỏ qua cả cửa kiểm mới lẫn công
  * tắc tắt).
  */
-export const EXPLANATION_PROMPT_VERSION = "6.4.0";
+export const EXPLANATION_PROMPT_VERSION = "6.5.0";
 
 export const EXPLANATION_MODEL = "claude-opus-5";
 

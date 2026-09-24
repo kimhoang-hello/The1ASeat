@@ -471,3 +471,75 @@ test("chưa khai số dư: khối chuyến bay KHÔNG in 'gom được 0 điểm
   const funded = presentRun(runFor(japanTripFunded), DATA, offersFor(DATA));
   assert.ok(funded?.trip?.accessible != null);
 });
+
+test("câu 'offer đang yếu' / 'chưa thẻ nào vừa' chỉ nói khi đúng điều kiện, không vì là dòng lớn nhất", () => {
+  // Rà trang 22/09/2026 (Codex): hồ sơ người mới có `offer_climate_weak` =
+  // 0.5 — "không biết", trung tính — là dòng đóng góp nhiều nhất của "chưa mở
+  // thẻ nào", và trang in "offer đang ở vùng thấp so với lịch sử".
+  const record = runFor(beginnerNoCards);
+  const noAction = record.outputSnapshot.results[0].noAction;
+  assert.ok(!noAction.reasonCodes.includes("WAIT_FOR_BETTER_OFFER"));
+  const top = [...noAction.components].sort((a, b) => b.contribution - a.contribution)[0];
+  assert.equal(top.key, "offer_climate_weak", "fixture phải còn tái hiện đúng ca này");
+  const view = presentRun(record, DATA, offersFor(DATA));
+  assert.ok(view?.noAction);
+  assert.equal(view.noAction.noCardReason, null);
+
+  // Một phần ứng viên bị chặn không phải "chưa thẻ nào vừa".
+  const blocked = structuredClone(record);
+  for (const row of blocked.outputSnapshot.results[0].noAction.components) {
+    if (row.key === "no_reachable_candidate") Object.assign(row, { raw: 0.9, contribution: 0.18 });
+    if (row.key === "offer_climate_weak") Object.assign(row, { raw: 0.5, contribution: 0.1 });
+  }
+  assert.equal(presentRun(blocked, DATA, offersFor(DATA))?.noAction?.noCardReason, null);
+  for (const row of blocked.outputSnapshot.results[0].noAction.components) {
+    if (row.key === "no_reachable_candidate") Object.assign(row, { raw: 1, contribution: 0.2 });
+  }
+  assert.equal(presentRun(blocked, DATA, offersFor(DATA))?.noAction?.noCardReason, "nothing_fits");
+});
+
+test("hết câu để hỏi thì độ chắc chắn không bảo 'trả lời thêm vài câu'", () => {
+  const bare = structuredClone(beginnerNoCards);
+  bare.declared = { cards: false, balances: false };
+  bare.spend = null;
+  bare.profile.annualPersonalIncome = null;
+  bare.profile.annualFeeTolerancePerCard = null;
+  const record = runFor(bare);
+  const asked = presentRun(record, DATA, offersFor(DATA));
+  assert.equal(asked?.confidence.label, "Còn thiếu thông tin");
+  assert.match(asked!.confidence.sentence, /Trả lời thêm/);
+  const skippedAll = presentRun(record, DATA, offersFor(DATA), 0, false);
+  assert.ok(skippedAll !== null);
+  assert.doesNotMatch(skippedAll.confidence.sentence, /Trả lời thêm/);
+  // Và khi thiếu dữ liệu vẫn là yếu tố thấp nhất, câu đó nói đúng tình trạng.
+  const weakest = structuredClone(record);
+  weakest.outputSnapshot.results[0].confidence.scoreSeparation = 1;
+  const onlyMissing = presentRun(weakest, DATA, offersFor(DATA), 0, false);
+  assert.equal(onlyMissing?.confidence.label, "Còn thiếu thông tin");
+  assert.doesNotMatch(onlyMissing!.confidence.sentence, /Trả lời thêm/);
+});
+
+test("chặng chưa có giá / thiếu thừa số chuyến đi: khối 'Đọc kỹ trước khi đăng ký' không nhắc lại khối chuyến bay", () => {
+  // Rà trang 22/09/2026: "Chưa biết chuyến đi có mấy người" nằm trong khối
+  // điều kiện của ngân hàng, ngay trên khối chuyến bay nói đúng câu đó.
+  const tripTexts = [
+    WARNING_TEXT.TRIP_CABIN_UNKNOWN,
+    WARNING_TEXT.TRIP_PASSENGERS_UNKNOWN,
+    WARNING_TEXT.TRIP_ROUND_TRIP_UNKNOWN,
+    WARNING_TEXT.AWARD_ROUTE_NOT_IN_DATASET,
+  ];
+  for (const goalValue of ["trip:EUROPE", "trip:SEA_VIETNAM"]) {
+    const record = runFor(stateWithGoal(goalValue));
+    const runWarnings = [
+      ...record.outputSnapshot.results[0].warnings,
+      ...record.outputSnapshot.warnings,
+    ].map((code) => WARNING_TEXT[code]);
+    assert.ok(
+      tripTexts.some((text) => runWarnings.includes(text)),
+      `${goalValue}: lượt chạy phải còn cảnh báo chuyến đi, nếu không bài test không canh gì`,
+    );
+    const view = presentRun(record, DATA, offersFor(DATA));
+    assert.ok(view?.trip);
+    for (const text of tripTexts) assert.ok(!view.warnings.includes(text), `${goalValue}: "${text}"`);
+  }
+});

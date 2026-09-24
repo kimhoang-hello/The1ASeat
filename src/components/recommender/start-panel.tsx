@@ -18,8 +18,7 @@ export function StartPanel() {
           Mục tiêu của bạn là gì?
         </h2>
         <p className="mt-2 text-base leading-relaxed text-foreground/80">
-          Chọn một mục tiêu. Mình chỉ hỏi thêm khi câu trả lời thật sự đổi được gợi ý — thường là ba
-          tới năm câu.
+          Chọn một mục tiêu. Câu nào đổi được gợi ý thì mình hỏi trước — thường là ba tới năm câu.
         </p>
 
         <label className="mt-5 flex items-start gap-2.5 rounded-xl border border-border px-4 py-3 text-base text-foreground">

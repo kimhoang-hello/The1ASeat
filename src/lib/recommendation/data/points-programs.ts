@@ -53,7 +53,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
   {
     id: id<PointsProgramId>("avion"),
     slug: "avion",
-    name: "RBC Avion®",
+    name: "RBC® Avion®",
     programType: "flexible_bank",
     transferable: true,
     cashOut: "redeemable",
@@ -168,7 +168,7 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
   {
     id: id<PointsProgramId>("aventura"),
     slug: "aventura",
-    name: "CIBC Aventura®",
+    name: "CIBC® Aventura®",
     programType: "fixed_value",
     transferable: false,
     cashOut: "redeemable",

@@ -18,7 +18,6 @@ import {
   pickOffers,
 } from "@/lib/best-cards";
 import { ringAfter } from "@/lib/card-next-steps";
-import { creditCardJsonLd } from "@/lib/credit-card-schema";
 import { absoluteUrl, breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
 import { t as translate } from "@/lib/t";
 
@@ -108,15 +107,15 @@ export default async function BestCardsCategoryPage({
         // MỌI thẻ trang này vẽ ra, không phải mỗi mục một thẻ: hai mục ghép
         // hai thẻ, nên đếm theo mục thì trang `offers` khai 5 item cho 7 thẻ
         // đang hiển thị và hai thẻ Platinum/Gold biến mất khỏi dữ liệu có cấu
-        // trúc. `creditCardJsonLd` là nguồn schema chung của site — dùng lại nó
-        // chứ không dựng một hình dạng thứ hai ở đây.
+        // trúc.
         itemListElement: sections
           .flatMap(({ cards }) => cards)
           .map((card, index) => ({
             "@type": "ListItem",
             position: index + 1,
             url: absoluteUrl(`/credit-cards/${card.slug}`),
-            item: creditCardJsonLd(card),
+            // Chỉ url + tên, cùng lý do với `/credit-cards`.
+            name: card.name,
           })),
       },
     ],

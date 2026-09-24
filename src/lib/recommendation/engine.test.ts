@@ -567,6 +567,28 @@ test("§6 — vùng chưa có award strategy thì nói KHÔNG BIẾT, không đo
   );
 });
 
+test("§6 — vùng chưa có giá ở MỌI hạng ghế thì nói ngay, không đòi hạng ghế trước", () => {
+  // Rà trang gợi ý 22/09/2026: hồ sơ bay châu Âu chưa chọn hạng ghế nhận
+  // TRIP_CABIN_UNKNOWN, trang hỏi "bay hạng nào?" như thể trả lời xong sẽ ra
+  // số điểm — rồi mới nói chặng này không có giá.
+  const goal = flexiblePointsSufficient.goals[0];
+  if (goal.type !== "trip") return;
+  assert.equal(goal.destinationRegion, "EUROPE");
+  const noCabin = resolveTripGoal(flexiblePointsSufficient.profile, { ...goal, cabin: null });
+  const need = tripNeedFor(noCabin, IX, ASOF);
+  assert.ok(need.warnings.includes("AWARD_ROUTE_NOT_IN_DATASET"));
+  assert.ok(!need.warnings.includes("TRIP_CABIN_UNKNOWN"));
+  // Vùng CÓ giá mà chưa biết hạng ghế thì vẫn phải hỏi hạng ghế.
+  const vietnam = resolveTripGoal(flexiblePointsSufficient.profile, {
+    ...goal,
+    cabin: null,
+    destinationRegion: "SEA_VIETNAM",
+  });
+  const priced = tripNeedFor(vietnam, IX, ASOF);
+  assert.ok(priced.warnings.includes("TRIP_CABIN_UNKNOWN"));
+  assert.ok(!priced.warnings.includes("AWARD_ROUTE_NOT_IN_DATASET"));
+});
+
 test("§6 — chặng chưa có giá KHÔNG được kéo mọi đồng tiền về cùng một mức", () => {
   // Một chỗ trống của lớp dữ liệu không được biến thành "không đồng tiền nào
   // hữu ích", vì lúc đó thẻ thắng cuộc được chọn bằng tiếng ồn.
@@ -2575,8 +2597,8 @@ test("Test C/D của §32 nay CHẠY trên dữ liệu thật, không còn bị 
 /**
  * Bộ dữ liệu y hệt, nhưng MỘT chương trình bị đẩy về `cashOut: "unknown"`.
  *
- * Từ 20/09/2026 không chương trình thật nào còn `unknown` — Membership
- * Rewards® và Avion® đã có tỷ lệ. Nhưng nhánh xử lý `unknown` vẫn sống trong
+ * Từ 20/09/2026 không chương trình thật nào còn `unknown` —
+ * Membership Rewards® và Avion® đã có tỷ lệ. Nhưng nhánh xử lý `unknown` vẫn sống trong
  * engine cho chương trình sau này, và một nhánh không test nào chạm tới là
  * một nhánh sẽ hỏng lặng lẽ đúng ngày có người thêm chương trình mới. Dựng ca
  * đó bằng tay thay vì chờ dữ liệu thật rơi vào nó.

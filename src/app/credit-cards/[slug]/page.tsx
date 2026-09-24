@@ -23,7 +23,7 @@ import { RebateChip } from "@/components/ui/hot-tip";
 import { ApplyButton } from "@/components/ui/apply-button";
 import { isReferralUrl } from "@/lib/affiliate-links";
 import { JsonLd } from "@/components/seo/json-ld";
-import { creditCardJsonLd } from "@/lib/credit-card-schema";
+import { creditCardJsonLd, creditCardMetaDescription } from "@/lib/credit-card-schema";
 import { t as translate } from "@/lib/t";
 import { pageMetadata, breadcrumbJsonLd } from "@/lib/seo";
 
@@ -60,7 +60,7 @@ export async function generateMetadata({
 
   return pageMetadata({
     title: offer.name,
-    description: offer.headline,
+    description: creditCardMetaDescription(offer),
     path: `/credit-cards/${offer.slug}`,
     image: offer.cardImage || undefined,
   });

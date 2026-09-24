@@ -3,7 +3,6 @@ import { PageHeader } from "@/components/layout/page-header";
 import { BankAccountFinder } from "@/components/bank-accounts/bank-account-finder";
 import { JsonLd } from "@/components/seo/json-ld";
 import { BANK_ACCOUNTS, bankAccountPath } from "@/lib/bank-accounts";
-import { bankAccountJsonLd } from "@/lib/bank-account-schema";
 import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
 import { t } from "@/lib/t";
 import { pageMetadata, absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
@@ -52,7 +51,9 @@ export default function BankAccountsPage() {
             // Trang của tài khoản trên site này, không phải trang ngân hàng —
             // một ItemList trỏ ra ngoài thì không mô tả trang này nữa.
             url: absoluteUrl(bankAccountPath(account.slug)),
-            item: bankAccountJsonLd(account),
+            // Chỉ url + tên, cùng lý do với `/credit-cards`: schema đầy đủ
+            // của tài khoản đã nằm trên trang riêng của nó.
+            name: account.name,
           })),
         },
       },

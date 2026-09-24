@@ -1,5 +1,6 @@
 import type { CreditCardOffer } from "@/lib/content";
 import { t as translate } from "@/lib/t";
+import { splitAnnualFee } from "@/lib/annual-fee";
 
 const offers = translate("offers");
 
@@ -9,32 +10,6 @@ const offers = translate("offers");
  * hai trang này với cùng một câu hỏi và không có lý do gì để hai trang trả lời
  * bằng hai hình dạng khác nhau.
  */
-
-/**
- * `annualFee` trong Contentful là câu văn: "$120/năm (thẻ phụ: $50/năm)".
- * Con số đứng đầu là thứ so sánh được giữa các thẻ, phần trong ngoặc là điều
- * kiện — nên tách ra, số vào ô lớn còn điều kiện xuống dòng nhỏ bên dưới.
- *
- * Nhận dạng cố ý hẹp: chỉ đúng dạng "$X/năm" hoặc "Miễn phí", có thể kèm một
- * cặp ngoặc. Không khớp thì trả nguyên câu và không bịa ra phần ghi chú —
- * đoán sai một con số phí trên trang tạo doanh thu tệ hơn nhiều so với một ô
- * hơi dài. (Đã kiểm: cả 20 thẻ hiện tại đều khớp.)
- *
- * Phần thập phân được nhận từ 06/09/2026. American Express Cobalt® Card là thẻ
- * đầu tiên trên site có phí lẻ ($191.88/năm), và `[\d,]+` trần dừng ở "191" rồi
- * trượt — cả câu 44 ký tự rơi vào ô số nhỏ bên phải, xuống hai dòng. Cùng dạng
- * số mà `moneyAtStart` bên `credit-card-sort.ts` vẫn luôn đọc được, nên trước
- * bản vá này hai hàm hiểu cùng một chuỗi theo hai kiểu khác nhau.
- *
- * ` USD` được nhận từ 21/09/2026 cho thẻ Mỹ ("$95 USD/năm"): `$` trần trên site
- * là đô Canada, nên phí thẻ Mỹ luôn mang chữ USD — và không nhận nó thì cả câu
- * có ghi chú trong ngoặc lại rơi vào ô số.
- */
-export function splitAnnualFee(annualFee: string): { amount: string; note?: string } {
-  const match = /^(\$[\d,]+(?:\.\d+)?(?: USD)?\/năm|Miễn phí)\s*(?:\((.+)\))?$/.exec(annualFee.trim());
-  if (!match) return { amount: annualFee };
-  return { amount: match[1], note: match[2] };
-}
 
 function Figure({ value, label, muted }: { value: string; label: string; muted?: boolean }) {
   return (

@@ -21,6 +21,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { programIdFor } from "../src/lib/card-points-programs.ts";
+import { annualFeeParses } from "../src/lib/annual-fee.ts";
 import {
   POSTS_WITHOUT_DEADLINE,
   POST_OFFER_DEADLINES,
@@ -230,6 +231,20 @@ for (const c of cards) {
     .filter(([, v]) => !v)
     .map(([k]) => k);
   if (missing.length) problems.push(`thẻ "${str(c, "slug")}" thiếu ${missing.join(", ")}`);
+}
+
+// ---- 4b. Phí thường niên không tách được ------------------------------
+// Ô số liệu trên `/credit-cards` tách "$X/năm (ghi chú)" thành số to + dòng
+// nhỏ. Chuỗi lệch dạng thì cả câu thành chữ to, xuống ba dòng trên điện
+// thoại — 22/09/2026 bốn thẻ "$139/năm — miễn năm đầu (…)" bị vậy, gồm hai
+// thẻ đứng đầu trang. Build không thấy vì lỗi nằm trong Contentful.
+for (const c of cards) {
+  const fee = str(c, "annualFeeVi") ?? "";
+  if (fee && !annualFeeParses(fee)) {
+    problems.push(
+      `thẻ "${str(c, "slug")}" có annualFeeVi lệch dạng "$X/năm (ghi chú)" — ô phí vỡ trên /credit-cards: ${fee}`,
+    );
+  }
 }
 
 // ---- 5. Link apply hỏng dạng ------------------------------------------

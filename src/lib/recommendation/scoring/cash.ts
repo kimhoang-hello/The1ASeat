@@ -70,8 +70,8 @@ export function scoreCash(candidate: CandidateFacts, ctx: ScoringContext): Score
   const fee = candidate.offer.ongoingFeeCents;
   // Con số 0 ở `earnCash` có HAI nguồn, và chúng dẫn tới hai câu trả lời
   // ngược nhau. Amex® Cobalt® tích $1,900/năm theo thước đổi vé và $0 theo
-  // thước tiền mặt — KHÔNG phải vì nó vô dụng, mà vì chưa ai tra Membership
-  // Rewards® rút ra tiền theo tỷ lệ nào. Chấm nó 0 (mức nặng nhất bảng này
+  // thước tiền mặt — KHÔNG phải vì nó vô dụng, mà vì chưa ai tra
+  // Membership Rewards® rút ra tiền theo tỷ lệ nào. Chấm nó 0 (mức nặng nhất bảng này
   // biết) là lại một lần nữa đọc "chưa biết" thành "đã biết là không", đúng
   // cái lỗi mục tiêu này sinh ra để khỏi mắc (vòng Codex 5).
   // `some`, không phải `every`: một thẻ tích ra hai đồng điểm mà một cái chưa

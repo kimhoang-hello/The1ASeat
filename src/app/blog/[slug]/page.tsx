@@ -88,6 +88,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   // được hứa một danh sách mà trang kia đã lọc sạch.
   const hasLiveTransferBonus = transferBonuses.some((bonus) => !hasExpired(bonus.expiresAt));
 
+  // Bài video tự đồng bộ từ YouTube mang `excerpt` mẫu ("Video mới từ Ghế 1A:
+  // <tên tiếng Anh>"). Khi tác giả đã viết `seoDescription` tiếng Việt thì đó
+  // là câu mô tả thật của bài — dùng nó cho cả dữ liệu có cấu trúc, cùng câu
+  // với thẻ meta, thay vì để JSON-LD lặp lại câu mẫu.
+  const structuredDescription = post.seoDescription || post.excerpt;
+
   // Video posts get a nested VideoObject so they can qualify for video results
   // as well as article results — without it these pages are just an iframe and
   // a paragraph as far as a crawler is concerned.
@@ -96,7 +102,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       ? {
           "@type": "VideoObject",
           name: post.title,
-          description: post.excerpt,
+          description: structuredDescription,
           uploadDate: post.publishedAt,
           ...(image && { thumbnailUrl: [image] }),
           ...(embedUrl && { embedUrl }),
@@ -116,7 +122,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         "@type": "BlogPosting",
         "@id": `${url}#article`,
         headline: post.title,
-        description: post.excerpt,
+        description: structuredDescription,
         datePublished: post.publishedAt,
         // publishedAt is set by hand in Contentful and can post-date the last
         // edit; a dateModified earlier than datePublished is invalid markup.

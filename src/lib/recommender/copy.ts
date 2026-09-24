@@ -345,6 +345,10 @@ export const CONFIDENCE_BY_CAUSE: Record<
   },
 };
 
+/** Thiếu dữ liệu mà không còn câu nào để hỏi — xem `confidenceOf`. */
+export const CONFIDENCE_NO_QUESTION_LEFT =
+  "Gợi ý vẫn dùng được, chỉ kém chắc hơn vì còn vài chỗ mình chưa biết.";
+
 /**
  * Vì sao độ chắc chắn ở mức đó — theo YẾU TỐ THẤP NHẤT trong bốn yếu tố §29.
  *

@@ -11,7 +11,8 @@ export type TocItem = { id: string; text: string };
  * nên không ai phát hiện. Đọc thẳng từ thân bài thì không có gì để lệch.
  *
  * CHỈ `h2`. Rich text của bài dùng `h2` cho các mục lớn; `h3` trong DOM trang
- * bài đến từ `CardSpotlight` và thẻ bài liên quan — đó là component, không
+ * bài đến từ thẻ bài liên quan (khối `CardSpotlight` trong bài in tên thẻ bằng
+ * `p`, không phải heading) — đó là component, không
  * phải mục của bài, và đưa chúng vào mục lục là nói dối về cấu trúc bài.
  */
 const H2 = /<h2\b([^>]*)>([\s\S]*?)<\/h2>/gi;

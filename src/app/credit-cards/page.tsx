@@ -24,7 +24,6 @@ import {
   programIdFor,
 } from "@/lib/card-points-programs";
 import { CARD_SORT_OPTIONS, cardSortId, sortOffers, type CardSortId } from "@/lib/credit-card-sort";
-import { creditCardJsonLd } from "@/lib/credit-card-schema";
 import { t } from "@/lib/t";
 import { pageMetadata, absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
 
@@ -102,8 +101,13 @@ export default async function CreditCardsPage({
           itemListElement: allOffers.map((offer, index) => ({
             "@type": "ListItem",
             position: index + 1,
+            // Trang danh sách = "summary page" theo cách Google hiểu ItemList:
+            // mỗi mục chỉ trỏ tới trang riêng, còn schema đầy đủ của thẻ nằm ở
+            // trang đó. Lồng cả `item` đầy đủ lẫn `url` là trộn hai kiểu mà
+            // Google tách riêng, và trên `/credit-cards` nó chiếm 76KB HTML —
+            // 34 bản sao của đúng những gì 34 trang thẻ đã khai (đo 22/09/2026).
             url: absoluteUrl(`/credit-cards/${offer.slug}`),
-            item: creditCardJsonLd(offer),
+            name: offer.name,
           })),
         },
       },

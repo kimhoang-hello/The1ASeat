@@ -96,6 +96,14 @@ type OfferSeed = {
    */
   recordedFrom?: string;
   recordedTo?: string;
+  /**
+   * Ngày kiểm / ngày đưa vào kho, khi khác hằng chung của file. Offer nối tiếp
+   * thêm sau ngày dựng seed PHẢI khai: mang ngày chung thì truy vấn `knownAt`
+   * trước đó sẽ thấy một offer lúc ấy kho chưa biết. Cùng luật với
+   * `FeeVersion.recordedAt` bên products.ts.
+   */
+  verifiedAt?: string;
+  recordedAt?: string;
   /** Phí năm đầu SAU ưu đãi. `null` = không có ưu đãi phí, trả phí thường. */
   feeFirstYear?: number;
   /** Rebate FinlyWealth, khớp `rebateVi` trên Contentful. */
@@ -108,10 +116,27 @@ type OfferSeed = {
 const OFFER_SEEDS: OfferSeed[] = [
   {
     slug: "amex-green",
+    name: "10,000 điểm Membership Rewards®",
+    headline: 10000,
+    currency: "amex-mr",
+    // Ngày mình thấy mức này trên amex.ca — Amex không ghi ngày bắt đầu. Bản
+    // đang mở đứng TRƯỚC bản đã đóng: test vòng đời lấy offer đầu tiên làm
+    // "offer hiện hành" của thẻ đầu tiên.
+    startDate: "2026-09-22",
+    verifiedAt: "2026-09-22",
+    recordedAt: "2026-09-23",
+    components: [{ type: "spend_threshold", points: 10000, spend: 1000, windowDays: 90 }],
+  },
+  {
+    slug: "amex-green",
     name: "15,000 điểm Membership Rewards®",
     headline: 15000,
     currency: "amex-mr",
     startDate: "2026-09-07",
+    // 22/09/2026 amex.ca và đường nút Apply thật (Finly → CJ → amex.ca) đều
+    // chỉ còn 10,000/$1,000. Amex không công bố ngày mức 15,000 kết thúc, nên
+    // bản ghi đóng ở ngày cuối mình còn tin nó, không sửa `endDate`.
+    recordedTo: "2026-09-21",
     components: [{ type: "spend_threshold", points: 15000, spend: 1250, windowDays: 90 }],
   },
   {
@@ -703,8 +728,8 @@ export const OFFERS: Offer[] = OFFER_SEEDS.map((seed) => ({
   effectiveTo: seed.recordedTo ?? seed.endDate ?? null,
   sourceUrl: `${CONTENTFUL_SOURCE}/${seed.slug}`,
   sourceKind: "ghe1a",
-  verifiedAt: VERIFIED_ON,
-  recordedAt: RECORDED_ON,
+  verifiedAt: seed.verifiedAt ?? VERIFIED_ON,
+  recordedAt: seed.recordedAt ?? RECORDED_ON,
   confidence: seed.components.length === 0 && seed.headline !== null ? "estimated" : "verified",
 }));
 

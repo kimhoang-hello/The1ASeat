@@ -460,3 +460,81 @@ test("nhãn nấc thu nhập khớp đúng khoảng lưu (người thu nhập đ
     }
   }
 });
+
+test("bấm Sửa thẻ / chương trình điểm: form tick sẵn câu trả lời cũ, và gửi lại không xoá chi tiết đã nhập", () => {
+  // Rà trang gợi ý 22/09/2026: "Sửa" mở form trống. Câu trả lời thay CẢ danh
+  // sách, nên tick thêm một thẻ là xoá im lặng mọi thẻ khai trước — và gửi lại
+  // đúng danh sách cũ vẫn xoá ngày đóng thẻ, số dư điểm đã nhập.
+  let state = stateWithGoal("trip:SEA_VIETNAM");
+  const cardsSpec = questionFor({ kind: "cards_undeclared", subject: "u_test" }, state, CTX);
+  assert.ok(cardsSpec?.input.type === "cards");
+  const [first, second] = cardsSpec.input.groups.flatMap((group) => group.cards.map((card) => card.value));
+  let applied = applyAnswer(state, cardsSpec, form({ holding: [first], closed: [second] }), CTX);
+  assert.ok(applied.ok);
+  state = applied.state;
+  const closedCard = state.cards.find((card) => card.status === "closed");
+  assert.ok(closedCard !== undefined);
+  closedCard.closedDate = "2025-03-31";
+
+  const programsSpec = questionFor({ kind: "balances_undeclared", subject: "u_test" }, state, CTX);
+  assert.ok(programsSpec?.input.type === "programs");
+  const program = programsSpec.input.programs[0].value;
+  applied = applyAnswer(state, programsSpec, form({ programs: [program] }), CTX);
+  assert.ok(applied.ok);
+  state = applied.state;
+  state.balances[0].balance = 60_000;
+
+  const editCards = questionFor({ kind: "cards_undeclared", subject: "u_test" }, state, CTX);
+  assert.ok(editCards?.input.type === "cards");
+  assert.deepEqual(editCards.input.holding, [first]);
+  assert.deepEqual(editCards.input.closed, [second]);
+  const editPrograms = questionFor({ kind: "balances_undeclared", subject: "u_test" }, state, CTX);
+  assert.ok(editPrograms?.input.type === "programs");
+  assert.deepEqual(editPrograms.input.selected, [program]);
+
+  const resubmitCards = applyAnswer(state, editCards, form({ holding: [first], closed: [second] }), CTX);
+  assert.ok(resubmitCards.ok);
+  assert.equal(resubmitCards.state.cards.find((card) => card.status === "closed")?.closedDate, "2025-03-31");
+  const resubmitPrograms = applyAnswer(state, editPrograms, form({ programs: [program] }), CTX);
+  assert.ok(resubmitPrograms.ok);
+  assert.equal(resubmitPrograms.state.balances[0].balance, 60_000);
+
+  // Chưa khai thì form trống — "chưa khai" không phải "không có gì".
+  const fresh = questionFor({ kind: "cards_undeclared", subject: "u_test" }, stateWithGoal("next_card"), CTX);
+  assert.ok(fresh?.input.type === "cards");
+  assert.deepEqual([fresh.input.holding, fresh.input.closed], [[], []]);
+});
+
+test("bấm Sửa câu tháng: <select> mở đúng tháng đã lưu, không phải dòng đầu tiên", () => {
+  // Codex, rà trang 22/09/2026: không có `current`, trình duyệt gửi dòng đầu
+  // — sửa tháng bay hay tháng đóng thẻ mà không đụng vào là ghi đè im lặng.
+  const state = stateWithGoal("trip:JAPAN");
+  const goal = state.goals[0];
+  assert.ok(goal.type === "trip");
+  const dates = questionFor({ kind: "trip_dates_unknown", subject: goal.id }, state, CTX);
+  assert.ok(dates?.input.type === "month");
+  assert.equal(dates.input.current, null);
+  const march = dates.input.months[6].value;
+  const answered = applyAnswer(state, dates, form({ month: march }), CTX);
+  assert.ok(answered.ok);
+  const again = questionFor({ kind: "trip_dates_unknown", subject: goal.id }, answered.state, CTX);
+  assert.ok(again?.input.type === "month");
+  assert.equal(again.input.current, march);
+
+  const withClosed = stateWithGoal("next_card");
+  const cardsSpec = questionFor({ kind: "cards_undeclared", subject: "u_test" }, withClosed, CTX);
+  assert.ok(cardsSpec?.input.type === "cards");
+  const slug = cardsSpec.input.groups[0].cards[0].value;
+  const declared = applyAnswer(withClosed, cardsSpec, form({ closed: [slug] }), CTX);
+  assert.ok(declared.ok);
+  const card = declared.state.cards[0];
+  const closedSpec = questionFor({ kind: "card_closed_date_unknown", subject: card.id }, declared.state, CTX);
+  assert.ok(closedSpec?.input.type === "month");
+  for (const choice of [closedSpec.input.months[3], closedSpec.input.months.at(-1)!]) {
+    const closed = applyAnswer(declared.state, closedSpec, form({ month: choice.value }), CTX);
+    assert.ok(closed.ok);
+    const edit = questionFor({ kind: "card_closed_date_unknown", subject: card.id }, closed.state, CTX);
+    assert.ok(edit?.input.type === "month");
+    assert.equal(edit.input.current, choice.value, `sửa lại ${choice.label}`);
+  }
+});

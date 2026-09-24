@@ -48,7 +48,13 @@ export function Result({
 }) {
   return (
     <div className="space-y-5">
-      <PrimaryCard action={view.primary} confidence={view.confidence} warnings={view.warnings} why={why} />
+      <PrimaryCard
+        action={view.primary}
+        confidence={view.confidence}
+        warnings={view.warnings}
+        why={why}
+        goalType={view.goalType}
+      />
 
       {view.trip && <TripNumbers trip={view.trip} />}
 
@@ -83,9 +89,11 @@ function PrimaryCard({
   confidence,
   warnings,
   why,
+  goalType,
 }: {
   action: ActionView;
   confidence: ResultView["confidence"];
+  goalType: ResultView["goalType"];
   /** Nằm TRONG thẻ này, ngay trên nút đăng ký — không phải một khối ở dưới. */
   warnings: string[];
   why?: React.ReactNode;
@@ -152,7 +160,9 @@ function PrimaryCard({
         </ul>
       )}
 
-      {action.kind === "no_new_card" && (
+      {/* Hai việc tiếp theo cho người đổi điểm lấy vé — không phải cho người
+          chọn "quy điểm ra tiền". */}
+      {action.kind === "no_new_card" && goalType !== "cash" && (
         <ul className="mt-4 space-y-2 text-base leading-relaxed text-foreground/90">
           <li>
             <Link
@@ -250,8 +260,8 @@ export function DeterministicWhy({ action }: { action: ActionView }) {
   if (action.strengths.length > 0) {
     return (
       <p className="mt-4 text-base leading-relaxed text-foreground/90">
-        Thẻ này lên đầu nhờ {action.strengths.join(" và ")} — không phải nhờ một đặc điểm nổi bật
-        nào, mà nhờ tổng thể.
+        Thẻ này lên đầu nhờ tổng điểm của cả bảng, mạnh nhất ở phần{" "}
+        {action.strengths.join(" và ")}.
       </p>
     );
   }
@@ -300,9 +310,13 @@ function TripNumbers({ trip }: { trip: NonNullable<ResultView["trip"]> }) {
       </p>
       {trip.routeNotPriced ? (
         <p className="mt-3 text-base leading-relaxed text-foreground/80">
-          Chặng này chưa có trong award chart của site, nên mình chưa nói được nó tốn bao nhiêu
-          điểm — trả lời thêm câu nào cũng không ra con số. Gợi ý thẻ bên trên vẫn dựa trên loại
-          điểm bạn sẽ cần.
+          {/* Có hạng ghế thì có thể chỉ HẠNG đó chưa có giá (Nhật có phổ thông tới
+              thương gia, chưa có hạng nhất) — nói "chặng này" là sai, và đổi hạng
+              ghế thì CÓ ra con số. */}
+          {trip.cabin
+            ? `Chặng này, ${trip.cabin.toLowerCase()}, chưa có trong award chart của site, nên mình chưa nói được nó tốn bao nhiêu điểm — số người hay khứ hồi cũng không đổi được điều đó.`
+            : "Chặng này chưa có trong award chart của site, nên mình chưa nói được nó tốn bao nhiêu điểm — trả lời thêm câu nào cũng không ra con số."}{" "}
+          Gợi ý thẻ bên trên vẫn dựa trên loại điểm bạn sẽ cần.
         </p>
       ) : nothingKnown ? (
         <p className="mt-3 text-base leading-relaxed text-foreground/80">

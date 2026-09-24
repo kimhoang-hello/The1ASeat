@@ -103,7 +103,7 @@ export function PostBody({
                 {posts_t("cardInPost")}
               </p>
               {run.cards.map((card) => (
-                <CardSpotlight key={card.slug} card={card} placement="post_body" />
+                <CardSpotlight key={card.slug} card={card} placement="post_body" nameAs="p" />
               ))}
             </div>
           )}
