@@ -393,6 +393,7 @@ const US_CARD_DATA: UsCardData[] = [
     category: "travel",
     business: false,
     elevatedBonus: false,
+    cardImage: "/images/us-cards/bilt-palladium.png",
     welcomeBonus: "50,000 điểm Bilt + Gold Status",
     minimumSpendUsd: 4_000,
     offerPeriod: "90 ngày đầu (không tính tiền nhà)",

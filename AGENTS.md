@@ -1251,8 +1251,11 @@ vào được bằng URL, `noindex`, dải báo nháp; bật cờ là hiện "�
   gợi ý, best-cards, sitemap thẻ Canada không phải học cách lọc chúng ra.
 - **Số liệu:** 16 thẻ đối chiếu trực tiếp với trang ngân hàng — 9 thẻ ngày
   21/09/2026, 7 thẻ phổ biến của các ngân hàng lớn thêm ngày 23/09/2026
-  (`verifiedOn`). Ảnh thẻ chính thức trong `public/images/us-cards/`, trừ Bilt
-  Palladium Card (Bilt chỉ đăng card art dạng video). `applyUrl` đang là trang
+  (`verifiedOn`). Ảnh thẻ chính thức trong `public/images/us-cards/` — đủ cả 16 thẻ từ
+  24/09/2026. Bilt chỉ đăng card art dạng `.webm`, KHÔNG có PNG: ảnh lấy bằng
+  `ffmpeg -c:v libvpx-vp9 -i <file>.webm -frames:v 1 -pix_fmt rgba`. Phải khai
+  `-c:v libvpx-vp9` thì mới ra nền trong suốt — decoder mặc định trả `yuv420p`
+  và nền thành đen đặc. `applyUrl` đang là trang
   ngân hàng, link affiliate user gửi sau. Offer Mỹ đổi thường xuyên và không có
   job nào canh như `check-rebates` — phải rà tay. Hai thẻ mang `expiresAt`:
   Delta SkyMiles® Gold (04/11/2026) và Hilton Honors American Express® Card
