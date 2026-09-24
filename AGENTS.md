@@ -1274,12 +1274,13 @@ vào được bằng URL, `noindex`, dải báo nháp; bật cờ là hiện "�
 - **Tiền:** "$95 USD", không phải "$95" (`$` trần = CAD). Số tiền là SỐ trong dữ
   liệu, chuỗi dựng bằng `formatUsd`; `npm run test:us-cards` bắt mọi `$X` viết tay
   thiếu ` USD`.
-- **Bài hướng dẫn:** `US_CARDS_GUIDE_SLUGS` (theo thứ tự nên đọc) — 22/09/2026
-  có hai bài: `apply-us-credit-card-tu-canada` và
-  `thanh-toan-us-credit-card-nhu-the-nao`. Khối "🇨🇦 Mới Chơi Thẻ Mỹ?" liệt kê
-  cả danh sách bằng `StepLink`, tiêu đề và mô tả đọc thẳng từ Contentful; dải
-  đầu trang chỉ trỏ bài ĐẦU. Bài nào unpublish thì tự rơi khỏi danh sách, hết
-  bài thì cả khối ẩn. Thêm bài mới = thêm slug, không sửa JSX.
+- **Bài hướng dẫn:** `US_CARDS_GUIDE_SLUGS` = thứ tự ĐỌC (24/09/2026: 4 lý do →
+  apply → mở Chase® bank account → thanh toán). Đích của mọi nút "Xem hướng dẫn"
+  là `US_CARDS_BEGINNER_SLUG` (bài apply) — TÁCH khỏi thứ tự đọc từ 24/09/2026,
+  vì chữ quanh các nút nói về ITIN và thẻ US đầu tiên; lấy `guides[0]` thì chỉ
+  cần đổi thứ tự đọc là nút trỏ nhầm bài. Khối "🇨🇦 Mới Chơi Thẻ Mỹ?" liệt kê cả
+  danh sách bằng `StepLink`, tiêu đề và mô tả đọc thẳng từ Contentful; bài chưa
+  publish tự rơi khỏi danh sách, hết bài thì cả khối ẩn.
 - **Thứ tự khối (đo 22/09/2026):** khối "🇨🇦 Mới Chơi Thẻ Mỹ?" đứng TRƯỚC
   "Tất Cả Thẻ Mỹ". Đặt sau danh sách thì trên màn 375px nó bắt đầu ở 7,771px
   của trang cao 9,059px — 86%, khoảng 9.5 màn; thủ phạm là danh sách 9 thẻ dài

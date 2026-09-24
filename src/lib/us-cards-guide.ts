@@ -1,5 +1,5 @@
 import { getPosts } from "./content";
-import { US_CARDS_GUIDE_SLUGS } from "./us-credit-cards";
+import { US_CARDS_BEGINNER_SLUG, US_CARDS_GUIDE_SLUGS } from "./us-credit-cards";
 
 export type UsCardsGuide = { slug: string; href: string; title: string; excerpt: string };
 
@@ -26,16 +26,16 @@ export async function usCardsGuides(): Promise<UsCardsGuide[]> {
 }
 
 /**
- * Bài cho NGƯỜI MỚI — `US_CARDS_GUIDE_SLUGS[0]`, và chỉ bài đó.
+ * Bài cho NGƯỜI MỚI — `US_CARDS_BEGINNER_SLUG`, và chỉ bài đó.
  *
  * Mọi nút "Xem hướng dẫn" đều đứng cạnh chữ nói về ITIN, thẻ US đầu tiên và US
  * credit history, nên chúng phải trỏ đúng bài ấy. Lấy `guides[0]` sau khi lọc
- * thì bài đầu bị unpublish là các nút đó lặng lẽ tụt xuống bài kế — hôm nay là
- * bài hướng dẫn thanh toán, không trả lời câu hỏi người đọc vừa đọc. Không có
- * bài đầu thì nút ẩn, còn danh sách nhiều bài vẫn hiện những bài còn lại.
+ * thì bài đó bị unpublish — hoặc chỉ cần đổi thứ tự đọc — là các nút lặng lẽ
+ * trỏ sang bài khác, không trả lời câu hỏi người đọc vừa đọc. Không có bài này
+ * thì nút ẩn, còn danh sách nhiều bài vẫn hiện những bài còn lại.
  */
 export function beginnerGuideHref(guides: UsCardsGuide[]): string | undefined {
-  return guides.find((guide) => guide.slug === US_CARDS_GUIDE_SLUGS[0])?.href;
+  return guides.find((guide) => guide.slug === US_CARDS_BEGINNER_SLUG)?.href;
 }
 
 /** Cùng bài, cho chỗ chỉ cần một link và không cần cả danh sách. */

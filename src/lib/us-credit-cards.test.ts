@@ -2,6 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   ALL_US_CARDS,
+  US_CARDS_BEGINNER_SLUG,
+  US_CARDS_GUIDE_SLUGS,
   US_CARD_FILTERS,
   US_ISSUERS,
   getUsCreditCards,
@@ -95,4 +97,11 @@ test("thẻ elevated phải có ngày hết hạn", () => {
   for (const card of ALL_US_CARDS) {
     if (card.elevatedBonus) assert.ok(card.expiresAt, card.slug);
   }
+});
+
+// Nút "Xem hướng dẫn" phải trỏ bài apply, không phải bài đầu danh sách: chữ
+// quanh nút nói về ITIN và thẻ US đầu tiên (xem `usCardsGuideHref`).
+test("bài cho người mới nằm trong danh sách hướng dẫn", () => {
+  assert.ok(US_CARDS_GUIDE_SLUGS.includes(US_CARDS_BEGINNER_SLUG));
+  assert.equal(new Set(US_CARDS_GUIDE_SLUGS).size, US_CARDS_GUIDE_SLUGS.length);
 });

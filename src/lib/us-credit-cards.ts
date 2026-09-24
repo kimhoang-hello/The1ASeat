@@ -33,18 +33,29 @@ export { US_CARDS_BASE };
 export const US_CARDS_LIST_ANCHOR = "tat-ca-the-my";
 
 /**
- * Các bài hướng dẫn chơi thẻ Mỹ từ Canada, theo thứ tự người mới nên đọc.
- * Bài ĐẦU TIÊN là bài mặc định của mọi nút "Xem hướng dẫn".
+ * Các bài hướng dẫn chơi thẻ Mỹ từ Canada, theo thứ tự người mới nên đọc:
+ * vì sao chơi → apply thế nào → mở tài khoản ngân hàng → trả tiền thẻ.
  *
  * Slug chứ không phải id: trang tự tìm chúng trong Contentful lúc render, nên
  * một bài bị unpublish thì link tự biến mất thay vì thành 404 (xem
  * `usCardsGuides`). Thêm bài mới thì thêm slug vào đây, không phải sửa JSX.
  */
 export const US_CARDS_GUIDE_SLUGS = [
+  "4-ly-do-canadians-nen-play-us-game",
   "apply-us-credit-card-tu-canada",
   "mo-chase-bank-account-tu-canada",
   "thanh-toan-us-credit-card-nhu-the-nao",
 ];
+
+/**
+ * Bài mà mọi nút "Xem hướng dẫn" trỏ tới — KHÔNG phải bài đầu danh sách.
+ *
+ * Hai thứ này tách nhau từ 24/09/2026, khi bài "4 lý do Canadians nên play US
+ * game" lên đầu danh sách: chữ quanh các nút đó nói về ITIN, thẻ US đầu tiên và
+ * US credit history, nên chúng phải trỏ bài hướng dẫn apply, không phải bài nói
+ * vì sao nên chơi. Đổi thứ tự đọc không được kéo theo đích của nút.
+ */
+export const US_CARDS_BEGINNER_SLUG = "apply-us-credit-card-tu-canada";
 
 export type UsIssuerId =
   | "amex"
