@@ -204,6 +204,31 @@ const VERIFIED_2 = "2026-09-23";
 /** Đợt thẻ thêm ngày 24/09/2026. */
 const VERIFIED_3 = "2026-09-24";
 
+const AMEX_ITIN: CanadianAnswer = {
+  short: "Tuỳ trường hợp",
+  note: "Người đang có thẻ American Express® Canada có thể xin thẻ Mỹ qua chương trình Global Transfer — điều kiện cụ thể phải xem lúc apply.",
+};
+
+const AMEX_HISTORY: CanadianAnswer = {
+  short: "Không nhất thiết",
+  note: "Qua Global Transfer, American Express® xét cả lịch sử thẻ American Express® ở Canada.",
+};
+
+const AMEX_FTF_27: CanadianAnswer = {
+  short: "Có — 2.7%",
+  note: "Theo bảng phí của American Express®: 2.7% mỗi giao dịch sau khi quy ra đô la Mỹ.",
+};
+
+const MR_FROM_CANADA: CanadianAnswer = {
+  short: "Có",
+  note: "Membership Rewards® Mỹ chuyển được sang Aeroplan® và nhiều hãng bay khác.",
+};
+
+const HILTON_FROM_CANADA: CanadianAnswer = {
+  short: "Có",
+  note: "Hilton Honors® là chương trình toàn cầu; điểm dùng được ở khách sạn Canada.",
+};
+
 const CHASE_ITIN: CanadianAnswer = {
   short: "Tuỳ trường hợp",
   note: "Chase® không công bố điều kiện cho người dùng ITIN.",
@@ -311,23 +336,14 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Ăn uống", "Chuyển điểm", "Không phí ngoại tệ"],
     canada: {
-      itin: {
-        short: "Tuỳ trường hợp",
-        note: "Người đang có thẻ American Express® Canada có thể xin thẻ Mỹ qua chương trình Global Transfer — điều kiện cụ thể phải xem lúc apply.",
-      },
-      usCreditHistory: {
-        short: "Không nhất thiết",
-        note: "Qua Global Transfer, American Express® xét cả lịch sử thẻ American Express® ở Canada.",
-      },
+      itin: AMEX_ITIN,
+      usCreditHistory: AMEX_HISTORY,
       usAddress: {
         short: "Cần",
         note: "Thẻ và thư gửi về địa chỉ ở Mỹ.",
       },
       foreignTransactionFee: NO_FTF,
-      pointsFromCanada: {
-        short: "Có",
-        note: "Membership Rewards® Mỹ chuyển được sang Aeroplan® và nhiều hãng bay khác.",
-      },
+      pointsFromCanada: MR_FROM_CANADA,
       watchOut:
         "Mức welcome offer khác nhau theo từng người và bạn có thể không đủ điều kiện nhận. Credit ăn uống, Uber và Dunkin' chỉ dùng được ở Mỹ.",
     },
@@ -514,55 +530,6 @@ const US_CARD_DATA: UsCardData[] = [
     needsVerification: false,
   },
   {
-    slug: "delta-skymiles-gold-amex",
-    name: "Delta SkyMiles® Gold American Express® Card",
-    issuerId: "amex",
-    category: "airline",
-    business: false,
-    elevatedBonus: true,
-    cardImage: "/images/us-cards/delta-skymiles-gold-amex.png",
-    welcomeBonus: "Lên đến 80,000 miles Delta SkyMiles® + $250 USD",
-    minimumSpendUsd: 3_000,
-    offerPeriod: "6 tháng đầu",
-    annualFeeUsd: 150,
-    annualFeeNote: "năm đầu $0 USD",
-    rewardsCurrency: "Delta SkyMiles®",
-    expiresAt: "2026-11-04",
-    headline:
-      "Thẻ hãng bay Delta® của American Express®: hành lý ký gửi miễn phí và giảm 15% khi đổi vé bằng miles.",
-    editorsTake:
-      "Offer hiện tại có thêm statement credit $250 USD cùng điều kiện chi tiêu, và năm đầu không mất phí. Chỉ đáng giữ lâu nếu bạn hay bay Delta® từ các sân bay Mỹ gần biên giới.",
-    keyBenefits: [
-      "Hành lý ký gửi đầu tiên miễn phí trên chuyến Delta®, thêm kiện thứ hai trên chuyến nội địa Mỹ",
-      "Giảm 15% khi đổi vé Delta® bằng miles trên delta.com (TakeOff 15)",
-      "2x miles ở nhà hàng, siêu thị Mỹ và khi mua trực tiếp với Delta®",
-      "Credit chuyến bay $200 USD sau khi chi $10,000 USD trong một năm",
-    ],
-    tags: ["Hành lý miễn phí", "Delta®", "Không phí ngoại tệ"],
-    canada: {
-      itin: {
-        short: "Tuỳ trường hợp",
-        note: "Giống các thẻ American Express® Mỹ khác.",
-      },
-      usCreditHistory: {
-        short: "Không nhất thiết",
-        note: "Người đang có thẻ American Express® Canada có thể đi qua Global Transfer.",
-      },
-      usAddress: { short: "Cần" },
-      foreignTransactionFee: NO_FTF,
-      pointsFromCanada: {
-        short: "Tuỳ chặng bay",
-        note: "Delta SkyMiles® dùng được cho chuyến Delta® và đối tác SkyTeam, không chuyển sang Aeroplan®.",
-      },
-      watchOut:
-        "Delta SkyMiles® không có award chart cố định — số miles cho một vé thay đổi theo ngày. Welcome offer là \"lên đến\" và có thể khác theo từng người.",
-    },
-    applyUrl: "https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-gold-american-express-card/",
-    lastUpdated: VERIFIED,
-    verifiedOn: VERIFIED,
-    needsVerification: false,
-  },
-  {
     slug: "marriott-bonvoy-boundless",
     name: "Marriott Bonvoy Boundless® Credit Card",
     issuerId: "chase",
@@ -723,20 +690,11 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Lounge", "Chuyển điểm", "Không phí ngoại tệ"],
     canada: {
-      itin: {
-        short: "Tuỳ trường hợp",
-        note: "Người đang có thẻ American Express® Canada có thể xin thẻ Mỹ qua chương trình Global Transfer.",
-      },
-      usCreditHistory: {
-        short: "Không nhất thiết",
-        note: "Qua Global Transfer, American Express® xét cả lịch sử thẻ American Express® ở Canada.",
-      },
+      itin: AMEX_ITIN,
+      usCreditHistory: AMEX_HISTORY,
       usAddress: { short: "Cần", note: "Thẻ và thư gửi về địa chỉ ở Mỹ." },
       foreignTransactionFee: NO_FTF,
-      pointsFromCanada: {
-        short: "Có",
-        note: "Membership Rewards® Mỹ chuyển được sang Aeroplan® và nhiều hãng bay khác.",
-      },
+      pointsFromCanada: MR_FROM_CANADA,
       watchOut:
         "Phần lớn credit hằng năm chỉ dùng được ở Mỹ, nên giá trị thật với người sống ở Canada thấp hơn con số American Express® quảng cáo.",
     },
@@ -901,20 +859,11 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Hotel", "Không annual fee", "Không phí ngoại tệ"],
     canada: {
-      itin: {
-        short: "Tuỳ trường hợp",
-        note: "Giống các thẻ American Express® Mỹ khác — người đang có thẻ American Express® Canada có thể đi qua Global Transfer.",
-      },
-      usCreditHistory: {
-        short: "Không nhất thiết",
-        note: "Qua Global Transfer, American Express® xét cả lịch sử thẻ American Express® ở Canada.",
-      },
+      itin: AMEX_ITIN,
+      usCreditHistory: AMEX_HISTORY,
       usAddress: { short: "Cần" },
       foreignTransactionFee: NO_FTF,
-      pointsFromCanada: {
-        short: "Có",
-        note: "Hilton Honors® là chương trình toàn cầu; điểm dùng được ở khách sạn Canada.",
-      },
+      pointsFromCanada: HILTON_FROM_CANADA,
       watchOut:
         "Điểm Hilton Honors® có giá trị mỗi điểm thấp hơn nhiều so với Aeroplan® hay World of Hyatt® — cần rất nhiều điểm cho một đêm.",
     },
@@ -1316,6 +1265,391 @@ const US_CARD_DATA: UsCardData[] = [
       watchOut: "Thẻ doanh nghiệp nên không tính vào 5/24, nhưng Chase® vẫn xét 5/24 khi duyệt.",
     },
     applyUrl: "https://creditcards.chase.com/business-credit-cards/world-of-hyatt/hyatt-business-card",
+    lastUpdated: VERIFIED_3,
+    verifiedOn: VERIFIED_3,
+    needsVerification: false,
+  },
+  {
+    slug: "amex-business-platinum",
+    name: "American Express® Business Platinum Card",
+    issuerId: "amex",
+    category: "travel",
+    business: true,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/amex-business-platinum.png",
+    welcomeBonus: "Lên đến 300,000 điểm Membership Rewards®",
+    minimumSpendUsd: 20_000,
+    offerPeriod: "3 tháng đầu",
+    annualFeeUsd: 895,
+    rewardsCurrency: "Membership Rewards®",
+    headline:
+      "Thẻ doanh nghiệp cao cấp nhất của American Express®: welcome offer lớn nhất trong các thẻ Mỹ trên trang này.",
+    editorsTake:
+      "300,000 điểm là con số lớn nhất ở đây, nhưng phải chi $20,000 USD trong 3 tháng và offer là mức \"lên đến\". Điểm Membership Rewards® chuyển được sang Aeroplan®.",
+    keyBenefits: [
+      "Vào The Global Lounge Collection®, gồm Centurion® Lounge",
+      "Các credit dịch vụ doanh nghiệp hằng năm",
+      "Chuyển điểm sang đối tác hàng không, có Aeroplan®",
+      "Không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Business", "Lounge", "Chuyển điểm"],
+    canada: {
+      itin: AMEX_ITIN,
+      usCreditHistory: AMEX_HISTORY,
+      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: MR_FROM_CANADA,
+      watchOut:
+        "Thẻ Pay in Full và phần lớn credit chỉ dùng được ở Mỹ; mức chi tiêu $20,000 USD trong 3 tháng là rào cản thật.",
+    },
+    applyUrl:
+      "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+    lastUpdated: VERIFIED_3,
+    verifiedOn: VERIFIED_3,
+    needsVerification: false,
+  },
+  {
+    slug: "amex-business-gold-us",
+    name: "American Express® Business Gold Card",
+    issuerId: "amex",
+    category: "travel",
+    business: true,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/amex-business-gold.png",
+    welcomeBonus: "Lên đến 200,000 điểm Membership Rewards®",
+    minimumSpendUsd: 15_000,
+    offerPeriod: "3 tháng đầu",
+    annualFeeUsd: 375,
+    rewardsCurrency: "Membership Rewards®",
+    headline:
+      "Thẻ doanh nghiệp bậc giữa của American Express®: nhân điểm theo hạng mục chi tiêu nhiều nhất của doanh nghiệp.",
+    editorsTake:
+      "Nhẹ hơn Business Platinum cả về phí lẫn mức chi tiêu, vẫn cùng hệ điểm Membership Rewards® chuyển được sang Aeroplan®.",
+    keyBenefits: [
+      "4x điểm ở hai hạng mục doanh nghiệp chi nhiều nhất mỗi kỳ",
+      "Chuyển điểm sang đối tác hàng không, có Aeroplan®",
+      "Không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Business", "Chuyển điểm", "Không phí ngoại tệ"],
+    canada: {
+      itin: AMEX_ITIN,
+      usCreditHistory: AMEX_HISTORY,
+      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: MR_FROM_CANADA,
+      watchOut: "Mức welcome offer khác nhau theo từng người và bạn có thể không đủ điều kiện nhận.",
+    },
+    applyUrl:
+      "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-gold-card-amex/",
+    lastUpdated: VERIFIED_3,
+    verifiedOn: VERIFIED_3,
+    needsVerification: false,
+  },
+  {
+    slug: "amex-business-green",
+    name: "American Express® Business Green Card",
+    issuerId: "amex",
+    category: "travel",
+    business: true,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/amex-business-green.png",
+    welcomeBonus: "25,000 điểm Membership Rewards®",
+    minimumSpendUsd: 3_000,
+    offerPeriod: "3 tháng đầu",
+    annualFeeUsd: 95,
+    rewardsCurrency: "Membership Rewards®",
+    headline:
+      "Thẻ doanh nghiệp rẻ nhất trong hệ Membership Rewards®: phí $95 USD, 2x điểm khi đặt du lịch qua American Express Travel®.",
+    editorsTake:
+      "Cửa rẻ nhất vào hệ điểm Membership Rewards® phía doanh nghiệp. American Express® ghi đây là offer đặc biệt, tăng từ 15,000 lên 25,000 điểm, nhưng không công bố ngày kết thúc. Lưu ý thẻ này CÓ phí giao dịch ngoại tệ 2.7%.",
+    keyBenefits: [
+      "2x điểm khi đặt du lịch qua American Express Travel®",
+      "1x điểm cho mọi chi tiêu khác",
+      "Chuyển điểm sang đối tác hàng không, có Aeroplan®",
+    ],
+    tags: ["Business", "Chuyển điểm", "Có phí ngoại tệ"],
+    canada: {
+      itin: AMEX_ITIN,
+      usCreditHistory: AMEX_HISTORY,
+      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      foreignTransactionFee: AMEX_FTF_27,
+      pointsFromCanada: MR_FROM_CANADA,
+      watchOut: "Thẻ Pay in Full: dư nợ phải trả hết mỗi kỳ sao kê.",
+    },
+    applyUrl:
+      "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-green-card-amex/",
+    lastUpdated: VERIFIED_3,
+    verifiedOn: VERIFIED_3,
+    needsVerification: false,
+  },
+  {
+    slug: "amex-blue-business-plus",
+    name: "American Express® Blue Business® Plus Credit Card",
+    issuerId: "amex",
+    category: "travel",
+    business: true,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/amex-blue-business-plus.png",
+    welcomeBonus: "15,000 điểm Membership Rewards®",
+    minimumSpendUsd: 3_000,
+    offerPeriod: "3 tháng đầu",
+    annualFeeUsd: 0,
+    rewardsCurrency: "Membership Rewards®",
+    headline:
+      "Thẻ doanh nghiệp không annual fee tích điểm Membership Rewards®: 2x điểm cho mọi chi tiêu tới hạn mức mỗi năm.",
+    editorsTake:
+      "Cách rẻ nhất để giữ một tài khoản Membership Rewards® sống: không annual fee mà vẫn tích 2x điểm. Lưu ý thẻ này CÓ phí giao dịch ngoại tệ 2.7%.",
+    keyBenefits: [
+      "2x điểm cho mọi chi tiêu tới hạn mức hằng năm, sau đó 1x",
+      "Không annual fee",
+      "Chuyển điểm sang đối tác hàng không, có Aeroplan®",
+    ],
+    tags: ["Business", "Không annual fee", "Có phí ngoại tệ"],
+    canada: {
+      itin: AMEX_ITIN,
+      usCreditHistory: AMEX_HISTORY,
+      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      foreignTransactionFee: AMEX_FTF_27,
+      pointsFromCanada: MR_FROM_CANADA,
+      watchOut: "Không phí thường niên nhưng phí ngoại tệ 2.7% — đừng quẹt thẻ này ở Canada.",
+    },
+    applyUrl:
+      "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-blue-business-plus-credit-card-amex/",
+    lastUpdated: VERIFIED_3,
+    verifiedOn: VERIFIED_3,
+    needsVerification: false,
+  },
+  {
+    slug: "marriott-bonvoy-bevy",
+    name: "Marriott Bonvoy Bevy® American Express® Card",
+    issuerId: "amex",
+    category: "hotel",
+    business: false,
+    elevatedBonus: true,
+    expiresAt: "2026-09-30",
+    cardImage: "/images/us-cards/marriott-bonvoy-bevy.png",
+    welcomeBonus: "125,000 điểm Marriott Bonvoy® + $150 USD",
+    minimumSpendUsd: 5_000,
+    offerPeriod: "6 tháng đầu",
+    annualFeeUsd: 250,
+    rewardsCurrency: "Marriott Bonvoy®",
+    headline:
+      "Thẻ Marriott Bonvoy® của American Express®: offer giới hạn thời gian 125,000 điểm cộng statement credit.",
+    editorsTake:
+      "American Express® ghi offer kết thúc 30/09/2026 — sát ngày, kiểm lại trước khi apply. Điểm và Elite Night Credits dùng chung với mọi thẻ Marriott Bonvoy® khác.",
+    keyBenefits: [
+      "6x điểm ở khách sạn thuộc Marriott Bonvoy®",
+      "Free Night Award hằng năm sau khi chi tiêu đủ mức",
+      "Hạng Gold Elite tự động",
+      "Không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Hotel", "Elite status", "Không phí ngoại tệ"],
+    canada: {
+      itin: AMEX_ITIN,
+      usCreditHistory: AMEX_HISTORY,
+      usAddress: { short: "Cần" },
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: BONVOY_FROM_CANADA,
+      watchOut:
+        "Marriott Bonvoy® giới hạn việc nhận bonus giữa các thẻ Marriott Bonvoy®, kể cả thẻ của Chase® — đọc điều khoản trước khi apply.",
+    },
+    applyUrl: "https://www.americanexpress.com/us/credit-cards/card/marriott-bonvoy-bevy/",
+    lastUpdated: VERIFIED_3,
+    verifiedOn: VERIFIED_3,
+    needsVerification: false,
+  },
+  {
+    slug: "marriott-bonvoy-brilliant",
+    name: "Marriott Bonvoy Brilliant® American Express® Card",
+    issuerId: "amex",
+    category: "hotel",
+    business: false,
+    elevatedBonus: true,
+    expiresAt: "2026-09-30",
+    cardImage: "/images/us-cards/marriott-bonvoy-brilliant.png",
+    welcomeBonus: "150,000 điểm Marriott Bonvoy® + $250 USD",
+    minimumSpendUsd: 6_000,
+    offerPeriod: "6 tháng đầu",
+    annualFeeUsd: 650,
+    rewardsCurrency: "Marriott Bonvoy®",
+    headline:
+      "Thẻ Marriott Bonvoy® cao cấp nhất của American Express®: hạng Platinum Elite và đêm miễn phí hằng năm.",
+    editorsTake:
+      "Offer cao nhất trong nhóm thẻ Marriott Bonvoy®, kết thúc 30/09/2026. Annual fee $650 USD nên chỉ hợp lý nếu bạn dùng được hạng Platinum Elite và các credit ăn uống.",
+    keyBenefits: [
+      "Hạng Platinum Elite tự động",
+      "Free Night Award hằng năm (tới 85,000 điểm)",
+      "Credit ăn uống hằng năm",
+      "Không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Hotel", "Elite status", "Đêm miễn phí"],
+    canada: {
+      itin: AMEX_ITIN,
+      usCreditHistory: AMEX_HISTORY,
+      usAddress: { short: "Cần" },
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: BONVOY_FROM_CANADA,
+      watchOut:
+        "Credit ăn uống chỉ dùng được ở nhà hàng tại Mỹ, nên giá trị thật với người sống ở Canada thấp hơn.",
+    },
+    applyUrl: "https://www.americanexpress.com/us/credit-cards/card/marriott-bonvoy-brilliant/",
+    lastUpdated: VERIFIED_3,
+    verifiedOn: VERIFIED_3,
+    needsVerification: false,
+  },
+  {
+    slug: "marriott-bonvoy-business-amex",
+    name: "Marriott Bonvoy Business® American Express® Card",
+    issuerId: "amex",
+    category: "hotel",
+    business: true,
+    elevatedBonus: true,
+    expiresAt: "2026-11-04",
+    cardImage: "/images/us-cards/marriott-bonvoy-business-amex.png",
+    welcomeBonus: "100,000 điểm Marriott Bonvoy® + 1 Free Night Award",
+    minimumSpendUsd: 8_000,
+    offerPeriod: "6 tháng đầu",
+    annualFeeUsd: 125,
+    rewardsCurrency: "Marriott Bonvoy®",
+    headline:
+      "Thẻ Marriott Bonvoy® doanh nghiệp: đêm miễn phí hằng năm và hạng Gold Elite với phí $125 USD.",
+    editorsTake:
+      "Offer kết thúc 04/11/2026. Free Night Award trong welcome offer dùng được ở khách sạn tới 50,000 điểm/đêm.",
+    keyBenefits: [
+      "6x điểm ở khách sạn thuộc Marriott Bonvoy®",
+      "Free Night Award hằng năm (tới 35,000 điểm)",
+      "Hạng Gold Elite tự động",
+      "Không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Hotel", "Business", "Đêm miễn phí"],
+    canada: {
+      itin: AMEX_ITIN,
+      usCreditHistory: AMEX_HISTORY,
+      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: BONVOY_FROM_CANADA,
+      watchOut:
+        "Marriott Bonvoy® giới hạn việc nhận bonus giữa các thẻ Marriott Bonvoy®, kể cả thẻ của Chase®.",
+    },
+    applyUrl:
+      "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/amex-marriott-bonvoy-business-credit-card/",
+    lastUpdated: VERIFIED_3,
+    verifiedOn: VERIFIED_3,
+    needsVerification: false,
+  },
+  {
+    slug: "hilton-honors-surpass",
+    name: "Hilton Honors American Express® Surpass® Card",
+    issuerId: "amex",
+    category: "hotel",
+    business: false,
+    elevatedBonus: true,
+    expiresAt: "2027-01-13",
+    cardImage: "/images/us-cards/hilton-honors-surpass.png",
+    welcomeBonus: "130,000 điểm Hilton Honors® + 1 Free Night Reward",
+    minimumSpendUsd: 3_000,
+    offerPeriod: "6 tháng đầu",
+    annualFeeUsd: 150,
+    rewardsCurrency: "Hilton Honors®",
+    headline:
+      "Thẻ Hilton® bậc giữa: hạng Gold Elite tự động và offer giới hạn thời gian 130,000 điểm.",
+    editorsTake:
+      "Mức chi tiêu $3,000 USD trong 6 tháng là dễ so với số điểm nhận được. Offer kết thúc 13/01/2027.",
+    keyBenefits: [
+      "Hạng Hilton Honors™ Gold tự động",
+      "12x điểm ở khách sạn thuộc Hilton®",
+      "Credit hằng quý cho chi tiêu tại Hilton®",
+      "Không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Hotel", "Elite status", "Không phí ngoại tệ"],
+    canada: {
+      itin: AMEX_ITIN,
+      usCreditHistory: AMEX_HISTORY,
+      usAddress: { short: "Cần" },
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: HILTON_FROM_CANADA,
+      watchOut:
+        "Điểm Hilton Honors® có giá trị mỗi điểm thấp — cần rất nhiều điểm cho một đêm.",
+    },
+    applyUrl: "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-surpass/",
+    lastUpdated: VERIFIED_3,
+    verifiedOn: VERIFIED_3,
+    needsVerification: false,
+  },
+  {
+    slug: "hilton-honors-aspire",
+    name: "Hilton Honors American Express® Aspire Card",
+    issuerId: "amex",
+    category: "hotel",
+    business: false,
+    elevatedBonus: true,
+    expiresAt: "2027-01-13",
+    cardImage: "/images/us-cards/hilton-honors-aspire.png",
+    welcomeBonus: "200,000 điểm Hilton Honors®",
+    minimumSpendUsd: 6_000,
+    offerPeriod: "6 tháng đầu",
+    annualFeeUsd: 550,
+    rewardsCurrency: "Hilton Honors®",
+    headline:
+      "Thẻ Hilton® cao cấp nhất: hạng Diamond tự động và đêm miễn phí hằng năm.",
+    editorsTake:
+      "American Express® gọi đây là offer điểm Hilton® cao nhất từ trước tới nay của thẻ này, kết thúc 13/01/2027. Hạng Diamond là thứ khó có được bằng cách khác.",
+    keyBenefits: [
+      "Hạng Hilton Honors™ Diamond tự động",
+      "Free Night Reward hằng năm",
+      "Credit resort và credit hãng bay hằng năm",
+      "Không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Hotel", "Elite status", "Đêm miễn phí"],
+    canada: {
+      itin: AMEX_ITIN,
+      usCreditHistory: AMEX_HISTORY,
+      usAddress: { short: "Cần" },
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: HILTON_FROM_CANADA,
+      watchOut:
+        "Nhiều credit chỉ dùng được ở Mỹ; annual fee $550 USD chỉ bù lại nếu bạn ở Hilton® thường xuyên.",
+    },
+    applyUrl: "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-aspire/",
+    lastUpdated: VERIFIED_3,
+    verifiedOn: VERIFIED_3,
+    needsVerification: false,
+  },
+  {
+    slug: "hilton-honors-business-amex",
+    name: "Hilton Honors American Express® Business Card",
+    issuerId: "amex",
+    category: "hotel",
+    business: true,
+    elevatedBonus: true,
+    expiresAt: "2027-01-13",
+    cardImage: "/images/us-cards/hilton-honors-business-amex.png",
+    welcomeBonus: "150,000 điểm Hilton Honors® + 1 Free Night Reward",
+    minimumSpendUsd: 8_000,
+    offerPeriod: "6 tháng đầu",
+    annualFeeUsd: 195,
+    rewardsCurrency: "Hilton Honors®",
+    headline:
+      "Bản doanh nghiệp của thẻ Hilton®: hạng Gold tự động và 12x điểm ở khách sạn Hilton®.",
+    editorsTake:
+      "Offer kết thúc 13/01/2027. Cùng hệ điểm và cùng hạng elite với bản cá nhân Surpass®, phí cao hơn $45 USD nhưng mức chi tiêu cũng cao hơn.",
+    keyBenefits: [
+      "Hạng Hilton Honors™ Gold tự động",
+      "12x điểm ở khách sạn thuộc Hilton®",
+      "Free Night Reward hằng năm sau khi chi tiêu đủ mức",
+      "Không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Hotel", "Business", "Elite status"],
+    canada: {
+      itin: AMEX_ITIN,
+      usCreditHistory: AMEX_HISTORY,
+      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: HILTON_FROM_CANADA,
+      watchOut: "Điểm Hilton Honors® có giá trị mỗi điểm thấp so với Aeroplan® hay World of Hyatt®.",
+    },
+    applyUrl:
+      "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/hilton-honors/",
     lastUpdated: VERIFIED_3,
     verifiedOn: VERIFIED_3,
     needsVerification: false,
