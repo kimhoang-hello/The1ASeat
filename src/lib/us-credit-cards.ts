@@ -83,7 +83,7 @@ export function usIssuerById(id: UsIssuerId): UsIssuer {
 
 /** Loại thẻ theo thứ người đọc định làm với điểm. Thẻ doanh nghiệp là một
  *  trục riêng (`business`), nên một thẻ vừa Travel vừa Business được. */
-export type UsCardCategory = "travel" | "airline" | "hotel";
+export type UsCardCategory = "travel" | "airline" | "hotel" | "cashback";
 
 /**
  * Một câu trả lời trong khối "Góc nhìn từ Canada". Cố ý KHÔNG phải yes/no:
@@ -204,14 +204,34 @@ const VERIFIED_2 = "2026-09-23";
 /** Đợt thẻ thêm ngày 24/09/2026. */
 const VERIFIED_3 = "2026-09-24";
 
+const CHASE_ITIN: CanadianAnswer = {
+  short: "Tuỳ trường hợp",
+  note: "Chase® không công bố điều kiện cho người dùng ITIN.",
+};
+
+/** Điểm Ultimate Rewards® của thẻ có quyền chuyển (Sapphire®, Ink Preferred®). */
+const UR_FROM_CANADA: CanadianAnswer = {
+  short: "Có",
+  note: "Ultimate Rewards® chuyển được sang Aeroplan®.",
+};
+
+/** Thẻ cash back trong hệ Ultimate Rewards®: phải ghép với một thẻ có quyền chuyển. */
+const UR_PAIRED_FROM_CANADA: CanadianAnswer = {
+  short: "Có, nếu ghép thẻ",
+  note: "Tự nó chỉ quy ra tiền. Gộp điểm sang Sapphire Preferred®, Sapphire Reserve® hoặc Ink Business Preferred® thì chuyển được sang Aeroplan®.",
+};
+
+const BONVOY_FROM_CANADA: CanadianAnswer = {
+  short: "Có",
+  note: "Marriott Bonvoy® là một chương trình chung, nên điểm từ thẻ Mỹ dùng được ở khách sạn Canada.",
+};
+
 /**
- * Hai thẻ Ink không annual fee trả thưởng bằng "cash back", nhưng đó thực chất
- * là điểm Ultimate Rewards® tính theo tỷ lệ 1 điểm = 1 cent. Ai đang giữ thêm
- * một thẻ Chase® có quyền chuyển điểm — Sapphire Preferred®, Sapphire Reserve®
- * hay Ink Business Preferred® — thì gộp được số điểm đó về thẻ kia rồi chuyển
- * sang đối tác. Không có thẻ đó thì cash back chỉ là tiền.
+ * Câu dùng chung cho mọi thẻ Chase® trả "cash back" trong hệ Ultimate Rewards®
+ * (hai thẻ Ink không annual fee và ba thẻ Freedom). Một chỗ để năm thẻ không
+ * nói khác nhau về cùng một cơ chế.
  */
-const INK_CONVERT_NOTE =
+const UR_CONVERT_NOTE =
   "Cash back của thẻ này thực chất là điểm Ultimate Rewards®: gộp được sang thẻ Chase® có quyền chuyển điểm (Sapphire Preferred®, Sapphire Reserve® hoặc Ink Business Preferred®) rồi chuyển tiếp sang đối tác như Aeroplan®.";
 
 const INK_FTF: CanadianAnswer = {
@@ -219,10 +239,6 @@ const INK_FTF: CanadianAnswer = {
   note: "Theo bảng phí của Chase®: 3% mỗi giao dịch quy ra đô la Mỹ. Đừng dùng thẻ này khi quẹt ở Canada.",
 };
 
-const INK_POINTS_FROM_CANADA: CanadianAnswer = {
-  short: "Có, nếu ghép thẻ",
-  note: "Tự nó chỉ quy ra tiền. Gộp điểm sang Sapphire Preferred®, Sapphire Reserve® hoặc Ink Business Preferred® thì chuyển được sang Aeroplan®.",
-};
 
 const US_CARD_DATA: UsCardData[] = [
   {
@@ -924,7 +940,7 @@ const US_CARD_DATA: UsCardData[] = [
       "Thẻ doanh nghiệp không annual fee của Chase®: 1.5% cash back cho mọi chi tiêu.",
     editorsTake:
       "Không annual fee mà welcome bonus $750 USD. " +
-      INK_CONVERT_NOTE +
+      UR_CONVERT_NOTE +
       " Lưu ý thẻ này CÓ phí giao dịch ngoại tệ 3%.",
     keyBenefits: [
       "1.5% cash back cho mọi chi tiêu, không giới hạn",
@@ -941,7 +957,7 @@ const US_CARD_DATA: UsCardData[] = [
       usCreditHistory: HISTORY_USUALLY,
       usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
       foreignTransactionFee: INK_FTF,
-      pointsFromCanada: INK_POINTS_FROM_CANADA,
+      pointsFromCanada: UR_PAIRED_FROM_CANADA,
       watchOut: "Thẻ này chịu luật 5/24 của Chase®, và doanh nghiệp đăng ký ở Canada không dùng được.",
     },
     applyUrl: "https://creditcards.chase.com/business-credit-cards/ink/unlimited",
@@ -966,7 +982,7 @@ const US_CARD_DATA: UsCardData[] = [
       "Thẻ doanh nghiệp không annual fee của Chase®: 5% cash back ở văn phòng phẩm, internet, cable và điện thoại.",
     editorsTake:
       "Cùng welcome bonus $750 USD và cùng annual fee $0 USD với Ink Business Unlimited®, khác ở chỗ nhân theo hạng mục thay vì đều 1.5%. " +
-      INK_CONVERT_NOTE +
+      UR_CONVERT_NOTE +
       " Lưu ý thẻ này CÓ phí giao dịch ngoại tệ 3%.",
     keyBenefits: [
       "5% cash back ở văn phòng phẩm và dịch vụ internet, cable, điện thoại (tới $25,000 USD mỗi năm gia hạn thẻ)",
@@ -983,11 +999,323 @@ const US_CARD_DATA: UsCardData[] = [
       usCreditHistory: HISTORY_USUALLY,
       usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
       foreignTransactionFee: INK_FTF,
-      pointsFromCanada: INK_POINTS_FROM_CANADA,
+      pointsFromCanada: UR_PAIRED_FROM_CANADA,
       watchOut:
         "Thẻ này chịu luật 5/24 của Chase®, và welcome bonus không dành cho người đã từng có bất kỳ thẻ doanh nghiệp Chase® không annual fee nào.",
     },
     applyUrl: "https://creditcards.chase.com/business-credit-cards/ink/cash",
+    lastUpdated: VERIFIED_3,
+    verifiedOn: VERIFIED_3,
+    needsVerification: false,
+  },
+  {
+    slug: "chase-sapphire-reserve-business",
+    name: "Sapphire Reserve for Business℠ Card",
+    issuerId: "chase",
+    category: "travel",
+    business: true,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/chase-sapphire-reserve-business.png",
+    welcomeBonus: "200,000 điểm Ultimate Rewards®",
+    minimumSpendUsd: 30_000,
+    offerPeriod: "6 tháng đầu",
+    annualFeeUsd: 795,
+    rewardsCurrency: "Ultimate Rewards®",
+    headline:
+      "Bản doanh nghiệp của Sapphire Reserve®: welcome bonus lớn nhất trong các thẻ Chase® ở đây, đổi lại mức chi tiêu cũng lớn nhất.",
+    editorsTake:
+      "200,000 điểm là con số rất lớn, nhưng phải chi $30,000 USD trong 6 tháng — chỉ hợp lý nếu doanh nghiệp bạn có dòng chi tiêu thật ở Mỹ. Chase® ghi đây là offer trở lại từ mức 150,000 điểm, không công bố ngày kết thúc.",
+    keyBenefits: [
+      "8x điểm khi đặt qua Chase® Travel",
+      "Credit du lịch và credit dịch vụ doanh nghiệp hằng năm",
+      "Thẻ nhân viên miễn phí",
+      "Chuyển điểm sang đối tác của Ultimate Rewards®, có Aeroplan®",
+    ],
+    tags: ["Business", "Chuyển điểm", "Không phí ngoại tệ"],
+    canada: {
+      itin: CHASE_ITIN,
+      usCreditHistory: HISTORY_USUALLY,
+      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: UR_FROM_CANADA,
+      watchOut:
+        "Là thẻ Pay in Full: dư nợ phải trả hết mỗi kỳ sao kê. Mức chi tiêu $30,000 USD trong 6 tháng là rào cản thật, không phải con số trang trí.",
+    },
+    applyUrl: "https://creditcards.chase.com/business-credit-cards/sapphire/reserve",
+    lastUpdated: VERIFIED_3,
+    verifiedOn: VERIFIED_3,
+    needsVerification: false,
+  },
+  {
+    slug: "chase-ink-business-premier",
+    name: "Ink Business Premier® Credit Card",
+    issuerId: "chase",
+    category: "cashback",
+    business: true,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/chase-ink-business-premier.png",
+    welcomeBonus: "$1,000 USD cash back",
+    minimumSpendUsd: 10_000,
+    offerPeriod: "3 tháng đầu",
+    annualFeeUsd: 195,
+    rewardsCurrency: "Cash back",
+    headline:
+      "Thẻ doanh nghiệp trả 2.5% cash back cho giao dịch lớn, 2% cho mọi chi tiêu khác.",
+    editorsTake:
+      "Khác hai thẻ Ink không annual fee: cash back của Ink Business Premier® KHÔNG quy đổi được sang điểm Ultimate Rewards®, nên nó là thẻ tiền mặt thuần. Cũng là thẻ Pay in Full.",
+    keyBenefits: [
+      "2.5% cash back cho mỗi giao dịch từ $5,000 USD trở lên",
+      "2% cash back cho mọi chi tiêu khác",
+      "Thẻ nhân viên miễn phí",
+      "Không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Business", "Cash back", "Không phí ngoại tệ"],
+    canada: {
+      itin: CHASE_ITIN,
+      usCreditHistory: HISTORY_USUALLY,
+      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: {
+        short: "Không",
+        note: "Cash back của thẻ này không đổi sang điểm Ultimate Rewards® được, nên không có đường sang Aeroplan®.",
+      },
+      watchOut: "Thẻ Pay in Full và chịu luật 5/24 của Chase®.",
+    },
+    applyUrl: "https://creditcards.chase.com/business-credit-cards/ink/premier",
+    lastUpdated: VERIFIED_3,
+    verifiedOn: VERIFIED_3,
+    needsVerification: false,
+  },
+  {
+    slug: "chase-freedom-unlimited",
+    name: "Chase Freedom Unlimited® Credit Card",
+    issuerId: "chase",
+    category: "cashback",
+    business: false,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/chase-freedom-unlimited.png",
+    welcomeBonus: "$200 USD cash back",
+    minimumSpendUsd: 500,
+    offerPeriod: "3 tháng đầu",
+    annualFeeUsd: 0,
+    rewardsCurrency: "Ultimate Rewards®",
+    headline:
+      "Thẻ không annual fee: 1.5% cash back cho mọi chi tiêu, 3% ăn uống và nhà thuốc.",
+    editorsTake:
+      "Mức chi tiêu $500 USD trong 3 tháng là thấp nhất trong các thẻ ở đây, hợp làm thẻ Chase® đầu tiên. " +
+      UR_CONVERT_NOTE,
+    keyBenefits: [
+      "1.5% cash back cho mọi chi tiêu",
+      "3% ăn uống và nhà thuốc, 5% du lịch đặt qua Chase® Travel",
+      "Không annual fee",
+      "Không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Cash back", "Không annual fee", "Không phí ngoại tệ"],
+    canada: {
+      itin: CHASE_ITIN,
+      usCreditHistory: HISTORY_USUALLY,
+      usAddress: ADDRESS_USUALLY,
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: UR_PAIRED_FROM_CANADA,
+      watchOut: "Thẻ này chịu luật 5/24 của Chase®.",
+    },
+    applyUrl: "https://creditcards.chase.com/cash-back-credit-cards/freedom/unlimited",
+    lastUpdated: VERIFIED_3,
+    verifiedOn: VERIFIED_3,
+    needsVerification: false,
+  },
+  {
+    slug: "chase-freedom-flex",
+    name: "Chase Freedom Flex® Credit Card",
+    issuerId: "chase",
+    category: "cashback",
+    business: false,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/chase-freedom-flex.png",
+    welcomeBonus: "$250 USD cash back",
+    minimumSpendUsd: 500,
+    offerPeriod: "3 tháng đầu",
+    annualFeeUsd: 0,
+    rewardsCurrency: "Ultimate Rewards®",
+    headline:
+      "Thẻ không annual fee với 5% cash back theo hạng mục xoay vòng mỗi quý (phải đăng ký).",
+    editorsTake:
+      "Chase® đang ghi đây là offer giới hạn thời gian, $250 USD thay cho $200 USD, nhưng không công bố ngày kết thúc. " +
+      UR_CONVERT_NOTE,
+    keyBenefits: [
+      "5% cash back ở hạng mục xoay vòng mỗi quý, tới $1,500 USD chi tiêu mỗi quý (phải đăng ký)",
+      "5% du lịch đặt qua Chase® Travel, 3% ăn uống và nhà thuốc",
+      "Không annual fee",
+      "Không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Cash back", "Không annual fee", "Không phí ngoại tệ"],
+    canada: {
+      itin: CHASE_ITIN,
+      usCreditHistory: HISTORY_USUALLY,
+      usAddress: ADDRESS_USUALLY,
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: UR_PAIRED_FROM_CANADA,
+      watchOut:
+        "Hạng mục 5% phải đăng ký mỗi quý — quên là mất. Thẻ này cũng chịu luật 5/24 của Chase®.",
+    },
+    applyUrl: "https://creditcards.chase.com/cash-back-credit-cards/freedom/flex",
+    lastUpdated: VERIFIED_3,
+    verifiedOn: VERIFIED_3,
+    needsVerification: false,
+  },
+  {
+    slug: "chase-freedom-rise",
+    name: "Chase Freedom Rise® Credit Card",
+    issuerId: "chase",
+    category: "cashback",
+    business: false,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/chase-freedom-rise.png",
+    annualFeeUsd: 0,
+    rewardsCurrency: "Ultimate Rewards®",
+    headline:
+      "Thẻ dành cho người chưa có lịch sử tín dụng ở Mỹ: 1.5% cash back, không annual fee.",
+    editorsTake:
+      "Thẻ đáng chú ý nhất trong nhóm này với người Canada mới sang: Chase® nói giữ ít nhất $250 USD trong tài khoản Chase® làm tăng khả năng được duyệt. Không có welcome bonus, chỉ $25 USD khi bật thanh toán tự động. Lưu ý thẻ này CÓ phí giao dịch ngoại tệ 3%.",
+    keyBenefits: [
+      "1.5% cash back cho mọi chi tiêu",
+      "Không annual fee",
+      "$25 USD khi bật thanh toán tự động",
+      "Dành cho người mới bắt đầu xây credit ở Mỹ",
+    ],
+    tags: ["Cash back", "Người mới", "Có phí ngoại tệ"],
+    canada: {
+      itin: CHASE_ITIN,
+      usCreditHistory: {
+        short: "Không cần",
+        note: "Đây là thẻ dành cho người chưa có lịch sử tín dụng ở Mỹ — cửa dễ nhất trong nhóm thẻ Chase®.",
+      },
+      usAddress: ADDRESS_USUALLY,
+      foreignTransactionFee: {
+        short: "Có — 3%",
+        note: "Theo bảng phí của Chase®: 3% mỗi giao dịch quy ra đô la Mỹ.",
+      },
+      pointsFromCanada: UR_PAIRED_FROM_CANADA,
+      watchOut:
+        "Chase® ghi rõ có thể phải nộp thêm giấy tờ sau khi apply, trong đó có Social Security Card — điểm vướng với người chỉ có ITIN.",
+    },
+    applyUrl: "https://creditcards.chase.com/cash-back-credit-cards/freedom/rise",
+    lastUpdated: VERIFIED_3,
+    verifiedOn: VERIFIED_3,
+    needsVerification: false,
+  },
+  {
+    slug: "marriott-bonvoy-bold",
+    name: "Marriott Bonvoy Bold® Credit Card",
+    issuerId: "chase",
+    category: "hotel",
+    business: false,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/marriott-bonvoy-bold.png",
+    welcomeBonus: "45,000 điểm Marriott Bonvoy®",
+    minimumSpendUsd: 1_000,
+    offerPeriod: "3 tháng đầu",
+    annualFeeUsd: 0,
+    rewardsCurrency: "Marriott Bonvoy®",
+    headline:
+      "Thẻ Marriott Bonvoy® không annual fee: hạng Silver Elite tự động và 5 Elite Night Credits mỗi năm.",
+    editorsTake:
+      "Mức chi tiêu thấp nhất trong ba thẻ Marriott Bonvoy® của Chase® và không tốn annual fee, đổi lại không có đêm miễn phí hằng năm.",
+    keyBenefits: [
+      "Tới 14x điểm ở khách sạn thuộc Marriott Bonvoy®",
+      "Hạng Silver Elite tự động, 5 Elite Night Credits mỗi năm",
+      "Không annual fee",
+      "Không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Hotel", "Không annual fee", "Không phí ngoại tệ"],
+    canada: {
+      itin: CHASE_ITIN,
+      usCreditHistory: HISTORY_USUALLY,
+      usAddress: ADDRESS_USUALLY,
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: BONVOY_FROM_CANADA,
+      watchOut:
+        "Thẻ này chịu luật 5/24 của Chase®, và Marriott Bonvoy® giới hạn việc nhận bonus giữa các thẻ Marriott Bonvoy® khác nhau.",
+    },
+    applyUrl: "https://creditcards.chase.com/travel-credit-cards/marriott-bonvoy/bold",
+    lastUpdated: VERIFIED_3,
+    verifiedOn: VERIFIED_3,
+    needsVerification: false,
+  },
+  {
+    slug: "marriott-bonvoy-bountiful",
+    name: "Marriott Bonvoy Bountiful® Credit Card",
+    issuerId: "chase",
+    category: "hotel",
+    business: false,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/marriott-bonvoy-bountiful.png",
+    welcomeBonus: "85,000 điểm Marriott Bonvoy®",
+    minimumSpendUsd: 4_000,
+    offerPeriod: "3 tháng đầu",
+    annualFeeUsd: 250,
+    rewardsCurrency: "Marriott Bonvoy®",
+    headline:
+      "Thẻ Marriott Bonvoy® bậc giữa của Chase®: tới 18.5x điểm ở khách sạn Marriott Bonvoy® và 2x cho mọi chi tiêu khác.",
+    editorsTake:
+      "Welcome bonus lớn nhất trong ba thẻ Marriott Bonvoy® cá nhân của Chase®. Annual fee $250 USD nên chỉ đáng nếu bạn ở Marriott Bonvoy® nhiều lần mỗi năm.",
+    keyBenefits: [
+      "Tới 18.5x điểm ở khách sạn thuộc Marriott Bonvoy®",
+      "2x điểm cho mọi chi tiêu khác",
+      "Hạng elite và Elite Night Credits hằng năm",
+      "Không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Hotel", "Chuyển điểm", "Không phí ngoại tệ"],
+    canada: {
+      itin: CHASE_ITIN,
+      usCreditHistory: HISTORY_USUALLY,
+      usAddress: ADDRESS_USUALLY,
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: BONVOY_FROM_CANADA,
+      watchOut:
+        "Thẻ này chịu luật 5/24 của Chase®, và Marriott Bonvoy® giới hạn việc nhận bonus giữa các thẻ Marriott Bonvoy® khác nhau.",
+    },
+    applyUrl: "https://creditcards.chase.com/travel-credit-cards/marriott-bonvoy/bountiful",
+    lastUpdated: VERIFIED_3,
+    verifiedOn: VERIFIED_3,
+    needsVerification: false,
+  },
+  {
+    slug: "world-of-hyatt-business",
+    name: "World of Hyatt® Business Credit Card",
+    issuerId: "chase",
+    category: "hotel",
+    business: true,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/world-of-hyatt-business.png",
+    welcomeBonus: "70,000 điểm World of Hyatt®",
+    minimumSpendUsd: 7_000,
+    offerPeriod: "3 tháng đầu",
+    annualFeeUsd: 199,
+    rewardsCurrency: "World of Hyatt®",
+    headline:
+      "Bản doanh nghiệp của thẻ World of Hyatt®: 2x điểm ở ba hạng mục chi tiêu nhiều nhất mỗi quý.",
+    editorsTake:
+      "Welcome bonus cao hơn bản cá nhân nhưng đòi chi $7,000 USD trong 3 tháng. Điểm World of Hyatt® vẫn là hệ điểm khách sạn đổi ra giá trị cao.",
+    keyBenefits: [
+      "Tới 9x điểm ở khách sạn thuộc World of Hyatt®",
+      "2x điểm ở ba hạng mục chi tiêu nhiều nhất mỗi quý",
+      "Thẻ nhân viên miễn phí",
+      "Không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Hotel", "Business", "Không phí ngoại tệ"],
+    canada: {
+      itin: CHASE_ITIN,
+      usCreditHistory: HISTORY_USUALLY,
+      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: {
+        short: "Có",
+        note: "World of Hyatt® là chương trình toàn cầu, điểm dùng được ở khách sạn Canada và mọi nơi khác.",
+      },
+      watchOut: "Thẻ doanh nghiệp nên không tính vào 5/24, nhưng Chase® vẫn xét 5/24 khi duyệt.",
+    },
+    applyUrl: "https://creditcards.chase.com/business-credit-cards/world-of-hyatt/hyatt-business-card",
     lastUpdated: VERIFIED_3,
     verifiedOn: VERIFIED_3,
     needsVerification: false,
@@ -1047,7 +1375,14 @@ export function usCardPath(slug: string): string {
 }
 
 /** Bộ lọc loại thẻ. "business" là trục riêng, không phải một `category`. */
-export const US_CARD_FILTERS = ["all", "travel", "airline", "hotel", "business"] as const;
+export const US_CARD_FILTERS = [
+  "all",
+  "travel",
+  "airline",
+  "hotel",
+  "cashback",
+  "business",
+] as const;
 export type UsCardFilter = (typeof US_CARD_FILTERS)[number];
 
 export function usCardFilter(value: string | undefined): UsCardFilter {

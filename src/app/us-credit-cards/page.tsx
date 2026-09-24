@@ -49,6 +49,7 @@ const FILTER_LABEL_KEYS: Record<UsCardFilter, string> = {
   travel: "filterTravel",
   airline: "filterAirline",
   hotel: "filterHotel",
+  cashback: "filterCashback",
   business: "filterBusiness",
 };
 
