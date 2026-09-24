@@ -1270,8 +1270,10 @@ vào được bằng URL, `noindex`, dải báo nháp; bật cờ là hiện "�
   bật cờ (trang chi tiết `dynamicParams = false` → 404).
 - **"🔥 Elevated Offers"** lấy thẻ `elevatedBonus` + chưa qua `expiresAt`
   (`isElevatedLive`, cùng luật thẻ Canada), không còn cờ `featured`. Chỉ bật
-  elevated khi trang ngân hàng tự ghi offer có thời hạn — rà 21/09/2026 chỉ có
-  Delta SkyMiles® Gold. Không thẻ nào elevated thì cả mục ẩn.
+  elevated khi trang ngân hàng tự ghi offer có thời hạn KÈM ngày kết thúc (test
+  `test:us-cards` bắt thẻ elevated thiếu `expiresAt`). Rà 24/09/2026: 7 thẻ —
+  ba thẻ Marriott Bonvoy® và ba thẻ Hilton® của American Express®, cộng thẻ
+  Hilton Honors không annual fee. Không thẻ nào elevated thì cả mục ẩn.
 - **Tiền:** "$95 USD", không phải "$95" (`$` trần = CAD). Số tiền là SỐ trong dữ
   liệu, chuỗi dựng bằng `formatUsd`; `npm run test:us-cards` bắt mọi `$X` viết tay
   thiếu ` USD`.
