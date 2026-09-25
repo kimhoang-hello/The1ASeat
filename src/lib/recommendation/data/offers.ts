@@ -557,6 +557,7 @@ const OFFER_SEEDS: OfferSeed[] = [
     endDate: "2027-01-31",
     verifiedAt: "2026-09-25",
     recordedAt: "2026-09-25",
+    rebate: 120,
     components: [{ type: "spend_threshold", points: 50000, spend: 5000, windowDays: 90 }],
   },
   {
