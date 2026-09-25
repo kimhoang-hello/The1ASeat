@@ -314,6 +314,20 @@ const BY_PRODUCT: Record<string, RuleSeed[]> = {
     lifetimeFromIssuer("https://www.neofinancial.com/credit-cards/neo-united-mastercard"),
   ],
   "scotiabank-passport-visa-infinite": [],
+  // Tangerine còn cho vế thứ ba: $400,000 assets under management. Mô hình
+  // người dùng không có trường tài sản nên vế đó chưa seed, như mọi thẻ khác có
+  // vế tài sản — giới hạn chung của engine. ĐỪNG hạ hai vế thu nhập xuống
+  // `soft`: `eligibility.ts` bỏ hẳn luật soft khỏi phép xét, tức người trượt cả
+  // hai ngưỡng thành "đủ điều kiện" (Codex bắt 25/09/2026).
+  // "(i) have not been Primary Cardholders of this card previously" — không có
+  // cửa sổ tháng: TỪNG giữ là mất bonus.
+  "tangerine-rewards-world-elite-mastercard": [
+    ...income(80000, 150000).map((rule) => ({ ...rule, from: "2026-09-25" })),
+    {
+      ...lifetimeFromIssuer("https://www.tangerine.ca/en/personal/spend/credit-cards/world-elite-mastercard"),
+      from: "2026-09-25",
+    },
+  ],
 
   "amex-platinum": [AMEX_ONCE_IN_A_LIFETIME],
   "amex-business-platinum": [

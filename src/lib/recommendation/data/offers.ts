@@ -544,6 +544,22 @@ const OFFER_SEEDS: OfferSeed[] = [
     ],
   },
   {
+    // Đọc qua đúng đường apply của site (link FinlyWealth → trang offer
+    // affiliate của Tangerine): 50,000 điểm, apply trước 31/01/2027.
+    // FinlyWealth lúc đó vẫn ghi mức cũ 30,000/$3,000 hạn 30/10/2026.
+    // 10,000 điểm khi chi $30,000/năm là thưởng THƯỜNG NIÊN lặp lại mỗi năm,
+    // không thuộc welcome bonus — nó nằm ở keyBenefitsVi, không ở đây.
+    slug: "tangerine-rewards-world-elite-mastercard",
+    name: "50,000 điểm Scene+™",
+    headline: 50000,
+    currency: "scene-plus",
+    startDate: "2026-09-25",
+    endDate: "2027-01-31",
+    verifiedAt: "2026-09-25",
+    recordedAt: "2026-09-25",
+    components: [{ type: "spend_threshold", points: 50000, spend: 5000, windowDays: 90 }],
+  },
+  {
     slug: "rbc-avion-visa-infinite",
     name: "Đến 70,000 điểm Avion®",
     headline: 70000,

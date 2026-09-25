@@ -298,6 +298,14 @@ const BY_PRODUCT: Record<string, BenefitSeed[]> = {
     ["travel-medical-insurance", null, { text: "Cho chủ thẻ đến 75 tuổi" }],
   ],
 
+  "tangerine-rewards-world-elite-mastercard": [
+    ["airport-lounge-passes", 4, { text: "DragonPass qua Mastercard® Travel Pass", from: "2026-09-25" }],
+    ["travel-medical-insurance", null, { text: "15 ngày tới $5,000,000, dưới 65 tuổi", from: "2026-09-25" }],
+    ["trip-cancellation-insurance", 2000, { from: "2026-09-25" }],
+    ["rental-car-insurance", null, { from: "2026-09-25" }],
+    ["mobile-device-insurance", null, { from: "2026-09-25" }],
+  ],
+
   "rbc-avion-visa-infinite": [
     ["travel-medical-insurance", null, { text: "Y tế khẩn cấp không giới hạn" }],
   ],

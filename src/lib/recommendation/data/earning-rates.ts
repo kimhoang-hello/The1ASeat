@@ -389,6 +389,15 @@ const RATES: Record<string, { program: string; rates: RateSeed[] }> = {
     ],
   },
 
+  // 1.5x cho 3 nhóm NGƯỜI DÙNG TỰ CHỌN trong 13 nhóm. Engine chưa có chiều
+  // "thẻ cho chọn nhóm": seed 1.5x cho cả 13 nhóm là hứa 1.5x ở mọi chỗ trong
+  // khi người dùng chỉ được ba, còn seed dạng `restrictedTo` thì engine bỏ qua
+  // và để lại chín cảnh báo "chưa có tỷ lệ nền". Chỉ seed 1x nền — cận DƯỚI.
+  "tangerine-rewards-world-elite-mastercard": {
+    program: "scene-plus",
+    rates: [["everything_else", 1, { from: "2026-09-25" }]],
+  },
+
   "rbc-avion-visa-infinite": {
     program: "avion",
     rates: [

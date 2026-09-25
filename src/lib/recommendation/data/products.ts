@@ -71,8 +71,16 @@ type Seed = {
   personalOrBusiness: "personal" | "business" | "student";
   program: string | null;
   /**
+   * Ngày kho bắt đầu biết thẻ này. Vắng thì là `SEEDED_ON`. Thẻ thêm SAU ngày
+   * seed phải khai: mang `SEEDED_ON` thì mọi lượt chạy dựng lại trước ngày thêm
+   * thấy một thẻ có phí mà chưa có offer, tỷ lệ hay điều kiện nào — một thẻ
+   * rỗng lúc ấy kho chưa hề biết. Cùng luật "nói đúng cái mình biết" với
+   * `SEEDED_ON`, chỉ là cho từng thẻ.
+   */
+  from?: string;
+  /**
    * Các quãng thẻ còn nhận đơn mới, cũ nhất trước. Vắng thì mặc định một quãng
-   * mở từ `SEEDED_ON` và chưa đóng.
+   * mở từ `from` (hoặc `SEEDED_ON`) và chưa đóng.
    *
    * DANH SÁCH vì thẻ ngừng rồi mở lại là chuyện có thật — xem
    * `ProductAvailability`.
@@ -424,6 +432,18 @@ const SEEDS: Seed[] = [
     officialUrl: null,
   },
   {
+    id: "prd_tangerine-rewards-world-elite-mastercard",
+    slug: "tangerine-rewards-world-elite-mastercard",
+    name: "Tangerine® Rewards World Elite® Mastercard®",
+    issuer: "tangerine",
+    network: "mastercard",
+    personalOrBusiness: "personal",
+    program: "scene-plus",
+    from: "2026-09-25",
+    fees: [{ annualFee: 120, from: "2026-09-25" }],
+    officialUrl: "https://www.tangerine.ca/en/personal/spend/credit-cards/world-elite-mastercard",
+  },
+  {
     id: "prd_rbc-avion-visa-infinite",
     slug: "rbc-avion-visa-infinite",
     name: "RBC® Avion® Visa Infinite",
@@ -559,7 +579,7 @@ export const PRODUCTS: ProductSeed[] = SEEDS.map((seed) => ({
   officialUrl: seed.officialUrl,
   contentfulLinked: true,
   supersededByProductId: null,
-  effectiveFrom: SEEDED_ON,
+  effectiveFrom: seed.from ?? SEEDED_ON,
   effectiveTo: null,
 }));
 
@@ -605,7 +625,7 @@ export const PRODUCT_FAMILIES: ProductFamily[] = [
 });
 
 export const PRODUCT_AVAILABILITY: ProductAvailability[] = SEEDS.flatMap((seed) => {
-  const windows = seed.availability ?? [{ from: SEEDED_ON }];
+  const windows = seed.availability ?? [{ from: seed.from ?? SEEDED_ON }];
   return windows.map((window) => ({
     id: makeId<ProductAvailabilityId>("avail", seed.id, window.from),
     productId: id<ProductId>(seed.id),

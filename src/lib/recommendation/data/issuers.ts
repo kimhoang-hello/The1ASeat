@@ -55,6 +55,15 @@ export const ISSUERS: Issuer[] = [
     officialUrl: "https://www.wealthsimple.com/en-ca/product/card",
   },
   {
+    // Công ty con của Scotiabank®, nhưng là nhà phát hành riêng trên thẻ và
+    // trong điều khoản offer — gộp vào "scotiabank" sẽ kéo thẻ này vào các luật
+    // "đã giữ thẻ Scotiabank" mà điều khoản của Tangerine không nhắc tới.
+    id: id<IssuerId>("tangerine"),
+    name: "Tangerine®",
+    country: "CA",
+    officialUrl: "https://www.tangerine.ca/en/personal/spend/credit-cards",
+  },
+  {
     // Neo phát hành thẻ United® MileagePlus® tại Canada; United® là chủ chương
     // trình điểm, không phải nhà phát hành thẻ.
     id: id<IssuerId>("neo"),
