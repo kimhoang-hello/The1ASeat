@@ -793,7 +793,6 @@ export const BANK_ACCOUNTS: BankAccount[] = [
       "Đăng ký bằng promo code FW10C26 khi mở tài khoản.",
       "Nạp tiền trong vòng 30 ngày kể từ ngày mở và chi tối thiểu $20 trong 30 ngày đầu.",
       "Được 10% cashback trên chi tiêu 3 tháng đầu, tối đa $1,000 chi tiêu — tức tối đa $100.",
-      "Nạp tối thiểu $20 trong 30 ngày đầu cũng là điều kiện để nhận rebate của FinlyWealth.",
     ],
     interestRate: 2,
     promoNoteVi:
@@ -806,8 +805,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     ],
     url: "https://www.koho.ca/essential/",
     affiliateUrl:
-      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fkoho-essential-plan&utm_source=ghe-1a",
-    rebate: "$100",
+      "https://www.finlywealth.com/r/pYQhcEuX?url=%2Fbanking%2Fsavings-accounts%2Fkoho-essential-plan&utm_source=ghe-1a",
   },
 
   // ------------------------------------------------------- National Bank

@@ -165,6 +165,19 @@ type Finding =
 
 const findings: Finding[] = [];
 const errors: string[] = [];
+/**
+ * Tài khoản mà link apply trỏ vào một trang `/rebates/` đã bị gỡ.
+ *
+ * Tách khỏi `gone` vì hai việc có hậu quả khác nhau: `gone` là con số tiền
+ * (`--fix` xoá được), còn đây là cái NÚT — người bấm "mở tài khoản" rơi vào
+ * trang "Not Found" của FinlyWealth, và không script nào biết nên đổi link sang
+ * đâu. Trước 25/09/2026 nhánh `gone` chỉ xoá dòng `rebate:` rồi thoát 0: job
+ * xanh, commit "đã sửa 1 con số", và từ lượt sau tài khoản không còn `rebate`
+ * nên không ai nhắc tới nó nữa — link chết nằm đó vô thời hạn (KOHO Essential
+ * Plan). Lỗi này không phụ thuộc `account.rebate`, nên nó đỏ ở MỌI lượt cho tới
+ * khi có người đổi `affiliateUrl`.
+ */
+const deadLinks: string[] = [];
 let checked = 0;
 
 for (const account of BANK_ACCOUNTS) {
@@ -194,6 +207,7 @@ for (const account of BANK_ACCOUNTS) {
 
   if (live === "gone") {
     if (account.rebate) findings.push({ kind: "gone", slug: account.slug, stored: account.rebate });
+    deadLinks.push(account.slug);
     continue;
   }
 
@@ -220,6 +234,16 @@ if (errors.length) {
   console.log(`không đọc được ${errors.length} trang:`);
   for (const e of errors) console.log("  ·", e);
   console.log();
+}
+
+if (deadLinks.length) {
+  console.log(`${deadLinks.length} tài khoản có link apply trỏ vào trang rebate đã bị gỡ (Not Found):`);
+  for (const slug of deadLinks) console.log("  ·", slug);
+  console.log(
+    "  Người bấm nút mở tài khoản đang rơi vào trang lỗi. Đổi `affiliateUrl` tay trong" +
+      " src/lib/bank-accounts.ts — thường là bản /banking/ cùng slug — và gỡ câu nhắc rebate" +
+      " FinlyWealth trong `bonusConditionsVi` nếu có.\n",
+  );
 }
 
 // Chỉ con số lệch mới là lỗi. Chuyện một tài khoản dùng link `/banking/`
@@ -334,4 +358,4 @@ if (linkNotes.length) {
 //
 // Không đọc được trang thì lúc nào cũng là lỗi: im lặng bỏ qua thì một trang
 // chết sẽ làm job xanh y như lúc mọi thứ đều đúng.
-process.exit((!fix && drift.length) || errors.length ? 1 : 0);
+process.exit((!fix && drift.length) || errors.length || deadLinks.length ? 1 : 0);

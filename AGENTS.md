@@ -2071,3 +2071,61 @@ thời gian". Điều khoản đọc thẳng trên trang ngân hàng ngày 21/09
 - **Bonus `unknown` không được in như chắc chắn**: `welcomeBonusUncertain` trên
   `ActionView`, câu chữ ở `openCardSentence`/`alternativeBonusLead` (present.ts),
   dữ kiện `bonus_uncertain` bắt buộc đi kèm `bonus` ở Phase 6.
+
+## Kiểm toàn diện 25/09/2026 — đừng đề xuất lại
+
+Gate xanh trước khi sửa: lint, tsc, build, 10 audit (trừ `audit:rebates`, xem
+dưới), 5 test suite, `npm audit` 0 lỗ hổng, 152 URL sitemap đều 200, `www` 308
+về apex, đủ 5 header bảo mật. 13 trang chính ở 375px: không trang nào cuộn
+ngang được. `/bay-ve-viet-nam` có `scrollWidth` 382 nhưng `scrollTo(200,0)`
+vẫn ra `scrollX` 0 — con số đó đến từ bảng trong khung `overflow-x-auto`,
+KHÔNG phải tràn trang.
+
+**Đã vá — link "mở tài khoản" của KOHO Essential Plan trỏ vào trang chết.**
+Trang `/rebates/bank-accounts/koho-essential-plan` của FinlyWealth trả tiêu đề
+"Not Found" (curl 3/3, trình duyệt thật cũng vậy). Đổi `affiliateUrl` sang
+`/banking/savings-accounts/koho-essential-plan` (còn sống, cùng promo code
+FW10C26 và cùng 10% cashback tối đa $100 — đúng dạng KOHO Everything đã dùng từ
+đầu), bỏ `rebate: "$100"` và câu "…điều kiện để nhận rebate của FinlyWealth".
+
+**Lỗ hổng gốc, đã vá — `check-bank-rebates.mts` biến link chết thành im
+lặng.** Nhánh `gone` chỉ xoá dòng `rebate:` rồi thoát 0 ở `--fix`: job xanh,
+commit "đã sửa 1 con số", và từ lượt sau tài khoản không còn `rebate` nên
+không nhánh nào nhắc tới nó nữa — nút apply rơi vào trang lỗi vô thời hạn.
+Nay mọi tài khoản dùng link `/rebates/` mà trang `gone` vào `deadLinks` và làm
+exit 1 ở MỌI lượt (không phụ thuộc còn `rebate` hay không) cho tới khi người
+đổi link. Bước commit của workflow chạy theo `!cancelled()` nên con số vẫn
+được xoá và đẩy lên như cũ, chỉ khác là job đỏ. Đã kiểm cả ba trạng thái: dữ
+liệu cũ (exit 1), đã xoá rebate mà link còn chết + `--fix` (vẫn exit 1), đã
+đổi link (exit 0). Codex chấm ĐÚNG. Bên thẻ tín dụng không có lỗ này:
+`rebateFromTitle` ném khi tiêu đề không có số, nên `check-rebates` đỏ.
+
+**Đã đổi — lịch `sync-videos` từ `0 */6` sang `17 1,7,13,19`.** Phân loại mọi
+lượt đỏ từ `gh run view --log-failed`: 08/09–25/09 có 14 lần "youtube feed
+failed: 404", TẤT CẢ ở lượt cron 00:00 UTC (nổ thật 02:54–03:31 UTC do hàng đợi
+GitHub), 0 lần ở ba lượt kia; lượt kế tiếp lần nào cũng xanh. Nguyên nhân gốc
+CHƯA BIẾT — đây là thử giả thuyết khung giờ, không phải chữa tận gốc. Cách
+đọc kết quả: nếu 404 đi theo sang lượt 01:17 (nổ thật khoảng 04–05 UTC) thì giả
+thuyết sai, lúc đó mới cân nhắc đổi cách xử lý 404 của feed trong route.
+
+**Job `expire-offers` đỏ 25/09 13:05 UTC**: `curl (28) Failed to connect to
+ghe1a.com port 443` cả 5 lượt, ~25 phút — đúng hình dạng Hostinger đã ghi ở các
+mục trước. `audit:health` xác nhận không có offer hết hạn nào còn treo.
+
+**Codex chỉ ra, đã kiểm và KHÔNG vá:**
+- *`getAuthor` rơi về `content/sample/author.json` khi CDA trả 0 author* —
+  đúng cơ chế, nhưng file "mẫu" đó chính là bio thật của Hoàng, nên người đọc
+  không thấy hồ sơ giả nào. Không phải lỗi.
+- *Xô chung của `rateLimit` làm giới hạn 2 lượt/email của `subscribe` thành
+  100 lượt chung* khi Map đã đủ 9,999 khoá trong một giờ. Đúng cơ chế, chỉ xảy
+  ra lúc site đang bị bơm bởi ~10,000 khoá khác nhau (site ~130 khách/tuần).
+  Rủi ro đã biết, cùng đánh đổi đã ghi ở chú thích `OVERFLOW_KEY`; giữ per-email
+  trong lúc tràn đòi lưu thêm khoá, tức đúng thứ cái trần sinh ra để chặn.
+
+**Chờ người dùng quyết — engine gợi ý KHÔNG tính rebate FinlyWealth.**
+`annualFeeRebate` có trong seed (Tangerine® 120, v.v.) và `audit:reco-data`
+đối chiếu nó với Contentful, nhưng không chỗ nào trong
+`src/lib/recommendation/` đọc trường này: `offer-quality.ts` chỉ cộng component
+welcome offer. Codex đo: đổi rebate Tangerine® 120 → 0 thì giá trị offer và
+phí năm đầu y nguyên. Tính vào là đổi thứ hạng, tức quyết định sản phẩm, không
+phải sửa lỗi — chưa làm. Trong lúc chờ, đừng báo lại như lỗi mới.
