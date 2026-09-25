@@ -1903,6 +1903,110 @@ vòng đó bắt được lỗi fail-open thật trong `slugTaken` (đã sửa) 
 giới hạn thật của `bodyTooLarge` (đã ghi rõ, không mở rộng). `lint`, `tsc`,
 `build`, `test:jobs`, `test:game` đều xanh sau bản vá cuối.
 
+## Kiểm toàn diện định kỳ 19/09/2026 — đừng đề xuất lại
+
+Mọi gate xanh trước khi bắt đầu (lint, tsc, build, 10 audit, 3 test suite,
+`npm audit` 0 lỗ hổng). Codex rà theo thứ tự hậu quả, ra 3 phát hiện. Một cái
+đã vá (và vòng phản biện bắt bản vá đầu HỎNG, phải vá lại), một cái vá theo
+hướng KHÁC với đề xuất của Codex, một cái cố ý không vá.
+
+**Đã vá — `rebateAmountInTitle` (`lib/finlywealth.ts`): bộ đọc rebate lấy con
+số `$` ĐẦU TIÊN trong `<title>`, không đòi tiêu đề chỉ có đúng một con số.**
+Cả HAI đường đọc rebate chép chung một dòng regex
+(`\$([\d,]+)\s+.*Rebate from FinlyWealth`): thẻ tín dụng ở `finlywealth.ts`,
+tài khoản ngân hàng ở `scripts/check-bank-rebates.mts`. Cả hai đều tự GHI con
+số đọc được lên site — `check-rebates` sửa `rebateVi` cộng câu HOT TIP rồi
+publish, script kia sửa thẳng `bank-accounts.ts` rồi commit vào `main`. Nên một
+tiêu đề hai con số (`"$700 in welcome value plus $200 … Rebate from
+FinlyWealth"`) được đọc thành `$700` và site hứa dư $500 với người đọc, không
+gate nào đỏ. `"$2,00 …"` cũng qua. Đây đúng lớp lỗi mà chính file này đã vá một
+lần (`endsWith("finlywealth.com")` nhận cả `notfinlywealth.com`) và đúng
+nguyên tắc fail-closed mà `check-bank-rebates.mts` tự ghi ra cho mình
+("không biết là gì thì không được coi là dữ liệu") — chỉ là dòng đọc SỐ chưa
+theo nguyên tắc đó.
+
+Đo tại nguồn trước khi sửa: lấy `<title>` thật của cả **39 trang đang dùng**
+(10 thẻ từ `applyUrl` trên CDA + 29 tài khoản từ `bank-accounts.ts`). Tất cả
+đều là dạng `"$NNN <tên sản phẩm> Rebate from FinlyWealth"` — đúng một con số,
+0 trang có hai. Tức đây là vá TRƯỚC KHI CHÁY, không phải chữa một con số đang
+sai. Bản vá cho 0/39 lệch so với bản cũ.
+
+**Vòng Codex bác bản vá bắt được BA lỗ mới trong bản vá đầu tiên** — bản đầu bỏ
+ràng buộc vị trí, chỉ đếm số `$` trong cả tiêu đề rồi soi. Ba ca nó mở ra:
+- `"Rebate from FinlyWealth | Annual fee $120"` → `$120`. Con số đứng SAU cụm
+  nhận diện là một con số KHÁC (hậu tố SEO), bản cũ từ chối đúng. Nay chỉ xét
+  phần đứng TRƯỚC cụm.
+- `"$75abc …"` → `$75`. Bản cũ từ chối (nó đòi khoảng trắng ngay sau chữ số).
+  Nay lấy TRỌN cụm tới khoảng trắng rồi mới soi, đuôi lạ là trượt.
+- `"$2 000 …"` → `$2`, hụt 998 đô. Cách ngăn nghìn kiểu Pháp; cả bản cũ lẫn bản
+  vá đầu đều đọc sai. Nay từ chối khi ngay sau con số là khoảng trắng rồi chữ
+  số.
+
+Bất biến nay khoá bằng `src/lib/finlywealth.test.ts` (14 ca, chạy trong
+`npm run test:jobs`), không chỉ bằng chú thích — đây là đường ghi tiền lên site
+và nó đã hỏng theo hai kiểu khác nhau trong cùng một phiên.
+
+**Đã vá nhưng KHÁC hướng Codex đề xuất — `api/revalidate`:
+`newPostNotified === "not-configured"` nay trả 502 thay vì 200.** Thiếu
+`KIT_V4_API_KEY` (hoặc token/space CMA) đúng lúc một bài `post` publish lần đầu
+là mất bản tin VĨNH VIỄN — `publishedCounter` sang lần publish sau đã là 2 —
+trong im lặng tuyệt đối: không dòng log, webhook trong Contentful vẫn xanh.
+Lý do cũ ("gọi lại bao nhiêu lần cũng không làm biến ra một token") ĐÚNG cho
+lượt purge CDN nhưng SAI ở đây, vì hai chỗ có hậu quả khác hẳn: CDN bẩn tự hết
+hạn, bản tin mất thì không. Lập luận quyết định là tính NHẤT QUÁN nội tại:
+chính file này đã trả 502 cho Kit 401/422 — cũng là lỗi mà gọi lại không tự
+chữa được — với đúng lý do "để lỗi hiện ra trong Contentful". 502 an toàn tuyệt
+đối vì cửa kiểm cấu hình nằm TRƯỚC `claimBroadcast` và trước mọi lời gọi Kit.
+`"missing_fields"` KHÔNG đi cùng nhánh và đừng gộp vào: lượt giao lại mang đúng
+payload cũ nên nó không bao giờ khác đi.
+Mình đã bác lập luận này một lần ("env của tiến trình Node chạy dài không thể
+tạm thiếu rồi có lại") — nó đúng nhưng không liên quan: vấn đề không phải retry
+có chữa được không, mà là lỗi có HIỆN RA hay không.
+
+**Cố ý KHÔNG vá — `updateEntry` PUT chỉ gửi `{ fields }` nên xoá `metadata`
+(tag + taxonomy concept) của entry.** Codex đúng về cơ chế: Contentful PUT thay
+thế chứ không merge. Nhưng đã đo qua CMA thật ngày 19/09/2026: **cả 81 entry**
+(34 `creditCardOffer` + 43 `blogPost` + 4 `transferBonus`) đều có
+`{"tags":[],"concepts":[]}`. Sửa đường ghi nguy hiểm nhất repo cho một ca chưa
+tồn tại là thêm rủi ro mà không mua được gì hôm nay.
+**Điều kiện kích hoạt, để lần sau khỏi đo lại:** ngày nào bắt đầu gắn tag hoặc
+taxonomy concept cho entry trong Contentful thì PHẢI sửa `updateEntry` trước
+(cho `metadata` của entry vào body PUT) — nếu không, lượt `check-rebates` hay
+`expire-offers` kế tiếp sẽ xoá sạch chúng rồi publish, và job vẫn xanh.
+
+**`npm run lint` in 305 warning không phải của repo này.** Một worktree của
+phiên Claude Code khác nằm NGAY TRONG repo
+(`.claude/worktrees/friendly-engelbart-790a91/`, 588MB), chỉ bị loại khỏi git
+bằng `.git/info/exclude` CỤC BỘ nên `git status` sạch và không ai thấy. eslint
+thì thấy: nó lint một bản checkout đầy đủ thứ hai của chính repo này. `src/`
+thật sự sạch 0 warning. Đã thêm `.claude/worktrees/**` vào `globalIgnores`,
+cùng lý do đã ghi sẵn cho `.claude/skills/**`.
+
+**Job và deploy:** 2/20 lượt gần nhất đỏ, cả hai là `sync-videos` và cả hai
+KHÔNG phải lỗi code. 18/09 20:23 UTC: `curl (28) Failed to connect to
+ghe1a.com port 443` cả 5 lượt — đúng hình dạng Hostinger đã ghi ở các mục
+02/09, 05/09, 09/09. 19/09 03:05 UTC: **YouTube trả 404 cho chính feed Atom**
+ở cả 5 lượt trong 2,5 phút; gọi lại feed đó từ máy nhà lúc kiểm (8/8 lượt) đều
+200 và trả đủ 15 entry, và lượt job 10:17 cùng ngày xanh. Tức YouTube chặn/nấc
+theo IP trong một cửa sổ ngắn, không phải channel ID sai. Nếu gặp lại: kiểm
+feed từ máy khác TRƯỚC khi nghi `YOUTUBE_CHANNEL_ID`.
+
+**Bổ sung 24/09/2026 (lượt kiểm kế tiếp commit phần trên — nó nằm chưa commit
+từ 19/09 vì phiên cũ dừng giữa lúc chờ vòng Codex bác bản vá).** Vòng bác bản
+vá chạy lại: `rebateAmountInTitle`, eslint ignore, `test:jobs` đều ĐÚNG. Riêng
+nhánh 502 cho `"not-configured"`, Codex chấm BẢN VÁ HỎNG vì thiếu token/space
+CMA thì `maybeNotifyNewPost` trả `"not-configured"` TRƯỚC khi kiểm
+`publishedCounter` — nên mọi lần publish LẠI một bài Kiến thức/Tips cũng 502,
+không riêng lần đầu. Cơ chế đúng, nhưng **cố ý giữ, đừng đề xuất lại**: thiếu
+CMA là cấu hình hỏng (chính `check-rebates` và `expire-offers` cũng chết theo),
+nên webhook đỏ ở mọi bài thuộc diện gửi bản tin là đúng tín hiệu cần có; lượt
+giao lại chỉ purge CDN thêm lần nữa, không thể gửi bản tin vì cửa kiểm nằm
+trước Kit. Không có CMA thì cũng không có cách nào biết đó có phải lần publish
+đầu hay không — tách nhánh chỉ để webhook "xanh giả" là đi ngược mục đích.
+Lượt `sync-videos` đỏ 24/09 03:06 UTC lại là **YouTube 404 cho feed Atom** ở cả
+5 lượt, lượt 11:05 cùng ngày xanh — lần thứ hai đúng khung ~03:05 UTC (lần đầu
+19/09). Nếu còn lặp đúng giờ này thì là YouTube, không phải code.
+
 ## Đo đạc GA4 (20/09/2026) — đừng đề xuất lại
 
 - **Tham số event `source` LỌT VÀO Session source/medium của GA4.** Bằng chứng có

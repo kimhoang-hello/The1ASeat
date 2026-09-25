@@ -63,14 +63,71 @@ async function fetchPage(url: string): Promise<string> {
   return res.text();
 }
 
+/**
+ * Con số rebate trong `<title>`, hoặc `null` khi tiêu đề KHÔNG nói rõ được một
+ * con số duy nhất.
+ *
+ * Bản cũ đọc `\$([\d,]+)\s+.*Rebate from FinlyWealth` và lấy con số `$` ĐẦU
+ * TIÊN nó gặp. Cả hai đường đọc rebate (thẻ tín dụng ở file này, tài khoản
+ * ngân hàng ở `scripts/check-bank-rebates.mts`) đều dùng đúng dòng đó, và cả
+ * hai đều tự ghi con số đọc được lên site: `check-rebates` sửa `rebateVi` cộng
+ * câu HOT TIP rồi publish, script kia sửa thẳng `bank-accounts.ts` rồi commit.
+ * Nên một tiêu đề có HAI con số — `"$700 in welcome value plus $200 … Rebate
+ * from FinlyWealth"` — được đọc thành `$700`, và site hứa dư $500 cho người
+ * đọc mà không gate nào đỏ. `"$2,00 … Rebate"` (dấu phẩy sai chỗ) cũng qua.
+ *
+ * Cả 39 trang đang dùng (10 thẻ + 29 tài khoản, đo 19/09/2026) đều là dạng
+ * `"$NNN <tên sản phẩm> Rebate from FinlyWealth"` — đúng MỘT con số. Nên luật
+ * mới là: thấy nhiều hơn một con số `$`, hoặc con số không đúng dạng số tiền,
+ * thì KHÔNG đoán — trả `null` để nơi gọi ném. Cùng nguyên tắc fail-closed mà
+ * file này đã áp cho `<title>` rỗng và cho phép so host chính xác: rebate là
+ * tiền hiện cho người đọc, đoán sai tốn hơn đỏ một lượt job.
+ *
+ * KHÔNG neo `^\$`: tiêu đề dạng `"Up to $75 … Rebate from FinlyWealth"` vẫn
+ * đọc được, đúng như `check-bank-rebates.mts` đã ghi là hợp lệ. Cũng không neo
+ * cuối chuỗi, để FinlyWealth thêm hậu tố SEO không làm đỏ cả 39 trang.
+ *
+ * Ba ràng buộc dưới đây đều do một vòng phản biện bắt được — bản vá đầu bỏ cả
+ * ba và mở ra lỗ mới ở chỗ khác, xem ghi chú ngày 19/09/2026 trong AGENTS.md:
+ *
+ * 1. Con số phải đứng TRƯỚC cụm "Rebate from FinlyWealth". Bỏ ràng buộc này
+ *    thì `"Rebate from FinlyWealth | Annual fee $120"` đọc ra `$120` — hậu tố
+ *    SEO trở thành con số rebate.
+ * 2. Cụm `$…` được lấy TRỌN tới khoảng trắng rồi mới soi, chứ không chỉ lấy
+ *    phần chữ số ăn được. `"$75abc"` phải bị từ chối, không được đọc thành
+ *    `$75`.
+ * 3. Ngay sau con số không được là khoảng trắng rồi chữ số: `"$2 000 …"`
+ *    (cách ngăn nghìn kiểu Pháp) đọc thành `$2` là hụt 998 đô.
+ */
+export function rebateAmountInTitle(title: string): string | null {
+  const phrase = title.search(/Rebate from FinlyWealth/i);
+  if (phrase === -1) return null;
+
+  // Chỉ xét phần ĐỨNG TRƯỚC cụm nhận diện, và quét MỌI cụm `$` trong đó chứ
+  // không dừng ở cụm đầu: đếm được bao nhiêu con số mới biết tiêu đề có mơ hồ
+  // hay không.
+  const before = title.slice(0, phrase);
+  const figures = [...before.matchAll(/\$\s?\S*/g)];
+  if (figures.length !== 1) return null;
+
+  const [figure] = figures;
+  const amount = figure[0].match(/^\$\s?(\d{1,3}(?:,\d{3})*|\d+)$/)?.[1];
+  if (!amount) return null;
+
+  const rest = before.slice(figure.index + figure[0].length);
+  if (/^\s+\d/.test(rest)) return null;
+
+  return `$${amount}`;
+}
+
 function rebateFromTitle(html: string): string {
   const title = html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1];
   if (!title) throw new Error("no <title> on the page");
 
-  const amount = title.match(/\$([\d,]+)\s+.*Rebate from FinlyWealth/i)?.[1];
+  const amount = rebateAmountInTitle(title);
   if (!amount) throw new Error(`no rebate in title: ${title.trim().slice(0, 80)}`);
 
-  return `$${amount}`;
+  return amount;
 }
 
 /** The dollar figure FinlyWealth currently advertises, formatted as "$120". */

@@ -135,8 +135,10 @@ export async function POST(request: NextRequest) {
   // retry khi lượt này không gửi gì: publish thẻ tín dụng và tài khoản ngân
   // hàng — đúng những thứ cần CDN sạch — đều rơi vào nhánh đó.
   //
-  // `"not-configured"` vẫn trả 200: gọi lại bao nhiêu lần cũng không làm biến
-  // ra một token Hostinger.
+  // `hostingerCachePurged === "not-configured"` vẫn trả 200: gọi lại bao nhiêu
+  // lần cũng không làm biến ra một token Hostinger, và cache bẩn thì tự hết
+  // hạn. ĐỪNG suy ra điều tương tự cho `newPostNotified === "not-configured"`
+  // — nó đi nhánh 502, lý do ghi ngay trên chỗ tính `retrySafe` bên dưới.
   //
   // NGOẠI LỆ `false`: Kit trả 4xx, tức là CHẮC CHẮN chưa có broadcast nào được
   // tạo và `claimBroadcast` đã trả chỗ lại. Trả 200 ở đây là bài đầu tiên của
@@ -149,8 +151,10 @@ export async function POST(request: NextRequest) {
   // `"fetch_failed"` đi CÙNG nhánh với `false`, và vì đúng cùng một lý do:
   // lượt gọi CMA nằm TRƯỚC `claimBroadcast` và trước mọi lời gọi Kit, nên khi
   // nó hỏng thì chắc chắn chưa có bản tin nào được tạo và chưa có chỗ nào bị
-  // giành. Nó cũng là lỗi THOÁNG QUA (CMA 429/503), khác hẳn
-  // `"not-configured"` hay `"missing_fields"` — gọi lại là qua được. Trả 200 ở
+  // giành. Nó còn là lỗi THOÁNG QUA (CMA 429/503) nên gọi lại là qua được —
+  // khác `"not-configured"`, thứ cũng đi nhánh 502 nhưng vì một lý do khác
+  // (để lỗi hiện ra), và khác `"missing_fields"`, thứ vẫn trả 200 vì lượt giao
+  // lại mang đúng payload cũ nên không bao giờ khác đi. Trả 200 ở
   // đây là mất hẳn bản tin của bài đó: Contentful không gọi lại, còn
   // `publishedCounter` thì sang lần publish sau đã là 2 nên `maybeNotifyNewPost`
   // không bao giờ chạm tới Kit nữa. Đúng một lần CMA nấc là một bài viết ra
@@ -172,7 +176,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const retrySafe = newPostNotified === false || newPostNotified === "fetch_failed";
+  // `"not-configured"` (thiếu `KIT_V4_API_KEY`, hoặc thiếu token/space CMA) đi
+  // CÙNG nhánh, thêm 19/09/2026. Trước đó nó trả 200 với lý do "gọi lại bao
+  // nhiêu lần cũng không làm biến ra một token" — đúng cho lượt purge CDN ở
+  // trên, nhưng SAI ở đây, vì hai chỗ có hậu quả khác hẳn nhau. CDN bẩn thì tự
+  // hết hạn; còn một bài viết đi qua nhánh này là mất bản tin VĨNH VIỄN
+  // (`publishedCounter` sang lần publish sau đã là 2), im lặng tuyệt đối:
+  // không dòng log nào, webhook trong Contentful vẫn xanh.
+  //
+  // 502 an toàn tuyệt đối ở đây vì cùng lý do với `"fetch_failed"`: cửa kiểm
+  // cấu hình nằm TRƯỚC `claimBroadcast` và trước mọi lời gọi Kit, nên chắc
+  // chắn chưa có bản tin nào được tạo. Và chính file này đã trả 502 cho Kit
+  // 401/422 — cũng là lỗi mà gọi lại không tự chữa được — với đúng lý do đang
+  // nói: để lỗi HIỆN RA trong Contentful thay vì ăn mất bản tin trong im lặng.
+  const retrySafe =
+    newPostNotified === false ||
+    newPostNotified === "fetch_failed" ||
+    newPostNotified === "not-configured";
   const status = retrySafe ? 502 : 200;
   return NextResponse.json({ revalidated: true, hostingerCachePurged, newPostNotified }, { status });
 }

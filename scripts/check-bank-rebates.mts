@@ -20,6 +20,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { BANK_ACCOUNTS } from "../src/lib/bank-accounts.ts";
+import { rebateAmountInTitle } from "../src/lib/finlywealth.ts";
 
 const FILE = path.join(process.cwd(), "src/lib/bank-accounts.ts");
 const fix = process.argv.includes("--fix");
@@ -145,8 +146,13 @@ async function fetchRebate(slug: string): Promise<RebateReading> {
     throw new Error(`${REBATE_BASE}${slug} trả một tiêu đề lạ: ${title.slice(0, 80)}`);
   }
 
-  const amount = title.match(/\$([\d,]+)\s+.*Rebate from FinlyWealth/i)?.[1];
-  if (amount) return `$${amount}`;
+  // Dùng CHUNG bộ đọc với đường thẻ tín dụng. Trước đây hai bên chép cùng một
+  // regex, nên cùng một lỗ hổng nằm ở hai chỗ: nó lấy con số `$` ĐẦU TIÊN, tức
+  // một tiêu đề hai con số ("$700 … plus $200 … Rebate from FinlyWealth") ghi
+  // đè số sai vào `bank-accounts.ts` rồi commit lên main. Xem chú thích của
+  // `rebateAmountInTitle`.
+  const amount = rebateAmountInTitle(title);
+  if (amount) return amount;
   if (/^null\b/i.test(title)) return "no-amount";
 
   throw new Error(`${REBATE_BASE}${slug}: trang FinlyWealth nhưng không đọc ra số: ${title.slice(0, 80)}`);

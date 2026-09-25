@@ -159,7 +159,7 @@ test("Scotia Momentum® đếm MỌI thẻ cá nhân Scotiabank®, và đang gi�
   assert.equal(evaluateEligibility(momentum, otherBank, IX, ASOF).welcomeOfferBlocked, false);
 });
 
-test("user chốt 21/09/2026: Aventura®, Scotiabank® Scene+™, TD Rewards KHÔNG có cửa sổ thời gian", () => {
+test("user chốt 21/09/2026: Aventura®, Scotiabank® Scene+™, TD Rewards® KHÔNG có cửa sổ thời gian", () => {
   // Footnote ghi 12/24 tháng, nhưng thực tế vẫn nhận bonus — đừng thêm lại.
   const recent = japanProfile([
     card("scotiabank-passport-visa-infinite", "active", "2026-08-01", null),

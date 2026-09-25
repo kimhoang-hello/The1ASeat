@@ -194,7 +194,7 @@ export const WARNING_CODE_NOTES: Record<WarningCode, string> = {
   SECOND_YEAR_FEE_APPLIES:
     "suitability.ts — offer miễn phí năm đầu nhưng phí thường niên vẫn tới ở năm thứ hai.",
   WELCOME_BONUS_BLOCKED_BY_PAST_CARD:
-    "eligibility.ts — everHeld + luật once-in-a-lifetime (Amex®, BMO®, Neo, loại thẻ Aeroplan®), hoặc luật N tháng (previous_cardholder_within_months) trượt. Thẻ gây chặn có thể là thẻ KHÁC cùng họ/cùng ngân hàng.",
+    "eligibility.ts — everHeld + luật once-in-a-lifetime (Amex®, BMO®, Neo™, loại thẻ Aeroplan®), hoặc luật N tháng (previous_cardholder_within_months) trượt. Thẻ gây chặn có thể là thẻ KHÁC cùng họ/cùng ngân hàng.",
   WELCOME_BONUS_NOT_VERIFIABLE:
     "eligibility.ts — thiếu dữ liệu người dùng cho luật welcome bonus (danh sách thẻ chưa khai, hoặc ngày mở/đóng của thẻ luật N tháng đếm).",
   ELIGIBILITY_NOT_VERIFIABLE: "eligibility.ts — thiếu dữ liệu người dùng cho một luật cứng.",
