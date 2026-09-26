@@ -54,9 +54,10 @@ async function handleSync(request: NextRequest) {
   // Bắt ở đây để trả 500 kèm lý do đọc được trong runtime log, thay vì để
   // Next dựng trang lỗi chung chung.
   let videos: VideoEntry[];
+  let feedSource: FeedSource;
   let existing: VideoEntryState;
   try {
-    videos = await fetchLatestVideos();
+    ({ videos, feedSource } = await fetchLatestVideos());
     existing = await fetchVideoUrlsByState(cmaBase, authHeaders);
   } catch (err) {
     // Log trước khi trả: workflow gọi bằng `curl -f` nên body bị nuốt, và Next
@@ -154,7 +155,7 @@ async function handleSync(request: NextRequest) {
   // trong khi video mới ngừng lên site — đúng lỗi đã sửa ở check-rebates.
   const status = errors.length > 0 ? 500 : 200;
   if (errors.length > 0) console.error("[sync-videos] lỗi:", errors);
-  return NextResponse.json({ checked: videos.length, created, errors }, { status });
+  return NextResponse.json({ checked: videos.length, feedSource, created, errors }, { status });
 }
 
 /**
@@ -205,19 +206,64 @@ async function fetchWithRetry(url: string, init: RequestInit, label: string): Pr
     : new Error(`${label} hỏng sau ${FETCH_ATTEMPTS} lượt: ${String(lastError)}`);
 }
 
-async function fetchLatestVideos(): Promise<VideoEntry[]> {
-  const res = await fetchWithRetry(
-    `https://www.youtube.com/feeds/videos.xml?channel_id=${YOUTUBE_CHANNEL_ID}`,
-    { cache: "no-store" },
-    "youtube feed",
-  );
-  // Feed hỏng phải nổ, không được đọc thành "không có video mới". Trang lỗi
-  // của Google là HTML không chứa <entry> nào, nên nếu không chặn ở đây thì
-  // một feed 404 sẽ đi tiếp thành `{checked: 0}` và job vẫn xanh.
-  if (!res.ok) {
-    throw new Error(`youtube feed failed: ${res.status} ${await res.text()}`);
+/**
+ * Hai địa chỉ cho CÙNG một danh sách video: feed theo kênh, và feed của
+ * playlist "Uploads" tự sinh của kênh đó (`UU` + phần sau `UC` của channel
+ * ID). Đo 26/09/2026: cả hai trả đúng 15 entry, cùng videoId, cùng thứ tự.
+ *
+ * VÌ SAO có đường thứ hai: YouTube trả 404 cho feed theo kênh ở đúng lượt ĐẦU
+ * NGÀY (UTC) của job — 14/18 đêm ở lịch cũ (nổ ~03:00 UTC), và lịch mới lệch
+ * giờ (nổ 06:10 UTC ngày 26/09) vẫn dính, nên không phải một khung giờ cố
+ * định. Chưa biết feed playlist có dính cùng lúc không; đây là phép thử, đọc
+ * kết quả ở `feedSource` trong body mà workflow in ra. Nếu cả hai cùng 404 thì
+ * job đỏ y như trước — không che được channel ID sai.
+ */
+const FEED_URLS = [
+  { source: "channel", url: `https://www.youtube.com/feeds/videos.xml?channel_id=${YOUTUBE_CHANNEL_ID}` },
+  { source: "uploads-playlist", url: `https://www.youtube.com/feeds/videos.xml?playlist_id=UU${YOUTUBE_CHANNEL_ID.slice(2)}` },
+] as const;
+
+type FeedSource = (typeof FEED_URLS)[number]["source"];
+
+async function fetchLatestVideos(): Promise<{ videos: VideoEntry[]; feedSource: FeedSource }> {
+  const failures: string[] = [];
+  for (const feed of FEED_URLS) {
+    const res = await fetchWithRetry(feed.url, { cache: "no-store" }, `youtube feed (${feed.source})`);
+    // Chỉ 404 mới được chuyển sang feed kia. Mã khác (403, 400…) là thứ lạ
+    // chưa từng gặp, phải nổ ngay để người nhìn.
+    if (res.status === 404) {
+      failures.push(`${feed.source}: 404`);
+      continue;
+    }
+    // Feed hỏng phải nổ, không được đọc thành "không có video mới". Trang lỗi
+    // của Google là HTML không chứa <entry> nào, nên nếu không chặn ở đây thì
+    // một feed 404 sẽ đi tiếp thành `{checked: 0}` và job vẫn xanh.
+    if (!res.ok) {
+      throw new Error(`youtube feed failed (${feed.source}): ${res.status} ${(await res.text()).slice(0, 200)}`);
+    }
+    const xml = await res.text();
+    // 200 chưa đủ để tin, nhất là ở đường dự phòng (Codex, vòng bác bản vá
+    // 26/09/2026): kênh có video thì feed không bao giờ rỗng, nên 0 entry là
+    // feed hỏng chứ không phải "không có gì mới" — đọc thành `checked: 0` là
+    // job xanh giả. Và mọi entry phải thuộc đúng kênh này, có videoId và
+    // ngày đăng — thiếu thì `parseFeed` lặng lẽ bỏ qua nó.
+    const blocks = xml.split("<entry>").slice(1);
+    const ownTag = `<yt:channelId>${YOUTUBE_CHANNEL_ID}</yt:channelId>`;
+    const malformed = blocks.filter(
+      (block) =>
+        !block.includes(ownTag) || !/<yt:videoId>[^<]+<\/yt:videoId>/.test(block) || !/<published>[^<]+<\/published>/.test(block),
+    );
+    if (blocks.length === 0 || malformed.length > 0) {
+      throw new Error(
+        `youtube feed (${feed.source}) trả 200 nhưng sai hình dạng: ${blocks.length} entry, ${malformed.length} entry hỏng`,
+      );
+    }
+    return { videos: parseFeed(xml), feedSource: feed.source };
   }
-  const xml = await res.text();
+  throw new Error(`youtube feed failed: ${failures.join(", ")}`);
+}
+
+function parseFeed(xml: string): VideoEntry[] {
   const entries: VideoEntry[] = [];
 
   for (const block of xml.split("<entry>").slice(1)) {

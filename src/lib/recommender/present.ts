@@ -824,7 +824,10 @@ export function coverageStatement(trip: Pick<TripNumbersView, "coverage" | "gap"
   // 0), phần phủ đo ở mức CAO NHẤT (dưới 100%). In "Không thiếu" ngay trên
   // "phủ khoảng 98%" là hai câu cãi nhau (Codex, audit trang 25/09/2026) — nói
   // rõ mỗi con số đo ở mức giá nào.
-  const percent = Math.round(trip.coverage * 100);
+  // Tới đây phần phủ luôn < 1, nên làm tròn không được lên 100: 139,999 trên
+  // 140,000 điểm in "phủ khoảng 100%" ngay cạnh "còn thiếu 1 điểm" (Codex,
+  // kiểm định kỳ 26/09/2026).
+  const percent = Math.min(99, Math.round(trip.coverage * 100));
   if (trip.gap === 0) {
     return `điểm hiện tại đủ ở mức giá điển hình; so với mức giá cao nhất thì phủ khoảng ${percent}%`;
   }

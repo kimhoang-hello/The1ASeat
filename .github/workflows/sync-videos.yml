@@ -15,6 +15,9 @@ on:
     # Một job đỏ gần như mỗi đêm vì lý do không ai sửa được
     # thì chẳng mấy chốc không ai còn đọc nó nữa. Phút 17 để khỏi rơi vào đỉnh
     # đầu giờ của hàng đợi cron. Xem AGENTS.md, mục 25/09/2026.
+    # KẾT QUẢ 26/09/2026: lượt 01:17 (nổ 06:10 UTC) vẫn 404 — giả thuyết
+    # khung giờ sai. Route nay thử feed playlist Uploads khi feed kênh 404;
+    # đọc `feedSource` trong log để biết đường nào đã phục vụ.
     - cron: "17 1,7,13,19 * * *"
   workflow_dispatch: {}
 

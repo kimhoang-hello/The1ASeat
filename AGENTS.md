@@ -2178,3 +2178,37 @@ Engine 4.30.0, prompt giải thích 6.6.0.
   giữa hai tab — hẹp, tự lành ở lần tải sau.
 - `EXPLANATION_MODEL = "claude-opus-5"` là model ID hợp lệ (đã tra skill
   claude-api); request không gửi tham số nào Opus 5 từ chối.
+
+## Kiểm toàn diện 26/09/2026 — đừng đề xuất lại
+
+Gate xanh: lint, tsc, build, 8 audit (`trademarks`, `awards`, `rebate-prose`,
+`rebates`, `health`, `reco-data`, `best-cards`, `card-mentions`), 5 test suite,
+`npm audit` 0 lỗ hổng, 8 URL chính 200, `www` 308 về apex, đủ 5 header bảo mật.
+`audit:health`: không có gì cần người nhìn, cả phần "Nhắc" cũng trống.
+
+**`npm run build` đỏ giả: "Can't resolve '@vercel/turbopack-next/internal/font/google/font'
+… next/font/google queries have exactly one entry".** Do cache `.next` cũ hỏng
+(CI xanh trên cùng commit, mạng tới Google Fonts vẫn 200). Dời `.next` đi rồi
+build lại là xanh. Gặp lại lỗi này thì làm vậy trước khi nghi code.
+
+**Giả thuyết khung giờ của `sync-videos` (mục 25/09) SAI.** Lượt `17 1` nổ
+06:10 UTC 26/09 vẫn "youtube feed failed: 404" cả 5 lượt; lượt 12:15 xanh. Tức
+404 bám theo lượt ĐẦU NGÀY (UTC), không theo giờ đồng hồ. Nguyên nhân gốc vẫn
+chưa biết. Bước thử kế tiếp đã làm: route gọi feed playlist Uploads
+(`playlist_id=UU` + phần sau `UC`) khi feed kênh trả 404. Đo 26/09: sau khi parse,
+hai feed giống hệt (15 entry, cùng videoId, cùng 4 Shorts, cùng ngày đăng).
+Vòng Codex bác bản vá chấm bản đầu HỎNG: feed 200 rỗng/sai cấu trúc được đọc
+thành `checked: 0` → xanh giả. Nay feed 200 phải có ≥1 `<entry>` và MỌI entry
+mang `<yt:channelId>` của đúng kênh, `<yt:videoId>` và `<published>` (vòng bác
+thứ hai bắt entry chỉ có channelId vẫn lọt), không thì ném (áp cả hai feed; lưu ý thẻ
+`yt:channelId` ở đầu feed kênh bị YouTube cắt mất `UC`, nên chỉ kiểm trong entry).
+Mã khác 404 vẫn ném ngay, cả hai 404 thì job đỏ như cũ.
+**Cách đọc kết quả:** body thành công nay có `feedSource`. Lượt đầu ngày mà ra
+`"uploads-playlist"` là fallback đang làm việc; nếu lượt đó ra
+"channel: 404, uploads-playlist: 404" thì YouTube chặn cả dịch vụ feed lúc đó,
+bước sau là cân nhắc bỏ qua đúng một lượt 404 thay vì thêm nguồn.
+
+**Đã vá — `coverageStatement` làm tròn phần phủ lên 100% khi vẫn còn thiếu.**
+139,999/140,000 điểm in "phủ khoảng 100%" ngay cạnh "còn thiếu 1 điểm". Nay
+trần 99% (ở nhánh đó phần phủ luôn < 1). Trang và lời giải thích Phase 6 đều đi
+qua hàm này, không có chỗ in phần trăm phủ nào khác. Codex chấm ĐÚNG.

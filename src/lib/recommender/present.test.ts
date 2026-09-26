@@ -276,6 +276,12 @@ test("'không thiếu' ở giá điển hình mà phủ dưới 100% cận trên
   assert.equal(coverageStatement({ coverage: 0.5, gap: 100_000 }), "điểm hiện tại phủ khoảng 50% chuyến này");
   assert.equal(coverageStatement({ coverage: 1, gap: 0 }), "điểm hiện tại phủ được cả chuyến này");
   assert.equal(coverageStatement({ coverage: 1.2, gap: 5_000 }), null);
+  // Làm tròn không được đẩy lên 100% khi vẫn còn thiếu (kiểm định kỳ 26/09/2026).
+  assert.equal(coverageStatement({ coverage: 139_999 / 140_000, gap: 1 }), "điểm hiện tại phủ khoảng 99% chuyến này");
+  assert.equal(
+    coverageStatement({ coverage: 0.997, gap: 0 }),
+    "điểm hiện tại đủ ở mức giá điển hình; so với mức giá cao nhất thì phủ khoảng 99%",
+  );
 });
 
 test("độ chắc chắn nói ra NGUYÊN NHÂN sửa được, không phải chỉ một mức", () => {
