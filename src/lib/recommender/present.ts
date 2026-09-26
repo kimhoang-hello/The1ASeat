@@ -163,6 +163,12 @@ export interface TripNumbersView {
   needLow: number | null;
   needTypical: number | null;
   needHigh: number | null;
+  /**
+   * Chương trình mà `need*`, `accessible`, `gap`, `coverage` cùng đo trên —
+   * `null` khi `need*` là khoảng GỘP qua mọi chương trình (chưa khai số dư,
+   * hoặc không chương trình nào phủ được).
+   */
+  needProgram: string | null;
   accessible: number | null;
   accessibleIsLowerBound: boolean;
   gap: number | null;
@@ -431,7 +437,11 @@ function noCardReasonOf(candidate: Candidate): ActionView["noCardReason"] {
     case "points_already_sufficient":
       return "points_sufficient";
     case "portfolio_already_covers":
-      return "portfolio_covers";
+      // Câu "thẻ bạn đang giữ đã kiếm đúng loại điểm" chỉ đúng khi phép so ĐO
+      // ĐƯỢC và ví thật sự theo kịp. Chưa khai chi tiêu thì engine trả 0.5
+      // trung tính ("không so được") — vẫn có thể là dòng lớn nhất (Codex,
+      // audit trang 25/09/2026).
+      return top.raw >= 0.75 ? "portfolio_covers" : null;
     case "offer_climate_weak":
       return candidate.reasonCodes.includes("WAIT_FOR_BETTER_OFFER") ? "offers_weak" : null;
     case "no_reachable_candidate":
@@ -517,6 +527,8 @@ function actionOf(
     // mạnh" (nó chỉ là dòng đóng góp nhiều nhất trong một bảng yếu), và
     // `spend_fit` bằng 1 theo QUY ƯỚC khi offer không có mốc chi nào biết được
     // — in "mốc chi vừa sức bạn" ở đó là khẳng định một thứ chưa ai biết.
+    // Bonus bị chặn cũng vậy: mốc chi vẫn có trong dữ liệu, nhưng không còn là
+    // thứ người này phải đạt, nên "vừa sức" là khen một việc không ai làm.
     strengths:
       candidate.kind === "no_new_card"
         ? []
@@ -525,7 +537,9 @@ function actionOf(
             .filter(
               (row) =>
                 row.key !== "spend_fit" ||
-                (slug !== null && cards.facts.get(slug)?.minSpendPer90Days != null),
+                (candidate.eligibility?.welcomeOfferBlocked !== true &&
+                  slug !== null &&
+                  cards.facts.get(slug)?.minSpendPer90Days != null),
             )
             .sort((a, b) => b.contribution - a.contribution)
             .slice(0, 2)
@@ -557,13 +571,21 @@ export function routeNotPricedOf(record: RecommendationRunRecord, goalIndex = 0)
   return result !== undefined && (result.warnings as string[]).includes("AWARD_ROUTE_NOT_IN_DATASET");
 }
 
-function tripView(record: RecommendationRunRecord, index: number): TripNumbersView | null {
+function tripView(
+  record: RecommendationRunRecord,
+  dataset: RecommendationDataset,
+  index: number,
+): TripNumbersView | null {
   const trace = record.derivedState.goals[index];
   const result = record.outputSnapshot.results[index];
   const trip = trace?.goal.trip;
   if (trip == null || result === undefined) return null;
   const coverage = trace.tripCoverage;
   const balancesUndeclared = (record.outputSnapshot.warnings as string[]).includes("BALANCES_UNDECLARED");
+  const bestRow =
+    balancesUndeclared || coverage?.bestProgram == null
+      ? undefined
+      : trace.goal.tripNeed?.byProgram.find((row) => row.programId === coverage.bestProgram);
   const goalId = trace.goalId ?? "";
   const missing: { label: string; questionKey: string }[] = [];
   if (trip.cabin === null) missing.push({ label: "hạng ghế", questionKey: `trip_cabin_unknown:${goalId}` });
@@ -580,9 +602,27 @@ function tripView(record: RecommendationRunRecord, index: number): TripNumbersVi
     cabin: trip.cabin === null ? null : CABIN_LABEL[trip.cabin],
     passengers: trip.passengers,
     roundTrip: trip.roundTrip,
-    needLow: result.numbers.tripNeedLow,
-    needTypical: result.numbers.tripNeedTypical,
-    needHigh: result.numbers.tripNeedHigh,
+    // "Cần", "gom được", "còn thiếu" và phần phủ phải nói về CÙNG một chương
+    // trình. Khoảng gộp trộn mức thấp của chương trình này với mức cao của
+    // chương trình kia; đặt nó cạnh "còn thiếu" (đo trên chương trình phủ tốt
+    // nhất) thì người đọc tự trừ ra một con số khác: "cần 280,000 – 476,000,
+    // gom được 60,000, còn thiếu 350,000" — 280,000 là của AAdvantage®, 350,000
+    // là của Aeroplan® (audit trang 25/09/2026).
+    ...(bestRow === undefined
+      ? {
+          needLow: result.numbers.tripNeedLow,
+          needTypical: result.numbers.tripNeedTypical,
+          needHigh: result.numbers.tripNeedHigh,
+          needProgram: null,
+        }
+      : {
+          // Chương trình chỉ công bố giá SÀN thì sàn là cận dưới duy nhất —
+          // `formatNeed` in nó thành "ít nhất X điểm (chưa biết mức cao nhất)".
+          needLow: bestRow.low ?? bestRow.floor,
+          needTypical: bestRow.typical,
+          needHigh: bestRow.high,
+          needProgram: programName(dataset, bestRow.programId),
+        }),
     // Chưa khai số dư (bỏ qua câu "có điểm ở đâu"): engine xếp hạng như thể 0
     // điểm, nhưng trang KHÔNG được in "gom được 0 điểm · còn thiếu X · phủ 0%"
     // — ba câu khẳng định dựng trên một câu người dùng chưa trả lời, ngay dưới
@@ -625,7 +665,9 @@ function confidenceOf(
     return {
       level: factors.level,
       label: CONFIDENCE_LABEL.high,
-      sentence: "Không còn chỗ nào mình phải đoán.",
+      // Nói về GỢI Ý THẺ, không về mọi con số trên trang: số điểm chuyến bay
+      // vẫn là khoảng ước lượng theo award chart (Codex, audit 25/09/2026).
+      sentence: "Mình có đủ thông tin cần cho gợi ý thẻ này.",
     };
   }
   const WEAK = 0.75;
@@ -687,7 +729,7 @@ export function presentRun(
   if (result === undefined) return null;
   const cards = lookup(record, dataset, offers);
   const runWarnings = [...result.warnings, ...record.outputSnapshot.warnings];
-  const trip = tripView(record, goalIndex);
+  const trip = tripView(record, dataset, goalIndex);
   const primary = actionOf(result.primaryAction, cards, new Set(), runWarnings);
   const primaryReasons = new Set(primary.reasons.map((row) => row.text));
   const noActionIsPrimary = result.primaryAction.kind === "no_new_card";
@@ -778,7 +820,15 @@ export function formatPoints(points: number): string {
 export function coverageStatement(trip: Pick<TripNumbersView, "coverage" | "gap">): string | null {
   if (trip.coverage === null || trip.coverage < 0) return null;
   if (trip.coverage >= 1) return trip.gap !== null && trip.gap > 0 ? null : "điểm hiện tại phủ được cả chuyến này";
-  return `điểm hiện tại phủ khoảng ${Math.round(trip.coverage * 100)}% chuyến này`;
+  // Chiều ngược lại của cùng mâu thuẫn: khoảng thiếu đo ở giá ĐIỂN HÌNH (bằng
+  // 0), phần phủ đo ở mức CAO NHẤT (dưới 100%). In "Không thiếu" ngay trên
+  // "phủ khoảng 98%" là hai câu cãi nhau (Codex, audit trang 25/09/2026) — nói
+  // rõ mỗi con số đo ở mức giá nào.
+  const percent = Math.round(trip.coverage * 100);
+  if (trip.gap === 0) {
+    return `điểm hiện tại đủ ở mức giá điển hình; so với mức giá cao nhất thì phủ khoảng ${percent}%`;
+  }
+  return `điểm hiện tại phủ khoảng ${percent}% chuyến này`;
 }
 
 /**
@@ -817,10 +867,18 @@ function amountText(amount: { low: number; high: number | null } | null): string
   if (amount === null) return null;
   const money = (n: number) => `$${n.toLocaleString("en-US")}`;
   if (amount.high === null) return `${money(amount.low)} trở lên`;
+  // [0, 0] chỉ sinh ra từ lựa chọn "Gần như không chi" — in lại đúng chữ đó,
+  // không in "$0" chính xác hơn điều người dùng đã chọn (Codex, audit 25/09/2026).
+  if (amount.high === 0) return "Gần như không chi";
   if (amount.high === amount.low) return money(amount.low);
   // In lại đúng nhãn người dùng đã bấm (xem `bands` trong questions.ts): nấc
   // đầu "Dưới $60,000" lưu thành [0, 59,999].
-  if (amount.low === 0) return `Dưới ${money(amount.high % 1000 === 999 ? amount.high + 1 : amount.high)}`;
+  // nấc đầu "Dưới $60,000" lưu thành [0, 59,999], "Dưới $200" thành [0, 199].
+  // Dải chi tiêu lưu TRƯỚC 25/09/2026 là [0, X] — có chứa X, nên in "Tới $X"
+  // chứ không in "Dưới $X" (engine vẫn coi nó chạm đúng mốc $X).
+  if (amount.low === 0) {
+    return amount.high % 100 === 99 ? `Dưới ${money(amount.high + 1)}` : `Tới ${money(amount.high)}`;
+  }
   return `${money(amount.low)} – ${money(amount.high)}`;
 }
 

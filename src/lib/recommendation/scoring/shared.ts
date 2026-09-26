@@ -64,9 +64,11 @@ export function spendFitComponent(weight: number, candidate: CandidateFacts): Sc
   const note =
     fit !== null
       ? `§13 mốc chi so với sức dồn 3 tháng: ${fit.toFixed(2)}`
-      : candidate.offer.termsUnknown
-        ? "§13 điều khoản offer chưa biết — 0.5 trung tính"
-        : "§13 chưa biết sức dồn chi tiêu — 0.5 trung tính";
+      : candidate.eligibility.welcomeOfferBlocked
+        ? "§13 bonus bị chặn, chưa biết sức dồn — 0.5 trung tính như mọi thẻ"
+        : candidate.offer.termsUnknown
+          ? "§13 điều khoản offer chưa biết — 0.5 trung tính"
+          : "§13 chưa biết sức dồn chi tiêu — 0.5 trung tính";
   return component("spend_fit", weight, fit ?? 0.5, note);
 }
 

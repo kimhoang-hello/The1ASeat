@@ -180,7 +180,7 @@ function PrimaryCard({
             >
               Theo dõi transfer bonus
             </Link>{" "}
-            — chuyển điểm đúng đợt khuyến mãi lợi hơn mở thêm thẻ.
+            khi bạn cần chuyển điểm sang hãng bay.
           </li>
         </ul>
       )}
@@ -189,7 +189,7 @@ function PrimaryCard({
         <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
           <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-amber-900">
             <Warning size={18} weight="bold" />
-            Đọc kỹ trước khi đăng ký
+            {action.kind === "no_new_card" ? "Lưu ý" : "Đọc kỹ trước khi đăng ký"}
           </p>
           <ul className="mt-2 space-y-1.5">
             {warnings.map((warning) => (
@@ -342,10 +342,26 @@ function TripNumbers({ trip }: { trip: NonNullable<ResultView["trip"]> }) {
         <div>
           <dt className="text-sm text-muted-foreground">Còn thiếu</dt>
           <dd className="font-display text-lg font-bold text-foreground">
-            {trip.gap === null ? "Chưa tính được" : trip.gap === 0 ? "Không thiếu" : `${formatPoints(trip.gap)} điểm`}
+            {trip.gap === null
+              ? "Chưa tính được"
+              : trip.gap > 0
+                ? `${formatPoints(trip.gap)} điểm`
+                : trip.coverage !== null && trip.coverage < 1
+                  ? "Không thiếu ở mức giá điển hình"
+                  : "Không thiếu"}
           </dd>
         </div>
       </dl>
+      )}
+      {!nothingKnown && !trip.routeNotPriced && trip.needProgram !== null && (
+        <p className="mt-3 text-sm text-muted-foreground">
+          Các con số trên tính bằng điểm {trip.needProgram}
+          {/* Chỉ nói "của bạn đi xa nhất" khi thật sự có điểm: khai 0 điểm thì
+              engine vẫn chọn một chương trình để đo (Codex, audit 25/09/2026). */}
+          {trip.accessible !== null && trip.accessible > 0
+            ? " — chương trình điểm của bạn đi được xa nhất trên chặng này."
+            : "."}
+        </p>
       )}
       {!nothingKnown && need !== null && trip.accessible === null && !trip.routeNotPriced && (
         <p className="mt-3 text-sm text-muted-foreground">
@@ -407,6 +423,7 @@ function AnsweredPanel({ rows }: { rows: AnsweredRow[] }) {
             {row.questionKey && (
               <Link
                 href={`/credit-cards/goi-y?sua=${encodeURIComponent(row.questionKey)}`}
+                aria-label={`Sửa: ${row.label}`}
                 className="shrink-0 text-sm font-semibold text-primary underline underline-offset-4"
               >
                 Sửa

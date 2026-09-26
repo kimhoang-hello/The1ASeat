@@ -76,6 +76,21 @@ export class NoDatabaseError extends Error {
   }
 }
 
+/**
+ * Lỗi của CHỖ LƯU (database xuống, sai mật khẩu, hết kết nối, hết giờ) — khác
+ * hồ sơ hỏng. Trang phải nói "tạm nghỉ, thử lại sau", không được mời "làm lại
+ * từ đầu": bấm nút đó là xoá cookie của một hồ sơ vẫn còn nguyên trong kho
+ * (Codex, audit trang 25/09/2026).
+ *
+ * mysql2 gắn `code` dạng `ER_*`/`PROTOCOL_*` cho lỗi server và mã hệ thống
+ * `E*` (ECONNREFUSED, ETIMEDOUT) cho lỗi mạng.
+ */
+export function isStorageError(error: unknown): boolean {
+  if (error instanceof NoDatabaseError) return true;
+  const code = (error as { code?: unknown } | null)?.code;
+  return typeof code === "string" && /^(ER_|PROTOCOL_|E[A-Z]+$)/.test(code);
+}
+
 function stores() {
   const db = recoDatabaseFromEnv();
   if (db === null) throw new NoDatabaseError();

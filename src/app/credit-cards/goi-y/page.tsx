@@ -11,6 +11,7 @@ import { answeredRows } from "@/lib/recommender/present";
 import { questionFor, questionFromKey } from "@/lib/recommender/questions";
 import {
   currentUserId,
+  isStorageError,
   loadState,
   recommenderStorageReady,
   runForDisplay,
@@ -112,7 +113,7 @@ export default async function RecommenderPage({ searchParams }: PageProps) {
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl space-y-5">
           {error && (
-            <p className="rounded-xl border border-border bg-card px-4 py-3 text-base text-destructive">
+            <p role="alert" className="rounded-xl border border-border bg-card px-4 py-3 text-base text-destructive">
               {error}
             </p>
           )}
@@ -221,6 +222,10 @@ async function Body({ editKey }: { editKey: string | null }) {
     // Quá trần lượt chạy không phải hồ sơ hỏng: bảo người dùng "làm lại từ
     // đầu" ở đây là bắt họ vứt hồ sơ vì một giới hạn sẽ tự hết.
     if (error instanceof RunLimitError) return <RunLimitNotice message={error.message} />;
+    if (isStorageError(error)) {
+      console.error("[goi-y] kho lỗi khi đọc/ghi lượt chạy", error);
+      return <StorageDownNotice />;
+    }
     // Hồ sơ trong kho không chạy được (dữ liệu cũ, một trường đã đổi nghĩa).
     // Người dùng phải còn đường ra: không có khối này thì mọi lần mở trang đều
     // nổ TRƯỚC khi nút "Làm lại từ đầu" kịp hiện (Codex vòng 2).
@@ -241,7 +246,7 @@ async function Body({ editKey }: { editKey: string | null }) {
   if (edit !== null) {
     return (
       <>
-        <QuestionCard spec={edit} lead="Sửa câu trả lời" />
+        <QuestionCard version={stored.version} spec={edit} lead="Sửa câu trả lời" />
         <p className="text-sm text-muted-foreground">
           Trả lời xong mình tính lại ngay. Bấm &ldquo;Bỏ qua câu này&rdquo; để giữ nguyên câu trả lời
           cũ.
@@ -259,7 +264,7 @@ async function Body({ editKey }: { editKey: string | null }) {
   // (bạn đang giữ thẻ nào, có điểm ở đâu), nên kết quả hiện lúc này là kết quả
   // sắp đổi. Các câu còn lại chỉ tinh chỉnh, nên hiện kết quả trước.
   if (question !== null && followUp?.basis === "gatekeeper") {
-    return <QuestionCard spec={question} lead="Câu hỏi nền" />;
+    return <QuestionCard version={stored.version} spec={question} lead="Câu hỏi nền" />;
   }
 
   // Câu KHÔNG đo được là đổi kết quả thì không chiếm chỗ của một câu hỏi thật:
@@ -282,6 +287,7 @@ async function Body({ editKey }: { editKey: string | null }) {
       {question !== null &&
         (upfront ? (
           <QuestionCard
+            version={stored.version}
             spec={question}
             lead={
               followUp?.basis === "measured"
@@ -298,7 +304,7 @@ async function Body({ editKey }: { editKey: string | null }) {
               Câu này không đổi thẻ mình đang gợi ý, nhưng nó lấp một chỗ mình còn chưa biết.
             </p>
             <div className="mt-4">
-              <QuestionCard spec={question} />
+              <QuestionCard version={stored.version} spec={question} />
             </div>
           </details>
         ))}

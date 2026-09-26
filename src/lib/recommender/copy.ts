@@ -304,7 +304,7 @@ export const COMPONENT_STRENGTH: Record<ScoreComponentKey, string> = {
   fee_drag: "annual fee thấp so với những thẻ cùng nhóm",
   editorial: "điều chỉnh biên tập",
   points_already_sufficient: "điểm bạn có đã đủ",
-  portfolio_already_covers: "ví hiện tại đã lo được việc này",
+  portfolio_already_covers: "thẻ bạn đang giữ đã kiếm đúng loại điểm này",
   no_reachable_candidate: "chưa thẻ nào vừa điều kiện của bạn",
   offer_climate_weak: "offer trên thị trường đang yếu",
 };
@@ -380,8 +380,11 @@ export const CONFIDENCE_REASON: Record<
 export const NO_CARD_SENTENCE: Record<string, string> = {
   points_sufficient:
     "Theo ước lượng của mình, số điểm bạn đang có đã đủ cho mục tiêu này — mở thêm thẻ lúc này không rút ngắn được gì.",
+  // Engine đo ví đang KIẾM được bao nhiêu so với thẻ tốt nhất còn lại — không
+  // đo số điểm đã có. "Đã lo được việc này" đọc như "đủ điểm rồi" với người
+  // khai 0 điểm và còn thiếu 120,000 (Codex, audit trang 25/09/2026).
   portfolio_covers:
-    "Ví hiện tại của bạn đã lo được việc này, nên thẻ mới không thêm được bao nhiêu.",
+    "Thẻ bạn đang giữ đã kiếm đúng loại điểm cho việc này, nên thẻ mới không thêm được bao nhiêu.",
   offers_weak:
     "Offer của những thẻ đáng mở đang ở vùng thấp so với lịch sử của chính chúng — lúc này chưa phải lúc tốt để mở thêm thẻ.",
   nothing_fits:

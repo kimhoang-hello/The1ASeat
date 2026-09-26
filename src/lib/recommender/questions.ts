@@ -278,12 +278,17 @@ function bands(edges: number[], { exclusiveHigh = false } = {}): Band[] {
   for (let i = 0; i < edges.length; i += 1) {
     const low = i === 0 ? 0 : edges[i - 1];
     const high = edges[i];
+    // Nấc đầu nói "Dưới $X" nên KHÔNG chứa $X — kể cả với chi tiêu. Lưu
+    // [0, $1,500] cho "Dưới $1,500" là để khoảng chạm đúng mốc chi $1,500, và
+    // `compareToThreshold` đọc thành "bắc qua" (sát) thay vì "dưới mốc" (Codex,
+    // audit trang 25/09/2026). Các nấc giữa thì nhãn đã ghi hai đầu.
+    const top = exclusiveHigh || i === 0 ? high - 1 : high;
     rows.push({
       value: `${low}-${high}`,
       // Nhãn phải nói đúng khoảng lưu: "$60,000 – $79,999", không phải "– $80,000"
       // — người thu nhập đúng $80,000 bấm vào đó sẽ bị coi là DƯỚI ngưỡng $80,000.
-      label: i === 0 ? `Dưới ${money(high)}` : `${money(low)} – ${money(exclusiveHigh ? high - 1 : high)}`,
-      amount: amountRange(low, exclusiveHigh ? high - 1 : high),
+      label: i === 0 ? `Dưới ${money(high)}` : `${money(low)} – ${money(top)}`,
+      amount: amountRange(low, top),
     });
   }
   const last = edges[edges.length - 1];

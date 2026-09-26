@@ -26,6 +26,7 @@ import {
   applyAnswerChecked,
   goalFrom,
   newUserState,
+  publicQuestionKey,
   questionFromKey,
   type QuestionContext,
 } from "@/lib/recommender/questions";
@@ -169,15 +170,37 @@ export async function answerQuestion(formData: FormData): Promise<void> {
   // Xung đột version = hai tab cùng trả lời. Áp LẠI đúng câu trả lời này lên
   // bản mới nhất thay vì bắt người dùng làm lại; câu trả lời của tab kia vẫn
   // còn nguyên.
+  //
+  // TRỪ câu dạng danh sách (thẻ, chương trình điểm): form đó gửi CẢ danh sách,
+  // dựng từ bản cũ, nên áp lại là xoá im lặng thẻ tab kia vừa tick — rồi engine
+  // gợi ý đúng tấm thẻ người dùng đang giữ (Codex, audit trang 25/09/2026).
+  // Không tự gộp: mở lại form trên bản mới nhất để người dùng tick lại.
+  const wholeList = spec.input.type === "cards" || spec.input.type === "programs";
+  // `publicQuestionKey`, không phải `key`: khoá thô mang id phiên — thứ mở được
+  // cả hồ sơ — và URL thì vào lịch sử trình duyệt, access log, GA4.
+  const staleForm = () =>
+    redirect(
+      `${PATH}?sua=${encodeURIComponent(publicQuestionKey(spec.kind, spec.subject, userId))}&loi=${encodeURIComponent(RECO_ERROR.staleList)}`,
+    );
+  // Form dựng từ bản cũ gửi lên SAU khi bản mới đã lưu: kho không thấy xung
+  // đột nào (mình vừa đọc bản mới), nên phải so version mà form mang theo.
+  const formVersion = formData.get("v");
+  if (wholeList && typeof formVersion === "string" && Number(formVersion) !== stored.version) staleForm();
   let saved: Awaited<ReturnType<typeof saveState>> = null;
+  let staleList = false;
   try {
     saved = await saveState(userId, stored.version, applied.state, (current) => {
+      if (wholeList) {
+        staleList = true;
+        return null;
+      }
       const retry = applyAnswerChecked(current, spec, form, ctx, validate);
       return retry.ok ? retry.state : null;
     });
   } catch (error) {
     console.error("[goi-y] không lưu được câu trả lời", error);
   }
+  if (saved === null && staleList) staleForm();
   if (saved === null) fail(RECO_ERROR.notSaved);
 
   // Trả lời rồi thì câu đó thôi nằm trong danh sách đã bỏ qua (người dùng vừa

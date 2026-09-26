@@ -19,22 +19,37 @@ export function QuestionCard({
   spec,
   lead,
   skippable = true,
+  version,
 }: {
   spec: QuestionSpec;
+  /**
+   * Version của hồ sơ lúc form được dựng. Câu dạng danh sách gửi lên CẢ danh
+   * sách, nên form dựng từ bản cũ (tab thứ hai, nút Back) sẽ ghi đè thẻ vừa
+   * tick ở chỗ khác — máy chủ so số này để từ chối thay vì xoá im lặng.
+   */
+  version?: number;
   /** Một dòng nói vì sao câu này đáng trả lời NGAY BÂY GIỜ. */
   lead?: string;
   skippable?: boolean;
 }) {
   const holding = new Set(spec.input.type === "cards" ? spec.input.holding : []);
   const closed = new Set(spec.input.type === "cards" ? spec.input.closed : []);
+  // Ô số và ô chọn tháng không có nhãn riêng: tên của chúng CHÍNH LÀ câu hỏi.
+  // Một câu hỏi mỗi trang, nên id dựng từ khoá câu hỏi là đủ duy nhất.
+  const titleId = `cau-hoi-${spec.key.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
   return (
     <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
       {lead && <p className="text-xs font-semibold uppercase tracking-wide text-primary">{lead}</p>}
-      <h2 className="mt-1 font-display text-xl font-bold text-foreground sm:text-2xl">{spec.title}</h2>
+      <h2 id={titleId} className="mt-1 font-display text-xl font-bold text-foreground sm:text-2xl">
+        {spec.title}
+      </h2>
       <p className="mt-2 text-base leading-relaxed text-foreground/80">{spec.help}</p>
 
       <form action={answerQuestion} className="mt-5">
         <input type="hidden" name="question" value={spec.key} />
+        {version !== undefined && (spec.input.type === "cards" || spec.input.type === "programs") && (
+          <input type="hidden" name="v" value={version} />
+        )}
 
         {spec.input.type === "choice" && (
           <ul className="space-y-2">
@@ -109,6 +124,9 @@ export function QuestionCard({
                             type="checkbox"
                             name="holding"
                             value={card.value}
+                            // Trình đọc màn hình chỉ đọc "Đang giữ" nếu không có
+                            // tên thẻ — duyệt 70 ô mà không biết ô nào của thẻ nào.
+                            aria-label={`${card.label}: đang giữ`}
                             defaultChecked={holding.has(card.value)}
                             className="size-4"
                           />
@@ -119,6 +137,7 @@ export function QuestionCard({
                             type="checkbox"
                             name="closed"
                             value={card.value}
+                            aria-label={`${card.label}: đã đóng`}
                             defaultChecked={closed.has(card.value)}
                             className="size-4"
                           />
@@ -172,6 +191,7 @@ export function QuestionCard({
             <input
               type="number"
               name="answer"
+              aria-labelledby={titleId}
               inputMode="numeric"
               min={spec.input.min}
               max={spec.input.max}
@@ -189,6 +209,7 @@ export function QuestionCard({
           <div className="flex flex-wrap items-center gap-3">
             <select
               name="month"
+              aria-labelledby={titleId}
               required
               defaultValue={spec.input.current ?? undefined}
               className="rounded-lg border border-border bg-white px-3 py-2.5 text-base outline-none focus:ring-2 focus:ring-primary"

@@ -232,7 +232,7 @@ export function explanationPayload(view: ResultView): ExplanationPayload {
           "trip_need",
           "estimate",
           "trip",
-          `theo ước lượng từ award chart, chuyến này cần ${trip.needLow !== null && trip.needHigh !== null ? "khoảng " : ""}${need}, và con số đổi theo ngày bay`,
+          `theo ước lượng từ award chart, chuyến này cần ${trip.needLow !== null && trip.needHigh !== null ? "khoảng " : ""}${need}${trip.needProgram === null ? "" : `, tính bằng điểm ${trip.needProgram}`}, và con số đổi theo ngày bay`,
         );
       }
       if (trip.accessible !== null) {

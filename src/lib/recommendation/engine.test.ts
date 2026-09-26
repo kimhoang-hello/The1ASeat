@@ -59,6 +59,7 @@ import {
   japanTripShortfall,
   cashSeeker,
   lowSpendCapacity,
+  nearlyEmpty,
   studentStarter,
   vagueEarner,
   vietnamTripFunded,
@@ -2199,6 +2200,38 @@ test("điều khoản offer CHƯA BIẾT ≠ offer KHÔNG đòi chi tiêu", () =
   });
   assert.equal(verdict.minSpendFit, null, "điều khoản chưa biết mà vẫn chấm là vừa sức");
   assert.ok(verdict.reasonCodes.includes("OFFER_TERMS_UNKNOWN"));
+});
+
+test("§13 — thẻ không có mốc chi: chưa biết sức dồn thì 0.5 như mọi thẻ, biết rồi mới 1.0", () => {
+  // Bản trước chấm 1.0 bất kể đã biết sức dồn hay chưa, trong khi thẻ CÓ bonus
+  // nhận 0.5 khi chưa biết. Mất bonus vì luật "từng giữ" gần như không mất
+  // điểm: phần `offer_quality` mất đi được bù gần đủ bằng `spend_fit` 1.0
+  // (audit trang 25/09/2026).
+  const product = DATA.products.find((p) => p.slug === "rbc-avion-visa-infinite")!;
+  const verdictFor = (capacity: { low: number; high: number } | null, blocked: boolean) =>
+    evaluateSuitability({
+      product,
+      state: beginnerNoCards,
+      facts: offerFacts(product, IX, ASOF, capacity, []),
+      capacity,
+      ix: IX,
+      asOf: ASOF,
+      heldProducts: [],
+      medianFeeCents: 13_900,
+      welcomeOfferBlocked: blocked,
+    });
+  assert.equal(verdictFor(null, true).minSpendFit, null, "chưa biết sức dồn mà bị chặn bonus vẫn được 1.0");
+  assert.equal(verdictFor(null, false).minSpendFit, null);
+  assert.ok(!verdictFor(null, true).reasonCodes.includes("MIN_SPEND_CAPACITY_UNKNOWN"), "bonus bị chặn thì không hỏi sức dồn cho nó");
+  assert.equal(verdictFor({ low: 3_000, high: 6_000 }, true).minSpendFit, 1);
+});
+
+test("§13 — thẻ bị chặn bonus không thắng nhờ một câu người dùng chưa trả lời", () => {
+  // `nearlyEmpty` từng giữ Amex® Green, chưa khai sức dồn. Bản trước để chính
+  // Amex® Green — bonus bị chặn — đứng đầu, trên RBC® Avion® 70,000 điểm.
+  const result = run(nearlyEmpty).results[0];
+  assert.notEqual(result.primaryAction.productSlug, "amex-green");
+  assert.ok(!result.primaryAction.warnings.includes("WELCOME_BONUS_BLOCKED_BY_PAST_CARD"));
 });
 
 test("§13 — mốc chi cần 56% sức dồn là VỪA SỨC, không phải 'sát'", () => {

@@ -2129,3 +2129,52 @@ mục trước. `audit:health` xác nhận không có offer hết hạn nào cò
 welcome offer. Codex đo: đổi rebate Tangerine® 120 → 0 thì giá trị offer và
 phí năm đầu y nguyên. Tính vào là đổi thứ hạng, tức quyết định sản phẩm, không
 phải sửa lỗi — chưa làm. Trong lúc chờ, đừng báo lại như lỗi mới.
+
+## Audit trang Gợi ý thẻ 25/09/2026 — đừng đề xuất lại
+
+Chạy cả luồng trên bản build local với MariaDB 11.8 (Docker/colima, cổng 3307,
+`DATABASE_URL` trong `.env.local` của worktree) — không bấm form trên production.
+Engine 4.30.0, prompt giải thích 6.6.0.
+
+**Đã vá:**
+- **Thẻ bị chặn welcome bonus đứng hạng nhất.** `spend_fit` của thẻ không có
+  mốc chi (bonus bị chặn, hoặc không có offer) là 1.0 kể cả khi CHƯA biết sức
+  dồn, trong khi thẻ có bonus nhận 0.5 — chênh 0.105, gần bằng phần
+  `offer_quality` thẻ đó mất. Người giữ Amex Cobalt®, đã đóng TD® Aeroplan® Visa
+  Infinite* được khuyên mở American Express® Aeroplan®* Card (không bonus) trên
+  RBC® Avion® 70,000 điểm, kèm câu "mạnh nhất ở phần mức spend vừa sức bạn".
+  Nay chưa biết sức dồn thì mọi thẻ cùng 0.5; biết rồi thì thẻ không mốc vẫn 1.0.
+  Đây là ca `u_sparse` mà HANDOFF §9 từng ghi "sát nút vì đúng điểm này" — luật
+  Aeroplan® once-in-a-lifetime (21/09) làm nó cắn người thật thường xuyên.
+- **Khối chuyến bay trộn hai chương trình.** "Cần" là khoảng GỘP (min/max qua
+  mọi chương trình) còn "còn thiếu" và "phủ" đo trên chương trình phủ tốt nhất:
+  "cần 280,000 – 476,000 · gom được 60,000 · còn thiếu 350,000" (280k là
+  AAdvantage®, 350k là Aeroplan®). Nay đã khai số dư thì "cần" lấy khoảng của
+  chính chương trình đó, kèm câu nêu tên chương trình. Chưa khai số dư thì vẫn
+  là khoảng gộp.
+- **"Không thiếu" ngay trên "phủ khoảng 98%"**: khoảng thiếu đo ở giá điển
+  hình, phần phủ ở mức cao nhất. Nay nói rõ cả hai mức.
+- **Hai tab / nút Back trên câu danh sách** (thẻ, chương trình điểm): form gửi
+  CẢ danh sách dựng từ bản cũ nên xoá im lặng thẻ vừa tick ở tab kia. Form mang
+  `v` = version hồ sơ; lệch thì mở lại form trên bản mới kèm câu `staleList`.
+  URL chuyển hướng dùng `publicQuestionKey` (không lộ id phiên).
+- **Lỗi database khi đọc lượt chạy** hiện "Hồ sơ cũ không chạy lại được" + nút
+  xoá cookie → nay `isStorageError` đưa về "Công cụ đang tạm nghỉ".
+- Nấc "Dưới $X" của chi tiêu/sức dồn lưu [0, X−1] (trước là [0, X], chạm đúng
+  mốc chi nên bị đọc là "sát" thay vì "dưới mốc"). Dải cũ đã lưu in "Tới $X".
+- Câu nói quá: `portfolio_covers` chỉ nói khi phép so ĐO ĐƯỢC (raw ≥ 0.75, không
+  phải 0.5 trung tính); độ chắc chắn cao nói về gợi ý thẻ, không về mọi con số;
+  dòng transfer bonus bỏ "lợi hơn mở thêm thẻ"; khối cảnh báo của "chưa mở thẻ"
+  là "Lưu ý", không phải "Đọc kỹ trước khi đăng ký"; không khen "mức spend vừa
+  sức bạn" cho thẻ bị chặn bonus.
+- a11y: checkbox thẻ có tên thẻ, ô số/tháng nối với câu hỏi, "Sửa: <dòng>",
+  câu lỗi `role="alert"`.
+
+**Codex nêu, đã kiểm và KHÔNG vá (Codex đồng ý ở vòng bác):**
+- Form "Bắt đầu" ở tab cũ tạo phiên mới — bắt đầu = hồ sơ mới là thiết kế; đổi
+  mục tiêu vốn chỉ đi qua "Làm lại từ đầu".
+- Hồ sơ `goals: []` rơi về màn hình bắt đầu — không đường nào tạo ra hồ sơ đó.
+- `runForDisplay` chạy lại bản cũ khi tab kia vừa lưu; race cookie "bỏ qua"
+  giữa hai tab — hẹp, tự lành ở lần tải sau.
+- `EXPLANATION_MODEL = "claude-opus-5"` là model ID hợp lệ (đã tra skill
+  claude-api); request không gửi tham số nào Opus 5 từ chối.

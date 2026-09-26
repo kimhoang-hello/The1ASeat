@@ -279,6 +279,14 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * ghế như thể trả lời xong sẽ ra số điểm. Chỉ đổi mã lý do/cảnh báo của mục
  * tiêu chuyến đi tới vùng chưa định giá; không đổi điểm số.
  *
+ * 4.30.0 — `spend_fit` của thẻ không có mốc chi (bonus bị chặn, hoặc không
+ * có offer) là 0.5 khi CHƯA BIẾT sức dồn, như mọi thẻ khác — không còn 1.0.
+ * Trước đây thẻ bị chặn bonus hơn thẻ có bonus 0.105 ở vế này chỉ vì người
+ * dùng chưa khai một con số, gần bằng đúng phần `offer_quality` nó mất: mất
+ * bonus gần như không mất điểm, và American Express® Aeroplan®* Card bị chặn
+ * bonus đứng HẠNG NHẤT trên RBC® Avion® 70,000 điểm (audit trang 25/09/2026).
+ * Biết sức dồn thì vẫn là 1.0 như cũ.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -291,7 +299,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.29.0";
+export const ENGINE_VERSION = "4.30.0";
 
 export interface RecommendInput {
   state: UserState;

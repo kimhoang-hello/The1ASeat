@@ -26,8 +26,8 @@ import { datasetAt } from "../recommendation/temporal.ts";
 import type { RecommendationDataset } from "../recommendation/types.ts";
 import type { UserState } from "../recommendation/user-types.ts";
 import { userGaps } from "../recommendation/user-gaps.ts";
-import { REASON_COVERED_BY_WARNING, REASON_TEXT, WARNING_TEXT } from "./copy.ts";
-import { answeredRows, presentRun, reasonsOf, spendSentenceOf } from "./present.ts";
+import { COMPONENT_STRENGTH, REASON_COVERED_BY_WARNING, REASON_TEXT, WARNING_TEXT } from "./copy.ts";
+import { answeredRows, coverageStatement, presentRun, reasonsOf, spendSentenceOf } from "./present.ts";
 import {
   applyAnswer,
   goalFrom,
@@ -222,10 +222,60 @@ test("số của chuyến đi lấy đúng con số bản ghi đã lưu", () => 
   const view = presentRun(record, DATA, offersFor(DATA));
   assert.ok(view !== null && view.trip !== null);
   const numbers = record.outputSnapshot.results[0].numbers;
-  assert.equal(view.trip.needTypical, numbers.tripNeedTypical);
   assert.equal(view.trip.accessible, numbers.accessiblePoints);
   assert.equal(view.trip.gap, numbers.pointsGapTypical);
   assert.equal(view.trip.accessibleIsLowerBound, numbers.accessiblePointsIsLowerBound);
+  // "Cần" đo trên CÙNG chương trình với "còn thiếu", không trên khoảng gộp:
+  // bản trước in "cần 280,000 – 476,000 · gom được 60,000 · còn thiếu
+  // 350,000", với 280,000 của AAdvantage® và 350,000 của Aeroplan® (audit
+  // trang 25/09/2026).
+  const trace = record.derivedState.goals[0];
+  const best = trace.goal.tripNeed?.byProgram.find((row) => row.programId === trace.tripCoverage?.bestProgram);
+  assert.ok(best !== undefined);
+  assert.notEqual(best.typical, numbers.tripNeedTypical, "fixture phải có khoảng gộp khác khoảng của chương trình phủ");
+  assert.equal(view.trip.needTypical, best.typical);
+  assert.equal(view.trip.needLow, best.low);
+  assert.equal(view.trip.needHigh, best.high);
+  assert.equal(view.trip.gap, (best.typical ?? 0) - (numbers.accessiblePoints ?? 0));
+  assert.ok(view.trip.needProgram !== null && view.trip.needProgram.includes("Aeroplan"));
+});
+
+test("chưa khai số dư: 'cần' là khoảng gộp, không gắn tên chương trình", () => {
+  const bare = structuredClone(vietnamTripShortfall);
+  bare.declared = { ...bare.declared, balances: false };
+  bare.balances = [];
+  const record = runFor(bare);
+  const view = presentRun(record, DATA, offersFor(DATA));
+  assert.ok(view !== null && view.trip !== null);
+  assert.equal(view.trip.needProgram, null);
+  assert.equal(view.trip.needTypical, record.outputSnapshot.results[0].numbers.tripNeedTypical);
+});
+
+test("thẻ bị chặn welcome bonus không được khen 'mức spend vừa sức bạn'", () => {
+  // Mốc chi của một bonus người dùng không nhận được không phải thứ họ phải
+  // đạt — "vừa sức" là khen một việc không ai làm (audit trang 25/09/2026).
+  const record = runFor(beginnerNoCards);
+  const spend = COMPONENT_STRENGTH.spend_fit;
+  const before = presentRun(record, DATA, offersFor(DATA));
+  assert.ok(before !== null && before.primary.strengths.includes(spend), "fixture phải có thẻ chính khen vế mốc chi");
+  const blocked = structuredClone(record);
+  const primary = blocked.outputSnapshot.results[0].primaryAction;
+  assert.ok(primary.eligibility !== null && primary.eligibility !== undefined);
+  primary.eligibility.welcomeOfferBlocked = true;
+  const after = presentRun(blocked, DATA, offersFor(DATA));
+  assert.ok(after !== null);
+  assert.ok(!after.primary.strengths.includes(spend), after.primary.strengths.join(" | "));
+});
+
+test("'không thiếu' ở giá điển hình mà phủ dưới 100% cận trên: câu phủ nói rõ hai mức giá", () => {
+  // Codex, audit 25/09/2026: "Không thiếu" ngay trên "phủ khoảng 98%".
+  assert.equal(
+    coverageStatement({ coverage: 0.976, gap: 0 }),
+    "điểm hiện tại đủ ở mức giá điển hình; so với mức giá cao nhất thì phủ khoảng 98%",
+  );
+  assert.equal(coverageStatement({ coverage: 0.5, gap: 100_000 }), "điểm hiện tại phủ khoảng 50% chuyến này");
+  assert.equal(coverageStatement({ coverage: 1, gap: 0 }), "điểm hiện tại phủ được cả chuyến này");
+  assert.equal(coverageStatement({ coverage: 1.2, gap: 5_000 }), null);
 });
 
 test("độ chắc chắn nói ra NGUYÊN NHÂN sửa được, không phải chỉ một mức", () => {
@@ -496,6 +546,31 @@ test("câu 'offer đang yếu' / 'chưa thẻ nào vừa' chỉ nói khi đúng 
     if (row.key === "no_reachable_candidate") Object.assign(row, { raw: 1, contribution: 0.2 });
   }
   assert.equal(presentRun(blocked, DATA, offersFor(DATA))?.noAction?.noCardReason, "nothing_fits");
+
+  // "Thẻ bạn đang giữ đã kiếm đúng loại điểm" chỉ khi phép so ĐO ĐƯỢC: chưa
+  // khai chi tiêu thì `portfolio_already_covers` = 0.5 trung tính (Codex, audit
+  // trang 25/09/2026).
+  const covers = structuredClone(record);
+  for (const row of covers.outputSnapshot.results[0].noAction.components) {
+    if (row.key === "portfolio_already_covers") Object.assign(row, { raw: 0.5, contribution: 0.3 });
+    if (row.key === "no_reachable_candidate") Object.assign(row, { raw: 0, contribution: 0 });
+  }
+  assert.equal(presentRun(covers, DATA, offersFor(DATA))?.noAction?.noCardReason, null);
+  for (const row of covers.outputSnapshot.results[0].noAction.components) {
+    if (row.key === "portfolio_already_covers") Object.assign(row, { raw: 0.9, contribution: 0.3 });
+  }
+  assert.equal(presentRun(covers, DATA, offersFor(DATA))?.noAction?.noCardReason, "portfolio_covers");
+});
+
+test("dải chi tiêu lưu trước 25/09 [0, X] in 'Tới $X', dải mới [0, X−1] in 'Dưới $X'", () => {
+  const state = structuredClone(beginnerNoCards);
+  const label = "Spend dồn được trong 3 tháng";
+  state.spend = { ...state.spend!, minimumSpendCapacity3m: { low: 0, high: 1_500 } };
+  assert.equal(answeredRows(state, DATA).find((row) => row.label === label)?.value, "Tới $1,500");
+  state.spend = { ...state.spend!, minimumSpendCapacity3m: { low: 0, high: 1_499 } };
+  assert.equal(answeredRows(state, DATA).find((row) => row.label === label)?.value, "Dưới $1,500");
+  state.spend = { ...state.spend!, minimumSpendCapacity3m: { low: 0, high: 0 } };
+  assert.equal(answeredRows(state, DATA).find((row) => row.label === label)?.value, "Gần như không chi");
 });
 
 test("hết câu để hỏi thì độ chắc chắn không bảo 'trả lời thêm vài câu'", () => {

@@ -18,6 +18,7 @@ export const RECO_ERROR = {
   storageDown: "Chỗ lưu hồ sơ đang không vào được — thử lại sau vài phút.",
   questionGone: "Câu hỏi này không còn nữa — tải lại trang rồi thử lại.",
   notSaved: "Không lưu được câu trả lời — thử lại lần nữa.",
+  staleList: "Danh sách này vừa được sửa ở một tab khác. Mình đã mở lại bản mới nhất — tick lại rồi bấm Xong.",
   runLimit: "Bạn vừa chạy quá nhiều lượt gợi ý — thử lại sau một lúc.",
 } as const;
 

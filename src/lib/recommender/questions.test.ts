@@ -16,6 +16,7 @@ import test from "node:test";
 import { offlineDataset } from "../recommendation/data/index.ts";
 import { datasetAt } from "../recommendation/temporal.ts";
 import { userGaps } from "../recommendation/user-gaps.ts";
+import { compareToThreshold } from "../recommendation/user.ts";
 import { validateUserState } from "../recommendation/user-validate.ts";
 import type { UserDataGap, UserState } from "../recommendation/user-types.ts";
 import {
@@ -537,4 +538,28 @@ test("bấm Sửa câu tháng: <select> mở đúng tháng đã lưu, không ph�
     assert.ok(edit?.input.type === "month");
     assert.equal(edit.input.current, choice.value, `sửa lại ${choice.label}`);
   }
+});
+
+test("nấc 'Dưới $X' không chứa $X — kể cả chi tiêu, không chỉ thu nhập", () => {
+  // "Dưới $1,500" từng lưu [0, 1500]: chạm đúng mốc chi $1,500/90 ngày nên
+  // `compareToThreshold` đọc thành "bắc qua" (sát) thay vì "dưới mốc" (Codex,
+  // audit trang 25/09/2026).
+  const state = stateWithGoal("next_card");
+  state.spend = {
+    userId: state.profile.id,
+    monthlyTotal: { low: 2_500, high: 5_000 },
+    byCategory: {},
+    minimumSpendCapacity3m: null,
+    updatedAt: TODAY,
+  };
+  const gap = userGaps(state).find((row) => row.kind === "minimum_spend_capacity_unknown");
+  assert.ok(gap !== undefined);
+  const spec = questionFor(gap, state, CTX);
+  assert.ok(spec !== null && spec.input.type === "choice");
+  const first = spec.input.options[0];
+  assert.match(first.label, /^Dưới \$1,500$/);
+  const applied = applyAnswer(state, spec, form({ answer: first.value }), CTX);
+  assert.ok(applied.ok);
+  assert.equal(applied.state.spend?.minimumSpendCapacity3m?.high, 1_499);
+  assert.equal(compareToThreshold(applied.state.spend!.minimumSpendCapacity3m!, 1_500), "below");
 });

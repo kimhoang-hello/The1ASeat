@@ -152,7 +152,17 @@ export function evaluateSuitability(input: SuitabilityInput): SuitabilityVerdict
   /* ---- Mốc chi (§13) --------------------------------------------- */
   let minSpendFit: number | null = null;
   const required = facts.fullRequiredPerNinetyDays;
-  if (input.welcomeOfferBlocked === true) {
+  // "Không có mốc = phù hợp tối đa" chỉ là một PHÉP SO khi biết sức dồn. Chưa
+  // biết thì thẻ có bonus nhận 0.5 trung tính, nên cho thẻ không-mốc 1.0 là
+  // để một đầu vào CHƯA AI KHAI tạo ra chênh lệch 0.105 giữa hai thẻ — đủ đưa
+  // một thẻ bị chặn bonus lên hạng NHẤT trên thẻ 70,000 điểm, với lời giải
+  // thích "mạnh nhất ở phần mức spend vừa sức bạn" cho người chưa khai sức dồn
+  // (audit trang 25/09/2026). Chưa biết thì mọi thẻ cùng 0.5: vế này thôi
+  // phân biệt ai cả, như mọi vế "chưa biết = trung tính" khác.
+  const noMilestone = input.welcomeOfferBlocked === true || (!facts.termsUnknown && required === null);
+  if (noMilestone && capacity === null) {
+    minSpendFit = null;
+  } else if (input.welcomeOfferBlocked === true) {
     // Bonus bị chặn: mốc chi của nó là mốc để lấy một thứ người này không
     // được nhận. Chấm như "không có mốc" — bản trước phạt MIN_SPEND_TOO_HIGH
     // cho một khoản chi chẳng ai cần tiêu (vòng rà sau Codex 20).
