@@ -32,8 +32,9 @@ Còn lại, theo thứ tự đáng làm:
    là bảng điểm cố định của RBC® Avion® / CIBC® Aventura® và WestJet dollars —
    mô hình award strategy chưa có. Dựng riêng Aeroplan® sẽ đẩy gợi ý lệch về
    Aeroplan®. Cần quyết định sản phẩm trước.
-2. **GA4 Admin:** đăng ký custom dimension `goal`, `question` (event-scoped)
-   để đọc được phễu theo mục tiêu / theo câu hỏi.
+2. ✅ **GA4 Admin (27/09/2026):** đã đăng ký "Recommender goal" → `goal` và
+   "Recommender question" → `question`, scope Event. Không tính ngược: phân
+   rã theo mục tiêu/câu hỏi chỉ có từ 27/09/2026.
 3. `offer_terms_unknown` (Scotiabank® Gold Amex, 2 thẻ Marriott Bonvoy®) và
    `base_earn_rate_unknown` (Scotiabank® Gold Amex, TD® First Class, BMO®
    VIPorter®) — tra được trên trang ngân hàng, cùng cách đã làm cho điều kiện.
