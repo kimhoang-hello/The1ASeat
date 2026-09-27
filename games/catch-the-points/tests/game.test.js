@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { Game, rankFor, weightedPick } from "../../../public/games/catch-the-points/src/game.js";
-import { CONFIG, PROGRAMS } from "../../../public/games/catch-the-points/src/config.js";
+import { Game, rankFor, weightedPick } from "../web/src/game.js";
+import { CONFIG, PROGRAMS } from "../web/src/config.js";
 
 function round() {
   const game = new Game({ random: () => 0.4 });

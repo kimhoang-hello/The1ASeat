@@ -1,5 +1,5 @@
 // Ảnh và icon nằm cạnh code, KHÔNG ở gốc site: game này sống trong
-// `public/games/catch-the-points/`, nên `/assets/...` sẽ trỏ ra ngoài repo
+// `/games/catch-the-points/`, nên `/assets/...` sẽ trỏ ra ngoài repo
 // game và đè lên chỗ khác của website. Giải theo `import.meta.url` để đường
 // dẫn tự đúng dù thư mục có được chuyển đi đâu.
 export const ASSET_BASE = new URL("../assets/", import.meta.url).href;

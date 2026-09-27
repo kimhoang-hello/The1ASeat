@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { bodyTooLarge, clientIp, emailKey, rateLimit } from "@/lib/rate-limit";
+import { clientIp, emailKey, rateLimit, readJsonBody } from "@/lib/rate-limit";
 import { SITE_URL, emailParagraphStyle, renderSubscriberEmailHtml } from "@/lib/subscriber-email";
 import { START_HERE_PUBLISHED } from "@/lib/feature-flags";
 
@@ -11,7 +11,7 @@ const LIMIT = 5;
 const WINDOW_MS = 60 * 60 * 1000;
 
 // Payload chỉ có một địa chỉ email (tối đa MAX_EMAIL_LENGTH) — xem
-// `bodyTooLarge` trong lib/rate-limit.ts.
+// `readJsonBody` trong lib/rate-limit.ts.
 const MAX_BODY_BYTES = 2 * 1024;
 
 /**
@@ -32,6 +32,19 @@ const MAX_BODY_BYTES = 2 * 1024;
  * lại vì tưởng lần đầu hỏng.
  */
 const EMAIL_LIMIT = 2;
+
+/**
+ * Trần CHUNG cho cả site — thứ giới hạn được list-bombing mà hai xô trên
+ * không làm được (xoay `X-Forwarded-For` vượt xô IP, mỗi lần một địa chỉ khác
+ * vượt xô email). Đếm SAU cả hai xô và sau khi validate, để rác và lượt đã bị
+ * chặn không ăn vào phần của người đăng ký thật.
+ *
+ * 60/giờ: site ~130 khách/tuần, nên con số này chỉ chạm tới khi có kẻ bơm.
+ * Cái giá nói thẳng: trong giờ bị bơm, người đăng ký thật cũng nhận 429 kèm
+ * `Retry-After` — một lần chờ, đổi lấy việc không trở thành công cụ gửi mail
+ * xác nhận hàng loạt tới hộp thư người lạ.
+ */
+const SITE_WIDE_LIMIT = 60;
 
 /**
  * Hạn giờ cho MỌI lượt gọi ra ngoài của route này.
@@ -62,16 +75,11 @@ export async function POST(request: Request) {
     );
   }
 
-  if (bodyTooLarge(request, MAX_BODY_BYTES)) {
-    return NextResponse.json({ error: "invalid_body" }, { status: 413 });
+  const read = await readJsonBody(request, MAX_BODY_BYTES);
+  if (!read.ok) {
+    return NextResponse.json({ error: "invalid_body" }, { status: read.reason === "too_large" ? 413 : 400 });
   }
-
-  let email: unknown;
-  try {
-    ({ email } = await request.json());
-  } catch {
-    return NextResponse.json({ error: "invalid_body" }, { status: 400 });
-  }
+  const email = (read.value as { email?: unknown } | null)?.email;
 
   if (typeof email !== "string" || email.length > MAX_EMAIL_LENGTH || !EMAIL_RE.test(email)) {
     return NextResponse.json({ error: "invalid_email" }, { status: 400 });
@@ -81,7 +89,8 @@ export async function POST(request: Request) {
   // kiểm thì mọi rác gửi lên đều thành một khoá. `emailKey` băm địa chỉ nên nó
   // không còn đọc được trực tiếp trong bộ nhớ, và `rate-limit` có trần số khoá
   // — xem chú thích ở cả hai chỗ đó, kể cả phần nói rõ chúng KHÔNG làm được gì.
-  const emailLimit = rateLimit(`subscribe:email:${emailKey(email)}`, EMAIL_LIMIT, WINDOW_MS);
+  const perEmail = rateLimit(`subscribe:email:${emailKey(email)}`, EMAIL_LIMIT, WINDOW_MS);
+  const emailLimit = perEmail.ok ? rateLimit("subscribe:all", SITE_WIDE_LIMIT, WINDOW_MS) : perEmail;
   if (!emailLimit.ok) {
     return NextResponse.json(
       { error: "rate_limited" },

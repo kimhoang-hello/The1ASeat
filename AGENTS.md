@@ -2212,3 +2212,66 @@ bước sau là cân nhắc bỏ qua đúng một lượt 404 thay vì thêm ngu
 139,999/140,000 điểm in "phủ khoảng 100%" ngay cạnh "còn thiếu 1 điểm". Nay
 trần 99% (ở nhánh đó phần phủ luôn < 1). Trang và lời giải thích Phase 6 đều đi
 qua hàm này, không có chỗ in phần trăm phủ nào khác. Codex chấm ĐÚNG.
+
+## Kiểm bảo mật toàn diện 26/09/2026 — đừng đề xuất lại
+
+Gate: lint, tsc, build, `test:reco`/`recommender`/`jobs`/`game`, `npm audit` 0
+lỗ hổng (cả dev), lịch sử git không có secret nào (quét mẫu khoá Anthropic,
+Contentful CFPAT, Resend, GitHub, AWS, Google, private key). Repo **công khai**,
+`default_workflow_permissions` của repo là `read`.
+
+**Đã vá:**
+- **Game đã gỡ vẫn 200 trên production.** Hostinger phục vụ thẳng `public/` từ
+  ổ đĩa, KHÔNG qua Next — response của `/games/catch-the-points/index.html`
+  không mang header nào của Next (không `x-nextjs-*`, không header bảo mật),
+  nên `src/proxy.ts` chưa bao giờ chạy với các file đó. Nay file game ở
+  `games/catch-the-points/web/`, phục vụ bằng route handler dựng tĩnh
+  (`generateStaticParams` + `dynamicParams = false`): cờ tắt thì không dựng gì,
+  mọi đường là 404 — không phụ thuộc Hostinger làm gì với `public/`. **Hệ quả
+  chung: đừng dựa vào `proxy.ts`/middleware để chặn bất cứ thứ gì nằm trong
+  `public/`**, và file trong `public/` không có header bảo mật của
+  `next.config.ts`. `proxy.ts` đã xoá — nó còn làm Next buffer MỌI body POST
+  (tới 10MB, `proxyClientMaxBodySize`) trước khi route kịp từ chối.
+- **Trần body chỉ tin `Content-Length`** (việc còn nợ ghi ở mục 16/09 và mục
+  "Việc còn nợ" của `api/revalidate`). `readJsonBody` trong `lib/rate-limit.ts`
+  đếm byte thật từ stream, `reader.cancel()` khi vượt trần hoặc hết giờ, và gắn
+  `catch` rỗng cho lượt `read()` đang treo (rejection không ai bắt = Node dừng
+  cả site). Áp ở contact/subscribe/game-record/revalidate. Revalidate đọc trong
+  phần còn lại của ngân sách 25s, trần 8 MB (entry lớn nhất đo được ~30 KB,
+  nhưng riêng một trường Rich Text đã được tới 1 MB); hết giờ →
+  `"payload_timeout"`, vượt trần → `"payload_too_large"`, cả hai 502 — an toàn
+  vì nằm trước `claimBroadcast` và trước Kit. **Vượt trần KHÔNG được đọc thành
+  `"no_payload"`**: đó là 200, bài ra đời không bản tin mà webhook vẫn xanh
+  (Codex bắt ở vòng review, bản đầu làm đúng như vậy). Đã thử: chunked 200 KB → 413, `Content-Length` khai gian →
+  413, body treo → timeout đúng hạn, kết nối đứt → `invalid`.
+- **Trần chung toàn site** cho `contact` (30/giờ) và `subscribe` (60/giờ), đếm
+  SAU khi body hợp lệ và sau trần theo IP/email. Bản đầu của contact đếm ở
+  đầu route — Codex tái hiện: 30 POST `{}` từ 30 IP là khoá form cả site một
+  giờ. Trần chung đặt trước bước validate là tự dựng đường DoS. Câu hỏi `X-Forwarded-For` (mục 30/08) vẫn chưa có đáp
+  án từ Hostinger, nhưng nó thôi quyết định thiệt hại tối đa: xoay header giờ
+  chỉ vượt được xô IP, không vượt được trần chung.
+- **CSP thật** trong `next.config.ts`. `'unsafe-inline'` cho script là cố ý
+  (nonce = mọi trang thành động). Iframe bình luận Cusdis là `srcdoc` nên THỪA
+  KẾ CSP của trang — cusdis.com phải có trong script/style/connect. Đã soát
+  console 7 loại trang: không vi phạm nào; script từ host lạ bị chặn đúng.
+- `poweredByHeader: false`. Muốn biết bản đang chạy có phải app Next không thì
+  nhìn `x-nextjs-cache`/`etag`/`content-security-policy` đầy đủ, không còn
+  `x-powered-by`.
+- `permissions` tối thiểu khai tường minh ở 4 workflow còn thiếu.
+- Tên database/user MySQL và host Remote MySQL gỡ khỏi `HANDOFF.md` và README
+  module (repo công khai). Vẫn còn trong lịch sử git — không phải bí mật (thiếu
+  mật khẩu, Remote MySQL lọc theo IP), nên không viết lại lịch sử.
+- `video-embed`: so host đúng tên (`includes("youtube.com")` nhận cả host lạ),
+  ID YouTube đúng 11 ký tự, Vimeo id là số. Kiểm 27/27 video đang có vẫn nhúng.
+- Tiêu đề thư của form liên hệ bỏ CR/LF.
+
+**Đã kiểm và KHÔNG phải lỗi:** debugger admin (`recoDebuggerEnabled`: chỉ dev
+hoặc `RECO_DEBUGGER=1`, `applyAssignment` chặn `__proto__`); Server Action
+trang gợi ý (cookie httpOnly/secure/lax, id 128 bit, `?loi=` chỉ nhận mã lỗi đã
+biết); JSON-LD escape `<`; `safeHref` cho thân bài; escape HTML email; feed XML
+escape; `/.env`, `/.git/*` trên production 403; job route chỉ nhận Bearer so
+constant-time; `finlywealth` chỉ fetch đúng host.
+
+**Ngoài phạm vi bảo mật, phát hiện khi soát CSP:** khung bình luận Cusdis hỏng
+SẴN trên production (trước bản vá này): `cusdis.com/js/iframe.umd.js` bị chặn
+CORS (không có `Access-Control-Allow-Origin`), khung `srcdoc` trống.

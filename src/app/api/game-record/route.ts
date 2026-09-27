@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 
 import { CATCH_THE_POINTS_PUBLISHED } from "@/lib/feature-flags";
-import { bodyTooLarge } from "@/lib/rate-limit";
+import { readJsonBody } from "@/lib/rate-limit";
 import {
   GAME_RECORD_TAG,
   MAX_NAME_LENGTH,
@@ -65,7 +65,7 @@ const WRITES_PER_TOKEN = 3;
 // Payload chỉ có token (~70 ký tự), điểm và tên (≤ MAX_NAME_LENGTH SAU khi
 // dọn — chuỗi THÔ trước khi dọn thì không có trần, xem `cleanPlayerName`).
 // Đây là lớp chặn body lớn DUY NHẤT của route này: parse xảy ra ở dòng đầu
-// `POST`, TRƯỚC cả hai lớp rate limit bên dưới — xem `bodyTooLarge` trong
+// `POST`, TRƯỚC cả hai lớp rate limit bên dưới — xem `readJsonBody` trong
 // lib/rate-limit.ts.
 const MAX_BODY_BYTES = 4 * 1024;
 /** Trần cứng cho bảng đếm token. Vượt trần thì bỏ những mục hết hạn trước, còn
@@ -174,17 +174,11 @@ export async function POST(request: NextRequest) {
 
   const now = Date.now();
 
-  if (bodyTooLarge(request, MAX_BODY_BYTES)) {
-    return NextResponse.json({ message: "bad_json" }, { status: 413 });
+  const read = await readJsonBody(request, MAX_BODY_BYTES);
+  if (!read.ok) {
+    return NextResponse.json({ message: "bad_json" }, { status: read.reason === "too_large" ? 413 : 400 });
   }
-
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ message: "bad_json" }, { status: 400 });
-  }
-  const { token, score, name } = (body ?? {}) as Record<string, unknown>;
+  const { token, score, name } = (read.value ?? {}) as Record<string, unknown>;
 
   if (typeof token !== "string" || !isPlausibleRound(token, now)) {
     return NextResponse.json({ message: "bad_round" }, { status: 400 });

@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { Game, rankFor } from '../../../public/games/catch-the-points/src/game.js';
-import { CONFIG } from '../../../public/games/catch-the-points/src/config.js';
-import { getPostGameRecommendation as recommend, buildRecommendationStats, recommendationURL, recommendationTracking } from '../../../public/games/catch-the-points/src/recommendations.js';
-import { setupRecommendation } from '../../../public/games/catch-the-points/src/recommendation-view.js';
+import { Game, rankFor } from '../web/src/game.js';
+import { CONFIG } from '../web/src/config.js';
+import { getPostGameRecommendation as recommend, buildRecommendationStats, recommendationURL, recommendationTracking } from '../web/src/recommendations.js';
+import { setupRecommendation } from '../web/src/recommendation-view.js';
 const baseline={finalScore:4000,rank:rankFor(4000),totalPositivePointsEarned:4000};
 const category=stats=>recommend({...baseline,...stats}).category;
 for (const [name,stats,expected] of [

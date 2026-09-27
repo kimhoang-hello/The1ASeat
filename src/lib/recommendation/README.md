@@ -1169,9 +1169,10 @@ Server production (đọc trong phpMyAdmin 15/09/2026): **MariaDB 11.8.9**,
 `sql_mode` = `NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION` (KHÔNG strict),
 `collation_server` = `utf8mb4_unicode_ci` (không phân biệt hoa thường),
 `wsrep_on` = OFF (không Galera, `GET_LOCK` dùng được), `max_allowed_packet` 1 GB.
-Database `u867954911_Ghe1A`, user `u867954911_ghe1a`; app đọc bộ `DB_*` với
-`DB_HOST=localhost`. Host cho kết nối từ xa (phải thêm IP ở Remote MySQL):
-`srv1718.hstgr.io`. Nút "Connect database" của app Node.js chỉ có Supabase và
+Tên database, user và host kết nối từ xa xem trong hPanel — CỐ Ý không ghi ở
+đây vì repo công khai (chúng là nửa còn lại của thông tin đăng nhập, cùng với
+tên tài khoản Hostinger). App đọc bộ `DB_*` với `DB_HOST=localhost`; kết nối từ
+xa phải thêm IP ở Remote MySQL. Nút "Connect database" của app Node.js chỉ có Supabase và
 MongoDB Atlas — biến môi trường đặt tay.
 
 | File | Vai trò |

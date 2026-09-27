@@ -8,6 +8,11 @@ on:
     - cron: "0 8 * * *"
   workflow_dispatch: {}
 
+# Quyền tối thiểu cho GITHUB_TOKEN. Mặc định của repo hiện là "read", nhưng đó
+# là một nút gạt trong Settings — khai ở đây để workflow không phụ thuộc nó.
+permissions:
+  contents: read
+
 jobs:
   expire:
     runs-on: ubuntu-latest

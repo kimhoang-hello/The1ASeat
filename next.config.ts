@@ -1,6 +1,53 @@
 import type { NextConfig } from "next";
 
+/**
+ * Content-Security-Policy. Thêm 26/09/2026 — trước đó chỉ có
+ * `upgrade-insecure-requests` do Hostinger tự gắn (header đó vẫn còn; hai
+ * header CSP cùng có hiệu lực, trình duyệt áp CẢ HAI).
+ *
+ * `'unsafe-inline'` trong `script-src` là CỐ Ý: Next chèn script inline để
+ * hydrate, và cách duy nhất bỏ được nó là nonce theo từng request — thứ biến
+ * mọi trang tĩnh/ISR thành render động. Cái CSP này vẫn làm được việc: chặn
+ * script tải từ host lạ, chặn `<object>`/`<embed>`, chặn đổi `<base>` (cách
+ * bẻ mọi đường dẫn tương đối), chặn form gửi ra ngoài, chặn bị nhúng iframe.
+ *
+ * Danh sách host lấy từ chính những gì site tải, kiểm 26/09/2026:
+ *  - GA4 qua `@next/third-parties` (gtag): googletagmanager.com, gửi hit tới
+ *    *.google-analytics.com / *.analytics.google.com; Google Signals thêm
+ *    *.g.doubleclick.net và www.google.com.
+ *  - Cusdis (bình luận): script + style từ cusdis.com, và khung bình luận là
+ *    iframe `srcdoc` — `srcdoc` THỪA KẾ CSP của trang cha, nên script, style
+ *    và lượt gọi API bên trong nó cũng phải qua được danh sách này.
+ *  - Video: iframe YouTube / Vimeo (`lib/video-embed.ts`).
+ *  - Ảnh: Contentful và YouTube đi qua `/_next/image` (tức `'self'`); `https:`
+ *    để lại cho ảnh bên thứ ba ít ỏi (pixel GA, ảnh trong bình luận).
+ *
+ * Thêm một dịch vụ nhúng mới mà quên sửa ở đây thì nó GÃY TRONG IM LẶNG trên
+ * production (chỉ có một dòng lỗi CSP trong console) — kiểm console sau mỗi
+ * lần thêm.
+ */
+const isDev = process.env.NODE_ENV === "development";
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  // `'unsafe-eval'` chỉ ở dev: React dùng eval để dựng lại call stack.
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://*.googletagmanager.com https://cusdis.com`,
+  "style-src 'self' 'unsafe-inline' https://cusdis.com",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  `connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://cusdis.com${isDev ? " ws: wss:" : ""}`,
+  "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com",
+  "media-src 'self' https:",
+  "worker-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'self'",
+].join("; ");
+
 const nextConfig: NextConfig = {
+  // `X-Powered-By: Next.js` chỉ kể cho người dò quét biết nên thử lỗ nào.
+  poweredByHeader: false,
+
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "images.ctfassets.net" },
@@ -40,6 +87,7 @@ const nextConfig: NextConfig = {
           // Không trang nào ở đây cần camera/mic/vị trí, nên đóng sẵn: thứ
           // không bật thì không hỏng được.
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+          { key: "Content-Security-Policy", value: contentSecurityPolicy },
         ],
       },
     ];

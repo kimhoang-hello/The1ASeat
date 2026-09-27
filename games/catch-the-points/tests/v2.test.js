@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { Game } from '../../../public/games/catch-the-points/src/game.js';
-import { CONFIG } from '../../../public/games/catch-the-points/src/config.js';
-import { createProfile, safeScore } from '../../../public/games/catch-the-points/src/profile.js';
-import { parseChallenge, gameURL, sharePayload } from '../../../public/games/catch-the-points/src/challenge.js';
-import { nativeShare } from '../../../public/games/catch-the-points/src/share.js';
-import { earnedAchievements } from '../../../public/games/catch-the-points/src/achievements.js';
-import { createAnalytics } from '../../../public/games/catch-the-points/src/analytics.js';
-import { summaryFor } from '../../../public/games/catch-the-points/src/personality.js';
+import { Game } from '../web/src/game.js';
+import { CONFIG } from '../web/src/config.js';
+import { createProfile, safeScore } from '../web/src/profile.js';
+import { parseChallenge, gameURL, sharePayload } from '../web/src/challenge.js';
+import { nativeShare } from '../web/src/share.js';
+import { earnedAchievements } from '../web/src/achievements.js';
+import { createAnalytics } from '../web/src/analytics.js';
+import { summaryFor } from '../web/src/personality.js';
 
 const round = () => { const game = new Game({random: () => .4}); game.start(); return game; };
 const good = game => game.catch({type:'normal',program:0,x:100});

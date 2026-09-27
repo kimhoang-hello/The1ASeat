@@ -47,7 +47,7 @@ export const VIETNAM_ROUTES_PUBLISHED = true;
 /**
  * Trang "Mini-game: Catch The Points" (`/catch-the-points`). Nhận bàn giao và
  * tích hợp 05/09/2026 — game là bản V2.1 dựng sẵn, đưa vào site dưới dạng
- * trang tĩnh trong `public/games/catch-the-points/` và nhúng bằng iframe cùng
+ * trang tĩnh (nay ở `games/catch-the-points/web/`) và nhúng bằng iframe cùng
  * domain. Tắt cờ suốt buổi để tác giả xem và sửa trên chính bản deploy thật,
  * **bật lại cùng ngày sau khi tác giả duyệt** — cùng lúc với bảng kỷ lục chung
  * (xem mục `gameHighScore` trong CONTENTFUL.md).

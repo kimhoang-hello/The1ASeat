@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import type { Document } from "@contentful/rich-text-types";
 import { jobAuthResponse } from "@/lib/job-auth";
+import { readJsonBody } from "@/lib/rate-limit";
 import { CONTENTFUL_TAG } from "@/lib/content";
 import {
   SITE_URL,
@@ -44,6 +45,15 @@ const WEBHOOK_BUDGET_MS = 25_000;
 const PURGE_ATTEMPT_MS = 4_000;
 const CMA_MS = 5_000;
 const KIT_MS = 8_000;
+
+/**
+ * Trần byte của body webhook. Đo 26/09/2026: entry lớn nhất đang phục vụ (một
+ * `blogPost`) là ~30 KB JSON. Nhưng riêng một trường Rich Text của Contentful
+ * đã được tới 1 MB, nên trần phải rộng hơn thế nhiều — 8 MB. Vượt trần thì
+ * KHÔNG được đọc như "không có payload" (200, im lặng mất bản tin): xem
+ * `"payload_too_large"` bên dưới.
+ */
+const MAX_PAYLOAD_BYTES = 8 * 1024 * 1024;
 
 /** Hạn giờ cho một lượt gọi: nhỏ hơn giữa hạn riêng và phần còn lại của ngân sách. */
 function budgeted(deadline: number, want: number): AbortSignal {
@@ -100,13 +110,23 @@ export async function POST(request: NextRequest) {
   let newPostNotified: boolean | string = "no_payload";
   /** Slug của bài, chỉ để đưa vào dòng log `missed_first_publish` bên dưới. */
   let missedPostLabel: string | undefined;
-  let payload: unknown;
-  let hasPayload = true;
-  try {
-    payload = await request.json();
-  } catch {
-    // No/invalid JSON body (e.g. a manual test ping) — nothing to notify about.
-    hasPayload = false;
+  // Đọc body trong phần CÒN LẠI của ngân sách, có trần byte, và huỷ lượt đọc
+  // khi hết giờ — trước đây đây là lượt chờ duy nhất không chịu ngân sách 25s
+  // (AGENTS.md, "Việc còn nợ"). Body tới chậm tới mức Contentful bỏ cuộc thì
+  // bài đó mất bản tin vĩnh viễn, nên hết giờ là `"payload_timeout"` và trả
+  // 502: tới đây chưa giành `broadcastClaims`, chưa gọi Kit, nên lượt gọi lại
+  // không thể sinh bản tin thứ hai (purge chạy lần hai là idempotent).
+  const read = await readJsonBody(request, MAX_PAYLOAD_BYTES, deadline - Date.now());
+  // No/invalid JSON body (e.g. a manual test ping) — nothing to notify about.
+  const hasPayload = read.ok;
+  const payload: unknown = read.ok ? read.value : undefined;
+  if (!read.ok && read.reason === "timeout") newPostNotified = "payload_timeout";
+  // Vượt trần cũng đi nhánh 502, cùng lý do: chưa claim, chưa gọi Kit. Gọi lại
+  // không tự chữa được, nhưng 502 làm webhook ĐỎ trong Contentful — thà người
+  // thấy còn hơn một bài ra đời không bản tin mà mọi thứ vẫn xanh.
+  if (!read.ok && read.reason === "too_large") {
+    newPostNotified = "payload_too_large";
+    console.error(`[revalidate] body webhook vượt ${MAX_PAYLOAD_BYTES} byte — không đọc được entry, không gửi bản tin.`);
   }
 
   if (hasPayload) {
@@ -191,6 +211,8 @@ export async function POST(request: NextRequest) {
   // nói: để lỗi HIỆN RA trong Contentful thay vì ăn mất bản tin trong im lặng.
   const retrySafe =
     newPostNotified === false ||
+    newPostNotified === "payload_timeout" ||
+    newPostNotified === "payload_too_large" ||
     newPostNotified === "fetch_failed" ||
     newPostNotified === "not-configured";
   const status = retrySafe ? 502 : 200;

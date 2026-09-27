@@ -10,6 +10,9 @@ name: Deploy to Hostinger VPS (unused — Hostinger's own GitHub auto-deploy is 
 on:
   workflow_dispatch: {}
 
+# Job chỉ SSH ra ngoài, không cần đọc gì của repo qua GITHUB_TOKEN.
+permissions: {}
+
 jobs:
   deploy:
     runs-on: ubuntu-latest

@@ -5,11 +5,17 @@ Game gốc là một trang tĩnh độc lập (bản bàn giao V2.1, commit `ff8
 
 | Thư mục | Nội dung | Vì sao ở đó |
 | --- | --- | --- |
-| `public/games/catch-the-points/` | `index.html`, `src/`, `assets/` | Next chỉ phục vụ file tĩnh từ `public/`. Đây là bản đang chạy thật. |
-| `games/catch-the-points/` (thư mục này) | `tests/`, `docs/`, `README.md` | Không phải thứ người đọc cần tải về. Để trong `public/` là công khai luôn cả tài liệu nội bộ. |
+| `games/catch-the-points/web/` | `index.html`, `src/`, `assets/` | Bản chạy thật. Phục vụ tại `/games/catch-the-points/…` bởi `src/app/games/catch-the-points/[...path]/route.ts`. |
+| `games/catch-the-points/` (thư mục này) | `tests/`, `docs/`, `README.md` | Không phải thứ người đọc cần tải về, nên route kia không phục vụ chúng. |
 
-Vì tách như vậy, `tests/*.js` import ngược lên
-`../../../public/games/catch-the-points/src/…`. Chạy:
+**Vì sao KHÔNG nằm trong `public/` nữa (26/09/2026):** trên production, máy chủ
+web của Hostinger phục vụ thẳng file trong `public/` từ ổ đĩa, không qua Next
+— nên `src/proxy.ts` (chặn khi cờ `CATCH_THE_POINTS_PUBLISHED` tắt) không bao
+giờ chạy với các file đó, và game đã gỡ vẫn trả 200. Route handler dựng tĩnh
+lúc build từ danh sách file thật; cờ tắt thì không dựng gì và mọi đường dẫn là
+404, không phụ thuộc Hostinger làm gì với `public/`.
+
+`tests/*.js` import `../web/src/…`. Chạy:
 
     npm run test:game     # 43 test, từ gốc repo
 
@@ -20,7 +26,7 @@ chỉnh thông số; đọc bảng trên để biết file thật nằm đâu.
 ## Những gì đã đổi so với bản bàn giao
 
 1. **Đường dẫn asset.** Bản gốc dùng `/assets/…` và `/src/…` tính từ gốc site —
-   đưa vào `public/games/catch-the-points/` là trỏ ra ngoài và đè lên asset của
+   đưa vào `/games/catch-the-points/` là trỏ ra ngoài và đè lên asset của
    website. Nay: `index.html` và `assets/fonts/fonts.css` dùng đường dẫn tương
    đối; JavaScript giải qua `ASSET_BASE` trong `src/config.js`
    (`new URL("../assets/", import.meta.url)`), nên chuyển thư mục đi đâu cũng

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { bodyTooLarge, clientIp, rateLimit } from "@/lib/rate-limit";
+import { clientIp, rateLimit, readJsonBody } from "@/lib/rate-limit";
 import { emailParagraphStyle, escapeHtml } from "@/lib/subscriber-email";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -13,9 +13,18 @@ const MAX_MESSAGE = 5000;
 
 const LIMIT = 5;
 const WINDOW_MS = 60 * 60 * 1000;
+/**
+ * Trần CHUNG cho cả site, đặt cạnh trần theo IP. `clientIp` đọc phần tử đầu của
+ * `X-Forwarded-For` — header client tự đặt được nếu proxy Hostinger nối thêm
+ * thay vì ghi đè (AGENTS.md: chưa biết). Xoay header là vượt trần theo IP, và
+ * đầu kia của route này là hộp thư info@ cộng hạn mức Resend. Trần chung giới
+ * hạn thiệt hại bất kể Hostinger làm gì; site ~130 khách/tuần nên người thật
+ * không chạm tới nó. Cùng cách với `reco:start:all` ở trang gợi ý thẻ.
+ */
+const SITE_WIDE_LIMIT = 30;
 
 // Rộng rãi cho MAX_MESSAGE (5000 ký tự, tới 4 byte/ký tự UTF-8) cộng các
-// field khác và overhead JSON — xem `bodyTooLarge` trong lib/rate-limit.ts.
+// field khác và overhead JSON — xem `readJsonBody` trong lib/rate-limit.ts.
 const MAX_BODY_BYTES = 32 * 1024;
 
 /**
@@ -61,19 +70,26 @@ export async function POST(request: Request) {
     );
   }
 
-  if (bodyTooLarge(request, MAX_BODY_BYTES)) {
-    return NextResponse.json({ error: "invalid_body" }, { status: 413 });
+  const read = await readJsonBody(request, MAX_BODY_BYTES);
+  if (!read.ok) {
+    return NextResponse.json({ error: "invalid_body" }, { status: read.reason === "too_large" ? 413 : 400 });
   }
-
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "invalid_body" }, { status: 400 });
-  }
+  const body = read.value;
 
   if (!isValidBody(body)) {
     return NextResponse.json({ error: "invalid_body" }, { status: 400 });
+  }
+
+  // Trần chung đếm SAU khi body hợp lệ, không phải trước: đếm ở đầu route thì
+  // 30 POST `{}` từ 30 IP (giả hay thật) là đủ khoá form của cả site trong một
+  // giờ (Codex tái hiện 26/09/2026). Lượt rác và lượt đã bị chặn theo IP không
+  // được ăn vào phần của người thật.
+  const siteWide = rateLimit("contact:all", SITE_WIDE_LIMIT, WINDOW_MS);
+  if (!siteWide.ok) {
+    return NextResponse.json(
+      { error: "rate_limited" },
+      { status: 429, headers: { "Retry-After": String(siteWide.retryAfter) } },
+    );
   }
 
   const { firstName, lastName, email, subject, message } = body;
@@ -102,7 +118,9 @@ export async function POST(request: Request) {
         from: "Ghế 1A <info@ghe1a.com>",
         to: CONTACT_INBOX,
         reply_to: email,
-        subject: `[Liên hệ] ${subject} — ${firstName} ${lastName}`,
+        // Dòng tiêu đề thư là MỘT dòng: xuống dòng trong field form không có
+        // chỗ nào hợp lệ để đi, và ở tầng SMTP nó là cách chèn header.
+        subject: `[Liên hệ] ${subject} — ${firstName} ${lastName}`.replace(/[\r\n]+/g, " "),
         html,
       }),
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),

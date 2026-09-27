@@ -10,10 +10,11 @@
 export const CATCH_THE_POINTS_PATH = "/catch-the-points";
 
 /**
- * File tĩnh của game trong `public/`.
+ * File tĩnh của game (`games/catch-the-points/web/`, phục vụ bởi route
+ * `app/games/catch-the-points/[...path]`).
  *
- * PHẢI có đuôi `index.html`: Next không phục vụ file trong `public/` theo kiểu
- * "thư mục có index" — `/games/catch-the-points/` sẽ là 404. Và vì mọi đường
+ * PHẢI có đuôi `index.html`: route đó chỉ phục vụ đúng từng file, không có
+ * kiểu "thư mục có index" — `/games/catch-the-points/` là 404. Và vì mọi đường
  * dẫn bên trong game đều là tương đối, thiếu đuôi file là asset đi lạc lên một
  * cấp.
  */

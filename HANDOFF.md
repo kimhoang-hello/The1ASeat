@@ -146,13 +146,13 @@ dùng công cụ/tháng × ~5 lượt chạy):
 `user-source.ts`, `stores.test.ts` chạy MỌI bài hợp đồng trên MỌI backend. Chi
 tiết + năm quyết định thiết kế: README module, mục "Phase 5".
 
-**Database production đã tạo (15/09/2026):** `u867954911_Ghe1A`, user
-`u867954911_ghe1a`, MariaDB 11.8.9 — thông số server ở README module, mục Phase
+**Database production đã tạo (15/09/2026):** tên database và user xem trong
+hPanel (không ghi vào repo — repo này công khai), MariaDB 11.8.9 — thông số server ở README module, mục Phase
 5. Biến `DB_HOST`/`DB_PORT`/`DB_USER`/`DB_NAME` đã đặt trong hPanel;
 `DB_PASSWORD` do user tự dán. CI chạy MariaDB 11.8 với `sql_mode` và collation
 giống production. **Chưa trang nào dùng kho** — kết nối thật từ app lần đầu sẽ
 được kiểm khi tầng trang gọi `recoDatabaseFromEnv()`; nếu `localhost` không vào
-được thì thử `srv1718.hstgr.io` (cần thêm IP của app ở Remote MySQL).
+được thì thử host Remote MySQL ghi trong hPanel (cần thêm IP của app ở Remote MySQL).
 
 Chưa có database thì site vẫn chạy: `recoDatabaseFromEnv()` trả `null`, tầng
 trang quyết định chạy-không-lưu hay báo lỗi.

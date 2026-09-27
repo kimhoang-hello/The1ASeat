@@ -23,7 +23,7 @@ const game = t("game");
  */
 const INITIAL_HEIGHT = "h-[45rem]";
 
-/** Những gì `public/games/catch-the-points/src/embed.js` gửi sang. */
+/** Những gì `games/catch-the-points/web/src/embed.js` gửi sang. */
 type GameMessage =
   | { source: "ghe1a-game"; type: "state"; playing: boolean; height: number }
   | { source: "ghe1a-game"; type: "analytics"; detail: Record<string, unknown> }

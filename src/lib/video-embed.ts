@@ -1,19 +1,28 @@
-/** The bare video id from any YouTube watch/shorts/youtu.be/embed URL. */
+/**
+ * Host được nhận, so ĐÚNG TÊN chứ không `includes`: `includes("youtube.com")`
+ * nhận cả `notyoutube.com.evil.example`. ID cũng phải đúng hình dạng — nó đi
+ * thẳng vào `src` của iframe và vào URL ảnh, nên một `v=` tuỳ ý là một đoạn
+ * đường dẫn tuỳ ý trên youtube.com.
+ */
+const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "youtube-nocookie.com", "www.youtube-nocookie.com"]);
+const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
+
+function youTubeIdFrom(url: URL): string | null {
+  const host = url.hostname.toLowerCase();
+  if (host === "youtu.be") return url.pathname.slice(1);
+  if (!YOUTUBE_HOSTS.has(host)) return null;
+  if (url.pathname.startsWith("/embed/") || url.pathname.startsWith("/shorts/")) {
+    return url.pathname.split("/")[2] ?? null;
+  }
+  return url.searchParams.get("v");
+}
+
+// Extract a YouTube video ID from common URL formats (watch, youtu.be, embed, shorts)
 export function getYouTubeVideoId(url: string): string | null {
   if (!url) return null;
-
   try {
-    const u = new URL(url);
-
-    if (u.hostname.includes("youtube.com")) {
-      if (u.pathname.startsWith("/embed/")) return u.pathname.split("/")[2] || null;
-      if (u.pathname.startsWith("/shorts/")) return u.pathname.split("/")[2] || null;
-      return u.searchParams.get("v");
-    }
-
-    if (u.hostname === "youtu.be") return u.pathname.slice(1) || null;
-
-    return null;
+    const id = youTubeIdFrom(new URL(url));
+    return id !== null && YOUTUBE_ID.test(id) ? id : null;
   } catch {
     return null;
   }
@@ -75,10 +84,11 @@ export function getVideoEmbedUrl(url: string): string | null {
   try {
     const u = new URL(url);
 
-    if (u.hostname.includes("vimeo.com")) {
-      if (u.pathname.startsWith("/video/")) return `https://player.vimeo.com${u.pathname}`;
-      const id = u.pathname.split("/").filter(Boolean).pop();
-      return id ? `https://player.vimeo.com/video/${id}` : null;
+    const host = u.hostname.toLowerCase();
+    if (host === "vimeo.com" || host.endsWith(".vimeo.com")) {
+      // `/video/<id>` (link player) hoặc `/<id>` (link trang); id Vimeo là số.
+      const id = u.pathname.split("/").filter(Boolean).pop() ?? "";
+      return /^\d+$/.test(id) ? `https://player.vimeo.com/video/${id}` : null;
     }
 
     return null;

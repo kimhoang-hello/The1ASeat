@@ -174,23 +174,99 @@ export function emailKey(email: string): string {
 }
 
 /**
- * Body khai `Content-Length` lớn hơn `maxBytes` — hỏi TRƯỚC khi gọi
- * `request.json()`.
+ * Kết quả đọc body JSON — xem `readJsonBody`.
  *
- * Ba route công khai (`/api/contact`, `/api/subscribe`, `/api/game-record`)
- * đều gọi `request.json()` mà không có trần kích thước nào — Route Handler
- * của Next (khác `bodyParser.sizeLimit` của Pages Router cũ) không tự đặt
- * trần body. Payload hợp lệ của cả ba đều dưới vài chục KB, nên một body vài
- * chục MB không phục vụ mục đích nào ngoài buộc server tốn bộ nhớ/CPU đọc và
- * parse nó — với `/api/game-record`, việc đó xảy ra TRƯỚC cả hai lớp rate
- * limit (xem chú thích ở route đó), nên ở route này đây là lớp chặn DUY NHẤT.
+ * `invalid` gộp cả "không có body" lẫn "body không phải JSON": mọi route gọi
+ * hàm này đều xử lý hai ca đó giống hệt nhau (đúng như `request.json()` ném
+ * cho cả hai trước đây).
+ */
+export type JsonBodyResult =
+  | { ok: true; value: unknown }
+  | { ok: false; reason: "too_large" | "invalid" | "timeout" };
+
+/**
+ * Đọc body JSON với trần byte THẬT và (tuỳ chọn) hạn giờ.
  *
- * CHỈ chặn được client trung thực khai đúng `Content-Length`. Một client cố ý
- * dùng chunked encoding (không khai header đó) hoặc khai sai vẫn gửi được một
- * body lớn — chặn triệt để cần đọc `request.body` bằng reader có trần byte
- * thật sự, cùng loại việc AGENTS.md đã ghi là "cần một phiên riêng" cho
- * `api/revalidate`. Đây là lớp rẻ, chặn ca phổ biến nhất, không phải lớp
- * cuối cùng.
+ * Thay cho `request.json()` ở mọi route nhận POST. Route Handler của Next
+ * (khác `bodyParser.sizeLimit` của Pages Router cũ) không tự đặt trần body,
+ * nên `request.json()` đọc hết bất kể bao lớn. Bản trước chỉ hỏi
+ * `Content-Length` — thứ client tự khai: chunked encoding (không có header
+ * đó) hoặc khai thấp hơn thực tế là đi thẳng qua.
+ *
+ * Ở đây đếm byte ĐỌC ĐƯỢC từ stream, và dừng ngay khi vượt trần bằng
+ * `reader.cancel()` — không buffer phần còn lại. `Content-Length` vẫn được hỏi
+ * trước, chỉ để từ chối sớm client trung thực mà khỏi mở stream.
+ *
+ * `timeoutMs` là hạn cho CẢ lượt đọc. Hết giờ thì huỷ reader (không để một
+ * lượt đọc thua cuộc tiếp tục giữ kết nối và buffer — đúng lỗi của bản
+ * `Promise.race` trần từng thử rồi gỡ ở `api/revalidate`, xem AGENTS.md).
+ * Lượt `read()` đang treo được gắn `catch` rỗng: sau khi huỷ, nó có thể reject
+ * lúc không còn ai chờ, và một rejection không ai bắt là đủ để Node dừng cả
+ * tiến trình — tức cả site.
+ */
+export async function readJsonBody(
+  request: Request,
+  maxBytes: number,
+  timeoutMs?: number,
+): Promise<JsonBodyResult> {
+  if (bodyTooLarge(request, maxBytes)) {
+    request.body?.cancel().catch(() => {});
+    return { ok: false, reason: "too_large" };
+  }
+  if (!request.body) return { ok: false, reason: "invalid" };
+
+  const reader = request.body.getReader();
+  const cancel = () => {
+    reader.cancel().catch(() => {});
+  };
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const expired =
+    timeoutMs === undefined
+      ? null
+      : new Promise<"timeout">((resolve) => {
+          timer = setTimeout(() => resolve("timeout"), Math.max(0, timeoutMs));
+        });
+
+  try {
+    for (;;) {
+      const read = reader.read();
+      read.catch(() => {});
+      const step = expired ? await Promise.race([read, expired]) : await read;
+      if (step === "timeout") {
+        cancel();
+        return { ok: false, reason: "timeout" };
+      }
+      if (step.done) break;
+      total += step.value.byteLength;
+      if (total > maxBytes) {
+        cancel();
+        return { ok: false, reason: "too_large" };
+      }
+      chunks.push(step.value);
+    }
+  } catch {
+    // Kết nối đứt giữa chừng: không có body nào để đọc.
+    cancel();
+    return { ok: false, reason: "invalid" };
+  } finally {
+    clearTimeout(timer);
+  }
+
+  try {
+    // `TextDecoder` bỏ BOM đầu chuỗi, đúng như `request.json()` từng làm.
+    return { ok: true, value: JSON.parse(new TextDecoder().decode(Buffer.concat(chunks))) };
+  } catch {
+    return { ok: false, reason: "invalid" };
+  }
+}
+
+/**
+ * Body khai `Content-Length` lớn hơn `maxBytes`.
+ *
+ * CHỈ là đường tắt cho client trung thực — client tự khai header này. Lớp
+ * chặn thật là phép đếm byte trong `readJsonBody`, nơi duy nhất gọi hàm này.
  */
 export function bodyTooLarge(request: Request, maxBytes: number): boolean {
   const length = Number(request.headers.get("content-length"));
