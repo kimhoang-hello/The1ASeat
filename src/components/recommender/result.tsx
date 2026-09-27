@@ -392,7 +392,11 @@ function TripNumbers({ trip }: { trip: NonNullable<ResultView["trip"]> }) {
         <p className="mt-3 text-sm text-muted-foreground">
           {/* Cùng luật với lời giải thích: không phần trăm vượt 100, không "phủ cả chuyến" cạnh "còn thiếu". */}
           {asSentenceStart(coverageStatement(trip) as string)}
-          {trip.coverageIsEstimate ? " — chưa tính phần điểm mình chưa biết." : "."}
+          {trip.coverageUncertainty === "balance"
+            ? " — chưa tính phần điểm mình chưa biết."
+            : trip.coverageUncertainty === "price"
+              ? " — con số này chưa chắc, vì có chương trình mới chỉ công bố giá sàn."
+              : "."}
         </p>
       )}
     </section>

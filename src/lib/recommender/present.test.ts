@@ -341,6 +341,31 @@ test("số dư đã khai mà chưa nói bao nhiêu: không in điểm giữa th�
   assert.ok(aviosView !== null && aviosView.trip !== null);
   assert.ok(!aviosView.trip.missing.some((row) => row.questionKey === "point_balance_amount_unknown:avios"));
 
+  assert.equal(view.trip.coverageUncertainty, "balance");
+  assert.equal(mixedView.trip.coverageUncertainty, "balance");
+
+  // Chỗ chưa chắc đến từ GIÁ, không từ số dư: khai đủ số dư, premium economy
+  // châu Âu (Aeroplan® chỉ có sàn động) — câu đuôi không được nói "chưa tính
+  // phần điểm chưa biết" (Codex, vòng chốt 27/09/2026).
+  const europeData = datasetAt(offlineDataset(), "2026-09-27");
+  const priceOnly = structuredClone(vietnamTripShortfall);
+  priceOnly.goals = priceOnly.goals.map((goal) =>
+    goal.type === "trip" ? { ...goal, destinationRegion: "EUROPE" as const, cabin: "premium_economy" as const, passengers: 1, roundTrip: false } : goal,
+  );
+  priceOnly.balances = [
+    { ...priceOnly.balances[0], programId: "aadvantage" as never, balance: 20_000 },
+    { ...priceOnly.balances[0], programId: "aeroplan" as never, balance: 30_000 },
+  ];
+  const priceRecord = executeRun(
+    { state: priceOnly, data: europeData, asOf: "2026-09-27" },
+    { id: "run_present_price_only", createdAt: "2026-09-27T12:00:00.000Z", userId: "u_test" },
+  ).record;
+  const priceView = presentRun(priceRecord, europeData, offersFor(europeData));
+  assert.ok(priceView !== null && priceView.trip !== null);
+  assert.ok(priceView.trip.coverageIsEstimate, "fixture phải rơi vào nhánh ước lượng");
+  assert.equal(priceView.trip.coverageUncertainty, "price");
+  assert.ok(!priceView.trip.missing.some((row) => row.questionKey.startsWith("point_balance_amount_unknown:")));
+
   // Số dư đã biết đủ thì dòng "nói thêm số điểm" không xuất hiện.
   const known = presentRun(runFor(vietnamTripShortfall), DATA, offersFor(DATA));
   assert.ok(known !== null && known.trip !== null);

@@ -188,6 +188,12 @@ export interface TripNumbersView {
    * không phải con số được phép in ra.
    */
   coverageLowerBound: number | null;
+  /**
+   * Vì sao phần phủ chỉ là ước lượng — hai nguồn, hai câu khác nhau: còn số dư
+   * chưa khai (hỏi thêm là chắc hơn), hay giá vé của một chương trình mới chỉ
+   * biết mức sàn (hỏi gì cũng không chắc hơn). `null` khi phần phủ là số chắc.
+   */
+  coverageUncertainty: "balance" | "price" | null;
 }
 
 export interface ResultView {
@@ -685,6 +691,16 @@ function tripView(
     // chưa biết, hoặc chương trình chỉ công bố giá sàn. Trình bày nó như một
     // con số chắc chắn là đúng lỗi §29 sinh ra để tránh.
     coverageIsEstimate: coverage !== null && coverage.coverageKnown === false,
+    // Một câu đuôi cho hai nguồn là sai ở một trong hai: 20,000 AAdvantage® +
+    // 30,000 Aeroplan® đã khai đủ, premium economy châu Âu, từng in "chưa tính
+    // phần điểm mình chưa biết" — chỗ chưa chắc ở đó là giá sàn động của
+    // Aeroplan® (Codex, vòng chốt 27/09/2026).
+    coverageUncertainty:
+      coverage === null || coverage.coverageKnown !== false
+        ? null
+        : missing.some((row) => row.questionKey.startsWith("point_balance_amount_unknown:"))
+          ? "balance"
+          : "price",
     // Sàn của CHÍNH chương trình đang hiển thị: điểm chắc chắn với tới được ÷
     // mức giá cao nhất của nó — cùng phép đo engine dùng cho `coverage`.
     // `tripCoverage.coverageLowerBound` là sàn tốt nhất qua MỌI chương trình,
