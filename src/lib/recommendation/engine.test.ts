@@ -2518,7 +2518,7 @@ test("KHÔNG có hack theo sản phẩm trong logic chung", async () => {
  * dưới đây khoá lại những chỗ dữ liệu mới dễ trôi nhất.
  * ================================================================== */
 
-test("JAPAN và EAST_ASIA đã định giá được; EUROPE thì CHƯA — và nói ra", () => {
+test("ngày 08/09: JAPAN và EAST_ASIA đã định giá được; EUROPE và nội địa thì CHƯA — và nói ra", () => {
   const priced = (region: TripRegion) =>
     DATA.awardStrategies.filter(
       (row) => row.originRegion === "CANADA_US" && row.destinationRegion === region,
@@ -2527,9 +2527,45 @@ test("JAPAN và EAST_ASIA đã định giá được; EUROPE thì CHƯA — và 
   assert.ok(priced("EAST_ASIA").length >= 3, "EAST_ASIA phải có ít nhất 3 chiến lược");
   assert.equal(priced("EUROPE").length, 0, "EUROPE vẫn chưa dựng — đừng lấp bằng phỏng đoán");
 
-  // Và chỗ trống phải khớp: đúng một cặp vùng còn lại.
+  // Và chỗ trống phải khớp: châu Âu, cộng chặng nội địa (chưa có bảng giá nào).
   const gaps = DATA.gaps.filter((gap) => gap.kind === "award_route_uncovered");
-  assert.deepEqual(gaps.map((gap) => gap.subjectId), ["CANADA_US|EUROPE"]);
+  assert.deepEqual(gaps.map((gap) => gap.subjectId), ["CANADA_US|CANADA_US", "CANADA_US|EUROPE"]);
+});
+
+test("EUROPE định giá được từ 27/09/2026 — band Đại Tây Dương, không phải Thái Bình Dương", () => {
+  const europe = datasetAt(RAW, "2026-09-27");
+  const rows = (program: string, cabin: string) =>
+    europe.awardStrategies.filter(
+      (row) =>
+        row.destinationRegion === "EUROPE" && (row.programId as string) === program && row.cabin === cabin,
+    );
+  assert.deepEqual(
+    europe.gaps.filter((gap) => gap.kind === "award_route_uncovered").map((gap) => gap.subjectId),
+    ["CANADA_US|CANADA_US"],
+  );
+
+  // Aeroplan®: band 1/2/3 của bảng "North America – Atlantic". Chép nhầm bảng
+  // Thái Bình Dương (cùng 32,500 ở band 1) sẽ ra 50,000/65,000 ở hai cận sau.
+  const [economy] = rows("aeroplan", "economy");
+  assert.deepEqual([economy.pointsLow, economy.pointsTypical, economy.pointsHigh], [32500, 42500, 60000]);
+  const [business] = rows("aeroplan", "business");
+  assert.deepEqual([business.pointsLow, business.pointsTypical, business.pointsHigh], [60000, 75000, 90000]);
+  // Premium Economy chỉ có ở cột động: mức sàn, không có typical/high.
+  const [premium] = rows("aeroplan", "premium_economy");
+  assert.equal(premium.pricingModel, "dynamic_floor");
+  assert.equal(premium.pointsTypical, null);
+
+  // AAdvantage®: một mức cho cả vùng, off-peak chỉ là cận dưới hạng phổ thông.
+  const [aaEconomy] = rows("aadvantage", "economy");
+  assert.deepEqual([aaEconomy.pointsLow, aaEconomy.pointsTypical, aaEconomy.pointsHigh], [22500, 30000, 30000]);
+  assert.equal(rows("aadvantage", "business")[0].pointsTypical, 57500);
+
+  // Không có Asia Miles® cho châu Âu — Cathay Pacific® không bay chặng này.
+  assert.equal(rows("asia-miles", "economy").length, 0);
+
+  // Bản dựng lại một ngày TRƯỚC đó không được biết bảng giá này.
+  const before = datasetAt(RAW, "2026-09-27", { knownAt: "2026-09-26" });
+  assert.equal(before.awardStrategies.filter((row) => row.destinationRegion === "EUROPE").length, 0);
 });
 
 test("KHÔNG có hạng First đi châu Á — vắng mặt là CÓ CHỦ Ý", () => {

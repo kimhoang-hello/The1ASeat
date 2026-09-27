@@ -728,15 +728,24 @@ test("chỗ trống dữ liệu là DỮ LIỆU, không phải chuỗi cảnh b�
   // tồn tại dưới dạng cảnh báo tiếng Việt của audit thì engine phải parse chữ.
   const kinds = new Set(BASE.gaps.map((g) => g.kind));
   assert.ok(kinds.has("no_award_chart"));
-  assert.ok(kinds.has("award_route_uncovered"), "4 vùng của spec §33 chưa có bảng giá");
   assert.ok(kinds.has("base_earn_rate_unknown"));
-  assert.ok(kinds.has("eligibility_unknown"));
+  // Vùng chưa có bảng giá: châu Âu là vùng trống cuối cùng tới 27/09/2026, nên
+  // chỗ trống này đọc ở ngày trước đó — và phải BIẾN MẤT khi bảng giá vào kho.
+  const uncoveredAt = (asOf: string) =>
+    datasetAt(BASE, asOf).gaps.filter((g) => g.kind === "award_route_uncovered").map((g) => g.subjectId);
+  assert.deepEqual(uncoveredAt(TODAY), ["CANADA_US|CANADA_US", "CANADA_US|EUROPE"]);
+  // Nội địa vẫn trống — và phải được KHAI, không bị vòng lặp bỏ qua như trước.
+  assert.deepEqual(uncoveredAt("2026-09-27"), ["CANADA_US|CANADA_US"]);
 
-  // "Chỉ có luật cư trú" KHÔNG được đọc là "đã biết điều kiện".
+  // "Chỉ có luật cư trú" KHÔNG được đọc là "đã biết điều kiện". Điều kiện mở
+  // thẻ của Passport™ vào kho ngày 27/09/2026 (đọc trên trang Scotiabank®), nên
+  // ca "chỉ có luật cư trú" dựng lại bằng chính kho ở một ngày TRƯỚC đó — không
+  // bám vào việc dữ liệu hôm nay còn trống ở đâu.
   const passport = BASE.products.find((p) => p.slug === "scotiabank-passport-visa-infinite")!;
-  assert.ok(
-    BASE.gaps.some((g) => g.kind === "eligibility_unknown" && g.subjectId === passport.id),
-  );
+  const unknownAt = (asOf: string) =>
+    datasetAt(BASE, asOf).gaps.some((g) => g.kind === "eligibility_unknown" && g.subjectId === passport.id);
+  assert.ok(unknownAt(TODAY), "20/09: chỉ có luật cư trú → chưa biết điều kiện");
+  assert.ok(!unknownAt("2026-09-27"), "27/09: đã có luật thu nhập của ngân hàng");
 });
 
 test("chỗ trống được tính LẠI cho từng thời điểm", () => {
@@ -814,13 +823,21 @@ test("luật phạm vi welcome_offer KHÔNG tính là biết điều kiện mở
   // Amex® Green chỉ có luật "từng giữ thẻ này rồi" — nó nói về welcome bonus,
   // không nói người này có được duyệt thẻ hay không. Đếm nó là kết luận "đã
   // biết điều kiện" cho một thẻ mà mình chưa biết ngưỡng thu nhập.
+  //
+  // Từ 27/09/2026 thẻ này có luật mở thẻ thật (Amex® ghi rõ không có ngưỡng
+  // thu nhập), nên ca "chỉ có luật welcome_offer" đọc ở ngày trước đó.
   const green = BASE.products.find((p) => p.slug === "amex-green")!;
-  const rules = BASE.eligibilityRules.filter((r) => r.productId === green.id);
+  const then = datasetAt(BASE, TODAY);
+  const rules = then.eligibilityRules.filter((r) => r.productId === green.id);
   assert.ok(rules.some((r) => r.scope === "welcome_offer"));
   assert.ok(!rules.some((r) => r.scope === "application" && r.ruleType !== "residency"));
   assert.ok(
-    BASE.gaps.some((g) => g.kind === "eligibility_unknown" && g.subjectId === green.id),
+    then.gaps.some((g) => g.kind === "eligibility_unknown" && g.subjectId === green.id),
     "vẫn phải khai là chưa biết điều kiện mở thẻ",
+  );
+  assert.ok(
+    !datasetAt(BASE, "2026-09-27").gaps.some((g) => g.kind === "eligibility_unknown" && g.subjectId === green.id),
+    "luật thu nhập 0 ĐÃ KIỂM thì hết chỗ trống",
   );
 });
 

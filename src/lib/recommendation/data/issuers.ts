@@ -52,7 +52,7 @@ export const ISSUERS: Issuer[] = [
     id: id<IssuerId>("wealthsimple"),
     name: "Wealthsimple®",
     country: "CA",
-    officialUrl: "https://www.wealthsimple.com/en-ca/product/card",
+    officialUrl: "https://www.wealthsimple.com/en-ca/credit-card",
   },
   {
     // Công ty con của Scotiabank®, nhưng là nhà phát hành riêng trên thẻ và

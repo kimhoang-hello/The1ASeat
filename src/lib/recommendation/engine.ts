@@ -287,6 +287,12 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * bonus đứng HẠNG NHẤT trên RBC® Avion® 70,000 điểm (audit trang 25/09/2026).
  * Biết sức dồn thì vẫn là 1.0 như cũ.
  *
+ * 4.31.0 — chặng nội địa `CANADA_US → CANADA_US` (mục tiêu "bay trong Canada /
+ * Mỹ") là chỗ trống `award_route_uncovered` ĐÃ KHAI. Trước đây `gaps.ts` bỏ
+ * qua đích CANADA_US: chặng không có bảng giá nào mà §29 không trừ độ tin cậy
+ * và §30 không biết đó là chỗ trống của dữ liệu. Chỉ đổi độ tin cậy của mục
+ * tiêu nội địa; không đổi điểm số.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -299,7 +305,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.30.0";
+export const ENGINE_VERSION = "4.31.0";
 
 export interface RecommendInput {
   state: UserState;

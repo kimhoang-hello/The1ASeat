@@ -217,13 +217,40 @@ function lifetimeFromIssuer(source: string): RuleSeed {
   return { ...AMEX_ONCE_IN_A_LIFETIME, source, from: RULES_CHECKED_ON };
 }
 
+/*
+ * Điều kiện MỞ THẺ đọc thẳng trên trang ngân hàng ngày 27/09/2026, cho 11 thẻ
+ * mà nội dung site chưa nêu (trước đó chúng mang `eligibility_unknown`, nên MỌI
+ * kết quả có chúng đều kèm "chưa kiểm được hết điều kiện" và −0.05 — kể cả
+ * Amex® Green / Gold / Cobalt®, ba thẻ được gợi ý nhiều nhất).
+ *
+ * Amex® Canada ghi mục "Eligibility" giống hệt nhau trên cả sáu trang: "make
+ * sure you can say yes to ALL of the following … You are a Canadian resident
+ * and have a Canadian credit file · You are the age of majority". Danh sách đó
+ * là TRỌN VẸN và không có dòng thu nhập nào — nên là `0` đã kiểm, như
+ * American Express® Aeroplan®* Card vốn có. Hồ sơ tín dụng không mô hình hoá
+ * (§3.10), tuổi thì mọi người mở được thẻ đều đạt.
+ */
+const ISSUER_RULES_CHECKED_ON = "2026-09-27";
+
+function incomeFromIssuer(personal: number, household: number | null, source: string): RuleSeed[] {
+  const rows: RuleSeed[] =
+    household === null
+      ? [{ type: "minimum_personal_income", value: personal, severity: "hard" }]
+      : income(personal, household);
+  return rows.map((rule) => ({ ...rule, source, from: ISSUER_RULES_CHECKED_ON }));
+}
+
+const WEALTHSIMPLE_VISA_INFINITE = "https://www.wealthsimple.com/en-ca/wealthsimple-visa-infinite-card";
+
+const amexNoIncome = (page: string) => incomeFromIssuer(0, null, `https://www.americanexpress.com/en-ca/${page}`);
+
 const BY_PRODUCT: Record<string, RuleSeed[]> = {
   // Amex® ghi rõ người ĐANG hoặc TỪNG giữ thẻ không đủ điều kiện nhận welcome
   // bonus. Đây là luật quyết định nhất trong cả file với người đã chơi điểm
   // vài năm — nó loại thẳng những thẻ trông hấp dẫn nhất.
-  "amex-green": [AMEX_ONCE_IN_A_LIFETIME],
-  "amex-gold-rewards": [AMEX_ONCE_IN_A_LIFETIME],
-  "amex-cobalt": [AMEX_ONCE_IN_A_LIFETIME],
+  "amex-green": [AMEX_ONCE_IN_A_LIFETIME, ...amexNoIncome("credit-cards/green-card/")],
+  "amex-gold-rewards": [AMEX_ONCE_IN_A_LIFETIME, ...amexNoIncome("credit-cards/gold-rewards-card/")],
+  "amex-cobalt": [AMEX_ONCE_IN_A_LIFETIME, ...amexNoIncome("credit-cards/cobalt-card/")],
 
   "scotiabank-momentum-visa-infinite-plus": [
     ...income(60000, 100000),
@@ -294,26 +321,55 @@ const BY_PRODUCT: Record<string, RuleSeed[]> = {
   // tiếng Việt trong `value` — vừa sai chỗ (đây là bảng điều kiện mở thẻ),
   // vừa buộc engine phải đọc chữ để hiểu. Sự thật đó đã có chỗ đúng của nó:
   // quyền lợi `annual_fee_waiver_conditional` trong `product-benefits.ts`.
-  "scotiabank-gold-amex": [],
+  // Phí và điều kiện là hai chuyện: "You can apply if: You have a minimum
+  // personal income of $12,000 per year." — chỉ một vế, không có vế hộ gia đình.
+  "scotiabank-gold-amex": incomeFromIssuer(
+    12000,
+    null,
+    "https://www.scotiabank.com/ca/en/personal/credit-cards/american-express/gold-card.html",
+  ),
   "rbc-avion-visa-infinite": income(60000, 100000),
   "rbc-avion-visa-platinum": [
     { type: "minimum_personal_income", value: 0, severity: "hard" },
   ],
-  "amex-marriott-bonvoy": [AMEX_ONCE_IN_A_LIFETIME],
-  "amex-aeroplan-reserve": [AMEX_ONCE_IN_A_LIFETIME],
-  // Cùng lý do với Scotiabank® Gold ngay trên.
-  "wealthsimple-visa-infinite-plus": [],
+  "amex-marriott-bonvoy": [AMEX_ONCE_IN_A_LIFETIME, ...amexNoIncome("credit-cards/marriott-bonvoy-card/")],
+  "amex-aeroplan-reserve": [AMEX_ONCE_IN_A_LIFETIME, ...amexNoIncome("credit-cards/aeroplan-reserve/")],
+  // "You'll also need to have a personal income of at least $80,000 or
+  // household income of at least $150,000" — cộng một tài khoản chequing
+  // Wealthsimple đang hoạt động. Tài khoản đó ai cũng mở được, miễn phí, ngay
+  // trong lúc đăng ký, nên nó là một BƯỚC chứ không phải một rào cản: để `soft`
+  // (ghi lại, không chặn). Để `hard` thì luật này mãi `unknown` — mô hình người
+  // dùng không có quan hệ ngân hàng — và thẻ quay lại đúng chỗ trống vừa lấp.
+  "wealthsimple-visa-infinite-plus": [
+    ...incomeFromIssuer(80000, 150000, WEALTHSIMPLE_VISA_INFINITE),
+    {
+      type: "banking_relationship_required",
+      value: "wealthsimple-chequing",
+      severity: "soft",
+      source: WEALTHSIMPLE_VISA_INFINITE,
+      from: ISSUER_RULES_CHECKED_ON,
+    },
+  ],
 
-  // Nội dung site chưa nói gì về điều kiện MỞ THẺ của hai thẻ dưới — luật
-  // của United® Neo chỉ nói về welcome bonus (`scope: "welcome_offer"`), nên
-  // `eligibility_unknown` vẫn đúng: trống nghĩa là chưa biết, không phải
-  // không yêu cầu.
   // "Limited one-time offer for new customers who have not opened a United
   // Neo World Elite Mastercard before the date of application approval."
+  // Điều kiện mở thẻ: "Minimum income: $80,000 personal or $150,000 household".
   "united-mileageplus-neo-world-elite-mastercard": [
     lifetimeFromIssuer("https://www.neofinancial.com/credit-cards/neo-united-mastercard"),
+    ...incomeFromIssuer(80000, 150000, "https://www.neofinancial.com/credit-cards/neo-united-mastercard"),
   ],
-  "scotiabank-passport-visa-infinite": [],
+  // Scotiabank® ghi NGƯỠNG DẠNG KHOẢNG: "a minimum income of $60,000 - $80,000
+  // or more per year, a minimum household income of $100,000 - $150,000 or
+  // more, or … $250,000 - $300,000 or more assets under management. We use your
+  // application to help identify the card that's right for you." Lấy cận dưới,
+  // y như Scotia Momentum® (cùng câu chữ, đã seed từ trước): cận trên sẽ loại
+  // oan người $60–80K mà ngân hàng tự nói vẫn xét. Vế tài sản chưa mô hình hoá,
+  // như Tangerine bên dưới.
+  "scotiabank-passport-visa-infinite": incomeFromIssuer(
+    60000,
+    100000,
+    "https://www.scotiabank.com/ca/en/personal/credit-cards/visa/passport-infinite-card.html",
+  ),
   // Tangerine còn cho vế thứ ba: $400,000 assets under management. Mô hình
   // người dùng không có trường tài sản nên vế đó chưa seed, như mọi thẻ khác có
   // vế tài sản — giới hạn chung của engine. ĐỪNG hạ hai vế thu nhập xuống
@@ -329,7 +385,7 @@ const BY_PRODUCT: Record<string, RuleSeed[]> = {
     },
   ],
 
-  "amex-platinum": [AMEX_ONCE_IN_A_LIFETIME],
+  "amex-platinum": [AMEX_ONCE_IN_A_LIFETIME, ...amexNoIncome("charge-cards/the-platinum-card/")],
   "amex-business-platinum": [
     AMEX_ONCE_IN_A_LIFETIME,
     { type: "business_required", value: true, severity: "hard" },
@@ -342,9 +398,12 @@ const BY_PRODUCT: Record<string, RuleSeed[]> = {
   "cibc-aeroplan-visa": [
     { type: "minimum_household_income", value: 15000, severity: "hard" },
   ],
-  // Bản Visa Infinite: nội dung site chưa nêu điều kiện thu nhập. Để trống —
-  // trống nghĩa là chưa biết, không phải không yêu cầu.
-  "cibc-aeroplan-visa-infinite": [],
+  // "$60,000 individual, or $100,000 household minimum annual income".
+  "cibc-aeroplan-visa-infinite": incomeFromIssuer(
+    60000,
+    100000,
+    "https://www.cibc.com/en/personal-banking/credit-cards/all-credit-cards/aeroplan-visa-infinite-card.html",
+  ),
   "cibc-aeroplan-visa-infinite-privilege": income(150000, 200000),
 };
 

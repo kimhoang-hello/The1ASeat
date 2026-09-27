@@ -31,11 +31,13 @@ const RECORDED_ON = "2026-09-07";
  * độc lập là hai chỗ sẽ lệch, và ở đây lệch nghĩa là engine bảo "đủ điểm rồi"
  * trong khi trang tra cứu ngay bên cạnh nói ngược lại.
  *
- * PHẠM VI CÓ HẠN, VÀ ĐÓ LÀ TRUNG THỰC. Spec §33 nêu 5 vùng; bảng giá trong
- * repo chỉ phủ **Canada → Đông Nam Á / Việt Nam**. Bốn vùng còn lại KHÔNG
- * được seed bằng số ước chừng — thà engine nói "chưa có dữ liệu cho chặng
- * này" còn hơn nói một con số không ai tra được. `audit:reco-data` liệt kê
- * các vùng còn trống.
+ * PHẠM VI CÓ HẠN, VÀ ĐÓ LÀ TRUNG THỰC. Spec §33 nêu 5 vùng; Award Flight
+ * Finder chỉ phủ **Canada → Đông Nam Á / Việt Nam**. Nhật và Đông Á suy từ
+ * CÙNG bảng Thái Bình Dương đó; châu Âu (27/09/2026) đọc thẳng bảng Đại Tây
+ * Dương của hai hãng, vì Award Flight Finder không có vùng này. Vùng nào chưa
+ * có bảng thì KHÔNG seed bằng số ước chừng — thà engine nói "chưa có dữ liệu
+ * cho chặng này" còn hơn nói một con số không ai tra được. `audit:reco-data`
+ * liệt kê các vùng còn trống.
  */
 
 const AWARD_CHART_SOURCE = "src/lib/award-charts.ts";
@@ -57,6 +59,10 @@ type StrategySeed = {
   pricing: "fixed" | "dynamic_floor";
   confidence: "verified" | "estimated";
   verifiedAt: string;
+  /** Ngày dòng này vào kho. Vắng thì là `RECORDED_ON` — đúng cho mọi dòng dựng
+   *  ngày 07/09; dòng thêm sau PHẢI khai, không thì một bản dựng lại theo
+   *  `knownAt` sẽ tưởng kho đã biết nó từ trước khi có. */
+  recordedOn?: string;
   sourceUrl: string;
   note: string;
 };
@@ -396,6 +402,112 @@ const SEEDS: StrategySeed[] = [
       "thuận. Cận dưới là Hong Kong bay thẳng; các điểm khác nối qua HKG nên " +
       "rơi band cao nhất.",
   },
+  /* ================================================================ *
+   * CANADA_US → EUROPE  (thêm 27/09/2026)
+   *
+   * Hai chương trình, cả hai đọc thẳng từ bảng của hãng ngày 27/09/2026:
+   *   Aeroplan   — PDF "Flight Reward Chart" bản 2026-08 của Air Canada®, trang
+   *                "Between North America and Atlantic zones". Band khoảng cách
+   *                RIÊNG của vùng này: 0–4,000 / 4,001–6,000 / 6,001–8,000 /
+   *                8,001+ (khác band Thái Bình Dương).
+   *   AAdvantage — bảng "Flight award chart" trên aa.com, xuất phát "Contiguous
+   *                48 U.S. states and Canada", đích "Europe".
+   *
+   * Band Aeroplan TÍNH từ toạ độ (8 thành phố gốc của `award-charts.ts` × 17 sân
+   * bay châu Âu lớn), không nhớ: bay thẳng rơi band 1 ở 52 cặp (bờ Đông → Tây
+   * Âu: YYZ–LHR 3,546 mi, YUL–CDG 3,433) và band 2 ở 83 cặp (bờ Tây, và bờ Đông
+   * → Nam/Đông Âu: YYZ–FCO 4,403, YVR–LHR 4,709). Nối chuyến đẩy lên band 3
+   * (YVR–YYZ–FCO 6,482; YVR–FRA–ATH 6,138). Nên thấp/điển hình/cao = band
+   * 1/2/3 — cùng cách đọc với chặng Nhật.
+   *
+   * KHÔNG có Asia Miles®: Cathay Pacific® không bay Canada–châu Âu, còn bảng
+   * đối tác của Asia Miles® không còn được công bố — số dựng lại sẽ là đoán.
+   * Avios® và Flying Blue® — hai chương trình mạnh nhất cho châu Âu — vẫn ở
+   * `UNQUOTABLE_AWARD_PROGRAMS` bên dưới, vì cùng lý do như mọi vùng khác.
+   * ================================================================ */
+  {
+    key: "aeroplan-ca-europe",
+    origin: "CANADA_US",
+    destination: "EUROPE",
+    program: "aeroplan",
+    name: "Aeroplan® / Star Alliance™ qua đối tác",
+    // Cột "All other partners": cố định, có bảo đảm, không có Premium Economy.
+    // Band 3 của cột này (60,000) CAO HƠN mức sàn Air Canada® cùng band
+    // (55,000) — lấy cột đối tác, vì đó là cột có bảo đảm.
+    economy: [32500, 42500, 60000],
+    premium: null,
+    business: [60000, 75000, 90000],
+    surcharge: "low",
+    // Đối tác bay thẳng từ Canada (kiểm trên flightconnections.com 27/09/2026):
+    // Lufthansa® từ Toronto/Montreal/Vancouver, TAP® từ Toronto/Montreal.
+    availability: "medium",
+    complexity: "moderate",
+    pricing: "fixed",
+    confidence: "verified",
+    verifiedAt: "2026-09-27",
+    recordedOn: "2026-09-27",
+    sourceUrl: "https://www.aircanada.com/ca/en/aco/home/aeroplan/redeem/air-canada.html",
+    note:
+      "Số của cột đối tác cố định, band theo khoảng cách tích luỹ. Bờ Đông bay " +
+      "thẳng Tây Âu rơi band thấp nhất; bờ Tây hay Nam/Đông Âu lên một band, nối " +
+      "chuyến lên thêm một band. Chuyến bay của chính Air Canada® định giá động — " +
+      "mức sàn bằng cột này nhưng giá trung vị cao hơn nhiều. Có chặng đối tác " +
+      "thì thu thêm phí đặt vé.",
+  },
+  {
+    key: "aeroplan-select-ca-europe",
+    origin: "CANADA_US",
+    destination: "EUROPE",
+    program: "aeroplan",
+    name: "Aeroplan® trên Air Canada® và Select Partners — giá động",
+    // Premium Economy chỉ có ở cột động. Mức sàn band 1 = 50,000.
+    economy: null,
+    premium: [50000, 0, 0],
+    business: null,
+    surcharge: "low",
+    availability: "medium",
+    complexity: "simple",
+    pricing: "dynamic_floor",
+    confidence: "estimated",
+    verifiedAt: "2026-09-27",
+    recordedOn: "2026-09-27",
+    sourceUrl: "https://www.aircanada.com/ca/en/aco/home/aeroplan/redeem/air-canada.html",
+    note:
+      "Mức SÀN, không phải giá. Chỉ áp cho Air Canada® và nhóm Select Partners " +
+      "(United®, Emirates®, Flydubai®, Etihad®, Canadian North®, Calm Air®, " +
+      "Bearskin®, PAL®). Giá trung vị Air Canada® công bố cho band thấp nhất là " +
+      "75,600 — giá thật thường cao hơn sàn nhiều.",
+  },
+  {
+    key: "aadvantage-ca-europe",
+    origin: "CANADA_US",
+    destination: "EUROPE",
+    program: "aadvantage",
+    name: "AAdvantage® qua đối tác oneworld",
+    // Bảng theo VÙNG: một mức cho cả châu Âu. Riêng phổ thông có mức off-peak
+    // 22,500 (10/01–14/03 và 01/11–14/12) — đó là cận dưới; ngoài hai khoảng
+    // ngày đó là 30,000.
+    economy: [22500, 30000, 30000],
+    premium: [40000, 40000, 40000],
+    business: [57500, 57500, 57500],
+    // Đối tác bay thẳng từ Canada là British Airways® (Toronto, Montreal,
+    // Vancouver → London Heathrow — flightconnections.com, 27/09/2026), và
+    // AAdvantage® thu phụ phí nhiên liệu của BA: vé thương gia có thể thêm vài
+    // trăm đô mỗi chiều.
+    surcharge: "high",
+    availability: "medium",
+    complexity: "moderate",
+    pricing: "fixed",
+    confidence: "verified",
+    verifiedAt: "2026-09-27",
+    recordedOn: "2026-09-27",
+    sourceUrl:
+      "https://www.aa.com/web/i18n/aadvantage-program/use-miles/partner-airline-flights.html",
+    note:
+      "Chỉ áp cho chặng do đối tác khai thác và chỉ chặng xuyên Đại Tây Dương; " +
+      "máy bay của chính American Airlines® định giá động. Bay British Airways® " +
+      "thì chịu phụ phí nhiên liệu cao.",
+  },
 ];
 
 /** Chương trình có bảng giá nhưng KHÔNG quote được, kèm lý do. Có mặt ở đây
@@ -453,7 +565,7 @@ export const AWARD_STRATEGIES: AwardStrategy[] = SEEDS.flatMap((seed) =>
         sourceUrl: seed.sourceUrl,
         sourceKind: "issuer",
         verifiedAt: seed.verifiedAt,
-        recordedAt: RECORDED_ON,
+        recordedAt: seed.recordedOn ?? RECORDED_ON,
         confidence: seed.confidence,
       };
     }),

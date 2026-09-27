@@ -516,7 +516,8 @@ if (cards === null) {
   );
   for (const origin of origins.length > 0 ? origins : ["CANADA_US"]) {
     for (const destination of TRIP_REGIONS) {
-      if (destination === origin) continue;
+      // Nội địa (CANADA_US → CANADA_US) CŨNG là một chặng: trang gợi ý có mục
+      // tiêu "bay trong Canada / Mỹ". Bỏ qua nó là giấu đúng vùng trống cuối.
       if (covered.has(`${origin}|${destination}`)) continue;
       warnings.push(
         `[award_strategies] ${origin} → ${destination}: chưa có bảng giá nào. ` +

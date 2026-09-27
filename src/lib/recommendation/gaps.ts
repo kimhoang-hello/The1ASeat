@@ -24,11 +24,15 @@ export function deriveGaps(data: RecommendationDataset): DataGap[] {
 
   // Cặp vùng chưa có strategy nào. Chỉ soi chiều ĐI TỪ Canada — V1 chỉ phục vụ
   // người ở Canada (spec §33), nên "Nhật → châu Âu" trống là đúng, không thiếu.
+  //
+  // KỂ CẢ `CANADA_US → CANADA_US`. Trang gợi ý có mục tiêu "bay trong Canada /
+  // Mỹ", và trước 27/09/2026 vòng lặp này bỏ qua đích CANADA_US — nên chặng
+  // nội địa không có bảng giá mà cũng không có chỗ trống: engine nói "chưa có
+  // trong award chart" nhưng §29 không trừ độ tin cậy vì nó.
   const covered = new Set(
     data.awardStrategies.map((s) => `${s.originRegion}|${s.destinationRegion}`),
   );
   for (const destination of TRIP_REGIONS) {
-    if (destination === "CANADA_US") continue;
     const key = `CANADA_US|${destination}`;
     if (covered.has(key)) continue;
     gaps.push({

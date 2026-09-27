@@ -10,6 +10,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { offlineDataset } from "./data/index.ts";
+import { datasetAt } from "./temporal.ts";
 import { id } from "./types.ts";
 import { productIdFor } from "./data/products.ts";
 import {
@@ -394,23 +395,32 @@ test("trip goal biểu diễn được chỉ bằng vùng", () => {
 });
 
 test("vùng chưa có bảng giá là chỗ trống ĐÃ KHAI, không phải im lặng", () => {
-  // CHÂU ÂU là vùng còn lại chưa dựng award strategy. Trạng thái người dùng
-  // biểu diễn chuyến đi này hoàn toàn bình thường; việc engine chưa định giá
-  // được là chuyện của lớp dữ liệu sản phẩm, và nó NÓI RA.
+  // Trạng thái người dùng biểu diễn chuyến đi này hoàn toàn bình thường; việc
+  // engine chưa định giá được là chuyện của lớp dữ liệu sản phẩm, và nó NÓI RA.
   //
-  // Bài này TỪNG dùng chuyến Nhật. JAPAN và EAST_ASIA đã được dựng, nên nó
-  // phải đổi sang vùng thật sự còn trống — nếu không nó chỉ đang chứng minh
-  // một chuyện đã hết đúng.
+  // Bài này TỪNG dùng chuyến Nhật, rồi châu Âu — mỗi lần một vùng được dựng
+  // bảng giá (châu Âu: 27/09/2026) thì bài chỉ còn chứng minh một chuyện đã
+  // hết đúng. Nay nó GỠ bảng giá của vùng đích khỏi một bản sao của kho, nên
+  // không còn phụ thuộc vào việc vùng nào đang trống.
   const goal = flexiblePointsSufficient.goals[0] as TripGoal;
   const resolved = resolveTripGoal(flexiblePointsSufficient.profile, goal);
-  const strategies = data.awardStrategies.filter(
+  const unpriced = datasetAt(
+    {
+      ...data,
+      awardStrategies: data.awardStrategies.filter(
+        (row) => row.destinationRegion !== resolved.destinationRegion,
+      ),
+    },
+    "2026-09-27",
+  );
+  const strategies = unpriced.awardStrategies.filter(
     (row) =>
       row.originRegion === resolved.originRegion &&
       row.destinationRegion === resolved.destinationRegion,
   );
   assert.equal(strategies.length, 0);
   assert.ok(
-    data.gaps.some(
+    unpriced.gaps.some(
       (gap) =>
         gap.kind === "award_route_uncovered" &&
         gap.subjectId === `${resolved.originRegion}|${resolved.destinationRegion}`,
