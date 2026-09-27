@@ -45,7 +45,7 @@ export function QuestionCard({
       </h2>
       <p className="mt-2 text-base leading-relaxed text-foreground/80">{spec.help}</p>
 
-      <form action={answerQuestion} className="mt-5">
+      <form action={answerQuestion} data-reco-event="answer" data-reco-question={spec.kind} className="mt-5">
         <input type="hidden" name="question" value={spec.key} />
         {version !== undefined && (spec.input.type === "cards" || spec.input.type === "programs") && (
           <input type="hidden" name="v" value={version} />
@@ -226,7 +226,7 @@ export function QuestionCard({
       </form>
 
       {skippable && (
-        <form action={skipCurrentQuestion} className="mt-4">
+        <form action={skipCurrentQuestion} data-reco-event="skip" data-reco-question={spec.kind} className="mt-4">
           <input type="hidden" name="question" value={spec.key} />
           <button
             type="submit"

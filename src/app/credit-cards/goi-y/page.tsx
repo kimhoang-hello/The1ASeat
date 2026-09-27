@@ -22,6 +22,7 @@ import { resetRecommendation } from "@/app/credit-cards/goi-y/actions";
 import { PageHeader } from "@/components/layout/page-header";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { ExplainedWhy } from "@/components/recommender/explanation";
+import { RecommenderFunnelTracker } from "@/components/recommender/funnel-tracker";
 import { QuestionCard } from "@/components/recommender/question-card";
 import { DeterministicWhy, Result } from "@/components/recommender/result";
 import { StartPanel } from "@/components/recommender/start-panel";
@@ -103,6 +104,7 @@ export default async function RecommenderPage({ searchParams }: PageProps) {
           : "Bản nháp — công cụ đang thử, nội dung có thể đổi."}
       </p>
       <JsonLd data={jsonLd} />
+      <RecommenderFunnelTracker />
       <PageHeader
         eyebrow={nav("creditCards").toUpperCase()}
         badge={<BetaBadge />}
@@ -163,7 +165,7 @@ function BrokenProfileNotice() {
       <p className="mt-2 text-base leading-relaxed text-foreground/90">
         Có thể do dữ liệu thẻ đã đổi kể từ lần trước. Làm lại từ đầu thì chỉ mất vài câu.
       </p>
-      <form action={resetRecommendation} className="mt-4">
+      <form action={resetRecommendation} data-reco-event="reset" className="mt-4">
         <button
           type="submit"
           className="inline-block cursor-pointer rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"

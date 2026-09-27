@@ -436,7 +436,7 @@ function AnsweredPanel({ rows }: { rows: AnsweredRow[] }) {
           </div>
         ))}
       </dl>
-      <form action={resetRecommendation} className="mt-4">
+      <form action={resetRecommendation} data-reco-event="reset" className="mt-4">
         <button
           type="submit"
           className="cursor-pointer text-sm font-semibold text-muted-foreground underline underline-offset-4 hover:text-primary"

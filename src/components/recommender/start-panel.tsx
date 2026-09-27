@@ -12,7 +12,7 @@ import { GOAL_OPTIONS } from "@/lib/recommender/questions";
  */
 export function StartPanel() {
   return (
-    <form action={startRecommendation} className="space-y-5">
+    <form action={startRecommendation} data-reco-event="start" className="space-y-5">
       <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
         <h2 className="font-display text-xl font-bold text-foreground sm:text-2xl">
           Mục tiêu của bạn là gì?
