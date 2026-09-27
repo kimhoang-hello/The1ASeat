@@ -26,7 +26,11 @@ import type {
   SpendCategory,
 } from "../recommendation/types.ts";
 import type { GoalType, UserState } from "../recommendation/user-types.ts";
+import { isOpenToEveryone } from "../recommendation/portfolio.ts";
+import { activeAt } from "../recommendation/temporal.ts";
 import {
+  BANKING_RELATIONSHIP_FALLBACK,
+  BANKING_RELATIONSHIP_TEXT,
   COMPONENT_LABEL,
   COMPONENT_STRENGTH,
   CONFIDENCE_BY_CAUSE,
@@ -67,6 +71,8 @@ export interface ActionView {
   apply: { url: string; affiliate: boolean } | null;
   reasons: ReasonRow[];
   warnings: string[];
+  /** Bước bắt buộc khi đăng ký mà engine không chặn (luật `soft`) — ví dụ phải có tài khoản ở chính ngân hàng. */
+  prerequisites: string[];
   /** Cho phần "cách tính" — người đọc kỹ mới mở ra. */
   score: number;
   /**
@@ -267,7 +273,7 @@ export function warningsOf(codes: readonly WarningCode[]): string[] {
 interface CardLookup {
   offers: Map<string, CreditCardOffer>;
   /** Dữ kiện offer engine ĐÃ ĐỌC, theo slug — nguồn của con số mốc chi. */
-  facts: Map<string, { minSpendPer90Days: number | null; spendSentence: string | null }>;
+  facts: Map<string, { minSpendPer90Days: number | null; spendSentence: string | null; prerequisites: string[] }>;
 }
 
 function lookup(
@@ -276,6 +282,7 @@ function lookup(
   offers: readonly CreditCardOffer[],
 ): CardLookup {
   const components = new Map(dataset.offerComponents.map((row) => [row.id as string, row]));
+  const rules = activeAt(dataset.eligibilityRules, record.outputSnapshot.asOf);
   return {
     offers: new Map(offers.map((offer) => [offer.slug, offer])),
     facts: new Map(
@@ -291,6 +298,9 @@ function lookup(
             // Mốc của TOÀN BỘ offer, không phải của phần người này với tới được.
             minSpendPer90Days: row.offer.fullRequiredPerNinetyDays,
             spendSentence: complete ? spendSentenceOf(own as OfferComponent[]) : null,
+            prerequisites: rules
+              .filter((rule) => rule.productId === row.productId && rule.ruleType === "banking_relationship_required")
+              .map((rule) => BANKING_RELATIONSHIP_TEXT[String(rule.value)] ?? BANKING_RELATIONSHIP_FALLBACK),
           },
         ];
       }),
@@ -553,6 +563,7 @@ function actionOf(
             .map((row) => COMPONENT_STRENGTH[row.key]),
     minSpendPer90Days: slug === null ? null : (cards.facts.get(slug)?.minSpendPer90Days ?? null),
     spendSentence: slug === null ? null : (cards.facts.get(slug)?.spendSentence ?? null),
+    prerequisites: slug === null ? [] : (cards.facts.get(slug)?.prerequisites ?? []),
     noCardReason: candidate.kind === "no_new_card" ? noCardReasonOf(candidate) : null,
     welcomeBonusBlocked: candidate.eligibility?.welcomeOfferBlocked === true,
     welcomeBonusUncertain:
@@ -608,8 +619,26 @@ function tripView(
   // Đọc từ chỗ trống §29 của CHÍNH mục tiêu này, không từ cờ cận dưới của
   // chương trình đang hiển thị: số dư chưa biết ở chương trình KHÁC vẫn có thể
   // lật chương trình phủ tốt nhất (Codex, review 27/09/2026).
+  //
+  // CHỈ số dư có thể đổi con số của chặng này: chương trình định giá được
+  // chặng, hoặc nguồn chuyển được sang một chương trình như vậy (một bước,
+  // chuyển được, chặng mở cho mọi người — đúng phép cộng của `portfolio.ts`).
+  // Avios® chưa khai số dư trên chặng Việt Nam thì hỏi thêm cũng không đổi
+  // gì (Codex, review 27/09/2026).
+  const pricedPrograms = new Set((trace.goal.tripNeed?.byProgram ?? []).map((row) => row.programId as string));
+  const paths = activeAt(dataset.transferPaths, record.outputSnapshot.asOf);
+  const transferable = new Set(dataset.pointsPrograms.filter((row) => row.transferable).map((row) => row.id as string));
+  const movesTrip = (programId: string) =>
+    pricedPrograms.has(programId) ||
+    (transferable.has(programId) &&
+      paths.some(
+        (path) =>
+          path.sourceProgramId === programId &&
+          isOpenToEveryone(path.requiresTier) &&
+          pricedPrograms.has(path.destinationProgramId as string),
+      ));
   for (const gap of trace.userGaps ?? []) {
-    if (gap.kind !== "point_balance_amount_unknown") continue;
+    if (gap.kind !== "point_balance_amount_unknown" || !movesTrip(gap.subject)) continue;
     missing.push({
       label: `số điểm ${programName(dataset, gap.subject as PointsProgramId)}`,
       questionKey: questionKey("point_balance_amount_unknown", gap.subject),

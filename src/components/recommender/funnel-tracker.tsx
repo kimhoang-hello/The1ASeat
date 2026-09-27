@@ -33,6 +33,11 @@ export function RecommenderFunnelTracker() {
         // Nút mục tiêu là nút gửi; không bấm nút nào (Enter trong form) thì
         // không có mục tiêu — máy chủ sẽ trả lỗi, nên cũng không phải một lượt bắt đầu.
         if (submitter?.name !== "goal" || submitter.value === "") return;
+        // Bỏ tick "Mình đang sống ở Canada" thì máy chủ chuyển sang trang báo
+        // "chỉ dùng được ở Canada" mà không tạo hồ sơ — không phải một lượt
+        // bắt đầu (Codex, review 27/09/2026).
+        const canada = form.elements.namedItem("canada");
+        if (!(canada instanceof HTMLInputElement) || !canada.checked) return;
         sendGAEvent("event", "recommender_started", { goal: submitter.value });
         return;
       }

@@ -149,12 +149,12 @@ function PrimaryCard({
 
       {why ?? <DeterministicWhy action={action} />}
 
-      {rest.length > 0 && (
+      {(rest.length > 0 || action.prerequisites.length > 0) && (
         <ul className="mt-3 space-y-2">
-          {rest.map((row) => (
-            <li key={row.text} className="flex gap-2 text-base leading-relaxed text-foreground/80">
+          {[...rest.map((row) => row.text), ...action.prerequisites].map((text) => (
+            <li key={text} className="flex gap-2 text-base leading-relaxed text-foreground/80">
               <Info size={20} weight="bold" className="mt-0.5 shrink-0 text-muted-foreground" />
-              {row.text}
+              {text}
             </li>
           ))}
         </ul>
@@ -282,6 +282,11 @@ function AlternativeRow({ action }: { action: ActionView }) {
         {action.kind === "no_new_card" ? "Chưa mở thẻ nào" : action.name}
       </p>
       {lead && <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{lead}</p>}
+      {action.prerequisites.map((text) => (
+        <p key={text} className="mt-1 text-sm leading-relaxed text-muted-foreground">
+          {text}
+        </p>
+      ))}
       {action.slug && (
         <Link
           href={`/credit-cards/${action.slug}`}

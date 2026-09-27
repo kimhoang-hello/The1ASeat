@@ -377,6 +377,18 @@ export const CONFIDENCE_REASON: Record<
  * Nằm ở đây chứ không trong component: lời giải thích Phase 6 đưa CHÍNH câu
  * này cho Claude làm dữ kiện, nên trang và prompt không được giữ hai bản.
  */
+/**
+ * Luật `banking_relationship_required` — một BƯỚC phải làm khi đăng ký, không
+ * phải rào cản (mọi dòng hiện có đều `soft`, nên engine không chặn và cũng
+ * không phát mã nào). Không có câu ở đây thì người đọc đi tới trang ngân hàng
+ * mới biết (Codex, review 27/09/2026). Khoá là `value` của luật.
+ */
+export const BANKING_RELATIONSHIP_TEXT: Record<string, string> = {
+  "wealthsimple-chequing":
+    "Wealthsimple® chỉ nhận đơn khi bạn có tài khoản chequing Wealthsimple® đang hoạt động — mở miễn phí, làm được ngay lúc đăng ký thẻ.",
+};
+export const BANKING_RELATIONSHIP_FALLBACK = "Ngân hàng đòi bạn có sẵn một tài khoản ở chính ngân hàng này mới nhận đơn.";
+
 export const NO_CARD_SENTENCE: Record<string, string> = {
   points_sufficient:
     "Theo ước lượng của mình, số điểm bạn đang có đã đủ cho mục tiêu này — mở thêm thẻ lúc này không rút ngắn được gì.",

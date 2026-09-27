@@ -320,8 +320,8 @@ test("số dư đã khai mà chưa nói bao nhiêu: không in điểm giữa th�
   const mixed = structuredClone(vietnamTripShortfall);
   mixed.balances = [
     { ...mixed.balances[0], programId: "aeroplan" as never, balance: 100_000 },
-    { ...mixed.balances[0], id: "b_aa" as never, programId: "aadvantage" as never, balance: 160_000 },
-    { ...mixed.balances[0], id: "b_mr" as never, programId: "amex-mr" as never, balance: null },
+    { ...mixed.balances[0], programId: "aadvantage" as never, balance: 160_000 },
+    { ...mixed.balances[0], programId: "amex-mr" as never, balance: null },
   ];
   const mixedView = presentRun(runFor(mixed), DATA, offersFor(DATA));
   assert.ok(mixedView !== null && mixedView.trip !== null);
@@ -331,10 +331,53 @@ test("số dư đã khai mà chưa nói bao nhiêu: không in điểm giữa th�
   assert.equal(coverageStatement(mixedView.trip), "điểm hiện tại phủ ít nhất 21% chuyến này");
   assert.ok(mixedView.trip.missing.some((row) => row.questionKey === "point_balance_amount_unknown:amex-mr"));
 
+  // Số dư chưa khai ở chương trình KHÔNG chạm tới chặng (Avios® không có bảng
+  // giá, và không chuyển sang Aeroplan®/AAdvantage®/Asia Miles®) thì không
+  // mời khai — trả lời xong con số vẫn y nguyên (Codex, review 27/09/2026).
+  const avios = structuredClone(vietnamTripShortfall);
+  avios.balances = [...avios.balances, { ...avios.balances[0], programId: "avios" as never, balance: null }];
+  const aviosView = presentRun(runFor(avios), DATA, offersFor(DATA));
+  assert.ok(aviosView !== null && aviosView.trip !== null);
+  assert.ok(!aviosView.trip.missing.some((row) => row.questionKey === "point_balance_amount_unknown:avios"));
+
   // Số dư đã biết đủ thì dòng "nói thêm số điểm" không xuất hiện.
   const known = presentRun(runFor(vietnamTripShortfall), DATA, offersFor(DATA));
   assert.ok(known !== null && known.trip !== null);
   assert.ok(!known.trip.missing.some((row) => row.questionKey.startsWith("point_balance_amount_unknown")));
+});
+
+test("bước bắt buộc mà engine không chặn (luật soft) vẫn tới mắt người đọc", () => {
+  // Wealthsimple® Visa Infinite+ đòi tài khoản chequing Wealthsimple® — `soft`
+  // vì ai cũng mở được lúc đăng ký. Engine bỏ qua luật soft, nên trước bản vá
+  // này thẻ được gợi ý mà người đọc không hề biết bước đó (Codex, 27/09/2026).
+  // Gắn luật vào thẻ chính của một nhân vật để khỏi phụ thuộc thứ hạng thật.
+  const record = runFor(beginnerNoCards);
+  const primaryId = record.outputSnapshot.results[0].primaryAction.productId;
+  assert.ok(primaryId != null);
+  const template = DATA.eligibilityRules.find((rule) => rule.productId === primaryId)!;
+  const data = {
+    ...DATA,
+    eligibilityRules: [
+      ...DATA.eligibilityRules,
+      {
+        ...template,
+        id: "elig_test_banking" as never,
+        ruleType: "banking_relationship_required" as const,
+        operator: "eq" as const,
+        value: "wealthsimple-chequing",
+        severity: "soft" as const,
+        scope: "application" as const,
+        ruleGroup: null,
+        lookback: null,
+      },
+    ],
+  };
+  const view = presentRun(record, data, offersFor(data));
+  assert.ok(view !== null);
+  assert.equal(view.primary.prerequisites.length, 1);
+  assert.match(view.primary.prerequisites[0], /chequing Wealthsimple®/u);
+  // Không có luật đó thì không có dòng nào.
+  assert.deepEqual(presentRun(record, DATA, offersFor(DATA))?.primary.prerequisites, []);
 });
 
 test("độ chắc chắn nói ra NGUYÊN NHÂN sửa được, không phải chỉ một mức", () => {
