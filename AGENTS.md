@@ -2050,6 +2050,32 @@ Lượt `sync-videos` đỏ 24/09 03:06 UTC lại là **YouTube 404 cho feed Ato
   Slot chỉ chạy khi đi CẶP với một dimension chuẩn. Lọc theo nguồn: `fieldName`
   `sessionSourceMedium`. Báo cáo tổng Search Console: `r=search-traffic&collectionId=search-console`.
 
+## Đo đạc GA4 (27/09/2026) — đừng đề xuất lại
+
+- **Phần thừa của bảng nguồn ở ngày cuối tự biến mất khi đọc lại.** Tuần 13–19/09:
+  đọc 20/09 thì 19/09 có `(not set)` 46, `(data not available)` 30, Cross-network
+  30, các dòng cộng dư 40; đọc lại 27/09 thì các dòng đó không còn (363 vs 364).
+  Tuần 20–26/09 lặp lại y hệt ở 26/09 (thừa 9). Không biết GA4 dồn các phiên đó vào
+  đâu — chỉ biết bảng hết lạ. Luật giữ nguyên: không trích số ngày cuối.
+- **`/calculator` từ `google / organic`: 12 phiên/tuần, 100% Safari iOS 26.6, 0s,
+  toàn người mới, 0 impression GSC** (20–26/09). Chưa phân loại. Tách khỏi mọi kết
+  luận "Google tăng" cho tới khi biết là gì.
+- **Game KHÔNG thể bắn event khi mở file trực tiếp** — `embed.js` dừng nếu không ở
+  iframe, và chỉ `catch-the-points-frame.tsx` (trang cha) chuyển event sang GA4. Tắt
+  cờ trang game là số event game về 0 bất kể file còn hở hay không; đừng đọc số 0
+  thành "không ai chơi".
+- **Đừng ghép hai phép so khác mẫu thành một khoảng** (Codex bắt 27/09: +58% 6 ngày
+  chưa lọc với +17% 7 ngày lọc một phía).
+- **`newsletter_subscribed` không phải "subscriber mới"** — bắn sau HTTP thành công,
+  người đã có trong Kit cũng tính.
+- **Custom dimension đăng ký 27/09:** `newsletter_source` ("Newsletter form"),
+  `goal`, `question`. Dimension `source` cũ vẫn còn, ngừng nhận dữ liệu từ 20/09.
+- **Đọc GA4 bằng URL, thêm:** phụ thẻ landing = `seldim` `["landingPagePlusQueryString",
+  "sessionSourceMedium"]` trên `r=landing-page`; lọc bằng ô tìm kiếm thì thêm
+  `_r.explorerCard..filterTerm=<chuỗi>` và `seldim` `["landingPageMinusQueryString",
+  "browser"|"city"|"operatingSystemWithVersion"]`. `dataFilters` với
+  `fieldName: landingPagePlusQueryString` KHÔNG chạy (báo cáo trắng).
+
 ## Luật welcome bonus theo cửa sổ thời gian (21/09/2026) — đừng đề xuất lại
 
 Chi tiết: `src/lib/recommendation/README.md`, mục "Luật welcome bonus theo cửa sổ
