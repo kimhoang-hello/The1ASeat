@@ -2057,9 +2057,20 @@ Lượt `sync-videos` đỏ 24/09 03:06 UTC lại là **YouTube 404 cho feed Ato
   30, các dòng cộng dư 40; đọc lại 27/09 thì các dòng đó không còn (363 vs 364).
   Tuần 20–26/09 lặp lại y hệt ở 26/09 (thừa 9). Không biết GA4 dồn các phiên đó vào
   đâu — chỉ biết bảng hết lạ. Luật giữ nguyên: không trích số ngày cuối.
-- **`/calculator` từ `google / organic`: 12 phiên/tuần, 100% Safari iOS 26.6, 0s,
-  toàn người mới, 0 impression GSC** (20–26/09). Chưa phân loại. Tách khỏi mọi kết
-  luận "Google tăng" cho tới khi biết là gì.
+- **`/calculator` từ `google / organic` từ 21/09 = gần như chắc là tự động, KHÔNG
+  phải click Google Search** (điều tra 27/09). Chữ ký: ~2 phiên/ngày rải cả giờ khuya
+  (04h, 06h), mỗi phiên 1 user MỚI (`first_visit` mỗi lần), 100% Safari + `iOS 26.6`
+  đúng bản đó (người thật cùng tuần rải 26.6/26.6.1/26.6.2) + `393x852` + English,
+  `pageReferrer` = `https://www.google.com/`, chỉ `session_start`/`first_visit`/
+  `page_view`, không `user_engagement`, 0s, không đi trang nào khác. Trước 21/09 trang
+  này chưa từng có phiên Google (tháng 8: 10 phiên direct/Facebook). Bằng chứng quyết
+  định: GSC cho `/calculator` **2 impression trong 01/07–26/09, 0 click** — mà bảng
+  theo trang của GSC GỒM cả query ẩn danh (các dòng trang cộng đúng bằng tổng 101
+  tuần 20–26/09), nên 12 click Search không thể thiếu dấu. Thành phố lẻ (Arnprior,
+  Hearst, Mattawa) khớp IP kiểu iCloud Private Relay/nhà mạng, nên KHÔNG đủ để nói
+  datacenter. Chưa thấy UA/IP thật — muốn chốt thì đọc access log Hostinger ở đúng
+  giờ (`dateHour` trong GA4, múi giờ property). Báo cáo tuần: trừ khỏi Google organic
+  và new users; lọc theo bộ ba `/calculator` + `iOS 26.6` + referrer google.com.
 - **Game KHÔNG thể bắn event khi mở file trực tiếp** — `embed.js` dừng nếu không ở
   iframe, và chỉ `catch-the-points-frame.tsx` (trang cha) chuyển event sang GA4. Tắt
   cờ trang game là số event game về 0 bất kể file còn hở hay không; đừng đọc số 0
