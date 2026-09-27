@@ -313,6 +313,24 @@ test("số dư đã khai mà chưa nói bao nhiêu: không in điểm giữa th�
     "điểm hiện tại phủ ít nhất 99% chuyến này",
   );
 
+  // Hai chương trình: sàn phải là của CHƯƠNG TRÌNH ĐANG HIỂN THỊ (Codex, review
+  // 27/09/2026). 100,000 Aeroplan® + 160,000 AAdvantage® + Membership Rewards®
+  // chưa khai số dư: trang đo bằng Aeroplan®, nên không được mượn sàn 57% của
+  // AAdvantage®.
+  const mixed = structuredClone(vietnamTripShortfall);
+  mixed.balances = [
+    { ...mixed.balances[0], programId: "aeroplan" as never, balance: 100_000 },
+    { ...mixed.balances[0], id: "b_aa" as never, programId: "aadvantage" as never, balance: 160_000 },
+    { ...mixed.balances[0], id: "b_mr" as never, programId: "amex-mr" as never, balance: null },
+  ];
+  const mixedView = presentRun(runFor(mixed), DATA, offersFor(DATA));
+  assert.ok(mixedView !== null && mixedView.trip !== null);
+  assert.equal(mixedView.trip.needProgram, "Air Canada® Aeroplan®");
+  assert.ok(mixedView.trip.coverageIsEstimate);
+  assert.equal(mixedView.trip.coverageLowerBound, 100_000 / (mixedView.trip.needHigh ?? Number.NaN));
+  assert.equal(coverageStatement(mixedView.trip), "điểm hiện tại phủ ít nhất 21% chuyến này");
+  assert.ok(mixedView.trip.missing.some((row) => row.questionKey === "point_balance_amount_unknown:amex-mr"));
+
   // Số dư đã biết đủ thì dòng "nói thêm số điểm" không xuất hiện.
   const known = presentRun(runFor(vietnamTripShortfall), DATA, offersFor(DATA));
   assert.ok(known !== null && known.trip !== null);

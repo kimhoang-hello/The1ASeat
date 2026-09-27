@@ -176,9 +176,10 @@ export interface TripNumbersView {
   coverage: number | null;
   coverageIsEstimate: boolean;
   /**
-   * Sàn CHẮC CHẮN của `coverage` — phần phủ của riêng những số dư đã biết.
-   * Khi `coverageIsEstimate`, `coverage` là điểm giữa của [sàn này, 1]: con số
-   * engine dùng để QUYẾT ĐỊNH, không phải con số được phép in ra.
+   * Sàn CHẮC CHẮN của phần phủ trên `needProgram` — điểm đã biết chắc với tới
+   * được ÷ mức giá cao nhất của chương trình đó. Khi `coverageIsEstimate`,
+   * `coverage` là điểm giữa của một khoảng: con số engine dùng để QUYẾT ĐỊNH,
+   * không phải con số được phép in ra.
    */
   coverageLowerBound: number | null;
 }
@@ -601,19 +602,20 @@ function tripView(
   if (trip.roundTrip === null) {
     missing.push({ label: "khứ hồi hay một chiều", questionKey: `trip_round_trip_unknown:${goalId}` });
   }
-  // Tài khoản đã khai mà chưa nói số dư: "gom được" chỉ còn là cận dưới, và
-  // câu §30 chọn tiếp có thể là chi tiêu hằng tháng — tức không còn đường nào
-  // từ khối chuyến bay tới đúng con số làm nó chính xác (audit trang 27/09/2026).
-  const accessibleIsLowerBound = !balancesUndeclared && result.numbers.accessiblePointsIsLowerBound;
-  if (accessibleIsLowerBound) {
-    for (const row of record.inputSnapshot.state.balances ?? []) {
-      if (row?.balance != null) continue;
-      missing.push({
-        label: `số điểm ${programName(dataset, row.programId)}`,
-        questionKey: questionKey("point_balance_amount_unknown", row.programId as string),
-      });
-    }
+  // Tài khoản đã khai mà chưa nói số dư: con số của khối này chỉ còn là ước
+  // lượng, và câu §30 chọn tiếp có thể là chi tiêu hằng tháng — tức không còn
+  // đường nào từ đây tới đúng con số làm nó chính xác (audit trang 27/09/2026).
+  // Đọc từ chỗ trống §29 của CHÍNH mục tiêu này, không từ cờ cận dưới của
+  // chương trình đang hiển thị: số dư chưa biết ở chương trình KHÁC vẫn có thể
+  // lật chương trình phủ tốt nhất (Codex, review 27/09/2026).
+  for (const gap of trace.userGaps ?? []) {
+    if (gap.kind !== "point_balance_amount_unknown") continue;
+    missing.push({
+      label: `số điểm ${programName(dataset, gap.subject as PointsProgramId)}`,
+      questionKey: questionKey("point_balance_amount_unknown", gap.subject),
+    });
   }
+  const accessibleIsLowerBound = !balancesUndeclared && result.numbers.accessiblePointsIsLowerBound;
   return {
     missing,
     routeNotPriced: routeNotPricedOf(record, index),
@@ -654,7 +656,16 @@ function tripView(
     // chưa biết, hoặc chương trình chỉ công bố giá sàn. Trình bày nó như một
     // con số chắc chắn là đúng lỗi §29 sinh ra để tránh.
     coverageIsEstimate: coverage !== null && coverage.coverageKnown === false,
-    coverageLowerBound: balancesUndeclared ? null : (coverage?.coverageLowerBound ?? null),
+    // Sàn của CHÍNH chương trình đang hiển thị: điểm chắc chắn với tới được ÷
+    // mức giá cao nhất của nó — cùng phép đo engine dùng cho `coverage`.
+    // `tripCoverage.coverageLowerBound` là sàn tốt nhất qua MỌI chương trình,
+    // nên có thể là của AAdvantage® trong khi mọi con số bên cạnh nói về
+    // Aeroplan® (Codex, review 27/09/2026). Chỉ biết giá sàn thì không có
+    // mẫu số — không nói.
+    coverageLowerBound:
+      balancesUndeclared || bestRow?.high == null || bestRow.high <= 0 || result.numbers.accessiblePoints === null
+        ? null
+        : Math.min(1, result.numbers.accessiblePoints / bestRow.high),
   };
 }
 
