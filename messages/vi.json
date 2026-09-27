@@ -517,6 +517,7 @@
     "bonusesLabel": "Đang có transfer bonus nào?",
     "bonusesDescription": "Các đợt bonus đang chạy và ngày hết hạn",
     "recommenderLabel": "So xong vẫn chưa chọn được?",
+    "recommenderEmptyLabel": "Chưa biết so thẻ nào? Để mình gợi ý (Beta)",
     "recommenderDescription": "Trả lời vài câu, mình gợi ý thẻ theo mục tiêu của bạn (Beta)",
     "startHereLabel": "Chưa biết bắt đầu từ đâu?",
     "startHereDescription": "Bốn bước từ con số không tới tấm vé award đầu tiên",

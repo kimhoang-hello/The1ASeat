@@ -885,12 +885,15 @@ export function coverageStatement(
   // Ước lượng: `coverage` là ĐIỂM GIỮA của [sàn, 1] — quy ước "chưa biết =
   // trung tính" của engine, dùng để quyết định. In nó ra là bịa: tài khoản
   // Aeroplan® chưa khai số dư có sàn 0, và trang từng in "phủ khoảng 50%" ngay
-  // cạnh "gom được 0 điểm (ít nhất)" (audit trang 27/09/2026). Chỉ nói phần
-  // CHẮC: sàn, làm tròn XUỐNG; sàn bằng 0 thì không có gì để nói.
+  // cạnh "gom được 0 điểm (ít nhất)" (audit trang 27/09/2026). Chỉ nói phần ĐÃ
+  // BIẾT, và nói đúng là phần đã biết — KHÔNG hứa "ít nhất": mẫu số là cận
+  // trên của khoảng mô hình (band 3 châu Âu), không phải trần của mọi hành
+  // trình, nên một chuyến rơi band 8,001+ phủ thấp hơn (Codex, vòng bác bản
+  // vá 27/09/2026). Phần đã biết bằng 0 thì không có gì để nói.
   if (trip.coverageIsEstimate === true) {
-    const floor = trip.coverageLowerBound ?? 0;
-    const percent = Math.min(99, Math.floor(floor * 100));
-    return percent > 0 ? `điểm hiện tại phủ ít nhất ${percent}% chuyến này` : null;
+    const known = trip.coverageLowerBound ?? 0;
+    const percent = Math.min(99, Math.round(known * 100));
+    return percent > 0 ? `số điểm đã biết của bạn phủ khoảng ${percent}% chuyến này` : null;
   }
   if (trip.coverage >= 1) return trip.gap !== null && trip.gap > 0 ? null : "điểm hiện tại phủ được cả chuyến này";
   // Chiều ngược lại của cùng mâu thuẫn: khoảng thiếu đo ở giá ĐIỂN HÌNH (bằng

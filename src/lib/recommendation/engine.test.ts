@@ -2568,6 +2568,22 @@ test("EUROPE định giá được từ 27/09/2026 — band Đại Tây Dương,
   assert.equal(before.awardStrategies.filter((row) => row.destinationRegion === "EUROPE").length, 0);
 });
 
+test("chặng nội địa CANADA_US → CANADA_US là chỗ trống ĐÃ KHAI trong lượt chạy", () => {
+  // Trang có mục tiêu "bay trong Canada / Mỹ". Trước 4.31.0, `gaps.ts` bỏ qua
+  // đích CANADA_US: không bảng giá mà cũng không chỗ trống, nên §29 không trừ
+  // độ tin cậy. Bài này đỏ nếu vòng lặp bỏ qua đích đó trở lại.
+  const domestic = structuredClone(vietnamTripShortfall);
+  domestic.goals = domestic.goals.map((goal) =>
+    goal.type === "trip" ? { ...goal, destinationRegion: "CANADA_US" as const } : goal,
+  );
+  const result = run(domestic);
+  assert.ok(
+    result.dataGaps.some((gap) => gap.kind === "award_route_uncovered" && gap.subjectId === "CANADA_US|CANADA_US"),
+    result.dataGaps.map((gap) => `${gap.kind}:${gap.subjectId}`).join(", "),
+  );
+  assert.ok((result.results[0].warnings as string[]).includes("AWARD_ROUTE_NOT_IN_DATASET"));
+});
+
 test("KHÔNG có hạng First đi châu Á — vắng mặt là CÓ CHỦ Ý", () => {
   // `award-charts.ts` ghi rõ: không hãng nào bán First giữa Canada và châu Á.
   // Nếu ngày nào đó có người thêm một dòng First, bài này đỏ và bắt họ chứng

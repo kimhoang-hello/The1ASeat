@@ -303,14 +303,15 @@ test("số dư đã khai mà chưa nói bao nhiêu: không in điểm giữa th�
     JSON.stringify(view.trip.missing),
   );
 
-  // Có sàn thật thì nói sàn, làm tròn XUỐNG — không bao giờ nói điểm giữa.
+  // Có phần đã biết thì nói đúng là phần đã biết — không bao giờ nói điểm giữa,
+  // và không hứa "ít nhất": mẫu số là cận trên của khoảng mô hình.
   assert.equal(
     coverageStatement({ coverage: 0.728, gap: null, coverageIsEstimate: true, coverageLowerBound: 0.456 }),
-    "điểm hiện tại phủ ít nhất 45% chuyến này",
+    "số điểm đã biết của bạn phủ khoảng 46% chuyến này",
   );
   assert.equal(
     coverageStatement({ coverage: 0.9995, gap: null, coverageIsEstimate: true, coverageLowerBound: 0.999 }),
-    "điểm hiện tại phủ ít nhất 99% chuyến này",
+    "số điểm đã biết của bạn phủ khoảng 99% chuyến này",
   );
 
   // Hai chương trình: sàn phải là của CHƯƠNG TRÌNH ĐANG HIỂN THỊ (Codex, review
@@ -328,7 +329,7 @@ test("số dư đã khai mà chưa nói bao nhiêu: không in điểm giữa th�
   assert.equal(mixedView.trip.needProgram, "Air Canada® Aeroplan®");
   assert.ok(mixedView.trip.coverageIsEstimate);
   assert.equal(mixedView.trip.coverageLowerBound, 100_000 / (mixedView.trip.needHigh ?? Number.NaN));
-  assert.equal(coverageStatement(mixedView.trip), "điểm hiện tại phủ ít nhất 21% chuyến này");
+  assert.equal(coverageStatement(mixedView.trip), "số điểm đã biết của bạn phủ khoảng 22% chuyến này");
   assert.ok(mixedView.trip.missing.some((row) => row.questionKey === "point_balance_amount_unknown:amex-mr"));
 
   // Số dư chưa khai ở chương trình KHÔNG chạm tới chặng (Avios® không có bảng

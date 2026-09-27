@@ -164,6 +164,18 @@ export default async function CompareCardsPage({
                   &larr; {t("needMoreCta")}
                 </Link>
               </p>
+              {/* Người vào từ menu mà chưa biết so thẻ nào là đúng người công
+                  cụ gợi ý dựng ra cho — nhánh này trước đây không mời họ. */}
+              {RECOMMENDER_PUBLISHED && (
+                <p className="mt-3">
+                  <Link
+                    href={RECOMMENDER_PATH}
+                    className="text-sm font-semibold text-primary hover:underline"
+                  >
+                    {next("recommenderEmptyLabel")} &rarr;
+                  </Link>
+                </p>
+              )}
             </div>
           )}
         </div>

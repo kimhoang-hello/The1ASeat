@@ -451,8 +451,8 @@ const SEEDS: StrategySeed[] = [
       "Số của cột đối tác cố định, band theo khoảng cách tích luỹ. Bờ Đông bay " +
       "thẳng Tây Âu rơi band thấp nhất; bờ Tây hay Nam/Đông Âu lên một band, nối " +
       "chuyến lên thêm một band. Chuyến bay của chính Air Canada® định giá động — " +
-      "mức sàn bằng cột này nhưng giá trung vị cao hơn nhiều. Có chặng đối tác " +
-      "thì thu thêm phí đặt vé.",
+      "mức sàn ngang cột này ở hai band đầu, nhưng giá trung vị cao hơn nhiều. " +
+      "Có chặng đối tác thì thu thêm phí đặt vé.",
   },
   {
     key: "aeroplan-select-ca-europe",
@@ -532,6 +532,15 @@ export const UNQUOTABLE_AWARD_PROGRAMS: { programId: string; reason: string }[] 
       "đổi theo từng chuyến, kể cả trên đối tác Star Alliance™.",
   },
 ];
+
+// Seed kiểm SAU ngày dựng kho mà không khai `recordedOn` là seed thêm sau
+// quên khai: nó sẽ mang `recordedAt` 07/09 và một bản dựng lại theo `knownAt`
+// sẽ biết nó từ trước khi nó có (Codex, vòng bác bản vá 27/09/2026).
+for (const seed of SEEDS) {
+  if (seed.recordedOn === undefined && seed.verifiedAt > RECORDED_ON) {
+    throw new Error(`award strategy "${seed.key}" kiểm ngày ${seed.verifiedAt} mà thiếu recordedOn`);
+  }
+}
 
 export const AWARD_STRATEGIES: AwardStrategy[] = SEEDS.flatMap((seed) =>
   (

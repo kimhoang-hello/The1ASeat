@@ -43,12 +43,9 @@ export function RecommenderFunnelTracker() {
       }
       const question = form.dataset.recoQuestion ?? "unknown";
       if (kind === "answer") {
-        // "Mình chưa có thẻ nào" / "chưa có điểm ở đâu" là một câu trả lời, và
-        // là câu trả lời phổ biến nhất của người mới — tách ra để đọc được.
-        sendGAEvent("event", "recommender_answered", {
-          question,
-          answer_none: submitter?.name === "none" ? "yes" : "no",
-        });
+        // KHÔNG kèm "trả lời gì" — kể cả "chưa có thẻ nào": đó vẫn là một câu
+        // trả lời về người dùng (Codex, vòng bác bản vá 27/09/2026).
+        sendGAEvent("event", "recommender_answered", { question });
       } else if (kind === "skip") {
         sendGAEvent("event", "recommender_skipped", { question });
       } else if (kind === "reset") {

@@ -392,7 +392,7 @@ function TripNumbers({ trip }: { trip: NonNullable<ResultView["trip"]> }) {
         <p className="mt-3 text-sm text-muted-foreground">
           {/* Cùng luật với lời giải thích: không phần trăm vượt 100, không "phủ cả chuyến" cạnh "còn thiếu". */}
           {asSentenceStart(coverageStatement(trip) as string)}
-          {trip.coverageIsEstimate ? " — con số thật có thể cao hơn, vì còn chỗ mình chưa biết." : "."}
+          {trip.coverageIsEstimate ? " — chưa tính phần điểm mình chưa biết." : "."}
         </p>
       )}
     </section>
