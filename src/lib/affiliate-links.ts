@@ -38,6 +38,9 @@ const REFERRAL_SOURCES: { host: string; path?: string }[] = [
   // Wise thì ngược lại: `wise.com` là trang sản phẩm bình thường, chỉ nhánh
   // `/invite/` mới có thưởng giới thiệu. Khoá theo đường dẫn như Amex.
   { host: "wise.com", path: "/invite/" },
+  // seats.aero cũng vậy: trang chủ là công cụ tìm award mà bài viết dẫn tới
+  // như một nguồn, chỉ nhánh `/r/` là link giới thiệu bản Pro.
+  { host: "seats.aero", path: "/r/" },
 ];
 
 /** `/referral` phải là một đoạn đường dẫn trọn vẹn, không phải chuỗi con:
