@@ -2284,3 +2284,27 @@ constant-time; `finlywealth` chỉ fetch đúng host.
 **Ngoài phạm vi bảo mật, phát hiện khi soát CSP:** khung bình luận Cusdis hỏng
 SẴN trên production (trước bản vá này): `cusdis.com/js/iframe.umd.js` bị chặn
 CORS (không có `Access-Control-Allow-Origin`), khung `srcdoc` trống.
+
+## Kiểm toàn diện 27/09/2026 — đừng đề xuất lại
+
+Gate xanh: lint, tsc, build, 8 audit, 4 test suite, `npm audit` 0 lỗ hổng, 8
+URL chính 200, `www` 308 về apex, đủ 5 header bảo mật, CSP meta có mặt trên
+trang chủ. `audit:health`: không có gì cần người nhìn, phần "Nhắc" trống.
+Job: `sync-videos` đỏ 26/09 17:13 UTC là `curl (28)` tới ghe1a.com cả 5 lượt —
+Hostinger, không phải code.
+
+**404 của feed YouTube là dịch vụ feed của YouTube sập, không phải kênh này.**
+Lúc 04:08 và 04:19 UTC 27/09/2026, gọi từ máy nhà: feed kênh, feed playlist
+`UU…` VÀ feed của một kênh đối chứng không liên quan (Google for Developers,
+`UC_x5XG1OV2P6uZZ5FSM9Ttw`) đều 404. Tức fallback uploads-playlist (mục 26/09)
+KHÔNG cứu được ca này — hai feed cùng một dịch vụ, sập cùng lúc. Đừng thêm
+nguồn feed thứ ba cùng họ `feeds/videos.xml`, và đừng nghi channel ID hay IP
+runner nữa. Job đỏ một lượt đầu ngày là giá chấp nhận được (lượt sau luôn
+xanh, video không mất vì feed giữ 15 entry).
+
+**Đã vá — cửa kiểm hình dạng feed quên `title`.** `parseFeed` bỏ qua entry
+thiếu hoặc rỗng `<title>`, nhưng cửa kiểm chỉ đòi channelId/videoId/published,
+nên feed 200 mà entry thiếu tiêu đề ra `checked` hụt và job xanh giả (Codex).
+Regex `<title>[^<]+</title>` không khớp nhầm `<media:title>` (đã thử tổng hợp:
+đủ → ok; rỗng, thiếu, chỉ còn `media:title` → hỏng). Vòng Codex bác bản vá chấm
+ĐÚNG, không thấy hồi quy (entity, emoji, ký tự đặc biệt trong tiêu đề vẫn qua).

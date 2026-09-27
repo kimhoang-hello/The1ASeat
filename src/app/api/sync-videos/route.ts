@@ -245,13 +245,17 @@ async function fetchLatestVideos(): Promise<{ videos: VideoEntry[]; feedSource: 
     // 200 chưa đủ để tin, nhất là ở đường dự phòng (Codex, vòng bác bản vá
     // 26/09/2026): kênh có video thì feed không bao giờ rỗng, nên 0 entry là
     // feed hỏng chứ không phải "không có gì mới" — đọc thành `checked: 0` là
-    // job xanh giả. Và mọi entry phải thuộc đúng kênh này, có videoId và
-    // ngày đăng — thiếu thì `parseFeed` lặng lẽ bỏ qua nó.
+    // job xanh giả. Và mọi entry phải thuộc đúng kênh này, có videoId, tiêu
+    // đề và ngày đăng — thiếu cái nào thì `parseFeed` lặng lẽ bỏ qua nó (kiểm
+    // 27/09/2026: bản trước quên `title`, entry thiếu tiêu đề vẫn ra 200 xanh).
     const blocks = xml.split("<entry>").slice(1);
     const ownTag = `<yt:channelId>${YOUTUBE_CHANNEL_ID}</yt:channelId>`;
     const malformed = blocks.filter(
       (block) =>
-        !block.includes(ownTag) || !/<yt:videoId>[^<]+<\/yt:videoId>/.test(block) || !/<published>[^<]+<\/published>/.test(block),
+        !block.includes(ownTag) ||
+        !/<yt:videoId>[^<]+<\/yt:videoId>/.test(block) ||
+        !/<title>[^<]+<\/title>/.test(block) ||
+        !/<published>[^<]+<\/published>/.test(block),
     );
     if (blocks.length === 0 || malformed.length > 0) {
       throw new Error(
