@@ -92,10 +92,12 @@ test("link lọc luôn nhảy về danh sách", () => {
 });
 
 // Elevated chỉ được bật khi ngân hàng công bố hạn offer. Thiếu `expiresAt` thì
-// thẻ nằm trong mục "Elevated Offers" mãi mãi, kể cả khi offer đã về mức thường.
-test("thẻ elevated phải có ngày hết hạn", () => {
+// thẻ nằm trong mục "Elevated Offers" mãi mãi, kể cả khi offer đã về mức thường —
+// nên thiếu ngày thì phải khai rõ `offerEndUnannounced` để lượt rà biết mà kiểm tay.
+test("thẻ elevated phải có ngày hết hạn hoặc khai rõ là ngân hàng không công bố", () => {
   for (const card of ALL_US_CARDS) {
-    if (card.elevatedBonus) assert.ok(card.expiresAt, card.slug);
+    if (!card.elevatedBonus) continue;
+    assert.ok(Boolean(card.expiresAt) !== Boolean(card.us.offerEndUnannounced), card.slug);
   }
 });
 

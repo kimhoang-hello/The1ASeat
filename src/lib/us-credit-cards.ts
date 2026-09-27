@@ -113,6 +113,8 @@ export type UsCardDetails = {
   /** Điều kiện nhận welcome bonus. Vắng khi thẻ không có welcome bonus. */
   minimumSpendUsd?: number;
   offerPeriod?: string;
+  /** Elevated offer ngân hàng ghi "Limited-Time" nhưng không công bố ngày kết thúc. */
+  offerEndUnannounced?: true;
   /** Vài quyền lợi ngắn làm tag trên thẻ trong danh sách. */
   tags: string[];
   canada: UsCardCanadianPerspective;
@@ -139,6 +141,12 @@ type UsCardData = {
    * `isElevatedLive` với thẻ Canada: qua `expiresAt` là tự rời mục.
    */
   elevatedBonus: boolean;
+  /**
+   * Ngân hàng ghi offer có thời hạn nhưng không công bố ngày (Capital One®).
+   * Thay cho `expiresAt`, nên thẻ KHÔNG tự rời mục Elevated — mỗi lượt rà phải
+   * mở lại trang ngân hàng, hết chữ "Limited-Time" thì tắt tay.
+   */
+  offerEndUnannounced?: true;
   cardImage?: string;
   /** Như `welcomeBonus` của thẻ Canada: "75,000 điểm Ultimate Rewards®". */
   welcomeBonus?: string;
@@ -685,7 +693,8 @@ const US_CARD_DATA: UsCardData[] = [
     issuerId: "capital-one",
     category: "travel",
     business: false,
-    elevatedBonus: false,
+    elevatedBonus: true,
+    offerEndUnannounced: true,
     cardImage: "/images/us-cards/capital-one-venture.png",
     welcomeBonus: "75,000 miles Capital One® + $300 USD credit",
     minimumSpendUsd: 4_000,
@@ -718,8 +727,8 @@ const US_CARD_DATA: UsCardData[] = [
       watchOut: "Capital One® kéo báo cáo tín dụng từ cả ba credit bureau khi xét đơn.",
     },
     applyUrl: "https://www.capitalone.com/credit-cards/venture/",
-    lastUpdated: VERIFIED_2,
-    verifiedOn: VERIFIED_2,
+    lastUpdated: "2026-09-27",
+    verifiedOn: "2026-09-27",
     needsVerification: false,
   },
   {
@@ -1774,6 +1783,7 @@ function toOffer(card: UsCardData): UsCreditCardOffer {
       annualFeeUsd: card.annualFeeUsd,
       minimumSpendUsd: card.minimumSpendUsd,
       offerPeriod: card.offerPeriod,
+      offerEndUnannounced: card.offerEndUnannounced,
       tags: card.tags,
       canada: card.canada,
       lastUpdated: card.lastUpdated,
