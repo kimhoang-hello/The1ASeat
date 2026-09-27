@@ -10,6 +10,7 @@ import { t } from "@/lib/t";
 import { SITE_URL } from "@/lib/subscriber-email";
 import { ORGANIZATION_SAME_AS } from "@/lib/social-links";
 import { alternatesWithFeed } from "@/lib/seo";
+import { CSP_META } from "@/lib/content-security-policy";
 import "./globals.css";
 
 /**
@@ -106,6 +107,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang="vi" className={`${fontHeading.variable} ${fontBody.variable} h-full antialiased`}>
+      <head>
+        {/* Bản CSP có hiệu lực trên ghe1a.com: edge Hostinger ghi đè header
+            CSP của app, còn HTML thì không đụng tới. Xem
+            `lib/content-security-policy.ts`. */}
+        <meta httpEquiv="Content-Security-Policy" content={CSP_META} />
+      </head>
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <JsonLd data={siteJsonLd} />
         {/* Hidden until it is tabbed to. Without it a keyboard reader crosses

@@ -2250,7 +2250,16 @@ Contentful CFPAT, Resend, GitHub, AWS, Google, private key). Repo **công khai**
   giờ. Trần chung đặt trước bước validate là tự dựng đường DoS. Câu hỏi `X-Forwarded-For` (mục 30/08) vẫn chưa có đáp
   án từ Hostinger, nhưng nó thôi quyết định thiệt hại tối đa: xoay header giờ
   chỉ vượt được xô IP, không vượt được trần chung.
-- **CSP thật** trong `next.config.ts`. `'unsafe-inline'` cho script là cố ý
+- **CSP thật**, định nghĩa ở `lib/content-security-policy.ts`. **Edge Hostinger
+  GHI ĐÈ header `Content-Security-Policy` của app** bằng bản
+  `upgrade-insecure-requests` của nó (kiểm ngay sau deploy, trên trang tĩnh,
+  động lẫn 404) — nên bản có hiệu lực trên production là thẻ
+  `<meta http-equiv>` trong `app/layout.tsx`; header chỉ còn tác dụng ở local.
+  Bản meta không mang `frame-ancestors` (meta không hỗ trợ), chiều đó do
+  `X-Frame-Options` lo — header ấy Hostinger để nguyên. Đừng "dọn" thẻ meta vì
+  tưởng trùng với header. Trang lỗi Next tự dựng ngoài root layout (`_global-error`, 404 dựng sẵn của
+  route đang tắt cờ) không có meta — chấp nhận: không nội dung nào từ người
+  dùng hay Contentful đi vào đó (Codex P3, đã cân). `'unsafe-inline'` cho script là cố ý
   (nonce = mọi trang thành động). Iframe bình luận Cusdis là `srcdoc` nên THỪA
   KẾ CSP của trang — cusdis.com phải có trong script/style/connect. Đã soát
   console 7 loại trang: không vi phạm nào; script từ host lạ bị chặn đúng.
