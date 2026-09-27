@@ -175,6 +175,12 @@ export interface TripNumbersView {
   /** 0..1 — phần chuyến đi mà số điểm hiện tại phủ được. */
   coverage: number | null;
   coverageIsEstimate: boolean;
+  /**
+   * Sàn CHẮC CHẮN của `coverage` — phần phủ của riêng những số dư đã biết.
+   * Khi `coverageIsEstimate`, `coverage` là điểm giữa của [sàn này, 1]: con số
+   * engine dùng để QUYẾT ĐỊNH, không phải con số được phép in ra.
+   */
+  coverageLowerBound: number | null;
 }
 
 export interface ResultView {
@@ -595,6 +601,19 @@ function tripView(
   if (trip.roundTrip === null) {
     missing.push({ label: "khứ hồi hay một chiều", questionKey: `trip_round_trip_unknown:${goalId}` });
   }
+  // Tài khoản đã khai mà chưa nói số dư: "gom được" chỉ còn là cận dưới, và
+  // câu §30 chọn tiếp có thể là chi tiêu hằng tháng — tức không còn đường nào
+  // từ khối chuyến bay tới đúng con số làm nó chính xác (audit trang 27/09/2026).
+  const accessibleIsLowerBound = !balancesUndeclared && result.numbers.accessiblePointsIsLowerBound;
+  if (accessibleIsLowerBound) {
+    for (const row of record.inputSnapshot.state.balances ?? []) {
+      if (row?.balance != null) continue;
+      missing.push({
+        label: `số điểm ${programName(dataset, row.programId)}`,
+        questionKey: questionKey("point_balance_amount_unknown", row.programId as string),
+      });
+    }
+  }
   return {
     missing,
     routeNotPriced: routeNotPricedOf(record, index),
@@ -628,13 +647,14 @@ function tripView(
     // — ba câu khẳng định dựng trên một câu người dùng chưa trả lời, ngay dưới
     // cảnh báo "bạn chưa khai điểm đang có".
     accessible: balancesUndeclared ? null : result.numbers.accessiblePoints,
-    accessibleIsLowerBound: balancesUndeclared ? false : result.numbers.accessiblePointsIsLowerBound,
+    accessibleIsLowerBound,
     gap: balancesUndeclared ? null : result.numbers.pointsGapTypical,
     coverage: balancesUndeclared ? null : (coverage?.coverage ?? null),
     // "Ước lượng" nói ra rằng con số phủ là điểm giữa của một khoảng — số dư
     // chưa biết, hoặc chương trình chỉ công bố giá sàn. Trình bày nó như một
     // con số chắc chắn là đúng lỗi §29 sinh ra để tránh.
     coverageIsEstimate: coverage !== null && coverage.coverageKnown === false,
+    coverageLowerBound: balancesUndeclared ? null : (coverage?.coverageLowerBound ?? null),
   };
 }
 
@@ -817,8 +837,21 @@ export function formatPoints(points: number): string {
  * hứa dư dả); và phần phủ ≥ 1 mà vẫn còn thiếu điểm là hai ước lượng mâu thuẫn
  * — giữ con số thiếu, bỏ câu phủ.
  */
-export function coverageStatement(trip: Pick<TripNumbersView, "coverage" | "gap">): string | null {
+export function coverageStatement(
+  trip: Pick<TripNumbersView, "coverage" | "gap"> &
+    Partial<Pick<TripNumbersView, "coverageIsEstimate" | "coverageLowerBound">>,
+): string | null {
   if (trip.coverage === null || trip.coverage < 0) return null;
+  // Ước lượng: `coverage` là ĐIỂM GIỮA của [sàn, 1] — quy ước "chưa biết =
+  // trung tính" của engine, dùng để quyết định. In nó ra là bịa: tài khoản
+  // Aeroplan® chưa khai số dư có sàn 0, và trang từng in "phủ khoảng 50%" ngay
+  // cạnh "gom được 0 điểm (ít nhất)" (audit trang 27/09/2026). Chỉ nói phần
+  // CHẮC: sàn, làm tròn XUỐNG; sàn bằng 0 thì không có gì để nói.
+  if (trip.coverageIsEstimate === true) {
+    const floor = trip.coverageLowerBound ?? 0;
+    const percent = Math.min(99, Math.floor(floor * 100));
+    return percent > 0 ? `điểm hiện tại phủ ít nhất ${percent}% chuyến này` : null;
+  }
   if (trip.coverage >= 1) return trip.gap !== null && trip.gap > 0 ? null : "điểm hiện tại phủ được cả chuyến này";
   // Chiều ngược lại của cùng mâu thuẫn: khoảng thiếu đo ở giá ĐIỂN HÌNH (bằng
   // 0), phần phủ đo ở mức CAO NHẤT (dưới 100%). In "Không thiếu" ngay trên

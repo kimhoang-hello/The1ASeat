@@ -284,6 +284,41 @@ test("'không thiếu' ở giá điển hình mà phủ dưới 100% cận trên
   );
 });
 
+test("số dư đã khai mà chưa nói bao nhiêu: không in điểm giữa thành 'phủ khoảng 50%'", () => {
+  // Audit trang 27/09/2026: khai có tài khoản Aeroplan® nhưng chưa nói số dư →
+  // "gom được 0 điểm (ít nhất) · còn thiếu: chưa tính được · phủ khoảng 50%".
+  // 50% là điểm giữa [0, 1] engine dùng để QUYẾT ĐỊNH, không phải một dữ kiện.
+  const unknownBalance = structuredClone(vietnamTripShortfall);
+  unknownBalance.balances = unknownBalance.balances.map((row) => ({ ...row, balance: null }));
+  const view = presentRun(runFor(unknownBalance), DATA, offersFor(DATA));
+  assert.ok(view !== null && view.trip !== null);
+  assert.equal(view.trip.accessible, 0);
+  assert.ok(view.trip.accessibleIsLowerBound);
+  assert.ok(view.trip.coverageIsEstimate);
+  assert.equal(view.trip.coverageLowerBound, 0);
+  assert.equal(coverageStatement(view.trip), null, "sàn bằng 0 thì không có phần phủ nào để nói");
+  // Và khối chuyến bay phải dẫn tới đúng câu làm con số chính xác.
+  assert.ok(
+    view.trip.missing.some((row) => row.questionKey === "point_balance_amount_unknown:aeroplan"),
+    JSON.stringify(view.trip.missing),
+  );
+
+  // Có sàn thật thì nói sàn, làm tròn XUỐNG — không bao giờ nói điểm giữa.
+  assert.equal(
+    coverageStatement({ coverage: 0.728, gap: null, coverageIsEstimate: true, coverageLowerBound: 0.456 }),
+    "điểm hiện tại phủ ít nhất 45% chuyến này",
+  );
+  assert.equal(
+    coverageStatement({ coverage: 0.9995, gap: null, coverageIsEstimate: true, coverageLowerBound: 0.999 }),
+    "điểm hiện tại phủ ít nhất 99% chuyến này",
+  );
+
+  // Số dư đã biết đủ thì dòng "nói thêm số điểm" không xuất hiện.
+  const known = presentRun(runFor(vietnamTripShortfall), DATA, offersFor(DATA));
+  assert.ok(known !== null && known.trip !== null);
+  assert.ok(!known.trip.missing.some((row) => row.questionKey.startsWith("point_balance_amount_unknown")));
+});
+
 test("độ chắc chắn nói ra NGUYÊN NHÂN sửa được, không phải chỉ một mức", () => {
   const record = runFor(beginnerNoCards);
   const view = presentRun(record, DATA, offersFor(DATA));

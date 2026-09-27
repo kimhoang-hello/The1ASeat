@@ -235,7 +235,8 @@ export function explanationPayload(view: ResultView): ExplanationPayload {
           `theo ước lượng từ award chart, chuyến này cần ${trip.needLow !== null && trip.needHigh !== null ? "khoảng " : ""}${need}${trip.needProgram === null ? "" : `, tính bằng điểm ${trip.needProgram}`}, và con số đổi theo ngày bay`,
         );
       }
-      if (trip.accessible !== null) {
+      // Cận dưới bằng 0 là số dư CHƯA KHAI, không phải "gom được 0 điểm".
+      if (trip.accessible !== null && !(trip.accessibleIsLowerBound && trip.accessible === 0)) {
         add(
           "trip_reach",
           "estimate",

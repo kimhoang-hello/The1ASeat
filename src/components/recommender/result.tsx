@@ -333,8 +333,12 @@ function TripNumbers({ trip }: { trip: NonNullable<ResultView["trip"]> }) {
         <div>
           <dt className="text-sm text-muted-foreground">Bạn gom được</dt>
           <dd className="font-display text-lg font-bold text-foreground">
-            {trip.accessible === null ? "Chưa biết" : `${formatPoints(trip.accessible)} điểm`}
-            {trip.accessibleIsLowerBound && (
+            {/* "0 điểm (ít nhất)" là cách in một số dư CHƯA KHAI thành con số —
+                đường tới câu khai số dư nằm ngay dưới, trong dòng "nói thêm". */}
+            {trip.accessible === null || (trip.accessibleIsLowerBound && trip.accessible === 0)
+              ? "Chưa biết"
+              : `${formatPoints(trip.accessible)} điểm`}
+            {trip.accessibleIsLowerBound && trip.accessible !== null && trip.accessible > 0 && (
               <span className="ml-1 text-sm font-normal text-muted-foreground">(ít nhất)</span>
             )}
           </dd>
@@ -383,7 +387,7 @@ function TripNumbers({ trip }: { trip: NonNullable<ResultView["trip"]> }) {
         <p className="mt-3 text-sm text-muted-foreground">
           {/* Cùng luật với lời giải thích: không phần trăm vượt 100, không "phủ cả chuyến" cạnh "còn thiếu". */}
           {asSentenceStart(coverageStatement(trip) as string)}
-          {trip.coverageIsEstimate ? " — con số này là ước lượng vì còn chỗ chưa biết." : "."}
+          {trip.coverageIsEstimate ? " — con số thật có thể cao hơn, vì còn chỗ mình chưa biết." : "."}
         </p>
       )}
     </section>
