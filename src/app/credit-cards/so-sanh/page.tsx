@@ -7,7 +7,8 @@ import { CompareTable } from "@/components/credit-cards/compare-table";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { JsonLd } from "@/components/seo/json-ld";
 import { NextSteps, StepLink } from "@/components/ui/next-steps";
-import { START_HERE_PUBLISHED } from "@/lib/feature-flags";
+import { RECOMMENDER_PUBLISHED, START_HERE_PUBLISHED } from "@/lib/feature-flags";
+import { RECOMMENDER_PATH } from "@/lib/recommender/path";
 import {
   COMPARE_PARAM,
   COMPARE_PATH,
@@ -101,6 +102,13 @@ export default async function CompareCardsPage({
               {/* So xong mà vẫn chưa quyết được là kết cục thường gặp nhất của
                   trang này, và trước khối này nó không dẫn đi đâu. */}
               <NextSteps title={next("title")} className="pt-4">
+                {RECOMMENDER_PUBLISHED && (
+                  <StepLink
+                    href={RECOMMENDER_PATH}
+                    label={next("recommenderLabel")}
+                    description={next("recommenderDescription")}
+                  />
+                )}
                 {/* Gác sau cờ như mọi lối vào /bat-dau khác (trang chủ, about,
                     sitemap, search): tắt cờ thì trang này cũng thôi mời. */}
                 {START_HERE_PUBLISHED && (

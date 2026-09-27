@@ -427,7 +427,9 @@
     "siblingsTitle": "Thẻ khác cũng tích {program}",
     "bankAccountsTitle": "Tài khoản ngân hàng của {bank}",
     "relatedTitle": "Bài viết liên quan",
-    "bestInLabel": "Thẻ này nằm trong: {category}"
+    "bestInLabel": "Thẻ này nằm trong: {category}",
+    "recommenderLabel": "Chưa chắc thẻ này hợp với bạn?",
+    "recommenderDescription": "Trả lời vài câu, mình gợi ý thẻ theo mục tiêu của bạn (Beta)"
   },
   "offerHistory": {
     "peakIsCurrent": "Mức hiện tại là mức cao nhất kể từ khi Ghế 1A bắt đầu theo dõi thẻ này ({since}).",
@@ -514,6 +516,8 @@
     "calculatorDescription": "Tính giá trị mỗi điểm cho một vé award cụ thể",
     "bonusesLabel": "Đang có transfer bonus nào?",
     "bonusesDescription": "Các đợt bonus đang chạy và ngày hết hạn",
+    "recommenderLabel": "So xong vẫn chưa chọn được?",
+    "recommenderDescription": "Trả lời vài câu, mình gợi ý thẻ theo mục tiêu của bạn (Beta)",
     "startHereLabel": "Chưa biết bắt đầu từ đâu?",
     "startHereDescription": "Bốn bước từ con số không tới tấm vé award đầu tiên",
     "blogLabel": "Đọc bài viết mới nhất",
@@ -615,6 +619,8 @@
     "otherCategories": "Các mục khác",
     "allCardsLabel": "Xem toàn bộ thẻ đang theo dõi",
     "allCardsDescription": "Danh sách đầy đủ, lọc được theo loại điểm và sắp xếp theo phí hay rebate",
+    "recommenderLabel": "Muốn gợi ý theo hoàn cảnh của riêng bạn?",
+    "recommenderDescription": "Trả lời vài câu, mình gợi ý thẻ theo mục tiêu của bạn (Beta)",
     "verifiedNote": "Số liệu trên trang này đọc trực tiếp từ trang của từng thẻ lúc bạn mở trang. Offer thay đổi thường xuyên — luôn kiểm lại điều kiện trên trang của ngân hàng trước khi apply.",
     "cardCount": "{count} thẻ",
     "categoryCount": "{count} mục"

@@ -20,6 +20,8 @@ import {
 import { ringAfter } from "@/lib/card-next-steps";
 import { absoluteUrl, breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
 import { t as translate } from "@/lib/t";
+import { RECOMMENDER_PUBLISHED } from "@/lib/feature-flags";
+import { RECOMMENDER_PATH } from "@/lib/recommender/path";
 
 const best = translate("bestCards");
 const seo = translate("seo");
@@ -239,6 +241,13 @@ export default async function BestCardsCategoryPage({
                   description={sibling.metaDescriptionVi}
                 />
               ))}
+              {RECOMMENDER_PUBLISHED && (
+                <StepLink
+                  href={RECOMMENDER_PATH}
+                  label={best("recommenderLabel")}
+                  description={best("recommenderDescription")}
+                />
+              )}
               <StepLink
                 href="/credit-cards"
                 label={best("allCardsLabel")}

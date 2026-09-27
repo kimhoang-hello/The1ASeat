@@ -13,7 +13,8 @@ import {
 import { accountMetaLine } from "@/lib/bank-next-steps";
 import { bestCardsPath, categoriesFeaturing } from "@/lib/best-cards";
 import { BANK_ACCOUNTS, bankAccountPath } from "@/lib/bank-accounts";
-import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
+import { BANK_ACCOUNTS_PUBLISHED, RECOMMENDER_PUBLISHED } from "@/lib/feature-flags";
+import { RECOMMENDER_PATH } from "@/lib/recommender/path";
 import { formatDate } from "@/lib/format-date";
 import { t as translate } from "@/lib/t";
 
@@ -78,6 +79,16 @@ export function CardNextSteps({
           label={t("compareLabel")}
           description={t("compareDescription")}
         />
+
+        {/* Người đọc hết một trang thẻ mà vẫn phân vân là đúng người công cụ
+            gợi ý dựng ra cho. Sau cờ như mọi ngõ vào khác của công cụ. */}
+        {RECOMMENDER_PUBLISHED && (
+          <StepLink
+            href={RECOMMENDER_PATH}
+            label={t("recommenderLabel")}
+            description={t("recommenderDescription")}
+          />
+        )}
 
         {tool && <StepLink href={tool.href} label={tool.label} description={tool.description} />}
 
