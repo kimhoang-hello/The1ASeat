@@ -1,15 +1,43 @@
-# Bàn giao: Recommendation Engine — bắt đầu Phase 6
+# Bàn giao: Recommendation Engine
 
-Trạng thái **16/09/2026**. Phase 1–5 đã xong và đã merge `main`. Đọc file này
-là đủ để làm tiếp Phase 6 (LLM giải thích), không cần lịch sử chat.
-
-Bắt đầu ở **§6**. Trước khi công bố công cụ cho người đọc thì xem **§9** —
-có hai việc kiểm bắt buộc chưa làm.
+Trạng thái **27/09/2026**. Phase 1–6 đã merge `main`; trang `/credit-cards/goi-y`
+đã CÔNG BỐ bản Beta từ 17/09/2026 (`RECOMMENDER_PUBLISHED = true`). Engine
+**4.31.0**, lời giải thích **6.7.0**. Việc mới nhất và việc còn lại: **§0**.
+Rủi ro đã biết: **§9**. Các mục bên dưới giữ nguyên lịch sử từng phase.
 
 Spec đầy đủ: [`docs/recommendation-engine-v1.md`](docs/recommendation-engine-v1.md).
 Mọi tham chiếu "§n" trỏ vào nó.
 Tài liệu module: [`src/lib/recommendation/README.md`](src/lib/recommendation/README.md)
 — **đọc trước khi sửa bất cứ gì trong module**, nhất là mục Phase 4.
+
+---
+
+## 0. Audit 27/09/2026 — đã làm và còn lại
+
+Chi tiết từng phát hiện: AGENTS.md, mục "Audit trang Gợi ý thẻ 27/09/2026".
+
+Đã làm: điều kiện mở thẻ của 11 thẻ từng `eligibility_unknown` (đọc trên
+trang ngân hàng — hết cảnh báo "chưa kiểm được điều kiện" trên Amex® Green /
+Gold / Cobalt®); bảng giá **CANADA_US → EUROPE** (Aeroplan® + AAdvantage®);
+chặng nội địa thành chỗ trống đã khai (engine 4.31.0); khối chuyến bay không
+còn in điểm giữa [0, 1] thành "phủ khoảng 50%"; event GA4 cho phễu
+(`recommender_started/answered/skipped/reset`); ngõ vào ở cuối trang thẻ,
+trang so sánh, Các thẻ tốt nhất.
+
+Còn lại, theo thứ tự đáng làm:
+
+1. **Chặng nội địa (mục tiêu "bay trong Canada / Mỹ") vẫn chưa có bảng giá.**
+   Cố ý chưa dựng: bảng của hãng chỉ cho Aeroplan® (toàn giá ĐỘNG trên chuyến
+   Air Canada®/United®) và AAdvantage®, trong khi cách đổi vé nội địa phổ biến
+   là bảng điểm cố định của RBC® Avion® / CIBC® Aventura® và WestJet dollars —
+   mô hình award strategy chưa có. Dựng riêng Aeroplan® sẽ đẩy gợi ý lệch về
+   Aeroplan®. Cần quyết định sản phẩm trước.
+2. **GA4 Admin:** đăng ký custom dimension `goal`, `question` (event-scoped)
+   để đọc được phễu theo mục tiêu / theo câu hỏi.
+3. `offer_terms_unknown` (Scotiabank® Gold Amex, 2 thẻ Marriott Bonvoy®) và
+   `base_earn_rate_unknown` (Scotiabank® Gold Amex, TD® First Class, BMO®
+   VIPorter®) — tra được trên trang ngân hàng, cùng cách đã làm cho điều kiện.
+4. Chờ user quyết từ 25/09: engine có tính rebate FinlyWealth không.
 
 ---
 
@@ -496,11 +524,11 @@ và event GA4 cho phễu.
 | --- | --- |
 | Database production chưa tạo | Kho MySQL đã viết + test trên MariaDB 11.4; phiên bản Hostinger chưa kiểm — xem §3 "Còn chờ user" |
 | **Chưa kiểm CDN trên production** | Trang gợi ý trả kết quả RIÊNG từng người và đọc cookie. Trước khi bật `RECOMMENDER_PUBLISHED`: mở trang bằng HAI trình duyệt khác nhau trên ghe1a.com và xác nhận mỗi bên thấy hồ sơ của chính mình. Next đã gắn `Cache-Control: no-cache` (nó ghi đè cả header khai trong `next.config.ts`), nhưng edge của Hostinger thì chưa ai kiểm |
-| Chưa có lối vào và chưa đo được phễu | Trang chưa được link từ đâu (đúng ý đồ khi còn cờ), và mới chỉ có `apply_clicked` với `placement=recommender_primary` — chưa có event cho "bắt đầu", "trả lời", "bỏ qua" |
+| Phễu đo được từ 27/09/2026 | `recommender_started/answered/skipped/reset` + `apply_clicked` (`placement=recommender_primary`). Tham số chưa đăng ký custom dimension trong GA4 Admin thì chưa đọc được theo chiều |
 | Cookie "đã bỏ qua" có trần 64 câu | Hồ sơ nhiều thẻ đã đóng + đủ hạng mục chi tiêu có thể sinh tới 79 câu hỏi được; từ câu 65 câu cũ bị đẩy ra và có thể được hỏi lại. Cookie khi đó ~3,3 KB (trần trình duyệt 4 KB). Chưa gặp ở người dùng thật — Codex vòng 2 nêu, cố ý không dựng thêm hạ tầng |
 | `x-forwarded-for` giả được | Trần tạo hồ sơ mới theo IP có thể bị lách; đã thêm trần chung cho cả site (500/giờ). Không có gì chống được bot có chủ đích ngoài hai trần đó |
 | Xoá dữ liệu theo yêu cầu người dùng | Kho lượt chạy CHỈ THÊM và chép nguyên trạng thái người dùng; chưa có đường xoá một người. Hồ sơ không có tên/email nên rủi ro thấp, nhưng Phase 5 phải quyết trước khi mở đăng nhập |
-| Award chart phủ 3/4 cặp vùng | `CANADA_US → EUROPE` còn trống; `flexiblePointsSufficient` bay châu Âu nên Test H phải dựng lại trên chặng Nhật |
+| Award chart phủ 4/5 vùng | Châu Âu có từ 27/09/2026; còn nội địa `CANADA_US → CANADA_US` (xem §0). Test "vùng chưa định giá" gỡ bảng giá khỏi bản sao kho, không bám vào vùng nào đang trống |
 | Percentile lịch sử gần như luôn `null` | Nhật ký từ 29/08/2026; §12 hiện là tín hiệu chết — Test I dùng lịch sử tổng hợp |
 | §30 đo bằng câu trả lời ĐIỂN HÌNH | Nói được "câu này CÓ THỂ đổi kết quả", không chứng minh "KHÔNG thể". `cards/balances_undeclared` không đo được, giữ chỗ theo bảng tĩnh |
 | §30 chạy engine thêm ~30 lần mỗi lượt | ~30 ms; `test:reco` từ ~1 s lên ~6 s |

@@ -2308,3 +2308,63 @@ nên feed 200 mà entry thiếu tiêu đề ra `checked` hụt và job xanh gi�
 Regex `<title>[^<]+</title>` không khớp nhầm `<media:title>` (đã thử tổng hợp:
 đủ → ok; rỗng, thiếu, chỉ còn `media:title` → hỏng). Vòng Codex bác bản vá chấm
 ĐÚNG, không thấy hồi quy (entity, emoji, ký tự đặc biệt trong tiêu đề vẫn qua).
+
+## Audit trang Gợi ý thẻ 27/09/2026 — đừng đề xuất lại
+
+Chạy cả luồng trên bản build local + MariaDB 11.8 (colima, cổng 3307) cho cả
+chín mục tiêu, 375px, hai tab — không bấm form trên production. Engine 4.31.0,
+lời giải thích 6.7.0. Codex: review từng commit, một vòng bác bản vá (3 "ĐÚNG
+NHƯNG BẢN VÁ HỎNG", đã vá), vòng chốt "CÒN CHẶN PUSH: KHÔNG".
+
+**Đã làm:**
+- **11 thẻ mang `eligibility_unknown`** — gồm Amex® Green/Gold/Cobalt®, ba thẻ
+  được gợi ý nhiều nhất — nên MỌI kết quả có chúng kèm "chưa kiểm được hết
+  điều kiện của ngân hàng" và −0.05. Đọc trên trang ngân hàng 27/09: Amex®
+  Canada ghi mục Eligibility TRỌN VẸN (cư trú + hồ sơ tín dụng + đủ tuổi,
+  không thu nhập) → `minimum_personal_income` 0 đã kiểm; Scotiabank® Gold Amex
+  $12,000 cá nhân (một vế); Passport™ VI "$60,000 - $80,000" → cận dưới như
+  Momentum® đã có; CIBC® Aeroplan® VI $60K/$100K; Neo United® và Wealthsimple®
+  VI+ $80K/$150K. Tài khoản chequing Wealthsimple® là `banking_relationship_required`
+  **soft** (mở được lúc đăng ký — `hard` sẽ mãi `unknown`) và hiện thành dòng
+  lưu ý trên trang (`prerequisites`), vì engine bỏ qua luật soft.
+- **Bảng giá CANADA_US → EUROPE.** Aeroplan®: PDF "Flight Reward Chart" bản
+  2026-08, trang "North America – Atlantic" (band RIÊNG 0–4,000/4,001–6,000/
+  6,001–8,000/8,001+). Band tính từ toạ độ 8 thành phố × 17 sân bay: 52 cặp
+  band 1, 83 cặp band 2, nối chuyến lên band 3 → thấp/điển hình/cao = band
+  1/2/3, như chặng Nhật. AAdvantage®: bảng trên aa.com (widget nằm trong
+  shadow DOM — đọc `adc-content-table`), Europe 22,500 off-peak/30,000/40,000/
+  57,500. KHÔNG có Asia Miles® (Cathay không bay chặng này; bảng đối tác không
+  công bố). Bảng Pacific trong PDF 2026-08 khớp nguyên số đang dùng.
+- **Chặng nội địa là chỗ trống IM LẶNG** — `gaps.ts` bỏ qua đích CANADA_US nên
+  mục tiêu "bay trong Canada / Mỹ" không có bảng giá mà §29 không trừ độ tin
+  cậy. Engine 4.31.0 khai nó; `audit:reco-data` cũng đếm.
+- **Khối chuyến bay in điểm giữa [0, 1] thành "phủ khoảng 50%"** khi khai có
+  tài khoản mà chưa nói số dư, cạnh "gom được 0 điểm (ít nhất)". Nay: phần
+  phủ ước lượng chỉ nói phần ĐÃ BIẾT của chương trình đang hiển thị ("số điểm
+  đã biết của bạn phủ khoảng X%"), câu đuôi theo nguồn chỗ chưa chắc (số dư /
+  giá sàn), "Bạn gom được" là "Chưa biết" khi cận dưới bằng 0, và có link khai
+  số dư — chỉ cho chương trình định giá được chặng hoặc nguồn chuyển sang nó.
+- **Phễu GA4:** `recommender_started {goal}`, `recommender_answered {question}`,
+  `recommender_skipped {question}`, `recommender_reset` — listener `submit` ở
+  document đọc `data-reco-event`, form vẫn chạy không cần JS.
+- Ngõ vào: cuối trang thẻ, trang so sánh (cả nhánh chưa chọn thẻ), từng mục
+  Các thẻ tốt nhất. Ô tìm kiếm đã có từ trước.
+- `issuers.ts`: link chính thức Wealthsimple® `/en-ca/product/card` là 404.
+
+**Cố ý KHÔNG làm (Codex nêu hoặc tự thấy):**
+- **Không dựng bảng giá nội địa.** Bảng hãng chỉ có Aeroplan® (toàn giá động
+  trên Air Canada®/United® — cột đối tác cố định gần như không áp trong nội
+  địa) và AAdvantage®; cách đổi vé nội địa phổ biến là bảng điểm cố định Avion®
+  /Aventura® và WestJet dollars, mô hình chưa có. Dựng riêng Aeroplan® làm gợi
+  ý lệch. Chờ quyết định sản phẩm (HANDOFF §0).
+- **Không gửi câu trả lời lên GA4**, kể cả "chưa có thẻ nào" (`answer_none` đã
+  gỡ ở vòng bác bản vá) — chỉ loại câu hỏi và mục tiêu.
+- **Phần phủ ước lượng không nói "ít nhất".** Mẫu số là cận trên của KHOẢNG MÔ
+  HÌNH (band 3 châu Âu), không phải trần của mọi hành trình — "ít nhất 83%" với
+  50,000 điểm sai ở band 8,001+ (66%).
+- Scotiabank® Passport™/Momentum® dùng cận dưới $60K của khoảng "$60,000 -
+  $80,000": cận trên loại oan người mà ngân hàng tự nói vẫn xét. Vế tài sản
+  (AUM) chưa mô hình hoá, như Tangerine.
+- Test "vùng chưa định giá" và "thẻ chưa biết điều kiện" đọc kho ở ngày TRƯỚC
+  27/09 hoặc gỡ bảng giá khỏi bản sao — đừng viết lại để bám vùng đang trống.
+
