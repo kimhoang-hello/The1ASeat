@@ -2410,3 +2410,29 @@ NHƯNG BẢN VÁ HỎNG", đã vá), vòng chốt "CÒN CHẶN PUSH: KHÔNG".
 - Test "vùng chưa định giá" và "thẻ chưa biết điều kiện" đọc kho ở ngày TRƯỚC
   27/09 hoặc gỡ bảng giá khỏi bản sao — đừng viết lại để bám vùng đang trống.
 
+
+## Kiểm bảo mật toàn diện 28/09/2026 — đừng đề xuất lại
+
+Gate xanh: lint, tsc, build, 5 test suite (597 test), `npm audit` 0 lỗ hổng,
+không secret nào trong các commit từ 26/09. Production (chỉ GET): `/.env`,
+`/.git/config`, `/.htaccess` 403; file nguồn/`AGENTS.md`/`.next` 404;
+`/admin/reco-debugger` 404; job route không Bearer 401; đủ 5 header bảo mật.
+Codex: một vòng audit độc lập + một vòng bác bản vá (cả 4 ĐÚNG, "CÒN CHẶN PUSH:
+KHÔNG", "CÒN LỖ HỔNG KHAI THÁC ĐƯỢC SAU BẢN VÁ: KHÔNG").
+
+**Đã vá:**
+- **POST công khai treo body vô hạn (Medium, Codex).** contact/subscribe/
+  game-record gọi `readJsonBody` không có hạn giờ: gửi nửa body rồi giữ kết
+  nối là giữ request ở `reader.read()` mãi, trước cả trần chung (trần chung
+  đếm sau khi body hợp lệ). Nay `timeoutMs` BẮT BUỘC trong chữ ký — không thể
+  quên lần nữa — `PUBLIC_BODY_TIMEOUT_MS = 10_000`, hết giờ trả 408 (form
+  contact/newsletter và game đều coi là lỗi, không báo thành công nhầm).
+- **`url` của transfer bonus đi thẳng vào `href`** mà không qua `safeHref`
+  (React 19 chặn `javascript:` nhưng không chặn `data:` hay các hình dạng đổi
+  host). Nay qua `safeBonusUrl`; không qua thì trỏ về `/transfer-bonuses`.
+- `skipQuestion` không ghi khoá mà `skippedQuestions` không đọc lại được.
+- `appleboy/ssh-action` pin theo SHA (action bên thứ ba cầm khoá SSH).
+
+**Đã cân và KHÔNG làm:** pin `actions/checkout`/`setup-node` theo SHA (action
+chính chủ GitHub, repo không có Dependabot để cập nhật SHA); cookie bỏ-qua có
+thể vượt 4 KB nếu CHÍNH người dùng tự gửi 64 khoá dài — chỉ tự hại mình.

@@ -318,6 +318,20 @@ function toCard(entry: Entry<CardSkeleton, undefined>): CreditCardOffer {
   };
 }
 
+/**
+ * `url` của transfer bonus là chuỗi tự do từ Contentful và đi thẳng vào `href`
+ * ở trang chủ lẫn `/transfer-bonuses`. React 19 chặn `javascript:`, nhưng
+ * không chặn `data:` hay các hình dạng đổi host mà `safeHref` đã phải vá bốn
+ * lần — nên đi qua đúng cửa đó như link trong thân bài. Không qua được thì trỏ
+ * về trang danh sách: thẻ bonus vẫn hiện, chỉ mất link ra ngoài.
+ */
+function safeBonusUrl(url: string, slug: string): string {
+  const href = safeHref(url);
+  if (href !== null) return href;
+  console.warn(`[content] transfer bonus "${slug}" có url không an toàn, đã bỏ: ${url}`);
+  return "/transfer-bonuses";
+}
+
 function toBonus(entry: Entry<BonusSkeleton, undefined>): TransferBonus {
   const f = entry.fields;
   return {
@@ -326,7 +340,7 @@ function toBonus(entry: Entry<BonusSkeleton, undefined>): TransferBonus {
     toProgram: f.toProgram,
     bonusPercent: f.bonusPercent,
     expiresAt: f.expiresAt,
-    url: f.url,
+    url: safeBonusUrl(f.url, f.slug),
     note: f.noteVi,
   };
 }

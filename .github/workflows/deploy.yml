@@ -18,7 +18,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy over SSH
-        uses: appleboy/ssh-action@v1.0.3
+        # Pin theo SHA của tag v1.0.3, không theo tên tag: action bên thứ ba
+        # cầm khoá SSH, mà tag thì chủ repo kia (hoặc ai chiếm được tài khoản
+        # đó) dời sang commit khác được bất cứ lúc nào.
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}

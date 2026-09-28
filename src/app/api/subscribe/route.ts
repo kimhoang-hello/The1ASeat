@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { clientIp, emailKey, rateLimit, readJsonBody } from "@/lib/rate-limit";
+import { clientIp, emailKey, rateLimit, PUBLIC_BODY_TIMEOUT_MS, readJsonBody } from "@/lib/rate-limit";
 import { SITE_URL, emailParagraphStyle, renderSubscriberEmailHtml } from "@/lib/subscriber-email";
 import { START_HERE_PUBLISHED } from "@/lib/feature-flags";
 
@@ -75,9 +75,9 @@ export async function POST(request: Request) {
     );
   }
 
-  const read = await readJsonBody(request, MAX_BODY_BYTES);
+  const read = await readJsonBody(request, MAX_BODY_BYTES, PUBLIC_BODY_TIMEOUT_MS);
   if (!read.ok) {
-    return NextResponse.json({ error: "invalid_body" }, { status: read.reason === "too_large" ? 413 : 400 });
+    return NextResponse.json({ error: "invalid_body" }, { status: read.reason === "too_large" ? 413 : read.reason === "timeout" ? 408 : 400 });
   }
   const email = (read.value as { email?: unknown } | null)?.email;
 

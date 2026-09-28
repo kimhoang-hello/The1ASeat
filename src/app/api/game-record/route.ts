@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 
 import { CATCH_THE_POINTS_PUBLISHED } from "@/lib/feature-flags";
-import { readJsonBody } from "@/lib/rate-limit";
+import { PUBLIC_BODY_TIMEOUT_MS, readJsonBody } from "@/lib/rate-limit";
 import {
   GAME_RECORD_TAG,
   MAX_NAME_LENGTH,
@@ -174,9 +174,9 @@ export async function POST(request: NextRequest) {
 
   const now = Date.now();
 
-  const read = await readJsonBody(request, MAX_BODY_BYTES);
+  const read = await readJsonBody(request, MAX_BODY_BYTES, PUBLIC_BODY_TIMEOUT_MS);
   if (!read.ok) {
-    return NextResponse.json({ message: "bad_json" }, { status: read.reason === "too_large" ? 413 : 400 });
+    return NextResponse.json({ message: "bad_json" }, { status: read.reason === "too_large" ? 413 : read.reason === "timeout" ? 408 : 400 });
   }
   const { token, score, name } = (read.value ?? {}) as Record<string, unknown>;
 

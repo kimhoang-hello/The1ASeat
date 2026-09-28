@@ -180,12 +180,19 @@ export function emailKey(email: string): string {
  * hàm này đều xử lý hai ca đó giống hệt nhau (đúng như `request.json()` ném
  * cho cả hai trước đây).
  */
+/**
+ * Hạn đọc body cho các route công khai (contact, subscribe, game-record).
+ * Payload của cả ba chỉ vài KB, người thật gửi xong trong chưa tới một giây kể
+ * cả trên 3G — 10 giây chỉ chạm tới khi có người cố tình giữ kết nối.
+ */
+export const PUBLIC_BODY_TIMEOUT_MS = 10_000;
+
 export type JsonBodyResult =
   | { ok: true; value: unknown }
   | { ok: false; reason: "too_large" | "invalid" | "timeout" };
 
 /**
- * Đọc body JSON với trần byte THẬT và (tuỳ chọn) hạn giờ.
+ * Đọc body JSON với trần byte THẬT và hạn giờ.
  *
  * Thay cho `request.json()` ở mọi route nhận POST. Route Handler của Next
  * (khác `bodyParser.sizeLimit` của Pages Router cũ) không tự đặt trần body,
@@ -197,7 +204,12 @@ export type JsonBodyResult =
  * `reader.cancel()` — không buffer phần còn lại. `Content-Length` vẫn được hỏi
  * trước, chỉ để từ chối sớm client trung thực mà khỏi mở stream.
  *
- * `timeoutMs` là hạn cho CẢ lượt đọc. Hết giờ thì huỷ reader (không để một
+ * `timeoutMs` là hạn cho CẢ lượt đọc, và BẮT BUỘC. Bản trước để nó tuỳ chọn,
+ * và contact/subscribe/game-record đều bỏ trống — một client gửi nửa body rồi
+ * giữ kết nối là giữ được request ở `reader.read()` vô hạn, trước cả trần
+ * chung của site (vốn chỉ đếm SAU khi body hợp lệ). Đủ kết nối kiểu đó là cạn
+ * socket/bộ nhớ của tiến trình duy nhất phục vụ cả site (Codex 28/09/2026).
+ * Hết giờ thì huỷ reader (không để một
  * lượt đọc thua cuộc tiếp tục giữ kết nối và buffer — đúng lỗi của bản
  * `Promise.race` trần từng thử rồi gỡ ở `api/revalidate`, xem AGENTS.md).
  * Lượt `read()` đang treo được gắn `catch` rỗng: sau khi huỷ, nó có thể reject
@@ -207,7 +219,7 @@ export type JsonBodyResult =
 export async function readJsonBody(
   request: Request,
   maxBytes: number,
-  timeoutMs?: number,
+  timeoutMs: number,
 ): Promise<JsonBodyResult> {
   if (bodyTooLarge(request, maxBytes)) {
     request.body?.cancel().catch(() => {});
@@ -222,18 +234,15 @@ export async function readJsonBody(
   const chunks: Uint8Array[] = [];
   let total = 0;
   let timer: ReturnType<typeof setTimeout> | undefined;
-  const expired =
-    timeoutMs === undefined
-      ? null
-      : new Promise<"timeout">((resolve) => {
-          timer = setTimeout(() => resolve("timeout"), Math.max(0, timeoutMs));
-        });
+  const expired = new Promise<"timeout">((resolve) => {
+    timer = setTimeout(() => resolve("timeout"), Math.max(0, timeoutMs));
+  });
 
   try {
     for (;;) {
       const read = reader.read();
       read.catch(() => {});
-      const step = expired ? await Promise.race([read, expired]) : await read;
+      const step = await Promise.race([read, expired]);
       if (step === "timeout") {
         cancel();
         return { ok: false, reason: "timeout" };

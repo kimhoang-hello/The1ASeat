@@ -164,6 +164,10 @@ export async function skippedQuestions(): Promise<Set<string>> {
 const MAX_SKIPPED = 64;
 
 export async function skipQuestion(key: string): Promise<void> {
+  // Cùng luật với lúc đọc (`skippedQuestions`): khoá rỗng, quá dài hay mang
+  // dấu phân cách `|` không bao giờ đọc lại được, nên ghi nó vào chỉ làm phình
+  // cookie — một form gửi khoá vài KB là đủ để trình duyệt từ chối cả cookie.
+  if (key.length === 0 || key.length >= 80 || key.includes("|")) return;
   const jar = await cookies();
   const current = await skippedQuestions();
   current.add(key);
