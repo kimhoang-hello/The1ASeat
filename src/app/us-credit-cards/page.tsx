@@ -280,7 +280,12 @@ export default async function UsCreditCardsPage({
             {/* Cùng hai tầng lọc như `/credit-cards`: viên pill đặc cho loại
                 thẻ, chip viền có số đếm cho ngân hàng. */}
             <nav aria-label={us("filterLabel")} className="mt-6 flex flex-wrap gap-2">
-              {US_CARD_FILTERS.map((filter) => (
+              {/* Pill của loại không còn thẻ nào (vd. Cash back khi các thẻ đó
+                  đang `hidden`) thì ẩn, trừ khi chính nó đang được chọn qua URL. */}
+              {US_CARD_FILTERS.filter(
+                (filter) =>
+                  filter === activeFilter || cards.some((card) => matchesUsCardFilter(card, filter)),
+              ).map((filter) => (
                 <Link
                   key={filter}
                   href={usCardsListPath({ filter, issuer: activeIssuer })}

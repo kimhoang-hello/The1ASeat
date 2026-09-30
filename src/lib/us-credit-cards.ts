@@ -126,6 +126,8 @@ export type UsCardDetails = {
   sourceUrl?: string;
   /** `true` = số liệu mẫu, chưa kiểm. Không bao giờ hiện khi đã công bố. */
   needsVerification: boolean;
+  /** Tạm ẩn khỏi site — xem `hidden` ở `UsCardData`. */
+  hidden?: true;
 };
 
 export type UsCreditCardOffer = CreditCardOffer & { country: "US"; us: UsCardDetails };
@@ -169,6 +171,12 @@ type UsCardData = {
   lastUpdated: string;
   verifiedOn?: string;
   needsVerification: boolean;
+  /**
+   * Tạm ẩn thẻ khỏi site mà không xoá dữ liệu: `getUsCreditCards()` bỏ nó, nên
+   * thẻ rời danh sách, trang chi tiết (404), sitemap và ô tìm kiếm cùng lúc.
+   * Job canh offer cũng bỏ qua. Muốn hiện lại thì xoá dòng `hidden`.
+   */
+  hidden?: true;
 };
 
 /** "$95 USD", "$4,000 USD". Dấu phẩy ngăn nghìn kiểu Anh như mọi số trên site. */
@@ -1084,6 +1092,8 @@ const US_CARD_DATA: UsCardData[] = [
     lastUpdated: VERIFIED_3,
     verifiedOn: VERIFIED_3,
     needsVerification: false,
+    // Tác giả yêu cầu tạm ẩn 30/09/2026.
+    hidden: true,
   },
   {
     slug: "chase-freedom-flex",
@@ -1123,6 +1133,8 @@ const US_CARD_DATA: UsCardData[] = [
     lastUpdated: VERIFIED_3,
     verifiedOn: VERIFIED_3,
     needsVerification: false,
+    // Tác giả yêu cầu tạm ẩn 30/09/2026.
+    hidden: true,
   },
   {
     slug: "chase-freedom-rise",
@@ -1164,6 +1176,8 @@ const US_CARD_DATA: UsCardData[] = [
     lastUpdated: VERIFIED_3,
     verifiedOn: VERIFIED_3,
     needsVerification: false,
+    // Tác giả yêu cầu tạm ẩn 30/09/2026.
+    hidden: true,
   },
   {
     slug: "marriott-bonvoy-bold",
@@ -1817,19 +1831,21 @@ function toOffer(card: UsCardData): UsCreditCardOffer {
       verifiedOn: card.verifiedOn,
       sourceUrl: card.sourceUrl,
       needsVerification: card.needsVerification,
+      hidden: card.hidden,
     },
   };
 }
 
-/** Mọi thẻ, kể cả số liệu mẫu — chỉ cho test và audit. Trang gọi `getUsCreditCards`. */
+/** Mọi thẻ, kể cả số liệu mẫu và thẻ đang ẩn — chỉ cho test và audit. Trang gọi `getUsCreditCards`. */
 export const ALL_US_CARDS: UsCreditCardOffer[] = US_CARD_DATA.map(toOffer);
 
 /**
  * Thẻ Mỹ được phép hiện. Chưa công bố: tất cả, số liệu mẫu mang nhãn. Đã
- * công bố: chỉ thẻ đã kiểm.
+ * công bố: chỉ thẻ đã kiểm. Thẻ `hidden` thì không bao giờ hiện.
  */
 export function getUsCreditCards(published = US_CARDS_PUBLISHED): UsCreditCardOffer[] {
-  return published ? ALL_US_CARDS.filter((card) => !card.us.needsVerification) : ALL_US_CARDS;
+  const shown = ALL_US_CARDS.filter((card) => !card.us.hidden);
+  return published ? shown.filter((card) => !card.us.needsVerification) : shown;
 }
 
 export function usCardPath(slug: string): string {

@@ -183,6 +183,11 @@ async function readPage(url: string): Promise<string> {
   throw new Error(last);
 }
 
+// Thẻ đang tạm ẩn (`hidden`) không ai đọc, nên số của nó lệch cũng không hại
+// ai — và job đỏ vì một thẻ không có trên site là báo động giả. Lúc hiện lại,
+// phép "quá hạn đối chiếu" sẽ tự nhắc rà nếu đã ẩn lâu.
+const WATCHED = ALL_US_CARDS.filter((card) => !card.us.hidden);
+
 const now = today();
 const expired: string[] = [];
 const stale: string[] = [];
@@ -191,7 +196,7 @@ const unreadable: string[] = [];
 let readOk = 0;
 let browserOnly = 0;
 
-for (const card of ALL_US_CARDS) {
+for (const card of WATCHED) {
   if (card.expiresAt && card.expiresAt.slice(0, 10) < now) {
     expired.push(`${card.slug} — offer ghi hết hạn ${card.expiresAt.slice(0, 10)}, welcome bonus trên site vẫn là mức cũ`);
   }
@@ -225,7 +230,9 @@ function section(title: string, lines: string[]) {
   for (const line of lines) console.log(`  - ${line}`);
 }
 
-console.log(`Canh offer thẻ Mỹ — ${now}. ${ALL_US_CARDS.length} thẻ.`);
+console.log(
+  `Canh offer thẻ Mỹ — ${now}. ${WATCHED.length} thẻ (${ALL_US_CARDS.length - WATCHED.length} thẻ đang ẩn, bỏ qua).`,
+);
 if (!OFFLINE) console.log(`Đọc trang ngân hàng: ${readOk} thẻ khớp.`);
 console.log(`${browserOnly} thẻ chỉ rà được bằng browser (task cục bộ).`);
 

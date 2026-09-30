@@ -64,7 +64,10 @@ test("slug không trùng, mọi thẻ đều là thẻ Mỹ", () => {
 test("công bố thì số liệu mẫu không bao giờ hiện", () => {
   const published = getUsCreditCards(true);
   assert.ok(published.every((card) => !card.us.needsVerification));
-  assert.equal(getUsCreditCards(false).length, ALL_US_CARDS.length);
+  assert.equal(
+    getUsCreditCards(false).length,
+    ALL_US_CARDS.filter((card) => !card.us.hidden).length,
+  );
 });
 
 test("mỗi thẻ thuộc đúng một bộ lọc loại, ngoài 'Tất cả'", () => {
@@ -118,5 +121,14 @@ test("link ref thẻ Mỹ được đánh dấu sponsored và giữ trang nguồ
     const { sourceUrl } = card.us;
     assert.equal(isReferralUrl(card.applyUrl), Boolean(sourceUrl), card.slug);
     if (sourceUrl) assert.equal(isReferralUrl(sourceUrl), false, card.slug);
+  }
+});
+
+// `hidden` là công tắc "tạm ẩn" của tác giả: thẻ phải rời MỌI bề mặt (danh sách,
+// trang chi tiết, sitemap, tìm kiếm đều đọc `getUsCreditCards`), dù cờ công bố
+// đang ở trạng thái nào.
+test("thẻ đang ẩn không bao giờ hiện", () => {
+  for (const published of [true, false]) {
+    assert.ok(getUsCreditCards(published).every((card) => !card.us.hidden));
   }
 });
