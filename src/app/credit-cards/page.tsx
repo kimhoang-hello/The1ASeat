@@ -16,6 +16,9 @@ import { BetaBadge } from "@/components/ui/beta-badge";
 import { RECOMMENDER_PUBLISHED } from "@/lib/feature-flags";
 import { RECOMMENDER_PATH } from "@/lib/recommender/path";
 import { PointsProgramLinks } from "@/components/credit-cards/points-program-links";
+import { CardTags } from "@/components/credit-cards/card-tags";
+import { cardTagsFor } from "@/lib/card-tags";
+import { todayInSiteZone } from "@/lib/format-date";
 import { CardSortSelect } from "@/components/credit-cards/sort-select";
 import { BEST_CARDS_BASE, BEST_CARDS_CATEGORIES } from "@/lib/best-cards";
 import {
@@ -70,6 +73,7 @@ export default async function CreditCardsPage({
   const programs = getCardPointsPrograms(tabOffers);
   const activePoints = programs.some((program) => program.id === points) ? points : undefined;
   const activeSort = cardSortId(sort);
+  const today = todayInSiteZone();
   const offers = sortOffers(
     activePoints ? tabOffers.filter((offer) => programIdFor(offer) === activePoints) : tabOffers,
     activeSort,
@@ -250,6 +254,8 @@ export default async function CreditCardsPage({
                 <OfferStats offer={offer} className="mt-3" />
 
                 <p className="mt-3 text-sm leading-relaxed text-foreground/90">{offer.headline}</p>
+
+                <CardTags tags={cardTagsFor(offer.slug, today)} className="mt-3" />
 
                 <details className="group mt-3">
                   <summary className="flex cursor-pointer list-none items-center gap-1 text-sm font-semibold text-foreground/80 hover:text-primary">

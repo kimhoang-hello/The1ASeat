@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CardImage } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
 import { OfferStats } from "@/components/credit-cards/offer-stats";
+import { CardTags } from "@/components/credit-cards/card-tags";
 import { spendRequirement, usCardPath, type UsCreditCardOffer } from "@/lib/us-credit-cards";
 import { t as translate } from "@/lib/t";
 
@@ -68,18 +69,7 @@ export function UsCardSummary({ card }: { card: UsCreditCardOffer }) {
           </p>
         )}
 
-        {card.us.tags.length > 0 && (
-          <ul className="mt-3 flex flex-wrap gap-1.5">
-            {card.us.tags.map((tag) => (
-              <li
-                key={tag}
-                className="rounded bg-primary/10 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary"
-              >
-                {tag}
-              </li>
-            ))}
-          </ul>
-        )}
+        <CardTags tags={card.us.tags} className="mt-3" />
 
         {card.us.needsVerification && (
           <p className="mt-3 text-xs font-medium text-amber-700">{us("sampleBadge")}</p>
