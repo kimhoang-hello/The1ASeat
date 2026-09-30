@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Inter } from "next/font/google";
+import localFont from "next/font/local";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { FeaturedOfferBanner } from "@/components/layout/featured-offer-banner";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -14,35 +14,38 @@ import { CSP_META } from "@/lib/content-security-policy";
 import "./globals.css";
 
 /**
- * `subsets` là danh sách PRELOAD, không phải danh sách glyph được phát hành.
- * Next chỉ dùng nó để quyết định chèn `<link rel=preload>` nào vào `<head>`;
- * mọi @font-face vẫn được sinh ra đủ, và trình duyệt vẫn tự tải file còn lại
- * theo `unicode-range` khi thật sự gặp ký tự thuộc về nó — xem
- * `node_modules/next/dist/docs/01-app/03-api-reference/02-components/font.md`,
- * mục `subsets`.
+ * Font TỰ HOST, không dùng `next/font/google`.
  *
- * VÌ SAO BỎ "latin-ext": đo ngày 07/09/2026, hai file latin-ext chiếm
- * 104.5/196.5 KB — 53% toàn bộ font payload — mà cả sáu file đều được preload
- * ở mức ưu tiên cao nhất trên MỌI trang, tranh băng thông với CSS và JS ngay
- * từ byte đầu. Riêng Inter latin-ext nặng 83.3 KB, là file font lớn nhất trên
- * critical path.
+ * `next/font/google` tải font từ Google LÚC BUILD. Từ 27/09/2026 máy build của
+ * Hostinger nhận về CSS mà Turbopack không đọc được ("next/font/google queries
+ * have exactly one entry" ở Plus Jakarta Sans) — 8 lượt deploy liền hỏng trong
+ * khi build trên máy và CI vẫn xanh, vì chỉ Hostinger nhận phản hồi khác. Font
+ * nằm trong repo thì build không còn phụ thuộc mạng.
  *
- * Site này viết tiếng Việt, mà tiếng Việt nằm trong subset `vietnamese`;
- * tiếng Pháp/Đức thông dụng nằm trong latin cơ bản. Chữ Séc/Ba Lan/Đông Âu
- * chỉ xuất hiện lác đác trong tên khách sạn ở vài bài review — những trang đó
- * vẫn nhận đúng font, chỉ là tải file latin-ext theo nhu cầu thay vì bắt cả
- * site trả trước.
+ * Mỗi họ là MỘT file variable woff2, dựng từ font gốc OFL (google/fonts) bằng
+ * fonttools: cắt trục wght về đúng dải site dùng (Inter còn ghim opsz=14), rồi
+ * subset về đúng hai subset `latin` + `vietnamese` của Google — cùng
+ * unicode-range với CSS Google phục vụ. Gộp hai subset không làm nặng thêm:
+ * mọi trang đều viết tiếng Việt nên trước đây cả hai file vốn đã tải hết.
+ * Đo 29/09/2026: 87.5 KB so với 94.3 KB của Google, và 2 request thay vì 4.
+ *
+ * `latin-ext` vẫn bỏ như quyết định 07/09/2026 (53% payload font lúc đó). Chữ
+ * Đông Âu lác đác trong tên khách sạn sẽ hiện bằng font fallback đã chỉnh
+ * metric thay vì tải file latin-ext theo nhu cầu.
+ *
+ * Đổi dải weight thì phải dựng lại file — xem OFL-*.txt cùng thư mục cho giấy
+ * phép.
  */
-const fontHeading = Plus_Jakarta_Sans({
+const fontHeading = localFont({
+  src: [{ path: "./fonts/plus-jakarta-sans-600-800.woff2", weight: "600 800", style: "normal" }],
   variable: "--font-heading",
-  subsets: ["latin", "vietnamese"],
-  weight: ["600", "700", "800"],
+  display: "swap",
 });
 
-const fontBody = Inter({
+const fontBody = localFont({
+  src: [{ path: "./fonts/inter-400-700.woff2", weight: "400 700", style: "normal" }],
   variable: "--font-body",
-  subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 const site = t("site");
