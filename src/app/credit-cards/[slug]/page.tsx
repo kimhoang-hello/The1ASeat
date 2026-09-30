@@ -18,6 +18,9 @@ import {
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { EditorsTake } from "@/components/credit-cards/editors-take";
 import { OfferStats } from "@/components/credit-cards/offer-stats";
+import { CardTags } from "@/components/credit-cards/card-tags";
+import { cardTagsFor } from "@/lib/card-tags";
+import { todayInSiteZone } from "@/lib/format-date";
 import { OfferHistoryNote } from "@/components/credit-cards/offer-history-note";
 import { RebateChip } from "@/components/ui/hot-tip";
 import { ApplyButton } from "@/components/ui/apply-button";
@@ -184,6 +187,8 @@ export default async function CreditCardDetailPage({
           <p className="mt-4 text-lg leading-relaxed text-foreground/90">
             {offer.headline}
           </p>
+
+          <CardTags tags={cardTagsFor(offer.slug, todayInSiteZone())} className="mt-4" />
 
           <EditorsTake editorsTake={offer.editorsTake} className="mt-6" />
 

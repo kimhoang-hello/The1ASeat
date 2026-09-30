@@ -6,6 +6,7 @@ import { CardBadges } from "@/components/credit-cards/card-badges";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { EditorsTake } from "@/components/credit-cards/editors-take";
 import { OfferStats } from "@/components/credit-cards/offer-stats";
+import { CardTags } from "@/components/credit-cards/card-tags";
 import { CanadianPerspective } from "@/components/credit-cards/canadian-perspective";
 import { UsCardsBetaNotice } from "@/components/credit-cards/us-beta-notice";
 import { ApplyButton } from "@/components/ui/apply-button";
@@ -168,6 +169,8 @@ export default async function UsCreditCardDetailPage({
             )}
 
             <p className="mt-4 text-lg leading-relaxed text-foreground/90">{card.headline}</p>
+
+            <CardTags tags={card.us.tags} className="mt-4" />
 
             <EditorsTake editorsTake={card.editorsTake} className="mt-6" />
 
