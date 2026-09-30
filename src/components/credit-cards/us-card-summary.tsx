@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { CardImage } from "@/components/credit-cards/card-image";
+import { CardImage, applyOverlay } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
 import { OfferStats } from "@/components/credit-cards/offer-stats";
 import { CardTags } from "@/components/credit-cards/card-tags";
+import { ApplyButton } from "@/components/ui/apply-button";
+import { isReferralUrl } from "@/lib/affiliate-links";
 import { spendRequirement, usCardPath, type UsCreditCardOffer } from "@/lib/us-credit-cards";
 import { t as translate } from "@/lib/t";
 
@@ -19,9 +21,11 @@ const us = translate("usCards");
  *   Canada cần thấy ngay con số đó là đô Mỹ.
  * - Vài tag quyền lợi thay cho khối "Quyền lợi chính" mở ra được: trang này
  *   để lướt tìm thẻ, chi tiết nằm ở trang riêng của thẻ.
- * - Nút là "Xem chi tiết", không phải "Apply ngay": khối "Góc nhìn từ Canada"
- *   (ITIN, US address, credit history) nằm ở trang chi tiết, và người Canada
- *   cần đọc nó trước khi bấm sang trang ngân hàng Mỹ.
+ * - Hàng nút giống thẻ Canada: link "Xem chi tiết" bên cạnh "Apply ngay", và
+ *   ảnh thẻ bấm được sang trang apply. Trước 29/09/2026 chỉ có "Xem chi tiết"
+ *   để người Canada đọc khối "Góc nhìn từ Canada" trước khi apply; tác giả
+ *   chốt thêm nút Apply cho khớp trang Canada — khối đó vẫn nằm ở trang chi
+ *   tiết, ngay cạnh.
  */
 export function UsCardSummary({ card }: { card: UsCreditCardOffer }) {
   const requirement = spendRequirement(card);
@@ -34,6 +38,7 @@ export function UsCardSummary({ card }: { card: UsCreditCardOffer }) {
         name={card.name}
         placeholderIcon={card.image}
         className="h-32 w-full shrink-0 self-start rounded-xl sm:h-32 sm:w-40 xl:h-36 xl:w-44"
+        {...applyOverlay(card.applyUrl, "us_card_list", card.slug)}
         sizes="176px"
       />
 
@@ -75,13 +80,21 @@ export function UsCardSummary({ card }: { card: UsCreditCardOffer }) {
           <p className="mt-3 text-xs font-medium text-amber-700">{us("sampleBadge")}</p>
         )}
 
-        <div className="mt-auto pt-4">
+        <div className="mt-auto flex flex-wrap items-center gap-4 pt-4">
           <Link
             href={href}
-            className="inline-block cursor-pointer rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
+            className="cursor-pointer text-sm font-semibold text-foreground/80 hover:text-primary hover:underline"
           >
             {us("viewDetails")} &rarr;
           </Link>
+          {card.applyUrl && (
+            <ApplyButton
+              href={card.applyUrl}
+              affiliate={isReferralUrl(card.applyUrl)}
+              placement="us_card_list"
+              product={card.slug}
+            />
+          )}
         </div>
       </div>
     </article>

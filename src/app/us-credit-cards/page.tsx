@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { JsonLd } from "@/components/seo/json-ld";
 import { UsCardSummary } from "@/components/credit-cards/us-card-summary";
 import { UsCardsBetaNotice } from "@/components/credit-cards/us-beta-notice";
+import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { StepLink } from "@/components/ui/next-steps";
 import { US_CARDS_PUBLISHED } from "@/lib/feature-flags";
@@ -344,6 +345,10 @@ export default async function UsCreditCardsPage({
                 </div>
               )}
             </div>
+
+            {/* Trang giờ có nút Apply dẫn link ref — cùng dòng công bố như
+                `/credit-cards`. */}
+            <OfferDisclosure className="mt-8" />
           </div>
 
         </div>
