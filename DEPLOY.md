@@ -83,6 +83,26 @@ Quản lý ở **Manage domain** trong Dashboard website — Hostinger tự cấ
 
 - **Runtime logs** (sidebar website) — log lỗi runtime của app đang chạy.
 - **Deployments** (sidebar website) — xem lịch sử build, log build lỗi nếu có.
+  **CI xanh KHÔNG có nghĩa là đã lên site**: CI không chạy `npm run build` trên
+  máy của Hostinger. Push xong phải xem ở đây, hoặc mở site thật.
+
+### Vì sao build dùng webpack (`next build --webpack`)
+
+Từ 27/09/2026 tới 29/09/2026, 10 lượt deploy liền hỏng trên Hostinger trong
+khi build trên máy và CI vẫn xanh — site đứng ở bản cũ hai ngày mà không ai
+biết. Hai lỗi, cả hai chỉ có trong môi trường build của Hostinger:
+
+1. `next/font/google`: Turbopack báo "next/font/google queries have exactly one
+   entry" khi tải Plus Jakarta Sans. Đã sửa tận gốc bằng cách tự host font
+   (`src/app/fonts/`), build không còn gọi Google Fonts.
+2. Sau đó Turbopack chết ở bước PostCSS: "node process exited before we could
+   connect to it". Turbopack chạy PostCSS trong một tiến trình node con rồi nối
+   vào nó; máy build Hostinger không cho kết nối đó. Webpack chạy PostCSS ngay
+   trong tiến trình chính nên không vướng.
+
+`next dev` vẫn dùng Turbopack — chỉ bản build production đổi. Muốn quay lại
+Turbopack thì bỏ cờ `--webpack` trong `package.json`, push, rồi PHẢI xem tab
+Deployments cho tới khi lượt đó "Completed".
 - Xem [CONTENTFUL.md](CONTENTFUL.md) để chuyển từ nội dung mẫu sang Contentful thật.
 
 ---
