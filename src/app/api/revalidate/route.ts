@@ -367,15 +367,16 @@ function claimBroadcast(entryId: string): boolean {
 }
 
 // The ONLY categories whose posts trigger a broadcast — an allowlist, not a
-// blocklist. Chốt 06/09/2026: chỉ Kiến thức và Tips đáng vào hộp thư của
-// subscriber. Mọi chủ đề khác (Đánh giá, Deals, News, Khách sạn, và bất kỳ chủ
-// đề nào đặt ra sau này) chỉ lên site — News là tin ngắn phản ứng lại thông báo
-// của chương trình khác, lên site là đủ.
+// blocklist. Chốt 30/09/2026: chỉ bài Deals tự gửi bản tin — deal có hạn chót
+// nên subscriber cần biết ngay. Mọi chủ đề khác (Kiến thức, Tips, Đánh giá,
+// News, Khách sạn, và bất kỳ chủ đề nào đặt ra sau này) chỉ lên site; bài nào
+// ngoài Deals cần gửi thì tác giả chỉ định từng bài và gửi tay, không qua đây.
+// (Bản 06/09/2026 làm ngược lại: gửi Kiến thức + Tips, chặn Deals.)
 //
 // Danh sách này cố tình là allowlist: bài mang một `categoryVi` mới mà chưa ai
 // nghĩ tới sẽ IM LẶNG thay vì tự gửi mail cho toàn bộ danh sách. Gửi thiếu thì
 // vào Kit bấm gửi tay được; gửi thừa thì không rút lại được.
-const BROADCAST_CATEGORIES = new Set(["kiến thức", "tips"]);
+const BROADCAST_CATEGORIES = new Set(["deals"]);
 
 /**
  * Lượt này gần như chắc chắn là một bài MỚI mà bản tin của nó đã bị mất.
@@ -437,11 +438,11 @@ async function maybeNotifyNewPost(payload: unknown, deadline: number): Promise<b
 
   if (entry?.sys?.contentType?.sys?.id !== "blogPost") return "not_blog_post";
   if (entry.fields?.type?.[LOCALE] !== "post") return "video_post";
-  // `.normalize("NFC")` không thừa: allowlist ở trên viết bằng NFC, còn chuỗi
-  // đi qua Contentful giữ nguyên dạng bàn phím gõ ra. "Kiến thức" gõ ở dạng NFD
-  // (dấu tách rời) là một chuỗi KHÁC với cùng chữ ở dạng NFC, nên không khớp và
-  // bài đó lặng lẽ mất bản tin. Mọi entry hiện có đều NFC (đã đo 06/09/2026) —
-  // dòng này để một entry gõ bằng bộ gõ khác về sau không hỏng thầm lặng.
+  // `.normalize("NFC")` không thừa dù allowlist hiện chỉ có "deals": thêm lại
+  // một chủ đề có dấu (như "kiến thức" của bản 06/09) thì chuỗi đi qua
+  // Contentful giữ nguyên dạng bàn phím gõ ra, và cùng chữ ở dạng NFD (dấu tách
+  // rời) là một chuỗi KHÁC, không khớp, bài đó lặng lẽ mất bản tin. Mọi entry
+  // hiện có đều NFC (đã đo 06/09/2026).
   const category = entry.fields?.categoryVi?.[LOCALE]?.normalize("NFC").trim().toLowerCase();
   if (!category || !BROADCAST_CATEGORIES.has(category)) {
     return `${category || "no"}_category_post`;

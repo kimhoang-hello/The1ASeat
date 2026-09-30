@@ -197,7 +197,7 @@ Nếu 4 biến môi trường trên chưa được điền, route vẫn chạy b
 nhưng chỉ làm mới cache của Next.js chứ không xoá được cache CDN Hostinger — bạn
 vẫn cần bấm Clear cache thủ công như trước.
 
-## Tự động gửi email cho subscriber khi có bài viết mới (chỉ 2 chủ đề)
+## Tự động gửi email cho subscriber khi có bài viết mới (chỉ bài Deals)
 
 Route `/api/revalidate` ở trên giờ làm thêm 1 việc: mỗi khi 1 `blogPost` với
 `type = "post"` (bài viết thường, **không phải video**) được Publish **lần
@@ -208,11 +208,12 @@ chào mừng subscriber mới — cả 2 dùng chung 1 template ở
 [src/lib/subscriber-email.ts](src/lib/subscriber-email.ts). Sửa bài đã đăng
 và Publish lại sẽ **không** gửi lại email (chỉ gửi ở lần Publish đầu).
 
-**Chỉ 2 chủ đề được gửi email (chốt 06/09/2026):** email chỉ gửi khi ô
-`Category Vi` là **`Kiến thức`** hoặc **`Tips`** (không phân biệt hoa/thường).
-Mọi chủ đề khác — `Đánh giá`, `Deals`, `News`, `Khách sạn`, và bất kỳ chủ đề
-nào bạn đặt ra sau này — chỉ lên site, **không** vào hộp thư subscriber, kể cả
-khi đây là bài `post` và là lần Publish đầu tiên.
+**Chỉ bài Deals được tự gửi email (chốt 30/09/2026):** email chỉ tự gửi khi ô
+`Category Vi` là **`Deals`** (không phân biệt hoa/thường). Mọi chủ đề khác —
+`Kiến thức`, `Tips`, `Đánh giá`, `News`, `Khách sạn`, và bất kỳ chủ đề nào bạn
+đặt ra sau này — chỉ lên site, **không** tự vào hộp thư subscriber, kể cả khi
+đây là bài `post` và là lần Publish đầu tiên. Bài nào ngoài Deals mà bạn muốn
+gửi cho subscriber thì cứ chỉ định bài đó, email sẽ được gửi tay riêng.
 
 Đây là **danh sách cho phép**, không phải danh sách cấm: gõ một chủ đề mới lạ
 vào `Category Vi` thì bài đó im lặng chứ không tự gửi mail. Gửi thiếu thì vào
