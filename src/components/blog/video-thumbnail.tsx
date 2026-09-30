@@ -27,12 +27,14 @@ export function VideoThumbnail({
   alt,
   sizes,
   className = "",
+  preload = false,
 }: {
   src: string;
   fallbackSrc: string | null;
   alt: string;
   sizes: string;
   className?: string;
+  preload?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
 
@@ -45,6 +47,7 @@ export function VideoThumbnail({
       alt={alt}
       fill
       sizes={sizes}
+      preload={preload}
       className={className}
       unoptimized={useFallback}
       onError={() => setFailed(true)}

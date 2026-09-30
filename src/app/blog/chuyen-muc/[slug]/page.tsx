@@ -109,8 +109,8 @@ export default async function BlogCategoryPage({
               ở trên bắt trước. Từng thêm một empty state ở đây rồi gỡ — nó là
               code chết kèm một chuỗi dịch chẳng ai đọc. */}
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-            {posts.map((post) => (
-              <PostCard key={post.slug} post={post} />
+            {posts.map((post, index) => (
+              <PostCard key={post.slug} post={post} preload={index === 0} />
             ))}
           </div>
 

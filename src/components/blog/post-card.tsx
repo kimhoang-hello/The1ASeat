@@ -14,15 +14,23 @@ const common = t("common");
  * Shared card used by /blog, the category archives and the related-posts block.
  * `headingLevel` exists so a card nested under a section heading can drop to h3
  * instead of stacking a second h2 into the outline.
+ *
+ * `preload` chỉ cho thẻ ĐẦU TIÊN của một lưới nằm ngay màn hình đầu (/blog,
+ * trang chuyên mục). Ảnh của thẻ đó là LCP của cả trang, mà `next/image` mặc
+ * định `loading="lazy"`: đo Lighthouse 29/09/2026, ảnh LCP của /blog chờ
+ * 1.7 s mới bắt đầu tải chỉ vì bị lazy. Thẻ thứ hai trở đi cùng cỡ nên không
+ * thay được LCP — preload thêm chỉ tranh băng thông với ảnh thật sự cần.
  */
 export function PostCard({
   post,
   headingLevel = "h2",
   className = "",
+  preload = false,
 }: {
   post: BlogPost;
   headingLevel?: "h2" | "h3";
   className?: string;
+  preload?: boolean;
 }) {
   const Heading = headingLevel;
   // Ảnh video có đường lùi riêng khi `maxresdefault` không tồn tại; ảnh do tác
@@ -44,10 +52,18 @@ export function PostCard({
               fallbackSrc={getYouTubeThumbnailFallbackUrl(post.videoUrl ?? "")}
               alt={post.title}
               sizes="384px"
+              preload={preload}
               className="object-cover"
             />
           ) : (
-            <Image src={thumbnail} alt={post.title} fill sizes="384px" className="object-cover" />
+            <Image
+              src={thumbnail}
+              alt={post.title}
+              fill
+              sizes="384px"
+              preload={preload}
+              className="object-cover"
+            />
           )}
         </div>
       ) : (

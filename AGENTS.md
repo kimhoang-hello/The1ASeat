@@ -2436,3 +2436,29 @@ KHÔNG", "CÒN LỖ HỔNG KHAI THÁC ĐƯỢC SAU BẢN VÁ: KHÔNG").
 **Đã cân và KHÔNG làm:** pin `actions/checkout`/`setup-node` theo SHA (action
 chính chủ GitHub, repo không có Dependabot để cập nhật SHA); cookie bỏ-qua có
 thể vượt 4 KB nếu CHÍNH người dùng tự gửi 64 khoá dài — chỉ tự hại mình.
+
+## Kiểm SEO toàn diện 29/09/2026 — đừng đề xuất lại
+
+Crawl 154 URL sitemap trên bản build cục bộ: 0 lỗi status, 0 title/description
+trùng, canonical tự trỏ đúng (mọi biến thể `?type=`/`?points=`/`?cards=`/`?utm_`
+về trang trần), 1 h1/trang, không nhảy cấp heading, 0 ảnh thiếu alt, JSON-LD
+parse sạch và đủ field bắt buộc (BlogPosting, VideoObject lồng trong `video`,
+BreadcrumbList, CreditCard, BankAccount, ItemList). 404 có `noindex`, thẻ Mỹ
+`noindex, nofollow` đúng cờ. Search Console: sitemap Success 153 URL, 108 index,
+5 không index đều là ca đã biết (xem mục GSC trong memory), Breadcrumbs 0 lỗi.
+
+- **LCP 4–5 s của Lighthouse mặc định là ẢO khi LCP là chữ (h1).** Lantern
+  (throttling mô phỏng) dồn cả JS vào "render delay"; chạy lại
+  `--throttling-method=devtools` thì LCP = FCP ≈ 1.7 s. Đừng tối ưu theo con số
+  đó; đo bằng devtools throttling trước khi kết luận.
+- **Đã vá — ảnh LCP của `/blog` và trang chuyên mục bị `loading="lazy"`.** Thẻ
+  đầu của lưới nay `preload` (`PostCard` → `VideoThumbnail`). `/blog` mobile LCP
+  2.9 → 2.1 s (devtools), desktop 1.1 s, chuyên mục 0.8 s; desktop cũng chọn
+  đúng thẻ đầu làm LCP nên preload một ảnh là đủ.
+- **Cố ý KHÔNG bật AVIF** (`images.formats`): encode chậm gấp nhiều lần WebP
+  ở lượt đầu, mà cache `/_next/image` mất sau mỗi deploy — site deploy hằng
+  ngày vì các job cron, nên khách đầu tiên sau mỗi deploy trả giá.
+- Vấn đề còn lại nằm ở NỘI DUNG, không ở code: query tìm ra site 28 ngày qua
+  toàn tiếng Anh tên sản phẩm (`amex green card`, `bmo premium chequing
+  account`, `how to get us credit card in canada`) ở vị trí 20–90; 36 trang
+  video dưới 300 chữ tiếng Việt (xem SEO.md mục 2.3).
