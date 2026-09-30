@@ -222,6 +222,12 @@ const VERIFIED = "2026-09-21";
 const VERIFIED_2 = "2026-09-23";
 /** Đợt thẻ thêm ngày 24/09/2026. */
 const VERIFIED_3 = "2026-09-24";
+/**
+ * Ngày công bố mục (30/09/2026): mở lại trang ngân hàng của mọi thẻ đang hiện,
+ * bonus + mức chi + annual fee đều khớp. Citi® không nằm trong đợt này — trang
+ * không in số welcome bonus cho browser tự động (xem AGENTS.md).
+ */
+const REVERIFIED = "2026-09-30";
 
 const AMEX_ITIN: CanadianAnswer = {
   short: "Tuỳ trường hợp",
@@ -255,8 +261,9 @@ const BOA_ITIN: CanadianAnswer = {
 
 /**
  * Bank of America® KHÔNG in mức phí giao dịch ngoại tệ trên trang sản phẩm của
- * hai thẻ Atmos™ rẻ hơn — bảng phí đầy đủ chỉ hiện trong luồng apply. Thẻ
- * Summit thì trang nói thẳng là không có, nên chỉ hai thẻ kia để ngỏ.
+ * thẻ Ascent — bảng phí đầy đủ chỉ hiện trong luồng apply. Thẻ Summit và thẻ
+ * doanh nghiệp thì trang nói thẳng là không có (rà lại 30/09/2026), nên chỉ
+ * Ascent để ngỏ.
  */
 const BOA_FTF_UNKNOWN: CanadianAnswer = {
   short: "Chưa rõ",
@@ -363,7 +370,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_PERSONAL_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred",
     lastUpdated: VERIFIED,
-    verifiedOn: VERIFIED,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -404,7 +411,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/gold-card/",
     lastUpdated: VERIFIED,
-    verifiedOn: VERIFIED,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -449,7 +456,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CAPITAL_ONE_REFERRAL,
     sourceUrl: "https://www.capitalone.com/credit-cards/venture-x/",
     lastUpdated: VERIFIED,
-    verifiedOn: VERIFIED,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -538,7 +545,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.bilt.com/card",
     lastUpdated: VERIFIED,
-    verifiedOn: VERIFIED,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -582,7 +589,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/marriott-bonvoy/boundless",
     lastUpdated: VERIFIED,
-    verifiedOn: VERIFIED,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -601,7 +608,7 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Thẻ doanh nghiệp của Chase®: 100,000 điểm Ultimate Rewards®, 3x ở du lịch, vận chuyển, quảng cáo và internet.",
     editorsTake:
-      "Welcome bonus cao nhất trong ba thẻ Chase® trên trang này, nhưng chỉ dành cho người có doanh nghiệp ở Mỹ. Điểm cùng hệ Ultimate Rewards® với Sapphire Preferred® nên chuyển được sang Aeroplan®.",
+      "Welcome bonus lớn so với mức annual fee, nhưng chỉ dành cho người có doanh nghiệp ở Mỹ. Điểm cùng hệ Ultimate Rewards® với Sapphire Preferred® nên chuyển được sang Aeroplan®.",
     keyBenefits: [
       "3x điểm ở du lịch, vận chuyển, quảng cáo mạng xã hội và internet/điện thoại (tới $150,000 USD/năm)",
       "Thẻ nhân viên miễn phí",
@@ -629,7 +636,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_BUSINESS_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/business-credit-cards/ink/business-preferred",
     lastUpdated: VERIFIED,
-    verifiedOn: VERIFIED,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -676,7 +683,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_PERSONAL_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/rewards-credit-cards/sapphire/reserve",
     lastUpdated: VERIFIED_2,
-    verifiedOn: VERIFIED_2,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -695,7 +702,7 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Bản Mỹ của thẻ Platinum: 5x điểm vé máy bay và khách sạn, mạng lưới lounge rộng nhất trong các thẻ American Express®.",
     editorsTake:
-      "Welcome offer là \"lên đến\" và mức chi tiêu $12,000 USD trong 6 tháng là cao nhất trong các thẻ ở đây. Điểm Membership Rewards® Mỹ chuyển được sang Aeroplan® như bản Canada.",
+      "Welcome offer là \"lên đến\" và mức chi tiêu $12,000 USD trong 6 tháng là cao nhất trong các thẻ cá nhân ở đây. Điểm Membership Rewards® Mỹ chuyển được sang Aeroplan® như bản Canada.",
     keyBenefits: [
       "5x điểm vé máy bay đặt thẳng với hãng hoặc qua American Express Travel® (tới $500,000 USD/năm)",
       "5x điểm khách sạn trả trước qua American Express Travel®",
@@ -714,7 +721,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/platinum/",
     lastUpdated: VERIFIED_2,
-    verifiedOn: VERIFIED_2,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -759,7 +766,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CAPITAL_ONE_REFERRAL,
     sourceUrl: "https://www.capitalone.com/credit-cards/venture/",
     lastUpdated: "2026-09-27",
-    verifiedOn: "2026-09-27",
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -803,7 +810,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/united/united-explorer",
     lastUpdated: VERIFIED_2,
-    verifiedOn: VERIFIED_2,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -846,7 +853,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/world-of-hyatt-credit-card",
     lastUpdated: VERIFIED_2,
-    verifiedOn: VERIFIED_2,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -885,7 +892,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/hilton-honors/",
     lastUpdated: VERIFIED_2,
-    verifiedOn: VERIFIED_2,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -928,7 +935,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_BUSINESS_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/business-credit-cards/ink/unlimited",
     lastUpdated: VERIFIED_2,
-    verifiedOn: VERIFIED_2,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -972,7 +979,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_BUSINESS_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/business-credit-cards/ink/cash",
     lastUpdated: VERIFIED_3,
-    verifiedOn: VERIFIED_3,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -1011,7 +1018,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_BUSINESS_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/business-credit-cards/sapphire/reserve",
     lastUpdated: VERIFIED_3,
-    verifiedOn: VERIFIED_3,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -1052,7 +1059,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_BUSINESS_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/business-credit-cards/ink/premier",
     lastUpdated: VERIFIED_3,
-    verifiedOn: VERIFIED_3,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -1214,7 +1221,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/marriott-bonvoy/bold",
     lastUpdated: VERIFIED_3,
-    verifiedOn: VERIFIED_3,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -1233,7 +1240,7 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Thẻ Marriott Bonvoy® bậc giữa của Chase®: tới 18.5x điểm ở khách sạn Marriott Bonvoy® và 2x cho mọi chi tiêu khác.",
     editorsTake:
-      "Welcome bonus lớn nhất trong ba thẻ Marriott Bonvoy® cá nhân của Chase®. Annual fee $250 USD nên chỉ đáng nếu bạn ở Marriott Bonvoy® nhiều lần mỗi năm.",
+      "Trong ba thẻ Marriott Bonvoy® cá nhân của Chase®, đây là thẻ tặng nhiều điểm nhất khi mở — Boundless® tặng đêm miễn phí thay vì điểm. Annual fee $250 USD nên chỉ đáng nếu bạn ở Marriott Bonvoy® nhiều lần mỗi năm.",
     keyBenefits: [
       "Tới 18.5x điểm ở khách sạn thuộc Marriott Bonvoy®",
       "2x điểm cho mọi chi tiêu khác",
@@ -1252,7 +1259,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/marriott-bonvoy/bountiful",
     lastUpdated: VERIFIED_3,
-    verifiedOn: VERIFIED_3,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -1292,7 +1299,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/business-credit-cards/world-of-hyatt/hyatt-business-card",
     lastUpdated: VERIFIED_3,
-    verifiedOn: VERIFIED_3,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -1331,7 +1338,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: VERIFIED_3,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -1368,7 +1375,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-gold-card-amex/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: VERIFIED_3,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -1385,9 +1392,9 @@ const US_CARD_DATA: UsCardData[] = [
     annualFeeUsd: 95,
     rewardsCurrency: "Membership Rewards®",
     headline:
-      "Thẻ doanh nghiệp rẻ nhất trong hệ Membership Rewards®: phí $95 USD, 2x điểm khi đặt du lịch qua American Express Travel®.",
+      "Thẻ doanh nghiệp annual fee thấp trong hệ Membership Rewards®: phí $95 USD, 2x điểm khi đặt du lịch qua American Express Travel®.",
     editorsTake:
-      "Cửa rẻ nhất vào hệ điểm Membership Rewards® phía doanh nghiệp. American Express® ghi đây là offer đặc biệt, tăng từ 15,000 lên 25,000 điểm, nhưng không công bố ngày kết thúc. Lưu ý thẻ này CÓ phí giao dịch ngoại tệ 2.7%.",
+      "Annual fee $95 USD — trong các thẻ doanh nghiệp tích Membership Rewards® ở đây chỉ Blue Business® Plus (không annual fee) là rẻ hơn. American Express® ghi đây là offer đặc biệt, tăng từ 15,000 lên 25,000 điểm, nhưng không công bố ngày kết thúc. Lưu ý thẻ này CÓ phí giao dịch ngoại tệ 2.7%.",
     keyBenefits: [
       "2x điểm khi đặt du lịch qua American Express Travel®",
       "1x điểm cho mọi chi tiêu khác",
@@ -1405,7 +1412,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-green-card-amex/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: VERIFIED_3,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -1442,7 +1449,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-blue-business-plus-credit-card-amex/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: VERIFIED_3,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -1481,7 +1488,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/marriott-bonvoy-bevy/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: VERIFIED_3,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -1520,7 +1527,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/marriott-bonvoy-brilliant/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: VERIFIED_3,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -1538,7 +1545,7 @@ const US_CARD_DATA: UsCardData[] = [
     annualFeeUsd: 125,
     rewardsCurrency: "Marriott Bonvoy®",
     headline:
-      "Thẻ Marriott Bonvoy® doanh nghiệp: đêm miễn phí hằng năm và hạng Gold Elite với phí $125 USD.",
+      "Thẻ Marriott Bonvoy® doanh nghiệp: đêm miễn phí hằng năm và hạng Gold Elite với annual fee $125 USD.",
     editorsTake:
       "Offer kết thúc 04/11/2026. Free Night Award trong welcome offer dùng được ở khách sạn tới 50,000 điểm/đêm.",
     keyBenefits: [
@@ -1560,7 +1567,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/amex-marriott-bonvoy-business-credit-card/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: VERIFIED_3,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -1599,7 +1606,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-surpass/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: VERIFIED_3,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -1638,7 +1645,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-aspire/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: VERIFIED_3,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -1677,7 +1684,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/hilton-honors/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: VERIFIED_3,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -1715,7 +1722,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.bankofamerica.com/credit-cards/products/alaska-airlines-infinite-credit-card/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: VERIFIED_3,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -1753,7 +1760,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.bankofamerica.com/credit-cards/products/alaska-airlines-credit-card/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: VERIFIED_3,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
   {
@@ -1771,27 +1778,28 @@ const US_CARD_DATA: UsCardData[] = [
     annualFeeNote: "thêm $25 USD/năm cho mỗi thẻ",
     rewardsCurrency: "Atmos™ Rewards",
     headline:
-      "Bản doanh nghiệp của thẻ Atmos™ Rewards: annual fee thấp nhất trong nhóm, Companion Fare hằng năm.",
+      "Bản doanh nghiệp của thẻ Atmos™ Rewards: annual fee $70 USD cho công ty cộng $25 USD mỗi thẻ, Companion Fare hằng năm.",
     editorsTake:
-      "Phí công ty $70 USD cộng $25 USD mỗi thẻ — rẻ nhất trong các thẻ hãng bay ở đây. Cùng Companion Fare và hành lý miễn phí như bản cá nhân.",
+      "Phí công ty $70 USD cộng $25 USD mỗi thẻ, nên công ty một thẻ trả $95 USD mỗi năm. Cùng Companion Fare và hành lý miễn phí như bản cá nhân.",
     keyBenefits: [
       "Companion Fare $99 USD (cộng thuế phí từ $23 USD) mỗi năm gia hạn, sau khi chi $6,000 USD trong năm",
       "Hành lý ký gửi miễn phí và ưu tiên lên máy bay",
       "3 điểm mỗi $1 USD cho vé Alaska Airlines® và Hawaiian Airlines®",
       "2 điểm ở xăng, sạc xe điện, vận chuyển và giao thông địa phương",
+      "Không phí giao dịch ngoại tệ",
     ],
     tags: ["Airline", "Business", "Companion fare"],
     canada: {
       itin: BOA_ITIN,
       usCreditHistory: HISTORY_USUALLY,
       usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
-      foreignTransactionFee: BOA_FTF_UNKNOWN,
+      foreignTransactionFee: NO_FTF,
       pointsFromCanada: ATMOS_FROM_CANADA,
       watchOut: "Phí thẻ tính theo từng thẻ nhân viên, khác với thẻ doanh nghiệp của Chase® và American Express®.",
     },
     applyUrl: "https://business.bankofamerica.com/en/credit-cards/atmos-rewards",
     lastUpdated: VERIFIED_3,
-    verifiedOn: VERIFIED_3,
+    verifiedOn: REVERIFIED,
     needsVerification: false,
   },
 ];

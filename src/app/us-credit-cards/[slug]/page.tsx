@@ -12,7 +12,7 @@ import { UsCardsBetaNotice } from "@/components/credit-cards/us-beta-notice";
 import { ApplyButton } from "@/components/ui/apply-button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { isReferralUrl } from "@/lib/affiliate-links";
-import { creditCardJsonLd } from "@/lib/credit-card-schema";
+import { creditCardJsonLd, creditCardMetaDescription } from "@/lib/credit-card-schema";
 import { US_CARDS_PUBLISHED } from "@/lib/feature-flags";
 import { formatDate } from "@/lib/format-date";
 import {
@@ -57,7 +57,7 @@ export async function generateMetadata({
   return {
     ...pageMetadata({
       title: card.name,
-      description: card.headline,
+      description: creditCardMetaDescription(card),
       path: usCardPath(card.slug),
       image: card.cardImage || undefined,
     }),

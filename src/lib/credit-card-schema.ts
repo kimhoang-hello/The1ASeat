@@ -29,7 +29,11 @@ export function creditCardJsonLd(offer: CreditCardOffer | UsCreditCardOffer) {
     description: offer.headline,
     url,
     category: offer.cardType,
-    ...(offer.cardImage && { image: offer.cardImage }),
+    // Ảnh thẻ Mỹ nằm trong `public/` nên là đường dẫn tương đối; schema.org
+    // cần URL tuyệt đối. Ảnh thẻ Canada (Contentful) đã tuyệt đối sẵn.
+    ...(offer.cardImage && {
+      image: offer.cardImage.startsWith("/") ? absoluteUrl(offer.cardImage) : offer.cardImage,
+    }),
     provider: { "@type": "Organization", name: offer.issuer },
     feesAndCommissionsSpecification: offer.annualFee,
     areaServed: offer.country === "CA" ? "CA" : "US",

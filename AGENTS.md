@@ -1256,6 +1256,27 @@ Citi® dựng số bằng JavaScript (đo 30/09):
   bên duy nhất SỬA số liệu thẻ Mỹ. Task không chạy (app đóng) quá 21 ngày thì
   job hằng ngày tự đỏ vì quá hạn đối chiếu.
 
+**Rà sau công bố (30/09/2026).** Mở lại trang ngân hàng của cả 33 thẻ đang
+hiện: 32 thẻ khớp bonus + mức chi + annual fee (`verifiedOn` = `REVERIFIED`),
+Citi Strata Premier® vẫn không đọc được số. Ba link ref còn phủ đúng nhóm thẻ —
+trang ref Chase® doanh nghiệp chỉ hiện 2 thẻ ở khung hẹp, phải mở ≥1440px mới
+thấy đủ 5. Đã sửa:
+- **Câu so sánh tuyệt đối trôi khi thêm thẻ.** Viết lúc mục có 9 thẻ ("cao nhất
+  trong ba thẻ Chase®", "mức chi cao nhất trong các thẻ ở đây", "thẻ doanh
+  nghiệp rẻ nhất hệ Membership Rewards®", "annual fee thấp nhất nhóm hãng bay")
+  rồi sai dần khi lên 36. Thêm/ẩn thẻ thì grep "nhất" trong `US_CARD_DATA` và
+  đối chiếu lại với các thẻ đang hiện — không audit nào bắt loại này.
+- Atmos™ Business: trang doanh nghiệp của Bank of America® GHI "No international
+  transaction fees" → `NO_FTF`; chỉ Ascent còn `BOA_FTF_UNKNOWN`.
+- JSON-LD `CreditCard.image` của thẻ Mỹ là đường dẫn tương đối (`/images/…`) →
+  nay tuyệt đối. Meta description trang chi tiết dùng `creditCardMetaDescription`
+  như thẻ Canada (trước đó 24/33 trang dưới 110 ký tự).
+
+Chưa làm, chờ tác giả: 33 trang chi tiết chỉ có MỘT đường dẫn vào (trang tổng);
+trang tổng chỉ được link từ menu — bốn bài hướng dẫn, `/credit-cards`, trang chủ
+và `/bat-dau` không trỏ sang. Ảnh thẻ Chase® (289px) và Atmos™ (250px) nhỏ hơn
+khung 328px của trang chi tiết nên mờ trên màn retina.
+
 Mục riêng cho người Canada muốn mở thẻ US. Cờ `US_CARDS_PUBLISHED` (bật từ 30/09/2026; khi tắt: trang
 vào được bằng URL, `noindex`, dải báo nháp; bật cờ là hiện "🇺🇸 Thẻ Mỹ" trên menu
 (desktop + mobile), vào sitemap và ô tìm kiếm).
