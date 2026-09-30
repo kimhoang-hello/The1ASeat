@@ -93,5 +93,9 @@ export const RECOMMENDER_PUBLISHED = true;
  * Bật cờ CŨNG làm `getUsCreditCards()` bỏ mọi thẻ còn `needsVerification` —
  * nên trước khi bật, phải có ít nhất vài thẻ đã đối chiếu với trang ngân hàng,
  * không thì trang công bố ra rỗng.
+ *
+ * BẬT 30/09/2026 — bản Beta, tác giả chốt giữ nhãn Beta (`UsCardsBetaNotice`
+ * và pill Beta trên menu). Cả 36 thẻ đã đối chiếu với trang ngân hàng; Chase®
+ * Sapphire/Ink và Capital One® đi link ref, các thẻ khác link công khai.
  */
-export const US_CARDS_PUBLISHED = false;
+export const US_CARDS_PUBLISHED = true;

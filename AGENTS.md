@@ -1235,14 +1235,17 @@ hỏng"; bốn cái sửa, hai cái không.
   Visa Infinite* / Gold Visa*" bỏ chữ "Card"). Phép kiểm vẫn bắt được ca chính
   — chữ trong tiêu đề không có trong tên thẻ NÀO. Ghi lại làm giới hạn đã biết.
 
-## Mục Thẻ Mỹ `/us-credit-cards` (21/09/2026) — CHƯA CÔNG BỐ
+## Mục Thẻ Mỹ `/us-credit-cards` (21/09/2026) — CÔNG BỐ BẢN BETA 30/09/2026
 
-Chờ user: link affiliate cho từng thẻ, và bài hướng dẫn thẻ Mỹ. Chưa có hai thứ
-đó thì không bật cờ, không merge vào `main`.
+Cờ `US_CARDS_PUBLISHED` bật 30/09/2026 theo yêu cầu tác giả, giữ nhãn Beta. Link
+ref (29/09): Chase® cá nhân chỉ phủ Sapphire Preferred®/Reserve®, Chase® doanh
+nghiệp phủ bốn thẻ Ink + Sapphire Reserve for Business℠, Capital One® phủ
+Venture X/Venture — thẻ khác giữ link công khai (`sourceUrl` giữ trang sản phẩm
+khi `applyUrl` là link ref). Các đoạn bên dưới viết lúc cờ còn tắt.
 
-Mục riêng cho người Canada muốn mở thẻ US. Cờ `US_CARDS_PUBLISHED` (tắt): trang
+Mục riêng cho người Canada muốn mở thẻ US. Cờ `US_CARDS_PUBLISHED` (bật từ 30/09/2026; khi tắt: trang
 vào được bằng URL, `noindex`, dải báo nháp; bật cờ là hiện "🇺🇸 Thẻ Mỹ" trên menu
-(desktop + mobile), vào sitemap và ô tìm kiếm.
+(desktop + mobile), vào sitemap và ô tìm kiếm).
 
 - **Dữ liệu nằm trong repo** (`src/lib/us-credit-cards.ts`), không ở Contentful.
   Thẻ Mỹ mang đúng kiểu `CreditCardOffer` (`country: "US"`) + khối `us`, nên dùng
