@@ -55,6 +55,10 @@ export const POSTS_WITHOUT_DEADLINE: Record<string, string> = {
   // hạ về 2X, không phải hạn welcome offer — Chase không công bố ngày kết thúc.
   "chase-aeroplan-card-refresh-115000-points-25k-status":
     "welcome offer không có ngày kết thúc công bố; 31/12/2026 là hạn earn rate 3X grocery/dining",
+  // Bài News về benefits thẻ Aeroplan Canada. 12/01/2027 là ngày benefits mới
+  // BẮT ĐẦU; 10/09/2026–11/01/2027 là promo 15% đã có bài riêng (bảng trên).
+  "aeroplan-credit-cards-benefits-moi-2027":
+    "benefits thẻ lâu dài, không phải ưu đãi có hạn; 12/01/2027 là ngày bắt đầu hiệu lực",
 };
 
 export interface OfferStatus extends PostOffer {
