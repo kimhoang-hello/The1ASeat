@@ -41,6 +41,12 @@ const REFERRAL_SOURCES: { host: string; path?: string }[] = [
   // seats.aero cũng vậy: trang chủ là công cụ tìm award mà bài viết dẫn tới
   // như một nguồn, chỉ nhánh `/r/` là link giới thiệu bản Pro.
   { host: "seats.aero", path: "/r/" },
+  // Link mời thẻ Mỹ. `referyourchasecard.com` chỉ phục vụ link giới thiệu của
+  // Chase®; `i.capitalone.com` là domain rút gọn riêng cho link mời của
+  // Capital One® — khoá đúng subdomain đó, không phải cả `capitalone.com` vốn
+  // là trang sản phẩm bình thường.
+  { host: "referyourchasecard.com" },
+  { host: "i.capitalone.com" },
 ];
 
 /** `/referral` phải là một đoạn đường dẫn trọn vẹn, không phải chuỗi con:

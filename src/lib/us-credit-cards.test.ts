@@ -11,6 +11,7 @@ import {
   spendRequirement,
   usCardsListPath,
 } from "./us-credit-cards.ts";
+import { isReferralUrl } from "./affiliate-links.ts";
 
 /** Mọi chuỗi người đọc thấy trên một thẻ, kể cả chuỗi dựng từ số. */
 function visibleStrings(card: (typeof ALL_US_CARDS)[number]): string[] {
@@ -106,4 +107,16 @@ test("thẻ elevated phải có ngày hết hạn hoặc khai rõ là ngân hàn
 test("bài cho người mới nằm trong danh sách hướng dẫn", () => {
   assert.ok(US_CARDS_GUIDE_SLUGS.includes(US_CARDS_BEGINNER_SLUG));
   assert.equal(new Set(US_CARDS_GUIDE_SLUGS).size, US_CARDS_GUIDE_SLUGS.length);
+});
+
+// Nút Apply lấy `sponsored` từ `isReferralUrl`. Link ref có host chưa nằm trong
+// `REFERRAL_SOURCES` vẫn đưa người đọc tới đúng nơi — hỏng hoàn toàn im lặng.
+// Và link ref thì phải giữ trang sản phẩm ở `sourceUrl`, không thì mất nguồn số liệu.
+test("link ref thẻ Mỹ được đánh dấu sponsored và giữ trang nguồn", () => {
+  for (const card of ALL_US_CARDS) {
+    if (!card.applyUrl) continue;
+    const { sourceUrl } = card.us;
+    assert.equal(isReferralUrl(card.applyUrl), Boolean(sourceUrl), card.slug);
+    if (sourceUrl) assert.equal(isReferralUrl(sourceUrl), false, card.slug);
+  }
 });

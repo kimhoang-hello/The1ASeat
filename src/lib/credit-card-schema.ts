@@ -2,7 +2,7 @@ import type { CreditCardOffer } from "./content";
 import { absoluteUrl } from "./seo";
 import { SITE_URL } from "./subscriber-email";
 import { t } from "./t";
-import { usCardPath } from "./us-credit-cards";
+import { type UsCreditCardOffer, usCardPath } from "./us-credit-cards";
 
 /**
  * schema.org/CreditCard for one offer. Shared between the /credit-cards list
@@ -12,7 +12,10 @@ import { usCardPath } from "./us-credit-cards";
  * editor's take, and shipping a rating we do not actually collect would be
  * fabricated markup.
  */
-export function creditCardJsonLd(offer: CreditCardOffer) {
+export function creditCardJsonLd(offer: CreditCardOffer | UsCreditCardOffer) {
+  // Link ref thẻ Mỹ mở một trang liệt kê cả nhóm thẻ, không định danh riêng thẻ
+  // này — `Offer.url` trỏ trang sản phẩm của ngân hàng thay vào đó.
+  const offerUrl = ("us" in offer && offer.us.sourceUrl) || offer.applyUrl;
   // Thẻ Mỹ sống ở mục riêng — `@id` phải trỏ đúng trang của nó, không phải
   // một `/credit-cards/<slug>` không tồn tại.
   const url = absoluteUrl(
@@ -35,7 +38,7 @@ export function creditCardJsonLd(offer: CreditCardOffer) {
       // BỎ HẲN `url` khi thẻ không có applyUrl hợp lệ (xem `safeApplyUrl`).
       // In `url: ""` là nói với crawler rằng offer này mở ở chính trang đang
       // đứng — sai, và sai một cách trông như thật.
-      ...(offer.applyUrl && { url: offer.applyUrl }),
+      ...(offerUrl && { url: offerUrl }),
       category: offer.cardType,
       availability: "https://schema.org/InStock",
       seller: { "@type": "Organization", name: offer.issuer },

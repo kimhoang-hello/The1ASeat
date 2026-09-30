@@ -122,6 +122,8 @@ export type UsCardDetails = {
   lastUpdated: string;
   /** Ngày đối chiếu với trang ngân hàng. Vắng khi còn là số liệu mẫu. */
   verifiedOn?: string;
+  /** Trang sản phẩm của ngân hàng khi `applyUrl` là link ref. Vắng thì nguồn chính là `applyUrl`. */
+  sourceUrl?: string;
   /** `true` = số liệu mẫu, chưa kiểm. Không bao giờ hiện khi đã công bố. */
   needsVerification: boolean;
 };
@@ -163,6 +165,7 @@ type UsCardData = {
   tags: string[];
   canada: UsCardCanadianPerspective;
   applyUrl?: string;
+  sourceUrl?: string;
   lastUpdated: string;
   verifiedOn?: string;
   needsVerification: boolean;
@@ -203,7 +206,7 @@ const ADDRESS_USUALLY: CanadianAnswer = {
 };
 
 // Nguồn: trang sản phẩm chính thức của từng ngân hàng, đọc trực tiếp ngày
-// 21/09/2026 (URL chính là `applyUrl` của thẻ). Welcome offer Mỹ đổi thường
+// 21/09/2026 (URL chính là `sourceUrl`, hoặc `applyUrl` khi thẻ không có link ref). Welcome offer Mỹ đổi thường
 // xuyên và nhiều offer của American Express® là "as high as" — con số ghi ở
 // đây là mức cao nhất trang công bố, không phải mức mọi người đều nhận.
 const VERIFIED = "2026-09-21";
@@ -293,6 +296,21 @@ const INK_FTF: CanadianAnswer = {
 };
 
 
+/**
+ * Link ref của tác giả. Mỗi link chỉ mở một nhóm thẻ, nên CHỈ gắn cho thẻ có
+ * mặt trên trang đích — thẻ khác của cùng ngân hàng giữ link công khai, nếu
+ * không người đọc bấm "Apply" thẻ này lại rơi vào trang thẻ khác. Đã mở kiểm
+ * ngày 29/09/2026:
+ * - Chase® cá nhân: chỉ Sapphire Preferred® và Sapphire Reserve®.
+ * - Chase® doanh nghiệp: bốn thẻ Ink và Sapphire Reserve for Business℠ — không
+ *   có World of Hyatt Business.
+ * - Capital One®: cả Venture X và Venture.
+ * Host của ba link nằm trong `REFERRAL_SOURCES` để nút mang `sponsored`.
+ */
+const CHASE_PERSONAL_REFERRAL = "https://www.referyourchasecard.com/19y/UZBI95X9X8";
+const CHASE_BUSINESS_REFERRAL = "https://www.referyourchasecard.com/21h/X40C9Z2AN2";
+const CAPITAL_ONE_REFERRAL = "https://i.capitalone.com/J2YmzuLB7";
+
 const US_CARD_DATA: UsCardData[] = [
   {
     slug: "chase-sapphire-preferred",
@@ -334,7 +352,8 @@ const US_CARD_DATA: UsCardData[] = [
       watchOut:
         "Chase® thường từ chối người đã mở từ 5 thẻ (của mọi ngân hàng) trong 24 tháng — luật \"5/24\" không có trong điều khoản nhưng được nhiều người xác nhận. Welcome bonus cũng không dành cho người đang có thẻ này.",
     },
-    applyUrl: "https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred",
+    applyUrl: CHASE_PERSONAL_REFERRAL,
+    sourceUrl: "https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred",
     lastUpdated: VERIFIED,
     verifiedOn: VERIFIED,
     needsVerification: false,
@@ -419,7 +438,8 @@ const US_CARD_DATA: UsCardData[] = [
       },
       watchOut: "Capital One® kéo báo cáo tín dụng từ cả ba credit bureau khi xét đơn.",
     },
-    applyUrl: "https://www.capitalone.com/credit-cards/venture-x/",
+    applyUrl: CAPITAL_ONE_REFERRAL,
+    sourceUrl: "https://www.capitalone.com/credit-cards/venture-x/",
     lastUpdated: VERIFIED,
     verifiedOn: VERIFIED,
     needsVerification: false,
@@ -598,7 +618,8 @@ const US_CARD_DATA: UsCardData[] = [
       },
       watchOut: "Không nhận welcome bonus nếu đã từng có thẻ này.",
     },
-    applyUrl: "https://creditcards.chase.com/business-credit-cards/ink/business-preferred",
+    applyUrl: CHASE_BUSINESS_REFERRAL,
+    sourceUrl: "https://creditcards.chase.com/business-credit-cards/ink/business-preferred",
     lastUpdated: VERIFIED,
     verifiedOn: VERIFIED,
     needsVerification: false,
@@ -644,7 +665,8 @@ const US_CARD_DATA: UsCardData[] = [
       watchOut:
         "Cũng chịu luật 5/24 của Chase®, và phần lớn giá trị nằm ở các credit chỉ dùng được khi đặt qua hệ thống của Chase®.",
     },
-    applyUrl: "https://creditcards.chase.com/rewards-credit-cards/sapphire/reserve",
+    applyUrl: CHASE_PERSONAL_REFERRAL,
+    sourceUrl: "https://creditcards.chase.com/rewards-credit-cards/sapphire/reserve",
     lastUpdated: VERIFIED_2,
     verifiedOn: VERIFIED_2,
     needsVerification: false,
@@ -726,7 +748,8 @@ const US_CARD_DATA: UsCardData[] = [
       },
       watchOut: "Capital One® kéo báo cáo tín dụng từ cả ba credit bureau khi xét đơn.",
     },
-    applyUrl: "https://www.capitalone.com/credit-cards/venture/",
+    applyUrl: CAPITAL_ONE_REFERRAL,
+    sourceUrl: "https://www.capitalone.com/credit-cards/venture/",
     lastUpdated: "2026-09-27",
     verifiedOn: "2026-09-27",
     needsVerification: false,
@@ -894,7 +917,8 @@ const US_CARD_DATA: UsCardData[] = [
       pointsFromCanada: UR_PAIRED_FROM_CANADA,
       watchOut: "Thẻ này chịu luật 5/24 của Chase®, và doanh nghiệp đăng ký ở Canada không dùng được.",
     },
-    applyUrl: "https://creditcards.chase.com/business-credit-cards/ink/unlimited",
+    applyUrl: CHASE_BUSINESS_REFERRAL,
+    sourceUrl: "https://creditcards.chase.com/business-credit-cards/ink/unlimited",
     lastUpdated: VERIFIED_2,
     verifiedOn: VERIFIED_2,
     needsVerification: false,
@@ -937,7 +961,8 @@ const US_CARD_DATA: UsCardData[] = [
       watchOut:
         "Thẻ này chịu luật 5/24 của Chase®, và welcome bonus không dành cho người đã từng có bất kỳ thẻ doanh nghiệp Chase® không annual fee nào.",
     },
-    applyUrl: "https://creditcards.chase.com/business-credit-cards/ink/cash",
+    applyUrl: CHASE_BUSINESS_REFERRAL,
+    sourceUrl: "https://creditcards.chase.com/business-credit-cards/ink/cash",
     lastUpdated: VERIFIED_3,
     verifiedOn: VERIFIED_3,
     needsVerification: false,
@@ -975,7 +1000,8 @@ const US_CARD_DATA: UsCardData[] = [
       watchOut:
         "Là thẻ Pay in Full: dư nợ phải trả hết mỗi kỳ sao kê. Mức chi tiêu $30,000 USD trong 6 tháng là rào cản thật, không phải con số trang trí.",
     },
-    applyUrl: "https://creditcards.chase.com/business-credit-cards/sapphire/reserve",
+    applyUrl: CHASE_BUSINESS_REFERRAL,
+    sourceUrl: "https://creditcards.chase.com/business-credit-cards/sapphire/reserve",
     lastUpdated: VERIFIED_3,
     verifiedOn: VERIFIED_3,
     needsVerification: false,
@@ -1015,7 +1041,8 @@ const US_CARD_DATA: UsCardData[] = [
       },
       watchOut: "Thẻ Pay in Full và chịu luật 5/24 của Chase®.",
     },
-    applyUrl: "https://creditcards.chase.com/business-credit-cards/ink/premier",
+    applyUrl: CHASE_BUSINESS_REFERRAL,
+    sourceUrl: "https://creditcards.chase.com/business-credit-cards/ink/premier",
     lastUpdated: VERIFIED_3,
     verifiedOn: VERIFIED_3,
     needsVerification: false,
@@ -1788,6 +1815,7 @@ function toOffer(card: UsCardData): UsCreditCardOffer {
       canada: card.canada,
       lastUpdated: card.lastUpdated,
       verifiedOn: card.verifiedOn,
+      sourceUrl: card.sourceUrl,
       needsVerification: card.needsVerification,
     },
   };
