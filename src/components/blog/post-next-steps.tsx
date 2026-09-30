@@ -3,7 +3,8 @@ import { ArrowRight } from "@phosphor-icons/react/ssr";
 import { NextSteps, StepLink } from "@/components/ui/next-steps";
 import { cardsMentionedInPost, pointsProgramForPost } from "@/lib/post-next-steps";
 import { foundationPosts } from "@/lib/start-here";
-import { START_HERE_PUBLISHED } from "@/lib/feature-flags";
+import { START_HERE_PUBLISHED, US_CARDS_PUBLISHED } from "@/lib/feature-flags";
+import { US_CARDS_BASE, US_CARDS_GUIDE_SLUGS, getUsCreditCards } from "@/lib/us-credit-cards";
 import { t as translate } from "@/lib/t";
 import type { BlogPost, CreditCardOffer } from "@/lib/content";
 
@@ -78,6 +79,18 @@ export function PostNextSteps({
     />
   ) : null;
 
+  // Bốn bài hướng dẫn thẻ Mỹ là cửa vào tự nhiên nhất của mục Thẻ Mỹ, nhưng
+  // tới 30/09/2026 không bài nào trỏ sang: mức 3 ở trên dẫn họ về thẻ CANADA.
+  // Chỉ đúng những bài trong `US_CARDS_GUIDE_SLUGS` — cùng lý do với `routeLink`.
+  const usLink =
+    US_CARDS_PUBLISHED && US_CARDS_GUIDE_SLUGS.includes(post.slug) ? (
+      <StepLink
+        href={US_CARDS_BASE}
+        label={t("usCardsLabel")}
+        description={t("usCardsDescription", { count: getUsCreditCards().length })}
+      />
+    ) : null;
+
   if (mentioned.length > 0) {
     return (
       <>
@@ -102,8 +115,9 @@ export function PostNextSteps({
           ))}
         </ul>
       </section>
-      {routeLink && (
+      {(usLink || routeLink) && (
         <NextSteps title={next("title")} className={className}>
+          {usLink}
           {routeLink}
         </NextSteps>
       )}
@@ -113,6 +127,7 @@ export function PostNextSteps({
 
   return (
     <NextSteps title={next("title")} className={className}>
+      {usLink}
       {program ? (
         <StepLink
           href={program.href}
@@ -120,11 +135,13 @@ export function PostNextSteps({
           description={t("programDescription")}
         />
       ) : (
-        <StepLink
-          href="/credit-cards"
-          label={next("cardsLabel")}
-          description={next("cardsDescription")}
-        />
+        !usLink && (
+          <StepLink
+            href="/credit-cards"
+            label={next("cardsLabel")}
+            description={next("cardsDescription")}
+          />
+        )
       )}
       {routeLink}
     </NextSteps>

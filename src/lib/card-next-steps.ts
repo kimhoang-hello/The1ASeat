@@ -3,6 +3,7 @@ import { PROGRAMS } from "./award-charts";
 import { getCardPointsPrograms, programIdFor, creditCardsPath } from "./card-points-programs";
 import { BANKS, type Bank, type BankAccount } from "./bank-accounts";
 import type { BlogPost, CreditCardOffer } from "./content/types";
+import { ringAfter } from "./ring";
 
 /**
  * Trang chi tiết một thẻ từng là ngõ cụt: nút apply, link về danh sách, link về
@@ -86,26 +87,8 @@ export function samePointsProgramLink(
   };
 }
 
-/**
- * `limit` phần tử đứng ngay sau `self` trong `items`, vòng lại đầu khi hết —
- * và không bao giờ trả về chính `self`.
- *
- * Dùng chung cho thẻ và cho tài khoản ngân hàng (`bank-next-steps.ts` gọi lại
- * hàm này). Tính chất cần ở cả hai chỗ: với `n` phần tử và `limit >= 1`, mỗi
- * phần tử được đúng `min(limit, n - 1)` phần tử khác trỏ vào — không có phần
- * tử nào bị bỏ lại, đó chính là điều mà cách "lấy `limit` phần tử đầu danh
- * sách" không bảo đảm được.
- */
-export function ringAfter<T>(items: T[], isSelf: (item: T) => boolean, limit: number): T[] {
-  const index = items.findIndex(isSelf);
-  if (index < 0) return items.slice(0, limit);
+export { ringAfter } from "./ring";
 
-  const out: T[] = [];
-  for (let step = 1; step < items.length && out.length < limit; step++) {
-    out.push(items[(index + step) % items.length]);
-  }
-  return out;
-}
 
 /**
  * Các thẻ khác cùng hệ điểm, dưới dạng thẻ thật chứ không phải một link lọc.

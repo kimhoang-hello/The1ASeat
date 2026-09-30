@@ -11,8 +11,11 @@ import { RebateChip } from "@/components/ui/hot-tip";
 import { ApplyButton } from "@/components/ui/apply-button";
 import { isReferralUrl } from "@/lib/affiliate-links";
 import { isElevatedLive } from "@/lib/credit-card-state";
+import { US_CARDS_PUBLISHED } from "@/lib/feature-flags";
+import { US_CARDS_BASE } from "@/lib/us-cards-path";
 
 const t = translate("offers");
+const usCards = translate("usCards");
 
 function shuffle<T>(items: T[]): T[] {
   const result = [...items];
@@ -39,9 +42,18 @@ export async function OffersSection() {
               {t("title")}
             </h2>
           </div>
-          <Link href="/credit-cards" className="cursor-pointer text-sm font-semibold text-primary hover:underline">
-            {t("viewAll")} &rarr;
-          </Link>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
+            <Link href="/credit-cards" className="cursor-pointer text-sm font-semibold text-primary hover:underline">
+              {t("viewAll")} &rarr;
+            </Link>
+            {/* Mục Thẻ Mỹ không có cửa nào trên trang chủ ngoài menu. Chỉ là một
+                link cạnh "xem tất cả", không chen vào bốn thẻ Canada. */}
+            {US_CARDS_PUBLISHED && (
+              <Link href={US_CARDS_BASE} className="cursor-pointer text-sm font-semibold text-primary hover:underline">
+                {usCards("homeLink")} &rarr;
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Two across once the section is wide enough, so the extra room goes

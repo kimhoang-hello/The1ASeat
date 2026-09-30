@@ -13,7 +13,8 @@ import { ApplyButton } from "@/components/ui/apply-button";
 import { isReferralUrl } from "@/lib/affiliate-links";
 import { JsonLd } from "@/components/seo/json-ld";
 import { BetaBadge } from "@/components/ui/beta-badge";
-import { RECOMMENDER_PUBLISHED } from "@/lib/feature-flags";
+import { RECOMMENDER_PUBLISHED, US_CARDS_PUBLISHED } from "@/lib/feature-flags";
+import { US_CARDS_BASE, getUsCreditCards } from "@/lib/us-credit-cards";
 import { RECOMMENDER_PATH } from "@/lib/recommender/path";
 import { PointsProgramLinks } from "@/components/credit-cards/points-program-links";
 import { CardTags } from "@/components/credit-cards/card-tags";
@@ -33,6 +34,7 @@ import { pageMetadata, absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
 const offers_t = t("offers");
 const best = t("bestCards");
 const reco = t("recommender");
+const usCards = t("usCards");
 const seo = t("seo");
 
 export const metadata: Metadata = pageMetadata({
@@ -305,6 +307,24 @@ export default async function CreditCardsPage({
                 {offers_t("emptyCta")} &rarr;
               </Link>
             </div>
+          )}
+
+          {/* Cửa sang mục Thẻ Mỹ, ĐẶT CUỐI danh sách chứ không cạnh hai dải
+              đầu trang: người vào trang này tìm thẻ Canada, còn thẻ Mỹ là bước
+              sau. Trước đây mục đó chỉ có cửa từ menu. */}
+          {US_CARDS_PUBLISHED && (
+            <Link
+              href={US_CARDS_BASE}
+              className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card px-5 py-4 transition-colors hover:border-primary xl:col-span-2"
+            >
+              <span>
+                <span className="block font-display font-bold text-foreground">{usCards("bandTitle")}</span>
+                <span className="mt-0.5 block text-sm text-muted-foreground">
+                  {usCards("bandBody", { count: getUsCreditCards().length })}
+                </span>
+              </span>
+              <span className="shrink-0 text-sm font-semibold text-primary">{usCards("bandCta")} &rarr;</span>
+            </Link>
           )}
 
           <OfferDisclosure className="mt-3 xl:col-span-2" />

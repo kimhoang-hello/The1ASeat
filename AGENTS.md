@@ -1272,10 +1272,21 @@ thấy đủ 5. Đã sửa:
   nay tuyệt đối. Meta description trang chi tiết dùng `creditCardMetaDescription`
   như thẻ Canada (trước đó 24/33 trang dưới 110 ký tự).
 
-Chưa làm, chờ tác giả: 33 trang chi tiết chỉ có MỘT đường dẫn vào (trang tổng);
-trang tổng chỉ được link từ menu — bốn bài hướng dẫn, `/credit-cards`, trang chủ
-và `/bat-dau` không trỏ sang. Ảnh thẻ Chase® (289px) và Atmos™ (250px) nhỏ hơn
-khung 328px của trang chi tiết nên mờ trên màn retina.
+Làm tiếp cùng ngày theo yêu cầu tác giả:
+- **Link nội bộ.** 33 trang chi tiết từng chỉ có MỘT đường vào (trang tổng). Nay
+  mỗi trang có hai khối anh em lấy theo vòng (`usCardSiblings`: cùng loại điểm,
+  cùng nhóm lọc) — test `test:us-cards` đòi mỗi thẻ ≥2 trang thẻ khác trỏ vào.
+  Trang tổng thêm cửa từ bốn bài hướng dẫn (`PostNextSteps`, thay link chung về
+  thẻ Canada), cuối `/credit-cards` và cạnh "xem tất cả" ở trang chủ. KHÔNG thêm
+  vào `/bat-dau`: lộ trình người mới, còn thẻ Mỹ đòi US credit history.
+  `ringAfter` chuyển sang `src/lib/ring.ts` để file dữ liệu vẫn import trần được.
+- **Ảnh Atmos™** thay bằng ảnh gốc 3000–3840px trên alaskaair.com (cắt thẻ ra
+  khỏi ảnh nền, bo góc bằng sharp) → 960px. **Ảnh Chase® vẫn 289px**: trang
+  Chase® (kể cả rendition gốc trong DAM và trang ref) chỉ có cỡ đó; marriott.com
+  có ảnh 1920px nhưng là THIẾT KẾ KHÁC với trang Chase® — đừng dùng.
+- **Mục Elevated** dùng `UsCardElevated` (ảnh nhỏ, tên, bonus, hạn): mọi thẻ ở
+  đó còn hiện lại ở danh sách đầy đủ. 375px: danh sách bắt đầu ở 3,438px thay
+  vì 7,507px.
 
 Mục riêng cho người Canada muốn mở thẻ US. Cờ `US_CARDS_PUBLISHED` (bật từ 30/09/2026; khi tắt: trang
 vào được bằng URL, `noindex`, dải báo nháp; bật cờ là hiện "🇺🇸 Thẻ Mỹ" trên menu

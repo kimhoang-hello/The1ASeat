@@ -26,6 +26,7 @@
 import type { CreditCardOffer } from "./content/types.ts";
 import { US_CARDS_PUBLISHED } from "./feature-flags.ts";
 import { US_CARDS_BASE } from "./us-cards-path.ts";
+import { ringAfter } from "./ring.ts";
 
 export { US_CARDS_BASE };
 
@@ -1881,6 +1882,46 @@ export function matchesUsCardFilter(card: UsCreditCardOffer, filter: UsCardFilte
   // Thẻ doanh nghiệp chỉ nằm ở mục Business, để mục Travel là thẻ cá nhân —
   // người lọc "Travel" gần như không bao giờ tìm thẻ đòi doanh nghiệp ở Mỹ.
   return !card.us.business && card.us.category === filter;
+}
+
+/** Bộ lọc loại mà thẻ này thuộc về — đúng một, xem `matchesUsCardFilter`. */
+export function usCardFilterOf(card: UsCreditCardOffer): Exclude<UsCardFilter, "all"> {
+  return card.us.business ? "business" : card.us.category;
+}
+
+/**
+ * Hai nhóm thẻ anh em cho trang một thẻ Mỹ: cùng loại điểm, và cùng nhóm lọc
+ * (Travel/Airline/Hotel/Business).
+ *
+ * Tồn tại vì đo 30/09/2026 cả 33 trang thẻ Mỹ chỉ có ĐÚNG MỘT link nội bộ trỏ
+ * vào — từ trang tổng. Lấy theo VÒNG (`ringAfter`) chứ không phải ba thẻ đầu,
+ * cùng lý do với thẻ Canada. Hai trục chứ không một: loại điểm bỏ sót thẻ duy
+ * nhất của hệ mình (Citi®, Bilt, United℠, Ink Business Premier®), còn mọi nhóm
+ * lọc đều có từ ba thẻ trở lên nên không thẻ nào bị bỏ lại.
+ *
+ * Thẻ đã có trong nhóm loại điểm thì không lặp ở nhóm lọc: trang đó vẫn trỏ
+ * tới thẻ ấy, nên số trang trỏ vào mỗi thẻ không giảm.
+ */
+export function usCardSiblings(
+  card: UsCreditCardOffer,
+  cards: UsCreditCardOffer[],
+  limit = 3,
+): { sameCurrency: UsCreditCardOffer[]; filter: Exclude<UsCardFilter, "all">; sameFilter: UsCreditCardOffer[] } {
+  const isSelf = (other: UsCreditCardOffer) => other.slug === card.slug;
+  const currencyFamily = cards.filter((other) => other.us.rewardsCurrency === card.us.rewardsCurrency);
+  const sameCurrency = currencyFamily.length > 1 ? ringAfter(currencyFamily, isSelf, limit) : [];
+
+  // Đi hết vòng rồi mới bỏ thẻ đã hiện và cắt `limit` — cắt trước thì thẻ
+  // Bonvoy® hay Business® của American Express® ra khối rỗng, vì ba thẻ đứng
+  // sau chúng trong nhóm lọc cũng chính là ba thẻ cùng loại điểm.
+  const filter = usCardFilterOf(card);
+  const shown = new Set(sameCurrency.map((other) => other.slug));
+  const filterFamily = cards.filter((other) => matchesUsCardFilter(other, filter));
+  const sameFilter = ringAfter(filterFamily, isSelf, filterFamily.length)
+    .filter((other) => !shown.has(other.slug))
+    .slice(0, limit);
+
+  return { sameCurrency, filter, sameFilter };
 }
 
 export function usIssuerId(value: string | undefined): UsIssuerId | undefined {

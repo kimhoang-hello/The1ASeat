@@ -533,7 +533,9 @@
     "programLabel": "Thẻ nào tích {program}?",
     "programDescription": "Lọc danh sách thẻ theo đúng loại điểm bài này nói tới",
     "routeLabel": "Bài này nằm trong lộ trình cho người mới",
-    "routeDescription": "{count} bài, đọc theo thứ tự — rồi tiếp tục với các bước chọn thẻ và dùng điểm"
+    "routeDescription": "{count} bài, đọc theo thứ tự — rồi tiếp tục với các bước chọn thẻ và dùng điểm",
+    "usCardsLabel": "Xem các thẻ tín dụng Mỹ trên Ghế 1A",
+    "usCardsDescription": "{count} thẻ, mỗi thẻ kèm góc nhìn cho người Canada — ITIN, US address, phí ngoại tệ"
   },
   "bankNextSteps": {
     "moreAccountsLabel": "Xem tất cả tài khoản của {bank}",
@@ -679,6 +681,12 @@
     "perspectivePoints": "Điểm có sử dụng tốt từ Canada không?",
     "perspectiveWatchOut": "Điều cần lưu ý",
     "perspectiveGuide": "Xem hướng dẫn chơi thẻ Mỹ từ Canada",
-    "rewardsCurrency": "Điểm thưởng"
+    "rewardsCurrency": "Điểm thưởng",
+    "siblingsCurrencyTitle": "Thẻ Mỹ khác cũng tích {currency}",
+    "siblingsFilterTitle": "Thẻ Mỹ khác trong nhóm {filter}",
+    "bandTitle": "🇺🇸 Tìm thẻ tín dụng Mỹ?",
+    "bandBody": "{count} thẻ Mỹ, mỗi thẻ kèm góc nhìn cho người Canada: ITIN, US address, phí ngoại tệ.",
+    "bandCta": "Xem thẻ Mỹ",
+    "homeLink": "🇺🇸 Thẻ Mỹ"
   }
 }

@@ -10,6 +10,7 @@ import { CardTags } from "@/components/credit-cards/card-tags";
 import { CanadianPerspective } from "@/components/credit-cards/canadian-perspective";
 import { UsCardsBetaNotice } from "@/components/credit-cards/us-beta-notice";
 import { ApplyButton } from "@/components/ui/apply-button";
+import { NextSteps, StepLink } from "@/components/ui/next-steps";
 import { JsonLd } from "@/components/seo/json-ld";
 import { isReferralUrl } from "@/lib/affiliate-links";
 import { creditCardJsonLd, creditCardMetaDescription } from "@/lib/credit-card-schema";
@@ -20,6 +21,7 @@ import {
   getUsCreditCards,
   spendRequirement,
   usCardPath,
+  usCardSiblings,
 } from "@/lib/us-credit-cards";
 import { usCardsGuideHref } from "@/lib/us-cards-guide";
 import { t as translate } from "@/lib/t";
@@ -31,6 +33,15 @@ const common = translate("common");
 const seo = translate("seo");
 
 export const revalidate = 60;
+
+/** Nhãn của từng nhóm lọc, cùng chữ với viên pill trên trang tổng. */
+const FILTER_LABEL_KEYS = {
+  travel: "filterTravel",
+  airline: "filterAirline",
+  hotel: "filterHotel",
+  cashback: "filterCashback",
+  business: "filterBusiness",
+} as const;
 
 // Chỉ những thẻ `getUsCreditCards()` cho hiện. Đã công bố thì thẻ còn số liệu
 // mẫu không có trang — kể cả gõ thẳng URL — thay vì một trang trông như offer
@@ -92,6 +103,7 @@ export default async function UsCreditCardDetailPage({
 
   const guideHref = await usCardsGuideHref();
   const requirement = spendRequirement(card);
+  const { sameCurrency, filter, sameFilter } = usCardSiblings(card, getUsCreditCards());
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -206,6 +218,42 @@ export default async function UsCreditCardDetailPage({
             </p>
 
             <OfferDisclosure className="mt-8" />
+
+            {/* Đặt SAU nút apply và phần công bố như trang thẻ Canada: đường đi
+                tiếp cho người chưa quyết. Link THẲNG sang từng thẻ, không phải
+                link lọc — xem `usCardSiblings`. */}
+            {sameCurrency.length > 0 && (
+              <NextSteps
+                title={us("siblingsCurrencyTitle", { currency: card.us.rewardsCurrency })}
+                compact
+                className="mt-12"
+              >
+                {sameCurrency.map((sibling) => (
+                  <StepLink
+                    key={sibling.slug}
+                    href={usCardPath(sibling.slug)}
+                    label={sibling.name}
+                    description={`${sibling.issuer} · ${sibling.annualFee}`}
+                  />
+                ))}
+              </NextSteps>
+            )}
+            {sameFilter.length > 0 && (
+              <NextSteps
+                title={us("siblingsFilterTitle", { filter: us(FILTER_LABEL_KEYS[filter]) })}
+                compact
+                className={sameCurrency.length > 0 ? "mt-8" : "mt-12"}
+              >
+                {sameFilter.map((sibling) => (
+                  <StepLink
+                    key={sibling.slug}
+                    href={usCardPath(sibling.slug)}
+                    label={sibling.name}
+                    description={`${sibling.issuer} · ${sibling.annualFee}`}
+                  />
+                ))}
+              </NextSteps>
+            )}
 
             <p className="mt-10 border-t border-border pt-4 text-xs text-muted-foreground">
               <Link href="/" className="underline">

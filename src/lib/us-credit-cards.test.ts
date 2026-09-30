@@ -9,6 +9,7 @@ import {
   getUsCreditCards,
   matchesUsCardFilter,
   spendRequirement,
+  usCardSiblings,
   usCardsListPath,
 } from "./us-credit-cards.ts";
 import { isReferralUrl } from "./affiliate-links.ts";
@@ -130,5 +131,35 @@ test("link ref thẻ Mỹ được đánh dấu sponsored và giữ trang nguồ
 test("thẻ đang ẩn không bao giờ hiện", () => {
   for (const published of [true, false]) {
     assert.ok(getUsCreditCards(published).every((card) => !card.us.hidden));
+  }
+});
+
+// Trang thẻ Mỹ từng chỉ có một đường vào (trang tổng). Khối "thẻ liên quan" lấy
+// theo vòng nên mỗi thẻ đang hiện phải được ít nhất hai trang thẻ khác trỏ vào,
+// và không trang nào tự trỏ về mình hay liệt kê một thẻ hai lần.
+test("mỗi thẻ Mỹ được ít nhất hai trang thẻ khác trỏ vào", () => {
+  const cards = getUsCreditCards(true);
+  const inbound = new Map(cards.map((card) => [card.slug, new Set<string>()]));
+  for (const card of cards) {
+    const { sameCurrency, sameFilter } = usCardSiblings(card, cards);
+    const linked = [...sameCurrency, ...sameFilter].map((other) => other.slug);
+    assert.equal(new Set(linked).size, linked.length, card.slug);
+    assert.ok(!linked.includes(card.slug), card.slug);
+    for (const slug of linked) inbound.get(slug)!.add(card.slug);
+  }
+  for (const [slug, from] of inbound) assert.ok(from.size >= 2, `${slug}: ${from.size}`);
+});
+
+// Khử trùng lặp phải xảy ra TRƯỚC khi cắt: nhóm lọc còn thẻ chưa hiện ở khối
+// loại điểm thì khối nhóm lọc phải có thẻ.
+test("khối cùng nhóm lọc không rỗng khi nhóm còn thẻ khác", () => {
+  const cards = getUsCreditCards(true);
+  for (const card of cards) {
+    const { sameCurrency, filter, sameFilter } = usCardSiblings(card, cards);
+    const shown = new Set([card.slug, ...sameCurrency.map((other) => other.slug)]);
+    const remaining = cards.filter(
+      (other) => matchesUsCardFilter(other, filter) && !shown.has(other.slug),
+    ).length;
+    assert.equal(sameFilter.length, Math.min(3, remaining), card.slug);
   }
 });

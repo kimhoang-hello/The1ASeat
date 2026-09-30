@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { JsonLd } from "@/components/seo/json-ld";
-import { UsCardSummary } from "@/components/credit-cards/us-card-summary";
+import { UsCardElevated, UsCardSummary } from "@/components/credit-cards/us-card-summary";
 import { UsCardsBetaNotice } from "@/components/credit-cards/us-beta-notice";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { BetaBadge } from "@/components/ui/beta-badge";
@@ -175,12 +175,12 @@ export default async function UsCreditCardsPage({
           {elevated.length > 0 && (
             <div className="mt-12">
               <SectionHeading>{us("featuredTitle")}</SectionHeading>
-              {/* Cùng lưới và cùng thẻ ngang với danh sách bên dưới: mục này
-                  thường chỉ có một hai thẻ, và ba cột thẻ dựng đứng với một
-                  thẻ duy nhất để trống hai phần ba bề ngang. */}
-              <div className="mt-6 grid gap-5 xl:grid-cols-2">
+              {/* Dạng gọn, không phải thẻ đầy đủ: mọi thẻ ở đây còn hiện lại ở
+                  "Tất cả thẻ Mỹ" bên dưới, và 30/09/2026 mục này có tám thẻ —
+                  xem `UsCardElevated`. */}
+              <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {elevated.map((card) => (
-                  <UsCardSummary key={card.slug} card={card} />
+                  <UsCardElevated key={card.slug} card={card} />
                 ))}
               </div>
             </div>
