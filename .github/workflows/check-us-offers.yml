@@ -1,0 +1,37 @@
+name: Canh welcome offer thẻ Mỹ
+
+# Việc `check-rebates` làm cho thẻ Canada, làm cho mục `/us-credit-cards`.
+# Job CHỈ BÁO, không tự sửa và không bao giờ push: nó đỏ khi có thẻ Mỹ cần rà —
+# offer đã qua `expiresAt`, con số trên site không còn thấy trên trang ngân
+# hàng (chỉ đọc được Chase® và Bilt bằng `fetch`), hoặc quá 21 ngày không ai đối
+# chiếu. Rà và sửa là việc của task cục bộ `ghe-1a-canh-offer-the-my`, chạy
+# bằng browser thật; xem đầu `scripts/check-us-offers.mts`.
+#
+# ĐỎ Ở ĐÂY LÀ TÍN HIỆU, không phải hỏng: GitHub gửi email, mở log ra là thấy
+# thẻ nào.
+
+on:
+  schedule:
+    # Một lượt mỗi ngày. Offer Mỹ không đổi theo giờ như rebate FinlyWealth, và
+    # hạn offer tính theo ngày — 9:15 UTC là 5:15 sáng Toronto, tức lượt đầu
+    # tiên sau khi một `expiresAt` vừa qua. Cron GitHub hay nổ trễ vài tiếng.
+    - cron: "15 9 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: So số liệu thẻ Mỹ với trang ngân hàng
+        run: npm run audit:us-offers

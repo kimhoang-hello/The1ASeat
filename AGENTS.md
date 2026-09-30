@@ -1243,6 +1243,19 @@ nghiệp phủ bốn thẻ Ink + Sapphire Reserve for Business℠, Capital One®
 Venture X/Venture — thẻ khác giữ link công khai (`sourceUrl` giữ trang sản phẩm
 khi `applyUrl` là link ref). Các đoạn bên dưới viết lúc cờ còn tắt.
 
+**Canh offer thẻ Mỹ (30/09/2026).** Hai tầng, vì chỉ Chase® và Bilt in offer vào
+HTML mà `fetch` đọc được — American Express®, Capital One®, Bank of America®,
+Citi® dựng số bằng JavaScript (đo 30/09):
+- `npm run audit:us-offers` (`scripts/check-us-offers.mts`), chạy hằng ngày bởi
+  `check-us-offers.yml`. CHỈ BÁO, không sửa, không push. Đỏ khi: offer đã qua
+  `expiresAt`; con số trên site không còn trên trang Chase®/Bilt (bonus phải đi
+  liền "spend $X" đúng mức chi — con số trần còn xuất hiện ở thẻ quảng cáo
+  chéo); hoặc `verifiedOn` cũ hơn 21 ngày. Job đỏ ở đây là tín hiệu có chủ ý.
+- Task cục bộ `ghe-1a-canh-offer-the-my` (T2 + T5, 9:23) mở trang ngân hàng bằng
+  browser, sửa `us-credit-cards.ts`, đặt lại `verifiedOn`, commit + push. Đây là
+  bên duy nhất SỬA số liệu thẻ Mỹ. Task không chạy (app đóng) quá 21 ngày thì
+  job hằng ngày tự đỏ vì quá hạn đối chiếu.
+
 Mục riêng cho người Canada muốn mở thẻ US. Cờ `US_CARDS_PUBLISHED` (bật từ 30/09/2026; khi tắt: trang
 vào được bằng URL, `noindex`, dải báo nháp; bật cờ là hiện "🇺🇸 Thẻ Mỹ" trên menu
 (desktop + mobile), vào sitemap và ô tìm kiếm).
@@ -1257,8 +1270,8 @@ vào được bằng URL, `noindex`, dải báo nháp; bật cờ là hiện "�
   cầu "thêm tất cả thẻ theo hệ điểm" — Chase® (UR + Bonvoy + Hyatt),
   American Express® (MR + Bonvoy + Hilton, ĐÃ BỎ các thẻ Delta), Bank of
   America® (chỉ Atmos™ Rewards, đã bỏ Premium Rewards®). Ảnh thẻ chính thức
-  cho cả 36. Offer Mỹ đổi thường xuyên và không có job nào canh như
-  `check-rebates` — phải rà tay. Bảy thẻ mang `expiresAt`, sớm nhất là hai thẻ
+  cho cả 36. Offer Mỹ đổi thường xuyên; từ 30/09/2026 có job canh (xem "Canh
+  offer thẻ Mỹ" ở trên), trước đó phải rà tay. Bảy thẻ mang `expiresAt`, sớm nhất là hai thẻ
   Marriott Bonvoy® của American Express® (30/09/2026).
 - **Citi® CHƯA LÀM ĐƯỢC.** Trang Citi® không render số welcome bonus, mức chi
   tiêu và annual fee cho browser này — chỉ ra "Earn $ cash back bonus after
