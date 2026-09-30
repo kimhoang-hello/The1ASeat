@@ -383,6 +383,29 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "amex-marriott-bonvoy-business",
+    name: "80,000 điểm Bonvoy®",
+    headline: 80000,
+    currency: "bonvoy",
+    // Mức thường sau khi offer 110,000 đóng. Ngày site (Contentful) đổi sang
+    // mức này — Amex® không ghi ngày bắt đầu. Bản đang mở đứng trước bản đã
+    // đóng, như amex-green ở đầu file.
+    startDate: "2026-09-28",
+    verifiedAt: "2026-09-30",
+    recordedAt: "2026-09-30",
+    components: [
+      { type: "spend_threshold", points: 70000, spend: 5000, windowDays: 90 },
+      {
+        type: "anniversary",
+        points: 10000,
+        spend: 1000,
+        windowDays: 30,
+        startsAfterDays: 365,
+        note: "Chi $1,000 trong tháng thứ 13",
+      },
+    ],
+  },
+  {
+    slug: "amex-marriott-bonvoy-business",
     name: "110,000 điểm Bonvoy®",
     headline: 110000,
     currency: "bonvoy",
@@ -516,6 +539,29 @@ const OFFER_SEEDS: OfferSeed[] = [
       { type: "first_purchase", points: 5000 },
       { type: "spend_threshold", points: 15000, spend: 3000, windowDays: 90 },
       { type: "anniversary", points: 5000, windowDays: 365, note: "Thưởng gia hạn mỗi năm" },
+    ],
+  },
+  {
+    slug: "amex-marriott-bonvoy",
+    name: "70,000 điểm Bonvoy®",
+    headline: 70000,
+    currency: "bonvoy",
+    // Mức thường sau khi offer 110,000 đóng. Ngày site (Contentful) đổi sang
+    // mức này — Amex® không ghi ngày bắt đầu. Bản đang mở đứng trước bản đã
+    // đóng, như amex-green ở đầu file.
+    startDate: "2026-09-28",
+    verifiedAt: "2026-09-30",
+    recordedAt: "2026-09-30",
+    components: [
+      { type: "spend_threshold", points: 60000, spend: 3000, windowDays: 90 },
+      {
+        type: "anniversary",
+        points: 10000,
+        spend: 500,
+        windowDays: 30,
+        startsAfterDays: 365,
+        note: "Chi $500 trong tháng thứ 13",
+      },
     ],
   },
   {

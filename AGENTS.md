@@ -2478,3 +2478,49 @@ BreadcrumbList, CreditCard, BankAccount, ItemList). 404 có `noindex`, thẻ M�
   toàn tiếng Anh tên sản phẩm (`amex green card`, `bmo premium chequing
   account`, `how to get us credit card in canada`) ở vị trí 20–90; 36 trang
   video dưới 300 chữ tiếng Việt (xem SEO.md mục 2.3).
+
+## Kiểm toàn diện 30/09/2026 — đừng đề xuất lại
+
+Gate xanh sau khi sửa: lint, tsc, build, 8 audit, 6 test suite, `npm audit` 0 lỗ
+hổng, 8 URL chính 200, `www` 308 về apex, đủ 5 header bảo mật. Codex rà theo
+thứ tự hậu quả + diff `55bdd6b..HEAD`: không lỗi mới.
+
+**Đã vá — trang `/credit-cards/tot-nhat/offers` in 110,000 điểm Bonvoy® suốt
+hai ngày sau khi offer hạ còn 70,000.** Tác giả sửa hai thẻ Marriott Bonvoy®
+trong Contentful ngày 28/09 (cá nhân 70,000, doanh nghiệp 80,000, hết elevated);
+đoạn văn viết tay trong `best-cards.ts` nằm nguyên. `check-rebates` đỏ 4 lượt
+liền từ 28/09 16:57 UTC — cửa canh `bestCardsProseDrift` làm đúng việc, chỉ là
+không ai nhìn. **Đổi welcome bonus của thẻ nào có mặt trong `best-cards.ts` thì
+chạy `audit:best-cards` ngay**, đừng đợi job đỏ.
+
+- Câu kết của mục offers KHÔNG còn con số Bonvoy®. Bản vá đầu ghi "70,000 điểm
+  Bonvoy®", Codex bác: trùng đúng con số của RBC® Avion® trong cùng câu, mà
+  audit đoạn kết chỉ đòi số khớp MỘT thẻ bất kỳ của mục — lần sau Bonvoy® đổi
+  mà quên đoạn kết thì vẫn xanh. Bỏ số là hết chỗ để lệch.
+  Giới hạn còn lại, không vá: chừng nào Bonvoy® còn đứng ở 70,000 thì chữ "RBC®
+  Avion® 70,000 điểm" trong đoạn kết được chính entry Bonvoy® che. Pick Avion®
+  vẫn có `sharedFiguresVi` canh riêng nên Avion® đổi thì job vẫn đỏ.
+- Thẻ này còn xứng đứng trong mục "offer tốt nhất" ở mức thường 70,000 hay
+  không là quyết định biên tập — đã báo tác giả, không tự gỡ.
+
+**Đã vá — engine gợi ý coi hai thẻ Bonvoy® là KHÔNG có welcome bonus.** Hai
+seed 110,000 đóng ở `endDate` 22/09 và không có bản nối tiếp; `audit:reco-data`
+chỉ cảnh báo (`⚠︎ chưa có offer nào`). Thêm hai seed mới (`startDate`
+28/09 — ngày Contentful đổi, Amex® không ghi ngày), mốc chi chép từ
+`editorsTakeVi`. Snapshot engine không đổi vì nó cố định ở 08/09.
+
+**`audit:rebates`: Neo™ Savings $75 → $50, KOHO Extra $100 → $75** (FinlyWealth
+hạ sau lượt job 23:57 UTC 29/09). `$100` trong `bonusLabelVi` của KOHO Extra là
+cashback của KOHO, không phải rebate — đừng sửa theo.
+
+**`audit:trademarks` báo giả 37 chỗ "Business℠"** — học từ một comment trong
+`us-credit-cards.ts` ("Sapphire Reserve for Business℠": chữ "for" viết thường
+cắt cụm, nên script chỉ học "Business"). Đã viết lại comment. Cùng lớp lỗi với
+các ca ngắt dòng 09/09 và 16/09: thấy một TỪ ĐƠN phổ thông bị đòi ký hiệu thì
+tìm chỗ script học nó, đừng sửa 37 chỗ.
+
+**Job đỏ, không phải lỗi code:** `sync-videos` 30/09 06:46 UTC "channel: 404,
+uploads-playlist: 404" (lượt đầu ngày UTC, đúng mục 27/09); `sync-videos` 29/09
+06:58 UTC HTTP 403 cả 5 lượt (Hostinger chặn runner). `check-rebates` 29/09
+23:50 UTC còn kèm một timeout FinlyWealth cho `scotiabank-scene-plus-visa-students`
+cả 3 lượt — trang đó gọi lại hôm nay 3/3 lượt 200 trong <2.5s.

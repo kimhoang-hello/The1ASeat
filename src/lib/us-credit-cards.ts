@@ -302,7 +302,7 @@ const INK_FTF: CanadianAnswer = {
  * không người đọc bấm "Apply" thẻ này lại rơi vào trang thẻ khác. Đã mở kiểm
  * ngày 29/09/2026:
  * - Chase® cá nhân: chỉ Sapphire Preferred® và Sapphire Reserve®.
- * - Chase® doanh nghiệp: bốn thẻ Ink và Sapphire Reserve for Business℠ — không
+ * - Chase® doanh nghiệp: bốn thẻ Ink và bản Sapphire Reserve® doanh nghiệp — không
  *   có World of Hyatt Business.
  * - Capital One®: cả Venture X và Venture.
  * Host của ba link nằm trong `REFERRAL_SOURCES` để nút mang `sponsored`.

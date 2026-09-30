@@ -145,8 +145,8 @@ export const BEST_CARDS_CATEGORIES: BestCardsCategory[] = [
       {
         slug: "amex-marriott-bonvoy",
         bodyVi: [
-          "American Express® Marriott Bonvoy® hiện có welcome bonus lên đến 110,000 điểm Bonvoy®, annual fee $120. Offer kết thúc ngày {expiresAt}.",
-          "Mình không xem điểm Bonvoy® có giá trị ngang Aeroplan® hay Amex® MR, nhưng 110,000 điểm vẫn là một lượng points rất đáng kể nếu bạn thường ở tại các khách sạn của Marriott Bonvoy®. Quan trọng hơn, thẻ còn tặng một Free Night Award trị giá 35,000 điểm Bonvoy® mỗi năm sau anniversary và 15 Elite Night Credits.",
+          "American Express® Marriott Bonvoy® hiện có welcome bonus lên đến 70,000 điểm Bonvoy®, annual fee $120. Offer kết thúc ngày {expiresAt}.",
+          "Mình không xem điểm Bonvoy® có giá trị ngang Aeroplan® hay Amex® MR, nhưng 70,000 điểm vẫn là một lượng points rất đáng kể nếu bạn thường ở tại các khách sạn của Marriott Bonvoy®. Quan trọng hơn, thẻ còn tặng một Free Night Award trị giá 35,000 điểm Bonvoy® mỗi năm sau anniversary và 15 Elite Night Credits.",
           "Đây cũng là một trong số ít thẻ mình thấy có lý do khá rõ ràng để giữ lâu dài: nếu bạn sử dụng được Free Night Award hàng năm với giá trị cao hơn $120 annual fee thì bài toán giữ thẻ tương đối đơn giản.",
         ],
         bestForVi:
@@ -194,7 +194,7 @@ export const BEST_CARDS_CATEGORIES: BestCardsCategory[] = [
     ],
     closingHeadingVi: "Nếu chỉ chọn một offer?",
     closingVi: [
-      "Không có một offer tốt nhất cho tất cả mọi người. Nếu mình ưu tiên transferable points, RBC® Avion® 70,000 điểm là offer mình sẽ nhìn đầu tiên. Nếu thường ở khách sạn của Marriott Bonvoy®, 110,000 điểm Bonvoy® đang rất đáng chú ý. Nếu muốn một chương trình đơn giản hơn, TD First Class Travel® hoặc CIBC® Aventura® sẽ dễ sử dụng hơn.",
+      "Không có một offer tốt nhất cho tất cả mọi người. Nếu mình ưu tiên transferable points, RBC® Avion® 70,000 điểm là offer mình sẽ nhìn đầu tiên. Nếu thường ở khách sạn của Marriott Bonvoy®, thẻ Bonvoy® với Free Night Award mỗi năm vẫn đáng chú ý. Nếu muốn một chương trình đơn giản hơn, TD First Class Travel® hoặc CIBC® Aventura® sẽ dễ sử dụng hơn.",
       "Đừng apply chỉ vì thấy một con số welcome bonus lớn. Trước tiên hãy xem minimum spend, annual fee và quan trọng nhất là bạn định dùng số points đó vào việc gì.",
     ],
     keywordsVi: "welcome bonus offer tốt nhất khuyến mãi thẻ đang có ưu đãi lớn nhất",

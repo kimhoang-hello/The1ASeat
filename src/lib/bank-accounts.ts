@@ -545,7 +545,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     url: "https://www.neofinancial.com/accounts",
     affiliateUrl:
       "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fneo-savings-account&utm_source=ghe-1a",
-    rebate: "$75",
+    rebate: "$50",
   },
 
   // ----------------------------------------------------------- Tangerine
@@ -776,7 +776,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     url: "https://www.koho.ca/extra/",
     affiliateUrl:
       "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fkoho-extra-plan&utm_source=ghe-1a",
-    rebate: "$100",
+    rebate: "$75",
   },
   {
     slug: "koho-essential",
