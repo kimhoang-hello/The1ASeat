@@ -1284,6 +1284,14 @@ Làm tiếp cùng ngày theo yêu cầu tác giả:
   khỏi ảnh nền, bo góc bằng sharp) → 960px. **Ảnh Chase® vẫn 289px**: trang
   Chase® (kể cả rendition gốc trong DAM và trang ref) chỉ có cỡ đó; marriott.com
   có ảnh 1920px nhưng là THIẾT KẾ KHÁC với trang Chase® — đừng dùng.
+- **SỰ CỐ 30/09 tối: cả 33 trang thẻ Mỹ 404.** `dynamicParams = false` + ISR:
+  sau `revalidatePath("/", "layout")` (webhook Contentful, mọi lần publish)
+  Next 16.3 dựng lại các trang đó thành 404 và CACHE bản 404 (`x-nextjs-cache:
+  HIT`) tới lần deploy sau; trang danh sách vẫn sống. Đã bỏ cờ, thẻ ẩn/slug lạ
+  vẫn 404 nhờ `notFound()`. Đừng đặt lại `dynamicParams = false` trên trang có
+  `revalidate`. Tái hiện cục bộ: route tạm gọi `revalidatePath("/", "layout")`
+  rồi gọi lại trang (KHÔNG gọi `/api/revalidate` thật — nó purge CDN và có thể
+  gửi email). `audit:links` trên production bắt được lỗi này (link hỏng).
 - **Mục Elevated** dùng `UsCardElevated` (ảnh nhỏ, tên, bonus, hạn): mọi thẻ ở
   đó còn hiện lại ở danh sách đầy đủ. 375px: danh sách bắt đầu ở 3,438px thay
   vì 7,507px.

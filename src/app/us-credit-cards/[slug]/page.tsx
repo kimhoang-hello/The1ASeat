@@ -43,11 +43,12 @@ const FILTER_LABEL_KEYS = {
   business: "filterBusiness",
 } as const;
 
-// Chỉ những thẻ `getUsCreditCards()` cho hiện. Đã công bố thì thẻ còn số liệu
-// mẫu không có trang — kể cả gõ thẳng URL — thay vì một trang trông như offer
-// thật.
-export const dynamicParams = false;
-
+// Chỉ những thẻ `getUsCreditCards()` cho hiện. Thẻ ẩn, thẻ còn số liệu mẫu hay
+// slug lạ đều 404 nhờ `notFound()` trong trang — KHÔNG dùng
+// `dynamicParams = false`. Đo 30/09/2026 trên Next 16.3: route có cờ đó, sau
+// `revalidatePath("/", "layout")` (webhook Contentful gọi ở MỌI lần publish),
+// dựng lại cả 33 trang thành 404 và cache luôn bản 404 — mục Thẻ Mỹ chết sạch
+// tới lần deploy sau, còn trang danh sách vẫn sống nên không ai thấy.
 export function generateStaticParams() {
   return getUsCreditCards().map((card) => ({ slug: card.slug }));
 }
