@@ -1250,7 +1250,9 @@ Rewards Business Credit Card" (slug cũ redirect 308 trong `next.config.ts`).
 Offer ra mắt chỉ có trên trang `/a1/ihg/*` (trang sản phẩm cũ còn số cũ vài giờ đầu)
 nên `applyUrl` trỏ về đó; cả bốn ghi "Apply by 11/18/2026" → elevated, hạn chung
 `IHG_LAUNCH_OFFER_ENDS`. Ảnh thẻ mới chỉ có 254–500px. Thẻ Aeroplan® ghi "OUR BEST
-OFFER EVER" mà không có ngày → KHÔNG elevated; bonus hai nấc nên `welcomeBonus`
+OFFER EVER" (gạch mức thường 60,000) mà không có ngày → tác giả xác nhận là
+elevated, dùng `offerEndUnannounced` như Capital One® Venture — mỗi lượt rà phải mở
+lại trang, mất chữ gạch/"best offer" thì tắt tay; bonus hai nấc nên `welcomeBonus`
 ghi nấc đầu (75,000 ↔ $4,000 USD) kèm "(tổng tới 115,000)". Hai câu "nhất" đã sửa:
 Amex Platinum (nấc hai thẻ Aeroplan® đòi $20,000 USD) và Sapphire Reserve® for
 Business (Premier Select cũng 200,000 điểm).

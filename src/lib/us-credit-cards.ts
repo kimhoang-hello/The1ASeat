@@ -147,7 +147,9 @@ type UsCardData = {
    */
   elevatedBonus: boolean;
   /**
-   * Ngân hàng ghi offer có thời hạn nhưng không công bố ngày (Capital One®).
+   * Ngân hàng ghi offer có thời hạn nhưng không công bố ngày (Capital One®), hoặc
+   * offer nâng mà ngân hàng không ghi hạn (thẻ Aeroplan® của Chase®: "best offer
+   * ever", mức thường gạch bỏ).
    * Thay cho `expiresAt`, nên thẻ KHÔNG tự rời mục Elevated — mỗi lượt rà phải
    * mở lại trang ngân hàng, hết chữ "Limited-Time" thì tắt tay.
    */
@@ -801,7 +803,8 @@ const US_CARD_DATA: UsCardData[] = [
     issuerId: "chase",
     category: "airline",
     business: false,
-    elevatedBonus: false,
+    elevatedBonus: true,
+    offerEndUnannounced: true,
     cardImage: "/images/us-cards/chase-aeroplan.png",
     welcomeBonus: "75,000 điểm Aeroplan® (tổng tới 115,000)",
     minimumSpendUsd: 4_000,
@@ -811,7 +814,7 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Thẻ Aeroplan® của Chase®: điểm vào thẳng tài khoản Aeroplan®, hạng 25K tự động và hành lý ký gửi miễn phí trên chuyến Air Canada®.",
     editorsTake:
-      "Welcome bonus tới 115,000 điểm chia hai nấc: 75,000 điểm sau khi chi $4,000 USD trong 3 tháng, thêm 40,000 điểm khi tổng chi đạt $20,000 USD trong 12 tháng — Chase® gọi đây là offer tốt nhất từ trước tới nay của thẻ. Với người Canada, đây là thẻ Mỹ tích thẳng ra Aeroplan® mà không cần bước chuyển điểm, và hạng 25K tự động đáng giá nếu bạn hay bay Air Canada®.",
+      "Welcome bonus tới 115,000 điểm chia hai nấc: 75,000 điểm sau khi chi $4,000 USD trong 3 tháng, thêm 40,000 điểm khi tổng chi đạt $20,000 USD trong 12 tháng — offer nâng từ mức thường 60,000 điểm, Chase® gọi là offer tốt nhất từ trước tới nay của thẻ nhưng không công bố ngày kết thúc. Với người Canada, đây là thẻ Mỹ tích thẳng ra Aeroplan® mà không cần bước chuyển điểm, và hạng 25K tự động đáng giá nếu bạn hay bay Air Canada®.",
     keyBenefits: [
       "Hạng Aeroplan® 25K tự động khi còn giữ thẻ; chi $75,000 USD trong năm lên 35K",
       "3x điểm khi mua thẳng với Air Canada® và ở du lịch khác; 3x ở siêu thị và nhà hàng tới 31/12/2026 (sau đó 2x); 2x ở trạm xăng",
