@@ -241,6 +241,8 @@ const VERIFIED_3 = "2026-09-24";
  * không in số welcome bonus cho browser tự động (xem AGENTS.md).
  */
 const REVERIFIED = "2026-09-30";
+/** Đợt thẻ thêm ngày 01/10/2026: ba thẻ IHG® và thẻ Aeroplan® của Chase®. */
+const VERIFIED_4 = "2026-10-01";
 
 const AMEX_FTF_27: CanadianAnswer = {
   short: "Có — 2.7%",
@@ -284,6 +286,19 @@ const UR_PAIRED_FROM_CANADA: CanadianAnswer = {
   short: "Có, nếu ghép thẻ",
   note: "Tự nó chỉ quy ra tiền. Gộp điểm sang Sapphire Preferred®, Sapphire Reserve® hoặc Ink Business Preferred® thì chuyển được sang Aeroplan®.",
 };
+
+const IHG_FROM_CANADA: CanadianAnswer = {
+  short: "Có",
+  note: "IHG® One Rewards là chương trình toàn cầu; điểm và đêm miễn phí dùng được ở khách sạn IHG® tại Canada.",
+};
+
+/**
+ * Điều kiện bonus in trên trang hai thẻ IHG® cá nhân (đọc 01/10/2026): không
+ * đang giữ thẻ IHG® nào, chưa nhận bonus trong 24 tháng, thẻ doanh nghiệp
+ * không tính. Hệ quả là giữ được một trong hai thẻ cá nhân, không phải cả hai.
+ */
+const IHG_PERSONAL_WATCH_OUT =
+  "Thẻ này chịu luật 5/24 của Chase®. Chỉ mở được khi bạn không đang giữ thẻ IHG® cá nhân nào (Premier hoặc Traveler) và chưa nhận bonus thẻ IHG® cá nhân trong 24 tháng; thẻ doanh nghiệp không tính vào luật này.";
 
 const BONVOY_FROM_CANADA: CanadianAnswer = {
   short: "Có",
@@ -667,7 +682,7 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Bản Mỹ của thẻ Platinum: 5x điểm vé máy bay và khách sạn, mạng lưới lounge rộng nhất trong các thẻ American Express®.",
     editorsTake:
-      "Welcome offer là \"lên đến\" và mức chi tiêu $12,000 USD trong 6 tháng là cao nhất trong các thẻ cá nhân ở đây. Điểm Membership Rewards® Mỹ chuyển được sang Aeroplan® như bản Canada.",
+      "Welcome offer là \"lên đến\" và đòi chi $12,000 USD trong 6 tháng. Điểm Membership Rewards® Mỹ chuyển được sang Aeroplan® như bản Canada.",
     keyBenefits: [
       "5x điểm vé máy bay đặt thẳng với hãng hoặc qua American Express Travel® (tới $500,000 USD/năm)",
       "5x điểm khách sạn trả trước qua American Express Travel®",
@@ -770,6 +785,49 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/united/united-explorer",
     lastUpdated: VERIFIED_2,
     verifiedOn: REVERIFIED,
+    needsVerification: false,
+  },
+  {
+    slug: "chase-aeroplan",
+    name: "Air Canada Aeroplan® Card",
+    issuerId: "chase",
+    category: "airline",
+    business: false,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/chase-aeroplan.png",
+    welcomeBonus: "75,000 điểm Aeroplan® (tổng tới 115,000)",
+    minimumSpendUsd: 4_000,
+    offerPeriod: "3 tháng đầu",
+    annualFeeUsd: 195,
+    rewardsCurrency: "Aeroplan®",
+    headline:
+      "Thẻ Aeroplan® của Chase®: điểm vào thẳng tài khoản Aeroplan®, hạng 25K tự động và hành lý ký gửi miễn phí trên chuyến Air Canada®.",
+    editorsTake:
+      "Welcome bonus tới 115,000 điểm chia hai nấc: 75,000 điểm sau khi chi $4,000 USD trong 3 tháng, thêm 40,000 điểm khi tổng chi đạt $20,000 USD trong 12 tháng — Chase® gọi đây là offer tốt nhất từ trước tới nay của thẻ. Với người Canada, đây là thẻ Mỹ tích thẳng ra Aeroplan® mà không cần bước chuyển điểm, và hạng 25K tự động đáng giá nếu bạn hay bay Air Canada®.",
+    keyBenefits: [
+      "Hạng Aeroplan® 25K tự động khi còn giữ thẻ; chi $75,000 USD trong năm lên 35K",
+      "3x điểm khi mua thẳng với Air Canada® và ở du lịch khác; 3x ở siêu thị và nhà hàng tới 31/12/2026 (sau đó 2x); 2x ở trạm xăng",
+      "Hành lý ký gửi đầu tiên miễn phí cho bạn và tối đa 8 người cùng đặt chỗ trên chuyến Air Canada®",
+      "Credit Air Canada® tới $100 USD mỗi năm (hai lần $50 USD) và giảm 15% vé đổi điểm của Air Canada®",
+      "Tới 25,000 Status Qualifying Credits (SQC) mỗi năm theo mức chi tiêu",
+      "Credit phí Global Entry, TSA PreCheck® hoặc NEXUS™ tới $120 USD, 4 năm một lần; không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Aeroplan®", "Hành lý miễn phí", "Không phí ngoại tệ"],
+    canada: {
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: {
+        short: "Có",
+        note: "Điểm tự chuyển vào tài khoản Aeroplan® gắn với thẻ sau mỗi kỳ sao kê. Aeroplan® không chia theo quốc gia, nên điểm dùng được cho chuyến bay xuất phát từ Canada như điểm từ thẻ Canada.",
+      },
+      watchOut:
+        "Thẻ này chịu luật 5/24 của Chase®. Điều khoản của Chase® chỉ chặn người đang có thẻ này hoặc đã nhận bonus của nó trong 24 tháng — không nhắc tới thẻ Aeroplan® Canada. Nấc 40,000 điểm đòi tổng chi $20,000 USD trong 12 tháng, khó với người ít tiêu ở Mỹ.",
+    },
+    applyUrl: "https://creditcards.chase.com/travel-credit-cards/aircanada/aeroplan",
+    lastUpdated: VERIFIED_4,
+    verifiedOn: VERIFIED_4,
     needsVerification: false,
   },
   {
@@ -1247,6 +1305,121 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: "https://creditcards.chase.com/business-credit-cards/world-of-hyatt/hyatt-business-card",
     lastUpdated: VERIFIED_3,
     verifiedOn: REVERIFIED,
+    needsVerification: false,
+  },
+  {
+    slug: "ihg-one-rewards-premier",
+    name: "IHG® One Rewards Premier Credit Card",
+    issuerId: "chase",
+    category: "hotel",
+    business: false,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/ihg-one-rewards-premier.png",
+    welcomeBonus: "140,000 điểm IHG® One Rewards",
+    minimumSpendUsd: 3_000,
+    offerPeriod: "3 tháng đầu",
+    annualFeeUsd: 99,
+    rewardsCurrency: "IHG® One Rewards",
+    headline:
+      "Thẻ khách sạn IHG® của Chase®: hạng Platinum Elite tự động và một đêm miễn phí mỗi năm gia hạn.",
+    editorsTake:
+      "Welcome bonus 140,000 điểm sau khi chi $3,000 USD trong 3 tháng — Chase® quy ra tới 4 đêm ở khách sạn IHG®. Đêm miễn phí hằng năm cộng ưu đãi đổi 3 đêm tặng đêm thứ 4 thường bù được $99 USD annual fee nếu bạn ở IHG® ít nhất một lần mỗi năm.",
+    keyBenefits: [
+      "Đêm miễn phí mỗi năm gia hạn (khách sạn tới 40,000 điểm/đêm, bù thêm điểm được cho khách sạn đắt hơn)",
+      "Hạng Platinum Elite tự động; chi $40,000 USD trong năm lên Diamond Elite",
+      "Đổi điểm 3 đêm liên tiếp được tặng đêm thứ 4",
+      "10x điểm ở khách sạn IHG®; 5x ở du lịch, nhà hàng và trạm xăng; 3x cho mọi chi tiêu khác",
+      "Chi $20,000 USD trong năm được $100 USD credit và 10,000 điểm",
+      "Credit phí Global Entry, TSA PreCheck® hoặc NEXUS™ tới $120 USD, 4 năm một lần; không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Hotel", "Đêm miễn phí", "Không phí ngoại tệ"],
+    canada: {
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: IHG_FROM_CANADA,
+      watchOut: IHG_PERSONAL_WATCH_OUT,
+    },
+    applyUrl: "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+    lastUpdated: VERIFIED_4,
+    verifiedOn: VERIFIED_4,
+    needsVerification: false,
+  },
+  {
+    slug: "ihg-one-rewards-traveler",
+    name: "IHG® One Rewards Traveler Credit Card",
+    issuerId: "chase",
+    category: "hotel",
+    business: false,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/ihg-one-rewards-traveler.png",
+    welcomeBonus: "80,000 điểm IHG® One Rewards",
+    minimumSpendUsd: 2_000,
+    offerPeriod: "3 tháng đầu",
+    annualFeeUsd: 0,
+    rewardsCurrency: "IHG® One Rewards",
+    headline:
+      "Thẻ IHG® không annual fee của Chase®: hạng Silver Elite tự động và tới 17x điểm khi ở khách sạn IHG®.",
+    editorsTake:
+      "Welcome bonus 80,000 điểm sau khi chi $2,000 USD trong 3 tháng, không tốn annual fee. Đổi lại không có đêm miễn phí hằng năm — nếu bạn ở IHG® đều đặn thì cân nhắc bản Premier $99 USD, vì không mở được thẻ này khi đang giữ bản Premier (và ngược lại).",
+    keyBenefits: [
+      "5x điểm ở khách sạn IHG®; 3x ở nhà hàng, tiện ích, một số dịch vụ streaming và trạm xăng; 2x cho mọi chi tiêu khác",
+      "Hạng Silver Elite tự động; chi $20,000 USD trong năm lên Gold Elite",
+      "Đổi điểm 3 đêm liên tiếp được tặng đêm thứ 4",
+      "Chi $10,000 USD trong năm được 10,000 điểm",
+      "Không annual fee, không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Hotel", "Không annual fee", "Không phí ngoại tệ"],
+    canada: {
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: IHG_FROM_CANADA,
+      watchOut: IHG_PERSONAL_WATCH_OUT,
+    },
+    applyUrl: "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/traveler",
+    lastUpdated: VERIFIED_4,
+    verifiedOn: VERIFIED_4,
+    needsVerification: false,
+  },
+  {
+    slug: "ihg-one-rewards-premier-business",
+    name: "IHG® One Rewards Premier Business Credit Card",
+    issuerId: "chase",
+    category: "hotel",
+    business: true,
+    elevatedBonus: false,
+    cardImage: "/images/us-cards/ihg-one-rewards-premier-business.png",
+    welcomeBonus: "140,000 điểm IHG® One Rewards",
+    minimumSpendUsd: 4_000,
+    offerPeriod: "3 tháng đầu",
+    annualFeeUsd: 99,
+    rewardsCurrency: "IHG® One Rewards",
+    headline:
+      "Bản doanh nghiệp của thẻ IHG® Premier: cùng hạng Platinum Elite và đêm miễn phí hằng năm, annual fee $99 USD.",
+    editorsTake:
+      "Welcome bonus 140,000 điểm như bản cá nhân nhưng đòi chi $4,000 USD trong 3 tháng. Điều kiện 24 tháng in trên hai thẻ IHG® cá nhân ghi rõ không tính thẻ doanh nghiệp, và trang thẻ này không ghi điều kiện tương tự.",
+    keyBenefits: [
+      "Đêm miễn phí mỗi năm gia hạn (khách sạn tới 40,000 điểm/đêm, bù thêm điểm được cho khách sạn đắt hơn)",
+      "Hạng Platinum Elite tự động; đổi điểm 3 đêm liên tiếp được tặng đêm thứ 4",
+      "10x điểm ở khách sạn IHG®; 5x ở du lịch, nhà hàng, trạm xăng và một số chi tiêu doanh nghiệp; 3x cho mọi chi tiêu khác",
+      "Chi $20,000 USD trong năm được $100 USD credit và 10,000 điểm",
+      "Credit phí Global Entry, TSA PreCheck® hoặc NEXUS™ tới $120 USD, 4 năm một lần; không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Hotel", "Business", "Không phí ngoại tệ"],
+    canada: {
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED_BUSINESS,
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: IHG_FROM_CANADA,
+      watchOut: "Thẻ doanh nghiệp nên không tính vào 5/24, nhưng Chase® vẫn xét 5/24 khi duyệt.",
+    },
+    applyUrl: "https://creditcards.chase.com/business-credit-cards/IHG/business-premier",
+    lastUpdated: VERIFIED_4,
+    verifiedOn: VERIFIED_4,
     needsVerification: false,
   },
   {
