@@ -1252,7 +1252,7 @@ nên `applyUrl` trỏ về đó; cả bốn ghi "Apply by 11/18/2026" → elevat
 `IHG_LAUNCH_OFFER_ENDS`. Ảnh thẻ mới chỉ có 254–500px. Thẻ Aeroplan® ghi "OUR BEST
 OFFER EVER" (gạch mức thường 60,000) mà không có ngày → tác giả xác nhận là
 elevated, dùng `offerEndUnannounced` như Capital One® Venture — mỗi lượt rà phải mở
-lại trang, mất chữ gạch/"best offer" thì tắt tay; bonus hai nấc nên `welcomeBonus`
+lại trang, mất chữ gạch/"best offer" thì tắt tay. Cùng ngày tác giả xác nhận Sapphire Reserve® for Business cũng elevated ("OUR BEST OFFER RETURNS", gạch 150,000 → 200,000, không ngày) → cùng cách; bonus hai nấc nên `welcomeBonus`
 ghi nấc đầu (75,000 ↔ $4,000 USD) kèm "(tổng tới 115,000)". Hai câu "nhất" đã sửa:
 Amex Platinum (nấc hai thẻ Aeroplan® đòi $20,000 USD) và Sapphire Reserve® for
 Business (Premier Select cũng 200,000 điểm).

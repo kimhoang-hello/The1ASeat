@@ -1007,7 +1007,8 @@ const US_CARD_DATA: UsCardData[] = [
     issuerId: "chase",
     category: "travel",
     business: true,
-    elevatedBonus: false,
+    elevatedBonus: true,
+    offerEndUnannounced: true,
     cardImage: "/images/us-cards/chase-sapphire-reserve-business.png",
     welcomeBonus: "200,000 điểm Ultimate Rewards®",
     minimumSpendUsd: 30_000,
@@ -1017,7 +1018,7 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Bản doanh nghiệp của Sapphire Reserve®: 200,000 điểm Ultimate Rewards® khi mở thẻ, đổi lại mức chi tiêu lớn nhất trong các thẻ Chase® ở đây.",
     editorsTake:
-      "200,000 điểm là con số rất lớn, nhưng phải chi $30,000 USD trong 6 tháng — chỉ hợp lý nếu doanh nghiệp bạn có dòng chi tiêu thật ở Mỹ. Chase® ghi đây là offer trở lại từ mức 150,000 điểm, không công bố ngày kết thúc.",
+      "200,000 điểm là con số rất lớn, nhưng phải chi $30,000 USD trong 6 tháng — chỉ hợp lý nếu doanh nghiệp bạn có dòng chi tiêu thật ở Mỹ. Chase® ghi \"Our best offer returns\" và gạch mức thường 150,000 điểm, nhưng không công bố ngày kết thúc.",
     keyBenefits: [
       "8x điểm khi đặt qua Chase® Travel",
       "Credit du lịch và credit dịch vụ doanh nghiệp hằng năm",
@@ -1036,8 +1037,8 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: CHASE_BUSINESS_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/business-credit-cards/sapphire/reserve",
-    lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED,
+    lastUpdated: VERIFIED_4,
+    verifiedOn: VERIFIED_4,
     needsVerification: false,
   },
   {
