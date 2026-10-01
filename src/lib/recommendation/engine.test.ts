@@ -2178,8 +2178,15 @@ test("điều khoản offer CHƯA BIẾT ≠ offer KHÔNG đòi chi tiêu", () =
   // Cả hai đều cho `spendPerNinetyDays === null`, và bản trước chấm cả hai
   // bằng 1.0 — mức phù hợp TỐI ĐA. Nghĩa là engine nói "thẻ này dễ đạt bonus"
   // về một thẻ chưa ai biết phải chi bao nhiêu.
+  //
+  // Ghim vào offer 110,000 của thẻ Bonvoy® CÁ NHÂN: bản ghi đã đóng nên không
+  // đổi nữa (hợp đồng chỉ-thêm). Lấy "offer đầu tiên chưa rõ điều khoản" thì
+  // test đi theo dữ liệu đang sống — 01/10/2026 Scotiabank® Gold được lấp mốc
+  // chi, test nhảy sang bản Bonvoy® DOANH NGHIỆP và đỏ vì thẻ doanh nghiệp bị
+  // loại trước cả bước xét điều khoản.
   const unknownTerms = DATA.offers.find(
     (offer) =>
+      offer.productId === productIdFor("amex-marriott-bonvoy") &&
       offer.headlineBonus !== null &&
       (IX.componentsByOffer.get(offer.id) ?? []).length === 0,
   );

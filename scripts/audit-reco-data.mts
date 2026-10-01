@@ -464,14 +464,12 @@ if (cards === null) {
      */
     const liveExpiry = card.expiresAt?.slice(0, 10);
     const seedExpiry = offer?.endDate ?? undefined;
-    // `elevatedBonus: false` + còn `expiresAt`: job `expire-offers` GIỮ ngày cũ
-    // khi hạ thẻ khỏi tab elevated (xem AGENTS.md), nên đó là ngày SÓT, không
-    // phải hạn của offer đang chạy. Nói ra, đừng đỏ.
-    if (liveExpiry !== undefined && card.elevatedBonus !== true) {
-      warnings.push(
-        `[contentful] ${card.slug}: còn expiresAt ${liveExpiry} nhưng elevatedBonus=false — ngày sót, không đối chiếu`,
-      );
-    } else if (liveExpiry !== undefined && seedExpiry === undefined) {
+    // So cả khi `elevatedBonus: false`. Nhánh cũ coi đó là ngày SÓT và chỉ cảnh
+    // báo, nhưng `expire-offers` XOÁ `expiresAt` khi hạ thẻ (chỉ giữ lại khi lỗi
+    // còn chạy lại được) — còn hai thẻ Scotiabank® mang ngày 01/11/2026 là hạn
+    // THẬT của offer thường (cửa sổ mở tài khoản, đọc 01/10/2026). Bỏ qua chúng
+    // là để engine chấm offer đó cả sau khi nó đóng.
+    if (liveExpiry !== undefined && seedExpiry === undefined) {
       errors.push(
         `[contentful] ${card.slug}: Contentful nói offer hết ngày ${liveExpiry} nhưng seed không có endDate — ` +
           `engine sẽ chấm điểm offer này mãi`,

@@ -229,6 +229,27 @@ const OFFER_SEEDS: OfferSeed[] = [
     headline: 50000,
     currency: "scene-plus",
     startDate: "2026-09-07",
+    // Mốc chi chép từ `keyBenefitsVi` (thêm 01/10/2026, đọc từ scotiabank.com).
+    // Bản ghi MỚI chứ không lấp vào bản cũ: lấp vào bản cũ là khai rằng kho đã
+    // biết hai mốc này từ 07/09, và mọi phép đọc `knownAt` trước 01/10 sẽ thấy
+    // chúng (Codex bắt). Cùng điều khoản, chỉ khác lúc mình biết.
+    recordedFrom: "2026-10-01",
+    recordedAt: "2026-10-01",
+    verifiedAt: "2026-10-01",
+    endDate: "2026-11-01",
+    rebate: 200,
+    components: [
+      { type: "spend_threshold", points: 30000, spend: 2000, windowDays: 90 },
+      { type: "spend_threshold", points: 20000, spend: 7500, windowDays: 365 },
+    ],
+  },
+  {
+    slug: "scotiabank-gold-amex",
+    name: "Đến 50,000 điểm Scene+™",
+    headline: 50000,
+    currency: "scene-plus",
+    startDate: "2026-09-07",
+    recordedTo: "2026-09-30",
     endDate: "2026-11-01",
     rebate: 200,
     components: [],
@@ -365,10 +386,34 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "amex-aeroplan-business-reserve",
+    name: "120,000 điểm Aeroplan®",
+    headline: 120000,
+    currency: "aeroplan",
+    // Offer nâng thấy trên amex.ca (đúng đường Apply của site: FinlyWealth → CJ
+    // → amex.ca ?CPID=) ngày 01/10/2026. Amex® không ghi ngày bắt đầu lẫn ngày
+    // kết thúc — `startDate` là ngày mình thấy.
+    startDate: "2026-10-01",
+    verifiedAt: "2026-10-01",
+    recordedAt: "2026-10-01",
+    components: [
+      { type: "spend_threshold", points: 80000, spend: 10500, windowDays: 90 },
+      {
+        type: "anniversary",
+        points: 40000,
+        spend: 3500,
+        windowDays: 30,
+        startsAfterDays: 365,
+        note: "Chi $3,500 trong tháng thứ 13",
+      },
+    ],
+  },
+  {
+    slug: "amex-aeroplan-business-reserve",
     name: "90,000 điểm Aeroplan®",
     headline: 90000,
     currency: "aeroplan",
     startDate: "2026-09-07",
+    endDate: "2026-09-30",
     components: [
       { type: "spend_threshold", points: 65000, spend: 10500, windowDays: 90 },
       {
@@ -579,7 +624,32 @@ const OFFER_SEEDS: OfferSeed[] = [
     name: "Đến 35,000 điểm Scene+™",
     headline: 35000,
     currency: "scene-plus",
-    startDate: "2026-09-07",
+    // Cửa sổ mở tài khoản 04/08 – 01/11/2026 (scotiabank.com, đọc 01/10/2026).
+    // Hạn 01/11 mới biết hôm đó nên là bản ghi MỚI, không gắn vào bản cũ —
+    // xem scotiabank-gold-amex. Về `startDate` và `recordedFrom`, xem
+    // scotiabank-scene-plus-visa-students.
+    startDate: "2026-08-04",
+    recordedFrom: "2026-10-01",
+    recordedAt: "2026-10-01",
+    verifiedAt: "2026-10-01",
+    endDate: "2026-11-01",
+    rebate: 120,
+    components: [
+      { type: "spend_threshold", points: 25000, spend: 2000, windowDays: 90 },
+      // Mốc $40,000/năm: với người chi $2,000/tháng thì đây là điều không xảy
+      // ra. Chính là ví dụ §11 lấy làm mẫu — 10,000 điểm này KHÔNG được cộng
+      // vào "mức dùng được" mặc định.
+      { type: "spend_threshold", points: 10000, spend: 40000, windowDays: 365 },
+    ],
+  },
+  {
+    slug: "scotiabank-passport-visa-infinite",
+    name: "Đến 35,000 điểm Scene+™",
+    headline: 35000,
+    currency: "scene-plus",
+    startDate: "2026-08-04",
+    recordedFrom: "2026-09-07",
+    recordedTo: "2026-09-30",
     rebate: 120,
     components: [
       { type: "spend_threshold", points: 25000, spend: 2000, windowDays: 90 },
@@ -689,10 +759,31 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "amex-business-platinum",
+    name: "Tới 150,000 điểm Membership Rewards®",
+    headline: 150000,
+    currency: "amex-mr",
+    // Offer nâng, xem amex-aeroplan-business-reserve.
+    startDate: "2026-10-01",
+    verifiedAt: "2026-10-01",
+    recordedAt: "2026-10-01",
+    components: [
+      { type: "spend_threshold", points: 100000, spend: 15000, windowDays: 90 },
+      {
+        type: "anniversary",
+        points: 50000,
+        windowDays: 90,
+        startsAfterDays: 425,
+        note: "Quẹt một giao dịch trong khoảng tháng 15–17",
+      },
+    ],
+  },
+  {
+    slug: "amex-business-platinum",
     name: "Tới 120,000 điểm Membership Rewards®",
     headline: 120000,
     currency: "amex-mr",
     startDate: "2026-09-07",
+    endDate: "2026-09-30",
     components: [
       { type: "spend_threshold", points: 80000, spend: 15000, windowDays: 90 },
       {
@@ -706,10 +797,25 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "amex-business-gold",
+    name: "Tới 90,000 điểm Membership Rewards®",
+    headline: 90000,
+    currency: "amex-mr",
+    // Offer nâng, xem amex-aeroplan-business-reserve.
+    startDate: "2026-10-01",
+    verifiedAt: "2026-10-01",
+    recordedAt: "2026-10-01",
+    components: [
+      { type: "spend_threshold", points: 60000, spend: 7500, windowDays: 90 },
+      { type: "spend_threshold", points: 30000, spend: 30000, windowDays: 365 },
+    ],
+  },
+  {
+    slug: "amex-business-gold",
     name: "Tới 70,000 điểm Membership Rewards®",
     headline: 70000,
     currency: "amex-mr",
     startDate: "2026-09-07",
+    endDate: "2026-09-30",
     components: [
       { type: "spend_threshold", points: 50000, spend: 7500, windowDays: 90 },
       { type: "spend_threshold", points: 20000, spend: 30000, windowDays: 365 },

@@ -134,9 +134,13 @@ export function creditCardMetaDescription(offer: CreditCardOffer): string {
       offer.annualFee && !/annual fee/i.test(text)
         ? seo("cardAnnualFee", { fee: shortAnnualFee(offer.annualFee) })
         : "";
-    for (const extra of [fee, seo("cardTail")]) {
-      if (extra && text.length + 1 + extra.length <= META_DESCRIPTION_MAX) text = `${text} ${extra}`;
-    }
+    if (fee && text.length + 1 + fee.length <= META_DESCRIPTION_MAX) text = `${text} ${fee}`;
+    // Câu đuôi đầy đủ dài 71 ký tự: headline 90–100 ký tự không còn chỗ cho nó
+    // và từng dừng ở 95–98 ký tự (6 trang, đo 01/10/2026). Bản ngắn lấp chỗ đó.
+    const tail = [seo("cardTail"), seo("cardTailShort")].find(
+      (extra) => text.length + 1 + extra.length <= META_DESCRIPTION_MAX,
+    );
+    if (tail) text = `${text} ${tail}`;
   }
 
   return text;

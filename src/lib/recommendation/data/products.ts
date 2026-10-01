@@ -225,7 +225,11 @@ const SEEDS: Seed[] = [
     program: "aeroplan",
     family: "amex-aeroplan",
     tier: 2,
-    fees: [{ annualFee: 599, from: SEEDED_ON }],
+    fees: [
+      { annualFee: 599, from: SEEDED_ON, to: "2027-01-11" },
+      // Amex® báo tăng phí từ 12/01/2027 (amex.ca, đọc 01/10/2026).
+      { annualFee: 799, from: "2027-01-12", verifiedAt: "2026-10-01", recordedAt: "2026-10-01" },
+    ],
     officialUrl: null,
   },
   {
@@ -286,7 +290,11 @@ const SEEDS: Seed[] = [
     network: "amex",
     personalOrBusiness: "business",
     program: "aeroplan",
-    fees: [{ annualFee: 599, from: SEEDED_ON }],
+    fees: [
+      { annualFee: 599, from: SEEDED_ON, to: "2027-01-11" },
+      // Amex® báo tăng phí từ 12/01/2027 (amex.ca, đọc 01/10/2026).
+      { annualFee: 799, from: "2027-01-12", verifiedAt: "2026-10-01", recordedAt: "2026-10-01" },
+    ],
     officialUrl: null,
   },
   {
@@ -384,7 +392,11 @@ const SEEDS: Seed[] = [
     program: "aeroplan",
     family: "amex-aeroplan",
     tier: 1,
-    fees: [{ annualFee: 120, from: SEEDED_ON }],
+    fees: [
+      { annualFee: 120, from: SEEDED_ON, to: "2027-01-11" },
+      // Amex® báo tăng phí từ 12/01/2027 (amex.ca, đọc 01/10/2026).
+      { annualFee: 150, from: "2027-01-12", verifiedAt: "2026-10-01", recordedAt: "2026-10-01" },
+    ],
     officialUrl: null,
   },
   {

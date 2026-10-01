@@ -2580,3 +2580,42 @@ uploads-playlist: 404" (lượt đầu ngày UTC, đúng mục 27/09); `sync-vid
 06:58 UTC HTTP 403 cả 5 lượt (Hostinger chặn runner). `check-rebates` 29/09
 23:50 UTC còn kèm một timeout FinlyWealth cho `scotiabank-scene-plus-visa-students`
 cả 3 lượt — trang đó gọi lại hôm nay 3/3 lượt 200 trong <2.5s.
+
+## Kiểm toàn diện 01/10/2026 — đừng đề xuất lại
+
+Gate xanh: lint, tsc, 5 test suite, 10 audit, mọi job GitHub trong ngày. 73 trang
+thẻ (35 Canada + 38 Mỹ) 200, JSON-LD parse sạch, không ảnh hỏng, không tràn ngang
+ở 375px. Welcome bonus 35 thẻ Canada đối chiếu trang ngân hàng / FinlyWealth: 32 khớp.
+
+**Đã sửa (Contentful, theo yêu cầu tác giả):**
+- **Ba thẻ Amex® doanh nghiệp chạy offer nâng mà site ghi mức thường.** Business
+  Platinum 150,000 (100,000 khi chi $15,000/3 tháng + 50,000 khi quẹt ở tháng
+  15–17), Aeroplan® Business Reserve 120,000 (80,000 khi chi $10,500/3 tháng +
+  40,000 khi chi $3,500 ở tháng 13), Business Gold 90,000 (60,000 khi chi
+  $7,500/3 tháng + 30,000 khi chi $30,000/năm). Kiểm bằng ĐÚNG đường Apply của
+  site (FinlyWealth `/go/creditCards/<slug>` → CJ → amex.ca `?CPID=`), xem
+  memory "Amex CA offer gate theo kênh". Amex® không ghi ngày kết thúc nên
+  `elevatedBonus: true` mà không có `expiresAt` (như TD First Class Travel® và
+  CIBC® Aventura®) — mỗi lượt rà phải mở lại, mất nhãn "ELEVATED OFFER" thì tắt tay.
+  Seed engine: bản mới `startDate` 01/10, bản cũ `endDate` 30/09.
+- **Phí ba thẻ Amex® Aeroplan® tăng từ 12/01/2027** (Aeroplan® $120 → $150,
+  Reserve và Business Reserve $599 → $799, thẻ phụ cũng tăng). Tác giả chốt: GIỮ
+  phí hiện tại làm con số chính, ghi phí mới vào phần ngoặc của `annualFeeVi`
+  ("…; từ 12/01/2027: $799/năm, …") — `splitAnnualFee` đưa nó xuống dòng ghi chú
+  nhỏ, còn `feeIn` của audit vẫn đọc số đầu chuỗi. `product_fees` có dòng thứ hai
+  `from: "2027-01-12"`. Sau ngày đó phải sửa tay `annualFeeVi` (đưa phí mới lên đầu).
+- Scotiabank® Gold American Express®: `keyBenefitsVi` nay nêu mốc chi (30,000 khi
+  chi $2,000/3 tháng + 20,000 khi chi $7,500/năm). Seed engine: bản ghi MỚI
+  `recordedFrom` 01/10, bản `incomplete` cũ đóng `recordedTo` 30/09 — lấp mốc chi
+  vào bản cũ là viết lại lịch sử (`knownAt` trước 01/10 sẽ thấy chúng; Codex bắt).
+  Cảnh báo `incomplete` của bản cũ còn hiện trong audit, như hai bản Bonvoy® đã đóng.
+  Test `điều khoản offer CHƯA BIẾT` ghim vào offer Bonvoy® cá nhân đã đóng thay vì
+  "offer chưa rõ đầu tiên" — cách cũ trôi theo dữ liệu sống và nhảy sang thẻ
+  doanh nghiệp (bị loại trước bước xét điều khoản).
+- `audit:reco-data` thôi coi `expiresAt` trên thẻ không elevated là "ngày sót":
+  `expire-offers` XOÁ ngày đó khi hạ thẻ. Passport™ và Scene+™ Students mang
+  01/11/2026 là hạn thật của offer thường (scotiabank.com: tài khoản mở tới
+  01/11/2026); seed Passport™ có bản ghi mới mang `endDate` từ 01/10 (cùng lý do
+  với Gold, Codex bắt ở vòng bác bản vá).
+- Meta description thẻ: headline 90–100 ký tự không còn chỗ cho câu đuôi 71 ký
+  tự nên dừng ở 95–98 ký tự (6 trang) — thêm `cardTailShort`.
