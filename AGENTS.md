@@ -1323,8 +1323,10 @@ vào được bằng URL, `noindex`, dải báo nháp; bật cờ là hiện "�
   American Express® (MR + Bonvoy + Hilton, ĐÃ BỎ các thẻ Delta), Bank of
   America® (chỉ Atmos™ Rewards, đã bỏ Premium Rewards®). Ảnh thẻ chính thức
   cho cả 36. Offer Mỹ đổi thường xuyên; từ 30/09/2026 có job canh (xem "Canh
-  offer thẻ Mỹ" ở trên), trước đó phải rà tay. Bảy thẻ mang `expiresAt`, sớm nhất là hai thẻ
-  Marriott Bonvoy® của American Express® (30/09/2026).
+  offer thẻ Mỹ" ở trên), trước đó phải rà tay. Hai thẻ Marriott Bonvoy® Bevy®/Brilliant®
+  của American Express® hết offer nâng 30/09/2026, rà lại 01/10/2026 (85,000 /
+  100,000 điểm, không còn elevated). Credit ăn uống của Brilliant® dùng được ở
+  nhà hàng toàn cầu — câu cũ "chỉ ở Mỹ" là sai.
 - **Citi® CHƯA LÀM ĐƯỢC.** Trang Citi® không render số welcome bonus, mức chi
   tiêu và annual fee cho browser này — chỉ ra "Earn $ cash back bonus after
   spending $ in the first months". Đúng một ngoại lệ là Citi Strata Premier®
