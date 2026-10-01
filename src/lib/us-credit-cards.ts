@@ -1562,7 +1562,8 @@ const US_CARD_DATA: UsCardData[] = [
     issuerId: "amex",
     category: "travel",
     business: true,
-    elevatedBonus: false,
+    elevatedBonus: true,
+    offerEndUnannounced: true,
     cardImage: "/images/us-cards/amex-business-green.png",
     welcomeBonus: "25,000 điểm Membership Rewards®",
     minimumSpendUsd: 3_000,
@@ -1589,8 +1590,8 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-green-card-amex/",
-    lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED,
+    lastUpdated: VERIFIED_4,
+    verifiedOn: VERIFIED_4,
     needsVerification: false,
   },
   {
