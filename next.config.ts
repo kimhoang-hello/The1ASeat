@@ -80,6 +80,18 @@ const nextConfig: NextConfig = {
         destination: "/award-flight-finder",
         permanent: true,
       },
+      // Chase® renamed two IHG® cards on 01/10/2026, hours after they went
+      // live here under their old names (Traveler, Premier Business).
+      {
+        source: "/us-credit-cards/ihg-one-rewards-traveler",
+        destination: "/us-credit-cards/ihg-one-rewards",
+        permanent: true,
+      },
+      {
+        source: "/us-credit-cards/ihg-one-rewards-premier-business",
+        destination: "/us-credit-cards/ihg-one-rewards-business",
+        permanent: true,
+      },
     ];
   },
 };

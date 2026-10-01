@@ -1243,13 +1243,17 @@ nghiệp phủ bốn thẻ Ink + Sapphire Reserve for Business℠, Capital One®
 Venture X/Venture — thẻ khác giữ link công khai (`sourceUrl` giữ trang sản phẩm
 khi `applyUrl` là link ref). Các đoạn bên dưới viết lúc cờ còn tắt.
 
-**Thêm 01/10/2026: ba thẻ IHG® + thẻ Aeroplan® của Chase®** (40 thẻ, 37 đang hiện).
-Tác giả xin "4 thẻ IHG®" nhưng Chase® chỉ còn bán ba (trang brand ghi "IHG® (3)":
-Premier, Traveler, Premier Business). Thẻ Aeroplan® ghi "OUR BEST OFFER EVER" mà
-không có ngày hết hạn → KHÔNG bật elevated. Bonus hai nấc nên `welcomeBonus` ghi
-nấc đầu (75,000 điểm ↔ $4,000 USD) kèm "(tổng tới 115,000)", để dòng điều kiện
-chi tiêu không hứa 115,000 điểm cho $4,000 USD. Câu "mức chi tiêu cao nhất trong
-các thẻ cá nhân" của Amex Platinum đã bỏ: nấc hai của thẻ Aeroplan® đòi $20,000 USD.
+**Thêm 01/10/2026: bốn thẻ IHG® + thẻ Aeroplan® của Chase®** (41 thẻ, 38 đang hiện).
+Chase® đổi cả dòng thẻ IHG® đúng ngày này: thêm Premier Select ($350 USD), Traveler
+đổi tên thành "IHG® One Rewards Credit Card", Premier Business thành "IHG® One
+Rewards Business Credit Card" (slug cũ redirect 308 trong `next.config.ts`).
+Offer ra mắt chỉ có trên trang `/a1/ihg/*` (trang sản phẩm cũ còn số cũ vài giờ đầu)
+nên `applyUrl` trỏ về đó; cả bốn ghi "Apply by 11/18/2026" → elevated, hạn chung
+`IHG_LAUNCH_OFFER_ENDS`. Ảnh thẻ mới chỉ có 254–500px. Thẻ Aeroplan® ghi "OUR BEST
+OFFER EVER" mà không có ngày → KHÔNG elevated; bonus hai nấc nên `welcomeBonus`
+ghi nấc đầu (75,000 ↔ $4,000 USD) kèm "(tổng tới 115,000)". Hai câu "nhất" đã sửa:
+Amex Platinum (nấc hai thẻ Aeroplan® đòi $20,000 USD) và Sapphire Reserve® for
+Business (Premier Select cũng 200,000 điểm).
 
 **Canh offer thẻ Mỹ (30/09/2026).** Hai tầng, vì chỉ Chase® và Bilt in offer vào
 HTML mà `fetch` đọc được — American Express®, Capital One®, Bank of America®,

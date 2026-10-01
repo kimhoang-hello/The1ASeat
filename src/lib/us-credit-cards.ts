@@ -241,7 +241,7 @@ const VERIFIED_3 = "2026-09-24";
  * không in số welcome bonus cho browser tự động (xem AGENTS.md).
  */
 const REVERIFIED = "2026-09-30";
-/** Đợt thẻ thêm ngày 01/10/2026: ba thẻ IHG® và thẻ Aeroplan® của Chase®. */
+/** Đợt thẻ thêm ngày 01/10/2026: bốn thẻ IHG® (sau đợt đổi cùng ngày) và thẻ Aeroplan® của Chase®. */
 const VERIFIED_4 = "2026-10-01";
 
 const AMEX_FTF_27: CanadianAnswer = {
@@ -293,12 +293,20 @@ const IHG_FROM_CANADA: CanadianAnswer = {
 };
 
 /**
- * Điều kiện bonus in trên trang hai thẻ IHG® cá nhân (đọc 01/10/2026): không
- * đang giữ thẻ IHG® nào, chưa nhận bonus trong 24 tháng, thẻ doanh nghiệp
- * không tính. Hệ quả là giữ được một trong hai thẻ cá nhân, không phải cả hai.
+ * Điều kiện in trên trang thẻ Premier và thẻ không annual fee (đọc sau đợt đổi
+ * 01/10/2026): không đang giữ thẻ IHG® cá nhân nào, chưa nhận bonus trong 24
+ * tháng, thẻ doanh nghiệp không tính. Thẻ Premier Select chỉ ghi điều kiện về
+ * chính nó, nên có câu riêng.
  */
 const IHG_PERSONAL_WATCH_OUT =
-  "Thẻ này chịu luật 5/24 của Chase®. Chỉ mở được khi bạn không đang giữ thẻ IHG® cá nhân nào (Premier hoặc Traveler) và chưa nhận bonus thẻ IHG® cá nhân trong 24 tháng; thẻ doanh nghiệp không tính vào luật này.";
+  "Thẻ này chịu luật 5/24 của Chase®. Chỉ mở được khi bạn không đang giữ thẻ IHG® cá nhân nào (kể cả Premier Select) và chưa nhận bonus thẻ IHG® cá nhân trong 24 tháng; thẻ doanh nghiệp không tính vào luật này.";
+
+/**
+ * Hạn của welcome offer ra mắt cả dòng thẻ IHG® ("Apply by 11/18/2026" trên cả
+ * bốn trang Chase®). Qua ngày này bốn thẻ tự rời mục Elevated, nhưng số bonus
+ * vẫn phải rà tay.
+ */
+const IHG_LAUNCH_OFFER_ENDS = "2026-11-18";
 
 const BONVOY_FROM_CANADA: CanadianAnswer = {
   short: "Có",
@@ -1004,7 +1012,7 @@ const US_CARD_DATA: UsCardData[] = [
     annualFeeUsd: 795,
     rewardsCurrency: "Ultimate Rewards®",
     headline:
-      "Bản doanh nghiệp của Sapphire Reserve®: welcome bonus lớn nhất trong các thẻ Chase® ở đây, đổi lại mức chi tiêu cũng lớn nhất.",
+      "Bản doanh nghiệp của Sapphire Reserve®: 200,000 điểm Ultimate Rewards® khi mở thẻ, đổi lại mức chi tiêu lớn nhất trong các thẻ Chase® ở đây.",
     editorsTake:
       "200,000 điểm là con số rất lớn, nhưng phải chi $30,000 USD trong 6 tháng — chỉ hợp lý nếu doanh nghiệp bạn có dòng chi tiêu thật ở Mỹ. Chase® ghi đây là offer trở lại từ mức 150,000 điểm, không công bố ngày kết thúc.",
     keyBenefits: [
@@ -1308,28 +1316,70 @@ const US_CARD_DATA: UsCardData[] = [
     needsVerification: false,
   },
   {
+    slug: "ihg-one-rewards-premier-select",
+    name: "IHG® One Rewards Premier Select Credit Card",
+    issuerId: "chase",
+    category: "hotel",
+    business: false,
+    elevatedBonus: true,
+    cardImage: "/images/us-cards/ihg-one-rewards-premier-select.png",
+    welcomeBonus: "200,000 điểm IHG® One Rewards",
+    minimumSpendUsd: 5_000,
+    offerPeriod: "3 tháng đầu",
+    annualFeeUsd: 350,
+    rewardsCurrency: "IHG® One Rewards",
+    expiresAt: IHG_LAUNCH_OFFER_ENDS,
+    headline:
+      "Thẻ IHG® cao cấp ra mắt 01/10/2026: hạng Platinum Elite tự động, đêm miễn phí tới 60,000 điểm mỗi năm và 20 Elite Night Credits.",
+    editorsTake:
+      "Welcome bonus 200,000 điểm sau khi chi $5,000 USD trong 3 tháng là offer ra mắt, chỉ apply tới 18/11/2026. Annual fee $350 USD chỉ hợp lý nếu bạn dùng hết credit ăn uống ở khách sạn IHG® và credit hãng bay — credit ăn uống chỉ dùng ở khách sạn IHG®, credit hãng bay đòi mua vé thẳng với hãng từ $250 USD mỗi năm.",
+    keyBenefits: [
+      "12x điểm ở khách sạn IHG®; 6x ở nhà hàng và mọi chi tiêu du lịch khác (kể cả rideshare); 3x cho mọi chi tiêu khác",
+      "Đêm miễn phí mỗi năm gia hạn (khách sạn tới 60,000 điểm/đêm, bù thêm điểm được); chi $40,000 USD trong năm được thêm một đêm",
+      "Hạng Platinum Elite tự động; chi $25,000 USD trong năm lên Diamond Elite",
+      "Credit ăn uống tới $300 USD mỗi năm ở khách sạn IHG® ($75 USD mỗi quý) và credit hãng bay $200 USD khi mua vé thẳng với hãng từ $250 USD trong năm (tới 31/12/2027)",
+      "20 Elite Night Credits mỗi năm, thêm 2 cho mỗi $5,000 USD chi tiêu; đổi điểm 3 đêm liên tiếp được tặng đêm thứ 4",
+      "Credit phí Global Entry, TSA PreCheck® hoặc NEXUS™ tới $120 USD, 4 năm một lần; không phí giao dịch ngoại tệ",
+    ],
+    tags: ["Hotel", "Đêm miễn phí", "Không phí ngoại tệ"],
+    canada: {
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
+      foreignTransactionFee: NO_FTF,
+      pointsFromCanada: IHG_FROM_CANADA,
+      watchOut:
+        "Thẻ này chịu luật 5/24 của Chase®. Điều kiện in trên trang chỉ nói về chính thẻ này: không đang giữ nó và chưa nhận bonus của nó trong 24 tháng. Ngược lại, đang giữ thẻ này thì không mở được bản Premier hay bản không annual fee, vì hai thẻ đó đòi bạn không giữ thẻ IHG® cá nhân nào.",
+    },
+    applyUrl: "https://creditcards.chase.com/a1/ihg/PremierSelectNAEPQ410",
+    lastUpdated: VERIFIED_4,
+    verifiedOn: VERIFIED_4,
+    needsVerification: false,
+  },
+  {
     slug: "ihg-one-rewards-premier",
     name: "IHG® One Rewards Premier Credit Card",
     issuerId: "chase",
     category: "hotel",
     business: false,
-    elevatedBonus: false,
+    elevatedBonus: true,
     cardImage: "/images/us-cards/ihg-one-rewards-premier.png",
-    welcomeBonus: "140,000 điểm IHG® One Rewards",
+    welcomeBonus: "180,000 điểm IHG® One Rewards",
     minimumSpendUsd: 3_000,
     offerPeriod: "3 tháng đầu",
-    annualFeeUsd: 99,
+    annualFeeUsd: 150,
     rewardsCurrency: "IHG® One Rewards",
+    expiresAt: IHG_LAUNCH_OFFER_ENDS,
     headline:
-      "Thẻ khách sạn IHG® của Chase®: hạng Platinum Elite tự động và một đêm miễn phí mỗi năm gia hạn.",
+      "Thẻ IHG® bậc giữa của Chase®: hạng Gold Elite tự động, đêm miễn phí tới 50,000 điểm mỗi năm và 15 Elite Night Credits.",
     editorsTake:
-      "Welcome bonus 140,000 điểm sau khi chi $3,000 USD trong 3 tháng — Chase® quy ra tới 4 đêm ở khách sạn IHG®. Đêm miễn phí hằng năm cộng ưu đãi đổi 3 đêm tặng đêm thứ 4 thường bù được $99 USD annual fee nếu bạn ở IHG® ít nhất một lần mỗi năm.",
+      "Welcome bonus 180,000 điểm sau khi chi $3,000 USD trong 3 tháng — mức chi thấp so với số điểm, chỉ apply tới 18/11/2026. Thẻ mở mới từ 01/10/2026 có hạng Gold Elite (trước là Platinum) và annual fee $150 USD (trước là $99 USD; người đang giữ thẻ được điều chỉnh phí trong năm 2027), đổi lại đêm miễn phí hằng năm nâng lên 50,000 điểm.",
     keyBenefits: [
-      "Đêm miễn phí mỗi năm gia hạn (khách sạn tới 40,000 điểm/đêm, bù thêm điểm được cho khách sạn đắt hơn)",
-      "Hạng Platinum Elite tự động; chi $40,000 USD trong năm lên Diamond Elite",
-      "Đổi điểm 3 đêm liên tiếp được tặng đêm thứ 4",
-      "10x điểm ở khách sạn IHG®; 5x ở du lịch, nhà hàng và trạm xăng; 3x cho mọi chi tiêu khác",
-      "Chi $20,000 USD trong năm được $100 USD credit và 10,000 điểm",
+      "10x điểm ở khách sạn IHG®; 5x ở vé máy bay mua thẳng với hãng, thuê xe, nhà hàng, siêu thị và trạm xăng; 3x cho mọi chi tiêu khác",
+      "Đêm miễn phí mỗi năm gia hạn (khách sạn tới 50,000 điểm/đêm, bù thêm điểm được)",
+      "Hạng Gold Elite tự động; chi $15,000 USD trong năm lên Platinum Elite, $40,000 USD lên Diamond Elite",
+      "Credit ăn uống tới $100 USD mỗi năm ở khách sạn IHG® ($25 USD mỗi quý) và credit hãng bay $100 USD khi mua vé thẳng với hãng từ $250 USD trong năm (tới 31/12/2027)",
+      "15 Elite Night Credits mỗi năm, thêm 2 cho mỗi $5,000 USD chi tiêu; đổi điểm 3 đêm liên tiếp được tặng đêm thứ 4",
       "Credit phí Global Entry, TSA PreCheck® hoặc NEXUS™ tới $120 USD, 4 năm một lần; không phí giao dịch ngoại tệ",
     ],
     tags: ["Hotel", "Đêm miễn phí", "Không phí ngoại tệ"],
@@ -1341,33 +1391,34 @@ const US_CARD_DATA: UsCardData[] = [
       pointsFromCanada: IHG_FROM_CANADA,
       watchOut: IHG_PERSONAL_WATCH_OUT,
     },
-    applyUrl: "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+    applyUrl: "https://creditcards.chase.com/a1/ihg/PremierNAEPQ410",
     lastUpdated: VERIFIED_4,
     verifiedOn: VERIFIED_4,
     needsVerification: false,
   },
   {
-    slug: "ihg-one-rewards-traveler",
-    name: "IHG® One Rewards Traveler Credit Card",
+    slug: "ihg-one-rewards",
+    name: "IHG® One Rewards Credit Card",
     issuerId: "chase",
     category: "hotel",
     business: false,
-    elevatedBonus: false,
-    cardImage: "/images/us-cards/ihg-one-rewards-traveler.png",
-    welcomeBonus: "80,000 điểm IHG® One Rewards",
+    elevatedBonus: true,
+    cardImage: "/images/us-cards/ihg-one-rewards.png",
+    welcomeBonus: "125,000 điểm IHG® One Rewards",
     minimumSpendUsd: 2_000,
     offerPeriod: "3 tháng đầu",
     annualFeeUsd: 0,
     rewardsCurrency: "IHG® One Rewards",
+    expiresAt: IHG_LAUNCH_OFFER_ENDS,
     headline:
-      "Thẻ IHG® không annual fee của Chase®: hạng Silver Elite tự động và tới 17x điểm khi ở khách sạn IHG®.",
+      "Thẻ IHG® không annual fee của Chase® (trước 01/10/2026 tên là Traveler): hạng Silver Elite tự động và 5 Elite Night Credits mỗi năm.",
     editorsTake:
-      "Welcome bonus 80,000 điểm sau khi chi $2,000 USD trong 3 tháng, không tốn annual fee. Đổi lại không có đêm miễn phí hằng năm — nếu bạn ở IHG® đều đặn thì cân nhắc bản Premier $99 USD, vì không mở được thẻ này khi đang giữ bản Premier (và ngược lại).",
+      "Welcome bonus 125,000 điểm sau khi chi $2,000 USD trong 3 tháng, không tốn annual fee, chỉ apply tới 18/11/2026. Đổi lại không có đêm miễn phí hằng năm, và từ 2027 ưu đãi đổi 3 đêm tặng đêm thứ 4 chỉ mở khi chi $5,000 USD trong một năm (dùng được hết năm đó và cả năm sau).",
     keyBenefits: [
-      "5x điểm ở khách sạn IHG®; 3x ở nhà hàng, tiện ích, một số dịch vụ streaming và trạm xăng; 2x cho mọi chi tiêu khác",
-      "Hạng Silver Elite tự động; chi $20,000 USD trong năm lên Gold Elite",
-      "Đổi điểm 3 đêm liên tiếp được tặng đêm thứ 4",
-      "Chi $10,000 USD trong năm được 10,000 điểm",
+      "5x điểm ở khách sạn IHG®; 3x ở nhà hàng, siêu thị và trạm xăng; 2x cho mọi chi tiêu khác",
+      "Hạng Silver Elite tự động; chi $15,000 USD trong năm lên Gold Elite",
+      "5 Elite Night Credits mỗi năm; chi $15,000 USD trong năm được 10,000 điểm",
+      "Đổi điểm 3 đêm liên tiếp được tặng đêm thứ 4 (từ 2027: chi $5,000 USD trong năm để mở cho hết năm đó và cả năm sau)",
       "Không annual fee, không phí giao dịch ngoại tệ",
     ],
     tags: ["Hotel", "Không annual fee", "Không phí ngoại tệ"],
@@ -1379,33 +1430,35 @@ const US_CARD_DATA: UsCardData[] = [
       pointsFromCanada: IHG_FROM_CANADA,
       watchOut: IHG_PERSONAL_WATCH_OUT,
     },
-    applyUrl: "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/traveler",
+    applyUrl: "https://creditcards.chase.com/a1/ihg/OneRewardsNAEPQ410",
     lastUpdated: VERIFIED_4,
     verifiedOn: VERIFIED_4,
     needsVerification: false,
   },
   {
-    slug: "ihg-one-rewards-premier-business",
-    name: "IHG® One Rewards Premier Business Credit Card",
+    slug: "ihg-one-rewards-business",
+    name: "IHG® One Rewards Business Credit Card",
     issuerId: "chase",
     category: "hotel",
     business: true,
-    elevatedBonus: false,
-    cardImage: "/images/us-cards/ihg-one-rewards-premier-business.png",
-    welcomeBonus: "140,000 điểm IHG® One Rewards",
-    minimumSpendUsd: 4_000,
+    elevatedBonus: true,
+    cardImage: "/images/us-cards/ihg-one-rewards-business.png",
+    welcomeBonus: "190,000 điểm IHG® One Rewards",
+    minimumSpendUsd: 5_000,
     offerPeriod: "3 tháng đầu",
-    annualFeeUsd: 99,
+    annualFeeUsd: 200,
     rewardsCurrency: "IHG® One Rewards",
+    expiresAt: IHG_LAUNCH_OFFER_ENDS,
     headline:
-      "Bản doanh nghiệp của thẻ IHG® Premier: cùng hạng Platinum Elite và đêm miễn phí hằng năm, annual fee $99 USD.",
+      "Thẻ IHG® doanh nghiệp của Chase® (trước 01/10/2026 tên là Premier Business): hạng Platinum Elite tự động và đêm miễn phí tới 50,000 điểm mỗi năm.",
     editorsTake:
-      "Welcome bonus 140,000 điểm như bản cá nhân nhưng đòi chi $4,000 USD trong 3 tháng. Điều kiện 24 tháng in trên hai thẻ IHG® cá nhân ghi rõ không tính thẻ doanh nghiệp, và trang thẻ này không ghi điều kiện tương tự.",
+      "Welcome bonus 190,000 điểm sau khi chi $5,000 USD trong 3 tháng, chỉ apply tới 18/11/2026. Giữ hạng Platinum Elite mà bản Premier cá nhân vừa mất, và điều kiện \"không giữ thẻ IHG® cá nhân nào\" của hai thẻ cá nhân ghi rõ không tính thẻ doanh nghiệp.",
     keyBenefits: [
-      "Đêm miễn phí mỗi năm gia hạn (khách sạn tới 40,000 điểm/đêm, bù thêm điểm được cho khách sạn đắt hơn)",
-      "Hạng Platinum Elite tự động; đổi điểm 3 đêm liên tiếp được tặng đêm thứ 4",
-      "10x điểm ở khách sạn IHG®; 5x ở du lịch, nhà hàng, trạm xăng và một số chi tiêu doanh nghiệp; 3x cho mọi chi tiêu khác",
-      "Chi $20,000 USD trong năm được $100 USD credit và 10,000 điểm",
+      "10x điểm ở khách sạn IHG®; 5x ở vé máy bay mua thẳng với hãng, thuê xe, nhà hàng, quảng cáo mạng xã hội/tìm kiếm và trạm xăng; 3x cho mọi chi tiêu khác",
+      "Đêm miễn phí mỗi năm gia hạn (khách sạn tới 50,000 điểm/đêm); chi $60,000 USD trong năm được thêm một đêm",
+      "Hạng Platinum Elite tự động; từ 2027, chi $50,000 USD trong năm lên Diamond Elite",
+      "Credit ăn uống tới $100 USD mỗi năm ở khách sạn IHG®, credit hãng bay $100 USD khi mua vé thẳng với hãng từ $250 USD trong năm (tới 31/12/2027) và credit Expensify tới $100 USD mỗi năm",
+      "15 Elite Night Credits mỗi năm, thêm 2 cho mỗi $5,000 USD chi tiêu; đổi điểm 3 đêm liên tiếp được tặng đêm thứ 4",
       "Credit phí Global Entry, TSA PreCheck® hoặc NEXUS™ tới $120 USD, 4 năm một lần; không phí giao dịch ngoại tệ",
     ],
     tags: ["Hotel", "Business", "Không phí ngoại tệ"],
@@ -1417,7 +1470,7 @@ const US_CARD_DATA: UsCardData[] = [
       pointsFromCanada: IHG_FROM_CANADA,
       watchOut: "Thẻ doanh nghiệp nên không tính vào 5/24, nhưng Chase® vẫn xét 5/24 khi duyệt.",
     },
-    applyUrl: "https://creditcards.chase.com/business-credit-cards/IHG/business-premier",
+    applyUrl: "https://creditcards.chase.com/a1/ihg/BizNAEPQ410",
     lastUpdated: VERIFIED_4,
     verifiedOn: VERIFIED_4,
     needsVerification: false,
