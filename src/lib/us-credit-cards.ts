@@ -205,13 +205,25 @@ const NO_FTF: CanadianAnswer = {
   short: "Không",
   note: "Không tính phí giao dịch ngoại tệ, nên quẹt ở Canada cũng không mất thêm 2.5%.",
 };
-const HISTORY_USUALLY: CanadianAnswer = {
-  short: "Thường là cần",
-  note: "Chưa có lịch sử tín dụng ở Mỹ thì khả năng được duyệt thấp. Credit score Canada không tự chuyển sang Mỹ.",
+
+// Ba câu trả lời giống nhau cho MỌI thẻ Mỹ — tác giả chốt 30/09/2026: apply thẻ
+// Mỹ từ Canada thì ITIN (hoặc SSN), lịch sử tín dụng ở Mỹ và địa chỉ ở Mỹ đều
+// là điều kiện cần, không có ngoại lệ theo ngân hàng hay theo thẻ.
+const ITIN_REQUIRED: CanadianAnswer = {
+  short: "Cần",
+  note: "Cần ITIN (hoặc SSN) để apply.",
 };
-const ADDRESS_USUALLY: CanadianAnswer = {
-  short: "Thường là cần",
-  note: "Đơn online đòi địa chỉ ở Mỹ. Địa chỉ nhận hàng (mailbox) có được chấp nhận hay không là tuỳ ngân hàng.",
+const HISTORY_REQUIRED: CanadianAnswer = {
+  short: "Cần",
+  note: "Cần lịch sử tín dụng ở Mỹ. Credit score Canada không tự chuyển sang Mỹ.",
+};
+const ADDRESS_REQUIRED: CanadianAnswer = {
+  short: "Cần",
+  note: "Cần địa chỉ ở Mỹ để nhận thẻ và thư từ ngân hàng.",
+};
+const ADDRESS_REQUIRED_BUSINESS: CanadianAnswer = {
+  short: "Cần",
+  note: "Doanh nghiệp phải có địa chỉ ở Mỹ.",
 };
 
 // Nguồn: trang sản phẩm chính thức của từng ngân hàng, đọc trực tiếp ngày
@@ -230,16 +242,6 @@ const VERIFIED_3 = "2026-09-24";
  */
 const REVERIFIED = "2026-09-30";
 
-const AMEX_ITIN: CanadianAnswer = {
-  short: "Tuỳ trường hợp",
-  note: "Người đang có thẻ American Express® Canada có thể xin thẻ Mỹ qua chương trình Global Transfer — điều kiện cụ thể phải xem lúc apply.",
-};
-
-const AMEX_HISTORY: CanadianAnswer = {
-  short: "Không nhất thiết",
-  note: "Qua Global Transfer, American Express® xét cả lịch sử thẻ American Express® ở Canada.",
-};
-
 const AMEX_FTF_27: CanadianAnswer = {
   short: "Có — 2.7%",
   note: "Theo bảng phí của American Express®: 2.7% mỗi giao dịch sau khi quy ra đô la Mỹ.",
@@ -253,11 +255,6 @@ const MR_FROM_CANADA: CanadianAnswer = {
 const HILTON_FROM_CANADA: CanadianAnswer = {
   short: "Có",
   note: "Hilton Honors® là chương trình toàn cầu; điểm dùng được ở khách sạn Canada.",
-};
-
-const BOA_ITIN: CanadianAnswer = {
-  short: "Tuỳ trường hợp",
-  note: "Bank of America® không công bố điều kiện cho người dùng ITIN.",
 };
 
 /**
@@ -274,11 +271,6 @@ const BOA_FTF_UNKNOWN: CanadianAnswer = {
 const ATMOS_FROM_CANADA: CanadianAnswer = {
   short: "Tuỳ chặng bay",
   note: "Atmos™ Rewards là chương trình gộp của Alaska Airlines® và Hawaiian Airlines®; điểm dùng cho chuyến của hai hãng này và đối tác oneworld®, không chuyển sang Aeroplan®.",
-};
-
-const CHASE_ITIN: CanadianAnswer = {
-  short: "Tuỳ trường hợp",
-  note: "Chase® không công bố điều kiện cho người dùng ITIN.",
 };
 
 /** Điểm Ultimate Rewards® của thẻ có quyền chuyển (Sapphire®, Ink Preferred®). */
@@ -310,7 +302,6 @@ const INK_FTF: CanadianAnswer = {
   short: "Có — 3%",
   note: "Theo bảng phí của Chase®: 3% mỗi giao dịch quy ra đô la Mỹ. Đừng dùng thẻ này khi quẹt ở Canada.",
 };
-
 
 /**
  * Link ref của tác giả. Mỗi link chỉ mở một nhóm thẻ, nên CHỈ gắn cho thẻ có
@@ -354,12 +345,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Travel", "Chuyển điểm", "Credit NEXUS™"],
     canada: {
-      itin: {
-        short: "Tuỳ trường hợp",
-        note: "Chase® không công bố điều kiện cho người dùng ITIN. Có người được duyệt, có người không — xem như chưa chắc.",
-      },
-      usCreditHistory: HISTORY_USUALLY,
-      usAddress: ADDRESS_USUALLY,
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: {
         short: "Có",
@@ -399,12 +387,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Ăn uống", "Chuyển điểm", "Không phí ngoại tệ"],
     canada: {
-      itin: AMEX_ITIN,
-      usCreditHistory: AMEX_HISTORY,
-      usAddress: {
-        short: "Cần",
-        note: "Thẻ và thư gửi về địa chỉ ở Mỹ.",
-      },
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: MR_FROM_CANADA,
       watchOut:
@@ -441,12 +426,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Lounge", "Chuyển điểm", "Không phí ngoại tệ"],
     canada: {
-      itin: {
-        short: "Tuỳ trường hợp",
-        note: "Capital One® không công bố điều kiện cho người dùng ITIN, và thẻ cao cấp như Venture X yêu cầu hồ sơ tín dụng tốt.",
-      },
-      usCreditHistory: HISTORY_USUALLY,
-      usAddress: ADDRESS_USUALLY,
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: {
         short: "Có",
@@ -485,12 +467,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Travel", "Chuyển điểm", "Không phí ngoại tệ"],
     canada: {
-      itin: {
-        short: "Tuỳ trường hợp",
-        note: "Citi® không công bố điều kiện cho người dùng ITIN.",
-      },
-      usCreditHistory: HISTORY_USUALLY,
-      usAddress: ADDRESS_USUALLY,
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: {
         short: "Tuỳ chặng bay",
@@ -530,12 +509,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Tiền nhà", "Lounge", "Chuyển điểm"],
     canada: {
-      itin: {
-        short: "Chưa rõ",
-        note: "Bilt không công bố điều kiện cho người dùng ITIN.",
-      },
-      usCreditHistory: HISTORY_USUALLY,
-      usAddress: ADDRESS_USUALLY,
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: {
         short: "Có",
@@ -574,12 +550,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Hotel", "Đêm miễn phí", "Không phí ngoại tệ"],
     canada: {
-      itin: {
-        short: "Tuỳ trường hợp",
-        note: "Giống các thẻ Chase® khác.",
-      },
-      usCreditHistory: HISTORY_USUALLY,
-      usAddress: ADDRESS_USUALLY,
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: {
         short: "Có",
@@ -618,15 +591,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Business", "Chuyển điểm", "Không phí ngoại tệ"],
     canada: {
-      itin: {
-        short: "Tuỳ trường hợp",
-        note: "Doanh nghiệp cần EIN; người đứng tên vẫn cần SSN hoặc ITIN.",
-      },
-      usCreditHistory: HISTORY_USUALLY,
-      usAddress: {
-        short: "Cần",
-        note: "Doanh nghiệp phải có địa chỉ ở Mỹ.",
-      },
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED_BUSINESS,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: {
         short: "Có",
@@ -667,12 +634,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Travel", "Lounge", "Chuyển điểm"],
     canada: {
-      itin: {
-        short: "Tuỳ trường hợp",
-        note: "Chase® không công bố điều kiện cho người dùng ITIN.",
-      },
-      usCreditHistory: HISTORY_USUALLY,
-      usAddress: ADDRESS_USUALLY,
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: {
         short: "Có",
@@ -712,9 +676,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Lounge", "Chuyển điểm", "Không phí ngoại tệ"],
     canada: {
-      itin: AMEX_ITIN,
-      usCreditHistory: AMEX_HISTORY,
-      usAddress: { short: "Cần", note: "Thẻ và thư gửi về địa chỉ ở Mỹ." },
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: MR_FROM_CANADA,
       watchOut:
@@ -751,12 +715,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Travel", "Chuyển điểm", "Không phí ngoại tệ"],
     canada: {
-      itin: {
-        short: "Tuỳ trường hợp",
-        note: "Capital One® không công bố điều kiện cho người dùng ITIN.",
-      },
-      usCreditHistory: HISTORY_USUALLY,
-      usAddress: ADDRESS_USUALLY,
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: {
         short: "Có",
@@ -796,12 +757,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Hành lý miễn phí", "United®", "Không phí ngoại tệ"],
     canada: {
-      itin: {
-        short: "Tuỳ trường hợp",
-        note: "Giống các thẻ Chase® khác.",
-      },
-      usCreditHistory: HISTORY_USUALLY,
-      usAddress: ADDRESS_USUALLY,
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: {
         short: "Tuỳ chặng bay",
@@ -839,12 +797,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Hotel", "Đêm miễn phí", "Không phí ngoại tệ"],
     canada: {
-      itin: {
-        short: "Tuỳ trường hợp",
-        note: "Giống các thẻ Chase® khác.",
-      },
-      usCreditHistory: HISTORY_USUALLY,
-      usAddress: ADDRESS_USUALLY,
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: {
         short: "Có",
@@ -883,9 +838,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Hotel", "Không annual fee", "Không phí ngoại tệ"],
     canada: {
-      itin: AMEX_ITIN,
-      usCreditHistory: AMEX_HISTORY,
-      usAddress: { short: "Cần" },
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: HILTON_FROM_CANADA,
       watchOut:
@@ -923,12 +878,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Business", "Không annual fee", "Có phí ngoại tệ"],
     canada: {
-      itin: {
-        short: "Tuỳ trường hợp",
-        note: "Doanh nghiệp cần EIN; người đứng tên vẫn cần SSN hoặc ITIN.",
-      },
-      usCreditHistory: HISTORY_USUALLY,
-      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED_BUSINESS,
       foreignTransactionFee: INK_FTF,
       pointsFromCanada: UR_PAIRED_FROM_CANADA,
       watchOut: "Thẻ này chịu luật 5/24 của Chase®, và doanh nghiệp đăng ký ở Canada không dùng được.",
@@ -966,12 +918,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Business", "Không annual fee", "Có phí ngoại tệ"],
     canada: {
-      itin: {
-        short: "Tuỳ trường hợp",
-        note: "Doanh nghiệp cần EIN; người đứng tên vẫn cần SSN hoặc ITIN.",
-      },
-      usCreditHistory: HISTORY_USUALLY,
-      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED_BUSINESS,
       foreignTransactionFee: INK_FTF,
       pointsFromCanada: UR_PAIRED_FROM_CANADA,
       watchOut:
@@ -1008,9 +957,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Business", "Chuyển điểm", "Không phí ngoại tệ"],
     canada: {
-      itin: CHASE_ITIN,
-      usCreditHistory: HISTORY_USUALLY,
-      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED_BUSINESS,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: UR_FROM_CANADA,
       watchOut:
@@ -1047,9 +996,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Business", "Cash back", "Không phí ngoại tệ"],
     canada: {
-      itin: CHASE_ITIN,
-      usCreditHistory: HISTORY_USUALLY,
-      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED_BUSINESS,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: {
         short: "Không",
@@ -1089,9 +1038,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Cash back", "Không annual fee", "Không phí ngoại tệ"],
     canada: {
-      itin: CHASE_ITIN,
-      usCreditHistory: HISTORY_USUALLY,
-      usAddress: ADDRESS_USUALLY,
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: UR_PAIRED_FROM_CANADA,
       watchOut: "Thẻ này chịu luật 5/24 của Chase®.",
@@ -1129,9 +1078,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Cash back", "Không annual fee", "Không phí ngoại tệ"],
     canada: {
-      itin: CHASE_ITIN,
-      usCreditHistory: HISTORY_USUALLY,
-      usAddress: ADDRESS_USUALLY,
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: UR_PAIRED_FROM_CANADA,
       watchOut:
@@ -1166,12 +1115,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Cash back", "Người mới", "Có phí ngoại tệ"],
     canada: {
-      itin: CHASE_ITIN,
-      usCreditHistory: {
-        short: "Không cần",
-        note: "Đây là thẻ dành cho người chưa có lịch sử tín dụng ở Mỹ — cửa dễ nhất trong nhóm thẻ Chase®.",
-      },
-      usAddress: ADDRESS_USUALLY,
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
       foreignTransactionFee: {
         short: "Có — 3%",
         note: "Theo bảng phí của Chase®: 3% mỗi giao dịch quy ra đô la Mỹ.",
@@ -1212,9 +1158,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Hotel", "Không annual fee", "Không phí ngoại tệ"],
     canada: {
-      itin: CHASE_ITIN,
-      usCreditHistory: HISTORY_USUALLY,
-      usAddress: ADDRESS_USUALLY,
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: BONVOY_FROM_CANADA,
       watchOut:
@@ -1250,9 +1196,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Hotel", "Chuyển điểm", "Không phí ngoại tệ"],
     canada: {
-      itin: CHASE_ITIN,
-      usCreditHistory: HISTORY_USUALLY,
-      usAddress: ADDRESS_USUALLY,
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: BONVOY_FROM_CANADA,
       watchOut:
@@ -1288,9 +1234,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Hotel", "Business", "Không phí ngoại tệ"],
     canada: {
-      itin: CHASE_ITIN,
-      usCreditHistory: HISTORY_USUALLY,
-      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED_BUSINESS,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: {
         short: "Có",
@@ -1328,9 +1274,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Business", "Lounge", "Chuyển điểm"],
     canada: {
-      itin: AMEX_ITIN,
-      usCreditHistory: AMEX_HISTORY,
-      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED_BUSINESS,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: MR_FROM_CANADA,
       watchOut:
@@ -1366,9 +1312,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Business", "Chuyển điểm", "Không phí ngoại tệ"],
     canada: {
-      itin: AMEX_ITIN,
-      usCreditHistory: AMEX_HISTORY,
-      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED_BUSINESS,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: MR_FROM_CANADA,
       watchOut: "Mức welcome offer khác nhau theo từng người và bạn có thể không đủ điều kiện nhận.",
@@ -1403,9 +1349,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Business", "Chuyển điểm", "Có phí ngoại tệ"],
     canada: {
-      itin: AMEX_ITIN,
-      usCreditHistory: AMEX_HISTORY,
-      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED_BUSINESS,
       foreignTransactionFee: AMEX_FTF_27,
       pointsFromCanada: MR_FROM_CANADA,
       watchOut: "Thẻ Pay in Full: dư nợ phải trả hết mỗi kỳ sao kê.",
@@ -1440,9 +1386,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Business", "Không annual fee", "Có phí ngoại tệ"],
     canada: {
-      itin: AMEX_ITIN,
-      usCreditHistory: AMEX_HISTORY,
-      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED_BUSINESS,
       foreignTransactionFee: AMEX_FTF_27,
       pointsFromCanada: MR_FROM_CANADA,
       watchOut: "Không phí thường niên nhưng phí ngoại tệ 2.7% — đừng quẹt thẻ này ở Canada.",
@@ -1479,9 +1425,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Hotel", "Elite status", "Không phí ngoại tệ"],
     canada: {
-      itin: AMEX_ITIN,
-      usCreditHistory: AMEX_HISTORY,
-      usAddress: { short: "Cần" },
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: BONVOY_FROM_CANADA,
       watchOut:
@@ -1518,9 +1464,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Hotel", "Elite status", "Đêm miễn phí"],
     canada: {
-      itin: AMEX_ITIN,
-      usCreditHistory: AMEX_HISTORY,
-      usAddress: { short: "Cần" },
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: BONVOY_FROM_CANADA,
       watchOut:
@@ -1557,9 +1503,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Hotel", "Business", "Đêm miễn phí"],
     canada: {
-      itin: AMEX_ITIN,
-      usCreditHistory: AMEX_HISTORY,
-      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED_BUSINESS,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: BONVOY_FROM_CANADA,
       watchOut:
@@ -1597,9 +1543,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Hotel", "Elite status", "Không phí ngoại tệ"],
     canada: {
-      itin: AMEX_ITIN,
-      usCreditHistory: AMEX_HISTORY,
-      usAddress: { short: "Cần" },
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: HILTON_FROM_CANADA,
       watchOut:
@@ -1636,9 +1582,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Hotel", "Elite status", "Đêm miễn phí"],
     canada: {
-      itin: AMEX_ITIN,
-      usCreditHistory: AMEX_HISTORY,
-      usAddress: { short: "Cần" },
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: HILTON_FROM_CANADA,
       watchOut:
@@ -1675,9 +1621,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Hotel", "Business", "Elite status"],
     canada: {
-      itin: AMEX_ITIN,
-      usCreditHistory: AMEX_HISTORY,
-      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED_BUSINESS,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: HILTON_FROM_CANADA,
       watchOut: "Điểm Hilton Honors® có giá trị mỗi điểm thấp so với Aeroplan® hay World of Hyatt®.",
@@ -1713,9 +1659,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Airline", "Companion award", "Không phí ngoại tệ"],
     canada: {
-      itin: BOA_ITIN,
-      usCreditHistory: HISTORY_USUALLY,
-      usAddress: ADDRESS_USUALLY,
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: ATMOS_FROM_CANADA,
       watchOut:
@@ -1751,9 +1697,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Airline", "Companion fare", "Hành lý miễn phí"],
     canada: {
-      itin: BOA_ITIN,
-      usCreditHistory: HISTORY_USUALLY,
-      usAddress: ADDRESS_USUALLY,
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED,
       foreignTransactionFee: BOA_FTF_UNKNOWN,
       pointsFromCanada: ATMOS_FROM_CANADA,
       watchOut:
@@ -1791,9 +1737,9 @@ const US_CARD_DATA: UsCardData[] = [
     ],
     tags: ["Airline", "Business", "Companion fare"],
     canada: {
-      itin: BOA_ITIN,
-      usCreditHistory: HISTORY_USUALLY,
-      usAddress: { short: "Cần", note: "Doanh nghiệp phải có địa chỉ ở Mỹ." },
+      itin: ITIN_REQUIRED,
+      usCreditHistory: HISTORY_REQUIRED,
+      usAddress: ADDRESS_REQUIRED_BUSINESS,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: ATMOS_FROM_CANADA,
       watchOut: "Phí thẻ tính theo từng thẻ nhân viên, khác với thẻ doanh nghiệp của Chase® và American Express®.",
@@ -1911,9 +1857,10 @@ export function usCardSiblings(
   const currencyFamily = cards.filter((other) => other.us.rewardsCurrency === card.us.rewardsCurrency);
   const sameCurrency = currencyFamily.length > 1 ? ringAfter(currencyFamily, isSelf, limit) : [];
 
-  // Đi hết vòng rồi mới bỏ thẻ đã hiện và cắt `limit` — cắt trước thì thẻ
-  // Bonvoy® hay Business® của American Express® ra khối rỗng, vì ba thẻ đứng
-  // sau chúng trong nhóm lọc cũng chính là ba thẻ cùng loại điểm.
+  // Đi hết vòng rồi mới bỏ thẻ đã hiện và cắt `limit` — cắt trước thì vài thẻ
+  // khách sạn và doanh nghiệp ra khối rỗng, vì ba thẻ đứng sau chúng trong nhóm
+  // lọc cũng chính là ba thẻ cùng loại điểm. (Comment không ghi tên thẻ kèm ký
+  // hiệu: `audit:trademarks` học thương hiệu từ đó, xem AGENTS.md.)
   const filter = usCardFilterOf(card);
   const shown = new Set(sameCurrency.map((other) => other.slug));
   const filterFamily = cards.filter((other) => matchesUsCardFilter(other, filter));
