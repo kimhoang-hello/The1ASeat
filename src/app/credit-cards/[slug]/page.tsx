@@ -80,7 +80,16 @@ export default async function CreditCardDetailPage({
   const [offer, allOffers, posts] = await Promise.all([
     getCreditCardOfferBySlug(slug),
     getCreditCardOffers(),
-    getPosts(),
+    // Bài viết chỉ nuôi khối "Đi tiếp từ đây", nên lỗi của nó không được kéo
+    // sập trang có nút Apply. Không có lưới ISR nào đỡ ca này: webhook
+    // publish gọi `revalidateTag(..., { expire: 0 })`, làm hết hạn luôn HTML
+    // của trang thẻ, nên lần render lỗi sau đó không còn bản cũ để Next lui về
+    // (Codex tái hiện 02/10/2026). Trang thiếu bài liên quan tự lành ở lượt
+    // regenerate sau.
+    getPosts().catch((err: unknown) => {
+      console.error(`credit-cards/${slug}: getPosts failed, rendering without related posts`, err);
+      return [];
+    }),
   ]);
 
   if (!offer) notFound();

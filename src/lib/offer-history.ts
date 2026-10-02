@@ -67,12 +67,21 @@ export function amountIn(label: string | undefined): number | undefined {
  * tiền, nói sai thì người đọc mở nhầm thẻ. Khác đơn vị thì coi như không so
  * được và không nói gì.
  */
-export type OfferUnit = "percent" | "dollar" | "points";
+export type OfferUnit = "percent" | "dollar" | "points" | "other";
 
+/**
+ * "points" chỉ khi nhãn NÓI là điểm/miles. Trước 02/10/2026 mọi nhãn không có
+ * `%` hay `$` đều rơi vào "points", nên "2 đêm miễn phí (tối đa 85,000
+ * điểm/đêm)" đọc ra 2 điểm và trang tuyên bố mức 110,000 điểm cũ "cao hơn" hai
+ * chứng nhận đêm (Codex). Nhãn không nhận ra đơn vị thì "other" — không so.
+ */
 export function unitOf(label: string): OfferUnit {
   if (label.includes("%")) return "percent";
   if (label.includes("$")) return "dollar";
-  return "points";
+  if (/^\s*[\d,.]+\s*(điểm|miles|points|dặm)/i.test(label.replace(/^(tới|đến|lên đến|tối đa)\s+/i, ""))) {
+    return "points";
+  }
+  return "other";
 }
 
 export interface OfferPeak {
@@ -99,6 +108,7 @@ export function welcomeBonusPeak(slug: string, current: string | undefined): Off
   const currentAmount = amountIn(current);
   if (!current || currentAmount === undefined) return undefined;
   const unit = unitOf(current);
+  if (unit === "other") return undefined;
 
   // Chỉ những mốc so được với mức hiện tại: cùng đơn vị và đọc ra được số.
   const comparable = historyFor(slug).filter(

@@ -2646,7 +2646,17 @@ trong nhãn phải có trong headline" vừa chặn oan ("$300" ở nhãn, headl
 mức chi) vừa để lọt (headline nhắc "mức cũ 110,000 đã hết" là cấp phép cho nhãn
 110,000) — đã bỏ, đừng đề xuất lại.
 
-**Codex báo, CHƯA kiểm, chưa vá:** trang chi tiết đọc danh sách thẻ 3 lần không
-gộp lời gọi đang chờ khi cache miss (meta và thân có thể lệch nhau lúc Contentful
-chậm); `getPosts()` hỏng làm cả trang thẻ hỏng; `offer-history` đọc "2 đêm miễn
-phí" thành 2 điểm (chưa thẻ nào dùng dạng nhãn đó).
+**Ba phát hiện phụ của Codex, đã kiểm:**
+- *KHÔNG vá — meta/thân trang chi tiết lệch do đọc danh sách thẻ 3 lần.* Trong
+  `unstable_cache` (node_modules/next/.../unstable-cache.js), entry còn (kể cả
+  stale) thì các lời gọi cùng request dùng chung `pendingRevalidates`: fresh 0
+  lượt tải, stale 1 lượt. Chỉ ngay sau webhook `expire: 0` mới 3 lượt song
+  song; lệch chỉ khi CDA trả hai phiên bản trong ~100ms đó, chưa từng thấy ở dữ
+  liệu thật, và trễ lan truyền CDA sau publish vẫn còn dù có gộp.
+- *ĐÃ VÁ — `getPosts()` lỗi làm sập trang thẻ.* Mình từng cho là ISR giữ trang
+  cũ; Codex bác đúng: `expire: 0` của webhook làm hết hạn cả HTML trang thẻ
+  (file-system-cache trả `null` cho tag đã expired), nên không có bản cũ để lui
+  về. Nay `getPosts().catch(() => [])` + `console.error` trên trang chi tiết.
+- *ĐÃ VÁ — `offer-history` đọc "2 đêm miễn phí" thành 2 điểm.* `unitOf` chỉ trả
+  "points" khi nhãn nói điểm/miles; còn lại "other" và `welcomeBonusPeak` im
+  lặng. 36/36 nhãn lịch sử giữ đơn vị cũ; engine loại mốc "other" khỏi percentile.
