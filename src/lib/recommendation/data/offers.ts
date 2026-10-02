@@ -386,6 +386,28 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "amex-aeroplan-business-reserve",
+    name: "90,000 điểm Aeroplan®",
+    headline: 90000,
+    currency: "aeroplan",
+    // Mức thường quay lại sau offer nâng 01/10 (kiểm 02/10/2026 qua đúng đường
+    // Apply của site và trang công khai amex.ca).
+    startDate: "2026-10-02",
+    verifiedAt: "2026-10-02",
+    recordedAt: "2026-10-02",
+    components: [
+      { type: "spend_threshold", points: 65000, spend: 10500, windowDays: 90 },
+      {
+        type: "anniversary",
+        points: 25000,
+        spend: 3500,
+        windowDays: 30,
+        startsAfterDays: 365,
+        note: "Chi $3,500 trong tháng thứ 13",
+      },
+    ],
+  },
+  {
+    slug: "amex-aeroplan-business-reserve",
     name: "120,000 điểm Aeroplan®",
     headline: 120000,
     currency: "aeroplan",
@@ -393,6 +415,9 @@ const OFFER_SEEDS: OfferSeed[] = [
     // → amex.ca ?CPID=) ngày 01/10/2026. Amex® không ghi ngày bắt đầu lẫn ngày
     // kết thúc — `startDate` là ngày mình thấy.
     startDate: "2026-10-01",
+    // 02/10/2026 cùng đường Apply đó và trang công khai đã về mức thường —
+    // offer nâng chỉ thấy được đúng một ngày. `endDate` là ngày cuối còn thấy.
+    endDate: "2026-10-01",
     verifiedAt: "2026-10-01",
     recordedAt: "2026-10-01",
     components: [
@@ -759,11 +784,33 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "amex-business-platinum",
+    name: "Tới 120,000 điểm Membership Rewards®",
+    headline: 120000,
+    currency: "amex-mr",
+    // Mức thường quay lại sau offer nâng 01/10 (kiểm 02/10/2026 qua đúng đường
+    // Apply của site và trang công khai amex.ca).
+    startDate: "2026-10-02",
+    verifiedAt: "2026-10-02",
+    recordedAt: "2026-10-02",
+    components: [
+      { type: "spend_threshold", points: 80000, spend: 15000, windowDays: 90 },
+      {
+        type: "anniversary",
+        points: 40000,
+        windowDays: 90,
+        startsAfterDays: 425,
+        note: "Quẹt một giao dịch trong khoảng tháng 15–17",
+      },
+    ],
+  },
+  {
+    slug: "amex-business-platinum",
     name: "Tới 150,000 điểm Membership Rewards®",
     headline: 150000,
     currency: "amex-mr",
     // Offer nâng, xem amex-aeroplan-business-reserve.
     startDate: "2026-10-01",
+    endDate: "2026-10-01",
     verifiedAt: "2026-10-01",
     recordedAt: "2026-10-01",
     components: [
@@ -797,11 +844,27 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "amex-business-gold",
+    name: "Tới 70,000 điểm Membership Rewards®",
+    headline: 70000,
+    currency: "amex-mr",
+    // Mức thường quay lại sau offer nâng 01/10 (kiểm 02/10/2026 qua đúng đường
+    // Apply của site và trang công khai amex.ca).
+    startDate: "2026-10-02",
+    verifiedAt: "2026-10-02",
+    recordedAt: "2026-10-02",
+    components: [
+      { type: "spend_threshold", points: 50000, spend: 7500, windowDays: 90 },
+      { type: "spend_threshold", points: 20000, spend: 30000, windowDays: 365 },
+    ],
+  },
+  {
+    slug: "amex-business-gold",
     name: "Tới 90,000 điểm Membership Rewards®",
     headline: 90000,
     currency: "amex-mr",
     // Offer nâng, xem amex-aeroplan-business-reserve.
     startDate: "2026-10-01",
+    endDate: "2026-10-01",
     verifiedAt: "2026-10-01",
     recordedAt: "2026-10-01",
     components: [

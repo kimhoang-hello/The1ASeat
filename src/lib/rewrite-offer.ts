@@ -4,8 +4,8 @@ import Anthropic from "@anthropic-ai/sdk";
  * Rewriting a card's Vietnamese offer copy from FinlyWealth's current numbers.
  *
  * When an elevated offer expires the card keeps running on the issuer's
- * standing offer, but every figure in `headlineVi`, `keyBenefitsVi` and
- * `editorsTakeVi` still quotes the offer that ended. FinlyWealth publishes the
+ * standing offer, but every figure in `welcomeBonusVi`, `headlineVi`,
+ * `keyBenefitsVi` and `editorsTakeVi` still quotes the offer that ended. FinlyWealth publishes the
  * current one in English prose; turning that into the site's Vietnamese voice
  * is a translation job, so it goes through Claude rather than a template.
  *
@@ -14,6 +14,13 @@ import Anthropic from "@anthropic-ai/sdk";
  */
 
 export interface OfferCopy {
+  /**
+   * Con số lớn trong ô số liệu (`OfferStats`) trên danh sách lẫn trang thẻ.
+   * Trước 02/10/2026 trường này KHÔNG nằm trong bản viết lại: job hạ offer
+   * viết headline mới 50,000 trong khi ô số ngay phía trên vẫn in 110,000 —
+   * và vì job xoá `expiresAt`, không lượt nào quay lại sửa.
+   */
+  welcomeBonusVi: string;
   headlineVi: string;
   keyBenefitsVi: string[];
   editorsTakeVi: string;
@@ -40,6 +47,10 @@ Quy tắc bắt buộc:
 Giọng văn: thẳng thắn, đánh giá thật. Nếu offer mới yếu hơn offer cũ thì nói rõ, và chỉ ra giá trị thật của thẻ nằm ở đâu.
 
 Yêu cầu từng trường:
+- welcomeBonusVi: nhãn NGẮN chỉ gồm con số welcome bonus hiện hành, viết đúng khuôn của
+  nhãn cũ (ví dụ "70,000 điểm Aeroplan®", "Cashback 15% (tối đa $300)") — không câu chữ,
+  không điều kiện chi tiêu. Con số trong nhãn phải trùng con số trong headlineVi. Thẻ
+  không còn welcome bonus thì để chuỗi rỗng.
 - headlineVi: MỘT câu, nêu welcome bonus hiện hành và 1–2 quyền lợi nổi bật nhất.
   BẮT BUỘC mở đầu bằng đúng chữ "Welcome bonus" nếu thẻ có welcome bonus — đây là
   luật của site: trang /credit-cards xếp các headline thành một cột, mở đầu giống
@@ -51,6 +62,7 @@ Yêu cầu từng trường:
 const SCHEMA = {
   type: "object",
   properties: {
+    welcomeBonusVi: { type: "string", description: "Nhãn ngắn: con số welcome bonus hiện hành." },
     headlineVi: { type: "string", description: "Một câu giới thiệu offer hiện hành." },
     keyBenefitsVi: {
       type: "array",
@@ -59,7 +71,7 @@ const SCHEMA = {
     },
     editorsTakeVi: { type: "string", description: "2–4 câu đánh giá, kết bằng HOT TIP nếu có rebate." },
   },
-  required: ["headlineVi", "keyBenefitsVi", "editorsTakeVi"],
+  required: ["welcomeBonusVi", "headlineVi", "keyBenefitsVi", "editorsTakeVi"],
   additionalProperties: false,
 } as const;
 
@@ -95,12 +107,13 @@ Rebate FinlyWealth hiện tại: ${input.rebate ?? "không có"}
 ${input.offerDetails}
 
 --- Nội dung cũ trên site (đang ghi offer ĐÃ HẾT HẠN — chỉ dùng để giữ giọng văn) ---
+welcomeBonusVi: ${input.current.welcomeBonusVi}
 headlineVi: ${input.current.headlineVi}
 keyBenefitsVi:
 ${input.current.keyBenefitsVi.map((b) => `- ${b}`).join("\n")}
 editorsTakeVi: ${input.current.editorsTakeVi}
 
-Viết lại ba trường theo offer hiện hành.`,
+Viết lại bốn trường theo offer hiện hành.`,
       },
     ],
   });
@@ -113,8 +126,23 @@ Viết lại ba trường theo offer hiện hành.`,
   if (!text) throw new Error(`No text in response (stop_reason: ${response.stop_reason})`);
 
   const parsed = JSON.parse(text) as OfferCopy;
-  if (!parsed.headlineVi || !parsed.editorsTakeVi || !parsed.keyBenefitsVi?.length) {
+  // `welcomeBonusVi` được phép rỗng: offer nâng hết mà thẻ không còn welcome
+  // bonus nào là ca có thật, và site đã hiển thị đúng thẻ không có nhãn này.
+  if (typeof parsed.welcomeBonusVi !== "string" || !parsed.headlineVi || !parsed.editorsTakeVi || !parsed.keyBenefitsVi?.length) {
     throw new Error("Rewrite came back with an empty field");
+  }
+
+  // Job chỉ gọi tới đây khi offer nâng VỪA HẾT, nên nhãn số lớn phải khác nhãn
+  // cũ. Giống hệt nghĩa là hoặc model chép lại số cũ (prose FinlyWealth hay
+  // nhắc cả mức cũ, nên cửa "truy được về nguồn" không bắt được), hoặc
+  // FinlyWealth chưa cập nhật — cả hai đều cần người nhìn. Ném thì người gọi
+  // giữ `expiresAt` và lượt sau thử lại, thay vì publish ô số cũ rồi xoá dấu.
+  // Không so số giữa nhãn và headline: Codex chỉ ra cách đó vừa chặn oan
+  // ("$300" ở nhãn, headline chỉ nói mức chi) vừa để lọt (headline nhắc "mức
+  // cũ 110,000 đã hết" là đủ cấp phép cho nhãn 110,000).
+  const sameLabel = (a: string) => a.replace(/\s+/g, " ").trim().toLowerCase();
+  if (parsed.welcomeBonusVi && sameLabel(parsed.welcomeBonusVi) === sameLabel(input.current.welcomeBonusVi)) {
+    throw new Error(`welcomeBonusVi không đổi so với offer đã hết hạn ("${parsed.welcomeBonusVi}")`);
   }
 
   assertFiguresAreSourced(parsed, input);
@@ -263,8 +291,7 @@ function assertFiguresAreSourced(
     moneyAndPointsIn([input.offerDetails, input.annualFee, input.rebate ?? "", input.name].join(" ")),
   );
 
-  const written = [copy.headlineVi, copy.editorsTakeVi, ...copy.keyBenefitsVi].join(" ");
-
+  const written = [copy.welcomeBonusVi, copy.headlineVi, copy.editorsTakeVi, ...copy.keyBenefitsVi].join(" ");
   const malformed = [...new Set(malformedMoneyIn(written))];
   if (malformed.length > 0) {
     throw new Error(`bản viết lại có số tiền viết sai định dạng: ${malformed.join(", ")}`);

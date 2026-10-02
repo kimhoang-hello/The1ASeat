@@ -143,6 +143,7 @@ async function handleExpire(request: NextRequest) {
             rebate: offer.rebate,
             offerDetails: offer.details,
             current: {
+              welcomeBonusVi: field<string>(card, "welcomeBonusVi") ?? "",
               headlineVi: field<string>(card, "headlineVi") ?? "",
               keyBenefitsVi: field<string[]>(card, "keyBenefitsVi") ?? [],
               editorsTakeVi: field<string>(card, "editorsTakeVi") ?? "",
@@ -162,6 +163,9 @@ async function handleExpire(request: NextRequest) {
           // đổi gì cả, thẻ giữ nguyên copy cũ và chờ lượt sau.
           changes.rebateVi = offer.rebate;
           Object.assign(changes, copy);
+          // Nhãn rỗng = thẻ hết welcome bonus: gỡ hẳn trường (`updateEntry`
+          // xoá field khi giá trị là `undefined`) thay vì ghi chuỗi rỗng.
+          if (!copy.welcomeBonusVi) changes.welcomeBonusVi = undefined;
           rewrote = true;
         } catch (err) {
           reason = `rewrite failed: ${err instanceof Error ? err.message : String(err)}`;

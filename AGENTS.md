@@ -2619,3 +2619,34 @@ thẻ (35 Canada + 38 Mỹ) 200, JSON-LD parse sạch, không ảnh hỏng, khô
   với Gold, Codex bắt ở vòng bác bản vá).
 - Meta description thẻ: headline 90–100 ký tự không còn chỗ cho câu đuôi 71 ký
   tự nên dừng ở 95–98 ký tự (6 trang) — thêm `cardTailShort`.
+
+## Kiểm toàn diện trang thẻ tín dụng 02/10/2026 — đừng đề xuất lại
+
+Gate xanh: lint, tsc, 7 audit, test reco/jobs/card-tags. 35 link Apply tới đúng
+trang đích (FinlyWealth `/r/` là trang chuyển hướng JS, tiêu đề chung — đọc
+tiêu đề của chính đường dẫn `url=` mới biết trang đích còn sống), chip lọc cộng
+đủ 35, sắp xếp đúng, số trên trang live khớp CDA 35/35.
+
+**Đã sửa (Contentful) — offer nâng 01/10 của ba thẻ Amex® doanh nghiệp hết sau MỘT
+ngày.** Đường Apply của site và trang công khai amex.ca đều về mức thường:
+Business Platinum 120,000, Aeroplan® Business Reserve 90,000, Business Gold
+70,000. Khôi phục chữ từ snapshot Contentful ngay trước 01/10 (giữ ghi chú phí
+2027), tắt `elevatedBonus`. Bản cũ của Business Gold có câu lộ tên field
+`elevatedBonus` cho người đọc — đã bỏ, không chép nguyên văn. Seed engine: bản
+nâng đóng `endDate` 01/10, bản thường mới từ 02/10. TD® Aeroplan® Visa Infinite:
+headline "giá trị đến $1,790" → $1,550 (TD đổi con số marketing).
+
+**Đã vá — `expire-offers` hạ offer mà ô số lớn giữ welcome bonus cũ vĩnh viễn**
+(Codex tìm, đã kiểm). `rewriteOfferCopy` chỉ viết lại headline/keyBenefits/
+editorsTake, còn `welcomeBonusVi` (con số của `OfferStats`) nằm nguyên, và job
+xoá `expiresAt` nên không lượt nào quay lại. Nay `welcomeBonusVi` nằm trong bản
+viết lại (rỗng = thẻ hết bonus → gỡ field), và nhãn mới giống hệt nhãn của offer
+vừa hết thì ném (giữ `expiresAt`, job đỏ). Vòng Codex bác bản vá đầu: cửa "số
+trong nhãn phải có trong headline" vừa chặn oan ("$300" ở nhãn, headline chỉ nói
+mức chi) vừa để lọt (headline nhắc "mức cũ 110,000 đã hết" là cấp phép cho nhãn
+110,000) — đã bỏ, đừng đề xuất lại.
+
+**Codex báo, CHƯA kiểm, chưa vá:** trang chi tiết đọc danh sách thẻ 3 lần không
+gộp lời gọi đang chờ khi cache miss (meta và thân có thể lệch nhau lúc Contentful
+chậm); `getPosts()` hỏng làm cả trang thẻ hỏng; `offer-history` đọc "2 đêm miễn
+phí" thành 2 điểm (chưa thẻ nào dùng dạng nhãn đó).
