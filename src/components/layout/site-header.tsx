@@ -636,12 +636,17 @@ export function SiteHeader() {
     // offer strip along with it. `relative` stays behind because it is what
     // the search panel hangs off — the panel spans the full width under the
     // bar rather than dangling from the icon that opened it.
-    <header className="relative border-b border-border bg-background/95 backdrop-blur">
+    //
+    // `flex flex-col min-h-0`: khối dính bọc ngoài cao tối đa một màn hình
+    // (`sticky-chrome.tsx`), và header là thứ được phép co lại khi menu mobile
+    // dài hơn phần còn lại — thanh nav thì `shrink-0`, panel menu `min-h-0`
+    // nên chỉ panel co và tự cuộn.
+    <header className="relative flex min-h-0 flex-col border-b border-border bg-background/95 backdrop-blur">
       {/* Full-bleed on purpose: the header is chrome, not reading matter, so it
           runs the width of the window and only keeps a gutter. Capping it left
           the logo and the newsletter button floating in the middle of a large
           display with a third of the bar empty on either side. */}
-      <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-10 2xl:h-20 2xl:px-16">
+      <div className="flex h-16 shrink-0 items-center justify-between px-4 sm:px-6 lg:px-10 2xl:h-20 2xl:px-16">
         <Link
           href="/"
           className="flex items-center gap-2 font-display text-lg font-extrabold tracking-tight text-primary xl:text-xl"
@@ -776,7 +781,9 @@ export function SiteHeader() {
       </div>
 
       {open && (
-        <div className="border-t border-border bg-background px-4 pb-6 pt-2 lg:hidden">
+        // `min-h-0` + `overflow-y-auto`: co lại theo trần một màn hình của khối
+        // dính rồi tự cuộn — xem chú thích ở `<header>` và `sticky-chrome.tsx`.
+        <div className="min-h-0 overflow-y-auto overscroll-contain border-t border-border bg-background px-4 pb-6 pt-2 lg:hidden">
           <nav className="flex flex-col gap-1">
             <Link
               href="/"

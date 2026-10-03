@@ -9,7 +9,7 @@ const t = translate("contactPage");
 const next = translate("nextSteps");
 
 const inputClass =
-  "mt-1.5 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary";
+  "mt-1.5 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none pointer-coarse:text-base focus:ring-2 focus:ring-primary";
 
 export function ContactForm() {
   const [status, setStatus] = useState<"idle" | "submitting" | "submitted" | "error">("idle");

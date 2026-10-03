@@ -20,7 +20,7 @@ export function BestCardPickSection({
     /* `scroll-mt` vì mục lục ở đầu trang nhảy tới đây bằng `#id`, và thanh
        điều hướng của site dính trên cùng — thiếu nó thì tiêu đề mục nằm khuất
        dưới thanh đó sau mỗi lần nhảy. */
-    <section id={pick.slug} className="scroll-mt-24 border-t border-border pt-10">
+    <section id={pick.slug} className="scroll-mt-chrome border-t border-border pt-10">
       <h2 className="text-balance font-display text-xl font-bold text-foreground">
         {pickHeading(pick, cards, bonusInHeading)}
       </h2>

@@ -84,7 +84,7 @@ export function UsCardSummary({ card }: { card: UsCreditCardOffer }) {
         <div className="mt-auto flex flex-wrap items-center gap-4 pt-4">
           <Link
             href={href}
-            className="cursor-pointer text-sm font-semibold text-foreground/80 hover:text-primary hover:underline"
+            className="cursor-pointer py-3 text-sm font-semibold text-foreground/80 hover:text-primary hover:underline"
           >
             {us("viewDetails")} &rarr;
           </Link>

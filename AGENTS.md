@@ -2660,3 +2660,72 @@ mức chi) vừa để lọt (headline nhắc "mức cũ 110,000 đã hết" là
 - *ĐÃ VÁ — `offer-history` đọc "2 đêm miễn phí" thành 2 điểm.* `unitOf` chỉ trả
   "points" khi nhãn nói điểm/miles; còn lại "other" và `welcomeBonusPeak` im
   lặng. 36/36 nhãn lịch sử giữ đơn vị cũ; engine loại mốc "other" khỏi percentile.
+
+## Kiểm tối ưu điện thoại 03/10/2026 — đừng đề xuất lại
+
+Cách đo, dùng lại được: bản build cục bộ (`next start`), quét MỌI URL trong
+sitemap (199 trang) bằng iframe cùng nguồn đặt đúng bề ngang (375×812, rồi
+320×568 — iPhone bật Display Zoom, thường gặp ở độc giả lớn tuổi), trong một
+tab giả lập cảm ứng (`pointer: coarse`). Mỗi trang đo: phần tử thò khỏi màn
+hình, vùng chạm < 44px, chữ < 12px, ô nhập < 16px, chiều cao khối dính.
+Lighthouse mobile (devtools throttling) trên 6 trang chính: hiệu năng 97–99,
+a11y 100, JS ~205 KB — **hiệu năng code không phải chỗ nghẽn trên điện thoại**;
+lệch FCP của PSI live là chuyện edge Hostinger (xem mục Đo PageSpeed).
+
+**Đã vá:**
+- **Menu mobile cao hơn màn hình thì phần cuối không bao giờ tới được.** Panel
+  nằm trong khối `sticky`; mở nhóm "Thẻ tín dụng" ở 375×812 là khối cao 929px,
+  nút "Đăng ký bản tin" đứng yên ở 904px dù cuộn tới đâu. Chữa bằng CSS:
+  `StickyChrome` là cột flex `max-h-dvh` (lui về `max-h-screen`), header
+  `min-h-0`, thanh nav `shrink-0`, panel `min-h-0 overflow-y-auto`. Bản đầu đo
+  `innerHeight − top` bằng JS lúc mở menu — bỏ, vì dải offer xoay thẻ mỗi 30s
+  và đổi chiều cao (48–82px) ngay cả khi menu đang mở, số đo cũ là sai.
+  Danh sách kết quả tìm kiếm cùng bệnh (`60vh` cũ tính theo màn hình khi thanh
+  Safari đã ẩn) nhưng panel đó `absolute` nên không ăn theo trần của cột flex:
+  nó đo bằng JS, nghe `resize` + `ResizeObserver` trên khối dính.
+- **Ô nhập 14px làm iPhone phóng to cả trang khi chạm** — mọi ô nhập/ô chọn
+  `text-sm` (bản tin cuối trang và trang Bắt đầu, sắp xếp thẻ/tài khoản, so
+  sánh, liên hệ, máy tính điểm, Award Flight Finder). Thêm `pointer-coarse:text-base`; desktop vẫn 14px. Theo
+  `pointer` chứ không theo bề ngang vì iPhone xoay ngang rộng hơn 640px.
+- **Ở 320px cả trang kéo ngang được** (`/transfer-partners` 204px, 13 trang
+  `/bay-ve-viet-nam` 62–97px). Thủ phạm là `sr-only` (position: absolute) trong
+  ô bảng: khung `overflow-x-auto` không định vị nên không cắt được chúng. Thêm
+  `relative` vào cả 5 khung — hai bảng so sánh thẻ/tài khoản cùng cấu trúc nên
+  vá luôn (chưa đo ở bản cũ; bản mới đã kiểm 320px với 2–3 thẻ). Mục kiểm
+  25/09 ghi "`scrollWidth` 382 mà `scrollTo` vẫn ra 0" — đúng ở 375px, nhưng ở
+  320px trang trượt thật; hỏi `scrollX` sau `scrollTo` ở bề ngang hẹp nhất.
+- **Vùng chạm:** nút tìm kiếm 40→44px (cạnh nút menu 44px); link footer cao 44px
+  (`py-2.5`, `gap-y` về 0); `summary` "Quyền lợi chính"/"Điều kiện nhận bonus"
+  nới bằng `::before` 12px mỗi phía (bố cục không đổi một pixel); link
+  "đánh giá/xem chi tiết" cạnh nút Apply cao 44px THẬT (`py-3`); link chuyên
+  mục trên H1 bài viết nới 8px (nhiều hơn là chạm vào tiêu đề cũng sang trang
+  chuyên mục); chip lọc `pointer-coarse:py-2` (30→38px).
+  **Đừng nới cả hai thứ kề nhau bằng `::before`.** Bản đầu làm thế với
+  `summary` và link đánh giá; ở 320px hàng nút gãy dòng, link nằm ngay dưới
+  `pt-4` và hai vùng nới chồng nhau 8px — Codex bấm thử, đáy vùng "Quyền lợi
+  chính" dẫn sang trang thẻ. Một bên nới ảo, bên kia cao thật là đủ tách.
+- **Chữ dữ liệu 10–11px lên 12px** (tên hãng · số miles, đơn vị điểm, ghi chú
+  trong Award Flight Finder và bảng chặng). `text-[11px]` chỉ còn cho badge
+  viết hoa trên nền màu. Luật ghi ở DESIGN-SYSTEM.md 4.2 và 5.4. Hệ quả phải
+  canh: chữ to ra làm cột phải của dòng hành trình (Award Flight Finder) rộng
+  ra và bóp cột hành trình còn 37px ở 320px ("AAdvantage® miles" một dòng) —
+  cột phải nay `max-w-[5.5rem]` dưới `sm`, cột hành trình hẹp nhất 60px.
+- **KHÔNG vá — ô nhập 12px ở `/admin/reco-debugger`** (Codex nêu, không chặn):
+  trang không công khai, đóng trên production, chữ nhỏ là chủ ý cho bảng dữ
+  liệu dày.
+- **Dải link có CTA bên phải** (3 ở `/credit-cards`, 1 ở `/us-credit-cards`)
+  xuống dòng dưới `sm`: ở 375px CTA giành gần nửa bề ngang, tiêu đề gãy 3 dòng.
+- **Mọi đích `#anchor` nằm khuất dưới khối dính trên điện thoại** — mục lục bài
+  viết (tiêu đề mục khuất 19px ở 375px, cả dòng khi dải offer dài), `/#newsletter`
+  từ nút "Đăng ký bản tin" (nhãn form bị che), mục lục "Các thẻ tốt nhất", trang
+  Bắt đầu, `#tat-ca-the-my`. Năm cái `scroll-mt-24/28/36` riêng lẻ đặt từ hồi
+  chỉ thanh nav dính. Nay một utility `scroll-mt-chrome` trong `globals.css`
+  (11rem dưới `sm`, 9rem từ `sm`) — khối dính đổi chiều cao thì sửa ở đó. Cả
+  `<main id="main">` cũng mang nó để link "Bỏ qua" không cuộn eyebrow/H1 vào
+  dưới khối dính. Đo lại 15 ca (5 đích × 320/375/1280): đích luôn dưới khối dính.
+
+**Đo được, CHƯA đổi — chờ tác giả quyết (quyết định sản phẩm, không phải lỗi):**
+- Khối dính (dải offer + thanh nav) cao 114–147px trên mọi trang, tức 23–27%
+  màn 320×568. Dải offer dính theo thanh nav từ commit `422fbf6` (15/08/2026).
+- Trang chi tiết thẻ trên điện thoại: nút "Apply ngay" đầu tiên ở ~2,500px
+  (Amex Cobalt®), vì nút ở cột trái chỉ hiện từ `xl` (xem chú thích tại chỗ).

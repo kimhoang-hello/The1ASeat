@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
@@ -124,6 +124,43 @@ export function SiteSearch({ onOpen }: { onOpen?: () => void }) {
     return () => window.clearTimeout(timer);
   }, [summary, open]);
 
+  /**
+   * Danh sách kết quả cao tối đa đúng phần màn hình còn lại dưới nó.
+   *
+   * Cùng lý do với menu mobile ở `site-header.tsx`: panel này treo dưới khối
+   * dính, nên phần nào thò khỏi mép dưới màn hình thì không cuộn tới được.
+   * `60vh` cũ tính theo màn hình KHI thanh Safari đã ẩn, mà cuộn bên trong
+   * danh sách không làm thanh đó ẩn đi — trên iPhone SE, khối dính 147px + ô
+   * nhập đẩy danh sách xuống ~220px, và vài kết quả cuối nằm sau thanh công
+   * cụ. `innerHeight` chứ không phải `visualViewport`: lúc bàn phím đang mở
+   * thì danh sách cứ nằm dưới bàn phím như mọi trang khác, gõ xong cụp bàn
+   * phím là thấy đủ; đo theo phần trên bàn phím thì danh sách còn vài chục px.
+   */
+  const [listMax, setListMax] = useState<number>();
+  const hasResults = results.length > 0;
+
+  useLayoutEffect(() => {
+    if (!open || !hasResults) return;
+    function fit() {
+      const list = listRef.current;
+      // 21px = `pb-5` của panel + đường viền dưới của nó.
+      if (list) setListMax(Math.max(window.innerHeight - list.getBoundingClientRect().top - 21, 0));
+    }
+    fit();
+    window.addEventListener("resize", fit);
+    // Dải offer phía trên đổi chiều cao mỗi lần xoay thẻ (48–82px), kể cả lúc
+    // panel này đang mở, và đẩy danh sách xuống theo. Nghe kích thước của khối
+    // dính bọc ngoài (`sticky-chrome.tsx`) — panel này `absolute` nên không
+    // làm khối đó đổi cỡ, chỉ dải offer mới làm.
+    const chrome = rootRef.current?.closest("header")?.parentElement;
+    const observer = chrome ? new ResizeObserver(fit) : undefined;
+    if (chrome) observer?.observe(chrome);
+    return () => {
+      window.removeEventListener("resize", fit);
+      observer?.disconnect();
+    };
+  }, [open, hasResults]);
+
   function toggle() {
     setOpen((wasOpen) => {
       if (!wasOpen) onOpen?.();
@@ -203,7 +240,9 @@ export function SiteSearch({ onOpen }: { onOpen?: () => void }) {
         aria-label={open ? tSearch("close") : tSearch("open")}
         aria-expanded={open}
         onClick={toggle}
-        className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-foreground/70 transition-colors hover:bg-secondary hover:text-primary"
+        // 44px như nút menu ngay cạnh (PRODUCT.md: độc giả lớn tuổi, mobile là
+        // mặt trận chính). Bản 40px là ô chạm nhỏ nhất còn lại trên thanh nav.
+        className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-foreground/70 transition-colors hover:bg-secondary hover:text-primary"
       >
         {open ? <X size={20} /> : <MagnifyingGlass size={20} />}
       </button>
@@ -253,7 +292,8 @@ export function SiteSearch({ onOpen }: { onOpen?: () => void }) {
                   // bọt lên đây, nên một handler đủ cho cả danh sách và không
                   // phải gắn lại mỗi lần kết quả đổi.
                   onKeyDown={onArrowKeys}
-                  className="max-h-[60vh] overflow-y-auto"
+                  style={{ maxHeight: listMax }}
+                  className="overflow-y-auto overscroll-contain"
                 >
                   {results.map((item) => (
                     <li key={item.href}>
@@ -277,7 +317,7 @@ export function SiteSearch({ onOpen }: { onOpen?: () => void }) {
                             </span>
                           )}
                         </span>
-                        <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground/60">
+                        <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-foreground/60">
                           {KIND_LABEL[item.kind]}
                         </span>
                       </Link>

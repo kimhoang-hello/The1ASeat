@@ -134,11 +134,16 @@ export default async function CreditCardsPage({
         {/* Cửa vào CÔNG CỤ GỢI Ý, đứng trên cả dải biên tập.
             Ba cửa trên trang này xếp theo mức người đọc đã biết mình cần gì:
             chưa biết (gợi ý) → muốn xem bảng xếp của Ghế 1A (tốt nhất) → đã có
-            danh sách (bộ lọc bên dưới). */}
+            danh sách (bộ lọc bên dưới).
+
+            Dưới `sm` chữ CTA xuống dòng riêng bên dưới (cả ba dải trang này
+            lẫn dải ở `/us-credit-cards`): đứng cạnh nhau ở 375px thì "Xem gợi
+            ý cho bạn →" giành gần nửa bề ngang, tiêu đề gãy ba dòng và đoạn mô
+            tả năm dòng trong một cột chỉ còn ~150px. */}
         {RECOMMENDER_PUBLISHED && (
           <Link
             href={RECOMMENDER_PATH}
-            className="mx-auto mb-3 flex max-w-page items-center justify-between gap-3 rounded-2xl border border-border bg-card px-5 py-4 transition-colors hover:border-primary"
+            className="mx-auto mb-3 flex max-w-page flex-col items-start gap-2 rounded-2xl border border-border bg-card px-5 py-4 transition-colors hover:border-primary sm:flex-row sm:items-center sm:justify-between sm:gap-3"
           >
             <span>
               <span className="flex items-center gap-2 font-display font-bold text-foreground">
@@ -157,7 +162,7 @@ export default async function CreditCardsPage({
             khác ngoài việc cuộn hết danh sách. */}
         <Link
           href={BEST_CARDS_BASE}
-          className="mx-auto mb-6 flex max-w-page items-center justify-between gap-3 rounded-2xl border border-border bg-card px-5 py-4 transition-colors hover:border-primary"
+          className="mx-auto mb-6 flex max-w-page flex-col items-start gap-2 rounded-2xl border border-border bg-card px-5 py-4 transition-colors hover:border-primary sm:flex-row sm:items-center sm:justify-between sm:gap-3"
         >
           <span>
             <span className="block font-display font-bold text-foreground">
@@ -259,8 +264,15 @@ export default async function CreditCardsPage({
 
                 <CardTags tags={cardTagsFor(offer.slug, today)} className="mt-3" />
 
+                {/* Vùng chạm 44px của hai thứ bấm được trong khối này nới theo hai
+                    cách khác nhau, CỐ Ý: `summary` nới bằng `::before` (12px mỗi
+                    phía, bố cục không đổi), còn link đánh giá bên dưới cao 44px
+                    THẬT bằng `py-3`. Bản đầu nới cả hai bằng `::before`, và ở 320px
+                    hàng nút gãy dòng làm link nằm ngay dưới `pt-4` — hai vùng
+                    nới chồng nhau 8px, chạm vào đó là trúng một trong hai đích
+                    (Codex bắt, 03/10/2026). */}
                 <details className="group mt-3">
-                  <summary className="flex cursor-pointer list-none items-center gap-1 text-sm font-semibold text-foreground/80 hover:text-primary">
+                  <summary className="relative flex cursor-pointer list-none items-center gap-1 text-sm font-semibold text-foreground/80 before:absolute before:inset-x-0 before:-inset-y-3 before:content-[''] hover:text-primary">
                     <CaretDown size={14} className="transition-transform group-open:rotate-180" />
                     {offers_t("keyBenefits")}
                   </summary>
@@ -274,7 +286,7 @@ export default async function CreditCardsPage({
                 <div className="mt-auto flex flex-wrap items-center gap-4 pt-4">
                   <Link
                     href={`/credit-cards/${offer.slug}`}
-                    className="cursor-pointer text-sm font-semibold text-foreground/80 hover:text-primary hover:underline"
+                    className="cursor-pointer py-3 text-sm font-semibold text-foreground/80 hover:text-primary hover:underline"
                   >
                     {offers_t("editorsTake")} &rarr;
                   </Link>
@@ -315,7 +327,7 @@ export default async function CreditCardsPage({
           {US_CARDS_PUBLISHED && (
             <Link
               href={US_CARDS_BASE}
-              className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card px-5 py-4 transition-colors hover:border-primary xl:col-span-2"
+              className="flex flex-col items-start gap-2 rounded-2xl border border-border bg-card px-5 py-4 transition-colors hover:border-primary sm:flex-row sm:items-center sm:justify-between sm:gap-3 xl:col-span-2"
             >
               <span>
                 <span className="block font-display font-bold text-foreground">{usCards("bandTitle")}</span>

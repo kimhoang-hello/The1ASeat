@@ -37,31 +37,35 @@ export function SiteFooter() {
             {site("name")}
           </Link>
 
-          <nav className="flex flex-wrap gap-x-6 gap-y-2 text-base">
-            <Link href="/" className="hover:text-white">
+          {/* Mỗi link cao 44px (`py-2.5`) thay cho chữ trần 24px cách nhau 8px:
+              trên điện thoại tám link gãy thành ba hàng sát nhau, và chạm hụt
+              là sang nhầm trang. Khoảng cách giữa các hàng giờ nằm trong chính
+              vùng chạm nên `gap-y` về 0. */}
+          <nav className="flex flex-wrap gap-x-6 text-base">
+            <Link href="/" className="py-2.5 hover:text-white">
               {nav("home")}
             </Link>
-            <Link href="/credit-cards" className="hover:text-white">
+            <Link href="/credit-cards" className="py-2.5 hover:text-white">
               {nav("creditCards")}
             </Link>
             {BANK_ACCOUNTS_PUBLISHED && (
-              <Link href="/bank-accounts" className="hover:text-white">
+              <Link href="/bank-accounts" className="py-2.5 hover:text-white">
                 {nav("bankAccounts")}
               </Link>
             )}
-            <Link href="/blog" className="hover:text-white">
+            <Link href="/blog" className="py-2.5 hover:text-white">
               {nav("blog")}
             </Link>
-            <Link href="/about" className="hover:text-white">
+            <Link href="/about" className="py-2.5 hover:text-white">
               {nav("about")}
             </Link>
-            <Link href="/privacy" className="hover:text-white">
+            <Link href="/privacy" className="py-2.5 hover:text-white">
               {t("privacy")}
             </Link>
-            <Link href="/terms" className="hover:text-white">
+            <Link href="/terms" className="py-2.5 hover:text-white">
               {t("terms")}
             </Link>
-            <Link href="/contact" className="hover:text-white">
+            <Link href="/contact" className="py-2.5 hover:text-white">
               {t("contact")}
             </Link>
           </nav>

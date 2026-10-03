@@ -263,7 +263,7 @@ function AccountCard({ account }: { account: BankAccount }) {
           đây là chỗ duy nhất họ đọc được các bước đó. */}
       {account.bonusConditionsVi && (
         <details className="group mt-3">
-          <summary className="flex cursor-pointer list-none items-center gap-1 text-sm font-semibold text-foreground/80 hover:text-primary">
+          <summary className="relative flex cursor-pointer list-none items-center gap-1 text-sm font-semibold text-foreground/80 before:absolute before:inset-x-0 before:-inset-y-3 before:content-[''] hover:text-primary">
             <CaretDown size={14} className="transition-transform group-open:rotate-180" />
             {t("bonusConditions")}
           </summary>
@@ -299,7 +299,7 @@ function AccountCard({ account }: { account: BankAccount }) {
         />
         <Link
           href={bankAccountPath(account.slug)}
-          className="cursor-pointer text-sm font-semibold text-foreground/80 hover:text-primary hover:underline"
+          className="cursor-pointer py-3 text-sm font-semibold text-foreground/80 hover:text-primary hover:underline"
         >
           {t("details")} &rarr;
         </Link>
@@ -423,7 +423,7 @@ function FilterChip({
       aria-checked={active}
       tabIndex={active ? 0 : -1}
       onClick={onClick}
-      className={`cursor-pointer rounded-full border px-3 py-1 text-sm transition-colors ${
+      className={`cursor-pointer rounded-full border px-3 py-1 text-sm transition-colors pointer-coarse:py-2 ${
         active
           ? "border-primary bg-primary/10 font-semibold text-primary"
           : "border-border text-foreground/70 hover:border-primary hover:text-primary"
@@ -452,7 +452,7 @@ function Field({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1.5 w-full cursor-pointer rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
+        className="mt-1.5 w-full cursor-pointer rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none pointer-coarse:text-base focus:ring-2 focus:ring-primary"
       >
         {children}
       </select>

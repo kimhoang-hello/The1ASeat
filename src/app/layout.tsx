@@ -136,7 +136,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <FeaturedOfferBanner />
           <SiteHeader />
         </StickyChrome>
-        <main id="main" className="flex-1">
+        {/* `scroll-mt-chrome`: link "Bỏ qua" nhảy tới đây, và thiếu khoảng chừa
+            thì trình duyệt cuộn `main` lên sát mép trên — đúng chỗ khối dính
+            đang che, tức nuốt mất eyebrow và nửa H1 của trang. */}
+        <main id="main" className="flex-1 scroll-mt-chrome">
           {children}
         </main>
         <SiteFooter />

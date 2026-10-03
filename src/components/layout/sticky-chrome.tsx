@@ -21,5 +21,15 @@ export function StickyChrome({ children }: { children: React.ReactNode }) {
 
   // `z-50` giữ nguyên ở cả hai nhánh: panel tìm kiếm và menu mobile thả xuống
   // từ thanh này, chúng vẫn phải nằm trên nội dung trang.
-  return <div className={sticky ? "sticky top-0 z-50" : "relative z-50"}>{children}</div>;
+  //
+  // Cột flex cao TỐI ĐA một màn hình: phần nào của khối dính thò khỏi mép
+  // dưới màn hình thì không bao giờ cuộn tới được (cuộn chỉ trượt trang phía
+  // sau). Đo 03/10/2026 ở 375×812: mở nhóm "Thẻ tín dụng" trong menu mobile là
+  // khối cao 929px, nút "Đăng ký bản tin" đứng yên ở 904px. Trần này cộng
+  // `min-h-0` của header và panel menu (`site-header.tsx`) làm panel co lại
+  // và tự cuộn. Làm bằng CSS chứ không đo bằng JS: dải offer đổi chiều cao
+  // (48–82px tuỳ tên thẻ) mỗi lần xoay thẻ, kể cả khi menu đang mở.
+  // `max-h-screen` là đường lui cho trình duyệt chưa hiểu `dvh` (iOS < 15.4).
+  const cap = "flex max-h-screen flex-col supports-[height:100dvh]:max-h-dvh";
+  return <div className={`${sticky ? "sticky top-0" : "relative"} z-50 ${cap}`}>{children}</div>;
 }

@@ -100,6 +100,24 @@ body {
   }
 }
 
+/* Khoảng chừa cho MỌI đích `#anchor` — mục lục bài viết, form bản tin
+   (`/#newsletter`), mục lục "Các thẻ tốt nhất", các bước trang Bắt đầu.
+
+   Khối dính trên cùng (dải offer + thanh nav) cao 113–129px từ `sm`, nhưng
+   dưới `sm` dải offer gãy 2–5 dòng tuỳ tên thẻ nên khối cao tới ~163px. Các
+   `scroll-mt-24`/`28` cũ đặt từ hồi chỉ thanh nav dính (trước 15/08/2026);
+   đo 03/10/2026 ở 375px: nhảy tới mục 3 của một bài, tiêu đề mục nằm khuất
+   dưới khối dính 19px — dải offer dài hơn thì khuất cả dòng. Một chỗ duy
+   nhất để sửa khi khối dính đổi chiều cao. Thừa chỗ khi dải offer ngắn hoặc đã
+   đóng là cái giá chấp nhận: đích nằm thấp hơn một chút, không bị che. */
+@utility scroll-mt-chrome {
+  scroll-margin-top: 11rem;
+
+  @media (width >= 40rem) {
+    scroll-margin-top: 9rem;
+  }
+}
+
 @keyframes offer-in {
   from {
     opacity: 0;

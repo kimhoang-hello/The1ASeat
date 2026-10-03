@@ -125,12 +125,17 @@ function OptionRow({ option, currency }: { option: RoutingOption; currency: stri
       </div>
       <div className="min-w-0 flex-1">
         <p className="font-mono text-sm text-foreground">{option.routing.join(" → ")}</p>
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           {option.carriers.map((c) => c.name).join(" + ")} ·{" "}
           {t("routingMiles", { miles: formatPoints(option.miles) })}
         </p>
       </div>
-      <div className="shrink-0 text-right">
+      {/* Trần 5.5rem dưới `sm`: nhãn đơn vị ở đây 12px (sàn chữ dữ liệu, xem
+          DESIGN-SYSTEM.md 4.2), và để "AAdvantage® miles" nằm một dòng thì
+          cột này rộng 111px ở màn 320px, bóp cột hành trình còn 37px — "YYZ →
+          HKG → SGN" gãy năm dòng. Cho nhãn xuống hai dòng thì cột giữa còn
+          rộng hơn cả hồi chữ 10px. */}
+      <div className="max-w-[5.5rem] shrink-0 text-right sm:max-w-none">
         {option.points === null ? (
           option.dynamicPrice ? (
             // No chart ever covered this flying, so a dash would read as a
@@ -146,11 +151,11 @@ function OptionRow({ option, currency }: { option: RoutingOption; currency: stri
                     {formatPoints(option.dynamicFrom)}
                   </p>
                   {option.dynamicMedian !== undefined && (
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       {t("medianLabel", { points: formatPoints(option.dynamicMedian) })}
                     </p>
                   )}
-                  <p className="text-[10px] text-muted-foreground">{t("optionDynamic")}</p>
+                  <p className="text-xs text-muted-foreground">{t("optionDynamic")}</p>
                 </>
               )}
             </div>
@@ -169,7 +174,7 @@ function OptionRow({ option, currency }: { option: RoutingOption; currency: stri
               {option.startingAt && <span className="font-normal">{t("fromPrefix")} </span>}
               {formatPoints(option.points)}
             </p>
-            <p className="text-[10px] text-muted-foreground">{currency}</p>
+            <p className="text-xs text-muted-foreground">{currency}</p>
           </>
         )}
       </div>
@@ -211,7 +216,7 @@ function Price({
         {t("pointsUnit", { currency: program.currency })}
       </p>
       {startingAt && (
-        <p className="mt-0.5 max-w-[15rem] text-[11px] leading-snug text-muted-foreground">
+        <p className="mt-0.5 max-w-[15rem] text-xs leading-snug text-muted-foreground">
           {t("startingAtHint")}
         </p>
       )}
@@ -220,7 +225,7 @@ function Price({
           {t("cheapest")}
         </span>
       ) : (
-        <p className="mt-1 text-[11px] font-medium text-muted-foreground">
+        <p className="mt-1 text-xs font-medium text-muted-foreground">
           {t("vsCheapest", { diff: formatPoints(gap) })}
         </p>
       )}
@@ -314,10 +319,10 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
 
       {options.length > 0 && (
         <div className="mt-4 border-t border-border pt-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {t("optionsHeading", { count: options.length })}
           </p>
-          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
             {t("optionsCaveat")}
           </p>
           <ul className="mt-2 grid gap-1.5">
@@ -340,7 +345,7 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
       )}
 
       <div className="mt-4 border-t border-border pt-3">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {t("transferHeading")}
         </p>
         <div className="mt-1.5">
@@ -370,7 +375,7 @@ function Field({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1.5 w-full cursor-pointer rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
+        className="mt-1.5 w-full cursor-pointer rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none pointer-coarse:text-base focus:ring-2 focus:ring-primary"
       >
         {children}
       </select>

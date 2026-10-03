@@ -130,7 +130,7 @@ export function PostBody({
  *  ký tự trên một dòng gần như đứng yên (75 → 74) trong khi khối chữ chiếm
  *  nhiều chỗ hơn và dễ đọc hơn ở khoảng cách ngồi xa.
  *
- *  `prose-headings:scroll-mt-28` vì header dính trên đỉnh: không có nó, link
+ *  `prose-headings:scroll-mt-chrome` (globals.css) vì header dính trên đỉnh: không có nó, link
  *  mục lục nhảy tới đúng heading rồi để header che mất chính cái heading đó. */
 const PROSE =
-  "prose prose-neutral max-w-none prose-headings:font-display prose-headings:scroll-mt-28 prose-a:text-primary [&_:is(h1,h2,h3,h4)_a]:[font-weight:inherit] xl:prose-lg";
+  "prose prose-neutral max-w-none prose-headings:font-display prose-headings:scroll-mt-chrome prose-a:text-primary [&_:is(h1,h2,h3,h4)_a]:[font-weight:inherit] xl:prose-lg";

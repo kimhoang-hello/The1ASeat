@@ -50,7 +50,7 @@ export function CardSortSelect({
         <select
           value={value}
           onChange={(event) => choose(event.target.value)}
-          className="mt-1.5 w-full cursor-pointer rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
+          className="mt-1.5 w-full cursor-pointer rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none pointer-coarse:text-base focus:ring-2 focus:ring-primary"
         >
           {CARD_SORT_OPTIONS.map((option) => (
             <option key={option.id} value={option.id}>

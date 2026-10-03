@@ -266,7 +266,7 @@ export function PointsCalculator({ cardProgramIds }: { cardProgramIds: string[] 
             <select
               value={programId}
               onChange={(e) => setProgramId(e.target.value)}
-              className="mt-1.5 w-full cursor-pointer rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
+              className="mt-1.5 w-full cursor-pointer rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none pointer-coarse:text-base focus:ring-2 focus:ring-primary"
             >
               <option value="">{t("programPlaceholder")}</option>
               {POINTS_PROGRAMS.map((program) => (
@@ -325,13 +325,13 @@ function Field({
     <label className="block">
       <span className="text-sm font-medium text-foreground/80">{label}</span>
       <div className="mt-1.5 flex items-center overflow-hidden rounded-lg border border-border bg-white focus-within:ring-2 focus-within:ring-primary">
-        {suffix && <span className="pl-3 text-sm text-muted-foreground">{suffix}</span>}
+        {suffix && <span className="pl-3 text-sm text-muted-foreground pointer-coarse:text-base">{suffix}</span>}
         <input
           type="text"
           inputMode="decimal"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full px-3 py-2.5 text-sm outline-none"
+          className="w-full px-3 py-2.5 text-sm outline-none pointer-coarse:text-base"
         />
       </div>
     </label>

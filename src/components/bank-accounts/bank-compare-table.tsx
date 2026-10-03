@@ -54,7 +54,9 @@ export function BankCompareTable({ accounts }: { accounts: BankAccount[] }) {
     <div>
       <p className="mb-2 text-sm text-muted-foreground lg:hidden">{t("swipeHint")}</p>
 
-      <div className="overflow-x-auto rounded-2xl border border-border bg-card">
+      {/* `relative`: không có nó các `sr-only` trong bảng thoát khỏi khung
+          cuộn và kéo ngang được cả trang — xem `route-award-table.tsx`. */}
+      <div className="relative overflow-x-auto rounded-2xl border border-border bg-card">
         {/* `table-fixed` và bề rộng tối thiểu đặt ở cấp bảng — cùng lý do như
             bảng so sánh thẻ: cột nào có dòng quyền lợi dài hơn sẽ tự giành
             phần rộng hơn nếu để bảng co theo nội dung. */}

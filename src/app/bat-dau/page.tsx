@@ -68,7 +68,7 @@ function Step({
   return (
     <li
       id={id}
-      className="relative scroll-mt-28 rounded-2xl border border-border bg-card p-5 sm:p-7"
+      className="relative scroll-mt-chrome rounded-2xl border border-border bg-card p-5 sm:p-7"
     >
       <p className="text-xs font-semibold uppercase tracking-wide text-primary">
         {t("stepLabel", { n })}
@@ -238,7 +238,7 @@ export default async function StartHerePage() {
           {newcomerAccounts.length > 0 && (
             <section
               id="moi-sang-canada"
-              className="scroll-mt-28 rounded-2xl border border-border bg-card p-5 sm:p-6"
+              className="scroll-mt-chrome rounded-2xl border border-border bg-card p-5 sm:p-6"
             >
               <h2 className="font-display text-lg font-bold text-foreground">
                 {t("newcomerTitle")}

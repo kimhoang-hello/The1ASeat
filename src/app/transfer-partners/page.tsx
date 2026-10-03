@@ -164,7 +164,9 @@ export default async function TransferPartnersPage() {
           <p className="mb-2 text-xs font-medium text-muted-foreground sm:hidden">
             {tp("scrollHint")}
           </p>
-          <div className="overflow-x-auto rounded-2xl border border-border">
+          {/* `relative`: không có nó các `sr-only` trong bảng thoát khỏi khung
+              cuộn và kéo ngang được cả trang — xem `route-award-table.tsx`. */}
+          <div className="relative overflow-x-auto rounded-2xl border border-border">
             <table className="w-full min-w-[560px] border-collapse text-sm">
               <thead>
                 <tr className="border-b border-border bg-card">

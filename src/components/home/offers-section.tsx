@@ -102,7 +102,7 @@ export async function OffersSection() {
                 <EditorsTake editorsTake={offer.editorsTake} className="mt-3" compact />
 
                 <details className="group mt-3">
-                  <summary className="flex cursor-pointer list-none items-center gap-1 text-sm font-semibold text-foreground/80 hover:text-primary">
+                  <summary className="relative flex cursor-pointer list-none items-center gap-1 text-sm font-semibold text-foreground/80 before:absolute before:inset-x-0 before:-inset-y-3 before:content-[''] hover:text-primary">
                     <CaretDown size={14} className="transition-transform group-open:rotate-180" />
                     {t("keyBenefits")}
                   </summary>

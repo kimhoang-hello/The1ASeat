@@ -183,7 +183,15 @@ export function RouteAwardTable({
     // Bản trước gộp cả hai vào `<caption>` rồi lại in nguyên câu đó ra ngoài,
     // nên screen reader đọc đúng một câu hai lần; bản sau đó bỏ hẳn caption,
     // và bảng mất tên. Hai chuỗi khác nhau ở hai vai khác nhau mới là đủ.
-    <div className="mt-4 overflow-x-auto rounded-xl border border-border">
+    //
+    // `relative` là thứ giữ CẢ TRANG không bị kéo ngang. Các `sr-only` trong ô
+    // bảng là `position: absolute`; khung cuộn không định vị thì khối chứa của
+    // chúng nằm NGOÀI khung, nên `overflow-x-auto` không cắt chúng — chúng
+    // nằm đúng chỗ ô của mình, tức thò ra ngoài màn hình, và nới bề ngang cả
+    // trang. Đo 03/10/2026 ở 320px (iPhone bật Display Zoom): trang chặng kéo
+    // ngang được 97px, `/transfer-partners` 204px. Cùng một dòng ở cả năm
+    // khung cuộn ngang của site.
+    <div className="relative mt-4 overflow-x-auto rounded-xl border border-border">
       <table
         aria-describedby={describedBy}
         className="w-full min-w-[36rem] border-collapse text-left"
@@ -257,7 +265,7 @@ function OptionLine({ option }: { option: RoutingOption }) {
   return (
     <li className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 rounded-lg bg-secondary/60 px-3 py-2">
       <span className="font-mono text-sm text-foreground">{option.routing.join(" → ")}</span>
-      <span className="text-[11px] text-muted-foreground">
+      <span className="text-xs text-muted-foreground">
         {option.carriers.map((c) => c.name).join(" + ")} ·{" "}
         {t("routingMiles", { miles: formatPoints(option.miles) })}
       </span>

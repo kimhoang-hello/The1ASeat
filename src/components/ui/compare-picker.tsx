@@ -74,7 +74,7 @@ export function ComparePicker({
               <select
                 value={value}
                 onChange={(event) => choose(index, event.target.value)}
-                className="mt-1.5 w-full cursor-pointer rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
+                className="mt-1.5 w-full cursor-pointer rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none pointer-coarse:text-base focus:ring-2 focus:ring-primary"
               >
                 <option value="">{labels.empty}</option>
                 {items

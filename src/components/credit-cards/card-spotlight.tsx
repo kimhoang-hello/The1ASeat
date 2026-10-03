@@ -96,7 +96,7 @@ export function CardSpotlight({
         <div className="mt-auto flex flex-wrap items-center gap-4 pt-4">
           <Link
             href={`/credit-cards/${card.slug}`}
-            className="cursor-pointer text-sm font-semibold text-foreground/80 hover:text-primary hover:underline"
+            className="cursor-pointer py-3 text-sm font-semibold text-foreground/80 hover:text-primary hover:underline"
           >
             {best("viewCard")} &rarr;
           </Link>

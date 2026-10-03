@@ -33,7 +33,7 @@ export function NewsletterForm({
 }) {
   const hero = size === "hero";
   const wrapWidth = hero ? "max-w-md sm:max-w-xl xl:max-w-2xl" : "max-w-md";
-  const fieldSize = hero ? "px-5 py-3.5 text-base xl:px-6 xl:py-4 xl:text-lg" : "px-4 py-3 text-sm";
+  const fieldSize = hero ? "px-5 py-3.5 text-base xl:px-6 xl:py-4 xl:text-lg" : "px-4 py-3 text-sm pointer-coarse:text-base";
   const buttonSize = hero ? "px-6 py-3.5 text-base xl:px-8 xl:py-4 xl:text-lg" : "px-5 py-3 text-sm";
   const iconSize = hero ? 20 : 16;
   const [status, setStatus] = useState<"idle" | "submitting" | "submitted" | "error">("idle");

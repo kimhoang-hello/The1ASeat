@@ -65,7 +65,9 @@ export function CompareTable({ cards }: { cards: CreditCardOffer[] }) {
     <div>
       <p className="mb-2 text-sm text-muted-foreground lg:hidden">{t("swipeHint")}</p>
 
-      <div className="overflow-x-auto rounded-2xl border border-border bg-card">
+      {/* `relative`: không có nó các `sr-only` trong bảng thoát khỏi khung
+          cuộn và kéo ngang được cả trang — xem `route-award-table.tsx`. */}
+      <div className="relative overflow-x-auto rounded-2xl border border-border bg-card">
         {/* `table-fixed` để các cột thẻ rộng đúng bằng nhau. Để bảng tự co theo
             nội dung thì thẻ nào có dòng quyền lợi dài hơn sẽ giành cột rộng
             hơn — trang so sánh mà cột này to gấp rưỡi cột kia thì mắt đọc ra

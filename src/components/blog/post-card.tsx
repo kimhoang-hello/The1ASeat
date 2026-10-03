@@ -80,7 +80,7 @@ export function PostCard({
             {post.category}
           </span>
           {post.type === "video" && (
-            <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground/70">
+            <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-foreground/70">
               {posts_t("videoBadge")}
             </span>
           )}

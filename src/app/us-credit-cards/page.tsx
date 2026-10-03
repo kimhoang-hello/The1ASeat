@@ -130,7 +130,7 @@ export default async function UsCreditCardsPage({
   };
 
   const chip = (isActive: boolean) =>
-    `inline-block cursor-pointer rounded-full border px-3 py-1 text-sm transition-colors ${
+    `inline-block cursor-pointer rounded-full border px-3 py-1 text-sm transition-colors pointer-coarse:py-2 ${
       isActive
         ? "border-primary bg-primary/10 font-semibold text-primary"
         : "border-border text-foreground/70 hover:border-primary hover:text-primary"
@@ -156,7 +156,7 @@ export default async function UsCreditCardsPage({
           {beginnerHref && (
             <Link
               href={beginnerHref}
-              className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card px-5 py-4 transition-colors hover:border-primary"
+              className="flex flex-col items-start gap-2 rounded-2xl border border-border bg-card px-5 py-4 transition-colors hover:border-primary sm:flex-row sm:items-center sm:justify-between sm:gap-3"
             >
               <span>
                 <span className="block font-display font-bold text-foreground">
@@ -274,7 +274,7 @@ export default async function UsCreditCardsPage({
               </ul>
             </div>
           )}
-          <div id={US_CARDS_LIST_ANCHOR} className="mt-14 scroll-mt-36">
+          <div id={US_CARDS_LIST_ANCHOR} className="mt-14 scroll-mt-chrome">
             <SectionHeading>{us("allTitle")}</SectionHeading>
 
             {/* Cùng hai tầng lọc như `/credit-cards`: viên pill đặc cho loại

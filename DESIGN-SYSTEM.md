@@ -154,11 +154,17 @@ thiếu nó thì dấu tiếng Việt rơi về font hệ thống và tiêu đ�
 | Tiêu đề thẻ | `font-display text-base font-bold leading-snug` | 16px | `PostCard` |
 | Thân bài | `text-base leading-relaxed` | 16px | |
 | Phụ | `text-sm` | 14px | Mô tả, chữ trong nút |
-| Chú thích | `text-xs` | 12px | Ngày, badge, nhãn |
-| Vi nhãn | `text-[11px]` / `text-[10px]` | 11 / 10px | Badge dày đặc, chữ disclosure |
+| Chú thích | `text-xs` | 12px | Ngày, badge, nhãn — và là **sàn** cho mọi chữ mang dữ liệu |
+| Vi nhãn | `text-[11px]` | 11px | CHỈ badge/chip ngắn trên nền màu (tag thẻ, loại tài khoản, VIDEO, surcharge) |
 
 Quy tắc: **mọi tiêu đề đều có `font-display`**. Chữ không phải tiêu đề không bao
 giờ dùng `font-display`.
+
+**Sàn 12px cho chữ dữ liệu** (03/10/2026): tên hãng, số miles, đơn vị điểm, ghi
+chú dưới con số — thứ người đọc cần đọc để quyết định — không nhỏ hơn
+`text-xs`. `text-[11px]` chỉ còn cho viên badge viết hoa trên nền màu, và
+`text-[10px]` đã bỏ hẳn (chỗ duy nhất còn lại là eyebrow của dải offer, chỉ
+hiện từ `md`). PRODUCT.md: có độc giả lớn tuổi, đọc chủ yếu trên điện thoại.
 
 ### 4.3 Nhãn viết hoa
 
@@ -253,6 +259,16 @@ Padding ngang **luôn** là `px-4 sm:px-6 lg:px-8`. Không tự nghĩ ra bộ kh
 | Hàng có icon lớn | `gap-3` |
 | Lưới thẻ | `gap-5` |
 | Sau tiêu đề | `mt-1` (eyebrow → H1), `mt-2`, `mt-3` (H1 → đoạn dẫn) |
+
+### 5.4 Trên điện thoại (đo 03/10/2026 ở 320, 375 và 375×812 cảm ứng)
+
+| Luật | Vì sao | Cách làm |
+|---|---|---|
+| **Vùng chạm 44px** cho nút/link đứng cạnh một thứ bấm được khác | Độc giả lớn tuổi; chạm hụt "Xem chi tiết" là bấm nhầm nút Apply ngay cạnh | Không muốn đổi bố cục thì nới bằng `::before` (`relative before:absolute before:inset-x-0 before:-inset-y-3 before:content-['']`) — nhưng KHÔNG nới cả hai thứ kề nhau theo cách đó: hàng gãy dòng ở 320px là hai vùng ảo chồng lên nhau. Một bên nới ảo, bên kia cao thật (`py-3`). Link xếp hàng (footer) thì `py-2.5`. Chip lọc `pointer-coarse:py-2` (38px). |
+| **Khung `overflow-x-auto` phải `relative`** | `sr-only` trong ô bảng là `position: absolute`; khung không định vị thì không cắt được chúng, và cả trang kéo ngang được (đo: 204px ở 320px) | Thêm `relative` vào chính khung cuộn. |
+| **Panel thả xuống từ khối dính phải tự cuộn** | Phần nào của khối `sticky` thò khỏi mép dưới màn hình thì không cuộn tới được | Panel nằm trong luồng (menu mobile): khối dính là cột flex `max-h-dvh`, panel `min-h-0 overflow-y-auto overscroll-contain` — CSS tự đúng khi dải offer đổi chiều cao. Panel `absolute` (kết quả tìm kiếm) không ăn trần đó: đo `innerHeight − top` bằng JS, nghe `resize` + `ResizeObserver` trên khối dính. |
+| **Đích `#anchor` dùng `scroll-mt-chrome`**, không tự đặt `scroll-mt-*` | Khối dính cao 113–163px tuỳ dải offer; số tự đặt sẽ lệch khi khối đổi chiều cao | Utility trong `globals.css`: 11rem dưới `sm`, 9rem từ `sm`. Bài viết: `prose-headings:scroll-mt-chrome`. |
+| **Dải link có CTA bên phải: xuống dòng dưới `sm`** | Ở 375px CTA giành gần nửa bề ngang, tiêu đề gãy ba dòng | `flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3`. |
 
 ---
 
@@ -362,8 +378,15 @@ dạng, cùng chữ. Prop `affiliate` **chỉ** đổi thuộc tính `rel`:
 
 ```tsx
 "mt-1.5 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm
- outline-none focus:ring-2 focus:ring-primary"
+ outline-none pointer-coarse:text-base focus:ring-2 focus:ring-primary"
 ```
+
+**`pointer-coarse:text-base` là bắt buộc** cho mọi `input`/`select`/`textarea`
+nhỏ hơn 16px. Safari trên iPhone tự phóng to CẢ TRANG khi chạm vào ô có chữ
+dưới 16px và không tự thu lại — người đọc phải tự véo màn hình để ra. Gắn theo
+`pointer: coarse` (máy cảm ứng, kể cả iPhone xoay ngang rộng hơn 640px) chứ
+không theo bề ngang, nên desktop vẫn 14px như cũ. Ô đã `text-base` sẵn (ô tìm
+kiếm, form bản tin cỡ hero, công cụ Gợi ý thẻ) thì không cần.
 
 | Thuộc tính | Mặc định | Focus | Lỗi |
 |---|---|---|---|
@@ -399,7 +422,7 @@ Không có ảnh → dùng `MediaPlaceholder` với `tone="navy"`, không để 
 | `RebateChip` | `rounded-full bg-emerald-100 px-3 py-1 text-sm font-extrabold uppercase tracking-wide text-emerald-700` | Tiền hoàn thêm |
 | Loại thẻ | `text-xs font-medium text-muted-foreground` | Trung tính, không có nền |
 | Hết hạn | `text-xs font-medium text-amber-700` | Đồng hồ đang chạy |
-| Badge video | `rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground/70` | Bài này là video |
+| Badge video | `rounded-full bg-secondary px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-foreground/70` | Bài này là video |
 
 ### 10.5 Hộp HOT TIP — `HotTip`
 
@@ -498,6 +521,10 @@ sửa hàng loạt nếu không có lý do cụ thể.**
 - [ ] Mẹo kiếm điểm dùng `<HotTip>`, không tự dựng hộp xanh mới
 - [ ] Xanh lá chỉ dành cho tiền/ưu đãi; hổ phách chỉ dành cho hạn chót
 - [ ] Kích thước đo bằng `rem`/class Tailwind, không phải `px` cứng
+- [ ] Ô nhập dưới 16px có `pointer-coarse:text-base` (không thì iPhone phóng to cả trang)
+- [ ] Chữ mang dữ liệu ≥ `text-xs`; `text-[11px]` chỉ cho badge
+- [ ] Khung `overflow-x-auto` có `relative`; panel thả xuống từ khối dính tự cuộn
+- [ ] Nút/link đứng cạnh thứ bấm được khác có vùng chạm ≥44px (xem 5.4)
 - [ ] Animation mới có nhánh `prefers-reduced-motion`
 - [ ] Icon lấy từ Phosphor, đúng cỡ và weight ở [phần 9](#9-icon)
 - [ ] Thiếu ảnh thì dùng `<MediaPlaceholder>`, không để ô trống

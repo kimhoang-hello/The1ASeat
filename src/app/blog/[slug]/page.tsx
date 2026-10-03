@@ -215,12 +215,15 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       <div className="mt-6 flex items-center gap-2">
         <Link
           href={categoryHref}
-          className="text-xs font-semibold uppercase tracking-wide text-primary hover:underline"
+          // Chữ 12px nên link chỉ cao 16px. Vùng chạm nới bằng `::before`,
+          // chỉ 8px mỗi phía: H1 đứng ngay dưới cách `mt-2`, nới nhiều hơn là
+          // chạm vào tiêu đề cũng nhảy sang trang chuyên mục.
+          className="relative text-xs font-semibold uppercase tracking-wide text-primary before:absolute before:-inset-x-2 before:-inset-y-2 before:content-[''] hover:underline"
         >
           {post.category}
         </Link>
         {post.type === "video" && (
-          <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground/70">
+          <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-foreground/70">
             {posts_t("videoBadge")}
           </span>
         )}

@@ -85,8 +85,9 @@ export default function VietnamRoutesHubPage() {
 
         {/* Cùng cách chia vai như bảng ở trang chặng: `<caption>` đặt tên cho
             bảng, `aria-describedby` trỏ tới đoạn mô tả nhìn thấy được đứng
-            ngoài khung cuộn. Xem chú thích đầy đủ ở `route-award-table.tsx`. */}
-        <div className="mt-4 overflow-x-auto rounded-xl border border-border">
+            ngoài khung cuộn. Xem chú thích đầy đủ ở `route-award-table.tsx` —
+            kể cả vì sao khung phải `relative`. */}
+        <div className="relative mt-4 overflow-x-auto rounded-xl border border-border">
           <table
             aria-describedby="hub-table-desc"
             className="w-full min-w-[32rem] border-collapse text-left"
@@ -170,7 +171,7 @@ export default function VietnamRoutesHubPage() {
                                   className="h-4 w-4 shrink-0 rounded border border-border bg-white object-contain p-px"
                                 />
                               )}
-                              <span className="text-[11px] font-medium leading-tight text-muted-foreground">
+                              <span className="text-xs font-medium leading-tight text-muted-foreground">
                                 {cell.programCurrency}
                               </span>
                             </span>
