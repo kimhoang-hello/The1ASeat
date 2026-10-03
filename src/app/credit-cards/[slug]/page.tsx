@@ -113,7 +113,8 @@ export default async function CreditCardDetailPage({
        cột trái, chính vì nó là thứ duy nhất đứng đầu sẵn — gom thêm
        `OfferStats` hay nút Apply vào đó thì trên điện thoại chúng nhảy lên
        trước cả tên thẻ. Nút Apply thì có thêm một cái NỮA trong cột trái —
-       thêm chứ không di chuyển, và chỉ từ `xl`; xem chú thích tại chỗ. */
+       thêm chứ không di chuyển, và chỉ từ `xl`; xem chú thích tại chỗ. Dưới
+       `xl` cái thứ hai đó nằm ngay dưới khối bonus + phí (`card_detail_top`). */
     <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8 xl:max-w-[68rem]">
       <JsonLd data={jsonLd} />
       <Link
@@ -192,6 +193,34 @@ export default async function CreditCardDetailPage({
           {/* Ngay dưới con số, vì nó nói về chính con số đó. Không hiện gì khi
           chưa đủ lịch sử để nói. */}
           <OfferHistoryNote offer={offer} className="mt-4" />
+
+          {/* Nút Apply sớm cho màn DƯỚI `xl` — bản của nút ở cột trái cho nơi
+              không có cột trái. Đo 03/10/2026 trên điện thoại: nút duy nhất
+              nằm sau editor's take và quyền lợi, ở ~2,500px (gần bốn màn cuộn).
+              Đứng SAU tên thẻ và khối bonus + phí, nên vẫn giữ luật của nút
+              cột trái: người đọc biết đang xem thẻ nào và được gì trước khi
+              gặp "Apply ngay". Tác giả chọn cách này (03/10/2026) thay vì một
+              thanh dính đáy màn hình.
+
+              `placement` riêng (`card_detail_top`), cùng lý do như
+              `card_detail_rail`: để GA4 trả lời được nút mới có thêm click thật
+              hay chỉ chia lại click của nút dưới thân bài. */}
+          {offer.applyUrl && (
+            <div className="mt-5 xl:hidden">
+              <ApplyButton
+                href={offer.applyUrl}
+                affiliate={isReferralUrl(offer.applyUrl)}
+                placement="card_detail_top"
+                product={offer.slug}
+                className="w-full text-center sm:w-auto"
+              />
+              {isReferralUrl(offer.applyUrl) && (
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                  {offers("applyAffiliateNote")}
+                </p>
+              )}
+            </div>
+          )}
 
           <p className="mt-4 text-lg leading-relaxed text-foreground/90">
             {offer.headline}

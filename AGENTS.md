@@ -2724,8 +2724,26 @@ lệch FCP của PSI live là chuyện edge Hostinger (xem mục Đo PageSpeed).
   `<main id="main">` cũng mang nó để link "Bỏ qua" không cuộn eyebrow/H1 vào
   dưới khối dính. Đo lại 15 ca (5 đích × 320/375/1280): đích luôn dưới khối dính.
 
-**Đo được, CHƯA đổi — chờ tác giả quyết (quyết định sản phẩm, không phải lỗi):**
-- Khối dính (dải offer + thanh nav) cao 114–147px trên mọi trang, tức 23–27%
-  màn 320×568. Dải offer dính theo thanh nav từ commit `422fbf6` (15/08/2026).
-- Trang chi tiết thẻ trên điện thoại: nút "Apply ngay" đầu tiên ở ~2,500px
-  (Amex Cobalt®), vì nút ở cột trái chỉ hiện từ `xl` (xem chú thích tại chỗ).
+**Hai quyết định sản phẩm — tác giả chọn 03/10/2026, đã làm:**
+- **Khối dính trượt lên khi cuộn xuống, dưới `lg`** (`sticky-chrome.tsx`). Nó
+  cao 114–147px trên điện thoại (23–27% màn 320×568). Tác giả chọn cách này
+  thay vì bỏ dính dải offer (giữ được cả hai). Hiện lại khi cuộn lên ≥12px, ở
+  đầu trang, khi menu/ô tìm kiếm mở (`aria-expanded`), khi focus bàn phím vào
+  khối. Từ `lg` đứng yên. **Cạm bẫy đã cắn ngay bản đầu:** dải offer xoay thẻ
+  mỗi 30s và đổi chiều cao ±16px; khối nằm trong luồng ở đầu trang nên trình
+  duyệt tự bù vị trí cuộn (scroll anchoring) — `scrollY` 700 → 683.5 không ai
+  chạm — và bộ đếm tưởng người đọc cuộn lên, kéo khối đang ẩn xuống giữa lúc
+  đọc. Nay lượt cuộn trùng lúc khối đổi chiều cao bị bỏ qua. Trạng thái ẩn gắn
+  với đường dẫn (`hiddenOn === pathname`) để sang trang là tự hiện, không cần
+  effect đặt lại state.
+- **Nút Apply sớm dưới `xl` ở trang chi tiết thẻ** (Canada `card_detail_top`, Mỹ
+  `us_card_detail_top`), ngay dưới khối bonus + phí (Mỹ: dưới dòng điều kiện
+  chi), kèm dòng công bố hoa hồng như nút cột trái. Trước đó nút duy nhất trên
+  điện thoại ở ~2,500px; nay ~810px. Placement riêng để GA4 tách được click mới
+  với click bị chia lại từ nút dưới thân bài. Tác giả chọn cách này thay vì
+  thanh Apply dính đáy màn hình.
+
+**Biết, chưa sửa:** ở đầu trang (khối chưa ẩn), mỗi lần dải offer xoay sang
+thẻ có tên dài/ngắn hơn là toàn bộ nội dung nhích ±16px. Có từ khi dải offer ra
+đời; muốn hết thì phải giữ chiều cao dải cố định trên điện thoại (= chiều cao
+của tên dài nhất), tức dải cao thêm với đa số thẻ.

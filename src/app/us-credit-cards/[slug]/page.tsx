@@ -181,6 +181,26 @@ export default async function UsCreditCardDetailPage({
               </p>
             )}
 
+            {/* Nút Apply sớm dưới `xl`, sau khối bonus + điều kiện chi — cùng
+                lý do và cùng luật với `card_detail_top` ở trang thẻ Canada
+                (`credit-cards/[slug]/page.tsx`). */}
+            {card.applyUrl && (
+              <div className="mt-5 xl:hidden">
+                <ApplyButton
+                  href={card.applyUrl}
+                  affiliate={isReferralUrl(card.applyUrl)}
+                  placement="us_card_detail_top"
+                  product={card.slug}
+                  className="w-full text-center sm:w-auto"
+                />
+                {isReferralUrl(card.applyUrl) && (
+                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                    {offers("applyAffiliateNote")}
+                  </p>
+                )}
+              </div>
+            )}
+
             <p className="mt-4 text-lg leading-relaxed text-foreground/90">{card.headline}</p>
 
             <CardTags tags={card.us.tags} className="mt-4" />

@@ -313,6 +313,7 @@ Thẻ ở trạng thái nghỉ **không có bóng** — chỉ `border border-bor
 | Token | Giá trị | Dùng cho |
 |---|---|---|
 | `.animate-offer-in` | `offer-in 450ms ease-out` (mờ + trượt xuống 4px) | Dải offer trên header khi đổi thẻ |
+| `transition-transform duration-200 ease-out` + `-translate-y-full` | khối dính trượt lên khi cuộn xuống, chỉ dưới `lg`; `motion-reduce:transition-none` | `StickyChrome` |
 | `transition-colors` | mặc định Tailwind (150ms) | Nút, link, mục nav |
 | `transition-shadow` | mặc định Tailwind | Thẻ bài viết |
 | `animate-spin` | mặc định Tailwind | Vòng xoay khi form đang gửi |

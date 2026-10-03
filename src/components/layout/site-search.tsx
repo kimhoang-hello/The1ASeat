@@ -155,9 +155,16 @@ export function SiteSearch({ onOpen }: { onOpen?: () => void }) {
     const chrome = rootRef.current?.closest("header")?.parentElement;
     const observer = chrome ? new ResizeObserver(fit) : undefined;
     if (chrome) observer?.observe(chrome);
+    // Dưới `lg` khối dính trượt lên/xuống bằng `transform` (`sticky-chrome.tsx`).
+    // Mở ô tìm kiếm đúng lúc khối đang trượt xuống thì lượt đo đầu đọc vị trí
+    // GIỮA hiệu ứng — danh sách cao hơn chỗ còn lại thật, kết quả cuối khuất
+    // (Codex tái hiện ở 320×568). `transform` không làm `ResizeObserver` hay
+    // `resize` nổ, nên đo lại khi hiệu ứng xong.
+    chrome?.addEventListener("transitionend", fit);
     return () => {
       window.removeEventListener("resize", fit);
       observer?.disconnect();
+      chrome?.removeEventListener("transitionend", fit);
     };
   }, [open, hasResults]);
 
