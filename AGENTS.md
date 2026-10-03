@@ -2747,3 +2747,15 @@ lệch FCP của PSI live là chuyện edge Hostinger (xem mục Đo PageSpeed).
 thẻ có tên dài/ngắn hơn là toàn bộ nội dung nhích ±16px. Có từ khi dải offer ra
 đời; muốn hết thì phải giữ chiều cao dải cố định trên điện thoại (= chiều cao
 của tên dài nhất), tức dải cao thêm với đa số thẻ.
+
+## Kiểm desktop 03/10/2026 (dở dang — hết hạn mức giữa chừng)
+
+Đã vá: (1) cột ảnh thẻ Canada/Mỹ, mục lục bài viết và mục lục "Các thẻ tốt nhất"
+dính ở `top-24` (96px) nằm khuất 17px dưới khối dính desktop (113px; 137px ở
+1920px) — nay utility `top-chrome` (9rem) trong `globals.css`; (2) dropdown nav
+desktop thò khỏi mép dưới ở cửa sổ thấp (1366×600: "Thẻ tín dụng" xuống 654px,
+dòng cuối không bấm được) — nay `max-h-[calc(100vh-7.5rem)] overflow-y-auto`.
+Chưa vá, đã thấy: đoạn disclaimer 12px dài 118–133 ký tự/dòng ở `/bank-accounts`,
+`/bank-accounts/so-sanh`, `/award-flight-finder` (nên `max-w-prose`); eyebrow
+10px của dải offer. Quét 1280/1920 mới chạy được ~125/201 trang; chưa chạy
+Lighthouse desktop; bản vá này CHƯA qua Codex.

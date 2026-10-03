@@ -125,7 +125,7 @@ export default async function CreditCardDetailPage({
       </Link>
 
       <div className="xl:grid xl:grid-cols-[22rem_minmax(0,1fr)] xl:gap-12">
-        <div className="mt-6 xl:sticky xl:top-24 xl:self-start">
+        <div className="mt-6 xl:sticky xl:top-chrome xl:self-start">
           <CardImage
             image={offer.cardImage}
             name={offer.name}

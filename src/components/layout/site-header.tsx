@@ -74,6 +74,22 @@ function isNavLinkActive(link: NavLink, pathname: string): boolean {
   return link.matchPrefix === true && pathname.startsWith(`${link.href}/`);
 }
 
+/**
+ * Khung của mọi dropdown trên thanh nav desktop.
+ *
+ * Cao tối đa phần màn hình còn lại dưới thanh nav rồi tự cuộn: panel treo
+ * trong khối dính, nên phần nào thò khỏi mép dưới màn hình thì không bao giờ
+ * cuộn tới được — cùng bệnh với menu mobile (`sticky-chrome.tsx`), nhưng panel
+ * này `absolute` nên không ăn theo trần của khối dính. Đo 03/10/2026 ở cửa sổ
+ * 1366×600 (laptop 1366×768 trừ thanh trình duyệt và thanh bookmark):
+ * dropdown "Thẻ tín dụng" xuống tới 654px, dòng cuối "So sánh tài khoản" không
+ * bấm được. 7.5rem: đỉnh panel ở ~103px khi có dải offer (~111px từ `2xl`)
+ * cộng một khoảng chừa ở mép dưới. `vh` chứ không `dvh` — desktop không có
+ * thanh trình duyệt co giãn.
+ */
+const DROPDOWN_PANEL =
+  "absolute left-0 top-full z-10 mt-2 max-h-[calc(100vh-7.5rem)] overflow-y-auto overscroll-contain rounded-xl border border-border bg-card p-2 shadow-lg";
+
 /** A menu entry for a page that filters itself with `?type=`. `type` is null
  *  for the entry that lives at the bare path, with no param. */
 type TypeLink = NavLink & { type: string | null };
@@ -333,9 +349,7 @@ function TypeDropdown({
         {label}
         <CaretDown size={14} className="transition-transform group-open:rotate-180" />
       </summary>
-      <div
-        className={`absolute left-0 top-full z-10 mt-2 ${width} rounded-xl border border-border bg-card p-2 shadow-lg`}
-      >
+      <div className={`${DROPDOWN_PANEL} ${width}`}>
         <Suspense fallback={<TypeLinksFallback links={links} onNavigate={onNavigate} />}>
           <TypeLinks
             links={links}
@@ -733,7 +747,7 @@ export function SiteHeader() {
               {nav("pointsTools")}
               <CaretDown size={14} className="transition-transform group-open:rotate-180" />
             </summary>
-            <div className="absolute left-0 top-full z-10 mt-2 w-80 rounded-xl border border-border bg-card p-2 shadow-lg">
+            <div className={`${DROPDOWN_PANEL} w-80`}>
               {toolsLinks.map((link) => (
                 <MenuItem
                   key={link.href}

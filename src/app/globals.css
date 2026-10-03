@@ -118,6 +118,16 @@ body {
   }
 }
 
+/* Đỉnh của mọi phần tử dính TRONG thân trang — cột ảnh thẻ (Canada, Mỹ), mục
+   lục bài viết, mục lục "Các thẻ tốt nhất". Cả bốn chỉ dính từ `xl`, nơi khối
+   dính trên cùng cao 113px (129px từ `2xl`). `top-24` cũ (96px) đặt từ hồi chỉ
+   thanh nav dính: đo 03/10/2026 ở 1280px, ảnh thẻ dính khuất 17px dưới khối
+   (33px từ `2xl`). Cùng con số với `scroll-mt-chrome` từ `sm`: thứ dính và
+   đích nhảy tới chừa cùng một khoảng dưới khối. */
+@utility top-chrome {
+  top: 9rem;
+}
+
 @keyframes offer-in {
   from {
     opacity: 0;

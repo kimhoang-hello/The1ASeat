@@ -279,7 +279,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             yên rồi trôi mất cùng đoạn đầu tiên. */}
         {hasToc && (
           <aside className="hidden xl:block">
-            <PostToc items={toc} className="sticky top-24" />
+            <PostToc items={toc} className="sticky top-chrome" />
           </aside>
         )}
       </div>
