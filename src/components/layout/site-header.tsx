@@ -85,10 +85,12 @@ function isNavLinkActive(link: NavLink, pathname: string): boolean {
  * dropdown "Thẻ tín dụng" xuống tới 654px, dòng cuối "So sánh tài khoản" không
  * bấm được. 7.5rem: đỉnh panel ở ~103px khi có dải offer (~111px từ `2xl`)
  * cộng một khoảng chừa ở mép dưới. `vh` chứ không `dvh` — desktop không có
- * thanh trình duyệt co giãn.
+ * thanh trình duyệt co giãn. `scroll-py-2`: Tab tới một link sát mép thì
+ * trình duyệt cuộn nó vào ĐÚNG mép khung, và khung `overflow` cắt mất cạnh
+ * dưới của viền focus (Codex bắt ở 1366×450) — chừa 8px là đủ.
  */
 const DROPDOWN_PANEL =
-  "absolute left-0 top-full z-10 mt-2 max-h-[calc(100vh-7.5rem)] overflow-y-auto overscroll-contain rounded-xl border border-border bg-card p-2 shadow-lg";
+  "absolute left-0 top-full z-10 mt-2 max-h-[calc(100vh-7.5rem)] scroll-py-2 overflow-y-auto overscroll-contain rounded-xl border border-border bg-card p-2 shadow-lg";
 
 /** A menu entry for a page that filters itself with `?type=`. `type` is null
  *  for the entry that lives at the bare path, with no param. */
@@ -797,7 +799,7 @@ export function SiteHeader() {
       {open && (
         // `min-h-0` + `overflow-y-auto`: co lại theo trần một màn hình của khối
         // dính rồi tự cuộn — xem chú thích ở `<header>` và `sticky-chrome.tsx`.
-        <div className="min-h-0 overflow-y-auto overscroll-contain border-t border-border bg-background px-4 pb-6 pt-2 lg:hidden">
+        <div className="min-h-0 scroll-py-2 overflow-y-auto overscroll-contain border-t border-border bg-background px-4 pb-6 pt-2 lg:hidden">
           <nav className="flex flex-col gap-1">
             <Link
               href="/"

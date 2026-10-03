@@ -2748,14 +2748,39 @@ thẻ có tên dài/ngắn hơn là toàn bộ nội dung nhích ±16px. Có t�
 đời; muốn hết thì phải giữ chiều cao dải cố định trên điện thoại (= chiều cao
 của tên dài nhất), tức dải cao thêm với đa số thẻ.
 
-## Kiểm desktop 03/10/2026 (dở dang — hết hạn mức giữa chừng)
+## Kiểm desktop 03/10/2026 — đừng đề xuất lại
 
-Đã vá: (1) cột ảnh thẻ Canada/Mỹ, mục lục bài viết và mục lục "Các thẻ tốt nhất"
-dính ở `top-24` (96px) nằm khuất 17px dưới khối dính desktop (113px; 137px ở
-1920px) — nay utility `top-chrome` (9rem) trong `globals.css`; (2) dropdown nav
-desktop thò khỏi mép dưới ở cửa sổ thấp (1366×600: "Thẻ tín dụng" xuống 654px,
-dòng cuối không bấm được) — nay `max-h-[calc(100vh-7.5rem)] overflow-y-auto`.
-Chưa vá, đã thấy: đoạn disclaimer 12px dài 118–133 ký tự/dòng ở `/bank-accounts`,
-`/bank-accounts/so-sanh`, `/award-flight-finder` (nên `max-w-prose`); eyebrow
-10px của dải offer. Quét 1280/1920 mới chạy được ~125/201 trang; chưa chạy
-Lighthouse desktop; bản vá này CHƯA qua Codex.
+Cách đo: Chrome headless (`puppeteer-core` cài ở thư mục tạm, trỏ vào Chrome
+của máy) quét 199 trang ở 1280×720 và 1920×1080, DPR 2: tràn ngang, chữ thò khỏi
+khung, khung cuộn ngang còn cuộn, độ dài dòng, ảnh hỏng, nút thiếu con trỏ tay,
+phần tử dính bị che hoặc thò đáy, chữ < 11px, nav gãy dòng, lỗi console. Không
+dùng Browser pane cho việc dài: pane bị đóng là mất sạch kết quả trong `window`.
+Lighthouse desktop 6 trang chính: hiệu năng 93–100, a11y/BP/SEO 100. Thứ tự Tab
+và viền focus (vòng mặc định của hệ điều hành) đạt.
+
+**Đã vá:**
+- **Phần tử dính trong thân trang nằm khuất dưới khối dính** — cột ảnh thẻ
+  (Canada, Mỹ), mục lục bài viết, mục lục "Các thẻ tốt nhất" dính ở `top-24`
+  (96px) từ hồi chỉ thanh nav dính; khối dính desktop nay 113px (137px ở
+  1920px). Utility `top-chrome` (9rem) trong `globals.css`.
+- **...và thò đáy ra ngoài ở cửa sổ thấp** (Codex đo 1366×400/500, 1920×450):
+  hai mục lục cao tối đa `100vh − 10rem` rồi tự cuộn; cột ảnh thẻ chỉ dính khi
+  cửa sổ cao ≥34rem (`@custom-variant tall`; 34 chứ không 32 vì `rem` trong media query luôn tính 16px, ở 2400px gốc 18px thì 32rem hụt 9px), thấp hơn thì cuộn theo trang —
+  cột đó có nút Apply, cuộn bên trong một cột ảnh thì kỳ.
+- **Dropdown nav desktop thò khỏi mép dưới** ở cửa sổ 1366×600 ("Thẻ tín dụng"
+  xuống 654px): `max-h-[calc(100vh-7.5rem)] overflow-y-auto`. Mọi khung tự cuộn
+  có `scroll-py-2` (và đệm đáy) để viền focus của dòng sát mép không bị cắt.
+- **CLS 0.161 ở `/award-flight-finder`** (ngưỡng tốt 0.1): công cụ đọc
+  `useSearchParams` nên chỉ dựng ở client, fallback là ô xám 256px. Nay fallback
+  là chính công cụ ở chặng mặc định, dựng sẵn ở server — cùng mẫu với
+  `bank-account-finder`. CLS đo lại: 0; HTML server có số award thật cho crawler.
+- **Đoạn ghi chú 12px dài 103–133 ký tự/dòng** (disclaimer `/bank-accounts`,
+  `/bank-accounts/so-sanh`, `/award-flight-finder`, `/bay-ve-viet-nam`, ghi chú
+  trong thẻ tài khoản, lời dặn "Hành trình mẫu…"): `max-w-prose`.
+- Ô tìm kiếm không có dấu focus nào ngoài con trỏ → `focus-within:ring-2` ở khung.
+  Nhãn "Elevated offer" của dải offer 10px → 11px (không còn chữ 10px nào).
+
+**Đã kiểm, KHÔNG phải lỗi:** ảnh thẻ ở dải offer tải `w=384` cho ô 56px — trình
+duyệt dùng lại biến thể lớn đã có trong cache từ lưới thẻ cùng trang (cache
+sạch thì tải đúng `w=128`); ảnh cover
+blog ở 1920px tải 1920px cho ô 1088px@2x — giới hạn ở ảnh gốc Contentful.

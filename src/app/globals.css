@@ -128,6 +128,16 @@ body {
   top: 9rem;
 }
 
+/* Cửa sổ đủ cao để một phần tử dính ở `top-chrome` còn thấy được trọn vẹn —
+   dùng cho cột ảnh thẻ (ảnh + nút Apply + dòng công bố, ~340px). Cửa sổ thấp
+   hơn thì cột đó cuộn theo trang như thường thay vì dính mà thò đáy ra ngoài
+   màn hình: Codex đo 03/10/2026 ở 1920×450, nút Apply và dòng công bố hoa
+   hồng nằm hẳn dưới mép. 34rem chứ không 32rem: `rem` trong media query luôn
+   tính theo 16px, KHÔNG theo cỡ chữ gốc đã nâng lên 18px từ 150rem — ở
+   2400×512 cột dính 162→521px, dòng công bố hụt 9px (Codex bắt). Mục lục thì không dùng cái này mà tự cuộn bên trong
+   (danh sách dài ngắn tuỳ bài). */
+@custom-variant tall (@media (min-height: 34rem));
+
 @keyframes offer-in {
   from {
     opacity: 0;

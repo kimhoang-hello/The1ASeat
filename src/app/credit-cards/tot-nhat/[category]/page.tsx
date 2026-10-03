@@ -171,7 +171,7 @@ export default async function BestCardsCategoryPage({
             <div className="mt-8 xl:col-start-2 xl:row-span-full">
               <nav
                 aria-labelledby="best-toc"
-                className="rounded-xl border border-border bg-secondary p-4 xl:sticky xl:top-chrome"
+                className="rounded-xl border border-border bg-secondary p-4 xl:sticky xl:top-chrome xl:max-h-[calc(100vh-10rem)] xl:scroll-py-2 xl:overflow-y-auto xl:overscroll-contain"
               >
                 <p
                   id="best-toc"

@@ -322,7 +322,7 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {t("optionsHeading", { count: options.length })}
           </p>
-          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 max-w-prose text-xs leading-relaxed text-muted-foreground">
             {t("optionsCaveat")}
           </p>
           <ul className="mt-2 grid gap-1.5">
@@ -353,7 +353,7 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
         </div>
       </div>
 
-      <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{t(program.noteKey)}</p>
+      <p className="mt-3 max-w-prose text-xs leading-relaxed text-muted-foreground">{t(program.noteKey)}</p>
     </li>
   );
 }
@@ -392,7 +392,6 @@ function Finder() {
   // useState from them would freeze the defaults and silently break every
   // shared deep link. Deriving on each render sidesteps that entirely.
   const selection = readParams(searchParams);
-  const { origin, destination, cabin } = selection;
 
   // replaceState is the documented way to shallow-route in the App Router; it
   // feeds back into useSearchParams, which is what re-renders this component.
@@ -407,6 +406,21 @@ function Finder() {
     params.set("cabin", next.cabin);
     window.history.replaceState(null, "", `?${params.toString()}`);
   }
+
+  return <FinderView selection={selection} update={update} />;
+}
+
+/** Lựa chọn khi URL không mang tham số nào — chặng mặc định của công cụ. */
+const DEFAULT_SELECTION = readParams(new URLSearchParams());
+
+function FinderView({
+  selection,
+  update,
+}: {
+  selection: Selection;
+  update: (patch: Partial<Selection>) => void;
+}) {
+  const { origin, destination, cabin } = selection;
 
   const originAirport = ORIGINS.find((a) => a.code === origin)!;
   const destinationAirport = DESTINATIONS.find((a) => a.code === destination)!;
@@ -512,7 +526,7 @@ function Finder() {
           <WarningCircle size={20} weight="fill" className="mt-0.5 shrink-0 text-[#a3352b]" aria-hidden />
           <div>
             <p className="text-sm font-semibold text-foreground">{t("disclaimerHeading")}</p>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t("disclaimer")}</p>
+            <p className="mt-1 max-w-prose text-xs leading-relaxed text-muted-foreground">{t("disclaimer")}</p>
           </div>
         </div>
 
@@ -541,8 +555,17 @@ export function AwardChartFinder() {
   // useSearchParams opts the subtree into client-side rendering, so the
   // boundary keeps the rest of the page prerenderable — same pattern the
   // site header already uses for its Blog dropdown.
+  //
+  // Fallback là CHÍNH công cụ ở chặng mặc định, dựng sẵn ở server — cùng cách
+  // `bank-account-finder` đã làm. Fallback cũ là một ô xám cao 256px, còn công
+  // cụ thật cao vài nghìn px: hydrate xong là khối "Đi tiếp" bên dưới bị đẩy
+  // xuống, Lighthouse desktop đo CLS 0.161 (03/10/2026, ngưỡng tốt là 0.1),
+  // và HTML server không có lấy một con số award nào cho crawler. Ai vào bằng
+  // link có tham số thì công cụ đổi lại cho đúng sau khi hydrate; ai vào thẳng
+  // — gần như tất cả — thấy đúng thứ sẽ hiện ra. Nút chưa chạy trước lúc
+  // hydrate, nhưng trước đây cũng vậy.
   return (
-    <Suspense fallback={<div className="mx-auto h-64 max-w-3xl animate-pulse rounded-2xl bg-secondary" />}>
+    <Suspense fallback={<FinderView selection={DEFAULT_SELECTION} update={() => {}} />}>
       <Finder />
     </Suspense>
   );

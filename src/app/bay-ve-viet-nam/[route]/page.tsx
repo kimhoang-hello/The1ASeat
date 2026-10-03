@@ -225,7 +225,7 @@ export default async function VietnamRoutePage({
 
         <div className="mt-10 rounded-xl border border-border bg-secondary p-4">
           <p className="text-sm font-semibold text-foreground">{chart("disclaimerHeading")}</p>
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{chart("disclaimer")}</p>
+          <p className="mt-1 max-w-prose text-xs leading-relaxed text-muted-foreground">{chart("disclaimer")}</p>
         </div>
 
         <p className="mt-3 text-xs leading-relaxed text-muted-foreground">

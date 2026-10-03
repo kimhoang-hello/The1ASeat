@@ -53,7 +53,7 @@ export function FeaturedOfferRotator({ offers }: { offers: FeaturedOffer[] }) {
           something. Below that the offer stacks onto two short lines and the
           strip grows instead — a cut-off card name is worth nothing. */}
       <div className="flex min-h-12 items-center gap-3 px-4 py-2 sm:h-12 sm:px-6 sm:py-0 lg:px-10 2xl:px-16">
-        <span className="hidden shrink-0 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider md:inline-block">
+        <span className="hidden shrink-0 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider md:inline-block">
           {tBanner("eyebrow")}
         </span>
 

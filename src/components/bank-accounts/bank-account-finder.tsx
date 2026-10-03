@@ -234,7 +234,7 @@ function AccountCard({ account }: { account: BankAccount }) {
       </div>
 
       {account.promoNoteVi && (
-        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+        <p className="mt-2 max-w-prose text-xs leading-relaxed text-muted-foreground">
           <span className="font-semibold">* </span>
           {account.promoNoteVi}
           {account.regularRate !== undefined && (
@@ -244,11 +244,11 @@ function AccountCard({ account }: { account: BankAccount }) {
       )}
 
       {account.noRateNoteVi && (
-        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{account.noRateNoteVi}</p>
+        <p className="mt-2 max-w-prose text-xs leading-relaxed text-muted-foreground">{account.noRateNoteVi}</p>
       )}
 
       {account.feeWaiverVi && (
-        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{account.feeWaiverVi}</p>
+        <p className="mt-2 max-w-prose text-xs leading-relaxed text-muted-foreground">{account.feeWaiverVi}</p>
       )}
 
       <ul className="mt-3 ml-5 list-disc space-y-1 text-sm leading-relaxed text-foreground/90">
@@ -630,7 +630,7 @@ function FinderView({
         <Info size={20} weight="fill" className="mt-0.5 shrink-0 text-primary" aria-hidden />
         <div>
           <p className="text-sm font-semibold text-foreground">{t("disclaimerHeading")}</p>
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t("disclaimer")}</p>
+          <p className="mt-1 max-w-prose text-xs leading-relaxed text-muted-foreground">{t("disclaimer")}</p>
         </div>
       </div>
 

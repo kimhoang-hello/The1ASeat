@@ -163,8 +163,7 @@ giờ dùng `font-display`.
 **Sàn 12px cho chữ dữ liệu** (03/10/2026): tên hãng, số miles, đơn vị điểm, ghi
 chú dưới con số — thứ người đọc cần đọc để quyết định — không nhỏ hơn
 `text-xs`. `text-[11px]` chỉ còn cho viên badge viết hoa trên nền màu, và
-`text-[10px]` đã bỏ hẳn (chỗ duy nhất còn lại là eyebrow của dải offer, chỉ
-hiện từ `md`). PRODUCT.md: có độc giả lớn tuổi, đọc chủ yếu trên điện thoại.
+`text-[10px]` đã bỏ hẳn. PRODUCT.md: có độc giả lớn tuổi, đọc chủ yếu trên điện thoại.
 
 ### 4.3 Nhãn viết hoa
 
@@ -267,6 +266,10 @@ Padding ngang **luôn** là `px-4 sm:px-6 lg:px-8`. Không tự nghĩ ra bộ kh
 | **Vùng chạm 44px** cho nút/link đứng cạnh một thứ bấm được khác | Độc giả lớn tuổi; chạm hụt "Xem chi tiết" là bấm nhầm nút Apply ngay cạnh | Không muốn đổi bố cục thì nới bằng `::before` (`relative before:absolute before:inset-x-0 before:-inset-y-3 before:content-['']`) — nhưng KHÔNG nới cả hai thứ kề nhau theo cách đó: hàng gãy dòng ở 320px là hai vùng ảo chồng lên nhau. Một bên nới ảo, bên kia cao thật (`py-3`). Link xếp hàng (footer) thì `py-2.5`. Chip lọc `pointer-coarse:py-2` (38px). |
 | **Khung `overflow-x-auto` phải `relative`** | `sr-only` trong ô bảng là `position: absolute`; khung không định vị thì không cắt được chúng, và cả trang kéo ngang được (đo: 204px ở 320px) | Thêm `relative` vào chính khung cuộn. |
 | **Panel thả xuống từ khối dính phải tự cuộn** | Phần nào của khối `sticky` thò khỏi mép dưới màn hình thì không cuộn tới được | Panel nằm trong luồng (menu mobile): khối dính là cột flex `max-h-dvh`, panel `min-h-0 overflow-y-auto overscroll-contain` — CSS tự đúng khi dải offer đổi chiều cao. Panel `absolute` (kết quả tìm kiếm) không ăn trần đó: đo `innerHeight − top` bằng JS, nghe `resize` + `ResizeObserver` trên khối dính. |
+| **Phần tử dính trong thân trang dùng `top-chrome`**, không tự đặt `top-*` | Khối dính desktop cao 113–137px; `top-24` cũ nằm khuất dưới nó | Mục lục: thêm `max-h-[calc(100vh-10rem)] overflow-y-auto` để tự cuộn ở cửa sổ thấp. Khối không nên cuộn bên trong (cột ảnh thẻ + nút Apply): chỉ dính khi cửa sổ đủ cao — `xl:tall:sticky` (`@custom-variant tall`, ≥34rem — `rem` trong media query luôn là 16px). |
+| **Khung tự cuộn có `scroll-py-2` + đệm đáy** | Tab tới dòng sát mép thì viền focus bị mép khung cắt | Dropdown, menu mobile, kết quả tìm kiếm, mục lục. |
+| **Công cụ đọc `useSearchParams`: fallback là chính nó ở trạng thái mặc định** | Fallback ô xám rồi công cụ thật cao vài nghìn px đẩy trang xuống — CLS 0.161 ở `/award-flight-finder`; HTML server cũng rỗng với crawler | `<Suspense fallback={<View selection={DEFAULT} update={() => {}} />}>` như `bank-account-finder` và `award-chart-finder`. |
+| **Ghi chú chữ nhỏ (`text-xs`) trong khung rộng: `max-w-prose`** | 12px chạy hết bề ngang 1137px là 133 ký tự/dòng | Disclaimer, ghi chú phí/lãi suất, lời dặn dưới bảng. |
 | **Đích `#anchor` dùng `scroll-mt-chrome`**, không tự đặt `scroll-mt-*` | Khối dính cao 113–163px tuỳ dải offer; số tự đặt sẽ lệch khi khối đổi chiều cao | Utility trong `globals.css`: 11rem dưới `sm`, 9rem từ `sm`. Bài viết: `prose-headings:scroll-mt-chrome`. |
 | **Dải link có CTA bên phải: xuống dòng dưới `sm`** | Ở 375px CTA giành gần nửa bề ngang, tiêu đề gãy ba dòng | `flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3`. |
 

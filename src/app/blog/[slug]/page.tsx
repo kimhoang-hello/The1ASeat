@@ -276,10 +276,15 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         {/* `aside` KHÔNG dính, `nav` bên trong mới dính. Cột lưới phải cao
             bằng cả thân bài thì phần tử `sticky` mới có quãng đường mà đi —
             đặt `sticky` thẳng lên cột (và để nó co bằng nội dung) là nó đứng
-            yên rồi trôi mất cùng đoạn đầu tiên. */}
+            yên rồi trôi mất cùng đoạn đầu tiên.
+
+            `max-h` + `overflow-y-auto`: mục lục dài hơn phần màn hình dưới
+            khối dính thì tự cuộn — dính mà thò đáy ra ngoài là mấy mục cuối
+            không bao giờ bấm được (Codex đo 1366×400 với bài 8 mục). `pb-2` +
+            `scroll-py-2` để viền focus của mục cuối không bị mép khung cắt. */}
         {hasToc && (
           <aside className="hidden xl:block">
-            <PostToc items={toc} className="sticky top-chrome" />
+            <PostToc items={toc} className="sticky top-chrome max-h-[calc(100vh-10rem)] scroll-py-2 overflow-y-auto overscroll-contain pb-2" />
           </aside>
         )}
       </div>

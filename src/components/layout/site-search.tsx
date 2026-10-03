@@ -257,7 +257,13 @@ export function SiteSearch({ onOpen }: { onOpen?: () => void }) {
       {open && (
         <div className="absolute inset-x-0 top-full border-b border-border bg-background px-4 pb-5 pt-4 shadow-lg sm:px-6 lg:px-10">
           <div className="mx-auto max-w-2xl">
-            <form onSubmit={submit} className="flex items-center gap-3 rounded-full border border-border bg-card px-4 py-2.5">
+            {/* `focus-within:ring-2`: ô nhập bên trong `outline-none`, nên vòng
+                focus phải nằm ở khung — như mọi ô nhập khác (DESIGN-SYSTEM.md
+                10.2). Trước đây ô này không có dấu focus nào ngoài con trỏ. */}
+            <form
+              onSubmit={submit}
+              className="flex items-center gap-3 rounded-full border border-border bg-card px-4 py-2.5 focus-within:ring-2 focus-within:ring-primary"
+            >
               <MagnifyingGlass size={18} className="shrink-0 text-muted-foreground" />
               <input
                 ref={inputRef}
@@ -298,9 +304,14 @@ export function SiteSearch({ onOpen }: { onOpen?: () => void }) {
                   // Đặt trên `<ul>`, không trên từng link: sự kiện bàn phím nổi
                   // bọt lên đây, nên một handler đủ cho cả danh sách và không
                   // phải gắn lại mỗi lần kết quả đổi.
+                  //
+                  // `p-1` (bù bằng `-mx-1`): danh sách tự cuộn nên mép khung cắt
+                  // mất viền focus của kết quả nằm sát mép — kể cả kết quả ĐẦU ở
+                  // `scrollTop = 0`, chỗ `scroll-py-2` không giúp được gì (Codex
+                  // bắt ở 1366×450). Đệm thật 4px quanh danh sách thì đủ chỗ.
                   onKeyDown={onArrowKeys}
                   style={{ maxHeight: listMax }}
-                  className="overflow-y-auto overscroll-contain"
+                  className="-mx-1 scroll-py-2 overflow-y-auto overscroll-contain p-1"
                 >
                   {results.map((item) => (
                     <li key={item.href}>

@@ -120,7 +120,7 @@ export default async function CompareBankAccountsPage({
                 <p className="text-sm font-semibold text-foreground">
                   {bank_t("disclaimerHeading")}
                 </p>
-                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                <p className="mt-1 max-w-prose text-xs leading-relaxed text-muted-foreground">
                   {bank_t("disclaimer")}
                 </p>
               </div>

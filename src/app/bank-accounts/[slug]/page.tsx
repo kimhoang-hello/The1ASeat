@@ -265,7 +265,7 @@ export default async function BankAccountDetailPage({
       {/* Cùng thứ tự với trang danh sách: dặn dò trước, công bố affiliate sau. */}
       <div className="mt-8 rounded-xl border border-border bg-secondary p-4">
         <p className="text-sm font-semibold text-foreground">{bank_t("disclaimerHeading")}</p>
-        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{bank_t("disclaimer")}</p>
+        <p className="mt-1 max-w-prose text-xs leading-relaxed text-muted-foreground">{bank_t("disclaimer")}</p>
       </div>
 
       <OfferDisclosure className="mt-4" />
