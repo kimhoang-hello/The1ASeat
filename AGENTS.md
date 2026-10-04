@@ -3007,4 +3007,4 @@ tắt bảo hiểm) ngày 04/10/2026. Kết quả: 0 ô "Chưa kiểm".
   khuếch đại lỗi đó. Snapshot ghi lại; vài nhân vật mẫu đổi thẻ chính.
 - `audit:trademarks` học thương hiệu cả từ chuỗi trong code: tên hàm `RBC(`/`CIBC(` và
   "Priority Pass™" trong comment làm nó báo 27 chỗ. Hàm URL viết thường
-  (`rbcUrl`…), comment không gắn ™ cho Priority Pass (nội dung site đang viết trần).
+  (`rbcUrl`…). Từ 04/10/2026 nội dung site và chuỗi hiển thị trong code đều viết "Priority Pass™"; comment vẫn viết trần.

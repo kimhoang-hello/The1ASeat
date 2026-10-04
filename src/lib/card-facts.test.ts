@@ -80,12 +80,12 @@ test("điều kiện thu nhập nối bằng HOẶC; thẻ doanh nghiệp nói c
 });
 
 test("phòng chờ không rõ số lượt: không đoán miễn phí, không in ghi chú nội bộ", () => {
-  assert.deepEqual(lines("scotiabank-gold-amex", "lounge", BEFORE_CHECK), ["Priority Pass (số lượt miễn phí chưa kiểm)"]);
+  assert.deepEqual(lines("scotiabank-gold-amex", "lounge", BEFORE_CHECK), ["Priority Pass™ (số lượt miễn phí chưa kiểm)"]);
 });
 
 test("đã kiểm là không có lượt miễn phí: nói trả phí, không nói chưa kiểm", () => {
-  assert.deepEqual(lines("scotiabank-gold-amex", "lounge"), ["Giảm giá thẻ hội viên Priority Pass (mỗi lượt vào trả phí)"]);
-  assert.ok(lines("amex-aeroplan-reserve", "lounge").includes("Priority Pass (mỗi lượt vào trả phí)"));
+  assert.deepEqual(lines("scotiabank-gold-amex", "lounge"), ["Giảm giá thẻ hội viên Priority Pass™ (mỗi lượt vào trả phí)"]);
+  assert.ok(lines("amex-aeroplan-reserve", "lounge").includes("Priority Pass™ (mỗi lượt vào trả phí)"));
 });
 
 test("thiếu dữ liệu thì dòng rỗng (trang ghi Chưa kiểm), không suy đoán", () => {

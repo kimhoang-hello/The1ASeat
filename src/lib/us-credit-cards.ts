@@ -446,7 +446,7 @@ const US_CARD_DATA: UsCardData[] = [
       "Credit du lịch $300 USD mỗi năm khi đặt qua Capital One® Travel",
       "10,000 miles mỗi năm gia hạn, bắt đầu từ năm thứ hai",
       "10x khách sạn và thuê xe, 5x vé máy bay qua Capital One® Travel; 2x mọi chi tiêu khác",
-      "Vào Capital One® Lounge và hơn 1,300 lounge Priority Pass",
+      "Vào Capital One® Lounge và hơn 1,300 lounge Priority Pass™",
       "Credit Global Entry hoặc TSA PreCheck® tới $120 USD",
     ],
     tags: ["Lounge", "Chuyển điểm", "Không phí ngoại tệ"],
@@ -529,7 +529,7 @@ const US_CARD_DATA: UsCardData[] = [
       "Tích tới 1.25x điểm khi trả tiền thuê nhà hoặc mortgage, không mất phí giao dịch",
       "2x điểm mọi chi tiêu khác",
       "Credit khách sạn $400 USD mỗi năm qua Bilt Travel, cộng $200 USD Bilt Cash mỗi năm",
-      "Priority Pass",
+      "Priority Pass™",
       "Chuyển điểm 1:1 sang Aeroplan®",
     ],
     tags: ["Tiền nhà", "Lounge", "Chuyển điểm"],
@@ -647,7 +647,7 @@ const US_CARD_DATA: UsCardData[] = [
     annualFeeNote: "thẻ phụ $195 USD/năm",
     rewardsCurrency: "Ultimate Rewards®",
     headline:
-      "Thẻ travel cao cấp của Chase®: 8x điểm qua Chase® Travel, credit du lịch $300 USD và lounge Priority Pass.",
+      "Thẻ travel cao cấp của Chase®: 8x điểm qua Chase® Travel, credit du lịch $300 USD và lounge Priority Pass™.",
     editorsTake:
       "Annual fee $795 USD chỉ đáng nếu bạn thật sự dùng hết credit du lịch $300 USD và các credit khách sạn. Điểm cùng hệ với Sapphire Preferred® nên vẫn chuyển được sang Aeroplan®.",
     keyBenefits: [

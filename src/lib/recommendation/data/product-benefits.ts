@@ -222,10 +222,10 @@ const BY_PRODUCT: Record<string, BenefitSeed[]> = {
 
   "scotiabank-gold-amex": [
     ["no-fx-fee"],
-    ["airport-lounge-passes", null, { text: "Priority Pass — site không nêu số lượt", to: BEFORE_ISSUER_CHECK }],
+    ["airport-lounge-passes", null, { text: "Priority Pass™ — site không nêu số lượt", to: BEFORE_ISSUER_CHECK }],
     // Trang Scotiabank®: chủ thẻ được GIẢM GIÁ thẻ hội viên Priority Pass — thẻ
     // không kèm lượt miễn phí nào.
-    ["airport-lounge-passes", 0, issuer(SRC.scotiaGold, { text: "Giảm giá thẻ hội viên Priority Pass" })],
+    ["airport-lounge-passes", 0, issuer(SRC.scotiaGold, { text: "Giảm giá thẻ hội viên Priority Pass™" })],
     ["annual-fee-waiver-conditional", null, { text: "Khi có gói ngân hàng phù hợp" }],
     ["travel-medical-insurance", 1000000, issuer(SRC.scotiaGold, { text: "25 ngày nếu dưới 65 tuổi, 3 ngày từ 65 tuổi" })],
     ["trip-cancellation-insurance", 1500, issuer(SRC.scotiaGold)],
@@ -257,10 +257,10 @@ const BY_PRODUCT: Record<string, BenefitSeed[]> = {
 
   "amex-aeroplan-reserve": [
     ["maple-leaf-lounge", 1, { text: "Không giới hạn tại Bắc Mỹ, kèm 1 khách và Air Canada® Café" }],
-    ["airport-lounge-passes", null, { text: "Priority Pass — site không nêu số lượt", to: BEFORE_ISSUER_CHECK }],
+    ["airport-lounge-passes", null, { text: "Priority Pass™ — site không nêu số lượt", to: BEFORE_ISSUER_CHECK }],
     // amex.ca: miễn phí thẻ hội viên Priority Pass US$99, "each lounge visit is
     // subject to a usage fee".
-    ["airport-lounge-passes", 0, issuer(SRC.amexAeroplanReserve, { text: "Priority Pass" })],
+    ["airport-lounge-passes", 0, issuer(SRC.amexAeroplanReserve, { text: "Priority Pass™" })],
     ["priority-boarding", 8, { text: "Check-in, boarding và hành lý cho tối đa 8 người đi cùng" }],
     ["free-checked-bag", 8],
     ["companion-pass", 99, { text: "Toàn cầu, từ $99 đến tối đa $599 chưa gồm thuế phí", minimumAnnualSpend: 25000 }],
@@ -325,10 +325,10 @@ const BY_PRODUCT: Record<string, BenefitSeed[]> = {
     // không chọi nhau — vào không giới hạn lượt, ở nhóm lounge Bắc Mỹ. Đã gỡ
     // nhầm chữ "không giới hạn" ngày 08/09/2026 rồi trả lại cùng ngày.
     ["maple-leaf-lounge", 1, { text: "Không giới hạn tại Bắc Mỹ, kèm 1 khách và Air Canada® Café" }],
-    ["airport-lounge-passes", null, { text: "Priority Pass — site không nêu số lượt", to: BEFORE_ISSUER_CHECK }],
+    ["airport-lounge-passes", null, { text: "Priority Pass™ — site không nêu số lượt", to: BEFORE_ISSUER_CHECK }],
     // Điều khoản Priority Pass trên amex.ca: "All lounge visits are subject to
     // a usage fee at the prevailing rate".
-    ["airport-lounge-passes", 0, issuer(SRC.amexAeroplanBizReserve, { text: "Priority Pass" })],
+    ["airport-lounge-passes", 0, issuer(SRC.amexAeroplanBizReserve, { text: "Priority Pass™" })],
     ["free-checked-bag", 8],
     ["nexus-credit", 100, { text: "Mỗi 4 năm" }],
     ["companion-pass", 99, { text: "Worldwide Companion Pass từ $99", minimumAnnualSpend: 25000 }],
