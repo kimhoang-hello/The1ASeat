@@ -53,7 +53,20 @@ function shuffle<T>(items: T[]): T[] {
  * sure the others are seen regardless.
  */
 export async function FeaturedOfferBanner() {
-  const offers = await getCreditCardOffers();
+  // Dải này nằm trong layout GỐC, tức là có mặt ở mọi URL. `lib/content` không
+  // bắt lỗi, và webhook publish xoá cache bằng `expire: 0` — Contentful nấc
+  // đúng lúc một trang đang dựng lại thì lỗi đi thẳng lên layout và CẢ TRANG
+  // hỏng, ở mọi đường dẫn (cùng lớp lỗi đã vá cho `getPosts()` ở trang thẻ
+  // 02/10/2026). Một dải quảng bá không được phép làm vậy: lỗi thì ẩn dải, ghi
+  // log, trang vẫn chạy. Bắt ở ĐÂY chứ không trong hàm cache, để mảng rỗng
+  // không bị cache như dữ liệu thật.
+  let offers: Awaited<ReturnType<typeof getCreditCardOffers>>;
+  try {
+    offers = await getCreditCardOffers();
+  } catch (error) {
+    console.error("[featured-offer-banner] không tải được danh sách thẻ, ẩn dải offer", error);
+    return null;
+  }
 
   const featured: FeaturedOffer[] = shuffle(offers.filter(isElevatedLive))
     .map((offer) => ({

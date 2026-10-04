@@ -31,8 +31,6 @@ website trên hPanel → bấm **Redeploy**.
 - `NEXT_PUBLIC_GA_MEASUREMENT_ID` — tuỳ chọn, Measurement ID của Google
   Analytics 4 (dạng `G-XXXXXXXXXX`, lấy ở analytics.google.com → Admin → Data
   Streams). Không có thì site không gắn script analytics nào.
-- `NEXT_PUBLIC_CUSDIS_APP_ID` — tuỳ chọn, App ID của Cusdis. Không có thì khung
-  bình luận dưới bài viết không hiện.
 - `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` — tuỳ chọn, chỉ là thẻ xác minh Search
   Console.
 

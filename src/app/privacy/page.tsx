@@ -43,8 +43,9 @@ export default function PrivacyPage() {
         bạn vào danh sách nhận bản tin.
       </p>
       <p>
-        <strong>Khi bạn bình luận:</strong> tên hiển thị và nội dung bình luận. Ô email trong khung
-        bình luận đã được ẩn đi, chúng tôi không thu thập email của người bình luận.
+        <strong>Bình luận:</strong> từ ngày 03/10/2026 trang không còn khung bình luận và không
+        nhận bình luận mới. Bình luận gửi trước đó (tên hiển thị và nội dung, không có email) nằm
+        ở dịch vụ Cusdis; bạn muốn xoá thì nhắn cho chúng tôi.
       </p>
       <p>
         <strong>Dữ liệu kỹ thuật:</strong> như mọi website, máy chủ ghi lại địa chỉ IP, loại trình
@@ -77,8 +78,8 @@ export default function PrivacyPage() {
           hộp thư của chúng tôi.
         </li>
         <li>
-          <strong>Cusdis</strong> — xử lý phần bình luận dưới bài viết và video. Bình luận cần được
-          duyệt trước khi hiển thị công khai.
+          <strong>Cusdis</strong> — giữ các bình luận gửi trước ngày 03/10/2026, khi trang còn
+          khung bình luận. Trang không còn gửi dữ liệu mới nào tới Cusdis.
         </li>
         <li>
           <strong>Google Analytics 4</strong> — thống kê lượt xem và nguồn truy cập ở dạng tổng
@@ -157,8 +158,8 @@ export default function PrivacyPage() {
       <h2>Lưu trữ bao lâu</h2>
       <p>
         Email bản tin được giữ cho tới khi bạn huỷ đăng ký. Nội dung form Liên hệ được giữ trong
-        hộp thư của chúng tôi để tiện tra cứu lại khi cần. Bình luận được giữ chừng nào bài viết
-        còn trên trang. Địa chỉ IP dùng cho chống spam bị xoá trong vòng vài giờ.
+        hộp thư của chúng tôi để tiện tra cứu lại khi cần. Bình luận cũ ở Cusdis được giữ tới khi
+        bạn yêu cầu xoá. Địa chỉ IP dùng cho chống spam bị xoá trong vòng vài giờ.
       </p>
 
       <h2>Quyền của bạn</h2>

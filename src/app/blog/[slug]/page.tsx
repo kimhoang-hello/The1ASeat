@@ -7,7 +7,6 @@ import type { BlogPost } from "@/lib/content";
 import { formatDate, hasExpired } from "@/lib/format-date";
 import { MediaPlaceholder, type PlaceholderIcon } from "@/components/ui/media-placeholder";
 import { getVideoEmbedUrl, getYouTubeThumbnailUrl, getYouTubeWatchUrl } from "@/lib/video-embed";
-import { CommentSection } from "@/components/blog/comment-section";
 import { PostCard } from "@/components/blog/post-card";
 import { AffiliateClickTracker } from "@/components/blog/affiliate-click-tracker";
 import { PostBody } from "@/components/blog/post-body";
@@ -17,6 +16,7 @@ import { OfferStatusNotice } from "@/components/blog/offer-status-notice";
 import { JsonLd } from "@/components/seo/json-ld";
 import { categoryPath, getRelatedPosts, lastModified, slugifyVi } from "@/lib/blog-categories";
 import { postOfferStatus } from "@/lib/post-offer-status";
+import { postDuration } from "@/lib/post-duration";
 import { withHeadingAnchors } from "@/lib/post-toc";
 import { SITE_URL } from "@/lib/subscriber-email";
 import { t } from "@/lib/t";
@@ -69,10 +69,23 @@ export async function generateMetadata({
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  // Thẻ và transfer bonus là dữ liệu PHỤ của một bài viết (khối thẻ nhắc trong
+  // bài, nút "đi tiếp" của nhãn ưu đãi). Để chúng chung một `Promise.all` trần
+  // thì một lượt Contentful nấc ở nguồn phụ làm mất luôn cả bài. Lỗi thì rơi về
+  // mảng rỗng và ghi log: bài vẫn hiện, khối thẻ không hiện, còn nút đi tiếp
+  // tự rẽ sang `/transfer-partners` — trang luôn có nội dung — vì không biết
+  // bonus nào còn chạy. `getPosts()` vẫn để lỗi đi lên: không có nó thì không
+  // có bài nào để hiện.
   const [allPosts, offers, transferBonuses] = await Promise.all([
     getPosts(),
-    getCreditCardOffers(),
-    getTransferBonuses(),
+    getCreditCardOffers().catch((error) => {
+      console.error(`[blog/${slug}] không tải được danh sách thẻ, bỏ khối thẻ trong bài`, error);
+      return [];
+    }),
+    getTransferBonuses().catch((error) => {
+      console.error(`[blog/${slug}] không tải được transfer bonus, nút đi tiếp dùng đường trung tính`, error);
+      return [];
+    }),
   ]);
   const post = allPosts.find((item) => item.slug === slug);
 
@@ -84,6 +97,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const related = getRelatedPosts(allPosts, post);
   const categoryHref = categoryPath(slugifyVi(post.category));
   const offerStatus = postOfferStatus(post);
+  const duration = postDuration(post);
   // Cùng phép lọc mà chính trang /transfer-bonuses dùng — nút "đi tiếp" không
   // được hứa một danh sách mà trang kia đã lọc sạch.
   const hasLiveTransferBonus = transferBonuses.some((bonus) => !hasExpired(bonus.expiresAt));
@@ -166,8 +180,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       className={`mx-auto max-w-2xl px-4 py-12 sm:px-6 lg:px-8${hasToc ? " xl:max-w-[68rem]" : ""}`}
     >
       <JsonLd data={jsonLd} />
-      <Link href="/" className="text-sm font-semibold text-primary hover:underline">
-        &larr; {common("backHome")}
+      {/* Về danh sách bài, như mọi trang chi tiết khác về danh sách của mục
+          mình ("← Xem tất cả thẻ"). Trước đây link này về trang chủ. */}
+      <Link href="/blog" className="text-sm font-semibold text-primary hover:underline">
+        &larr; {posts_t("viewAll")}
       </Link>
 
       {embedUrl ? (
@@ -233,10 +249,14 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <span>{post.author}</span>
         <span aria-hidden>&middot;</span>
         <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
-        <span aria-hidden>&middot;</span>
-        <span>
-          {post.minutesRead} {common("minRead")}
-        </span>
+        {duration && (
+          <>
+            <span aria-hidden>&middot;</span>
+            <span>
+              {duration.minutes} {common(duration.kind === "watch" ? "minWatch" : "minRead")}
+            </span>
+          </>
+        )}
       </div>
 
       {/* Bài viết về một ưu đãi có hạn nói trạng thái của ưu đãi đó NGAY ĐẦU
@@ -311,8 +331,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         </section>
       )}
-
-      <CommentSection pageId={post.slug} url={url} title={post.title} />
     </article>
   );
 }

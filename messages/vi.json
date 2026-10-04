@@ -68,7 +68,9 @@
     "subscribe": "Đăng ký bản tin",
     "subscribed": "Đã đăng ký!",
     "disclaimer": "Không spam. Huỷ đăng ký bất cứ lúc nào.",
-    "error": "Có lỗi xảy ra, vui lòng thử lại."
+    "error": "Có lỗi xảy ra, vui lòng thử lại.",
+    "errorInvalidEmail": "Email chưa đúng định dạng, bạn kiểm tra lại giúp mình.",
+    "errorRateLimited": "Bạn vừa gửi nhiều lần liền. Thử lại sau khoảng {minutes} phút."
   },
   "startHereBand": {
     "eyebrow": "DÀNH CHO NGƯỜI MỚI",
@@ -264,6 +266,7 @@
   "common": {
     "readMore": "Đọc thêm",
     "minRead": "phút đọc",
+    "minWatch": "phút xem",
     "backHome": "Về trang chủ",
     "skipToContent": "Bỏ qua, tới nội dung chính",
     "backStartHere": "Bắt đầu từ đâu?"
@@ -291,7 +294,7 @@
     "contactTitle": "Liên hệ",
     "contactDescription": "Gửi câu hỏi, góp ý về bài viết hoặc đề nghị hợp tác cho Ghế 1A. Bạn cũng có thể email trực tiếp tới info@ghe1a.com.",
     "privacyTitle": "Chính sách bảo mật",
-    "privacyDescription": "Ghế 1A thu thập và sử dụng dữ liệu của bạn như thế nào: email đăng ký bản tin, form liên hệ, bình luận và cookie phân tích lưu lượng.",
+    "privacyDescription": "Ghế 1A thu thập và sử dụng dữ liệu của bạn như thế nào: email đăng ký bản tin, form liên hệ và cookie phân tích lưu lượng.",
     "termsTitle": "Điều khoản sử dụng",
     "termsDescription": "Điều khoản sử dụng website Ghế 1A: nội dung chỉ mang tính tham khảo, không phải lời khuyên tài chính.",
     "categoryDescription": "Tổng hợp {count} bài viết và video tiếng Việt của Ghế 1A về {category} — kinh nghiệm Miles & Points và trải nghiệm thực tế.",

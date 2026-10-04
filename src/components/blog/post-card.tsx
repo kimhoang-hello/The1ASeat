@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { BlogPost } from "@/lib/content";
 import { formatDate } from "@/lib/format-date";
+import { postDuration } from "@/lib/post-duration";
 import { getYouTubeThumbnailFallbackUrl, getYouTubeThumbnailUrl } from "@/lib/video-embed";
 import { VideoThumbnail } from "@/components/blog/video-thumbnail";
 import { MediaPlaceholder, type PlaceholderIcon } from "@/components/ui/media-placeholder";
@@ -33,6 +34,7 @@ export function PostCard({
   preload?: boolean;
 }) {
   const Heading = headingLevel;
+  const duration = postDuration(post);
   // Ảnh video có đường lùi riêng khi `maxresdefault` không tồn tại; ảnh do tác
   // giả tải lên thì không cần, nó luôn có thật.
   const videoThumbnail =
@@ -91,10 +93,14 @@ export function PostCard({
         <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{post.excerpt}</p>
         <div className="mt-auto flex items-center gap-2 pt-4 text-xs text-muted-foreground">
           <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
-          <span aria-hidden>&middot;</span>
-          <span>
-            {post.minutesRead} {common("minRead")}
-          </span>
+          {duration && (
+            <>
+              <span aria-hidden>&middot;</span>
+              <span>
+                {duration.minutes} {common(duration.kind === "watch" ? "minWatch" : "minRead")}
+              </span>
+            </>
+          )}
         </div>
       </div>
     </Link>

@@ -570,7 +570,11 @@ async function createVideoPost(
     coverImage: { [LOCALE]: icon },
     videoUrl: { [LOCALE]: video.videoUrl },
     publishedAt: { [LOCALE]: video.publishedAt },
-    minutesRead: { [LOCALE]: 10 },
+    // RSS của YouTube không có thời lượng video, và trường này bắt buộc. 0 là
+    // "chưa biết" — `lib/post-duration.ts` không in số nào cho nó. Trước
+    // 03/10/2026 job ghi 10, và mọi video tự tạo hiện "10 phút" bất kể dài
+    // bao nhiêu. Tác giả điền thời lượng thật thì nhãn tự hiện.
+    minutesRead: { [LOCALE]: 0 },
     author: { [LOCALE]: "Hoàng" },
   };
 

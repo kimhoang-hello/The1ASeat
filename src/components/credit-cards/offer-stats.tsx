@@ -41,7 +41,12 @@ export function OfferStats({
         {offer.welcomeBonus ? (
           <>
             <Figure value={offer.welcomeBonus} label={offers("welcomeBonus")} />
-            <div className="text-right">
+            {/* `ml-auto`: con số bonus dài (điện thoại, lưới hai cột) đẩy ô phí
+                xuống dòng riêng, và `justify-between` của một dòng chỉ có một
+                phần tử là đặt nó sát TRÁI — chữ căn phải trong một ô nằm bên
+                trái làm nhãn "Annual fee" thụt vào giữa. Đẩy cả ô sang phải thì
+                bonus trái, phí phải ở mọi thẻ. */}
+            <div className="ml-auto text-right">
               <p className="font-display text-lg font-bold text-foreground">{fee.amount}</p>
               <p className="text-xs text-muted-foreground">{offers("annualFee")}</p>
             </div>

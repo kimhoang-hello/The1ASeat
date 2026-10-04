@@ -1,5 +1,6 @@
 "use client";
 
+import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { MAX_COMPARE } from "@/lib/compare";
 export interface PickableItem {
@@ -40,6 +41,10 @@ export function ComparePicker({
   labels: { title: string; slots: string[]; empty: string };
 }) {
   const router = useRouter();
+  // `selected` là prop của server, chỉ đổi khi lượt điều hướng trước xong. Chọn
+  // ô thứ hai trong lúc lượt đầu còn chạy (mạng chậm) là dựng URL từ danh sách
+  // CŨ và mất thẻ vừa chọn ở ô đầu. Khoá các ô cho tới khi trang mới về.
+  const [pending, startTransition] = useTransition();
 
   // Số ô: đủ cho những thẻ đang chọn, cộng một ô trống để thêm thẻ nữa — nhưng
   // không quá trần. Ba ô trống ngay từ đầu trông như ba việc phải làm.
@@ -56,7 +61,9 @@ export function ComparePicker({
     else params.delete(param);
 
     const query = params.toString();
-    router.replace(query ? `${path}?${query}` : path, { scroll: false });
+    startTransition(() => {
+      router.replace(query ? `${path}?${query}` : path, { scroll: false });
+    });
   }
 
   return (
@@ -73,8 +80,10 @@ export function ComparePicker({
               </span>
               <select
                 value={value}
+                disabled={pending}
+                aria-busy={pending}
                 onChange={(event) => choose(index, event.target.value)}
-                className="mt-1.5 w-full cursor-pointer rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none pointer-coarse:text-base focus:ring-2 focus:ring-primary"
+                className="mt-1.5 w-full cursor-pointer rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none pointer-coarse:text-base focus:ring-2 focus:ring-primary disabled:cursor-wait disabled:opacity-70"
               >
                 <option value="">{labels.empty}</option>
                 {items

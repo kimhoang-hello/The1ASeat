@@ -37,6 +37,10 @@ export function NewsletterForm({
   const buttonSize = hero ? "px-6 py-3.5 text-base xl:px-8 xl:py-4 xl:text-lg" : "px-5 py-3 text-sm";
   const iconSize = hero ? 20 : 16;
   const [status, setStatus] = useState<"idle" | "submitting" | "submitted" | "error">("idle");
+  // Câu báo lỗi phải nói đúng lỗi: "thử lại" cho một lượt bị giới hạn (429)
+  // là bảo người đọc làm đúng việc sẽ thất bại lần nữa, còn email sai (400)
+  // thì cần sửa ô nhập chứ không cần bấm lại.
+  const [errorMessage, setErrorMessage] = useState("");
   const [email, setEmail] = useState("");
   const doneRef = useRef<HTMLDivElement>(null);
 
@@ -62,7 +66,19 @@ export function NewsletterForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      if (!res.ok) throw new Error("subscribe failed");
+      if (!res.ok) {
+        if (res.status === 429) {
+          const seconds = Number(res.headers.get("Retry-After"));
+          const minutes = Number.isFinite(seconds) && seconds > 0 ? Math.ceil(seconds / 60) : 60;
+          setErrorMessage(t("errorRateLimited", { minutes: String(minutes) }));
+        } else if (res.status === 400) {
+          setErrorMessage(t("errorInvalidEmail"));
+        } else {
+          setErrorMessage(t("error"));
+        }
+        setStatus("error");
+        return;
+      }
       // Chỉ bắn sau khi server nhận thật. Bắn lúc submit thì đếm cả lần gõ sai
       // email lẫn lần rate-limit bị chặn, và con số đó không dùng được.
       // Tên tham số KHÔNG được là `source`: giá trị đó lọt vào Session
@@ -71,6 +87,7 @@ export function NewsletterForm({
       sendGAEvent("event", "newsletter_subscribed", { newsletter_source: source });
       setStatus("submitted");
     } catch {
+      setErrorMessage(t("error"));
       setStatus("error");
     }
   }
@@ -140,7 +157,7 @@ export function NewsletterForm({
           role="status"
           className={`mt-2 text-xs ${variant === "dark" ? "text-red-300" : "text-destructive"}`}
         >
-          {t("error")}
+          {errorMessage || t("error")}
         </p>
       )}
     </div>

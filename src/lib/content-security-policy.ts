@@ -24,12 +24,12 @@
  *  - GA4 qua `@next/third-parties` (gtag): googletagmanager.com, gửi hit tới
  *    *.google-analytics.com / *.analytics.google.com; Google Signals thêm
  *    *.g.doubleclick.net và www.google.com.
- *  - Cusdis (bình luận): script + style từ cusdis.com, và khung bình luận là
- *    iframe `srcdoc` — `srcdoc` THỪA KẾ CSP của trang cha, nên script, style
- *    và lượt gọi API bên trong nó cũng phải qua được danh sách này.
+ *  - Cusdis (bình luận) ĐÃ GỠ 03/10/2026: iframe.umd.js của họ trả 521 từ
+ *    trước 26/09 và khung bình luận trống ở mọi bài. Thêm lại một dịch vụ
+ *    bình luận thì nhớ khung `srcdoc` THỪA KẾ CSP của trang cha.
  *  - Video: iframe YouTube / Vimeo (`lib/video-embed.ts`).
  *  - Ảnh: Contentful và YouTube đi qua `/_next/image` (tức `'self'`); `https:`
- *    để lại cho ảnh bên thứ ba ít ỏi (pixel GA, ảnh trong bình luận).
+ *    để lại cho ảnh bên thứ ba ít ỏi (pixel GA).
  *
  * Thêm một dịch vụ nhúng mới mà quên sửa ở đây thì nó GÃY TRONG IM LẶNG trên
  * production (chỉ có một dòng lỗi CSP trong console) — kiểm console sau mỗi
@@ -41,11 +41,11 @@ const isDev = process.env.NODE_ENV === "development";
 const DIRECTIVES = [
   "default-src 'self'",
   // `'unsafe-eval'` chỉ ở dev: React dùng eval để dựng lại call stack.
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://*.googletagmanager.com https://cusdis.com`,
-  "style-src 'self' 'unsafe-inline' https://cusdis.com",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://*.googletagmanager.com`,
+  "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  `connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://cusdis.com${isDev ? " ws: wss:" : ""}`,
+  `connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com${isDev ? " ws: wss:" : ""}`,
   "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com",
   "media-src 'self' https:",
   "worker-src 'self' blob:",

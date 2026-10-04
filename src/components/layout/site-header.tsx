@@ -600,8 +600,13 @@ export function SiteHeader() {
   // Mở nhóm và tô sáng dòng cha là hai câu hỏi khác nhau — xem `MobileSection`.
   // Trừ trang So sánh ra vì nó có dòng riêng bên trong nhóm, và trừ luôn các
   // trang Ngân hàng vì `cardsActive` vốn đã không tính chúng.
+  // Gợi ý thẻ cũng có dòng riêng trong nhóm, nên cũng phải trừ ra — thiếu nó
+  // thì trên `/credit-cards/goi-y` cả dòng cha lẫn dòng "Gợi ý thẻ" cùng sáng.
   const cardsRowActive =
-    cardsActive && pathname !== COMPARE_PATH && !isNavLinkActive(bestCardsLink, pathname);
+    cardsActive &&
+    pathname !== COMPARE_PATH &&
+    pathname !== RECOMMENDER_PATH &&
+    !isNavLinkActive(bestCardsLink, pathname);
   const blogActive = pathname === "/blog" || pathname.startsWith("/blog/");
   // Mục riêng chứ không phải một dòng trong dropdown Thẻ tín dụng: thẻ Mỹ là
   // một thị trường khác, và nằm chung menu với thẻ Canada thì người đọc dễ

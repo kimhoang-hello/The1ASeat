@@ -59,6 +59,10 @@ export const POSTS_WITHOUT_DEADLINE: Record<string, string> = {
   // BẮT ĐẦU; 10/09/2026–11/01/2027 là promo 15% đã có bài riêng (bảng trên).
   "aeroplan-credit-cards-benefits-moi-2027":
     "benefits thẻ lâu dài, không phải ưu đãi có hạn; 12/01/2027 là ngày bắt đầu hiệu lực",
+  // Bài Kiến thức về Asia Miles. "01/03/2026" là ngày US MR hạ tỷ lệ sang Asia
+  // Miles xuống 5:4 — một mốc đã qua, không phải hạn của ưu đãi nào.
+  "everything-about-asia-miles":
+    "01/03/2026 là ngày tỷ lệ US MR → Asia Miles đổi sang 5:4, mốc lịch sử chứ không phải hạn ưu đãi",
 };
 
 export interface OfferStatus extends PostOffer {

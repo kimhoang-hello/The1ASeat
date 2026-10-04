@@ -2784,3 +2784,36 @@ và viền focus (vòng mặc định của hệ điều hành) đạt.
 duyệt dùng lại biến thể lớn đã có trong cache từ lưới thẻ cùng trang (cache
 sạch thì tải đúng `w=128`); ảnh cover
 blog ở 1920px tải 1920px cho ô 1088px@2x — giới hạn ở ảnh gốc Contentful.
+
+## Audit UX/UI 03/10/2026 — đợt 0: sửa lỗi — đừng đề xuất lại
+
+Báo cáo audit: https://claude.ai/artifact/FJZFFQu9PT6J5y6rPtguLi (tác giả chọn làm cả
+lộ trình, font Be Vietnam Pro, gỡ bình luận, menu sáu mục).
+
+- **Dải offer (layout gốc) và trang bài blog bắt lỗi dữ liệu PHỤ.** `lib/content`
+  không bắt lỗi, webhook xoá cache bằng `expire: 0`, nên Contentful nấc đúng lúc
+  trang dựng lại là lỗi đi lên layout — mọi URL cùng hỏng. Banner lỗi thì ẩn + log;
+  trang bài: thẻ/bonus lỗi thì rơi về `[]` (khối thẻ không hiện, nút đi tiếp của
+  nhãn ưu đãi rẽ sang `/transfer-partners`), `getPosts()` vẫn để lỗi đi lên. Bắt ở
+  nơi gọi, KHÔNG bắt trong hàm cache — không thì mảng rỗng bị cache như dữ liệu thật.
+- **Cusdis đã gỡ hẳn** (component, CSP, DEPLOY/CONTENTFUL, `/privacy`).
+  `iframe.umd.js` trả 521 từ trước 26/09. `/privacy` vẫn nhắc bình luận CŨ nằm ở
+  Cusdis và quyền yêu cầu xoá — đừng xoá câu đó chừng nào dữ liệu cũ còn ở đó.
+- **Nhãn thời lượng đi qua `lib/post-duration.ts`.** Video: "phút xem"; bài viết:
+  "phút đọc"; không biết thì không in số. `sync-videos` ghi `minutesRead: 0` (trường
+  bắt buộc, không validation) thay cho số cứng 10; entry cũ nhận ra bằng excerpt mẫu
+  VÀ đúng số 10 (tác giả điền thời lượng khác thì nhãn hiện). **Bẫy Codex bắt:**
+  `lib/content/contentful.ts` chạy `keepBrandTogether()` lên title, excerpt,
+  bodyBlocks/body (bài viết), headline, editorsTake, keyBenefits (thẻ) và bio (tác
+  giả), nên "Ghế 1A" trong các trường
+  đó chứa khoảng trắng không ngắt dòng (U+00A0). So chuỗi với chúng phải đổi U+00A0
+  về khoảng trắng thường trước, không thì phép so trượt trong im lặng. Các trường
+  khác (category, author, SEO…) không qua hàm đó.
+- `OfferStats`: ô phí `ml-auto` để vẫn nằm bên phải khi bị đẩy xuống dòng.
+- Ô tìm kiếm: chưa có chỉ mục thì "Đang tải", không phải "không có kết quả".
+- `ComparePicker`: `useTransition` + khoá ô khi đang điều hướng — `selected` là prop
+  của server, chọn ô thứ hai giữa chừng là dựng URL từ danh sách cũ.
+- Menu mobile: `cardsRowActive` trừ cả `RECOMMENDER_PATH`.
+- Form bản tin: 429 báo số phút chờ theo `Retry-After`, 400 báo email sai định dạng.
+- Bài `everything-about-asia-miles` vào `POSTS_WITHOUT_DEADLINE` (01/03/2026 là mốc
+  lịch sử).

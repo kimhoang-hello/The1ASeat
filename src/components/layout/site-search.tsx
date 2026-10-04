@@ -294,6 +294,12 @@ export function SiteSearch({ onOpen }: { onOpen?: () => void }) {
                 <p className="px-2 py-3 text-sm text-muted-foreground">
                   {items ? tSearch("hint") : tSearch("loading")}
                 </p>
+              ) : !items ? (
+                // Gõ ngay khi vừa mở ô: chỉ mục chưa về nên `results` rỗng. Báo
+                // "không có kết quả" lúc này là nói sai — trên mạng chậm người
+                // đọc tin rồi đóng ô. Câu đọc cho screen reader (`summary`) đã
+                // xử lý ca này từ trước; đây là phần người nhìn thấy.
+                <p className="px-2 py-3 text-sm text-muted-foreground">{tSearch("loading")}</p>
               ) : results.length === 0 ? (
                 <p className="px-2 py-3 text-sm text-muted-foreground">
                   {tSearch("empty", { query: query.trim() })}
