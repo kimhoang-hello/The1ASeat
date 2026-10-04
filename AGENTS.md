@@ -2970,3 +2970,6 @@ CIBC® Aventura®, Scotiabank® Scene+™, TD Rewards®) nằm ở
   vừa thẻ hai cột ở 320px (Codex bắt). Đo 320/360/375/768/1024/1280: không tràn.
 - Mục lục dính bên phải từ `xl` dùng lại `PostToc` của trang bài viết; dưới `xl` thẻ
   chọn chương trình làm việc đó.
+- **Thân trang CANH GIỮA** (cột 48rem; từ `xl` khung 68rem gồm cả mục lục), giống
+  `/transfer-partners` và `/calculator` — tác giả chốt 04/10/2026 sau khi bản đầu
+  để sát trái theo DESIGN-SYSTEM 5.1.2. Đừng kéo lại sát trái.

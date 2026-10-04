@@ -674,13 +674,14 @@ export default async function RefundableHotelTrickPage() {
       <JsonLd data={jsonLd} />
       <PageHeader title={t("title")} subtitle={t("subtitle")} />
 
-      {/* Thân trang sát trái cùng mép với `PageHeader` (DESIGN-SYSTEM 5.1.2),
-          cột chữ chặn ở 48rem cho dễ đọc. Bề ngang dôi ra từ `xl` dành cho mục
-          lục dính — cùng cách trang bài viết dùng phần rộng thêm, và cùng
-          component. Dưới `xl` thẻ chọn chương trình ở đầu trang làm việc của
-          mục lục. */}
+      {/* Thân trang canh giữa như các trang khác trong mục Công cụ
+          (`/transfer-partners`, `/calculator`) — tác giả chốt 04/10/2026. Cột
+          chữ 48rem; từ `xl` khung nới thành 68rem để chứa thêm mục lục dính
+          16rem, và cả khối (chữ + mục lục) canh giữa — cùng cách trang bài viết
+          dùng phần rộng thêm, và cùng component. Dưới `xl` thẻ chọn chương trình
+          ở đầu trang làm việc của mục lục. */}
       <section className="px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-page xl:grid xl:grid-cols-[minmax(0,48rem)_16rem] xl:gap-16">
+        <div className="mx-auto max-w-3xl xl:grid xl:max-w-[68rem] xl:grid-cols-[minmax(0,48rem)_16rem] xl:gap-16">
           <div className="min-w-0 max-w-3xl space-y-12">
             <FlowStepper />
             <ProgramPicker />
