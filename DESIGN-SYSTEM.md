@@ -121,7 +121,7 @@ Site dùng `text-foreground/xx` để tạo bậc thứ tự thay vì thêm toke
 | `text-foreground/90` | Mục menu mobile không active |
 | `text-foreground/80` | Nhãn form, chữ thân dài |
 | `text-foreground/70` | Nhãn badge phụ |
-| `text-foreground/55` | Mục nav desktop **không** active |
+| `text-foreground/65` | Mục nav desktop **không** active |
 | `text-white/70` | Chữ trong footer |
 
 ### 3.4 Độ tương phản (đã tính, chuẩn WCAG AA = 4.5:1)
@@ -131,10 +131,10 @@ Site dùng `text-foreground/xx` để tạo bậc thứ tự thay vì thêm toke
 | `#1A1613` trên `#FAF6EC` | ~16:1 | ✅ Rất tốt |
 | `#0F2A4A` trên `#FAF6EC` | ~12:1 | ✅ Rất tốt |
 | `#6B6259` trên `#FAF6EC` (chữ phụ) | 5.5:1 | ✅ Đạt |
-| `text-foreground/55` trên `#FAF6EC` (nav idle) | **3.9:1** | ⚠️ Không đạt AA cho chữ 16px |
+| `text-foreground/65` trên `#FAF6EC` (nav idle) | 5.45:1 | ✅ Đạt (`/55` cũ chỉ 3.9:1) |
 
-Mục nav không-active mờ có chủ đích (để mục đang mở là thứ sáng nhất trong
-hàng) nhưng đang dưới ngưỡng. Xem [phần 11](#11-khoảng-trống-đã-biết).
+Mục nav không-active mờ có chủ đích: mục đang mở phải là thứ sáng nhất trong
+hàng — nhờ navy, chữ đậm và gạch chân, không nhờ bậc mờ này.
 
 ---
 
@@ -271,10 +271,10 @@ Padding ngang **luôn** là `px-4 sm:px-6 lg:px-8`. Không tự nghĩ ra bộ kh
 
 | Chỗ | Giá trị |
 |---|---|
-| Padding trong thẻ | `p-5` (thẻ bài viết), `p-5 sm:p-6` (panel công cụ), `p-4` (thẻ nhỏ) |
+| Padding trong thẻ | `p-5` (thẻ bài viết), `p-5 sm:p-6` (panel công cụ), `p-4` (thẻ nhỏ), `p-4 sm:p-5` (dòng gọn trong danh sách) |
 | Hàng badge / icon + chữ | `gap-2` |
 | Hàng có icon lớn | `gap-3` |
-| Lưới thẻ | `gap-5` |
+| Lưới thẻ | `gap-5`; danh sách dòng gọn `gap-4 xl:gap-5` |
 | Sau tiêu đề | `mb-3` (breadcrumb → H1), `mt-2`, `mt-3` (H1 → đoạn dẫn) |
 
 ### 5.4 Trên điện thoại (đo 03/10/2026 ở 320, 375 và 375×812 cảm ứng)
@@ -481,13 +481,20 @@ bằng `<Breadcrumbs>` ở cùng chỗ, thay cho link "← Xem tất cả…" c�
 | Trạng thái | Desktop | Mobile |
 |---|---|---|
 | Đang mở | `border-primary font-bold text-primary` | `bg-secondary font-semibold text-primary` |
-| Nghỉ | `border-transparent font-medium text-foreground/55` | `text-foreground/90` |
+| Nghỉ | `border-transparent font-medium text-foreground/65` (5.45:1) | `text-foreground/90` |
 | Hover | `hover:text-primary` | `hover:bg-secondary` |
 
 Trang đang mở được đánh dấu **ba cách cùng lúc** — navy, đậm hơn, và gạch chân
 — vì không cách nào đứng một mình đủ rõ: navy cạnh chữ đen là hai màu tối khó
 tách, còn độ đậm thì dễ bỏ sót. Mọi mục đều mang một gạch chân trong suốt
 (`border-b-2 border-transparent`) nên không có gì nhảy khi highlight di chuyển.
+
+Sáu mục (03/10/2026): Trang chủ · Thẻ & ngân hàng · Thẻ Mỹ · Bay về Việt Nam ·
+Công cụ · Blog. Dropdown chỉ chứa TRANG, không chứa trạng thái lọc của một trang
+(`?type=` là việc của tab ngay đầu danh sách). Chữ mục và nút "Đăng ký bản tin"
+`text-[15px] xl:text-base`, `whitespace-nowrap`; lề thanh `px-6 xl:px-10`. Đo ở
+1024px: cần 970px trong 1,024px (16px + lề 40px là 1,041px — chữ gãy hai dòng).
+**Đổi hay thêm nhãn menu là phải đo lại ở 1024px.**
 
 ### 10.8 Dòng menu — `MenuItem`
 
@@ -511,6 +518,36 @@ Dùng plugin `@tailwindcss/typography`. Hai override bắt buộc: tiêu đề p
 `font-display`, link phải là navy. Trang pháp lý thêm `prose-h2:mt-10
 prose-h2:text-xl`.
 
+### 10.11 Dòng thẻ gọn — `CardRow`
+
+Nguồn: [`src/components/credit-cards/card-row.tsx`](src/components/credit-cards/card-row.tsx).
+Một mẫu cho mọi danh sách thẻ: `/credit-cards`, `/us-credit-cards` (qua
+`UsCardSummary`) và bốn thẻ ở trang chủ (03/10/2026). Thứ tự: badge (offer nâng,
+US, loại thẻ, hạn) → tên → **bonus + annual fee** trên một hàng (hai phần tử flex,
+không phải chữ nối tiếp) → ghi chú phí ngay dưới phí → `RebateChip` → headline →
+phần riêng của nơi dùng (`children`: tag, điều kiện chi tiêu, HOT TIP) → link
+trang thẻ bên trái, `ApplyButton` bên phải.
+
+- Điện thoại: ảnh 80px cạnh tên, phần còn lại chạy hết bề ngang. Từ `sm`: cột ảnh
+  144px. Ba hàng `auto 1fr auto` giữ hàng nút ở đáy khi lưới hai cột kéo cao.
+- KHÔNG có khối "Quyền lợi chính" trong danh sách — đầy đủ ở trang thẻ.
+- Ghi chú phí KHÔNG cắt, dù dài: "miễn phí năm đầu", phí sắp tăng là dữ kiện quyết
+  định. Rebate đứng SAU ghi chú phí — chen vào giữa thì ghi chú đọc như điều kiện
+  của rebate.
+
+Tài khoản ngân hàng có mẫu RIÊNG (`AccountCard` trong `bank-account-finder.tsx`)
+vì quyết định bằng dữ kiện khác: con số chính (bonus / lãi suất / phí) + monthly
+fee trên một hàng, rồi ghi chú khuyến mãi lãi suất, cách miễn phí, khối điều kiện
+nhận bonus, HOT TIP. Rebate ở góc phải hàng nhãn.
+
+### 10.12 Bộ lọc danh sách — `FilterPanel`
+
+Nguồn: [`src/components/ui/filter-panel.tsx`](src/components/ui/filter-panel.tsx).
+Dưới `lg`: một nút "Lọc · Sắp xếp (n)" (n = số bộ lọc khác mặc định, gồm cả thứ tự
+sắp xếp) cạnh dòng số kết quả; bảng lọc mở khi bấm. Từ `lg`: bảng lọc luôn mở, nút
+ẩn, số kết quả xuống dưới bảng lọc. Dùng ở `/credit-cards` và `/bank-accounts`.
+Ô sắp xếp trong bảng `sm:max-w-xs`.
+
 ---
 
 ## 11. Khoảng trống đã biết
@@ -519,9 +556,8 @@ prose-h2:text-xl`.
 không phải phát hiện lại từ đầu. **Không có mục nào là lỗi đang gây hại; đừng
 sửa hàng loạt nếu không có lý do cụ thể.**
 
-1. **Tương phản nav 3.9:1** — `text-foreground/55` cho mục nav không active thấp
-   hơn chuẩn AA (4.5:1). Đổi lên `/65` sẽ đạt ~4.6:1 mà vẫn giữ được thứ tự thị
-   giác. Chưa đổi vì cần nhìn tận mắt để chắc mục đang mở vẫn nổi bật hơn.
+1. ~~Tương phản nav 3.9:1~~ — mục nav không active đã là `text-foreground/65`
+   (5.45:1), xem 10.7.
 2. ~~Màu trạng thái không có token~~ — đã có `--success`, `--warning`,
    `--destructive` (+ `-soft`) từ 03/10/2026, xem 3.2.
 3. **Chưa có lớp component token** — mọi thứ dùng utility Tailwind trực tiếp.
@@ -554,7 +590,9 @@ sửa hàng loạt nếu không có lý do cụ thể.**
 - [ ] Animation mới có nhánh `prefers-reduced-motion`
 - [ ] Icon lấy từ Phosphor, đúng cỡ và weight ở [phần 9](#9-icon)
 - [ ] Thiếu ảnh thì dùng `<MediaPlaceholder>`, không để ô trống
-- [ ] Đã xem lại ở 375px, 768px, 1280px và 1920px
+- [ ] Danh sách dài dùng dòng gọn (`CardRow` / mẫu tài khoản) và `FilterPanel`, không dựng ô thẻ mới
+- [ ] Đổi nhãn menu → đo lại hàng nav ở 1024px
+- [ ] Đã xem lại ở 375px, 768px, 1024px, 1280px và 1920px
 
 ---
 

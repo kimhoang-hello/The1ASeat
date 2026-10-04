@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Hero } from "@/components/home/hero";
 import { StartHereBand } from "@/components/home/start-here-band";
 import { OffersSection } from "@/components/home/offers-section";
+import { VietnamRoutesSection } from "@/components/home/vietnam-routes-section";
 import { PostsSection } from "@/components/home/posts-section";
 import { TransferBonusesSection } from "@/components/home/transfer-bonuses-section";
 import { AuthorSection } from "@/components/home/author-section";
@@ -30,6 +31,10 @@ export default function HomePage() {
       <Hero />
       {START_HERE_PUBLISHED && <StartHereBand />}
       <OffersSection />
+      {/* Ngay sau thẻ: thẻ → điểm → chặng bay về Việt Nam là chuỗi mà chỉ
+          site này có (PRODUCT.md), nên nó đứng trước bài viết và transfer
+          bonus — hai thứ blog Miles & Points nào cũng có. */}
+      <VietnamRoutesSection />
       <PostsSection />
       <TransferBonusesSection />
       <AuthorSection />

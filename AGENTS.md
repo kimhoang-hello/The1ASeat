@@ -2848,3 +2848,46 @@ Tác giả chọn: làm cả lộ trình, font Be Vietnam Pro. Luật đầy đ�
   bỏ viền trái dày.
 - Cố ý KHÔNG làm ở đợt này: gom bo góc về ba cấp (Codex: lựa chọn làm gọn, không
   phải lỗi), emoji cờ trên menu (tác giả chưa chốt).
+
+## Audit UX/UI 03/10/2026 — đợt 2: bố cục — đừng đề xuất lại
+
+Luật thành phần ở DESIGN-SYSTEM.md 10.7, 10.11, 10.12. Đo ở 375px (bản build local):
+trang chủ 7,936 → 7,282px dù thêm hai khối; `/credit-cards` 26,634 → 15,039px, thẻ
+đầu tiên từ 1,464 → 585px; `/bank-accounts` 20,905 → 12,589px.
+
+- **Menu sáu mục**: Trang chủ · Thẻ & ngân hàng · Thẻ Mỹ · Bay về Việt Nam · Công cụ ·
+  Blog. Dropdown không còn link trạng thái lọc (`?type=` của thẻ và blog); "Giới
+  thiệu" rời thanh menu (footer + khối tác giả trang chủ vẫn dẫn tới). **Bẫy:** Be
+  Vietnam Pro (đợt 1) rộng hơn Inter — ở 1024px hàng nav 16px cần 1,041px, bốn mục
+  và nút bản tin gãy hai dòng, mà không lệnh nào báo. Nay 15px dưới `xl` + lề 24px +
+  `whitespace-nowrap`: 970px. Đổi nhãn menu là đo lại ở 1024px.
+- **Dải offer giữ chỗ** bằng thẻ dài nhất: mọi offer chồng trong một ô grid
+  (`col-start-1 row-start-1`), offer không active `invisible` + `aria-hidden` +
+  `inert` + `tabIndex=-1`; chỉ offer active mới tải ảnh. Hết nhích trang khi xoay.
+- **Mục lục bài dưới `xl`**: `PostTocMobile` (`<details>` đóng sẵn) ở đầu bài; link
+  cao 44px thật vì xếp sát nhau (Codex bắt: `py-2.5` chỉ ra 39px).
+- **Hero** nói site dành cho ai + link chữ sang 12 trang chặng. CỐ Ý không có con số
+  ở hero: một số điểm phải đi kèm chương trình, nguồn chuyển điểm, phụ phí.
+- **Trang chủ**: Hero → Bắt đầu → 4 offer → Bay về Việt Nam → Bài viết → Transfer
+  bonus → Tác giả → Bản tin. Khối chặng chọn theo SLUG (`FEATURED_SLUGS`), số tính từ
+  `cheapestByCabin()` lúc render, mỗi số kèm tên loại điểm. Khối tác giả kèm 3 bài
+  mới nhất của chuyên mục "Đánh giá"/"Khách sạn" (chữ cứng — đổi tên chuyên mục ở
+  Contentful thì khối im lặng biến mất), không số đếm.
+- **`CardRow` dùng chung** cho `/credit-cards`, `/us-credit-cards`, trang chủ. Bỏ
+  "Quyền lợi chính" khỏi danh sách (đầy đủ ở trang thẻ). Ghi chú phí KHÔNG cắt; rebate
+  đứng sau ghi chú phí. Placement GA4 giữ nguyên (`card_list`, `us_card_list`,
+  `home_offers`, `+_image` cho ảnh). Thẻ Mỹ: tên ngân hàng + dòng "Điều kiện", không
+  headline, link "Xem chi tiết".
+- **`/credit-cards`**: hai dải quảng bá thành MỘT dải (câu hỏi + hai link, thứ tự
+  cũ); tab + chip điểm + sắp xếp sau `FilterPanel` dưới `lg` (số = bộ lọc khác mặc
+  định, tính cả sắp xếp; panel giữ trạng thái mở qua điều hướng chip); dòng "35 thẻ".
+  Link chip/tab vẫn bỏ `utm_*` như trước — có từ trước đợt này, chưa sửa.
+- **`/bank-accounts`**: mẫu dòng riêng — bỏ danh sách quyền lợi, giữ con số chính +
+  monthly fee, ghi chú khuyến mãi lãi suất, cách miễn phí, điều kiện bonus, HOT TIP;
+  rebate về góc phải hàng nhãn. Hộp số liệu nền kem trong ô tài khoản đã bỏ.
+- Chuỗi chết đã dọn khỏi `messages/vi.json`: mọi `eyebrow`/`pageEyebrow` trừ dải offer
+  và trang 404, năm mục menu lọc cũ, mô tả hai dải quảng bá. `/about` hết eyebrow.
+  Kiểm khoá dùng bằng cách tìm chuỗi `"key"` trong `src/` + `scripts/` —
+  `audit-award-charts.mts` có danh sách khoá cho phép, bỏ khoá ở đó cùng lúc.
+- `PostThumbnail` tách khỏi `PostCard` (chọn ảnh cover / YouTube / placeholder một
+  chỗ); `alt=""` khi tiêu đề nằm ngay cạnh trong cùng link.

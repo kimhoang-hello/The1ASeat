@@ -1,15 +1,10 @@
 import Link from "next/link";
-import { CaretDown } from "@phosphor-icons/react/ssr";
 import { t as translate } from "@/lib/t";
 import { getCreditCardOffers } from "@/lib/content";
-import { CardImage, applyOverlay } from "@/components/credit-cards/card-image";
-import { CardBadges } from "@/components/credit-cards/card-badges";
+import { CardRow } from "@/components/credit-cards/card-row";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
-import { EditorsTake } from "@/components/credit-cards/editors-take";
-import { OfferStats } from "@/components/credit-cards/offer-stats";
-import { RebateChip } from "@/components/ui/hot-tip";
-import { ApplyButton } from "@/components/ui/apply-button";
-import { isReferralUrl } from "@/lib/affiliate-links";
+import { splitHotTip } from "@/components/credit-cards/editors-take";
+import { HotTip } from "@/components/ui/hot-tip";
 import { isElevatedLive } from "@/lib/credit-card-state";
 import { US_CARDS_PUBLISHED } from "@/lib/feature-flags";
 import { US_CARDS_BASE } from "@/lib/us-cards-path";
@@ -55,76 +50,32 @@ export async function OffersSection() {
           </div>
         </div>
 
-        {/* Two across once the section is wide enough, so the extra room goes
-            into a second card rather than into 110-character lines of text. */}
-        <div className="grid gap-5 xl:grid-cols-2">
-          {offers.map((offer) => (
-            <article
-              key={offer.slug}
-              className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5 sm:flex-row"
-            >
-              <CardImage
-                image={offer.cardImage}
-                name={offer.name}
-                placeholderIcon={offer.image}
-                badge={
-                  offer.rebate && (
-                    <RebateChip
-                      amount={offer.rebate}
-                      label={t("rebate")}
-                      className="absolute -bottom-3 left-1/2 -translate-x-1/2 shadow-sm"
-                    />
-                  )
-                }
-                className="h-32 w-full shrink-0 self-start rounded-xl sm:h-32 sm:w-40 xl:h-36 xl:w-44"
-                {...applyOverlay(offer.applyUrl, "home_offers", offer.slug)}
-                sizes="176px"
-              />
-
-              {/* A column so the apply button can sit on the bottom edge — see
-                  the note on the credit-cards list. */}
-              <div className="flex flex-1 flex-col">
-                <CardBadges
-                  offer={offer}
-                  cardType={offer.cardType}
-                  elevatedBonusLabel={t("elevatedBonus")}
-                  expiresOnLabel={t("expiresOn")}
-                />
-
-                <h3 className="mt-1.5 font-display text-lg font-bold text-foreground">
-                  <Link href={`/credit-cards/${offer.slug}`} className="cursor-pointer hover:text-primary">
-                    {offer.name}
-                  </Link>
-                </h3>
-                <OfferStats offer={offer} className="mt-3" />
-
-                <EditorsTake editorsTake={offer.editorsTake} className="mt-3" compact />
-
-                <details className="group mt-3">
-                  <summary className="relative flex cursor-pointer list-none items-center gap-1 text-sm font-semibold text-foreground/80 before:absolute before:inset-x-0 before:-inset-y-3 before:content-[''] hover:text-primary">
-                    <CaretDown size={14} className="transition-transform group-open:rotate-180" />
-                    {t("keyBenefits")}
-                  </summary>
-                  <ul className="ml-5 mt-2 list-disc space-y-1 text-sm text-muted-foreground">
-                    {offer.keyBenefits.map((benefit) => (
-                      <li key={benefit}>{benefit}</li>
-                    ))}
-                  </ul>
-                </details>
-
-                <div className="mt-auto pt-4">
-                  {offer.applyUrl && (
-                    <ApplyButton
-                      href={offer.applyUrl}
-                      affiliate={isReferralUrl(offer.applyUrl)}
-                      placement="home_offers"
-                      product={offer.slug}
-                    />
-                  )}
-                </div>
-              </div>
-            </article>
-          ))}
+        {/* Dòng thẻ GỌN, chính là dòng của `/credit-cards` (03/10/2026, sau
+            audit UX/UI). Trước đây mỗi ô in nguyên phần "Ghế 1A đánh giá"
+            (tới ~150 chữ) và danh sách quyền lợi — bốn ô chiếm 54% chiều dài
+            trang chủ trên điện thoại (4,265 / 7,936px), trùng nguyên văn trang
+            thẻ. Riêng ở đây có thêm HOT TIP: đó là đường nhận rebate, và trang
+            chủ là nơi duy nhất ngoài trang thẻ từng nói ra nó. */}
+        <div className="grid gap-4 xl:grid-cols-2 xl:gap-5">
+          {offers.map((offer) => {
+            const { hotTip } = splitHotTip(offer.editorsTake);
+            return (
+              <CardRow
+                key={offer.slug}
+                offer={offer}
+                href={`/credit-cards/${offer.slug}`}
+                placement="home_offers"
+                detailsLabel={t("editorsTake")}
+                heading="h3"
+              >
+                {hotTip && (
+                  <div className="mt-3">
+                    <HotTip compact>{hotTip}</HotTip>
+                  </div>
+                )}
+              </CardRow>
+            );
+          })}
 
           <OfferDisclosure className="mt-3 xl:col-span-2" />
         </div>

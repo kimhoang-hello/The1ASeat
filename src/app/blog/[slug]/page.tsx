@@ -10,7 +10,7 @@ import { getVideoEmbedUrl, getYouTubeThumbnailUrl, getYouTubeWatchUrl } from "@/
 import { PostCard } from "@/components/blog/post-card";
 import { AffiliateClickTracker } from "@/components/blog/affiliate-click-tracker";
 import { PostBody } from "@/components/blog/post-body";
-import { PostToc } from "@/components/blog/post-toc";
+import { PostToc, PostTocMobile } from "@/components/blog/post-toc";
 import { PostNextSteps } from "@/components/blog/post-next-steps";
 import { OfferStatusNotice } from "@/components/blog/offer-status-notice";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -268,6 +268,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       {offerStatus && (
         <OfferStatusNotice status={offerStatus} hasLiveTransferBonus={hasLiveTransferBonus} />
       )}
+
+      {hasToc && <PostTocMobile items={toc} className="mt-6 xl:hidden" />}
 
       {/* A link inside a heading would otherwise drop to the typography plugin's
           font-weight:500 and read thinner than the words around it, so headings

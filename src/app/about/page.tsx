@@ -56,8 +56,7 @@ export default async function AboutPage() {
   return (
     <section className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
       <JsonLd data={jsonLd} />
-      <p className="text-xs font-semibold tracking-wide text-primary">{author("eyebrow")}</p>
-      <h1 className="mt-1 font-display text-3xl font-bold text-foreground sm:text-4xl">
+      <h1 className="font-display text-3xl font-bold text-foreground sm:text-4xl">
         {author("title", { name: authorProfile.name })}
       </h1>
 

@@ -1,3 +1,4 @@
+import { CaretDown } from "@phosphor-icons/react/ssr";
 import type { TocItem } from "@/lib/post-toc";
 import { t as translate } from "@/lib/t";
 
@@ -34,5 +35,48 @@ export function PostToc({ items, className = "" }: { items: TocItem[]; className
         ))}
       </ol>
     </nav>
+  );
+}
+
+/**
+ * Cùng mục lục đó cho DƯỚI `xl`: một khối thu gọn ở ĐẦU bài (thêm 03/10/2026).
+ *
+ * Trước đây dưới `xl` không có mục lục nào, nên đúng nhóm đọc chính — điện
+ * thoại (PRODUCT.md) — phải cuộn cả bài "Everything about Aeroplan" để tìm phần
+ * redeem. Đặt TRƯỚC thân bài (mục lục nằm sau nội dung thì không còn là mục
+ * lục), đóng sẵn để không đẩy chữ đầu bài xuống thêm một màn hình. Hai bản
+ * không bao giờ cùng hiện (`xl:hidden` / `hidden xl:block`), nên hai `nav` cùng
+ * nhãn không chồng nhau trong cây truy cập.
+ */
+export function PostTocMobile({ items, className = "" }: { items: TocItem[]; className?: string }) {
+  if (items.length < 2) return null;
+
+  return (
+    <details className={`group rounded-2xl border border-border bg-card ${className}`}>
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+        <span>
+          {posts_t("tocTitle")}{" "}
+          <span className="font-normal text-muted-foreground">({items.length})</span>
+        </span>
+        <CaretDown size={16} aria-hidden className="shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+      </summary>
+      <nav aria-label={posts_t("tocTitle")} className="border-t border-border px-4 pb-3 pt-1">
+        <ol>
+          {items.map((item) => (
+            <li key={item.id}>
+              {/* Cao 44px THẬT (`min-h-11`): các dòng đứng sát nhau, `py-2.5` với
+                  chữ 14px chỉ ra 39px — chạm hụt là nhảy sang mục kế bên
+                  (Codex bắt, 03/10/2026). */}
+              <a
+                href={`#${item.id}`}
+                className="flex min-h-11 items-center py-2.5 text-sm leading-snug text-primary hover:underline"
+              >
+                {item.text}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+    </details>
   );
 }

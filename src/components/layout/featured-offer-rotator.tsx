@@ -57,31 +57,62 @@ export function FeaturedOfferRotator({ offers }: { offers: FeaturedOffer[] }) {
           {tBanner("eyebrow")}
         </span>
 
-        {/* Remounted on every rotation by the key, which replays the fade. */}
-        <div key={offer.slug} className="animate-offer-in flex min-w-0 flex-1 items-center">
-          <Link href={href} className="flex min-w-0 items-center gap-2.5 hover:opacity-90 sm:gap-3">
-            {offer.cardImage && (
-              <Image
-                src={offer.cardImage}
-                alt=""
-                // 56×32 is the box the classes below paint. Any other ratio
-                // here and next/image warns that one dimension was changed
-                // without the other — the artwork itself is letterboxed inside
-                // the box by object-contain, whatever shape it arrives in.
-                width={56}
-                height={32}
-                sizes="56px"
-                className="h-8 w-14 shrink-0 rounded object-contain"
-              />
-            )}
-            <span className="min-w-0 text-xs leading-snug sm:truncate sm:text-sm">
-              <span className="block font-bold sm:inline">{offer.name}</span>
-              <span className="hidden sm:inline"> • </span>
-              {/* Its own line on a phone, part of the same sentence above that,
-                  where truncate takes care of a row that runs out of room. */}
-              <span className="block text-primary-foreground/75 sm:inline">{offer.teaser}</span>
-            </span>
-          </Link>
+        {/* Mọi offer cùng nằm MỘT ô lưới (`col-start-1 row-start-1`), chỉ offer
+            đang hiện là nhìn thấy được. Ô lưới cao bằng offer DÀI NHẤT, nên đổi
+            thẻ không còn làm dải cao thấp ±16px — và cả trang nhích theo (ghi
+            "biết, chưa sửa" ở AGENTS.md mục 03/10/2026, vá cùng ngày sau audit
+            UX/UI). Tên thẻ vẫn đầy đủ trên điện thoại, không cắt: cái giá là dải
+            cao hơn một chút với thẻ tên ngắn. Từ `sm` dải vốn cao cố định 48px.
+
+            Offer đang ẩn: `invisible` + `inert` (không bấm, không Tab, screen
+            reader bỏ qua), và không tải ảnh — ô ảnh cỡ cố định nên một khối rỗng
+            cùng cỡ là đủ giữ chỗ. Đổi sang `animate-offer-in` lúc được hiện là
+            phát lại hiệu ứng mờ dần, như bản cũ làm bằng `key`. */}
+        <div className="grid min-w-0 flex-1 items-center">
+          {offers.map((item, i) => {
+            const active = i === index;
+            return (
+              <div
+                key={item.slug}
+                aria-hidden={active ? undefined : true}
+                inert={!active}
+                className={`col-start-1 row-start-1 flex min-w-0 items-center ${
+                  active ? "animate-offer-in" : "invisible"
+                }`}
+              >
+                <Link
+                  href={`/credit-cards/${item.slug}`}
+                  tabIndex={active ? undefined : -1}
+                  className="flex min-w-0 items-center gap-2.5 hover:opacity-90 sm:gap-3"
+                >
+                  {item.cardImage &&
+                    (active ? (
+                      <Image
+                        src={item.cardImage}
+                        alt=""
+                        // 56×32 is the box the classes below paint. Any other ratio
+                        // here and next/image warns that one dimension was changed
+                        // without the other — the artwork itself is letterboxed inside
+                        // the box by object-contain, whatever shape it arrives in.
+                        width={56}
+                        height={32}
+                        sizes="56px"
+                        className="h-8 w-14 shrink-0 rounded object-contain"
+                      />
+                    ) : (
+                      <span className="h-8 w-14 shrink-0" />
+                    ))}
+                  <span className="min-w-0 text-xs leading-snug sm:truncate sm:text-sm">
+                    <span className="block font-bold sm:inline">{item.name}</span>
+                    <span className="hidden sm:inline"> • </span>
+                    {/* Its own line on a phone, part of the same sentence above that,
+                        where truncate takes care of a row that runs out of room. */}
+                    <span className="block text-primary-foreground/75 sm:inline">{item.teaser}</span>
+                  </span>
+                </Link>
+              </div>
+            );
+          })}
         </div>
 
         <Link

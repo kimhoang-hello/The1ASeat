@@ -1,16 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CaretDown } from "@phosphor-icons/react/ssr";
 import { getCreditCardOffers } from "@/lib/content";
 import { isElevatedLive } from "@/lib/credit-card-state";
 import { PageHeader } from "@/components/layout/page-header";
-import { CardImage, applyOverlay } from "@/components/credit-cards/card-image";
-import { CardBadges } from "@/components/credit-cards/card-badges";
+import { CardRow } from "@/components/credit-cards/card-row";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
-import { OfferStats } from "@/components/credit-cards/offer-stats";
-import { RebateChip } from "@/components/ui/hot-tip";
-import { ApplyButton } from "@/components/ui/apply-button";
-import { isReferralUrl } from "@/lib/affiliate-links";
+import { FilterPanel } from "@/components/ui/filter-panel";
 import { JsonLd } from "@/components/seo/json-ld";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { RECOMMENDER_PUBLISHED, US_CARDS_PUBLISHED } from "@/lib/feature-flags";
@@ -21,7 +16,7 @@ import { CardTags } from "@/components/credit-cards/card-tags";
 import { cardTagsFor } from "@/lib/card-tags";
 import { todayInSiteZone } from "@/lib/format-date";
 import { CardSortSelect } from "@/components/credit-cards/sort-select";
-import { BEST_CARDS_BASE, BEST_CARDS_CATEGORIES } from "@/lib/best-cards";
+import { BEST_CARDS_BASE } from "@/lib/best-cards";
 import {
   creditCardsPath,
   getCardPointsPrograms,
@@ -32,6 +27,7 @@ import { t } from "@/lib/t";
 import { pageMetadata, absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
 
 const offers_t = t("offers");
+const common = t("common");
 const best = t("bestCards");
 const reco = t("recommender");
 const usCards = t("usCards");
@@ -83,6 +79,13 @@ export default async function CreditCardsPage({
 
   // Nhãn dựng sẵn ở server: `CardSortSelect` là Client Component, không nhận
   // được hàm `t` qua ranh giới RSC.
+  // Số bộ lọc khác mặc định, in trên nút "Lọc · Sắp xếp" ở điện thoại.
+  const activeFilterCount = [
+    activeTab !== "all",
+    activePoints !== undefined,
+    activeSort !== CARD_SORT_OPTIONS[0].id,
+  ].filter(Boolean).length;
+
   const sortLabels = Object.fromEntries(
     CARD_SORT_OPTIONS.map((option) => [option.id, offers_t(option.labelKey)]),
   ) as Record<CardSortId, string>;
@@ -126,181 +129,92 @@ export default async function CreditCardsPage({
       <PageHeader title={offers_t("title")} />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
-        {/* `flex-wrap` + `whitespace-nowrap`: không có hai lớp này thì ba viên
-            pill bị ép nằm chung một dòng, chữ xuống dòng bên trong và
-            `rounded-full` biến chúng thành ba khối tròn cao 76px ở màn 320px
-            (56px ở 375px — tức gần như mọi điện thoại). Xuống dòng thành hai
-            hàng pill là đúng hình dạng của nó. */}
-        {/* Cửa vào CÔNG CỤ GỢI Ý, đứng trên cả dải biên tập.
-            Ba cửa trên trang này xếp theo mức người đọc đã biết mình cần gì:
-            chưa biết (gợi ý) → muốn xem bảng xếp của Ghế 1A (tốt nhất) → đã có
-            danh sách (bộ lọc bên dưới).
-
-            Dưới `sm` chữ CTA xuống dòng riêng bên dưới (cả ba dải trang này
-            lẫn dải ở `/us-credit-cards`): đứng cạnh nhau ở 375px thì "Xem gợi
-            ý cho bạn →" giành gần nửa bề ngang, tiêu đề gãy ba dòng và đoạn mô
-            tả năm dòng trong một cột chỉ còn ~150px. */}
-        {RECOMMENDER_PUBLISHED && (
-          <Link
-            href={RECOMMENDER_PATH}
-            className="mx-auto mb-3 flex max-w-page flex-col items-start gap-2 rounded-2xl border border-border bg-card px-5 py-4 transition-colors hover:border-primary sm:flex-row sm:items-center sm:justify-between sm:gap-3"
-          >
-            <span>
-              <span className="flex items-center gap-2 font-display font-bold text-foreground">
-                {reco("bandTitle")}
-                <BetaBadge />
-              </span>
-              <span className="mt-0.5 block text-sm text-muted-foreground">{reco("bandBody")}</span>
-            </span>
-            <span className="shrink-0 text-sm font-semibold text-primary">{reco("bandCta")} &rarr;</span>
-          </Link>
-        )}
-
-        {/* Cửa vào phần biên tập, đứng TRÊN bộ lọc.
-            Trang này để người đã biết mình tìm gì tự lọc; ai chưa biết thì bộ
-            lọc không giúp được gì cả, và trước dải này họ không có đường nào
-            khác ngoài việc cuộn hết danh sách. */}
-        <Link
-          href={BEST_CARDS_BASE}
-          className="mx-auto mb-6 flex max-w-page flex-col items-start gap-2 rounded-2xl border border-border bg-card px-5 py-4 transition-colors hover:border-primary sm:flex-row sm:items-center sm:justify-between sm:gap-3"
-        >
-          <span>
-            <span className="block font-display font-bold text-foreground">
-              {best("hubTitle")}
-            </span>
-            <span className="mt-0.5 block text-sm text-muted-foreground">
-              {best("navDescription")}
-            </span>
-          </span>
-          <span className="shrink-0 text-sm font-semibold text-primary">
-            {best("categoryCount", { count: BEST_CARDS_CATEGORIES.length })} &rarr;
-          </span>
-        </Link>
-
-        <div className="mx-auto mb-6 flex max-w-page flex-wrap gap-2">
-          {TABS.map((tab) => (
+        {/* Cửa vào CÔNG CỤ GỢI Ý và phần biên tập, đứng trên bộ lọc — gộp
+            thành MỘT dải từ 03/10/2026 (audit UX/UI). Trước đó là hai dải
+            đầy đủ tiêu đề + mô tả, cộng lại ~280px trên màn 375px trước khi
+            tới bộ lọc. Thứ tự giữ nguyên ý cũ: chưa biết mình cần gì (gợi ý)
+            → muốn xem bảng xếp của Ghế 1A (tốt nhất) → đã có danh sách (bộ
+            lọc bên dưới). Link cao 44px thật vì trên điện thoại hai link
+            xếp chồng sát nhau. */}
+        <div className="mx-auto mb-8 flex max-w-page flex-col items-start gap-x-6 rounded-2xl border border-border bg-card px-5 py-2 sm:flex-row sm:flex-wrap sm:items-center">
+          <p className="py-2 font-display font-bold text-foreground">{reco("bandTitle")}</p>
+          {RECOMMENDER_PUBLISHED && (
             <Link
-              key={tab.value}
-              href={creditCardsPath({ type: tab.value, points: activePoints, sort: activeSort })}
-              aria-current={activeTab === tab.value ? "true" : undefined}
-              className={`cursor-pointer whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-                activeTab === tab.value
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-foreground/70 hover:text-foreground"
-              }`}
+              href={RECOMMENDER_PATH}
+              className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary hover:underline"
             >
-              {offers_t(tab.labelKey)}
+              {reco("bandCta")}
+              <BetaBadge />
+              <span aria-hidden>&rarr;</span>
             </Link>
-          ))}
+          )}
+          <Link
+            href={BEST_CARDS_BASE}
+            className="inline-flex min-h-11 items-center text-sm font-semibold text-primary hover:underline"
+          >
+            {best("hubTitle")} &rarr;
+          </Link>
         </div>
 
-        <PointsProgramLinks
-          programs={programs}
-          activeId={activePoints}
-          activeType={activeTab}
-          activeSort={activeSort}
-          totalCount={tabOffers.length}
-          className="mx-auto mb-4 max-w-page"
-        />
+        <FilterPanel
+          label={common("filterSort")}
+          activeCount={activeFilterCount}
+          summary={<p>{offers_t("resultCount", { count: offers.length })}</p>}
+          className="mx-auto mb-5 max-w-page"
+        >
+          {/* `flex-wrap` + `whitespace-nowrap`: không có hai lớp này thì ba viên
+              pill bị ép nằm chung một dòng, chữ xuống dòng bên trong và
+              `rounded-full` biến chúng thành ba khối tròn cao 76px ở màn 320px.
+              Xuống dòng thành hai hàng pill là đúng hình dạng của nó. */}
+          <div className="flex flex-wrap gap-2">
+            {TABS.map((tab) => (
+              <Link
+                key={tab.value}
+                href={creditCardsPath({ type: tab.value, points: activePoints, sort: activeSort })}
+                aria-current={activeTab === tab.value ? "true" : undefined}
+                className={`cursor-pointer whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                  activeTab === tab.value
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-foreground/70 hover:text-foreground"
+                }`}
+              >
+                {offers_t(tab.labelKey)}
+              </Link>
+            ))}
+          </div>
 
-        {/* Dưới hai hàng lọc và trên danh sách — cùng chỗ trang tài khoản ngân
-            hàng đặt nó, nên ai đã dùng một trang thì không phải đi tìm ở trang
-            kia. */}
-        <CardSortSelect
-          value={activeSort}
-          label={offers_t("sortLabel")}
-          optionLabels={sortLabels}
-          className="mx-auto mb-8 max-w-page"
-        />
+          <PointsProgramLinks
+            programs={programs}
+            activeId={activePoints}
+            activeType={activeTab}
+            activeSort={activeSort}
+            totalCount={tabOffers.length}
+            className="mt-4"
+          />
 
-        {/* Two across once the page is wide enough, so the extra room goes into
-            a second card rather than into 110-character lines of text. */}
-        <div className="mx-auto grid max-w-page gap-5 xl:grid-cols-2">
+          {/* Dưới hai hàng lọc — cùng chỗ trang tài khoản ngân hàng đặt nó, nên
+              ai đã dùng một trang thì không phải đi tìm ở trang kia. */}
+          <CardSortSelect
+            value={activeSort}
+            label={offers_t("sortLabel")}
+            optionLabels={sortLabels}
+            className="mt-4 sm:max-w-xs"
+          />
+        </FilterPanel>
+
+        {/* Hai cột từ `xl`: chỗ rộng dồn vào thẻ thứ hai thay vì thành dòng
+            chữ 110 ký tự. */}
+        <div className="mx-auto grid max-w-page gap-4 xl:grid-cols-2 xl:gap-5">
           {offers.map((offer) => (
-            <article
+            <CardRow
               key={offer.slug}
-              className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5 sm:flex-row"
+              offer={offer}
+              href={`/credit-cards/${offer.slug}`}
+              placement="card_list"
+              detailsLabel={offers_t("editorsTake")}
             >
-              <CardImage
-                image={offer.cardImage}
-                name={offer.name}
-                placeholderIcon={offer.image}
-                badge={
-                  offer.rebate && (
-                    <RebateChip
-                      amount={offer.rebate}
-                      label={offers_t("rebate")}
-                      className="absolute -bottom-3 left-1/2 -translate-x-1/2 shadow-sm"
-                    />
-                  )
-                }
-                className="h-32 w-full shrink-0 self-start rounded-xl sm:h-32 sm:w-40 xl:h-36 xl:w-44"
-                {...applyOverlay(offer.applyUrl, "card_list", offer.slug)}
-                sizes="176px"
-              />
-
-              {/* A column so the actions can sit on the bottom edge — side by
-                  side, cards whose copy runs to different lengths would
-                  otherwise put their Apply buttons at different heights. */}
-              <div className="flex flex-1 flex-col">
-                <CardBadges
-                  offer={offer}
-                  cardType={offer.cardType}
-                  elevatedBonusLabel={offers_t("elevatedBonus")}
-                  expiresOnLabel={offers_t("expiresOn")}
-                />
-
-                <h2 className="mt-1.5 font-display text-lg font-bold text-foreground">
-                  <Link href={`/credit-cards/${offer.slug}`} className="cursor-pointer hover:text-primary">
-                    {offer.name}
-                  </Link>
-                </h2>
-                {/* Dòng "Phí thường niên: $120/năm (thẻ phụ...)" cũ nói đúng
-                    một nửa câu chuyện và nói nhỏ. Dải số liệu nói cả hai nửa:
-                    bonus nhận được và phí phải trả. */}
-                <OfferStats offer={offer} className="mt-3" />
-
-                <p className="mt-3 text-sm leading-relaxed text-foreground/90">{offer.headline}</p>
-
-                <CardTags tags={cardTagsFor(offer.slug, today)} className="mt-3" />
-
-                {/* Vùng chạm 44px của hai thứ bấm được trong khối này nới theo hai
-                    cách khác nhau, CỐ Ý: `summary` nới bằng `::before` (12px mỗi
-                    phía, bố cục không đổi), còn link đánh giá bên dưới cao 44px
-                    THẬT bằng `py-3`. Bản đầu nới cả hai bằng `::before`, và ở 320px
-                    hàng nút gãy dòng làm link nằm ngay dưới `pt-4` — hai vùng
-                    nới chồng nhau 8px, chạm vào đó là trúng một trong hai đích
-                    (Codex bắt, 03/10/2026). */}
-                <details className="group mt-3">
-                  <summary className="relative flex cursor-pointer list-none items-center gap-1 text-sm font-semibold text-foreground/80 before:absolute before:inset-x-0 before:-inset-y-3 before:content-[''] hover:text-primary">
-                    <CaretDown size={14} className="transition-transform group-open:rotate-180" />
-                    {offers_t("keyBenefits")}
-                  </summary>
-                  <ul className="ml-5 mt-2 list-disc space-y-1 text-sm text-muted-foreground">
-                    {offer.keyBenefits.map((benefit) => (
-                      <li key={benefit}>{benefit}</li>
-                    ))}
-                  </ul>
-                </details>
-
-                <div className="mt-auto flex flex-wrap items-center gap-4 pt-4">
-                  <Link
-                    href={`/credit-cards/${offer.slug}`}
-                    className="cursor-pointer py-3 text-sm font-semibold text-foreground/80 hover:text-primary hover:underline"
-                  >
-                    {offers_t("editorsTake")} &rarr;
-                  </Link>
-                  {offer.applyUrl && (
-                    <ApplyButton
-                      href={offer.applyUrl}
-                      affiliate={isReferralUrl(offer.applyUrl)}
-                      placement="card_list"
-                      product={offer.slug}
-                    />
-                  )}
-                </div>
-              </div>
-            </article>
+              <CardTags tags={cardTagsFor(offer.slug, today)} className="mt-3" />
+            </CardRow>
           ))}
 
           {offers.length === 0 && (

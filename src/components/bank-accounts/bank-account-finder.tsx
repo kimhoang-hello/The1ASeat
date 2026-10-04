@@ -7,6 +7,7 @@ import { CaretDown, Info } from "@phosphor-icons/react";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { HotTip, RebateChip } from "@/components/ui/hot-tip";
 import { ApplyButton } from "@/components/ui/apply-button";
+import { FilterPanel } from "@/components/ui/filter-panel";
 import { t as translate } from "@/lib/t";
 import {
   AVAILABLE_FILTERS,
@@ -33,6 +34,7 @@ const t = translate("bankAccounts");
 // Nhãn hết hạn lấy chung với trang thẻ tín dụng — cùng một sự việc thì phải
 // gọi cùng một tên, và gọi từ cùng một chỗ thì không thể lệch nhau về sau.
 const offers = translate("offers");
+const common = translate("common");
 
 type Selection = {
   bank: BankId | "all";
@@ -120,8 +122,32 @@ function feeIsHeadline(account: BankAccount): boolean {
   );
 }
 
+/** Nhãn nhỏ rồi con số — cùng cách dòng thẻ tín dụng in "Annual fee $120/năm". */
+function Figure({
+  label,
+  value,
+  tone = "primary",
+}: {
+  label: string;
+  value: React.ReactNode;
+  tone?: "primary" | "foreground" | "muted";
+}) {
+  const valueClass = {
+    primary: "font-display text-base font-bold text-primary",
+    foreground: "font-display text-base font-bold text-foreground",
+    muted: "font-semibold text-muted-foreground",
+  }[tone];
+
+  return (
+    <span>
+      <span className="text-sm text-muted-foreground">{label}</span>{" "}
+      <span className={valueClass}>{value}</span>
+    </span>
+  );
+}
+
 /**
- * Con số lớn nhất trên mỗi thẻ. Tài khoản chi tiêu bán welcome bonus, tài
+ * Con số chính của mỗi tài khoản. Tài khoản chi tiêu bán welcome bonus, tài
  * khoản tiết kiệm bán lãi suất, còn lại thì bán monthly fee — chỗ này đổi ý
  * nghĩa theo tài khoản thay vì để trống.
  */
@@ -130,70 +156,66 @@ function Headline({ account }: { account: BankAccount }) {
   // xuống nói về lãi suất hoặc phí, chứ không quảng cáo một con số không lấy
   // được nữa.
   if (hasLiveBonus(account)) {
-    return (
-      <>
-        <p className="font-display text-2xl font-bold leading-tight text-primary">
-          {account.bonusLabelVi}
-        </p>
-        <p className="text-xs text-muted-foreground">{t("welcomeBonus")}</p>
-      </>
-    );
+    return <Figure label={t("welcomeBonus")} value={account.bonusLabelVi} />;
   }
 
   if (account.interestRate !== undefined) {
     return (
-      <>
-        <p className="font-display text-2xl font-bold leading-tight text-primary">
-          {formatRate(account.interestRate)}
-          {account.promoNoteVi && <span className="align-super text-base">*</span>}
-        </p>
-        <p className="text-xs text-muted-foreground">{t("interestRate")}</p>
-      </>
+      <Figure
+        label={t("interestRate")}
+        value={
+          <>
+            {formatRate(account.interestRate)}
+            {account.promoNoteVi && <span className="align-super text-sm">*</span>}
+          </>
+        }
+      />
     );
   }
 
   if (account.noRateNoteVi) {
-    return (
-      <>
-        <p className="font-display text-lg font-bold leading-tight text-muted-foreground">
-          {t("noRate")}
-        </p>
-        <p className="text-xs text-muted-foreground">{t("interestRate")}</p>
-      </>
-    );
+    return <Figure label={t("interestRate")} value={t("noRate")} tone="muted" />;
   }
 
   return (
-    <>
-      <p className="font-display text-2xl font-bold leading-tight text-foreground">
-        {account.monthlyFee === 0 ? t("free") : formatMoney(account.monthlyFee)}
-      </p>
-      <p className="text-xs text-muted-foreground">{t("monthlyFee")}</p>
-    </>
+    <Figure
+      label={t("monthlyFee")}
+      value={account.monthlyFee === 0 ? t("free") : formatMoney(account.monthlyFee)}
+      tone="foreground"
+    />
   );
 }
 
+/**
+ * Một tài khoản trong danh sách, dạng DÒNG GỌN (03/10/2026, audit UX/UI) —
+ * mẫu riêng, không dùng chung `CardRow` của thẻ tín dụng, vì người mở tài
+ * khoản quyết định bằng dữ kiện khác: lãi suất (kèm điều kiện khuyến mãi),
+ * cách được miễn monthly fee, và điều kiện nhận bonus.
+ *
+ * Bỏ danh sách "Quyền lợi chính" (3–6 gạch đầu dòng, phần dài nhất của ô cũ —
+ * 29 tài khoản từng dài 20,905px ở màn 375px); nó vẫn đầy đủ ở trang riêng
+ * của tài khoản. Ba ghi chú (khuyến mãi lãi suất, không công bố lãi suất, cách
+ * miễn phí) và khối điều kiện bonus thì ở lại.
+ */
 function AccountCard({ account }: { account: BankAccount }) {
   return (
-    <li className="flex flex-col rounded-2xl border border-border bg-card p-5">
-      {/* Nhãn phân loại làm dòng đầu, rồi logo và tên đứng cùng hàng — cùng
-          thứ tự và cùng lý do như trang riêng của tài khoản: logo và tên trả
-          lời chung một câu hỏi nên đi liền nhau.
-          Ở đây tên chỉ 18px chứ không phải 30px như trang riêng, nên nó đủ chỗ
-          nằm cạnh logo ngay cả trên điện thoại, không cần xuống dòng. */}
+    <li className="flex flex-col rounded-2xl border border-border bg-card p-4 sm:p-5">
+      {/* Rebate ở góc phải hàng nhãn, như trước: dưới hàng số liệu là ghi chú
+          cách miễn monthly fee, chip chen vào giữa thì ghi chú đó đọc như
+          điều kiện của rebate. */}
       <div className="flex flex-wrap items-start justify-between gap-1.5">
         <div className="flex flex-wrap gap-1.5">
-        <span className="rounded bg-secondary px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-foreground/70">
-          {t(KIND_LABEL_KEYS[account.kind])}
-        </span>
-        {account.tags.map((tag) => (
-          <span
-            key={tag}
-            className="rounded bg-primary/10 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary"
-          >
-            {t(TAG_LABEL_KEYS[tag])}
+          <span className="rounded bg-secondary px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-foreground/70">
+            {t(KIND_LABEL_KEYS[account.kind])}
           </span>
-        ))}
+          {account.tags.map((tag) => (
+            <span
+              key={tag}
+              className="rounded bg-primary/10 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary"
+            >
+              {t(TAG_LABEL_KEYS[tag])}
+            </span>
+          ))}
         </div>
         {account.rebate && <RebateChip amount={account.rebate} label={t("rebate")} />}
       </div>
@@ -210,28 +232,27 @@ function AccountCard({ account }: { account: BankAccount }) {
         {/* h2 chứ không phải h3: trang chỉ có một h1 (tiêu đề trang) nên tên
             tài khoản là cấp tiếp theo — h3 ở đây tạo ra một bậc nhảy cóc,
             đúng thứ mà bản kiểm tra tiêu đề của site vẫn bắt lỗi. */}
-        <h2 className="wrap-anywhere font-display text-lg font-bold leading-snug text-foreground">
+        <h2 className="wrap-anywhere font-display text-base font-bold leading-snug text-foreground sm:text-lg">
           <Link href={bankAccountPath(account.slug)} className="cursor-pointer hover:text-primary">
             {account.name}
           </Link>
         </h2>
       </div>
 
-      {/* Con số lớn và monthly fee nằm cạnh nhau: gần như câu hỏi nào của người
-          đọc cũng là "được bao nhiêu" trừ đi "mất bao nhiêu". */}
-      <div className="mt-4 flex flex-wrap items-end justify-between gap-4 rounded-xl bg-secondary/70 px-4 py-3">
-        <div>
-          <Headline account={account} />
-        </div>
+      {/* Được bao nhiêu, mất bao nhiêu — một hàng, như dòng thẻ tín dụng.
+          Không lồng vào hộp nền kem nữa (bỏ 03/10/2026, cùng lúc với dải số
+          liệu của thẻ). */}
+      <p className="mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-1 leading-snug">
+        <Headline account={account} />
         {!feeIsHeadline(account) && (
-          <div className="text-right">
-            <p className="font-display text-lg font-bold text-foreground">
+          <span className="whitespace-nowrap">
+            <span className="text-sm text-muted-foreground">{t("monthlyFee")}</span>{" "}
+            <span className="text-sm font-semibold text-foreground">
               {account.monthlyFee === 0 ? t("free") : formatMoney(account.monthlyFee)}
-            </p>
-            <p className="text-xs text-muted-foreground">{t("monthlyFee")}</p>
-          </div>
+            </span>
+          </span>
         )}
-      </div>
+      </p>
 
       {account.promoNoteVi && (
         <p className="mt-2 max-w-prose text-xs leading-relaxed text-muted-foreground">
@@ -250,12 +271,6 @@ function AccountCard({ account }: { account: BankAccount }) {
       {account.feeWaiverVi && (
         <p className="mt-2 max-w-prose text-xs leading-relaxed text-muted-foreground">{account.feeWaiverVi}</p>
       )}
-
-      <ul className="mt-3 ml-5 list-disc space-y-1 text-sm leading-relaxed text-foreground/90">
-        {account.keyBenefitsVi.map((benefit) => (
-          <li key={benefit}>{benefit}</li>
-        ))}
-      </ul>
 
       {/* CỐ Ý không gate theo `hasLiveBonus` như `Headline` ở trên — xem lý do
           đầy đủ ở khối cùng loại trong `bank-accounts/[slug]/page.tsx`: người
@@ -286,23 +301,25 @@ function AccountCard({ account }: { account: BankAccount }) {
         </div>
       )}
 
-      {/* Cùng một nút với trang thẻ tín dụng. `affiliate` bật theo dữ liệu chứ
-          không đặt cứng: tài khoản có link FinlyWealth thì nút mang
-          `rel="sponsored"`, tài khoản chưa có thì trỏ thẳng trang ngân hàng
-          với rel thường. */}
-      <div className="mt-auto flex flex-wrap items-center gap-4 pt-4">
+      {/* Cùng một nút với trang thẻ tín dụng, cùng chỗ đứng: link trái, nút
+          phải. `affiliate` bật theo dữ liệu chứ không đặt cứng: tài khoản có
+          link FinlyWealth thì nút mang `rel="sponsored"`, tài khoản chưa có thì
+          trỏ thẳng trang ngân hàng với rel thường. Link cao 44px THẬT (`py-3`)
+          vì `summary` ngay trên nó đã nới vùng chạm bằng `::before` — hai thứ
+          kề nhau không được cùng nới ảo (DESIGN-SYSTEM.md 5.4). */}
+      <div className="mt-auto flex flex-wrap items-center justify-between gap-x-4 pt-3">
+        <Link
+          href={bankAccountPath(account.slug)}
+          className="cursor-pointer py-3 text-sm font-semibold text-primary hover:underline"
+        >
+          {t("details")} &rarr;
+        </Link>
         <ApplyButton
           href={account.affiliateUrl ?? account.url}
           affiliate={Boolean(account.affiliateUrl)}
           placement="account_list"
           product={account.slug}
         />
-        <Link
-          href={bankAccountPath(account.slug)}
-          className="cursor-pointer py-3 text-sm font-semibold text-foreground/80 hover:text-primary hover:underline"
-        >
-          {t("details")} &rarr;
-        </Link>
       </div>
     </li>
   );
@@ -516,83 +533,97 @@ function FinderView({
     inFilter.filter((account) => activeBank === "all" || account.bank === activeBank),
     sort,
   );
+  const activeCount = [
+    filter !== DEFAULT_SELECTION.filter,
+    activeBank !== DEFAULT_SELECTION.bank,
+    sort !== DEFAULT_SELECTION.sort,
+  ].filter(Boolean).length;
 
   return (
     <div className="mx-auto max-w-page">
-      {/* Một nhóm, một lựa chọn. `radiogroup` nói đúng điều mắt đã thấy, và
-          "Tất cả" là đường quay ra — nên bấm lại chip đang bật không cần làm
-          gì cả, khác với khi hàng này còn là hai nhóm chồng lên nhau. */}
-      <RadioGroup label={t("filterLabel")} className="flex flex-wrap gap-2">
-        {AVAILABLE_FILTERS.map((f) => (
-          <Chip key={f.id} active={filter === f.id} onClick={() => patch({ filter: f.id })}>
-            {t(f.labelKey)}
-          </Chip>
-        ))}
-      </RadioGroup>
-
-      {/* Hàng ngân hàng đọc như hàng Điểm thưởng bên trang thẻ tín dụng: nhãn
-          nhỏ rồi tới chip có số đếm. Số đếm tính trong phạm vi bộ lọc nhanh
-          đang chọn, nên không chip nào hứa một con số mà bấm vào lại ra danh
-          sách rỗng — ngân hàng không còn tài khoản nào thì chip tự biến mất.
-          Một mình một ngân hàng thì cả hàng biến mất: lọc theo nó không đổi
-          được gì.
-
-          `radiogroup` chứ không phải `nav > ul`: đây là những nút chọn một
-          trong nhiều, không phải link điều hướng, và một `role="radio"` không
-          nằm trong `radiogroup` là ARIA nói dối — trình đọc màn hình đọc ra
-          một nhóm không có nhãn và không biết có mấy lựa chọn. */}
-      {availableBanks.length > 1 && (
-        <RadioGroup
-          label={t("bankLabel")}
-          className="mt-4 flex flex-wrap items-center gap-2"
-        >
-          {/* `aria-hidden`: chính chữ này đã là `aria-label` của nhóm, để lộ ra
-              thì trình đọc màn hình đọc "Ngân hàng" hai lần liên tiếp. */}
-          <span
-            aria-hidden="true"
-            className="mr-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-          >
-            {t("bankLabel")}
-          </span>
-          <FilterChip
-            active={activeBank === "all"}
-            count={inFilter.length}
-            onClick={() => patch({ bank: "all" })}
-          >
-            {t("bankAll")}
-          </FilterChip>
-          {availableBanks.map((b) => (
-            <FilterChip
-              key={b.id}
-              active={activeBank === b.id}
-              count={b.count}
-              onClick={() => patch({ bank: b.id })}
-            >
-              {b.name}
-            </FilterChip>
+      {/* Gom sau nút "Lọc · Sắp xếp" dưới `lg` — xem `FilterPanel`. Số kết
+          quả đi cùng nút, vẫn `aria-live` vì danh sách lọc ngay tại chỗ. */}
+      <FilterPanel
+        label={common("filterSort")}
+        activeCount={activeCount}
+        summary={
+          <p className="font-medium" aria-live="polite">
+            {t("resultCount", { count: accounts.length })}
+          </p>
+        }
+        className="mb-5"
+      >
+        {/* Một nhóm, một lựa chọn. `radiogroup` nói đúng điều mắt đã thấy, và
+            "Tất cả" là đường quay ra — nên bấm lại chip đang bật không cần làm
+            gì cả, khác với khi hàng này còn là hai nhóm chồng lên nhau. */}
+        <RadioGroup label={t("filterLabel")} className="flex flex-wrap gap-2">
+          {AVAILABLE_FILTERS.map((f) => (
+            <Chip key={f.id} active={filter === f.id} onClick={() => patch({ filter: f.id })}>
+              {t(f.labelKey)}
+            </Chip>
           ))}
         </RadioGroup>
-      )}
 
-      <div className="mt-4">
-        <Field
-          label={t("sortLabel")}
-          value={sort}
-          onChange={(value) => patch({ sort: value as SortId })}
-        >
-          {SORT_OPTIONS.map((option) => (
-            <option key={option.id} value={option.id}>
-              {t(option.labelKey)}
-            </option>
-          ))}
-        </Field>
-      </div>
+        {/* Hàng ngân hàng đọc như hàng Điểm thưởng bên trang thẻ tín dụng: nhãn
+            nhỏ rồi tới chip có số đếm. Số đếm tính trong phạm vi bộ lọc nhanh
+            đang chọn, nên không chip nào hứa một con số mà bấm vào lại ra danh
+            sách rỗng — ngân hàng không còn tài khoản nào thì chip tự biến mất.
+            Một mình một ngân hàng thì cả hàng biến mất: lọc theo nó không đổi
+            được gì.
 
-      <p className="mt-6 text-sm font-medium text-muted-foreground" aria-live="polite">
-        {t("resultCount", { count: accounts.length })}
-      </p>
+            `radiogroup` chứ không phải `nav > ul`: đây là những nút chọn một
+            trong nhiều, không phải link điều hướng, và một `role="radio"` không
+            nằm trong `radiogroup` là ARIA nói dối — trình đọc màn hình đọc ra
+            một nhóm không có nhãn và không biết có mấy lựa chọn. */}
+        {availableBanks.length > 1 && (
+          <RadioGroup
+            label={t("bankLabel")}
+            className="mt-4 flex flex-wrap items-center gap-2"
+          >
+            {/* `aria-hidden`: chính chữ này đã là `aria-label` của nhóm, để lộ ra
+                thì trình đọc màn hình đọc "Ngân hàng" hai lần liên tiếp. */}
+            <span
+              aria-hidden="true"
+              className="mr-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            >
+              {t("bankLabel")}
+            </span>
+            <FilterChip
+              active={activeBank === "all"}
+              count={inFilter.length}
+              onClick={() => patch({ bank: "all" })}
+            >
+              {t("bankAll")}
+            </FilterChip>
+            {availableBanks.map((b) => (
+              <FilterChip
+                key={b.id}
+                active={activeBank === b.id}
+                count={b.count}
+                onClick={() => patch({ bank: b.id })}
+              >
+                {b.name}
+              </FilterChip>
+            ))}
+          </RadioGroup>
+        )}
 
-      <ul className="mt-3 grid gap-5 xl:grid-cols-2">
+        <div className="mt-4 sm:max-w-xs">
+          <Field
+            label={t("sortLabel")}
+            value={sort}
+            onChange={(value) => patch({ sort: value as SortId })}
+          >
+            {SORT_OPTIONS.map((option) => (
+              <option key={option.id} value={option.id}>
+                {t(option.labelKey)}
+              </option>
+            ))}
+          </Field>
+        </div>
+      </FilterPanel>
+
+      <ul className="grid gap-4 xl:grid-cols-2 xl:gap-5">
         {accounts.map((account) => (
           <AccountCard key={account.slug} account={account} />
         ))}

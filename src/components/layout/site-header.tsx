@@ -5,10 +5,8 @@ import { useSearchParams, usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  AirplaneTakeoff,
   AirplaneTilt,
   ArrowsLeftRight,
-  Article,
   Bank,
   CaretDown,
   Calculator,
@@ -16,15 +14,11 @@ import {
   GameController,
   List,
   Compass,
-  Newspaper,
   PaperPlaneTilt,
   Percent,
   Scales,
-  Sparkle,
-  Stack,
   Trophy,
   X,
-  YoutubeLogo,
   type Icon,
 } from "@phosphor-icons/react";
 import { SiteSearch } from "@/components/layout/site-search";
@@ -104,8 +98,13 @@ type TypeLink = NavLink & { type: string | null };
  * is the brightest thing in the row, and every item carries a transparent
  * underline so nothing shifts when the highlight moves.
  */
+// 15px dưới `xl`, `whitespace-nowrap` ở mọi cỡ: Be Vietnam Pro (03/10/2026)
+// rộng hơn Inter, và ở 1024px hàng sáu mục 16px cần 1,041px trong khung 1,024px
+// — "Trang chủ", "Thẻ & ngân hàng", "Công cụ" và nút bản tin gãy hai dòng. 15px
+// cộng lề thanh 24px dưới `xl` trả lại ~65px; từ `xl` thanh rộng thừa nên giữ
+// 16px như cũ. Đổi nhãn menu là phải đo lại ở 1024px.
 function navItemClassName(active: boolean) {
-  return `border-b-2 pb-1 text-base transition-colors hover:text-primary ${
+  return `whitespace-nowrap border-b-2 pb-1 text-[15px] transition-colors hover:text-primary xl:text-base ${
     active
       ? "border-primary font-bold text-primary"
       : // /65, not /55: at 55% this sat at 3.90:1 on the cream background —
@@ -389,7 +388,6 @@ function TypeDropdown({
 
 const nav = t("nav");
 const tMenu = t("navMenu");
-const tPosts = t("posts");
 const tOffers = t("offers");
 const tBankCompare = t("bankCompare");
 const site = t("site");
@@ -398,29 +396,18 @@ export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  // "Tất cả offers" is the bare path, so its type is null — same shape as the
-  // blog's own all/post/video split.
+  // MỘT dòng cho cả danh sách thẻ. Trước 03/10/2026 menu còn hai dòng
+  // "Elevated offers" / "Các offers khác" — chỉ là hai tab lọc của chính trang
+  // đó, nằm ngay đầu danh sách. Ba dòng cho một trang là ba lựa chọn giả trong
+  // một menu vốn đã dài. Vẫn là `TypeLink` (type null = đường dẫn trần) để
+  // `TypeDropdown`/`TypeLinks` giữ nguyên cách tô sáng.
   const cardLinks: TypeLink[] = [
     {
       href: "/credit-cards",
       type: null,
-      label: tOffers("tabAll"),
+      label: nav("creditCards"),
       description: tMenu("cardsAll"),
       icon: CreditCard,
-    },
-    {
-      href: "/credit-cards?type=noi-bat",
-      type: "noi-bat",
-      label: tOffers("tabElevated"),
-      description: tMenu("cardsElevated"),
-      icon: Sparkle,
-    },
-    {
-      href: "/credit-cards?type=khac",
-      type: "khac",
-      label: tOffers("tabOther"),
-      description: tMenu("cardsOther"),
-      icon: Stack,
     },
   ];
 
@@ -493,33 +480,6 @@ export function SiteHeader() {
       ]
     : [];
 
-  // "Blog" is a <summary>, not a link, so without this first entry the full
-  // archive at /blog had no route in from the desktop nav at all — only the
-  // footer reached it. Same shape as the card menu above.
-  const blogLinks: TypeLink[] = [
-    {
-      href: "/blog",
-      type: null,
-      label: tPosts("tabAll"),
-      description: tMenu("postsAll"),
-      icon: Newspaper,
-    },
-    {
-      href: "/blog?type=post",
-      type: "post",
-      label: tPosts("tabPosts"),
-      description: tMenu("postsPosts"),
-      icon: Article,
-    },
-    {
-      href: "/blog?type=video",
-      type: "video",
-      label: tPosts("tabVideos"),
-      description: tMenu("postsVideos"),
-      icon: YoutubeLogo,
-    },
-  ];
-
   const toolsLinks: NavLink[] = [
     {
       href: "/award-flight-finder",
@@ -527,25 +487,6 @@ export function SiteHeader() {
       description: tMenu("awardCharts"),
       icon: AirplaneTilt,
     },
-    ...(VIETNAM_ROUTES_PUBLISHED
-      ? [
-          {
-            // Đứng ngay sau công cụ: mười hai trang chặng là bản trả lời sẵn
-            // của chính công cụ đó cho câu hỏi được hỏi nhiều nhất trên nó.
-            //
-            // Đường dẫn viết thẳng chứ KHÔNG import hằng số từ
-            // `award-routes.ts`: file này là Client Component, nên một import
-            // như vậy kéo cả `award-charts.ts` lẫn mười hai đoạn văn của các
-            // trang chặng vào bundle của MỌI trang trên site, chỉ để lấy đúng
-            // một chuỗi. Mọi href khác trong menu này cũng viết thẳng, cùng lý
-            // do — xem thêm ghi chú `bank-compare-path` ở đầu file.
-            href: "/bay-ve-viet-nam",
-            label: nav("vietnamRoutes"),
-            description: tMenu("vietnamRoutes"),
-            icon: AirplaneTakeoff,
-          },
-        ]
-      : []),
     {
       href: "/calculator",
       label: nav("calculator"),
@@ -608,6 +549,12 @@ export function SiteHeader() {
     pathname !== RECOMMENDER_PATH &&
     !isNavLinkActive(bestCardsLink, pathname);
   const blogActive = pathname === "/blog" || pathname.startsWith("/blog/");
+  // Mục riêng trên thanh menu từ 03/10/2026, không còn là dòng thứ hai trong
+  // nhóm công cụ: mười hai trang chặng là thứ khác biệt nhất của site
+  // (PRODUCT.md — nhu cầu bay về Việt Nam), và chôn nó trong một dropdown tên
+  // "Miles & Points" là giấu đúng thứ người đọc mới nhất cần thấy. Đường dẫn
+  // viết thẳng — xem ghi chú `bank-compare-path` ở đầu file.
+  const vietnamActive = pathname === "/bay-ve-viet-nam" || pathname.startsWith("/bay-ve-viet-nam/");
   // Mục riêng chứ không phải một dòng trong dropdown Thẻ tín dụng: thẻ Mỹ là
   // một thị trường khác, và nằm chung menu với thẻ Canada thì người đọc dễ
   // tưởng đó là thẻ mở được ở Canada. Link thẳng, không dropdown — mục này
@@ -667,7 +614,7 @@ export function SiteHeader() {
           runs the width of the window and only keeps a gutter. Capping it left
           the logo and the newsletter button floating in the middle of a large
           display with a third of the bar empty on either side. */}
-      <div className="flex h-16 shrink-0 items-center justify-between px-4 sm:px-6 lg:px-10 2xl:h-20 2xl:px-16">
+      <div className="flex h-16 shrink-0 items-center justify-between gap-4 px-4 sm:px-6 xl:px-10 2xl:h-20 2xl:px-16">
         <Link
           href="/"
           className="flex items-center gap-2 font-display text-lg font-bold text-primary xl:text-xl"
@@ -699,8 +646,11 @@ export function SiteHeader() {
             {nav("home")}
           </Link>
 
+          {/* "Thẻ & ngân hàng": chữ "ngân hàng" phải đọc được ngay trên thanh menu —
+              người mới định cư cần tài khoản ngân hàng trước khi cần thẻ, và
+              trước 03/10/2026 nó chỉ hiện khi đã mở dropdown "Thẻ tín dụng". */}
           <TypeDropdown
-            label={nav("creditCards")}
+            label={nav("cardsAndBanks")}
             basePath="/credit-cards"
             links={cardLinks}
             groupLinks={[...recommenderLinks, bestCardsLink, compareLink]}
@@ -716,7 +666,7 @@ export function SiteHeader() {
               href={US_CARDS_BASE}
               // `xl:gap-1.5`, không phải `gap-1.5`: nhãn Beta chỉ hiện từ `xl`,
               // còn dưới đó 6px thừa đủ làm hàng nav 1024px gãy chữ hai dòng.
-              className={`flex items-center whitespace-nowrap xl:gap-1.5 ${navItemClassName(usCardsActive)}`}
+              className={`flex items-center xl:gap-1.5 ${navItemClassName(usCardsActive)}`}
             >
               {nav("usCards")}
               {/* Nhãn chỉ hiện từ `xl`: ở 1024px hàng nav sáu mục còn đúng 18px
@@ -735,15 +685,14 @@ export function SiteHeader() {
             </Link>
           )}
 
-          <TypeDropdown
-            label={nav("blog")}
-            basePath="/blog"
-            links={blogLinks}
-            active={blogActive}
-            width="w-80"
-            pathname={pathname}
-            onNavigate={closeParentDropdown}
-          />
+          {VIETNAM_ROUTES_PUBLISHED && (
+            <Link
+              href="/bay-ve-viet-nam"
+              className={navItemClassName(vietnamActive)}
+            >
+              {nav("vietnamRoutes")}
+            </Link>
+          )}
 
           <details name="nav-dropdown" className="group relative">
             <summary
@@ -766,8 +715,12 @@ export function SiteHeader() {
             </div>
           </details>
 
-          <Link href="/about" className={navItemClassName(pathname === "/about")}>
-            {nav("about")}
+          {/* Blog là một link, không còn dropdown "Tất cả / Bài viết / Video" —
+              ba dòng đó là ba tab lọc của chính trang /blog. "Giới thiệu" rời
+              thanh menu (03/10/2026): footer và khối tác giả ở trang chủ đã
+              dẫn tới nó, còn chỗ trên thanh nhường cho "Bay về Việt Nam". */}
+          <Link href="/blog" className={navItemClassName(blogActive)}>
+            {nav("blog")}
           </Link>
         </nav>
 
@@ -779,7 +732,7 @@ export function SiteHeader() {
 
           <Link
             href="/#newsletter"
-            className="hidden cursor-pointer items-center gap-2 rounded-full bg-primary px-4 py-2 text-base font-semibold text-primary-foreground transition-colors hover:bg-primary-hover lg:flex"
+            className="hidden cursor-pointer items-center gap-2 whitespace-nowrap rounded-full bg-primary px-4 py-2 text-[15px] font-semibold text-primary-foreground transition-colors hover:bg-primary-hover lg:flex xl:text-base"
           >
             {nav("newsletter")}
             <PaperPlaneTilt size={16} weight="bold" />
@@ -815,7 +768,7 @@ export function SiteHeader() {
             </Link>
 
             <MobileSection
-              label={nav("creditCards")}
+              label={nav("cardsAndBanks")}
               active={cardsMenuActive}
               highlight={cardsRowActive}
             >
@@ -854,21 +807,15 @@ export function SiteHeader() {
               </Link>
             )}
 
-            <MobileSection label={nav("blog")} active={blogActive}>
-              <Suspense
-                fallback={
-                  <TypeLinksFallback links={blogLinks} onNavigate={closeMobileMenu} compact />
-                }
+            {VIETNAM_ROUTES_PUBLISHED && (
+              <Link
+                href="/bay-ve-viet-nam"
+                onClick={() => setOpen(false)}
+                className={mobileItemClassName(vietnamActive)}
               >
-                <TypeLinks
-                  links={blogLinks}
-                  basePath="/blog"
-                  pathname={pathname}
-                  onNavigate={closeMobileMenu}
-                  compact
-                />
-              </Suspense>
-            </MobileSection>
+                {nav("vietnamRoutes")}
+              </Link>
+            )}
 
             <MobileSection label={nav("pointsTools")} active={toolsActive}>
               {toolsLinks.map((link) => (
@@ -883,11 +830,11 @@ export function SiteHeader() {
             </MobileSection>
 
             <Link
-              href="/about"
+              href="/blog"
               onClick={() => setOpen(false)}
-              className={mobileItemClassName(pathname === "/about")}
+              className={mobileItemClassName(blogActive)}
             >
-              {nav("about")}
+              {nav("blog")}
             </Link>
           </nav>
           <div className="mt-4 flex items-center justify-between gap-3 border-t border-border pt-4">

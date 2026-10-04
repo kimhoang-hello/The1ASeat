@@ -35,47 +35,13 @@ export function PostCard({
 }) {
   const Heading = headingLevel;
   const duration = postDuration(post);
-  // Ảnh video có đường lùi riêng khi `maxresdefault` không tồn tại; ảnh do tác
-  // giả tải lên thì không cần, nó luôn có thật.
-  const videoThumbnail =
-    post.coverPhoto || post.type !== "video" ? null : getYouTubeThumbnailUrl(post.videoUrl ?? "");
-  const thumbnail = post.coverPhoto ?? videoThumbnail;
 
   return (
     <Link
       href={`/blog/${post.slug}`}
       className={`group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md ${className}`}
     >
-      {thumbnail ? (
-        <div className="relative h-44 w-full overflow-hidden bg-primary">
-          {videoThumbnail ? (
-            <VideoThumbnail
-              src={videoThumbnail}
-              fallbackSrc={getYouTubeThumbnailFallbackUrl(post.videoUrl ?? "")}
-              alt={post.title}
-              sizes="384px"
-              preload={preload}
-              className="object-cover"
-            />
-          ) : (
-            <Image
-              src={thumbnail}
-              alt={post.title}
-              fill
-              sizes="384px"
-              preload={preload}
-              className="object-cover"
-            />
-          )}
-        </div>
-      ) : (
-        <MediaPlaceholder
-          icon={post.coverImage as PlaceholderIcon}
-          tone="navy"
-          className="h-44 w-full"
-          isVideo={post.type === "video"}
-        />
-      )}
+      <PostThumbnail post={post} preload={preload} className="h-44 w-full" />
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold uppercase tracking-wide text-primary">
@@ -104,5 +70,60 @@ export function PostCard({
         </div>
       </div>
     </Link>
+  );
+}
+
+/**
+ * Ảnh của một bài: ảnh tác giả tải lên, ảnh YouTube cho bài video (có đường
+ * lùi riêng khi `maxresdefault` không tồn tại), hoặc ô giữ chỗ theo biểu tượng
+ * chọn trong Contentful. Tách khỏi `PostCard` để khối review ở trang chủ dùng
+ * đúng cách chọn ảnh đó ở cỡ nhỏ.
+ *
+ * `alt` để trống khi tiêu đề bài đã nằm ngay cạnh ảnh trong cùng một link —
+ * nếu không, trình đọc màn hình đọc tiêu đề hai lần liên tiếp.
+ */
+export function PostThumbnail({
+  post,
+  className = "",
+  sizes = "384px",
+  preload = false,
+  alt = post.title,
+}: {
+  post: BlogPost;
+  className?: string;
+  sizes?: string;
+  preload?: boolean;
+  alt?: string;
+}) {
+  const videoThumbnail =
+    post.coverPhoto || post.type !== "video" ? null : getYouTubeThumbnailUrl(post.videoUrl ?? "");
+  const thumbnail = post.coverPhoto ?? videoThumbnail;
+
+  if (!thumbnail) {
+    return (
+      <MediaPlaceholder
+        icon={post.coverImage as PlaceholderIcon}
+        tone="navy"
+        className={className}
+        isVideo={post.type === "video"}
+      />
+    );
+  }
+
+  return (
+    <div className={`relative overflow-hidden bg-primary ${className}`}>
+      {videoThumbnail ? (
+        <VideoThumbnail
+          src={videoThumbnail}
+          fallbackSrc={getYouTubeThumbnailFallbackUrl(post.videoUrl ?? "")}
+          alt={alt}
+          sizes={sizes}
+          preload={preload}
+          className="object-cover"
+        />
+      ) : (
+        <Image src={thumbnail} alt={alt} fill sizes={sizes} preload={preload} className="object-cover" />
+      )}
+    </div>
   );
 }
