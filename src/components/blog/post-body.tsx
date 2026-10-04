@@ -99,7 +99,7 @@ export function PostBody({
           />
           {run.cards.length > 0 && (
             <div className="mt-8 space-y-4">
-              <p className="text-xs font-semibold tracking-wide text-primary">
+              <p className="text-sm font-semibold text-primary">
                 {posts_t("cardInPost")}
               </p>
               {run.cards.map((card) => (

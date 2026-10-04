@@ -84,13 +84,17 @@ export default async function CompareBankAccountsPage({
   return (
     <>
       {!BANK_ACCOUNTS_PUBLISHED && (
-        <p className="border-b border-amber-300 bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-900 sm:px-6 lg:px-8">
+        <p className="border-b border-warning/30 bg-warning-soft px-4 py-3 text-center text-sm font-semibold text-warning sm:px-6 lg:px-8">
           {bank_t("draftNotice")}
         </p>
       )}
 
       <JsonLd data={jsonLd} />
-      <PageHeader eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} />
+      <PageHeader
+        breadcrumbs={[{ label: seo("breadcrumbBankAccounts"), href: "/bank-accounts" }]}
+        title={t("title")}
+        subtitle={t("subtitle")}
+      />
 
       <section className="px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-page space-y-6">

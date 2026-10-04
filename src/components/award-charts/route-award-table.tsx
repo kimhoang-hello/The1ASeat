@@ -26,16 +26,16 @@ const CONFIDENCE_LABELS: Record<Program["confidence"], string> = {
 };
 
 const CONFIDENCE_STYLES: Record<Program["confidence"], string> = {
-  published: "bg-[#e7f2ea] text-[#1f6f43]",
-  unpublished: "bg-[#fdf1d8] text-[#8a5a10]",
+  published: "bg-success-soft text-success",
+  unpublished: "bg-warning-soft text-warning",
   unquotable: "bg-secondary text-muted-foreground",
 };
 
 const SURCHARGE_LABELS = { low: "surchargeLow", medium: "surchargeMedium", high: "surchargeHigh" } as const;
 const SURCHARGE_STYLES = {
-  low: "text-[#1f6f43]",
-  medium: "text-[#8a5a10]",
-  high: "text-[#a3352b]",
+  low: "text-success",
+  medium: "text-warning",
+  high: "text-destructive",
 } as const;
 
 /** Ô "không có số". Ba lý do khác nhau đọc ra ba câu khác nhau — cùng luật với
@@ -97,7 +97,7 @@ export function CheapestTiles({ rows }: { rows: CheapestByCabin[] }) {
             </>
           ) : (
             <>
-              <p className="mt-1 font-display text-2xl font-extrabold leading-tight text-primary">
+              <p className="mt-1 font-display text-2xl font-bold leading-tight text-primary">
                 {row.startingAt && <span className="mr-1 text-base font-semibold">{t("fromPrefix")}</span>}
                 {formatPoints(row.points)}
               </p>
@@ -270,7 +270,7 @@ function OptionLine({ option }: { option: RoutingOption }) {
         {t("routingMiles", { miles: formatPoints(option.miles) })}
       </span>
       {option.needsFeeder && (
-        <span className="rounded bg-[#fdf1d8] px-1.5 py-0.5 text-[11px] font-medium text-[#8a5a10]">
+        <span className="rounded bg-warning-soft px-1.5 py-0.5 text-[11px] font-medium text-warning">
           {r("feederBadge")}
         </span>
       )}
@@ -307,7 +307,7 @@ export function RouteRoutings({ rows }: { rows: ProgramRow[] }) {
             <p
               className={`mt-1.5 rounded-lg border px-3 py-2 text-xs font-medium leading-relaxed ${
                 row.quote.routeNoteTone === "highlight"
-                  ? "border-[#8a5a10]/30 bg-[#fdf1d8] text-[#8a5a10]"
+                  ? "border-warning/30 bg-warning-soft text-warning"
                   : "border-border bg-secondary text-foreground/80"
               }`}
             >

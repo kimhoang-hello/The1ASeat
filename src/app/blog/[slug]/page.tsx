@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import Image from "next/image";
 import { getCreditCardOffers, getPostBySlug, getPosts, getTransferBonuses } from "@/lib/content";
 import type { BlogPost } from "@/lib/content";
@@ -180,11 +180,15 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       className={`mx-auto max-w-2xl px-4 py-12 sm:px-6 lg:px-8${hasToc ? " xl:max-w-[68rem]" : ""}`}
     >
       <JsonLd data={jsonLd} />
-      {/* Về danh sách bài, như mọi trang chi tiết khác về danh sách của mục
-          mình ("← Xem tất cả thẻ"). Trước đây link này về trang chủ. */}
-      <Link href="/blog" className="text-sm font-semibold text-primary hover:underline">
-        &larr; {posts_t("viewAll")}
-      </Link>
+      {/* "Blog › <chuyên mục>" — cùng kiểu với mọi trang sâu khác, khớp
+          `breadcrumbJsonLd` ở trên. Thay cho link "← Về trang chủ" cũ (về nhầm
+          trang chủ) và cho nhãn chuyên mục viết hoa từng nằm trên H1. */}
+      <Breadcrumbs
+        items={[
+          { label: seo("breadcrumbBlog"), href: "/blog" },
+          { label: post.category, href: categoryHref },
+        ]}
+      />
 
       {embedUrl ? (
         <div className="mt-6 aspect-video w-full overflow-hidden rounded-2xl bg-primary">
@@ -228,24 +232,21 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         />
       )}
 
-      <div className="mt-6 flex items-center gap-2">
-        <Link
-          href={categoryHref}
-          // Chữ 12px nên link chỉ cao 16px. Vùng chạm nới bằng `::before`,
-          // chỉ 8px mỗi phía: H1 đứng ngay dưới cách `mt-2`, nới nhiều hơn là
-          // chạm vào tiêu đề cũng nhảy sang trang chuyên mục.
-          className="relative text-xs font-semibold uppercase tracking-wide text-primary before:absolute before:-inset-x-2 before:-inset-y-2 before:content-[''] hover:underline"
-        >
-          {post.category}
-        </Link>
+      {/* Tiêu đề bài lớn hơn tiêu đề trang thường từ `sm` (36 → 44px): đây là
+          trang ĐỌC, thân bài 18px trên desktop, và H1 30px cũ chỉ hơn chữ thân
+          có 1.67 lần. */}
+      <h1 className="mt-6 text-balance font-display text-3xl font-bold text-foreground sm:text-4xl lg:text-[2.75rem]">
+        {post.title}
+      </h1>
+      <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
         {post.type === "video" && (
-          <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-foreground/70">
-            {posts_t("videoBadge")}
-          </span>
+          <>
+            <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-foreground/70">
+              {posts_t("videoBadge")}
+            </span>
+            <span aria-hidden>&middot;</span>
+          </>
         )}
-      </div>
-      <h1 className="mt-2 font-display text-3xl font-extrabold text-foreground">{post.title}</h1>
-      <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
         <span>{post.author}</span>
         <span aria-hidden>&middot;</span>
         <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>

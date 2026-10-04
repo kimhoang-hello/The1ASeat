@@ -66,13 +66,13 @@ export default function BankAccountsPage() {
           nói ra điều đó — không ai đọc nhầm bản nháp thành nội dung chính
           thức. Dải này biến mất cùng lúc với việc bật cờ. */}
       {!BANK_ACCOUNTS_PUBLISHED && (
-        <p className="border-b border-amber-300 bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-900 sm:px-6 lg:px-8">
+        <p className="border-b border-warning/30 bg-warning-soft px-4 py-3 text-center text-sm font-semibold text-warning sm:px-6 lg:px-8">
           {bank_t("draftNotice")}
         </p>
       )}
 
       <JsonLd data={jsonLd} />
-      <PageHeader eyebrow={bank_t("eyebrow")} title={bank_t("title")} subtitle={bank_t("subtitle")} />
+      <PageHeader title={bank_t("title")} subtitle={bank_t("subtitle")} />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         <BankAccountFinder />

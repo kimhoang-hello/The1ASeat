@@ -33,11 +33,13 @@ export function EditorsTake({
   const { body, hotTip } = splitHotTip(editorsTake);
 
   return (
-    <div className={`rounded-lg bg-secondary ${compact ? "p-3" : "p-5"} ${className}`}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+    // Không còn hộp nền kem (03/10/2026): ô thẻ đã là một bề mặt trắng, thêm
+    // một hộp nữa bên trong là hộp lồng hộp. Nhãn đủ nói đây là nhận định.
+    <div className={className}>
+      <p className={`font-semibold text-primary ${compact ? "text-sm" : "text-base"}`}>
         {offers("editorsTake")}
       </p>
-      <p className={`leading-relaxed text-foreground/90 ${compact ? "mt-1 text-sm" : "mt-2"}`}>
+      <p className={`leading-relaxed text-foreground ${compact ? "mt-1 text-sm" : "mt-2"}`}>
         {body}
       </p>
 

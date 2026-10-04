@@ -26,7 +26,6 @@ export default function ContactPage() {
   return (
     <>
       <PageHeader
-        eyebrow={contact("eyebrow")}
         title={contact("title")}
         subtitle={contact("subtitle")}
        

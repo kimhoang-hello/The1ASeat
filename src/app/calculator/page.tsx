@@ -32,7 +32,6 @@ export default async function CalculatorPage() {
   return (
     <>
       <PageHeader
-        eyebrow={calc("eyebrow")}
         title={calc("title")}
         subtitle={calc("subtitle")}
        

@@ -19,7 +19,7 @@ export function CardBadges({
   return (
     <div className="flex flex-wrap items-center gap-2">
       {isElevatedLive(offer) && (
-        <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+        <span className="rounded-full bg-success-soft px-2.5 py-0.5 text-xs font-semibold text-success">
           + {elevatedBonusLabel}
         </span>
       )}
@@ -40,7 +40,7 @@ export function CardBadges({
           làm họ nghĩ offer đang hiện cũng đã chết. Cùng một lưới an toàn
           `/transfer-bonuses` đã dùng. */}
       {offer.expiresAt && !hasExpired(offer.expiresAt) && expiresOnLabel && (
-        <span className="text-xs font-medium text-amber-700">
+        <span className="text-xs font-medium text-warning">
           {expiresOnLabel} {formatDate(offer.expiresAt)}
         </span>
       )}

@@ -70,7 +70,7 @@ export default async function BestCardsHubPage() {
     <>
       <JsonLd data={jsonLd} />
       <PageHeader
-        eyebrow={best("eyebrow")}
+        breadcrumbs={[{ label: seo("breadcrumbCreditCards"), href: "/credit-cards" }]}
         title={best("hubTitle")}
         subtitle={best("hubSubtitle")}
       />
@@ -81,11 +81,7 @@ export default async function BestCardsHubPage() {
           chồng lên nhau. Chữ dẫn bên trong vẫn chặn ở `max-w-2xl`, chỗ rộng
           thêm dành cho lưới mục. */}
       <div className="mx-auto max-w-page px-4 py-12 sm:px-6 lg:px-8">
-        <Link href="/credit-cards" className="text-sm font-semibold text-primary hover:underline">
-          &larr; {offers_t("viewAll")}
-        </Link>
-
-        <div className="mt-8 max-w-2xl space-y-4 leading-relaxed text-foreground/90">
+        <div className="max-w-2xl space-y-4 leading-relaxed text-foreground/90">
           <p>{best("hubIntro1")}</p>
           <p>{best("hubIntro2")}</p>
         </div>

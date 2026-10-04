@@ -57,7 +57,7 @@ const FILTER_LABEL_KEYS: Record<UsCardFilter, string> = {
 /** Cùng cỡ chữ tiêu đề mục như các khu trên trang chủ. */
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="font-display text-2xl font-extrabold text-foreground sm:text-3xl">{children}</h2>
+    <h2 className="font-display text-2xl font-bold text-foreground sm:text-3xl">{children}</h2>
   );
 }
 
@@ -142,7 +142,6 @@ export default async function UsCreditCardsPage({
       <UsCardsBetaNotice />
       <JsonLd data={jsonLd} />
       <PageHeader
-        eyebrow={us("eyebrow")}
         badge={<BetaBadge />}
         title={us("title")}
         subtitle={us("subtitle")}

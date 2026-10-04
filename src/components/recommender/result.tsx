@@ -104,7 +104,7 @@ function PrimaryCard({
       <p className="text-xs font-semibold uppercase tracking-wide text-primary">
         {action.kind === "no_new_card" ? "Gợi ý cho bạn" : "Thẻ gợi ý cho bạn"}
       </p>
-      <h2 className="mt-1 font-display text-2xl font-extrabold text-foreground sm:text-3xl">
+      <h2 className="mt-1 font-display text-2xl font-bold text-foreground sm:text-3xl">
         {action.kind === "no_new_card" ? "Chưa cần mở thẻ mới" : action.name}
       </h2>
 
@@ -186,14 +186,14 @@ function PrimaryCard({
       )}
 
       {warnings.length > 0 && (
-        <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
-          <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-amber-900">
+        <div className="mt-4 rounded-xl border border-warning/30 bg-warning-soft px-4 py-3">
+          <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-warning">
             <Warning size={18} weight="bold" />
             {action.kind === "no_new_card" ? "Lưu ý" : "Đọc kỹ trước khi đăng ký"}
           </p>
           <ul className="mt-2 space-y-1.5">
             {warnings.map((warning) => (
-              <li key={warning} className="text-base leading-relaxed text-amber-950">
+              <li key={warning} className="text-base leading-relaxed text-foreground">
                 {warning}
               </li>
             ))}
@@ -250,7 +250,7 @@ export function DeterministicWhy({ action }: { action: ActionView }) {
       <ul className="mt-4 space-y-2">
         {good.map((row) => (
           <li key={row.text} className="flex gap-2 text-base leading-relaxed text-foreground/90">
-            <CheckCircle size={20} weight="fill" className="mt-0.5 shrink-0 text-emerald-600" />
+            <CheckCircle size={20} weight="fill" className="mt-0.5 shrink-0 text-success" />
             {row.text}
           </li>
         ))}

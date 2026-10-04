@@ -670,7 +670,7 @@ export function SiteHeader() {
       <div className="flex h-16 shrink-0 items-center justify-between px-4 sm:px-6 lg:px-10 2xl:h-20 2xl:px-16">
         <Link
           href="/"
-          className="flex items-center gap-2 font-display text-lg font-extrabold tracking-tight text-primary xl:text-xl"
+          className="flex items-center gap-2 font-display text-lg font-bold text-primary xl:text-xl"
         >
           <Image
             src="/images/logo.png"

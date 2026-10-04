@@ -286,7 +286,7 @@ export function PointsCalculator({ cardProgramIds }: { cardProgramIds: string[] 
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {t("result")}
           </p>
-          <p className="mt-1 font-display text-3xl font-extrabold text-primary">
+          <p className="mt-1 font-display text-3xl font-bold text-primary">
             {/* `cents` là null ở HAI ca khác nhau — không tính được, và tính
                 được nhưng không in ra được (tràn số ở phép nhân trong
                 `formatCents`). Cả hai đều phải ra cùng một dòng "không tính

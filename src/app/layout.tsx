@@ -17,33 +17,34 @@ import "./globals.css";
  * Font TỰ HOST, không dùng `next/font/google`.
  *
  * `next/font/google` tải font từ Google LÚC BUILD. Từ 27/09/2026 máy build của
- * Hostinger nhận về CSS mà Turbopack không đọc được ("next/font/google queries
- * have exactly one entry" ở Plus Jakarta Sans) — 8 lượt deploy liền hỏng trong
- * khi build trên máy và CI vẫn xanh, vì chỉ Hostinger nhận phản hồi khác. Font
- * nằm trong repo thì build không còn phụ thuộc mạng.
+ * Hostinger nhận về CSS mà Turbopack không đọc được — 8 lượt deploy liền hỏng
+ * trong khi build trên máy và CI vẫn xanh. Font nằm trong repo thì build không
+ * còn phụ thuộc mạng.
  *
- * Mỗi họ là MỘT file variable woff2, dựng từ font gốc OFL (google/fonts) bằng
- * fonttools: cắt trục wght về đúng dải site dùng (Inter còn ghim opsz=14), rồi
- * subset về đúng hai subset `latin` + `vietnamese` của Google — cùng
- * unicode-range với CSS Google phục vụ. Gộp hai subset không làm nặng thêm:
- * mọi trang đều viết tiếng Việt nên trước đây cả hai file vốn đã tải hết.
- * Đo 29/09/2026: 87.5 KB so với 94.3 KB của Google, và 2 request thay vì 4.
+ * MỘT họ font cho cả tiêu đề lẫn thân bài: Be Vietnam Pro (chốt 03/10/2026 sau
+ * audit UX/UI, thay cặp Plus Jakarta Sans + Inter). Thiết kế cho tiếng Việt, dấu
+ * vẽ theo dạng thích ứng thay vì gắn thêm vào chữ Latin. Bản Google Fonts chỉ có
+ * file tĩnh, nên bốn file cho bốn độ đậm site dùng: 400 thân bài, 500
+ * (`font-medium`, 48 chỗ), 600 nhãn và nút, 700 tiêu đề. `font-extrabold` không
+ * có file riêng và hiện bằng 700 — đừng thêm 800 lại.
  *
- * `latin-ext` vẫn bỏ như quyết định 07/09/2026 (53% payload font lúc đó). Chữ
- * Đông Âu lác đác trong tên khách sạn sẽ hiện bằng font fallback đã chỉnh
- * metric thay vì tải file latin-ext theo nhu cầu.
+ * Mỗi file dựng từ TTF gốc OFL (google/fonts, ofl/bevietnampro) bằng fonttools:
+ * `pyftsubset --unicodes=<latin + vietnamese của Google> --layout-features='*'
+ * --flavor=woff2 --no-hinting --desubroutinize`. Bốn file 67 KB, so với 87.5 KB
+ * của hai file variable trước đây. Mũi tên → không có trong font (cũng không có
+ * trong bộ cũ) nên hiện bằng font hệ thống.
  *
- * Đổi dải weight thì phải dựng lại file — xem OFL-*.txt cùng thư mục cho giấy
- * phép.
+ * Hai biến CSS vẫn tồn tại (`--font-heading` cho `font-display`, `--font-body`
+ * cho thân bài) và cùng trỏ về một họ — tách lại hai họ sau này chỉ cần đổi ở
+ * đây. Xem OFL-BeVietnamPro.txt cùng thư mục cho giấy phép.
  */
-const fontHeading = localFont({
-  src: [{ path: "./fonts/plus-jakarta-sans-600-800.woff2", weight: "600 800", style: "normal" }],
-  variable: "--font-heading",
-  display: "swap",
-});
-
-const fontBody = localFont({
-  src: [{ path: "./fonts/inter-400-700.woff2", weight: "400 700", style: "normal" }],
+const fontSans = localFont({
+  src: [
+    { path: "./fonts/be-vietnam-pro-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/be-vietnam-pro-500.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/be-vietnam-pro-600.woff2", weight: "600", style: "normal" },
+    { path: "./fonts/be-vietnam-pro-700.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-body",
   display: "swap",
 });
@@ -109,7 +110,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
   return (
-    <html lang="vi" className={`${fontHeading.variable} ${fontBody.variable} h-full antialiased`}>
+    <html lang="vi" className={`${fontSans.variable} h-full antialiased`}>
       <head>
         {/* Bản CSP có hiệu lực trên ghe1a.com: edge Hostinger ghi đè header
             CSP của app, còn HTML thì không đụng tới. Xem

@@ -99,11 +99,11 @@ export function BankCompareTable({ accounts }: { accounts: BankAccount[] }) {
                 <td key={account.slug} className="px-4 py-4">
                   {hasLiveBonus(account) && account.bonusLabelVi ? (
                     <>
-                      <span className="font-display text-lg font-extrabold leading-tight text-primary">
+                      <span className="font-display text-lg font-bold leading-tight text-primary">
                         {account.bonusLabelVi}
                       </span>
                       {account.bonusExpiresOn && (
-                        <span className="mt-1 block text-xs text-amber-700">
+                        <span className="mt-1 block text-xs text-warning">
                           {offers_t("expiresOn")} {formatIsoDate(account.bonusExpiresOn)}
                         </span>
                       )}
@@ -136,7 +136,7 @@ export function BankCompareTable({ accounts }: { accounts: BankAccount[] }) {
                 <td key={account.slug} className="px-4 py-4 text-foreground/90">
                   {account.interestRate !== undefined ? (
                     <>
-                      <span className="font-display text-lg font-extrabold leading-tight text-primary">
+                      <span className="font-display text-lg font-bold leading-tight text-primary">
                         {formatRate(account.interestRate)}
                       </span>
                       {account.regularRate !== undefined && (
@@ -166,7 +166,7 @@ export function BankCompareTable({ accounts }: { accounts: BankAccount[] }) {
               {accounts.map((account) => (
                 <td key={account.slug} className="px-4 py-4">
                   {account.rebate ? (
-                    <span className="font-semibold text-emerald-700">{account.rebate}</span>
+                    <span className="font-semibold text-success">{account.rebate}</span>
                   ) : (
                     <Empty />
                   )}

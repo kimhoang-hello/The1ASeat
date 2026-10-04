@@ -27,7 +27,7 @@ export default async function Image() {
           alignItems: "center",
           justifyContent: "center",
           background: "#0f2a4a",
-          fontFamily: "Inter",
+          fontFamily: "Be Vietnam Pro",
         }}
       >
         <div
@@ -51,11 +51,10 @@ export default async function Image() {
         </div>
         <div
           style={{
-            fontFamily: "Plus Jakarta Sans",
+            fontFamily: "Be Vietnam Pro",
             fontSize: 96,
-            fontWeight: 800,
+            fontWeight: 700,
             color: "#ffffff",
-            letterSpacing: -2,
           }}
         >
           {site("name")}
@@ -75,8 +74,11 @@ export default async function Image() {
     {
       ...size,
       fonts: [
-        { name: "Plus Jakarta Sans", data: heading, style: "normal", weight: 800 },
-        { name: "Inter", data: body, style: "normal", weight: 600 },
+        // Hai file trong `assets/` là Be Vietnam Pro cắt về ĐÚNG các ký tự của
+        // tên site + tagline (kể cả khoảng trắng không ngắt dòng của "Ghế 1A").
+        // Đổi chữ trên ảnh thì phải cắt lại, không thì satori vẽ ô vuông.
+        { name: "Be Vietnam Pro", data: heading, style: "normal", weight: 700 },
+        { name: "Be Vietnam Pro", data: body, style: "normal", weight: 600 },
       ],
     }
   );

@@ -93,7 +93,7 @@ export default async function BlogCategoryPage({
     <>
       <JsonLd data={jsonLd} />
       <PageHeader
-        eyebrow={seo("categoryEyebrow")}
+        breadcrumbs={[{ label: seo("breadcrumbBlog"), href: "/blog" }]}
         title={category.name}
         subtitle={categoryDescription(category)}
       />

@@ -19,8 +19,8 @@ const us = translate("usCards");
  */
 export function UsCardsBetaNotice() {
   return (
-    <p className="flex flex-wrap items-center justify-center gap-2 border-b border-amber-300 bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-900 sm:px-6 lg:px-8">
-      <BetaBadge className="bg-amber-100 text-amber-900" />
+    <p className="flex flex-wrap items-center justify-center gap-2 border-b border-warning/30 bg-warning-soft px-4 py-3 text-center text-sm font-semibold text-warning sm:px-6 lg:px-8">
+      <BetaBadge className="bg-warning-soft text-warning" />
       {US_CARDS_PUBLISHED ? us("betaNotice") : us("draftNotice")}
     </p>
   );

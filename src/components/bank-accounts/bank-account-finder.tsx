@@ -132,7 +132,7 @@ function Headline({ account }: { account: BankAccount }) {
   if (hasLiveBonus(account)) {
     return (
       <>
-        <p className="font-display text-2xl font-extrabold leading-tight text-primary">
+        <p className="font-display text-2xl font-bold leading-tight text-primary">
           {account.bonusLabelVi}
         </p>
         <p className="text-xs text-muted-foreground">{t("welcomeBonus")}</p>
@@ -143,7 +143,7 @@ function Headline({ account }: { account: BankAccount }) {
   if (account.interestRate !== undefined) {
     return (
       <>
-        <p className="font-display text-2xl font-extrabold leading-tight text-primary">
+        <p className="font-display text-2xl font-bold leading-tight text-primary">
           {formatRate(account.interestRate)}
           {account.promoNoteVi && <span className="align-super text-base">*</span>}
         </p>
@@ -165,7 +165,7 @@ function Headline({ account }: { account: BankAccount }) {
 
   return (
     <>
-      <p className="font-display text-2xl font-extrabold leading-tight text-foreground">
+      <p className="font-display text-2xl font-bold leading-tight text-foreground">
         {account.monthlyFee === 0 ? t("free") : formatMoney(account.monthlyFee)}
       </p>
       <p className="text-xs text-muted-foreground">{t("monthlyFee")}</p>
@@ -273,7 +273,7 @@ function AccountCard({ account }: { account: BankAccount }) {
             ))}
           </ul>
           {account.bonusExpiresOn && (
-            <p className="mt-2 text-xs font-medium text-amber-700">
+            <p className="mt-2 text-xs font-medium text-warning">
               {offers("expiresOn")} {formatIsoDate(account.bonusExpiresOn)}
             </p>
           )}

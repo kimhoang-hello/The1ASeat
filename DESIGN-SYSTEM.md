@@ -20,8 +20,8 @@ còn lại của site.
 |---|---|
 | **Editorial, không phải fintech** | Nền kem (`#FAF6EC`) chứ không phải trắng; chữ tiêu đề đậm; ảnh lớn. Site đọc như một tạp chí du lịch, không như một trang so sánh thẻ. |
 | **Navy là màu của hành động** | Navy `#0F2A4A` chỉ dùng cho: link, nút chính, mục nav đang mở, nhãn chuyên mục. Không dùng navy để trang trí — nếu một thứ màu navy, người đọc phải bấm được vào nó hoặc nó phải đang nói "bạn đang ở đây". |
-| **Xanh lá = tiền vào túi bạn** | `emerald` chỉ dành cho offer cao hơn bình thường, rebate và HOT TIP. Người đọc học nghĩa của màu xanh ở trang thẻ tín dụng thì sang trang ngân hàng không phải học lại. |
-| **Hổ phách = đồng hồ đang chạy** | `amber` chỉ dành cho hạn chót (`Hết hạn 03/09/2026`). Không dùng amber cho gì khác. |
+| **Ba màu trạng thái, mỗi màu một nghĩa** | `success` (xanh) = có lợi / chắc chắn: offer nâng, rebate, HOT TIP, chart có công bố, surcharge thấp. `warning` (hổ phách) = cần chú ý: hạn chót, chưa công bố, bản nháp, Beta. `destructive` (đỏ) = bất lợi / lỗi. Nhãn chỉ là TÊN (nguồn điểm Amex®/RBC®) thì luôn trung tính. Xem 3.2. |
+| **Một nền, một bề mặt** | Nền kem cho trang, trắng cho thẻ/panel. Không dải nền xen kẽ (kẻ sọc), không hộp lồng hộp trong một ô thẻ (chốt 03/10/2026). Tách khối bằng khoảng trắng và đường kẻ `border-border`. |
 | **Một thứ, một chỗ** | Nút "Đăng ký ngay" nằm trong `ApplyButton`, hộp HOT TIP nằm trong `HotTip`, thẻ bài viết nằm trong `PostCard`. Không copy class ra chỗ khác — sửa component gốc. |
 | **Không hex thô trong component** | Luôn dùng `bg-primary`, `text-muted-foreground`… Nếu cần một màu chưa có token, thêm token vào `globals.css` trước. |
 
@@ -81,26 +81,35 @@ xem [phần 11](#11-khoảng-trống-đã-biết) nếu sau này cần theme th�
 | `--primary` | `bg-primary` / `text-primary` | `#0F2A4A` | Navy — link, nút chính, nhãn chuyên mục |
 | `--primary-hover` | `hover:bg-primary-hover` | `#123A63` | Navy sáng hơn khi rê chuột |
 | `--primary-foreground` | `text-primary-foreground` | `#FFFFFF` | Chữ trên nền navy |
-| `--secondary` | `bg-secondary` | `#F1E9D8` | Kem đậm — dải phân đoạn, nền hover, badge |
+| `--secondary` | `bg-secondary` | `#F1E9D8` | Kem đậm — nền hover, badge, chip, ô tỷ lệ trung tính. KHÔNG làm nền cả một section hay một hộp trong ô thẻ (bỏ 03/10/2026) |
 | `--secondary-foreground` | `text-secondary-foreground` | `#1A1613` | Chữ trên nền kem đậm |
 | `--muted` | `bg-muted` | `#EFE6D3` | Nền chờ ảnh, vùng trung tính |
 | `--muted-foreground` | `text-muted-foreground` | `#6B6259` | Chữ phụ: ngày tháng, mô tả, chú thích |
 | `--border` | `border-border` | `#E5DAC3` | **Mọi** đường viền và đường kẻ ngang |
-| `--destructive` | `text-destructive` | `#B3261E` | Lỗi form |
+| `--success` / `--success-soft` | `text-success` / `bg-success-soft` | `#1F6F43` / `#E7F2EA` | Có lợi, chắc chắn (xem 3.2) |
+| `--warning` / `--warning-soft` | `text-warning` / `bg-warning-soft` | `#8A5A10` / `#FDF1D8` | Cần chú ý (xem 3.2) |
+| `--destructive` / `--destructive-soft` | `text-destructive` / `bg-destructive-soft` | `#A3352B` / `#F8E4E1` | Lỗi form, bất lợi |
 | `--destructive-foreground` | `text-destructive-foreground` | `#FFFFFF` | Chữ trên nền lỗi |
 | `--navy-ink` | `bg-navy-ink` | `#0B2036` | Navy đậm hơn primary — chỉ dùng cho footer và khối CTA tối |
 
-### 3.2 Màu trạng thái (lấy từ bảng màu mặc định của Tailwind)
+### 3.2 Màu trạng thái (token, từ 03/10/2026)
 
-Ba màu này **không có trong `globals.css`** — dùng thẳng palette của Tailwind.
-Chúng mang nghĩa cố định, không được dùng sai chỗ:
+Trước 03/10/2026 site có HAI bộ màu cho cùng một nghĩa: emerald/amber của
+Tailwind ở trang thẻ, và bộ hex tự đặt (`#1f6f43`, `#8a5a10`, `#a3352b`) ở công
+cụ award — còn chip TÊN nguồn điểm RBC® mang đúng màu "chưa công bố". Nay là ba
+token trong `globals.css`, mỗi token một nghĩa. Bộ hex của công cụ award được
+giữ làm giá trị vì tương phản cao hơn (5.36 và 5.28 trên nền nhạt của chính nó,
+so với 4.84 và 4.65 của emerald-700/amber-700) và hợp tông kem hơn.
 
-| Nghĩa | Class đang dùng | Xuất hiện ở |
+| Nghĩa | Class | Xuất hiện ở |
 |---|---|---|
-| **Ưu đãi cao hơn bình thường / tiền hoàn** | `bg-emerald-100` + `text-emerald-700` | badge "+ Ưu đãi cao", `RebateChip` |
-| **Mẹo kiếm thêm điểm** | `bg-emerald-50` + `border-l-4 border-emerald-600` + `text-emerald-950` | `HotTip` |
-| **Sắp hết hạn** | `text-amber-700` (viền `border-amber-300`, nền `bg-amber-50`) | ngày hết hạn của offer |
-| **Thành công** | `text-emerald-500` | tick sau khi đăng ký bản tin |
+| **Có lợi / chắc chắn** | `bg-success-soft` + `text-success` | badge "+ Elevated offer", `RebateChip`, `HotTip`, "Hãng công bố chart", surcharge thấp, tick thành công |
+| **Cần chú ý** | `text-warning` (nền `bg-warning-soft`, viền `border-warning/30`) | ngày hết hạn, "Không tra trước được", surcharge trung bình, dải Beta/nháp |
+| **Bất lợi / lỗi** | `text-destructive` (nền `bg-destructive-soft`) | lỗi form, surcharge cao |
+| **Tên, không đánh giá** | `bg-secondary` + `text-foreground` | chip nguồn điểm Amex® MR / RBC® Avion®, ô tỷ lệ ở `/transfer-partners` |
+
+Ngoại lệ duy nhất còn palette Tailwind: `text-red-300` cho câu lỗi của form bản
+tin trên nền navy (token đỏ là cho nền sáng).
 
 ### 3.3 Màu chữ theo độ mờ
 
@@ -131,24 +140,30 @@ hàng) nhưng đang dưới ngưỡng. Xem [phần 11](#11-khoảng-trống-đã
 
 ## 4. Chữ
 
-### 4.1 Hai font
+### 4.1 Một font: Be Vietnam Pro (từ 03/10/2026)
 
 | Vai trò | Font | Biến CSS | Class | Weight nạp |
 |---|---|---|---|---|
-| Tiêu đề | **Plus Jakarta Sans** | `--font-heading` | `font-display` | 600, 700, 800 |
-| Thân bài | **Inter** | `--font-body` | mặc định | 400, 500, 600, 700 |
+| Tiêu đề | **Be Vietnam Pro** | `--font-heading` (trỏ về `--font-body`) | `font-display` | 700 |
+| Thân bài, nhãn, nút | **Be Vietnam Pro** | `--font-body` | mặc định | 400, 500, 600 |
 
-Cả hai nạp qua `next/font/google` trong `src/app/layout.tsx` với subset
-`["latin", "latin-ext", "vietnamese"]` — **subset `vietnamese` là bắt buộc**,
-thiếu nó thì dấu tiếng Việt rơi về font hệ thống và tiêu đề trông vỡ.
+Thay cặp Plus Jakarta Sans + Inter sau audit UX/UI 03/10/2026, theo lựa chọn của
+tác giả: một họ gọn hơn hai, và Be Vietnam Pro (Lâm Bảo, Tony Le, ViệtAnh
+Nguyễn, OFL) vẽ dấu tiếng Việt theo dạng thích ứng thay vì gắn thêm vào chữ
+Latin. Tự host bốn file tĩnh trong `src/app/fonts/` (67 KB), cắt về đúng
+unicode-range `latin` + `vietnamese` của Google — cách dựng ghi trong
+`src/app/layout.tsx`. `font-extrabold` không có file riêng và hiện bằng 700; đừng
+dùng nó cho chữ mới. Ảnh OG (`app/opengraph-image.tsx`) dùng cùng họ font, cắt về
+đúng các ký tự của tên site + tagline trong `assets/og-*.woff`.
 
 ### 4.2 Thang chữ
 
 | Cấp | Class | Kích thước | Ghi chú |
 |---|---|---|---|
-| H1 hero (trang chủ) | `font-display text-4xl font-extrabold tracking-tight sm:text-5xl 2xl:text-6xl` | 36 → 48 → 60px | Chỉ dùng một lần, trên trang chủ |
-| H1 trang | `font-display text-3xl font-extrabold sm:text-4xl` | 30 → 36px | Chuẩn của `PageHeader` |
-| H2 khối lớn | `font-display text-2xl font-extrabold sm:text-3xl xl:text-4xl` | 24 → 30 → 36px | Đầu mỗi section trang chủ |
+| H1 hero (trang chủ) | `font-display text-4xl font-bold sm:text-5xl 2xl:text-6xl` | 36 → 48 → 60px | Chỉ dùng một lần, trên trang chủ |
+| H1 trang | `font-display text-3xl font-bold sm:text-4xl` | 30 → 36px | Chuẩn của `PageHeader` |
+| H1 bài viết | `font-display text-3xl font-bold sm:text-4xl lg:text-[2.75rem]` | 30 → 36 → 44px | Trang đọc: tiêu đề phải lớn hơn hẳn thân bài 18px |
+| H2 khối lớn | `font-display text-2xl font-bold sm:text-3xl xl:text-4xl` | 24 → 30 → 36px | Đầu mỗi section trang chủ |
 | H2 thường | `font-display text-xl font-bold` | 20px | Trong bài viết, trong panel |
 | H3 | `font-display text-lg font-bold` | 18px | |
 | Tiêu đề thẻ | `font-display text-base font-bold leading-snug` | 16px | `PostCard` |
@@ -158,23 +173,26 @@ thiếu nó thì dấu tiếng Việt rơi về font hệ thống và tiêu đ�
 | Vi nhãn | `text-[11px]` | 11px | CHỈ badge/chip ngắn trên nền màu (tag thẻ, loại tài khoản, VIDEO, surcharge) |
 
 Quy tắc: **mọi tiêu đề đều có `font-display`**. Chữ không phải tiêu đề không bao
-giờ dùng `font-display`.
+giờ dùng `font-display`. Tiêu đề **đậm 700, không giãn chữ âm** (`tracking-tight`
+đã bỏ), và **viết hoa đầu câu** — "Thẻ tín dụng đáng chú ý", không phải "Thẻ Tín
+Dụng Đáng Chú Ý"; tên riêng, thương hiệu và tên công cụ (Award Flight Finder,
+Transfer Partners) giữ nguyên. Giãn dòng của `text-2xl` → `text-6xl` đặt ở
+`@theme` (1.3 → 1.18) vì chữ hoa tiếng Việt chồng dấu trên lẫn dưới.
 
 **Sàn 12px cho chữ dữ liệu** (03/10/2026): tên hãng, số miles, đơn vị điểm, ghi
 chú dưới con số — thứ người đọc cần đọc để quyết định — không nhỏ hơn
 `text-xs`. `text-[11px]` chỉ còn cho viên badge viết hoa trên nền màu, và
 `text-[10px]` đã bỏ hẳn. PRODUCT.md: có độc giả lớn tuổi, đọc chủ yếu trên điện thoại.
 
-### 4.3 Nhãn viết hoa
+### 4.3 Nhãn viết hoa — chỉ còn cho nhãn có việc riêng
 
-Mẫu lặp lại xuyên suốt site — nhãn nhỏ, viết hoa, giãn chữ:
+Từ 03/10/2026 **không còn eyebrow** (nhãn nhỏ viết hoa nằm trên tiêu đề) ở
+`PageHeader` và các khối trang chủ: nó chỉ nhắc lại tên mục mà menu đã sáng, và
+thêm một tầng chữ nhỏ viết hoa khó đọc với độc giả lớn tuổi. Trang sâu dùng
+`Breadcrumbs` (`components/ui/breadcrumbs.tsx`) — vừa nói vị trí vừa bấm được.
 
-```tsx
-className="text-xs font-semibold uppercase tracking-wide text-primary"
-```
-
-Dùng cho: chuyên mục bài viết, eyebrow trên `PageHeader`, nhãn HOT TIP,
-`RebateChip`.
+Mẫu `text-xs font-semibold uppercase tracking-wide` chỉ còn cho: chuyên mục trên
+thẻ bài viết, nhãn HOT TIP, `RebateChip`, badge VIDEO/Beta, tiêu đề cột bảng.
 
 ### 4.4 Cỡ chữ gốc tự giãn theo màn hình
 
@@ -257,7 +275,7 @@ Padding ngang **luôn** là `px-4 sm:px-6 lg:px-8`. Không tự nghĩ ra bộ kh
 | Hàng badge / icon + chữ | `gap-2` |
 | Hàng có icon lớn | `gap-3` |
 | Lưới thẻ | `gap-5` |
-| Sau tiêu đề | `mt-1` (eyebrow → H1), `mt-2`, `mt-3` (H1 → đoạn dẫn) |
+| Sau tiêu đề | `mb-3` (breadcrumb → H1), `mt-2`, `mt-3` (H1 → đoạn dẫn) |
 
 ### 5.4 Trên điện thoại (đo 03/10/2026 ở 320, 375 và 375×812 cảm ứng)
 
@@ -422,35 +440,39 @@ Không có ảnh → dùng `MediaPlaceholder` với `tone="navy"`, không để 
 
 | Thành phần | Class | Nghĩa |
 |---|---|---|
-| Ưu đãi cao | `rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700` | Offer đang cao hơn mức thường |
-| `RebateChip` | `rounded-full bg-emerald-100 px-3 py-1 text-sm font-extrabold uppercase tracking-wide text-emerald-700` | Tiền hoàn thêm |
+| Ưu đãi cao | `rounded-full bg-success-soft px-2.5 py-0.5 text-xs font-semibold text-success` | Offer đang cao hơn mức thường |
+| `RebateChip` | `rounded-full bg-success-soft px-3 py-1 text-sm font-bold uppercase tracking-wide text-success` | Tiền hoàn thêm |
 | Loại thẻ | `text-xs font-medium text-muted-foreground` | Trung tính, không có nền |
-| Hết hạn | `text-xs font-medium text-amber-700` | Đồng hồ đang chạy |
+| Hết hạn | `text-xs font-medium text-warning` | Cần chú ý |
 | Badge video | `rounded-full bg-secondary px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-foreground/70` | Bài này là video |
 
 ### 10.5 Hộp HOT TIP — `HotTip`
 
 ```tsx
-"flex gap-2 rounded-md border-l-4 border-emerald-600 bg-emerald-50
- px-3 py-2 leading-relaxed text-emerald-950"
+"flex gap-2 rounded-lg bg-success-soft px-3 py-2 leading-relaxed text-foreground"
 ```
 
-Viền trái dày 4px là dấu hiệu nhận dạng. Nhãn "HOT TIP" là
-`font-extrabold uppercase tracking-wide text-emerald-700`. Prop `compact` hạ
-xuống `text-sm`. Dùng chung cho trang thẻ tín dụng và trang tài khoản ngân hàng.
+Nền xanh nhạt + nhãn "HOT TIP" `font-bold uppercase tracking-wide text-success`
+là dấu hiệu nhận dạng. **Không viền trái dày** (bỏ 03/10/2026, bộ quét thiết kế
+gắn cờ kiểu viền này). HOT TIP phải là thứ nổi nhất trong ô thẻ vì nó là đường
+nhận tiền rebate — làm phẳng các hộp khác, không làm phẳng hộp này. Prop
+`compact` hạ xuống `text-sm`. Dùng chung cho trang thẻ tín dụng và trang tài
+khoản ngân hàng.
 
 ### 10.6 Đầu trang — `PageHeader`
 
 ```tsx
-"border-b border-border bg-secondary px-4 py-12 sm:px-6 lg:px-8"
+"border-b border-border px-4 pb-8 pt-10 sm:px-6 lg:px-8"
 ```
 
-Ba tầng: eyebrow (`text-xs font-semibold tracking-wide text-primary`) → H1
-(`text-balance font-display text-3xl font-extrabold sm:text-4xl`) → phụ đề
-(`mt-3 max-w-2xl text-base text-muted-foreground`).
+Không nền riêng (bỏ dải beige 03/10/2026). Ba tầng: `breadcrumbs` (chỉ trang
+sâu — các bậc PHÍA TRÊN trang này, khớp `breadcrumbJsonLd` của trang) → H1
+(`text-balance font-display text-3xl font-bold sm:text-4xl`, nhãn Beta đứng
+ngay sau) → phụ đề (`mt-3 max-w-2xl text-base text-muted-foreground`). Không còn
+prop `eyebrow`.
 
-`text-balance` để một tiêu đề như "Thẻ Tín Dụng Đáng Chú Ý" không bị rớt một
-chữ đơn độc xuống dòng dưới.
+Trang chi tiết không dùng `PageHeader` (thẻ, tài khoản, thẻ Mỹ, bài viết) mở đầu
+bằng `<Breadcrumbs>` ở cùng chỗ, thay cho link "← Xem tất cả…" cũ.
 
 **Mọi trang không phải trang chủ đều mở đầu bằng component này.**
 
@@ -500,10 +522,8 @@ sửa hàng loạt nếu không có lý do cụ thể.**
 1. **Tương phản nav 3.9:1** — `text-foreground/55` cho mục nav không active thấp
    hơn chuẩn AA (4.5:1). Đổi lên `/65` sẽ đạt ~4.6:1 mà vẫn giữ được thứ tự thị
    giác. Chưa đổi vì cần nhìn tận mắt để chắc mục đang mở vẫn nổi bật hơn.
-2. **Màu trạng thái không có token** — `emerald`/`amber` lấy thẳng từ palette
-   Tailwind, nằm rải trong các file `.tsx`. Muốn đổi tông xanh của toàn site thì
-   phải sửa nhiều chỗ. Cách sửa: thêm `--success` / `--warning` vào `globals.css`
-   khi nào thật sự cần đổi.
+2. ~~Màu trạng thái không có token~~ — đã có `--success`, `--warning`,
+   `--destructive` (+ `-soft`) từ 03/10/2026, xem 3.2.
 3. **Chưa có lớp component token** — mọi thứ dùng utility Tailwind trực tiếp.
    Đúng cho quy mô hiện tại; chỉ cần thêm khi có nhiều biến thể của cùng một
    thành phần.
@@ -523,7 +543,9 @@ sửa hàng loạt nếu không có lý do cụ thể.**
 - [ ] Mọi viền dùng `border-border` — không có màu viền tùy ý
 - [ ] Nút "Đăng ký ngay" dùng `<ApplyButton>`, không viết lại
 - [ ] Mẹo kiếm điểm dùng `<HotTip>`, không tự dựng hộp xanh mới
-- [ ] Xanh lá chỉ dành cho tiền/ưu đãi; hổ phách chỉ dành cho hạn chót
+- [ ] Màu trạng thái qua token: `success` có lợi, `warning` cần chú ý, `destructive` bất lợi; tên thì trung tính
+- [ ] Không eyebrow trên tiêu đề; trang sâu dùng `Breadcrumbs`; tiêu đề viết hoa đầu câu, đậm 700
+- [ ] Không hộp nền kem lồng trong ô thẻ trắng; không dải nền xen kẽ giữa các section
 - [ ] Kích thước đo bằng `rem`/class Tailwind, không phải `px` cứng
 - [ ] Ô nhập dưới 16px có `pointer-coarse:text-base` (không thì iPhone phóng to cả trang)
 - [ ] Chữ mang dữ liệu ≥ `text-xs`; `text-[11px]` chỉ cho badge

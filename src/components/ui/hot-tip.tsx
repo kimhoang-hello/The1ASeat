@@ -7,17 +7,20 @@ const offers = translate("offers");
  *
  * Trước đây nó nằm chôn trong EditorsTake và chỉ trang thẻ tín dụng dùng
  * được. Tách ra đây để tài khoản ngân hàng dùng đúng cái hộp đó: cùng màu,
- * cùng viền trái, cùng chữ nhãn — người đọc đã học nghĩa của hộp xanh này ở
- * trang thẻ thì sang trang ngân hàng không phải học lại.
+ * cùng chữ nhãn — người đọc đã học nghĩa của hộp xanh này ở trang thẻ thì sang
+ * trang ngân hàng không phải học lại.
+ *
+ * KHÔNG viền trái dày (bỏ 03/10/2026): nền xanh nhạt + nhãn đậm đã đủ nổi, và
+ * đây phải là thứ nổi nhất trong ô thẻ vì nó là đường nhận tiền rebate.
  */
 export function HotTip({ children, compact = false }: { children: React.ReactNode; compact?: boolean }) {
   return (
     <p
-      className={`flex gap-2 rounded-md border-l-4 border-emerald-600 bg-emerald-50 px-3 py-2 leading-relaxed text-emerald-950 ${
+      className={`flex gap-2 rounded-lg bg-success-soft px-3 py-2 leading-relaxed text-foreground ${
         compact ? "text-sm" : ""
       }`}
     >
-      <span className="shrink-0 font-extrabold uppercase tracking-wide text-emerald-700">
+      <span className="shrink-0 font-bold uppercase tracking-wide text-success">
         {offers("hotTip")}
       </span>
       <span>{children}</span>
@@ -47,7 +50,7 @@ export function RebateChip({
 }) {
   return (
     <span
-      className={`whitespace-nowrap rounded-full bg-emerald-100 px-3 py-1 text-sm font-extrabold uppercase tracking-wide text-emerald-700 ${className}`}
+      className={`whitespace-nowrap rounded-full bg-success-soft px-3 py-1 text-sm font-bold uppercase tracking-wide text-success ${className}`}
     >
       +{amount} {label}
     </span>

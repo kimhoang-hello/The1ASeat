@@ -22,7 +22,7 @@ export function LegalPage({
 }) {
   return (
     <article className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
-      <h1 className="text-balance font-display text-3xl font-extrabold text-foreground">{title}</h1>
+      <h1 className="text-balance font-display text-3xl font-bold text-foreground">{title}</h1>
       <p className="mt-3 text-sm text-muted-foreground">Cập nhật lần cuối: {updated}</p>
       <div className="prose prose-neutral mt-8 max-w-none prose-headings:font-display prose-headings:text-foreground prose-h2:mt-10 prose-h2:text-xl prose-a:text-primary">
         {children}

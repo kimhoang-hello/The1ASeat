@@ -35,7 +35,7 @@ export default async function TransferBonusesPage() {
 
   return (
     <>
-      <PageHeader eyebrow={bonuses_t("pageEyebrow")} title={bonuses_t("title")} />
+      <PageHeader title={bonuses_t("title")} />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-page overflow-hidden rounded-2xl border border-border">
@@ -75,10 +75,10 @@ export default async function TransferBonusesPage() {
                 {bonus.note && <p className="text-xs text-muted-foreground">{bonus.note}</p>}
               </div>
               <div className="flex items-center gap-4 text-sm">
-                <span className="font-medium text-amber-700">
+                <span className="font-medium text-warning">
                   {bonuses_t("expires")} {formatDate(bonus.expiresAt)}
                 </span>
-                <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700">
+                <span className="rounded-full bg-success-soft px-2.5 py-1 text-xs font-bold text-success">
                   +{bonus.bonusPercent}%
                 </span>
               </div>

@@ -135,7 +135,7 @@ export default async function VietnamRoutePage({
     <>
       <JsonLd data={jsonLd} />
       <PageHeader
-        eyebrow={r("eyebrow")}
+        breadcrumbs={[{ label: seo("breadcrumbVietnamRoutes"), href: VIETNAM_ROUTES_BASE }]}
         title={r("title", { origin: route.originName, destination: route.destinationName })}
         subtitle={r("subtitle", {
           origin: route.originName,
@@ -148,19 +148,12 @@ export default async function VietnamRoutePage({
 
       <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
         {!VIETNAM_ROUTES_PUBLISHED && (
-          <p className="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+          <p className="mb-6 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3 text-sm font-semibold text-warning">
             {r("draftNotice")}
           </p>
         )}
 
-        <Link
-          href={VIETNAM_ROUTES_BASE}
-          className="text-sm font-semibold text-primary hover:underline"
-        >
-          &larr; {r("hubLabel")}
-        </Link>
-
-        <h2 className="mt-8 font-display text-xl font-bold text-foreground">
+        <h2 className="font-display text-xl font-bold text-foreground">
           {r("cheapestHeading")}
         </h2>
         <div className="mt-3">

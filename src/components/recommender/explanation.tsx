@@ -57,7 +57,7 @@ const BASIS_LABEL: Record<FactBasis, string> = {
 };
 
 const BASIS_STYLE: Record<FactBasis, string> = {
-  verified: "bg-emerald-50 text-emerald-800",
-  estimate: "bg-amber-50 text-amber-900",
+  verified: "bg-success-soft text-success",
+  estimate: "bg-warning-soft text-warning",
   editorial: "bg-muted text-muted-foreground",
 };

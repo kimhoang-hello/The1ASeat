@@ -58,7 +58,7 @@ export function ContactForm() {
           tabIndex={-1}
           className="flex items-center gap-2 rounded-xl bg-secondary px-5 py-4 text-sm font-medium text-foreground outline-none"
         >
-          <CheckCircle size={20} weight="fill" className="shrink-0 text-emerald-500" />
+          <CheckCircle size={20} weight="fill" className="shrink-0 text-success" />
           {t("sent")}
         </div>
 

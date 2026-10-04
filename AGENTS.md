@@ -2817,3 +2817,34 @@ lộ trình, font Be Vietnam Pro, gỡ bình luận, menu sáu mục).
 - Form bản tin: 429 báo số phút chờ theo `Retry-After`, 400 báo email sai định dạng.
 - Bài `everything-about-asia-miles` vào `POSTS_WITHOUT_DEADLINE` (01/03/2026 là mốc
   lịch sử).
+
+## Audit UX/UI 03/10/2026 — đợt 1: hệ thị giác — đừng đề xuất lại
+
+Tác giả chọn: làm cả lộ trình, font Be Vietnam Pro. Luật đầy đủ ở DESIGN-SYSTEM.md
+(1, 3.2, 4.1–4.3, 10.4–10.6, 12).
+
+- **Một font Be Vietnam Pro, bốn file tĩnh 400/500/600/700** (67 KB, tự host, cắt
+  latin + vietnamese). `--font-heading` trỏ về `--font-body`. 800 KHÔNG có file —
+  `font-extrabold` hiện bằng 700, đừng thêm file 800 lại. Mũi tên → không có trong
+  font (cũng không có trong bộ cũ). Ảnh OG dùng cùng họ font, subset theo đúng chữ
+  trên ảnh — đổi tagline/tên site là phải cắt lại `assets/og-*.woff`.
+- **Ba token trạng thái** `success` / `warning` / `destructive` (+ `-soft`), mỗi
+  màu MỘT nghĩa: có lợi/chắc chắn — cần chú ý — bất lợi/lỗi. Chip TÊN nguồn điểm và ô
+  tỷ lệ `/transfer-partners` trung tính (`bg-secondary`). Không còn emerald/amber của
+  Tailwind hay hex thô; ngoại lệ duy nhất `text-red-300` trên nền navy.
+- **Viết hoa đầu câu** cho mọi tiêu đề tiếng Việt (messages/vi.json); tên công cụ
+  và thương hiệu giữ nguyên. Tiêu đề đậm 700, không `tracking-tight`; giãn dòng
+  `text-2xl`→`text-6xl` đặt ở `@theme` (1.3→1.18) cho dấu tiếng Việt.
+- **Không eyebrow.** `PageHeader` mất prop `eyebrow` và dải nền beige; trang sâu
+  truyền `breadcrumbs` (bậc phía trên, khớp `breadcrumbJsonLd`). Trang chi tiết
+  (thẻ, tài khoản, thẻ Mỹ, bài viết) mở đầu bằng `<Breadcrumbs>` thay cho "← Xem
+  tất cả…". Bài viết: "Blog › <chuyên mục>" thay cả link quay lại lẫn nhãn chuyên
+  mục trên H1; H1 bài 30→36→44px.
+- **Một nền, một bề mặt.** Không dải nền kem/beige xen kẽ ở trang chủ; dải "Bắt
+  đầu ở đây" thành một thẻ trắng có viền (vẫn là thứ dễ nhận ra nhất dưới hero).
+  Trong ô thẻ: `EditorsTake` không còn hộp kem (nhãn "Ghế 1A đánh giá" + đoạn văn),
+  `OfferStats` dùng hai đường kẻ mảnh thay hộp, ảnh thẻ không còn ô nền kem.
+  `HotTip` GIỮ nền xanh nhạt + nhãn đậm (đường nhận tiền rebate phải nổi nhất), chỉ
+  bỏ viền trái dày.
+- Cố ý KHÔNG làm ở đợt này: gom bo góc về ba cấp (Codex: lựa chọn làm gọn, không
+  phải lỗi), emoji cờ trên menu (tác giả chưa chốt).

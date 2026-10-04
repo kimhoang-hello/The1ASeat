@@ -73,7 +73,11 @@ export default async function CompareCardsPage({
   return (
     <>
       <JsonLd data={jsonLd} />
-      <PageHeader eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} />
+      <PageHeader
+        breadcrumbs={[{ label: seo("breadcrumbCreditCards"), href: "/credit-cards" }]}
+        title={t("title")}
+        subtitle={t("subtitle")}
+      />
 
       <section className="px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-page space-y-6">

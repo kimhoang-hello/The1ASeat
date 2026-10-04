@@ -103,7 +103,13 @@ export function NewsletterForm({
           variant === "dark" ? "bg-white/10 text-white" : "bg-secondary text-foreground"
         }`}
       >
-        <CheckCircle size={18} weight="fill" className="text-emerald-500 shrink-0" />
+        {/* Trên nền navy (`variant="dark"`), xanh đậm `text-success` chỉ còn
+            ~2:1 — dùng tông xanh nhạt của chính token đó. */}
+        <CheckCircle
+          size={18}
+          weight="fill"
+          className={`shrink-0 ${variant === "dark" ? "text-success-soft" : "text-success"}`}
+        />
         {t("subscribed")}
       </div>
     );

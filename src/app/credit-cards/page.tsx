@@ -123,7 +123,7 @@ export default async function CreditCardsPage({
   return (
     <>
       <JsonLd data={jsonLd} />
-      <PageHeader eyebrow={offers_t("pageEyebrow")} title={offers_t("title")} />
+      <PageHeader title={offers_t("title")} />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         {/* `flex-wrap` + `whitespace-nowrap`: không có hai lớp này thì ba viên

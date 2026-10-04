@@ -62,11 +62,11 @@ export default function VietnamRoutesHubPage() {
   return (
     <>
       <JsonLd data={jsonLd} />
-      <PageHeader eyebrow={r("eyebrow")} title={r("hubTitle")} subtitle={r("hubSubtitle")} />
+      <PageHeader title={r("hubTitle")} subtitle={r("hubSubtitle")} />
 
       <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
         {!VIETNAM_ROUTES_PUBLISHED && (
-          <p className="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+          <p className="mb-6 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3 text-sm font-semibold text-warning">
             {r("draftNotice")}
           </p>
         )}

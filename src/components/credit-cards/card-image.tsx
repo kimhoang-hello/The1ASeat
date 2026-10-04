@@ -67,14 +67,14 @@ export function CardImage({
   return (
     <div className={`relative ${className}`}>
       {image ? (
-        <div className="absolute inset-0 overflow-hidden rounded-[inherit] bg-secondary">
+        <div className="absolute inset-0 overflow-hidden rounded-[inherit]">
           <Image
             src={image}
             alt={name}
             fill
             sizes={sizes}
             preload={preload}
-            className="object-contain p-3"
+            className="object-contain p-1"
           />
         </div>
       ) : (

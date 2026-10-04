@@ -1,3 +1,5 @@
+import { Breadcrumbs, type Crumb } from "@/components/ui/breadcrumbs";
+
 /**
  * Dải tiêu đề của một trang. Bề ngang LUÔN là `max-w-page`, không có prop nào
  * đổi được.
@@ -8,32 +10,31 @@
  * nhảy vào giữa màn hình trong khi mọi trang khác vẫn nằm sát trái. Hai mép
  * trái lệch nhau trong một trang là chuyện nhỏ; tên trang mỗi trang một chỗ
  * khi bấm qua lại giữa các mục là chuyện lớn hơn.
+ *
+ * Từ 03/10/2026 (audit UX/UI): không còn dải nền beige và không còn eyebrow
+ * viết hoa. Trang sâu truyền `breadcrumbs` (các bậc phía trên trang này); trang
+ * cấp một thì không có gì phía trên H1. Nhãn Beta đứng ngay sau H1.
  */
 export function PageHeader({
-  eyebrow,
+  breadcrumbs = [],
   badge,
   title,
   subtitle,
 }: {
-  eyebrow?: string;
-  /** Nhãn đứng cạnh eyebrow — hôm nay chỉ có `<BetaBadge />`. */
+  breadcrumbs?: Crumb[];
+  /** Nhãn đứng sau tiêu đề — hôm nay chỉ có `<BetaBadge />`. */
   badge?: React.ReactNode;
   title: string;
   subtitle?: string;
 }) {
   return (
-    <div className="border-b border-border bg-secondary px-4 py-12 sm:px-6 lg:px-8">
+    <div className="border-b border-border px-4 pb-8 pt-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-page">
-        {(eyebrow || badge) && (
-          <p className="flex items-center gap-2 text-xs font-semibold tracking-wide text-primary">
-            {eyebrow}
-            {badge}
-          </p>
-        )}
-        {/* text-balance so a title like "Thẻ Tín Dụng Đáng Chú Ý" does not
-            wrap with its last character stranded alone on the second line. */}
-        <h1 className="mt-1 text-balance font-display text-3xl font-extrabold text-foreground sm:text-4xl">
+        <Breadcrumbs items={breadcrumbs} className="mb-1" />
+        {/* text-balance để tiêu đề hai dòng không bỏ lại một chữ đơn độc. */}
+        <h1 className="text-balance font-display text-3xl font-bold text-foreground sm:text-4xl">
           {title}
+          {badge && <span className="ml-3 inline-block align-middle">{badge}</span>}
         </h1>
         {subtitle && (
           <p className="mt-3 max-w-2xl text-base text-muted-foreground">{subtitle}</p>

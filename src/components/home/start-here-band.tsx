@@ -14,11 +14,11 @@ const t = translate("startHereBand");
  * đăng ký thì bản tin giữ nguyên vị trí số một, còn người chưa biết bắt đầu từ
  * đâu vẫn gặp lối đi trước khi gặp danh sách thẻ.
  *
- * MÀU: `bg-secondary` (#F1E9D8) giữa hai khối `bg-background` (#FAF6EC). Đây
- * là cách duy nhất một dải ngang tự tách ra khỏi trang khi nó không có ảnh và
- * không có viền dày — hero ở trên và offers ở dưới cùng một nền, nên chỉ cần
- * đổi nền một bậc là mắt đọc ra ba khối chứ không phải một dải dài. Viền trên
- * dưới để mép dải sắc ở chỗ hai màu gần nhau.
+ * MÀU: từ 03/10/2026 là MỘT TẤM THẺ TRẮNG nằm trên nền kem, không còn dải
+ * beige chạy hết bề ngang. Trang chủ bỏ kiểu nền kẻ sọc (kem/beige xen kẽ bảy
+ * dải), nên cửa này phải tự tách khỏi trang bằng cách khác: một bề mặt trắng có
+ * viền là vật thể riêng giữa hai khối cùng nền kem — vẫn là thứ dễ nhận ra nhất
+ * ngay dưới hero, đúng yêu cầu khi chốt dải này.
  *
  * KHOẢNG TRẮNG: `pb` của hero rút từ 80px xuống 56px cho bằng `pt` của dải này.
  * Hai khối đứng liền nhau thì khoảng trắng của chúng cộng dồn, không phải cái
@@ -33,10 +33,9 @@ const t = translate("startHereBand");
  */
 export function StartHereBand() {
   return (
-    <section className="border-y border-border bg-secondary px-4 py-14 sm:px-6 lg:px-8 2xl:py-16">
-      <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
-        <p className="text-xs font-semibold tracking-wide text-primary">{t("eyebrow")}</p>
-        <h2 className="mt-1 font-display text-2xl font-extrabold text-foreground sm:text-3xl">
+    <section className="px-4 pb-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-3xl flex-col items-center rounded-2xl border border-border bg-card px-5 py-10 text-center sm:px-10 2xl:py-12">
+        <h2 className="font-display text-2xl font-bold text-foreground sm:text-3xl">
           {t("title")}
         </h2>
         <p className="mt-3 text-balance text-base leading-relaxed text-foreground/90 sm:text-lg">

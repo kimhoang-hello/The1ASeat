@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
@@ -117,12 +118,9 @@ export default async function CreditCardDetailPage({
        `xl` cái thứ hai đó nằm ngay dưới khối bonus + phí (`card_detail_top`). */
     <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8 xl:max-w-[68rem]">
       <JsonLd data={jsonLd} />
-      <Link
-        href="/credit-cards"
-        className="text-sm font-semibold text-primary hover:underline"
-      >
-        &larr; {offers("viewAll")}
-      </Link>
+      {/* Breadcrumb thay cho "← Xem tất cả thẻ" (03/10/2026): mọi trang sâu
+          của site nói vị trí cùng một kiểu. Khớp `breadcrumbJsonLd` ở trên. */}
+      <Breadcrumbs items={[{ label: seo("breadcrumbCreditCards"), href: "/credit-cards" }]} />
 
       <div className="xl:grid xl:grid-cols-[22rem_minmax(0,1fr)] xl:gap-12">
         <div className="mt-6 xl:self-start xl:tall:sticky xl:tall:top-chrome">
@@ -185,7 +183,7 @@ export default async function CreditCardDetailPage({
             />
           </div>
 
-          <h1 className="mt-2 font-display text-3xl font-extrabold text-foreground">
+          <h1 className="mt-2 font-display text-3xl font-bold text-foreground">
             {offer.name}
           </h1>
           <OfferStats offer={offer} className="mt-4" />

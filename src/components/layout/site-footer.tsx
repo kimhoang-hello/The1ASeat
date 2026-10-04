@@ -22,7 +22,7 @@ export function SiteFooter() {
         <div className="flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href="/"
-            className="flex items-center gap-2 font-display text-lg font-extrabold text-white xl:text-xl"
+            className="flex items-center gap-2 font-display text-lg font-bold text-white xl:text-xl"
           >
             <span className="flex h-8 w-8 items-center justify-center rounded-md bg-background xl:h-9 xl:w-9">
               <Image

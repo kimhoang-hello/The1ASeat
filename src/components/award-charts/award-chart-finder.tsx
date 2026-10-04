@@ -28,8 +28,8 @@ const CONFIDENCE_LABELS: Record<Program["confidence"], string> = {
 };
 
 const CONFIDENCE_STYLES: Record<Program["confidence"], string> = {
-  published: "bg-[#e7f2ea] text-[#1f6f43]",
-  unpublished: "bg-[#fdf1d8] text-[#8a5a10]",
+  published: "bg-success-soft text-success",
+  unpublished: "bg-warning-soft text-warning",
   unquotable: "bg-secondary text-muted-foreground",
 };
 
@@ -40,9 +40,9 @@ const SURCHARGE_LABELS = {
 } as const;
 
 const SURCHARGE_STYLES = {
-  low: "text-[#1f6f43]",
-  medium: "text-[#8a5a10]",
-  high: "text-[#a3352b]",
+  low: "text-success",
+  medium: "text-warning",
+  high: "text-destructive",
 } as const;
 
 function isCabin(value: string | null): value is Cabin {
@@ -76,8 +76,11 @@ function readParams(params: URLSearchParams): Selection {
 function TransferLegs({ program }: { program: Program }) {
   const row = TRANSFER_PARTNERS.find((p) => p.program === program.transferPartnerKey);
   const legs = [
-    { issuer: "Amex® MR", leg: row?.amex ?? null, tint: "bg-[#e7f2ea] text-[#1f6f43]" },
-    { issuer: "RBC® Avion®", leg: row?.rbc ?? null, tint: "bg-[#fdf1d8] text-[#8a5a10]" },
+    // Chip TÊN nguồn điểm: trung tính. Xanh/hổ phách ở công cụ này là độ chắc
+    // chắn của bảng giá (`CONFIDENCE_STYLES`) — trước đây chip RBC® mang đúng
+    // màu "chưa công bố", nên một cái tên trông như một lời cảnh báo.
+    { issuer: "Amex® MR", leg: row?.amex ?? null, tint: "bg-secondary text-foreground" },
+    { issuer: "RBC® Avion®", leg: row?.rbc ?? null, tint: "bg-secondary text-foreground" },
   ].filter((entry) => entry.leg !== null);
 
   if (legs.length === 0) {
@@ -208,7 +211,7 @@ function Price({
 
   return (
     <>
-      <p className="font-display text-2xl font-extrabold text-primary sm:text-3xl">
+      <p className="font-display text-2xl font-bold text-primary sm:text-3xl">
         {startingAt && <span className="mr-1.5 text-base font-semibold">{t("fromPrefix")}</span>}
         {formatPoints(points!)}
       </p>
@@ -309,7 +312,7 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
         <p
           className={`mt-4 rounded-lg border px-3 py-2 text-xs font-medium leading-relaxed ${
             quote.routeNoteTone === "highlight"
-              ? "border-[#8a5a10]/30 bg-[#fdf1d8] text-[#8a5a10]"
+              ? "border-warning/30 bg-warning-soft text-warning"
               : "border-border bg-secondary text-foreground/80"
           }`}
         >
@@ -523,7 +526,7 @@ function FinderView({
         <p className="mt-4 text-xs text-muted-foreground">{t("verifiedOn", { date: formatDate(verifiedOn) })}</p>
 
         <div className="mt-6 flex gap-3 rounded-xl border border-border bg-secondary p-4">
-          <WarningCircle size={20} weight="fill" className="mt-0.5 shrink-0 text-[#a3352b]" aria-hidden />
+          <WarningCircle size={20} weight="fill" className="mt-0.5 shrink-0 text-destructive" aria-hidden />
           <div>
             <p className="text-sm font-semibold text-foreground">{t("disclaimerHeading")}</p>
             <p className="mt-1 max-w-prose text-xs leading-relaxed text-muted-foreground">{t("disclaimer")}</p>

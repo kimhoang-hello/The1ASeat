@@ -15,7 +15,7 @@ function Figure({ value, label, muted }: { value: string; label: string; muted?:
   return (
     <div>
       <p
-        className={`font-display text-2xl font-extrabold leading-tight ${
+        className={`font-display text-2xl font-bold leading-tight ${
           muted ? "text-foreground" : "text-primary"
         }`}
       >
@@ -37,7 +37,9 @@ export function OfferStats({
 
   return (
     <div className={className}>
-      <div className="flex flex-wrap items-end justify-between gap-4 rounded-xl bg-secondary/70 px-4 py-3">
+      {/* Hai đường kẻ mảnh thay cho hộp nền kem (03/10/2026): con số vẫn tách
+          khỏi phần chữ quanh nó mà không thêm một bề mặt nữa trong ô thẻ. */}
+      <div className="flex flex-wrap items-end justify-between gap-4 border-y border-border py-3">
         {offer.welcomeBonus ? (
           <>
             <Figure value={offer.welcomeBonus} label={offers("welcomeBonus")} />

@@ -43,12 +43,12 @@ export default function CatchThePointsPage() {
           { name: seo("breadcrumbCatchThePoints"), path: CATCH_THE_POINTS_PATH },
         ])}
       />
-      <PageHeader eyebrow={game("eyebrow")} title={game("title")} subtitle={game("subtitle")} />
+      <PageHeader title={game("title")} subtitle={game("subtitle")} />
 
       <section className="px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-page">
           {!CATCH_THE_POINTS_PUBLISHED && (
-            <p className="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+            <p className="mb-6 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3 text-sm font-semibold text-warning">
               {game("draftNotice")}
             </p>
           )}

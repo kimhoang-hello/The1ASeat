@@ -12,14 +12,11 @@ export async function PostsSection() {
   const posts = allPosts.slice(0, 12);
 
   return (
-    <section className="border-t border-border bg-secondary px-4 py-16 sm:px-6 lg:px-8">
+    <section className="border-t border-border bg-background px-4 py-16 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-page">
         <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold tracking-wide text-primary sm:text-sm">
-              {t("eyebrow")}
-            </p>
-            <h2 className="mt-1 font-display text-2xl font-extrabold text-foreground sm:text-3xl xl:text-4xl">
+            <h2 className="font-display text-2xl font-bold text-foreground sm:text-3xl xl:text-4xl">
               {t("title")}
             </h2>
           </div>

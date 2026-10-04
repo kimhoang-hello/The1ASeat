@@ -78,7 +78,7 @@ export function UsCardSummary({ card }: { card: UsCreditCardOffer }) {
         <CardTags tags={card.us.tags} className="mt-3" />
 
         {card.us.needsVerification && (
-          <p className="mt-3 text-xs font-medium text-amber-700">{us("sampleBadge")}</p>
+          <p className="mt-3 text-xs font-medium text-warning">{us("sampleBadge")}</p>
         )}
 
         <div className="mt-auto flex flex-wrap items-center gap-4 pt-4">
@@ -139,7 +139,7 @@ export function UsCardElevated({ card }: { card: UsCreditCardOffer }) {
           <p className="mt-1 text-sm font-semibold leading-snug text-primary">{card.welcomeBonus}</p>
         )}
         {card.expiresAt && !hasExpired(card.expiresAt) && (
-          <p className="mt-1 text-xs font-medium text-amber-700">
+          <p className="mt-1 text-xs font-medium text-warning">
             {offers_t("expiresOn")} {formatDate(card.expiresAt)}
           </p>
         )}

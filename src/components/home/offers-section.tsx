@@ -37,8 +37,7 @@ export async function OffersSection() {
       <div className="mx-auto max-w-page">
         <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold tracking-wide text-primary">{t("eyebrow")}</p>
-            <h2 className="mt-1 font-display text-2xl font-extrabold text-foreground sm:text-3xl">
+            <h2 className="font-display text-2xl font-bold text-foreground sm:text-3xl">
               {t("title")}
             </h2>
           </div>

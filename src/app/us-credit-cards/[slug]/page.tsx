@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { CardImage, applyOverlay } from "@/components/credit-cards/card-image";
@@ -123,9 +124,7 @@ export default async function UsCreditCardDetailPage({
       <UsCardsBetaNotice />
       <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8 xl:max-w-[68rem]">
         <JsonLd data={jsonLd} />
-        <Link href={US_CARDS_BASE} className="text-sm font-semibold text-primary hover:underline">
-          &larr; {us("viewAll")}
-        </Link>
+        <Breadcrumbs items={[{ label: seo("breadcrumbUsCards"), href: US_CARDS_BASE }]} />
 
         <div className="xl:grid xl:grid-cols-[22rem_minmax(0,1fr)] xl:gap-12">
           <div className="mt-6 xl:self-start xl:tall:sticky xl:tall:top-chrome">
@@ -166,7 +165,7 @@ export default async function UsCreditCardDetailPage({
               />
             </div>
 
-            <h1 className="mt-2 wrap-anywhere font-display text-3xl font-extrabold text-foreground">
+            <h1 className="mt-2 wrap-anywhere font-display text-3xl font-bold text-foreground">
               {card.name}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -230,7 +229,7 @@ export default async function UsCreditCardDetailPage({
 
             <p
               className={`mt-4 text-xs ${
-                card.us.needsVerification ? "font-medium text-amber-700" : "text-muted-foreground"
+                card.us.needsVerification ? "font-medium text-warning" : "text-muted-foreground"
               }`}
             >
               {card.us.verifiedOn

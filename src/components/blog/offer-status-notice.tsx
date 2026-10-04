@@ -60,8 +60,8 @@ export function OfferStatusNotice({
   }
 
   return (
-    <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950">
-      <Prohibit size={18} weight="fill" className="mt-0.5 shrink-0 text-amber-700" aria-hidden />
+    <div className="mt-4 flex items-start gap-2 rounded-xl border border-warning/30 bg-warning-soft px-4 py-3 text-sm leading-relaxed text-foreground">
+      <Prohibit size={18} weight="fill" className="mt-0.5 shrink-0 text-warning" aria-hidden />
       <p>
         <span className="font-semibold">{posts_t("offerEnded", { date })}</span>{" "}
         <Link href={cta.href} className="font-semibold text-primary hover:underline">

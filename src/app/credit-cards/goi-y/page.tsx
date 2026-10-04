@@ -97,8 +97,8 @@ export default async function RecommenderPage({ searchParams }: PageProps) {
           không ai ngoài mình nên đọc; đã công bố thì nó là bản BETA — người đọc
           có quyền biết công cụ còn mới và mình vẫn đang chỉnh, và biết gửi mã
           tra cứu ở cuối trang khi thấy kết quả sai. */}
-      <p className="flex flex-wrap items-center justify-center gap-2 border-b border-amber-300 bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-900 sm:px-6 lg:px-8">
-        <BetaBadge className="bg-amber-100 text-amber-900" />
+      <p className="flex flex-wrap items-center justify-center gap-2 border-b border-warning/30 bg-warning-soft px-4 py-3 text-center text-sm font-semibold text-warning sm:px-6 lg:px-8">
+        <BetaBadge className="bg-warning-soft text-warning" />
         {RECOMMENDER_PUBLISHED
           ? "Công cụ còn mới, vẫn đang trong giai đoạn BETA và cần được chỉnh sửa thêm."
           : "Bản nháp — công cụ đang thử, nội dung có thể đổi."}
@@ -106,7 +106,7 @@ export default async function RecommenderPage({ searchParams }: PageProps) {
       <JsonLd data={jsonLd} />
       <RecommenderFunnelTracker />
       <PageHeader
-        eyebrow={nav("creditCards").toUpperCase()}
+        breadcrumbs={[{ label: nav("creditCards"), href: "/credit-cards" }]}
         badge={<BetaBadge />}
         title="Gợi ý thẻ cho mục tiêu của bạn"
         subtitle="Trả lời vài câu hỏi để mình đưa gợi ý về thẻ nào tiếp theo phù hợp với bạn."

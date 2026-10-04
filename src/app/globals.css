@@ -2,6 +2,9 @@
 @plugin "@tailwindcss/typography";
 
 :root {
+  /* Một họ font cho cả site — xem `app/layout.tsx`. */
+  --font-heading: var(--font-body);
+
   --background: #faf6ec;
   --foreground: #1a1613;
 
@@ -20,7 +23,19 @@
 
   --border: #e5dac3;
 
-  --destructive: #b3261e;
+  /* Ba màu trạng thái, mỗi màu MỘT nghĩa (chốt 03/10/2026):
+     xanh = có lợi / chắc chắn (offer nâng, rebate, HOT TIP, chart có công bố,
+     surcharge thấp); hổ phách = cần chú ý (hạn chót, chưa công bố, bản nháp,
+     Beta); đỏ = bất lợi / lỗi. Nhãn chỉ là TÊN (nguồn điểm Amex®/RBC®) thì luôn
+     trung tính — trước đây chip RBC® mang đúng màu "chưa công bố" của công cụ
+     award. Bộ hex lấy từ công cụ award vì tương phản cao hơn emerald/amber của
+     Tailwind (5.36 và 5.28 so với 4.84 và 4.65) và hợp tông kem hơn. */
+  --success: #1f6f43;
+  --success-soft: #e7f2ea;
+  --warning: #8a5a10;
+  --warning-soft: #fdf1d8;
+  --destructive: #a3352b;
+  --destructive-soft: #f8e4e1;
   --destructive-foreground: #ffffff;
 
   --navy-ink: #0b2036;
@@ -47,7 +62,12 @@
 
   --color-border: var(--border);
 
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
   --color-destructive: var(--destructive);
+  --color-destructive-soft: var(--destructive-soft);
   --color-destructive-foreground: var(--destructive-foreground);
 
   --color-navy-ink: var(--navy-ink);
@@ -58,6 +78,16 @@
 
   --font-display: var(--font-heading);
   --font-sans: var(--font-body);
+
+  /* Giãn dòng cho chữ lớn. Mặc định của Tailwind là 1.2 → 1 cho text-3xl →
+     text-6xl — đẹp cho tiếng Anh, nhưng chữ tiếng Việt chồng dấu trên lẫn dưới
+     (Ộ, Ặ, Ữ) nên dấu của dòng này đâm vào dòng kia khi tiêu đề gãy hai dòng.
+     Đặt ở theme để mọi tiêu đề ăn luôn, không phải nhớ thêm `leading-*`. */
+  --text-2xl--line-height: 1.3;
+  --text-3xl--line-height: 1.25;
+  --text-4xl--line-height: 1.22;
+  --text-5xl--line-height: 1.2;
+  --text-6xl--line-height: 1.18;
 }
 
 body {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -77,7 +78,7 @@ export async function generateMetadata({
 function Stat({ value, label, hint }: { value: string; label: string; hint?: string }) {
   return (
     <div className="rounded-xl border border-border bg-card p-4">
-      <p className="font-display text-2xl font-extrabold leading-tight text-primary">{value}</p>
+      <p className="font-display text-2xl font-bold leading-tight text-primary">{value}</p>
       <p className="mt-0.5 text-sm text-muted-foreground">{label}</p>
       {hint && <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{hint}</p>}
     </div>
@@ -117,14 +118,12 @@ export default async function BankAccountDetailPage({
       <JsonLd data={jsonLd} />
 
       {!BANK_ACCOUNTS_PUBLISHED && (
-        <p className="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+        <p className="mb-6 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3 text-sm font-semibold text-warning">
           {bank_t("draftNotice")}
         </p>
       )}
 
-      <Link href="/bank-accounts" className="text-sm font-semibold text-primary hover:underline">
-        &larr; {bank_t("viewAll")}
-      </Link>
+      <Breadcrumbs items={[{ label: seo("breadcrumbBankAccounts"), href: "/bank-accounts" }]} />
 
       <div className="mt-6 flex flex-wrap items-center gap-x-1.5 gap-y-3">
         <span className="rounded bg-secondary px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-foreground/70">
@@ -152,7 +151,7 @@ export default async function BankAccountDetailPage({
           alt=""
           className="h-12 w-36 shrink-0 self-start rounded-lg border border-border bg-white object-contain p-2 sm:self-auto"
         />
-        <h1 className="font-display text-3xl font-extrabold text-foreground">{account.name}</h1>
+        <h1 className="font-display text-3xl font-bold text-foreground">{account.name}</h1>
       </div>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -240,7 +239,7 @@ export default async function BankAccountDetailPage({
             ))}
           </ul>
           {account.bonusExpiresOn && (
-            <p className="mt-3 text-sm font-medium text-amber-700">
+            <p className="mt-3 text-sm font-medium text-warning">
               {offers("expiresOn")} {formatIsoDate(account.bonusExpiresOn)}
             </p>
           )}

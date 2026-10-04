@@ -45,9 +45,12 @@ export const revalidate = 60;
  */
 const STICKY_COL = "sticky left-0 z-10";
 
+// Ô tỷ lệ của hai issuer đều TRUNG TÍNH. Trước 03/10/2026 cột Amex® mang màu
+// xanh "có lợi" còn cột RBC® mang màu hổ phách "cần chú ý" — tức một cái tên
+// trông như một lời đánh giá. Tiêu đề cột (logo + tên) đã nói ô nào của ai.
 const BADGE_STYLES = {
-  amex: "bg-[#e7f2ea] text-[#1f6f43]",
-  rbc: "bg-[#fdf1d8] text-[#8a5a10]",
+  amex: "bg-secondary text-foreground",
+  rbc: "bg-secondary text-foreground",
 } as const;
 
 /**
@@ -158,7 +161,7 @@ export default async function TransferPartnersPage() {
 
   return (
     <>
-      <PageHeader eyebrow={tp("eyebrow")} title={tp("title")} subtitle={tp("subtitle")} />
+      <PageHeader title={tp("title")} subtitle={tp("subtitle")} />
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl">
           <p className="mb-2 text-xs font-medium text-muted-foreground sm:hidden">

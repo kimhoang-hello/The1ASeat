@@ -184,13 +184,13 @@ export default async function StartHerePage() {
       {/* Trang chưa công bố vẫn vào được bằng URL trực tiếp, nên nó phải tự
           nói ra điều đó. Dải này biến mất cùng lúc với việc bật cờ. */}
       {!START_HERE_PUBLISHED && (
-        <p className="border-b border-amber-300 bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-900 sm:px-6 lg:px-8">
+        <p className="border-b border-warning/30 bg-warning-soft px-4 py-3 text-center text-sm font-semibold text-warning sm:px-6 lg:px-8">
           {t("draftNotice")}
         </p>
       )}
 
       <JsonLd data={jsonLd} />
-      <PageHeader eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} />
+      <PageHeader title={t("title")} subtitle={t("subtitle")} />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl space-y-5">

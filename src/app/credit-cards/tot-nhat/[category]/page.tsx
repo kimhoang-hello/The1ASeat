@@ -127,7 +127,10 @@ export default async function BestCardsCategoryPage({
     <>
       <JsonLd data={jsonLd} />
       <PageHeader
-        eyebrow={best("eyebrow")}
+        breadcrumbs={[
+          { label: seo("breadcrumbCreditCards"), href: "/credit-cards" },
+          { label: seo("breadcrumbBestCards"), href: BEST_CARDS_BASE },
+        ]}
         title={category.titleVi}
         subtitle={category.subtitleVi}
        
@@ -142,13 +145,6 @@ export default async function BestCardsCategoryPage({
           `id="best-toc"` cùng tồn tại, và `aria-labelledby` của cái thứ hai
           lặng lẽ trỏ về cái thứ nhất. */}
       <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8 xl:max-w-[68rem]">
-        <Link
-          href={BEST_CARDS_BASE}
-          className="text-sm font-semibold text-primary hover:underline"
-        >
-          &larr; {best("backToHub")}
-        </Link>
-
         {/* `grid-rows` khai TƯỜNG MINH: mục lục span cả hai hàng, và nếu để
             hàng nào cũng `auto` thì trình duyệt kéo giãn hàng đầu tiên cho vừa
             chiều cao mục lục — đo được 434px cho một đoạn dẫn cao 150px, tức

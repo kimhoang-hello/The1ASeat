@@ -123,7 +123,7 @@ export function CompareTable({ cards }: { cards: CreditCardOffer[] }) {
               {cards.map((card) => (
                 <td key={card.slug} className="px-4 py-4">
                   {card.welcomeBonus ? (
-                    <span className="font-display text-lg font-extrabold leading-tight text-primary">
+                    <span className="font-display text-lg font-bold leading-tight text-primary">
                       {card.welcomeBonus}
                     </span>
                   ) : (
@@ -145,7 +145,7 @@ export function CompareTable({ cards }: { cards: CreditCardOffer[] }) {
               {cards.map((card) => (
                 <td key={card.slug} className="px-4 py-4">
                   {card.rebate ? (
-                    <span className="font-semibold text-emerald-700">{card.rebate}</span>
+                    <span className="font-semibold text-success">{card.rebate}</span>
                   ) : (
                     <Empty />
                   )}
@@ -174,14 +174,14 @@ export function CompareTable({ cards }: { cards: CreditCardOffer[] }) {
                 <td key={card.slug} className="px-4 py-4 text-foreground/90">
                   {isElevatedLive(card) ? (
                     <>
-                      <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                      <span className="rounded-full bg-success-soft px-2.5 py-0.5 text-xs font-semibold text-success">
                         {offers_t("elevatedBonus")}
                       </span>
                       {/* Hạn chỉ in ra khi còn hiệu lực — `isElevatedLive` đã
                           bảo đảm điều đó, nhưng kiểm lại ở đây để hàng này
                           không phụ thuộc vào việc nhớ luật của hàm kia. */}
                       {card.expiresAt && !hasExpired(card.expiresAt) && (
-                        <span className="mt-1 block text-xs text-amber-700">
+                        <span className="mt-1 block text-xs text-warning">
                           {offers_t("expiresOn")} {formatDate(card.expiresAt)}
                         </span>
                       )}

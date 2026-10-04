@@ -109,7 +109,7 @@ export function DebuggerForm({ fixtures, defaultAsOf }: Props) {
         {result === null ? (
           <p className="text-sm text-foreground/60">Chọn một nhân vật hoặc dán hồ sơ, rồi chạy.</p>
         ) : result.error !== null ? (
-          <p className="text-sm text-red-700">{result.error}</p>
+          <p className="text-sm text-destructive">{result.error}</p>
         ) : (
           <>
             {result.inputIssues.length > 0 && (
