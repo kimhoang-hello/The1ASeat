@@ -2932,3 +2932,39 @@ Toronto). Luật thành phần: DESIGN-SYSTEM.md 10.13.
 - Bảng so sánh lặp tên thẻ đầu ô ở hàng dài (tích điểm, bảo hiểm, quyền lợi, nhận
   định): hàng tên đầu bảng trôi khỏi màn hình và không làm dính được trong khung cuộn
   ngang.
+
+## Trang Refundable Hotel Trick (04/10/2026) — đừng đề xuất lại
+
+`/refundable-hotel-trick`, menu Công cụ. Nội dung bốn workflow (Amex® Travel Credit,
+CIBC® Aventura®, Scotiabank® Scene+™, TD Rewards®) nằm ở
+`src/lib/refundable-hotel-trick.ts`; chuỗi giao diện ở khoá `rht` của `vi.json`.
+
+- **Nguồn là spec tác giả viết ngày 04/10/2026; câu chữ các bước là nguyên văn**,
+  kể cả tiêu đề bước bằng tiếng Anh ("Go to Amex® Travel"). Đừng dịch, đừng "làm rõ".
+  Spec CẤM thêm: thời gian xử lý, welcome bonus hiện tại, điều kiện Product Switch,
+  hạn điểm, cách tính annual fee, điều kiện welcome bonus sau Product Switch. Khối
+  thẻ cuối mỗi workflow chỉ in tên + loại thẻ (không welcome bonus, không phí) vì
+  luật đó.
+- **Tỷ lệ khai MỘT lần** (`centsPerPoint`). Ví dụ "50,000 points = $500", nhãn "1
+  point = 1¢", cột Value và calculator tính ra từ đó qua `lib/cash-out.ts` — tính
+  bằng CENT, làm tròn XUỐNG (lẻ nửa cent ở TD® thì nói thiếu, không hứa dư).
+- **Thẻ chọn chương trình là link neo, không phải tab.** Cả bốn hướng dẫn nằm sẵn
+  trong HTML: đọc được không cần JS, crawler thấy hết, nút Back về lại chỗ chọn.
+- **Khối thẻ lọc theo issuer VÀ hệ điểm** (`cardIssuer` + `rhtCards`). Tangerine®
+  Rewards World Elite® Mastercard® tích Scene+™ nhưng KHÔNG nằm trong khối Scene+™ —
+  workflow đi qua Scotiabank® App. Amex® lọc theo quyền lợi "travel credit".
+- **`lib/cash-out.ts` tách khỏi file dữ liệu** để calculator (Client Component)
+  không kéo nội dung bốn workflow và `card-points-programs` vào bundle trình duyệt.
+  `parseNumber` chuyển nguyên văn từ `points-calculator.tsx` sang
+  `lib/parse-number.ts` — hai calculator đọc số theo cùng một luật.
+- **Contentful lỗi thì rơi về `[]`** (bắt ở nơi gọi, như trang bài viết): bốn workflow
+  và calculator là dữ liệu tĩnh, chỉ khối thẻ và link bài Points 101 biến mất.
+- **Sơ đồ chung BOOK → REDEEM → WAIT → CANCEL → REFUND là yêu cầu nguyên văn của
+  tác giả**, nên không thêm Product Switch vào đó; dòng chú thích ngay dưới nói TD®
+  bắt buộc Product Switch trước khi cancel (Codex bắt: sơ đồ đọc như checklist).
+- Bảng So sánh nhanh dựng HAI lần từ cùng mảng: thẻ dưới `sm`, bảng từ `sm`; bản ẩn
+  là `display: none` nên screen reader đọc một bản.
+- Lưới thẻ chọn: 1 cột dưới 22.5rem — cụm "PRODUCT SWITCH" (~115px, `nowrap`) không
+  vừa thẻ hai cột ở 320px (Codex bắt). Đo 320/360/375/768/1024/1280: không tràn.
+- Mục lục dính bên phải từ `xl` dùng lại `PostToc` của trang bài viết; dưới `xl` thẻ
+  chọn chương trình làm việc đó.

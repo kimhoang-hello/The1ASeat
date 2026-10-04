@@ -4,6 +4,7 @@ import { BEST_CARDS_BASE, BEST_CARDS_CATEGORIES, bestCardsPath } from "@/lib/bes
 import { VIETNAM_ROUTES, VIETNAM_ROUTES_BASE, routeLabel, vietnamRoutePath } from "@/lib/award-routes";
 import { BANK_ACCOUNTS_PUBLISHED, VIETNAM_ROUTES_PUBLISHED } from "@/lib/feature-flags";
 import { absoluteUrl } from "@/lib/seo";
+import { RHT_PATH } from "@/lib/refundable-hotel-trick";
 import { t } from "@/lib/t";
 
 const site = t("site");
@@ -48,6 +49,7 @@ export async function GET() {
       link(seo("transferBonusesTitle"), "/transfer-bonuses", seo("transferBonusesDescription")),
       link(seo("awardChartsTitle"), "/award-flight-finder", seo("awardChartsDescription")),
       link(seo("calculatorTitle"), "/calculator", seo("calculatorDescription")),
+      link(seo("rhtTitle"), RHT_PATH, seo("rhtDescription")),
       ...(BANK_ACCOUNTS_PUBLISHED
         ? [link(seo("bankAccountsTitle"), "/bank-accounts", seo("bankAccountsDescription"))]
         : []),

@@ -8,6 +8,7 @@ import {
 } from "@/lib/blog-categories";
 import { absoluteUrl } from "@/lib/seo";
 import { COMPARE_PATH } from "@/lib/card-compare";
+import { RHT_LAST_UPDATED, RHT_PATH } from "@/lib/refundable-hotel-trick";
 import { RECOMMENDER_PATH } from "@/lib/recommender/path";
 import {
   BEST_CARDS_BASE,
@@ -181,6 +182,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         ] satisfies MetadataRoute.Sitemap)
       : []),
     { url: absoluteUrl("/calculator"), changeFrequency: "monthly", priority: 0.7 },
+    {
+      url: absoluteUrl(RHT_PATH),
+      lastModified: validDate(RHT_LAST_UPDATED),
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
     // Không có `lastModified`: game nằm nguyên trong repo, chỉ đổi lúc deploy.
     ...(CATCH_THE_POINTS_PUBLISHED
       ? ([

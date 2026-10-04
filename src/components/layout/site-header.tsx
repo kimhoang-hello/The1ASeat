@@ -8,6 +8,7 @@ import {
   AirplaneTilt,
   ArrowsLeftRight,
   Bank,
+  Bed,
   CaretDown,
   Calculator,
   CreditCard,
@@ -504,6 +505,15 @@ export function SiteHeader() {
       label: nav("transferPartners"),
       description: tMenu("transferPartners"),
       icon: ArrowsLeftRight,
+    },
+    // Hướng dẫn chứ không phải công cụ tra cứu, nhưng có calculator riêng và
+    // người đọc quay lại nó mỗi lần cash out — nên ở đây, trước mini-game.
+    // Đường dẫn viết thẳng, cùng lý do với các mục trên.
+    {
+      href: "/refundable-hotel-trick",
+      label: nav("refundableHotelTrick"),
+      description: tMenu("refundableHotelTrick"),
+      icon: Bed,
     },
     // Đứng CUỐI nhóm, sau bốn công cụ tra cứu: nó là thứ duy nhất ở đây không
     // trả lời một câu hỏi nào cả. Đường dẫn viết thẳng, cùng lý do với các mục

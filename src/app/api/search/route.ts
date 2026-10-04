@@ -19,6 +19,7 @@ import {
 } from "@/lib/feature-flags";
 import { US_CARDS_BASE, getUsCreditCards, usCardPath } from "@/lib/us-credit-cards";
 import { COMPARE_PATH } from "@/lib/card-compare";
+import { RHT_PATH } from "@/lib/refundable-hotel-trick";
 import { RECOMMENDER_PATH } from "@/lib/recommender/path";
 import { BEST_CARDS_BASE, BEST_CARDS_CATEGORIES, bestCardsPath } from "@/lib/best-cards";
 import { CATCH_THE_POINTS_PATH } from "@/lib/catch-the-points-path";
@@ -150,6 +151,13 @@ const PAGES: SearchItem[] = [
     href: "/transfer-partners",
     kind: "page",
     keywords: "chuyển điểm tỷ lệ đối tác hãng bay khách sạn",
+  },
+  {
+    title: nav("refundableHotelTrick"),
+    href: RHT_PATH,
+    kind: "page",
+    keywords:
+      "rht cash out đổi điểm ra tiền travel credit hoàn huỷ khách sạn aventura scene+ td rewards amex product switch pending posted",
   },
   {
     // Công cụ thứ năm của site. Bốn cái kia đều nằm trong ô tìm kiếm, nên
