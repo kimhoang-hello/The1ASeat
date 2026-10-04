@@ -27,6 +27,8 @@ const BASE = offlineDataset();
  *  thật — bộ seed kiểm ngày 07/09/2026. */
 const TODAY = "2026-09-20";
 const LATER = "2027-03-01";
+/** Ngày trước khi tỷ lệ nền còn thiếu được lấp từ trang ngân hàng (04/10/2026). */
+const BEFORE_EARN_FILL = "2026-10-03";
 
 function errorsIn(data: RecommendationDataset, asOf = TODAY): string[] {
   return validateDataset(data, asOf)
@@ -728,7 +730,10 @@ test("chỗ trống dữ liệu là DỮ LIỆU, không phải chuỗi cảnh b�
   // tồn tại dưới dạng cảnh báo tiếng Việt của audit thì engine phải parse chữ.
   const kinds = new Set(BASE.gaps.map((g) => g.kind));
   assert.ok(kinds.has("no_award_chart"));
-  assert.ok(kinds.has("base_earn_rate_unknown"));
+  // Tỷ lệ nền của ba thẻ cuối cùng (Scotiabank® Gold, TD® First Class, BMO®
+  // VIPorter®) vào kho ngày 04/10/2026, đọc trên trang ngân hàng — nên chỗ trống
+  // này dựng lại ở ngày trước đó, không bám vào việc kho hôm nay còn thiếu gì.
+  assert.ok(new Set(datasetAt(BASE, BEFORE_EARN_FILL).gaps.map((g) => g.kind)).has("base_earn_rate_unknown"));
   // Vùng chưa có bảng giá: châu Âu là vùng trống cuối cùng tới 27/09/2026, nên
   // chỗ trống này đọc ở ngày trước đó — và phải BIẾN MẤT khi bảng giá vào kho.
   const uncoveredAt = (asOf: string) =>
@@ -751,11 +756,16 @@ test("chỗ trống dữ liệu là DỮ LIỆU, không phải chuỗi cảnh b�
 test("chỗ trống được tính LẠI cho từng thời điểm", () => {
   // Thẻ hồi đó chưa có tỷ lệ nền mà nay đã có: bản dựng lại phải nói đúng cái
   // engine thiếu LÚC ẤY, không phải cái nó thiếu hôm nay.
-  const missing = BASE.gaps.find((g) => g.kind === "base_earn_rate_unknown")!;
+  const missing = datasetAt(BASE, BEFORE_EARN_FILL).gaps.find((g) => g.kind === "base_earn_rate_unknown")!;
   const fixed = {
     ...BASE,
     earningRates: [
-      ...BASE.earningRates,
+      // Bỏ tỷ lệ nền THẬT của thẻ này (vào kho 04/10/2026) để backfill là thứ
+      // duy nhất lấp chỗ trống — giữ cả hai thì từ 2027 có hai tỷ lệ nền chồng
+      // nhau và phép kiểm "chỗ trống biến mất" xanh vì một lý do khác.
+      ...BASE.earningRates.filter(
+        (rate) => !(rate.productId === missing.subjectId && rate.category === "everything_else"),
+      ),
       {
         ...BASE.earningRates[0],
         id: "er_backfill" as (typeof BASE.earningRates)[number]["id"],

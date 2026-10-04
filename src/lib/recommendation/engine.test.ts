@@ -1882,6 +1882,18 @@ test("§16 Rule 6 — thẻ trùng HẾT quyền lợi thì giá trị tăng th�
   assert.ok(fit.reasonCodes.includes("EXISTING_BENEFIT_DUPLICATION"));
 });
 
+test("§16 — hạn mức bảo hiểm KHÔNG phải tiền: chỉ khoản tín dụng vào phần tiền của quyền lợi", () => {
+  // Business Platinum: travel credit $200 + hoàn phí NEXUS™ $100 là tiền thật;
+  // "y tế tới $5,000,000", huỷ chuyến $1,500, thiết bị $1,500, xe tới $85,000
+  // là hạn mức. Bản 4.31 cộng cả bốn — thẻ này ra hơn 500 triệu cent và đè bẹp
+  // thang tiền của mọi thẻ khác.
+  const product = DATA.products.find((p) => p.slug === "amex-business-platinum");
+  assert.ok(product !== undefined);
+  const fit = benefitFitFor(product!.id, new Set(), IX, ASOF);
+  assert.equal(fit.incrementalCashCents, 30_000);
+  assert.ok(fit.incrementalCount > 2, "bảo hiểm vẫn đếm là quyền lợi, chỉ không tính là tiền");
+});
+
 test("§7 — chương trình chưa có ĐỊNH GIÁ không phá phép đo tập trung", () => {
   const exotic: UserState = {
     ...beginnerNoCards,

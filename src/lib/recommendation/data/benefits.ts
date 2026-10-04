@@ -141,6 +141,26 @@ export const BENEFITS: Benefit[] = [
     unit: "cad",
   },
   {
+    // Thêm 04/10/2026 cùng `baggage-insurance`: phần lớn thẻ có bảo hiểm trễ
+    // chuyến và hành lý mà không có y tế du lịch (Amex® Aeroplan®*, Marriott
+    // Bonvoy®, TD® Aeroplan® Platinum). Thiếu hai loại này thì dòng Bảo hiểm
+    // của Thông tin nhanh chỉ còn "Thuê xe" — đúng nhưng nói thiếu tới mức sai.
+    id: id<BenefitId>("flight-delay-insurance"),
+    slug: "flight_delay_insurance",
+    name: "Bảo hiểm trễ chuyến bay",
+    category: "insurance",
+    duplicatesAcrossCards: true,
+    unit: "cad",
+  },
+  {
+    id: id<BenefitId>("baggage-insurance"),
+    slug: "baggage_insurance",
+    name: "Bảo hiểm hành lý (trễ, thất lạc)",
+    category: "insurance",
+    duplicatesAcrossCards: true,
+    unit: "cad",
+  },
+  {
     id: id<BenefitId>("mobile-device-insurance"),
     slug: "mobile_device_insurance",
     name: "Bảo hiểm thiết bị di động",

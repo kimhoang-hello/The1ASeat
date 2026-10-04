@@ -15,11 +15,14 @@ import { EARNING_CAPS, EARNING_RATES } from "./recommendation/data/earning-rates
 import { PRODUCT_BENEFITS } from "./recommendation/data/product-benefits.ts";
 import { ELIGIBILITY_RULES } from "./recommendation/data/eligibility-rules.ts";
 import { POINTS_PROGRAMS } from "./recommendation/data/points-programs.ts";
+import { VERIFIED_NONE } from "./card-facts-none.ts";
 
 const AS_OF = "2026-10-04";
+/** Ngày trước đợt kiểm tại trang ngân hàng — các ô "Chưa kiểm" còn nguyên. */
+const BEFORE_CHECK = "2026-10-03";
 
-const lines = (slug: string, key: CardFactKey) =>
-  cardFactsFor(slug, AS_OF)!.facts.find((fact) => fact.key === key)!.lines.map((line) => line.text);
+const lines = (slug: string, key: CardFactKey, asOf = AS_OF) =>
+  cardFactsFor(slug, asOf)!.facts.find((fact) => fact.key === key)!.lines.map((line) => line.text);
 
 test("mọi thẻ có trang trên site: đủ bốn dòng, đúng thứ tự", () => {
   for (const product of PRODUCTS.filter((row) => row.contentfulLinked)) {
@@ -51,9 +54,13 @@ test("thẻ cashback: % và trần tính bằng đô hoàn lại, hai trần ri�
 });
 
 test("tỷ lệ chỉ áp ở một nhóm merchant in kèm nhóm đó; thiếu tỷ lệ nền thì nói chưa kiểm", () => {
-  const earn = lines("scotiabank-gold-amex", "earn");
-  assert.ok(earn[0].startsWith("6x siêu thị — Sobeys"), earn[0]);
-  assert.equal(earn.at(-1), "Mọi chi tiêu khác: chưa kiểm");
+  const before = lines("scotiabank-gold-amex", "earn", BEFORE_CHECK);
+  assert.ok(before[0].startsWith("6x siêu thị — Sobeys"), before[0]);
+  assert.equal(before.at(-1), "Mọi chi tiêu khác: chưa kiểm");
+  // Từ ngày kiểm tại trang Scotiabank®: đủ các nhóm, có tỷ lệ nền.
+  const after = lines("scotiabank-gold-amex", "earn");
+  assert.ok(after.includes("3x xăng, phương tiện công cộng, rideshare, streaming"), after.join(" | "));
+  assert.equal(after.at(-1), "1x mọi chi tiêu khác");
 });
 
 test("hệ số lẻ vô hạn viết thành điểm trên số đô", () => {
@@ -73,13 +80,37 @@ test("điều kiện thu nhập nối bằng HOẶC; thẻ doanh nghiệp nói c
 });
 
 test("phòng chờ không rõ số lượt: không đoán miễn phí, không in ghi chú nội bộ", () => {
-  const lounge = lines("scotiabank-gold-amex", "lounge");
-  assert.deepEqual(lounge, ["Priority Pass (số lượt miễn phí chưa kiểm)"]);
+  assert.deepEqual(lines("scotiabank-gold-amex", "lounge", BEFORE_CHECK), ["Priority Pass (số lượt miễn phí chưa kiểm)"]);
+});
+
+test("đã kiểm là không có lượt miễn phí: nói trả phí, không nói chưa kiểm", () => {
+  assert.deepEqual(lines("scotiabank-gold-amex", "lounge"), ["Giảm giá thẻ hội viên Priority Pass (mỗi lượt vào trả phí)"]);
+  assert.ok(lines("amex-aeroplan-reserve", "lounge").includes("Priority Pass (mỗi lượt vào trả phí)"));
 });
 
 test("thiếu dữ liệu thì dòng rỗng (trang ghi Chưa kiểm), không suy đoán", () => {
-  assert.deepEqual(lines("td-first-class-travel-visa-infinite", "earn"), []);
-  assert.deepEqual(lines("amex-cobalt", "lounge"), []);
+  assert.deepEqual(lines("td-first-class-travel-visa-infinite", "earn", BEFORE_CHECK), []);
+  assert.deepEqual(lines("amex-cobalt", "lounge", BEFORE_CHECK), []);
+});
+
+test("đã kiểm là không có: ghi Không có, và chỉ từ ngày kiểm", () => {
+  assert.deepEqual(lines("amex-cobalt", "lounge"), ["Không có"]);
+  assert.deepEqual(lines("amex-green", "insurance"), ["Không có bảo hiểm du lịch hay thiết bị"]);
+  assert.deepEqual(lines("amex-green", "insurance", BEFORE_CHECK), []);
+});
+
+test("hạng mục mỗi cái một trần y hệt nhau gộp thành một ý 'cho mỗi hạng mục'", () => {
+  const earn = lines("td-first-class-travel-visa-infinite", "earn");
+  assert.ok(
+    earn.includes("6x siêu thị, ăn uống, phương tiện công cộng — tối đa $25,000 chi tiêu/năm cho mỗi hạng mục, sau đó 2x"),
+    earn.join(" | "),
+  );
+  // Nhóm nhiều hạng mục CHUNG một trần vẫn tách riêng (TD® Cash Back).
+  assert.equal(lines("td-cash-back-visa-infinite", "earn").filter((line) => line.startsWith("3%")).length, 2);
+});
+
+test("số của bảo hiểm thuê xe là giá trị xe, không phải hạn mức bồi thường", () => {
+  assert.ok(lines("amex-business-platinum", "insurance").includes("Thuê xe (xe tới $85,000)"));
 });
 
 test("numbersIn đọc số theo cùng một luật cho bảng và nội dung", () => {
@@ -97,6 +128,7 @@ const SITE: CardFactsData = {
   caps: EARNING_CAPS,
   benefits: PRODUCT_BENEFITS,
   rules: ELIGIBILITY_RULES,
+  none: VERIFIED_NONE,
 };
 const earnFrom = (data: CardFactsData, slug: string) =>
   cardFactsFrom(data, slug, AS_OF)!.facts.find((fact) => fact.key === "earn")!.lines.map((line) => line.text);

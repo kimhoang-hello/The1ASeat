@@ -104,7 +104,12 @@ export function benefitFitFor(
     }
 
     incrementalCount += 1;
-    if (benefit.unit === "cad" && row.numericValue !== null) {
+    // CHỈ khoản tín dụng (travel credit, hoàn phí NEXUS™) là tiền thật vào túi.
+    // Số của bảo hiểm là HẠN MỨC ("y tế tới $5,000,000", xe thuê tới $85,000),
+    // còn số của companion pass là giá vé người đi cùng phải TRẢ — cộng chúng
+    // như tiền làm thẻ có bảo hiểm $5 triệu chiếm trọn thang "tiền" của mọi thẻ
+    // khác (sửa 04/10/2026, ENGINE_VERSION 4.32.0).
+    if (benefit.unit === "cad" && benefit.category === "credit" && row.numericValue !== null) {
       incrementalCashCents += row.numericValue * 100;
     }
   }

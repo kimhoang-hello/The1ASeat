@@ -293,6 +293,13 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * và §30 không biết đó là chỗ trống của dữ liệu. Chỉ đổi độ tin cậy của mục
  * tiêu nội địa; không đổi điểm số.
  *
+ * 4.32.0 — quyền lợi tính bằng đô chỉ cộng vào phần "tiền" của
+ * `benefits_fit` khi nó là khoản TÍN DỤNG (`category: "credit"`). Trước đây hạn
+ * mức bảo hiểm cũng cộng: thẻ có "y tế du lịch tới $5,000,000" ra 500 triệu cent,
+ * chiếm trọn thang chuẩn hoá, và travel credit $200 của mọi thẻ khác về gần 0.
+ * Phát hiện khi lấp bảo hiểm cho 35 thẻ (04/10/2026) — thêm dữ liệu sẽ khuếch
+ * đại đúng lỗi đó. Đổi điểm số.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -305,7 +312,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.31.0";
+export const ENGINE_VERSION = "4.32.0";
 
 export interface RecommendInput {
   state: UserState;

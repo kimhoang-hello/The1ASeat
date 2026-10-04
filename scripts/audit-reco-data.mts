@@ -42,11 +42,17 @@ import { PROGRAMS as AWARD_CHART_PROGRAMS } from "../src/lib/award-charts.ts";
 import { todayInSiteZone } from "../src/lib/format-date.ts";
 import {
   cardFactsFor,
+  cardFactsFrom,
   hasRateEvidence,
   numbersIn,
   rateClaimsIn,
   withoutRateClaims,
 } from "../src/lib/card-facts.ts";
+import { VERIFIED_NONE } from "../src/lib/card-facts-none.ts";
+import { PRODUCTS } from "../src/lib/recommendation/data/products.ts";
+import { EARNING_CAPS, EARNING_RATES } from "../src/lib/recommendation/data/earning-rates.ts";
+import { PRODUCT_BENEFITS } from "../src/lib/recommendation/data/product-benefits.ts";
+import { ELIGIBILITY_RULES } from "../src/lib/recommendation/data/eligibility-rules.ts";
 
 const REPO = fileURLToPath(new URL("..", import.meta.url));
 const REQUEST_TIMEOUT_MS = 20_000;
@@ -333,6 +339,36 @@ for (const [programId, partnerKey] of Object.entries(PARTNER_KEY_BY_PROGRAM)) {
         `[transfer-paths] ${source} → ${programId}: có trong lib/transfer-partners.ts ` +
           `("${leg.ratio}") nhưng seed không có chặng nào còn hiệu lực hôm nay — ` +
           `engine không thấy đường chuyển này`,
+      );
+    }
+  }
+}
+
+// THÔNG TIN NHANH — dòng "đã kiểm là không có" (`card-facts-none.ts`) không
+// được chọi với dữ kiện. Thẻ thêm phòng chờ hay bảo hiểm về sau thì trang vẫn
+// đúng (dữ kiện thắng), nhưng dòng "không có" kia thành rác nói dối nằm im —
+// báo ra để xoá. Slug đổi tên mà quên sửa ở đó thì dòng biến mất khỏi trang.
+{
+  const withoutNone = {
+    products: PRODUCTS,
+    programs: RECO_PROGRAMS,
+    rates: EARNING_RATES,
+    caps: EARNING_CAPS,
+    benefits: PRODUCT_BENEFITS,
+    rules: ELIGIBILITY_RULES,
+    none: [],
+  };
+  for (const entry of VERIFIED_NONE) {
+    const facts = cardFactsFrom(withoutNone, entry.slug, TODAY);
+    if (facts === null) {
+      errors.push(`[thông tin nhanh] card-facts-none: "${entry.slug}" không khớp thẻ nào còn hiệu lực`);
+      continue;
+    }
+    const lines = facts.facts.find((fact) => fact.key === entry.key)?.lines ?? [];
+    if (lines.length > 0) {
+      errors.push(
+        `[thông tin nhanh] card-facts-none: ${entry.slug}/${entry.key} ghi "không có" nhưng dữ liệu có ` +
+          `"${lines.map((line) => line.text).join("; ")}" — xoá dòng ở card-facts-none.ts`,
       );
     }
   }

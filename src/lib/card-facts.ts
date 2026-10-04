@@ -4,6 +4,7 @@ import { PRODUCT_BENEFITS } from "./recommendation/data/product-benefits.ts";
 import { ELIGIBILITY_RULES } from "./recommendation/data/eligibility-rules.ts";
 import { POINTS_PROGRAMS } from "./recommendation/data/points-programs.ts";
 import { activeAt, isActiveAt } from "./recommendation/temporal.ts";
+import { VERIFIED_NONE, type VerifiedNone } from "./card-facts-none.ts";
 import type {
   EarningCap,
   EarningRate,
@@ -70,6 +71,8 @@ export interface CardFactsData {
   caps: readonly EarningCap[];
   benefits: readonly ProductBenefit[];
   rules: readonly EligibilityRule[];
+  /** Dòng ĐÃ KIỂM là không có (phòng chờ, bảo hiểm) — xem `card-facts-none.ts`. */
+  none: readonly VerifiedNone[];
 }
 
 const SITE_DATA: CardFactsData = {
@@ -79,6 +82,7 @@ const SITE_DATA: CardFactsData = {
   caps: EARNING_CAPS,
   benefits: PRODUCT_BENEFITS,
   rules: ELIGIBILITY_RULES,
+  none: VERIFIED_NONE,
 };
 
 /** Nhãn ngắn của hạng mục chi tiêu — ngắn hơn bản ở `recommender/questions.ts`,
@@ -120,9 +124,18 @@ const AIRLINE_BY_PROGRAM: Record<string, string> = {
 const INSURANCE: [benefitId: string, label: string, labelWithAmount: string][] = [
   ["travel-medical-insurance", "Y tế du lịch", "Y tế du lịch"],
   ["trip-cancellation-insurance", "Huỷ/gián đoạn chuyến", "Huỷ chuyến"],
+  ["flight-delay-insurance", "Trễ chuyến bay", "Trễ chuyến bay"],
+  ["baggage-insurance", "Hành lý", "Hành lý"],
   ["mobile-device-insurance", "Thiết bị di động", "Thiết bị di động"],
   ["rental-car-insurance", "Thuê xe", "Thuê xe"],
 ];
+
+/** Chữ của dòng đã kiểm là không có. Bảo hiểm nói rõ PHẠM VI: thẻ vẫn có thể
+ *  có bảo vệ mua sắm, chỉ không có loại nào trong sáu loại bảng này theo dõi. */
+const NONE_TEXT: Record<VerifiedNone["key"], string> = {
+  lounge: "Không có",
+  insurance: "Không có bảo hiểm du lịch hay thiết bị",
+};
 
 /** Cùng mẫu với `card-tags.ts`: `null` lượt mà chữ nói không giới hạn. */
 const UNLIMITED_LOUNGE = /không giới hạn|Global Lounge Collection/i;
@@ -207,20 +220,48 @@ function earnLines(
    * Gắn trần vào một ý — MỌI nhánh đi qua đây (nhóm thường, nhóm merchant, tỷ
    * lệ nền), vì validator không cấm trần ở nhánh nào. Tỷ lệ CÓ trần mà trần hết
    * hiệu lực hoặc chưa kiểm thì nói ra, không để dòng trông như không giới hạn.
+   * `perCategory`: ý gộp từ nhiều hạng mục, mỗi hạng mục một trần y hệt nhau.
    */
-  const withCap = (text: string, rows: EarningRate[]): CardFactLine => {
+  const withCap = (text: string, rows: EarningRate[], perCategory = false): CardFactLine => {
     const first = rows[0];
     if (first.capId === null) return { text, sources: rows };
     const cap = caps.find((row) => row.id === first.capId);
     if (!cap) return { text: `${text} — trần: chưa kiểm`, sources: rows };
+    const rowCaps = perCategory ? caps.filter((row) => rows.some((rate) => rate.capId === row.id)) : [cap];
+    const each = perCategory ? " cho mỗi hạng mục" : "";
     const after = first.rateAfterCap !== null ? `, sau đó ${rateText(first.rateAfterCap, cashBack)}` : "";
-    return { text: `${text} — ${capText(cap, cashBack)}${after}`, sources: [...rows, cap] };
+    return { text: `${text} — ${capText(cap, cashBack)}${each}${after}`, sources: [...rows, ...rowCaps] };
   };
 
+  // Hạng mục mỗi cái một trần RIÊNG mà các trần y hệt nhau (TD® First Class:
+  // siêu thị, ăn uống, phương tiện công cộng, mỗi nhóm $25,000/năm) gộp thành
+  // một ý "… cho mỗi hạng mục". CHỈ gộp nhóm một hạng mục: nhóm nhiều hạng mục
+  // dùng chung một trần (TD® Cash Back) mà gộp thì không còn biết hạng mục nào
+  // chung trần với hạng mục nào.
+  const capSignature = (rows: EarningRate[]): string | null => {
+    if (rows.length !== 1 || rows[0].capId === null) return null;
+    const cap = caps.find((row) => row.id === rows[0].capId);
+    return cap ? `${rows[0].multiplier}|${cap.kind}|${cap.amount}|${cap.period}|${rows[0].rateAfterCap ?? ""}` : null;
+  };
+  const merged: { multiplier: number; rows: EarningRate[]; perCategory: boolean }[] = [];
+  const bySignature = new Map<string, (typeof merged)[number]>();
+  for (const group of groups.values()) {
+    const signature = capSignature(group.rows);
+    const existing = signature === null ? undefined : bySignature.get(signature);
+    if (existing) {
+      existing.rows.push(...group.rows);
+      existing.perCategory = true;
+      continue;
+    }
+    const entry = { multiplier: group.multiplier, rows: [...group.rows], perCategory: false };
+    merged.push(entry);
+    if (signature !== null) bySignature.set(signature, entry);
+  }
+
   const items: { multiplier: number; line: CardFactLine }[] = [];
-  for (const { multiplier, rows } of groups.values()) {
+  for (const { multiplier, rows, perCategory } of merged) {
     const text = `${rateText(multiplier, cashBack)} ${rows.map((row) => label(row.category)).join(", ")}`;
-    items.push({ multiplier, line: withCap(text, rows) });
+    items.push({ multiplier, line: withCap(text, rows, perCategory) });
   }
   // Tỷ lệ chỉ áp ở một nhóm merchant: in kèm đúng nhóm đó, không thì "6x siêu
   // thị" đọc như mọi siêu thị. `restrictedTo` vì vậy là chữ cho NGƯỜI ĐỌC.
@@ -303,6 +344,11 @@ function loungeLines(benefits: ProductBenefit[]): CardFactLine[] {
     const text = row.textValue ?? "";
     if (row.numericValue !== null && row.numericValue > 0) {
       lines.push({ text: `${row.numericValue} lượt miễn phí mỗi năm${text ? ` (${text})` : ""}`, sources: [row] });
+    } else if (row.numericValue === 0) {
+      // ĐÃ KIỂM là không có lượt miễn phí: thẻ chỉ cho (hoặc giảm giá) thẻ hội
+      // viên, mỗi lượt vào vẫn trả tiền — Priority Pass của Amex® Aeroplan®*
+      // Reserve, DragonPass của WestJet RBC® và BMO® VIPorter® (US$32/lượt).
+      lines.push({ text: `${text.split(" — ")[0]} (mỗi lượt vào trả phí)`, sources: [row] });
     } else if (UNLIMITED_LOUNGE.test(text)) {
       lines.push({ text, sources: [row] });
     } else if (text) {
@@ -322,7 +368,10 @@ function insuranceLines(benefits: ProductBenefit[]): CardFactLine[] {
     if (!row) continue;
     const amount = row.numericValue !== null ? money(row.numericValue) : null;
     // "Y tế du lịch (Y tế khẩn cấp ngoài tỉnh)" → "(khẩn cấp ngoài tỉnh)".
-    const text = row.textValue?.replace(/^Y tế\s+/, "") ?? null;
+    let text = row.textValue?.replace(/^Y tế\s+/, "") ?? null;
+    // Số của bảo hiểm thuê xe là giá trị XE được bảo hiểm (MSRP), không phải
+    // hạn mức bồi thường — "Thuê xe tới $85,000" đọc như được bồi tới $85,000.
+    if (benefitId === "rental-car-insurance" && amount !== null && text === null) text = `xe tới ${amount}`;
     // Chữ đã chứa con số ("31 ngày, xe đến $65,000") thì không in số hai lần —
     // nhưng vẫn là nhãn CÓ SỐ: con số nằm trong ngoặc vẫn là hạn mức huỷ.
     const lead = amount === null ? label : text?.includes(amount) ? labelWithAmount : `${labelWithAmount} tới ${amount}`;
@@ -342,11 +391,27 @@ export function cardFactsFrom(data: CardFactsData, slug: string, asOf: string): 
   const cashBack = program?.programType === "cash_back";
   const benefits = usable(activeAt(data.benefits.filter((row) => row.productId === product.id), asOf));
 
+  /** Không có dữ kiện nào mà ĐÃ KIỂM là không có → một dòng "Không có" thay
+   *  cho "Chưa kiểm". Có dữ kiện thì dữ kiện thắng (`audit:reco-data` báo lỗi
+   *  khi hai bên chọi nhau). */
+  const orNone = (key: VerifiedNone["key"], lines: CardFactLine[]): CardFactLine[] => {
+    if (lines.length > 0) return lines;
+    // `recordedAt <= asOf`: dựng lại một ngày TRƯỚC lần kiểm thì chưa ai biết
+    // là "không có" — trang của ngày đó ghi "Chưa kiểm", như lúc ấy.
+    const entry = data.none.find(
+      (row) =>
+        row.key === key &&
+        row.recordedAt <= asOf &&
+        (row.slug === product.slug || product.previousSlugs.includes(row.slug)),
+    );
+    return entry ? [{ text: NONE_TEXT[key], sources: [entry] }] : lines;
+  };
+
   const facts: CardFact[] = [
     { key: "earn", lines: earnLines(data, product.id, program?.slug, cashBack, asOf) },
     { key: "eligibility", lines: eligibilityLines(data, product.id, asOf) },
-    { key: "lounge", lines: loungeLines(benefits) },
-    { key: "insurance", lines: insuranceLines(benefits) },
+    { key: "lounge", lines: orNone("lounge", loungeLines(benefits)) },
+    { key: "insurance", lines: orNone("insurance", insuranceLines(benefits)) },
   ];
   return {
     cashBack,

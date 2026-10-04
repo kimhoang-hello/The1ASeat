@@ -2973,3 +2973,38 @@ CIBC® Aventura®, Scotiabank® Scene+™, TD Rewards®) nằm ở
 - **Thân trang CANH GIỮA** (cột 48rem; từ `xl` khung 68rem gồm cả mục lục), giống
   `/transfer-partners` và `/calculator` — tác giả chốt 04/10/2026 sau khi bản đầu
   để sát trái theo DESIGN-SYSTEM 5.1.2. Đừng kéo lại sát trái.
+
+## Lấp "Chưa kiểm" của Thông tin nhanh 04/10/2026 — đừng đề xuất lại
+
+Tác giả bảo kiểm và làm luôn dữ liệu cho mọi ô "Chưa kiểm". Đọc trang chính chủ của
+35 thẻ (Amex® CA mở từng ô "coverage" mới ra chữ; BMO® lấy số bảo hiểm từ PDF tóm
+tắt bảo hiểm) ngày 04/10/2026. Kết quả: 0 ô "Chưa kiểm".
+
+- **Dòng nguồn ngân hàng** (`source` trong `product-benefits.ts`/`earning-rates.ts`,
+  `sourceKind: "issuer"`, `from: 2026-10-04`). Dòng SỬA thì đóng bản cũ
+  `to: 2026-10-03`, thêm bản mới — không sửa tại chỗ. Trang không nêu hạn mức thì
+  `numericValue: null`, không đoán.
+- **Hai loại bảo hiểm mới**: `flight-delay-insurance`, `baggage-insurance`. Không có
+  chúng thì Amex® Aeroplan®*/Marriott Bonvoy® chỉ còn "Thuê xe" — đúng mà thiếu
+  tới mức sai. Đã kiểm hai loại này cho cả 35 thẻ, không chỉ thẻ "Chưa kiểm".
+- **"Không có"** nằm ở `src/lib/card-facts-none.ts` (engine không cần biết "không có";
+  trang cần tách "đã kiểm, không có" với "chưa kiểm"). Áp từ `recordedAt`.
+  `audit:reco-data` báo lỗi khi một dòng ở đó chọi với dữ kiện.
+- **Lượt phòng chờ `numericValue: 0`** = đã kiểm là không có lượt miễn phí (thẻ hội
+  viên Priority Pass/DragonPass, mỗi lượt trả phí): Scotiabank® Gold (chỉ GIẢM GIÁ
+  thẻ hội viên), Amex® Aeroplan®* Reserve và Business Reserve, WestJet RBC®, BMO®
+  VIPorter® (US$32/lượt). `null` vẫn nghĩa là chưa kiểm số lượt.
+- **Sửa sai dữ liệu cũ** (seed VÀ `keyBenefitsVi` trên Contentful, cùng ngày — hai entry
+  sạch, không bản nháp): Wealthsimple® Visa Infinite + y tế du lịch $1M (site từng ghi
+  $2M — là của bản Privilege). BMO® VIPorter® 2x là xăng/đi lại/khách sạn, không phải
+  "du lịch" (`travel`). Scotiabank® Gold đủ hạng mục: 5x siêu thị khác và giao đồ ăn,
+  3x xăng/đi lại/rideshare/streaming, 1x. Codex bắt chỗ VIPorter®: seed sửa mà chữ trên
+  trang chưa sửa là bảng và đoạn văn nói hai điều — audit không thấy vì dòng nguồn
+  ngân hàng chỉ được canh bằng ngày.
+- **ENGINE 4.32.0**: `benefit-fit` chỉ cộng phần "tiền" cho quyền lợi `category:
+  "credit"`. Trước đó hạn mức bảo hiểm ("y tế tới $5,000,000") cộng như tiền, chiếm
+  trọn thang và travel credit $200 của thẻ khác về gần 0 — thêm dữ liệu bảo hiểm sẽ
+  khuếch đại lỗi đó. Snapshot ghi lại; vài nhân vật mẫu đổi thẻ chính.
+- `audit:trademarks` học thương hiệu cả từ chuỗi trong code: tên hàm `RBC(`/`CIBC(` và
+  "Priority Pass™" trong comment làm nó báo 27 chỗ. Hàm URL viết thường
+  (`rbcUrl`…), comment không gắn ™ cho Priority Pass (nội dung site đang viết trần).

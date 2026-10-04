@@ -60,8 +60,22 @@ type RateSeed = [
     to?: string;
     /** Ngày kiểm lại. Vắng thì lấy `from`. ĐỘC LẬP với ngày vào kho. */
     verifiedAt?: string;
+    /**
+     * URL trang chính chủ mà dòng này được đọc từ đó (`sourceKind: "issuer"`).
+     * Vắng = seed từ nội dung site. Thêm 04/10/2026 để lấp tỷ lệ còn thiếu mà
+     * nội dung site chưa nêu — vẫn đọc từ ngân hàng, không đoán.
+     */
+    source?: string;
   },
 ];
+
+/** Ngày kiểm tại trang chính chủ của đợt lấp "Chưa kiểm" (04/10/2026). */
+const ISSUER_CHECK = "2026-10-04";
+const BEFORE_ISSUER_CHECK = "2026-10-03";
+const SCOTIA_GOLD_SRC = "https://www.scotiabank.com/ca/en/personal/credit-cards/american-express/gold-card.html";
+const TD_FIRST_CLASS_SRC =
+  "https://www.td.com/ca/en/personal-banking/products/credit-cards/travel-rewards/first-class-travel-visa-infinite-card";
+const VIPORTER_SRC = "https://www.bmo.com/en-ca/main/personal/credit-cards/bmo-viporter-world-elite-mastercard/";
 
 /**
  * Trần tích điểm, khai riêng để nhiều hạng mục dùng CHUNG một cái.
@@ -77,6 +91,9 @@ const CAPS: Record<string, Record<string, {
   kind: "spend" | "points";
   amount: number;
   period: "monthly" | "quarterly" | "annual";
+  /** Như `RateSeed.from` / `source`. */
+  from?: string;
+  source?: string;
 }>> = {
   "amex-cobalt": {
     dining5x: {
@@ -107,6 +124,13 @@ const CAPS: Record<string, Record<string, {
       amount: 20000,
       period: "annual",
     },
+  },
+  // TD®: mỗi nhóm 6x có trần $25,000 chi tiêu/năm RIÊNG; nhóm 4x một trần chung.
+  "td-first-class-travel-visa-infinite": {
+    grocery6x: { name: "Siêu thị 6x", kind: "spend", amount: 25000, period: "annual", from: ISSUER_CHECK, source: TD_FIRST_CLASS_SRC },
+    dining6x: { name: "Ăn uống 6x", kind: "spend", amount: 25000, period: "annual", from: ISSUER_CHECK, source: TD_FIRST_CLASS_SRC },
+    transit6x: { name: "Phương tiện công cộng 6x", kind: "spend", amount: 25000, period: "annual", from: ISSUER_CHECK, source: TD_FIRST_CLASS_SRC },
+    recurring4x: { name: "Hoá đơn định kỳ và streaming 4x", kind: "spend", amount: 25000, period: "annual", from: ISSUER_CHECK, source: TD_FIRST_CLASS_SRC },
   },
 };
 
@@ -175,6 +199,15 @@ const RATES: Record<string, { program: string; rates: RateSeed[] }> = {
       ["grocery", 6, { restrictedTo: "Sobeys, Safeway, FreshCo và các siêu thị cùng nhóm" }],
       ["dining", 5],
       ["entertainment", 5],
+      // Trang Scotiabank® 04/10/2026: 5 điểm ở các siêu thị khác và giao đồ ăn,
+      // 3 điểm xăng, đi lại (gồm rideshare) và streaming, 1 điểm còn lại.
+      ["grocery", 5, { from: ISSUER_CHECK, source: SCOTIA_GOLD_SRC }],
+      ["food_delivery", 5, { from: ISSUER_CHECK, source: SCOTIA_GOLD_SRC }],
+      ["gas", 3, { from: ISSUER_CHECK, source: SCOTIA_GOLD_SRC }],
+      ["transit", 3, { from: ISSUER_CHECK, source: SCOTIA_GOLD_SRC }],
+      ["rideshare", 3, { from: ISSUER_CHECK, source: SCOTIA_GOLD_SRC }],
+      ["streaming", 3, { from: ISSUER_CHECK, source: SCOTIA_GOLD_SRC }],
+      ["everything_else", 1, { from: ISSUER_CHECK, source: SCOTIA_GOLD_SRC }],
     ],
   },
 
@@ -242,7 +275,19 @@ const RATES: Record<string, { program: string; rates: RateSeed[] }> = {
   // TD® First Class Travel: `keyBenefitsVi` chỉ nói welcome bonus và các
   // credit, không nêu một tỷ lệ tích điểm nào. Để trống có chủ ý — xem chú
   // thích đầu file.
-  "td-first-class-travel-visa-infinite": { program: "td-rewards", rates: [] },
+  // Trang TD® 04/10/2026. Trước đó trống: nội dung site không nêu tỷ lệ nào.
+  "td-first-class-travel-visa-infinite": {
+    program: "td-rewards",
+    rates: [
+      ["travel", 8, { restrictedTo: "Đặt qua Expedia® For TD", from: ISSUER_CHECK, source: TD_FIRST_CLASS_SRC }],
+      ["grocery", 6, { cap: "grocery6x", rateAfterCap: 2, from: ISSUER_CHECK, source: TD_FIRST_CLASS_SRC }],
+      ["dining", 6, { cap: "dining6x", rateAfterCap: 2, from: ISSUER_CHECK, source: TD_FIRST_CLASS_SRC }],
+      ["transit", 6, { cap: "transit6x", rateAfterCap: 2, from: ISSUER_CHECK, source: TD_FIRST_CLASS_SRC }],
+      ["recurring", 4, { cap: "recurring4x", rateAfterCap: 2, from: ISSUER_CHECK, source: TD_FIRST_CLASS_SRC }],
+      ["streaming", 4, { cap: "recurring4x", rateAfterCap: 2, from: ISSUER_CHECK, source: TD_FIRST_CLASS_SRC }],
+      ["everything_else", 2, { from: ISSUER_CHECK, source: TD_FIRST_CLASS_SRC }],
+    ],
+  },
 
   "cibc-aventura-visa-infinite": {
     program: "aventura",
@@ -353,7 +398,15 @@ const RATES: Record<string, { program: string; rates: RateSeed[] }> = {
     program: "viporter",
     rates: [
       ["airline_direct", 3, { cap: "porter3x", rateAfterCap: 2 }],
-      ["travel", 2],
+      // Nội dung site viết "du lịch" 2x; bản hướng dẫn quyền lợi của BMO® nói
+      // rõ là "everyday travel like gas and transportation" và khách sạn — không
+      // phải vé/tour đặt qua đại lý. Dòng `travel` đóng lại, thay bằng đúng các
+      // hạng mục BMO® liệt kê (04/10/2026).
+      ["travel", 2, { to: BEFORE_ISSUER_CHECK }],
+      ["gas", 2, { from: ISSUER_CHECK, source: VIPORTER_SRC }],
+      ["transit", 2, { from: ISSUER_CHECK, source: VIPORTER_SRC }],
+      ["hotel", 2, { from: ISSUER_CHECK, source: VIPORTER_SRC }],
+      ["everything_else", 1, { from: ISSUER_CHECK, source: VIPORTER_SRC }],
       ["grocery", 2],
       ["dining", 2],
     ],
@@ -465,7 +518,7 @@ const RATES: Record<string, { program: string; rates: RateSeed[] }> = {
 };
 
 function capIdFor(slug: string, cap: string): EarningCapId {
-  return makeId<EarningCapId>("cap", slug, cap, VERIFIED_ON);
+  return makeId<EarningCapId>("cap", slug, cap, CAPS[slug]?.[cap]?.from ?? VERIFIED_ON);
 }
 
 export const EARNING_CAPS: EarningCap[] = Object.entries(CAPS).flatMap(([slug, caps]) =>
@@ -476,12 +529,12 @@ export const EARNING_CAPS: EarningCap[] = Object.entries(CAPS).flatMap(([slug, c
     kind: cap.kind,
     amount: cap.amount,
     period: cap.period,
-    effectiveFrom: VERIFIED_ON,
+    effectiveFrom: cap.from ?? VERIFIED_ON,
     effectiveTo: null,
-    sourceUrl: `https://ghe1a.com/credit-cards/${slug}`,
-    sourceKind: "ghe1a",
-    verifiedAt: VERIFIED_ON,
-    recordedAt: RECORDED_ON,
+    sourceUrl: cap.source ?? `https://ghe1a.com/credit-cards/${slug}`,
+    sourceKind: cap.source ? "issuer" : "ghe1a",
+    verifiedAt: cap.from ?? VERIFIED_ON,
+    recordedAt: cap.from ?? RECORDED_ON,
     confidence: "verified",
   })),
 );
@@ -511,8 +564,8 @@ export const EARNING_RATES: EarningRate[] = Object.entries(RATES).flatMap(
       restrictedTo: opts?.restrictedTo ?? null,
       effectiveFrom: opts?.from ?? VERIFIED_ON,
       effectiveTo: opts?.to ?? null,
-      sourceUrl: `https://ghe1a.com/credit-cards/${slug}`,
-      sourceKind: "ghe1a",
+      sourceUrl: opts?.source ?? `https://ghe1a.com/credit-cards/${slug}`,
+      sourceKind: opts?.source ? "issuer" : "ghe1a",
       verifiedAt: opts?.verifiedAt ?? opts?.from ?? VERIFIED_ON,
       recordedAt: opts?.from ?? RECORDED_ON,
       confidence: "verified",
