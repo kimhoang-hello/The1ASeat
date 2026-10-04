@@ -554,10 +554,9 @@ trang thẻ bên trái, `ApplyButton` bên phải.
 - Điện thoại: ảnh 80px cạnh tên, phần còn lại chạy hết bề ngang. Từ `sm`: cột ảnh
   144px. Ba hàng `auto 1fr auto` giữ hàng nút ở đáy khi lưới hai cột kéo cao.
 - KHÔNG có khối "Quyền lợi chính" trong danh sách — đầy đủ ở trang thẻ.
-- Link trang thẻ: "Ghế 1A đánh giá" cho MỌI dòng thẻ Canada (danh sách, trang chủ, Các
-  thẻ tốt nhất, giữa thân bài — tác giả chốt 04/10/2026); "Xem chi tiết" cho thẻ Mỹ,
-  tài khoản ngân hàng và hai bảng so sánh. Tên thẻ nối vào link và `ApplyButton`
-  (`name`) bằng `sr-only`; mũi tên `aria-hidden`.
+- Link trang thẻ luôn là "Xem chi tiết" (04/10/2026 — trước đó bốn chữ khác nhau cho
+  cùng một việc). Tên thẻ nối vào link và `ApplyButton` (`name`) bằng `sr-only`; mũi
+  tên `aria-hidden`.
 - Root mang `data-affiliate-self-tracked`: ảnh và nút Apply tự bắn `apply_clicked`,
   `AffiliateClickTracker` trong thân bài bỏ qua chúng.
 - Ghi chú phí KHÔNG cắt, dù dài: "miễn phí năm đầu", phí sắp tăng là dữ kiện quyết

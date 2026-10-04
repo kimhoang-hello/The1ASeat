@@ -47,8 +47,7 @@ export function CardRow({
   href: string;
   /** Bề mặt cho GA4, dùng cho cả nút Apply lẫn ảnh thẻ (`<placement>_image`). */
   placement: string;
-  /** Chữ của link sang trang thẻ, đứng cạnh nút Apply: "Ghế 1A đánh giá" cho
-   *  thẻ Canada (tác giả chốt 04/10/2026), "Xem chi tiết" cho thẻ Mỹ. */
+  /** Chữ của link sang trang thẻ, đứng cạnh nút Apply. */
   detailsLabel: string;
   /** `h3` khi danh sách nằm dưới một tiêu đề mục `h2`; `p` khi thẻ chỉ là chú
    *  thích bên lề (giữa thân bài viết — xem `CardSpotlight`). */
@@ -144,7 +143,7 @@ export function CardRow({
       {/* Link trái, nút phải: nút Apply luôn ở cùng một mép, chỗ ngón cái tìm
           tới. Link cao 44px THẬT (`py-3`) — đứng cạnh nút ra trang ngân hàng,
           chạm hụt là rời site (DESIGN-SYSTEM.md 5.4). Tên thẻ nối vào link và
-          nút bằng `sr-only`: 35 dòng cùng một chữ link và cùng "Apply ngay"
+          nút bằng `sr-only`: 35 dòng cùng chữ "Xem chi tiết" / "Apply ngay"
           thì danh sách link của trình đọc màn hình không phân biệt được. */}
       <div className="col-span-2 mt-2 flex flex-wrap items-center justify-between gap-x-4 sm:col-span-1 sm:col-start-2">
         <Link

@@ -75,7 +75,7 @@ export async function OffersSection() {
                 offer={offer}
                 href={`/credit-cards/${offer.slug}`}
                 placement="home_offers"
-                detailsLabel={t("editorsTake")}
+                detailsLabel={t("viewDetails")}
                 heading="h3"
               >
                 {hotTip && (
