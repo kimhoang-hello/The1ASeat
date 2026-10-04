@@ -6,10 +6,39 @@ import { isReferralUrl } from "@/lib/affiliate-links";
 import { formatDate, hasExpired } from "@/lib/format-date";
 import { CardImage, applyOverlay } from "@/components/credit-cards/card-image";
 import { ApplyButton } from "@/components/ui/apply-button";
+import { CardFactValue } from "@/components/credit-cards/card-facts";
+import { cardFactsFor, type CardFactKey } from "@/lib/card-facts";
+import { todayInSiteZone } from "@/lib/format-date";
 import { t as translate } from "@/lib/t";
 
 const t = translate("compare");
 const offers_t = translate("offers");
+const facts_t = translate("cardFacts");
+
+/** Dòng Thông tin nhanh trong bảng, cùng thứ tự với khối trên trang thẻ. Thẻ
+ *  cashback và thẻ điểm có thể nằm cùng bảng nên dòng đầu mang nhãn chung. */
+const FACT_ROWS: { key: CardFactKey; label: string; long: boolean }[] = [
+  { key: "earn", label: facts_t("earnCompare"), long: true },
+  { key: "eligibility", label: facts_t("eligibility"), long: false },
+  { key: "lounge", label: facts_t("lounge"), long: false },
+  { key: "insurance", label: facts_t("insurance"), long: true },
+];
+
+/**
+ * Tên thẻ lặp lại ĐẦU Ô ở những hàng dài (03/10/2026, audit UX/UI): tên chỉ có
+ * ở hàng đầu, mà hàng đầu trôi khỏi màn hình sau vài hàng — đọc tới danh sách
+ * quyền lợi thì không còn biết cột nào là thẻ nào. Không làm hàng đầu dính
+ * được: bảng nằm trong khung cuộn ngang, `sticky top` bám vào khung đó chứ
+ * không bám vào màn hình. `aria-hidden` vì trình đọc màn hình đã đọc tên cột
+ * từ `th scope="col"`.
+ */
+function CardName({ name }: { name: string }) {
+  return (
+    <span aria-hidden className="mb-1.5 block text-xs font-semibold text-muted-foreground">
+      {name}
+    </span>
+  );
+}
 
 /** Ô trống. Dấu gạch một mình không nói gì với screen reader, nên đi kèm một
  *  dòng chỉ đọc lên — cùng cách bảng Transfer Partners đã làm. */
@@ -56,6 +85,8 @@ function Row({
  */
 export function CompareTable({ cards }: { cards: CreditCardOffer[] }) {
   const programs = getCardPointsPrograms(cards);
+  const today = todayInSiteZone();
+  const factsBySlug = new Map(cards.map((card) => [card.slug, cardFactsFor(card.slug, today)]));
   const programName = (offer: CreditCardOffer) => {
     const id = programIdFor(offer);
     return id ? programs.find((program) => program.id === id)?.name : undefined;
@@ -193,9 +224,25 @@ export function CompareTable({ cards }: { cards: CreditCardOffer[] }) {
               ))}
             </Row>
 
+            {FACT_ROWS.map(({ key, label, long }) => (
+              <Row key={key} label={label}>
+                {cards.map((card) => {
+                  const fact = factsBySlug.get(card.slug)?.facts.find((row) => row.key === key);
+                  return (
+                    <td key={card.slug} className="px-4 py-4 text-foreground/90">
+                      {long && <CardName name={card.name} />}
+                      {/* Thẻ engine chưa biết: "Chưa kiểm", cùng chữ với dòng rỗng. */}
+                      <CardFactValue fact={fact ?? { key, lines: [] }} />
+                    </td>
+                  );
+                })}
+              </Row>
+            ))}
+
             <Row label={t("rowBenefits")}>
               {cards.map((card) => (
                 <td key={card.slug} className="px-4 py-4">
+                  <CardName name={card.name} />
                   {card.keyBenefits.length > 0 ? (
                     <ul className="list-disc space-y-1.5 pl-4 text-foreground/90">
                       {card.keyBenefits.map((benefit) => (
@@ -212,6 +259,7 @@ export function CompareTable({ cards }: { cards: CreditCardOffer[] }) {
             <Row label={t("rowEditorsTake")}>
               {cards.map((card) => (
                 <td key={card.slug} className="px-4 py-4 text-foreground/90">
+                  <CardName name={card.name} />
                   {card.editorsTake || <Empty />}
                 </td>
               ))}
@@ -246,6 +294,9 @@ export function CompareTable({ cards }: { cards: CreditCardOffer[] }) {
           </tbody>
         </table>
       </div>
+      {/* Cùng lời dặn dưới khối Thông tin nhanh ở trang thẻ: bốn hàng dữ kiện ở
+          trên dùng chung dữ liệu và chung giới hạn. */}
+      <p className="mt-3 max-w-prose text-xs leading-relaxed text-muted-foreground">{facts_t("note")}</p>
     </div>
   );
 }

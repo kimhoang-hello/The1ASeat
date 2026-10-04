@@ -289,10 +289,11 @@ const RATES: Record<string, { program: string; rates: RateSeed[] }> = {
       // Site viết "đến 5 điểm/$1" — National Bank® chia bậc theo mức chi và
       // theo gói ngân hàng, nên 5 là TRẦN chứ không phải tỷ lệ ai cũng nhận.
       // Đánh dấu `restrictedTo` để engine không lấy nó làm mặc định, và dòng
-      // không giới hạn ở dưới mới là dòng nó dùng.
-      ["grocery", 5, { restrictedTo: "Mức trần theo bậc chi tiêu — không phải tỷ lệ nền" }],
+      // không giới hạn ở dưới mới là dòng nó dùng. Chuỗi này IN RA ở "Thông
+      // tin nhanh" trang thẻ (`lib/card-facts.ts`) — viết cho người đọc.
+      ["grocery", 5, { restrictedTo: "mức cao nhất, tuỳ bậc chi tiêu và gói ngân hàng" }],
       ["grocery", 1],
-      ["dining", 5, { restrictedTo: "Mức trần theo bậc chi tiêu — không phải tỷ lệ nền" }],
+      ["dining", 5, { restrictedTo: "mức cao nhất, tuỳ bậc chi tiêu và gói ngân hàng" }],
       ["dining", 1],
       ["gas", 2],
       ["ev_charging", 2],

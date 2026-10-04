@@ -2895,3 +2895,40 @@ trang chủ 7,936 → 7,282px dù thêm hai khối; `/credit-cards` 26,634 → 1
   `audit-award-charts.mts` có danh sách khoá cho phép, bỏ khoá ở đó cùng lúc.
 - `PostThumbnail` tách khỏi `PostCard` (chọn ảnh cover / YouTube / placeholder một
   chỗ); `alt=""` khi tiêu đề nằm ngay cạnh trong cùng link.
+
+## Audit UX/UI 03/10/2026 — đợt 3: Thông tin nhanh — đừng đề xuất lại
+
+Khối "Thông tin nhanh" (Tích điểm/Hoàn tiền, Điều kiện mở thẻ, Phòng chờ, Bảo hiểm)
+trên trang thẻ Canada, TRƯỚC nhận định, và cùng bốn hàng đó trong bảng so sánh. Dữ
+liệu: `src/lib/card-facts.ts` đọc bộ seed của engine (bản ghi còn hiệu lực ngày
+Toronto). Luật thành phần: DESIGN-SYSTEM.md 10.13.
+
+- **Không có dòng chuyển điểm, cố ý.** Chặng chuyển lưu theo CHƯƠNG TRÌNH; Cobalt chỉ
+  chuyển sang Aeroplan®/Avios® trong khi bảng Membership Rewards® chung có tám đích —
+  in danh sách chung là hứa chặng thẻ đó không có.
+- **Thiếu dữ liệu → "Chưa kiểm", không suy đoán.** Không có tỷ lệ nền → "Mọi chi tiêu
+  khác: chưa kiểm"; tỷ lệ có trần mà trần không dùng được → "trần: chưa kiểm" (MỌI
+  nhánh qua `withCap`: nhóm thường, nhóm merchant, tỷ lệ nền); phòng
+  chờ `numericValue: null` không thuộc loại "không giới hạn" → "(số lượt miễn phí chưa
+  kiểm)", KHÔNG viết "trả phí mỗi lượt". `stale`/`editorial` bị bỏ; dòng có nguồn
+  `estimated` (kể cả trần) in "(ước tính)" — gắn ở MỘT chỗ (`markEstimated`).
+- **Hạn mức `trip-cancellation` là hạn mức HUỶ** → "Huỷ chuyến tới $X"; không số thì
+  "Huỷ/gián đoạn chuyến" (Codex bắt: TD® Aeroplan® Privilege huỷ $2,500, gián đoạn
+  $5,000). Dữ liệu không lưu phạm vi địa lý của tỷ lệ ("5x ăn uống tại Canada" của
+  thẻ Amex®) → câu dặn dưới khối và dưới bảng so sánh.
+- **`audit:reco-data` canh mọi dòng:** dòng có nguồn `ghe1a` (seed từ nội dung site)
+  phải có mọi con số trong nội dung Contentful của chính thẻ; tỷ lệ phải có CÙNG DẠNG
+  ("5x", "X6", "2 điểm/$1", "3%", "1 điểm/$1.50") kể cả MẪU SỐ của chính vế đó —
+  so số trần thì "Hoàn 3%"→"2%" lọt nhờ "3 tháng đầu", và mẫu số tìm quá rộng thì
+  "2 điểm cho siêu thị, 1 điểm/$1.50" gán $1.50 cho vế đầu (ba vòng Codex, vòng
+  bác bản vá bắt hai lỗi cuối). Dòng chỉ có nguồn `issuer`/`third_party` (thu nhập tối thiểu đọc thẳng từ
+  trang ngân hàng 27/09/2026) không đòi có trong Contentful; quá 180 ngày thì cảnh báo
+  kiểm lại. Lần chạy đầu bắt 7 chỗ: 5 là thu nhập nguồn issuer (đúng là không có
+  trong Contentful), 2 là "$2M" chưa được đọc thành 2,000,000.
+- `restrictedTo` của National Bank® viết lại cho người đọc ("mức cao nhất, tuỳ bậc chi
+  tiêu và gói ngân hàng") vì nay nó hiện ra; `engine.snapshot.json` chỉ đổi dấu vân
+  tay dữ liệu, mọi `run` giữ nguyên. Test: `npm run test:card-facts` (dựng fixture qua
+  `cardFactsFrom` cho ca trần `stale`/hết hiệu lực và nguồn `estimated`).
+- Bảng so sánh lặp tên thẻ đầu ô ở hàng dài (tích điểm, bảo hiểm, quyền lợi, nhận
+  định): hàng tên đầu bảng trôi khỏi màn hình và không làm dính được trong khung cuộn
+  ngang.

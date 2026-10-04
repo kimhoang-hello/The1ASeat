@@ -69,6 +69,12 @@ và rebate, cộng cả drift với `points-programs.ts`, `transfer-partners.ts`
 `award-charts.ts` (bộ seed chép số từ ba file đó). Nó bắt được ca đầu tiên ngay
 hôm dựng: 3 thẻ CIBC® Aeroplan® publish trong lúc đang làm.
 
+Từ 03/10/2026 dữ liệu này còn HIỆN RA trên trang: khối "Thông tin nhanh" ở
+trang thẻ và trang so sánh (`src/lib/card-facts.ts`). Audit đòi mọi con số của
+khối đó có mặt trong nội dung Contentful của chính thẻ (với dòng seed từ nội
+dung site), nên sửa tỷ lệ tích điểm, quyền lợi hay bảo hiểm ở Contentful mà quên
+seed là audit đỏ — đúng lúc cần, vì bảng đứng ngay trên đoạn văn nói cùng chuyện.
+
 Cảnh báo (`⚠︎`) KHÔNG chặn — chúng là chỗ trống đã biết, ví dụ thẻ mà nội dung
 site chưa nêu tỷ lệ tích điểm nền. Để trống có chủ ý, đừng lấp bằng phỏng đoán.
 

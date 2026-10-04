@@ -384,6 +384,17 @@
     "medianLabel": "trung vị {points}",
     "feederOnlyShort": "Cần nối chuyến nội địa"
   },
+  "cardFacts": {
+    "title": "Thông tin nhanh",
+    "earn": "Tích điểm",
+    "earnCashBack": "Hoàn tiền",
+    "earnCompare": "Tích điểm / hoàn tiền",
+    "eligibility": "Điều kiện mở thẻ",
+    "lounge": "Phòng chờ",
+    "insurance": "Bảo hiểm",
+    "notChecked": "Chưa kiểm",
+    "note": "Tỷ lệ theo hạng mục tính theo cách ngân hàng phân loại cửa hàng, và một số thẻ chỉ tính chi tiêu tại Canada. \"Chưa kiểm\" là chỗ Ghế 1A chưa có dữ kiện đã kiểm. Điều kiện đầy đủ luôn ở trang của ngân hàng."
+  },
   "compare": {
     "title": "So sánh thẻ",
     "subtitle": "Chọn hai hoặc ba thẻ để đặt cạnh nhau: welcome bonus, annual fee, rebate và quyền lợi, cùng một hàng cho dễ so.",

@@ -40,6 +40,13 @@ import { POINTS_PROGRAMS as CALCULATOR_PROGRAMS } from "../src/lib/points-progra
 import { TRANSFER_PARTNERS } from "../src/lib/transfer-partners.ts";
 import { PROGRAMS as AWARD_CHART_PROGRAMS } from "../src/lib/award-charts.ts";
 import { todayInSiteZone } from "../src/lib/format-date.ts";
+import {
+  cardFactsFor,
+  hasRateEvidence,
+  numbersIn,
+  rateClaimsIn,
+  withoutRateClaims,
+} from "../src/lib/card-facts.ts";
 
 const REPO = fileURLToPath(new URL("..", import.meta.url));
 const REQUEST_TIMEOUT_MS = 20_000;
@@ -66,6 +73,9 @@ interface ContentfulCard {
   annualFeeVi?: string;
   rebateVi?: string;
   welcomeBonusVi?: string;
+  headlineVi?: string;
+  editorsTakeVi?: string;
+  keyBenefitsVi?: string[];
   elevatedBonus?: boolean;
   expiresAt?: string;
 }
@@ -131,6 +141,15 @@ function rebateIn(text: string | undefined): number | undefined {
 
 const errors: string[] = [];
 const warnings: string[] = [];
+
+/** Dữ kiện ở Thông tin nhanh mà nguồn không phải nội dung site (trang ngân
+ *  hàng) cần kiểm lại sau chừng này ngày — điều kiện thu nhập ít khi đổi, nhưng
+ *  không phải không bao giờ. */
+const ISSUER_FACT_MAX_AGE_DAYS = 180;
+
+function daysBetween(from: string, to: string): number {
+  return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
+}
 
 // Ngày theo giờ TORONTO, không phải UTC. `toISOString()` nhảy sang ngày mới
 // lúc 19:00 hoặc 20:00 giờ Toronto, nên trong mấy tiếng cuối ngày cuối cùng
@@ -487,6 +506,80 @@ if (cards === null) {
         `[contentful] ${card.slug}: rebate seed là ${seedRebate ?? "(không có)"}, ` +
           `Contentful nói ${liveRebate ?? "(không có)"}`,
       );
+    }
+
+    /*
+     * THÔNG TIN NHANH (03/10/2026) — bảng dữ kiện trên trang thẻ và trang so
+     * sánh, dựng từ seed (`lib/card-facts.ts`). Mọi con số bảng đó IN RA phải
+     * có mặt trong nội dung Contentful của chính thẻ này: tỷ lệ tích điểm, trần,
+     * thu nhập tối thiểu, số lượt phòng chờ, hạn mức bảo hiểm, cả số trong chữ
+     * mô tả ("15 ngày", "dưới 65 tuổi").
+     *
+     * Lý do: bảng đứng NGAY TRÊN đoạn đánh giá và danh sách quyền lợi. Ngân
+     * hàng đổi tỷ lệ, tác giả sửa Contentful mà quên seed, thì bảng nói 5x
+     * trong khi đoạn văn bên dưới nói 4x — cùng một trang, hai con số. Cùng
+     * lớp lỗi `audit:rebate-prose` và `audit:best-cards` canh, áp cho bảng mới.
+     *
+     * Tỷ lệ ("5x", "3%", "1 điểm/$1.50") phải có mặt CÙNG DẠNG (`hasRateEvidence`,
+     * kể cả mẫu số: "2 điểm cho mỗi $3" không chứng cho 2x) — so số trần thì
+     * "Hoàn 3%" đổi thành "Hoàn 2%" vẫn lọt nhờ chữ "3 tháng đầu". Số
+     * còn lại (trần, thu nhập, hạn mức, "15 ngày") so theo GIÁ TRỊ, cùng một
+     * hàm đọc số cho cả hai phía (`numbersIn`): "$2,500" và "2,500" là một số,
+     * "$5 triệu" và "$2M" là triệu. Chiều ngược lại (Contentful nói điều kiện
+     * mà seed không có) KHÔNG kiểm ở đây — bảng chỉ nói ít hơn đoạn văn, không
+     * nói khác; chỗ thiếu thì bảng ghi "chưa kiểm".
+     *
+     * Đối chiếu với CÁI GÌ tuỳ `sourceKind` của bản ghi dựng nên dòng đó:
+     * bản ghi `ghe1a` được seed TỪ nội dung site, nên phải khớp nội dung site.
+     * Bản ghi chỉ có nguồn `issuer`/`third_party` (thu nhập tối thiểu của
+     * Scotiabank® Passport®, đọc thẳng từ trang ngân hàng 27/09/2026) chưa bao
+     * giờ nằm trong Contentful — đòi chúng có mặt ở đó là bắt site viết thêm câu
+     * chỉ để audit xanh. Chúng được canh bằng ngày kiểm: quá
+     * `ISSUER_FACT_MAX_AGE_DAYS` ngày thì cảnh báo kiểm lại.
+     */
+    const facts = cardFactsFor(card.slug, TODAY);
+    if (facts) {
+      const contentText = [
+        card.welcomeBonusVi,
+        card.annualFeeVi,
+        card.headlineVi,
+        card.editorsTakeVi,
+        ...(card.keyBenefitsVi ?? []),
+      ]
+        .filter((text): text is string => typeof text === "string")
+        .join("\n")
+        .replace(/\u00A0/g, " ");
+      const contentNumbers = new Set(numbersIn(contentText));
+      for (const fact of facts.facts) {
+        for (const line of fact.lines) {
+          if (line.sources.some((source) => source.sourceKind === "ghe1a")) {
+            const missing = [
+              ...rateClaimsIn(line.text)
+                .filter((claim) => !hasRateEvidence(contentText, claim))
+                .map((claim) =>
+                  claim.kind === "perDollar" ? `${claim.points} điểm/$${claim.dollars}` : `${claim.value}${claim.unit}`,
+                ),
+              ...numbersIn(withoutRateClaims(line.text))
+                .filter((value) => !contentNumbers.has(value))
+                .map((value) => value.toLocaleString("en-US")),
+            ];
+            if (missing.length > 0) {
+              errors.push(
+                `[thông tin nhanh] ${card.slug}: dòng ${fact.key} in "${line.text}" — ` +
+                  `${missing.join(", ")} không có trong nội dung Contentful của thẻ`,
+              );
+            }
+            continue;
+          }
+          const oldest = line.sources.map((source) => source.verifiedAt).sort()[0];
+          if (oldest !== undefined && daysBetween(oldest, TODAY) > ISSUER_FACT_MAX_AGE_DAYS) {
+            warnings.push(
+              `[thông tin nhanh] ${card.slug}: dòng ${fact.key} "${line.text}" lấy từ nguồn ngoài site, ` +
+                `kiểm lần cuối ${oldest} — quá ${ISSUER_FACT_MAX_AGE_DAYS} ngày, kiểm lại tại nguồn`,
+            );
+          }
+        }
+      }
     }
   }
 }

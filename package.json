@@ -12,6 +12,7 @@
     "test:reco": "node --test --experimental-strip-types src/lib/recommendation/*.test.ts",
     "test:recommender": "node --test --experimental-strip-types src/lib/recommender/*.test.ts",
     "test:card-tags": "node --test --experimental-strip-types src/lib/card-tags.test.ts",
+    "test:card-facts": "node --test --experimental-strip-types src/lib/card-facts.test.ts",
     "test:jobs": "node --test --experimental-strip-types src/lib/job-retry.test.ts src/lib/finlywealth.test.ts",
     "audit:awards": "tsx scripts/audit-award-charts.mts",
     "audit:health": "tsx scripts/audit-content-health.mts",

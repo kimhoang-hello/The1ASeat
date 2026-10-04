@@ -548,6 +548,21 @@ sắp xếp) cạnh dòng số kết quả; bảng lọc mở khi bấm. Từ `l
 ẩn, số kết quả xuống dưới bảng lọc. Dùng ở `/credit-cards` và `/bank-accounts`.
 Ô sắp xếp trong bảng `sm:max-w-xs`.
 
+### 10.13 Thông tin nhanh — `CardFacts`
+
+Nguồn: [`src/components/credit-cards/card-facts.tsx`](src/components/credit-cards/card-facts.tsx),
+dữ liệu ở [`src/lib/card-facts.ts`](src/lib/card-facts.ts). Bốn dòng — Tích điểm (thẻ
+cashback: Hoàn tiền), Điều kiện mở thẻ, Phòng chờ, Bảo hiểm — dạng `<dl>` hai cột từ
+`sm` (nhãn 9.5rem), một cột trên điện thoại, kẻ `divide-y` không hộp. Trên trang thẻ:
+sau tag, TRƯỚC nhận định. Trong bảng so sánh: cùng các dòng, cùng chữ (qua
+`CardFactValue`), đặt sau các hàng ngắn và trước "Quyền lợi chính".
+
+- Dòng rỗng in "Chưa kiểm" bằng `text-muted-foreground`; không bao giờ để trống hay
+  in "—" (gạch ngang đọc như "không có").
+- Hàng dài trong bảng so sánh (tích điểm, bảo hiểm, quyền lợi, nhận định) lặp tên
+  thẻ đầu ô (`text-xs text-muted-foreground`, `aria-hidden`) — hàng tên ở đầu bảng
+  trôi khỏi màn hình, và bảng nằm trong khung cuộn ngang nên không làm nó dính được.
+
 ---
 
 ## 11. Khoảng trống đã biết

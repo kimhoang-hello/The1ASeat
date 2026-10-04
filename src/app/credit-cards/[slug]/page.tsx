@@ -20,6 +20,7 @@ import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { EditorsTake } from "@/components/credit-cards/editors-take";
 import { OfferStats } from "@/components/credit-cards/offer-stats";
 import { CardTags } from "@/components/credit-cards/card-tags";
+import { CardFacts } from "@/components/credit-cards/card-facts";
 import { cardTagsFor } from "@/lib/card-tags";
 import { todayInSiteZone } from "@/lib/format-date";
 import { OfferHistoryNote } from "@/components/credit-cards/offer-history-note";
@@ -226,7 +227,11 @@ export default async function CreditCardDetailPage({
 
           <CardTags tags={cardTagsFor(offer.slug, todayInSiteZone())} className="mt-4" />
 
-          <EditorsTake editorsTake={offer.editorsTake} className="mt-6" />
+          {/* Dữ kiện có cấu trúc TRƯỚC nhận định (03/10/2026): người đang so hai
+              thẻ tìm tỷ lệ tích điểm và điều kiện thu nhập, không tìm đoạn văn. */}
+          <CardFacts slug={offer.slug} className="mt-8" />
+
+          <EditorsTake editorsTake={offer.editorsTake} className="mt-8" />
 
           <h2 className="mt-8 font-display text-xl font-bold text-foreground">
             {offers("keyBenefits")}
