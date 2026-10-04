@@ -84,7 +84,10 @@ export function StartHereRouter({
   newcomer?: { href: string; label: string; note: string };
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-secondary p-5 sm:p-6">
+    // Không còn panel nền kem bọc ngoài (04/10/2026): bốn ô trắng nằm thẳng
+    // trên nền trang — "một nền, một bề mặt" (DESIGN-SYSTEM.md 1), không hộp
+    // lồng hộp. Bốn ô vẫn bằng nhau, vẫn bắn `start_here_goal`.
+    <section>
       <h2 className="font-display text-lg font-bold text-foreground sm:text-xl">{title}</h2>
 
       {/* `auto-rows-fr` chứ không phải `items-stretch`. Cái sau chỉ kéo ô cho

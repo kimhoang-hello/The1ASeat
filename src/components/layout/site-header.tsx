@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
-import { useSearchParams, usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -24,6 +24,7 @@ import {
 } from "@phosphor-icons/react";
 import { SiteSearch } from "@/components/layout/site-search";
 import { BetaBadge } from "@/components/ui/beta-badge";
+import { Flag } from "@/components/ui/flag";
 import { COMPARE_PATH } from "@/lib/card-compare";
 import { RECOMMENDER_PATH } from "@/lib/recommender/path";
 // Từ `bank-compare-path`, KHÔNG phải `bank-compare`: header là Client
@@ -86,10 +87,6 @@ function isNavLinkActive(link: NavLink, pathname: string): boolean {
  */
 const DROPDOWN_PANEL =
   "absolute left-0 top-full z-10 mt-2 max-h-[calc(100vh-7.5rem)] scroll-py-2 overflow-y-auto overscroll-contain rounded-xl border border-border bg-card p-2 shadow-lg";
-
-/** A menu entry for a page that filters itself with `?type=`. `type` is null
- *  for the entry that lives at the bare path, with no param. */
-type TypeLink = NavLink & { type: string | null };
 
 /**
  * A top-level nav item. The active page marks itself three ways at once — navy,
@@ -240,91 +237,26 @@ function MenuItem({
   );
 }
 
-// Reads the ?type= search param to highlight the active entry. Isolated in its
-// own component so only this leaf needs a Suspense boundary (useSearchParams()
-// requires one during static prerendering) instead of the whole header,
-// avoiding a flash of unstyled header on first paint.
-//
-// `pathname` alone cannot decide this: it never carries the query string, so
-// comparing it against a href like "/credit-cards?type=noi-bat" is false on the
-// very page that link points at, and the bare "/credit-cards" entry lights up
-// instead. Both the desktop dropdown and the mobile menu go through here so
-// they cannot drift apart again.
-function TypeLinks({
-  links,
-  basePath,
-  pathname,
-  onNavigate,
-  compact,
-}: {
-  links: TypeLink[];
-  basePath: string;
-  pathname: string;
-  onNavigate: (event: React.MouseEvent<HTMLElement>) => void;
-  compact?: boolean;
-}) {
-  const searchParams = useSearchParams();
-  const activeType = searchParams.get("type");
-
-  return (
-    <>
-      {links.map((link) => (
-        <MenuItem
-          key={link.href}
-          link={link}
-          active={pathname === basePath && activeType === link.type}
-          onNavigate={onNavigate}
-          compact={compact}
-        />
-      ))}
-    </>
-  );
-}
-
-/** The same list with nothing marked active — the prerender/Suspense fallback. */
-function TypeLinksFallback({
-  links,
-  onNavigate,
-  compact,
-}: {
-  links: TypeLink[];
-  onNavigate: (event: React.MouseEvent<HTMLElement>) => void;
-  compact?: boolean;
-}) {
-  return (
-    <>
-      {links.map((link) => (
-        <MenuItem
-          key={link.href}
-          link={link}
-          active={false}
-          onNavigate={onNavigate}
-          compact={compact}
-        />
-      ))}
-    </>
-  );
-}
-
-/** The dropdown panel itself, so the Blog and credit-card menus stay identical.
+/** Dropdown "Thẻ & Ngân hàng" trên thanh nav desktop.
  *
- *  Hai loại entry không đi qua TypeLinks được (nó quyết định "active" bằng
- *  cách so query string trên một đường dẫn chung), và chúng nằm ở hai phía
- *  khác nhau của đường kẻ vì chúng là hai thứ khác nhau:
+ *  Hai nhóm dòng nằm ở hai phía của đường kẻ vì chúng là hai thứ khác nhau:
  *
- *  `groupLinks` vẫn nói về chính thứ menu này nói — So sánh thẻ là một cách
- *  nhìn khác của cùng danh sách thẻ — nên nó đứng TRÊN đường kẻ, cùng nhóm với
- *  ba lát cắt `?type=`.
+ *  `links` nói về chính thứ menu này nói — danh sách thẻ, gợi ý, các thẻ tốt
+ *  nhất, so sánh thẻ là những cách nhìn khác nhau của cùng một kho thẻ — nên
+ *  đứng TRÊN đường kẻ.
  *
  *  `extraLinks` là trang lân cận: Ngân hàng nằm trong menu thẻ vì người chọn
  *  thẻ và người chọn tài khoản chequing là cùng một người trong cùng một việc,
- *  nhưng nó là một khu vực khác của site. Nó hang DƯỚI đường kẻ, để menu đọc
- *  ra là "danh sách thẻ, cắt mấy kiểu" rồi mới tới "một trang bên cạnh". */
-function TypeDropdown({
+ *  nhưng nó là một khu vực khác của site. Nó nằm DƯỚI đường kẻ.
+ *
+ *  Mọi dòng so ĐƯỜNG DẪN, không so query string (04/10/2026). Trước đó dòng
+ *  danh sách thẻ so cả `?type=` — từ hồi menu còn ba dòng Tất cả / Elevated /
+ *  Khác. Còn một dòng thì phép so đó chỉ còn tác dụng phụ: đứng ở tab Elevated
+ *  hay Khác của chính `/credit-cards` là dòng "Thẻ tín dụng" tắt, cả menu mở ra
+ *  mà không dòng nào sáng. Bỏ luôn `useSearchParams` và lớp `Suspense` nó đòi. */
+function NavDropdown({
   label,
-  basePath,
   links,
-  groupLinks = [],
   extraLinks = [],
   active,
   width,
@@ -332,9 +264,7 @@ function TypeDropdown({
   onNavigate,
 }: {
   label: string;
-  basePath: string;
-  links: TypeLink[];
-  groupLinks?: NavLink[];
+  links: NavLink[];
   extraLinks?: NavLink[];
   active: boolean;
   width: string;
@@ -352,16 +282,7 @@ function TypeDropdown({
         <CaretDown size={14} className="transition-transform group-open:rotate-180" />
       </summary>
       <div className={`${DROPDOWN_PANEL} ${width}`}>
-        <Suspense fallback={<TypeLinksFallback links={links} onNavigate={onNavigate} />}>
-          <TypeLinks
-            links={links}
-            basePath={basePath}
-            pathname={pathname}
-            onNavigate={onNavigate}
-          />
-        </Suspense>
-
-        {groupLinks.map((link) => (
+        {links.map((link) => (
           <MenuItem
             key={link.href}
             link={link}
@@ -400,26 +321,16 @@ export function SiteHeader() {
   // MỘT dòng cho cả danh sách thẻ. Trước 03/10/2026 menu còn hai dòng
   // "Elevated offers" / "Các offers khác" — chỉ là hai tab lọc của chính trang
   // đó, nằm ngay đầu danh sách. Ba dòng cho một trang là ba lựa chọn giả trong
-  // một menu vốn đã dài. Vẫn là `TypeLink` (type null = đường dẫn trần) để
-  // `TypeDropdown`/`TypeLinks` giữ nguyên cách tô sáng.
-  const cardLinks: TypeLink[] = [
-    {
-      href: "/credit-cards",
-      type: null,
-      label: nav("creditCards"),
-      description: tMenu("cardsAll"),
-      icon: CreditCard,
-    },
-  ];
+  // một menu vốn đã dài. So đúng đường dẫn như mọi dòng khác, nên dòng này
+  // sáng ở mọi tab và mọi bộ lọc của `/credit-cards` — xem `NavDropdown`.
+  const cardListLink: NavLink = {
+    href: "/credit-cards",
+    label: nav("creditCards"),
+    description: tMenu("cardsAll"),
+    icon: CreditCard,
+  };
 
-  // Ngân hàng is not a slice of the card list — it is its own page, listed
-  // here because a reader picking a card and a reader picking a chequing
-  // account are the same person on the same errand. Empty while the page is
-  // still a draft, which takes the row out of both menus at once.
-  // Trang riêng nằm trong menu thẻ, không phải một lát cắt `?type=` của danh
-  // sách — nên đi qua `extraLinks` như Ngân hàng, không qua TypeLinks.
-  // Bốn trang biên tập "tốt nhất", không phải một lát cắt `?type=` của danh
-  // sách — nên đi qua `extraLinks` như So sánh và Ngân hàng.
+  // Bốn trang biên tập "tốt nhất" (`matchPrefix`: sáng cả ở bốn trang con).
   //
   // Đường dẫn viết THẲNG, không import `BEST_CARDS_BASE`: file này là Client
   // Component, và `best-cards.ts` mang theo toàn bộ đoạn văn của bốn trang —
@@ -537,12 +448,12 @@ export function SiteHeader() {
   // Prefix, not exact: a bank account's own page is inside this section the
   // same way a card's own page is inside /credit-cards, and matching exactly
   // left the whole menu unlit on all 29 of them. The rows *inside* the menu
-  // still compare exactly (see TypeDropdown), which is what keeps "Thẻ tín
+  // still compare exactly (see NavDropdown), which is what keeps "Thẻ tín
   // dụng" from lighting up next to "Ngân hàng" on /bank-accounts.
   // Nhóm "Thẻ tín dụng" trong menu mobile không có đường kẻ để chia hai phía
   // như dropdown desktop — nên ở đây hai nhóm nối làm một, và thứ tự (So sánh
   // trước, Ngân hàng sau) là thứ giữ cho hai menu đọc ra cùng một trình tự.
-  const cardExtraLinks: NavLink[] = [...recommenderLinks, bestCardsLink, compareLink, ...bankLinks];
+  const cardGroupLinks: NavLink[] = [cardListLink, ...recommenderLinks, bestCardsLink, compareLink];
 
   const bankActive = bankLinks.some(
     (link) => pathname === link.href || pathname.startsWith(`${link.href}/`),
@@ -573,6 +484,8 @@ export function SiteHeader() {
   const toolsActive = toolsLinks.some((link) => pathname === link.href);
 
   const navRef = useRef<HTMLElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const mobilePanelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function closeDropdowns() {
@@ -587,10 +500,25 @@ export function SiteHeader() {
 
     // Escape is how every other menu on the web closes; <details> gives us the
     // open/close and the outside-click above, but not this.
+    //
+    // Đóng xong phải TRẢ focus về nút đã mở (04/10/2026, Codex bắt): focus
+    // đang nằm trên một dòng trong panel, panel ẩn đi là trình duyệt thả
+    // focus về `body` — người dùng bàn phím bị đá về đầu trang. Dropdown desktop
+    // trả về `summary` của nó; menu mobile trả về nút Menu. Focus ở chỗ khác
+    // thì để yên.
     function closeOnEscape(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
+      const focused = document.activeElement;
+      const dropdown = focused?.closest("details[open]") ?? null;
+      const returnTo =
+        dropdown && navRef.current?.contains(dropdown)
+          ? dropdown.querySelector<HTMLElement>(":scope > summary")
+          : focused && mobilePanelRef.current?.contains(focused)
+            ? menuButtonRef.current
+            : null;
       closeDropdowns();
       setOpen(false);
+      returnTo?.focus();
     }
 
     document.addEventListener("click", closeOnOutsideClick);
@@ -660,11 +588,9 @@ export function SiteHeader() {
               chữ "ngân hàng" phải đọc được ngay trên thanh menu —
               người mới định cư cần tài khoản ngân hàng trước khi cần thẻ, và
               trước 03/10/2026 nó chỉ hiện khi đã mở dropdown "Thẻ tín dụng". */}
-          <TypeDropdown
+          <NavDropdown
             label={nav("cardsAndBanks")}
-            basePath="/credit-cards"
-            links={cardLinks}
-            groupLinks={[...recommenderLinks, bestCardsLink, compareLink]}
+            links={cardGroupLinks}
             extraLinks={bankLinks}
             active={cardsMenuActive}
             width="w-80"
@@ -679,7 +605,12 @@ export function SiteHeader() {
               // còn dưới đó 6px thừa đủ làm hàng nav 1024px gãy chữ hai dòng.
               className={`flex items-center xl:gap-1.5 ${navItemClassName(usCardsActive)}`}
             >
-              {nav("usCards")}
+              {/* Cờ SVG thay emoji 🇺🇸 (Windows hiện thành chữ "US") — xem
+                  `Flag`. Cùng bề ngang emoji cũ: hàng nav 1024px còn dư rất ít. */}
+              <span className="flex items-center gap-[0.3em]">
+                <Flag country="us" />
+                {nav("usCards")}
+              </span>
               {/* Nhãn chỉ hiện từ `xl`: ở 1024px hàng nav sáu mục còn đúng 18px
                   dư, thêm một viên pill là chữ gãy hai dòng. Mục vẫn mang nhãn
                   Beta ở menu mobile, ở dải đầu trang và ở chính tiêu đề trang.
@@ -750,6 +681,7 @@ export function SiteHeader() {
           </Link>
 
           <button
+            ref={menuButtonRef}
             type="button"
             aria-label="Menu"
             aria-expanded={open}
@@ -768,7 +700,10 @@ export function SiteHeader() {
       {open && (
         // `min-h-0` + `overflow-y-auto`: co lại theo trần một màn hình của khối
         // dính rồi tự cuộn — xem chú thích ở `<header>` và `sticky-chrome.tsx`.
-        <div className="min-h-0 scroll-py-2 overflow-y-auto overscroll-contain border-t border-border bg-background px-4 pb-6 pt-2 lg:hidden">
+        <div
+          ref={mobilePanelRef}
+          className="min-h-0 scroll-py-2 overflow-y-auto overscroll-contain border-t border-border bg-background px-4 pb-6 pt-2 lg:hidden"
+        >
           <nav className="flex flex-col gap-1">
             <Link
               href="/"
@@ -783,20 +718,7 @@ export function SiteHeader() {
               active={cardsMenuActive}
               highlight={cardsRowActive}
             >
-              <Suspense
-                fallback={
-                  <TypeLinksFallback links={cardLinks} onNavigate={closeMobileMenu} compact />
-                }
-              >
-                <TypeLinks
-                  links={cardLinks}
-                  basePath="/credit-cards"
-                  pathname={pathname}
-                  onNavigate={closeMobileMenu}
-                  compact
-                />
-              </Suspense>
-              {cardExtraLinks.map((link) => (
+              {[...cardGroupLinks, ...bankLinks].map((link) => (
                 <MenuItem
                   key={link.href}
                   link={link}
@@ -813,7 +735,10 @@ export function SiteHeader() {
                 onClick={() => setOpen(false)}
                 className={`flex items-center gap-2 ${mobileItemClassName(usCardsActive)}`}
               >
-                {nav("usCards")}
+                <span className="flex items-center gap-[0.3em]">
+                  <Flag country="us" />
+                  {nav("usCards")}
+                </span>
                 <BetaBadge className={usCardsActive ? "bg-primary/10 text-primary" : "bg-card"} />
               </Link>
             )}
@@ -852,7 +777,8 @@ export function SiteHeader() {
             <Link
               href="/#newsletter"
               onClick={() => setOpen(false)}
-              className="ml-auto flex cursor-pointer items-center gap-2 rounded-full bg-primary px-4 py-2 text-base font-semibold text-primary-foreground"
+              // `min-h-11`: 40px trước đây, ngay dưới dòng "Blog" của menu.
+              className="ml-auto flex min-h-11 cursor-pointer items-center gap-2 rounded-full bg-primary px-4 py-2 text-base font-semibold text-primary-foreground"
             >
               {nav("newsletter")}
               <PaperPlaneTilt size={16} weight="bold" />

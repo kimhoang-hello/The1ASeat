@@ -99,9 +99,7 @@ export function PostBody({
           />
           {run.cards.length > 0 && (
             <div className="mt-8 space-y-4">
-              <p className="text-sm font-semibold text-primary">
-                {posts_t("cardInPost")}
-              </p>
+              <p className="text-sm font-semibold text-foreground">{posts_t("cardInPost")}</p>
               {run.cards.map((card) => (
                 <CardSpotlight key={card.slug} card={card} placement="post_body" nameAs="p" />
               ))}

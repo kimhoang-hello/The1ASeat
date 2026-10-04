@@ -322,7 +322,7 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
 
       {options.length > 0 && (
         <div className="mt-4 border-t border-border pt-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <p className="text-sm font-semibold text-foreground">
             {t("optionsHeading", { count: options.length })}
           </p>
           <p className="mt-0.5 max-w-prose text-xs leading-relaxed text-muted-foreground">
@@ -348,9 +348,7 @@ function QuoteCard({ quote, cheapest }: { quote: Quote; cheapest: number | null 
       )}
 
       <div className="mt-4 border-t border-border pt-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          {t("transferHeading")}
-        </p>
+        <p className="text-sm font-semibold text-foreground">{t("transferHeading")}</p>
         <div className="mt-1.5">
           <TransferLegs program={program} />
         </div>

@@ -70,9 +70,7 @@ function Step({
       id={id}
       className="relative scroll-mt-chrome rounded-2xl border border-border bg-card p-5 sm:p-7"
     >
-      <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-        {t("stepLabel", { n })}
-      </p>
+      <p className="text-sm font-semibold text-muted-foreground">{t("stepLabel", { n })}</p>
       <h2 className="mt-1 font-display text-xl font-bold text-foreground sm:text-2xl">{title}</h2>
       <p className="mt-3 text-base leading-relaxed text-foreground/90">{body}</p>
       <div className="mt-5">{children}</div>

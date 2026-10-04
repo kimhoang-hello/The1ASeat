@@ -59,7 +59,7 @@ export function VietnamRoutesSection() {
           </div>
           <Link
             href={VIETNAM_ROUTES_BASE}
-            className="shrink-0 py-2 text-sm font-semibold text-primary hover:underline"
+            className="inline-flex min-h-11 shrink-0 items-center text-base font-semibold text-primary hover:underline sm:items-end"
           >
             {t("viewAll", { count: VIETNAM_ROUTES.length })} &rarr;
           </Link>

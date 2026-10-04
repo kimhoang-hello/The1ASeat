@@ -312,13 +312,15 @@ function AccountCard({ account }: { account: BankAccount }) {
           href={bankAccountPath(account.slug)}
           className="cursor-pointer py-3 text-sm font-semibold text-primary hover:underline"
         >
-          {t("details")} &rarr;
+          {t("details")} <span aria-hidden>&rarr;</span>
+          <span className="sr-only"> {account.name}</span>
         </Link>
         <ApplyButton
           href={account.affiliateUrl ?? account.url}
           affiliate={Boolean(account.affiliateUrl)}
           placement="account_list"
           product={account.slug}
+          name={account.name}
         />
       </div>
     </li>
@@ -584,7 +586,7 @@ function FinderView({
                 thì trình đọc màn hình đọc "Ngân hàng" hai lần liên tiếp. */}
             <span
               aria-hidden="true"
-              className="mr-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+              className="mr-1 text-sm font-medium text-muted-foreground"
             >
               {t("bankLabel")}
             </span>

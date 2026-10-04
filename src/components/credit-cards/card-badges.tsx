@@ -2,6 +2,7 @@ import type { CreditCardOffer } from "@/lib/content";
 import { formatDate, hasExpired } from "@/lib/format-date";
 import { isElevatedLive } from "@/lib/credit-card-state";
 import { t } from "@/lib/t";
+import { Flag } from "@/components/ui/flag";
 
 const usCards = t("usCards");
 
@@ -29,7 +30,8 @@ export function CardBadges({
           hiệu này là thứ duy nhất nói ngay rằng đây không phải thẻ mở được ở
           Canada. */}
       {offer.country === "US" && (
-        <span className="rounded-full border border-border bg-secondary px-2.5 py-0.5 text-xs font-semibold text-foreground/80">
+        <span className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary px-2.5 py-0.5 text-xs font-semibold text-foreground/80">
+          <Flag country="us" />
           {usCards("usBadge")}
         </span>
       )}

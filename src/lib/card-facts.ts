@@ -48,6 +48,9 @@ export type CardFactKey = "earn" | "eligibility" | "lounge" | "insurance";
 export interface CardFactLine {
   text: string;
   sources: Sourced[];
+  /** Ý có một phần "chưa kiểm" ngay trong chữ (trần, tỷ lệ nền, số lượt phòng
+   *  chờ) — xem `hasUnchecked`. */
+  unchecked?: true;
 }
 
 export interface CardFact {
@@ -226,7 +229,7 @@ function earnLines(
     const first = rows[0];
     if (first.capId === null) return { text, sources: rows };
     const cap = caps.find((row) => row.id === first.capId);
-    if (!cap) return { text: `${text} — trần: chưa kiểm`, sources: rows };
+    if (!cap) return { text: `${text} — trần: chưa kiểm`, sources: rows, unchecked: true };
     const rowCaps = perCategory ? caps.filter((row) => rows.some((rate) => rate.capId === row.id)) : [cap];
     const each = perCategory ? " cho mỗi hạng mục" : "";
     const after = first.rateAfterCap !== null ? `, sau đó ${rateText(first.rateAfterCap, cashBack)}` : "";
@@ -284,7 +287,7 @@ function earnLines(
         )
       : // Không có tỷ lệ nền thì danh sách trên CHƯA ĐỦ — nói ra, đừng để bảng
         // trông như đã liệt kê hết.
-        { text: "Mọi chi tiêu khác: chưa kiểm", sources: [] },
+        { text: "Mọi chi tiêu khác: chưa kiểm", sources: [], unchecked: true },
   );
   return lines;
 }
@@ -355,7 +358,11 @@ function loungeLines(benefits: ProductBenefit[]): CardFactLine[] {
       // `null` lượt = site không nêu số lượt (xem đầu `product-benefits.ts`):
       // có thẻ hội viên, nhưng mấy lượt miễn phí thì chưa ai kiểm. Phần sau
       // dấu " — " là ghi chú nội bộ của file dữ liệu, không in.
-      lines.push({ text: `${text.split(" — ")[0]} (số lượt miễn phí chưa kiểm)`, sources: [row] });
+      lines.push({
+        text: `${text.split(" — ")[0]} (số lượt miễn phí chưa kiểm)`,
+        sources: [row],
+        unchecked: true,
+      });
     }
   }
   return lines;
@@ -417,6 +424,16 @@ export function cardFactsFrom(data: CardFactsData, slug: string, asOf: string): 
     cashBack,
     facts: facts.map((fact) => ({ ...fact, lines: fact.lines.map(markEstimated) })),
   };
+}
+
+/**
+ * Khối có chỗ nào "chưa kiểm" không — dòng rỗng, hoặc một ý chưa kiểm một phần
+ * ("trần: chưa kiểm", "Mọi chi tiêu khác: chưa kiểm", "số lượt miễn phí chưa
+ * kiểm"). Câu giải thích chữ "Chưa kiểm" dưới khối chỉ in khi có: từ 04/10/2026
+ * 35/35 thẻ không còn ô nào như thế, mà câu đó vẫn nằm dưới mọi trang thẻ.
+ */
+export function hasUnchecked(data: CardFacts): boolean {
+  return data.facts.some((fact) => fact.lines.length === 0 || fact.lines.some((line) => line.unchecked));
 }
 
 /**

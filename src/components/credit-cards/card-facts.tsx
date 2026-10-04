@@ -1,4 +1,4 @@
-import { cardFactsFor, type CardFact, type CardFacts as CardFactsData } from "@/lib/card-facts";
+import { cardFactsFor, hasUnchecked, type CardFact, type CardFacts as CardFactsData } from "@/lib/card-facts";
 import { todayInSiteZone } from "@/lib/format-date";
 import { t as translate } from "@/lib/t";
 
@@ -54,8 +54,12 @@ export function CardFacts({ slug, className = "" }: { slug: string; className?: 
       </dl>
       {/* Dữ liệu không lưu phạm vi địa lý của tỷ lệ ("5x ăn uống TẠI CANADA" của
           thẻ Amex®) — câu này nói ra giới hạn đó thay vì để "2x ăn uống" đọc
-          như tính cả khi đi nước ngoài (Codex bắt, 03/10/2026). */}
-      <p className="mt-2 max-w-prose text-xs leading-relaxed text-muted-foreground">{t("note")}</p>
+          như tính cả khi đi nước ngoài (Codex bắt, 03/10/2026). Câu giải thích
+          "Chưa kiểm" chỉ in khi khối có chỗ chưa kiểm (04/10/2026). */}
+      <p className="mt-2 max-w-prose text-xs leading-relaxed text-muted-foreground">
+        {t("note")}
+        {hasUnchecked(data) && ` ${t("noteUnchecked")}`}
+      </p>
     </section>
   );
 }

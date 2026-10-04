@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { MAX_COMPARE } from "@/lib/compare";
 export interface PickableItem {
@@ -46,9 +46,26 @@ export function ComparePicker({
   // CŨ và mất thẻ vừa chọn ở ô đầu. Khoá các ô cho tới khi trang mới về.
   const [pending, startTransition] = useTransition();
 
+  // Khoá ô bằng `disabled` thì trình duyệt thả focus của ô đang dùng về `body`
+  // (đo 04/10/2026: chọn xong ô 1, `document.activeElement` là BODY) — người
+  // dùng bàn phím bị đá về đầu trang sau mỗi lần chọn. Nên nhớ ô vừa đổi và trả
+  // focus về nó khi trang mới về, TRỪ KHI trong lúc chờ người đọc đã tự đặt
+  // focus ở chỗ khác. Bỏ chọn ô cuối thì ô đó biến mất: lùi về ô gần nhất.
+  const selectRefs = useRef<(HTMLSelectElement | null)[]>([]);
+  const focusAfterNavigation = useRef<number | null>(null);
+
   // Số ô: đủ cho những thẻ đang chọn, cộng một ô trống để thêm thẻ nữa — nhưng
   // không quá trần. Ba ô trống ngay từ đầu trông như ba việc phải làm.
   const slotCount = Math.min(Math.max(selected.length + 1, 2), MAX_COMPARE);
+
+  useEffect(() => {
+    if (pending || focusAfterNavigation.current === null) return;
+    const index = Math.min(focusAfterNavigation.current, slotCount - 1);
+    focusAfterNavigation.current = null;
+    const active = document.activeElement;
+    if (active && active !== document.body) return;
+    selectRefs.current[index]?.focus();
+  }, [pending, slotCount]);
 
   function choose(index: number, slug: string) {
     const next = [...selected];
@@ -61,6 +78,7 @@ export function ComparePicker({
     else params.delete(param);
 
     const query = params.toString();
+    focusAfterNavigation.current = index;
     startTransition(() => {
       router.replace(query ? `${path}?${query}` : path, { scroll: false });
     });
@@ -79,6 +97,9 @@ export function ComparePicker({
                 {labels.slots[index]}
               </span>
               <select
+                ref={(element) => {
+                  selectRefs.current[index] = element;
+                }}
                 value={value}
                 disabled={pending}
                 aria-busy={pending}

@@ -108,9 +108,9 @@ export default async function BlogCategoryPage({
               bài; mục không còn bài thì biến mất khỏi danh sách và `notFound()`
               ở trên bắt trước. Từng thêm một empty state ở đây rồi gỡ — nó là
               code chết kèm một chuỗi dịch chẳng ai đọc. */}
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 2xl:grid-cols-4">
             {posts.map((post, index) => (
-              <PostCard key={post.slug} post={post} preload={index === 0} />
+              <PostCard key={post.slug} post={post} preload={index === 0} listOnMobile />
             ))}
           </div>
 

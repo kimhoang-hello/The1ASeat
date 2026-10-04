@@ -7,7 +7,7 @@ import { formatDate, hasExpired } from "@/lib/format-date";
 import { CardImage, applyOverlay } from "@/components/credit-cards/card-image";
 import { ApplyButton } from "@/components/ui/apply-button";
 import { CardFactValue } from "@/components/credit-cards/card-facts";
-import { cardFactsFor, type CardFactKey } from "@/lib/card-facts";
+import { cardFactsFor, hasUnchecked, type CardFactKey } from "@/lib/card-facts";
 import { todayInSiteZone } from "@/lib/format-date";
 import { t as translate } from "@/lib/t";
 
@@ -87,6 +87,11 @@ export function CompareTable({ cards }: { cards: CreditCardOffer[] }) {
   const programs = getCardPointsPrograms(cards);
   const today = todayInSiteZone();
   const factsBySlug = new Map(cards.map((card) => [card.slug, cardFactsFor(card.slug, today)]));
+  // Thẻ engine chưa biết hiện "Chưa kiểm" ở cả bốn hàng — cũng tính là có.
+  const anyUnchecked = cards.some((card) => {
+    const facts = factsBySlug.get(card.slug);
+    return !facts || hasUnchecked(facts);
+  });
   const programName = (offer: CreditCardOffer) => {
     const id = programIdFor(offer);
     return id ? programs.find((program) => program.id === id)?.name : undefined;
@@ -268,6 +273,10 @@ export function CompareTable({ cards }: { cards: CreditCardOffer[] }) {
             <Row label={t("rowApply")}>
               {cards.map((card) => (
                 <td key={card.slug} className="px-4 py-4">
+                  {/* Tên thẻ ngay trên nút (04/10/2026, Codex bắt): tới hàng này
+                      thì hàng tên đầu bảng và đầu ô nhận định đã trôi khỏi màn
+                      hình, còn lại hai, ba nút giống hệt nhau. */}
+                  <CardName name={card.name} />
                   {card.applyUrl && (
                     <ApplyButton
                       href={card.applyUrl}
@@ -275,18 +284,20 @@ export function CompareTable({ cards }: { cards: CreditCardOffer[] }) {
                       className="w-full text-center"
                       placement="card_compare"
                       product={card.slug}
+                      name={card.name}
                     />
                   )}
                   <Link
                     href={`/credit-cards/${card.slug}`}
-                    // `py-2.5` cho vùng chạm ~40px thay vì đúng một dòng chữ
+                    // `py-3` cho vùng chạm 44px THẬT thay vì đúng một dòng chữ
                     // 20px. Trong bảng cuộn ngang trên điện thoại, đây là
                     // đường DUY NHẤT sang trang chi tiết mà không đi thẳng ra
                     // link affiliate — hụt tay ở đây là bấm nhầm vào nút Apply
-                    // ngay bên trên.
-                    className="mt-1 block py-2.5 text-center text-sm font-semibold text-primary hover:underline"
+                    // ngay bên trên (DESIGN-SYSTEM.md 5.4).
+                    className="mt-1 block py-3 text-center text-sm font-semibold text-primary hover:underline"
                   >
                     {t("viewCard")}
+                    <span className="sr-only"> {card.name}</span>
                   </Link>
                 </td>
               ))}
@@ -296,7 +307,10 @@ export function CompareTable({ cards }: { cards: CreditCardOffer[] }) {
       </div>
       {/* Cùng lời dặn dưới khối Thông tin nhanh ở trang thẻ: bốn hàng dữ kiện ở
           trên dùng chung dữ liệu và chung giới hạn. */}
-      <p className="mt-3 max-w-prose text-xs leading-relaxed text-muted-foreground">{facts_t("note")}</p>
+      <p className="mt-3 max-w-prose text-xs leading-relaxed text-muted-foreground">
+        {facts_t("note")}
+        {anyUnchecked && ` ${facts_t("noteUnchecked")}`}
+      </p>
     </div>
   );
 }

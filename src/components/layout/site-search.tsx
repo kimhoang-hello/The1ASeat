@@ -341,7 +341,9 @@ export function SiteSearch({ onOpen }: { onOpen?: () => void }) {
                             </span>
                           )}
                         </span>
-                        <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-foreground/60">
+                        {/* `/70`, không phải `/60`: chữ 11px trên `bg-secondary` cần
+                            4.5:1, và `/60` chỉ ra 4.41:1 (04/10/2026). */}
+                        <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-foreground/70">
                           {KIND_LABEL[item.kind]}
                         </span>
                       </Link>

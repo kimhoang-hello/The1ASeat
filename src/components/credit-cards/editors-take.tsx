@@ -24,30 +24,30 @@ export function splitHotTip(editorsTake: string): { body: string; hotTip?: strin
 export function EditorsTake({
   editorsTake,
   className = "",
-  compact = false,
 }: {
   editorsTake: string;
   className?: string;
-  compact?: boolean;
 }) {
   const { body, hotTip } = splitHotTip(editorsTake);
 
   return (
-    // Không còn hộp nền kem (03/10/2026): ô thẻ đã là một bề mặt trắng, thêm
-    // một hộp nữa bên trong là hộp lồng hộp. Nhãn đủ nói đây là nhận định.
-    <div className={className}>
-      <p className={`font-semibold text-primary ${compact ? "text-sm" : "text-base"}`}>
-        {offers("editorsTake")}
-      </p>
-      <p className={`leading-relaxed text-foreground ${compact ? "mt-1 text-sm" : "mt-2"}`}>
-        {body}
-      </p>
+    // Không còn hộp nền kem (03/10/2026): trang thẻ đã là một bề mặt, thêm một
+    // hộp nữa là hộp lồng hộp.
+    //
+    // Tiêu đề là H2 cùng kiểu với "Thông tin nhanh" và "Quyền lợi chính" ngay
+    // trên và dưới nó (04/10/2026, audit UX/UI). Trước đó là một dòng chữ navy
+    // thường: người dùng trình đọc màn hình nhảy theo tiêu đề đi thẳng từ
+    // "Thông tin nhanh" sang "Quyền lợi chính", bỏ qua đúng phần nhận định;
+    // còn mắt thì thấy chữ navy — màu của link — mà bấm không được.
+    <section className={className}>
+      <h2 className="font-display text-xl font-bold text-foreground">{offers("editorsTake")}</h2>
+      <p className="mt-3 leading-relaxed text-foreground/90">{body}</p>
 
       {hotTip && (
-        <div className={compact ? "mt-3" : "mt-4"}>
-          <HotTip compact={compact}>{hotTip}</HotTip>
+        <div className="mt-4">
+          <HotTip>{hotTip}</HotTip>
         </div>
       )}
-    </div>
+    </section>
   );
 }

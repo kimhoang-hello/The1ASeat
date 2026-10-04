@@ -12,7 +12,9 @@ const offers = translate("offers");
 
 /**
  * Một thẻ trong danh sách, dạng DÒNG GỌN — dùng chung cho `/credit-cards`,
- * `/us-credit-cards` và bốn thẻ ở trang chủ, để ba nơi vẫn trông là một site.
+ * `/us-credit-cards`, bốn thẻ ở trang chủ, và (qua `CardSpotlight`, từ
+ * 04/10/2026) khối thẻ ở bốn trang "Các thẻ tốt nhất" lẫn giữa thân bài viết —
+ * để mọi nơi một tấm thẻ hiện ra đều trông là một site.
  *
  * Thay cho ô thẻ cũ từ 03/10/2026 (audit UX/UI): ảnh thẻ rộng hết bề ngang
  * điện thoại, dải số liệu chữ 24px, headline, tag và khối "Quyền lợi chính" —
@@ -47,8 +49,9 @@ export function CardRow({
   placement: string;
   /** Chữ của link sang trang thẻ, đứng cạnh nút Apply. */
   detailsLabel: string;
-  /** `h3` khi danh sách nằm dưới một tiêu đề mục `h2`. */
-  heading?: "h2" | "h3";
+  /** `h3` khi danh sách nằm dưới một tiêu đề mục `h2`; `p` khi thẻ chỉ là chú
+   *  thích bên lề (giữa thân bài viết — xem `CardSpotlight`). */
+  heading?: "h2" | "h3" | "p";
   /** Dòng nhỏ dưới tên — thẻ Mỹ in tên ngân hàng phát hành. */
   subtitle?: string;
   showHeadline?: boolean;
@@ -58,7 +61,14 @@ export function CardRow({
   const fee = splitAnnualFee(offer.annualFee);
 
   return (
-    <article className="grid grid-cols-[5rem_minmax(0,1fr)] grid-rows-[auto_1fr_auto] gap-x-4 rounded-2xl border border-border bg-card p-4 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-x-5 sm:p-5">
+    // `data-affiliate-self-tracked`: ảnh thẻ và nút Apply tự bắn `apply_clicked`
+    // qua `ApplyLink`. Đứng trong vùng `AffiliateClickTracker` quét (thân bài
+    // blog), thuộc tính này bảo tracker BỎ QUA để một click không bị đếm hai
+    // lần. Đặt ở root của chính component, nên nơi nào dùng lại cũng tự đúng.
+    <article
+      className="grid grid-cols-[5rem_minmax(0,1fr)] grid-rows-[auto_1fr_auto] gap-x-4 rounded-2xl border border-border bg-card p-4 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-x-5 sm:p-5"
+      data-affiliate-self-tracked
+    >
       <CardImage
         image={offer.cardImage}
         name={offer.name}
@@ -132,13 +142,16 @@ export function CardRow({
 
       {/* Link trái, nút phải: nút Apply luôn ở cùng một mép, chỗ ngón cái tìm
           tới. Link cao 44px THẬT (`py-3`) — đứng cạnh nút ra trang ngân hàng,
-          chạm hụt là rời site (DESIGN-SYSTEM.md 5.4). */}
+          chạm hụt là rời site (DESIGN-SYSTEM.md 5.4). Tên thẻ nối vào link và
+          nút bằng `sr-only`: 35 dòng cùng chữ "Xem chi tiết" / "Apply ngay"
+          thì danh sách link của trình đọc màn hình không phân biệt được. */}
       <div className="col-span-2 mt-2 flex flex-wrap items-center justify-between gap-x-4 sm:col-span-1 sm:col-start-2">
         <Link
           href={href}
           className="cursor-pointer py-3 text-sm font-semibold text-primary hover:underline"
         >
-          {detailsLabel} &rarr;
+          {detailsLabel} <span aria-hidden>&rarr;</span>
+          <span className="sr-only"> {offer.name}</span>
         </Link>
         {offer.applyUrl && (
           <ApplyButton
@@ -146,6 +159,7 @@ export function CardRow({
             affiliate={isReferralUrl(offer.applyUrl)}
             placement={placement}
             product={offer.slug}
+            name={offer.name}
           />
         )}
       </div>

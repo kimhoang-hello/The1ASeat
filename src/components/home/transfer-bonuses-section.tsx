@@ -29,7 +29,7 @@ export async function TransferBonusesSection() {
           </div>
           <Link
             href="/transfer-bonuses"
-            className="cursor-pointer text-base font-semibold text-primary hover:underline"
+            className="inline-flex min-h-11 cursor-pointer items-center text-base font-semibold text-primary hover:underline sm:items-end"
           >
             {t("viewAll")} &rarr;
           </Link>

@@ -22,7 +22,7 @@ export function CategoryLinks({
   return (
     <nav aria-label={seo("categoriesLabel")} className={className}>
       <ul className="flex flex-wrap items-center gap-2">
-        <li className="mr-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <li className="mr-1 text-sm font-medium text-muted-foreground">
           {seo("categoriesLabel")}
         </li>
         {categories.map((category) => (

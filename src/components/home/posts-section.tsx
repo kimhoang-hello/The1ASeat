@@ -22,7 +22,7 @@ export async function PostsSection() {
           </div>
           <Link
             href="/blog"
-            className="cursor-pointer text-base font-semibold text-primary hover:underline"
+            className="inline-flex min-h-11 cursor-pointer items-center text-base font-semibold text-primary hover:underline sm:items-end"
           >
             {t("viewAll")} &rarr;
           </Link>

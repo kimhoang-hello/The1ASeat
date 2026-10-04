@@ -507,6 +507,7 @@ function CalculatorSection() {
             label: program.calculatorLabel,
             pointsName: program.pointsName,
             centsPerPoint: program.centsPerPoint,
+            rateChannel: program.rateChannel,
           }))}
         />
       </div>

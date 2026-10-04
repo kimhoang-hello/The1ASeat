@@ -12,6 +12,8 @@ export interface RhtCalculatorProgram {
   label: string;
   pointsName: string;
   centsPerPoint: number;
+  /** Kênh redeem mà tỷ lệ chỉ đúng khi đi qua (TD®: "qua Expedia® For TD"). */
+  rateChannel?: string;
 }
 
 /**
@@ -85,8 +87,16 @@ export function RhtCalculator({ programs }: { programs: RhtCalculatorProgram[] }
             </span>
           </>
         )}
+        {/* Kênh đi kèm tỷ lệ, cùng câu với thẻ workflow ở trên (04/10/2026, Codex
+            bắt): 0.5¢ của TD® chỉ đúng qua Expedia® For TD, nên in tỷ lệ trần
+            ở đây là nói giá trị điểm cao hơn thật ở mọi kênh khác. */}
         <span className="mt-2 block text-sm text-muted-foreground">
-          {t("rate", { rate: dollarRateLabel(program.centsPerPoint) })}
+          {program.rateChannel
+            ? t("rateChannel", {
+                channel: program.rateChannel,
+                rate: dollarRateLabel(program.centsPerPoint),
+              })
+            : t("rate", { rate: dollarRateLabel(program.centsPerPoint) })}
         </span>
       </output>
     </div>

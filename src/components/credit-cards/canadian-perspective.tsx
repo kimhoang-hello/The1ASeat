@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CanadianAnswer, UsCardCanadianPerspective } from "@/lib/us-credit-cards";
+import { Flag } from "@/components/ui/flag";
 import { t as translate } from "@/lib/t";
 
 const us = translate("usCards");
@@ -36,7 +37,10 @@ export function CanadianPerspective({
 
   return (
     <section className={`rounded-2xl border border-border bg-card p-5 ${className}`}>
-      <h2 className="font-display text-xl font-bold text-foreground">{us("perspectiveTitle")}</h2>
+      <h2 className="flex items-center gap-[0.35em] font-display text-xl font-bold text-foreground">
+        <Flag country="ca" />
+        {us("perspectiveTitle")}
+      </h2>
 
       <dl className="mt-3 divide-y divide-border">
         {rows.map(({ label, answer }) => (
@@ -57,10 +61,11 @@ export function CanadianPerspective({
         ))}
       </dl>
 
-      <div className="mt-2 rounded-lg bg-secondary p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-          {us("perspectiveWatchOut")}
-        </p>
+      {/* Một hàng nữa sau đường kẻ, không phải hộp nền kem lồng trong khối
+          (04/10/2026). Nhãn màu hổ phách: đây đúng nghĩa "cần chú ý" của token
+          `warning` (DESIGN-SYSTEM.md 3.2), không phải navy — màu của link. */}
+      <div className="border-t border-border pt-3">
+        <p className="text-sm font-semibold text-warning">{us("perspectiveWatchOut")}</p>
         <p className="mt-1 text-sm leading-relaxed text-foreground/90">{perspective.watchOut}</p>
       </div>
 

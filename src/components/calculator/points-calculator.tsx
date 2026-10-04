@@ -156,10 +156,10 @@ export function PointsCalculator({ cardProgramIds }: { cardProgramIds: string[] 
           <Field label={t("taxesLabel")} value={taxes} onChange={setTaxes} suffix="$" />
         </div>
 
-        <div className="mt-6 rounded-xl bg-secondary p-5 text-center">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("result")}
-          </p>
+        {/* Đường kẻ thay hộp nền kem (04/10/2026): ô công cụ đã là một bề mặt
+            trắng, thêm hộp nữa là hộp lồng hộp — cùng cách calculator RHT. */}
+        <div className="mt-6 border-t border-border pt-5 text-center">
+          <p className="text-sm font-semibold text-muted-foreground">{t("result")}</p>
           <p className="mt-1 font-display text-3xl font-bold text-primary">
             {/* `cents` là null ở HAI ca khác nhau — không tính được, và tính
                 được nhưng không in ra được (tràn số ở phép nhân trong

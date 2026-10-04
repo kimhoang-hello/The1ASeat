@@ -21,7 +21,7 @@
     "catchThePoints": "Mini-game: Catch The Points",
     "bestCards": "Các thẻ tốt nhất",
     "cardRecommender": "Gợi ý thẻ",
-    "usCards": "🇺🇸 Thẻ Mỹ"
+    "usCards": "Thẻ Mỹ"
   },
   "navMenu": {
     "cardsAll": "Toàn bộ thẻ đang theo dõi",
@@ -93,6 +93,7 @@
     "annualFee": "Annual fee",
     "welcomeBonus": "Welcome bonus",
     "editorsTake": "Ghế 1A đánh giá",
+    "viewDetails": "Xem chi tiết",
     "elevatedBonus": "Elevated offer",
     "expiresOn": "Hết hạn",
     "applyAffiliateNote": "Ghế 1A có thể nhận hoa hồng nếu bạn mở thẻ qua link này.",
@@ -155,7 +156,7 @@
     "bonusConditions": "Điều kiện nhận bonus",
     "viewAll": "Xem tất cả tài khoản",
     "keyBenefits": "Quyền lợi chính",
-    "details": "Chi tiết",
+    "details": "Xem chi tiết",
     "feeWaiverHeading": "Cách được miễn monthly fee",
     "otherFromBank": "Xem các tài khoản khác của {bank}",
     "disclaimerHeading": "Đọc kỹ trước khi mở tài khoản",
@@ -398,7 +399,8 @@
     "lounge": "Phòng chờ",
     "insurance": "Bảo hiểm",
     "notChecked": "Chưa kiểm",
-    "note": "Tỷ lệ theo hạng mục tính theo cách ngân hàng phân loại cửa hàng, và một số thẻ chỉ tính chi tiêu tại Canada. \"Chưa kiểm\" là chỗ Ghế 1A chưa có dữ kiện đã kiểm. Điều kiện đầy đủ luôn ở trang của ngân hàng."
+    "note": "Tỷ lệ theo hạng mục tính theo cách ngân hàng phân loại cửa hàng, và một số thẻ chỉ tính chi tiêu tại Canada. Điều kiện đầy đủ luôn ở trang của ngân hàng.",
+    "noteUnchecked": "\"Chưa kiểm\" là chỗ Ghế 1A chưa có dữ kiện đã kiểm."
   },
   "compare": {
     "title": "So sánh thẻ",
@@ -623,7 +625,6 @@
     "navLabel": "Các thẻ tốt nhất",
     "inThisPage": "Trong trang này",
     "bestFor": "Phù hợp với",
-    "viewCard": "Xem chi tiết thẻ",
     "alsoLabel": "Thẻ trong mục này",
     "otherCategories": "Các mục khác",
     "allCardsLabel": "Xem toàn bộ thẻ đang theo dõi",
@@ -663,20 +664,20 @@
     "issuerAll": "Tất cả",
     "empty": "Chưa có thẻ Mỹ nào khớp với bộ lọc này.",
     "emptyCta": "Xem tất cả thẻ Mỹ",
-    "usBadge": "🇺🇸 US Card",
+    "usBadge": "US Card",
     "requirementLabel": "Điều kiện",
     "viewDetails": "Xem chi tiết",
     "viewAll": "Xem tất cả thẻ Mỹ",
     "sampleBadge": "Số liệu mẫu — chưa kiểm",
     "verifiedOn": "Số liệu kiểm tra ngày {date}",
     "sampleNote": "Số liệu mẫu, chưa đối chiếu với ngân hàng — cập nhật {date}.",
-    "newcomerTitle": "🇨🇦 Mới chơi thẻ Mỹ?",
+    "newcomerTitle": "Mới chơi thẻ Mỹ?",
     "newcomerBody": "Chơi thẻ Mỹ khác khá nhiều so với Canada. Nếu bạn chưa có ITIN hoặc US credit history, Ghế 1A đã chuẩn bị hướng dẫn riêng để bắt đầu.",
     "journeyCanada": "Canada",
     "journeyItin": "ITIN",
     "journeyFirstCard": "First US card",
     "journeyCredit": "Build US credit",
-    "perspectiveTitle": "🇨🇦 Góc nhìn từ Canada",
+    "perspectiveTitle": "Góc nhìn từ Canada",
     "perspectiveItin": "ITIN",
     "perspectiveHistory": "US credit history",
     "perspectiveAddress": "US address",
@@ -687,10 +688,10 @@
     "rewardsCurrency": "Điểm thưởng",
     "siblingsCurrencyTitle": "Thẻ Mỹ khác cũng tích {currency}",
     "siblingsFilterTitle": "Thẻ Mỹ khác trong nhóm {filter}",
-    "bandTitle": "🇺🇸 Tìm thẻ tín dụng Mỹ?",
+    "bandTitle": "Tìm thẻ tín dụng Mỹ?",
     "bandBody": "{count} thẻ Mỹ, mỗi thẻ kèm góc nhìn cho người Canada: ITIN, US address, phí ngoại tệ.",
     "bandCta": "Xem thẻ Mỹ",
-    "homeLink": "🇺🇸 Thẻ Mỹ"
+    "homeLink": "Thẻ Mỹ"
   },
   "rht": {
     "title": "Refundable Hotel Trick",

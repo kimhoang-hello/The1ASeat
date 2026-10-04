@@ -194,6 +194,12 @@ thêm một tầng chữ nhỏ viết hoa khó đọc với độc giả lớn t
 Mẫu `text-xs font-semibold uppercase tracking-wide` chỉ còn cho: chuyên mục trên
 thẻ bài viết, nhãn HOT TIP, `RebateChip`, badge VIDEO/Beta, tiêu đề cột bảng.
 
+Mọi nhãn khác viết thường đầu câu, `text-sm` (04/10/2026): nhãn nhóm lọc
+("Điểm thưởng", "Chuyên mục", "Ngân hàng" — `font-medium text-muted-foreground`),
+nhãn mục con trong công cụ ("Các lựa chọn hành trình", "Chuyển điểm từ"), tiêu đề
+mục lục, "Bước n" ở trang Bắt đầu, nhãn cặp gợi ý ở hai trang so sánh. Nhãn không
+bấm được thì không dùng navy — navy là màu của hành động.
+
 ### 4.4 Cỡ chữ gốc tự giãn theo màn hình
 
 ```css
@@ -289,6 +295,7 @@ Padding ngang **luôn** là `px-4 sm:px-6 lg:px-8`. Không tự nghĩ ra bộ kh
 | **Công cụ đọc `useSearchParams`: fallback là chính nó ở trạng thái mặc định** | Fallback ô xám rồi công cụ thật cao vài nghìn px đẩy trang xuống — CLS 0.161 ở `/award-flight-finder`; HTML server cũng rỗng với crawler | `<Suspense fallback={<View selection={DEFAULT} update={() => {}} />}>` như `bank-account-finder` và `award-chart-finder`. |
 | **Ghi chú chữ nhỏ (`text-xs`) trong khung rộng: `max-w-prose`** | 12px chạy hết bề ngang 1137px là 133 ký tự/dòng | Disclaimer, ghi chú phí/lãi suất, lời dặn dưới bảng. |
 | **Đích `#anchor` dùng `scroll-mt-chrome`**, không tự đặt `scroll-mt-*` | Khối dính cao 113–163px tuỳ dải offer; số tự đặt sẽ lệch khi khối đổi chiều cao | Utility trong `globals.css`: 11rem dưới `sm`, 9rem từ `sm`. Bài viết: `prose-headings:scroll-mt-chrome`. |
+| **Khoá hay ẩn phần tử đang giữ focus thì trả focus** | `disabled` hay ẩn một phần tử đang được focus là trình duyệt thả focus về `body` — người dùng bàn phím bị đá về đầu trang | `ComparePicker` trả focus về ô vừa chọn khi điều hướng xong; Esc đóng dropdown nav trả về `summary`, đóng menu mobile trả về nút Menu (04/10/2026). |
 | **Dải link có CTA bên phải: xuống dòng dưới `sm`** | Ở 375px CTA giành gần nửa bề ngang, tiêu đề gãy ba dòng | `flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3`. |
 
 ---
@@ -366,6 +373,12 @@ Import từ `@phosphor-icons/react/ssr` trong component server (xem
 
 Không thêm thư viện icon thứ hai.
 
+**Cờ quốc gia: `Flag`** ([`src/components/ui/flag.tsx`](src/components/ui/flag.tsx)),
+SVG nội tuyến cỡ theo `em`, `aria-hidden`. KHÔNG dùng emoji cờ (🇺🇸 🇨🇦): Chrome và
+Edge trên Windows không có font emoji cờ, "🇺🇸 Thẻ Mỹ" hiện thành "US Thẻ Mỹ"
+(04/10/2026). Chuỗi trong `messages/vi.json` không mang emoji cờ — component đặt
+`<Flag>` cạnh chữ.
+
 ---
 
 ## 10. Đặc tả thành phần
@@ -433,6 +446,14 @@ font-bold`) → tóm tắt (`text-sm text-muted-foreground line-clamp-2`) → ch
 
 Prop `headingLevel` cho phép hạ xuống `h3` khi thẻ nằm dưới một `h2` — giữ cấu
 trúc heading hợp lệ cho SEO.
+
+Ảnh `alt=""`: tiêu đề nằm ngay dưới trong cùng link, có alt là trình đọc màn hình
+đọc tên bài hai lần.
+
+`listOnMobile` (04/10/2026): dưới `sm` thẻ thành một dòng — ảnh `aspect-video w-28`
+bên trái, chuyên mục + nhãn Video, tiêu đề, ngày · thời lượng; bỏ tóm tắt. Bật ở
+`/blog`, trang chuyên mục và "Bài viết liên quan" (lưới `gap-3 sm:gap-6`); KHÔNG bật
+ở carousel trang chủ. `/blog` ở 375px: 22,967 → 9,977px.
 
 Không có ảnh → dùng `MediaPlaceholder` với `tone="navy"`, không để ô trống.
 
@@ -522,7 +543,9 @@ prose-h2:text-xl`.
 
 Nguồn: [`src/components/credit-cards/card-row.tsx`](src/components/credit-cards/card-row.tsx).
 Một mẫu cho mọi danh sách thẻ: `/credit-cards`, `/us-credit-cards` (qua
-`UsCardSummary`) và bốn thẻ ở trang chủ (03/10/2026). Thứ tự: badge (offer nâng,
+`UsCardSummary`) và bốn thẻ ở trang chủ (03/10/2026); từ 04/10/2026 cả khối thẻ ở
+bốn trang "Các thẻ tốt nhất" và giữa thân bài viết (`CardSpotlight` =
+`CardRow showHeadline={false}`, tên thẻ `h3` / `p`). Thứ tự: badge (offer nâng,
 US, loại thẻ, hạn) → tên → **bonus + annual fee** trên một hàng (hai phần tử flex,
 không phải chữ nối tiếp) → ghi chú phí ngay dưới phí → `RebateChip` → headline →
 phần riêng của nơi dùng (`children`: tag, điều kiện chi tiêu, HOT TIP) → link
@@ -531,6 +554,11 @@ trang thẻ bên trái, `ApplyButton` bên phải.
 - Điện thoại: ảnh 80px cạnh tên, phần còn lại chạy hết bề ngang. Từ `sm`: cột ảnh
   144px. Ba hàng `auto 1fr auto` giữ hàng nút ở đáy khi lưới hai cột kéo cao.
 - KHÔNG có khối "Quyền lợi chính" trong danh sách — đầy đủ ở trang thẻ.
+- Link trang thẻ luôn là "Xem chi tiết" (04/10/2026 — trước đó bốn chữ khác nhau cho
+  cùng một việc). Tên thẻ nối vào link và `ApplyButton` (`name`) bằng `sr-only`; mũi
+  tên `aria-hidden`.
+- Root mang `data-affiliate-self-tracked`: ảnh và nút Apply tự bắn `apply_clicked`,
+  `AffiliateClickTracker` trong thân bài bỏ qua chúng.
 - Ghi chú phí KHÔNG cắt, dù dài: "miễn phí năm đầu", phí sắp tăng là dữ kiện quyết
   định. Rebate đứng SAU ghi chú phí — chen vào giữa thì ghi chú đọc như điều kiện
   của rebate.
@@ -559,6 +587,9 @@ sau tag, TRƯỚC nhận định. Trong bảng so sánh: cùng các dòng, cùng
 
 - Dòng rỗng in "Chưa kiểm" bằng `text-muted-foreground`; không bao giờ để trống hay
   in "—" (gạch ngang đọc như "không có").
+- Câu giải thích chữ "Chưa kiểm" dưới khối/bảng chỉ in khi có chỗ chưa kiểm
+  (`hasUnchecked`: dòng rỗng HOẶC ý mang cờ `unchecked` — "trần: chưa kiểm", "Mọi chi
+  tiêu khác: chưa kiểm", "số lượt miễn phí chưa kiểm"). Câu phạm vi Canada luôn in.
 - Hàng dài trong bảng so sánh (tích điểm, bảo hiểm, quyền lợi, nhận định) lặp tên
   thẻ đầu ô (`text-xs text-muted-foreground`, `aria-hidden`) — hàng tên ở đầu bảng
   trôi khỏi màn hình, và bảng nằm trong khung cuộn ngang nên không làm nó dính được.

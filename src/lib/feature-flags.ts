@@ -88,7 +88,7 @@ export const RECOMMENDER_PUBLISHED = true;
  * Mục Thẻ Mỹ (`/us-credit-cards`). Dựng 21/09/2026 — kiến trúc và giao diện,
  * số liệu thẻ còn là SỐ LIỆU MẪU (xem đầu `src/lib/us-credit-cards.ts`).
  *
- * Bật cờ là công bố: mục "🇺🇸 Thẻ Mỹ" hiện trên menu (desktop lẫn mobile), các
+ * Bật cờ là công bố: mục "Thẻ Mỹ" (kèm cờ SVG) hiện trên menu (desktop lẫn mobile), các
  * trang vào sitemap và ô tìm kiếm, `noindex` được gỡ và dải báo nháp biến mất.
  * Bật cờ CŨNG làm `getUsCreditCards()` bỏ mọi thẻ còn `needsVerification` —
  * nên trước khi bật, phải có ít nhất vài thẻ đã đối chiếu với trang ngân hàng,

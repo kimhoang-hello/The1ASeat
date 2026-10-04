@@ -37,7 +37,7 @@ export function PointsProgramLinks({
   return (
     <nav aria-label={offers_t("pointsLabel")} className={className}>
       <ul className="flex flex-wrap items-center gap-2">
-        <li className="mr-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <li className="mr-1 text-sm font-medium text-muted-foreground">
           {offers_t("pointsLabel")}
         </li>
 

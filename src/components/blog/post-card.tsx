@@ -21,17 +21,27 @@ const common = t("common");
  * định `loading="lazy"`: đo Lighthouse 29/09/2026, ảnh LCP của /blog chờ
  * 1.7 s mới bắt đầu tải chỉ vì bị lazy. Thẻ thứ hai trở đi cùng cỡ nên không
  * thay được LCP — preload thêm chỉ tranh băng thông với ảnh thật sự cần.
+ *
+ * `listOnMobile` (04/10/2026, audit UX/UI): dưới `sm` thẻ thành một DÒNG — ảnh
+ * nhỏ bên trái, chuyên mục, tiêu đề, ngày — như khối review ở trang chủ. Thẻ
+ * dọc ảnh 176px cao ~400px một bài, nên `/blog` dài 22,967px ở 375px (gần 28
+ * màn hình), trang dài nhất site. Bỏ tóm tắt trên điện thoại; giữ chuyên mục,
+ * nhãn Video và thời lượng — thứ người đọc dùng để chọn bài. Từ `sm` vẫn là
+ * thẻ dọc ảnh lớn. Không bật cho carousel trang chủ: ở đó thẻ dọc nằm trong
+ * một hàng cuộn ngang.
  */
 export function PostCard({
   post,
   headingLevel = "h2",
   className = "",
   preload = false,
+  listOnMobile = false,
 }: {
   post: BlogPost;
   headingLevel?: "h2" | "h3";
   className?: string;
   preload?: boolean;
+  listOnMobile?: boolean;
 }) {
   const Heading = headingLevel;
   const duration = postDuration(post);
@@ -39,10 +49,26 @@ export function PostCard({
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className={`group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md ${className}`}
+      className={`group flex cursor-pointer rounded-2xl border border-border bg-card transition-shadow hover:shadow-md ${
+        listOnMobile
+          ? "items-start gap-3 p-3 sm:flex-col sm:items-stretch sm:gap-0 sm:overflow-hidden sm:p-0"
+          : "flex-col overflow-hidden"
+      } ${className}`}
     >
-      <PostThumbnail post={post} preload={preload} className="h-44 w-full" />
-      <div className="flex flex-1 flex-col p-5">
+      {/* `alt=""`: tiêu đề bài nằm ngay dưới ảnh trong CÙNG link — có alt thì
+          trình đọc màn hình đọc tên bài hai lần liền nhau (04/10/2026). */}
+      <PostThumbnail
+        post={post}
+        preload={preload}
+        alt=""
+        className={
+          listOnMobile
+            ? "aspect-video w-28 shrink-0 rounded-lg sm:aspect-auto sm:h-44 sm:w-full sm:rounded-none"
+            : "h-44 w-full"
+        }
+        sizes={listOnMobile ? "(min-width: 640px) 384px, 112px" : undefined}
+      />
+      <div className={`flex flex-1 flex-col ${listOnMobile ? "min-w-0 sm:p-5" : "p-5"}`}>
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold uppercase tracking-wide text-primary">
             {post.category}
@@ -56,8 +82,16 @@ export function PostCard({
         <Heading className="mt-2 text-pretty font-display text-base font-bold leading-snug text-foreground group-hover:text-primary">
           {post.title}
         </Heading>
-        <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{post.excerpt}</p>
-        <div className="mt-auto flex items-center gap-2 pt-4 text-xs text-muted-foreground">
+        <p
+          className={`mt-2 line-clamp-2 text-sm text-muted-foreground ${listOnMobile ? "hidden sm:block" : ""}`}
+        >
+          {post.excerpt}
+        </p>
+        <div
+          className={`mt-auto flex items-center gap-2 text-xs text-muted-foreground ${
+            listOnMobile ? "pt-2 sm:pt-4" : "pt-4"
+          }`}
+        >
           <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
           {duration && (
             <>

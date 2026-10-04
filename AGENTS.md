@@ -3008,3 +3008,57 @@ tắt bảo hiểm) ngày 04/10/2026. Kết quả: 0 ô "Chưa kiểm".
 - `audit:trademarks` học thương hiệu cả từ chuỗi trong code: tên hàm `RBC(`/`CIBC(` và
   "Priority Pass™" trong comment làm nó báo 27 chỗ. Hàm URL viết thường
   (`rbcUrl`…). Từ 04/10/2026 nội dung site và chuỗi hiển thị trong code đều viết "Priority Pass™"; comment vẫn viết trần.
+
+## Audit UX/UI lần hai 04/10/2026 — đợt 4: sửa theo kết quả — đừng đề xuất lại
+
+Audit lại toàn site sau đợt 0–3 (199 URL × 320/375/1024/1280 bằng Chrome headless, chặn
+GA và mọi request không phải GET; Codex soát độc lập rồi phản biện). Kỹ thuật sạch:
+0 tràn ngang, 0 lỗi tương phản, 0 heading nhảy cóc, 1 H1/trang, 0 lỗi console, CLS ≈ 0
+có throttle, detector anti-pattern 0. Tác giả bảo "làm hết" 12 đề xuất + hai việc chờ
+quyết. Luật mới ghi ở DESIGN-SYSTEM.md (4.3, 5.4, 9, 10.3, 10.11, 10.13).
+
+- **Focus không được rơi về `body`.** `ComparePicker` khoá ô bằng `disabled` lúc điều
+  hướng → trình duyệt thả focus (đo: chọn xong ô 1, `activeElement` = BODY); nay trả
+  focus về ô vừa chọn khi xong, trừ khi người đọc đã tự chuyển focus. Esc đóng dropdown
+  nav trả focus về `summary`, đóng menu mobile trả về nút Menu (Codex bắt).
+- **Menu so ĐƯỜNG DẪN, không so `?type=`**: bỏ `TypeLinks`/`useSearchParams`/`Suspense`
+  của header — còn một dòng "Thẻ tín dụng" thì phép so query chỉ làm dòng đó tắt ở tab
+  Elevated/Khác.
+- **Calculator RHT in kênh của tỷ lệ** ("Rate qua Expedia® For TD: …") — 0.5¢ của TD®
+  chỉ đúng qua kênh đó (Codex bắt; dữ liệu `rateChannel` đã có, props bỏ mất).
+- **"Ghế 1A đánh giá" là H2** cùng kiểu "Thông tin nhanh"/"Quyền lợi chính" (trang thẻ
+  Canada + Mỹ). Trước đó là chữ navy thường: nhảy theo heading bỏ qua phần nhận định.
+- **Tên sản phẩm trong tên link**: `ApplyButton name` + `CardRow` nối tên thẻ bằng
+  `sr-only`; hàng Apply hai bảng so sánh có tên hiển thị (hàng tên đầu bảng đã trôi
+  khỏi màn hình). Badge tìm kiếm `/60` → `/70` (4.41 → 6.08:1). `PostCard` ảnh `alt=""`.
+- **Vùng chạm 44px chỉ cho thứ đứng cạnh thứ bấm được khác** (DESIGN-SYSTEM 5.4): link
+  đầu khối trang chủ (cặp "Xem tất cả thẻ" / "Thẻ Mỹ" từng cao 20px), link chi tiết dưới
+  nút Apply trong bảng so sánh, nút bản tin trong menu mobile. Codex phản biện: KHÔNG
+  gỡ link "Về trang chủ" cuối trang chi tiết (đường về cuối một trang dài, Breadcrumbs ở
+  đầu không thay được) và không nới mọi link đứng riêng.
+- **`/blog` trên điện thoại**: `PostCard listOnMobile` (dòng ngang dưới `sm`) ở `/blog`,
+  trang chuyên mục, "Bài viết liên quan" — 22,967 → 9,977px ở 375px. Carousel trang chủ
+  giữ thẻ dọc.
+- **`CardSpotlight` = `CardRow showHeadline={false}`** (Các thẻ tốt nhất: tên `h3`; giữa
+  thân bài: `p`). `data-affiliate-self-tracked` chuyển lên root `CardRow` — Codex: thay
+  thẳng mà quên cờ đó là `AffiliateClickTracker` đếm click hai lần. `OfferStats` nay chỉ
+  còn ở đầu trang thẻ (Canada, Mỹ).
+- **Câu giải thích "Chưa kiểm" chỉ in khi có** (`hasUnchecked`: dòng rỗng hoặc ý mang cờ
+  `unchecked`); câu phạm vi Canada luôn in. Bảng so sánh: thẻ engine không biết cũng tính.
+- **Hết lệch hệ thị giác còn sót**: panel nền kem cấp section (ngã ba `/bat-dau`, khối
+  "Mới chơi thẻ Mỹ?"), hộp kem lồng trong "Góc nhìn từ Canada" (nay hàng kẻ trên, nhãn
+  `text-warning`) và Points Calculator (nay `border-t` như calculator RHT); nhãn viết hoa
+  ngoài danh sách 4.3 → chữ thường `text-sm`. Nhãn của công cụ Gợi ý thẻ KHÔNG đổi — bản
+  local báo "Công cụ đang tạm nghỉ" vì không tới được DB, không kiểm được bằng mắt.
+- **Hai việc tác giả để mình quyết, đã làm**: (1) link sang trang sản phẩm thống nhất
+  "Xem chi tiết" — đã là chữ ở thẻ Mỹ, hai bảng so sánh, dải offer; thay "Ghế 1A đánh giá
+  →" (danh sách thẻ Canada, trang chủ), "Chi tiết →" (tài khoản), "Xem chi tiết thẻ →"
+  (khối thẻ). Muốn đổi chữ thì sửa `offers.viewDetails`, `bankAccounts.details`,
+  `usCards.viewDetails`, `compare.viewCard`, `bankCompare.viewAccount`. (2) Emoji cờ →
+  `Flag` SVG (Chrome/Edge trên Windows hiện 🇺🇸 thành "US"); `messages/vi.json` không còn
+  emoji cờ. Hàng nav 1024px đo lại: một hàng, nút bản tin không gãy.
+
+**Đã kiểm, KHÔNG phải lỗi:** bảng so sánh cuộn ngang trên điện thoại (cột nhãn dính — thiết
+kế 29/08); ba nhãn Beta ở Thẻ Mỹ (chốt 22/09); ô navy trống trong carousel bài viết ở ảnh
+chụp toàn trang (ảnh lazy chưa kịp tải — đo lại: cả bốn ảnh tải); "Quyền lợi chính" lặp
+một phần "Thông tin nhanh" (Codex: chưa đủ cơ sở gập lại; nội dung là của tác giả).

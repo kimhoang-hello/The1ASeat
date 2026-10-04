@@ -152,7 +152,7 @@ export default async function CompareBankAccountsPage({
 
               {SUGGESTED_PAIRS.length > 0 && (
                 <>
-                  <p className="mt-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <p className="mt-5 text-sm font-semibold text-foreground">
                     {t("suggestTitle")}
                   </p>
                   <div className="mt-2 flex flex-wrap justify-center gap-2">

@@ -4,6 +4,7 @@ import { getCreditCardOffers } from "@/lib/content";
 import { isElevatedLive } from "@/lib/credit-card-state";
 import { PageHeader } from "@/components/layout/page-header";
 import { CardRow } from "@/components/credit-cards/card-row";
+import { Flag } from "@/components/ui/flag";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { FilterPanel } from "@/components/ui/filter-panel";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -211,7 +212,7 @@ export default async function CreditCardsPage({
               offer={offer}
               href={`/credit-cards/${offer.slug}`}
               placement="card_list"
-              detailsLabel={offers_t("editorsTake")}
+              detailsLabel={offers_t("viewDetails")}
             >
               <CardTags tags={cardTagsFor(offer.slug, today)} className="mt-3" />
             </CardRow>
@@ -244,7 +245,10 @@ export default async function CreditCardsPage({
               className="flex flex-col items-start gap-2 rounded-2xl border border-border bg-card px-5 py-4 transition-colors hover:border-primary sm:flex-row sm:items-center sm:justify-between sm:gap-3 xl:col-span-2"
             >
               <span>
-                <span className="block font-display font-bold text-foreground">{usCards("bandTitle")}</span>
+                <span className="flex items-center gap-[0.35em] font-display font-bold text-foreground">
+                  <Flag country="us" />
+                  {usCards("bandTitle")}
+                </span>
                 <span className="mt-0.5 block text-sm text-muted-foreground">
                   {usCards("bandBody", { count: getUsCreditCards().length })}
                 </span>

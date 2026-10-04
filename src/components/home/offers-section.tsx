@@ -2,6 +2,7 @@ import Link from "next/link";
 import { t as translate } from "@/lib/t";
 import { getCreditCardOffers } from "@/lib/content";
 import { CardRow } from "@/components/credit-cards/card-row";
+import { Flag } from "@/components/ui/flag";
 import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { splitHotTip } from "@/components/credit-cards/editors-take";
 import { HotTip } from "@/components/ui/hot-tip";
@@ -37,18 +38,22 @@ export async function OffersSection() {
       <div className="mx-auto max-w-page">
         <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="font-display text-2xl font-bold text-foreground sm:text-3xl">
+            <h2 className="font-display text-2xl font-bold text-foreground sm:text-3xl xl:text-4xl">
               {t(elevatedOnly ? "homeElevatedTitle" : "title")}
             </h2>
           </div>
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
-            <Link href="/credit-cards" className="cursor-pointer text-sm font-semibold text-primary hover:underline">
+          {/* Hai link đứng sát nhau nên mỗi cái cao 44px THẬT (04/10/2026) — trước
+              đó 20px, chạm hụt "Xem tất cả thẻ" là sang Thẻ Mỹ. Chữ canh đáy từ
+              `sm` để vẫn thẳng hàng với đáy tiêu đề bên trái. */}
+          <div className="flex flex-wrap items-center gap-x-5">
+            <Link href="/credit-cards" className="inline-flex min-h-11 cursor-pointer items-center text-base font-semibold text-primary hover:underline sm:items-end">
               {t("viewAll")} &rarr;
             </Link>
             {/* Mục Thẻ Mỹ không có cửa nào trên trang chủ ngoài menu. Chỉ là một
                 link cạnh "xem tất cả", không chen vào bốn thẻ Canada. */}
             {US_CARDS_PUBLISHED && (
-              <Link href={US_CARDS_BASE} className="cursor-pointer text-sm font-semibold text-primary hover:underline">
+              <Link href={US_CARDS_BASE} className="inline-flex min-h-11 cursor-pointer items-center gap-[0.3em] text-base font-semibold text-primary hover:underline sm:items-end">
+                <Flag country="us" className="sm:mb-[0.2em]" />
                 {usCards("homeLink")} &rarr;
               </Link>
             )}
@@ -70,7 +75,7 @@ export async function OffersSection() {
                 offer={offer}
                 href={`/credit-cards/${offer.slug}`}
                 placement="home_offers"
-                detailsLabel={t("editorsTake")}
+                detailsLabel={t("viewDetails")}
                 heading="h3"
               >
                 {hotTip && (

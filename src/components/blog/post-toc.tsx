@@ -19,9 +19,7 @@ export function PostToc({ items, className = "" }: { items: TocItem[]; className
 
   return (
     <nav aria-label={posts_t("tocTitle")} className={className}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {posts_t("tocTitle")}
-      </p>
+      <p className="text-sm font-semibold text-foreground">{posts_t("tocTitle")}</p>
       <ol className="mt-3 space-y-2 border-l border-border">
         {items.map((item) => (
           <li key={item.id}>

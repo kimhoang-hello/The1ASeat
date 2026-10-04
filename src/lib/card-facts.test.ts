@@ -4,6 +4,7 @@ import {
   cardFactsFor,
   cardFactsFrom,
   hasRateEvidence,
+  hasUnchecked,
   numbersIn,
   rateClaimsIn,
   withoutRateClaims,
@@ -238,4 +239,23 @@ test("hạn mức nằm trong chữ mô tả vẫn mang nhãn huỷ chuyến, kh
   const insurance = cardFactsFrom({ ...SITE, benefits }, "td-aeroplan-visa-infinite-privilege", AS_OF)!
     .facts.find((fact) => fact.key === "insurance")!.lines.map((line) => line.text);
   assert.ok(insurance.includes("Huỷ chuyến (tối đa $2,500 mỗi người)"), insurance.join(" | "));
+});
+
+test("hasUnchecked: dòng rỗng và ý chưa kiểm một phần đều tính; 04/10/2026 không thẻ nào còn", () => {
+  const linked = PRODUCTS.filter((row) => row.contentfulLinked);
+  // Trước đợt kiểm: có thẻ còn ô rỗng hoặc "(số lượt miễn phí chưa kiểm)".
+  assert.ok(linked.some((product) => hasUnchecked(cardFactsFor(product.slug, BEFORE_CHECK)!)));
+  assert.ok(lines("scotiabank-gold-amex", "lounge", BEFORE_CHECK)[0].includes("chưa kiểm"));
+  assert.equal(hasUnchecked(cardFactsFor("scotiabank-gold-amex", BEFORE_CHECK)!), true);
+  for (const product of linked) {
+    assert.equal(hasUnchecked(cardFactsFor(product.slug, AS_OF)!), false, product.slug);
+  }
+  // Ý chưa kiểm một phần, không có dòng rỗng nào: vẫn phải tính.
+  assert.equal(
+    hasUnchecked({
+      cashBack: false,
+      facts: [{ key: "earn", lines: [{ text: "Mọi chi tiêu khác: chưa kiểm", sources: [], unchecked: true }] }],
+    }),
+    true,
+  );
 });

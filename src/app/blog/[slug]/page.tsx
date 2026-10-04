@@ -327,9 +327,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           <h2 className="font-display text-xl font-bold text-foreground">{seo("relatedTitle")}</h2>
           {/* Cột thứ ba CHỈ khi khung đã nới ra. Bài không có mục lục vẫn
               rộng 38rem, nhét ba thẻ vào đó là tiêu đề nào cũng gãy bốn dòng. */}
-          <div className={`mt-5 grid gap-5 sm:grid-cols-2${hasToc ? " xl:grid-cols-3" : ""}`}>
+          <div className={`mt-5 grid gap-3 sm:grid-cols-2 sm:gap-5${hasToc ? " xl:grid-cols-3" : ""}`}>
             {related.map((item) => (
-              <PostCard key={item.slug} post={item} headingLevel="h3" />
+              <PostCard key={item.slug} post={item} headingLevel="h3" listOnMobile />
             ))}
           </div>
         </section>

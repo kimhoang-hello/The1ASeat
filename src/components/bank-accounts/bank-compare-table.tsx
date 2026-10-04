@@ -201,23 +201,31 @@ export function BankCompareTable({ accounts }: { accounts: BankAccount[] }) {
             <Row label={t("rowApply")}>
               {accounts.map((account) => (
                 <td key={account.slug} className="px-4 py-4">
+                  {/* Tên tài khoản ngay trên nút — cùng lý do với bảng so sánh
+                      thẻ: tới hàng cuối, hàng tên đầu bảng đã trôi khỏi màn
+                      hình. `aria-hidden` vì trình đọc màn hình đọc tên cột từ
+                      `th scope="col"`; tên đi vào nút bằng `sr-only`. */}
+                  <span aria-hidden className="mb-1.5 block text-xs font-semibold text-muted-foreground">
+                    {account.name}
+                  </span>
                   <ApplyButton
                     href={account.affiliateUrl ?? account.url}
                     affiliate={Boolean(account.affiliateUrl)}
                     className="w-full text-center"
                     placement="account_compare"
                     product={account.slug}
+                    name={account.name}
                   />
                   <Link
                     href={bankAccountPath(account.slug)}
-                    // `py-2.5` cho vùng chạm ~40px thay vì đúng một dòng chữ
-                    // 20px. Trong bảng cuộn ngang trên điện thoại, đây là
-                    // đường DUY NHẤT sang trang chi tiết mà không đi thẳng ra
-                    // link affiliate — hụt tay ở đây là bấm nhầm vào nút Apply
-                    // ngay bên trên.
-                    className="mt-1 block py-2.5 text-center text-sm font-semibold text-primary hover:underline"
+                    // `py-3` cho vùng chạm 44px THẬT. Trong bảng cuộn ngang trên
+                    // điện thoại, đây là đường DUY NHẤT sang trang chi tiết mà
+                    // không đi thẳng ra link affiliate — hụt tay ở đây là bấm
+                    // nhầm vào nút Apply ngay bên trên (DESIGN-SYSTEM.md 5.4).
+                    className="mt-1 block py-3 text-center text-sm font-semibold text-primary hover:underline"
                   >
                     {t("viewAccount")}
+                    <span className="sr-only"> {account.name}</span>
                   </Link>
                 </td>
               ))}

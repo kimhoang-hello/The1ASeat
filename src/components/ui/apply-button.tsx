@@ -13,6 +13,12 @@ const offers = translate("offers");
  * FinlyWealth referral link too; the few that have none point straight at the
  * bank and go out as plain `nofollow` — same button either way, because the
  * reader is doing the same thing.
+ *
+ * `name` (04/10/2026, audit UX/UI): trong một danh sách, 35 nút cùng đọc
+ * "Apply ngay" — mở danh sách link của trình đọc màn hình là không biết nút nào
+ * ra ngân hàng nào. Tên sản phẩm được nối vào bằng `sr-only`, chữ nhìn thấy giữ
+ * nguyên. Trang của chính một sản phẩm thì không cần: tên đã là H1. Mũi tên
+ * `aria-hidden` để không bị đọc thành "mũi tên phải".
  */
 export function ApplyButton({
   href,
@@ -20,6 +26,7 @@ export function ApplyButton({
   affiliate = true,
   placement,
   product,
+  name,
 }: {
   href: string;
   className?: string;
@@ -28,6 +35,8 @@ export function ApplyButton({
   placement: string;
   /** Slug thẻ hoặc tài khoản. */
   product: string;
+  /** Tên thẻ/tài khoản, chỉ cho trình đọc màn hình — xem ghi chú trên. */
+  name?: string;
 }) {
   return (
     <ApplyLink
@@ -37,7 +46,8 @@ export function ApplyButton({
       product={product}
       className={`inline-block cursor-pointer rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover ${className}`}
     >
-      {offers("applyNow")} &rarr;
+      {offers("applyNow")} <span aria-hidden>&rarr;</span>
+      {name && <span className="sr-only"> {name}</span>}
     </ApplyLink>
   );
 }

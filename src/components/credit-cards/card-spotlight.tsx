@@ -1,40 +1,34 @@
-import Link from "next/link";
-
-import { CardImage, applyOverlay } from "@/components/credit-cards/card-image";
-import { CardBadges } from "@/components/credit-cards/card-badges";
-import { OfferStats } from "@/components/credit-cards/offer-stats";
-import { RebateChip } from "@/components/ui/hot-tip";
-import { ApplyButton } from "@/components/ui/apply-button";
-import { isReferralUrl } from "@/lib/affiliate-links";
+import { CardRow } from "@/components/credit-cards/card-row";
 import type { CreditCardOffer } from "@/lib/content";
 import { t as translate } from "@/lib/t";
 
 const offers_t = translate("offers");
-const best = translate("bestCards");
 
 /**
- * Một tấm thẻ ở dạng gọn: ảnh, huy hiệu, dải số liệu, hai đường đi tiếp.
+ * Một tấm thẻ ở dạng gọn, đặt cạnh chữ của tác giả: ảnh, huy hiệu, bonus +
+ * annual fee, rebate, hai đường đi tiếp.
  *
- * Dùng ở HAI chỗ, và đó là lý do nó đứng riêng: bốn trang "Các thẻ tốt nhất",
- * và giữa thân bài viết mỗi khi bài nhắc tới một thẻ có trên site. Hai chỗ đó
- * phải trông giống hệt nhau — người đọc gặp cùng một tấm thẻ ở hai nơi mà nó
- * hiện ra hai kiểu thì lần thứ hai họ phải đọc lại từ đầu.
+ * Dùng ở HAI chỗ: bốn trang "Các thẻ tốt nhất", và giữa thân bài viết mỗi khi
+ * bài nhắc tới một thẻ có trên site. Từ 04/10/2026 (audit UX/UI) nó CHÍNH LÀ
+ * dòng thẻ của danh sách (`CardRow`) — trước đó là một bố cục riêng (dải số liệu
+ * `OfferStats`, phí đẩy sang mép phải, ~520px một thẻ trên điện thoại), nên
+ * người đọc gặp cùng một tấm thẻ ở danh sách và trong bài thì thấy hai kiểu.
  *
- * KHÔNG chép lại `article` của `/credit-cards`: ở đó thẻ đứng một mình nên nó
- * mang cả headline lẫn khối quyền lợi mở ra được. Ở đây ngay cạnh đã là chữ
- * của tác giả nói đúng những điều đó, nên lặp lại là bắt người đọc đọc hai lần
- * cùng một nội dung. Cái còn lại — ảnh thẻ, dải số liệu, huy hiệu hết hạn, nút
- * apply — là thứ đoạn văn không nói được và cũng là thứ phải luôn khớp
- * Contentful.
+ * KHÔNG có headline: ngay cạnh đã là chữ của tác giả nói đúng những điều đó,
+ * lặp lại là bắt người đọc đọc hai lần cùng một nội dung. Cái còn lại — ảnh
+ * thẻ, con số, huy hiệu hết hạn, nút apply — là thứ đoạn văn không nói được và
+ * cũng là thứ phải luôn khớp Contentful.
  *
  * `placement` là bề mặt phát ra click trong GA4, và người gọi truyền vào chứ
  * không cố định ở đây: khối trong bài viết và khối trên trang "tốt nhất" phải
  * đếm riêng, nếu không thì không trả lời được câu "bài viết có ra tiền không".
+ * Cờ `data-affiliate-self-tracked` cho `AffiliateClickTracker` nằm ở root của
+ * `CardRow`.
  */
 export function CardSpotlight({
   card,
   placement,
-  nameAs: NameTag = "h3",
+  nameAs = "h3",
 }: {
   card: CreditCardOffer;
   placement: string;
@@ -48,68 +42,13 @@ export function CardSpotlight({
   nameAs?: "h3" | "p";
 }) {
   return (
-    // `data-affiliate-self-tracked`: cả ảnh lẫn nút Apply bên dưới tự bắn
-    // `apply_clicked` riêng qua `ApplyLink`. Khi component này đứng trong
-    // vùng `AffiliateClickTracker` quét (thân bài blog), thuộc tính này báo
-    // cho tracker BỎ QUA — không đếm thêm một lần nữa cho cùng một click.
-    // Đặt ở CHÍNH root của component, không phải ở nơi gọi nó, để bất kỳ chỗ
-    // nào tái dùng `CardSpotlight` sau này cũng tự động đúng, không cần nhớ
-    // khai báo lại (đã có một lần quên — xem AGENTS.md 13/09/2026).
-    <div
-      className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:flex-row"
-      data-affiliate-self-tracked
-    >
-      <CardImage
-        image={card.cardImage}
-        name={card.name}
-        placeholderIcon={card.image}
-        badge={
-          card.rebate && (
-            <RebateChip
-              amount={card.rebate}
-              label={offers_t("rebate")}
-              className="absolute -bottom-3 left-1/2 -translate-x-1/2 shadow-sm"
-            />
-          )
-        }
-        className="h-32 w-full shrink-0 self-start rounded-xl sm:h-28 sm:w-36"
-        {...applyOverlay(card.applyUrl, placement, card.slug)}
-        sizes="144px"
-      />
-
-      <div className="flex flex-1 flex-col">
-        <CardBadges
-          offer={card}
-          cardType={card.cardType}
-          elevatedBonusLabel={offers_t("elevatedBonus")}
-          expiresOnLabel={offers_t("expiresOn")}
-        />
-
-        <NameTag className="mt-1.5 font-display text-base font-bold text-foreground">
-          <Link href={`/credit-cards/${card.slug}`} className="cursor-pointer hover:text-primary">
-            {card.name}
-          </Link>
-        </NameTag>
-
-        <OfferStats offer={card} className="mt-3" />
-
-        <div className="mt-auto flex flex-wrap items-center gap-4 pt-4">
-          <Link
-            href={`/credit-cards/${card.slug}`}
-            className="cursor-pointer py-3 text-sm font-semibold text-foreground/80 hover:text-primary hover:underline"
-          >
-            {best("viewCard")} &rarr;
-          </Link>
-          {card.applyUrl && (
-            <ApplyButton
-              href={card.applyUrl}
-              affiliate={isReferralUrl(card.applyUrl)}
-              placement={placement}
-              product={card.slug}
-            />
-          )}
-        </div>
-      </div>
-    </div>
+    <CardRow
+      offer={card}
+      href={`/credit-cards/${card.slug}`}
+      placement={placement}
+      detailsLabel={offers_t("viewDetails")}
+      heading={nameAs}
+      showHeadline={false}
+    />
   );
 }

@@ -26,6 +26,7 @@ import { beginnerGuideHref, usCardsGuides } from "@/lib/us-cards-guide";
 import { creditCardJsonLd } from "@/lib/credit-card-schema";
 import { t } from "@/lib/t";
 import { pageMetadata, absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
+import { Flag } from "@/components/ui/flag";
 
 const us = t("usCards");
 const seo = t("seo");
@@ -233,8 +234,15 @@ export default async function UsCreditCardsPage({
               trong cùng một màn — và trang này trước hết để tìm thẻ. Ở đây
               người đọc đã đi qua Elevated Offers và hàng ngân hàng rồi. */}
           {guides.length > 0 && (
-            <div className="mt-14 rounded-2xl border border-border bg-secondary p-6 sm:p-8">
-              <SectionHeading>{us("newcomerTitle")}</SectionHeading>
+            // Không còn panel nền kem (04/10/2026): mục này là một mục ngang hàng
+            // các mục khác trên trang, không phải một hộp — "một nền, một bề mặt".
+            <div className="mt-14">
+              <SectionHeading>
+                <span className="flex items-center gap-[0.3em]">
+                  <Flag country="ca" />
+                  {us("newcomerTitle")}
+                </span>
+              </SectionHeading>
               <p className="mt-3 max-w-2xl leading-relaxed text-foreground/90">{us("newcomerBody")}</p>
 
               {/* Mũi tên đi SAU chip, không phải trước chip kế tiếp: ở màn
@@ -303,7 +311,7 @@ export default async function UsCreditCardsPage({
             {issuerChips.length > 1 && (
               <nav aria-label={us("issuerLabel")} className="mt-4">
                 <ul className="flex flex-wrap items-center gap-2">
-                  <li className="mr-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <li className="mr-1 text-sm font-medium text-muted-foreground">
                     {us("issuerLabel")}
                   </li>
                   <li>
