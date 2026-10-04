@@ -8,7 +8,7 @@
     "creditCards": "Thẻ tín dụng",
     "blog": "Blog",
     "pointsTools": "Công cụ",
-    "cardsAndBanks": "Thẻ & ngân hàng",
+    "cardsAndBanks": "Thẻ & Ngân hàng",
     "calculator": "Points Calculator",
     "transferBonuses": "Transfer Bonus",
     "transferPartners": "Transfer Partners",
@@ -86,6 +86,7 @@
   },
   "offers": {
     "title": "Thẻ tín dụng đáng chú ý",
+    "homeElevatedTitle": "🔥 Elevated offers",
     "viewAll": "Xem tất cả thẻ",
     "applyNow": "Apply ngay",
     "keyBenefits": "Quyền lợi chính",

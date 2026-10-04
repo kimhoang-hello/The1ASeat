@@ -489,7 +489,7 @@ Trang đang mở được đánh dấu **ba cách cùng lúc** — navy, đậm 
 tách, còn độ đậm thì dễ bỏ sót. Mọi mục đều mang một gạch chân trong suốt
 (`border-b-2 border-transparent`) nên không có gì nhảy khi highlight di chuyển.
 
-Sáu mục (03/10/2026): Trang chủ · Thẻ & ngân hàng · Thẻ Mỹ · Bay về Việt Nam ·
+Sáu mục (03/10/2026): Trang chủ · Thẻ & Ngân hàng · Thẻ Mỹ · Bay về Việt Nam ·
 Công cụ · Blog. Dropdown chỉ chứa TRANG, không chứa trạng thái lọc của một trang
 (`?type=` là việc của tab ngay đầu danh sách). Chữ mục và nút "Đăng ký bản tin"
 `text-[15px] xl:text-base`, `whitespace-nowrap`; lề thanh `px-6 xl:px-10`. Đo ở

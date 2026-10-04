@@ -25,7 +25,12 @@ export async function OffersSection() {
   const offersAll = await getCreditCardOffers();
   const notable = offersAll.filter(isElevatedLive);
   const rest = offersAll.filter((offer) => !isElevatedLive(offer));
-  const offers = [...shuffle(notable), ...shuffle(rest)].slice(0, 4);
+  // Tiêu đề "🔥 Elevated offers" (tác giả chọn 04/10/2026, cùng chữ với mục đó
+  // ở Thẻ Mỹ) chỉ đúng khi MỌI ô bên dưới là elevated. Nên có offer elevated
+  // thì chỉ hiện chúng (tối đa 4) — không độn thêm thẻ thường cho đủ bốn như
+  // trước; không có cái nào thì quay về tiêu đề cũ với các thẻ còn lại.
+  const elevatedOnly = notable.length > 0;
+  const offers = shuffle(elevatedOnly ? notable : rest).slice(0, 4);
 
   return (
     <section className="bg-background px-4 py-16 sm:px-6 lg:px-8">
@@ -33,7 +38,7 @@ export async function OffersSection() {
         <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="font-display text-2xl font-bold text-foreground sm:text-3xl">
-              {t("title")}
+              {t(elevatedOnly ? "homeElevatedTitle" : "title")}
             </h2>
           </div>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-1">

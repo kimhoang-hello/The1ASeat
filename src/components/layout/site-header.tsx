@@ -101,7 +101,7 @@ type TypeLink = NavLink & { type: string | null };
  */
 // 15px dưới `xl`, `whitespace-nowrap` ở mọi cỡ: Be Vietnam Pro (03/10/2026)
 // rộng hơn Inter, và ở 1024px hàng sáu mục 16px cần 1,041px trong khung 1,024px
-// — "Trang chủ", "Thẻ & ngân hàng", "Công cụ" và nút bản tin gãy hai dòng. 15px
+// — "Trang chủ", "Thẻ & Ngân hàng", "Công cụ" và nút bản tin gãy hai dòng. 15px
 // cộng lề thanh 24px dưới `xl` trả lại ~65px; từ `xl` thanh rộng thừa nên giữ
 // 16px như cũ. Đổi nhãn menu là phải đo lại ở 1024px.
 function navItemClassName(active: boolean) {
@@ -656,7 +656,8 @@ export function SiteHeader() {
             {nav("home")}
           </Link>
 
-          {/* "Thẻ & ngân hàng": chữ "ngân hàng" phải đọc được ngay trên thanh menu —
+          {/* "Thẻ & Ngân hàng" (tác giả chọn viết hoa "Ngân hàng", 04/10/2026):
+              chữ "ngân hàng" phải đọc được ngay trên thanh menu —
               người mới định cư cần tài khoản ngân hàng trước khi cần thẻ, và
               trước 03/10/2026 nó chỉ hiện khi đã mở dropdown "Thẻ tín dụng". */}
           <TypeDropdown
