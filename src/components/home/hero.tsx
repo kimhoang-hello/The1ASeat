@@ -6,6 +6,9 @@ import { VIETNAM_ROUTES, VIETNAM_ROUTES_BASE } from "@/lib/award-routes";
 
 const t = translate("hero");
 
+/** "Toronto, Vancouver, Montréal, Calgary" — theo thứ tự xuất hiện trong dữ liệu. */
+const ROUTE_ORIGINS = [...new Set(VIETNAM_ROUTES.map((route) => route.originName))].join(", ");
+
 /**
  * Đáy hero rút ngắn CHỈ khi dải "Bắt đầu" hiện ngay bên dưới.
  *
@@ -17,9 +20,6 @@ const t = translate("hero");
  * khoảng cách hero→offers — một chỗ chẳng ai yêu cầu đổi. Buộc nó vào cờ để
  * trang chủ đang chạy giữ nguyên nhịp cũ, và tự đúng ngay lúc bật cờ.
  */
-/** "Toronto, Vancouver, Montréal, Calgary" — theo thứ tự xuất hiện trong dữ liệu. */
-const ROUTE_ORIGINS = [...new Set(VIETNAM_ROUTES.map((route) => route.originName))].join(", ");
-
 const HERO_PAD_BOTTOM = START_HERE_PUBLISHED ? "pb-14 2xl:pb-16" : "pb-20 2xl:pb-28";
 
 export function Hero() {
@@ -32,6 +32,9 @@ export function Hero() {
           {t("title1")}{" "}
           <span className="text-primary">{t("title2")}</span>
         </h1>
+        {/* Phụ đề là câu của TÁC GIẢ — giữ nguyên theo yêu cầu (03/10/2026).
+            Bản audit đã thay bằng một câu định vị viết mẫu; đừng viết lại câu
+            này nếu tác giả không đưa câu mới. */}
         <p className="mt-5 max-w-xl text-balance text-base leading-relaxed text-muted-foreground sm:text-lg 2xl:max-w-2xl 2xl:text-xl">
           {t("subtitle")}
         </p>

@@ -2866,8 +2866,12 @@ trang chủ 7,936 → 7,282px dù thêm hai khối; `/credit-cards` 26,634 → 1
   `inert` + `tabIndex=-1`; chỉ offer active mới tải ảnh. Hết nhích trang khi xoay.
 - **Mục lục bài dưới `xl`**: `PostTocMobile` (`<details>` đóng sẵn) ở đầu bài; link
   cao 44px thật vì xếp sát nhau (Codex bắt: `py-2.5` chỉ ra 39px).
-- **Hero** nói site dành cho ai + link chữ sang 12 trang chặng. CỐ Ý không có con số
-  ở hero: một số điểm phải đi kèm chương trình, nguồn chuyển điểm, phụ phí.
+- **Hero**: tiêu đề "Miles & Points cho người Việt" + link chữ sang 12 trang chặng.
+  Phụ đề GIỮ câu của tác giả ("Học cách tối ưu… hạng thương gia và hạng nhất với chi
+  phí hạng phổ thông") — tác giả yêu cầu ngay sau đợt 2, khi câu định vị viết mẫu của
+  bản audit đã lên production. Câu chữ trong mẫu đề xuất là minh hoạ, không phải copy
+  để ship. CỐ Ý không có con số ở hero: một số điểm phải đi kèm chương trình, nguồn
+  chuyển điểm, phụ phí.
 - **Trang chủ**: Hero → Bắt đầu → 4 offer → Bay về Việt Nam → Bài viết → Transfer
   bonus → Tác giả → Bản tin. Khối chặng chọn theo SLUG (`FEATURED_SLUGS`), số tính từ
   `cheapestByCabin()` lúc render, mỗi số kèm tên loại điểm. Khối tác giả kèm 3 bài
