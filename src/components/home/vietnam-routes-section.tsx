@@ -13,6 +13,7 @@ import { t as translate } from "@/lib/t";
 
 const t = translate("homeRoutes");
 const chart = translate("awardCharts");
+const routes = translate("awardRoutes");
 
 /**
  * Ba chặng về Sài Gòn từ ba cộng đồng người Việt lớn nhất ở Canada. Chọn theo
@@ -106,6 +107,22 @@ function CabinRow({ row }: { row: CheapestByCabin }) {
               {formatPoints(row.points)}
             </span>
             <span className="block text-xs text-muted-foreground">{row.programCurrency}</span>
+            {/* Lựa chọn rẻ thứ hai, cùng cách trình bày với bảng tổng ở
+                /bay-ve-viet-nam: nằm dưới, nhỏ và nhạt hơn, ngăn bằng nét đứt. */}
+            {row.runnerUp && (
+              <span className="mt-1.5 block border-t border-dashed border-border pt-1.5">
+                <span className="sr-only">{routes("hubRunnerUpLabel")} </span>
+                <span className="font-display text-sm font-semibold tabular-nums text-foreground/70">
+                  {row.runnerUp.startingAt && (
+                    <span className="mr-1 text-xs font-normal">{chart("fromPrefix")}</span>
+                  )}
+                  {formatPoints(row.runnerUp.points)}
+                </span>
+                <span className="block text-[11px] text-muted-foreground">
+                  {row.runnerUp.programCurrency}
+                </span>
+              </span>
+            )}
           </>
         )}
       </dd>
