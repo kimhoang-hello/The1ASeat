@@ -38,6 +38,65 @@ export const metadata: Metadata = {
 // Next sẽ giao cho CDN một `s-maxage` một năm, mà deploy không xoá cache đó.
 export const revalidate = 3600;
 
+/** Một con số kèm loại điểm của nó, cho ô bảng tổng.
+ *
+ *  Con số đứng một mình không nói nó là điểm của ai, mà ba cột xếp cạnh nhau
+ *  như thể đổi được cho nhau. Logo cho mắt quét nhanh, tên loại điểm cho người
+ *  đọc chưa quen logo — site có độc giả lớn tuổi, nên chỉ logo là chưa đủ.
+ *
+ *  Logo `alt=""` vì tên đã nằm ngay cạnh dưới dạng chữ; để `alt` mang tên nữa
+ *  là screen reader đọc đúng một thứ hai lần. */
+function ProgramFigure({
+  points,
+  startingAt,
+  logo,
+  currency,
+  secondary = false,
+}: {
+  points: number;
+  startingAt: boolean;
+  logo: string | null;
+  currency: string | null;
+  /** Lựa chọn rẻ thứ hai: cùng bố cục, nhỏ và nhạt hơn. */
+  secondary?: boolean;
+}) {
+  return (
+    <>
+      <span
+        className={`block font-display ${
+          secondary ? "text-[13px] font-semibold text-foreground/70" : "font-bold"
+        }`}
+      >
+        {startingAt && (
+          <span className="font-normal text-muted-foreground">{chart("fromPrefix")} </span>
+        )}
+        {formatPoints(points)}
+      </span>
+      {currency && (
+        <span className="mt-1 flex items-center justify-end gap-1.5">
+          {logo && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={logo}
+              alt=""
+              className={`${
+                secondary ? "h-3.5 w-3.5" : "h-4 w-4"
+              } shrink-0 rounded border border-border bg-white object-contain p-px`}
+            />
+          )}
+          <span
+            className={`${
+              secondary ? "text-[11px]" : "text-xs"
+            } font-medium leading-tight text-muted-foreground`}
+          >
+            {currency}
+          </span>
+        </span>
+      )}
+    </>
+  );
+}
+
 export default function VietnamRoutesHubPage() {
   const rows = VIETNAM_ROUTES.map((route) => ({ route, cheapest: cheapestByCabin(route) }));
   const cabins = rows[0].cheapest;
@@ -144,36 +203,27 @@ export default function VietnamRoutesHubPage() {
                         </span>
                       ) : (
                         <>
-                          <span className="block font-display font-bold">
-                            {cell.startingAt && (
-                              <span className="font-normal text-muted-foreground">
-                                {chart("fromPrefix")}{" "}
-                              </span>
-                            )}
-                            {formatPoints(cell.points)}
-                          </span>
-                          {/* Con số đứng một mình không nói nó là điểm của ai,
-                              mà ba cột này xếp cạnh nhau như thể đổi được cho
-                              nhau. Logo cho mắt quét nhanh, tên loại điểm cho
-                              người đọc chưa quen logo — site có độc giả lớn
-                              tuổi, nên chỉ logo là chưa đủ.
-
-                              Logo `alt=""` vì tên đã nằm ngay cạnh dưới dạng
-                              chữ; để `alt` mang tên nữa là screen reader đọc
-                              đúng một thứ hai lần. */}
-                          {cell.programCurrency && (
-                            <span className="mt-1 flex items-center justify-end gap-1.5">
-                              {cell.programLogo && (
-                                /* eslint-disable-next-line @next/next/no-img-element */
-                                <img
-                                  src={cell.programLogo}
-                                  alt=""
-                                  className="h-4 w-4 shrink-0 rounded border border-border bg-white object-contain p-px"
-                                />
-                              )}
-                              <span className="text-xs font-medium leading-tight text-muted-foreground">
-                                {cell.programCurrency}
-                              </span>
+                          <ProgramFigure
+                            points={cell.points}
+                            startingAt={cell.startingAt}
+                            logo={cell.programLogo}
+                            currency={cell.programCurrency}
+                          />
+                          {/* Lựa chọn thứ hai nằm DƯỚI, nhạt hơn và ngăn bằng
+                              nét đứt: mắt quét cột vẫn gặp con số rẻ nhất trước,
+                              còn người đang giữ loại điểm khác thì thấy ngay
+                              mình có đường hay không. Ô không có lựa chọn thứ
+                              hai thì để trống phần này — xem `runnerUp`. */}
+                          {cell.runnerUp && (
+                            <span className="mt-2 block border-t border-dashed border-border pt-2">
+                              <span className="sr-only">{r("hubRunnerUpLabel")} </span>
+                              <ProgramFigure
+                                points={cell.runnerUp.points}
+                                startingAt={cell.runnerUp.startingAt}
+                                logo={cell.runnerUp.programLogo}
+                                currency={cell.runnerUp.programCurrency}
+                                secondary
+                              />
                             </span>
                           )}
                         </>

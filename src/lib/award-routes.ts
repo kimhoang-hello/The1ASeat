@@ -276,11 +276,33 @@ export type CheapestByCabin = {
    * điện thoại thì đó là khác biệt giữa đọc được và không.
    */
   programCurrency: string | null;
+  /**
+   * Chương trình rẻ thứ hai cho cùng hạng ghế, `null` khi không có.
+   *
+   * `null` là chuyện thường, không phải lỗi: cả bốn chặng đi Đà Nẵng và ba
+   * chặng từ Calgary chỉ Aeroplan® báo được giá, và Premium Economy từ
+   * Montréal chỉ còn AAdvantage®. Đừng lấp ô đó bằng một chương trình định giá
+   * động — bảng tổng chỉ in số tra trước được.
+   *
+   * Bỏ qua chương trình cùng LOẠI ĐIỂM với lựa chọn đầu: hai chương trình
+   * Avios® dùng chung một loại điểm, chuyển qua lại một đổi một, nên "Avios®
+   * rẻ nhất, Avios® rẻ nhì" là một lựa chọn in hai lần chứ không phải hai.
+   */
+  runnerUp: {
+    points: number;
+    startingAt: boolean;
+    programLogo: string;
+    programCurrency: string;
+  } | null;
 };
 
 export function cheapestByCabin(route: VietnamRoute): CheapestByCabin[] {
   return CABINS.map(({ id, labelKey }) => {
-    const best = quoteRoute(route.origin, route.destination, id).find((q) => q.points !== null);
+    const priced = quoteRoute(route.origin, route.destination, id).filter(
+      (q): q is Quote & { points: number } => q.points !== null
+    );
+    const best = priced[0];
+    const second = best && priced.find((q) => q.program.currency !== best.program.currency);
     return {
       cabin: id,
       labelKey,
@@ -289,6 +311,14 @@ export function cheapestByCabin(route: VietnamRoute): CheapestByCabin[] {
       programName: best?.program.name ?? null,
       programLogo: best?.program.logo ?? null,
       programCurrency: best?.program.currency ?? null,
+      runnerUp: second
+        ? {
+            points: second.points,
+            startingAt: second.startingAt,
+            programLogo: second.program.logo,
+            programCurrency: second.program.currency,
+          }
+        : null,
     };
   });
 }
