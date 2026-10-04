@@ -3050,11 +3050,11 @@ quyết. Luật mới ghi ở DESIGN-SYSTEM.md (4.3, 5.4, 9, 10.3, 10.11, 10.13)
   `text-warning`) và Points Calculator (nay `border-t` như calculator RHT); nhãn viết hoa
   ngoài danh sách 4.3 → chữ thường `text-sm`. Nhãn của công cụ Gợi ý thẻ KHÔNG đổi — bản
   local báo "Công cụ đang tạm nghỉ" vì không tới được DB, không kiểm được bằng mắt.
-- **Hai việc tác giả để mình quyết, đã làm**: (1) link sang trang sản phẩm thống nhất
-  "Xem chi tiết" — đã là chữ ở thẻ Mỹ, hai bảng so sánh, dải offer; thay "Ghế 1A đánh giá
-  →" (danh sách thẻ Canada, trang chủ), "Chi tiết →" (tài khoản), "Xem chi tiết thẻ →"
-  (khối thẻ). Muốn đổi chữ thì sửa `offers.viewDetails`, `bankAccounts.details`,
-  `usCards.viewDetails`, `compare.viewCard`, `bankCompare.viewAccount`. (2) Emoji cờ →
+- **Hai việc tác giả để mình quyết, đã làm**: (1) nhãn link sang trang sản phẩm — bản
+  đầu thống nhất hết thành "Xem chi tiết"; tác giả sửa ngay: **thẻ Canada GIỮ "Ghế 1A
+  đánh giá"** (danh sách, trang chủ, và cả khối thẻ ở Các thẻ tốt nhất / giữa thân bài,
+  trước đó là "Xem chi tiết thẻ"). "Xem chi tiết" cho thẻ Mỹ, tài khoản ("Chi tiết →"
+  cũ), hai bảng so sánh, dải offer. Đừng thống nhất lại hai chữ này. (2) Emoji cờ →
   `Flag` SVG (Chrome/Edge trên Windows hiện 🇺🇸 thành "US"); `messages/vi.json` không còn
   emoji cờ. Hàng nav 1024px đo lại: một hàng, nút bản tin không gãy.
 

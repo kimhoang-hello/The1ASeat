@@ -24,6 +24,10 @@ const offers_t = translate("offers");
  * đếm riêng, nếu không thì không trả lời được câu "bài viết có ra tiền không".
  * Cờ `data-affiliate-self-tracked` cho `AffiliateClickTracker` nằm ở root của
  * `CardRow`.
+ *
+ * Link sang trang thẻ mang chữ "Ghế 1A đánh giá" như mọi dòng thẻ Canada — tác
+ * giả chốt 04/10/2026 giữ chữ này cho thẻ Canada (thẻ Mỹ, tài khoản và bảng so
+ * sánh dùng "Xem chi tiết").
  */
 export function CardSpotlight({
   card,
@@ -46,7 +50,7 @@ export function CardSpotlight({
       offer={card}
       href={`/credit-cards/${card.slug}`}
       placement={placement}
-      detailsLabel={offers_t("viewDetails")}
+      detailsLabel={offers_t("editorsTake")}
       heading={nameAs}
       showHeadline={false}
     />

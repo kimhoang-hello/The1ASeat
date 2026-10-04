@@ -212,7 +212,7 @@ export default async function CreditCardsPage({
               offer={offer}
               href={`/credit-cards/${offer.slug}`}
               placement="card_list"
-              detailsLabel={offers_t("viewDetails")}
+              detailsLabel={offers_t("editorsTake")}
             >
               <CardTags tags={cardTagsFor(offer.slug, today)} className="mt-3" />
             </CardRow>
