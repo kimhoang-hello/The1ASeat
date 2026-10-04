@@ -34,8 +34,13 @@ export function Hero() {
         </h1>
         {/* Phụ đề là câu của TÁC GIẢ — giữ nguyên theo yêu cầu (03/10/2026).
             Bản audit đã thay bằng một câu định vị viết mẫu; đừng viết lại câu
-            này nếu tác giả không đưa câu mới. */}
-        <p className="mt-5 max-w-xl text-balance text-base leading-relaxed text-muted-foreground sm:text-lg 2xl:max-w-2xl 2xl:text-xl">
+            này nếu tác giả không đưa câu mới.
+
+            HAI dòng trên desktop (tác giả yêu cầu 04/10/2026): từ `lg` khung
+            rộng bằng cả cột hero. Đo: câu dài 1,227px ở 18px và 1,449px ở màn
+            1920px, nên 768px / 952px là vừa hai dòng; `max-w-xl` cũ (576px)
+            bẻ nó thành ba. Đổi câu là đo lại. */}
+        <p className="mt-5 max-w-xl text-balance text-base leading-relaxed text-muted-foreground sm:text-lg lg:max-w-3xl 2xl:max-w-4xl 2xl:text-xl">
           {t("subtitle")}
         </p>
 
