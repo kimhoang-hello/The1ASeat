@@ -138,10 +138,11 @@ export const RHT_PROGRAMS: RhtProgram[] = [
       ],
     },
     steps: [
-      { title: "Go to Amex® Travel", body: ["Truy cập Amex® Travel và tìm hotel."] },
+      // Chọn Fully Refundable nằm TRONG bước 1, không phải một bước riêng — tác
+      // giả chốt 04/10/2026: đó là điều kiện bắt buộc của việc tìm hotel.
       {
-        title: "Choose Fully Refundable",
-        body: ["Chọn hotel/rate có chính sách:"],
+        title: "Go to Amex® Travel",
+        body: ["Truy cập Amex® Travel và tìm hotel.", "Chọn hotel/rate có chính sách:"],
         flow: { chips: [FULLY_REFUNDABLE] },
         bodyAfter: ["Kiểm tra cancellation deadline trước khi book."],
       },
@@ -276,10 +277,14 @@ export const RHT_PROGRAMS: RhtProgram[] = [
     steps: [
       {
         title: "Book Hotel",
-        body: ["Book trực tiếp với Expedia® hoặc một eligible travel website."],
+        // Cùng luật với bước 1 của Amex®: Fully Refundable là điều kiện của bước
+        // này, không tách riêng.
+        body: [
+          "Book trực tiếp với Expedia® hoặc một eligible travel website.",
+          "Chọn Fully Refundable hotel/rate.",
+        ],
         warnings: ["Không sử dụng Expedia® portal bên trong Scene+™ cho workflow này."],
       },
-      { title: "Choose Fully Refundable", body: ["Chọn Fully Refundable hotel/rate."] },
       {
         title: "Pay with Scotia® Card",
         body: ["Thanh toán bằng Scotia® credit card earn Scene+™."],

@@ -2855,7 +2855,7 @@ Luật thành phần ở DESIGN-SYSTEM.md 10.7, 10.11, 10.12. Đo ở 375px (b�
 trang chủ 7,936 → 7,282px dù thêm hai khối; `/credit-cards` 26,634 → 15,039px, thẻ
 đầu tiên từ 1,464 → 585px; `/bank-accounts` 20,905 → 12,589px.
 
-- **Menu sáu mục**: Trang chủ · Thẻ & ngân hàng · Thẻ Mỹ · Bay về Việt Nam · Công cụ ·
+- **Menu sáu mục**: Trang chủ · Thẻ & Ngân hàng · Thẻ Mỹ · Bay về Việt Nam · Công cụ ·
   Blog. Dropdown không còn link trạng thái lọc (`?type=` của thẻ và blog); "Giới
   thiệu" rời thanh menu (footer + khối tác giả trang chủ vẫn dẫn tới). **Bẫy:** Be
   Vietnam Pro (đợt 1) rộng hơn Inter — ở 1024px hàng nav 16px cần 1,041px, bốn mục
@@ -2941,6 +2941,8 @@ CIBC® Aventura®, Scotiabank® Scene+™, TD Rewards®) nằm ở
 
 - **Nguồn là spec tác giả viết ngày 04/10/2026; câu chữ các bước là nguyên văn**,
   kể cả tiêu đề bước bằng tiếng Anh ("Go to Amex® Travel"). Đừng dịch, đừng "làm rõ".
+  Ngoại lệ do tác giả chốt cùng ngày: "Choose Fully Refundable" KHÔNG là bước riêng —
+  nó gộp vào bước 1 (Amex®, Scene+™) vì là điều kiện bắt buộc, như CIBC®/TD® vốn viết.
   Spec CẤM thêm: thời gian xử lý, welcome bonus hiện tại, điều kiện Product Switch,
   hạn điểm, cách tính annual fee, điều kiện welcome bonus sau Product Switch. Khối
   thẻ cuối mỗi workflow chỉ in tên + loại thẻ (không welcome bonus, không phí) vì
