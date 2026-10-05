@@ -571,9 +571,10 @@ nhận bonus, HOT TIP. Rebate ở góc phải hàng nhãn.
 ### 10.12 Bộ lọc danh sách — `FilterPanel`
 
 Nguồn: [`src/components/ui/filter-panel.tsx`](src/components/ui/filter-panel.tsx).
-Dưới `lg`: một nút "Lọc · Sắp xếp (n)" (n = số bộ lọc khác mặc định, gồm cả thứ tự
-sắp xếp) cạnh dòng số kết quả; bảng lọc mở khi bấm. Từ `lg`: bảng lọc luôn mở, nút
-ẩn, số kết quả xuống dưới bảng lọc. Dùng ở `/credit-cards` và `/bank-accounts`.
+Mọi bề ngang: một nút "Lọc · Sắp xếp (n)" (n = số bộ lọc khác mặc định, gồm cả thứ
+tự sắp xếp) cạnh dòng số kết quả; bảng lọc mở khi bấm. Desktop cũng gom vào nút từ
+05/10/2026 (user chốt) — trước đó từ `lg` bảng lọc luôn mở. Dùng ở `/credit-cards` và
+`/bank-accounts`.
 Ô sắp xếp trong bảng `sm:max-w-xs`.
 
 ### 10.13 Thông tin nhanh — `CardFacts`

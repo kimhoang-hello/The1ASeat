@@ -2883,7 +2883,7 @@ trang chủ 7,936 → 7,282px dù thêm hai khối; `/credit-cards` 26,634 → 1
   `home_offers`, `+_image` cho ảnh). Thẻ Mỹ: tên ngân hàng + dòng "Điều kiện", không
   headline, link "Xem chi tiết".
 - **`/credit-cards`**: hai dải quảng bá thành MỘT dải (câu hỏi + hai link, thứ tự
-  cũ); tab + chip điểm + sắp xếp sau `FilterPanel` dưới `lg` (số = bộ lọc khác mặc
+  cũ); tab + chip điểm + sắp xếp sau `FilterPanel` (mọi bề ngang từ 05/10) (số = bộ lọc khác mặc
   định, tính cả sắp xếp; panel giữ trạng thái mở qua điều hướng chip); dòng "35 thẻ".
   Link chip/tab vẫn bỏ `utm_*` như trước — có từ trước đợt này, chưa sửa.
 - **`/bank-accounts`**: mẫu dòng riêng — bỏ danh sách quyền lợi, giữ con số chính +

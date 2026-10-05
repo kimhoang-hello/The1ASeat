@@ -543,7 +543,7 @@ function FinderView({
 
   return (
     <div className="mx-auto max-w-page">
-      {/* Gom sau nút "Lọc · Sắp xếp" dưới `lg` — xem `FilterPanel`. Số kết
+      {/* Gom sau nút "Lọc · Sắp xếp" — xem `FilterPanel`. Số kết
           quả đi cùng nút, vẫn `aria-live` vì danh sách lọc ngay tại chỗ. */}
       <FilterPanel
         label={common("filterSort")}

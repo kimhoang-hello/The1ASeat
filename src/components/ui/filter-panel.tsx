@@ -7,7 +7,7 @@ import { t as translate } from "@/lib/t";
 const common = translate("common");
 
 /**
- * Bộ lọc của một danh sách, gom sau MỘT nút "Lọc · Sắp xếp (n)" dưới `lg`.
+ * Bộ lọc của một danh sách, gom sau MỘT nút "Lọc · Sắp xếp (n)" ở mọi bề ngang.
  *
  * Thêm 03/10/2026 (audit UX/UI): trên màn 375px, tab, chip và ô sắp xếp của
  * `/credit-cards` đẩy thẻ đầu tiên xuống 1,464px — gần hai màn hình chỉ có bộ
@@ -15,13 +15,12 @@ const common = translate("common");
  * bộ lọc đang bật, nên người đến bằng link có sẵn `?points=` vẫn biết danh
  * sách đang bị lọc mà không phải mở ra xem.
  *
- * Từ `lg` bảng lọc luôn mở và nút biến mất: màn rộng thì hai hàng chip chỉ
- * chiếm một dải mỏng, giấu đi chỉ thêm một cú bấm.
+ * Desktop cũng gom vào nút từ 05/10/2026 (user chốt): trước đó từ `lg` bảng
+ * lọc luôn mở và nút ẩn, nhưng hai hàng chip + ô sắp xếp vẫn đẩy thẻ đầu tiên
+ * xuống, và hai bề ngang trông như hai bộ lọc khác nhau.
  *
- * `summary` (số kết quả) đứng cạnh nút trên điện thoại và dưới bảng lọc trên
- * desktop — cùng một phần tử, chỉ đổi `order`, để trình đọc màn hình không gặp
- * hai bản. Nút chỉ hoạt động sau hydrate; trước đó bảng lọc đóng, danh sách
- * vẫn đọc được bình thường.
+ * `summary` (số kết quả) đứng cạnh nút. Nút chỉ hoạt động sau hydrate; trước
+ * đó bảng lọc đóng, danh sách vẫn đọc được bình thường.
  */
 export function FilterPanel({
   label,
@@ -47,7 +46,7 @@ export function FilterPanel({
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((value) => !value)}
-        className="relative inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-border bg-card px-4 text-sm font-semibold text-foreground transition-colors hover:border-primary lg:hidden"
+        className="relative inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-border bg-card px-4 text-sm font-semibold text-foreground transition-colors hover:border-primary"
       >
         <SlidersHorizontal size={16} aria-hidden />
         {label}
@@ -64,9 +63,9 @@ export function FilterPanel({
         <CaretDown size={14} aria-hidden className={`transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
-      <div className="text-sm text-muted-foreground lg:order-last lg:w-full">{summary}</div>
+      <div className="text-sm text-muted-foreground">{summary}</div>
 
-      <div id={panelId} className={`w-full ${open ? "" : "hidden"} lg:block`}>
+      <div id={panelId} className={`w-full ${open ? "" : "hidden"}`}>
         {children}
       </div>
     </div>
