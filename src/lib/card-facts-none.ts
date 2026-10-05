@@ -23,13 +23,13 @@ export interface VerifiedNone extends Sourced {
 
 const CHECKED = "2026-10-04";
 
-const none = (slug: string, key: VerifiedNone["key"], sourceUrl: string): VerifiedNone => ({
+const none = (slug: string, key: VerifiedNone["key"], sourceUrl: string, checked = CHECKED): VerifiedNone => ({
   slug,
   key,
   sourceUrl,
   sourceKind: "issuer",
-  verifiedAt: CHECKED,
-  recordedAt: CHECKED,
+  verifiedAt: checked,
+  recordedAt: checked,
   confidence: "verified",
 });
 
@@ -62,4 +62,7 @@ export const VERIFIED_NONE: VerifiedNone[] = [
   // Bảng so sánh trên wealthsimple.com: "Airport lounge access — N/A".
   none("wealthsimple-visa-infinite-plus", "lounge", "https://www.wealthsimple.com/en-ca/wealthsimple-visa-infinite-card"),
   none("united-mileageplus-neo-world-elite-mastercard", "lounge", "https://www.neofinancial.com/credit-cards/neo-united-mastercard"),
+  // Thêm 05/10/2026 cùng ngày thẻ lên site.
+  none("capital-one-quicksilver-world-elite-mastercard", "lounge", "https://www.capitalone.ca/credit-cards/quicksilver-world-elite-mastercard/", "2026-10-05"),
+  none("capital-one-quicksilver-world-mastercard", "lounge", "https://www.capitalone.ca/credit-cards/quicksilver-world-mastercard/", "2026-10-05"),
 ];

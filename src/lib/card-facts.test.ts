@@ -22,12 +22,16 @@ const AS_OF = "2026-10-04";
 /** Ngày trước đợt kiểm tại trang ngân hàng — các ô "Chưa kiểm" còn nguyên. */
 const BEFORE_CHECK = "2026-10-03";
 
+/** Thẻ thêm SAU `AS_OF` thì kiểm ở ngày nó vào kho — trước đó đúng là chưa có bảng. */
+const asOfFor = (product: { effectiveFrom: string }) =>
+  product.effectiveFrom > AS_OF ? product.effectiveFrom : AS_OF;
+
 const lines = (slug: string, key: CardFactKey, asOf = AS_OF) =>
   cardFactsFor(slug, asOf)!.facts.find((fact) => fact.key === key)!.lines.map((line) => line.text);
 
 test("mọi thẻ có trang trên site: đủ bốn dòng, đúng thứ tự", () => {
   for (const product of PRODUCTS.filter((row) => row.contentfulLinked)) {
-    const facts = cardFactsFor(product.slug, AS_OF);
+    const facts = cardFactsFor(product.slug, asOfFor(product));
     assert.ok(facts, product.slug);
     assert.deepEqual(
       facts.facts.map((fact) => fact.key),
@@ -248,7 +252,7 @@ test("hasUnchecked: dòng rỗng và ý chưa kiểm một phần đều tính; 
   assert.ok(lines("scotiabank-gold-amex", "lounge", BEFORE_CHECK)[0].includes("chưa kiểm"));
   assert.equal(hasUnchecked(cardFactsFor("scotiabank-gold-amex", BEFORE_CHECK)!), true);
   for (const product of linked) {
-    assert.equal(hasUnchecked(cardFactsFor(product.slug, AS_OF)!), false, product.slug);
+    assert.equal(hasUnchecked(cardFactsFor(product.slug, asOfFor(product))!), false, product.slug);
   }
   // Ý chưa kiểm một phần, không có dòng rỗng nào: vẫn phải tính.
   assert.equal(

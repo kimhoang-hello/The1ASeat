@@ -701,6 +701,39 @@ const OFFER_SEEDS: OfferSeed[] = [
     rebate: 120,
     components: [{ type: "spend_threshold", points: 50000, spend: 5000, windowDays: 90 }],
   },
+  // Capital One® match TOÀN BỘ cashback 365 ngày đầu, đô đổi đô, không trần và
+  // không mốc chi. Giá trị bằng đúng tiền hoàn năm đầu của người dùng, tức phụ
+  // thuộc hoàn toàn vào họ chi bao nhiêu — cùng lý do phần "đến $600" của TD®
+  // Cash Back không nằm trong components: §11 chỉ đếm cái chắc chắn nhận được.
+  // Không có thành phần nào đếm được nên `kind` phải khai tay; suy ra sẽ thành
+  // `none`, tức nói thẻ không có welcome bonus. Không công bố ngày kết thúc
+  // ("subject to change or cancellation at any time").
+  // Giới hạn đã biết (Codex 05/10/2026): §11 chấm offer này ~0.4 với giá trị
+  // bonus $0 và "hiệu quả chi" tối đa vì không có mốc chi — tức đánh giá THẤP
+  // phần match. Sửa đúng cần một loại thành phần "match tỷ lệ năm đầu"; chưa
+  // làm cho riêng hai thẻ này.
+  {
+    slug: "capital-one-quicksilver-world-elite-mastercard",
+    name: "Nhân đôi toàn bộ cashback năm đầu",
+    headline: null,
+    currency: null,
+    kind: "cash",
+    startDate: "2026-10-05",
+    verifiedAt: "2026-10-05",
+    recordedAt: "2026-10-05",
+    components: [],
+  },
+  {
+    slug: "capital-one-quicksilver-world-mastercard",
+    name: "Nhân đôi toàn bộ cashback năm đầu",
+    headline: null,
+    currency: null,
+    kind: "cash",
+    startDate: "2026-10-05",
+    verifiedAt: "2026-10-05",
+    recordedAt: "2026-10-05",
+    components: [],
+  },
   {
     slug: "rbc-avion-visa-infinite",
     name: "Đến 70,000 điểm Avion®",

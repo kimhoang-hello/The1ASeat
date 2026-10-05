@@ -4,17 +4,20 @@ import { cardTagsFor } from "./card-tags.ts";
 import { PRODUCTS } from "./recommendation/data/products.ts";
 
 const AS_OF = "2026-09-29";
+/** Thẻ thêm SAU `AS_OF` thì kiểm ở ngày nó vào kho — trước đó đúng là chưa có tag. */
+const asOfFor = (product: { effectiveFrom: string }) =>
+  product.effectiveFrom > AS_OF ? product.effectiveFrom : AS_OF;
 
 test("mọi thẻ Canada: tối đa 3 tag, không trùng", () => {
   for (const product of PRODUCTS) {
-    const tags = cardTagsFor(product.slug, AS_OF);
+    const tags = cardTagsFor(product.slug, asOfFor(product));
     assert.ok(tags.length <= 3, `${product.slug}: ${tags.join(", ")}`);
     assert.equal(new Set(tags).size, tags.length, product.slug);
   }
 });
 
 test("hầu hết thẻ có ít nhất một tag — dữ liệu engine không bị cắt đứt im lặng", () => {
-  const empty = PRODUCTS.filter((product) => cardTagsFor(product.slug, AS_OF).length === 0);
+  const empty = PRODUCTS.filter((product) => cardTagsFor(product.slug, asOfFor(product)).length === 0);
   assert.deepEqual(
     empty.map((product) => product.slug),
     [],

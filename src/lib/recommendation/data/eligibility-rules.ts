@@ -385,6 +385,18 @@ const BY_PRODUCT: Record<string, RuleSeed[]> = {
     },
   ],
 
+  // Footnote offer: "exclusively for new cardholders" — không có cửa sổ tháng
+  // và không nói "new" là mới với thẻ này, với hạng kia hay với Capital One®.
+  // Chưa đủ căn cứ cho luật loại trừ nào, kể cả trọn đời cho chính thẻ (Codex
+  // bác 05/10/2026): chờ hỏi thực tế. Pre-approval ghi "You have an existing
+  // Capital One account" là lý do CÓ THỂ bị từ chối, không phải luật cứng.
+  "capital-one-quicksilver-world-elite-mastercard": incomeFromIssuer(80000, 150000, "https://www.capitalone.ca/credit-cards/quicksilver-world-elite-mastercard/").map(
+    (rule) => ({ ...rule, from: "2026-10-05" }),
+  ),
+  "capital-one-quicksilver-world-mastercard": incomeFromIssuer(50000, 80000, "https://www.capitalone.ca/credit-cards/quicksilver-world-mastercard/").map(
+    (rule) => ({ ...rule, from: "2026-10-05" }),
+  ),
+
   "amex-platinum": [AMEX_ONCE_IN_A_LIFETIME, ...amexNoIncome("charge-cards/the-platinum-card/")],
   "amex-business-platinum": [
     AMEX_ONCE_IN_A_LIFETIME,

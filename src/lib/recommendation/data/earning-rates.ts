@@ -452,6 +452,28 @@ const RATES: Record<string, { program: string; rates: RateSeed[] }> = {
     rates: [["everything_else", 1, { from: "2026-09-25" }]],
   },
 
+  // Không trần. 3% siêu thị chỉ theo MCC 5411/5422/5451/5499 và trừ siêu thị
+  // lớn như Walmart, Costco — cùng kiểu loại trừ mà hạng mục `grocery` của mọi
+  // thẻ khác cũng mang, nên không tách `restrictedTo` (engine bỏ qua dòng đó).
+  // Phần match năm đầu là welcome bonus, không phải tỷ lệ: xem offers.ts.
+  "capital-one-quicksilver-world-elite-mastercard": {
+    program: "cash-back",
+    rates: [
+      ["grocery", 3, { from: "2026-10-05", source: "https://www.capitalone.ca/credit-cards/quicksilver-world-elite-mastercard/" }],
+      ["gas", 3, { from: "2026-10-05", source: "https://www.capitalone.ca/credit-cards/quicksilver-world-elite-mastercard/" }],
+      ["ev_charging", 3, { from: "2026-10-05", source: "https://www.capitalone.ca/credit-cards/quicksilver-world-elite-mastercard/" }],
+      ["everything_else", 1, { from: "2026-10-05", source: "https://www.capitalone.ca/credit-cards/quicksilver-world-elite-mastercard/" }],
+    ],
+  },
+  "capital-one-quicksilver-world-mastercard": {
+    program: "cash-back",
+    rates: [
+      ["grocery", 3, { from: "2026-10-05", source: "https://www.capitalone.ca/credit-cards/quicksilver-world-mastercard/" }],
+      ["gas", 3, { from: "2026-10-05", source: "https://www.capitalone.ca/credit-cards/quicksilver-world-mastercard/" }],
+      ["ev_charging", 3, { from: "2026-10-05", source: "https://www.capitalone.ca/credit-cards/quicksilver-world-mastercard/" }],
+      ["everything_else", 1, { from: "2026-10-05", source: "https://www.capitalone.ca/credit-cards/quicksilver-world-mastercard/" }],
+    ],
+  },
   "rbc-avion-visa-infinite": {
     program: "avion",
     rates: [

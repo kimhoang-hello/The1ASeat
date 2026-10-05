@@ -121,6 +121,8 @@ const SRC = {
   wealthsimple: "https://www.wealthsimple.com/en-ca/wealthsimple-visa-infinite-card",
   nationalBank: "https://www.nbc.ca/personal/mastercard-credit-cards/world-elite.html",
   tangerine: "https://www.tangerine.ca/en/personal/spend/credit-cards/world-elite-mastercard",
+  // Hai hạng Quicksilver dùng CHUNG một Certificate of Insurance (8706400-01-BB).
+  quicksilverInsurance: "https://www.capitalone.ca/assets/documents/pdf/8706400-01-BB-EN-072726.pdf",
 };
 
 /** Xe thuê của thẻ Amex®: MSRP tới $85,000, tối đa 48 ngày (cùng một mức). */
@@ -466,6 +468,20 @@ const BY_PRODUCT: Record<string, BenefitSeed[]> = {
     ["mobile-device-insurance", null, { from: "2026-09-25" }],
     ["flight-delay-insurance", null, issuer(SRC.tangerine)],
     ["baggage-insurance", null, issuer(SRC.tangerine, { text: "trễ hoặc thất lạc" })],
+  ],
+
+  "capital-one-quicksilver-world-elite-mastercard": [
+    ["no-fx-fee", null, { source: "https://www.capitalone.ca/credit-cards/quicksilver-world-elite-mastercard/", from: "2026-10-05" }],
+    ["flight-delay-insurance", 1000, { text: "từ 4 tiếng, $250 mỗi 24 tiếng", source: SRC.quicksilverInsurance, from: "2026-10-05" }],
+    ["baggage-insurance", 1000, { text: "mất hành lý; trễ tới $300", source: SRC.quicksilverInsurance, from: "2026-10-05" }],
+    ["rental-car-insurance", null, { text: "tối đa 31 ngày", source: SRC.quicksilverInsurance, from: "2026-10-05" }],
+  ],
+
+  "capital-one-quicksilver-world-mastercard": [
+    ["no-fx-fee", null, { source: "https://www.capitalone.ca/credit-cards/quicksilver-world-mastercard/", from: "2026-10-05" }],
+    ["flight-delay-insurance", 1000, { text: "từ 4 tiếng, $250 mỗi 24 tiếng", source: SRC.quicksilverInsurance, from: "2026-10-05" }],
+    ["baggage-insurance", 1000, { text: "mất hành lý; trễ tới $300", source: SRC.quicksilverInsurance, from: "2026-10-05" }],
+    ["rental-car-insurance", null, { text: "tối đa 31 ngày", source: SRC.quicksilverInsurance, from: "2026-10-05" }],
   ],
 
   "rbc-avion-visa-infinite": [

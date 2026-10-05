@@ -455,6 +455,37 @@ const SEEDS: Seed[] = [
     fees: [{ annualFee: 120, from: "2026-09-25" }],
     officialUrl: "https://www.tangerine.ca/en/personal/spend/credit-cards/world-elite-mastercard",
   },
+  // Hai hạng của cùng một thẻ: tỷ lệ, welcome bonus và bảo hiểm giống hệt, chỉ
+  // khác ngưỡng thu nhập và lãi suất. Cùng kiểu với họ Wealthsimple® (hai hạng
+  // cùng 2%), nên gom họ: giữ hạng cao rồi thì hạng thấp là thừa.
+  {
+    id: "prd_capital-one-quicksilver-world-elite-mastercard",
+    slug: "capital-one-quicksilver-world-elite-mastercard",
+    name: "Capital One® Quicksilver World Elite® Mastercard®",
+    issuer: "capital-one",
+    network: "mastercard",
+    personalOrBusiness: "personal",
+    program: "cash-back",
+    family: "capital-one-quicksilver",
+    tier: 2,
+    from: "2026-10-05",
+    fees: [{ annualFee: 0, from: "2026-10-05" }],
+    officialUrl: "https://www.capitalone.ca/credit-cards/quicksilver-world-elite-mastercard/",
+  },
+  {
+    id: "prd_capital-one-quicksilver-world-mastercard",
+    slug: "capital-one-quicksilver-world-mastercard",
+    name: "Capital One® Quicksilver World Mastercard®",
+    issuer: "capital-one",
+    network: "mastercard",
+    personalOrBusiness: "personal",
+    program: "cash-back",
+    family: "capital-one-quicksilver",
+    tier: 1,
+    from: "2026-10-05",
+    fees: [{ annualFee: 0, from: "2026-10-05" }],
+    officialUrl: "https://www.capitalone.ca/credit-cards/quicksilver-world-mastercard/",
+  },
   {
     id: "prd_rbc-avion-visa-infinite",
     slug: "rbc-avion-visa-infinite",
@@ -616,6 +647,7 @@ const FAMILY_NAMES: Record<string, string> = {
   "rbc-avion": "RBC® Avion®",
   "amex-aeroplan": "American Express® Aeroplan®",
   wealthsimple: "Wealthsimple® Visa Infinite",
+  "capital-one-quicksilver": "Capital One® Quicksilver",
 };
 
 export const PRODUCT_FAMILIES: ProductFamily[] = [

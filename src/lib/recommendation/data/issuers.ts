@@ -64,6 +64,12 @@ export const ISSUERS: Issuer[] = [
     officialUrl: "https://www.tangerine.ca/en/personal/spend/credit-cards",
   },
   {
+    id: id<IssuerId>("capital-one"),
+    name: "Capital One®",
+    country: "CA",
+    officialUrl: "https://www.capitalone.ca/",
+  },
+  {
     // Neo phát hành thẻ United® MileagePlus® tại Canada; United® là chủ chương
     // trình điểm, không phải nhà phát hành thẻ.
     id: id<IssuerId>("neo"),

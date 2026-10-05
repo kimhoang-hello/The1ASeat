@@ -3064,3 +3064,25 @@ quyết. Luật mới ghi ở DESIGN-SYSTEM.md (4.3, 5.4, 9, 10.3, 10.11, 10.13)
 kế 29/08); ba nhãn Beta ở Thẻ Mỹ (chốt 22/09); ô navy trống trong carousel bài viết ở ảnh
 chụp toàn trang (ảnh lazy chưa kịp tải — đo lại: cả bốn ảnh tải); "Quyền lợi chính" lặp
 một phần "Thông tin nhanh" (Codex: chưa đủ cơ sở gập lại; nội dung là của tác giả).
+
+## Capital One® Quicksilver (05/10/2026) — đừng đề xuất lại
+
+Hai thẻ Canada mới ra mắt 05/10/2026: Quicksilver World Elite® và World Mastercard®.
+`applyUrl` là trang PUBLIC của capitalone.ca theo yêu cầu tác giả (không affiliate,
+nên `PLAIN_REL` là đúng). Ảnh thẻ lấy bản 472×298 không có nhãn "NEW" (bản hero
+914px có nhãn in sẵn).
+
+- **Offer = match toàn bộ cashback 365 ngày đầu, không trần, không mốc chi.** Seed
+  `kind: "cash"`, `components: []`: giá trị phụ thuộc chi tiêu, như phần "đến $600"
+  của TD® Cash Back. Hệ quả đã biết: §11 chấm ~0.4 với bonus $0 (đánh giá THẤP).
+  Sửa đúng cần loại thành phần mới — chưa làm cho riêng hai thẻ.
+- **Không seed luật loại trừ welcome bonus.** Footnote chỉ ghi "exclusively for new
+  cardholders"; Codex bác cả luật trọn đời cho chính thẻ. Chờ tác giả hỏi thực tế.
+- Họ `capital-one-quicksilver` (tier 1 World, tier 2 World Elite) dù cùng phí $0,
+  cùng tỷ lệ — như họ Wealthsimple®.
+- `card-facts.test`/`card-tags.test` kiểm thẻ thêm SAU `AS_OF` ở ngày nó vào kho
+  (`asOfFor`): trước ngày đó thẻ đúng là chưa có bảng/tag.
+- **Phát hiện kèm:** TD® Cash Back Visa Infinite* có trần $15,000 chi tiêu/năm RIÊNG
+  cho từng nhóm (siêu thị; xăng & sạc; phương tiện công cộng; hoá đơn định kỳ &
+  streaming) theo footnote td.com 05/10/2026 — seed hiện gom bốn nhóm đầu vào MỘT
+  trần $450 và nội dung Contentful cũng viết vậy. Chưa sửa trong lượt này.
