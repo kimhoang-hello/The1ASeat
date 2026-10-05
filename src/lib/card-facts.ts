@@ -171,7 +171,7 @@ function rateText(multiplier: number, cashBack: boolean): string {
   return `1 điểm/$${perPoint.toFixed(2)}`;
 }
 
-/** Trần "điểm" của thẻ cashback là CENT hoàn lại: 45,000 = $450 (TD® Cash Back). */
+/** Trần "điểm" của thẻ cashback là CENT hoàn lại: 45,000 = $450. */
 function capText(cap: EarningCap, cashBack: boolean): string {
   const period = { monthly: "tháng", quarterly: "quý", annual: "năm" }[cap.period];
   if (cap.kind === "spend") return `tối đa ${money(cap.amount)} chi tiêu/${period}`;
@@ -197,7 +197,8 @@ function earnLines(
   const base = rates.find((rate) => rate.category === "everything_else" && rate.restrictedTo === null);
 
   // Một ý cho mỗi (hệ số, trần, hệ số sau trần) — hai nhóm 3% của TD® Cash Back
-  // có hai trần RIÊNG, gộp làm một là nói sai cả hai. Hạng mục trùng tỷ lệ nền
+  // (xăng + sạc; hoá đơn + streaming) có hai trần RIÊNG, gộp làm một là nói sai
+  // cả hai. Hạng mục trùng tỷ lệ nền
   // không in: "1x du lịch" cạnh "1x mọi chi tiêu khác" không thêm gì.
   const groups = new Map<string, { multiplier: number; rows: EarningRate[] }>();
   const restricted = new Map<string, { multiplier: number; rows: EarningRate[] }>();
@@ -239,8 +240,8 @@ function earnLines(
   // Hạng mục mỗi cái một trần RIÊNG mà các trần y hệt nhau (TD® First Class:
   // siêu thị, ăn uống, phương tiện công cộng, mỗi nhóm $25,000/năm) gộp thành
   // một ý "… cho mỗi hạng mục". CHỈ gộp nhóm một hạng mục: nhóm nhiều hạng mục
-  // dùng chung một trần (TD® Cash Back) mà gộp thì không còn biết hạng mục nào
-  // chung trần với hạng mục nào.
+  // dùng chung một trần (xăng + sạc của TD® Cash Back) mà gộp thì không còn
+  // biết hạng mục nào chung trần với hạng mục nào.
   const capSignature = (rows: EarningRate[]): string | null => {
     if (rows.length !== 1 || rows[0].capId === null) return null;
     const cap = caps.find((row) => row.id === rows[0].capId);

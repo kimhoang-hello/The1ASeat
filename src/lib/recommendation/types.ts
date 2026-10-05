@@ -755,11 +755,10 @@ export interface EarningRate extends Temporal, Sourced {
    * Trần mà tỷ lệ này chịu, nếu có. Trỏ tới `earning_caps`.
    *
    * LÀ THAM CHIẾU chứ không phải trần chép sẵn tại chỗ, vì NHIỀU HẠNG MỤC
-   * DÙNG CHUNG MỘT TRẦN. TD® Cash Back có trần $450 mỗi năm dùng chung cho
-   * siêu thị, xăng, sạc xe điện và phương tiện công cộng — bốn hạng mục, MỘT
-   * cái trần. Chép trần vào từng dòng thì bốn dòng trông y hệt bốn cái trần
-   * riêng, và engine sẽ cấp $1,800 thay vì $450. Cobalt cũng vậy với ba nhóm
-   * 5x dùng chung trần 12,500 điểm/tháng.
+   * DÙNG CHUNG MỘT TRẦN. Amex® Cobalt® có ba nhóm 5x dùng chung trần 12,500
+   * điểm/tháng — ba hạng mục, MỘT cái trần. Chép trần vào từng dòng thì ba
+   * dòng trông y hệt ba cái trần riêng, và engine cấp gấp ba. TD® Cash Back
+   * cũng vậy: xăng và sạc xe điện chung một trần $15,000 chi tiêu/năm.
    *
    * `null` = tỷ lệ không giới hạn.
    */

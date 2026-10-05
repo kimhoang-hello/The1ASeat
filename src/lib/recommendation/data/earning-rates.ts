@@ -76,23 +76,29 @@ const SCOTIA_GOLD_SRC = "https://www.scotiabank.com/ca/en/personal/credit-cards/
 const TD_FIRST_CLASS_SRC =
   "https://www.td.com/ca/en/personal-banking/products/credit-cards/travel-rewards/first-class-travel-visa-infinite-card";
 const VIPORTER_SRC = "https://www.bmo.com/en-ca/main/personal/credit-cards/bmo-viporter-world-elite-mastercard/";
+/** Footnote 3 trên trang TD® đọc 05/10/2026: trần $15,000 chi tiêu/năm RIÊNG cho từng nhóm. */
+const TD_CASH_BACK_CHECK = "2026-10-05";
+const BEFORE_TD_CASH_BACK_CHECK = "2026-10-04";
+const TD_CASH_BACK_SRC =
+  "https://www.td.com/ca/en/personal-banking/products/credit-cards/cash-back/cash-back-visa-infinite-card";
 
 /**
  * Trần tích điểm, khai riêng để nhiều hạng mục dùng CHUNG một cái.
  *
- * Đây là chỗ dễ mất tiền nhất trong cả file. TD® Cash Back có trần $450 mỗi
- * năm cho nhóm siêu thị/xăng/sạc/di chuyển và một trần $450 KHÁC cho nhóm hoá
- * đơn định kỳ/streaming. Bản trước chép `capAmount: 45000` vào cả sáu dòng,
- * nên sáu dòng trông như sáu cái trần độc lập — engine đọc nó sẽ cấp $2,700
- * thay vì $900. Cobalt cũng vậy: ba nhóm 5x dùng chung 12,500 điểm/tháng.
+ * Đây là chỗ dễ mất tiền nhất trong cả file. Cobalt: ba nhóm 5x dùng chung
+ * 12,500 điểm/tháng — chép trần vào từng dòng thì ba dòng trông như ba cái
+ * trần độc lập và engine cấp gấp ba. TD® Cash Back thì ngược lại: mỗi nhóm
+ * một trần riêng, nhưng xăng + sạc xe điện là MỘT nhóm, hoá đơn định kỳ +
+ * streaming cũng vậy.
  */
 const CAPS: Record<string, Record<string, {
   name: string;
   kind: "spend" | "points";
   amount: number;
   period: "monthly" | "quarterly" | "annual";
-  /** Như `RateSeed.from` / `source`. */
+  /** Như `RateSeed.from` / `to` / `source`. */
   from?: string;
+  to?: string;
   source?: string;
 }>> = {
   "amex-cobalt": {
@@ -104,18 +110,27 @@ const CAPS: Record<string, Record<string, {
     },
   },
   "td-cash-back-visa-infinite": {
+    // Đóng 04/10/2026: gom bốn hạng mục đầu vào MỘT trần $450 là sai — xem
+    // các trần riêng bên dưới.
     everyday3: {
       name: "Nhóm 3% siêu thị, xăng, sạc và di chuyển",
       kind: "points",
       amount: 45000,
       period: "annual",
+      to: BEFORE_TD_CASH_BACK_CHECK,
     },
     recurring3: {
       name: "Nhóm 3% hoá đơn định kỳ và streaming",
       kind: "points",
       amount: 45000,
       period: "annual",
+      to: BEFORE_TD_CASH_BACK_CHECK,
     },
+    // TD®: bốn nhóm, mỗi nhóm trần $15,000 chi tiêu/năm RIÊNG.
+    grocery3: { name: "Siêu thị 3%", kind: "spend", amount: 15000, period: "annual", from: TD_CASH_BACK_CHECK, source: TD_CASH_BACK_SRC },
+    gas3: { name: "Xăng và sạc xe điện 3%", kind: "spend", amount: 15000, period: "annual", from: TD_CASH_BACK_CHECK, source: TD_CASH_BACK_SRC },
+    transit3: { name: "Phương tiện công cộng 3%", kind: "spend", amount: 15000, period: "annual", from: TD_CASH_BACK_CHECK, source: TD_CASH_BACK_SRC },
+    bills3: { name: "Hoá đơn định kỳ và streaming 3%", kind: "spend", amount: 15000, period: "annual", from: TD_CASH_BACK_CHECK, source: TD_CASH_BACK_SRC },
   },
   "bmo-viporter-world-elite-mastercard": {
     porter3x: {
@@ -351,16 +366,24 @@ const RATES: Record<string, { program: string; rates: RateSeed[] }> = {
   "td-cash-back-visa-infinite": {
     program: "cash-back",
     rates: [
-      // Trần $450 TIỀN HOÀN mỗi năm. Một "điểm" ở chương trình cash-back là
-      // một CENT (xem points-programs.ts), nên trần viết là 45,000.
-      // Bốn hạng mục dưới đây dùng CHUNG một trần $450/năm — cùng `cap`.
-      ["grocery", 3, { cap: "everyday3", rateAfterCap: 1 }],
-      ["gas", 3, { cap: "everyday3", rateAfterCap: 1 }],
-      ["ev_charging", 3, { cap: "everyday3", rateAfterCap: 1 }],
-      ["transit", 3, { cap: "everyday3", rateAfterCap: 1 }],
-      // Nhóm thứ hai có trần $450 RIÊNG, không dùng chung với nhóm trên.
-      ["recurring", 3, { cap: "recurring3", rateAfterCap: 1 }],
-      ["streaming", 3, { cap: "recurring3", rateAfterCap: 1 }],
+      // Bản seed từ nội dung site: bốn hạng mục đầu chung MỘT trần $450 tiền
+      // hoàn. Sai — footnote TD® tính trần theo từng nhóm. Đóng lại, không sửa.
+      ["grocery", 3, { cap: "everyday3", rateAfterCap: 1, to: BEFORE_TD_CASH_BACK_CHECK }],
+      ["gas", 3, { cap: "everyday3", rateAfterCap: 1, to: BEFORE_TD_CASH_BACK_CHECK }],
+      ["ev_charging", 3, { cap: "everyday3", rateAfterCap: 1, to: BEFORE_TD_CASH_BACK_CHECK }],
+      ["transit", 3, { cap: "everyday3", rateAfterCap: 1, to: BEFORE_TD_CASH_BACK_CHECK }],
+      ["recurring", 3, { cap: "recurring3", rateAfterCap: 1, to: BEFORE_TD_CASH_BACK_CHECK }],
+      ["streaming", 3, { cap: "recurring3", rateAfterCap: 1, to: BEFORE_TD_CASH_BACK_CHECK }],
+      // Trang TD® 05/10/2026: "only available on the first $15,000 in annual
+      // Purchases in that category" cho (i) siêu thị, (ii) xăng & sạc, (iii)
+      // phương tiện công cộng, (iv) hoá đơn định kỳ & streaming. Xăng và sạc
+      // là MỘT nhóm nên chung trần; hoá đơn và streaming cũng vậy.
+      ["grocery", 3, { cap: "grocery3", rateAfterCap: 1, from: TD_CASH_BACK_CHECK, source: TD_CASH_BACK_SRC }],
+      ["gas", 3, { cap: "gas3", rateAfterCap: 1, from: TD_CASH_BACK_CHECK, source: TD_CASH_BACK_SRC }],
+      ["ev_charging", 3, { cap: "gas3", rateAfterCap: 1, from: TD_CASH_BACK_CHECK, source: TD_CASH_BACK_SRC }],
+      ["transit", 3, { cap: "transit3", rateAfterCap: 1, from: TD_CASH_BACK_CHECK, source: TD_CASH_BACK_SRC }],
+      ["recurring", 3, { cap: "bills3", rateAfterCap: 1, from: TD_CASH_BACK_CHECK, source: TD_CASH_BACK_SRC }],
+      ["streaming", 3, { cap: "bills3", rateAfterCap: 1, from: TD_CASH_BACK_CHECK, source: TD_CASH_BACK_SRC }],
       ["everything_else", 1],
     ],
   },
@@ -552,7 +575,7 @@ export const EARNING_CAPS: EarningCap[] = Object.entries(CAPS).flatMap(([slug, c
     amount: cap.amount,
     period: cap.period,
     effectiveFrom: cap.from ?? VERIFIED_ON,
-    effectiveTo: null,
+    effectiveTo: cap.to ?? null,
     sourceUrl: cap.source ?? `https://ghe1a.com/credit-cards/${slug}`,
     sourceKind: cap.source ? "issuer" : "ghe1a",
     verifiedAt: cap.from ?? VERIFIED_ON,

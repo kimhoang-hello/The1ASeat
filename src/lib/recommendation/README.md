@@ -123,10 +123,10 @@ hưởng tới điểm số của **mọi** sản phẩm, không chỉ một.
 ## Trần tích điểm dùng chung
 
 `earning_caps` là entity riêng, và `EarningRate.capId` **trỏ** vào nó. Không
-chép trần vào từng dòng tỷ lệ: TD® Cash Back có một trần $450/năm dùng chung
-cho bốn hạng mục và một trần $450 khác cho hai hạng mục nữa. Chép vào từng dòng
-thì sáu dòng trông như sáu trần độc lập và engine cấp $2,700 thay vì $900.
-Cobalt cũng vậy với ba nhóm 5x dùng chung 12,500 điểm/tháng.
+chép trần vào từng dòng tỷ lệ: Cobalt có ba nhóm 5x dùng chung 12,500
+điểm/tháng — chép vào từng dòng thì ba dòng trông như ba trần độc lập và engine
+cấp gấp ba. TD® Cash Back cũng vậy: sáu hạng mục 3% nhưng chỉ bốn trần $15,000
+chi tiêu/năm (xăng + sạc chung một trần, hoá đơn định kỳ + streaming chung một).
 
 ## Quyền lợi: đơn vị và nhà cung cấp
 

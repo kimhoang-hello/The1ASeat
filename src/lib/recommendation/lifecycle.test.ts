@@ -435,17 +435,28 @@ test("10. dựng lại toàn bộ thế giới như nó ở một ngày trong qu
  * --------------------------------------------------------------- */
 
 test("trần tích điểm DÙNG CHUNG chỉ đếm một lần", () => {
-  // TD® Cash Back có trần $450/năm dùng chung cho bốn hạng mục và một trần
-  // $450 KHÁC cho hai hạng mục nữa. Chép trần vào từng dòng thì sáu dòng trông
-  // như sáu cái trần độc lập, và engine cấp $2,700 thay vì $900.
-  const td = BASE.products.find((p) => p.slug === "td-cash-back-visa-infinite")!;
-  const rates = BASE.earningRates.filter((r) => r.productId === td.id && r.capId !== null);
-  const distinctCaps = new Set(rates.map((r) => r.capId));
+  // TD® Cash Back (footnote td.com 05/10/2026): trần $15,000 chi tiêu/năm cho
+  // TỪNG nhóm — siêu thị; xăng & sạc; phương tiện công cộng; hoá đơn định kỳ &
+  // streaming. Sáu hạng mục, bốn cái trần: xăng và sạc chung một, hoá đơn và
+  // streaming chung một. Chép trần vào từng dòng thì engine cấp sáu trần.
+  const data = datasetAt(BASE, "2026-10-05");
+  const td = data.products.find((p) => p.slug === "td-cash-back-visa-infinite")!;
+  const rates = data.earningRates.filter((r) => r.productId === td.id && r.capId !== null);
+  const capOf = (category: string) => rates.find((r) => r.category === category)!.capId;
   assert.equal(rates.length, 6, "sáu hạng mục có trần");
-  assert.equal(distinctCaps.size, 2, "nhưng chỉ HAI cái trần");
+  assert.equal(new Set(rates.map((r) => r.capId)).size, 4, "nhưng chỉ BỐN cái trần");
+  assert.equal(capOf("gas"), capOf("ev_charging"), "xăng và sạc là một nhóm");
+  assert.equal(capOf("recurring"), capOf("streaming"), "hoá đơn và streaming là một nhóm");
+  assert.notEqual(capOf("grocery"), capOf("transit"), "siêu thị và phương tiện công cộng trần riêng");
 
-  const caps = BASE.earningCaps.filter((c) => c.productId === td.id);
-  assert.equal(caps.reduce((sum, c) => sum + c.amount, 0), 90000, "tổng trần là $900, không phải $2,700");
+  const caps = data.earningCaps.filter((c) => c.productId === td.id);
+  assert.ok(caps.every((c) => c.kind === "spend" && c.amount === 15000 && c.period === "annual"));
+  assert.equal(caps.length, 4);
+
+  // Bản cũ (gom bốn hạng mục vào một trần $450) đóng lại chứ không bị xoá.
+  const before = datasetAt(BASE, "2026-10-04");
+  const oldRates = before.earningRates.filter((r) => r.productId === td.id && r.capId !== null);
+  assert.equal(new Set(oldRates.map((r) => r.capId)).size, 2);
 });
 
 test("quyền lợi cùng tên nhưng khác hãng KHÔNG trùng nhau", () => {

@@ -58,6 +58,15 @@ test("thẻ cashback: % và trần tính bằng đô hoàn lại, hai trần ri�
   assert.equal(earn.filter((line) => line.startsWith("3%") && line.includes("$450 hoàn tiền/năm")).length, 2);
 });
 
+test("TD® Cash Back từ 05/10/2026: trần $15,000 chi tiêu riêng từng nhóm", () => {
+  assert.deepEqual(lines("td-cash-back-visa-infinite", "earn", "2026-10-05"), [
+    "3% siêu thị, phương tiện công cộng — tối đa $15,000 chi tiêu/năm cho mỗi hạng mục, sau đó 1%",
+    "3% xăng, sạc xe điện — tối đa $15,000 chi tiêu/năm, sau đó 1%",
+    "3% hoá đơn định kỳ, streaming — tối đa $15,000 chi tiêu/năm, sau đó 1%",
+    "1% mọi chi tiêu khác",
+  ]);
+});
+
 test("tỷ lệ chỉ áp ở một nhóm merchant in kèm nhóm đó; thiếu tỷ lệ nền thì nói chưa kiểm", () => {
   const before = lines("scotiabank-gold-amex", "earn", BEFORE_CHECK);
   assert.ok(before[0].startsWith("6x siêu thị — Sobeys"), before[0]);

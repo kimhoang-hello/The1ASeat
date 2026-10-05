@@ -3084,5 +3084,8 @@ nên `PLAIN_REL` là đúng). Ảnh thẻ lấy bản 472×298 không có nhãn 
   (`asOfFor`): trước ngày đó thẻ đúng là chưa có bảng/tag.
 - **Phát hiện kèm:** TD® Cash Back Visa Infinite* có trần $15,000 chi tiêu/năm RIÊNG
   cho từng nhóm (siêu thị; xăng & sạc; phương tiện công cộng; hoá đơn định kỳ &
-  streaming) theo footnote td.com 05/10/2026 — seed hiện gom bốn nhóm đầu vào MỘT
-  trần $450 và nội dung Contentful cũng viết vậy. Chưa sửa trong lượt này.
+  streaming) theo footnote td.com 05/10/2026. Đã sửa cùng ngày: seed cũ (bốn nhóm
+  đầu chung MỘT trần $450) đóng `to` 04/10, bản mới bốn trần `spend` 15,000 từ
+  05/10 (xăng + sạc chung một trần, hoá đơn + streaming chung một); Contentful
+  `keyBenefitsVi`/`editorsTakeVi` (và bản En ẩn) viết lại. Năm đầu, trần mỗi nhóm
+  còn bị trừ phần chi của 3 tháng welcome (footnote 2) — engine không mô hình hoá.
