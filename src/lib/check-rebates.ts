@@ -13,6 +13,10 @@ import {
 } from "@/lib/best-cards";
 import { rebateProseMismatches, rebateProsePatch } from "@/lib/rebate-prose";
 import { isTransient } from "@/lib/job-retry";
+import { todayInSiteZone } from "@/lib/format-date";
+import { OFFERS } from "@/lib/recommendation/data/offers";
+import { PRODUCTS } from "@/lib/recommendation/data/products";
+import { oneActiveAt } from "@/lib/recommendation/temporal";
 
 // Called twice a day (see .github/workflows/check-rebates.yml). FinlyWealth
 // changes its rebate amounts without warning — the BMO card went $125 -> $200 —
@@ -212,6 +216,31 @@ export async function runCheckRebates({
         slug,
         message: err instanceof Error ? err.message : String(err),
         retryable: isTransient(err),
+      });
+    }
+  }
+
+  // Engine gợi ý giữ bản chép rebate RIÊNG trong seed (`offers.ts`, trường
+  // `rebate`). Job ghi được Contentful nhưng không ghi được repo, nên mỗi lần
+  // FinlyWealth đổi số là seed đứng yên — 06/10/2026 hai thẻ TD® hạ $140 → $50,
+  // trang thẻ đã $50 mà engine vẫn chấm điểm bằng $140, và chỉ
+  // `npm run audit:reco-data` chạy tay mới thấy. BÁO ở đây để lỗi hiện ngay
+  // lượt kế; điều kiện còn nguyên tới khi sửa seed, vòng thử lại không rửa được.
+  const today = todayInSiteZone();
+  for (const slug of checkedSlugs) {
+    const product = PRODUCTS.find((row) => row.slug === slug);
+    // Thẻ thiếu trong seed, hay có ≠ 1 offer hiệu lực: `audit:reco-data` lo.
+    if (!product) continue;
+    const offer = oneActiveAt(OFFERS.filter((row) => row.productId === product.id), today);
+    if (!offer) continue;
+
+    const site = updated.find((change) => change.slug === slug)?.to ?? published.get(slug)?.rebate;
+    const siteAmount = site ? Number(site.replace(/[^\d.]/g, "")) : null;
+    const seedAmount = offer.annualFeeRebate ?? null;
+    if (seedAmount !== siteAmount) {
+      errors.push({
+        slug,
+        message: `site hiện rebate ${site ?? "(trống)"} nhưng seed engine (recommendation/data/offers.ts) vẫn ghi ${seedAmount ?? "(không có)"} — sửa seed rồi chạy UPDATE_ENGINE_SNAPSHOT=1 npm run test:reco`,
       });
     }
   }

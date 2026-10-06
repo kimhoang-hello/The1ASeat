@@ -350,7 +350,7 @@ const OFFER_SEEDS: OfferSeed[] = [
     startDate: "2026-09-01",
     recordedFrom: "2026-09-07",
     feeFirstYear: 0,
-    rebate: 140,
+    rebate: 50,
     components: [
       { type: "first_purchase", points: 20000 },
       { type: "spend_threshold", points: 140000, spend: 7500, windowDays: 180 },
@@ -500,7 +500,7 @@ const OFFER_SEEDS: OfferSeed[] = [
     currency: null,
     startDate: "2026-09-07",
     feeFirstYear: 0,
-    rebate: 140,
+    rebate: 50,
     components: [
       {
         type: "statement_credit",
