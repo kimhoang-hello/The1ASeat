@@ -25,6 +25,7 @@ import {
   usCardSiblings,
 } from "@/lib/us-credit-cards";
 import { usCardsGuideHref } from "@/lib/us-cards-guide";
+import { partnerCount, usTransferIssuerForCurrency } from "@/lib/us-transfer-partners";
 import { t as translate } from "@/lib/t";
 import { pageMetadata, breadcrumbJsonLd } from "@/lib/seo";
 
@@ -106,6 +107,10 @@ export default async function UsCreditCardDetailPage({
   const guideHref = await usCardsGuideHref();
   const requirement = spendRequirement(card);
   const { sameCurrency, filter, sameFilter } = usCardSiblings(card, getUsCreditCards());
+  // Hệ điểm của thẻ có cột trong bảng Transfer Partners Mỹ thì trỏ sang đó — như
+  // thẻ Canada hệ `amex-mr`/`avion` trỏ sang bảng Canada (`pointsToolFor`). Thẻ
+  // Bonvoy®, Hilton®, Atmos™… không có cột nên không có link, thà thiếu còn hơn sai.
+  const transferIssuer = usTransferIssuerForCurrency(card.us.rewardsCurrency);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -242,11 +247,24 @@ export default async function UsCreditCardDetailPage({
             {/* Đặt SAU nút apply và phần công bố như trang thẻ Canada: đường đi
                 tiếp cho người chưa quyết. Link THẲNG sang từng thẻ, không phải
                 link lọc — xem `usCardSiblings`. */}
+            {transferIssuer && (
+              <NextSteps
+                title={us("transferTitle", { currency: card.us.rewardsCurrency })}
+                compact
+                className="mt-12"
+              >
+                <StepLink
+                  href="/transfer-partners#my"
+                  label={us("transferLabel")}
+                  description={us("transferDescription", { count: partnerCount(transferIssuer.id) })}
+                />
+              </NextSteps>
+            )}
             {sameCurrency.length > 0 && (
               <NextSteps
                 title={us("siblingsCurrencyTitle", { currency: card.us.rewardsCurrency })}
                 compact
-                className="mt-12"
+                className={transferIssuer ? "mt-8" : "mt-12"}
               >
                 {sameCurrency.map((sibling) => (
                   <StepLink
@@ -262,7 +280,7 @@ export default async function UsCreditCardDetailPage({
               <NextSteps
                 title={us("siblingsFilterTitle", { filter: us(FILTER_LABEL_KEYS[filter]) })}
                 compact
-                className={sameCurrency.length > 0 ? "mt-8" : "mt-12"}
+                className={sameCurrency.length > 0 || transferIssuer ? "mt-8" : "mt-12"}
               >
                 {sameFilter.map((sibling) => (
                   <StepLink

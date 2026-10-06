@@ -3089,3 +3089,49 @@ nên `PLAIN_REL` là đúng). Ảnh thẻ lấy bản 472×298 không có nhãn 
   05/10 (xăng + sạc chung một trần, hoá đơn + streaming chung một); Contentful
   `keyBenefitsVi`/`editorsTakeVi` (và bản En ẩn) viết lại. Năm đầu, trần mỗi nhóm
   còn bị trừ phần chi của 3 tháng welcome (footnote 2) — engine không mô hình hoá.
+
+## Transfer Partners thẻ Mỹ (06/10/2026) — đừng đề xuất lại
+
+`/transfer-partners` có hai mục neo: `#canada` (bảng Amex® CA / RBC® cũ, không đổi
+dữ liệu) và `#my` (bảng mới: 6 hệ điểm Mỹ × 36 chương trình, dữ liệu ở
+`src/lib/us-transfer-partners.ts`, bảng ở `components/transfer-partners/us-transfer-table.tsx`).
+Tác giả giao danh sách theo cheat sheet của Daily Drop, kèm luật: **chỉ thêm chương
+trình có ít nhất một ngân hàng chuyển được** — `npm run test:us-transfer` canh luật đó.
+
+- **File riêng, không thêm cột vào `TRANSFER_PARTNERS`.** Bảng Canada được Award
+  Flight Finder, trang chặng, engine gợi ý (`transfer-paths.ts`) và hai audit đọc như
+  điểm Canada; thêm cột Mỹ là engine khuyên người Canada chuyển điểm Chase® họ không có.
+- **Đối chiếu nguồn chính chủ 06/10/2026, khớp Daily Drop:** Amex® (công cụ
+  `global.americanexpress.com/rewards/transfer`, chân trang "United States", 20 đối
+  tác), Chase® (trang quyền lợi Sapphire Preferred®: 14 đối tác, Hyatt 4:3), Capital
+  One® (trang transfer partners, 22), Citi® (`thankyou.com/partnerProgramsListing.htm`,
+  mở từng ô mới ra tỷ lệ theo loại thẻ, 20). Bilt: danh sách sau đăng nhập — đối chiếu
+  qua AwardWallet. Wells Fargo®: trang sản phẩm không liệt kê — JetBlue/Cathay theo
+  thông cáo newsroom.wf.com. Số đối tác từng hệ khoá trong test; ngân hàng đổi thì sửa
+  cả dữ liệu lẫn test.
+- **Thời gian chuyển chỉ lấy từ Daily Drop**, ô "Not enough data" để trống. Không lấp
+  bằng "48 hours" của American Express®: đó là mức tối đa, đặt cạnh "Tức thì" là hai
+  thước đo trong một cột. Không dùng dấu "~" (ở cỡ chữ ô nó trông như dấu trừ).
+- **Alaska + Hawaiian = một hàng Atmos™ Rewards** (Daily Drop để hai hàng). Bilt → Accor
+  viết "1,500 : 1,000", không "1,000 : 667" (số tròn không có thật).
+- **Hyatt:** ô Chase® hiện 1,000 : 750 (Sapphire Preferred®/Ink Business Preferred® từ
+  01/10/2026) kèm dòng "Sapphire Reserve®: 1,000 : 1,000". Ô Bilt có `change` → tự lật
+  sang 1,000 : 750 ngày 01/01/2027 (`legOn` + `todayInSiteZone`, trang ISR 60s).
+- **Logo vuông `/images/logos/programs/*.png` (128px) cho MỌI hàng, cả bảng Canada.**
+  Logo chữ cũ co về 22px không đọc được; một chương trình một logo trên cả trang. Award
+  Flight Finder vẫn dùng bản chữ trong `/images/logos/partners/` ở khổ rộng của nó.
+  Nguồn: icon chính chủ (favicon/apple-touch-icon), cắt từ logo trên công cụ Amex®/Citi®
+  hoặc SVG Wikimedia Commons (đuôi EVA, trái tim Southwest, linh dương Qatar, chữ LHW).
+- **Bố cục:** chữ của mục Mỹ cùng cột 56rem với mục Canada, riêng bảng nới `max-w-6xl`
+  như một hình rộng — kéo cả mục ra thì tiêu đề "Mỹ" lệch mép trái so với "Canada".
+- **Hàng tên cột dính từ `xl`:** khung đổi sang `overflow-clip` (không `hidden` — nó
+  tạo khung cuộn và nuốt `sticky`), đỉnh là `--chrome-h` do `StickyChrome` đo bằng
+  `ResizeObserver`. `top-chrome` (9rem) để hở khe 31px ở 1280px, các hàng lộ qua đó.
+- **Trang thẻ Mỹ** có hệ điểm là cột của bảng (MR, UR, Capital One® Miles, ThankYou®,
+  Bilt) thì có khối link sang `/transfer-partners#my`; thẻ Bonvoy®/Hilton®/IHG®/Atmos™
+  không — như `pointsToolFor` của thẻ Canada.
+- **Bẫy `audit:trademarks`:** nó lùi tối đa 4 từ viết hoa trước ® để học cụm, và "®, "
+  không chặn được bước lùi — "Citi Strata Premier®, Citi Strata Elite®" dạy nó cụm
+  "Premier Citi Strata Elite" rồi báo "Citi" trần. Viết xen một chữ thường ("… và …").
+  "Etihad® Guest" dạy nó chữ "Etihad" và làm lộ một chỗ viết trần sẵn có ở
+  `awardCharts` (đã thêm ®).

@@ -118,6 +118,26 @@ export function StickyChrome({ children }: { children: React.ReactNode }) {
     };
   }, [sticky, pathname]);
 
+  // Chiều cao THẬT của khối, ra biến `--chrome-h` cho phần tử nào phải dính sát
+  // mép dưới nó — hàng tên cột của bảng Transfer Partners Mỹ. `top-chrome`
+  // (9rem) là khoảng chừa cố định, hợp cho cột ảnh thẻ hay mục lục, nhưng đặt
+  // một hàng tiêu đề bảng ở đó thì các hàng bên dưới lộ ra qua khe ~30px giữa
+  // hai thứ dính. Đo bằng `ResizeObserver` vì dải offer đổi chiều cao mỗi lần
+  // xoay thẻ và khi bị đóng. Trước khi JS chạy, người dùng biến tự rơi về 9rem.
+  useEffect(() => {
+    const chrome = ref.current;
+    if (!chrome) return;
+    const root = document.documentElement;
+    const observer = new ResizeObserver(() => {
+      root.style.setProperty("--chrome-h", `${chrome.offsetHeight}px`);
+    });
+    observer.observe(chrome);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty("--chrome-h");
+    };
+  }, []);
+
   // `z-50` giữ nguyên ở cả hai nhánh: panel tìm kiếm và menu mobile thả xuống
   // từ thanh này, chúng vẫn phải nằm trên nội dung trang.
   //
