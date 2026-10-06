@@ -166,6 +166,11 @@
         "at": "2026-08-29",
         "welcomeBonus": "Đến $600 giá trị + miễn annual fee năm đầu",
         "rebate": "$140"
+      },
+      {
+        "at": "2026-10-06",
+        "welcomeBonus": "Đến $600 giá trị + miễn annual fee năm đầu",
+        "rebate": "$50"
       }
     ],
     "td-first-class-travel-visa-infinite": [
@@ -183,6 +188,11 @@
         "at": "2026-09-10",
         "welcomeBonus": "160,000 điểm TD Rewards®",
         "rebate": "$140"
+      },
+      {
+        "at": "2026-10-06",
+        "welcomeBonus": "160,000 điểm TD Rewards®",
+        "rebate": "$50"
       }
     ],
     "united-mileageplus-neo-world-elite-mastercard": [
@@ -305,6 +315,18 @@
         "at": "2026-09-26",
         "welcomeBonus": "50,000 điểm Scene+™",
         "rebate": "$120"
+      }
+    ],
+    "capital-one-quicksilver-world-elite-mastercard": [
+      {
+        "at": "2026-10-06",
+        "welcomeBonus": "Nhân đôi toàn bộ cashback năm đầu"
+      }
+    ],
+    "capital-one-quicksilver-world-mastercard": [
+      {
+        "at": "2026-10-06",
+        "welcomeBonus": "Nhân đôi toàn bộ cashback năm đầu"
       }
     ]
   }
