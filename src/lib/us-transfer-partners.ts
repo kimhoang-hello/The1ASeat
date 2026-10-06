@@ -35,7 +35,7 @@
 // THỜI GIAN CHUYỂN lấy từ Daily Drop: đó là mức người dùng ghi nhận, không phải
 // cam kết. Ô nào Daily Drop ghi "Not enough data" hoặc để trống thì không có
 // `time` — không lấp bằng con số của nguồn khác, vì trang American Express® ghi
-// "48 hours" cho gần như mọi đối tác (mức tối đa), đặt cạnh "Tức thì" của Daily
+// "48 hours" cho gần như mọi đối tác (mức tối đa), đặt cạnh "Instant" của Daily
 // Drop là hai thước đo khác nhau trong cùng một cột.
 //
 // TỶ LỆ viết "1,000 : X" như bảng Canada, kể cả khi ngân hàng in "250 : 200"
@@ -138,7 +138,7 @@ const TO_800 = "1,000 : 800";
 const TO_750 = "1,000 : 750";
 const TO_2000 = "1,000 : 2,000";
 
-const INSTANT = "Tức thì";
+const INSTANT = "Instant";
 
 /** Hãng bay trước, khách sạn sau; trong mỗi nhóm xếp theo tên. */
 export const US_TRANSFER_AIRLINES: UsTransferPartnerRow[] = [
@@ -261,7 +261,7 @@ export const US_TRANSFER_AIRLINES: UsTransferPartnerRow[] = [
     program: "Etihad® Guest",
     logo: `${LOGO}/etihad.png`,
     legs: {
-      "capital-one": { ratio: ONE_TO_ONE, time: "Tức thì–36 giờ" },
+      "capital-one": { ratio: ONE_TO_ONE, time: "Instant–36 giờ" },
       citi: { ratio: ONE_TO_ONE, time: INSTANT },
       bilt: { ratio: ONE_TO_ONE },
     },
@@ -336,7 +336,7 @@ export const US_TRANSFER_AIRLINES: UsTransferPartnerRow[] = [
     legs: {
       amex: { ratio: ONE_TO_ONE, time: "Từ 1 ngày" },
       chase: { ratio: ONE_TO_ONE, time: "1–2 ngày, có khi tới 7" },
-      "capital-one": { ratio: ONE_TO_ONE, time: "Tức thì–48 giờ" },
+      "capital-one": { ratio: ONE_TO_ONE, time: "Instant–48 giờ" },
       citi: { ratio: ONE_TO_ONE },
     },
   },
@@ -419,7 +419,7 @@ export const US_TRANSFER_HOTELS: UsTransferPartnerRow[] = [
     logo: `${LOGO}/hilton.png`,
     legs: {
       amex: { ratio: TO_2000, time: INSTANT },
-      bilt: { ratio: ONE_TO_ONE, time: "Tức thì–48 giờ" },
+      bilt: { ratio: ONE_TO_ONE, time: "Instant–48 giờ" },
     },
   },
   {
@@ -469,7 +469,7 @@ export const US_TRANSFER_HOTELS: UsTransferPartnerRow[] = [
     logo: `${LOGO}/hyatt.png`,
     legs: {
       chase: { ratio: TO_750, note: "Sapphire Reserve®: 1,000 : 1,000", time: INSTANT },
-      bilt: { ratio: ONE_TO_ONE, time: "Tức thì–72 giờ", change: { from: "2027-01-01", ratio: TO_750 } },
+      bilt: { ratio: ONE_TO_ONE, time: "Instant–72 giờ", change: { from: "2027-01-01", ratio: TO_750 } },
     },
   },
   {

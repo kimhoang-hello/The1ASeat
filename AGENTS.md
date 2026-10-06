@@ -3110,7 +3110,7 @@ trình có ít nhất một ngân hàng chuyển được** — `npm run test:us
   thông cáo newsroom.wf.com. Số đối tác từng hệ khoá trong test; ngân hàng đổi thì sửa
   cả dữ liệu lẫn test.
 - **Thời gian chuyển chỉ lấy từ Daily Drop**, ô "Not enough data" để trống. Không lấp
-  bằng "48 hours" của American Express®: đó là mức tối đa, đặt cạnh "Tức thì" là hai
+  bằng "48 hours" của American Express®: đó là mức tối đa, đặt cạnh "Instant" là hai
   thước đo trong một cột. Không dùng dấu "~" (ở cỡ chữ ô nó trông như dấu trừ).
 - **Alaska + Hawaiian = một hàng Atmos™ Rewards** (Daily Drop để hai hàng). Bilt → Accor
   viết "1,500 : 1,000", không "1,000 : 667" (số tròn không có thật).
