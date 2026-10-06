@@ -28,12 +28,27 @@ export function keepBrandTogether(str: string): string {
   return str.replaceAll(BRAND, BRAND_NO_BREAK);
 }
 
-/** Vietnamese-only stand-in for next-intl's useTranslations/getTranslations. */
-export function t<N extends Namespace>(namespace: N) {
-  const ns = messages[namespace] as Record<string, string>;
+/**
+ * Bản của `t` cho Client Component và mọi file chúng import: nhận thẳng bảng
+ * chuỗi, `translator(messages.nav)`, với `messages` import trực tiếp từ
+ * `messages/vi.json`.
+ *
+ * `t("nav")` tra khoá ĐỘNG, nên webpack không biết namespace nào được dùng và
+ * nhét nguyên `vi.json` (53 KB, ~15 KB gzip) vào bundle trình duyệt — của MỌI
+ * trang, vì header là Client Component trong layout gốc. `messages.nav` là
+ * truy cập tĩnh: webpack chỉ giữ những namespace phía client thật sự đọc.
+ * Một lời gọi `t(...)` trong cây client — kể cả ở đầu một file lib mà client
+ * import gián tiếp — là kéo lại cả file JSON (đo 05/10/2026).
+ */
+export function translator(table: Record<string, string>) {
   return (key: string, vars?: Record<string, string | number>): string => {
-    const raw = ns[key];
+    const raw = table[key];
     if (raw === undefined) return key;
     return keepBrandTogether(interpolate(raw, vars));
   };
+}
+
+/** Vietnamese-only stand-in for next-intl's useTranslations/getTranslations. Server only — see `translator`. */
+export function t<N extends Namespace>(namespace: N) {
+  return translator(messages[namespace] as Record<string, string>);
 }

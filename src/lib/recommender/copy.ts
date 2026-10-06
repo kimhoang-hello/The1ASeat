@@ -350,24 +350,6 @@ export const CONFIDENCE_NO_QUESTION_LEFT =
   "Gợi ý vẫn dùng được, chỉ kém chắc hơn vì còn vài chỗ mình chưa biết.";
 
 /**
- * Vì sao độ chắc chắn ở mức đó — theo YẾU TỐ THẤP NHẤT trong bốn yếu tố §29.
- *
- * Bốn yếu tố có bốn cách chữa khác nhau: thiếu thông tin thì trả lời thêm, hai
- * thẻ sát nhau thì chọn cái nào cũng được, dữ liệu cũ thì đợi mình kiểm lại,
- * mục tiêu chung chung thì nói rõ hơn. In một câu chung ("độ tin cậy trung
- * bình") không nói được nên làm gì tiếp.
- */
-export const CONFIDENCE_REASON: Record<
-  "dataCompleteness" | "dataFreshness" | "goalSpecificity" | "scoreSeparation",
-  string
-> = {
-  dataCompleteness: "vì bạn còn vài thông tin chưa khai",
-  dataFreshness: "vì vài dòng dữ liệu đã lâu chưa kiểm lại",
-  goalSpecificity: "vì mục tiêu còn chung chung",
-  scoreSeparation: "vì hai lựa chọn đầu gần như ngang nhau",
-};
-
-/**
  * Bốn cách "chưa mở thẻ" thắng, bốn câu khác nhau.
  *
  * `nothing_fits` là ca dễ nói sai nhất: người dùng đặt ngưỡng phí $0 và thu

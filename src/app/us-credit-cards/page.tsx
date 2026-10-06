@@ -23,7 +23,6 @@ import {
   type UsCardFilter,
 } from "@/lib/us-credit-cards";
 import { beginnerGuideHref, usCardsGuides } from "@/lib/us-cards-guide";
-import { creditCardJsonLd } from "@/lib/credit-card-schema";
 import { t } from "@/lib/t";
 import { pageMetadata, absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
 import { Flag } from "@/components/ui/flag";
@@ -122,8 +121,11 @@ export default async function UsCreditCardsPage({
           itemListElement: cards.map((card, index) => ({
             "@type": "ListItem",
             position: index + 1,
+            // "Summary page" như `/credit-cards`: schema đầy đủ của thẻ nằm ở
+            // trang riêng của nó. Lồng `item` đủ ở đây là 57KB JSON-LD cho 38
+            // thẻ — và gấp đôi trong HTML, vì payload RSC chép lại thẻ script.
             url: absoluteUrl(usCardPath(card.slug)),
-            item: creditCardJsonLd(card),
+            name: card.name,
           })),
         },
       },

@@ -2,11 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CaretLeft, CaretRight } from "@phosphor-icons/react";
-import type { BlogPost } from "@/lib/content";
-import { PostCard } from "@/components/blog/post-card";
-import { t as translate } from "@/lib/t";
+import messages from "../../../messages/vi.json";
+import { translator } from "@/lib/t";
 
-const t = translate("posts");
+const t = translator(messages.posts);
 
 /**
  * The home page's preview strip. It shows more posts than fit at once and
@@ -14,8 +13,14 @@ const t = translate("posts");
  * for the archive. Native scrolling does the work — swipe, trackpad and
  * keyboard already move it — and the arrows are the affordance that says so on
  * a desktop, where none of those are visible.
+ *
+ * Thẻ bài được dựng sẵn ở server rồi truyền vào làm `children` (05/10/2026).
+ * Trước đó component này nhận nguyên `BlogPost[]`, và một prop của Client
+ * Component là được nhúng NGUYÊN VẸN vào HTML để hydrate — kể cả thân bài
+ * HTML mà thẻ không hề hiện: trang chủ nặng 437 KB, gần 200 KB trong đó là
+ * thân của 12 bài viết. Ở đây chỉ còn phần cuộn.
  */
-export function PostCarousel({ posts }: { posts: BlogPost[] }) {
+export function PostCarousel({ children }: { children: React.ReactNode }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
@@ -84,23 +89,12 @@ export function PostCarousel({ posts }: { posts: BlogPost[] }) {
         </button>
       </div>
 
-      {/* The widths are exact fractions of the track minus the gaps it spans,
-          so one, two, three or four cards sit flush across a row. On a phone a
-          card stops short of the full width, letting the next one peek in —
-          that overhang is what tells a reader there is more to swipe to. */}
       <div
         ref={trackRef}
         onScroll={syncEdges}
         className="flex snap-x snap-mandatory gap-6 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        {posts.map((post) => (
-          <div
-            key={post.slug}
-            className="flex w-[82%] shrink-0 snap-start sm:w-[calc((100%-1.5rem)/2)] lg:w-[calc((100%-3rem)/3)] 2xl:w-[calc((100%-4.5rem)/4)]"
-          >
-            <PostCard post={post} headingLevel="h3" className="w-full" />
-          </div>
-        ))}
+        {children}
       </div>
     </>
   );

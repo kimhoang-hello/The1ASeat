@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { PaperPlaneTilt, CheckCircle, CircleNotch } from "@phosphor-icons/react";
 import { sendGAEvent } from "@next/third-parties/google";
-import { t as translate } from "@/lib/t";
+import messages from "../../../messages/vi.json";
+import { translator } from "@/lib/t";
 
-const t = translate("hero");
+const t = translator(messages.hero);
 
 /**
  * `size="hero"` is for the form that stands alone in the middle of the hero,

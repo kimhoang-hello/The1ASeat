@@ -39,7 +39,8 @@ import {
   VIETNAM_ROUTES_PUBLISHED,
 } from "@/lib/feature-flags";
 import { US_CARDS_BASE } from "@/lib/us-cards-path";
-import { t } from "@/lib/t";
+import messages from "../../../messages/vi.json";
+import { translator } from "@/lib/t";
 
 /** A menu entry: an icon, what it is, and what is behind it in one line. */
 type NavLink = {
@@ -308,11 +309,11 @@ function NavDropdown({
   );
 }
 
-const nav = t("nav");
-const tMenu = t("navMenu");
-const tOffers = t("offers");
-const tBankCompare = t("bankCompare");
-const site = t("site");
+const nav = translator(messages.nav);
+const tMenu = translator(messages.navMenu);
+const tOffers = translator(messages.offers);
+const tBankCompare = translator(messages.bankCompare);
+const site = translator(messages.site);
 
 export function SiteHeader() {
   const pathname = usePathname();

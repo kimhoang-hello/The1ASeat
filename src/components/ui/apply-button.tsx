@@ -1,8 +1,9 @@
 import { AFFILIATE_REL, PLAIN_REL } from "@/lib/affiliate-links";
 import { ApplyLink } from "@/components/ui/apply-link";
-import { t as translate } from "@/lib/t";
+import messages from "../../../messages/vi.json";
+import { translator } from "@/lib/t";
 
-const offers = translate("offers");
+const offers = translator(messages.offers);
 
 /**
  * The single place the apply link lives: every surface gets the same pill and

@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { t as translate } from "@/lib/t";
+import messages from "../../../messages/vi.json";
+import { translator } from "@/lib/t";
 
-const t = translate("footer");
+const t = translator(messages.footer);
 
 /**
  * The affiliate disclosure, with its closing sentence carrying real links.

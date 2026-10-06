@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, X } from "@phosphor-icons/react";
-import { t } from "@/lib/t";
+import messages from "../../../messages/vi.json";
+import { translator } from "@/lib/t";
 
-const tBanner = t("banner");
+const tBanner = translator(messages.banner);
 
 export interface FeaturedOffer {
   slug: string;

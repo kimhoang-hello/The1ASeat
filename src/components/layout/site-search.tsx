@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
 import { searchItems, type SearchItem } from "@/lib/search";
-import { t } from "@/lib/t";
+import messages from "../../../messages/vi.json";
+import { translator } from "@/lib/t";
 
-const tSearch = t("search");
+const tSearch = translator(messages.search);
 
 const KIND_LABEL: Record<SearchItem["kind"], string> = {
   card: tSearch("kindCard"),

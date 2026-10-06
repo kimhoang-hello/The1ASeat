@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { PaperPlaneTilt, CheckCircle, CircleNotch } from "@phosphor-icons/react";
 import { NextSteps, StepLink } from "@/components/ui/next-steps";
-import { t as translate } from "@/lib/t";
+import messages from "../../../messages/vi.json";
+import { translator } from "@/lib/t";
 
-const t = translate("contactPage");
-const next = translate("nextSteps");
+const t = translator(messages.contactPage);
+const next = translator(messages.nextSteps);
 
 const inputClass =
   "mt-1.5 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none pointer-coarse:text-base focus:ring-2 focus:ring-primary";

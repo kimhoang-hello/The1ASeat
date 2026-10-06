@@ -1,8 +1,6 @@
 import type { BlogPost } from "./content";
 import { t } from "./t";
 
-const seo = t("seo");
-
 /**
  * Vietnamese-safe slug: "Khách sạn" -> "khach-san", "Đánh giá" -> "danh-gia".
  *
@@ -115,7 +113,10 @@ export function categoryTitle(category: BlogCategory): string {
 export function categoryDescription(category: BlogCategory): string {
   return (
     CATEGORY_DESCRIPTIONS[category.name] ??
-    seo("categoryDescription", { category: category.name.toLowerCase(), count: category.count })
+    // `t` gọi TRONG hàm, không ở đầu file: ô tìm kiếm (Client Component) import
+    // `slugifyVi` từ đây, và một lời gọi `t` ở đầu file là kéo cả `vi.json` vào
+    // bundle của mọi trang — xem `translator` trong `lib/t.ts`.
+    t("seo")("categoryDescription", { category: category.name.toLowerCase(), count: category.count })
   );
 }
 

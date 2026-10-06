@@ -2,9 +2,10 @@
 
 import { useId, useState } from "react";
 import { CaretDown, SlidersHorizontal } from "@phosphor-icons/react";
-import { t as translate } from "@/lib/t";
+import messages from "../../../messages/vi.json";
+import { translator } from "@/lib/t";
 
-const common = translate("common");
+const common = translator(messages.common);
 
 /**
  * Bộ lọc của một danh sách, gom sau MỘT nút "Lọc · Sắp xếp (n)" ở mọi bề ngang.

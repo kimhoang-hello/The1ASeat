@@ -8,7 +8,8 @@ import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { HotTip, RebateChip } from "@/components/ui/hot-tip";
 import { ApplyButton } from "@/components/ui/apply-button";
 import { FilterPanel } from "@/components/ui/filter-panel";
-import { t as translate } from "@/lib/t";
+import messages from "../../../messages/vi.json";
+import { translator } from "@/lib/t";
 import {
   AVAILABLE_FILTERS,
   hasLiveBonus,
@@ -30,11 +31,11 @@ import {
   type SortId,
 } from "@/lib/bank-accounts";
 
-const t = translate("bankAccounts");
+const t = translator(messages.bankAccounts);
 // Nhãn hết hạn lấy chung với trang thẻ tín dụng — cùng một sự việc thì phải
 // gọi cùng một tên, và gọi từ cùng một chỗ thì không thể lệch nhau về sau.
-const offers = translate("offers");
-const common = translate("common");
+const offers = translator(messages.offers);
+const common = translator(messages.common);
 
 type Selection = {
   bank: BankId | "all";

@@ -126,10 +126,6 @@ export function safeHref(uri: string): string | null {
   return /^https?:\/\//i.test(cleaned) ? cleaned : null;
 }
 
-export function renderPostBody(document: Document): string {
-  return documentToHtmlString(document, bodyOptions);
-}
-
 /**
  * Thân bài cắt theo khối cấp cao nhất — xem `BlogPost.bodyBlocks`.
  *

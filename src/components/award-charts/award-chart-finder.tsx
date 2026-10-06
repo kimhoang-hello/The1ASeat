@@ -4,7 +4,8 @@ import { Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { formatDate } from "@/lib/format-date";
 import { ArrowRight, Info, WarningCircle } from "@phosphor-icons/react";
-import { t as translate } from "@/lib/t";
+import messages from "../../../messages/vi.json";
+import { translator } from "@/lib/t";
 import { TRANSFER_PARTNERS } from "@/lib/transfer-partners";
 import {
   CABINS,
@@ -19,7 +20,7 @@ import {
   type RoutingOption,
 } from "@/lib/award-charts";
 
-const t = translate("awardCharts");
+const t = translator(messages.awardCharts);
 
 const CONFIDENCE_LABELS: Record<Program["confidence"], string> = {
   published: "confidencePublished",

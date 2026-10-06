@@ -1,14 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { t as translate } from "@/lib/t";
+import messages from "../../../messages/vi.json";
+import { translator } from "@/lib/t";
 import { POINTS_PROGRAMS, type PointsProgram } from "@/lib/points-programs";
 import { creditCardsPath } from "@/lib/card-points-programs";
 import { NextSteps, StepLink } from "@/components/ui/next-steps";
 import { parseNumber } from "@/lib/parse-number";
 
-const t = translate("calculator");
-const next = translate("nextSteps");
+const t = translator(messages.calculator);
+const next = translator(messages.nextSteps);
 
 /** `null` khi con số không in ra được. Chốt `Number.isFinite` phải nằm SAU
  *  phép nhân, không chỉ sau phép chia ở `valuePerPoint`: `1e308` là hữu hạn và

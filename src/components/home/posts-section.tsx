@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { t as translate } from "@/lib/t";
 import { getPosts } from "@/lib/content";
+import { PostCard } from "@/components/blog/post-card";
 import { PostCarousel } from "./post-carousel";
 
 const t = translate("posts");
@@ -28,7 +29,20 @@ export async function PostsSection() {
           </Link>
         </div>
 
-        <PostCarousel posts={posts} />
+        <PostCarousel>
+          {/* The widths are exact fractions of the track minus the gaps it spans,
+              so one, two, three or four cards sit flush across a row. On a phone a
+              card stops short of the full width, letting the next one peek in —
+              that overhang is what tells a reader there is more to swipe to. */}
+          {posts.map((post) => (
+            <div
+              key={post.slug}
+              className="flex w-[82%] shrink-0 snap-start sm:w-[calc((100%-1.5rem)/2)] lg:w-[calc((100%-3rem)/3)] 2xl:w-[calc((100%-4.5rem)/4)]"
+            >
+              <PostCard post={post} headingLevel="h3" className="w-full" />
+            </div>
+          ))}
+        </PostCarousel>
       </div>
     </section>
   );

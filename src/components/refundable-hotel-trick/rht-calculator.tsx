@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { t as translate } from "@/lib/t";
+import messages from "../../../messages/vi.json";
+import { translator } from "@/lib/t";
 import { parseNumber } from "@/lib/parse-number";
 import { cashOutCents, dollarRateLabel, formatDollars, formatPoints } from "@/lib/cash-out";
 
-const t = translate("rht");
+const t = translator(messages.rht);
 
 export interface RhtCalculatorProgram {
   id: string;

@@ -1,6 +1,7 @@
-import { t as translate } from "@/lib/t";
+import messages from "../../../messages/vi.json";
+import { translator } from "@/lib/t";
 
-const offers = translate("offers");
+const offers = translator(messages.offers);
 
 /**
  * Dòng "HOT TIP" — câu nói cho người đọc biết phải làm gì để lấy thêm tiền.

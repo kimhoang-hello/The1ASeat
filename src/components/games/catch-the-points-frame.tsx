@@ -2,9 +2,10 @@
 
 import { useEffect, useRef } from "react";
 import { CATCH_THE_POINTS_GAME_SRC } from "@/lib/catch-the-points-path";
-import { t } from "@/lib/t";
+import messages from "../../../messages/vi.json";
+import { translator } from "@/lib/t";
 
-const game = t("game");
+const game = translator(messages.game);
 
 /**
  * Chiều cao dùng tạm trước khi game tự chỉnh — cỡ màn hình bắt đầu trên điện
