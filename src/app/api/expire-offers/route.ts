@@ -116,18 +116,39 @@ async function handleExpire(request: NextRequest) {
     }
 
     try {
+      const rebateUrl = finlyWealthRebateUrl(field<string>(card, "applyUrl") ?? "");
+
+      // Thẻ không có trang rebate FinlyWealth (link thẳng ngân hàng, hoặc link
+      // FinlyWealth dạng rewards-calculator như ba thẻ RBC® Avion®): không có
+      // nguồn nào để viết lại copy, nên welcome bonus và câu "elevated offer đến
+      // <ngày>" trong headline nằm nguyên sau khi offer chết. Trước 07/10/2026
+      // nhánh này xoá `expiresAt` rồi trả 200 kèm `needsReview`: job xanh, và từ
+      // lượt sau thẻ không còn khớp truy vấn nên không gì nhắc tới nó nữa — site
+      // in mãi một offer đã hết. Nay GIỮ `expiresAt` và báo lỗi ở MỌI lượt cho
+      // tới khi có người sửa copy rồi tự xoá hạn — đỏ dai có chủ ý, cùng loại với
+      // `sync-videos`. `elevatedBonus` vẫn tắt ngay (thẻ nằm sai tab còn tệ
+      // hơn), và chỉ ghi khi nó còn bật để lượt sau không publish lại vô cớ.
+      if (!rebateUrl) {
+        if (field<boolean>(card, "elevatedBonus") === true) {
+          await updateEntry(client, card, CARD_TYPE, { elevatedBonus: false });
+          movedToOther.push(slug);
+        }
+        errors.push({
+          slug,
+          message:
+            "offer đã hết hạn nhưng thẻ không có trang rebate FinlyWealth để viết lại copy — sửa tay welcome bonus, headline, key benefits, editor's take rồi xoá expiresAt trong Contentful",
+        });
+        continue;
+      }
+
       const changes: Record<string, unknown> = { elevatedBonus: false, expiresAt: undefined };
       let rewrote = false;
       let reason = "";
-      // Lỗi tạm thời (FinlyWealth hỏng, rewrite ném, thiếu API key) khác lỗi
-      // cấu trúc (thẻ không có trang FinlyWealth nào để đọc): cái đầu lượt sau
-      // chạy lại được, cái sau thì không bao giờ.
+      // Lỗi tạm thời (FinlyWealth hỏng, rewrite ném, thiếu API key): lượt sau
+      // chạy lại được, nên giữ `expiresAt` (xem bên dưới).
       let retryable = false;
 
-      const rebateUrl = finlyWealthRebateUrl(field<string>(card, "applyUrl") ?? "");
-      if (!rebateUrl) {
-        reason = "no FinlyWealth page to read the new offer from";
-      } else if (!isRewriteConfigured) {
+      if (!isRewriteConfigured) {
         reason = "ANTHROPIC_API_KEY is not set";
         retryable = true;
       } else {
