@@ -63,6 +63,10 @@ export const POSTS_WITHOUT_DEADLINE: Record<string, string> = {
   // Asia Miles® xuống 5:4 — một mốc đã qua, không phải hạn của ưu đãi nào.
   "everything-about-asia-miles":
     "01/03/2026 là ngày tỷ lệ US MR → Asia Miles® đổi sang 5:4, mốc lịch sử chứ không phải hạn ưu đãi",
+  // Bài Kiến thức về World of Hyatt®. "01/10/2026" và "01/01/2027" là ngày
+  // Chase® rồi Bilt hạ tỷ lệ chuyển sang Hyatt xuống 4:3 — mốc đổi tỷ lệ.
+  "everything-about-hyatt":
+    "01/10/2026 và 01/01/2027 là ngày Chase® và Bilt hạ tỷ lệ chuyển sang Hyatt® còn 4:3, không phải hạn ưu đãi",
 };
 
 export interface OfferStatus extends PostOffer {

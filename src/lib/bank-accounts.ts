@@ -681,19 +681,18 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     kind: "chequing",
     tags: [],
     monthlyFee: 0,
-    // Bonus là $300 tiền mặt cộng một gift card Skip $50 — hai offer riêng của
-    // Simplii Financial™, cùng điều kiện direct deposit và cùng ngày kết thúc.
-    // `bonusValue` gộp lại chỉ để sắp xếp; nhãn mới là thứ người đọc thấy, và
-    // nó nói rõ phần nào là tiền, phần nào là gift card.
+    // Offer 01/10/2026 – 31/01/2027, điều khoản đọc 07/10/2026 trên trang
+    // offer của Simplii Financial™: $350 tiền mặt, không còn gift card Skip và
+    // không còn dòng loại trừ Quebec như offer trước (hết 30/09/2026).
     bonusValue: 350,
-    bonusLabelVi: "$300 + gift card Skip $50",
-    bonusExpiresOn: "2026-09-30",
+    bonusLabelVi: "$350",
+    bonusExpiresOn: "2027-01-31",
     bonusConditionsVi: [
-      "Chỉ dành cho khách hàng mới, chưa từng đứng tên chính bất kỳ sản phẩm Simplii Financial™ nào trước 18/06/2024.",
-      "Mở No Fee Chequing Account mới trước 30/09/2026.",
-      "Trong vòng 120 ngày kể từ ngày mở, set up direct deposit định kỳ tổng từ $100/tháng.",
-      "Duy trì direct deposit đó đủ 3 tháng liên tiếp trong khung 120 ngày nói trên.",
-      "Không áp dụng cho người cư trú tại Quebec.",
+      "Chỉ dành cho khách hàng mới, chưa từng đứng tên chính bất kỳ sản phẩm Simplii Financial™ nào tính tới hết 23/03/2026.",
+      "Mở No Fee Chequing Account mới trong khoảng 01/10/2026 – 31/01/2027.",
+      "Trong vòng 150 ngày kể từ ngày mở, set up direct deposit định kỳ tổng từ $100/tháng (lương, lương hưu, OAS, EI… đều được).",
+      "Duy trì direct deposit đó đủ 4 tháng liên tiếp trong khung 150 ngày nói trên.",
+      "$350 vào thẳng tài khoản mới trong 3 ngày làm việc sau khi đủ điều kiện; mỗi người chỉ nhận một lần.",
     ],
     keyBenefitsVi: [
       "Không monthly fee, không yêu cầu số dư tối thiểu",
@@ -824,7 +823,12 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     // con số trông dễ với hơn thực tế.
     bonusValue: 600,
     bonusLabelVi: "Tối đa $600",
+    // "Promotion period: November 5, 2025 to November 3, 2026" trên trang
+    // newcomers của National Bank® (đọc 07/10/2026). Trước đó entry không có
+    // ngày nên qua 03/11 site vẫn sẽ quảng cáo $600 như offer còn sống.
+    bonusExpiresOn: "2026-11-03",
     bonusConditionsVi: [
+      "Mở tài khoản mới trong khoảng 05/11/2025 – 03/11/2026.",
       "Từ 18 tuổi, có thường trú hoặc work/study permit còn hiệu lực, và sắp sang Canada trong 90 ngày hoặc đã ở Canada từ 5 năm trở xuống.",
       "$300 khi mở tài khoản chequing, đăng ký online banking, thực hiện 20 giao dịch đủ điều kiện và nhận 3 khoản automatic deposit từ $100 mỗi khoản.",
       "$100 nữa khi mở thẻ tín dụng Mastercard® của National Bank®, được duyệt và quẹt đủ 20 giao dịch.",

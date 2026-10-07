@@ -3144,3 +3144,67 @@ trình có ít nhất một ngân hàng chuyển được** — `npm run test:us
   được cả bốn hãng, Premium chỉ WestJet, Select không hãng nào. Engine vẫn để
   `requiresTier: null` cho chặng WestJet (mọi thẻ RBC® trên site là Elite; đặt hạng
   là `isOpenToEveryone` gạt chặng duy nhất còn mở và Avion® thành "không linh hoạt").
+
+## Kiểm toàn diện 07/10/2026 — đừng đề xuất lại
+
+Gate: lint, tsc, build, 8 test suite (`test:reco` 456 + 23 skip vì không có MySQL),
+10 audit, `audit:links` trên production (206 trang, không trang mồ côi), crawl SEO 206
+URL bản build (0 lỗi status/canonical/h1/JSON-LD/og:image/lang), Chrome headless 206
+trang × 320/1280px (0 lỗi console/JS, 0 ảnh hỏng, 0 tràn ngang), 95 trang đích
+FinlyWealth/ngân hàng sống, production 200 + `www` 308 + 5 header bảo mật + CSP meta.
+Codex bốn vòng: diff 41 commit từ 01/10 (không lỗi mới), "chứng minh sạch là sai"
+(9 điểm), bác 6 bản vá (cả 6 ĐÚNG, "CÒN CHẶN PUSH: KHÔNG"), engine (dưới).
+
+**Đã vá:**
+- **FinlyWealth chạy Next.js từ 05/10/2026: trang không tồn tại trả HTTP 404 THẬT**,
+  tiêu đề chung "FinlyWealth: Best Credit Cards, Bank Accounts, and More", thân có
+  `NEXT_HTTP_ERROR_FALLBACK;404` (trang 200 không có chuỗi đó). Không còn 200 + tiêu
+  đề "Not Found". `check-bank-rebates` đỏ MỌI lượt từ 05/10 17:25 UTC: nó đọc bản
+  `/rebates/` cùng slug của 3 tài khoản dùng link `/banking/` (không tồn tại là bình
+  thường) và coi 404 là "không đọc được". Nay 404 + marker = `gone`, 404 thiếu marker
+  vẫn ném. Kèm: trang ĐÍCH của 13 link `/banking/` nay được đọc — trước đó không gì
+  đọc chúng, FinlyWealth gỡ trang là nút "mở tài khoản" chết mà job xanh. Phía thẻ
+  (`lib/finlywealth.ts`) không cần sửa: `fetchPage` ném ở mọi 404 → `check-rebates`
+  đỏ (không retry), `expire-offers` giữ `expiresAt` — đều đỏ đúng.
+- **`expire-offers`: thẻ KHÔNG có trang rebate FinlyWealth hết offer → GIỮ
+  `expiresAt` và đỏ mỗi lượt.** ĐẢO quyết định 29/08 ("lỗi cấu trúc thì vẫn xoá"):
+  xoá hạn rồi trả 200 kèm `needsReview` là job xanh, từ lượt sau thẻ rời truy vấn, và
+  copy ("70,000 điểm Avion®", headline "…elevated offer đến 25/11/2026") nằm nguyên
+  vĩnh viễn — không gì nhắc. Ca có thật sắp tới: ba thẻ RBC® Avion® (link
+  rewards-calculator) hết offer nâng 25/11/2026. Nay job tắt elevated (chỉ khi cờ còn
+  bật — không publish lại mỗi ngày) và đỏ tới khi người sửa copy rồi xoá hạn tay;
+  `audit:health` mục 1 cũng đỏ theo. Codex chạy fixture 5 lượt: luôn 500, chỉ một lần
+  publish; badge, `resolveProse`, dải offer, sắp xếp đều loại ngày đã qua.
+- **"Thông tin nhanh" của Tangerine® Rewards in "1x mọi chi tiêu"** ngay trên "Quyền
+  lợi chính" nói 1.5 điểm/$1 cho 3 nhóm tự chọn. Seed engine cố ý chỉ có 1x nền (cận
+  dưới, engine chưa có chiều "nhóm tự chọn"), còn card-facts in nó như dữ kiện đủ.
+  Thêm dòng `everything_else` 1.5x có `restrictedTo` (engine bỏ qua mọi dòng giới hạn
+  — Codex so 16 hồ sơ: kết quả y nguyên); card-facts in dòng giới hạn trên tỷ lệ nền
+  không kèm nhãn hạng mục. Test `test:card-facts` đã kiểm ngược.
+- **`assertExpiryTokenIsLast` (best-cards) chặn dấu chấm giữa câu chứa `{expiresAt}`.**
+  `resolveProse` cắt tại dấu chấm cuối trước token; "Tích 1.25x tới {expiresAt}." in
+  "Tích 1." (Codex). Chữ viết tắt ("TP.") cùng hình dạng, vẫn là luật cho người viết.
+- Dữ liệu: Simplii™ No Fee Chequing offer mới $350 (01/10/2026–31/01/2027; offer cũ
+  hết 30/09 nên trang đang hiện như không có bonus); National Bank® newcomer thiếu
+  `bonusExpiresOn` (trang ghi hết 03/11/2026 — qua ngày đó site vẫn quảng cáo $600);
+  bài Kiến thức `everything-about-hyatt` vào `POSTS_WITHOUT_DEADLINE`.
+
+**Codex nêu, đã kiểm, KHÔNG vá (đừng báo lại):**
+- *Bài thiếu `excerptVi` làm `getPosts()` ném* — trường REQUIRED trong content model
+  (đọc CMA 07/10), Contentful không cho publish thiếu nó.
+- *`parseNumber("100 points $200")` = 100200* — phải gõ hai số vào một ô; giữ.
+- *`unitOf` đọc "20,000 điểm (giá trị $200)" thành đô* — 0 nhãn trộn đơn vị trong
+  `offer-history.json` lẫn Contentful. Nếu tác giả bắt đầu viết `welcomeBonusVi` kiểu
+  đó thì đổi thứ tự kiểm (điểm trước, `$` sau) trong `lib/offer-history.ts`.
+- *`fetchFinlyWealthOffer` tìm mốc kết thúc từ đầu trang* — trang hiện tại đọc đúng
+  7/7 thẻ sắp hết offer; nếu hỏng thì ném (đỏ), không ghi sai.
+- *SDK Anthropic trong `rewrite-offer.ts` không hạn giờ phần body* — API không
+  stream trả header khi xong; job vẫn đỏ nếu treo.
+- *Award Flight Finder "+X so với rẻ nhất" trừ miles của hai hãng* — trang đã có mục
+  "Số miles thấp nhất chưa chắc là rẻ nhất"; xếp theo số thô là lựa chọn sản phẩm.
+
+**Engine: Amex® Green đứng đầu 6/16 hồ sơ mẫu (07/10/2026) KHÔNG phải lỗi.** Bonus
+10,000 điểm nhưng mốc chi $1,000 so với sức dồn $3,000 → `spend_fit` 1.0 (TD®
+Aeroplan® 50,000: 0.68); chênh +0.067 lật thứ hạng. Codex: đúng đường cong §13 và
+trọng số §10 — `spend_fit` đo độ dư sức, độc lập cỡ bonus. Nhân nó với giá trị bonus
+hay hạ trọng số là quyết định sản phẩm, chờ tác giả.
