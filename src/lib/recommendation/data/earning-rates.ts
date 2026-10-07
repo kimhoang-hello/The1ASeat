@@ -468,11 +468,18 @@ const RATES: Record<string, { program: string; rates: RateSeed[] }> = {
 
   // 1.5x cho 3 nhóm NGƯỜI DÙNG TỰ CHỌN trong 13 nhóm. Engine chưa có chiều
   // "thẻ cho chọn nhóm": seed 1.5x cho cả 13 nhóm là hứa 1.5x ở mọi chỗ trong
-  // khi người dùng chỉ được ba, còn seed dạng `restrictedTo` thì engine bỏ qua
-  // và để lại chín cảnh báo "chưa có tỷ lệ nền". Chỉ seed 1x nền — cận DƯỚI.
+  // khi người dùng chỉ được ba, còn seed `restrictedTo` theo từng hạng mục thì
+  // để lại chín cảnh báo "chưa có tỷ lệ nền". Engine chỉ dùng 1x nền — cận DƯỚI.
+  //
+  // Dòng 1.5x `restrictedTo` trên `everything_else` là cho khối "Thông tin
+  // nhanh" (engine bỏ qua mọi dòng giới hạn, xem `earn-fit.ts`). Thiếu nó, khối
+  // đó in "1x mọi chi tiêu" ngay trên "Quyền lợi chính" nói 1.5x (07/10/2026).
   "tangerine-rewards-world-elite-mastercard": {
     program: "scene-plus",
-    rates: [["everything_else", 1, { from: "2026-09-25" }]],
+    rates: [
+      ["everything_else", 1.5, { restrictedTo: "3 nhóm tự chọn trong 13 nhóm, đổi nhóm được mỗi 90 ngày", from: "2026-10-07" }],
+      ["everything_else", 1, { from: "2026-09-25" }],
+    ],
   },
 
   // Không trần. 3% siêu thị chỉ theo MCC 5411/5422/5451/5499 và trừ siêu thị

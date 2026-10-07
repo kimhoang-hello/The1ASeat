@@ -81,6 +81,13 @@ test("hệ số lẻ vô hạn viết thành điểm trên số đô", () => {
   assert.ok(lines("td-aeroplan-visa-platinum", "earn").includes("1 điểm/$1.50 mọi chi tiêu khác"));
 });
 
+test("giới hạn đặt trên tỷ lệ nền in đúng phạm vi đó, và tỷ lệ nền thành 'mọi chi tiêu khác'", () => {
+  assert.deepEqual(lines("tangerine-rewards-world-elite-mastercard", "earn", "2026-10-07"), [
+    "1.5x 3 nhóm tự chọn trong 13 nhóm, đổi nhóm được mỗi 90 ngày",
+    "1x mọi chi tiêu khác",
+  ]);
+});
+
 test("tỷ lệ nền đứng một mình là mọi chi tiêu, không phải mọi chi tiêu khác", () => {
   assert.deepEqual(lines("wealthsimple-visa-infinite-plus", "earn"), ["2% mọi chi tiêu"]);
 });

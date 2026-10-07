@@ -545,6 +545,19 @@ function assertExpiryTokenIsLast(): void {
               `của đoạn (xem resolveProse) — "${paragraph.slice(Math.max(0, at - 40), at + 60)}"`,
           );
         }
+        // `resolveProse` cắt tại dấu chấm cuối cùng TRƯỚC token, nên dấu chấm đó
+        // phải là dấu kết câu. Số thập phân trong chính câu chứa token ("Tích
+        // 1.25x tới {expiresAt}.") đứng gần hơn và bị cắt ngay giữa số: trang in
+        // "Tích 1." (Codex bắt 07/10/2026). Chữ viết tắt ("TP. Hồ Chí Minh")
+        // cùng hình dạng nhưng không phân biệt được với kết câu — vẫn là luật cho
+        // người viết.
+        const cut = paragraph.lastIndexOf(".", at);
+        if (cut >= 0 && !/\s/.test(paragraph[cut + 1] ?? "")) {
+          throw new Error(
+            `best-cards: ${category.slug} → ${pick.slug}: câu chứa {expiresAt} không được có dấu chấm ` +
+              `giữa câu (số thập phân?) — viết lại câu — "${paragraph.slice(Math.max(0, cut - 40), at + 20)}"`,
+          );
+        }
       }
     }
   }

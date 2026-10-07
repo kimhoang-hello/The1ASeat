@@ -269,8 +269,14 @@ function earnLines(
   }
   // Tỷ lệ chỉ áp ở một nhóm merchant: in kèm đúng nhóm đó, không thì "6x siêu
   // thị" đọc như mọi siêu thị. `restrictedTo` vì vậy là chữ cho NGƯỜI ĐỌC.
+  // Giới hạn đặt trên CHÍNH tỷ lệ nền (Tangerine®: 1.5x cho 3 nhóm tự chọn)
+  // thì chữ giới hạn đã là toàn bộ phạm vi — "1.5x mọi chi tiêu khác — 3 nhóm
+  // tự chọn" vừa thừa vừa đọc như hai điều trái nhau.
   for (const { multiplier, rows } of restricted.values()) {
-    const text = `${rateText(multiplier, cashBack)} ${rows.map((row) => label(row.category)).join(", ")} — ${rows[0].restrictedTo}`;
+    const categories = rows.filter((row) => row.category !== "everything_else").map((row) => label(row.category));
+    const text = categories.length
+      ? `${rateText(multiplier, cashBack)} ${categories.join(", ")} — ${rows[0].restrictedTo}`
+      : `${rateText(multiplier, cashBack)} ${rows[0].restrictedTo}`;
     items.push({ multiplier, line: withCap(text, rows) });
   }
   // Sort của JS ổn định: cùng hệ số thì giữ thứ tự của file dữ liệu, vốn theo
