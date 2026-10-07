@@ -102,7 +102,10 @@ function RowGroup({
               <RatioCell
                 key={column.programId}
                 ratio={leg?.ratio ?? null}
-                lines={leg ? [{ text: leg.note, muted: true }] : []}
+                lines={[
+                  ...(leg?.note ? [{ text: leg.note }] : []),
+                  ...(leg?.time ? [{ text: leg.time, muted: true }] : []),
+                ]}
               />
             );
           })}

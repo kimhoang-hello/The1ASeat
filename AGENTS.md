@@ -3135,3 +3135,12 @@ trình có ít nhất một ngân hàng chuyển được** — `npm run test:us
   "Premier Citi Strata Elite" rồi báo "Citi" trần. Viết xen một chữ thường ("… và …").
   "Etihad® Guest" dạy nó chữ "Etihad" và làm lộ một chỗ viết trần sẵn có ở
   `awardCharts` (đã thêm ®).
+- **Bảng Canada dùng chung mảnh với bảng Mỹ (06/10/2026)** — `table-parts.tsx`: nhóm
+  Hãng bay / Khách sạn (`TransferPartnerRow.kind`), số đối tác dưới tên cột, cùng ô
+  tỷ lệ, hàng tên cột dính từ `xl`. `TransferLeg` tách `note` (hạng thẻ RBC®) khỏi
+  `time`. Amex® CA "~30 phút" → "Tối đa 30 phút" (trang ghi "up to 30 minutes").
+- **RBC® CÓ công bố thời gian chuyển:** điều khoản Avion Rewards ghi "up to 4 weeks" —
+  ghi chú cũ "RBC không công bố" là sai. Trang travel của Avion Rewards: Elite chuyển
+  được cả bốn hãng, Premium chỉ WestJet, Select không hãng nào. Engine vẫn để
+  `requiresTier: null` cho chặng WestJet (mọi thẻ RBC® trên site là Elite; đặt hạng
+  là `isOpenToEveryone` gạt chặng duy nhất còn mở và Avion® thành "không linh hoạt").

@@ -13,8 +13,9 @@ const RBC_SOURCE = "https://www.rbcrewards.com/";
  * Chặng chuyển điểm một bước.
  *
  * Tỷ lệ và điều kiện lấy nguyên từ `lib/transfer-partners.ts` — bảng đó đã
- * được kiểm tại nguồn của chính nhà phát hành (Amex 04/08/2026, RBC đối chiếu
- * chéo vì RBC không công bố), và chép lại số ở đây thay vì tự tra lần nữa là
+ * được kiểm tại nguồn của chính nhà phát hành (Amex 04/08/2026; RBC lúc đầu
+ * đối chiếu chéo, ngày 06/10/2026 kiểm lại trên trang Avion Rewards — tỷ lệ,
+ * hạng thẻ và thời gian), và chép lại số ở đây thay vì tự tra lần nữa là
  * cố ý: hai chỗ tự tra độc lập là hai chỗ sẽ lệch nhau. `audit:reco-data` so
  * hai bảng và báo khi có chặng chỉ tồn tại ở một bên.
  *
@@ -164,8 +165,12 @@ export const TRANSFER_PATHS: TransferPath[] = [
     destinationProgramId: "westjet" as PointsProgramId,
     ratioFrom: 1000,
     ratioTo: 1000,
+    // Avion Select không chuyển được (avionrewards.com/travel, 06/10/2026), nhưng
+    // mọi thẻ RBC® Avion® trên site đều Elite, nên chặng này vẫn để mở: đặt hạng
+    // ở đây là `isOpenToEveryone` gạt nó đi và Avion® thành đồng tiền "không linh
+    // hoạt" trong engine — sai với mọi thẻ site đang khuyên.
     requiresTier: null,
-    conditionText: "Mọi hạng Avion®",
+    conditionText: "Avion® Premium và Elite",
     effectiveFrom: "2026-08-04",
     effectiveTo: null,
     sourceUrl: RBC_SOURCE,

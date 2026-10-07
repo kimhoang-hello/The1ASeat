@@ -3,10 +3,10 @@
 // live tool at global.americanexpress.com/rewards/transfer (Canada country
 // context, verified 2026-08-04 — this superseded an earlier, less complete
 // scrape of a different Amex CA page that had Etihad Guest but was missing
-// Air France KLM Flying Blue and ALL Accor); RBC doesn't publish transfer
-// times publicly anywhere, so eligibility tier is shown instead, cross
-// referenced from thepointcalculator.com and princeoftravel.com. Update when
-// an issuer changes a ratio or adds/drops a partner.
+// Air France KLM Flying Blue and ALL Accor). RBC: tỷ lệ, hạng được chuyển và
+// thời gian (tối đa 4 tuần) đối chiếu trang Avion Rewards ngày 06/10/2026 —
+// bản cũ ghi "RBC không công bố thời gian" là sai, điều khoản có ghi. Update
+// when an issuer changes a ratio or adds/drops a partner.
 //
 // Logo hàng là logo VUÔNG trong `/images/logos/programs/`, dùng chung với bảng
 // Mỹ (`us-transfer-partners.ts`) từ 06/10/2026: một chương trình một logo trên
@@ -14,7 +14,10 @@
 // đọc được; Award Flight Finder vẫn dùng bản chữ ở khổ rộng của nó.
 export type TransferLeg = {
   ratio: string;
-  note: string;
+  /** Điều kiện của ô (hạng thẻ RBC®). */
+  note?: string;
+  /** Thời gian chuyển tối đa ngân hàng công bố. */
+  time?: string;
 } | null;
 
 export type TransferPartnerRow = {
@@ -26,26 +29,31 @@ export type TransferPartnerRow = {
   rbc: TransferLeg;
 };
 
+// Điều khoản Avion Rewards (avionrewards.com/terms-and-conditions, đọc 06/10/2026):
+// "allow up to 4 weeks for your Avion points to be converted". Trang travel của
+// Avion Rewards: Elite chuyển được cả bốn hãng, Premium chỉ WestJet.
+const RBC_TIME = "Tối đa 4 tuần";
+
 export const TRANSFER_PARTNERS: TransferPartnerRow[] = [
   {
     program: "Accor® ALL®",
     kind: "hotel",
     logo: "/images/logos/programs/accor.png",
-    amex: { ratio: "1,000 : 500", note: "Tối đa 48 giờ" },
+    amex: { ratio: "1,000 : 500", time: "Tối đa 48 giờ" },
     rbc: null,
   },
   {
     program: "Air Canada® Aeroplan®",
     kind: "airline",
     logo: "/images/logos/programs/aeroplan.png",
-    amex: { ratio: "1,000 : 1,000", note: "Tối đa 30 phút" },
+    amex: { ratio: "1,000 : 1,000", time: "Tối đa 30 phút" },
     rbc: null,
   },
   {
     program: "Air France KLM® Flying Blue®",
     kind: "airline",
     logo: "/images/logos/programs/flying-blue.png",
-    amex: { ratio: "1,000 : 1,000", note: "Tối đa 3 ngày" },
+    amex: { ratio: "1,000 : 1,000", time: "Tối đa 3 ngày" },
     rbc: null,
   },
   {
@@ -53,7 +61,7 @@ export const TRANSFER_PARTNERS: TransferPartnerRow[] = [
     kind: "airline",
     logo: "/images/logos/programs/american-airlines.png",
     amex: null,
-    rbc: { ratio: "1,000 : 700", note: "Chỉ Avion® Elite" },
+    rbc: { ratio: "1,000 : 700", note: "Chỉ Avion® Elite", time: RBC_TIME },
   },
   {
     // Avios is the currency British Airways shares with Qatar, Iberia and Aer
@@ -62,35 +70,35 @@ export const TRANSFER_PARTNERS: TransferPartnerRow[] = [
     program: "British Airways® Club",
     kind: "airline",
     logo: "/images/logos/programs/british-airways.png",
-    amex: { ratio: "1,000 : 1,000", note: "Tối đa 30 phút" },
-    rbc: { ratio: "1,000 : 1,000", note: "Chỉ Avion® Elite" },
+    amex: { ratio: "1,000 : 1,000", time: "Tối đa 30 phút" },
+    rbc: { ratio: "1,000 : 1,000", note: "Chỉ Avion® Elite", time: RBC_TIME },
   },
   {
     program: "Cathay Pacific® Asia Miles®",
     kind: "airline",
     logo: "/images/logos/programs/cathay-pacific.png",
-    amex: { ratio: "1,000 : 750", note: "5 ngày làm việc" },
-    rbc: { ratio: "1,000 : 1,000", note: "Chỉ Avion® Elite" },
+    amex: { ratio: "1,000 : 750", time: "5 ngày làm việc" },
+    rbc: { ratio: "1,000 : 1,000", note: "Chỉ Avion® Elite", time: RBC_TIME },
   },
   {
     program: "Delta® SkyMiles®",
     kind: "airline",
     logo: "/images/logos/programs/delta.png",
-    amex: { ratio: "1,000 : 750", note: "Tối đa 30 phút" },
+    amex: { ratio: "1,000 : 750", time: "Tối đa 30 phút" },
     rbc: null,
   },
   {
     program: "Hilton Honors®",
     kind: "hotel",
     logo: "/images/logos/programs/hilton.png",
-    amex: { ratio: "1,000 : 1,000", note: "5 ngày làm việc" },
+    amex: { ratio: "1,000 : 1,000", time: "5 ngày làm việc" },
     rbc: null,
   },
   {
     program: "Marriott Bonvoy®",
     kind: "hotel",
     logo: "/images/logos/programs/marriott.png",
-    amex: { ratio: "1,000 : 1,200", note: "Tối đa 48 giờ" },
+    amex: { ratio: "1,000 : 1,200", time: "Tối đa 48 giờ" },
     rbc: null,
   },
   {
@@ -98,6 +106,6 @@ export const TRANSFER_PARTNERS: TransferPartnerRow[] = [
     kind: "airline",
     logo: "/images/logos/programs/westjet.png",
     amex: null,
-    rbc: { ratio: "1,000 : 1,000", note: "Mọi hạng Avion®" },
+    rbc: { ratio: "1,000 : 1,000", note: "Avion® Premium và Elite", time: RBC_TIME },
   },
 ];
