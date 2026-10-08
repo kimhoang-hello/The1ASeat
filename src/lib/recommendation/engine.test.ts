@@ -52,6 +52,7 @@ import {
   aeroplanHeavy,
   advancedCollector,
   beginnerNoCards,
+  beginnerUndeclared,
   duplicateBagBenefit,
   flexiblePointsSufficient,
   highSpendLowCapacity,
@@ -2243,6 +2244,123 @@ test("§13 — thẻ không có mốc chi: chưa biết sức dồn thì 0.5 nh�
   assert.equal(verdictFor(null, false).minSpendFit, null);
   assert.ok(!verdictFor(null, true).reasonCodes.includes("MIN_SPEND_CAPACITY_UNKNOWN"), "bonus bị chặn thì không hỏi sức dồn cho nó");
   assert.equal(verdictFor({ low: 3_000, high: 6_000 }, true).minSpendFit, 1);
+});
+
+/**
+ * 4.33.0 — `spend_fit` cân theo phần đặt cược. Chạy trên dữ liệu NGÀY PHÁT HIỆN
+ * (07/10/2026, cắt cả `knownAt`) vì đó là thế giới có ca thật: Amex® Green
+ * 10,000 điểm đứng đầu `beginnerNoCards` nhờ trọn 1.0 ở vế mốc chi.
+ */
+const STAKE_ASOF = "2026-10-07";
+const STAKE_DATA = datasetAt(RAW, STAKE_ASOF, { knownAt: STAKE_ASOF });
+const STAKE_IX = indexDataset(STAKE_DATA);
+function stakeRun(state: UserState) {
+  return recommend({ state, data: STAKE_DATA, ix: STAKE_IX, asOf: STAKE_ASOF, probeFollowUps: false });
+}
+function rankedOf(result: RecommendationRun, slug: string) {
+  const row = result.derived.goals[0].ranking.find((r) => r.candidate.productSlug === slug);
+  assert.ok(row, `không thấy ${slug} trong bảng xếp hạng`);
+  return row.candidate;
+}
+const spendRaw = (candidate: { components: { key: string; raw: number }[] }) =>
+  candidate.components.find((c) => c.key === "spend_fit")!.raw;
+
+test("§13 × đặt cược — bonus nhỏ mốc chi dễ không còn thắng nhờ vế mốc chi", () => {
+  const result = stakeRun(beginnerNoCards);
+  assert.notEqual(result.results[0].primaryAction.productSlug, "amex-green");
+  const green = rankedOf(result, "amex-green");
+  // §13 tự nó không đổi: mốc $1,000 so với sức dồn $3,000 vẫn là vừa sức trọn vẹn.
+  assert.equal(green.suitability?.minSpendFit, 1);
+  const raw = spendRaw(green);
+  assert.ok(raw > 0.5 && raw < 0.75, `bonus 10,000 điểm mà vế mốc chi vẫn ${raw}`);
+  // Bonus từ cỡ trung vị trở lên: phép tính cũ, không đổi một chữ số.
+  const td = rankedOf(result, "td-aeroplan-visa-infinite");
+  assert.equal(spendRaw(td), td.suitability?.minSpendFit);
+});
+
+test("§13 × đặt cược — không có gì để lấy thì 0.5 trung tính, kể cả khi đã biết sức dồn", () => {
+  // Thẻ không có welcome bonus: §13 vẫn chấm 1.0 (không có mốc nào), nhưng
+  // không có bonus nào ở cuối mốc đó nên vế điểm không được khen nó.
+  const beginner = stakeRun(beginnerNoCards);
+  const plain = rankedOf(beginner, "wealthsimple-visa-infinite-plus");
+  assert.equal(plain.suitability?.minSpendFit, 1);
+  assert.equal(spendRaw(plain), 0.5);
+  // Bonus bị chặn, sức dồn đã khai: cùng lý do.
+  const advanced = stakeRun(advancedCollector);
+  const gold = rankedOf(advanced, "amex-gold-rewards");
+  assert.equal(gold.eligibility?.welcomeOfferBlocked, true);
+  assert.equal(spendRaw(gold), 0.5);
+  // Chưa khai sức dồn: 0.5 cho MỌI thẻ, như trước — cỡ bonus không được tạo
+  // chênh lệch ở một vế mà đầu vào của nó còn trống.
+  for (const row of stakeRun(beginnerUndeclared).derived.goals[0].ranking) {
+    if (row.candidate.kind === "no_new_card") continue;
+    assert.equal(spendRaw(row.candidate), 0.5, row.candidate.productSlug ?? "");
+  }
+});
+
+test("§13 × đặt cược — offer không định giá được giữ trọn §13, không bị phạt thêm", () => {
+  // Capital One® Quicksilver: match cashback năm đầu, `components: []` — §11 đã
+  // chấm thấp vì thiếu mô hình; vế mốc chi không được trừ thêm lần nữa.
+  const quicksilver = rankedOf(stakeRun(beginnerNoCards), "capital-one-quicksilver-world-mastercard");
+  assert.equal(spendRaw(quicksilver), quicksilver.suitability?.minSpendFit);
+});
+
+const withCapacity = (state: UserState, dollars: number): UserState => ({
+  ...state,
+  spend: { ...state.spend!, minimumSpendCapacity3m: { low: dollars, high: dollars } },
+});
+
+test("§13 × đặt cược — bonus chưa chắc là điểm giữa hai thế giới, tính MỘT lần", () => {
+  // Ca Codex bắt ở bản vá đầu: `minSpendFit` đã là điểm giữa (thế giới bị chặn
+  // = 1), rồi stake lại nhân 0.5 — Amex® Gold với sức dồn $500 ra 0.5 thay vì
+  // 0.25. Chắc nhận được: 0 (trượt hẳn mốc chi). Bị chặn: 0.5. Chưa chắc: 0.25.
+  const certain = withCapacity(beginnerNoCards, 500);
+  const uncertain: UserState = { ...certain, declared: { ...certain.declared, cards: false } };
+  const goldCertain = rankedOf(stakeRun(certain), "amex-gold-rewards");
+  const goldUncertain = rankedOf(stakeRun(uncertain), "amex-gold-rewards");
+  assert.equal(goldCertain.eligibility?.welcomeOfferUncertain ?? false, false, "tiền đề: chắc nhận được bonus");
+  assert.equal(goldUncertain.eligibility?.welcomeOfferUncertain, true, "tiền đề: chưa chắc nhận được bonus");
+  assert.equal(spendRaw(goldCertain), 0, "tiền đề: trượt hẳn mốc chi, phần đặt cược trọn");
+  assert.equal(spendRaw(goldUncertain), 0.25);
+});
+
+test("§13 × đặt cược — phần thưởng nhận không cần chi KHÔNG đổi vế mốc chi", () => {
+  // RBC® Avion® có 35,000 điểm khi duyệt và 15,000 khi gia hạn, không đòi mốc
+  // chi; chỉ 20,000 bị khoá. Bản vá đầu đo phần đặt cược bằng TOÀN BỘ offer nên
+  // người dồn $1,000 bị phạt như mất cả offer (Codex). Gỡ hẳn phần không cần
+  // chi: §11 phải đổi, vế mốc chi thì không được nhúc nhích. (Chiều GỠ chứ không
+  // chiều thêm: thêm thì bản lỗi cũng bão hoà ở stake 1 và test xanh oan.)
+  const product = STAKE_DATA.products.find((p) => p.slug === "rbc-avion-visa-infinite")!;
+  const offer = activeAt(STAKE_DATA.offers.filter((o) => o.productId === product.id), STAKE_ASOF)[0];
+  const free = new Set(
+    STAKE_DATA.offerComponents
+      .filter((c) => c.offerId === offer.id && c.spendRequirement === null && (c.pointsAmount ?? 0) > 0)
+      .map((c) => c.id),
+  );
+  assert.ok(free.size > 0, "tiền đề: offer có phần nhận không cần chi");
+  const leaner = {
+    ...STAKE_DATA,
+    offerComponents: STAKE_DATA.offerComponents.map((c) => (free.has(c.id) ? { ...c, pointsAmount: 0 } : c)),
+  };
+  const state = withCapacity(beginnerNoCards, 1_000);
+  const base = rankedOf(stakeRun(state), "rbc-avion-visa-infinite");
+  const lean = rankedOf(
+    recommend({ state, data: leaner, ix: indexDataset(leaner), asOf: STAKE_ASOF, probeFollowUps: false }),
+    "rbc-avion-visa-infinite",
+  );
+  const offerRaw = (c: typeof base) => c.components.find((x) => x.key === "offer_quality")!.raw;
+  assert.notEqual(offerRaw(lean), offerRaw(base), "tiền đề: phần gỡ đi thật sự được đọc");
+  assert.ok(spendRaw(base) > 0, "trượt mốc chi mà vẫn giữ phần lớn offer thì không phạt như mất hết");
+  assert.equal(spendRaw(lean), spendRaw(base));
+});
+
+test("§13 × đặt cược — phần bị khoá bằng $0 theo thước mục tiêu là 0.5, không phải 'chưa định giá'", () => {
+  // Mục tiêu rút tiền mặt: bonus Aeroplan® đổi ra tiền được $0 — câu trả lời đã
+  // biết. Bản vá đầu gộp nó với offer chưa có mô hình (Quicksilver) và cho trọn
+  // §13 (Codex).
+  const td = rankedOf(stakeRun(withCapacity(cashSeeker, 9_000)), "td-aeroplan-visa-infinite");
+  assert.ok((td.suitability?.minSpendFit ?? 0) > 0.5, "tiền đề: mốc chi vừa sức");
+  assert.equal(spendRaw(td), 0.5);
 });
 
 test("§13 — thẻ bị chặn bonus không thắng nhờ một câu người dùng chưa trả lời", () => {

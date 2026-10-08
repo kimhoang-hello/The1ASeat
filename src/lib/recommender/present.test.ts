@@ -475,7 +475,18 @@ test("thẻ mà người dùng KHÔNG còn nhận được welcome bonus thì kh
   // Amex® once-in-a-lifetime: thẻ vẫn có thể là lựa chọn đúng (tỷ lệ tích
   // điểm, quyền lợi), nhưng câu "chi $X để nhận trọn welcome bonus" là một lời
   // hứa ngân hàng sẽ không giữ.
-  const view = presentRun(runFor(advancedCollector), DATA, offersFor(DATA));
+  //
+  // Chạy trên dữ liệu 07/10/2026 (cắt cả `knownAt`): từ engine 4.33.0 thẻ bị
+  // chặn bonus không còn phần "mốc chi vừa sức" (không có gì để lấy), nên ở dữ
+  // liệu 08/09 Amex® Gold của nhân vật này đứng hạng 6 — ngay ngoài bảng hiển
+  // thị. Ở 07/10 nó đứng hạng 2.
+  const asOf = "2026-10-07";
+  const data = datasetAt(offlineDataset(), asOf, { knownAt: asOf });
+  const record = executeRun(
+    { state: advancedCollector, data, asOf, knownAt: asOf },
+    { id: "run_present_blocked", createdAt: `${asOf}T12:00:00.000Z`, userId: "u_test" },
+  ).record;
+  const view = presentRun(record, data, offersFor(data));
   assert.ok(view !== null);
   const blocked = [view.primary, ...view.alternatives].find((row) => row.welcomeBonusBlocked);
   assert.ok(blocked !== undefined, "nhân vật này phải có ít nhất một thẻ bị chặn bonus");

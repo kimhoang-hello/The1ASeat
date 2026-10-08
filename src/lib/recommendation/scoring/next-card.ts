@@ -67,7 +67,7 @@ export function scoreNextCard(
     offerQualityComponent(0.25, candidate, ctx),
     // Chưa biết sức dồn thì 0.5 trung tính — chỗ trống đó đi thẳng vào §30 và
     // §29. Xem `spendFitComponent`.
-    spendFitComponent(0.2, candidate),
+    spendFitComponent(0.2, candidate, ctx),
     earnFitComponent(0.15, candidate, ctx),
     currencyFitComponent(0.15, candidate, ctx),
     component("benefits_fit", 0.1, benefits.raw, benefits.note),

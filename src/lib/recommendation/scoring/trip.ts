@@ -175,7 +175,7 @@ export function scoreTrip(candidate: CandidateFacts, ctx: ScoringContext): Score
     component("trip_currency_utility", 0.35, utility.raw, utility.note),
     component("points_gap_reduction", 0.2, gapRaw, gapNote),
     offerQualityComponent(0.15, candidate, ctx),
-    spendFitComponent(0.1, candidate),
+    spendFitComponent(0.1, candidate, ctx),
     component("flexibility_value", 0.1, flexibilityRaw, flexibilityNote),
     component(
       "travel_benefits",

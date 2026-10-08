@@ -36,7 +36,6 @@ import {
   japanTripShortfall,
   lowSpendCapacity,
   nearlyEmpty,
-  studentStarter,
   USER_FIXTURES,
   vietnamTripFunded,
   vietnamTripShortfall,
@@ -981,14 +980,17 @@ test("lượt chạy KHÔNG mục tiêu không kể tỷ lệ tích điểm củ
  * ================================================================== */
 
 test("SCORES_NEARLY_TIED nói đúng khoảng cách điểm, không nói thay cho độ tin cậy thấp", () => {
-  // Ca của Codex: sinh viên, hai ứng viên đầu cách nhau ~0.062. Làm cũ phí của
-  // chính thẻ thắng (thẻ chọn được, ngưỡng đã khai → phí đi vào điểm phù hợp)
-  // kéo độ tin cậy xuống `low` — nhưng lý do không phải "sát nhau".
-  const base = execute(studentStarter).record;
+  // Ca của Codex: hai ứng viên đầu cách nhau xa. Làm cũ phí của chính thẻ thắng
+  // (thẻ chọn được, ngưỡng đã khai → phí đi vào điểm phù hợp) kéo độ tin cậy
+  // xuống `low` — nhưng lý do không phải "sát nhau". Ca gốc là sinh viên (cách
+  // ~0.062); từ engine 4.33.0 (`spend_fit` cân theo phần đặt cược) hai thẻ đầu
+  // của sinh viên sát nhau, nên tiền đề dời sang `duplicateBagBenefit` (~0.065,
+  // độ tin cậy `medium` mà phí cũ kéo xuống `low`).
+  const base = execute(duplicateBagBenefit).record;
   const [top, second] = ranking(base);
   assert.ok(top.candidate.score - second.candidate.score >= 0.05, "tiền đề: không sát nhau");
   const fee = DATA.productFees.find((row) => row.productId === top.candidate.productId)!;
-  const stale = execute(studentStarter, { data: staleAny("productFees", fee.id as string) }).record;
+  const stale = execute(duplicateBagBenefit, { data: staleAny("productFees", fee.id as string) }).record;
   const result = stale.outputSnapshot.results[0];
   assert.equal(result.confidence.level, "low", "tiền đề: dữ liệu cũ kéo độ tin cậy xuống");
   assert.ok(!result.reasonCodes.includes("SCORES_NEARLY_TIED"));
@@ -1213,10 +1215,18 @@ test("§30: câu hỏi chọn theo BẢNG TĨNH nói ra như thế, không độ
 });
 
 test("§30 xét cả thẻ BỊ ẨN vì cùng họ: câu thu nhập hộ đổi được người thắng thì phải được hỏi (vòng Codex 16)", () => {
-  // `flexiblePointsSufficient`: không thẻ HIỆN RA nào vướng điều kiện, nên bộ
-  // lọc cũ bỏ câu thu nhập mà không đo — trong khi một thẻ bị ẩn vì cùng họ
-  // đang vướng đúng luật thu nhập, và khai thu nhập hộ đưa nó lên đầu.
-  const { record } = execute(flexiblePointsSufficient);
+  // Không thẻ HIỆN RA nào vướng điều kiện, nên bộ lọc cũ bỏ câu thu nhập mà
+  // không đo — trong khi một thẻ bị ẩn vì cùng họ đang vướng đúng luật thu nhập,
+  // và khai thu nhập hộ đưa nó lên đầu. Ca gốc là `flexiblePointsSufficient` ở
+  // dữ liệu 08/09; từ engine 4.33.0 một thẻ Amex® chưa biết điều kiện lọt vào
+  // bảng hiển thị của nó (và của mọi nhân vật ở 08/09 — Amex® Canada được lấp
+  // điều kiện ngày 27/09). Ở dữ liệu 07/10 (cắt cả `knownAt`) `beginnerNoCards`
+  // mang đúng hình dạng đó.
+  const asOf = "2026-10-07";
+  const record = executeRun(
+    { state: beginnerNoCards, data: datasetAt(offlineDataset(), asOf, { knownAt: asOf }), asOf, knownAt: asOf },
+    { id: "run_acceptance_hidden_family", createdAt: `${asOf}T00:00:00.000Z` },
+  ).record;
   const result = record.outputSnapshot.results[0];
   const visible = [result.primaryAction, ...result.alternatives];
   assert.ok(visible.every((row) => row.eligibility?.status !== "unknown"), "tiền đề: không thẻ hiện ra nào vướng điều kiện");

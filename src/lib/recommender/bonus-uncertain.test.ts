@@ -57,7 +57,14 @@ function viewFor(state: UserState) {
 
 // Người tìm hoàn tiền CHƯA khai thẻ từng giữ: Scotia Momentum® loại mọi người
 // từng giữ thẻ Scotiabank® trong 24 tháng, nên bonus của thẻ đứng đầu là chưa biết.
-const undeclared: UserState = { ...cashSeeker, declared: { ...cashSeeker.declared, cards: false } };
+// Ngưỡng phí $0 (không muốn trả phí năm đầu — Momentum® miễn năm đầu): từ engine
+// 4.33.0, với ngưỡng $120 RBC® Avion® Visa Platinum (bonus chắc chắn, lớn hơn)
+// vượt lên đầu, và bài này cần thẻ đứng đầu là thẻ có bonus chưa chắc.
+const undeclared: UserState = {
+  ...cashSeeker,
+  profile: { ...cashSeeker.profile, annualFeeTolerancePerCard: 0 },
+  declared: { ...cashSeeker.declared, cards: false },
+};
 
 test("bonus chưa chắc: trang và Phase 6 đều phải nói ra", () => {
   const view = viewFor(undeclared);

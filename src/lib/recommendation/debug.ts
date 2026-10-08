@@ -236,7 +236,8 @@ const COMPONENT_SOURCES: Record<string, { source: LineSource; detail: string }[]
   offer_quality: [{ source: "source_data", detail: "offer, thành phần offer, lịch sử offer" }],
   spend_fit: [
     { source: "user_input", detail: "sức dồn chi 3 tháng" },
-    { source: "source_data", detail: "mốc chi của offer" },
+    { source: "source_data", detail: "mốc chi của offer, giá trị phần bị mốc chi khoá, định giá" },
+    { source: "engine", detail: "trung vị thị trường của tập ứng viên, cửa welcome bonus (chặn / chưa chắc)" },
   ],
   long_term_earn_fit: [
     { source: "user_input", detail: "hồ sơ chi tiêu" },

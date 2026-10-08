@@ -78,6 +78,6 @@ export function scoreDiversify(
     // bảng giải thích của §19 trông như hai thứ khác nhau.
     earnFitComponent(0.15, candidate, ctx),
     offerQualityComponent(0.1, candidate, ctx),
-    spendFitComponent(0.1, candidate),
+    spendFitComponent(0.1, candidate, ctx),
   ];
 }

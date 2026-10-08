@@ -42,7 +42,7 @@ export function scoreEarning(
     earnFitComponent(0.4, candidate, ctx),
     currencyFitComponent(0.2, candidate, ctx),
     offerQualityComponent(0.15, candidate, ctx),
-    spendFitComponent(0.1, candidate),
+    spendFitComponent(0.1, candidate, ctx),
     component(
       "fee_drag",
       0.1,

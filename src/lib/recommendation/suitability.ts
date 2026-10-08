@@ -43,6 +43,20 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
 /** Mốc chi từ 70% sức dồn điển hình trở lên là "sát" (reason-codes.ts). */
 const TIGHT_FROM_RATIO = 0.7;
 
+/**
+ * §13 của một bonus CHƯA CHẮC: điểm giữa của thế giới nhận được bonus (`fit`)
+ * và thế giới bị chặn (không còn mốc nào = 1). Hai chiều của cùng một quy ước
+ * nằm cạnh nhau ở đây vì `scoring/shared.ts` phải tách lại `fit` của thế giới
+ * có bonus — ở đó thế giới bị chặn không còn là 1 mà là 0.5 trung tính.
+ */
+export function uncertainSpendFit(fitIfBonus: number): number {
+  return (fitIfBonus + 1) / 2;
+}
+
+export function spendFitIfBonus(uncertainFit: number): number {
+  return 2 * uncertainFit - 1;
+}
+
 export function minimumSpendFit(required: number, capacity: number): number {
   if (capacity <= 0) return 0;
   const ratio = required / capacity;
@@ -204,7 +218,7 @@ export function evaluateSuitability(input: SuitabilityInput): SuitabilityVerdict
   // cùng quy ước với nửa `offer_quality` và nửa phần tăng chuyến đi. Mã
   // MIN_SPEND_* vẫn giữ: chúng đúng trong thế giới nhận được bonus (vòng Codex 21).
   if (input.welcomeOfferUncertain === true && minSpendFit !== null) {
-    minSpendFit = (minSpendFit + 1) / 2;
+    minSpendFit = uncertainSpendFit(minSpendFit);
   }
 
   /* ---- Hạng trong họ thẻ ----------------------------------------- */

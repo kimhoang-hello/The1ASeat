@@ -3203,8 +3203,27 @@ Codex bốn vòng: diff 41 commit từ 01/10 (không lỗi mới), "chứng minh
 - *Award Flight Finder "+X so với rẻ nhất" trừ miles của hai hãng* — trang đã có mục
   "Số miles thấp nhất chưa chắc là rẻ nhất"; xếp theo số thô là lựa chọn sản phẩm.
 
-**Engine: Amex® Green đứng đầu 6/16 hồ sơ mẫu (07/10/2026) KHÔNG phải lỗi.** Bonus
+**Engine: Amex® Green đứng đầu 6/16 hồ sơ mẫu (07/10/2026) KHÔNG phải lỗi code.** Bonus
 10,000 điểm nhưng mốc chi $1,000 so với sức dồn $3,000 → `spend_fit` 1.0 (TD®
 Aeroplan® 50,000: 0.68); chênh +0.067 lật thứ hạng. Codex: đúng đường cong §13 và
-trọng số §10 — `spend_fit` đo độ dư sức, độc lập cỡ bonus. Nhân nó với giá trị bonus
-hay hạ trọng số là quyết định sản phẩm, chờ tác giả.
+trọng số §10 — `spend_fit` đo độ dư sức, độc lập cỡ bonus.
+
+**Tác giả chốt cùng ngày ("làm luôn") → engine 4.33.0: `spend_fit` cân theo phần
+đặt cược** (`scoring/shared.ts`, chi tiết ở chú thích `ENGINE_VERSION` và HANDOFF §9):
+`0.5 + (minSpendFit − 0.5) × stake`, stake = giá trị phần BỊ MỐC CHI KHOÁ
+(`gatedValueCents`) ÷ trung vị của phần đó (`medianGatedValueCents`), cắt ở 1.
+Ba lỗi của bản vá ĐẦU mà vòng Codex bác bắt được — đừng làm lại:
+- **Đặt cược bằng TOÀN BỘ offer**: RBC® Avion® có 50,000/70,000 điểm nhận không cần
+  chi, người dồn $1,000 bị phạt như mất cả offer. Cũng đừng dùng phần VỚI TỚI ĐƯỢC:
+  thẻ đòi chi quá sức có phần đó bằng 0, đo bằng nó là xoá luôn hình phạt §13.
+- **Chưa chắc tính hai lần**: `minSpendFit` của suitability đã là điểm giữa (thế
+  giới bị chặn = 1); nhân thêm stake × 0.5 cho Amex® Gold sức dồn $500 ra 0.5 thay
+  vì 0.25. Nay tách lại `fit` của thế giới có bonus (`spendFitIfBonus`) rồi trộn với
+  0.5 một lần.
+- **$0 gộp với "chưa định giá"**: bonus Aeroplan® với mục tiêu rút tiền mặt là $0
+  ĐÃ BIẾT → 0.5; chỉ offer không có thành phần nào (Quicksilver) mới giữ trọn §13.
+Mỗi lỗi có một test kiểm ngược (cài lại lỗi → đỏ). 16 nhân vật mẫu 07/10: Green còn
+thắng 3 (sinh viên, đa dạng hoá, chưa khai sức chi) — đều vì vế KHÁC; beginner →
+Scotiabank® Gold Amex® (TD® Aeroplan® sát nút), highSpend → Scotiabank® Gold Amex®.
+Bốn test đổi KỊCH BẢN (không đổi điều chúng kiểm) vì tiền đề dựa vào thứ hạng cũ —
+ghi ngay trong từng test. Đừng "sửa" vế này lại thành trọn 1.0 cho thẻ không bonus.

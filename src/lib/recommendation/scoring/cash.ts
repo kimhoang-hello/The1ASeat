@@ -111,6 +111,6 @@ export function scoreCash(candidate: CandidateFacts, ctx: ScoringContext): Score
           ? `tích ra $0 tiền mặt, phí $${Math.round(fee / 100)}`
           : `1 − phí $${Math.round(fee / 100)} ÷ rút ra $${Math.round(annual / 100)}/năm`,
     ),
-    spendFitComponent(0.1, candidate),
+    spendFitComponent(0.1, candidate, ctx),
   ];
 }

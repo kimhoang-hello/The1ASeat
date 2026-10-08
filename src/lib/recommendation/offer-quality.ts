@@ -101,6 +101,13 @@ export interface OfferFacts {
   fullValueCents: number | null;
   /** Giá trị của tập thành phần người này thật sự với tới, theo sức dồn đã khai. */
   usableValueCents: number | null;
+  /**
+   * Giá trị của riêng các thành phần BỊ MỐC CHI KHOÁ (`requiredSpendOf !== null`)
+   * — thứ §13 quyết định lấy được hay không. Thưởng lượt quẹt đầu hay thưởng
+   * gia hạn không đòi chi thì nhận được dù mốc chi quá sức: RBC® Avion® có
+   * 50,000/70,000 điểm như thế. `null` khi không có offer.
+   */
+  gatedValueCents: number | null;
   /** `usable / full`. `null` khi chưa biết sức dồn — KHÔNG phải 1. */
   usableRatio: number | null;
   /** Mốc chi quy về 90 ngày của tập thành phần với tới được. */
@@ -322,6 +329,7 @@ export function offerFacts(
       headlineBonus: null,
       fullValueCents: null,
       usableValueCents: null,
+      gatedValueCents: null,
       usableRatio: null,
       requiredPerNinetyDays: null,
       fullRequiredPerNinetyDays: null,
@@ -355,6 +363,9 @@ export function offerFacts(
       sum + componentValueCents(component, cpp, repeatsOf(component), countsFeeWaiver),
     0,
   );
+  const gatedValueCents = components
+    .filter((component) => requiredSpendOf(component) !== null)
+    .reduce((sum, component) => sum + componentValueCents(component, cpp, repeatsOf(component), countsFeeWaiver), 0);
 
   if (components.length === 0 && offer.headlineBonus !== null) {
     // DataGap `offer_terms_unknown`: có con số quảng cáo mà không có mốc nào.
@@ -387,6 +398,7 @@ export function offerFacts(
     headlineBonus: offer.headlineBonus,
     fullValueCents,
     usableValueCents,
+    gatedValueCents,
     usableRatio,
     requiredPerNinetyDays: reachable?.requiredPerNinetyDays ?? null,
     fullRequiredPerNinetyDays: offer.spendPerNinetyDays,
@@ -420,6 +432,14 @@ export interface OfferClimate {
   maxValuePerSpendDollar: number;
   /** Percentile trung vị của các offer đang chạy — dùng cho WAIT_FOR_BETTER_OFFER. */
   medianPercentile: number | null;
+  /**
+   * Giá trị phần BỊ MỐC CHI KHOÁ (`gatedValueCents`), trung vị của các offer có
+   * phần đó (> 0) — mốc của "phần đặt cược" trong `spend_fit`
+   * (`scoring/shared.ts`). Không dùng phần với tới được: thẻ đòi chi quá sức thì
+   * phần với tới được là 0, đo bằng nó là xoá luôn hình phạt §13. Không dùng
+   * toàn bộ offer: phần nhận được không cần chi không phụ thuộc mốc chi.
+   */
+  medianGatedValueCents: number | null;
 }
 
 export function offerClimate(
@@ -437,10 +457,14 @@ export function offerClimate(
   let maxFull = 0;
   let maxPerDollar = 0;
   const percentiles: number[] = [];
-  const weighted: { percentile: number; weight: number }[] = [];
+  const weighted: { value: number; weight: number }[] = [];
+  const gatedValues: { value: number; weight: number }[] = [];
   for (const [index, fact] of facts.entries()) {
     maxUsable = Math.max(maxUsable, fact.usableValueCents ?? 0);
     maxFull = Math.max(maxFull, fact.fullValueCents ?? 0);
+    if (fact.gatedValueCents !== null && fact.gatedValueCents > 0) {
+      gatedValues.push({ value: fact.gatedValueCents, weight: weights?.[index] ?? 1 });
+    }
     const required = fact.requiredPerNinetyDays ?? fact.fullRequiredPerNinetyDays;
     const value = fact.usableValueCents ?? fact.fullValueCents;
     if (required !== null && required > 0 && value !== null) {
@@ -448,7 +472,7 @@ export function offerClimate(
     }
     if (fact.historicalPercentile !== null) {
       percentiles.push(fact.historicalPercentile);
-      weighted.push({ percentile: fact.historicalPercentile, weight: weights?.[index] ?? 1 });
+      weighted.push({ value: fact.historicalPercentile, weight: weights?.[index] ?? 1 });
     }
   }
   percentiles.sort((a, b) => a - b);
@@ -465,6 +489,7 @@ export function offerClimate(
     maxFullValueCents: maxFull,
     maxValuePerSpendDollar: maxPerDollar,
     medianPercentile: median,
+    medianGatedValueCents: weightedMedian(gatedValues),
   };
 }
 
@@ -563,17 +588,17 @@ export function offerQuality(fact: OfferFacts, climate: OfferClimate): { score: 
  * đúng BẰNG nửa tổng thì lấy trung bình với giá trị kế — cùng quy ước với
  * trung vị số chẵn phần tử khi mọi trọng số bằng nhau.
  */
-function weightedMedian(rows: readonly { percentile: number; weight: number }[]): number | null {
-  const sorted = rows.filter((row) => row.weight > 0).sort((a, b) => a.percentile - b.percentile);
+function weightedMedian(rows: readonly { value: number; weight: number }[]): number | null {
+  const sorted = rows.filter((row) => row.weight > 0).sort((a, b) => a.value - b.value);
   const total = sorted.reduce((sum, row) => sum + row.weight, 0);
   if (total <= 0) return null;
   let acc = 0;
   for (let i = 0; i < sorted.length; i += 1) {
     acc += sorted[i].weight;
-    if (acc > total / 2) return sorted[i].percentile;
-    if (acc === total / 2) return (sorted[i].percentile + sorted[i + 1].percentile) / 2;
+    if (acc > total / 2) return sorted[i].value;
+    if (acc === total / 2) return (sorted[i].value + sorted[i + 1].value) / 2;
   }
-  return sorted[sorted.length - 1].percentile;
+  return sorted[sorted.length - 1].value;
 }
 
 export function clamp01(value: number): number {

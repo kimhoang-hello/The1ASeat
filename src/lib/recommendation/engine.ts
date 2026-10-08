@@ -300,6 +300,20 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * Phát hiện khi lấp bảo hiểm cho 35 thẻ (04/10/2026) — thêm dữ liệu sẽ khuếch
  * đại đúng lỗi đó. Đổi điểm số.
  *
+ * 4.33.0 — `spend_fit` cân theo PHẦN ĐẶT CƯỢC khi đã biết sức dồn:
+ * `0.5 + (minSpendFit − 0.5) × stake`, stake = giá trị phần BỊ MỐC CHI KHOÁ
+ * (`OfferFacts.gatedValueCents`) ÷ trung vị của phần đó trên thị trường của
+ * người đó (`OfferClimate.medianGatedValueCents`), cắt ở 1. Không có gì đứng sau
+ * mốc chi (kể cả $0 theo thước của mục tiêu) hoặc bonus bị chặn → 0.5 trung tính
+ * (trước đây 1.0); offer không có thành phần nào để định giá → giữ trọn §13;
+ * chưa chắc nhận được bonus → điểm giữa của hai thế giới, MỘT lần. Trước đây
+ * bonus nhỏ mà mốc chi dễ nhận trọn 1.0: Amex® Green (10,000 điểm, mốc $1,000)
+ * đứng đầu 6/16 nhân vật mẫu ngày 07/10/2026, trên TD® Aeroplan® Visa Infinite*
+ * 50,000 điểm, đúng nhờ vế này. `minSpendFit` (§13) không đổi — chỉ cách nó vào
+ * điểm. Tác giả chốt 07/10/2026; vòng Codex bác bản vá đầu bắt ba lỗi (đặt cược
+ * bằng toàn bộ offer, chưa chắc tính hai lần, $0 gộp với chưa định giá). Đổi
+ * điểm số.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -312,7 +326,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.32.0";
+export const ENGINE_VERSION = "4.33.0";
 
 export interface RecommendInput {
   state: UserState;
