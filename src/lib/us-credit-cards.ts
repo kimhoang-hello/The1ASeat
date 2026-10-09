@@ -246,7 +246,9 @@ const VERIFIED_4 = "2026-10-01";
 /**
  * Rà lại 09/10/2026: mở trang ngân hàng của mọi thẻ đang hiện (Amex®, Capital One®,
  * BoA® bằng browser; Chase®/Bilt qua `audit:us-offers`) — bonus, mức chi, annual fee
- * và hạn offer đều khớp. Citi® vẫn không in số cho browser tự động.
+ * và hạn offer đều khớp. Citi Strata Premier® đọc được cùng ngày từ JSON mà trang Citi®
+ * tự gọi (`offerPricingPositioning/retrieve`, xem AGENTS.md): 60,000 điểm, $4,000 USD
+ * trong 3 tháng, phí $95 USD.
  */
 const REVERIFIED_2 = "2026-10-09";
 
@@ -509,7 +511,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.citi.com/credit-cards/citi-strata-premier-credit-card",
     lastUpdated: VERIFIED,
-    verifiedOn: VERIFIED,
+    verifiedOn: REVERIFIED_2,
     needsVerification: false,
   },
   {

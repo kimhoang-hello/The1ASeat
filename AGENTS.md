@@ -1335,6 +1335,12 @@ vào được bằng URL, `noindex`, dải báo nháp; bật cờ là hiện "�
   (đọc được 21/09). Đã thử: chờ 15 giây, mở mục "Important Pricing &
   Information", đọc trang view-all. Không bịa số từ nguồn cấp hai — cần số thì
   hỏi user mở trang bằng browser của họ.
+  **Cách đọc được (09/10/2026):** trang tự POST tới
+  `citi.com/gcgapi/prod/public/v1/prelogin/digital/creditCards/offers/offerPricingPositioning/retrieve`
+  và response JSON có đủ số mà HTML để trống — `rewardPromotion.totalBonusAmount`,
+  `rewardPromotionDetail[].hurdleAmount`/`hurdleDuration` (tháng), `annualFeeAmount`.
+  Mở trang bằng Browser pane rồi đọc response qua `read_network_requests` (lọc "citi",
+  lấy requestId của request đó). Đừng tự POST tới endpoint này.
 - **Phí ngoại tệ không mặc định là 0:** Ink Business Unlimited® có 3% (đọc từ
   bảng Pricing & Terms của Chase®, không phải trang sản phẩm). Mỗi thẻ mới phải
   mở trang `sites.chase.com/.../pricingandterms` hoặc bảng phí của hãng mà kiểm.
