@@ -68,8 +68,11 @@ test("1. offer mới nối tiếp offer cũ, và offer cũ vẫn tra được", 
   assert.deepEqual(errorsIn(next, "2026-11-15"), []);
 
   // Truy vấn tại NGÀY CŨ vẫn thấy mức cũ. Đây là điều Phase 4 cần để giải
-  // thích một khuyến nghị đã đưa ra trước ngày 01/11.
-  const then = datasetAt(next, "2026-10-01");
+  // thích một khuyến nghị đã đưa ra trước ngày 01/11. Tra tại chính ngày offer
+  // cũ bắt đầu, không phải một ngày cố định: offer đầu tiên của seed đổi theo
+  // dữ liệu (09/10/2026 là Amex® Green 15,000 mở từ 09/10, nên tra ngày 01/10
+  // thấy bản 10,000 đứng trước nó — sai tiền đề, không phải sai engine).
+  const then = datasetAt(next, old.effectiveFrom);
   assert.equal(
     then.offers.find((o) => o.productId === old.productId)?.headlineBonus,
     old.headlineBonus,
