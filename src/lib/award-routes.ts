@@ -155,7 +155,7 @@ export const VIETNAM_ROUTES: VietnamRoute[] = [
   route("YYZ", "DAD", [
     DA_NANG_NETWORK,
     DA_NANG_REMAINING,
-    "Từ Toronto, hai hành trình Aeroplan® là Toronto – Đài Bắc – Đà Nẵng, EVA Air® bay cả hai chặng; và Toronto – Seoul – Đà Nẵng, trong đó chặng cuối cần Asiana Airlines® còn chặng đầu là Air Canada®, vì Asiana đã rút hẳn khỏi Canada.",
+    "Từ Toronto, hai hành trình Aeroplan® là Toronto – Đài Bắc – Đà Nẵng, EVA Air® bay cả hai chặng; và Toronto – Seoul – Đà Nẵng, trong đó chặng cuối cần Asiana Airlines® còn chặng đầu là Air Canada®, vì Asiana® đã rút hẳn khỏi Canada.",
     PREMIUM_GAP,
     "Nếu ngày bay linh động, đáng so thêm phương án bay về Sài Gòn hoặc Hà Nội rồi mua vé nội địa Việt Nam bằng tiền — vé nội địa rẻ, và bảng ở trang chặng Sài Gòn có bốn chương trình cạnh tranh nhau thay vì một.",
   ]),

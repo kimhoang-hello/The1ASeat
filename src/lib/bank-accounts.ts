@@ -931,7 +931,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     bonusConditionsVi: [
       "Từ 13 tuổi trở lên và chưa từng có tài khoản cá nhân RBC® trong 3 năm trước 02/06/2026.",
       "Mở tài khoản Advantage Banking for Students đầu tiên trước 21:00 EST ngày 02/11/2026.",
-      "Làm hai trong các việc sau trước 21:00 EST ngày 15/01/2027: đăng ký Interac Autodeposit và gửi/nhận 1 e-Transfer; lấy thẻ RBC® Virtual Visa Debit và quẹt ít nhất 1 lần; chuyển trọn payroll về tài khoản mới; set up 1 khoản thanh toán định kỳ; hoặc thanh toán 1 hoá đơn qua app/online banking.",
+      "Làm hai trong các việc sau trước 21:00 EST ngày 15/01/2027: đăng ký Interac® Autodeposit và gửi/nhận 1 e-Transfer; lấy thẻ RBC® Virtual Visa Debit và quẹt ít nhất 1 lần; chuyển trọn payroll về tài khoản mới; set up 1 khoản thanh toán định kỳ; hoặc thanh toán 1 hoá đơn qua app/online banking.",
       "Phần thưởng là AirPods 4, kèm 3 tháng Apple Music cho người đăng ký mới.",
     ],
     keyBenefitsVi: [
