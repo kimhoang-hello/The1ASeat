@@ -151,18 +151,28 @@ function spendStake(candidate: CandidateFacts, ctx: ScoringContext): { value: nu
  */
 export function earnFitComponent(weight: number, candidate: CandidateFacts, ctx: ScoringContext): ScoreComponent {
   const cash = valuationModeFor(ctx.goal) === "cash";
-  const annual = (cash ? candidate.earnCash : candidate.earn).annualValueCents;
+  const earn = cash ? candidate.earnCash : candidate.earn;
+  // Tử số là phần thẻ này THÊM VÀO ví đang giữ (`addedEarnFor`); mẫu số vẫn là
+  // mức tích cao nhất của MỘT thẻ trong tập. Chia cho phần thêm lớn nhất thì
+  // thẻ thêm được $50/năm vẫn nhận trọn 1.0 khi ví đã gần như đủ — đúng ca
+  // engine cần nói "thêm được rất ít". Ví trống thì phần thêm = cả phần tích,
+  // nên hồ sơ chưa giữ thẻ nào chấm y như trước.
+  const added = earn.addedValueCents;
   const max = cash ? ctx.scale.maxEarnCashCents : ctx.scale.maxEarnAnnualCents;
   const unit = cash ? " rút ra tiền" : "";
+  const what =
+    added === earn.annualValueCents
+      ? `tích${unit} ${dollars(added)}/năm`
+      : `tích${unit} thêm ${dollars(added)}/năm so với thẻ đang giữ (riêng thẻ này ${dollars(earn.annualValueCents)})`;
   return component(
     "long_term_earn_fit",
     weight,
-    relativeTo(annual, max),
+    relativeTo(added, max),
     max <= 0
       ? cash
         ? "không thẻ nào trong tập ứng viên tích ra đồng điểm rút được tiền (hoặc chưa khai chi tiêu)"
         : "chưa tính được giá trị tích điểm của thẻ nào (chưa khai chi tiêu)"
-      : `tích${unit} ${dollars(annual)}/năm ÷ cao nhất tập ứng viên ${dollars(max)}`,
+      : `${what} ÷ cao nhất tập ứng viên ${dollars(max)}`,
   );
 }
 

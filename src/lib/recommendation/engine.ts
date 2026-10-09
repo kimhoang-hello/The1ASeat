@@ -25,7 +25,7 @@ import { generateStrategies, tripCoverage } from "./strategies.ts";
 import { computeNeeds } from "./needs.ts";
 import { evaluateEligibility } from "./eligibility.ts";
 import { evaluateSuitability } from "./suitability.ts";
-import { earnFitFor } from "./earn-fit.ts";
+import { addedEarnFor, earnFitFor } from "./earn-fit.ts";
 import { benefitFitFor, heldBenefitKeys } from "./benefit-fit.ts";
 import { offerClimate, offerFacts } from "./offer-quality.ts";
 import { activeAt } from "./temporal.ts";
@@ -329,6 +329,13 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  *     chặng của mục tiêu chuyến đi.
  *   - Hai hạng cùng họ hoà tuyệt đối → hạng dưới đứng trước (`rankCandidates`).
  *
+ * 4.35.0 — `long_term_earn_fit` và `fee_drag` đọc phần tích điểm thẻ THÊM VÀO
+ * ví đang giữ (`EarnFit.addedValueCents`, `addedEarnFor`), không đọc phần tích
+ * của riêng thẻ. Mẫu số giữ nguyên (mức tích cao nhất của một thẻ), nên hồ sơ
+ * chưa giữ thẻ nào chấm y như cũ. Trước đó người giữ Cobalt® + Platinum được
+ * khuyên mở lại Amex® Gold — không bonus, phí $250, ví đã kiếm bằng hoặc hơn ở
+ * mọi hạng mục — trên "chưa mở thẻ nào". Tác giả chốt 09/10/2026. Đổi điểm số.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -341,7 +348,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.34.0";
+export const ENGINE_VERSION = "4.35.0";
 
 export interface RecommendInput {
   state: UserState;
@@ -505,6 +512,12 @@ export function recommend(input: RecommendInput): RecommendationRun {
   );
 
   /* ---- Dữ kiện từng ứng viên (không phụ thuộc mục tiêu) ------------ */
+  // Phần tích điểm mỗi thẻ THÊM VÀO ví đang giữ — xem `addedEarnFor`. Một lần
+  // cho cả tập: phía ví chỉ cần đo một lần.
+  const heldIds = portfolio.heldProducts.map((product) => product.id as string);
+  const universeIds = normalized.universe.map((product) => product.id as string);
+  const addedBest = addedEarnFor(universeIds, heldIds, state.spend, ix, asOf);
+  const addedCash = addedEarnFor(universeIds, heldIds, state.spend, ix, asOf, "cash");
   const facts: CandidateFacts[] = normalized.universe.map((product) => {
     const rows = history.get(product.id) ?? [];
     const offer = offerFacts(product, ix, asOf, capacity, rows);
@@ -514,11 +527,14 @@ export function recommend(input: RecommendInput): RecommendationRun {
       offer,
       // Dựng cho MỌI lượt chạy, cùng lý do với `earnCash` ngay dưới.
       offerCash: offerFacts(product, ix, asOf, capacity, rows, "cash"),
-      earn: earnFitFor(product.id, state.spend, ix, asOf),
+      earn: { ...earnFitFor(product.id, state.spend, ix, asOf), addedValueCents: addedBest.get(product.id) ?? 0 },
       // Dựng cho MỌI lượt chạy, không chỉ khi có mục tiêu `cash`: dữ kiện ứng
       // viên cố ý không phụ thuộc mục tiêu (xem `CandidateFacts`), và một hồ
       // sơ có hai mục tiêu thì tập dữ kiện phải giống hệt nhau ở cả hai.
-      earnCash: earnFitFor(product.id, state.spend, ix, asOf, "cash"),
+      earnCash: {
+        ...earnFitFor(product.id, state.spend, ix, asOf, "cash"),
+        addedValueCents: addedCash.get(product.id) ?? 0,
+      },
       benefits: benefitFitFor(product.id, heldKeys, ix, asOf),
       eligibility,
       suitability: evaluateSuitability({

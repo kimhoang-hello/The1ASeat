@@ -652,6 +652,8 @@ export function renderProductExplanation(explanation: ProductExplanation): strin
     }
     out.push(
       `  tích điểm/năm ${money(facts.earn.annualValueCents)}${facts.earn.fromStatedCategories ? "" : " (trên chi tiêu CHƯA phân bổ)"}` +
+        // Vắng ở bản ghi trước 4.35.0 — im lặng bỏ qua, như `earnCash`.
+        `${facts.earn.addedValueCents !== undefined && facts.earn.addedValueCents !== facts.earn.annualValueCents ? ` · thêm vào ví ${money(facts.earn.addedValueCents)}` : ""}` +
         ` · quyền lợi thêm ${facts.benefits.incrementalCount}/${facts.benefits.totalCount} (${money(facts.benefits.incrementalCashCents)})` +
         `${facts.benefits.duplicatedKeys.length > 0 ? ` · TRÙNG: ${facts.benefits.duplicatedKeys.join(", ")}` : ""}`,
     );

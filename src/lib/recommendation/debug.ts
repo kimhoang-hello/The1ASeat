@@ -240,8 +240,8 @@ const COMPONENT_SOURCES: Record<string, { source: LineSource; detail: string }[]
     { source: "engine", detail: "trung vị thị trường của tập ứng viên, cửa welcome bonus (chặn / chưa chắc)" },
   ],
   long_term_earn_fit: [
-    { source: "user_input", detail: "hồ sơ chi tiêu" },
-    { source: "source_data", detail: "tỷ lệ tích điểm, trần, định giá" },
+    { source: "user_input", detail: "hồ sơ chi tiêu, thẻ đang giữ (phần tích THÊM vào ví)" },
+    { source: "source_data", detail: "tỷ lệ tích điểm, trần, định giá — của thẻ này và thẻ đang giữ" },
   ],
   currency_fit: [
     { source: "engine", detail: "nhu cầu đồng tiền §9" },
@@ -275,7 +275,7 @@ const COMPONENT_SOURCES: Record<string, { source: LineSource; detail: string }[]
   ],
   fee_drag: [
     { source: "source_data", detail: "phí thường niên" },
-    { source: "user_input", detail: "hồ sơ chi tiêu" },
+    { source: "user_input", detail: "hồ sơ chi tiêu, thẻ đang giữ" },
   ],
   points_already_sufficient: [
     { source: "user_input", detail: "số dư" },
@@ -499,6 +499,13 @@ export function provenanceFor(
    * bảng nguồn không ghi dòng đó).
    */
   walletPrograms: readonly string[] = [],
+  /**
+   * Thẻ người dùng ĐANG GIỮ. Từ 4.35.0 phần tích điểm của thẻ này được chấm
+   * bằng phần nó THÊM VÀO ví (`addedEarnFor`), nên tỷ lệ, trần và định giá của
+   * thẻ đang giữ quyết định điểm của nó: "Gold thêm $0" có thể nằm ở trần của
+   * Cobalt® đang giữ chứ không ở dòng nào của Gold (vòng Codex 4.35.0).
+   */
+  walletProducts: readonly string[] = [],
 ): ProvenanceRow[] {
   const rows: ProvenanceRow[] = [];
   const offer = dataset.offers.find((row) => row.id === facts.offer.activeOfferId);
@@ -513,7 +520,14 @@ export function provenanceFor(
   const byProduct = <T extends Temporal & { productId: string }>(table: readonly T[]) =>
     activeAt(table.filter((row) => row.productId === facts.productId), asOf);
   for (const row of byProduct(dataset.productFees)) rows.push(provenanceRow("product_fees", row));
-  const rates = byProduct(dataset.earningRates);
+  // Bản ghi trước 4.35.0 không có `addedValueCents`: phần tích điểm khi đó là
+  // của riêng thẻ, không đọc ví.
+  const readsWallet = facts.earn.addedValueCents !== undefined && walletProducts.length > 0;
+  const walletSet = new Set(readsWallet ? walletProducts : []);
+  const rates = [
+    ...byProduct(dataset.earningRates),
+    ...activeAt(dataset.earningRates.filter((row) => walletSet.has(row.productId as string)), asOf),
+  ];
   for (const row of rates) rows.push(provenanceRow("earning_rates", row));
   // Trần tích điểm mà các tỷ lệ trỏ vào — `earnFitFor` đọc chúng qua `capId`,
   // nên một giá trị tích điểm sai có thể nằm ở trần chứ không ở tỷ lệ.
@@ -525,8 +539,10 @@ export function provenanceFor(
   // trình của tỷ lệ tích điểm và đồng tiền của welcome bonus.
   const programs = new Set<string>(facts.earn.programs as string[]);
   if (offer?.bonusCurrencyId != null) programs.add(offer.bonusCurrencyId as string);
+  // Định giá đồng tiền của thẻ đang giữ — cùng lý do với tỷ lệ của chúng ở trên.
+  const valued = new Set<string>([...programs, ...rates.map((row) => row.pointsProgramId as string)]);
   for (const valuation of activeAt(dataset.programValuations, asOf)) {
-    if (programs.has(valuation.programId as string)) rows.push(provenanceRow("program_valuations", valuation));
+    if (valued.has(valuation.programId as string)) rows.push(provenanceRow("program_valuations", valuation));
   }
   // Chặng chuyển điểm đi từ đồng tiền của thẻ: chúng quyết định bonus quy về
   // chương trình đặt vé, tầm với linh hoạt, và phần "đổ vào hệ sinh thái"
@@ -791,6 +807,10 @@ export function explainProduct(
             record.inputSnapshot.asOf,
             goal?.goal.tripNeed?.strategies ?? [],
             derived.portfolio.direct.map((row) => row.programId as string),
+            // Chỉ khi mục tiêu ĐỌC tích điểm — chuyến đi thì không (§10.2).
+            goal !== undefined && goal !== null && goal.goal.goal.type !== "trip"
+              ? (derived.portfolio.heldProductIds as string[])
+              : [],
           ),
   };
 }

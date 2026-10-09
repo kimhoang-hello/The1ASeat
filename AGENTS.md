@@ -3273,9 +3273,8 @@ hôm nay: 37 thẻ đều có đúng một offer + một mức phí đang hiệu
 - *Scotiabank® Gold Amex®/Passport™ thiếu luật "giữ thẻ Scotiabank trong 24
   tháng"*: tác giả chốt 21/09/2026 là thực tế không áp (khối chú thích trên
   `RULES_CHECKED_ON` trong `eligibility-rules.ts`). Codex đồng ý ở vòng bác.
-- *`long_term_earn_fit` đo tuyệt đối thay vì phần tăng thêm so với ví* — đúng là
-  hạn chế, nhưng là đổi mô hình cho mọi mục tiêu có thẻ đang giữ: chờ tác giả
-  (HANDOFF §0 mục 1). Codex đồng ý không chặn push.
+- *`long_term_earn_fit` đo tuyệt đối thay vì phần tăng thêm so với ví* — tách khỏi
+  4.34.0 vì là đổi mô hình; tác giả chốt cùng ngày → **4.35.0**, xem cuối mục này.
 - *Chuyến đi không tính tích điểm thường* (Cobalt® gom nhanh hơn Gold trên ăn uống
   cho chuyến 6 tháng nữa): §10.2 không có vế đó — đổi spec, không phải lỗi code.
 
@@ -3288,3 +3287,30 @@ bonus" so với "Mức spend để nhận bonus…"), một test đếm số câ
 vì kiểm ngày chúng ghi. **So bằng MÃ, không bằng chữ hiển thị; và hồ sơ của test
 phải đi QUA nhánh đang kiểm** (thẻ bị chặn bonus chỉ có câu về mức spend khi sức
 dồn đã khai).
+
+**4.35.0 — tích điểm đo phần THÊM VÀO ví đang giữ (tác giả chốt 09/10/2026).**
+`EarnFit.addedValueCents` (`addedEarnFor` ở `earn-fit.ts`) là tử số của
+`long_term_earn_fit` và của hai `fee_drag` (earn_points, cash); `annualValueCents`
+giữ nguyên để trình bày và làm MẪU SỐ (mức tích cao nhất của một thẻ — chia cho phần
+thêm lớn nhất thì thẻ thêm được $50/năm nhận trọn 1.0 khi ví đã gần đủ). Phần thêm =
+giá trị tốt nhất của (ví + thẻ mới) − của ví, mỗi hạng mục đặt TRỌN lên một thẻ, mỗi
+thẻ đo bằng `earnFitFor` trên đúng tập nó nhận (trần chung áp ở CẢ HAI phía). Lời giải
+CHÍNH XÁC: hạng mục không dính trần chung cộng thẳng (thẻ tốt nhất cho riêng nó), thẻ
+không có trần chung gộp thành một thẻ ảo, chỉ nhóm hạng mục dính trần (dữ liệu hôm nay
+tối đa 7: Cobalt® 3 + TD® Cash Back 4) chia bằng quy hoạch động trên tập con
+(`assignAmong`); nhóm > 7 lui về leo đồi (`bestAllocation`, test ép chạy qua). Test so
+với phép VÉT CẠN mọi phân bổ trên 6 hồ sơ, mọi thẻ ứng viên. BA bản trước đều sai và
+đều đổi khuyến nghị — vòng Codex bác bắt cả ba: đo phía ví từng hạng mục riêng lẻ (Gold
+"thêm $0" cho người giữ Cobalt® chi $4,000 + $4,000, thật $864); một lượt thử bỏ từng
+hạng mục ($864 thay vì $1,152); leo đồi theo nước chuyển MỘT hạng mục kẹt ở phân bổ
+cần đổi chéo (ví Cobalt® + TD® Cash Back: Scotiabank® Gold $967 thay vì $1,956). Bản
+quy hoạch động đầu thử mọi thẻ đang giữ: 2.3 s mỗi lượt với ví 7 thẻ × 13 hạng mục;
+gộp thẻ cộng thẳng thành thẻ ảo đưa về ~100 ms. **Phép phân bổ có oracle vét cạn thì
+đừng tin "khớp trên mọi hồ sơ thử" của một heuristic — Codex dựng ca ngoài tập thử.** Ví trống / chưa khai thẻ → phần thêm = phần tích của riêng thẻ,
+nên mọi hồ sơ chưa giữ thẻ nào chấm y như 4.34.0. `why` nay kể cả tỷ lệ, trần, định giá
+của thẻ đang giữ khi mục tiêu đọc tích điểm. Không đổi: `walletEarnCoverage`
+của `NO_NEW_CARD`, mục tiêu chuyến đi. Chi phí đo được: +~25 ms mỗi lượt gợi ý đầy đủ
+(cả §30) cho hồ sơ nhiều thẻ. 16 nhân vật: "đa dạng hơn" của `advancedCollector` nay
+là BMO® VIPorter® / WestJet RBC® / Avion® (chương trình mới với ví đó), thay cho thẻ
+Aeroplan® thứ ba được cộng điểm vì tỷ lệ tích điểm mà ví đã có.
+

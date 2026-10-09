@@ -27,7 +27,8 @@ import { productIdFor } from "./data/products.ts";
 import { offerClimate } from "./offer-quality.ts";
 import { rankCandidates } from "./rank.ts";
 import { answersFor } from "./sensitivity.ts";
-import type { DatasetIndex } from "./indexes.ts";
+import { indexDataset, type DatasetIndex } from "./indexes.ts";
+import { addedEarnFor, earnFitFor } from "./earn-fit.ts";
 import { validateDataset } from "./validate.ts";
 import {
   advancedCollector,
@@ -46,8 +47,8 @@ import {
   vietnamTripShortfall,
 } from "./data/user-fixtures.ts";
 import type { OfferHistoryPoint } from "./offer-history.ts";
-import type { Product, RecommendationDataset } from "./types.ts";
-import { amountRange, type UserDataGap, type UserState } from "./user-types.ts";
+import type { Product, RecommendationDataset, RedemptionMode, SpendCategory } from "./types.ts";
+import { amountRange, type UserDataGap, type UserSpendProfile, type UserState } from "./user-types.ts";
 import type { Candidate } from "./engine-types.ts";
 
 const ASOF = "2026-09-08";
@@ -992,12 +993,25 @@ test("SCORES_NEARLY_TIED nói đúng khoảng cách điểm, không nói thay ch
   // xuống `low` — nhưng lý do không phải "sát nhau". Ca gốc là sinh viên (cách
   // ~0.062); từ engine 4.33.0 (`spend_fit` cân theo phần đặt cược) hai thẻ đầu
   // của sinh viên sát nhau, nên tiền đề dời sang `duplicateBagBenefit` (~0.065,
-  // độ tin cậy `medium` mà phí cũ kéo xuống `low`).
-  const base = execute(duplicateBagBenefit).record;
+  // độ tin cậy `medium` mà phí cũ kéo xuống `low`). Từ 4.35.0 (tích điểm đo
+  // phần THÊM vào ví) hai thẻ đầu của nó cũng sát nhau, và không nhân vật nào
+  // còn tách ≥ 0.05 mà một dòng phí cũ kéo xuống `low` được — dời sang
+  // `advancedCollector` chưa khai hạng mục chi tiêu, trên bộ dữ liệu CŨ toàn bộ.
+  const state = structuredClone(advancedCollector);
+  state.spend = { ...state.spend!, byCategory: {} };
+  const base = execute(state).record;
   const [top, second] = ranking(base);
   assert.ok(top.candidate.score - second.candidate.score >= 0.05, "tiền đề: không sát nhau");
-  const fee = DATA.productFees.find((row) => row.productId === top.candidate.productId)!;
-  const stale = execute(duplicateBagBenefit, { data: staleAny("productFees", fee.id as string) }).record;
+  assert.notEqual(base.outputSnapshot.results[0].confidence.level, "low", "tiền đề: dữ liệu tươi thì chưa thấp");
+  const everythingStale = Object.fromEntries(
+    Object.entries(DATA).map(([table, rows]) => [
+      table,
+      Array.isArray(rows)
+        ? rows.map((row) => (row !== null && typeof row === "object" && "verifiedAt" in row ? { ...row, verifiedAt: "2020-01-01" } : row))
+        : rows,
+    ]),
+  ) as unknown as RecommendationDataset;
+  const stale = execute(state, { data: everythingStale }).record;
   const result = stale.outputSnapshot.results[0];
   assert.equal(result.confidence.level, "low", "tiền đề: dữ liệu cũ kéo độ tin cậy xuống");
   assert.ok(!result.reasonCodes.includes("SCORES_NEARLY_TIED"));
@@ -1660,4 +1674,293 @@ test("hai hạng CÙNG HỌ hoà tuyệt đối thì hạng dưới — thẻ d�
   assert.equal(rows[elite].candidate.score, rows[world].candidate.score, "tiền đề: hoà tuyệt đối");
   assert.ok(world < elite, "bản World phải đứng trước bản World Elite");
   assert.equal(rows[elite].visibility, "hidden_same_family");
+});
+
+/* ================================================================== *
+ * Engine 4.35.0 — tích điểm đo phần THÊM VÀO ví đang giữ
+ * ================================================================== */
+
+/** Ca của Codex 09/10/2026: người giữ Cobalt®/Platinum/Business Platinum, từng
+ *  giữ Gold (bonus bị chặn), muốn "tích thêm điểm", chịu phí $250. */
+function walletCoversGold(): UserState {
+  const state = structuredClone(advancedCollector);
+  state.goals = [{ ...state.goals[0], type: "earn_points", targetProgramId: null } as never];
+  state.profile = {
+    ...state.profile,
+    annualFeeTolerancePerCard: 250,
+    businessCardsAllowed: false,
+  };
+  return state;
+}
+
+test("ví trống: phần tích THÊM bằng đúng phần tích của riêng thẻ — hồ sơ chưa giữ thẻ nào chấm y như cũ", () => {
+  for (const state of [beginnerNoCards, lowSpendCapacity, beginnerUndeclared]) {
+    for (const row of execute(state).record.derivedState.candidates) {
+      assert.equal(row.earn.addedValueCents, row.earn.annualValueCents, `${state.profile.id}: ${row.productSlug}`);
+    }
+  }
+});
+
+test("phần tích THÊM nằm trong [0, phần tích của riêng thẻ] trên mọi nhân vật", () => {
+  for (const state of USER_FIXTURES) {
+    for (const row of execute(state).record.derivedState.candidates) {
+      for (const earn of [row.earn, row.earnCash].filter((value) => value !== undefined)) {
+        assert.ok(earn.addedValueCents >= 0, `${state.profile.id}: ${row.productSlug} âm`);
+        assert.ok(earn.addedValueCents <= earn.annualValueCents + 1e-6, `${state.profile.id}: ${row.productSlug} thêm nhiều hơn chính nó`);
+      }
+    }
+  }
+});
+
+test("ví đã kiếm bằng hoặc hơn ở mọi hạng mục: thẻ mới không được điểm tích lũy, phí không bù được bằng gì", () => {
+  const { record } = execute(walletCoversGold());
+  const gold = facts(record, productIdFor("amex-gold-rewards"))!;
+  assert.ok(gold.earn.annualValueCents > 0, "tiền đề: riêng Gold tích được");
+  assert.ok(gold.eligibility.welcomeOfferBlocked, "tiền đề: bonus Gold bị chặn");
+  assert.equal(gold.earn.addedValueCents, 0);
+  const ranked = findRanked(record, "amex-gold-rewards")!;
+  assert.equal(raw(ranked, "long_term_earn_fit"), 0);
+  assert.equal(raw(ranked, "fee_drag"), 0);
+  // Bản trước khuyên mở lại Gold (không bonus, phí $250) trên "chưa mở thẻ nào".
+  assert.notEqual(winner(record).productSlug, "amex-gold-rewards");
+});
+
+test("thẻ kiếm hơn ví ở một hạng mục thì có phần tích THÊM, và chỉ ở hạng mục đó", () => {
+  // Ví chỉ có hai thẻ Aeroplan® (1.5x siêu thị/xăng, 1x còn lại); Amex®
+  // Cobalt® 5x ăn uống/siêu thị — phần thêm dương nhưng nhỏ hơn phần tích của
+  // riêng nó, vì ở các hạng mục còn lại ví đã kiếm ngang hoặc hơn.
+  const { record } = execute(aeroplanHeavy);
+  const cobalt = facts(record, productIdFor("amex-cobalt"))!;
+  assert.ok(cobalt.earn.addedValueCents > 0);
+  assert.ok(cobalt.earn.addedValueCents < cobalt.earn.annualValueCents);
+  assert.match(findRanked(record, "amex-cobalt")!.components.find((c) => c.key === "long_term_earn_fit")!.note, /so với thẻ đang giữ/);
+});
+
+test("trần CHUNG của thẻ mới: để lại cho ví hạng mục mà dồn vào thẻ mới làm tụt tổng", () => {
+  // Ví giữ Scotiabank® Gold Amex® (5x siêu thị VÀ ăn uống, không trần trong dữ
+  // liệu). Amex® Cobalt® 5x cho cả hai nhưng chung một trần 12,500 điểm/tháng.
+  // Chi $3,000 siêu thị + $3,000 ăn uống: dồn cả hai sang Cobalt® vượt trần và
+  // tụt dưới ví (−$144/năm); chỉ dồn siêu thị thì hơn ví. Phép thử bỏ từng hạng
+  // mục một tìm ra tập đó — không có nó phần thêm là 0.
+  const asOf = "2026-10-09";
+  const state = structuredClone(beginnerNoCards);
+  state.cards = [
+    {
+      id: "uc_cap_scotia" as never,
+      userId: state.profile.id,
+      productId: productIdFor("scotiabank-gold-amex"),
+      status: "active",
+      openedDate: "2025-01-01",
+      closedDate: null,
+    } as never,
+  ];
+  state.declared = { ...state.declared, cards: true };
+  state.spend = {
+    ...state.spend!,
+    monthlyTotal: { low: 6_000, high: 6_000 },
+    byCategory: { grocery: { low: 3_000, high: 3_000 }, dining: { low: 3_000, high: 3_000 } },
+  };
+  const record = executeRun(
+    { state, data: datasetAt(offlineDataset(), asOf, { knownAt: asOf }), asOf, knownAt: asOf },
+    { id: "run_acceptance_shared_cap", createdAt: `${asOf}T00:00:00.000Z` },
+  ).record;
+  const cobalt = record.derivedState.candidates.find((row) => row.productSlug === "amex-cobalt")!;
+  assert.ok(cobalt.earn.addedValueCents > 0, "Cobalt® vẫn thêm được ở siêu thị");
+  assert.ok(cobalt.earn.addedValueCents < cobalt.earn.annualValueCents);
+});
+
+test("mục tiêu quy ra tiền: phí so với phần RÚT RA TIỀN thêm vào ví, không so với phần của riêng thẻ", () => {
+  const state = walletCoversGold();
+  state.goals = [{ ...state.goals[0], type: "cash" } as never];
+  const { record } = execute(state);
+  const gold = facts(record, productIdFor("amex-gold-rewards"))!;
+  assert.ok(gold.earnCash !== undefined && gold.earnCash.annualValueCents > 0, "tiền đề: riêng Gold rút ra được tiền");
+  assert.equal(gold.earnCash.addedValueCents, 0, "tiền đề: Cobalt® đang giữ rút ra bằng hoặc hơn");
+  assert.equal(raw(findRanked(record, "amex-gold-rewards"), "fee_drag"), 0);
+});
+
+/* ---- Phân bổ của `addedEarnFor` so với phép VÉT CẠN ------------------ */
+
+const ALLOC_ASOF = "2026-10-09";
+const ALLOC_DATA = datasetAt(offlineDataset(), ALLOC_ASOF, { knownAt: ALLOC_ASOF });
+const ALLOC_IX = indexDataset(ALLOC_DATA);
+
+function profileWith(byCategory: Partial<Record<SpendCategory, number>>): UserSpendProfile {
+  const amounts = Object.fromEntries(
+    Object.entries(byCategory).map(([category, monthly]) => [category, { low: monthly, high: monthly }]),
+  );
+  const total = Object.values(byCategory).reduce((sum, monthly) => sum + (monthly ?? 0), 0);
+  return {
+    ...beginnerNoCards.spend!,
+    monthlyTotal: { low: total, high: total },
+    byCategory: amounts,
+  };
+}
+
+/** Giá trị tốt nhất của một tập thẻ: thử MỌI cách đặt trọn từng hạng mục lên một thẻ. */
+function bruteForceBest(cards: readonly string[], spend: UserSpendProfile, mode: RedemptionMode): number {
+  const categories = Object.keys(spend.byCategory) as SpendCategory[];
+  let best = 0;
+  const total = cards.length ** categories.length;
+  for (let code = 0; code < total; code += 1) {
+    const assigned = new Map<string, SpendCategory[]>();
+    let rest = code;
+    for (const category of categories) {
+      const card = cards[rest % cards.length];
+      rest = Math.floor(rest / cards.length);
+      assigned.set(card, [...(assigned.get(card) ?? []), category]);
+    }
+    let value = 0;
+    for (const [card, owned] of assigned) {
+      const sub: UserSpendProfile = {
+        ...spend,
+        monthlyTotal: null,
+        byCategory: Object.fromEntries(owned.map((category) => [category, spend.byCategory[category]])),
+      };
+      value += earnFitFor(card, sub, ALLOC_IX, ALLOC_ASOF, mode).annualValueCents;
+    }
+    best = Math.max(best, value);
+  }
+  return best;
+}
+
+function assertMatchesBruteForce(heldSlugs: string[], spend: UserSpendProfile, mode: RedemptionMode = "best") {
+  const held = heldSlugs.map((slug) => productIdFor(slug) as string);
+  const candidates = ALLOC_DATA.products.map((product) => product.id as string).filter((id) => !held.includes(id));
+  const added = addedEarnFor(candidates, held, spend, ALLOC_IX, ALLOC_ASOF, mode);
+  const wallet = bruteForceBest(held, spend, mode);
+  for (const candidate of candidates) {
+    const expected = Math.max(0, bruteForceBest([...held, candidate], spend, mode) - wallet);
+    assert.ok(
+      Math.abs((added.get(candidate) ?? NaN) - expected) < 1,
+      `${heldSlugs.join("+")} → ${candidate} (${mode}): engine ${added.get(candidate)}, vét cạn ${expected}`,
+    );
+  }
+  return added;
+}
+
+test("phần tích THÊM bằng phép vét cạn — trần chung của thẻ ĐANG GIỮ (Cobalt®) được áp", () => {
+  // Bản đầu đo ví từng hạng mục riêng lẻ: mỗi hạng mục hưởng trọn trần 12,500
+  // điểm/tháng của Cobalt®, nên Gold "thêm $0" — trong khi dời siêu thị sang
+  // Gold thêm $864/năm và đổi khuyến nghị (vòng Codex bác bản vá 4.35.0).
+  const added = assertMatchesBruteForce(["amex-cobalt"], profileWith({ grocery: 4_000, dining: 4_000 }));
+  assert.ok(Math.abs(added.get(productIdFor("amex-gold-rewards") as string)! - 86_400) < 1);
+});
+
+test("phần tích THÊM bằng phép vét cạn — tìm đúng tập hạng mục khi thẻ MỚI có trần chung", () => {
+  // Một lượt "thử bỏ từng hạng mục" theo thứ tự chữ cái dừng ở siêu thị ($864);
+  // chỉ dồn giao đồ ăn sang Cobalt® mới tốt nhất ($1,152).
+  const spend = profileWith({ dining: 300, food_delivery: 2_400, grocery: 1_800 });
+  const added = assertMatchesBruteForce(["scotiabank-gold-amex"], spend);
+  assert.ok(Math.abs(added.get(productIdFor("amex-cobalt") as string)! - 115_200) < 1);
+  // Thước tiền mặt: MR và Scene+™ cùng 1 cent — Cobalt® không thêm được đồng nào.
+  const cash = assertMatchesBruteForce(["scotiabank-gold-amex"], spend, "cash");
+  assert.equal(cash.get(productIdFor("amex-cobalt") as string), 0);
+});
+
+test("phần tích THÊM bằng phép vét cạn — cần NHIỀU nước chuyển (dưới trần, Cobalt® nhận cả ba hạng mục)", () => {
+  // Một nước chuyển mỗi lần: Cobalt® phải nhận lần lượt siêu thị, ăn uống, giao
+  // đồ ăn ($2,000 — dưới trần) mới tới tối ưu. Leo đồi dừng sau một bước thì vét
+  // cạn bắt được.
+  const added = assertMatchesBruteForce(["amex-green"], profileWith({ grocery: 800, dining: 700, food_delivery: 500 }));
+  assert.ok(added.get(productIdFor("amex-cobalt") as string)! > 0);
+});
+
+test("phần tích THÊM bằng phép vét cạn — phân bổ cần ĐỔI CHÉO hai hạng mục", () => {
+  // Ví Cobalt® + TD® Cash Back. Tối ưu: ăn uống + giao đồ ăn sang Scotiabank®
+  // Gold, siêu thị ở lại Cobalt®. Leo đồi theo nước chuyển MỘT hạng mục dừng ở
+  // "ăn uống ở Cobalt®" — Scotiabank® Gold thêm $967 thay vì $1,956, đủ đổi thẻ
+  // đứng đầu (vòng Codex chốt 4.35.0). Lời giải chính xác thử mọi cách chia
+  // nhóm hạng mục dính trần.
+  const added = assertMatchesBruteForce(
+    ["amex-cobalt", "td-cash-back-visa-infinite"],
+    profileWith({ dining: 5_200, food_delivery: 300, grocery: 2_400 }),
+  );
+  assert.ok(Math.abs(added.get(productIdFor("scotiabank-gold-amex") as string)! - 195_600) < 1);
+});
+
+test("đường lui leo đồi (nhóm dính trần quá lớn) vẫn chạy đúng ở những ca nó tới được tối ưu", () => {
+  // Dữ liệu hôm nay dính tối đa 7 hạng mục nên lời giải chính xác luôn áp dụng;
+  // hạ trần về 0 để chạy qua nhánh leo đồi. Ba ca dưới leo đồi tới đúng tối ưu
+  // (đã kiểm bằng vét cạn); ca đổi chéo ở test trên thì không — đó là lý do có
+  // lời giải chính xác.
+  const cases: [string[], UserSpendProfile, string, number][] = [
+    [["amex-cobalt"], profileWith({ grocery: 4_000, dining: 4_000 }), "amex-gold-rewards", 86_400],
+    [["scotiabank-gold-amex"], profileWith({ dining: 300, food_delivery: 2_400, grocery: 1_800 }), "amex-cobalt", 115_200],
+    [["amex-green"], profileWith({ grocery: 800, dining: 700, food_delivery: 500 }), "amex-cobalt", -1],
+  ];
+  for (const [heldSlugs, spend, slug, expected] of cases) {
+    const held = heldSlugs.map((name) => productIdFor(name) as string);
+    const candidates = ALLOC_DATA.products.map((product) => product.id as string).filter((id) => !held.includes(id));
+    const heuristic = addedEarnFor(candidates, held, spend, ALLOC_IX, ALLOC_ASOF, "best", 0);
+    const exact = addedEarnFor(candidates, held, spend, ALLOC_IX, ALLOC_ASOF);
+    const target = productIdFor(slug) as string;
+    assert.ok(Math.abs(heuristic.get(target)! - exact.get(target)!) < 1, `${heldSlugs.join("+")} → ${slug}`);
+    if (expected >= 0) assert.ok(Math.abs(heuristic.get(target)! - expected) < 1);
+    for (const candidate of candidates) {
+      const own = earnFitFor(candidate, spend, ALLOC_IX, ALLOC_ASOF).annualValueCents;
+      const value = heuristic.get(candidate)!;
+      assert.ok(value >= 0 && value <= own + 1e-6, `${candidate}: ${value} ngoài [0, ${own}]`);
+    }
+  }
+});
+
+test("phần tích THÊM bằng phép vét cạn — trần chung TD® Cash Back và ví nhiều thẻ", () => {
+  assertMatchesBruteForce(["td-cash-back-visa-infinite"], profileWith({ gas: 1_200, ev_charging: 1_200 }));
+  assertMatchesBruteForce(
+    ["amex-cobalt", "scotiabank-gold-amex"],
+    profileWith({ grocery: 3_000, dining: 1_500, food_delivery: 800, gas: 500 }),
+  );
+});
+
+
+test("`why` kể cả tỷ lệ, trần, định giá của thẻ ĐANG GIỮ khi phần tích điểm đọc ví (4.35.0)", () => {
+  // "Gold thêm $0" có thể nằm ở trần của Cobalt® đang giữ chứ không ở dòng nào
+  // của Gold — bảng nguồn phải kể ra dòng đó (vòng Codex 4.35.0).
+  const { record, dataset } = execute(walletCoversGold());
+  const rows = explainProduct(record, "amex-gold-rewards", { dataset }).provenance ?? [];
+  const cobalt = productIdFor("amex-cobalt");
+  const cobaltRates = DATA.earningRates.filter((row) => row.productId === cobalt);
+  const cobaltCaps = new Set(cobaltRates.map((row) => row.capId).filter((id) => id !== null) as string[]);
+  assert.ok(cobaltCaps.size > 0, "tiền đề: Cobalt® có trần");
+  assert.ok(rows.some((row) => row.table === "earning_rates" && cobaltRates.some((rate) => rate.id === row.id)));
+  assert.ok(rows.some((row) => row.table === "earning_caps" && cobaltCaps.has(row.id)));
+  // Chuyến đi không đọc tích điểm (§10.2): không kể dòng nào của ví.
+  const trip = execute(vietnamTripFunded);
+  const tripRows = explainProduct(trip.record, "amex-cobalt", { dataset: trip.dataset }).provenance ?? [];
+  const held = new Set(vietnamTripFunded.cards.map((card) => card.productId as string));
+  const heldRates = new Set(DATA.earningRates.filter((row) => held.has(row.productId as string)).map((row) => row.id as string));
+  assert.ok(!tripRows.some((row) => row.table === "earning_rates" && heldRates.has(row.id)));
+});
+
+test("mục tiêu quy ra tiền đọc phần thêm THEO THƯỚC TIỀN MẶT, không theo thước đổi vé", () => {
+  // Ví giữ Scotiabank® Gold Amex®; Cobalt® thêm $1,152/năm theo giá đổi vé
+  // nhưng $0 khi rút ra tiền (MR và Scene+™ cùng 1 cent). Đọc nhầm thước đổi
+  // vé thì Cobalt® được cộng tích điểm và bù được phí cho một người vừa nói họ
+  // không định đổi vé (vòng Codex 4.35.0: test cũ có cả hai phần thêm cùng bằng 0).
+  const state = structuredClone(beginnerNoCards);
+  state.cards = [
+    {
+      id: "uc_cash_scotia" as never,
+      userId: state.profile.id,
+      productId: productIdFor("scotiabank-gold-amex"),
+      status: "active",
+      openedDate: "2025-01-01",
+      closedDate: null,
+    } as never,
+  ];
+  state.declared = { ...state.declared, cards: true };
+  state.spend = profileWith({ dining: 300, food_delivery: 2_400, grocery: 1_800 });
+  state.goals = [{ ...state.goals[0], type: "cash" } as never];
+  state.profile = { ...state.profile, annualFeeTolerancePerCard: 250 };
+  const record = executeRun(
+    { state, data: ALLOC_DATA, asOf: ALLOC_ASOF, knownAt: ALLOC_ASOF },
+    { id: "run_acceptance_cash_added", createdAt: `${ALLOC_ASOF}T00:00:00.000Z` },
+  ).record;
+  const cobalt = record.derivedState.candidates.find((row) => row.productSlug === "amex-cobalt")!;
+  assert.ok(cobalt.earn.addedValueCents > 0, "tiền đề: theo giá đổi vé Cobalt® thêm được");
+  assert.equal(cobalt.earnCash?.addedValueCents, 0, "tiền đề: rút ra tiền thì không");
+  const ranked = findRanked(record, "amex-cobalt")!;
+  assert.equal(raw(ranked, "long_term_earn_fit"), 0);
+  assert.equal(raw(ranked, "fee_drag"), 0);
 });

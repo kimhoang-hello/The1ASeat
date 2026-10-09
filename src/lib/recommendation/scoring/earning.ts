@@ -31,12 +31,16 @@ export function scoreEarning(
   candidate: CandidateFacts,
   ctx: ScoringContext,
 ): ScoreComponent[] {
-  const annual = candidate.earn.annualValueCents;
-  // Phí so với chính phần tích được. Thẻ chưa tính được giá trị tích điểm —
-  // người dùng chưa khai chi tiêu nào — thì 0.5 trung tính, không phải 0: cho
-  // 0 là phạt mọi thẻ có phí vì một câu chưa ai hỏi.
-  const feeDrag =
-    annual <= 0 ? 0.5 : Math.max(0, 1 - candidate.offer.ongoingFeeCents / annual);
+  // Phí so với phần thẻ này THÊM VÀO ví đang giữ — thứ phí phải trả cho
+  // (`addedEarnFor`). Thẻ chưa tính được giá trị tích điểm — người dùng chưa
+  // khai chi tiêu nào — thì 0.5 trung tính, không phải 0: cho 0 là phạt mọi thẻ
+  // có phí vì một câu chưa ai hỏi. Còn tính ĐƯỢC mà thẻ không thêm gì (ví đã
+  // kiếm bằng hoặc hơn) thì phí không bù được bằng gì: 0, trừ thẻ không phí.
+  const computable = candidate.earn.annualValueCents > 0;
+  const annual = candidate.earn.addedValueCents;
+  const fee = candidate.offer.ongoingFeeCents;
+  const feeDrag = !computable ? 0.5 : annual <= 0 ? (fee > 0 ? 0 : 1) : Math.max(0, 1 - fee / annual);
+  const extra = annual === candidate.earn.annualValueCents ? "" : " thêm so với thẻ đang giữ";
 
   return [
     earnFitComponent(0.4, candidate, ctx),
@@ -47,9 +51,13 @@ export function scoreEarning(
       "fee_drag",
       0.1,
       feeDrag,
-      annual <= 0
+      !computable
         ? "chưa tính được phần tích mỗi năm — 0.5 trung tính"
-        : `1 − phí $${Math.round(candidate.offer.ongoingFeeCents / 100)} ÷ tích $${Math.round(annual / 100)}/năm`,
+        : annual <= 0
+          ? fee > 0
+            ? "ví đang giữ đã kiếm bằng hoặc hơn thẻ này — phí không bù được bằng gì"
+            : "không thêm được gì so với ví, nhưng không phí"
+          : `1 − phí $${Math.round(fee / 100)} ÷ tích${extra} $${Math.round(annual / 100)}/năm`,
     ),
   ];
 }

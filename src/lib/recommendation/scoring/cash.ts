@@ -66,7 +66,8 @@ export function scoreCash(candidate: CandidateFacts, ctx: ScoringContext): Score
   // một thẻ phí $139 tích ra ĐÚNG $0 tiền mặt vẫn được cộng điểm — trong khi
   // đó là ca tệ nhất bảng này biết mô tả. Phân biệt bằng thước `best`: tính
   // được ở đó mà ra 0 ở đây nghĩa là đã có đủ dữ liệu, câu trả lời là 0.
-  const annual = candidate.earnCash.annualValueCents;
+  // Phần THÊM VÀO ví đang giữ (`addedEarnFor`), cùng lý do với `scoring/earning.ts`.
+  const annual = candidate.earnCash.addedValueCents;
   const fee = candidate.offer.ongoingFeeCents;
   // Con số 0 ở `earnCash` có HAI nguồn, và chúng dẫn tới hai câu trả lời
   // ngược nhau. Amex® Cobalt® tích $1,900/năm theo thước đổi vé và $0 theo
@@ -108,8 +109,10 @@ export function scoreCash(candidate: CandidateFacts, ctx: ScoringContext): Score
           ? "chưa tra được đồng điểm này rút ra tiền theo tỷ lệ nào — 0.5 trung tính"
           : "chưa tính được phần tích mỗi năm (chưa khai chi tiêu, hoặc thẻ chưa có tỷ lệ nào) — 0.5 trung tính"
         : annual <= 0
-          ? `tích ra $0 tiền mặt, phí $${Math.round(fee / 100)}`
-          : `1 − phí $${Math.round(fee / 100)} ÷ rút ra $${Math.round(annual / 100)}/năm`,
+          ? candidate.earnCash.annualValueCents > 0
+            ? `ví đang giữ đã rút ra bằng hoặc hơn thẻ này, phí $${Math.round(fee / 100)}`
+            : `tích ra $0 tiền mặt, phí $${Math.round(fee / 100)}`
+          : `1 − phí $${Math.round(fee / 100)} ÷ rút ra${annual === candidate.earnCash.annualValueCents ? "" : " thêm so với thẻ đang giữ"} $${Math.round(annual / 100)}/năm`,
     ),
     spendFitComponent(0.1, candidate, ctx),
   ];
