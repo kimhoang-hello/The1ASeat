@@ -28,6 +28,7 @@ import { tripCoverage } from "./strategies.ts";
 import { component, assembleScore } from "./scoring/weights.ts";
 import { earnFitFor } from "./earn-fit.ts";
 import { activeAt } from "./temporal.ts";
+import type { DatasetIndex } from "./indexes.ts";
 import type { PointsProgramId } from "./types.ts";
 import { valuationModeFor } from "./scoring/context.ts";
 import type { CandidateFacts, ScoringContext } from "./scoring/context.ts";
@@ -218,12 +219,38 @@ export function buildNoNewCardCandidate(
  * hoà với một thẻ thì nó THUA — "không làm gì" chỉ nên thắng khi nó thắng
  * thật.
  */
-export function rankCandidates(candidates: readonly Candidate[]): Candidate[] {
+export function rankCandidates(candidates: readonly Candidate[], ix?: DatasetIndex): Candidate[] {
+  // Hai hạng của CÙNG một họ hoà nhau tuyệt đối thì engine không thấy hạng
+  // trên đem lại gì thêm — chọn hạng DƯỚI, thẻ dễ mở hơn. Phá hoà theo id từng
+  // chọn Capital One® Quicksilver World Elite® (đòi $80,000 thu nhập) thay cho
+  // bản World ($50,000) cho một sinh viên không khai thu nhập, rồi phép gom họ
+  // giấu luôn bản World (vòng Codex 09/10/2026).
+  //
+  // Phải là một thứ tự TOÀN PHẦN: so hạng khi cùng họ còn khác họ so id thì
+  // không bắc cầu — một thẻ khác họ có id nằm giữa hai hạng làm kết quả phụ
+  // thuộc thứ tự đầu vào (vòng Codex bác bản vá). Nên mỗi thẻ mang một khoá
+  // (nhóm, hạng, id): thẻ trong họ lấy nhóm = id NHỎ NHẤT của họ, thẻ đứng một
+  // mình lấy nhóm = id của chính nó — ca không có họ nào giữ nguyên thứ tự cũ.
+  const familyAnchor = new Map<string, string>();
+  for (const product of ix?.productById.values() ?? []) {
+    if (product.familyId === null) continue;
+    const family = product.familyId as string;
+    const current = familyAnchor.get(family);
+    if (current === undefined || (product.id as string) < current) familyAnchor.set(family, product.id as string);
+  }
+  const keyOf = (candidate: Candidate): [string, number, string] => {
+    const id = (candidate.productId ?? "") as string;
+    const product = candidate.productId === null ? undefined : ix?.productById.get(candidate.productId);
+    const anchor = product?.familyId == null ? undefined : familyAnchor.get(product.familyId as string);
+    return anchor === undefined ? [id, 0, id] : [anchor, product?.tierRank ?? 0, id];
+  };
   return [...candidates].sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
     if (a.kind !== b.kind) return a.kind === "no_new_card" ? 1 : -1;
-    const aid = a.productId ?? "";
-    const bid = b.productId ?? "";
+    const [ag, at, aid] = keyOf(a);
+    const [bg, bt, bid] = keyOf(b);
+    if (ag !== bg) return ag < bg ? -1 : 1;
+    if (at !== bt) return at - bt;
     return aid < bid ? -1 : aid > bid ? 1 : 0;
   });
 }

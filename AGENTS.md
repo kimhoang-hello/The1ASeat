@@ -3227,3 +3227,64 @@ thắng 3 (sinh viên, đa dạng hoá, chưa khai sức chi) — đều vì v�
 Scotiabank® Gold Amex® (TD® Aeroplan® sát nút), highSpend → Scotiabank® Gold Amex®.
 Bốn test đổi KỊCH BẢN (không đổi điều chúng kiểm) vì tiền đề dựa vào thứ hạng cũ —
 ghi ngay trong từng test. Đừng "sửa" vế này lại thành trọn 1.0 cho thẻ không bonus.
+
+## Audit engine Gợi ý thẻ 09/10/2026 — đừng đề xuất lại
+
+Engine 4.33.0 → **4.34.0**. Cách làm: chạy `reco:debug run` cho cả 16 nhân vật mẫu
+ở ngày hôm nay rồi đọc từng bảng xếp hạng như một chuyên gia points; hai vòng
+Codex song song (chứng minh kết luận "sạch" là sai; đóng vai chuyên gia đọc 16
+lượt chạy), một vòng bác bản vá (chặn push, đúng cả ba), một vòng chốt. Dữ liệu
+hôm nay: 37 thẻ đều có đúng một offer + một mức phí đang hiệu lực, offer quá
+`endDate` đều có bản nối tiếp; `audit:reco-data` không lỗi.
+
+**Đã vá (mỗi bản vá có test kiểm ngược — cài lại lỗi là đỏ):**
+- **Mục tiêu "đa dạng hơn" khuyên thẻ Membership Rewards® thứ tư.** Người giữ
+  Cobalt®/Platinum/Business Platinum và 410,000 điểm MR được Amex® Green hạng nhất:
+  `transfer_flexibility` chấm trọn 1.0 cho năm đích MR mà ví đã tới được. Nay chỉ
+  đếm đích ví CHƯA với tới (`walletReach` ở `scoring/context.ts`: chương trình có
+  số dư chưa biết hoặc > 0, chương trình thẻ đang giữ kiếm ra, và đích mở của
+  chúng). Ví trống thì như cũ.
+- **Số dư chưa biết đọc thành "chương trình mới".** `new_currency_exposure` cho 1
+  khi có tài khoản mà không nhớ số dư (hoặc chương trình chưa định giá) → nay 0.5.
+  Bản vá đầu xét "danh mục chưa có giá trị đã biết" TRƯỚC nên ví chỉ có một dòng
+  MR `null` vẫn ra 1 — Codex bắt ở vòng bác.
+- **Phần phủ chuyến đi cộng bonus không lấy được.** `bonusPointsToward` cộng mọi
+  thành phần, độc lập với tập `usableValueCents` đã chọn: Amex® Gold dùng được $0
+  vẫn "phủ từ 4% lên 17%". Nay `tripBonusParts` (`scoring/trip.ts`) lấy đúng tập
+  với tới (`reachableOfferComponents`, cùng `bestReachableSubset`).
+- **Tháng bay hỏi mà không đọc.** Câu "Bạn định bay khoảng tháng nào?" hứa "để
+  biết còn bao nhiêu thời gian đạt mức spend" — không phép tính nào đọc
+  `travelStart` ngoài Rule 2. Gold được cộng trọn 12 chu kỳ cho chuyến bay sau 23
+  ngày. Nay bỏ phần CHẮC CHẮN không kịp: chu kỳ hằng tháng chưa trôi qua (cửa sổ ÷
+  số chu kỳ), `anniversary` sớm nhất ngày max(365, cửa sổ mở), loại khác sớm nhất
+  lúc cửa sổ mở. Mốc lạc quan có chủ ý (HANDOFF §9). §30 có hai câu trả lời thử
+  cho tháng bay (tháng sau / sau 13 tháng) — trước đó `answersFor` trả rỗng.
+- **Rule 3 phạt người đang gom đúng đồng tiền của chuyến đi.** 20,000 Aeroplan® là
+  "100% Aeroplan®" nên mọi thẻ Aeroplan® bị −0.15 cho chuyến Việt Nam định giá
+  bằng Aeroplan®. Nay luật im khi hệ sinh thái đang dồn nằm trong
+  `tripNeed.programs`; mục tiêu khác giữ nguyên.
+- **Phá hoà theo id giấu thẻ dễ mở hơn.** Quicksilver World Elite® ($80,000) và
+  World ($50,000) hoà tuyệt đối; id chọn World Elite rồi phép gom họ giấu World.
+  Nay khoá (nhóm, hạng, id) — nhóm = id nhỏ nhất của họ. Bản vá đầu so hạng khi
+  cùng họ, so id khi khác họ: KHÔNG bắc cầu (kết quả đổi theo thứ tự đầu vào khi
+  một thẻ khác họ có id nằm giữa) — Codex bắt; test chạy đủ 6 hoán vị.
+
+**Codex nêu, đã kiểm và KHÔNG vá:**
+- *Scotiabank® Gold Amex®/Passport™ thiếu luật "giữ thẻ Scotiabank trong 24
+  tháng"*: tác giả chốt 21/09/2026 là thực tế không áp (khối chú thích trên
+  `RULES_CHECKED_ON` trong `eligibility-rules.ts`). Codex đồng ý ở vòng bác.
+- *`long_term_earn_fit` đo tuyệt đối thay vì phần tăng thêm so với ví* — đúng là
+  hạn chế, nhưng là đổi mô hình cho mọi mục tiêu có thẻ đang giữ: chờ tác giả
+  (HANDOFF §0 mục 1). Codex đồng ý không chặn push.
+- *Chuyến đi không tính tích điểm thường* (Cobalt® gom nhanh hơn Gold trên ăn uống
+  cho chuyến 6 tháng nữa): §10.2 không có vế đó — đổi spec, không phải lỗi code.
+
+**Bài học test, lần thứ hai trong một tuần:** bản vá đổi thứ hạng làm mất TIỀN ĐỀ
+của 5 test (Rule 3 trên chuyến đi đủ điểm, §30 thẻ doanh nghiệp ở mục tiêu thứ
+hai, §30 bảng tĩnh, cảnh báo giá sàn, thẻ bị chặn bonus trên trang) — đổi kịch
+bản, giữ phép kiểm, ghi lý do ngay trong test. Và hai test "xanh với mọi đầu vào"
+lộ ra khi kiểm ngược: một test so chuỗi copy đã đổi từ lâu ("Mốc chi để nhận
+bonus" so với "Mức spend để nhận bonus…"), một test đếm số câu trả lời thử thay
+vì kiểm ngày chúng ghi. **So bằng MÃ, không bằng chữ hiển thị; và hồ sơ của test
+phải đi QUA nhánh đang kiểm** (thẻ bị chặn bonus chỉ có câu về mức spend khi sức
+dồn đã khai).

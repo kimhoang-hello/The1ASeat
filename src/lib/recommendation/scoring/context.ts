@@ -15,7 +15,7 @@
 
 import { activeAt } from "../temporal.ts";
 import type { DatasetIndex } from "../indexes.ts";
-import type { PointsProgramId, Product, RedemptionMode } from "../types.ts";
+import type { OfferComponent, PointsProgramId, Product, RedemptionMode } from "../types.ts";
 import type { UserState } from "../user-types.ts";
 import type { BenefitFit } from "../benefit-fit.ts";
 import type { EarnFit } from "../earn-fit.ts";
@@ -150,6 +150,33 @@ export function transferDestinationCount(
 }
 
 /**
+ * Mọi chương trình ví HIỆN TẠI đã chạm tới: chương trình có số dư (đã biết
+ * và > 0, hoặc chưa biết), chương trình thẻ đang giữ kiếm ra, và mọi đích mở
+ * cho ai cũng được mà chúng chuyển thẳng tới.
+ *
+ * Số dư ĐÃ BIẾT bằng 0 không tính: tài khoản trống không chuyển đi đâu được,
+ * trừ khi một thẻ đang giữ vẫn đổ điểm vào nó — và vế đó đã nằm trong
+ * `earnedPrograms`.
+ */
+export function walletReach(ctx: ScoringContext): Set<string> {
+  const held = new Set<string>(ctx.portfolio.earnedPrograms as Set<string>);
+  for (const [programId, knowledge] of ctx.portfolio.direct) {
+    if (knowledge.kind === "unknown" || (knowledge.kind === "known" && knowledge.points > 0)) {
+      held.add(programId as string);
+    }
+  }
+  const reach = new Set(held);
+  for (const programId of held) {
+    const program = ctx.ix.programById.get(programId as PointsProgramId);
+    if (program === undefined || !program.transferable) continue;
+    for (const path of activeAt(ctx.ix.pathsBySource.get(programId as PointsProgramId) ?? [], ctx.asOf)) {
+      if (path.requiresTier === null) reach.add(path.destinationProgramId as string);
+    }
+  }
+  return reach;
+}
+
+/**
  * Điểm welcome bonus của thẻ này quy về MỘT chương trình đích.
  *
  * `null` khi offer thưởng tiền mặt, khi chưa biết mốc chi, hoặc khi đồng tiền
@@ -162,6 +189,13 @@ export function bonusPointsToward(
   target: PointsProgramId,
   ix: DatasetIndex,
   asOf: string,
+  /**
+   * Chỉ đếm những phần này, mỗi phần bao nhiêu chu kỳ. Vắng thì đếm MỌI thành
+   * phần của offer, trọn số chu kỳ — mức tối đa, dù mất bao lâu. Chuyến đi
+   * truyền vào đúng phần người dùng VỚI TỚI và KỊP NHẬN trước ngày bay (xem
+   * `tripBonusParts`): 0 phần nào thì là 0 điểm, KHÔNG rơi về cả offer.
+   */
+  parts?: readonly { component: OfferComponent; repeats: number }[],
 ): number | null {
   const active = candidate.offer.active;
   if (active === null) return null;
@@ -169,11 +203,17 @@ export function bonusPointsToward(
   if (source === null) return null;
   if (candidate.eligibility.welcomeOfferBlocked) return 0;
 
-  const points = active.components.reduce((sum, part) => {
-    const repeats = part.componentType === "monthly_spend" ? (part.repeatCount ?? 1) : 1;
-    return sum + (part.pointsAmount ?? 0) * repeats;
-  }, 0);
-  if (points <= 0) return null;
+  const counted =
+    parts ??
+    active.components.map((component) => ({
+      component,
+      repeats: component.componentType === "monthly_spend" ? (component.repeatCount ?? 1) : 1,
+    }));
+  const anyPoints = active.components.some((part) => (part.pointsAmount ?? 0) > 0);
+  const points = counted.reduce((sum, part) => sum + (part.component.pointsAmount ?? 0) * part.repeats, 0);
+  // Offer không có phần điểm nào thì "không áp dụng" (`null`); có mà chưa kịp
+  // nhận phần nào thì "áp dụng, bằng không" (0) — cùng phân biệt với nhánh bị chặn.
+  if (!anyPoints) return null;
 
   if (source === target) return points;
 

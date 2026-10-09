@@ -177,7 +177,15 @@ export function applyRules(input: RuleInput): RuleOutcome {
   }
 
   /* ---- Rule 3 — tập trung danh mục -------------------------------- */
-  const dominant = dominantEcosystem(ctx);
+  // Mục tiêu CHUYẾN ĐI mà hệ sinh thái đang dồn chính là chương trình định giá
+  // chặng đó thì dồn thêm là ĐÚNG việc người dùng đang làm — gom đủ điểm cho
+  // một vé. Phạt ở đây trừ −0.15 mọi thẻ Aeroplan® của người có 20,000 điểm
+  // Aeroplan® đang gom cho vé đi Việt Nam (vòng Codex 09/10/2026). Mục tiêu
+  // khác giữ nguyên luật.
+  const tripPrograms = ctx.goal.tripNeed?.programs ?? [];
+  const dominantRaw = dominantEcosystem(ctx);
+  const dominant =
+    dominantRaw !== null && tripPrograms.includes(dominantRaw as PointsProgramId) ? null : dominantRaw;
   const feeds = dominant === null ? 0 : feedShare(ctx, programId, dominant);
   if (dominant !== null && feeds > 0) {
     const share = ctx.portfolio.concentration[0].share;

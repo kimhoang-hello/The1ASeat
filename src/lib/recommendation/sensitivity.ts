@@ -69,6 +69,28 @@ function tripGoal(state: UserState, goalId: string) {
  */
 export function answersFor(gap: UserDataGap, asOf?: string): Answer[] {
   switch (gap.kind) {
+    case "trip_dates_unknown": {
+      // Tháng bay quyết định phần welcome bonus KỊP về tay trước chuyến đi
+      // (`tripBonusParts`). Hai câu trả lời lộ được cả hai phía: bay tháng sau
+      // (nhiều nhất một chu kỳ hằng tháng, chưa tới kỳ gia hạn) và bay sau hơn
+      // một năm (kịp mọi phần). Cần NGÀY của lượt chạy, như tháng đóng thẻ.
+      if (asOf === undefined) return [];
+      return [1, 13].map((months) => {
+        const [year, month] = asOf.split("-").map(Number);
+        const index = year * 12 + (month - 1) + months;
+        const start = `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, "0")}`;
+        const lastDay = new Date(Date.UTC(Math.floor(index / 12), (index % 12) + 1, 0)).getUTCDate();
+        return {
+          label: months === 1 ? "bay tháng sau" : "bay sau hơn một năm",
+          apply: (state: UserState) => {
+            const goal = tripGoal(state, gap.subject);
+            if (goal === null) return;
+            goal.travelStart = `${start}-01`;
+            goal.travelEnd = `${start}-${String(lastDay).padStart(2, "0")}`;
+          },
+        };
+      });
+    }
     case "card_closed_date_unknown": {
       // Cần NGÀY của lượt chạy: "tháng trước" chỉ có nghĩa so với hôm nay.
       // Dịch bằng CHÍNH hàm trang dùng (`closedDateFromAnswer`). Ba câu trả
@@ -176,7 +198,6 @@ export function answersFor(gap: UserDataGap, asOf?: string): Answer[] {
     case "balances_undeclared":
     case "personal_income_declined":
     case "household_income_declined":
-    case "trip_dates_unknown":
     case "trip_flexibility_unknown":
       return [];
   }

@@ -1,8 +1,8 @@
 # Bàn giao: Recommendation Engine
 
-Trạng thái **27/09/2026**. Phase 1–6 đã merge `main`; trang `/credit-cards/goi-y`
+Trạng thái **09/10/2026**. Phase 1–6 đã merge `main`; trang `/credit-cards/goi-y`
 đã CÔNG BỐ bản Beta từ 17/09/2026 (`RECOMMENDER_PUBLISHED = true`). Engine
-**4.31.0**, lời giải thích **6.7.0**. Việc mới nhất và việc còn lại: **§0**.
+**4.34.0**, lời giải thích **6.7.0**. Việc mới nhất và việc còn lại: **§0**.
 Rủi ro đã biết: **§9**. Các mục bên dưới giữ nguyên lịch sử từng phase.
 
 Spec đầy đủ: [`docs/recommendation-engine-v1.md`](docs/recommendation-engine-v1.md).
@@ -12,7 +12,33 @@ Tài liệu module: [`src/lib/recommendation/README.md`](src/lib/recommendation/
 
 ---
 
-## 0. Audit 27/09/2026 — đã làm và còn lại
+## 0. Audit engine 09/10/2026 — đã làm và còn lại
+
+Chi tiết: AGENTS.md, mục "Audit engine Gợi ý thẻ 09/10/2026". Engine **4.34.0**.
+
+Đã làm: mục tiêu "đa dạng hơn" chỉ thưởng đích chuyển điểm ví CHƯA với tới
+(trước đó thẻ Membership Rewards® thứ tư đứng hạng nhất cho người đang giữ ba);
+số dư chưa biết là điểm giữa chứ không phải "chương trình mới"; phần welcome
+bonus phủ chuyến đi chỉ gồm thành phần với tới theo sức dồn và kịp về tay trước
+tháng bay (trang hỏi tháng bay mà trước đó không phép tính nào đọc); §30 đo được
+câu hỏi tháng bay; Rule 3 không phạt khi chuyến đi cần chính hệ sinh thái đang
+dồn; hai hạng cùng họ hoà điểm → hạng dưới (dễ mở hơn) đứng trước.
+
+Còn lại:
+
+1. **Chờ tác giả quyết: `long_term_earn_fit` đo giá trị TUYỆT ĐỐI của thẻ, không
+   phải phần tăng thêm so với ví đang giữ.** Người giữ Cobalt® + Platinum vẫn
+   được chấm trọn tỷ lệ tích điểm của Amex® Gold dù ví đã kiếm bằng hoặc hơn ở
+   mọi hạng mục; ca dựng được: khuyên mở lại Gold (không bonus, phí $250) trên
+   `NO_NEW_CARD` 0.768 – 0.761. Đổi sang phần tăng thêm là đổi mô hình cho mọi
+   mục tiêu có thẻ đang giữ (phải chọn cách phân bổ chi tiêu và áp trần giữa
+   nhiều thẻ) — Codex đồng ý tách khỏi lượt vá này.
+2. Mục tiêu chuyến đi KHÔNG có vế tích điểm thường (§10.2 chỉ chấm welcome
+   bonus): với chuyến còn 6+ tháng, Cobalt® gom nhanh hơn Gold trên chi tiêu ăn
+   uống nhưng engine không thấy. Đúng spec; muốn đổi là đổi trọng số §10.2.
+3. Các mục còn lại của §0 cũ (27/09) bên dưới vẫn còn nguyên.
+
+## 0b. Audit 27/09/2026 — đã làm và còn lại
 
 Chi tiết từng phát hiện: AGENTS.md, mục "Audit trang Gợi ý thẻ 27/09/2026".
 
@@ -542,6 +568,8 @@ và event GA4 cho phễu.
 | §30 hỏi câu NỀN (thẻ, số dư, nước ở, mục tiêu) trước câu ĐO ĐƯỢC là đổi người thắng | Quyết định thiết kế, giữ nguyên: câu nền không đo được bằng câu trả lời thử mà có thể đổi cả tập ứng viên. `followUp.basis = "gatekeeper"` nói ra điều đó. Codex vòng 17 phản đối — Phase 5 có thể xem lại khi có dữ liệu người dùng thật |
 | Bonus CHƯA CHẮC = điểm giữa hai thế giới ở từng thành phần | Xấp xỉ có chủ ý: trung vị percentile của thị trường cân offer chưa chắc bằng 0.5 (không phải kỳ vọng thật qua mọi tổ hợp thế giới); mã `MIN_SPEND_*` vẫn giữ vì đúng trong thế giới nhận được bonus |
 | `spend_fit` cân theo PHẦN ĐẶT CƯỢC (engine 4.33.0, tác giả chốt 07/10/2026) | `0.5 + (minSpendFit − 0.5) × stake`, stake = giá trị phần BỊ MỐC CHI KHOÁ ÷ trung vị của phần đó trên thị trường của người đó, cắt ở 1. Không có gì đứng sau mốc chi ($0 theo thước mục tiêu, bonus bị chặn, không có bonus) → 0.5 trung tính (trước đây 1.0 khi đã biết sức dồn); chưa chắc nhận bonus → điểm giữa hai thế giới, một lần (`spendFitIfBonus` tách lại điểm giữa cũ của suitability); offer không có thành phần nào để định giá (Quicksilver) → giữ trọn §13; chưa biết sức dồn → 0.5 cho mọi thẻ như từ 4.30.0. `minSpendFit` (§13) KHÔNG đổi. Giới hạn: trung vị là của tập ứng viên người đó, nên cùng một thẻ có stake khác nhau giữa hai hồ sơ |
+| Mốc "kịp nhận trước tháng bay" là mốc LẠC QUAN (4.34.0) | `tripBonusParts` chỉ bỏ phần CHẮC CHẮN không kịp: chu kỳ hằng tháng chưa trôi qua, thưởng gia hạn (sớm nhất ngày 365), cửa sổ mở sau ngày bay. Chưa trừ thời gian chi đủ mốc, độ trễ ghi điểm (thường 4–8 tuần), hay việc đặt vé trước ngày bay nhiều tháng — một phần bonus được tính có thể vẫn về muộn |
+| `long_term_earn_fit` đo tuyệt đối, không đo phần tăng thêm so với ví | Xem §0 mục 1 — chờ tác giả quyết |
 | Bản build HỎNG mang cùng version với bản tốt | `ENGINE_VERSION` chỉ định danh logic khi MỌI lần deploy qua bài bản chụp §20 — lượt `ad979b91` của buổi diễn tập được tạo khi engine đang cài lỗi mà vẫn mang nhãn 4.23.0; replay về sau quy khác biệt cho "đổi version". **Phase 5: chạy `test:reco` trong CI trước deploy** |
 | Bảng "dòng điểm đọc từ nguồn nào" (`COMPONENT_SOURCES` ở `debug.ts`) viết tay | Như `read-set.ts`: thêm thành phần chấm điểm mà quên khai thì `why` ghi "engine" cho dòng đó |
 | Lưới `unmapped` của phép so chỉ bắt ca IM LẶNG hoàn toàn | Trường chưa ánh xạ đổi cùng lúc với trường đã ánh xạ thì lưới không thấy; thứ đóng lỗ là bài vét cạn (đỏ khi thêm trường mà quên `stageValue`) |

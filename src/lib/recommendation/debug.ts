@@ -263,12 +263,15 @@ const COMPONENT_SOURCES: Record<string, { source: LineSource; detail: string }[]
     { source: "engine", detail: "phân tích danh mục §7" },
     { source: "user_input", detail: "số dư" },
   ],
-  transfer_flexibility: [{ source: "source_data", detail: "chặng chuyển điểm" }],
+  transfer_flexibility: [
+    { source: "source_data", detail: "chặng chuyển điểm" },
+    { source: "user_input", detail: "thẻ đang giữ, số dư (đích ví đã với tới)" },
+  ],
   flexibility_value: [{ source: "source_data", detail: "chặng chuyển điểm (tầm với)" }],
   trip_currency_utility: [{ source: "source_data", detail: "award strategy của chặng, chặng chuyển" }],
   points_gap_reduction: [
     { source: "source_data", detail: "award strategy, offer" },
-    { source: "user_input", detail: "chuyến đi, số dư" },
+    { source: "user_input", detail: "chuyến đi (cả tháng bay), số dư, sức dồn chi tiêu" },
   ],
   fee_drag: [
     { source: "source_data", detail: "phí thường niên" },

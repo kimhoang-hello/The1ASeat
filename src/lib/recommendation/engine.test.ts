@@ -647,13 +647,26 @@ test("§16 Rule 6 — quyền lợi chỉ trùng khi CÙNG hãng", () => {
   }
 });
 
+/** `vietnamTripFunded` — 100% Aeroplan® — nhưng mục tiêu là "thẻ tiếp theo". Từ
+ *  engine 4.34.0 Rule 3 im lặng khi chuyến đi CẦN chính hệ sinh thái đang dồn,
+ *  nên phép thử luật chống tập trung phải đứng trên một mục tiêu không phải
+ *  chuyến đi. */
+function concentratedNextCard(): UserState {
+  const state = structuredClone(vietnamTripFunded);
+  state.goals = [
+    { type: "next_card", id: "goal_r3_next" as never, userId: state.profile.id, priority: null, createdAt: ASOF },
+  ];
+  return state;
+}
+
 test("§16 Rule 3 — luật chống tập trung không được phạt đồng tiền LINH HOẠT ngang co-brand", () => {
-  // `vietnamTripFunded` dồn 100% vào Aeroplan®. Membership Rewards® đi được
+  // Hồ sơ dồn 100% vào Aeroplan®. Membership Rewards® đi được
   // Aeroplan® — nhưng cũng đi được bốn nơi khác, nên nó là thứ đa dạng hoá
   // nhất trong bảng. Phạt nó ngang một thẻ đồng thương hiệu Aeroplan® là để
   // luật chống tập trung quay ra phạt đúng liều thuốc.
-  const result = run(vietnamTripFunded).results[0];
-  const all = [result.primaryAction, ...result.alternatives];
+  // Bảng xếp hạng ĐẦY ĐỦ, không chỉ phần hiện ra: với "thẻ tiếp theo" các thẻ
+  // Aeroplan® bị phạt nằm dưới top 5 — đúng việc của luật này.
+  const all = run(concentratedNextCard()).derived.goals[0].ranking.map((row) => row.candidate);
   const penaltyOf = (slug: string) =>
     Math.abs(
       all
@@ -665,6 +678,24 @@ test("§16 Rule 3 — luật chống tập trung không được phạt đồng 
   assert.ok(coBrand > 0, "thẻ đồng thương hiệu Aeroplan® phải bị phạt");
   assert.ok(flexible > 0, "MR có với tới Aeroplan® nên vẫn bị phạt một phần");
   assert.ok(coBrand > flexible * 2, `co-brand ${coBrand} phải nặng hơn hẳn linh hoạt ${flexible}`);
+});
+
+test("§16 Rule 3 — KHÔNG phạt khi chuyến đi cần chính hệ sinh thái đang dồn (4.34.0)", () => {
+  // Người gom Aeroplan® cho một vé Aeroplan® định giá được thì dồn thêm là đúng
+  // việc. Bản trước trừ −0.15 mọi thẻ Aeroplan® của người chỉ có 20,000 điểm.
+  for (const state of [vietnamTripFunded, vietnamTripShortfall]) {
+    const result = run(state).results[0];
+    assert.ok(result.numbers.topEcosystemShare !== null && result.numbers.topEcosystemShare > 0.7, "tiền đề: dồn > 70%");
+    for (const candidate of [result.primaryAction, ...result.alternatives]) {
+      assert.ok(
+        !candidate.adjustments.some((a) => a.rule === "R3_portfolio_concentration"),
+        `${state.profile.id}: ${candidate.productSlug} bị Rule 3 phạt dù chuyến đi định giá bằng Aeroplan®`,
+      );
+    }
+  }
+  // Cùng số dư, mục tiêu khác thì luật vẫn nổ.
+  const nextCard = run(concentratedNextCard()).derived.goals[0].ranking.map((row) => row.candidate);
+  assert.ok(nextCard.some((c) => c.adjustments.some((a) => a.rule === "R3_portfolio_concentration")));
 });
 
 test("§16 Rule 3 — tập trung > 70% thì nhu cầu đa dạng hoá nổi lên", () => {

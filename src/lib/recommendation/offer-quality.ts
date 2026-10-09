@@ -149,7 +149,13 @@ function bestReachableSubset(
   cpp: number | null,
   capacity: EstimatedAmount | null,
   countsFeeWaiver: boolean,
-): { valueCents: number; requiredPerNinetyDays: number | null; tight: boolean } | null {
+): {
+  valueCents: number;
+  requiredPerNinetyDays: number | null;
+  tight: boolean;
+  /** Đúng tập thành phần làm nên `valueCents` — phần không đòi chi + phần đã chọn. */
+  components: OfferComponent[];
+} | null {
   const spending = components.filter((component) => requiredSpendOf(component) !== null);
   const free = components.filter((component) => requiredSpendOf(component) === null);
   const freeValue = free.reduce(
@@ -160,8 +166,12 @@ function bestReachableSubset(
   if (spending.length > 12) return null;
   if (capacity === null) return null;
 
-  let best: { valueCents: number; requiredPerNinetyDays: number | null; tight: boolean } | null =
-    null;
+  let best: {
+    valueCents: number;
+    requiredPerNinetyDays: number | null;
+    tight: boolean;
+    components: OfferComponent[];
+  } | null = null;
 
   for (let mask = 0; mask < 1 << spending.length; mask += 1) {
     const chosen = spending.filter((_, index) => (mask & (1 << index)) !== 0);
@@ -199,9 +209,26 @@ function bestReachableSubset(
       // lựa chọn tốt hơn, và nó cũng là phép phá hoà tất định.
       (valueCents === best.valueCents &&
         (required ?? 0) < (best.requiredPerNinetyDays ?? 0));
-    if (better) best = { valueCents, requiredPerNinetyDays: required, tight };
+    if (better) best = { valueCents, requiredPerNinetyDays: required, tight, components: [...free, ...chosen] };
   }
   return best;
+}
+
+/**
+ * Thành phần welcome bonus người này VỚI TỚI được theo sức dồn đã khai — đúng
+ * tập mà `usableValueCents` của `offerFacts` cộng ra, để chỗ khác đếm ĐIỂM từ
+ * cùng một lựa chọn thay vì suy ngược từ tiền. `null` khi chưa biết sức dồn:
+ * khi đó KHÔNG có tập nào bị loại, và người gọi dùng cả offer như trước.
+ */
+export function reachableOfferComponents(
+  active: ActiveOffer,
+  ix: DatasetIndex,
+  asOf: string,
+  capacity: EstimatedAmount | null,
+): OfferComponent[] | null {
+  const { offer, components } = active;
+  const cpp = offer.bonusCurrencyId === null ? null : centsPerPoint(ix, offer.bonusCurrencyId, asOf);
+  return bestReachableSubset(components, cpp, capacity, offer.annualFeeFirstYear === null)?.components ?? null;
 }
 
 /**

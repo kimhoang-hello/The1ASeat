@@ -19,7 +19,9 @@ import {
   japanTripFunded,
   vietnamTripFunded,
   vietnamTripShortfall,
+  vagueEarner,
 } from "../recommendation/data/user-fixtures.ts";
+import { productIdFor } from "../recommendation/data/products.ts";
 import { REASON_CODES, WARNING_CODES } from "../recommendation/reason-codes.ts";
 import { executeRun } from "../recommendation/runs.ts";
 import { datasetAt } from "../recommendation/temporal.ts";
@@ -476,24 +478,46 @@ test("thẻ mà người dùng KHÔNG còn nhận được welcome bonus thì kh
   // điểm, quyền lợi), nhưng câu "chi $X để nhận trọn welcome bonus" là một lời
   // hứa ngân hàng sẽ không giữ.
   //
-  // Chạy trên dữ liệu 07/10/2026 (cắt cả `knownAt`): từ engine 4.33.0 thẻ bị
-  // chặn bonus không còn phần "mốc chi vừa sức" (không có gì để lấy), nên ở dữ
-  // liệu 08/09 Amex® Gold của nhân vật này đứng hạng 6 — ngay ngoài bảng hiển
-  // thị. Ở 07/10 nó đứng hạng 2.
+  // Chạy trên dữ liệu 07/10/2026 (cắt cả `knownAt`). Ca gốc là Amex® Gold của
+  // `advancedCollector`; từ engine 4.34.0 mục tiêu "đa dạng hơn" thôi chấm thẻ
+  // MR thứ tư là linh hoạt thêm, và Gold rời bảng hiển thị — đổi kịch bản, giữ
+  // phép kiểm: người "tích thêm điểm" từng giữ Amex® Green, Green vẫn hiện ra
+  // (hạng 4) nhờ tỷ lệ tích điểm.
   const asOf = "2026-10-07";
   const data = datasetAt(offlineDataset(), asOf, { knownAt: asOf });
+  const state = structuredClone(vagueEarner);
+  state.cards = [
+    {
+      id: "uc_present_green" as never,
+      userId: state.profile.id,
+      productId: productIdFor("amex-green"),
+      status: "previously_held",
+      openedDate: "2022-01-01",
+      closedDate: "2023-01-01",
+    } as never,
+  ];
+  state.declared = { ...state.declared, cards: true };
+  // Sức dồn ĐÃ KHAI: chưa khai thì không thẻ nào có câu về mức spend, và phép
+  // kiểm bên dưới xanh với mọi đầu vào.
+  state.spend = { ...state.spend!, minimumSpendCapacity3m: { low: 3_000, high: 3_000 } };
   const record = executeRun(
-    { state: advancedCollector, data, asOf, knownAt: asOf },
+    { state, data, asOf, knownAt: asOf },
     { id: "run_present_blocked", createdAt: `${asOf}T12:00:00.000Z`, userId: "u_test" },
   ).record;
   const view = presentRun(record, data, offersFor(data));
   assert.ok(view !== null);
   const blocked = [view.primary, ...view.alternatives].find((row) => row.welcomeBonusBlocked);
   assert.ok(blocked !== undefined, "nhân vật này phải có ít nhất một thẻ bị chặn bonus");
+  // So bằng MÃ, không bằng chữ: phép so cũ tìm "Mốc chi để nhận bonus" trong khi
+  // copy đã đổi thành "Mức spend để nhận bonus…" — nên nó xanh với mọi đầu vào
+  // (vòng Codex bác bản vá 09/10/2026).
   assert.equal(
-    blocked.reasons.some((row) => row.text.includes("Mốc chi để nhận bonus")),
+    blocked.reasons.some((row) => row.code.startsWith("MIN_SPEND_")),
     false,
+    `thẻ bị chặn bonus vẫn có câu về mức spend để nhận bonus: ${blocked.reasons.map((row) => row.code).join(", ")}`,
   );
+  assert.equal(blocked.strengths.includes(COMPONENT_STRENGTH.spend_fit), false);
+  assert.equal(blocked.strengths.includes(COMPONENT_STRENGTH.offer_quality), false);
 });
 
 test("lựa chọn thay thế GIỮ vế cảnh báo của nó — khối cảnh báo chỉ có ở thẻ chính", () => {

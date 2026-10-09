@@ -1,10 +1,10 @@
 {
-  "engineVersion": "4.33.0",
+  "engineVersion": "4.34.0",
   "datasetFingerprint": "304834-15e5eebe3940c8d5",
   "runs": [
     {
       "user": "u_beginner",
-      "run": "192670-ceae147298c2d201",
+      "run": "192670-43c1a409040abf0a",
       "goalResolution": "resolved",
       "followUp": "household_income_unknown",
       "primary": "td-aeroplan-visa-infinite",
@@ -49,7 +49,7 @@
     },
     {
       "user": "u_undeclared",
-      "run": "202860-d67b46d8d400d577",
+      "run": "202860-fb076f336714fe84",
       "goalResolution": "resolved",
       "followUp": "cards_undeclared",
       "primary": "rbc-avion-visa-platinum",
@@ -94,7 +94,7 @@
     },
     {
       "user": "u_aeroplan_heavy",
-      "run": "201122-effbe2dddad2f756",
+      "run": "201122-b10d40bac5c7d541",
       "goalResolution": "resolved",
       "followUp": "household_income_unknown",
       "primary": "amex-gold-rewards",
@@ -143,7 +143,7 @@
     },
     {
       "user": "u_japan_funded",
-      "run": "180384-f39ddf690b692546",
+      "run": "180384-4c17c3a6116da309",
       "goalResolution": "resolved",
       "followUp": "spend_profile_missing",
       "primary": "no_new_card",
@@ -188,11 +188,11 @@
     },
     {
       "user": "u_japan_gap",
-      "run": "210824-1835c0989fcf871f",
+      "run": "207841-7340f46534b3d33c",
       "goalResolution": "resolved",
       "followUp": "business_ownership_unknown",
       "primary": "amex-gold-rewards",
-      "score": 0.6137,
+      "score": 0.6283,
       "noAction": 0.1455,
       "strategy": "EARN_FLEXIBLE_POINTS",
       "confidence": "low",
@@ -219,26 +219,26 @@
       },
       "alternatives": [
         [
-          "amex-business-gold",
-          0.5757
-        ],
-        [
-          "amex-green",
-          0.5369
-        ],
-        [
-          "amex-cobalt",
-          0.5211
-        ],
-        [
           "td-aeroplan-visa-infinite",
-          0.4879
+          0.6251
+        ],
+        [
+          "amex-aeroplan",
+          0.6165
+        ],
+        [
+          "amex-business-gold",
+          0.6057
+        ],
+        [
+          "cibc-aeroplan-visa-infinite",
+          0.5751
         ]
       ]
     },
     {
       "user": "u_low_capacity",
-      "run": "175069-dfb90b78f4ad3929",
+      "run": "175069-fd6db4279a1a02de",
       "goalResolution": "resolved",
       "followUp": "spend_category_unknown",
       "primary": "td-aeroplan-visa-infinite",
@@ -283,7 +283,7 @@
     },
     {
       "user": "u_dup_benefit",
-      "run": "197566-60e11d897d48e692",
+      "run": "197566-e8650c7260e64e29",
       "goalResolution": "resolved",
       "followUp": "household_income_unknown",
       "primary": "rbc-avion-visa-platinum",
@@ -329,7 +329,7 @@
     },
     {
       "user": "u_flexible",
-      "run": "201331-4938d50e69b8cb7b",
+      "run": "201666-2f0afc8c28ae7aa7",
       "goalResolution": "resolved",
       "followUp": "household_income_unknown",
       "primary": "cibc-aeroplan-visa-infinite-privilege",
@@ -375,7 +375,7 @@
     },
     {
       "user": "u_sparse",
-      "run": "214928-9048b04175a68306",
+      "run": "214928-cfedd26ad0b277b5",
       "goalResolution": "resolved",
       "followUp": "minimum_spend_capacity_unknown",
       "primary": "rbc-avion-visa-platinum",
@@ -421,7 +421,7 @@
     },
     {
       "user": "u_student",
-      "run": "203779-1e198928444e546d",
+      "run": "203779-3dea5e09e74b4f48",
       "goalResolution": "resolved",
       "followUp": "spend_category_unknown",
       "primary": "scotiabank-scene-plus-visa-students",
@@ -465,18 +465,17 @@
     },
     {
       "user": "u_advanced",
-      "run": "175799-0298d842d906d403",
+      "run": "175530-f6ef0fc66664ab4d",
       "goalResolution": "resolved",
       "followUp": "household_income_unknown",
       "primary": "rbc-avion-visa-platinum",
       "score": 0.6894,
       "noAction": 0.5452,
       "strategy": "DIVERSIFY",
-      "confidence": "low",
+      "confidence": "medium",
       "reasonCodes": [
         "MIN_SPEND_GOOD_FIT",
-        "FLEXIBLE_CURRENCY_VALUABLE",
-        "SCORES_NEARLY_TIED"
+        "FLEXIBLE_CURRENCY_VALUABLE"
       ],
       "numbers": {
         "tripNeedLow": null,
@@ -491,26 +490,26 @@
       },
       "alternatives": [
         [
-          "amex-green",
-          0.6514
-        ],
-        [
-          "amex-business-gold",
-          0.6475
-        ],
-        [
           "cibc-aeroplan-visa-infinite-privilege",
           0.6103
         ],
         [
           "westjet-rbc-world-elite-mastercard",
           0.6084
+        ],
+        [
+          "bmo-viporter-world-elite-mastercard",
+          0.5955
+        ],
+        [
+          "amex-aeroplan-business-reserve",
+          0.5743
         ]
       ]
     },
     {
       "user": "u_high_spend",
-      "run": "188955-8c254ac2d7e8343f",
+      "run": "188955-176a2c1b4029e40e",
       "goalResolution": "resolved",
       "followUp": "household_income_unknown",
       "primary": "amex-green",
@@ -558,7 +557,7 @@
     },
     {
       "user": "u_vague",
-      "run": "201588-cbc901426076a651",
+      "run": "201588-bfad868d1828dd8e",
       "goalResolution": "resolved",
       "followUp": "minimum_spend_capacity_unknown",
       "primary": "amex-green",
@@ -604,7 +603,7 @@
     },
     {
       "user": "u_cash",
-      "run": "230275-5f5c463d7af59488",
+      "run": "230275-c0315b561d01b1ab",
       "goalResolution": "resolved",
       "followUp": "personal_income_unknown",
       "primary": "scotiabank-momentum-visa-infinite-plus",
@@ -649,7 +648,7 @@
     },
     {
       "user": "u_vn_funded",
-      "run": "196074-d9046352918af24d",
+      "run": "194104-0289d5b560dd5f26",
       "goalResolution": "resolved",
       "followUp": "household_income_unknown",
       "primary": "no_new_card",
@@ -679,32 +678,32 @@
       "alternatives": [
         [
           "amex-green",
-          0.4395
-        ],
-        [
-          "amex-cobalt",
-          0.3362
+          0.4695
         ],
         [
           "cibc-aeroplan-visa-infinite",
-          0.2873
+          0.4373
         ],
         [
           "amex-aeroplan",
-          0.2785
+          0.4285
+        ],
+        [
+          "amex-cobalt",
+          0.3662
         ]
       ]
     },
     {
       "user": "u_vn_gap",
-      "run": "191686-236bc3b819fb582f",
+      "run": "189400-d2023916dd01f4e9",
       "goalResolution": "resolved",
       "followUp": "household_income_unknown",
       "primary": "amex-gold-rewards",
-      "score": 0.6122,
+      "score": 0.6284,
       "noAction": 0.1675,
       "strategy": "EARN_FLEXIBLE_POINTS",
-      "confidence": "medium",
+      "confidence": "low",
       "reasonCodes": [
         "MIN_SPEND_GOOD_FIT",
         "POINTS_GAP_LARGE",
@@ -712,7 +711,8 @@
         "PORTFOLIO_CONCENTRATED",
         "PORTFOLIO_LACKS_FLEXIBILITY",
         "FLEXIBLE_CURRENCY_VALUABLE",
-        "ELIGIBILITY_UNCERTAIN"
+        "ELIGIBILITY_UNCERTAIN",
+        "SCORES_NEARLY_TIED"
       ],
       "numbers": {
         "tripNeedLow": 280000,
@@ -727,26 +727,26 @@
       },
       "alternatives": [
         [
-          "amex-green",
-          0.54
-        ],
-        [
-          "amex-cobalt",
-          0.5242
+          "td-aeroplan-visa-infinite",
+          0.6258
         ],
         [
           "cibc-aeroplan-visa-infinite-privilege",
-          0.4923
+          0.6194
         ],
         [
-          "td-aeroplan-visa-infinite",
-          0.4872
+          "amex-aeroplan",
+          0.6172
+        ],
+        [
+          "amex-green",
+          0.57
         ]
       ]
     },
     {
       "user": "u_snapshot_two_goals",
-      "run": "297140-152cf0a814f89d07",
+      "run": "294855-b381ccc84d02de11",
       "goalResolution": "ambiguous",
       "followUp": "goal_priority_ambiguous",
       "primary": "amex-gold-rewards",
@@ -793,7 +793,7 @@
     },
     {
       "user": "u_snapshot_no_goal",
-      "run": "81436-149ede5014fa62eb",
+      "run": "81436-228d717d44f0438a",
       "goalResolution": "none",
       "followUp": "goal_missing",
       "primary": null,

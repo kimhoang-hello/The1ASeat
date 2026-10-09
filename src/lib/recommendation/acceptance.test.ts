@@ -25,8 +25,12 @@ import { renderRunReport, renderScoreTable } from "./debug-render.ts";
 import { STRATEGY_TYPES } from "./reason-codes.ts";
 import { productIdFor } from "./data/products.ts";
 import { offerClimate } from "./offer-quality.ts";
+import { rankCandidates } from "./rank.ts";
+import { answersFor } from "./sensitivity.ts";
+import type { DatasetIndex } from "./indexes.ts";
 import { validateDataset } from "./validate.ts";
 import {
+  advancedCollector,
   aeroplanHeavy,
   beginnerNoCards,
   beginnerUndeclared,
@@ -36,13 +40,14 @@ import {
   japanTripShortfall,
   lowSpendCapacity,
   nearlyEmpty,
+  studentStarter,
   USER_FIXTURES,
   vietnamTripFunded,
   vietnamTripShortfall,
 } from "./data/user-fixtures.ts";
 import type { OfferHistoryPoint } from "./offer-history.ts";
-import type { RecommendationDataset } from "./types.ts";
-import { amountRange, type UserState } from "./user-types.ts";
+import type { Product, RecommendationDataset } from "./types.ts";
+import { amountRange, type UserDataGap, type UserState } from "./user-types.ts";
 import type { Candidate } from "./engine-types.ts";
 
 const ASOF = "2026-09-08";
@@ -731,9 +736,11 @@ test("tỷ lệ tích điểm chưa biết không trừ độ tin cậy của m�
 
 test("§30 xét thẻ doanh nghiệp đang thắng ở mục tiêu THỨ HAI", () => {
   // "Thẻ tiếp theo" (đứng trước theo id) không có thẻ doanh nghiệp nào trong
-  // top 5; chuyến Việt Nam còn thiếu điểm thì Amex® Business Gold đứng đầu.
-  // Bộ lọc cũ chỉ nhìn bảng của mục tiêu đầu nên không xét câu hỏi đó.
-  const state = structuredClone(vietnamTripShortfall);
+  // top 5; chuyến Nhật còn thiếu điểm thì Amex® Business Gold có trong top 5.
+  // Bộ lọc cũ chỉ nhìn bảng của mục tiêu đầu nên không xét câu hỏi đó. (Ca gốc
+  // là chuyến Việt Nam; từ 4.34.0 Rule 3 thôi phạt thẻ Aeroplan® ở đó và
+  // Business Gold rơi khỏi top 5 — đổi kịch bản, giữ phép kiểm.)
+  const state = structuredClone(japanTripShortfall);
   const trip = state.goals.find((goal) => goal.type === "trip")!;
   state.goals = [
     { ...trip, priority: null },
@@ -1205,8 +1212,10 @@ test("bảng điểm §19 đặt ĐIỂM NỀN giữa chấm điểm và điều
 
 test("§30: câu hỏi chọn theo BẢNG TĨNH nói ra như thế, không đội lốt một câu đã đo", () => {
   // Ca đọc được trên debugger: không câu nào đổi được người thắng, engine vẫn
-  // hỏi thu nhập hộ — theo bảng ưu tiên. Bản ghi phải nói ra điều đó.
-  const { record } = execute(vietnamTripShortfall);
+  // hỏi thu nhập hộ — theo bảng ưu tiên. Bản ghi phải nói ra điều đó. (Ca gốc
+  // là chuyến Việt Nam còn thiếu; từ 4.34.0 các thẻ Aeroplan® sát nút người
+  // thắng nên câu thu nhập hộ lật được — dùng chuyến đã đủ điểm.)
+  const { record } = execute(vietnamTripFunded);
   const followUp = record.outputSnapshot.followUp!;
   assert.ok(record.derivedState.followUpProbes.every((probe) => probe.flips === 0), "tiền đề: không câu nào lật");
   assert.equal(followUp.basis, "priority");
@@ -1297,7 +1306,14 @@ test("cảnh báo 'chỉ biết giá sàn' trên THẺ chỉ khi bonus của ch�
   const state = structuredClone(japanTripFunded);
   state.cards = [];
   state.balances = [{ ...japanTripFunded.balances[0], programId: "aeroplan" as never, balance: 45_000 }];
-  state.goals = state.goals.map((goal) => (goal.type === "trip" ? { ...goal, cabin: "premium_economy", roundTrip: false } : goal));
+  // Bay sau hơn một năm: mọi chu kỳ của Amex® Gold kịp về tay (4.34.0 chỉ đếm
+  // phần kịp nhận trước tháng bay — tháng 3/2027 chỉ kịp 5/12 chu kỳ, và phần
+  // tăng về 0, mất tiền đề của phép thử này).
+  state.goals = state.goals.map((goal) =>
+    goal.type === "trip"
+      ? { ...goal, cabin: "premium_economy", roundTrip: false, travelStart: "2027-12-01", travelEnd: "2027-12-31" }
+      : goal,
+  );
   const gold = productIdFor("amex-gold-rewards");
   const data: RecommendationDataset = {
     ...DATA,
@@ -1480,4 +1496,168 @@ test("thị trường offer: offer có cửa bonus chưa chắc góp NỬA trọ
   assert.ok(record.derivedState.candidates.find((r) => r.productId === gold)!.eligibility.welcomeOfferUncertain, "tiền đề: cửa bonus Amex® chưa chắc");
   assert.ok(percentile(gold)! < percentile(avion)!, "tiền đề: Amex® thấp, Avion® cao");
   assert.equal(record.derivedState.climate.medianPercentile, percentile(avion));
+});
+
+/* ================================================================== *
+ * Audit 09/10/2026 — engine 4.34.0
+ * ================================================================== */
+
+const raw = (candidate: Candidate | null, key: string) => {
+  const row = candidate?.components.find((c) => c.key === key);
+  assert.ok(row !== undefined, `thiếu dòng ${key} của ${candidate?.productSlug}`);
+  return row.raw;
+};
+
+test("đa dạng hoá: chỉ đích ví CHƯA với tới mới được tính là linh hoạt thêm", () => {
+  // Người giữ ba thẻ Membership Rewards® và 410,000 điểm MR đã tới được mọi
+  // đích của MR. Bản trước chấm Amex® Green trọn 1.0 ở dòng này, và dòng đó một
+  // mình đưa thẻ MR thứ tư lên hạng nhất của mục tiêu "đa dạng hơn".
+  const { record } = execute(advancedCollector);
+  assert.equal(record.derivedState.goals[0].goalType, "diversify", "tiền đề: mục tiêu đa dạng hoá");
+  assert.equal(raw(findRanked(record, "amex-green"), "transfer_flexibility"), 0);
+  // Avion® vẫn mở được đích mà ví này chưa có (AAdvantage®), nên nó không về 0.
+  assert.ok(raw(findRanked(record, "rbc-avion-visa-infinite"), "transfer_flexibility") > 0);
+  const top = winner(record);
+  assert.notEqual(
+    DATA.products.find((p) => p.id === top.productId)?.pointsProgramId,
+    "amex-mr",
+    `mục tiêu đa dạng hoá mà hạng nhất lại là thêm một thẻ MR (${top.productSlug})`,
+  );
+  // Ví trống thì không trừ gì: cùng thẻ, người chưa có điểm nào.
+  const empty = structuredClone(advancedCollector);
+  empty.cards = [];
+  empty.balances = [];
+  assert.equal(raw(findRanked(execute(empty).record, "amex-green"), "transfer_flexibility"), 1);
+});
+
+test("đa dạng hoá: có tài khoản mà chưa biết số dư là ĐIỂM GIỮA, không phải 'chương trình mới'", () => {
+  const state = structuredClone(advancedCollector);
+  state.balances = state.balances.map((row) => (row.programId === "amex-mr" ? { ...row, balance: null } : row));
+  const { record } = execute(state);
+  assert.equal(raw(findRanked(record, "amex-green"), "new_currency_exposure"), 0.5);
+  // Chương trình không có dòng số dư nào vẫn là mới thật.
+  assert.equal(raw(findRanked(record, "rbc-avion-visa-infinite"), "new_currency_exposure"), 1);
+
+  // Ví CHỈ có dòng MR không rõ số dư: giá trị đã biết của danh mục bằng 0. Bản
+  // vá đầu xét "danh mục chưa có giá trị" TRƯỚC nên vẫn trả 1 (vòng Codex bác bản vá).
+  const onlyUnknown = structuredClone(advancedCollector);
+  onlyUnknown.balances = advancedCollector.balances
+    .filter((row) => row.programId === "amex-mr")
+    .map((row) => ({ ...row, balance: null }));
+  assert.equal(raw(findRanked(execute(onlyUnknown).record, "amex-green"), "new_currency_exposure"), 0.5);
+
+  // MR có số dư nhưng chưa định giá: không đo được tỷ trọng — cũng điểm giữa.
+  const onlyMr = structuredClone(advancedCollector);
+  onlyMr.balances = advancedCollector.balances.filter((row) => row.programId === "amex-mr");
+  const unvalued: RecommendationDataset = {
+    ...DATA,
+    programValuations: DATA.programValuations.filter((row) => row.programId !== "amex-mr"),
+  };
+  assert.equal(raw(findRanked(execute(onlyMr, { data: unvalued }).record, "amex-green"), "new_currency_exposure"), 0.5);
+});
+
+test("chuyến đi: bonus KHÔNG với tới theo sức dồn không được phủ chuyến đi", () => {
+  // Sức dồn $1,000 cho 3 tháng: Amex® Gold đòi $1,000 MỖI chu kỳ nên không
+  // phần nào với tới — §11 nói mức dùng được $0. Bản trước vẫn ghi "phủ từ 4%
+  // lên 17%" vì phép phủ cộng mọi thành phần.
+  const state = structuredClone(vietnamTripShortfall);
+  state.spend = { ...state.spend!, minimumSpendCapacity3m: { low: 1_000, high: 1_000 } };
+  const { record } = execute(state);
+  const gold = productIdFor("amex-gold-rewards");
+  assert.equal(facts(record, gold)!.offer.usableValueCents, 0, "tiền đề: mức dùng được $0");
+  assert.equal(raw(findRanked(record, "amex-gold-rewards"), "points_gap_reduction"), 0);
+  // Thành phần không đòi chi (10,000 điểm lượt quẹt đầu) vẫn được tính.
+  assert.ok(raw(findRanked(record, "td-aeroplan-visa-infinite"), "points_gap_reduction") > 0);
+});
+
+test("chuyến đi: chỉ phần bonus KỊP về tay trước tháng bay được phủ chuyến đi", () => {
+  // Trang hỏi tháng bay "để biết bạn còn bao nhiêu thời gian" — bản trước
+  // không phép tính nào đọc nó. Amex® Gold trả 12 chu kỳ hằng tháng; TD®
+  // Aeroplan® Visa Infinite* trả 25,000 điểm ở ngày kỷ niệm năm đầu.
+  const gapFor = (slug: string, start: string, end: string) => {
+    const state = structuredClone(vietnamTripShortfall);
+    state.goals = state.goals.map((goal) => (goal.type === "trip" ? { ...goal, travelStart: start, travelEnd: end } : goal));
+    return raw(findRanked(execute(state).record, slug), "points_gap_reduction");
+  };
+  const goldSoon = gapFor("amex-gold-rewards", "2026-10-01", "2026-10-31"); // 23 ngày: chưa trọn chu kỳ nào
+  const goldMid = gapFor("amex-gold-rewards", "2027-04-01", "2027-04-30");
+  const goldLate = gapFor("amex-gold-rewards", "2027-12-01", "2027-12-31"); // hơn một năm: đủ 12 chu kỳ
+  assert.equal(goldSoon, 0);
+  assert.ok(goldSoon < goldMid && goldMid < goldLate, `${goldSoon} < ${goldMid} < ${goldLate}`);
+  const tdMid = gapFor("td-aeroplan-visa-infinite", "2027-04-01", "2027-04-30");
+  const tdLate = gapFor("td-aeroplan-visa-infinite", "2027-12-01", "2027-12-31");
+  assert.ok(tdMid < tdLate, `thưởng ngày kỷ niệm không kịp cho chuyến tháng 4: ${tdMid} < ${tdLate}`);
+});
+
+test("§30 đo được câu hỏi tháng bay — tháng bay nay đổi được phần phủ", () => {
+  // `flexiblePointsSufficient` chưa khai ngày đi. Câu trả lời thử phải tồn tại
+  // và chạy thật, không rơi về bảng ưu tiên tĩnh như trước 4.34.0.
+  const { record } = execute(flexiblePointsSufficient);
+  const probe = record.derivedState.followUpProbes.find((p) => p.gapKind === "trip_dates_unknown");
+  assert.ok(probe !== undefined, "§30 không đo câu hỏi tháng bay");
+  assert.equal(probe.outcomes.length, 2);
+
+  // Và câu trả lời thử ghi ĐÚNG tháng vào đúng chuyến đi — đếm số câu thôi thì
+  // bỏ cả hai phép ghi ngày vẫn xanh (vòng Codex bác bản vá). Ngày chạy cuối
+  // năm để lộ phép cộng tháng qua năm.
+  const goal = flexiblePointsSufficient.goals.find((row) => row.type === "trip")!;
+  const gap = { kind: "trip_dates_unknown", subject: goal.id as string, reason: "" } as UserDataGap;
+  const written = answersFor(gap, "2026-12-31").map((answer) => {
+    const state = structuredClone(flexiblePointsSufficient);
+    answer.apply(state);
+    const trip = state.goals.find((row) => row.id === goal.id);
+    assert.ok(trip?.type === "trip");
+    return [trip.travelStart, trip.travelEnd];
+  });
+  assert.deepEqual(written, [
+    ["2027-01-01", "2027-01-31"],
+    ["2028-01-01", "2028-01-31"],
+  ]);
+  assert.deepEqual(answersFor(gap), [], "không có ngày chạy thì không có câu trả lời thử");
+});
+
+test("phá hoà là thứ tự TOÀN PHẦN — mọi hoán vị của ba thẻ hoà điểm ra cùng một thứ tự", () => {
+  // Hai hạng cùng họ, và một thẻ đứng một mình có id NẰM GIỮA hai hạng đó. So
+  // hạng khi cùng họ + so id khi khác họ là không bắc cầu: kết quả đổi theo thứ
+  // tự đầu vào (vòng Codex bác bản vá).
+  const product = (id: string, familyId: string | null, tierRank: number | null) =>
+    ({ id, familyId, tierRank }) as unknown as Product;
+  const ix = {
+    productById: new Map([
+      ["p_a", product("p_a", "fam_x", 2)],
+      ["p_b", product("p_b", null, null)],
+      ["p_c", product("p_c", "fam_x", 1)],
+    ]),
+  } as unknown as DatasetIndex;
+  const card = (productId: string) => ({ kind: "open_card", productId, score: 0.5 }) as unknown as Candidate;
+  const permutations = (items: Candidate[]): Candidate[][] =>
+    items.length <= 1
+      ? [items]
+      : items.flatMap((item, index) =>
+          permutations([...items.slice(0, index), ...items.slice(index + 1)]).map((rest) => [item, ...rest]),
+        );
+  const orders = new Set(
+    permutations([card("p_a"), card("p_b"), card("p_c")]).map((input) =>
+      rankCandidates(input, ix).map((row) => row.productId).join(" "),
+    ),
+  );
+  assert.deepEqual([...orders], ["p_c p_a p_b"], "hạng dưới đứng trước hạng trên, và thứ tự không phụ thuộc đầu vào");
+});
+
+test("hai hạng CÙNG HỌ hoà tuyệt đối thì hạng dưới — thẻ dễ mở hơn — đứng trước", () => {
+  // Capital One® Quicksilver World Elite® đòi $80,000 thu nhập, bản World
+  // $50,000; engine chấm hai thẻ bằng nhau. Phá hoà theo id chọn World Elite
+  // rồi phép gom họ giấu bản World.
+  const asOf = "2026-10-09";
+  const record = executeRun(
+    { state: studentStarter, data: datasetAt(offlineDataset(), asOf, { knownAt: asOf }), asOf, knownAt: asOf },
+    { id: "run_acceptance_tie", createdAt: `${asOf}T00:00:00.000Z` },
+  ).record;
+  const rows = ranking(record);
+  const elite = rows.findIndex((r) => r.candidate.productSlug === "capital-one-quicksilver-world-elite-mastercard");
+  const world = rows.findIndex((r) => r.candidate.productSlug === "capital-one-quicksilver-world-mastercard");
+  assert.ok(elite >= 0 && world >= 0, "tiền đề: cả hai thẻ đều được chấm");
+  assert.equal(rows[elite].candidate.score, rows[world].candidate.score, "tiền đề: hoà tuyệt đối");
+  assert.ok(world < elite, "bản World phải đứng trước bản World Elite");
+  assert.equal(rows[elite].visibility, "hidden_same_family");
 });

@@ -30,7 +30,8 @@ import { flexibilityReach, flexibilityScale } from "../portfolio.ts";
 import { activeAt } from "../temporal.ts";
 import { component, relativeTo } from "./weights.ts";
 import { bonusPointsToward } from "./context.ts";
-import type { PointsProgramId } from "../types.ts";
+import { daysBetween, reachableOfferComponents } from "../offer-quality.ts";
+import type { OfferComponent, PointsProgramId } from "../types.ts";
 import type { ScoreComponent } from "../engine-types.ts";
 import type { CandidateFacts, ScoringContext } from "./context.ts";
 
@@ -64,6 +65,51 @@ function tripCurrencyUtility(
 }
 
 /**
+ * Thành phần welcome bonus phục vụ được CHUYẾN ĐI NÀY, và mỗi phần bao nhiêu
+ * chu kỳ.
+ *
+ * Hai cửa, cả hai từng thiếu (vòng Codex 09/10/2026):
+ *
+ *  1. VỚI TỚI — chỉ tập thành phần sức dồn đã khai đạt được, đúng tập
+ *     `usableValueCents` của §11 đã chọn. Bản trước cộng mọi thành phần, nên
+ *     thẻ có mức dùng được $0 vẫn ghi "phủ từ 4% lên 17%".
+ *  2. KỊP NHẬN — đã khai tháng bay thì bỏ phần KHÔNG THỂ về tay trước tháng
+ *     đó: chu kỳ hằng tháng chưa kịp trôi qua, thưởng gia hạn (trả ở ngày kỷ
+ *     niệm, sớm nhất ngày 365), cửa sổ mở sau ngày bay. Trang hỏi tháng bay
+ *     "để biết bạn còn bao nhiêu thời gian" mà trước đây không phép tính nào
+ *     đọc nó: Amex® Gold được cộng trọn 12 chu kỳ cho chuyến bay sau 23 ngày.
+ *
+ * Mốc sớm nhất là mốc LẠC QUAN — chi đủ ngay khi cửa sổ mở, điểm về ngay, chưa
+ * trừ thời gian đặt vé trước ngày bay. Phép lọc chỉ bỏ cái chắc chắn không
+ * kịp, không đoán người dùng chi nhanh tới đâu.
+ */
+export function tripBonusParts(
+  candidate: CandidateFacts,
+  ctx: ScoringContext,
+): { component: OfferComponent; repeats: number }[] | null {
+  const active = candidate.offer.active;
+  if (active === null) return null;
+  const capacity = ctx.state.spend?.minimumSpendCapacity3m ?? null;
+  const reachable = reachableOfferComponents(active, ctx.ix, ctx.asOf, capacity) ?? active.components;
+  const travelStart = ctx.goal.trip?.travelStart ?? null;
+  const daysLeft = travelStart === null ? null : daysBetween(ctx.asOf, travelStart);
+
+  return reachable.map((component) => {
+    const cycles = component.componentType === "monthly_spend" ? (component.repeatCount ?? 1) : 1;
+    if (daysLeft === null) return { component, repeats: cycles };
+    const opensAt = component.windowStartsAfterDays;
+    if (component.componentType === "monthly_spend") {
+      // Mỗi chu kỳ dài cửa sổ ÷ số chu kỳ (Cobalt®: 365 ÷ 12) và trả khi chu kỳ đó khép lại.
+      const cycleDays = (component.spendWindowDays ?? 365) / cycles;
+      const done = Math.floor((daysLeft - opensAt) / cycleDays);
+      return { component, repeats: Math.max(0, Math.min(cycles, done)) };
+    }
+    const earliest = component.componentType === "anniversary" ? Math.max(365, opensAt) : opensAt;
+    return { component, repeats: earliest <= daysLeft ? 1 : 0 };
+  });
+}
+
+/**
  * Phần chuyến đi mà welcome bonus của thẻ này thêm vào — `null` khi chưa tính
  * được (chặng chưa định giá, thiếu thừa số chuyến đi).
  *
@@ -90,7 +136,9 @@ export function tripGain(
   const before = tripCoverage(ctx.state, ctx.ix, ctx.asOf, need).coverage;
   if (before === null) return null;
   if (before >= 1) return { before, after: before, raw: 0, estimated: false, floorOnly: false, bonusUncertain: false };
-  const bonusTo = (programId: PointsProgramId) => bonusPointsToward(candidate, programId, ctx.ix, ctx.asOf) ?? 0;
+  const parts = tripBonusParts(candidate, ctx) ?? undefined;
+  const bonusTo = (programId: PointsProgramId) =>
+    bonusPointsToward(candidate, programId, ctx.ix, ctx.asOf, parts) ?? 0;
   const after = tripCoverage(ctx.state, ctx.ix, ctx.asOf, need, bonusTo);
   const full = Math.max(0, (after.coverage as number) - before);
   // Bonus BỊ CHẶN thì `bonusPointsToward` về 0 — phần tăng bằng 0. Bonus

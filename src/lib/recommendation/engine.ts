@@ -314,6 +314,21 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * bằng toàn bộ offer, chưa chắc tính hai lần, $0 gộp với chưa định giá). Đổi
  * điểm số.
  *
+ * 4.34.0 — audit 09/10/2026, năm chỗ, cả năm đổi điểm số:
+ *   - Mục tiêu "đa dạng hơn": `transfer_flexibility` chỉ đếm đích ví hiện tại
+ *     CHƯA với tới (`walletReach`); `new_currency_exposure` của chương trình
+ *     có tài khoản mà chưa biết số dư (hoặc chưa định giá) là 0.5, không phải
+ *     1. Trước đó người giữ 410,000 điểm và ba thẻ Membership Rewards® được
+ *     khuyên thẻ MR thứ tư (Amex® Green) làm hạng nhất.
+ *   - Chuyến đi: phần welcome bonus phủ chuyến đi chỉ gồm thành phần VỚI TỚI
+ *     theo sức dồn và KỊP NHẬN trước tháng bay (`tripBonusParts`). Trước đó
+ *     cộng mọi thành phần trọn số chu kỳ — thẻ dùng được $0 vẫn "phủ từ 4%
+ *     lên 17%", và tháng bay người dùng khai không phép tính nào đọc.
+ *   - §30 có câu trả lời thử cho tháng bay (bay tháng sau / sau hơn một năm).
+ *   - Rule 3 không phạt khi hệ sinh thái đang dồn là chương trình định giá
+ *     chặng của mục tiêu chuyến đi.
+ *   - Hai hạng cùng họ hoà tuyệt đối → hạng dưới đứng trước (`rankCandidates`).
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -326,7 +341,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.33.0";
+export const ENGINE_VERSION = "4.34.0";
 
 export interface RecommendInput {
   state: UserState;
@@ -652,7 +667,7 @@ export function recommend(input: RecommendInput): RecommendationRun {
     // Truyền TẬP ĐẦY ĐỦ: thành phần `no_reachable_candidate` đo đúng phần ứng
     // viên bị chặn, nên nó phải nhìn thấy cả những thẻ vừa bị lọc ra.
     const noAction = buildNoNewCardCandidate(facts, ctx);
-    const ranked = rankCandidates([...cardCandidates, noAction]);
+    const ranked = rankCandidates([...cardCandidates, noAction], ix);
 
     // Đúng những dòng lượt chạy ĐÃ ĐỌC cho mục tiêu này — một câu trả lời cho
     // cả độ tươi lẫn chỗ trống theo sản phẩm. Xem `read-set.ts`.
