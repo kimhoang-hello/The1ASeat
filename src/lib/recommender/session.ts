@@ -18,7 +18,7 @@
  * vì âm thầm chạy tiếp.
  */
 
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 
 import { todayInSiteZone } from "@/lib/format-date";
@@ -131,6 +131,19 @@ export async function startUserId(): Promise<string> {
     maxAge: COOKIE_MAX_AGE,
   });
   return id;
+}
+
+/**
+ * Dấu của phiên, đi kèm mỗi form câu hỏi (`name="s"`).
+ *
+ * Tab còn mở từ trước khi bấm "Làm lại từ đầu" ở tab khác gửi form lên kèm
+ * cookie của phiên MỚI, mà khoá câu hỏi trùng nhau giữa các phiên
+ * (`trip_dates_unknown:g_1`): không có dấu này, câu trả lời của hồ sơ cũ ghi
+ * thẳng vào hồ sơ mới (Codex, kiểm toàn diện 10/10/2026). Băm chứ không đặt id:
+ * id phiên mở được cả hồ sơ.
+ */
+export function sessionTag(userId: string): string {
+  return createHash("sha256").update(userId).digest("hex").slice(0, 16);
 }
 
 export async function clearSession(): Promise<void> {

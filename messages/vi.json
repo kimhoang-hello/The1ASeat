@@ -205,6 +205,7 @@
     "result": "Giá trị mỗi điểm",
     "resultUnavailable": "—",
     "resultHint": "Kinh nghiệm: từ 1.5–2¢/điểm trở lên thường là một giao dịch đổi điểm tốt.",
+    "resultLoss": "Thuế, phí cao hơn giá vé tiền mặt: đổi điểm vừa mất điểm vừa tốn tiền hơn mua vé — trả tiền mặt rẻ hơn.",
     "benchmark": "Giá trị trung bình theo Ghế 1A cho {program}: {value}¢/điểm",
     "reset": "Tính lại"
   },

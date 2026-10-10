@@ -109,7 +109,12 @@ export default async function VietnamRoutePage({
   // cố ý cho một id lạ rơi về danh sách không lọc, nên một link đoán bừa sẽ
   // trả về nguyên 23 thẻ và người đọc tưởng đó là kết quả lọc — đúng cái bẫy
   // đã ghi trong `TransferLegs`.
-  const offers = await getCreditCardOffers();
+  // Bảng giá là dữ liệu tĩnh; danh sách thẻ chỉ quyết định link lọc nào được
+  // hiện. Contentful nấc thì rơi về `[]` + log: link lọc biến mất, bảng vẫn hiện.
+  const offers = await getCreditCardOffers().catch((error) => {
+    console.error("[bay-ve-viet-nam] không tải được danh sách thẻ, bỏ link lọc theo hệ điểm", error);
+    return [];
+  });
   const cardPrograms = new Set(getCardPointsPrograms(offers).map((p) => p.id));
 
   // Chặng này với tới được những chương trình nào — và từ đó, loại điểm thẻ

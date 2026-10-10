@@ -119,7 +119,9 @@ export function PointsCalculator({ cardProgramIds }: { cardProgramIds: string[] 
     const fees = parseNumber(taxes);
     if (p === null || cash === null || fees === null) return null;
     if (p <= 0 || cash < 0 || fees < 0) return null;
-    const value = Math.max(cash - fees, 0) / p;
+    // KHÔNG kẹp về 0: thuế phí cao hơn giá vé là đổi điểm LỖ, và "0.0¢" giấu
+    // khoản lỗ đó sau một con số trông như hoà vốn (Codex, kiểm 10/10/2026).
+    const value = (cash - fees) / p;
     // `p > 0` chưa đủ: `p` nhỏ tới mức dưới ngưỡng biểu diễn của số thực làm
     // phép chia tràn thành `Infinity`, và ô kết quả in ra "Infinity¢" — đúng
     // loại "con số trông như đã tính xong" mà `null` ở trên sinh ra để chặn.
@@ -169,6 +171,9 @@ export function PointsCalculator({ cardProgramIds }: { cardProgramIds: string[] 
                 bắt vì template literal nhận cả `null`. */}
             {cents === null ? t("resultUnavailable") : `${cents}¢`}
           </p>
+          {valuePerPoint !== null && valuePerPoint < 0 && (
+            <p className="mt-2 text-sm font-medium text-warning">{t("resultLoss")}</p>
+          )}
         </div>
 
         {selectedProgram && (

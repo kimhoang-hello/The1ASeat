@@ -16,6 +16,7 @@ import {
   recommenderStorageReady,
   runForDisplay,
   RunLimitError,
+  sessionTag,
   skippedQuestions,
 } from "@/lib/recommender/session";
 import { resetRecommendation } from "@/app/credit-cards/goi-y/actions";
@@ -216,6 +217,7 @@ async function Body({ editKey }: { editKey: string | null }) {
     return <StorageDownNotice />;
   }
   if (userId === null || stored === null) return <StartPanel />;
+  const session = sessionTag(userId);
 
   let run;
   try {
@@ -248,7 +250,7 @@ async function Body({ editKey }: { editKey: string | null }) {
   if (edit !== null) {
     return (
       <>
-        <QuestionCard version={stored.version} spec={edit} lead="Sửa câu trả lời" />
+        <QuestionCard session={session} version={stored.version} spec={edit} lead="Sửa câu trả lời" />
         <p className="text-sm text-muted-foreground">
           Trả lời xong mình tính lại ngay. Bấm &ldquo;Bỏ qua câu này&rdquo; để giữ nguyên câu trả lời
           cũ.
@@ -266,7 +268,7 @@ async function Body({ editKey }: { editKey: string | null }) {
   // (bạn đang giữ thẻ nào, có điểm ở đâu), nên kết quả hiện lúc này là kết quả
   // sắp đổi. Các câu còn lại chỉ tinh chỉnh, nên hiện kết quả trước.
   if (question !== null && followUp?.basis === "gatekeeper") {
-    return <QuestionCard version={stored.version} spec={question} lead="Câu hỏi nền" />;
+    return <QuestionCard session={session} version={stored.version} spec={question} lead="Câu hỏi nền" />;
   }
 
   // Câu KHÔNG đo được là đổi kết quả thì không chiếm chỗ của một câu hỏi thật:
@@ -289,6 +291,7 @@ async function Body({ editKey }: { editKey: string | null }) {
       {question !== null &&
         (upfront ? (
           <QuestionCard
+            session={session}
             version={stored.version}
             spec={question}
             lead={
@@ -306,7 +309,7 @@ async function Body({ editKey }: { editKey: string | null }) {
               Câu này không đổi thẻ mình đang gợi ý, nhưng nó lấp một chỗ mình còn chưa biết.
             </p>
             <div className="mt-4">
-              <QuestionCard version={stored.version} spec={question} />
+              <QuestionCard session={session} version={stored.version} spec={question} />
             </div>
           </details>
         ))}

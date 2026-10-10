@@ -3320,3 +3320,59 @@ của `NO_NEW_CARD`, mục tiêu chuyến đi. Chi phí đo được: +~25 ms m�
 là BMO® VIPorter® / WestJet RBC® / Avion® (chương trình mới với ví đó), thay cho thẻ
 Aeroplan® thứ ba được cộng điểm vì tỷ lệ tích điểm mà ví đã có.
 
+## Kiểm toàn diện 10/10/2026 (lượt tay, sau lượt định kỳ cùng sáng) — đừng đề xuất lại
+
+Gate: lint, tsc, build, 11 audit, 8 test suite (`test:reco` 484 + 23 skip MySQL),
+`audit:links` production 207 trang. Chrome headless (puppeteer-core) quét 212 trang ×
+1280/320px: 0 lỗi console/JS, 0 tràn ngang, 0 ảnh hỏng, 0 link nội bộ chết, 1 h1 +
+canonical + og:image + `lang="vi"` + JSON-LD parse được ở mọi trang. Webhook Contentful
+11/11 lượt 200. Lượt định kỳ sáng cùng ngày kết luận "sạch" — nó không soi lãi suất,
+không quét trang, và vòng Codex của nó không đi tới server action của `/goi-y`.
+
+**Bẫy khi quét bằng puppeteer:** nhiều trang trong một trình duyệt thì tab nền bị bóp
+timer (`setTimeout` 60ms thành ~1s), lượt quét chậm 10 lần mà không báo lỗi gì. Mở
+Chrome với `--disable-background-timer-throttling --disable-renderer-backgrounding
+--disable-backgrounding-occluded-windows`.
+
+**Đã vá:**
+- **Lãi suất lấy theo NGÂN HÀNG, không theo FinlyWealth.** Ba tài khoản lệch, cả ba
+  FinlyWealth còn số cũ: Scotiabank® MomentumPLUS 0.95% → 0.80% (premium 360 ngày
+  0.45% → 0.30%, bảng lãi hiệu lực 10/10/2026), Money Master 0.40% → 0.50% (0.01% +
+  0.49% Smart Savings, hiệu lực 13/02/2026 — "sửa" 0.50 → 0.40 ngày 16/08 là sai),
+  EQ Bank™ Base Rate 1.00% → 1.50%. Ghi ở đầu `bank-accounts.ts`. Welcome bonus và
+  rebate vẫn theo FinlyWealth.
+- **`ratePromoEndsOn` + `withLiveRate`**: lãi khuyến mãi nằm trong file TS, không job
+  nào gỡ — qua 31/10 Simplii™ HISA vẫn in 4.60%, đứng đầu "sắp theo lãi", JSON-LD
+  khai 4.6. Hết hạn thì `regularRate` lên làm số chính, câu khuyến mãi biến mất. Gọi
+  ở `bankAccountBySlug`, `parseBankCompareSlugs`, danh sách của `bank-account-finder`
+  (trước `sortAccounts`) — lúc render, không lúc nạp module. Cùng lý do với
+  `hasLiveBonus`.
+- **`/goi-y`: form của phiên cũ ghi vào phiên mới.** Tab A còn form của S1, tab B
+  "Làm lại từ đầu" rồi tạo S2; khoá câu hỏi trùng giữa các phiên (`…:g_1`) nên câu trả
+  lời của S1 vào S2, và với câu danh sách `staleForm()` đưa id S1 lên `?sua=`
+  (`publicQuestionKey` chỉ giấu id phiên ĐANG mở). Nay form answer + skip mang `s` =
+  `sessionTag(userId)` (sha256 cắt 16 hex, không đặt id thô); action từ chối khi lệch
+  (`otherSession`) hoặc THIẾU (`questionGone`). Bản vá đầu cho "thiếu `s`" đi qua —
+  Codex bác: HTML cũ chính là tab gây lỗi. Skip không có phiên thì không ghi cookie, và
+  `startRecommendation` gọi `clearSession()` trước `startUserId()` — cookie "bỏ qua"
+  theo khoá câu hỏi, không theo phiên, nên phiên mới phải bắt đầu với danh sách sạch.
+- **Máy tính điểm không kẹp giá trị về 0.** Thuế phí > giá vé từng in "0.0¢" — trông
+  như hoà vốn trong khi đổi điểm là lỗ. Nay in số âm kèm câu `resultLoss`.
+- **Lỗi Contentful ở bốn trang dữ liệu tĩnh rơi về `[]` + log** (calculator,
+  transfer-partners, bay-ve-viet-nam/[route], bank-accounts/[slug]) — cùng tiền lệ
+  `/refundable-hotel-trick`: danh sách thẻ/bài chỉ nuôi khối phụ. Các trang mà nội
+  dung CHÍNH là dữ liệu Contentful (blog, trang thẻ, tot-nhat, transfer-bonuses,
+  feed) vẫn để lỗi đi lên — cố ý.
+
+**Đã kiểm, KHÔNG phải lỗi:**
+- `npm audit`: 5 high, một gốc `braces` (mọi phiên bản dính, chưa có bản vá) chỉ qua
+  `eslint-config-next` — công cụ lint, không lên site. "Fix" của npm là hạ xuống
+  eslint-config-next 14.
+- `sync-videos` 07:12 UTC đỏ 5 lượt 403 "Checking your browser" — Hostinger chặn runner,
+  lượt sau xanh (mục 05/09).
+- `/catch-the-points` 404 — cờ `CATCH_THE_POINTS_PUBLISHED` đang tắt.
+- Link phủ ảnh thẻ (`absolute inset-0`, không chữ) là `aria-hidden` + `tabindex=-1`,
+  có nút "Apply ngay" mang tên ngay bên dưới.
+- Tangerine® Savings: trang có "0.70%" trong ô ước tính và "5.00% boost" ở menu —
+  cái sau là offer tài khoản đăng ký (TFSA/RSP). Savings thường vẫn 0.30% / 4.50%.
+

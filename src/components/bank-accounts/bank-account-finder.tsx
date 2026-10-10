@@ -28,6 +28,7 @@ import {
   type BankAccount,
   type BankId,
   type FilterId,
+  withLiveRate,
   type SortId,
 } from "@/lib/bank-accounts";
 
@@ -500,7 +501,9 @@ function FinderView({
   // Không useMemo: danh sách chỉ mười mấy dòng, lọc lại mỗi lần render rẻ hơn
   // nhiều so với cái giá thật sự — React Compiler từ chối tối ưu cả component
   // khi thấy memo thủ công phụ thuộc vào giá trị nó nghĩ có thể đổi sau.
-  const inFilter = BANK_ACCOUNTS.filter((account) => matchesFilter(account, filter));
+  // `withLiveRate`: lãi khuyến mãi đã hết hạn thì cả số trên thẻ lẫn thứ tự
+  // "sắp theo lãi" đều dùng mức thường.
+  const inFilter = BANK_ACCOUNTS.filter((account) => matchesFilter(account, filter)).map(withLiveRate);
   // Nhiều tài khoản nhất đứng trước, giống hàng chip điểm thưởng ở trang thẻ
   // (getCardPointsPrograms). Thứ tự khai báo trong BANKS đọc như thể đã sắp
   // theo số lượng — Scotiabank® 6 rồi BMO® 4 — nên RBC® 5 nằm cuối, sau

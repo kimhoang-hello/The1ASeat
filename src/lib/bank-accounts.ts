@@ -34,6 +34,12 @@
 // Simplii Financial™ đều ghi 4.60%. Ba nguồn thắng một widget, nên ở đây là
 // 4.60% — nếu sau này thấy lệch nữa thì đọc điều khoản chứ đừng đọc widget.
 //
+// Lãi suất thì FinlyWealth CHẬM hơn ngân hàng. Đối chiếu 10/10/2026: ba tài
+// khoản lệch, cả ba FinlyWealth còn số cũ còn ngân hàng đã đổi — MomentumPLUS
+// (0.95% → 0.80%), Money Master (0.40% → 0.50%), EQ Bank™ Base Rate (1.00% →
+// 1.50%). Lãi suất lấy theo trang/bảng lãi của chính ngân hàng; FinlyWealth chỉ
+// còn là nguồn cho welcome bonus và rebate.
+//
 // Bản đầu của file này lấy số từ một trang tổng hợp khác và sai ở bốn chỗ,
 // đối chiếu lại mới phát hiện — giữ lại đây làm lời nhắc rằng bảng tổng hợp
 // của bên thứ ba không thay được trang gốc:
@@ -42,7 +48,9 @@
 //   · welcome bonus tài khoản sinh viên ghi $175, thật ra tới $200
 //   · MomentumPLUS ghi 4.05%, thật ra cao nhất 0.95% và chỉ khi có Ultimate
 //     Package kèm premium period 360 ngày — chênh hơn bốn lần
-//   · Money Master ghi 0.50%, thật ra 0.40%
+//   · Money Master ghi 0.50%, thật ra 0.40% (đính chính 10/10/2026: 0.40% là
+//     số của FinlyWealth; bảng lãi Scotiabank® ghi 0.50% từ 13/02/2026 — bản
+//     đầu đúng, "sửa" ngày 16/08 mới sai)
 //
 // Lãi suất và welcome bonus ở Canada thay đổi liên tục. Chỗ nào ngân hàng
 // không công bố thì để trống và nói thẳng, không đoán.
@@ -142,6 +150,11 @@ export type BankAccount = {
   interestRate?: number;
   /** Lãi suất sau khi hết khuyến mãi, %/năm. */
   regularRate?: number;
+  /**
+   * ISO date — ngày CUỐI người mới còn đăng ký được lãi khuyến mãi
+   * `interestRate`. Qua ngày đó trang tự hiện `regularRate`: xem `withLiveRate`.
+   */
+  ratePromoEndsOn?: string;
   /** Điều kiện để hưởng mức lãi ở trên. */
   promoNoteVi?: string;
   /** Lý do không có con số, khi ngân hàng không công bố mức lãi cố định. */
@@ -274,7 +287,10 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     kind: "savings",
     tags: [],
     monthlyFee: 0,
-    interestRate: 0.95,
+    // 0.40% + 0.30% (premium period 360 ngày) + 0.10% (Ultimate Package), theo
+    // bảng lãi Scotiabank® hiệu lực 10/10/2026 — premium 360 ngày từ 0.45%
+    // xuống 0.30%. Trang FinlyWealth còn ghi mức cũ 0.95%.
+    interestRate: 0.8,
     regularRate: 0.4,
     promoNoteVi:
       "Đây là mức cao nhất và rất khó chạm: phải vừa có Ultimate Package, vừa chọn premium period 360 ngày và để tiền yên suốt kỳ đó. Không kèm gì thì chỉ 0.40%.",
@@ -294,10 +310,12 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     kind: "savings",
     tags: [],
     monthlyFee: 0,
-    interestRate: 0.4,
+    // 0.01% + 0.49% bonus khi đăng ký Smart Savings tools, theo trang sản phẩm
+    // và bảng lãi Scotiabank® (hiệu lực 13/02/2026). Trang FinlyWealth còn ghi 0.4%.
+    interestRate: 0.5,
     regularRate: 0.01,
     promoNoteVi:
-      "Chỉ đạt 0.40% khi đăng ký Smart Savings tools của Scotiabank®; không đăng ký thì mọi số dư chỉ được 0.01%.",
+      "Chỉ đạt 0.50% khi đăng ký Smart Savings tools của Scotiabank®; không đăng ký thì mọi số dư chỉ được 0.01%.",
     keyBenefitsVi: [
       "Không mất monthly fee, mở tài khoản chỉ với $1",
       "Chuyển tiền miễn phí giữa các tài khoản Scotiabank®",
@@ -558,6 +576,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     monthlyFee: 0,
     interestRate: 4.5,
     regularRate: 0.3,
+    ratePromoEndsOn: "2026-11-30",
     promoNoteVi:
       "4.50% là lãi khuyến mãi 153 ngày (khoảng 5 tháng) kể từ ngày bạn làm xong các điều kiện, chỉ tính trên phần số dư tới $1,000,000, cộng gộp mọi Eligible Savings Account cùng loại tiền tệ. Dành cho khách hàng mới mở tài khoản tiết kiệm đủ điều kiện trong vòng 60 ngày kể từ khi có Client Number; offer chạy 28/07/2026 – 30/11/2026. Hết kỳ khuyến mãi thì về mức thường 0.30%.",
     keyBenefitsVi: [
@@ -611,9 +630,11 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     tags: [],
     monthlyFee: 0,
     interestRate: 2.75,
-    regularRate: 1,
+    // Base Rate 1.50% theo chú thích trên trang EQ Bank™ (10/10/2026): 2.75% =
+    // Base Rate + 1.25%. Trang FinlyWealth còn ghi Base Rate 1.00%.
+    regularRate: 1.5,
     promoNoteVi:
-      "2.75% chỉ khi có direct deposit định kỳ từ $2,000/tháng; không có thì 1.00%. Đây không phải lãi khuyến mãi có hạn — nó giữ nguyên chừng nào direct deposit còn về.",
+      "2.75% chỉ khi có direct deposit định kỳ từ $2,000/tháng; không có thì 1.50%. Đây không phải lãi khuyến mãi có hạn — nó giữ nguyên chừng nào direct deposit còn về.",
     keyBenefitsVi: [
       "Không monthly fee, không yêu cầu số dư tối thiểu",
       "Giao dịch, Interac e-Transfer® và thanh toán hoá đơn miễn phí không giới hạn",
@@ -661,6 +682,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     monthlyFee: 0,
     interestRate: 4.6,
     regularRate: 0.3,
+    ratePromoEndsOn: "2026-10-31",
     promoNoteVi:
       "4.60% là lãi khuyến mãi 153 ngày (khoảng 5 tháng) kể từ ngày mở tài khoản, chỉ tính trên phần số dư tới $200,000. Phải là khách hàng mới hoàn toàn của Simplii Financial™ và mở HISA đầu tiên trong vòng 60 ngày kể từ khi có Client Number; offer chạy 01/08/2026 – 31/10/2026. Hết kỳ khuyến mãi thì về biểu lãi thường theo bậc số dư: 0.30% dưới $50,000, 0.50% từ $50,000, 0.60% từ $100,000, 0.70% từ $500,000 và 1.00% từ $1,000,000.",
     keyBenefitsVi: [
@@ -991,7 +1013,26 @@ export const BANK_ACCOUNTS: BankAccount[] = [
 export const BANK_ACCOUNTS_VERIFIED_ON = "2026-08-19";
 
 export function bankAccountBySlug(slug: string): BankAccount | undefined {
-  return BANK_ACCOUNTS.find((account) => account.slug === slug);
+  const account = BANK_ACCOUNTS.find((row) => row.slug === slug);
+  return account && withLiveRate(account);
+}
+
+/**
+ * Tài khoản với lãi suất người mở HÔM NAY thật sự nhận được.
+ *
+ * Cùng lý do với `hasLiveBonus`: lãi khuyến mãi nằm trong file này, không job
+ * nào gỡ nó khi tới hạn. Không có lớp này thì qua ngày cuối của offer, Simplii
+ * Financial™ HISA vẫn in 4.60% làm số lớn nhất, vẫn đứng đầu "sắp theo lãi", và
+ * JSON-LD vẫn khai 4.6 (Codex, kiểm toàn diện 10/10/2026). Hết hạn thì mức
+ * thường lên làm số chính và câu khuyến mãi biến mất — nó nói về một offer
+ * không còn đăng ký được.
+ *
+ * Gọi ở chỗ ĐỌC (trang riêng, bảng so sánh, bộ lọc), lúc render, không phải lúc
+ * nạp module: tiến trình server sống qua nhiều ngày.
+ */
+export function withLiveRate(account: BankAccount): BankAccount {
+  if (!account.ratePromoEndsOn || !hasExpired(account.ratePromoEndsOn)) return account;
+  return { ...account, interestRate: account.regularRate, regularRate: undefined, promoNoteVi: undefined };
 }
 
 /** Đường dẫn trang riêng của một tài khoản. */

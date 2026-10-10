@@ -26,7 +26,13 @@ export default async function CalculatorPage() {
   // client component nên không với tới Contentful; truyền xuống từ đây để nó
   // không bao giờ hứa một bộ lọc rỗng — `/credit-cards` cố ý cho `?points=` lạ
   // rơi về danh sách KHÔNG lọc, nên một link sai sẽ hỏng lặng chứ không báo.
-  const offers = await getCreditCardOffers();
+  // Chỉ nuôi khối "đi tiếp" — calculator là dữ liệu tĩnh. Contentful nấc đúng
+  // lúc trang dựng lại thì rơi về `[]` + log (khối đi tiếp về link chung), như
+  // `/refundable-hotel-trick`. Bắt ở đây, KHÔNG trong hàm cache.
+  const offers = await getCreditCardOffers().catch((error) => {
+    console.error("[calculator] không tải được danh sách thẻ, bỏ link lọc theo hệ điểm", error);
+    return [];
+  });
   const cardProgramIds = getCardPointsPrograms(offers).map((program) => program.id);
 
   return (

@@ -20,8 +20,14 @@ export function QuestionCard({
   lead,
   skippable = true,
   version,
+  session,
 }: {
   spec: QuestionSpec;
+  /**
+   * `sessionTag` của phiên đã dựng form. Máy chủ từ chối form của phiên khác
+   * (tab mở từ trước "Làm lại từ đầu") thay vì ghi câu trả lời sang hồ sơ mới.
+   */
+  session: string;
   /**
    * Version của hồ sơ lúc form được dựng. Câu dạng danh sách gửi lên CẢ danh
    * sách, nên form dựng từ bản cũ (tab thứ hai, nút Back) sẽ ghi đè thẻ vừa
@@ -47,6 +53,7 @@ export function QuestionCard({
 
       <form action={answerQuestion} data-reco-event="answer" data-reco-question={spec.kind} className="mt-5">
         <input type="hidden" name="question" value={spec.key} />
+        <input type="hidden" name="s" value={session} />
         {version !== undefined && (spec.input.type === "cards" || spec.input.type === "programs") && (
           <input type="hidden" name="v" value={version} />
         )}
@@ -228,6 +235,7 @@ export function QuestionCard({
       {skippable && (
         <form action={skipCurrentQuestion} data-reco-event="skip" data-reco-question={spec.kind} className="mt-4">
           <input type="hidden" name="question" value={spec.key} />
+          <input type="hidden" name="s" value={session} />
           <button
             type="submit"
             className="cursor-pointer text-sm font-semibold text-muted-foreground underline underline-offset-4 hover:text-primary"

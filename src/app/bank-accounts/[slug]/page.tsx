@@ -100,7 +100,19 @@ export default async function BankAccountDetailPage({
 
   // `offers` ở file này đã là hàm dịch namespace "offers", nên danh sách thẻ
   // phải mang tên khác.
-  const [cardOffers, posts] = await Promise.all([getCreditCardOffers(), getPosts()]);
+  // Tài khoản là dữ liệu trong repo; thẻ và bài chỉ nuôi khối "đi tiếp".
+  // Contentful nấc đúng lúc trang dựng lại thì rơi về `[]` + log, như
+  // `/refundable-hotel-trick` — bắt ở đây, KHÔNG trong hàm cache.
+  const [cardOffers, posts] = await Promise.all([
+    getCreditCardOffers().catch((error) => {
+      console.error("[bank-accounts] không tải được danh sách thẻ, bỏ khối thẻ", error);
+      return [];
+    }),
+    getPosts().catch((error) => {
+      console.error("[bank-accounts] không tải được bài viết, bỏ link bài", error);
+      return [];
+    }),
+  ]);
 
   const jsonLd = {
     "@context": "https://schema.org",

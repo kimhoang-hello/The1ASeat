@@ -20,6 +20,8 @@ export const RECO_ERROR = {
   notSaved: "Không lưu được câu trả lời — thử lại lần nữa.",
   staleList: "Danh sách này vừa được sửa ở một tab khác. Mình đã mở lại bản mới nhất — tick lại rồi bấm Xong.",
   runLimit: "Bạn vừa chạy quá nhiều lượt gợi ý — thử lại sau một lúc.",
+  otherSession:
+    "Câu trả lời đó đến từ một tab của lượt gợi ý cũ (bạn đã làm lại từ đầu ở tab khác), nên mình không lưu. Đây là lượt hiện tại.",
 } as const;
 
 const KNOWN_ERRORS: ReadonlySet<string> = new Set([...Object.values(RECO_ERROR), ...ANSWER_ERRORS]);

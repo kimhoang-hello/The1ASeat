@@ -39,6 +39,7 @@ import {
   runAndSave,
   RunLimitError,
   saveState,
+  sessionTag,
   skipQuestion,
   startUserId,
   unskipQuestion,
@@ -91,6 +92,21 @@ function answerForm(formData: FormData): AnswerForm {
 }
 
 /**
+ * Form dựng cho một phiên khác với phiên trong cookie — tab mở từ trước khi
+ * bấm "Làm lại từ đầu" ở tab khác. Xem `sessionTag`.
+ *
+ * Thiếu field cũng bị từ chối (bảo tải lại trang), không cho qua: HTML dựng
+ * trước khi có field này chính là tab cũ mà lỗi gốc sinh ra từ đó — cho qua
+ * là giữ nguyên cả lỗi ghi chéo phiên lẫn id phiên cũ lên URL (Codex bác bản vá
+ * đầu, 10/10/2026). Cái giá là một lần "tải lại trang" cho tab mở qua lúc deploy.
+ */
+function sessionMismatch(formData: FormData, userId: string): string | null {
+  const tag = formData.get("s");
+  if (typeof tag !== "string") return RECO_ERROR.questionGone;
+  return tag === sessionTag(userId) ? null : RECO_ERROR.otherSession;
+}
+
+/**
  * Bắt đầu: mục tiêu + nước ở, trong cùng một lần bấm.
  *
  * Nước ở hỏi NGAY ở đây chứ không để engine hỏi sau, vì `validateUserState` từ
@@ -117,6 +133,10 @@ export async function startRecommendation(formData: FormData): Promise<void> {
   if (!perIp.ok || !siteWide.ok) fail(RECO_ERROR.busy);
 
   const today = todayInSiteZone();
+  // Phiên mới thì danh sách "đã bỏ qua" cũng mới: cookie bỏ qua theo khoá câu
+  // hỏi chứ không theo phiên, mà khoá trùng nhau giữa các phiên (`…:g_1`). Form
+  // "Bắt đầu" ở tab cũ không qua "Làm lại từ đầu" nên không ai xoá nó hộ.
+  await clearSession();
   const userId = await startUserId();
   const goal = goalFrom(goalValue, userId, today);
   if (goal === null) fail(RECO_ERROR.goalInvalid);
@@ -139,6 +159,10 @@ export async function startRecommendation(formData: FormData): Promise<void> {
 export async function answerQuestion(formData: FormData): Promise<void> {
   const userId = await currentUserId();
   if (userId === null) redirect(PATH);
+  // Trước mọi thứ khác, kể cả `staleForm`: khoá câu hỏi của hồ sơ cũ mang id
+  // phiên cũ, mà `publicQuestionKey` chỉ giấu id của phiên ĐANG mở.
+  const mismatch = sessionMismatch(formData, userId);
+  if (mismatch !== null) fail(mismatch);
   let stored: Awaited<ReturnType<typeof loadState>>;
   try {
     stored = await loadState(userId);
@@ -212,6 +236,13 @@ export async function answerQuestion(formData: FormData): Promise<void> {
 }
 
 export async function skipCurrentQuestion(formData: FormData): Promise<void> {
+  // Không có phiên thì không có gì để bỏ qua: tab cũ gửi "Bỏ qua" sau khi tab
+  // kia đã làm lại từ đầu sẽ ghi cookie bỏ qua, và cookie đó (không gắn với
+  // phiên nào) đi tiếp sang phiên mới — giấu đúng câu trùng khoá ở đó.
+  const userId = await currentUserId();
+  if (userId === null) redirect(PATH);
+  const mismatch = sessionMismatch(formData, userId);
+  if (mismatch !== null) fail(mismatch);
   const key = String(formData.get("question") ?? "");
   if (key !== "") await skipQuestion(key);
   redirect(PATH);

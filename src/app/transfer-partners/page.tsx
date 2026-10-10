@@ -105,7 +105,13 @@ function RegionHeading({
 export default async function TransferPartnersPage() {
   // Hệ điểm nào thật sự có thẻ trên site — đọc từ chính danh sách mà bộ lọc sẽ
   // chạy trên đó, nên một link ở đây không bao giờ hứa một bộ lọc rỗng.
-  const offers = await getCreditCardOffers();
+  // Bảng là dữ liệu tĩnh; danh sách thẻ chỉ nuôi các cột "thẻ tích hệ điểm
+  // này". Contentful nấc đúng lúc trang dựng lại thì rơi về `[]` + log — cột
+  // thẻ biến mất, bảng vẫn hiện (như `/refundable-hotel-trick`).
+  const offers = await getCreditCardOffers().catch((error) => {
+    console.error("[transfer-partners] không tải được danh sách thẻ, bỏ cột thẻ", error);
+    return [];
+  });
   const linkablePrograms = new Set(getCardPointsPrograms(offers).map((p) => p.id));
 
   // Cột nào không có thẻ nào thì biến mất hẳn thay vì hiện một tiêu đề trống —

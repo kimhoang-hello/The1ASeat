@@ -1,4 +1,4 @@
-import { BANK_ACCOUNTS, type BankAccount } from "./bank-accounts";
+import { BANK_ACCOUNTS, type BankAccount, withLiveRate } from "./bank-accounts";
 import { BANK_COMPARE_PATH, BANK_COMPARE_PARAM, BANK_RESERVED_SLUG } from "./bank-compare-path";
 import {
   assertNoSlugClash as assertNoClash,
@@ -20,7 +20,7 @@ export {
 } from "./bank-compare-path";
 
 export function parseBankCompareSlugs(raw: string | string[] | undefined): BankAccount[] {
-  return pickBySlugs(raw, BANK_ACCOUNTS);
+  return pickBySlugs(raw, BANK_ACCOUNTS).map(withLiveRate);
 }
 
 export function bankComparePath(slugs: string[]): string {
