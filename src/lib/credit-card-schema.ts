@@ -1,5 +1,6 @@
 import type { CreditCardOffer } from "./content";
-import { absoluteUrl } from "./seo";
+import { hasExpired } from "./format-date";
+import { absoluteUrl, bonusForTitle } from "./seo";
 import { SITE_URL } from "./subscriber-email";
 import { t } from "./t";
 import { type UsCreditCardOffer, usCardPath } from "./us-credit-cards";
@@ -68,6 +69,42 @@ export function creditCardJsonLd(offer: CreditCardOffer | UsCreditCardOffer) {
 }
 
 const seo = t("seo");
+
+/** "điểm Aeroplan®" → "aeroplan": so tên chương trình với tên thẻ mà không vấp ký hiệu. */
+function bareName(text: string): string {
+  return text.replace(/[®™℠*]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+/**
+ * `<title>` của trang một thẻ (Canada lẫn Mỹ): tên thẻ + con số welcome bonus.
+ *
+ * Search Console 90 ngày tới 06/10/2026: query tìm ra trang thẻ là tên sản
+ * phẩm kèm đúng thứ người ta đang cân — "tangerine world elite mastercard
+ * welcome bonus", "td first class travel visa infinite promotion", "marriott
+ * boundless 100k", "chase marriott 150k". Tiêu đề chỉ có tên thẻ thì không
+ * khớp vế sau. Con số lấy từ `welcomeBonus`, đúng chuỗi trang đang hiện làm số
+ * lớn, nên tiêu đề đổi cùng lúc với trang — không có bản viết tay nào để lệch.
+ *
+ * Tên chương trình bị bỏ khi tên thẻ đã chứa nó ("TD® Aeroplan® Visa
+ * Infinite* Card: welcome bonus 50,000 điểm", không phải "… điểm Aeroplan®").
+ * Nhãn không có chữ số ("Nhân đôi toàn bộ cashback năm đầu") thì giữ tiêu đề
+ * là tên thẻ: không có con số thì vế sau chỉ làm dài tiêu đề.
+ *
+ * `expiresAt` đã qua thì cũng chỉ tên thẻ. `expire-offers` chạy ngày một lần,
+ * còn thẻ Mỹ không có job nào gỡ — trong khoảng đó con số trong `welcomeBonus`
+ * là offer đã đóng, và tiêu đề là chỗ duy nhất Google in nó ra ngay dòng đầu.
+ * Không dùng `isElevatedLive`: thẻ không elevated vẫn có welcome bonus hợp lệ.
+ */
+export function creditCardMetaTitle(offer: CreditCardOffer): string {
+  if (offer.expiresAt && hasExpired(offer.expiresAt)) return offer.name;
+  // Kiểm chữ số trên nhãn ĐÃ gọt: " (tối đa 100,000 điểm)" có số trước khi gọt
+  // nhưng gọt xong là chuỗi rỗng.
+  let bonus = bonusForTitle(offer.welcomeBonus ?? "");
+  if (!/\d/.test(bonus)) return offer.name;
+  const unit = bonus.match(/^(.*\d\S*\s+(?:điểm|miles))\s+(.+)$/u);
+  if (unit && bareName(offer.name).includes(bareName(unit[2]))) bonus = unit[1];
+  return seo("cardTitle", { name: offer.name, bonus });
+}
 
 /** Chỗ Google cắt mô tả — cùng mốc với `bankAccountDescription`. */
 const META_DESCRIPTION_MAX = 160;

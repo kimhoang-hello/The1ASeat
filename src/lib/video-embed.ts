@@ -70,11 +70,6 @@ export function getYouTubeThumbnailFallbackUrl(url: string): string | null {
   return id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : null;
 }
 
-export function getYouTubeWatchUrl(url: string): string | null {
-  const id = getYouTubeVideoId(url);
-  return id ? `https://www.youtube.com/watch?v=${id}` : null;
-}
-
 export function getVideoEmbedUrl(url: string): string | null {
   if (!url) return null;
 

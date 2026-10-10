@@ -6,7 +6,7 @@ import { getCreditCardOffers, getPostBySlug, getPosts, getTransferBonuses } from
 import type { BlogPost } from "@/lib/content";
 import { formatDate, hasExpired } from "@/lib/format-date";
 import { MediaPlaceholder, type PlaceholderIcon } from "@/components/ui/media-placeholder";
-import { getVideoEmbedUrl, getYouTubeThumbnailUrl, getYouTubeWatchUrl } from "@/lib/video-embed";
+import { getVideoEmbedUrl, getYouTubeThumbnailUrl } from "@/lib/video-embed";
 import { PostCard } from "@/components/blog/post-card";
 import { AffiliateClickTracker } from "@/components/blog/affiliate-click-tracker";
 import { PostBody } from "@/components/blog/post-body";
@@ -119,8 +119,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           description: structuredDescription,
           uploadDate: post.publishedAt,
           ...(image && { thumbnailUrl: [image] }),
+          // Chỉ `embedUrl`, KHÔNG `contentUrl`: Google định nghĩa `contentUrl`
+          // là chính file video, và dặn đừng trỏ nó vào trang chứa video.
+          // Trước 10/10/2026 trường này mang URL `youtube.com/watch` — một trang,
+          // không phải file. Video YouTube không có file công khai, nên
+          // `embedUrl` là trường đúng duy nhất.
           ...(embedUrl && { embedUrl }),
-          ...(getYouTubeWatchUrl(post.videoUrl) && { contentUrl: getYouTubeWatchUrl(post.videoUrl) }),
         }
       : null;
 

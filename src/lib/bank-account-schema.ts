@@ -6,7 +6,7 @@ import {
   hasLiveBonus,
   type BankAccount,
 } from "./bank-accounts";
-import { absoluteUrl } from "./seo";
+import { absoluteUrl, bonusForTitle } from "./seo";
 import { SITE_URL } from "./subscriber-email";
 import { t } from "./t";
 
@@ -68,6 +68,17 @@ export function bankAccountDescription(account: BankAccount): string {
   const core = parts.join(" ");
   const tail = seo("bankAccountTail");
   return core.length + 1 + tail.length <= META_DESCRIPTION_MAX ? `${core} ${tail}` : core;
+}
+
+/**
+ * `<title>` của trang một tài khoản: tên + welcome bonus khi bonus còn sống.
+ * Cùng lý do và cùng cửa `hasLiveBonus` với mô tả ở trên — xem
+ * `creditCardMetaTitle`. Hết bonus thì tiêu đề lui về tên trần, không bao giờ
+ * hứa một khoản đã đóng.
+ */
+export function bankAccountMetaTitle(account: BankAccount): string {
+  const bonus = hasLiveBonus(account) ? bonusForTitle(account.bonusLabelVi ?? "") : "";
+  return bonus ? seo("bankAccountTitle", { name: account.name, bonus }) : account.name;
 }
 
 /**

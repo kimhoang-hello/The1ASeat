@@ -3,7 +3,69 @@
 Tài liệu này ghi lại: **(1)** những gì đã sửa trong code, **(2)** những việc chỉ
 bạn mới làm được, và **(3)** lộ trình nội dung để lên thứ hạng tiếng Việt.
 
-Cập nhật lần cuối: 2026-08-09.
+Cập nhật lần cuối: 2026-10-10.
+
+---
+
+## Cập nhật 10/10/2026 — đọc phần này trước
+
+Số liệu Search Console 90 ngày (tới 06/10): 139 lượt click, trong đó 100 lượt là
+người gõ thẳng "ghe1a". Vị trí trung bình 46: phần lớn lượt hiện ra nằm từ trang
+4–5 của Google trở đi. Kỹ thuật on-page vẫn sạch (208 trang, không lỗi). Ba
+chuyện mới tìm ra:
+
+1. **Search Console không ghi nhận website nào link về Ghế 1A** (Links →
+   External: **0**). Báo cáo đó chỉ là mẫu, nhưng con số 0 tròn nghĩa là gần như
+   chưa có link đáng kể nào. Đây là lý do khả dĩ nhất khiến site đứng ở vị trí 46
+   dù kỹ thuật sạch, và Google mới index 131/206 trang: với Google, một site chưa
+   ai nhắc tới là một site chưa đáng tin. Không đoạn code nào sửa được chuyện này.
+2. **Bing chưa biết site tồn tại** — tìm `site:ghe1a.com` trên Bing ra site khác.
+   Bing là nguồn kết quả của Copilot, DuckDuckGo và Yahoo, nên những nơi đó cũng
+   không thấy Ghế 1A. (ChatGPT search dùng bot riêng, OAI-SearchBot, và bot đó vào
+   site bình thường.)
+3. **69 trang Google đã biết nhưng chưa ghé** — 30 thẻ Mỹ, 21 tài khoản ngân
+   hàng, 8 thẻ Canada… Trong khi đó gần 30% lượt tải của Googlebot là các gói
+   "tải trước link" (kể cả link Privacy, Terms ở chân trang), không phải trang.
+
+### Đã sửa trong code
+
+- **Chặn Googlebot tải trước link** (`robots.txt`): lượt ghé dành cho trang thật.
+  Trang hiển thị với Google không đổi gì.
+- **Tiêu đề trang thẻ và tài khoản ngân hàng có thêm welcome bonus**, ví dụ
+  "BMO® Premium Chequing Account: welcome bonus tối đa $900". Người ta tìm đúng
+  kiểu này ("… welcome bonus", "marriott boundless 100k"). Con số lấy thẳng từ dữ
+  liệu thẻ nên tự đổi theo offer; offer hết hạn thì tiêu đề tự lui về tên thẻ.
+- **Sửa dữ liệu video của 28 bài video**: trường "file video" đang trỏ vào trang
+  YouTube, trái hướng dẫn của Google. Giờ chỉ khai link nhúng, đúng chuẩn.
+- **Báo trang mới cho Bing qua IndexNow**: `npm run indexnow`. Đã gửi toàn bộ
+  sitemap một lần. Lượt kiểm định kỳ (thứ 4, thứ 7) sẽ tự gửi các trang đổi trong
+  tuần.
+
+### Việc chỉ bạn làm được, theo thứ tự đáng làm
+
+1. **Bing Webmaster Tools — 5 phút.** Vào
+   [bing.com/webmasters](https://www.bing.com/webmasters), đăng nhập bằng tài khoản
+   Google đang dùng cho Search Console, chọn **Import from Google Search Console**,
+   tích ghe1a.com. Bing tự lấy sitemap từ đó, khỏi xác minh lại.
+2. **Có link đầu tiên trỏ về site.** Hai loại, đừng nhầm nhau:
+   - **Đem người đọc tới (làm ngay, rẻ):** phần giới thiệu trang/nhóm Facebook;
+     trả lời câu hỏi thật trên Reddit (r/churningcanada, r/PersonalFinanceCanada)
+     bằng một công cụ cụ thể như "Award Flight Finder" hay "Bay về Việt Nam".
+     Các nền tảng này gắn `nofollow` nên Google gần như không tính là phiếu bầu —
+     nhưng chúng đem khách thật tới và giúp Google, Bing tìm ra trang nhanh hơn. Van
+     YouTube vẫn đóng như bạn chốt 04/09: chỉ mở khi bài video có nội dung thật.
+   - **Phiếu bầu thật (chậm, đáng giá nhất):** link từ website khác — blog
+     Miles & Points khác nhắc tới công cụ của bạn, hội người Việt ở Toronto/
+     Vancouver, trang tài nguyên cho người mới định cư (họ hay liệt kê hướng dẫn
+     mở tài khoản ngân hàng — đúng mảng `/bank-accounts`), báo cộng đồng tiếng
+     Việt ở Canada. Đây mới là loại link nâng thứ hạng.
+3. **Nội dung tiếng Việt cho 28 bài video** (đang tạm giữ từ 29/09) vẫn là việc
+   lớn nhất về nội dung — xem mục 2.3 bên dưới.
+
+Ghi chú: CDN Hostinger chặn **GPTBot** (lỗi 429). GPTBot là bot lấy dữ liệu
+**huấn luyện** của OpenAI, không phải bot của ChatGPT search, nên chặn nó không làm
+site biến mất khỏi ChatGPT. Mở hay giữ là quyết định của bạn (hPanel → CDN →
+Manage → tab AI Audit).
 
 ---
 

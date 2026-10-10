@@ -3376,3 +3376,64 @@ Chrome với `--disable-background-timer-throttling --disable-renderer-backgroun
 - Tangerine® Savings: trang có "0.70%" trong ô ước tính và "5.00% boost" ở menu —
   cái sau là offer tài khoản đăng ký (TFSA/RSP). Savings thường vẫn 0.30% / 4.50%.
 
+
+## Tối ưu SEO 10/10/2026 — đừng đề xuất lại
+
+Số đo Search Console (90 ngày tới 06/10/2026): 139 click — 100 là query thương hiệu
+"ghe1a"/"ghe 1a" — 1.14K impression, vị trí TB 46.2. Page indexing: 131 index / 75
+không, trong đó **69 "Discovered – currently not indexed"** (30 thẻ Mỹ, 21 tài khoản
+ngân hàng, 8 thẻ Canada, 5 trang chặng gồm trang tổng, `/bat-dau`,
+`/transfer-partners`, `/contact`, 2 bài). Host status sạch, 99% request 200.
+**Links → External: 0** — báo cáo là mẫu, nhưng 0 tròn nghĩa là gần như chưa có
+backlink. **Bing không có trang nào của site** (`site:ghe1a.com` trả site khác) và
+chưa có Bing Webmaster Tools. ChatGPT search KHÔNG đi qua chuyện này: OAI-SearchBot
+nhận 200 (đo 10/10); bị CDN trả 429 chỉ là GPTBot — bot lấy dữ liệu huấn luyện. Query ngoài thương hiệu toàn là tên sản
+phẩm tiếng Anh ở vị trí 18–90. Kỹ thuật on-page vẫn sạch như mục 29/09 (crawl 208
+URL: 0 lỗi status/canonical/h1/alt/JSON-LD).
+
+- **robots `Disallow: /*_rsc=`.** Crawl stats: "Other file type" 41% tổng lượt
+  crawl, 948/987 mẫu là `?_rsc=`; HTML chỉ 15%. Gần như chắc là prefetch của
+  `<Link>` lúc Googlebot render — link footer (`/about`, `/terms`, `/privacy`,
+  `/contact`) bị fetch 63–76 lần mỗi cái. Chặn là bỏ loại URL đó khỏi crawl; KHÔNG
+  bảo đảm phần ngân sách dôi ra sẽ chảy sang 69 trang chưa crawl. Codex thử
+  chặn mọi `_rsc=` trong Chrome: DOM của `/award-flight-finder`,
+  `/credit-cards/goi-y`, `/credit-cards/so-sanh?cards=…` giống hệt; không URL
+  nào trong sitemap hay hơn 13,000 link của bản build chứa `_rsc=`. GSC có thể báo
+  "Blocked by robots.txt" cho biến thể `_rsc` — dự kiến, không phải lỗi.
+- **Title trang thẻ (CA + Mỹ) và tài khoản: "{tên}: welcome bonus {bonus}"**
+  (`creditCardMetaTitle`, `bankAccountMetaTitle`, `bonusForTitle`). Query thật:
+  "… welcome bonus", "… promotion", "marriott boundless 100k", "chase marriott
+  150k". Ba cửa lui về tên trần: nhãn không có chữ số, `expiresAt` đã qua (Codex
+  bắt ở vòng 1 — thẻ Mỹ không có job nào gỡ), tài khoản không `hasLiveBonus`.
+  Tên chương trình bị bỏ khi tên thẻ đã chứa nó. Title dài tới 96 ký tự là cố ý:
+  Google cắt phần hiển thị, phần đầu luôn là tên thẻ — ĐỪNG cắt bonus để vừa 60.
+- **IndexNow: `npm run indexnow`** (`scripts/indexnow.mts`, khoá ở
+  `public/<khoá>.txt` — công khai theo thiết kế). Chạy từ máy này, không từ GitHub
+  Actions: hcdn challenge runner. Mặc định chỉ gửi URL có `lastmod` trong 7 ngày;
+  `--all` cho lần đầu hoặc sau một thay đổi code đổi nhiều trang mà không đổi
+  `lastmod`. Google KHÔNG đọc IndexNow. Task cục bộ `ghe-1a-kiem-tra-toan-dien`
+  (T4 + T7) chạy nó cuối mỗi lượt.
+- **`VideoObject` bỏ `contentUrl`** (vòng Codex 2). Trường đó mang URL
+  `youtube.com/watch` — một trang, trong khi Google định nghĩa `contentUrl` là
+  chính file video và dặn đừng trỏ vào trang. GSC Videos báo 0 lỗi nên không ai
+  thấy; giờ chỉ còn `embedUrl`, là trường đúng cho video YouTube.
+
+**Cố ý KHÔNG làm:**
+- `lastmod` cho tài khoản ngân hàng và trang chặng — không có ngày theo từng trang.
+  `BANK_ACCOUNTS_VERIFIED_ON` (19/08) cũ hơn các lần sửa 07/10 và 10/10, nên dùng
+  nó là khai sai; thiếu `lastmod` không bị phạt.
+- BreadcrumbList cho trang công cụ cấp một (`/transfer-partners`,
+  `/award-flight-finder`, `/calculator`…): chỉ một cấp, Google tự hiện từ URL.
+- FAQ/HowTo schema (Google đã bỏ rich result cho site thường), Review/Rating
+  (xem `credit-card-schema.ts`), `hreflang` (site một ngôn ngữ).
+- Sửa H1 hay copy để nhét từ khoá — on-page đã sạch, giả thuyết mạnh nhất cho vị
+  trí 46 là thiếu backlink.
+- Mô tả meta và JSON-LD của thẻ có `expiresAt` đã qua vẫn in headline cũ cho tới
+  khi `expire-offers` (CA, hằng ngày) hoặc người sửa (Mỹ, `check-us-offers` đỏ)
+  dọn — y như khối số lớn trên chính trang. Chỉ title có cửa hết hạn vì title là
+  bề mặt MỚI của con số; mô tả đã có job canh, không dựng thêm nhánh thứ hai.
+
+**Đòn bẩy còn lại nằm NGOÀI code:** backlink (0), đăng ký Bing Webmaster Tools
+(import từ GSC), nội dung tiếng Việt cho 28 bài video (đang tạm giữ theo user,
+29/09). Van YouTube vẫn đóng theo quyết định 04/09 — đừng đề xuất link mô tả
+video như một cách lấy backlink. Xem SEO.md mục "Cập nhật 10/10/2026".

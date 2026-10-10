@@ -90,6 +90,20 @@ export function pageMetadata({
   };
 }
 
+/**
+ * Nhãn welcome bonus đã gọt để đứng sau chữ "welcome bonus" trong `<title>`.
+ *
+ * Bỏ vế phụ sau " + " hoặc " (" — "70,000 điểm Hilton Honors® + 1 Free Night
+ * Reward", "iPad (RBC® ghi $499)": tiêu đề chỉ cần con số chính, mô tả ngay
+ * dưới đã nói đủ. Chữ đầu viết thường khi nó là một từ thường ("Lên đến",
+ * "Tối đa", "Cashback") vì giờ nó nằm giữa câu; tên riêng viết hoa giữa chữ
+ * ("AirPods", "iPad") giữ nguyên.
+ */
+export function bonusForTitle(label: string): string {
+  const main = label.split(/\s+\+\s+|\s+\(/)[0].trim();
+  return main.replace(/^(\p{Lu})(\p{Ll}+)(?=\s|$)/u, (_, first: string, rest: string) => first.toLowerCase() + rest);
+}
+
 /** BreadcrumbList JSON-LD from an ordered list of crumbs (excluding the site root). */
 export function breadcrumbJsonLd(crumbs: { name: string; path: string }[]) {
   return {

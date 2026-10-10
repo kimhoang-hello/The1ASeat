@@ -18,7 +18,7 @@ import {
   formatRate,
   hasLiveBonus,
 } from "@/lib/bank-accounts";
-import { bankAccountDescription, bankAccountJsonLd } from "@/lib/bank-account-schema";
+import { bankAccountDescription, bankAccountJsonLd, bankAccountMetaTitle } from "@/lib/bank-account-schema";
 import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
 import { assertNoBankSlugClash } from "@/lib/bank-compare";
 import { t as translate } from "@/lib/t";
@@ -64,7 +64,7 @@ export async function generateMetadata({
 
   return {
     ...pageMetadata({
-      title: account.name,
+      title: bankAccountMetaTitle(account),
       description: bankAccountDescription(account),
       path: bankAccountPath(account.slug),
     }),

@@ -14,7 +14,7 @@ import { ApplyButton } from "@/components/ui/apply-button";
 import { NextSteps, StepLink } from "@/components/ui/next-steps";
 import { JsonLd } from "@/components/seo/json-ld";
 import { isReferralUrl } from "@/lib/affiliate-links";
-import { creditCardJsonLd, creditCardMetaDescription } from "@/lib/credit-card-schema";
+import { creditCardJsonLd, creditCardMetaDescription, creditCardMetaTitle } from "@/lib/credit-card-schema";
 import { US_CARDS_PUBLISHED } from "@/lib/feature-flags";
 import { formatDate } from "@/lib/format-date";
 import {
@@ -70,7 +70,7 @@ export async function generateMetadata({
 
   return {
     ...pageMetadata({
-      title: card.name,
+      title: creditCardMetaTitle(card),
       description: creditCardMetaDescription(card),
       path: usCardPath(card.slug),
       image: card.cardImage || undefined,
