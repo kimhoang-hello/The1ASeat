@@ -343,11 +343,14 @@ const INK_FTF: CanadianAnswer = {
  * - Chase® doanh nghiệp: bốn thẻ Ink và bản Sapphire Reserve® doanh nghiệp — không
  *   có World of Hyatt Business.
  * - Capital One®: cả Venture X và Venture.
- * Host của ba link nằm trong `REFERRAL_SOURCES` để nút mang `sponsored`.
+ * - Chase® IHG® (09/10/2026): cả bốn thẻ IHG® — ba thẻ cá nhân và bản doanh nghiệp
+ *   đều mang cùng mã giới thiệu.
+ * Host của bốn link nằm trong `REFERRAL_SOURCES` để nút mang `sponsored`.
  */
 const CHASE_PERSONAL_REFERRAL = "https://www.referyourchasecard.com/19y/UZBI95X9X8";
 const CHASE_BUSINESS_REFERRAL = "https://www.referyourchasecard.com/21h/X40C9Z2AN2";
 const CAPITAL_ONE_REFERRAL = "https://i.capitalone.com/J2YmzuLB7";
+const CHASE_IHG_REFERRAL = "https://www.referyourchasecard.com/210z/PMZG4LIGL3";
 
 const US_CARD_DATA: UsCardData[] = [
   {
@@ -1362,7 +1365,8 @@ const US_CARD_DATA: UsCardData[] = [
       watchOut:
         "Thẻ này chịu luật 5/24 của Chase®. Điều kiện in trên trang chỉ nói về chính thẻ này: không đang giữ nó và chưa nhận bonus của nó trong 24 tháng. Ngược lại, đang giữ thẻ này thì không mở được bản Premier hay bản không annual fee, vì hai thẻ đó đòi bạn không giữ thẻ IHG® cá nhân nào.",
     },
-    applyUrl: "https://creditcards.chase.com/a1/ihg/PremierSelectNAEPQ410",
+    applyUrl: CHASE_IHG_REFERRAL,
+    sourceUrl: "https://creditcards.chase.com/a1/ihg/PremierSelectNAEPQ410",
     lastUpdated: VERIFIED_4,
     verifiedOn: REVERIFIED_2,
     needsVerification: false,
@@ -1402,7 +1406,8 @@ const US_CARD_DATA: UsCardData[] = [
       pointsFromCanada: IHG_FROM_CANADA,
       watchOut: IHG_PERSONAL_WATCH_OUT,
     },
-    applyUrl: "https://creditcards.chase.com/a1/ihg/PremierNAEPQ410",
+    applyUrl: CHASE_IHG_REFERRAL,
+    sourceUrl: "https://creditcards.chase.com/a1/ihg/PremierNAEPQ410",
     lastUpdated: VERIFIED_4,
     verifiedOn: REVERIFIED_2,
     needsVerification: false,
@@ -1441,7 +1446,8 @@ const US_CARD_DATA: UsCardData[] = [
       pointsFromCanada: IHG_FROM_CANADA,
       watchOut: IHG_PERSONAL_WATCH_OUT,
     },
-    applyUrl: "https://creditcards.chase.com/a1/ihg/OneRewardsNAEPQ410",
+    applyUrl: CHASE_IHG_REFERRAL,
+    sourceUrl: "https://creditcards.chase.com/a1/ihg/OneRewardsNAEPQ410",
     lastUpdated: VERIFIED_4,
     verifiedOn: REVERIFIED_2,
     needsVerification: false,
@@ -1481,7 +1487,8 @@ const US_CARD_DATA: UsCardData[] = [
       pointsFromCanada: IHG_FROM_CANADA,
       watchOut: "Thẻ doanh nghiệp nên không tính vào 5/24, nhưng Chase® vẫn xét 5/24 khi duyệt.",
     },
-    applyUrl: "https://creditcards.chase.com/a1/ihg/BizNAEPQ410",
+    applyUrl: CHASE_IHG_REFERRAL,
+    sourceUrl: "https://creditcards.chase.com/a1/ihg/BizNAEPQ410",
     lastUpdated: VERIFIED_4,
     verifiedOn: REVERIFIED_2,
     needsVerification: false,
