@@ -144,7 +144,9 @@ const MEANING: Record<number, string> = {
   200: "đã nhận",
   202: "đã nhận, khoá đang được xác minh",
   400: "yêu cầu sai định dạng",
-  403: "khoá không hợp lệ — file khoá không đọc được từ phía IndexNow",
+  // Lần gửi ĐẦU TIÊN luôn ra 403 `SiteVerificationNotCompleted`: lượt đó mới
+  // kích hoạt việc Bing đọc file khoá (đo 10/10/2026). Đợi vài phút rồi chạy lại.
+  403: "khoá chưa được xác minh — lần đầu thì đợi vài phút; còn mãi thì file khoá không đọc được",
   422: "có URL không thuộc host, hoặc khoá không khớp",
   429: "gửi quá dày, bị coi là spam",
 };
