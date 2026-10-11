@@ -3385,8 +3385,9 @@ không, trong đó **69 "Discovered – currently not indexed"** (30 thẻ Mỹ,
 ngân hàng, 8 thẻ Canada, 5 trang chặng gồm trang tổng, `/bat-dau`,
 `/transfer-partners`, `/contact`, 2 bài). Host status sạch, 99% request 200.
 **Links → External: 0** — báo cáo là mẫu, nhưng 0 tròn nghĩa là gần như chưa có
-backlink. **Bing không có trang nào của site** (`site:ghe1a.com` trả site khác) và
-chưa có Bing Webmaster Tools. ChatGPT search KHÔNG đi qua chuyện này: OAI-SearchBot
+backlink. **Bing không có trang nào của site** (`site:ghe1a.com` trả site khác);
+user đăng ký Bing Webmaster Tools cùng ngày (import từ GSC, sitemap Success 208 URL).
+Request indexing GSC cho 11 trang trong số 69; quota property này hết ở lượt thứ 12. ChatGPT search KHÔNG đi qua chuyện này: OAI-SearchBot
 nhận 200 (đo 10/10); bị CDN trả 429 chỉ là GPTBot — bot lấy dữ liệu huấn luyện. Query ngoài thương hiệu toàn là tên sản
 phẩm tiếng Anh ở vị trí 18–90. Kỹ thuật on-page vẫn sạch như mục 29/09 (crawl 208
 URL: 0 lỗi status/canonical/h1/alt/JSON-LD).
@@ -3433,7 +3434,6 @@ URL: 0 lỗi status/canonical/h1/alt/JSON-LD).
   dọn — y như khối số lớn trên chính trang. Chỉ title có cửa hết hạn vì title là
   bề mặt MỚI của con số; mô tả đã có job canh, không dựng thêm nhánh thứ hai.
 
-**Đòn bẩy còn lại nằm NGOÀI code:** backlink (0), đăng ký Bing Webmaster Tools
-(import từ GSC), nội dung tiếng Việt cho 28 bài video (đang tạm giữ theo user,
+**Đòn bẩy còn lại nằm NGOÀI code:** backlink (0), nội dung tiếng Việt cho 28 bài video (đang tạm giữ theo user,
 29/09). Van YouTube vẫn đóng theo quyết định 04/09 — đừng đề xuất link mô tả
 video như một cách lấy backlink. Xem SEO.md mục "Cập nhật 10/10/2026".

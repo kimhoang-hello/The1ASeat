@@ -40,13 +40,16 @@ chuyện mới tìm ra:
 - **Báo trang mới cho Bing qua IndexNow**: `npm run indexnow`. Đã gửi toàn bộ
   sitemap một lần. Lượt kiểm định kỳ (thứ 4, thứ 7) sẽ tự gửi các trang đổi trong
   tuần.
+- **Request indexing trên Search Console cho 11 trang** đang chờ (10/10): Amex Gold
+  Rewards, Amex Aeroplan Reserve, Amex Aeroplan, Transfer Partners, Bắt đầu ở
+  đây, Bay về Việt Nam + chặng Toronto–Sài Gòn, hai trang "Các thẻ tốt nhất"
+  (Aeroplan, offers), Simplii No Fee Chequing, bài Points 101. Google cho khoảng
+  11 lượt/ngày; 58 trang còn lại đi theo sitemap.
 
 ### Việc chỉ bạn làm được, theo thứ tự đáng làm
 
-1. **Bing Webmaster Tools — 5 phút.** Vào
-   [bing.com/webmasters](https://www.bing.com/webmasters), đăng nhập bằng tài khoản
-   Google đang dùng cho Search Console, chọn **Import from Google Search Console**,
-   tích ghe1a.com. Bing tự lấy sitemap từ đó, khỏi xác minh lại.
+1. ~~Bing Webmaster Tools~~ — **xong 10/10/2026**: ghe1a.com đã import từ Search
+   Console, sitemap "Success", 208 URL. Số liệu Bing cần tới 48 tiếng mới hiện.
 2. **Có link đầu tiên trỏ về site.** Hai loại, đừng nhầm nhau:
    - **Đem người đọc tới (làm ngay, rẻ):** phần giới thiệu trang/nhóm Facebook;
      trả lời câu hỏi thật trên Reddit (r/churningcanada, r/PersonalFinanceCanada)
