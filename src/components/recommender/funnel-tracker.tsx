@@ -3,6 +3,8 @@
 import { useEffect } from "react";
 import { sendGAEvent } from "@next/third-parties/google";
 
+import { markRecommenderCard } from "@/lib/recommender/via";
+
 /**
  * Phễu của trang gợi ý: bắt đầu → trả lời / bỏ qua → (apply_clicked với
  * `placement=recommender_primary`, đã có sẵn ở `ApplyLink`).
@@ -52,8 +54,98 @@ export function RecommenderFunnelTracker() {
         sendGAEvent("event", "recommender_reset", {});
       }
     };
+    // Sang trang thẻ từ kết quả ("Đọc kỹ về thẻ này", "Xem thẻ"). Phần lớn
+    // người đọc không bấm Apply ngay trên trang gợi ý mà đọc trang thẻ trước —
+    // không có event này thì 2 click `recommender_primary` trong 30 ngày không
+    // phân biệt được "bỏ dở" với "sang trang thẻ rồi mới apply" (GA4 10/10/2026).
+    // Chỉ slug thẻ công khai và vị trí, như `apply_clicked`.
+    const onClick = (event: MouseEvent) => {
+      const link = event.target instanceof HTMLElement ? event.target.closest("a[data-reco-card]") : null;
+      if (!(link instanceof HTMLAnchorElement)) return;
+      // Chuột giữa phát `auxclick`, không phát `click` (như `ApplyLink`); chuột
+      // phải cũng là `auxclick` nhưng chưa đi đâu cả.
+      if (event.type === "auxclick" && event.button !== 1) return;
+      const product = link.dataset.recoProduct ?? "unknown";
+      sendGAEvent("event", "recommender_card_clicked", { position: link.dataset.recoCard ?? "unknown", product });
+      // Đánh dấu `via` chỉ khi trang thẻ mở NGAY TRONG tab này. Cmd/Ctrl/Shift+click
+      // hay chuột giữa mở tab khác: ghi dấu vào tab gợi ý là gắn `via` nhầm cho
+      // một lần apply sau này của tab này (Codex, 10/10/2026).
+      const sameTab =
+        event.type === "click" && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
+      if (sameTab) markRecommenderCard(product);
+    };
     document.addEventListener("submit", onSubmit, { capture: true });
-    return () => document.removeEventListener("submit", onSubmit, { capture: true });
+    document.addEventListener("click", onClick, { capture: true });
+    document.addEventListener("auxclick", onClick, { capture: true });
+    return () => {
+      document.removeEventListener("submit", onSubmit, { capture: true });
+      document.removeEventListener("click", onClick, { capture: true });
+      document.removeEventListener("auxclick", onClick, { capture: true });
+    };
   }, []);
+  return null;
+}
+
+/**
+ * Người đọc đã thấy một KẾT QUẢ — đáy của phễu trước `apply_clicked`.
+ *
+ * Trước đây phễu dừng ở `recommender_answered`: không biết bao nhiêu người tới
+ * được trang kết quả, và kết quả đó là "mở thẻ" hay "chưa cần mở thẻ" — mà hai
+ * thứ đó đọc ngược nhau khi đếm click Apply (GA4 10/10/2026).
+ *
+ * Một lần cho mỗi lượt chạy: F5 hay tab thứ hai hiện lại đúng lượt đó
+ * (`runForDisplay`) nên không bắn lại. Nhớ id lượt chạy cuối bằng `localStorage`
+ * — `sessionStorage` riêng từng tab nên hai tab cùng hồ sơ từng đếm hai lần
+ * (Codex, 10/10/2026). Bọc try/catch: có trình duyệt chặn nó; mất thì chỉ đếm dư.
+ * `runId` KHÔNG gửi lên GA4: nó là khoá tra cứu hồ sơ ở phía mình.
+ */
+export function RecommenderResultSeen({
+  runId,
+  goal,
+  outcome,
+}: {
+  runId: string;
+  /** Cùng chuỗi với `recommender_started` (`goalValueOf`). */
+  goal: string;
+  outcome: "open_card" | "no_new_card";
+}) {
+  useEffect(() => {
+    const key = "g1a_reco_seen";
+    try {
+      if (window.localStorage.getItem(key) === runId) return;
+    } catch {
+      // Không đọc được thì vẫn đếm.
+    }
+    // Lần tải trang ĐẦU, effect này chạy trước script khởi tạo GA
+    // (`afterInteractive`, nằm sau `main` trong layout) — `sendGAEvent` khi đó
+    // bỏ event kèm một cảnh báo. Đợi `dataLayer` có mặt, tối đa ~10 giây; điều
+    // hướng phía client (sau mỗi câu trả lời) thì nó đã có sẵn.
+    let tries = 0;
+    // Kiểm LẠI ngay lúc gửi, rồi giữ chỗ trước khi gửi: hai tab cùng mở trước
+    // khi GA sẵn sàng đều qua phép kiểm đầu, và tab đến sau vẫn gửi (Codex, vòng
+    // bác bản vá 10/10/2026). Hai tab đọc–ghi xen kẽ đúng cùng khoảnh khắc vẫn
+    // có thể đếm dư MỘT event (`localStorage` không có khoá liên tab) — chấp
+    // nhận: số NGƯỜI của event trong GA4 không đổi, không dựng khoá cho ca đó.
+    const send = () => {
+      try {
+        if (window.localStorage.getItem(key) === runId) return;
+        window.localStorage.setItem(key, runId);
+      } catch {
+        // Không nhớ được thì F5 đếm thêm một lần.
+      }
+      sendGAEvent("event", "recommender_result", { goal, outcome });
+    };
+    const ready = () => Array.isArray((window as { dataLayer?: unknown }).dataLayer);
+    if (ready()) {
+      send();
+      return;
+    }
+    const timer = window.setInterval(() => {
+      tries += 1;
+      if (ready()) send();
+      if (ready() || tries >= 40) window.clearInterval(timer);
+    }, 250);
+    return () => window.clearInterval(timer);
+  }, [runId, goal, outcome]);
   return null;
 }

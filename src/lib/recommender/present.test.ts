@@ -29,7 +29,7 @@ import type { RecommendationDataset } from "../recommendation/types.ts";
 import type { UserState } from "../recommendation/user-types.ts";
 import { userGaps } from "../recommendation/user-gaps.ts";
 import { COMPONENT_STRENGTH, REASON_COVERED_BY_WARNING, REASON_TEXT, WARNING_TEXT } from "./copy.ts";
-import { answeredRows, coverageStatement, presentRun, reasonsOf, spendSentenceOf } from "./present.ts";
+import { answeredRows, coverageStatement, presentRun, primaryKeyOf, reasonsOf, spendSentenceOf } from "./present.ts";
 import {
   applyAnswer,
   goalFrom,
@@ -251,6 +251,58 @@ test("chưa khai số dư: 'cần' là khoảng gộp, không gắn tên chươn
   assert.ok(view !== null && view.trip !== null);
   assert.equal(view.trip.needProgram, null);
   assert.equal(view.trip.needTypical, record.outputSnapshot.results[0].numbers.tripNeedTypical);
+});
+
+test("đã khai chưa có điểm nào: 'cần' là khoảng gộp kèm giá từng chương trình, không mượn chương trình phá hoà", () => {
+  // Audit trang 10/10/2026: người chưa có điểm nào, gợi ý Amex® Green, khối
+  // chuyến bay in "cần 150,000 điểm American Airlines® AAdvantage®" — mọi
+  // chương trình cùng phủ 0 nên chương trình đó chỉ là phép phá hoà của engine,
+  // và Membership Rewards® không chuyển được sang AAdvantage®.
+  const none = structuredClone(vietnamTripShortfall);
+  none.declared = { ...none.declared, balances: true };
+  none.balances = [];
+  const record = runFor(none);
+  const numbers = record.outputSnapshot.results[0].numbers;
+  assert.equal(numbers.accessiblePoints, 0, "fixture phải là hồ sơ đã khai và chưa có điểm");
+  assert.ok(record.derivedState.goals[0].tripCoverage?.bestProgram != null, "engine vẫn chọn một chương trình để phá hoà");
+  const view = presentRun(record, DATA, offersFor(DATA));
+  assert.ok(view !== null && view.trip !== null);
+  assert.equal(view.trip.noPointsYet, true);
+  assert.equal(view.trip.needProgram, null);
+  assert.equal(view.trip.needLow, numbers.tripNeedLow);
+  assert.equal(view.trip.needHigh, numbers.tripNeedHigh);
+  assert.equal(view.trip.gap, null, "phần thiếu là cả chuyến, không phải khoảng thiếu của chương trình phá hoà");
+  assert.equal(coverageStatement(view.trip), null, "'phủ 0%' không nói thêm được gì");
+  const byProgram = record.derivedState.goals[0].goal.tripNeed?.byProgram ?? [];
+  assert.ok(byProgram.length > 1, "fixture phải có hơn một chương trình định giá được chặng");
+  assert.equal(view.trip.needByProgram.length, byProgram.length);
+  // Rẻ nhất trước: dòng đầu là chương trình có giá điển hình thấp nhất.
+  const cheapest = [...byProgram].sort((a, b) => (a.typical ?? Infinity) - (b.typical ?? Infinity))[0];
+  assert.ok(view.trip.needByProgram[0].program.length > 0);
+  assert.ok(
+    view.trip.needByProgram[0].need.startsWith((cheapest.low ?? cheapest.floor ?? 0).toLocaleString("en-US")),
+    JSON.stringify(view.trip.needByProgram),
+  );
+
+  // Có điểm thật thì như cũ: con số đo trên chương trình của chính người đó,
+  // không kèm danh sách.
+  const funded = presentRun(runFor(vietnamTripShortfall), DATA, offersFor(DATA));
+  assert.ok(funded !== null && funded.trip !== null);
+  assert.equal(funded.trip.noPointsYet, false);
+  assert.ok(funded.trip.needProgram !== null);
+  assert.deepEqual(funded.trip.needByProgram, []);
+});
+
+test("primaryKeyOf: slug của thẻ chính, hoặc no_new_card", () => {
+  const record = runFor(beginnerNoCards);
+  const action = record.outputSnapshot.results[0].primaryAction;
+  assert.equal(primaryKeyOf(record), action.kind === "no_new_card" ? "no_new_card" : action.productSlug);
+  const noCard = structuredClone(record);
+  noCard.outputSnapshot.results[0].primaryAction = noCard.outputSnapshot.results[0].noAction;
+  assert.equal(primaryKeyOf(noCard), "no_new_card");
+  const empty = structuredClone(record);
+  empty.outputSnapshot.results = [];
+  assert.equal(primaryKeyOf(empty), null);
 });
 
 test("thẻ bị chặn welcome bonus không được khen 'mức spend vừa sức bạn'", () => {

@@ -7,12 +7,13 @@ import { RECOMMENDER_PUBLISHED } from "@/lib/feature-flags";
 import { todayInSiteZone } from "@/lib/format-date";
 import { knownError } from "@/lib/recommender/errors";
 import { asksForAttention, presentForPage } from "@/lib/recommender/follow-up";
-import { answeredRows } from "@/lib/recommender/present";
-import { questionFor, questionFromKey } from "@/lib/recommender/questions";
+import { answeredRows, primaryKeyOf } from "@/lib/recommender/present";
+import { goalValueOf, questionFor, questionFromKey } from "@/lib/recommender/questions";
 import {
   currentUserId,
   isStorageError,
   loadState,
+  primaryChangedRunId,
   recommenderStorageReady,
   runForDisplay,
   RunLimitError,
@@ -23,7 +24,7 @@ import { resetRecommendation } from "@/app/credit-cards/goi-y/actions";
 import { PageHeader } from "@/components/layout/page-header";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { ExplainedWhy } from "@/components/recommender/explanation";
-import { RecommenderFunnelTracker } from "@/components/recommender/funnel-tracker";
+import { RecommenderFunnelTracker, RecommenderResultSeen } from "@/components/recommender/funnel-tracker";
 import { QuestionCard } from "@/components/recommender/question-card";
 import { DeterministicWhy, Result } from "@/components/recommender/result";
 import { StartPanel } from "@/components/recommender/start-panel";
@@ -243,6 +244,9 @@ async function Body({ editKey }: { editKey: string | null }) {
   if (view === null) return <StartPanel />;
 
   const ctx = { dataset, today: todayInSiteZone() };
+  const primary = primaryKeyOf(record);
+  // Câu trả lời vừa rồi đổi hành động chính — chỉ đúng với CHÍNH lượt chạy đó.
+  const changed = (await primaryChangedRunId()) === record.id;
 
   // Người dùng bấm "Sửa" trên một dòng đã trả lời: hỏi lại đúng câu đó, không
   // phải câu engine đang muốn hỏi.
@@ -250,7 +254,13 @@ async function Body({ editKey }: { editKey: string | null }) {
   if (edit !== null) {
     return (
       <>
-        <QuestionCard session={session} version={stored.version} spec={edit} lead="Sửa câu trả lời" />
+        <QuestionCard
+          session={session}
+          version={stored.version}
+          primary={primary}
+          spec={edit}
+          lead="Sửa câu trả lời"
+        />
         <p className="text-sm text-muted-foreground">
           Trả lời xong mình tính lại ngay. Bấm &ldquo;Bỏ qua câu này&rdquo; để giữ nguyên câu trả lời
           cũ.
@@ -275,9 +285,17 @@ async function Body({ editKey }: { editKey: string | null }) {
   // nó nằm trong khối gập "muốn chắc hơn" — xem `asksForAttention`.
   const upfront = question !== null && followUp !== null && asksForAttention(followUp);
 
+  const goal = stored.state.goals[0];
   return (
+    <>
+    <RecommenderResultSeen
+      runId={record.id}
+      goal={goal === undefined ? "unknown" : goalValueOf(goal)}
+      outcome={view.primary.kind}
+    />
     <Result
       view={view}
+      changed={changed}
       answered={answeredRows(stored.state, dataset)}
       // Phase 6: lời giải thích của Claude CHỈ thay khối "vì sao hợp". Kết quả,
       // cảnh báo, độ chắc chắn, nút đăng ký đã hiện xong trước khi nó tới, và
@@ -293,26 +311,36 @@ async function Body({ editKey }: { editKey: string | null }) {
           <QuestionCard
             session={session}
             version={stored.version}
+            primary={primary}
             spec={question}
+            // Nói đúng VÌ SAO câu này được đặt lên trước. Bản cũ in "Một câu nữa
+            // thôi" cho mọi câu không đo được — và lặp lại ở bốn câu chuyến bay
+            // liền nhau (audit trang 10/10/2026).
             lead={
               followUp?.basis === "measured"
                 ? "Câu này có thể đổi thẻ mình đang gợi ý"
-                : "Một câu nữa thôi"
+                : followUp?.basis === "urgent"
+                  ? "Thẻ mình đang gợi ý dựa vào câu này"
+                  : "Câu này giúp tính sát chuyến bay của bạn"
             }
           />
         ) : (
-          <details className="rounded-2xl border border-border bg-card p-5 sm:p-6">
-            <summary className="cursor-pointer font-display text-lg font-bold text-foreground">
+          // Lề trên `summary`: cả dải bấm được, không chỉ dòng chữ.
+          <details className="rounded-2xl border border-border bg-card">
+            <summary className="cursor-pointer p-5 font-display text-lg font-bold text-foreground sm:p-6">
               Muốn chắc hơn? Trả lời thêm một câu
             </summary>
-            <p className="mt-2 text-base leading-relaxed text-foreground/80">
-              Câu này không đổi thẻ mình đang gợi ý, nhưng nó lấp một chỗ mình còn chưa biết.
-            </p>
-            <div className="mt-4">
-              <QuestionCard session={session} version={stored.version} spec={question} />
+            <div className="px-5 pb-5 sm:px-6 sm:pb-6">
+              <p className="text-base leading-relaxed text-foreground/80">
+                Câu này không đổi thẻ mình đang gợi ý, nhưng nó lấp một chỗ mình còn chưa biết.
+              </p>
+              <div className="mt-4">
+                <QuestionCard session={session} version={stored.version} primary={primary} spec={question} />
+              </div>
             </div>
           </details>
         ))}
     </Result>
+    </>
   );
 }

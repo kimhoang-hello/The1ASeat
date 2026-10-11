@@ -12,6 +12,17 @@ Tài liệu module: [`src/lib/recommendation/README.md`](src/lib/recommendation/
 
 ---
 
+## 0a. Audit trang 10/10/2026 (lớp trình bày, engine không đổi)
+
+Chi tiết: AGENTS.md, mục "Audit trang Gợi ý thẻ 10/10/2026". Câu trả lời đổi thẻ
+gợi ý → trang báo và cuộn về thẻ (cookie `g1a_reco_doi`, không qua URL); câu dẫn
+theo `followUp.basis`; khối chuyến bay của người chưa có điểm nào không mượn chương
+trình phá hoà nữa; vùng chạm 44px; GA4 `recommender_result`,
+`recommender_card_clicked`, `apply_clicked.via`.
+
+Còn lại: đăng ký custom dimension `outcome`, `position`, `via` trong GA4 Admin; đo
+~2 tuần rồi mới quyết có đổi CTA của trang kết quả không.
+
 ## 0. Audit engine 09/10/2026 — đã làm và còn lại
 
 Chi tiết: AGENTS.md, mục "Audit engine Gợi ý thẻ 09/10/2026". Engine **4.34.0**

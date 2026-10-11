@@ -21,6 +21,7 @@ export function QuestionCard({
   skippable = true,
   version,
   session,
+  primary,
 }: {
   spec: QuestionSpec;
   /**
@@ -34,6 +35,12 @@ export function QuestionCard({
    * tick ở chỗ khác — máy chủ so số này để từ chối thay vì xoá im lặng.
    */
   version?: number;
+  /**
+   * Khoá hành động chính đang hiện cạnh câu hỏi (`primaryKeyOf`). Máy chủ so
+   * với lượt chạy mới: đổi thì đưa người đọc về thẻ gợi ý, kèm câu báo đổi.
+   * Vắng khi chưa có kết quả nào trên trang (câu gác cổng).
+   */
+  primary?: string | null;
   /** Một dòng nói vì sao câu này đáng trả lời NGAY BÂY GIỜ. */
   lead?: string;
   skippable?: boolean;
@@ -54,6 +61,7 @@ export function QuestionCard({
       <form action={answerQuestion} data-reco-event="answer" data-reco-question={spec.kind} className="mt-5">
         <input type="hidden" name="question" value={spec.key} />
         <input type="hidden" name="s" value={session} />
+        {primary && <input type="hidden" name="p" value={primary} />}
         {version !== undefined && (spec.input.type === "cards" || spec.input.type === "programs") && (
           <input type="hidden" name="v" value={version} />
         )}
@@ -110,23 +118,28 @@ export function QuestionCard({
                 open={group.cards.some(
                   (card) => holding.has(card.value) || closed.has(card.value),
                 )}
-                className="rounded-xl border border-border px-4 py-3"
+                // Lề trên `summary` chứ không trên `details`: cả dải 48px bấm
+                // được, thay vì dòng chữ 24px (audit trang 10/10/2026).
+                className="rounded-xl border border-border"
               >
-                <summary className="cursor-pointer text-base font-semibold text-foreground">
+                <summary className="cursor-pointer px-4 py-3 text-base font-semibold text-foreground">
                   {group.issuer}
                   <span className="ml-2 text-sm font-normal text-muted-foreground">
                     {group.cards.length} thẻ
                   </span>
                 </summary>
-                <ul className="mt-2 space-y-1.5">
+                <ul className="space-y-1.5 px-4 pb-3">
                   {group.cards.map((card) => (
                     <li
                       key={card.value}
                       className="flex flex-col gap-1 rounded-xl border border-border px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
                     >
                       <span className="text-base text-foreground">{card.label}</span>
+                      {/* Hai ô kề nhau, đổi nghĩa hẳn (đang giữ ≠ từng giữ — luật
+                          welcome bonus đọc đúng chỗ này): trên màn cảm ứng mỗi
+                          nhãn cao 44px thật, chạm hụt không sang ô bên kia. */}
                       <span className="flex gap-4">
-                        <label className="flex items-center gap-1.5 text-sm text-foreground/80">
+                        <label className="flex items-center gap-1.5 text-sm text-foreground/80 pointer-coarse:min-h-11">
                           <input
                             type="checkbox"
                             name="holding"
@@ -139,7 +152,7 @@ export function QuestionCard({
                           />
                           Đang giữ
                         </label>
-                        <label className="flex items-center gap-1.5 text-sm text-foreground/80">
+                        <label className="flex items-center gap-1.5 text-sm text-foreground/80 pointer-coarse:min-h-11">
                           <input
                             type="checkbox"
                             name="closed"
@@ -233,12 +246,12 @@ export function QuestionCard({
       </form>
 
       {skippable && (
-        <form action={skipCurrentQuestion} data-reco-event="skip" data-reco-question={spec.kind} className="mt-4">
+        <form action={skipCurrentQuestion} data-reco-event="skip" data-reco-question={spec.kind} className="mt-1">
           <input type="hidden" name="question" value={spec.key} />
           <input type="hidden" name="s" value={session} />
           <button
             type="submit"
-            className="cursor-pointer text-sm font-semibold text-muted-foreground underline underline-offset-4 hover:text-primary"
+            className="cursor-pointer py-3 text-sm font-semibold text-muted-foreground underline underline-offset-4 hover:text-primary"
           >
             Bỏ qua câu này
           </button>

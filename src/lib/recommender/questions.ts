@@ -802,6 +802,15 @@ export function goalFrom(value: string, userId: string, now: string): Goal | nul
   return null;
 }
 
+/**
+ * Ngược của `goalFrom`: mục tiêu → đúng giá trị nút ở màn hình bắt đầu. Event
+ * GA4 của kết quả dùng chung chiều "Recommender goal" với `recommender_started`,
+ * nên hai bên phải nói cùng một chuỗi.
+ */
+export function goalValueOf(goal: Goal): string {
+  return goal.type === "trip" ? `trip:${goal.destinationRegion}` : goal.type;
+}
+
 /* ------------------------------------------------------------------ *
  * Áp câu trả lời
  * ------------------------------------------------------------------ */

@@ -21,6 +21,7 @@ import { todayInSiteZone } from "@/lib/format-date";
 import { RECO_ERROR } from "@/lib/recommender/errors";
 import { rateLimit } from "@/lib/rate-limit";
 import { validateUserState, type UserState } from "@/lib/recommendation";
+import { primaryKeyOf } from "@/lib/recommender/present";
 import type { AnswerForm } from "@/lib/recommender/questions";
 import {
   applyAnswerChecked,
@@ -36,6 +37,7 @@ import {
   currentDataset,
   currentUserId,
   loadState,
+  markPrimaryChanged,
   runAndSave,
   RunLimitError,
   saveState,
@@ -59,15 +61,21 @@ function fail(message: string): never {
  *
  * Trả về câu lỗi thay vì gọi `fail` ở trong: `redirect` ném NEXT_REDIRECT, và
  * một `catch` bọc quanh nó sẽ nuốt mất lệnh chuyển trang.
+ *
+ * `primary` là khoá hành động chính của lượt chạy mới (`primaryKeyOf`), `null`
+ * khi không chạy được — khi đó không ai nói được gợi ý có đổi hay không.
  */
-async function runAfterSave(userId: string, state: UserState): Promise<string | null> {
+async function runAfterSave(
+  userId: string,
+  state: UserState,
+): Promise<{ limited: string | null; primary: string | null; runId: string | null }> {
   try {
-    await runAndSave(userId, state);
-    return null;
+    const { record } = await runAndSave(userId, state);
+    return { limited: null, primary: primaryKeyOf(record), runId: record.id };
   } catch (error) {
-    if (error instanceof RunLimitError) return error.message;
+    if (error instanceof RunLimitError) return { limited: error.message, primary: null, runId: null };
     console.error("[goi-y] không chạy được engine sau khi lưu hồ sơ", error);
-    return null;
+    return { limited: null, primary: null, runId: null };
   }
 }
 
@@ -151,7 +159,7 @@ export async function startRecommendation(formData: FormData): Promise<void> {
     created = false;
   }
   if (!created) fail(RECO_ERROR.storageDown);
-  const limited = await runAfterSave(userId, state);
+  const { limited } = await runAfterSave(userId, state);
   if (limited !== null) fail(limited);
   redirect(PATH);
 }
@@ -230,8 +238,14 @@ export async function answerQuestion(formData: FormData): Promise<void> {
   // Trả lời rồi thì câu đó thôi nằm trong danh sách đã bỏ qua (người dùng vừa
   // bấm "Sửa" trên chính nó).
   await unskipQuestion(key);
-  const limited = await runAfterSave(userId, saved.state);
+  const { limited, primary, runId } = await runAfterSave(userId, saved.state);
   if (limited !== null) fail(limited);
+  // Trang giữ nguyên chỗ cuộn ở câu hỏi vừa trả lời, tức thẻ gợi ý nằm khuất
+  // phía trên. Câu trả lời ĐỔI thẻ đó thì trang báo đổi và cuộn về đúng nó;
+  // không đổi thì để yên ở câu hỏi kế tiếp (audit trang 10/10/2026). `p` là
+  // khoá form mang theo — chỉ quyết định câu báo, không quyết định gợi ý.
+  const shown = formData.get("p");
+  await markPrimaryChanged(typeof shown === "string" && primary !== null && shown !== primary ? runId : null);
   redirect(PATH);
 }
 
@@ -245,6 +259,9 @@ export async function skipCurrentQuestion(formData: FormData): Promise<void> {
   if (mismatch !== null) fail(mismatch);
   const key = String(formData.get("question") ?? "");
   if (key !== "") await skipQuestion(key);
+  // Bỏ qua không đổi gợi ý: câu báo "vừa đổi" của câu trả lời TRƯỚC đó thôi đúng
+  // (lượt chạy vẫn là lượt cũ nên trang sẽ còn báo — Codex, 10/10/2026).
+  await markPrimaryChanged(null);
   redirect(PATH);
 }
 

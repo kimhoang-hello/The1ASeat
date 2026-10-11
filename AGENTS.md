@@ -3437,3 +3437,72 @@ URL: 0 lỗi status/canonical/h1/alt/JSON-LD).
 **Đòn bẩy còn lại nằm NGOÀI code:** backlink (0), nội dung tiếng Việt cho 28 bài video (đang tạm giữ theo user,
 29/09). Van YouTube vẫn đóng theo quyết định 04/09 — đừng đề xuất link mô tả
 video như một cách lấy backlink. Xem SEO.md mục "Cập nhật 10/10/2026".
+
+## Audit trang Gợi ý thẻ 10/10/2026 — đừng đề xuất lại
+
+Chạy cả luồng trên bản build local + MariaDB 11.8 (colima, cổng 3307, `DATABASE_URL`
+truyền qua biến môi trường của `next start`, không ghi vào `.env.local` của repo gốc)
+ở 375/320/1280px. Engine không đổi (4.35.0). Đầu vào từ GA4 30 ngày (10/09–09/10):
+trang chiếm 21% lượt xem cả site, 136 người, 2m03s, nhưng chỉ **2** `apply_clicked`
+có `placement=recommender_primary`; từ 27/09: 43 người xem, 23 bắt đầu, 22 trả lời
+(95 câu, ~4.3 câu/người). Phễu dừng ở `recommender_answered` nên 2 click không phân
+biệt được bỏ dở / được khuyên chưa mở thẻ / sang trang thẻ rồi mới apply.
+
+**Đã vá:**
+- **Câu trả lời ĐỔI thẻ gợi ý mà người đọc không thấy.** Server Action chuyển hướng
+  về CÙNG URL nên Next giữ chỗ cuộn ở câu hỏi; thẻ mới nằm khuất phía trên (đo:
+  Green → Gold → Green sau câu phí thường niên rồi câu tháng bay, cả hai lần thẻ ở
+  −880px). Form mang `p` = `primaryKeyOf(record)`; `answerQuestion` so với lượt chạy
+  mới và đặt cookie `g1a_reco_doi` = runId mới (xoá khi không đổi, khi bỏ qua, khi
+  làm lại); trang chỉ báo "Gợi ý vừa đổi…" khi cookie === `record.id`, và
+  `ScrollToResult` cuộn `#ket-qua` một lần mỗi runId. **Đừng chuyển sang tham số
+  URL:** bản đầu `?doi=1#ket-qua` không cuộn ở lần đổi thứ hai (cùng URL) và làm câu
+  trả lời kế tiếp (URL đổi về trang trần) bị Next kéo lên đầu trang.
+- **"Một câu nữa thôi"** in cho mọi câu đặt lên trước mà không đo được — lặp ở bốn câu
+  chuyến bay liền nhau. Nay câu dẫn theo `followUp.basis`: measured / urgent / dữ
+  kiện chuyến đi.
+- **Khối chuyến bay của người đã khai và chưa có điểm nào** in "cần 150,000 điểm
+  American Airlines® AAdvantage®" — mọi chương trình cùng phủ 0 nên `bestProgram`
+  chỉ là phép phá hoà, ngay dưới Amex® Green (Membership Rewards® không chuyển sang
+  AAdvantage®; Aeroplan® cần 260,000). Nay `noPointsYet`: khoảng gộp, "Tuỳ chương
+  trình: …" rẻ nhất trước (`needByProgram`, cũng hiện khi chưa khai số dư), "Còn
+  thiếu: Cả chuyến", không in "phủ 0%". Test kiểm ngược (gỡ cờ là đỏ).
+- **Vùng chạm** — đợt quét điện thoại 03/10 chỉ nạp URL sitemap không cookie, nên
+  chưa từng thấy câu hỏi lẫn trang kết quả: nhãn "Đang giữ/Đã đóng" 20px kề nhau
+  (đổi nghĩa hẳn: đang giữ ≠ từng giữ) nay `pointer-coarse:min-h-11`; summary nhóm
+  ngân hàng và hai khối gập chuyển lề từ `details` sang `summary` (lề của `details`
+  không bấm được); "Đọc kỹ về thẻ này" cạnh Apply cao thật `py-3`; "Sửa", "Xem thẻ"
+  nới ảo `::before`; "Bỏ qua câu này", "Làm lại từ đầu" cao thật. Đo lại: 0 phần tử
+  < 44px ở cả trang kết quả lẫn câu chọn thẻ (11 nhóm mở).
+- **Đo GA4:** `recommender_result {goal, outcome}` một lần mỗi runId (localStorage;
+  đợi `dataLayer` vì GA khởi tạo `afterInteractive` SAU effect của trang ở lần tải
+  đầu — `sendGAEvent` sớm là rơi event); `recommender_card_clicked {position,
+  product}` (click + chuột giữa); `apply_clicked` thêm `via: "recommender"` khi người
+  đọc apply một thẻ đã mở từ trang gợi ý trong CÙNG tab (`lib/recommender/via.ts`,
+  danh sách slug trong sessionStorage, chỉ đánh dấu khi click trái trần). `goal`
+  dùng chung chuỗi với `recommender_started` (`goalValueOf`). `outcome`, `position`,
+  `via` cần đăng ký custom dimension trong GA4 Admin mới đọc được theo chiều.
+
+**Codex (review + bác bản vá + vòng chốt):** vòng 1 nêu 5 điểm "nên sửa", vá cả 5
+(Back mount lại `ScrollToResult` cuộn lần nữa → nhớ token đã cuộn; bỏ qua câu hỏi
+vẫn báo "vừa đổi" → xoá cookie; chống trùng `recommender_result` từng tab →
+localStorage; `via` chỉ một slug bị ghi đè → danh sách; Cmd/Ctrl+click đánh dấu nhầm
+tab nguồn → chỉ click trái trần). Vòng bác bắt bản vá chống trùng hỏng (hai tab mở
+trước khi GA sẵn sàng đều gửi) → kiểm lại + giữ chỗ ngay lúc gửi. **Bác, không vá:**
+hai tab đọc–ghi `localStorage` xen kẽ đúng cùng khoảnh khắc vẫn đếm dư một event —
+số người của event không đổi, không dựng khoá liên tab cho ca đó.
+
+**Đã kiểm, KHÔNG phải lỗi:**
+- Link `?sua=` trong khối chuyến bay được `<Link>` prefetch, nhưng route động không
+  có `loading.js` nên prefetch không chạy trang: general log MariaDB cho đúng 4 truy
+  vấn mỗi lượt xem trang kể cả khi cuộn hết các link.
+- TTFB trang kết quả 20–40 ms (dùng lại lượt chạy), Server Action trả lời 205 ms
+  (engine + §30 + lưu + dựng lại), HTML ~120 KB, JS riêng của route 8.9 KB. 0 tràn
+  ngang ở 320px (câu chọn thẻ mở hết nhóm, trang kết quả mở hết khối gập).
+- Preload logo hãng bay "không dùng tới" trong console là gợi ý preload của trang
+  khác được `<Link>` prefetch (dải offer, header) — không riêng trang này.
+- Dải Beta vàng trên trang là câu tác giả chốt (`754ff2e`, 18/09) — giữ nguyên dù
+  nó cùng PageHeader đẩy nút mục tiêu đầu tiên xuống dưới mép màn hình 375×812.
+- Engine: Green đứng đầu cho người mới bay Việt Nam khi chưa khai ngưỡng phí (Gold
+  ×0.84) là hành vi đã chốt của §16/§17; trang nói "hai lựa chọn ngang nhau" và hỏi
+  ngưỡng phí ngay ("Câu này có thể đổi thẻ…").

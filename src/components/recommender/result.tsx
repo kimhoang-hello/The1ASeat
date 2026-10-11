@@ -1,9 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { CheckCircle, Info, Warning } from "@phosphor-icons/react/ssr";
+import { ArrowsClockwise, CheckCircle, Info, Warning } from "@phosphor-icons/react/ssr";
 
 import { resetRecommendation } from "@/app/credit-cards/goi-y/actions";
 import { ApplyButton } from "@/components/ui/apply-button";
+import { ScrollToResult } from "@/components/recommender/scroll-to-result";
 import type { ActionView, AnsweredRow, ResultView } from "@/lib/recommender/present";
 import { NO_CARD_SENTENCE } from "@/lib/recommender/copy";
 import {
@@ -34,6 +35,7 @@ export function Result({
   answered,
   children,
   why,
+  changed = false,
 }: {
   view: ResultView;
   answered: AnsweredRow[];
@@ -45,10 +47,14 @@ export function Result({
    * nguyên vẹn: đó là đường chạy khi không có LLM.
    */
   why?: React.ReactNode;
+  /** Câu trả lời vừa rồi đổi hành động chính — xem `primaryKeyOf`. */
+  changed?: boolean;
 }) {
   return (
     <div className="space-y-5">
+      {changed && <ScrollToResult token={view.runId} />}
       <PrimaryCard
+        changed={changed}
         action={view.primary}
         confidence={view.confidence}
         warnings={view.warnings}
@@ -90,7 +96,9 @@ function PrimaryCard({
   warnings,
   why,
   goalType,
+  changed,
 }: {
+  changed: boolean;
   action: ActionView;
   confidence: ResultView["confidence"];
   goalType: ResultView["goalType"];
@@ -100,7 +108,16 @@ function PrimaryCard({
 }) {
   const rest = action.reasons.filter((row) => row.tone !== "good");
   return (
-    <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+    // `id` là đích cuộn sau một câu trả lời ĐỔI gợi ý (`ScrollToResult`): trang
+    // giữ chỗ cuộn ở câu hỏi, nên không cuộn về đây thì thẻ mới nằm khuất phía
+    // trên và người đọc tưởng gợi ý vẫn như cũ (audit trang 10/10/2026).
+    <section id="ket-qua" className="scroll-mt-chrome rounded-2xl border border-border bg-card p-5 sm:p-6">
+      {changed && (
+        <p role="status" className="mb-3 flex items-center gap-2 rounded-xl bg-primary/5 px-3 py-2 text-sm font-semibold text-primary">
+          <ArrowsClockwise size={18} weight="bold" className="shrink-0" />
+          Gợi ý vừa đổi theo câu trả lời của bạn.
+        </p>
+      )}
       <p className="text-xs font-semibold uppercase tracking-wide text-primary">
         {action.kind === "no_new_card" ? "Gợi ý cho bạn" : "Thẻ gợi ý cho bạn"}
       </p>
@@ -216,9 +233,13 @@ function PrimaryCard({
             />
           )}
           {action.slug && (
+            // Cao 44px THẬT, cạnh nút Apply cũng cao thật — chạm hụt chữ này là
+            // bấm nhầm sang ngân hàng (DESIGN-SYSTEM.md 5.4).
             <Link
               href={`/credit-cards/${action.slug}`}
-              className="text-sm font-semibold text-primary underline underline-offset-4"
+              data-reco-card="primary"
+              data-reco-product={action.slug}
+              className="inline-block py-3 text-sm font-semibold text-primary underline underline-offset-4"
             >
               Đọc kỹ về thẻ này
             </Link>
@@ -290,7 +311,9 @@ function AlternativeRow({ action }: { action: ActionView }) {
       {action.slug && (
         <Link
           href={`/credit-cards/${action.slug}`}
-          className="mt-2 inline-block text-sm font-semibold text-primary underline underline-offset-4"
+          data-reco-card="alternative"
+          data-reco-product={action.slug}
+          className="relative mt-2 inline-block text-sm font-semibold text-primary underline underline-offset-4 before:absolute before:-inset-x-3 before:-inset-y-3 before:content-['']"
         >
           Xem thẻ
         </Link>
@@ -351,7 +374,9 @@ function TripNumbers({ trip }: { trip: NonNullable<ResultView["trip"]> }) {
         <div>
           <dt className="text-sm text-muted-foreground">Còn thiếu</dt>
           <dd className="font-display text-lg font-bold text-foreground">
-            {trip.gap === null
+            {trip.noPointsYet
+              ? "Cả chuyến"
+              : trip.gap === null
               ? "Chưa tính được"
               : trip.gap > 0
                 ? `${formatPoints(trip.gap)} điểm`
@@ -361,6 +386,12 @@ function TripNumbers({ trip }: { trip: NonNullable<ResultView["trip"]> }) {
           </dd>
         </div>
       </dl>
+      )}
+      {!nothingKnown && !trip.routeNotPriced && trip.needByProgram.length > 1 && (
+        <p className="mt-3 text-sm text-muted-foreground">
+          Tuỳ chương trình:{" "}
+          {trip.needByProgram.map((row) => `${row.program} ${row.need}`).join(" · ")}.
+        </p>
       )}
       {!nothingKnown && !trip.routeNotPriced && trip.needProgram !== null && (
         <p className="mt-3 text-sm text-muted-foreground">
@@ -437,7 +468,9 @@ function AnsweredPanel({ rows }: { rows: AnsweredRow[] }) {
               <Link
                 href={`/credit-cards/goi-y?sua=${encodeURIComponent(row.questionKey)}`}
                 aria-label={`Sửa: ${row.label}`}
-                className="shrink-0 text-sm font-semibold text-primary underline underline-offset-4"
+                // 27×20px trên điện thoại; nới ảo 12px mỗi phía. Hai dòng kề
+                // nhau cách ≥ 60px nên hai vùng nới không chồng lên nhau.
+                className="relative shrink-0 text-sm font-semibold text-primary underline underline-offset-4 before:absolute before:-inset-x-3 before:-inset-y-3 before:content-['']"
               >
                 Sửa
               </Link>
@@ -445,10 +478,10 @@ function AnsweredPanel({ rows }: { rows: AnsweredRow[] }) {
           </div>
         ))}
       </dl>
-      <form action={resetRecommendation} data-reco-event="reset" className="mt-4">
+      <form action={resetRecommendation} data-reco-event="reset" className="mt-1">
         <button
           type="submit"
-          className="cursor-pointer text-sm font-semibold text-muted-foreground underline underline-offset-4 hover:text-primary"
+          className="cursor-pointer py-3 text-sm font-semibold text-muted-foreground underline underline-offset-4 hover:text-primary"
         >
           Làm lại từ đầu
         </button>
@@ -467,11 +500,14 @@ function AnsweredPanel({ rows }: { rows: AnsweredRow[] }) {
 function HowItWorks({ view }: { view: ResultView }) {
   const percents = wholePercents(view.primary.components.map((row) => row.weight));
   return (
-    <details className="rounded-2xl border border-border bg-card p-5 sm:p-6">
-      <summary className="cursor-pointer font-display text-lg font-bold text-foreground">
+    // Lề nằm trên `summary`, không trên `details`: vùng bấm được của tiêu đề gập
+    // là cả dải 64px thay vì dòng chữ 28px (lề của `details` không bấm được).
+    <details className="rounded-2xl border border-border bg-card">
+      <summary className="cursor-pointer p-5 font-display text-lg font-bold text-foreground sm:p-6">
         Cách mình tính ra kết quả này
       </summary>
-      <p className="mt-3 text-base leading-relaxed text-foreground/80">
+      <div className="px-5 pb-5 sm:px-6 sm:pb-6">
+      <p className="text-base leading-relaxed text-foreground/80">
         Hướng đi mình chọn: <strong>{view.strategy}</strong>. Điểm số dưới đây chấm trên thang 0–1,
         mỗi dòng là một phần của công thức.
       </p>
@@ -525,6 +561,7 @@ function HowItWorks({ view }: { view: ResultView }) {
         Dữ liệu thẻ tính đến {vietnameseDate(view.asOf)}. Mã tra cứu: <code>{view.runId}</code> — gửi mã này cho
         mình nếu bạn thấy kết quả sai, mình xem lại được đúng lượt tính của bạn.
       </p>
+      </div>
     </details>
   );
 }

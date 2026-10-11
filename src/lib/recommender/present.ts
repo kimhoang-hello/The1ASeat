@@ -175,6 +175,17 @@ export interface TripNumbersView {
    * hoặc không chương trình nào phủ được).
    */
   needProgram: string | null;
+  /**
+   * Giá từng chương trình, rẻ nhất trước — chỉ khi `need*` là khoảng GỘP
+   * (`needProgram === null`); rỗng khi con số đã đo trên một chương trình.
+   */
+  needByProgram: { program: string; need: string }[];
+  /**
+   * Đã khai, và chắc chắn chưa có điểm nào với tới chặng này. "Còn thiếu" khi
+   * đó là cả chuyến; `gap`/`coverage` là `null` vì không có chương trình nào để
+   * đo trên.
+   */
+  noPointsYet: boolean;
   accessible: number | null;
   accessibleIsLowerBound: boolean;
   gap: number | null;
@@ -589,6 +600,20 @@ const GOAL_TITLE: Record<GoalType, string> = {
   diversify: "Trải điểm ra nhiều chương trình",
 };
 
+/**
+ * Khoá của hành động chính: slug thẻ, hoặc `no_new_card`.
+ *
+ * Form câu hỏi mang khoá đang hiện trên trang; Server Action so nó với lượt chạy
+ * mới để biết câu trả lời vừa ĐỔI gợi ý — trang giữ nguyên chỗ cuộn ở câu hỏi,
+ * nên không có tín hiệu này thì thẻ mới đổi nằm ngoài màn hình và người đọc
+ * không biết (audit trang 10/10/2026).
+ */
+export function primaryKeyOf(record: RecommendationRunRecord, goalIndex = 0): string | null {
+  const action = record.outputSnapshot.results[goalIndex]?.primaryAction;
+  if (action === undefined) return null;
+  return action.kind === "no_new_card" ? "no_new_card" : (action.productSlug ?? null);
+}
+
 /** Chặng của mục tiêu chuyến đi chưa có award chart — trang và câu hỏi tiếp theo cùng đọc chỗ này. */
 export function routeNotPricedOf(record: RecommendationRunRecord, goalIndex = 0): boolean {
   const result = record.outputSnapshot.results[goalIndex];
@@ -606,8 +631,19 @@ function tripView(
   if (trip == null || result === undefined) return null;
   const coverage = trace.tripCoverage;
   const balancesUndeclared = (record.outputSnapshot.warnings as string[]).includes("BALANCES_UNDECLARED");
+  // Đã khai và CHẮC CHẮN không có điểm nào với tới chặng này. Mọi chương trình
+  // cùng phủ 0, nên "chương trình phủ tốt nhất" của engine chỉ là phép phá hoà —
+  // trang từng in "cần 150,000 điểm American Airlines® AAdvantage®" cho người
+  // chưa có điểm nào ngay dưới thẻ Amex® Green, thẻ kiếm Membership Rewards®
+  // không chuyển được sang AAdvantage® (Aeroplan® cần 260,000). Không có chương
+  // trình nào là "của bạn" thì nói khoảng gộp kèm giá từng chương trình (audit
+  // trang 10/10/2026).
+  const noPointsYet =
+    !balancesUndeclared &&
+    result.numbers.accessiblePoints === 0 &&
+    !result.numbers.accessiblePointsIsLowerBound;
   const bestRow =
-    balancesUndeclared || coverage?.bestProgram == null
+    balancesUndeclared || noPointsYet || coverage?.bestProgram == null
       ? undefined
       : trace.goal.tripNeed?.byProgram.find((row) => row.programId === coverage.bestProgram);
   const goalId = trace.goalId ?? "";
@@ -679,14 +715,32 @@ function tripView(
           needHigh: bestRow.high,
           needProgram: programName(dataset, bestRow.programId),
         }),
+    // Khoảng gộp một mình ("150,000 – 280,000 điểm") không nói được chương
+    // trình nào rẻ, nên kèm giá từng chương trình — rẻ nhất trước.
+    needByProgram:
+      bestRow !== undefined
+        ? []
+        : [...(trace.goal.tripNeed?.byProgram ?? [])]
+            .map((row) => ({
+              program: programName(dataset, row.programId),
+              typical: row.typical ?? row.low ?? row.floor ?? row.high,
+              need: formatNeed(row.low ?? row.floor, row.high),
+            }))
+            .filter((row): row is { program: string; typical: number; need: string } => row.need !== null && row.typical !== null)
+            .sort((a, b) => a.typical - b.typical)
+            .map(({ program, need }) => ({ program, need })),
+    noPointsYet,
     // Chưa khai số dư (bỏ qua câu "có điểm ở đâu"): engine xếp hạng như thể 0
     // điểm, nhưng trang KHÔNG được in "gom được 0 điểm · còn thiếu X · phủ 0%"
     // — ba câu khẳng định dựng trên một câu người dùng chưa trả lời, ngay dưới
     // cảnh báo "bạn chưa khai điểm đang có".
     accessible: balancesUndeclared ? null : result.numbers.accessiblePoints,
     accessibleIsLowerBound,
-    gap: balancesUndeclared ? null : result.numbers.pointsGapTypical,
-    coverage: balancesUndeclared ? null : (coverage?.coverage ?? null),
+    // Chưa có điểm nào: phần thiếu là cả chuyến (trang nói thế), không phải
+    // khoảng thiếu đo trên chương trình engine chọn để phá hoà; "phủ 0%" thì
+    // không nói thêm được gì.
+    gap: balancesUndeclared || noPointsYet ? null : result.numbers.pointsGapTypical,
+    coverage: balancesUndeclared || noPointsYet ? null : (coverage?.coverage ?? null),
     // "Ước lượng" nói ra rằng con số phủ là điểm giữa của một khoảng — số dư
     // chưa biết, hoặc chương trình chỉ công bố giá sàn. Trình bày nó như một
     // con số chắc chắn là đúng lỗi §29 sinh ra để tránh.

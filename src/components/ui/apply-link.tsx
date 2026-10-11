@@ -2,6 +2,8 @@
 
 import { sendGAEvent } from "@next/third-parties/google";
 
+import { cameFromRecommender } from "@/lib/recommender/via";
+
 /**
  * Mọi đường ra affiliate của site đi qua đây, và đây là chỗ DUY NHẤT bắn
  * `apply_clicked`.
@@ -46,7 +48,15 @@ export function ApplyLink({
   ariaHidden?: boolean;
   tabIndex?: number;
 }) {
-  const track = () => sendGAEvent("event", "apply_clicked", { placement, product });
+  // `via` chỉ khi click KHÔNG nằm trên trang gợi ý mà thẻ được mở từ đó — xem
+  // `lib/recommender/via.ts`. Click ngay trên trang gợi ý đã mang
+  // `placement=recommender_primary`.
+  const track = () =>
+    sendGAEvent("event", "apply_clicked", {
+      placement,
+      product,
+      ...(placement !== "recommender_primary" && cameFromRecommender(product) ? { via: "recommender" } : {}),
+    });
 
   return (
     <a

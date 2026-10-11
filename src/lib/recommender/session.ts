@@ -44,6 +44,7 @@ import { mysqlExplanationStore, type ExplanationStore } from "@/lib/recommender/
 
 export const USER_COOKIE = "g1a_reco";
 export const SKIP_COOKIE = "g1a_reco_skip";
+export const CHANGED_COOKIE = "g1a_reco_doi";
 
 /** Một năm: đủ để quay lại sau một mùa săn offer, và tự hết hạn nếu không. */
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
@@ -150,6 +151,37 @@ export async function clearSession(): Promise<void> {
   const jar = await cookies();
   jar.delete(USER_COOKIE);
   jar.delete(SKIP_COOKIE);
+  jar.delete(CHANGED_COOKIE);
+}
+
+/**
+ * Lượt chạy mà câu trả lời vừa rồi ĐỔI hành động chính — trang hiện câu báo đổi
+ * và cuộn về thẻ gợi ý, nhưng chỉ khi lượt đang hiện đúng là lượt này (câu trả
+ * lời kế tiếp tạo lượt mới, câu báo tự tắt).
+ *
+ * Cookie chứ không phải tham số URL: Server Action chuyển hướng về CÙNG URL thì
+ * Next giữ nguyên chỗ cuộn ở câu hỏi kế tiếp — đúng điều mình muốn khi gợi ý
+ * không đổi. Bản đầu dùng `?doi=1#ket-qua`: hai lần đổi liên tiếp là cùng một
+ * URL nên lần sau không cuộn, và câu trả lời sau đó (URL đổi về trang trần) bị
+ * Next kéo lên đầu trang (audit trang 10/10/2026). `runId` không mở được hồ sơ.
+ */
+export async function markPrimaryChanged(runId: string | null): Promise<void> {
+  const jar = await cookies();
+  if (runId === null) {
+    jar.delete(CHANGED_COOKIE);
+    return;
+  }
+  jar.set(CHANGED_COOKIE, runId, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 10,
+  });
+}
+
+export async function primaryChangedRunId(): Promise<string | null> {
+  return (await cookies()).get(CHANGED_COOKIE)?.value ?? null;
 }
 
 /**
