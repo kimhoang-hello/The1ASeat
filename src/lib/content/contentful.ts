@@ -3,6 +3,7 @@ import type { Asset, Entry, EntrySkeletonType } from "contentful";
 import { documentToHtmlString, type Options } from "@contentful/rich-text-html-renderer";
 import { BLOCKS, INLINES, type Document } from "@contentful/rich-text-types";
 import { relForUrl } from "@/lib/affiliate-links";
+import { getVideoEmbedUrl } from "@/lib/video-embed";
 import { keepBrandTogether } from "@/lib/t";
 import type { AuthorProfile, BlogPost, CreditCardOffer, TransferBonus } from "./types";
 
@@ -68,9 +69,26 @@ function renderBodyImage(target: unknown): string {
   return `<figure><img src="${escapeAttribute(src(fallback))}" srcset="${escapeAttribute(srcset)}" sizes="(min-width: 768px) 42rem, 100vw"${dims} alt="${escapeAttribute(alt)}" loading="lazy" decoding="async"></figure>`;
 }
 
+/**
+ * Video chèn trong thân bài: tác giả chèn chính entry bài VIDEO (blogPost có
+ * `videoUrl`) vào rich text, và bài viết nhúng player của video đó — cùng iframe
+ * với trang bài video. URL đi qua `getVideoEmbedUrl`, nên chỉ YouTube/Vimeo
+ * đúng hình dạng mới thành `src`; entry khác loại hay chưa publish thì bỏ qua.
+ */
+function renderBodyVideo(target: unknown): string {
+  if (!target || typeof target !== "object" || !("fields" in target)) return "";
+  const fields = (target as { fields?: { videoUrl?: unknown; titleVi?: unknown } }).fields;
+  const embedUrl = getVideoEmbedUrl(typeof fields?.videoUrl === "string" ? fields.videoUrl : "");
+  if (!embedUrl) return "";
+  const title = String(fields?.titleVi ?? "");
+
+  return `<div class="not-prose my-8 aspect-video w-full overflow-hidden rounded-2xl bg-primary"><iframe src="${escapeAttribute(embedUrl)}" title="${escapeAttribute(title)}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="h-full w-full"></iframe></div>`;
+}
+
 const bodyOptions: Options = {
   renderNode: {
     [BLOCKS.EMBEDDED_ASSET]: (node) => renderBodyImage((node.data as { target?: unknown }).target),
+    [BLOCKS.EMBEDDED_ENTRY]: (node) => renderBodyVideo((node.data as { target?: unknown }).target),
     [INLINES.HYPERLINK]: (node, next) => {
       const uri = String((node.data as { uri?: unknown }).uri ?? "");
       const text = next(node.content);
