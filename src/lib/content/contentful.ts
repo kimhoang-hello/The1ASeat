@@ -1,7 +1,7 @@
 import { createClient, EntryFieldTypes } from "contentful";
 import type { Asset, Entry, EntrySkeletonType } from "contentful";
 import { documentToHtmlString, type Options } from "@contentful/rich-text-html-renderer";
-import { INLINES, type Document } from "@contentful/rich-text-types";
+import { BLOCKS, INLINES, type Document } from "@contentful/rich-text-types";
 import { relForUrl } from "@/lib/affiliate-links";
 import { keepBrandTogether } from "@/lib/t";
 import type { AuthorProfile, BlogPost, CreditCardOffer, TransferBonus } from "./types";
@@ -11,8 +11,14 @@ const accessToken = process.env.CONTENTFUL_ACCESS_TOKEN;
 
 export const isContentfulConfigured = Boolean(spaceId && accessToken);
 
+// `CONTENTFUL_HOST=preview.contentful.com` (kèm token Preview API ở
+// `CONTENTFUL_ACCESS_TOKEN`) cho chạy site ở máy với cả bản NHÁP — để tác giả
+// duyệt một bài trước khi bấm Publish. Không đặt thì SDK dùng CDA như cũ;
+// Hostinger không có biến này.
+const host = process.env.CONTENTFUL_HOST;
+
 const client = isContentfulConfigured
-  ? createClient({ space: spaceId!, accessToken: accessToken! })
+  ? createClient({ space: spaceId!, accessToken: accessToken!, ...(host ? { host } : {}) })
   : null;
 
 function escapeAttribute(value: string): string {
@@ -29,8 +35,42 @@ function escapeAttribute(value: string): string {
  * referral links, which every other surface on the site marks as `sponsored`.
  * The host decides; see lib/affiliate-links.
  */
+/**
+ * Ảnh chèn trong thân bài (embedded asset của rich text).
+ *
+ * Bộ render mặc định trả về chuỗi rỗng cho khối này, nên trước 11/10/2026 một
+ * ảnh tác giả chèn vào bài sẽ biến mất không báo gì. File gốc là ảnh chụp
+ * cỡ lớn; Images API của Contentful cắt ra bản WebP theo bề rộng, và
+ * `width`/`height` gốc giữ chỗ để trang không giật khi ảnh tải xong. Alt lấy từ
+ * Description của asset, thiếu thì Title. Asset chưa giải được (chưa publish)
+ * hay không phải ảnh thì bỏ qua.
+ */
+const BODY_IMAGE_WIDTHS = [640, 960, 1344, 1800];
+
+function renderBodyImage(target: unknown): string {
+  if (!target || typeof target !== "object" || !("fields" in target)) return "";
+  const fields = (target as Asset).fields;
+  const file = fields?.file;
+  const url = typeof file?.url === "string" ? file.url : "";
+  if (!url || !String(file?.contentType ?? "").startsWith("image/")) return "";
+
+  const src = (w: number) => `https:${url}?w=${w}&fm=webp&q=75`;
+  const size = (file?.details as { image?: { width: number; height: number } } | undefined)?.image;
+  const dims = size ? ` width="${size.width}" height="${size.height}"` : "";
+  const alt = String(fields.description || fields.title || "");
+  // Images API không phóng to ảnh, nên mức rộng hơn file gốc phải gộp về
+  // đúng bề rộng gốc — khai `1800w` cho một file 600px làm trình duyệt tưởng
+  // ảnh có mật độ cao và vẽ nó nhỏ lại (cột dùng `w-auto`).
+  const widths = [...new Set(BODY_IMAGE_WIDTHS.map((w) => Math.min(w, size?.width ?? w)))];
+  const srcset = widths.map((w) => `${src(w)} ${w}w`).join(", ");
+  const fallback = widths.find((w) => w >= 1344) ?? widths[widths.length - 1];
+
+  return `<figure><img src="${escapeAttribute(src(fallback))}" srcset="${escapeAttribute(srcset)}" sizes="(min-width: 768px) 42rem, 100vw"${dims} alt="${escapeAttribute(alt)}" loading="lazy" decoding="async"></figure>`;
+}
+
 const bodyOptions: Options = {
   renderNode: {
+    [BLOCKS.EMBEDDED_ASSET]: (node) => renderBodyImage((node.data as { target?: unknown }).target),
     [INLINES.HYPERLINK]: (node, next) => {
       const uri = String((node.data as { uri?: unknown }).uri ?? "");
       const text = next(node.content);

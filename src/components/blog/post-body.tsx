@@ -128,7 +128,12 @@ export function PostBody({
  *  ký tự trên một dòng gần như đứng yên (75 → 74) trong khi khối chữ chiếm
  *  nhiều chỗ hơn và dễ đọc hơn ở khoảng cách ngồi xa.
  *
+ *  Ảnh trong bài (`prose-img:*`): `w-auto` + `max-h` để ảnh dọc không cao quá
+ *  một màn hình — ảnh iPhone dọc kéo hết cột 42rem sẽ cao gần 900px. `w-auto`
+ *  là bắt buộc: chỉ chặn `max-h` trong khi bề rộng vẫn theo thuộc tính
+ *  `width` thì ảnh bị bóp méo chứ không thu nhỏ.
+ *
  *  `prose-headings:scroll-mt-chrome` (globals.css) vì header dính trên đỉnh: không có nó, link
  *  mục lục nhảy tới đúng heading rồi để header che mất chính cái heading đó. */
 const PROSE =
-  "prose prose-neutral max-w-none prose-headings:font-display prose-headings:scroll-mt-chrome prose-a:text-primary [&_:is(h1,h2,h3,h4)_a]:[font-weight:inherit] xl:prose-lg";
+  "prose prose-neutral max-w-none prose-headings:font-display prose-headings:scroll-mt-chrome prose-a:text-primary [&_:is(h1,h2,h3,h4)_a]:[font-weight:inherit] xl:prose-lg prose-img:mx-auto prose-img:w-auto prose-img:max-h-[80svh] prose-img:rounded-xl";
