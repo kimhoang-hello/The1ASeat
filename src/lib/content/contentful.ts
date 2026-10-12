@@ -4,8 +4,10 @@ import { documentToHtmlString, type Options } from "@contentful/rich-text-html-r
 import { BLOCKS, INLINES, type Document } from "@contentful/rich-text-types";
 import { relForUrl } from "@/lib/affiliate-links";
 import { getVideoEmbedUrl } from "@/lib/video-embed";
-import { keepBrandTogether } from "@/lib/t";
+import { keepBrandTogether, t as translate } from "@/lib/t";
 import type { AuthorProfile, BlogPost, CreditCardOffer, TransferBonus } from "./types";
+
+const posts_t = translate("posts");
 
 const spaceId = process.env.CONTENTFUL_SPACE_ID;
 const accessToken = process.env.CONTENTFUL_ACCESS_TOKEN;
@@ -31,12 +33,6 @@ function escapeAttribute(value: string): string {
 }
 
 /**
- * Contentful's rich text has nowhere for an editor to set `rel` or `target`, so
- * a link written in a post body would otherwise ship bare — including the
- * referral links, which every other surface on the site marks as `sponsored`.
- * The host decides; see lib/affiliate-links.
- */
-/**
  * Ảnh chèn trong thân bài (embedded asset của rich text).
  *
  * Bộ render mặc định trả về chuỗi rỗng cho khối này, nên trước 11/10/2026 một
@@ -48,25 +44,90 @@ function escapeAttribute(value: string): string {
  */
 const BODY_IMAGE_WIDTHS = [640, 960, 1344, 1800];
 
-function renderBodyImage(target: unknown): string {
-  if (!target || typeof target !== "object" || !("fields" in target)) return "";
+interface BodyImage {
+  src: string;
+  srcset: string;
+  width?: number;
+  height?: number;
+  alt: string;
+}
+
+function bodyImage(target: unknown): BodyImage | null {
+  if (!target || typeof target !== "object" || !("fields" in target)) return null;
   const fields = (target as Asset).fields;
   const file = fields?.file;
   const url = typeof file?.url === "string" ? file.url : "";
-  if (!url || !String(file?.contentType ?? "").startsWith("image/")) return "";
+  if (!url || !String(file?.contentType ?? "").startsWith("image/")) return null;
 
   const src = (w: number) => `https:${url}?w=${w}&fm=webp&q=75`;
   const size = (file?.details as { image?: { width: number; height: number } } | undefined)?.image;
-  const dims = size ? ` width="${size.width}" height="${size.height}"` : "";
-  const alt = String(fields.description || fields.title || "");
   // Images API không phóng to ảnh, nên mức rộng hơn file gốc phải gộp về
   // đúng bề rộng gốc — khai `1800w` cho một file 600px làm trình duyệt tưởng
   // ảnh có mật độ cao và vẽ nó nhỏ lại (cột dùng `w-auto`).
   const widths = [...new Set(BODY_IMAGE_WIDTHS.map((w) => Math.min(w, size?.width ?? w)))];
-  const srcset = widths.map((w) => `${src(w)} ${w}w`).join(", ");
   const fallback = widths.find((w) => w >= 1344) ?? widths[widths.length - 1];
 
-  return `<figure><img src="${escapeAttribute(src(fallback))}" srcset="${escapeAttribute(srcset)}" sizes="(min-width: 768px) 42rem, 100vw"${dims} alt="${escapeAttribute(alt)}" loading="lazy" decoding="async"></figure>`;
+  return {
+    src: src(fallback),
+    srcset: widths.map((w) => `${src(w)} ${w}w`).join(", "),
+    width: size?.width,
+    height: size?.height,
+    alt: String(fields.description || fields.title || ""),
+  };
+}
+
+function imgTag(image: BodyImage, className = ""): string {
+  const dims = image.width && image.height ? ` width="${image.width}" height="${image.height}"` : "";
+  const cls = className ? ` class="${className}"` : "";
+  return `<img src="${escapeAttribute(image.src)}" srcset="${escapeAttribute(image.srcset)}" sizes="(min-width: 768px) 42rem, 100vw"${dims} alt="${escapeAttribute(image.alt)}"${cls} loading="lazy" decoding="async">`;
+}
+
+function renderBodyImage(target: unknown): string {
+  const image = bodyImage(target);
+  return image ? `<figure>${imgTag(image)}</figure>` : "";
+}
+
+const CARET_LEFT = "M168.49,199.51a12,12,0,0,1-17,17l-80-80a12,12,0,0,1,0-17l80-80a12,12,0,0,1,17,17L97,128Z";
+const CARET_RIGHT = "M184.49,136.49l-80,80a12,12,0,0,1-17-17L159,128,87.51,56.49a12,12,0,1,1,17-17l80,80A12,12,0,0,1,184.49,136.49Z";
+
+/**
+ * Hai ảnh trở lên đứng liền nhau trong thân bài thành MỘT carousel (11/10/2026,
+ * user chốt cho review flights & hotels): cuộn ngang, mỗi lần một ảnh, nút
+ * mũi tên cùng kiểu với carousel bài viết ở trang chủ (`PostCarousel`).
+ *
+ * Tác giả không phải làm gì đặc biệt — chèn các ảnh sát nhau trong Contentful
+ * là đủ; đoạn trống mà trình soạn thảo tự chèn giữa hai ảnh được bỏ qua. Cuộn
+ * là cuộn gốc của trình duyệt (vuốt, trackpad, phím mũi tên khi khung có
+ * focus), nên không có JS vẫn xem hết được ảnh; `PostImageCarousels` chỉ gắn
+ * nút và bộ đếm.
+ *
+ * Khung lấy tỉ lệ của ẢNH ĐẦU (4:3 ngang hoặc 3:4 dọc) và cắt `object-cover`
+ * những ảnh lệch tỉ lệ — nên gom ảnh cùng chiều vào một bộ. Bộ ảnh dọc hẹp lại
+ * (`max-w-md`) để không cao quá một màn hình.
+ */
+function renderImageCarousel(images: BodyImage[]): string {
+  const first = images[0];
+  const portrait = Boolean(first.width && first.height && first.height > first.width);
+  const arrow =
+    "absolute top-1/2 flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-border bg-card text-foreground/70 shadow-sm transition hover:border-primary hover:text-primary disabled:pointer-events-none disabled:opacity-0";
+  const icon = (d: string) =>
+    `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="${d}"></path></svg>`;
+  const slides = images
+    .map(
+      (image) =>
+        `<figure class="m-0 w-full shrink-0 snap-center ${portrait ? "aspect-[3/4]" : "aspect-[4/3]"}">${imgTag(image, "h-full w-full object-cover")}</figure>`,
+    )
+    .join("");
+
+  return (
+    `<div class="not-prose my-8" data-image-carousel>` +
+    `<div class="relative${portrait ? " mx-auto max-w-md" : ""}">` +
+    `<div data-carousel-track tabindex="0" role="region" aria-roledescription="carousel" aria-label="${escapeAttribute(posts_t("galleryLabel", { count: images.length }))}" class="flex snap-x snap-mandatory gap-3 overflow-x-auto rounded-xl bg-primary [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">${slides}</div>` +
+    `<button type="button" data-carousel-prev disabled aria-label="${escapeAttribute(posts_t("galleryPrev"))}" class="${arrow} left-3">${icon(CARET_LEFT)}</button>` +
+    `<button type="button" data-carousel-next aria-label="${escapeAttribute(posts_t("galleryNext"))}" class="${arrow} right-3">${icon(CARET_RIGHT)}</button>` +
+    `<span data-carousel-count aria-live="polite" aria-atomic="true" class="pointer-events-none absolute right-3 bottom-3 rounded-full bg-black/55 px-2.5 py-1 text-xs font-medium text-white tabular-nums">1 / ${images.length}</span>` +
+    `</div></div>`
+  );
 }
 
 /**
@@ -84,6 +145,13 @@ function renderBodyVideo(target: unknown): string {
 
   return `<div class="not-prose my-8 aspect-video w-full overflow-hidden rounded-2xl bg-primary"><iframe src="${escapeAttribute(embedUrl)}" title="${escapeAttribute(title)}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="h-full w-full"></iframe></div>`;
 }
+
+/**
+ * Contentful's rich text has nowhere for an editor to set `rel` or `target`, so
+ * a link written in a post body would otherwise ship bare — including the
+ * referral links, which every other surface on the site marks as `sponsored`.
+ * The host decides; see lib/affiliate-links.
+ */
 
 const bodyOptions: Options = {
   renderNode: {
@@ -192,10 +260,44 @@ export function safeHref(uri: string): string | null {
  * cả 40 bài đang có (390 khối): không lệch một byte nào. Nếu một ngày nào đó
  * bộ render thêm thứ gì vào giữa hai khối, `body` bên dưới sẽ đổi theo và
  * trang vẫn đúng — hai giá trị luôn được dựng từ cùng một mảng.
+ *
+ * Ngoại lệ duy nhất: một dãy ảnh liền nhau gộp thành MỘT khối carousel (xem
+ * `renderImageCarousel`). Mọi chỗ đếm khối (`afterBlock` của khối thẻ, mục lục)
+ * đều đọc chính mảng này nên vẫn khớp nhau.
  */
 export function renderPostBlocks(document: Document): string[] {
-  return (document.content ?? []).map((node) =>
-    documentToHtmlString({ ...document, content: [node] }, bodyOptions),
+  const nodes = document.content ?? [];
+  const blocks: string[] = [];
+  let i = 0;
+  while (i < nodes.length) {
+    const run: BodyImage[] = [];
+    let next = i;
+    while (next < nodes.length && nodes[next].nodeType === BLOCKS.EMBEDDED_ASSET) {
+      const image = bodyImage((nodes[next].data as { target?: unknown }).target);
+      if (!image) break;
+      run.push(image);
+      next++;
+      // Trình soạn thảo Contentful tự chèn một đoạn trống sau mỗi khối nhúng;
+      // đoạn trống nằm GIỮA hai ảnh không được cắt đôi bộ ảnh.
+      let after = next;
+      while (after < nodes.length && isEmptyParagraph(nodes[after])) after++;
+      if (after > next && nodes[after]?.nodeType === BLOCKS.EMBEDDED_ASSET) next = after;
+    }
+    if (run.length >= 2) {
+      blocks.push(renderImageCarousel(run));
+      i = next;
+    } else {
+      blocks.push(documentToHtmlString({ ...document, content: [nodes[i]] }, bodyOptions));
+      i++;
+    }
+  }
+  return blocks;
+}
+
+function isEmptyParagraph(node: Document["content"][number]): boolean {
+  return (
+    node.nodeType === BLOCKS.PARAGRAPH &&
+    node.content.every((child) => child.nodeType === "text" && child.value.trim() === "")
   );
 }
 

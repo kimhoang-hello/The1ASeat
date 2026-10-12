@@ -10,6 +10,7 @@ import { getVideoEmbedUrl, getYouTubeThumbnailUrl } from "@/lib/video-embed";
 import { PostCard } from "@/components/blog/post-card";
 import { AffiliateClickTracker } from "@/components/blog/affiliate-click-tracker";
 import { PostBody } from "@/components/blog/post-body";
+import { PostImageCarousels } from "@/components/blog/post-image-carousels";
 import { PostToc, PostTocMobile } from "@/components/blog/post-toc";
 import { PostNextSteps } from "@/components/blog/post-next-steps";
 import { OfferStatusNotice } from "@/components/blog/offer-status-notice";
@@ -298,6 +299,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <div className={hasToc ? "min-w-0" : "mx-auto w-full max-w-[42rem]"}>
           <PostBody post={anchoredPost} offers={offers} />
           <AffiliateClickTracker scope="post-body" slug={post.slug} />
+          {post.body.includes("data-image-carousel") && <PostImageCarousels />}
         </div>
 
         {/* `aside` KHÔNG dính, `nav` bên trong mới dính. Cột lưới phải cao
