@@ -47,6 +47,11 @@ const REFERRAL_SOURCES: { host: string; path?: string }[] = [
   // là trang sản phẩm bình thường.
   { host: "referyourchasecard.com" },
   { host: "i.capitalone.com" },
+  // Expedia: `expedia.com` là trang đặt phòng bình thường, chỉ link rút gọn
+  // `/affiliate/<mã>` (chương trình Expedia Group Affiliate) mới có hoa hồng.
+  // Khoá theo đường dẫn như Wise. Link này đi vòng qua expedia.ca khi người
+  // đọc ở Canada, nhưng thứ nằm trong bài luôn là bản `expedia.com/affiliate/`.
+  { host: "expedia.com", path: "/affiliate/" },
 ];
 
 /** `/referral` phải là một đoạn đường dẫn trọn vẹn, không phải chuỗi con:
