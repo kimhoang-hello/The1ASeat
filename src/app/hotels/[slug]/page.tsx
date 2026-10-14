@@ -9,7 +9,7 @@ import { HotelVideo } from "@/components/hotels/hotel-video";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { NextSteps, StepLink } from "@/components/ui/next-steps";
-import { getPosts } from "@/lib/content";
+import { getPostsWithin } from "@/lib/content";
 import { HOTELS_PUBLISHED } from "@/lib/feature-flags";
 import {
   HOTELS_BASE,
@@ -42,6 +42,9 @@ export function generateStaticParams() {
 // Dữ liệu khách sạn nằm trong repo; Contentful chỉ cho bài review (tiêu đề,
 // ảnh, ngày). Thiếu `revalidate` thì CDN giữ HTML tới một năm.
 export const revalidate = 3600;
+
+/** Hạn chờ danh sách bài viết — dữ liệu phụ của trang này, xem `getPostsWithin`. */
+const POSTS_BUDGET_MS = 8_000;
 
 function coverUrl(hotel: Hotel): string | undefined {
   const src = hotel.coverImage?.src;
@@ -77,12 +80,10 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
   const hotel = hotelBySlug(slug);
   if (!hotel) notFound();
 
-  // Bài review là dữ liệu PHỤ: Contentful nấc thì trang khách sạn vẫn hiện đủ
-  // phần của nó, chỉ mất thẻ bài review và link sang blog.
-  const posts = await getPosts().catch((error) => {
-    console.error(`[hotels/${slug}] không tải được bài viết, bỏ khối review`, error);
-    return [];
-  });
+  // Bài review là dữ liệu PHỤ: Contentful nấc hay treo thì trang khách sạn vẫn
+  // hiện đủ phần của nó, chỉ mất thẻ bài review và link sang blog — có hạn chờ,
+  // xem `getPostsWithin`.
+  const posts = await getPostsWithin(POSTS_BUDGET_MS, `hotels/${slug}`);
   // Chỉ dẫn tới bài ĐANG publish — bài bị gỡ thì link biến mất cùng nó, không
   // để lại một đường dẫn 404 trên trang.
   const review = hotel.reviewSlug ? posts.find((post) => post.slug === hotel.reviewSlug) : undefined;

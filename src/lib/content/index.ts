@@ -13,6 +13,7 @@ import {
   getSampleTransferBonuses,
 } from "./sample";
 import { isElevatedLive } from "../credit-card-state";
+import { settleWithin } from "../deadline";
 import type { AuthorProfile, BlogPost, CreditCardOffer, TransferBonus } from "./types";
 
 /**
@@ -54,6 +55,33 @@ const getCachedAuthor = cached(fetchContentfulAuthor, "contentful-author");
 export async function getPosts(): Promise<BlogPost[]> {
   if (isContentfulConfigured) return getCachedPosts();
   return getSamplePosts();
+}
+
+/**
+ * Danh sách bài cho trang chỉ dùng bài viết làm dữ liệu PHỤ — hôm nay là hai
+ * trang khách sạn, nơi nội dung chính nằm trong repo và bài viết chỉ quyết định
+ * link nào sang blog được hiện. Quá `timeoutMs` hoặc lỗi thì `[]` + log: trang
+ * vẫn ra đủ phần chính, chỉ mất các link sang blog.
+ *
+ * VÌ SAO CẦN HẠN: SDK Contentful tự thử lại tới 6 lượt × 30 giây khi request
+ * treo. Sau webhook (`revalidateTag(…, { expire: 0 })` + `revalidatePath("/",
+ * "layout")`) lượt render kế tiếp phải gọi thật, và Codex đo được trang khách
+ * sạn có thể chờ ~199 giây chỉ vì phần phụ (14/10/2026).
+ *
+ * Lượt gọi thua cuộc KHÔNG bị huỷ (SDK không nhận `AbortSignal`) — nó chạy nốt
+ * trong nền và nạp cache khi xong, trong giới hạn thời gian của chính SDK. Phần
+ * đua và chặn unhandled rejection nằm ở `settleWithin` (`lib/deadline.ts`, có
+ * test riêng).
+ */
+export async function getPostsWithin(timeoutMs: number, label: string): Promise<BlogPost[]> {
+  const result = await settleWithin(getPosts(), timeoutMs);
+  if (result.ok) return result.value;
+  if (result.reason === "timeout") {
+    console.error(`[${label}] danh sách bài viết quá ${timeoutMs}ms, bỏ các link sang blog`);
+  } else {
+    console.error(`[${label}] không tải được danh sách bài viết, bỏ các link sang blog`, result.error);
+  }
+  return [];
 }
 
 export async function getPostBySlug(slug: string): Promise<BlogPost | undefined> {

@@ -275,6 +275,9 @@ export const ALL_HOTELS: Hotel[] = [
     youtubeUrl: "https://www.youtube.com/watch?v=RJ8_-c1odbg",
     location: "Ginza, Tokyo — gần metro và các phố mua sắm",
     roomTypeReviewed: "King Moderate (upgrade từ King Standard)",
+    // "35k": phụ đề cháy trong khung hình cuối video ("I used a 35k free night
+    // certificate, plus the Bonvoy points…", thấy ở ảnh `maxres3.jpg` YouTube tự
+    // sinh); file OCR ở `research/video-captions/` đọc sót con số này.
     booked: "1 free night certificate 35k cộng 15,000 Marriott Bonvoy® points cho 1 đêm",
     amenities: ["Nhà hàng breakfast buffet kiểu Âu và Á, có quầy mì", "Cà phê miễn phí cho mọi khách"],
     highlights: [
@@ -405,6 +408,9 @@ export const ALL_HOTELS: Hotel[] = [
     category: "luxury",
     description: [
       "The Ritz-Carlton® Kyoto nằm bên bờ sông Kamogawa, kết hợp thiết kế Nhật truyền thống với dịch vụ kiểu Ritz-Carlton®. Đây là một trong những khách sạn Marriott Bonvoy® đáng mơ ước nhất ở Nhật.",
+      // Nguồn: mô tả YouTube do tác giả viết — "with some of the highest room
+      // rates in Kyoto… redeeming Marriott Bonvoy points… may offer an
+      // alternative way to experience the hotel".
       "Giá phòng thuộc hàng cao nhất Kyoto, nên đổi Marriott Bonvoy® points là cách để ở mà không phải trả mức giá tiền mặt đó.",
     ],
     coverImage: {

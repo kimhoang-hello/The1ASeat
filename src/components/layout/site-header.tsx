@@ -491,6 +491,18 @@ export function SiteHeader() {
   const hotelsActive = pathname === "/hotels" || pathname.startsWith("/hotels/");
   const toolsActive = toolsLinks.some((link) => pathname === link.href);
 
+  // Khoảng cách giữa các mục trên thanh nav desktop, theo số mục đang hiện.
+  // Bảy mục (khi mục Khách sạn bật) đo 14/10/2026: ở 1280px với 28px thì
+  // thiếu 13px — logo bị bóp, chữ đè lên nhau; 16px còn dư ~19px. Từ `2xl`
+  // thanh rộng thừa (dư ~155px) nên trả lại 28px. Dưới `xl` bảy mục vừa nhờ
+  // bỏ chữ "Trang chủ" — xem chú thích ở chính link đó. Đổi hay thêm mục là
+  // phải đo lại ở 1024px VÀ 1280px.
+  const navGapClassName = HOTELS_PUBLISHED
+    ? "gap-3 xl:gap-4 2xl:gap-7"
+    : US_CARDS_PUBLISHED
+      ? "gap-3 xl:gap-7"
+      : "gap-7";
+
   const navRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const mobilePanelRef = useRef<HTMLDivElement>(null);
@@ -584,7 +596,7 @@ export function SiteHeader() {
             menu năm mục hiện tại không đổi một pixel nào trước ngày công bố. */}
         <nav
           ref={navRef}
-          className={`hidden items-center lg:flex ${US_CARDS_PUBLISHED ? "gap-3 xl:gap-7" : "gap-7"}`}
+          className={`hidden items-center lg:flex ${navGapClassName}`}
         >
           {/* The logo already goes home, but that is a convention rather than a
               label — the nav says so in words.

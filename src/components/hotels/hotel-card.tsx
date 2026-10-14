@@ -17,26 +17,37 @@ const h = translate("hotels");
  * `PostCard`, có alt thì trình đọc màn hình đọc tên hai lần.
  *
  * `summary` (khối "Ghế 1A chọn"): thêm đoạn giới thiệu đầu tiên, cắt ba dòng.
+ *
+ * `hasReview` do trang truyền vào, từ danh sách bài ĐANG publish — không suy từ
+ * `reviewSlug`: bài review bị gỡ thì nhãn "Review + video" sẽ hứa một thứ trang
+ * khách sạn đã không còn hiện (Codex bắt 14/10/2026).
  */
 export function HotelCard({
   hotel,
+  hasReview,
   headingLevel = "h3",
   summary = false,
   preload = false,
   sizes = "(min-width: 1280px) 30vw, (min-width: 1024px) 31vw, (min-width: 640px) 46vw, calc(100vw - 2rem)",
 }: {
   hotel: Hotel;
+  /** Bài review chữ của khách sạn có đang publish không. */
+  hasReview: boolean;
   headingLevel?: "h2" | "h3";
   summary?: boolean;
   preload?: boolean;
   sizes?: string;
 }) {
   const Heading = headingLevel;
-  const kind = hotel.reviewSlug
-    ? hotel.youtubeUrl
+  const hasVideo = Boolean(hotel.youtubeUrl);
+  const kind =
+    hasReview && hasVideo
       ? h("badgeReviewVideo")
-      : h("badgeReview")
-    : h("badgeVideo");
+      : hasReview
+        ? h("badgeReview")
+        : hasVideo
+          ? h("badgeVideo")
+          : null;
 
   return (
     <Link
@@ -75,7 +86,7 @@ export function HotelCard({
         {summary && hotel.description[0] && (
           <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-foreground/80">{hotel.description[0]}</p>
         )}
-        <p className="mt-auto pt-4 text-xs text-muted-foreground">{kind}</p>
+        {kind && <p className="mt-auto pt-4 text-xs text-muted-foreground">{kind}</p>}
       </div>
     </Link>
   );

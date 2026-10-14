@@ -3529,3 +3529,54 @@ Sạch: lint, tsc, build, 11 audit, 6 test suite (`test:reco` 484 + 23 skip MySQ
   vẫn elevated. Trang CÔNG KHAI amex.ca của Business Platinum/Business Gold/Aeroplan®
   Business Reserve ghi mức thường (120k/70k/90k) trong khi site ghi mức nâng — offer
   nâng theo KÊNH (memory Amex), lượt này không bấm đường Apply nên chưa kết luận.
+
+## Mục Khách sạn `/hotels` (14/10/2026) — CHƯA CÔNG BỐ, đừng đề xuất lại
+
+Cờ `HOTELS_PUBLISHED` (tắt). Dữ liệu `src/lib/hotels.ts`, test `npm run test:hotels`,
+logic lọc thuần ở `src/lib/hotel-filters.ts` (Client Component chỉ import file này).
+
+- **Dữ liệu trong repo, không Contentful** — cùng lý do thẻ Mỹ: tạo content type qua
+  CMA bị chặn ở tầng quyền. Bài review/video VẪN ở Contentful; trang khách sạn chỉ giữ
+  `reviewSlug` + `youtubeUrl` và đọc bài lúc render. Bài bị gỡ thì link biến mất, không
+  để lại 404.
+- **Nội dung chỉ từ nguồn của tác giả**: bài review, phụ đề cháy trong video
+  (`research/video-captions/`), mô tả YouTube. Số điểm là số ĐÃ TRẢ, trang luôn in câu
+  `pointsNote`. Caption by Hyatt® Namba cố ý KHÔNG có số điểm: phụ đề có hai số lệch
+  nhau ("18k cho hai đêm" / "8K một đêm") — chờ tác giả. Park Hyatt® Toronto là nháp
+  (`published: false` → 404): không có nội dung nào.
+- **Ảnh bìa là ảnh chính thức** của khách sạn (website của chuỗi), tác giả chốt
+  14/10/2026; mang `credit` hiện dưới ảnh. Ảnh tự chụp chỉ ở `galleryImages`. KHÔNG lấy
+  ảnh từ Expedia® (ảnh cấp phép cho Expedia®, điều khoản cấm dùng lại).
+- **Event riêng `hotel_affiliate_click`**, KHÔNG gộp vào `apply_clicked` (key event
+  doanh thu thẻ, task GA4 hằng tuần đọc thẳng nó). Tham số: `hotel_id`, `hotel_slug`,
+  `partner`, `placement` (`hotel_detail_top` / `_rail` / `_end`).
+- **KHÔNG gửi `page_path`** dù spec gợi ý: đọc `g/collect` thật (build với GA ID giả)
+  thì gtag biến nó thành `dp=` — ghi đè đường dẫn trang của hit, không thành
+  `ep.page_path`. Đường dẫn trang đã có sẵn qua `dl` ở mọi event.
+- **Câu `loyaltyNote`** ("đặt qua Expedia® thường không được cộng điểm/đêm hạng…") là cố
+  ý: độc giả là người chơi điểm. Không có câu nào hứa đối tác rẻ hơn.
+- **JSON-LD `Hotel`** chỉ có tên, địa chỉ cấp thành phố, ảnh, brand, `url` trang chính
+  thức, `subjectOf` bài review. Không `aggregateRating`/`starRating`/`priceRange`.
+- **Không `dynamicParams = false`** (sự cố 404 của thẻ Mỹ 30/09). Nháp và slug lạ 404
+  nhờ `notFound()`.
+- **Menu bảy mục** (khi bật cờ) đo 14/10/2026: 1024px thiếu ~68px → bỏ chữ "Trang chủ"
+  dưới `xl` (logo vẫn về trang chủ), còn dư ~14px; 1280px với gap 28px thiếu 13px → gap
+  16px ở `xl`, 28px từ `2xl`. Đổi nhãn menu là đo lại ở CẢ 1024px và 1280px.
+- **Bộ lọc**: lựa chọn 0 khách sạn (trong phạm vi các nhóm khác) thì ẩn, trừ lựa chọn
+  đang bật. Cả nhóm chỉ ẩn khi TOÀN BỘ dữ liệu có dưới hai lựa chọn (điều kiện tĩnh).
+  Ẩn nhóm theo phạm vi đang lọc là sai: người dùng bàn phím chọn "Tất cả" thì nhóm biến
+  mất cùng chip đang giữ focus (Codex 14/10, đã kiểm lại trên trình duyệt).
+- **Bài viết là dữ liệu phụ của trang khách sạn** → `getPostsWithin(8_000, …)` thay
+  cho `getPosts()`: SDK Contentful tự thử lại tới 6 × 30 giây, trang có thể chờ ~199
+  giây chỉ vì link sang blog. Phần đua nằm ở `lib/deadline.ts` (`settleWithin`, có test,
+  gắn `catch` trước khi đua). Lượt thua không bị huỷ — chấp nhận, vì SDK tự có giới hạn.
+- **Codex 14/10 bác bỏ, mình bác lại và Codex nhận**: "35k" của Courtyard có trong phụ
+  đề cháy ở khung cuối video (file OCR đọc sót); "giá phòng thuộc hàng cao nhất Kyoto"
+  là nguyên văn mô tả YouTube của tác giả. Cả hai có ghi chú nguồn cạnh dòng dữ liệu.
+- **Widget tìm kiếm Expedia®** (`HOTEL_SEARCH_WIDGET`) tắt, không dựng ô tìm kiếm giả.
+  Bật cần snippet thật từ Travel Creator + thêm host vào CSP.
+- `RadioGroup`/`FilterChip` chuyển từ `bank-account-finder.tsx` sang
+  `components/ui/radio-chips.tsx` (nơi dùng thứ hai). `PRIMARY_PILL_CLASS` trong
+  `apply-button.tsx` không mang `display` — nơi dùng tự đặt.
+- Link Expedia® Park Hyatt® Kyoto (`Np3Ul82`) mở expedia.com bản Mỹ, Tokyo
+  (`Qw37WT2`) mở expedia.ca — link do tác giả tạo, không tự sửa tham số.

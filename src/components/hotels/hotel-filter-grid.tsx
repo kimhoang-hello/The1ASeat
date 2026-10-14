@@ -89,10 +89,14 @@ export function HotelFilterGrid({
             const options = facet.options.filter(
               (option) => (counts.get(option.value) ?? 0) > 0 || selection[facet.key] === option.value,
             );
-            // Một lựa chọn duy nhất thì lọc theo nó không đổi được gì — trừ khi
-            // nhóm đang lọc: ẩn đi lúc đó là giấu một bộ lọc vẫn đang chạy, và
-            // người đọc không còn chip "Tất cả" nào để bỏ nó.
-            if (options.length < 2 && selection[facet.key] === FILTER_ALL) return null;
+            // Cả nhóm chỉ ẩn khi TOÀN BỘ dữ liệu có dưới hai lựa chọn — điều
+            // kiện tĩnh. Ẩn theo phạm vi đang lọc là sai cả hai chiều: ẩn khi
+            // nhóm đang lọc thì giấu một bộ lọc vẫn chạy; ẩn ngay khi người
+            // dùng bàn phím vừa chọn "Tất cả" thì chip đang giữ focus biến mất
+            // và focus rơi về `body` (Codex bắt 14/10/2026). Danh sách lựa chọn
+            // của một nhóm không phụ thuộc lựa chọn của chính nó, nên đi phím
+            // mũi tên trong nhóm không bao giờ làm chip đang focus biến mất.
+            if (facet.options.length < 2) return null;
             const inScope = values.filter((value) => matchesSelection(value, selection, facet.key)).length;
 
             return (

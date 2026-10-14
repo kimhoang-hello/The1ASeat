@@ -515,7 +515,11 @@ Công cụ · Blog. Dropdown chỉ chứa TRANG, không chứa trạng thái l�
 (`?type=` là việc của tab ngay đầu danh sách). Chữ mục và nút "Đăng ký bản tin"
 `text-[15px] xl:text-base`, `whitespace-nowrap`; lề thanh `px-6 xl:px-10`. Đo ở
 1024px: cần 970px trong 1,024px (16px + lề 40px là 1,041px — chữ gãy hai dòng).
-**Đổi hay thêm nhãn menu là phải đo lại ở 1024px.**
+**Đổi hay thêm nhãn menu là phải đo lại ở 1024px VÀ 1280px.**
+
+Mục thứ bảy "Khách sạn" (khi bật `HOTELS_PUBLISHED`, đo 14/10/2026): dưới `xl` bỏ chữ
+"Trang chủ" (logo vẫn về trang chủ) — còn dư ~14px ở 1024px; khoảng cách mục 16px ở
+`xl` (28px thiếu 13px ở 1280px), 28px từ `2xl`. Chi tiết trong `site-header.tsx`.
 
 ### 10.8 Dòng menu — `MenuItem`
 

@@ -66,7 +66,28 @@ không phải nội dung bài viết) — vẫn nằm trong code, ở file
 
 Phần này cần nhờ Claude Code sửa + commit + push (không tự sửa qua web được).
 
-## 6. Lưu ý
+## 6. Khách sạn (`/hotels`)
+
+Mục Khách sạn **không nằm trong Contentful** — mỗi khách sạn là một khối trong file
+**`src/lib/hotels.ts`**. Cách nhanh nhất: nhờ Claude Code ("thêm khách sạn X, review
+ở bài Y, link Expedia là Z"). Những gì bạn cần chuẩn bị:
+
+| Việc | Làm thế nào |
+|---|---|
+| Thêm khách sạn | Cần ít nhất một nguồn thật của bạn: bài review hoặc video YouTube. Chưa có thì khách sạn để `published: false` (nháp, không hiện trên web). |
+| Link đặt phòng Expedia® | Vào Expedia® Travel Creator → tạo link cho đúng khách sạn → gửi link `expedia.com/affiliate/…`. **Dán nguyên link, không sửa gì thêm.** |
+| Tạm tắt một link | Đổi `enabled: true` thành `false` — nút biến mất, link vẫn còn để bật lại. |
+| Đổi ảnh bìa | Ảnh hiện là ảnh chính thức của khách sạn. Muốn dùng ảnh bạn chụp: gửi ảnh, Claude Code thay `coverImage`. |
+| Chọn vào khối "Ghế 1A chọn" | Đặt `featured: 1`, `2`, `3`… (số nhỏ đứng trước). Bỏ `featured` là ra khỏi khối. |
+| Thứ tự trong danh sách | Thứ tự các khối trong file. |
+| Ẩn một khách sạn | `published: false` — trang trả 404, ra khỏi danh sách và sitemap. |
+
+Bật/tắt cả mục: `HOTELS_PUBLISHED` trong `src/lib/feature-flags.ts`. Khi tắt, trang vẫn
+mở được bằng link trực tiếp để bạn xem, kèm dải "Bản nháp", và Google không index.
+
+Câu công bố affiliate trên trang khách sạn nằm ở `messages/vi.json` → `hotels.disclosure`.
+
+## 7. Lưu ý
 
 - **Xoá entry** trong Contentful: phải bấm **Unpublish** trước, rồi mới **Delete**
   được (Contentful chặn xoá trực tiếp entry đang published).

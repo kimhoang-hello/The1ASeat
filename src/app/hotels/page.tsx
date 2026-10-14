@@ -7,7 +7,7 @@ import { NextSteps, StepLink } from "@/components/ui/next-steps";
 import { HotelCard } from "@/components/hotels/hotel-card";
 import { HotelFilterGrid, type HotelFacet } from "@/components/hotels/hotel-filter-grid";
 import { HotelSearchWidget } from "@/components/hotels/hotel-search-widget";
-import { getPosts } from "@/lib/content";
+import { getPostsWithin } from "@/lib/content";
 import { categoryPath, slugifyVi } from "@/lib/blog-categories";
 import { HOTELS_PUBLISHED } from "@/lib/feature-flags";
 import {
@@ -25,6 +25,9 @@ import { t as translate } from "@/lib/t";
 
 const h = translate("hotels");
 const seo = translate("seo");
+
+/** Hạn chờ danh sách bài viết — dữ liệu phụ của trang này, xem `getPostsWithin`. */
+const POSTS_BUDGET_MS = 8_000;
 
 /** Chuyên mục blog chứa các bài review khách sạn — đích của link "Đọc tất cả review". */
 const HOTEL_CATEGORY = "Khách sạn";
@@ -58,13 +61,12 @@ export default async function HotelsPage() {
   const hotels = getHotels();
   const featured = getFeaturedHotels();
 
-  // Danh sách bài chỉ để quyết định link nào được hiện; Contentful nấc thì các
-  // link đó biến mất, còn danh sách khách sạn vẫn đủ.
-  const posts = await getPosts().catch((error) => {
-    console.error("[hotels] không tải được danh sách bài viết, bỏ các link sang blog", error);
-    return [];
-  });
+  // Danh sách bài chỉ để quyết định link nào được hiện; Contentful nấc hay
+  // treo thì các link đó biến mất, còn danh sách khách sạn vẫn đủ — xem
+  // `getPostsWithin`.
+  const posts = await getPostsWithin(POSTS_BUDGET_MS, "hotels");
   const postSlugs = new Set(posts.map((post) => post.slug));
+  const hasLiveReview = (hotel: Hotel) => Boolean(hotel.reviewSlug && postSlugs.has(hotel.reviewSlug));
   const hasHotelCategory = posts.some((post) => slugifyVi(post.category) === slugifyVi(HOTEL_CATEGORY));
   const reviewsHref = categoryPath(slugifyVi(HOTEL_CATEGORY));
 
@@ -144,7 +146,12 @@ export default async function HotelsPage() {
                   <li key={hotel.slug}>
                     {/* Ảnh của thẻ ĐẦU TIÊN là LCP của trang — cùng luật `preload`
                         với `PostCard` ở `/blog`. */}
-                    <HotelCard hotel={hotel} summary preload={index === 0} />
+                    <HotelCard
+                      hotel={hotel}
+                      hasReview={hasLiveReview(hotel)}
+                      summary
+                      preload={index === 0}
+                    />
                   </li>
                 ))}
               </ul>
@@ -161,7 +168,7 @@ export default async function HotelsPage() {
               items={hotels.map((hotel) => ({
                 slug: hotel.slug,
                 values: { destination: hotel.city, chain: hotel.chain, category: hotel.category },
-                card: <HotelCard hotel={hotel} />,
+                card: <HotelCard hotel={hotel} hasReview={hasLiveReview(hotel)} />,
               }))}
               facets={facets}
               labels={{
