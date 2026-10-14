@@ -12,12 +12,14 @@ import type { SearchItem } from "@/lib/search";
 import {
   BANK_ACCOUNTS_PUBLISHED,
   CATCH_THE_POINTS_PUBLISHED,
+  HOTELS_PUBLISHED,
   RECOMMENDER_PUBLISHED,
   START_HERE_PUBLISHED,
   US_CARDS_PUBLISHED,
   VIETNAM_ROUTES_PUBLISHED,
 } from "@/lib/feature-flags";
 import { US_CARDS_BASE, getUsCreditCards, usCardPath } from "@/lib/us-credit-cards";
+import { HOTELS_BASE, getHotels, hotelLocationLabel, hotelPath } from "@/lib/hotels";
 import { COMPARE_PATH } from "@/lib/card-compare";
 import { RHT_PATH } from "@/lib/refundable-hotel-trick";
 import { RECOMMENDER_PATH } from "@/lib/recommender/path";
@@ -46,6 +48,7 @@ const search = t("search");
 const offers = t("offers");
 const startHere = t("startHere");
 const bankCompare = t("bankCompare");
+const hotels = t("hotels");
 
 /**
  * `keywords` là các chữ tiếng Việt người đọc gõ nhưng không có trong tên trang.
@@ -268,6 +271,29 @@ const US_CARD_ITEMS: SearchItem[] = US_CARDS_PUBLISHED
     ]
   : [];
 
+/**
+ * Trang tổng Khách sạn và từng khách sạn. `meta` mang chữ "Khách sạn" và thành
+ * phố, để gõ "Park Hyatt" ra được cả trang khách sạn lẫn bài review mà vẫn
+ * phân biệt được hai thứ.
+ */
+const HOTEL_ITEMS: SearchItem[] = HOTELS_PUBLISHED
+  ? [
+      {
+        title: nav("hotels"),
+        href: HOTELS_BASE,
+        kind: "page" as const,
+        keywords: hotels("searchKeywords"),
+      },
+      ...getHotels().map((hotel) => ({
+        title: hotel.name,
+        href: hotelPath(hotel.slug),
+        kind: "page" as const,
+        meta: `${nav("hotels")} · ${hotelLocationLabel(hotel)}`,
+        keywords: `khách sạn hotel ${hotel.brand}`,
+      })),
+    ]
+  : [];
+
 export async function GET() {
   const [posts, offers] = await Promise.all([getPosts(), getCreditCardOffers()]);
 
@@ -296,6 +322,7 @@ export async function GET() {
     })),
     ...US_CARD_ITEMS,
     ...VIETNAM_ROUTE_ITEMS,
+    ...HOTEL_ITEMS,
     ...categoryItems,
     ...BANK_ACCOUNT_ITEMS,
     ...posts.map((post) => ({

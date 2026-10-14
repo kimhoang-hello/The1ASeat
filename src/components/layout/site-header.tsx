@@ -34,6 +34,7 @@ import { BANK_COMPARE_PATH } from "@/lib/bank-compare-path";
 import {
   BANK_ACCOUNTS_PUBLISHED,
   CATCH_THE_POINTS_PUBLISHED,
+  HOTELS_PUBLISHED,
   RECOMMENDER_PUBLISHED,
   US_CARDS_PUBLISHED,
   VIETNAM_ROUTES_PUBLISHED,
@@ -482,6 +483,12 @@ export function SiteHeader() {
   // tưởng đó là thẻ mở được ở Canada. Link thẳng, không dropdown — mục này
   // chỉ có một trang tổng, các bộ lọc nằm ngay trên trang.
   const usCardsActive = pathname === US_CARDS_BASE || pathname.startsWith(`${US_CARDS_BASE}/`);
+  // Mục riêng trên thanh menu, cạnh "Bay về Việt Nam": cùng là chuyện chuyến
+  // đi chứ không phải chuyện thẻ. Link thẳng, không dropdown — mục chỉ có một
+  // trang tổng, bộ lọc nằm ngay trên trang. Đường dẫn viết thẳng, KHÔNG import
+  // `HOTELS_BASE`: `lib/hotels.ts` mang theo toàn bộ nội dung của mọi khách
+  // sạn, và header là Client Component có mặt trên MỌI trang.
+  const hotelsActive = pathname === "/hotels" || pathname.startsWith("/hotels/");
   const toolsActive = toolsLinks.some((link) => pathname === link.href);
 
   const navRef = useRef<HTMLElement>(null);
@@ -580,8 +587,19 @@ export function SiteHeader() {
           className={`hidden items-center lg:flex ${US_CARDS_PUBLISHED ? "gap-3 xl:gap-7" : "gap-7"}`}
         >
           {/* The logo already goes home, but that is a convention rather than a
-              label — the nav says so in words. */}
-          <Link href="/" className={navItemClassName(pathname === "/")}>
+              label — the nav says so in words.
+
+              TRỪ khoảng 1024–1279px khi mục Khách sạn đã bật: đo 14/10/2026,
+              bảy mục ở 15px cần ~1,092px trong khung 1,024px — logo bị bóp, chữ
+              "Trang chủ" đè lên "Ghế 1A", nút bản tin thò khỏi mép phải. Bỏ
+              riêng chữ "Trang chủ" ở khoảng đó trả lại ~85px (còn dư ~17px như
+              trước khi thêm mục); logo vẫn dẫn về trang chủ, menu mobile và
+              từ `xl` vẫn có đủ. `xl:block` chứ không đổi `display` ở mức gốc:
+              phần tử trong flex vốn đã thành block. */}
+          <Link
+            href="/"
+            className={`${HOTELS_PUBLISHED ? "hidden xl:block " : ""}${navItemClassName(pathname === "/")}`}
+          >
             {nav("home")}
           </Link>
 
@@ -634,6 +652,12 @@ export function SiteHeader() {
               className={navItemClassName(vietnamActive)}
             >
               {nav("vietnamRoutes")}
+            </Link>
+          )}
+
+          {HOTELS_PUBLISHED && (
+            <Link href="/hotels" className={navItemClassName(hotelsActive)}>
+              {nav("hotels")}
             </Link>
           )}
 
@@ -751,6 +775,16 @@ export function SiteHeader() {
                 className={mobileItemClassName(vietnamActive)}
               >
                 {nav("vietnamRoutes")}
+              </Link>
+            )}
+
+            {HOTELS_PUBLISHED && (
+              <Link
+                href="/hotels"
+                onClick={() => setOpen(false)}
+                className={mobileItemClassName(hotelsActive)}
+              >
+                {nav("hotels")}
               </Link>
             )}
 

@@ -6,6 +6,20 @@ import { translator } from "@/lib/t";
 const offers = translator(messages.offers);
 
 /**
+ * Hình dạng nút chính của site. Tách thành hằng số (14/10/2026) vì nút "Xem giá
+ * trên Expedia®" của mục Khách sạn phải trông đúng như nút Apply — cùng một
+ * hành động "ra đối tác" — mà đi qua component đo đạc riêng
+ * (`HotelBookingLink`), không qua `ApplyLink`.
+ *
+ * KHÔNG mang thuộc tính `display`: nơi dùng tự đặt (`inline-block` ở đây,
+ * `inline-flex` ở nút khách sạn). Hai utility cùng `display` trên một phần tử
+ * thì thứ tự trong file CSS quyết định chứ không phải thứ tự trong chuỗi class
+ * — cùng cái bẫy đã ghi ở nhãn Beta trên menu.
+ */
+export const PRIMARY_PILL_CLASS =
+  "cursor-pointer rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover";
+
+/**
  * The single place the apply link lives: every surface gets the same pill and
  * the same words, so the call to action reads the same on the home page, the
  * card list, a card's own page and the bank-account list.
@@ -45,7 +59,7 @@ export function ApplyButton({
       rel={affiliate ? AFFILIATE_REL : PLAIN_REL}
       placement={placement}
       product={product}
-      className={`inline-block cursor-pointer rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover ${className}`}
+      className={`inline-block ${PRIMARY_PILL_CLASS} ${className}`}
     >
       {offers("applyNow")} <span aria-hidden>&rarr;</span>
       {name && <span className="sr-only"> {name}</span>}

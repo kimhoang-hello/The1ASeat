@@ -4,7 +4,7 @@ import { EDITORIAL_REL } from "@/lib/affiliate-links";
 import { YoutubeLogo } from "@phosphor-icons/react/ssr";
 import { FacebookIcon } from "@/components/ui/brand-icons";
 import { DisclosureText } from "@/components/layout/disclosure-text";
-import { BANK_ACCOUNTS_PUBLISHED } from "@/lib/feature-flags";
+import { BANK_ACCOUNTS_PUBLISHED, HOTELS_PUBLISHED } from "@/lib/feature-flags";
 import { SOCIAL_LINKS } from "@/lib/social-links";
 import { t as translate } from "@/lib/t";
 
@@ -51,6 +51,11 @@ export function SiteFooter() {
             {BANK_ACCOUNTS_PUBLISHED && (
               <Link href="/bank-accounts" className="py-2.5 hover:text-white">
                 {nav("bankAccounts")}
+              </Link>
+            )}
+            {HOTELS_PUBLISHED && (
+              <Link href="/hotels" className="py-2.5 hover:text-white">
+                {nav("hotels")}
               </Link>
             )}
             <Link href="/blog" className="py-2.5 hover:text-white">

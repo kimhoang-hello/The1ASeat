@@ -2,7 +2,8 @@ import { getCreditCardOffers, getPosts } from "@/lib/content";
 import { BANK_ACCOUNTS, bankAccountPath } from "@/lib/bank-accounts";
 import { BEST_CARDS_BASE, BEST_CARDS_CATEGORIES, bestCardsPath } from "@/lib/best-cards";
 import { VIETNAM_ROUTES, VIETNAM_ROUTES_BASE, routeLabel, vietnamRoutePath } from "@/lib/award-routes";
-import { BANK_ACCOUNTS_PUBLISHED, VIETNAM_ROUTES_PUBLISHED } from "@/lib/feature-flags";
+import { BANK_ACCOUNTS_PUBLISHED, HOTELS_PUBLISHED, VIETNAM_ROUTES_PUBLISHED } from "@/lib/feature-flags";
+import { HOTELS_BASE, getHotels, hotelPath } from "@/lib/hotels";
 import { absoluteUrl } from "@/lib/seo";
 import { RHT_PATH } from "@/lib/refundable-hotel-trick";
 import { t } from "@/lib/t";
@@ -72,6 +73,15 @@ export async function GET() {
           [
             "## Bay từ Canada về Việt Nam bằng điểm",
             ...VIETNAM_ROUTES.map((route) => link(routeLabel(route), vietnamRoutePath(route.slug))),
+          ].join("\n"),
+        ]
+      : []),
+    ...(HOTELS_PUBLISHED
+      ? [
+          [
+            "## Khách sạn Ghế 1A đã ở",
+            link(seo("hotelsTitle"), HOTELS_BASE, seo("hotelsDescription")),
+            ...getHotels().map((hotel) => link(hotel.name, hotelPath(hotel.slug), hotel.seoDescription)),
           ].join("\n"),
         ]
       : []),

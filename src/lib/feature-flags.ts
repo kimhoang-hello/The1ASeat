@@ -99,3 +99,19 @@ export const RECOMMENDER_PUBLISHED = true;
  * Sapphire/Ink và Capital One® đi link ref, các thẻ khác link công khai.
  */
 export const US_CARDS_PUBLISHED = true;
+
+/**
+ * Mục Khách sạn (`/hotels`). Dựng 14/10/2026 — trang tổng, trang từng khách
+ * sạn và nút đặt phòng affiliate (Expedia®), dữ liệu ở `src/lib/hotels.ts`.
+ *
+ * Tắt cờ: mọi trang vẫn vào được bằng URL để tác giả xem trên bản deploy thật,
+ * nhưng mang `noindex` và dải báo nháp, không có trong menu, sitemap, ô tìm
+ * kiếm, `llms.txt`, và bài review không trỏ sang.
+ *
+ * Bật cờ là công bố cùng lúc: mục "Khách sạn" hiện trên menu (desktop lẫn
+ * mobile) và footer, các trang vào sitemap + ô tìm kiếm + `llms.txt`, bài
+ * review và bài video có dòng "đi tiếp" sang trang khách sạn của chúng, gỡ
+ * `noindex` và dải báo nháp. Từng khách sạn còn cờ `published` riêng trong
+ * dữ liệu — khách sạn chưa có nội dung kiểm chứng thì 404 dù cờ này bật.
+ */
+export const HOTELS_PUBLISHED = false;

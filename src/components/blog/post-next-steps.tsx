@@ -3,7 +3,8 @@ import { ArrowRight } from "@phosphor-icons/react/ssr";
 import { NextSteps, StepLink } from "@/components/ui/next-steps";
 import { cardsMentionedInPost, pointsProgramForPost } from "@/lib/post-next-steps";
 import { foundationPosts } from "@/lib/start-here";
-import { START_HERE_PUBLISHED, US_CARDS_PUBLISHED } from "@/lib/feature-flags";
+import { HOTELS_PUBLISHED, START_HERE_PUBLISHED, US_CARDS_PUBLISHED } from "@/lib/feature-flags";
+import { hotelForPost, hotelPath } from "@/lib/hotels";
 import { US_CARDS_BASE, US_CARDS_GUIDE_SLUGS, getUsCreditCards } from "@/lib/us-credit-cards";
 import { t as translate } from "@/lib/t";
 import type { BlogPost, CreditCardOffer } from "@/lib/content";
@@ -91,6 +92,19 @@ export function PostNextSteps({
       />
     ) : null;
 
+  // Bài review chữ hay bài video của một khách sạn đã có trang riêng thì trỏ
+  // sang trang đó — nơi có nút đặt phòng. Cùng cờ với cả mục: tắt cờ là đường
+  // này biến mất, không dẫn người đọc vào bản nháp. Đứng SAU đường tới thẻ ở
+  // cả hai nhánh, cùng luật với `routeLink` bên dưới.
+  const hotel = HOTELS_PUBLISHED ? hotelForPost(post) : undefined;
+  const hotelLink = hotel ? (
+    <StepLink
+      href={hotelPath(hotel.slug)}
+      label={t("hotelLabel", { name: hotel.name })}
+      description={t("hotelDescription")}
+    />
+  ) : null;
+
   if (mentioned.length > 0) {
     return (
       <>
@@ -115,9 +129,10 @@ export function PostNextSteps({
           ))}
         </ul>
       </section>
-      {(usLink || routeLink) && (
+      {(usLink || hotelLink || routeLink) && (
         <NextSteps title={next("title")} className={className}>
           {usLink}
+          {hotelLink}
           {routeLink}
         </NextSteps>
       )}
@@ -143,6 +158,7 @@ export function PostNextSteps({
           />
         )
       )}
+      {hotelLink}
       {routeLink}
     </NextSteps>
   );

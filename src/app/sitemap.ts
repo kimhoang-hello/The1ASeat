@@ -22,6 +22,7 @@ import { BANK_ACCOUNTS, bankAccountPath } from "@/lib/bank-accounts";
 import {
   BANK_ACCOUNTS_PUBLISHED,
   CATCH_THE_POINTS_PUBLISHED,
+  HOTELS_PUBLISHED,
   RECOMMENDER_PUBLISHED,
   START_HERE_PUBLISHED,
   US_CARDS_PUBLISHED,
@@ -30,6 +31,7 @@ import {
 import { US_CARDS_BASE, getUsCreditCards, usCardPath } from "@/lib/us-credit-cards";
 import { foundationLastModified } from "@/lib/start-here";
 import { VIETNAM_ROUTES, VIETNAM_ROUTES_BASE, vietnamRoutePath } from "@/lib/award-routes";
+import { HOTELS_BASE, getHotels, hotelPath } from "@/lib/hotels";
 
 // Keep the sitemap in step with the ISR window on the pages it lists.
 export const revalidate = 60;
@@ -176,6 +178,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           { url: absoluteUrl(VIETNAM_ROUTES_BASE), changeFrequency: "monthly" as const, priority: 0.8 },
           ...VIETNAM_ROUTES.map((route) => ({
             url: absoluteUrl(vietnamRoutePath(route.slug)),
+            changeFrequency: "monthly" as const,
+            priority: 0.7,
+          })),
+        ] satisfies MetadataRoute.Sitemap)
+      : []),
+    // Mục Khách sạn: trang tổng + từng khách sạn ĐÃ publish (`getHotels()` bỏ
+    // nháp). Không `lastModified`, cùng lý do với các trang chặng: dữ liệu nằm
+    // trong repo, chỉ đổi lúc deploy.
+    ...(HOTELS_PUBLISHED
+      ? ([
+          { url: absoluteUrl(HOTELS_BASE), changeFrequency: "weekly" as const, priority: 0.8 },
+          ...getHotels().map((hotel) => ({
+            url: absoluteUrl(hotelPath(hotel.slug)),
             changeFrequency: "monthly" as const,
             priority: 0.7,
           })),

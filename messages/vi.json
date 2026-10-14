@@ -21,7 +21,8 @@
     "catchThePoints": "Mini-game: Catch The Points",
     "bestCards": "Các thẻ tốt nhất",
     "cardRecommender": "Gợi ý thẻ",
-    "usCards": "Thẻ Mỹ"
+    "usCards": "Thẻ Mỹ",
+    "hotels": "Khách sạn"
   },
   "navMenu": {
     "cardsAll": "Toàn bộ thẻ đang theo dõi",
@@ -352,7 +353,10 @@
     "usCardsDescription": "Khám phá credit card Mỹ dành cho người Canada chơi Miles & Points. So sánh welcome bonus, benefits và tìm hiểu cách bắt đầu với US credit cards.",
     "breadcrumbUsCards": "Thẻ Mỹ",
     "rhtTitle": "Refundable Hotel Trick: cash out points và travel credit",
-    "rhtDescription": "Hướng dẫn từng bước Refundable Hotel Trick cho Amex® Travel Credit, CIBC® Aventura®, Scotiabank® Scene+™ và TD Rewards®, kèm calculator quy đổi points ra tiền."
+    "rhtDescription": "Hướng dẫn từng bước Refundable Hotel Trick cho Amex® Travel Credit, CIBC® Aventura®, Scotiabank® Scene+™ và TD Rewards®, kèm calculator quy đổi points ra tiền.",
+    "hotelsTitle": "Khám phá khách sạn: review thật, video và cách đặt phòng",
+    "hotelsDescription": "Những khách sạn Ghế 1A đã ở thật, từ boutique tới luxury: số điểm đã trả, điều nên biết trước, video review và cách đặt phòng.",
+    "breadcrumbHotels": "Khách sạn"
   },
   "awardCharts": {
     "title": "Award Flight Finder",
@@ -570,7 +574,9 @@
     "routeLabel": "Bài này nằm trong lộ trình cho người mới",
     "routeDescription": "{count} bài, đọc theo thứ tự — rồi tiếp tục với các bước chọn thẻ và dùng điểm",
     "usCardsLabel": "Xem các thẻ tín dụng Mỹ trên Ghế 1A",
-    "usCardsDescription": "{count} thẻ, mỗi thẻ kèm góc nhìn cho người Canada — ITIN, US address, phí ngoại tệ"
+    "usCardsDescription": "{count} thẻ, mỗi thẻ kèm góc nhìn cho người Canada — ITIN, US address, phí ngoại tệ",
+    "hotelLabel": "Trang khách sạn: {name}",
+    "hotelDescription": "Thông tin nhanh, điều nên biết trước và cách đặt phòng"
   },
   "bankNextSteps": {
     "moreAccountsLabel": "Xem tất cả tài khoản của {bank}",
@@ -763,5 +769,57 @@
     "disclaimer2": "Credit card terms, rewards rules, redemption rates, travel portals và refund policies có thể thay đổi bất cứ lúc nào.",
     "disclaimer3": "Ghế 1A cung cấp hướng dẫn này cho mục đích tham khảo/educational. Trước khi thực hiện, hãy kiểm tra current card terms, rewards terms và cancellation policy của booking.",
     "lastUpdated": "Last Updated: {date}"
+  },
+  "hotels": {
+    "title": "Khám phá khách sạn",
+    "subtitle": "Khám phá những khách sạn Ghế 1A đã trải nghiệm, từ những khách sạn boutique độc đáo đến các thương hiệu luxury hàng đầu thế giới.",
+    "reviewsLink": "Đọc tất cả review khách sạn",
+    "draftNotice": "Bản nháp — mục Khách sạn chưa công bố. Trang chỉ vào được bằng link trực tiếp và không hiện trên Google.",
+    "featuredHeading": "Ghế 1A chọn",
+    "allHeading": "Tất cả khách sạn",
+    "filterButton": "Lọc",
+    "filterDestination": "Điểm đến",
+    "filterChain": "Thương hiệu",
+    "filterCategory": "Phân khúc",
+    "filterAll": "Tất cả",
+    "resultCount": "{count} khách sạn",
+    "empty": "Không có khách sạn nào khớp bộ lọc.",
+    "emptyCta": "Xoá bộ lọc",
+    "badgeReviewVideo": "Review + video",
+    "badgeVideo": "Video review",
+    "badgeReview": "Bài review",
+    "factsHeading": "Trải nghiệm của Ghế 1A",
+    "factLocation": "Vị trí",
+    "factRoom": "Hạng phòng mình ở",
+    "factBooked": "Mình đã đặt",
+    "factProgram": "Chương trình thành viên",
+    "factAmenities": "Tiện ích đáng chú ý",
+    "pointsNote": "Số điểm và số tiền ở đây là của lần mình đặt — giá phòng và số điểm hiện tại có thể khác.",
+    "highlightsHeading": "Điều mình thích",
+    "notesHeading": "Cần biết trước",
+    "videoHeading": "Video review",
+    "playVideo": "Phát video: {title}",
+    "reviewHeading": "Bài review đầy đủ",
+    "galleryHeading": "Ảnh mình chụp trong chuyến ở",
+    "galleryMore": "Xem toàn bộ ảnh trong bài review",
+    "bookingHeading": "Đặt phòng",
+    "bookOn": "Xem giá trên {partner}",
+    "bookDirect": "Đặt trực tiếp với khách sạn",
+    "readReview": "Đọc review đầy đủ",
+    "noPrices": "Ghế 1A không hiện giá: giá và phòng trống luôn xem ở trang đặt phòng.",
+    "loyaltyNote": "Đặt qua {partner} thường không được cộng điểm, đêm tính hạng hay quyền lợi hạng thành viên {program}. Cần những thứ đó thì đặt trực tiếp với khách sạn.",
+    "directNote": "Đặt trực tiếp thường được cộng điểm {program} và hưởng quyền lợi hạng thành viên.",
+    "disclosure": "Một số link đặt phòng trên Ghế 1A là affiliate links. Ghế 1A có thể nhận commission khi bạn đặt phòng qua các link này, mà không phát sinh thêm phí affiliate riêng từ Ghế 1A.",
+    "nextStepsTitle": "Đi tiếp từ đây",
+    "siblingsTitle": "Khách sạn khác",
+    "allHotelsLabel": "Tất cả khách sạn Ghế 1A đã ở",
+    "allHotelsDescription": "{count} khách sạn, lọc theo điểm đến và thương hiệu",
+    "programLabel": "Tìm hiểu {program}",
+    "programDescription": "Cách tích và đổi điểm, giải thích từ đầu",
+    "reviewsLabel": "Review khách sạn trên blog",
+    "reviewsDescription": "Bài viết và video review khách sạn của Ghế 1A",
+    "itemListName": "Khách sạn Ghế 1A đã ở",
+    "searchWidgetHeading": "Tìm khách sạn khác",
+    "searchKeywords": "khách sạn hotel resort đặt phòng review khách sạn"
   }
 }
