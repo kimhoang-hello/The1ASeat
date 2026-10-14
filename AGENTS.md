@@ -3506,3 +3506,26 @@ số người của event không đổi, không dựng khoá liên tab cho ca đ
 - Engine: Green đứng đầu cho người mới bay Việt Nam khi chưa khai ngưỡng phí (Gold
   ×0.84) là hành vi đã chốt của §16/§17; trang nói "hai lựa chọn ngang nhau" và hỏi
   ngưỡng phí ngay ("Câu này có thể đổi thẻ…").
+
+## Kiểm toàn diện định kỳ 14/10/2026 — đừng đề xuất lại
+
+Sạch: lint, tsc, build, 11 audit, 6 test suite (`test:reco` 484 + 23 skip MySQL),
+`audit:links` production, smoke test + `www` 308 + 5 header bảo mật. Codex hai vòng
+(diff `8f25fda..HEAD` + các route theo thứ tự hậu quả): không lỗi thật. Không vá code.
+
+**Đã kiểm, KHÔNG phải lỗi:**
+- `sync-videos` 12/10 21:45 UTC đỏ 5 lượt HTTP 000: log curl ghi "Failed to connect
+  to ghe1a.com port 443 after 268643 ms" — máy chủ không nhận kết nối ~25 phút, không
+  phải route treo. 14/10 06:11 UTC là "channel: 404, uploads-playlist: 404" (feed
+  YouTube sập, mục 26/09–27/09). Lượt sau đều xanh.
+- *`CONTENTFUL_HOST=preview.contentful.com` làm job đọc bản nháp* (Codex): đúng về cơ
+  chế (một client cho cả trang lẫn `expire-offers`/`offer-snapshot`), nhưng biến chỉ
+  đặt trên dòng lệnh `next dev` ở máy để duyệt bài; job chạy trên production (không có
+  biến) và POST vào route của chính app ở máy là việc bị cấm. Không thêm cửa chặn.
+- *`sync-videos` có thể vượt 300 s* (Codex dựng mô phỏng 7 video × 9 s/request):
+  không khớp sự cố 12/10 (lỗi ở bước kết nối TCP), mỗi request đã có timeout 10 s.
+- Rà tay: offer + hạn 19 tài khoản ngân hàng và lãi Scotiabank®/EQ Bank™/Tangerine®/
+  Simplii™ khớp trang ngân hàng; TD® First Class, CIBC® Aventura® ×2, Amex® Green
+  vẫn elevated. Trang CÔNG KHAI amex.ca của Business Platinum/Business Gold/Aeroplan®
+  Business Reserve ghi mức thường (120k/70k/90k) trong khi site ghi mức nâng — offer
+  nâng theo KÊNH (memory Amex), lượt này không bấm đường Apply nên chưa kết luận.
