@@ -72,7 +72,15 @@ export function HotelBooking({
           href={direct}
           target="_blank"
           rel={EDITORIAL_REL}
-          className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-full border border-border bg-card px-6 py-2.5 text-center text-sm font-semibold text-primary transition-colors hover:border-primary"
+          // Nút viền khi đứng sau nút đối tác; nút CHÍNH khi nó là đường đặt
+          // phòng duy nhất — audit 14/10/2026: 7/9 khách sạn chưa có link đối
+          // tác, và một nút viền đứng một mình thì trang không có hành động
+          // chính nào.
+          className={
+            affiliateLinks.length > 0
+              ? "inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-full border border-border bg-card px-6 py-2.5 text-center text-sm font-semibold text-primary transition-colors hover:border-primary"
+              : `${PRIMARY_PILL_CLASS} inline-flex w-full items-center justify-center gap-1.5 text-center`
+          }
         >
           {h("bookDirect")}
           <ArrowUpRight size={16} weight="bold" aria-hidden />

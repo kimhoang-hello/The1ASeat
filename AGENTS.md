@@ -3580,3 +3580,16 @@ logic lọc thuần ở `src/lib/hotel-filters.ts` (Client Component chỉ impor
   `apply-button.tsx` không mang `display` — nơi dùng tự đặt.
 - Link Expedia® Park Hyatt® Kyoto (`Np3Ul82`) mở expedia.com bản Mỹ, Tokyo
   (`Qw37WT2`) mở expedia.ca — link do tác giả tạo, không tự sửa tham số.
+- **Audit UX/UI 14/10/2026 tối** (impeccable audit + critique, Codex một vòng):
+  - Trang khách sạn từ `xl`: hai cột, khối đặt phòng ở cột phải dính khi cuộn
+    (`xl:tall:sticky`); dưới `xl` khối gọn ngay sau phần giới thiệu + khối cuối trang
+    (hai khối đó `xl:hidden`, `placement` riêng). Nút đầu tiên ở 1280×800 nay nằm ở
+    456–500px thay vì 1,019px.
+  - Lưới "Tất cả khách sạn" dưới `sm` là danh sách dòng (`listOnMobile`, cùng mẫu
+    `PostCard` ở `/blog`): trang 375px từ 6,771px còn 4,599px.
+  - Link đặt trực tiếp là nút chính khi khách sạn chưa có link affiliate, thành nút viền
+    khi có — trang không có nút chính nào thì không có đường đi rõ.
+  - Vòng focus của video: `box-shadow` hai vòng trên lớp phủ + `outline` trong suốt lùi
+    vào trong cho forced colors. Viền đặt trên lớp phủ, không trên link — ảnh và lớp phủ
+    là con `absolute`, vẽ đè viền của link (đo bằng CDP `Emulation.setEmulatedMedia`).
+  - Cố ý bỏ qua: ba thẻ "Ghế 1A chọn" ở 640–1023px để lẻ một thẻ ở hàng hai.

@@ -57,7 +57,19 @@ export function HotelVideo({
             event.preventDefault();
             setPlaying(true);
           }}
-          className="group absolute inset-0 block cursor-pointer"
+          // Vòng focus vẽ trên lớp phủ phía trên ảnh, không phải viền mặc định
+          // của link: link phủ kín khung `overflow-hidden`, nên viền trình duyệt
+          // vẽ ra NGOÀI link bị khung cắt mất — người dùng bàn phím không thấy
+          // mình đang đứng ở đâu (audit 14/10/2026). Hai vòng trắng + navy để
+          // nhìn ra được trên cả ảnh sáng lẫn ảnh tối.
+          //
+          // Lớp phủ còn mang một viền `outline` TRONG SUỐT lùi vào trong: chế độ
+          // tương phản cao (forced colors) bỏ hết `box-shadow` nhưng tô viền
+          // trong suốt bằng màu hệ thống — thiếu nó thì ở chế độ đó link mất hẳn
+          // dấu focus (Codex bắt 14/10/2026). Viền đặt trên lớp phủ, không đặt
+          // trên link: ảnh và lớp phủ là con `absolute`, vẽ đè lên viền của link
+          // (đo ở Chrome giả lập forced colors: viền trên link không hiện).
+          className="group absolute inset-0 block cursor-pointer focus-visible:outline-none"
         >
           <VideoThumbnail
             src={`https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`}
@@ -66,7 +78,7 @@ export function HotelVideo({
             sizes="(min-width: 1280px) 42rem, (min-width: 768px) 704px, calc(100vw - 2rem)"
             className="object-cover"
           />
-          <span className="absolute inset-0 flex items-center justify-center bg-black/10">
+          <span className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/10 group-focus-visible:shadow-[inset_0_0_0_3px_var(--color-card),inset_0_0_0_6px_var(--color-primary)] group-focus-visible:outline-3 group-focus-visible:-outline-offset-6 group-focus-visible:outline-transparent">
             <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 text-navy-ink shadow-md transition-transform group-hover:scale-105 motion-reduce:transition-none">
               <Play size={28} weight="fill" aria-hidden />
             </span>

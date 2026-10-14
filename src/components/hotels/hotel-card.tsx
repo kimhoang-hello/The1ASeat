@@ -21,6 +21,11 @@ const h = translate("hotels");
  * `hasReview` do trang truyền vào, từ danh sách bài ĐANG publish — không suy từ
  * `reviewSlug`: bài review bị gỡ thì nhãn "Review + video" sẽ hứa một thứ trang
  * khách sạn đã không còn hiện (Codex bắt 14/10/2026).
+ *
+ * `listOnMobile` (lưới "Tất cả khách sạn"): dưới `sm` thẻ thành một DÒNG — ảnh
+ * nhỏ bên trái, phân khúc, tên, vị trí — cùng mẫu với `PostCard` ở `/blog`. Đo
+ * 14/10/2026 ở 375px: chín thẻ dọc cao 371px mỗi thẻ, trang tổng dài 6,771px
+ * (hơn tám màn), danh sách đầy đủ bắt đầu ở 2,082px. Từ `sm` vẫn là thẻ dọc.
  */
 export function HotelCard({
   hotel,
@@ -28,7 +33,7 @@ export function HotelCard({
   headingLevel = "h3",
   summary = false,
   preload = false,
-  sizes = "(min-width: 1280px) 30vw, (min-width: 1024px) 31vw, (min-width: 640px) 46vw, calc(100vw - 2rem)",
+  listOnMobile = false,
 }: {
   hotel: Hotel;
   /** Bài review chữ của khách sạn có đang publish không. */
@@ -36,7 +41,7 @@ export function HotelCard({
   headingLevel?: "h2" | "h3";
   summary?: boolean;
   preload?: boolean;
-  sizes?: string;
+  listOnMobile?: boolean;
 }) {
   const Heading = headingLevel;
   const hasVideo = Boolean(hotel.youtubeUrl);
@@ -52,15 +57,27 @@ export function HotelCard({
   return (
     <Link
       href={hotelPath(hotel.slug)}
-      className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md"
+      className={`group flex h-full cursor-pointer rounded-2xl border border-border bg-card transition-shadow hover:shadow-md ${
+        listOnMobile
+          ? "items-start gap-3 p-3 sm:flex-col sm:items-stretch sm:gap-0 sm:overflow-hidden sm:p-0"
+          : "flex-col overflow-hidden"
+      }`}
     >
-      <div className="relative aspect-[3/2] w-full overflow-hidden bg-muted">
+      <div
+        className={`relative aspect-[3/2] overflow-hidden bg-muted ${
+          listOnMobile ? "w-28 shrink-0 rounded-lg sm:w-full sm:rounded-none" : "w-full"
+        }`}
+      >
         {hotel.coverImage ? (
           <Image
             src={hotel.coverImage.src}
             alt=""
             fill
-            sizes={sizes}
+            sizes={
+              listOnMobile
+                ? "(min-width: 1280px) 30vw, (min-width: 1024px) 31vw, (min-width: 640px) 46vw, 112px"
+                : "(min-width: 1280px) 30vw, (min-width: 1024px) 31vw, (min-width: 640px) 46vw, calc(100vw - 2rem)"
+            }
             preload={preload}
             className="object-cover"
           />
@@ -73,11 +90,15 @@ export function HotelCard({
           </div>
         )}
       </div>
-      <div className="flex flex-1 flex-col p-5">
+      <div className={`flex flex-1 flex-col ${listOnMobile ? "min-w-0 sm:p-5" : "p-5"}`}>
         <span className="text-xs font-semibold uppercase tracking-wide text-primary">
           {HOTEL_CATEGORIES[hotel.category]}
         </span>
-        <Heading className="mt-2 text-pretty font-display text-base font-bold leading-snug text-foreground group-hover:text-primary">
+        <Heading
+          className={`text-pretty font-display text-base font-bold leading-snug text-foreground group-hover:text-primary ${
+            listOnMobile ? "mt-1 sm:mt-2" : "mt-2"
+          }`}
+        >
           {hotel.name}
         </Heading>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -86,7 +107,9 @@ export function HotelCard({
         {summary && hotel.description[0] && (
           <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-foreground/80">{hotel.description[0]}</p>
         )}
-        {kind && <p className="mt-auto pt-4 text-xs text-muted-foreground">{kind}</p>}
+        {kind && (
+          <p className={`mt-auto text-xs text-muted-foreground ${listOnMobile ? "pt-1 sm:pt-4" : "pt-4"}`}>{kind}</p>
+        )}
       </div>
     </Link>
   );

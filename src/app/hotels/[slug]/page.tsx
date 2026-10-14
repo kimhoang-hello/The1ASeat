@@ -144,8 +144,8 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
 
   return (
     /* Cùng khung với trang thẻ: 42rem dưới `xl`, 68rem từ `xl` với cột phải
-       dính. Khác trang thẻ ở chỗ ảnh nằm TRÊN, chạy hết bề ngang — với khách
-       sạn, tấm ảnh là thứ người đọc muốn thấy trước, không phải chi tiết bên lề.
+       dính. Khác trang thẻ ở chỗ cột dính nằm bên PHẢI và ảnh bìa lớn đứng đầu
+       cột trái — với khách sạn, tấm ảnh là thứ người đọc muốn thấy trước.
 
        Khung đặt phòng có ba bản, mỗi bản một `placement`: `hotel_detail_top`
        (gọn, ngay dưới giới thiệu, dưới `xl`), `hotel_detail_end` (đầy đủ, cuối
@@ -170,29 +170,35 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
         </p>
       </header>
 
-      {cover && (
-        <figure className="mt-6">
-          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-muted">
-            {/* `sizes` theo bề rộng THẬT của khung ở từng khoảng — cùng cách
-                tính với ảnh cover của bài viết. */}
-            <Image
-              src={cover.src}
-              alt={cover.alt}
-              fill
-              preload
-              sizes="(min-width: 1280px) 1024px, (min-width: 1024px) 704px, (min-width: 768px) 720px, (min-width: 640px) calc(100vw - 3rem), calc(100vw - 2rem)"
-              className="object-cover"
-            />
-          </div>
-          {cover.credit && (
-            <figcaption className="mt-2 text-xs text-muted-foreground">{cover.credit}</figcaption>
-          )}
-        </figure>
-      )}
-
-      <div className="mt-8 xl:grid xl:grid-cols-[minmax(0,1fr)_20rem] xl:gap-12">
+      {/* Từ `xl`: ảnh bìa nằm trong cột TRÁI, khung đặt phòng đứng cạnh ngay từ
+          đỉnh ảnh. Bản đầu để ảnh chạy hết bề ngang phía trên lưới: ở 1280×800
+          ảnh cao 576px đẩy khung đặt phòng xuống 1,019px — màn đầu trên desktop
+          không có nút đặt phòng nào (audit UX 14/10/2026). Dưới `xl` không có
+          cột phải nên thứ tự đọc không đổi. */}
+      <div className="mt-6 xl:grid xl:grid-cols-[minmax(0,1fr)_20rem] xl:gap-12">
         <div className="min-w-0">
-          <div className="space-y-4 text-lg leading-relaxed text-foreground/90">
+          {cover && (
+            <figure>
+              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-muted">
+                {/* `sizes` theo bề rộng THẬT của khung ở từng khoảng: từ `xl`
+                    ảnh nằm trong cột trái (68rem − cột phải 20rem − khe 3rem −
+                    lề 4rem = 41rem), dưới `xl` chạy hết khung 42rem. */}
+                <Image
+                  src={cover.src}
+                  alt={cover.alt}
+                  fill
+                  preload
+                  sizes="(min-width: 1280px) 41rem, (min-width: 1024px) 704px, (min-width: 768px) 720px, (min-width: 640px) calc(100vw - 3rem), calc(100vw - 2rem)"
+                  className="object-cover"
+                />
+              </div>
+              {cover.credit && (
+                <figcaption className="mt-2 text-xs text-muted-foreground">{cover.credit}</figcaption>
+              )}
+            </figure>
+          )}
+
+          <div className={`space-y-4 text-lg leading-relaxed text-foreground/90 ${cover ? "mt-8" : ""}`}>
             {hotel.description.map((paragraph) => (
               <p key={paragraph.slice(0, 40)}>{paragraph}</p>
             ))}

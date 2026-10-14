@@ -168,7 +168,7 @@ export default async function HotelsPage() {
               items={hotels.map((hotel) => ({
                 slug: hotel.slug,
                 values: { destination: hotel.city, chain: hotel.chain, category: hotel.category },
-                card: <HotelCard hotel={hotel} hasReview={hasLiveReview(hotel)} />,
+                card: <HotelCard hotel={hotel} hasReview={hasLiveReview(hotel)} listOnMobile />,
               }))}
               facets={facets}
               labels={{
