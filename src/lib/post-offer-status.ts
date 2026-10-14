@@ -67,6 +67,11 @@ export const POSTS_WITHOUT_DEADLINE: Record<string, string> = {
   // Chase® rồi Bilt hạ tỷ lệ chuyển sang Hyatt xuống 4:3 — mốc đổi tỷ lệ.
   "everything-about-hyatt":
     "01/10/2026 và 01/01/2027 là ngày Chase® và Bilt hạ tỷ lệ chuyển sang Hyatt® còn 4:3, không phải hạn ưu đãi",
+  // Bài News về Aeroplan® Elite Status Challenge cho Hyatt® members. Challenge
+  // mở mỗi calendar year, không có ngày đóng công bố; 14/10/2026 là ngày mở,
+  // 31/01/2028 và 31/01/2029 là hạn của STATUS nhận được, không phải hạn đăng ký.
+  "hyatt-globalist-fast-track-aeroplan-50k-17k-sqc":
+    "challenge mở mỗi năm, không có ngày đóng; 14/10/2026 là ngày mở, 31/01/2028 và 31/01/2029 là hạn của status nhận được",
 };
 
 export interface OfferStatus extends PostOffer {

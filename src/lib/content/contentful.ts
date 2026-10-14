@@ -1,7 +1,7 @@
 import { createClient, EntryFieldTypes } from "contentful";
 import type { Asset, Entry, EntrySkeletonType } from "contentful";
 import { documentToHtmlString, type Options } from "@contentful/rich-text-html-renderer";
-import { BLOCKS, INLINES, type Document } from "@contentful/rich-text-types";
+import { BLOCKS, INLINES, type Block, type Document, type Inline, type Text } from "@contentful/rich-text-types";
 import { relForUrl } from "@/lib/affiliate-links";
 import { getVideoEmbedUrl } from "@/lib/video-embed";
 import { keepBrandTogether, t as translate } from "@/lib/t";
@@ -175,8 +175,34 @@ const bodyOptions: Options = {
       const attrs = rel ? ` target="_blank" rel="${rel}"` : "";
       return `<a href="${escapeAttribute(href)}"${attrs}>${text}</a>`;
     },
+    // Bảng trong thân bài (lần đầu: bài Hyatt × Aeroplan 14/10/2026). Renderer
+    // mặc định in `<table><tr><th>` không có `<thead>`, mà plugin typography chỉ
+    // tô `thead th` — hàng tiêu đề ra chữ thường, sát mép, không gạch chân.
+    // Nó còn bọc mỗi ô trong `<p>`, và lề của `p` làm mỗi hàng cao gấp ba.
+    // Khung `overflow-x-auto` để bảng nhiều cột cuộn ngang trên điện thoại thay
+    // vì đẩy cả trang rộng ra.
+    [BLOCKS.TABLE]: (node, next) => {
+      const [head, ...rest] = node.content;
+      const hasHead =
+        head?.nodeType === BLOCKS.TABLE_ROW &&
+        head.content.length > 0 &&
+        head.content.every((cell) => cell.nodeType === BLOCKS.TABLE_HEADER_CELL);
+      const body = hasHead
+        ? `<thead>${next([head])}</thead><tbody>${next(rest)}</tbody>`
+        : `<tbody>${next(node.content)}</tbody>`;
+      return `<div class="overflow-x-auto"><table>${body}</table></div>`;
+    },
+    [BLOCKS.TABLE_HEADER_CELL]: (node, next) => `<th>${tableCellContent(node, next)}</th>`,
+    [BLOCKS.TABLE_CELL]: (node, next) => `<td>${tableCellContent(node, next)}</td>`,
   },
 };
+
+/** Ô bảng của Contentful luôn chứa đoạn văn; in phần chữ, nối các đoạn bằng `<br>`. */
+function tableCellContent(node: Block | Inline, next: (nodes: (Block | Inline | Text)[]) => string): string {
+  return node.content
+    .map((child) => (child.nodeType === BLOCKS.PARAGRAPH ? next(child.content) : next([child])))
+    .join("<br>");
+}
 
 /**
  * Chuỗi href ĐƯỢC PHÉP IN RA, hoặc `null` nếu không phải link đọc được.

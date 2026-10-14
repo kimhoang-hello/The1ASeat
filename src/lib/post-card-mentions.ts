@@ -53,6 +53,17 @@ const ALIASES: Record<string, string[]> = {
   "rbc-avion-visa-platinum": ["avion visa platinum"],
   "td-first-class-travel-visa-infinite": ["first class travel"],
   "td-aeroplan-visa-infinite": ["td aeroplan visa infinite"],
+  // Bốn bí danh dưới có mặt vì bí danh NGẮN hơn của thẻ anh em nằm trọn trong
+  // tên chúng: "td aeroplan visa infinite" khớp ngay giữa "TD Aeroplan Visa
+  // Infinite Privilege", "cibc aeroplan visa" khớp giữa "CIBC Aeroplan Visa
+  // Infinite". Thiếu tên dài thì khối thẻ hiện ĐÚNG thẻ anh em sai — đo được
+  // 14/10/2026 trên bài aeroplan-credit-cards-benefits-moi-2027 (bài nói hai thẻ
+  // Privilege, khối hiện TD® Visa Infinite và CIBC® Visa). Tên dài khớp trước và
+  // che chỗ nó đứng, xem `cardMentionsInPost`.
+  "td-aeroplan-visa-infinite-privilege": ["td aeroplan visa infinite privilege"],
+  "cibc-aeroplan-visa-infinite-privilege": ["cibc aeroplan visa infinite privilege"],
+  "cibc-aeroplan-visa-infinite": ["cibc aeroplan visa infinite"],
+  "amex-aeroplan-business-reserve": ["aeroplan business reserve"],
   "cibc-aventura-gold-visa": ["aventura gold"],
   "cibc-aeroplan-visa": ["cibc aeroplan visa"],
   "scotiabank-passport-visa-infinite": ["scotiabank passport", "passport visa infinite"],
@@ -92,9 +103,19 @@ export interface CardMention {
  * vậy mà có `limit` — bài "101" điểm danh sáu thẻ sẽ biến thành catalogue nếu
  * không chặn.
  *
- * Thẻ mang tên là khúc đầu của tên thẻ khác bị loại, cùng luật với
- * `cardsMentionedInPost`: bài nói về "RBC® Avion® Visa Infinite Privilege"
- * đương nhiên cũng chứa chuỗi "RBC® Avion® Visa Infinite".
+ * TÊN DÀI KHỚP TRƯỚC VÀ CHE CHỖ NÓ ĐỨNG. Bài nói về "RBC® Avion® Visa Infinite
+ * Privilege" đương nhiên cũng chứa chuỗi "Avion Visa Infinite" — bí danh của
+ * thẻ anh em. Mọi cách gọi của mọi thẻ được thử theo thứ tự dài → ngắn, và
+ * chỗ một cách gọi đã khớp bị xoá khỏi chữ trước khi thử cách gọi ngắn hơn,
+ * nên chuỗi ngắn không bao giờ khớp lại vào giữa tên dài.
+ *
+ * Bản trước so bao hàm giữa các TÊN ("tên thẻ A nằm trong tên thẻ B thì bỏ A"),
+ * và nó trượt đúng chỗ cần: tên trong Contentful có đuôi " Card", nên
+ * "td-aeroplan-visa-infinite-card" không nằm trong
+ * "td-aeroplan-visa-infinite-privilege-card", còn thẻ Privilege thì không khớp
+ * được cái gì vì bài không viết chữ "Card". Kết quả: bài nói thẻ Privilege, khối
+ * hiện thẻ Visa Infinite (đo 14/10/2026). Che theo VỊ TRÍ trong chữ thì không
+ * phụ thuộc đuôi tên, và hai thẻ được nhắc ở hai chỗ khác nhau vẫn hiện cả hai.
  */
 export function cardMentionsInPost(
   post: BlogPost,
@@ -103,30 +124,32 @@ export function cardMentionsInPost(
 ): CardMention[] {
   const blocks = post.bodyBlocks.map((block) => slugifyVi(stripTags(block)));
 
-  const found = offers
-    .map((offer) => {
-      const keys = keysFor(offer);
-      // Khối đầu tiên chứa BẤT KỲ cách gọi nào của thẻ này.
-      const at = blocks.findIndex((block) => keys.some((key) => block.includes(key)));
-      // `longest` chỉ để so bao hàm giữa các thẻ, nên lấy chuỗi dài nhất khớp
-      // được — tên đầy đủ khi bài viết trọn tên, bí danh khi không.
-      const longest = keys.slice().sort((a, b) => b.length - a.length)[0] ?? "";
-      return { offer, at, longest };
-    })
-    .filter((entry) => entry.at >= 0)
-    // Tên dài trước, để vòng lọc dưới giữ tên đầy đủ và bỏ tên bị bao trong nó.
-    .sort((a, b) => b.longest.length - a.longest.length);
+  const tries = offers
+    .flatMap((offer) => keysFor(offer).map((key) => ({ offer, key })))
+    .sort((a, b) => b.key.length - a.key.length);
 
-  const kept: typeof found = [];
-  for (const entry of found) {
-    if (kept.some((other) => other.longest.includes(entry.longest))) continue;
-    kept.push(entry);
+  // Lần nhắc ĐẦU TIÊN của mỗi thẻ: khối nào, và vị trí trong khối đó.
+  const first = new Map<string, { offer: CreditCardOffer; at: number; pos: number }>();
+  for (const { offer, key } of tries) {
+    blocks.forEach((block, at) => {
+      const pos = block.indexOf(key);
+      if (pos < 0) return;
+      const seen = first.get(offer.slug);
+      if (!seen || at < seen.at || (at === seen.at && pos < seen.pos)) {
+        first.set(offer.slug, { offer, at, pos });
+      }
+      // `#` không bao giờ có trong chuỗi đã slugify, nên chỗ đã che không khớp
+      // lại được với cách gọi nào; giữ nguyên độ dài để `pos` của các lần khớp
+      // sau vẫn là vị trí thật.
+      blocks[at] = block.split(key).join("#".repeat(key.length));
+    });
   }
 
   // Theo THỨ TỰ XUẤT HIỆN trong bài, không theo độ dài tên: khối thẻ chèn vào
-  // giữa thân bài, nên thứ tự phải là thứ tự người đọc gặp chúng.
-  return kept
-    .sort((a, b) => a.at - b.at)
+  // giữa thân bài, nên thứ tự phải là thứ tự người đọc gặp chúng — kể cả giữa
+  // hai thẻ nhắc trong cùng một đoạn.
+  return [...first.values()]
+    .sort((a, b) => a.at - b.at || a.pos - b.pos)
     .slice(0, limit)
     .map((entry) => ({ card: entry.offer, afterBlock: entry.at }));
 }
