@@ -221,7 +221,7 @@ export const ALL_HOTELS: Hotel[] = [
     category: "luxury",
     description: [
       "Park Hyatt® Tokyo nằm trên cao giữa Shinjuku và nổi tiếng từ bộ phim Lost in Translation. Khách sạn mở cửa trở lại vào tháng 12/2025 sau 19 tháng cải tạo, đợt lớn nhất kể từ khi khai trương năm 1994.",
-      "Đây là khách sạn Category 8 của World of Hyatt®, và sau khi mở cửa lại thì phòng đổi bằng points càng khó tìm.",
+      "Đây là khách sạn Category 8 của World of Hyatt®, và từ khi mở cửa lại, nhu cầu cao nên tìm được phòng bằng points ở đây không hề dễ.",
     ],
     coverImage: {
       src: "/images/hotels/park-hyatt-tokyo.jpg",
@@ -240,7 +240,7 @@ export const ALL_HOTELS: Hotel[] = [
     ],
     reviewSlug: "park-hyatt-tokyo-review-king-suite-deluxe",
     youtubeUrl: "https://www.youtube.com/watch?v=lfockzqToYA",
-    location: "Shinjuku, Tokyo — khách sạn ở các tầng cao, nhìn ra toàn thành phố",
+    location: "Shinjuku, Tokyo, ở các tầng cao nhìn ra toàn thành phố",
     roomTypeReviewed: "King Suite Deluxe",
     booked: "35,000 World of Hyatt® points cho 1 đêm, cộng 1 Suite Upgrade Award để xác nhận suite ngay lúc đặt",
     amenities: [
@@ -254,7 +254,7 @@ export const ALL_HOTELS: Hotel[] = [
       "Phòng tắm đá marble với bồn tắm lớn",
       "Dịch vụ nhất quán: gần như nhân viên nào cũng chủ động chào hỏi",
     ],
-    notes: ["Phòng đổi bằng points rất khó tìm sau khi mở cửa lại — mình canh mãi mới ra đúng đêm cuối ở Tokyo"],
+    notes: ["Từ khi mở cửa lại, phòng đổi bằng points rất khó tìm. Mình canh khá lâu mới đặt được đúng đêm cuối ở Tokyo"],
     featured: 2,
     published: true,
     affiliateLinks: [
@@ -275,8 +275,8 @@ export const ALL_HOTELS: Hotel[] = [
     chain: "marriott",
     category: "upscale",
     description: [
-      "Courtyard® Tokyo Ginza nằm ngay khu Ginza, gần ga metro và các phố mua sắm. Phòng ấm cúng, thiết kế đẹp, và nhà hàng breakfast lớn có cả quầy mì nấu tại chỗ.",
-      "Với người chơi Marriott Bonvoy®, đây là một lựa chọn đổi điểm hợp lý ngay trung tâm Tokyo, nơi giá phòng thường cao.",
+      "Courtyard® Tokyo Ginza nằm ngay khu Ginza, gần ga metro và các con phố mua sắm. Phòng không quá rộng nhưng ánh đèn và thiết kế tạo cảm giác rất ấm cúng, còn nhà hàng breakfast thì rộng và có cả quầy mì nấu tại chỗ.",
+      "Mình được nhận phòng sớm từ khoảng 11 giờ sáng và được upgrade nhờ hạng Platinum. Upgrade miễn phí ở Tokyo khá hiếm, nên dù không phải phòng cao cấp, mình vẫn thấy đây là một điểm cộng.",
     ],
     coverImage: {
       src: "/images/hotels/courtyard-tokyo-ginza.jpg",
@@ -287,7 +287,7 @@ export const ALL_HOTELS: Hotel[] = [
     },
     galleryImages: [],
     youtubeUrl: "https://www.youtube.com/watch?v=RJ8_-c1odbg",
-    location: "Ginza, Tokyo — gần metro và các phố mua sắm",
+    location: "Ginza, Tokyo, gần metro và các con phố mua sắm",
     roomTypeReviewed: "King Moderate (upgrade từ King Standard)",
     // "35k": phụ đề cháy trong khung hình cuối video ("I used a 35k free night
     // certificate, plus the Bonvoy points…", thấy ở ảnh `maxres3.jpg` YouTube tự
@@ -299,7 +299,7 @@ export const ALL_HOTELS: Hotel[] = [
       "Giường King êm, có vòi sen rain shower",
       "Mình quay lại ở thêm một lần nữa ba tháng sau",
     ],
-    notes: ["Cửa sổ nhỏ và không có view — về view thì AC Hotel® Tokyo Ginza hơn"],
+    notes: ["Cửa sổ nhỏ và không có view. Về view thì AC Hotel® Tokyo Ginza mình từng ở tốt hơn"],
     published: true,
     affiliateLinks: [
       { partner: "expedia", url: "https://expedia.com/affiliate/gfcNXld", enabled: true, trackingRef: "gfcNXld" },
@@ -319,7 +319,7 @@ export const ALL_HOTELS: Hotel[] = [
     chain: "marriott",
     category: "lifestyle",
     description: [
-      "AC Hotel® Tokyo Ginza nằm ngay trung tâm Ginza. Phòng rộng so với chuẩn Nhật, thiết kế hiện đại, sạch sẽ, với cửa sổ lớn nhìn xuống phố.",
+      "AC Hotel® Tokyo Ginza nằm ngay trung tâm Ginza. Phòng rộng so với chuẩn khách sạn ở Nhật, thiết kế hiện đại, sạch sẽ và có cửa sổ lớn nhìn xuống phố.",
       "Mình ở đây đêm cuối của chuyến Hàn–Nhật, trước chuyến bay sáng sớm về Toronto.",
     ],
     coverImage: {
@@ -338,7 +338,7 @@ export const ALL_HOTELS: Hotel[] = [
     highlights: [
       "Phòng sáng, sạch và rộng hơn mặt bằng chung ở Tokyo",
       "Phòng tắm chia ba khu riêng: bồn rửa, vòi sen và toilet",
-      "Vị trí ngay giữa Ginza — mình sẵn sàng quay lại",
+      "Vị trí ngay giữa Ginza, mình sẵn sàng quay lại",
     ],
     notes: [
       "60,000 points không phải mức rẻ, dù với mình vẫn đáng",
@@ -365,8 +365,8 @@ export const ALL_HOTELS: Hotel[] = [
     chain: "hyatt",
     category: "luxury",
     description: [
-      "Park Hyatt® Kyoto nằm ngay giữa khu phố cổ Higashiyama, cạnh hai con dốc Ninenzaka và Sannenzaka. Khách sạn chỉ khoảng 70 phòng và được thiết kế như một khu nghỉ nhỏ theo kiến trúc Nhật truyền thống, thay vì một toà nhà cao tầng.",
-      "Với người chơi Miles & Points, đây là một trong những khách sạn World of Hyatt® khó đặt bằng points nhất: Category 8, ít phòng award và giá tiền mặt rất cao.",
+      "Park Hyatt® Kyoto nằm ngay giữa khu phố cổ Higashiyama, cạnh hai con dốc Ninenzaka và Sannenzaka. Khách sạn chỉ có khoảng 70 phòng và được thiết kế như một khu nghỉ dưỡng nhỏ mang kiến trúc Nhật truyền thống, thay vì một toà nhà cao tầng với sảnh lớn.",
+      "Với người chơi Miles & Points, đây là một trong những khách sạn World of Hyatt® khó đặt bằng points nhất: Category 8, ít phòng award, còn giá tiền mặt thì rất cao.",
     ],
     coverImage: {
       src: "/images/hotels/park-hyatt-kyoto.jpg",
@@ -385,7 +385,7 @@ export const ALL_HOTELS: Hotel[] = [
     ],
     reviewSlug: "park-hyatt-kyoto-review-park-suite-garden-view",
     youtubeUrl: "https://www.youtube.com/watch?v=0UDgwRw4-SI",
-    location: "Higashiyama, Kyoto — đi bộ tới Ninenzaka, Sannenzaka, Yasaka Pagoda và Kiyomizu-dera",
+    location: "Higashiyama, Kyoto, đi bộ được tới Ninenzaka, Sannenzaka, Yasaka Pagoda và Kiyomizu-dera",
     roomTypeReviewed: "Park Suite Garden View",
     booked:
       "40,000 World of Hyatt® points cho 1 đêm mùa hoa anh đào (trước đợt devaluation tháng 5/2026), cộng 1 Suite Upgrade Award để xác nhận suite ngay lúc đặt",
@@ -397,13 +397,13 @@ export const ALL_HOTELS: Hotel[] = [
     ],
     highlights: [
       "Suite Upgrade Award xác nhận Park Suite ngay lúc đặt, không phải chờ tới lúc check-in",
-      "Yên tĩnh và riêng tư dù nằm giữa khu đông khách du lịch nhất Kyoto",
+      "Yên tĩnh và riêng tư dù nằm giữa một trong những khu đông khách du lịch nhất Kyoto",
       "Nhân viên ở Kyoto Bistro rất chú ý từng chi tiết nhỏ",
     ],
     notes: [
-      "Park Suite Garden View không nhìn thẳng ra Yasaka Pagoda — muốn ngắm thì lên Bar Kohaku",
+      "Park Suite Garden View không nhìn thẳng ra Yasaka Pagoda. Muốn ngắm pagoda thì lên Bar Kohaku",
       "Phòng award rất ít: nên tìm từ nhiều tháng trước và linh hoạt ngày",
-      "Một đêm là quá ngắn; lần sau mình sẽ ở ít nhất hai đêm",
+      "Một đêm là quá ngắn, lần sau mình sẽ ở ít nhất hai đêm",
     ],
     featured: 1,
     published: true,
@@ -425,11 +425,11 @@ export const ALL_HOTELS: Hotel[] = [
     chain: "marriott",
     category: "luxury",
     description: [
-      "The Ritz-Carlton® Kyoto nằm bên bờ sông Kamogawa, kết hợp thiết kế Nhật truyền thống với dịch vụ kiểu Ritz-Carlton®. Đây là một trong những khách sạn Marriott Bonvoy® đáng mơ ước nhất ở Nhật.",
+      "The Ritz-Carlton® Kyoto nằm bên bờ sông Kamogawa, không xa các khu phố cổ của Kyoto. Thiết kế mang nét Nhật truyền thống, còn dịch vụ thì đúng chất Ritz-Carlton®, và đây là một trong những khách sạn Marriott Bonvoy® ở Nhật mà nhiều người mơ được ở nhất.",
       // Nguồn: mô tả YouTube do tác giả viết — "with some of the highest room
       // rates in Kyoto… redeeming Marriott Bonvoy points… may offer an
       // alternative way to experience the hotel".
-      "Giá phòng thuộc hàng cao nhất Kyoto, nên đổi Marriott Bonvoy® points là cách để ở mà không phải trả mức giá tiền mặt đó.",
+      "Giá phòng ở đây thuộc hàng cao nhất Kyoto, nên dùng Marriott Bonvoy® points là một cách để trải nghiệm khách sạn mà không phải trả mức giá tiền mặt đó.",
     ],
     coverImage: {
       src: "/images/hotels/ritz-carlton-kyoto.jpg",
@@ -447,9 +447,9 @@ export const ALL_HOTELS: Hotel[] = [
     highlights: [
       "Check-in ngay trong phòng thay vì ở quầy lễ tân",
       "Cửa sổ rất lớn nhìn ra sông Kamogawa, phòng ngập ánh sáng tự nhiên",
-      "Hạng Platinum Elite được breakfast miễn phí — điều ít khách sạn Ritz-Carlton® làm",
+      "Hạng Platinum Elite được breakfast miễn phí, điều không nhiều khách sạn Ritz-Carlton® làm",
     ],
-    notes: ["Số điểm cao; lần sau mình sẽ cân nhắc bù thêm một chút để ở The Mitsui Kyoto"],
+    notes: ["Số điểm khá cao. Lần sau mình sẽ cân nhắc bù thêm một chút để ở The Mitsui Kyoto"],
     published: true,
     affiliateLinks: [
       { partner: "expedia", url: "https://expedia.com/affiliate/4PGUTHx", enabled: true, trackingRef: "4PGUTHx" },
@@ -472,7 +472,7 @@ export const ALL_HOTELS: Hotel[] = [
     category: "lifestyle",
     description: [
       "Caption by Hyatt® Namba Osaka là khách sạn lifestyle của Hyatt® ngay khu Namba, cách chợ Kuromon và Dotonbori vài phút.",
-      "Không khí trẻ trung, năng động, giống một quán cà phê địa phương hơn là khách sạn. Dù là thương hiệu giá mềm, mình ở không thấy cảm giác 'budget'.",
+      "Không khí ở đây trẻ trung, năng động, giống một quán cà phê địa phương hơn là một khách sạn. Dù là thương hiệu giá mềm, ở đây mình không có cảm giác đang ở một khách sạn budget.",
     ],
     coverImage: {
       src: "/images/hotels/caption-by-hyatt-namba-osaka.jpg",
@@ -483,7 +483,7 @@ export const ALL_HOTELS: Hotel[] = [
     },
     galleryImages: [],
     youtubeUrl: "https://www.youtube.com/watch?v=-lFFlcvKwGY",
-    location: "Namba, Osaka — gần chợ Kuromon và Dotonbori",
+    location: "Namba, Osaka, gần chợ Kuromon và Dotonbori",
     roomTypeReviewed: "Standard Queen",
     // Số điểm do tác giả xác nhận 14/10/2026: 16k cho hai đêm. Phụ đề video ghi
     // lệch ("18k cho hai đêm" rồi "8K một đêm") — đừng sửa theo phụ đề.
@@ -515,8 +515,8 @@ export const ALL_HOTELS: Hotel[] = [
     chain: "marriott",
     category: "luxury",
     description: [
-      "The Ritz-Carlton® Fukuoka là khách sạn Ritz-Carlton® còn khá mới, nằm trên cao nhìn ra vịnh Hakata. Phòng và suite rộng, thiết kế Nhật hiện đại, có Bay Bar ngắm toàn cảnh vịnh về đêm.",
-      "Giá tiền mặt lẫn giá Marriott Bonvoy® points đều cao, nên upgrade nhờ hạng thành viên ảnh hưởng rất lớn tới giá trị một lần ở.",
+      "The Ritz-Carlton® Fukuoka là một khách sạn Ritz-Carlton® còn khá mới, nằm trên cao nhìn ra vịnh Hakata. Phòng và suite đều rộng, thiết kế Nhật hiện đại, và Bay Bar là chỗ ngắm toàn cảnh vịnh về đêm.",
+      "Giá tiền mặt lẫn mức đổi Marriott Bonvoy® points ở đây đều cao, nên quyền lợi hạng thành viên, nhất là được upgrade lên suite, có thể làm một lần ở đáng giá hơn rất nhiều.",
     ],
     coverImage: {
       src: "/images/hotels/ritz-carlton-fukuoka.jpg",
@@ -533,8 +533,8 @@ export const ALL_HOTELS: Hotel[] = [
     amenities: ["Bay Bar nhìn toàn cảnh vịnh Hakata", "Spa và fitness center", "Amenities của Diptyque"],
     highlights: [
       "Upgrade hai lần nhờ hạng Platinum Elite: lên King Deluxe Hakata View trước ngày đến, rồi lên Premium Corner Suite lúc check-in",
-      "Suite góc rộng nhất mình từng ở, nhìn ra vịnh từ gần như mọi góc — kể cả từ bồn tắm",
-      "Mình chắc chắn sẽ quay lại: ở Fukuoka không có nhiều khách sạn luxury tầm này",
+      "Suite góc rộng nhất mình từng ở, nhìn ra vịnh từ gần như mọi góc, kể cả từ bồn tắm",
+      "Mình chắc chắn sẽ quay lại, vì ở Fukuoka không có nhiều khách sạn luxury tầm này",
     ],
     notes: ["Hạng Platinum Elite không được breakfast miễn phí ở đây"],
     featured: 3,
@@ -558,7 +558,7 @@ export const ALL_HOTELS: Hotel[] = [
     category: "boutique",
     description: [
       "Hotel Sosei Sapporo là khách sạn boutique thuộc MGallery® Collection của Accor®, thiết kế lấy cảm hứng từ truyền thống nấu bia của Sapporo.",
-      "Mình ở hai đêm, đặt qua American Express® Fine Hotels + Resorts® bằng thẻ Business Platinum của Mỹ: sau credit $300 USD của thẻ, phần mình tự trả chỉ còn $78 USD, và booking còn kèm $100 USD credit để dùng trong khách sạn.",
+      "Mình ở hai đêm, đặt qua American Express® Fine Hotels + Resorts® bằng thẻ Business Platinum của Mỹ. Sau khi trừ credit $300 USD của thẻ, mình chỉ tự trả $78 USD, và booking còn kèm $100 USD credit để dùng trong khách sạn.",
     ],
     coverImage: {
       src: "/images/hotels/hotel-sosei-sapporo.jpg",
@@ -576,10 +576,10 @@ export const ALL_HOTELS: Hotel[] = [
     amenities: ["Lounge bar", "Nhà hàng phục vụ breakfast"],
     highlights: [
       "Thiết kế boutique rất riêng, lấy cảm hứng từ lịch sử nấu bia của Sapporo",
-      "Nhà hàng breakfast làm mình nhớ không khí ở Park Hyatt® Kyoto và The Ritz-Carlton® Kyoto",
+      "Không khí ở nhà hàng breakfast làm mình nhớ tới Park Hyatt® Kyoto và The Ritz-Carlton® Kyoto",
     ],
     notes: [
-      "Mức $78 USD có được nhờ credit của thẻ American Express® Business Platinum Card (thẻ Mỹ); đặt thông thường sẽ không rẻ như vậy",
+      "Mức $78 USD là nhờ credit của thẻ American Express® Business Platinum Card (thẻ Mỹ). Đặt thông thường sẽ không rẻ như vậy",
     ],
     published: true,
     affiliateLinks: [
@@ -590,7 +590,7 @@ export const ALL_HOTELS: Hotel[] = [
       {
         href: "/us-credit-cards/amex-business-platinum",
         label: "American Express® Business Platinum Card",
-        description: "Thẻ Mỹ mình dùng cho booking này — credit Fine Hotels + Resorts®",
+        description: "Mình dùng credit Fine Hotels + Resorts® của thẻ Mỹ này cho booking ở đây",
       },
     ],
     seoTitle: "Hotel Sosei Sapporo: review khách sạn MGallery® ở Sapporo",
@@ -609,8 +609,8 @@ export const ALL_HOTELS: Hotel[] = [
     chain: "hyatt",
     category: "upscale",
     description: [
-      "Hyatt Regency® Hong Kong, Tsim Sha Tsui nằm ngay trên trung tâm thương mại K11 và cách ga MTR Tsim Sha Tsui vài bước — một vị trí khó chê ở Kowloon.",
-      "Đổi lại, phòng đã khá cũ so với vị trí của nó.",
+      "Hyatt Regency® Hong Kong, Tsim Sha Tsui nằm ngay trên trung tâm thương mại K11 và cách ga MTR Tsim Sha Tsui vài bước. Về vị trí ở Kowloon thì gần như không có gì để chê.",
+      "Điểm trừ là phòng đã khá cũ.",
     ],
     coverImage: {
       src: "/images/hotels/hyatt-regency-hong-kong-tsim-sha-tsui.jpg",
@@ -621,14 +621,14 @@ export const ALL_HOTELS: Hotel[] = [
     },
     galleryImages: [],
     youtubeUrl: "https://www.youtube.com/watch?v=u4yBynV9p5Y",
-    location: "Tsim Sha Tsui, Kowloon — trên K11, cạnh ga MTR",
+    location: "Tsim Sha Tsui, Kowloon, ngay trên K11 và cạnh ga MTR",
     roomTypeReviewed: "Standard King, có quyền vào Regency Club",
     booked: "51,000 World of Hyatt® points cộng 1 Club Access Award cho 3 đêm dịp giao thừa",
     amenities: ["Regency Club ở tầng cao nhất, nhìn ra thành phố", "Phòng tắm có bồn tắm"],
     highlights: ["Check-in ngay ở club lounge thay vì quầy chính", "Giường King êm, housekeeping dọn kỹ mỗi ngày"],
     notes: [
       "Phòng đã cũ và view thành phố không đẹp",
-      "Đồ ăn ở club chỉ ở mức bình thường; mình ra ngoài ăn sáng kiểu Hong Kong",
+      "Đồ ăn ở club chỉ ở mức bình thường. Ở Hong Kong có quá nhiều chỗ ăn sáng địa phương ngon nên suốt chuyến này mình không ăn sáng ở club lần nào",
       "Lần sau mình có lẽ sẽ thử một khách sạn Hyatt® khác ở phía bên kia thành phố (Hyatt Centric)",
     ],
     published: true,
@@ -655,8 +655,8 @@ export const ALL_HOTELS: Hotel[] = [
     chain: "ihg",
     category: "boutique",
     description: [
-      "Kimpton® Da An Hotel nằm giữa quận Da'an của Taipei, vài bước tới ga MRT Zhongxiao Fuxing và một số khu mua sắm, ăn uống tốt nhất Taipei. Đây là lần đầu mình ở một khách sạn Kimpton®.",
-      "Kimpton® thường được xem là thương hiệu premium, nhất là ở Bắc Mỹ, nhưng ở đây mình không thấy rõ cảm giác đó — với mình, nó giống một khách sạn boutique hơn.",
+      "Kimpton® Da An Hotel nằm giữa quận Da'an của Taipei, chỉ vài bước là tới ga MRT Zhongxiao Fuxing và một số khu mua sắm, ăn uống tốt nhất Taipei. Đây là lần đầu mình ở một khách sạn Kimpton®.",
+      "Kimpton® thường được xem là thương hiệu premium, nhất là ở Bắc Mỹ, nhưng Kimpton® Da An lại cho mình cảm giác giống một khách sạn boutique hơn.",
     ],
     coverImage: {
       src: "/images/hotels/kimpton-da-an-taipei.jpg",
@@ -667,7 +667,7 @@ export const ALL_HOTELS: Hotel[] = [
     },
     galleryImages: [],
     youtubeUrl: "https://www.youtube.com/watch?v=OhLYjX_sbgY",
-    location: "Da'an, Taipei — vài bước tới ga MRT Zhongxiao Fuxing",
+    location: "Da'an, Taipei, vài bước tới ga MRT Zhongxiao Fuxing",
     roomTypeReviewed: "King Premium (upgrade từ King Standard vài tuần trước ngày đến, nhờ hạng IHG® Platinum Elite)",
     // Phụ đề: "I used 190,000 IHG points for a three-night stay. As an IHG
     // cardholder, I received one free night when redeeming for three nights" —
@@ -681,14 +681,14 @@ export const ALL_HOTELS: Hotel[] = [
       "Amenities của Atelier Bloem",
     ],
     highlights: [
-      "Được upgrade lên King Premium từ vài tuần trước ngày đến — hạng Platinum Elite trở lên thì nên xin upgrade sớm",
+      "Được upgrade lên King Premium từ vài tuần trước ngày đến. Nếu có hạng Platinum Elite trở lên, bạn nên xin upgrade sớm",
       "Phòng khá rộng, tông màu tre ấm cúng; housekeeping dọn kỹ mỗi ngày",
       "Phòng đổi bằng points dễ tìm, dù mức điểm cao",
     ],
     notes: [
       "Hai cửa sổ nhỏ thay vì một cửa sổ lớn, nên phòng thiếu ánh sáng tự nhiên",
       "Bố cục lạ: phải đi ngang khu phòng tắm mới tới phòng ngủ; bồn rửa thoát nước chậm",
-      "Lần sau mình có lẽ sẽ đổi điểm ở chỗ khác — lúc quay video, mình nhắm Park Hyatt® Taipei sắp mở cửa",
+      "Lần sau mình có lẽ sẽ đổi điểm ở chỗ khác. Lúc quay video, mình đang nhắm tới Park Hyatt® Taipei sắp mở cửa",
     ],
     published: true,
     affiliateLinks: [
@@ -711,8 +711,8 @@ export const ALL_HOTELS: Hotel[] = [
     chain: "hyatt",
     category: "luxury",
     description: [
-      "Grand Hyatt® Seoul có những phòng nhìn ra Namsan Tower, và mình xin được đúng một phòng như vậy. Mình ở hai đêm đúng mùa hoa anh đào, ngay sau chuyến bay dài từ Toronto — và đây là lần đầu mình ở một khách sạn Grand Hyatt®.",
-      "Khách sạn mang lại trải nghiệm thật sự sang trọng: phòng hiện đại mà vẫn có nét Hàn Quốc, có cả hồ bơi trong nhà lẫn ngoài trời, và breakfast ở Grand Club là bữa sáng khách sạn ngon nhất mình từng ăn tới lúc đó.",
+      "Grand Hyatt® Seoul là khách sạn Grand Hyatt® đầu tiên mình ở, ngay sau chuyến bay dài từ Toronto. Mình ở hai đêm đúng mùa hoa anh đào, và xin được một phòng nhìn thẳng ra Namsan Tower, bên dưới là những hàng cây anh đào đang nở hoa.",
+      "Phòng hiện đại mà vẫn có nét Hàn Quốc, khách sạn có cả hồ bơi trong nhà lẫn ngoài trời, và breakfast ở Grand Club là bữa sáng khách sạn ngon nhất mình từng ăn tính tới lúc đó.",
     ],
     coverImage: {
       src: "/images/hotels/grand-hyatt-seoul.jpg",
@@ -731,8 +731,8 @@ export const ALL_HOTELS: Hotel[] = [
     ],
     reviewSlug: "grand-hyatt-seoul-review-king-room-namsan-tower-view",
     youtubeUrl: "https://www.youtube.com/watch?v=W5TJUqQIJI4",
-    location: "Hannam-dong, Yongsan, Seoul — gần Itaewon",
-    roomTypeReviewed: "Standard King, view Namsan Tower (xin lúc check-in)",
+    location: "Hannam-dong, Yongsan, Seoul, gần Itaewon",
+    roomTypeReviewed: "King Room, view Namsan Tower (xin lúc check-in)",
     booked: "43,000 World of Hyatt® points cho 2 đêm (Category 5 lúc đặt)",
     amenities: [
       "Hồ bơi ngoài trời, bên cạnh hồ bơi trong nhà",
@@ -741,11 +741,11 @@ export const ALL_HOTELS: Hotel[] = [
       "Amenities của Balmain Paris",
     ],
     highlights: [
-      "Xin phòng view Namsan Tower lúc check-in và được xếp đúng — mùa hoa anh đào thì view càng đẹp",
-      "Standard King rộng, sạch, giường êm; amenities Balmain Paris thơm tới mức mình về tìm mua",
+      "Xin phòng view Namsan Tower lúc check-in và được xếp đúng, lại đúng mùa hoa anh đào nên view càng đẹp",
+      "King Room tiêu chuẩn nhưng rộng, sạch, giường rất êm. Amenities Balmain Paris thơm tới mức sau chuyến đi mình còn tìm chỗ mua",
       "Booking có quyền vào Grand Club: ăn sáng ở đó có không khí như nhà hàng fine dining",
     ],
-    notes: ["Vị trí không tiện nếu bạn đi lại chủ yếu bằng phương tiện công cộng như mình"],
+    notes: ["Khách sạn nằm trên sườn đồi Namsan, không tiện nếu bạn đi lại chủ yếu bằng subway như mình"],
     published: true,
     affiliateLinks: [
       { partner: "expedia", url: "https://expedia.com/affiliate/OGmHpXW", enabled: true, trackingRef: "OGmHpXW" },
@@ -765,8 +765,8 @@ export const ALL_HOTELS: Hotel[] = [
     chain: "hyatt",
     category: "lifestyle",
     description: [
-      "Andaz® Seoul Gangnam nằm ngay cạnh ga tàu điện ngầm Apgujeong, gần khu Gangnam nổi tiếng. Nội thất của khách sạn gây ấn tượng ngay từ lúc bước vào; sảnh không lớn bằng Grand Hyatt® Seoul nhưng ấm cúng.",
-      "Mình ở hai đêm, ngay sau hai đêm ở Grand Hyatt® Seoul. Đây là lần đầu mình ở một khách sạn Andaz®, và với vị trí cùng tiện nghi như vậy, 20,000 points một đêm là đáng.",
+      "Andaz® Seoul Gangnam nằm ngay cạnh ga tàu điện ngầm Apgujeong, gần khu Gangnam nổi tiếng. Nội thất gây ấn tượng ngay từ lúc bước vào. Sảnh không lớn bằng Grand Hyatt® Seoul nhưng ấm cúng.",
+      "Mình ở hai đêm, ngay sau hai đêm ở Grand Hyatt® Seoul. Đây là lần đầu mình ở một khách sạn Andaz®, và với vị trí cùng tiện nghi như vậy, mình thấy 20,000 points một đêm là xứng đáng.",
     ],
     coverImage: {
       src: "/images/hotels/andaz-seoul-gangnam.jpg",
@@ -777,7 +777,7 @@ export const ALL_HOTELS: Hotel[] = [
     },
     galleryImages: [],
     youtubeUrl: "https://www.youtube.com/watch?v=Ys0mEZRqp7o",
-    location: "Gangnam-gu, Seoul — nối thẳng với ga tàu điện ngầm Apgujeong",
+    location: "Gangnam-gu, Seoul, nối thẳng với ga tàu điện ngầm Apgujeong",
     roomTypeReviewed: "Standard King",
     booked: "40,000 World of Hyatt® points cho 2 đêm (Category 5 lúc đặt)",
     amenities: [
@@ -816,8 +816,8 @@ export const ALL_HOTELS: Hotel[] = [
     chain: "hyatt",
     category: "upscale",
     description: [
-      "Hyatt Regency® Paris Etoile cách Champs-Élysées vài phút, và nhiều phòng nhìn thẳng ra tháp Eiffel. Mình xin phòng view tháp và được xếp đúng: tháp Eiffel lấp lánh về đêm nhìn từ cửa sổ đẹp không tả được.",
-      "Booking Guest of Honor cho mình quyền lợi Globalist, trong đó có Regency Club ở tầng 34 — nơi mình ăn sáng với view tháp Eiffel. Mình thật sự yêu khách sạn này: nhân viên thân thiện, phòng sạch và view tuyệt đẹp.",
+      "Hyatt Regency® Paris Etoile cách Champs-Élysées vài phút, và có những phòng nhìn thẳng ra tháp Eiffel. Mình xin phòng view tháp và được xếp đúng như vậy. Buổi tối nhìn tháp Eiffel lấp lánh từ cửa sổ phòng đẹp đến mức khó tả.",
+      "Booking Guest of Honor cho mình quyền lợi Globalist, trong đó có quyền vào Regency Club ở tầng 34, nơi mình ăn sáng với view tháp Eiffel. Mình thật sự yêu khách sạn này, từ nhân viên thân thiện, phòng sạch sẽ cho tới view quá đẹp.",
     ],
     coverImage: {
       src: "/images/hotels/hyatt-regency-paris-etoile.jpg",
@@ -828,7 +828,7 @@ export const ALL_HOTELS: Hotel[] = [
     },
     galleryImages: [],
     youtubeUrl: "https://www.youtube.com/watch?v=EUZw94ZNAMg",
-    location: "Quận 17, Paris — vài phút tới Champs-Élysées",
+    location: "Quận 17, Paris, vài phút tới Champs-Élysées",
     roomTypeReviewed: "King Deluxe, view tháp Eiffel (upgrade từ Standard King lúc check-in nhờ booking Guest of Honor)",
     booked: "72,000 World of Hyatt® points cho 4 đêm, đặt trước khoảng 3 tháng, kèm Guest of Honor",
     amenities: [
@@ -839,10 +839,10 @@ export const ALL_HOTELS: Hotel[] = [
     ],
     highlights: [
       "Upgrade lên King Deluxe lúc check-in, đúng phòng view tháp Eiffel như đã xin",
-      "Breakfast ở Regency Club với view tháp Eiffel — nhớ thử croissant",
+      "Breakfast ở Regency Club với view tháp Eiffel, nhớ thử croissant",
       "Dép đi trong phòng êm tới mức mình mang mỗi ngày",
     ],
-    notes: ["Khó đặt bằng points nếu không lên kế hoạch sớm — mình đặt trước khoảng 3 tháng và may mắn còn phòng"],
+    notes: ["Khó đặt bằng points nếu không lên kế hoạch sớm. Mình đặt trước khoảng 3 tháng và may mắn vẫn còn phòng"],
     published: true,
     affiliateLinks: [
       { partner: "expedia", url: "https://expedia.com/affiliate/6WLzXqh", enabled: true, trackingRef: "6WLzXqh" },
@@ -864,7 +864,7 @@ export const ALL_HOTELS: Hotel[] = [
     category: "upscale",
     description: [
       "Courtyard® Paris Porte de Versailles là một lựa chọn Marriott Bonvoy® giá mềm ở rìa tây nam Paris: phòng hiện đại, thoải mái và sạch sẽ.",
-      "Khách sạn ở Paris đắt kể cả khi đổi điểm, nên với mình mức điểm ở đây là hợp lý — nhất là so với các khách sạn khác trong thành phố.",
+      "Khách sạn ở Paris đắt kể cả khi đổi điểm, nên so với các khách sạn khác trong thành phố, mình thấy mức điểm ở đây khá hợp lý.",
     ],
     coverImage: {
       src: "/images/hotels/courtyard-paris-porte-de-versailles.jpg",
@@ -909,7 +909,7 @@ export const ALL_HOTELS: Hotel[] = [
     category: "upscale",
     description: [
       "Element® Amsterdam cách trung tâm Amsterdam một chặng tram ngắn. Phòng rộng, có bếp nhỏ, và mọi khách đều được breakfast miễn phí mỗi sáng ở nhà hàng Papa's Loft House.",
-      "Khách sạn sạch và có không khí ấm cúng như ở nhà — mình chắc chắn sẽ quay lại.",
+      "Khách sạn sạch sẽ, có không khí ấm cúng như ở nhà, và mình chắc chắn sẽ quay lại.",
     ],
     coverImage: {
       src: "/images/hotels/element-amsterdam.jpg",
@@ -920,7 +920,7 @@ export const ALL_HOTELS: Hotel[] = [
     },
     galleryImages: [],
     youtubeUrl: "https://www.youtube.com/watch?v=AgQZ2XJ4cYM",
-    location: "Phía nam Amsterdam, gần Zuidas — một chặng tram vào trung tâm",
+    location: "Phía nam Amsterdam, gần Zuidas, đi một chặng tram là vào trung tâm",
     booked: "36,000 Marriott Bonvoy® points cộng 2 free night certificate cho 3 đêm",
     amenities: [
       "Breakfast miễn phí mỗi sáng ở Papa's Loft House",
@@ -955,8 +955,8 @@ export const ALL_HOTELS: Hotel[] = [
     chain: "marriott",
     category: "lifestyle",
     description: [
-      "Moxy® Frankfurt City Center nằm ngay trung tâm Frankfurt, thiết kế trẻ trung và năng động. Điểm sáng nhất là khu lounge và bar rộng, nơi khách có thể ngồi chờ tới giờ nhận phòng.",
-      "Phòng nhỏ nhưng sạch và ấm cúng — đủ cho một đêm như mình. Nếu ở Frankfurt lâu hơn, mình sẽ chọn khách sạn khác.",
+      "Moxy® Frankfurt City Center nằm ngay trung tâm Frankfurt, thiết kế trẻ trung và năng động. Điểm mình thích nhất là khu lounge và bar rộng, có thể ngồi chờ ở đó tới giờ nhận phòng.",
+      "Phòng nhỏ nhưng sạch và ấm cúng. Mình chỉ ở một đêm nên thấy vẫn ổn. Nếu ở Frankfurt lâu hơn, mình sẽ chọn khách sạn khác.",
     ],
     coverImage: {
       src: "/images/hotels/moxy-frankfurt-city-center.jpg",
@@ -967,7 +967,7 @@ export const ALL_HOTELS: Hotel[] = [
     },
     galleryImages: [],
     youtubeUrl: "https://www.youtube.com/watch?v=9sa0ATpMLt0",
-    location: "Trung tâm Frankfurt — gần ga U-Bahn Eschenheimer Tor",
+    location: "Trung tâm Frankfurt, gần ga U-Bahn Eschenheimer Tor",
     booked: "22,000 Marriott Bonvoy® points cho 1 đêm",
     amenities: ["Lounge và bar rộng, ngồi chờ được trước giờ nhận phòng", "Nước đóng hộp miễn phí trong phòng"],
     highlights: [
@@ -998,7 +998,7 @@ export const ALL_HOTELS: Hotel[] = [
     category: "lifestyle",
     description: [
       "Moxy® Frankfurt Airport cách sân bay Frankfurt vài phút, hợp cho một đêm trước chuyến bay sớm. Mình ở đây đêm cuối của chuyến châu Âu mùa thu, trước khi bay về Toronto.",
-      "Dù là khách sạn sân bay, nó có lounge rộng để thư giãn, và trong những khách sạn sân bay mình từng ở thì đây là chỗ đẹp nhất.",
+      "Dù là khách sạn sân bay, ở đây vẫn có lounge rộng để ngồi thư giãn, và trong những khách sạn sân bay mình từng ở, đây là chỗ đẹp nhất.",
     ],
     coverImage: {
       src: "/images/hotels/moxy-frankfurt-airport.jpg",
@@ -1013,9 +1013,9 @@ export const ALL_HOTELS: Hotel[] = [
     booked: "12,400 Marriott Bonvoy® points cho 1 đêm",
     amenities: ["Lounge rộng cho khách ngồi thư giãn"],
     highlights: [
-      "Hạng Gold Elite xin phòng tầng trên cùng, khách sạn vui vẻ đáp ứng",
-      "Cửa sổ lớn — điểm cộng cho người mê máy bay như mình",
-      "Cân bằng tốt giữa tiện lợi và thư giãn; mình sẽ quay lại",
+      "Với hạng Gold Elite, mình xin phòng ở tầng trên cùng và khách sạn vui vẻ đáp ứng",
+      "Cửa sổ lớn, một điểm cộng cho người mê máy bay như mình",
+      "Vừa tiện ra sân bay, vừa có lounge để ngồi thư giãn; mình sẽ quay lại",
     ],
     notes: ["Phòng tắm nhỏ, dù rất sạch"],
     published: true,

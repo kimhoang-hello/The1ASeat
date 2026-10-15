@@ -3625,3 +3625,20 @@ logic lọc thuần ở `src/lib/hotel-filters.ts` (Client Component chỉ impor
     nhưng JSON-LD ghi địa chỉ thật Issy-les-Moulineaux.
   - Ảnh bìa Kimpton® là bản 4:3 cắt về 3:2 (giữ bảng tên + người đạp xe — khách sạn có
     xe đạp miễn phí); ở khung 16:9 của trang chi tiết bánh xe hơi bị cắt, chấp nhận.
+- **Rà copy trước công bố (15/10/2026)**, tác giả yêu cầu "câu văn tự nhiên như các bài blog,
+  tránh giống copy AI". Viết lại description/highlights/notes/location và năm chuỗi giao
+  diện (`pointsNote`, `noPrices`, `loyaltyNote`, `directNote`, `galleryHeading`) theo giọng ba
+  bài review chữ: xưng "mình", câu liền mạch, bỏ gạch ngang dài giữa câu (bài của tác giả gần
+  như không dùng), giữ thuật ngữ tiếng Anh (`elite night credits` thay "đêm tính hạng").
+  - **Ba chuỗi là chữ tác giả trong spec, CỐ Ý giữ nguyên:** `hotels.title`, `hotels.subtitle`,
+    `hotels.disclosure`. Muốn đổi thì hỏi tác giả.
+  - **Mô tả YouTube là nguồn thứ ba**, ngang phụ đề: phần lớn địa danh (Shinjuku, K11, ga
+    Apgujeong "direct access", Champs-Élysées, tram ở Element®, Dotonbori) và toàn bộ dữ kiện
+    Hotel Sosei Sapporo (không có file phụ đề) nằm ở đó. Đọc bằng
+    `yt-dlp --skip-download --print description -- <url>`. Không đưa nguồn này cho Codex thì
+    nó báo "không có nguồn" hàng loạt (vòng 1 ngày 15/10).
+  - Grand Hyatt® Seoul: hạng phòng theo bài review chữ là "King Room" (không phải "Standard
+    King"). Moxy® Frankfurt City Center ở Thurn-und-Taxis-Platz 8, cạnh ga Eschenheimer Tor.
+  - Codex 2 vòng (đối chiếu nguồn + biên tập/bác bản vá): 6/6 bản vá ĐÚNG; sửa thêm hai câu
+    nói mạnh hơn nguồn ("được săn đón nhất" ≠ "aspirational"; Fukuoka "quyết định giá trị"
+    → "có thể làm đáng giá hơn").
