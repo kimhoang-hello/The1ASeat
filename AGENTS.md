@@ -3542,7 +3542,7 @@ logic lọc thuần ở `src/lib/hotel-filters.ts` (Client Component chỉ impor
 - **Nội dung chỉ từ nguồn của tác giả**: bài review, phụ đề cháy trong video
   (`research/video-captions/`), mô tả YouTube. Số điểm là số ĐÃ TRẢ, trang luôn in câu
   `pointsNote`. Caption by Hyatt® Namba: phụ đề có hai số lệch nhau ("18k cho hai đêm" /
-  "8K một đêm"); tác giả xác nhận 15/10/2026 là 16,000 cho hai đêm. Park Hyatt® Toronto là nháp
+  "8K một đêm"); tác giả xác nhận 14/10/2026 là 16,000 cho hai đêm. Park Hyatt® Toronto là nháp
   (`published: false` → 404): không có nội dung nào.
 - **Ảnh bìa là ảnh chính thức** của khách sạn (website của chuỗi), tác giả chốt
   14/10/2026; mang `credit` hiện dưới ảnh. Ảnh tự chụp chỉ ở `galleryImages`. KHÔNG lấy
@@ -3578,12 +3578,18 @@ logic lọc thuần ở `src/lib/hotel-filters.ts` (Client Component chỉ impor
 - `RadioGroup`/`FilterChip` chuyển từ `bank-account-finder.tsx` sang
   `components/ui/radio-chips.tsx` (nơi dùng thứ hai). `PRIMARY_PILL_CLASS` trong
   `apply-button.tsx` không mang `display` — nơi dùng tự đặt.
-- Link Expedia® do tác giả tạo trong Travel Creator, không tự sửa tham số. 15/10/2026 tác
+- Link Expedia® do tác giả tạo trong Travel Creator, không tự sửa tham số. 14/10/2026 tác
   giả gửi link cho 16 khách sạn (Park Hyatt® Kyoto thay `Np3Ul82` — link cũ mở expedia.com
   bản Mỹ — bằng `tn6f1Pk`); cả 17 khách sạn đã publish nay đều có link. Đã mở thử từng link
   trong browser pane: đều tới đúng khách sạn trên expedia.ca, có `affcid=CA.DIRECT.PHG…`.
   curl không kiểm được: hop thứ hai (`www.expedia.com/affiliate/…`) trả 429 captcha.
-  Bài review Park Hyatt® Kyoto trên Contentful vẫn dùng `Np3Ul82` trong thân bài.
+  Cùng ngày đổi luôn 4 chỗ `Np3Ul82` trong bài review Park Hyatt® Kyoto (bodyVi + bodyEn,
+  publish lại: `publishedCounter` 2 nên không gửi email).
+- **GA4 (14/10/2026):** key event `hotel_affiliate_click` tạo TRƯỚC khi có dữ liệu — Admin →
+  Events → Create event → nhập tên, bật "Mark as key event", KHÔNG đặt giá trị mặc định,
+  chọn "Create with code" ("Create without code" sẽ đẻ ra event thứ hai). Custom dimension
+  "Hotel slug" → `hotel_slug`, "Partner" → `partner` (Event). `placement` dùng chung
+  dimension "Placement" có sẵn của `apply_clicked`.
 - **Audit UX/UI 14/10/2026 tối** (impeccable audit + critique, Codex một vòng):
   - Trang khách sạn từ `xl`: hai cột, khối đặt phòng ở cột phải dính khi cuộn
     (`xl:tall:sticky`); dưới `xl` khối gọn ngay sau phần giới thiệu + khối cuối trang

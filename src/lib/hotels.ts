@@ -485,7 +485,7 @@ export const ALL_HOTELS: Hotel[] = [
     youtubeUrl: "https://www.youtube.com/watch?v=-lFFlcvKwGY",
     location: "Namba, Osaka — gần chợ Kuromon và Dotonbori",
     roomTypeReviewed: "Standard Queen",
-    // Số điểm do tác giả xác nhận 15/10/2026: 16k cho hai đêm. Phụ đề video ghi
+    // Số điểm do tác giả xác nhận 14/10/2026: 16k cho hai đêm. Phụ đề video ghi
     // lệch ("18k cho hai đêm" rồi "8K một đêm") — đừng sửa theo phụ đề.
     booked:
       "16,000 World of Hyatt® points cho 2 đêm vào tháng 3, đặt kèm một Guest of Honor nên có breakfast miễn phí mỗi ngày",
