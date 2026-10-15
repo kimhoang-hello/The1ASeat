@@ -3593,3 +3593,25 @@ logic lọc thuần ở `src/lib/hotel-filters.ts` (Client Component chỉ impor
     vào trong cho forced colors. Viền đặt trên lớp phủ, không trên link — ảnh và lớp phủ
     là con `absolute`, vẽ đè viền của link (đo bằng CDP `Emulation.setEmulatedMedia`).
   - Cố ý bỏ qua: ba thẻ "Ghế 1A chọn" ở 640–1023px để lẻ một thẻ ở hàng hai.
+- **Thêm 8 khách sạn từ video kênh (14/10/2026 tối)**: Kimpton® Da An (Taipei), Grand
+  Hyatt® Seoul, Andaz® Seoul Gangnam, Hyatt Regency® Paris Etoile, Courtyard Paris Porte
+  de Versailles, Element® Amsterdam, hai Moxy® ở Frankfurt — đủ mọi video review khách
+  sạn dạng dài trên kênh. Chưa có bài review chữ, chưa có link Expedia® → nút chính là
+  đặt trực tiếp.
+  - Số điểm đã trả ĐỌC LẠI TRÊN KHUNG HÌNH video (yt-dlp `--download-sections` đoạn
+    cuối → ffmpeg → nhìn tận mắt), vì file OCR ở `research/video-captions/` làm rơi
+    chữ: Grand Hyatt® Seoul mất hẳn đoạn cuối, Paris Etoile mất số đêm ("4 nights for
+    72,000"). Kimpton®: 190,000 điểm cho 3 đêm + 1 đêm miễn phí của chủ thẻ IHG® = 4 đêm.
+  - Moxy® Frankfurt Airport là khách sạn ở Gateway Gardens (`fraox`), KHÔNG phải
+    "Moxy Frankfurt Airport Kelsterbach" (`fraok`) — đối chiếu lối vào và sảnh trong
+    video với ảnh chính thức.
+  - "Element" và "Moxy" đã thành thương hiệu `audit:trademarks` học được: tên khách sạn
+    mang ® ngay sau tên thương hiệu ("Element® Amsterdam", "Moxy® Frankfurt…"). Codex bắt
+    Courtyard thiếu ® → cả hai Courtyard® đổi theo, `brand` là "Courtyard®". Amenities
+    (Nespresso, Aesop, Diptyque…) cố ý viết trần, đồng bộ với dữ liệu cũ.
+  - Bộ lọc "Điểm đến" đổi từ thành phố sang **quốc gia** (11 thành phố, phần lớn một
+    khách sạn — chip không còn thu hẹp được gì).
+  - `addressLocality`: Courtyard Paris Porte de Versailles hiện "Paris" trên trang
+    nhưng JSON-LD ghi địa chỉ thật Issy-les-Moulineaux.
+  - Ảnh bìa Kimpton® là bản 4:3 cắt về 3:2 (giữ bảng tên + người đạp xe — khách sạn có
+    xe đạp miễn phí); ở khung 16:9 của trang chi tiết bánh xe hơi bị cắt, chấp nhận.

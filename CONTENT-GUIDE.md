@@ -80,6 +80,7 @@ Mục Khách sạn **không nằm trong Contentful** — mỗi khách sạn là 
 | Đổi ảnh bìa | Ảnh hiện là ảnh chính thức của khách sạn. Muốn dùng ảnh bạn chụp: gửi ảnh, Claude Code thay `coverImage`. |
 | Chọn vào khối "Ghế 1A chọn" | Đặt `featured: 1`, `2`, `3`… (số nhỏ đứng trước). Bỏ `featured` là ra khỏi khối. |
 | Thứ tự trong danh sách | Thứ tự các khối trong file. |
+| Khách sạn ở nước mới / chuỗi mới | Bộ lọc "Điểm đến" đi theo **quốc gia**, "Thương hiệu" theo chuỗi. Nước hay chuỗi chưa có thì Claude Code thêm vào `HOTEL_COUNTRIES` / `HOTEL_CHAINS` — chip mới tự hiện. |
 | Ẩn một khách sạn | `published: false` — trang trả 404, ra khỏi danh sách và sitemap. |
 
 Bật/tắt cả mục: `HOTELS_PUBLISHED` trong `src/lib/feature-flags.ts`. Khi tắt, trang vẫn

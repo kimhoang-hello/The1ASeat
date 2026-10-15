@@ -48,9 +48,9 @@ export function hotelPath(slug: string): string {
   return `${HOTELS_BASE}/${slug}`;
 }
 
-export type HotelChainId = "hyatt" | "marriott" | "accor";
+export type HotelChainId = "hyatt" | "marriott" | "accor" | "ihg";
 export type HotelCategoryId = "luxury" | "boutique" | "lifestyle" | "upscale";
-export type HotelCountryId = "JP" | "HK" | "CA";
+export type HotelCountryId = "JP" | "HK" | "TW" | "KR" | "FR" | "NL" | "DE" | "CA";
 export type HotelPartnerId = "expedia" | "agoda" | "booking";
 
 /** Chuỗi khách sạn: nhãn bộ lọc, chương trình thành viên, và bài "Everything
@@ -63,6 +63,7 @@ export const HOTEL_CHAINS: Record<HotelChainId, { label: string; program: string
     programPostSlug: "everything-about-marriott-bonvoy",
   },
   accor: { label: "Accor®", program: "Accor® ALL®" },
+  ihg: { label: "IHG®", program: "IHG One Rewards®", programPostSlug: "everything-about-ihg-one-rewards" },
 };
 
 export const HOTEL_CATEGORIES: Record<HotelCategoryId, string> = {
@@ -75,6 +76,11 @@ export const HOTEL_CATEGORIES: Record<HotelCategoryId, string> = {
 export const HOTEL_COUNTRIES: Record<HotelCountryId, string> = {
   JP: "Nhật Bản",
   HK: "Hong Kong",
+  TW: "Đài Loan",
+  KR: "Hàn Quốc",
+  FR: "Pháp",
+  NL: "Hà Lan",
+  DE: "Đức",
   CA: "Canada",
 };
 
@@ -146,9 +152,16 @@ export interface Hotel {
   id: string;
   slug: string;
   name: string;
+  /** Thành phố người đọc tìm (thẻ, tiêu đề phụ, bộ lọc). */
   city: string;
+  /**
+   * Địa phương hành chính THẬT khi khác `city` — chỉ cho JSON-LD `addressLocality`,
+   * nơi máy đối chiếu với địa chỉ của khách sạn. Vd. Courtyard Paris Porte de
+   * Versailles mang tên Paris nhưng địa chỉ ở Issy-les-Moulineaux, sát ranh Paris.
+   */
+  addressLocality?: string;
   country: HotelCountryId;
-  /** Thương hiệu con: "Park Hyatt®", "Courtyard by Marriott®"… */
+  /** Thương hiệu con: "Park Hyatt®", "Courtyard®"… */
   brand: string;
   chain: HotelChainId;
   category: HotelCategoryId;
@@ -185,6 +198,7 @@ export interface Hotel {
 const HYATT_CREDIT = "Ảnh: Hyatt®";
 const MARRIOTT_CREDIT = "Ảnh: Marriott®";
 const ACCOR_CREDIT = "Ảnh: Accor®";
+const IHG_CREDIT = "Ảnh: IHG®";
 
 /** Ảnh tự chụp trong bài review, đọc thẳng từ CDN của Contentful. */
 const ctf = (path: string, width: number, height: number, alt: string): HotelImage => ({
@@ -254,14 +268,14 @@ export const ALL_HOTELS: Hotel[] = [
   {
     id: "courtyard-tokyo-ginza",
     slug: "courtyard-tokyo-ginza",
-    name: "Courtyard Tokyo Ginza",
+    name: "Courtyard® Tokyo Ginza",
     city: "Tokyo",
     country: "JP",
-    brand: "Courtyard by Marriott®",
+    brand: "Courtyard®",
     chain: "marriott",
     category: "upscale",
     description: [
-      "Courtyard Tokyo Ginza nằm ngay khu Ginza, gần ga metro và các phố mua sắm. Phòng ấm cúng, thiết kế đẹp, và nhà hàng breakfast lớn có cả quầy mì nấu tại chỗ.",
+      "Courtyard® Tokyo Ginza nằm ngay khu Ginza, gần ga metro và các phố mua sắm. Phòng ấm cúng, thiết kế đẹp, và nhà hàng breakfast lớn có cả quầy mì nấu tại chỗ.",
       "Với người chơi Marriott Bonvoy®, đây là một lựa chọn đổi điểm hợp lý ngay trung tâm Tokyo, nơi giá phòng thường cao.",
     ],
     coverImage: {
@@ -289,9 +303,9 @@ export const ALL_HOTELS: Hotel[] = [
     published: true,
     affiliateLinks: [],
     directBookingUrl: "https://www.marriott.com/en-us/hotels/tyocy-courtyard-tokyo-ginza-hotel/overview/",
-    seoTitle: "Courtyard Tokyo Ginza: review và cách đổi Marriott Bonvoy®",
+    seoTitle: "Courtyard® Tokyo Ginza: review và cách đổi Marriott Bonvoy®",
     seoDescription:
-      "Courtyard Tokyo Ginza ngay trung tâm Ginza: Ghế 1A ở bằng một free night certificate 35k cộng 15,000 Marriott Bonvoy® points. Review, video và cách đặt.",
+      "Courtyard® Tokyo Ginza ngay trung tâm Ginza: Ghế 1A ở bằng một free night certificate 35k cộng 15,000 Marriott Bonvoy® points. Review, video và cách đặt.",
   },
   {
     id: "ac-hotel-tokyo-ginza",
@@ -611,6 +625,369 @@ export const ALL_HOTELS: Hotel[] = [
     seoTitle: "Hyatt Regency® Hong Kong, Tsim Sha Tsui: review và cách đặt",
     seoDescription:
       "Hyatt Regency® Hong Kong, Tsim Sha Tsui ngay trên K11: Ghế 1A ở 3 đêm giao thừa bằng 51,000 World of Hyatt® points + Club Access Award. Review và video.",
+  },
+
+  // ——— Đài Loan ———
+  // Nguồn tám khách sạn từ đây trở xuống: phụ đề cháy (`research/video-captions/`,
+  // số điểm đọc lại trên chính khung hình video 14/10/2026 vì OCR làm rơi chữ) và
+  // mô tả YouTube của tác giả. Chưa có bài review chữ.
+  {
+    id: "kimpton-da-an-taipei",
+    slug: "kimpton-da-an-taipei",
+    name: "Kimpton® Da An Hotel",
+    city: "Taipei",
+    country: "TW",
+    brand: "Kimpton®",
+    chain: "ihg",
+    category: "boutique",
+    description: [
+      "Kimpton® Da An Hotel nằm giữa quận Da'an của Taipei, vài bước tới ga MRT Zhongxiao Fuxing và một số khu mua sắm, ăn uống tốt nhất Taipei. Đây là lần đầu mình ở một khách sạn Kimpton®.",
+      "Kimpton® thường được xem là thương hiệu premium, nhất là ở Bắc Mỹ, nhưng ở đây mình không thấy rõ cảm giác đó — với mình, nó giống một khách sạn boutique hơn.",
+    ],
+    coverImage: {
+      src: "/images/hotels/kimpton-da-an-taipei.jpg",
+      width: 2000,
+      height: 1334,
+      alt: "Mặt tiền khách sạn ở Da'an, một người đạp xe ngang qua",
+      credit: IHG_CREDIT,
+    },
+    galleryImages: [],
+    youtubeUrl: "https://www.youtube.com/watch?v=OhLYjX_sbgY",
+    location: "Da'an, Taipei — vài bước tới ga MRT Zhongxiao Fuxing",
+    roomTypeReviewed: "King Premium (upgrade từ King Standard vài tuần trước ngày đến, nhờ hạng IHG® Platinum Elite)",
+    // Phụ đề: "I used 190,000 IHG points for a three-night stay. As an IHG
+    // cardholder, I received one free night when redeeming for three nights" —
+    // và trước đó "After a four-night stay": ba đêm trả điểm + một đêm miễn phí.
+    booked:
+      "4 đêm dịp Giáng sinh: 190,000 IHG One Rewards® points cho 3 đêm, thêm 1 đêm miễn phí nhờ quyền lợi chủ thẻ tín dụng IHG®",
+    amenities: [
+      "Lounge nhỏ có cà phê và snack miễn phí buổi sáng",
+      "Xe đạp miễn phí, kèm mũ bảo hiểm và khoá",
+      "Nhà hàng và bar The Tavernist ở tầng trên cùng, khách được giảm giá đồ uống",
+      "Amenities của Atelier Bloem",
+    ],
+    highlights: [
+      "Được upgrade lên King Premium từ vài tuần trước ngày đến — hạng Platinum Elite trở lên thì nên xin upgrade sớm",
+      "Phòng khá rộng, tông màu tre ấm cúng; housekeeping dọn kỹ mỗi ngày",
+      "Phòng đổi bằng points dễ tìm, dù mức điểm cao",
+    ],
+    notes: [
+      "Hai cửa sổ nhỏ thay vì một cửa sổ lớn, nên phòng thiếu ánh sáng tự nhiên",
+      "Bố cục lạ: phải đi ngang khu phòng tắm mới tới phòng ngủ; bồn rửa thoát nước chậm",
+      "Lần sau mình có lẽ sẽ đổi điểm ở chỗ khác — lúc quay video, mình nhắm Park Hyatt® Taipei sắp mở cửa",
+    ],
+    published: true,
+    affiliateLinks: [],
+    directBookingUrl: "https://www.ihg.com/kimptonhotels/hotels/us/en/da-an-hotel-taipei/tpekm/hoteldetail",
+    seoTitle: "Kimpton® Da An Hotel Taipei: review phòng King Premium",
+    seoDescription:
+      "Kimpton® Da An Hotel ở quận Da'an, Taipei: Ghế 1A ở 4 đêm Giáng sinh bằng 190,000 IHG One Rewards® points cộng 1 đêm miễn phí. Review, video và cách đặt.",
+  },
+
+  // ——— Hàn Quốc ———
+  {
+    id: "grand-hyatt-seoul",
+    slug: "grand-hyatt-seoul",
+    name: "Grand Hyatt® Seoul",
+    city: "Seoul",
+    country: "KR",
+    brand: "Grand Hyatt®",
+    chain: "hyatt",
+    category: "luxury",
+    description: [
+      "Grand Hyatt® Seoul có những phòng nhìn ra Namsan Tower, và mình xin được đúng một phòng như vậy. Mình ở hai đêm đúng mùa hoa anh đào, ngay sau chuyến bay dài từ Toronto — và đây là lần đầu mình ở một khách sạn Grand Hyatt®.",
+      "Khách sạn mang lại trải nghiệm thật sự sang trọng: phòng hiện đại mà vẫn có nét Hàn Quốc, có cả hồ bơi trong nhà lẫn ngoài trời, và breakfast ở Grand Club là bữa sáng khách sạn ngon nhất mình từng ăn tới lúc đó.",
+    ],
+    coverImage: {
+      src: "/images/hotels/grand-hyatt-seoul.jpg",
+      width: 2000,
+      height: 1126,
+      alt: "Toà khách sạn sau hàng cây mùa thu",
+      credit: HYATT_CREDIT,
+    },
+    galleryImages: [],
+    youtubeUrl: "https://www.youtube.com/watch?v=W5TJUqQIJI4",
+    location: "Hannam-dong, Yongsan, Seoul — gần Itaewon",
+    roomTypeReviewed: "Standard King, view Namsan Tower (xin lúc check-in)",
+    booked: "43,000 World of Hyatt® points cho 2 đêm (Category 5 lúc đặt)",
+    amenities: [
+      "Hồ bơi ngoài trời, bên cạnh hồ bơi trong nhà",
+      "Grand Club: breakfast buffet đủ món Âu, Á và Hàn",
+      "Máy Nespresso và máy nước uống trong phòng",
+      "Amenities của Balmain Paris",
+    ],
+    highlights: [
+      "Xin phòng view Namsan Tower lúc check-in và được xếp đúng — mùa hoa anh đào thì view càng đẹp",
+      "Standard King rộng, sạch, giường êm; amenities Balmain Paris thơm tới mức mình về tìm mua",
+      "Booking có quyền vào Grand Club: ăn sáng ở đó có không khí như nhà hàng fine dining",
+    ],
+    notes: ["Vị trí không tiện nếu bạn đi lại chủ yếu bằng phương tiện công cộng như mình"],
+    published: true,
+    affiliateLinks: [],
+    directBookingUrl: "https://www.hyatt.com/grand-hyatt/en-US/selrs-grand-hyatt-seoul",
+    seoTitle: "Grand Hyatt® Seoul: review phòng view Namsan Tower",
+    seoDescription:
+      "Grand Hyatt® Seoul, phòng view Namsan Tower: Ghế 1A ở 2 đêm mùa hoa anh đào bằng 43,000 World of Hyatt® points, có Grand Club. Review, video và cách đặt.",
+  },
+  {
+    id: "andaz-seoul-gangnam",
+    slug: "andaz-seoul-gangnam",
+    name: "Andaz® Seoul Gangnam",
+    city: "Seoul",
+    country: "KR",
+    brand: "Andaz®",
+    chain: "hyatt",
+    category: "lifestyle",
+    description: [
+      "Andaz® Seoul Gangnam nằm ngay cạnh ga tàu điện ngầm Apgujeong, gần khu Gangnam nổi tiếng. Nội thất của khách sạn gây ấn tượng ngay từ lúc bước vào; sảnh không lớn bằng Grand Hyatt® Seoul nhưng ấm cúng.",
+      "Mình ở hai đêm, ngay sau hai đêm ở Grand Hyatt® Seoul. Đây là lần đầu mình ở một khách sạn Andaz®, và với vị trí cùng tiện nghi như vậy, 20,000 points một đêm là đáng.",
+    ],
+    coverImage: {
+      src: "/images/hotels/andaz-seoul-gangnam.jpg",
+      width: 2000,
+      height: 1126,
+      alt: "Toà khách sạn giữa khu Gangnam vào một ngày nắng",
+      credit: HYATT_CREDIT,
+    },
+    galleryImages: [],
+    youtubeUrl: "https://www.youtube.com/watch?v=Ys0mEZRqp7o",
+    location: "Gangnam-gu, Seoul — nối thẳng với ga tàu điện ngầm Apgujeong",
+    roomTypeReviewed: "Standard King",
+    booked: "40,000 World of Hyatt® points cho 2 đêm (Category 5 lúc đặt)",
+    amenities: [
+      "Snack miễn phí trong phòng, bổ sung mỗi ngày",
+      "Lounge có breakfast buổi sáng giá 11,000 KRW",
+      "Globalist hoặc booking Guest of Honor: breakfast miễn phí ở nhà hàng tầng 2",
+      "Amenities của Christophe Laudamiel, nhà làm nước hoa người Pháp",
+    ],
+    highlights: [
+      "Vị trí là điểm cộng lớn: ngay cạnh ga tàu điện ngầm, hợp để đi khắp Seoul",
+      "Phòng sạch không chê được, sáng và ấm cúng; giường King êm",
+      "Toilet tách riêng khỏi phòng tắm",
+    ],
+    notes: [
+      "Standard King hơi nhỏ so với kỳ vọng của mình về một khách sạn Andaz®",
+      "Cửa sổ gần như không có view",
+    ],
+    published: true,
+    affiliateLinks: [],
+    directBookingUrl: "https://www.hyatt.com/andaz/en-US/selaz-andaz-seoul-gangnam",
+    seoTitle: "Andaz® Seoul Gangnam: review và cách đặt bằng points",
+    seoDescription:
+      "Andaz® Seoul Gangnam cạnh ga Apgujeong: Ghế 1A ở 2 đêm bằng 40,000 World of Hyatt® points, tức 20,000 points một đêm. Review, video và cách đặt phòng.",
+  },
+
+  // ——— Pháp ———
+  {
+    id: "hyatt-regency-paris-etoile",
+    slug: "hyatt-regency-paris-etoile",
+    name: "Hyatt Regency® Paris Etoile",
+    city: "Paris",
+    country: "FR",
+    brand: "Hyatt Regency®",
+    chain: "hyatt",
+    category: "upscale",
+    description: [
+      "Hyatt Regency® Paris Etoile cách Champs-Élysées vài phút, và nhiều phòng nhìn thẳng ra tháp Eiffel. Mình xin phòng view tháp và được xếp đúng: tháp Eiffel lấp lánh về đêm nhìn từ cửa sổ đẹp không tả được.",
+      "Booking Guest of Honor cho mình quyền lợi Globalist, trong đó có Regency Club ở tầng 34 — nơi mình ăn sáng với view tháp Eiffel. Mình thật sự yêu khách sạn này: nhân viên thân thiện, phòng sạch và view tuyệt đẹp.",
+    ],
+    coverImage: {
+      src: "/images/hotels/hyatt-regency-paris-etoile.jpg",
+      width: 2000,
+      height: 1126,
+      alt: "Phòng ngủ với cửa sổ lớn nhìn ra tháp Eiffel",
+      credit: HYATT_CREDIT,
+    },
+    galleryImages: [],
+    youtubeUrl: "https://www.youtube.com/watch?v=EUZw94ZNAMg",
+    location: "Quận 17, Paris — vài phút tới Champs-Élysées",
+    roomTypeReviewed: "King Deluxe, view tháp Eiffel (upgrade từ Standard King lúc check-in nhờ booking Guest of Honor)",
+    booked: "72,000 World of Hyatt® points cho 4 đêm, đặt trước khoảng 3 tháng, kèm Guest of Honor",
+    amenities: [
+      "Regency Club ở tầng 34, phục vụ breakfast buổi sáng",
+      "Hộp trà và cà phê tặng khách",
+      "Yêu cầu đồ dùng qua app World of Hyatt®",
+      "Amenities của Pharmacopia",
+    ],
+    highlights: [
+      "Upgrade lên King Deluxe lúc check-in, đúng phòng view tháp Eiffel như đã xin",
+      "Breakfast ở Regency Club với view tháp Eiffel — nhớ thử croissant",
+      "Dép đi trong phòng êm tới mức mình mang mỗi ngày",
+    ],
+    notes: ["Khó đặt bằng points nếu không lên kế hoạch sớm — mình đặt trước khoảng 3 tháng và may mắn còn phòng"],
+    published: true,
+    affiliateLinks: [],
+    directBookingUrl: "https://www.hyatt.com/hyatt-regency/en-US/parhr-hyatt-regency-paris-etoile",
+    seoTitle: "Hyatt Regency® Paris Etoile: review phòng view tháp Eiffel",
+    seoDescription:
+      "Hyatt Regency® Paris Etoile gần Champs-Élysées: Ghế 1A ở 4 đêm bằng 72,000 World of Hyatt® points, phòng nhìn thẳng ra tháp Eiffel. Review, video và cách đặt.",
+  },
+  {
+    id: "courtyard-paris-porte-de-versailles",
+    slug: "courtyard-paris-porte-de-versailles",
+    name: "Courtyard® Paris Porte de Versailles",
+    city: "Paris",
+    addressLocality: "Issy-les-Moulineaux",
+    country: "FR",
+    brand: "Courtyard®",
+    chain: "marriott",
+    category: "upscale",
+    description: [
+      "Courtyard® Paris Porte de Versailles là một lựa chọn Marriott Bonvoy® giá mềm ở rìa tây nam Paris: phòng hiện đại, thoải mái và sạch sẽ.",
+      "Khách sạn ở Paris đắt kể cả khi đổi điểm, nên với mình mức điểm ở đây là hợp lý — nhất là so với các khách sạn khác trong thành phố.",
+    ],
+    coverImage: {
+      src: "/images/hotels/courtyard-paris-porte-de-versailles.jpg",
+      width: 2000,
+      height: 1124,
+      alt: "Mặt tiền khách sạn lúc chạng vạng",
+      credit: MARRIOTT_CREDIT,
+    },
+    galleryImages: [],
+    youtubeUrl: "https://www.youtube.com/watch?v=jy6s1-xlT9k",
+    location: "Issy-les-Moulineaux, sát Porte de Versailles ở rìa tây nam Paris",
+    booked: "35,000 Marriott Bonvoy® points cho 1 đêm",
+    amenities: ["Hộp trà và cà phê miễn phí trong phòng", "Xin bộ đánh răng qua app Marriott Bonvoy® khi cần"],
+    highlights: [
+      "Phòng sạch, được giữ gìn tốt",
+      "Phòng tắm cơ bản nhưng đủ mọi thứ cần",
+      "Mức điểm hợp lý so với mặt bằng khách sạn ở Paris",
+    ],
+    notes: [
+      "Phòng không rộng như mình mong, nhưng đủ cho một đêm",
+      "Mình xin upgrade lên phòng rộng hơn bằng hạng Gold Elite nhưng khách sạn hết phòng",
+    ],
+    published: true,
+    affiliateLinks: [],
+    directBookingUrl: "https://www.marriott.com/en-us/hotels/parcv-courtyard-paris-porte-de-versailles/overview/",
+    seoTitle: "Courtyard® Paris Porte de Versailles: review và đổi điểm",
+    seoDescription:
+      "Courtyard® Paris Porte de Versailles: Ghế 1A ở 1 đêm bằng 35,000 Marriott Bonvoy® points, mức hợp lý cho Paris. Review, video và cách đặt phòng.",
+  },
+
+  // ——— Hà Lan ———
+  {
+    id: "element-amsterdam",
+    slug: "element-amsterdam",
+    name: "Element® Amsterdam",
+    city: "Amsterdam",
+    country: "NL",
+    brand: "Element®",
+    chain: "marriott",
+    category: "upscale",
+    description: [
+      "Element® Amsterdam cách trung tâm Amsterdam một chặng tram ngắn. Phòng rộng, có bếp nhỏ, và mọi khách đều được breakfast miễn phí mỗi sáng ở nhà hàng Papa's Loft House.",
+      "Khách sạn sạch và có không khí ấm cúng như ở nhà — mình chắc chắn sẽ quay lại.",
+    ],
+    coverImage: {
+      src: "/images/hotels/element-amsterdam.jpg",
+      width: 2000,
+      height: 1126,
+      alt: "Khu lounge với sofa dài và kệ sách",
+      credit: MARRIOTT_CREDIT,
+    },
+    galleryImages: [],
+    youtubeUrl: "https://www.youtube.com/watch?v=AgQZ2XJ4cYM",
+    location: "Phía nam Amsterdam, gần Zuidas — một chặng tram vào trung tâm",
+    booked: "36,000 Marriott Bonvoy® points cộng 2 free night certificate cho 3 đêm",
+    amenities: [
+      "Breakfast miễn phí mỗi sáng ở Papa's Loft House",
+      "Bếp nhỏ trong phòng",
+      "Trà và cà phê miễn phí",
+      "Lounge ấm cúng để ngồi chờ nhận phòng",
+    ],
+    highlights: [
+      "Phòng rộng, sạch, ánh đèn ấm; cửa sổ lớn đón nhiều ánh sáng tự nhiên",
+      "Xin lên tầng cao hai ngày trước khi đến và được duyệt",
+      "Phòng tắm sạch bong, đồ dùng được bổ sung đầy đủ suốt kỳ ở",
+    ],
+    notes: ["Không nằm ngay khu phố cổ: vào trung tâm phải đi một chặng tram"],
+    published: true,
+    affiliateLinks: [],
+    directBookingUrl: "https://www.marriott.com/en-us/hotels/amsel-element-amsterdam/overview/",
+    seoTitle: "Element® Amsterdam: review và cách đổi Marriott Bonvoy®",
+    seoDescription:
+      "Element® Amsterdam có bếp nhỏ và breakfast miễn phí: Ghế 1A ở 3 đêm bằng 36,000 Marriott Bonvoy® points cộng 2 free night certificate. Review và video.",
+  },
+
+  // ——— Đức ———
+  {
+    id: "moxy-frankfurt-city-center",
+    slug: "moxy-frankfurt-city-center",
+    name: "Moxy® Frankfurt City Center",
+    city: "Frankfurt",
+    country: "DE",
+    brand: "Moxy Hotels®",
+    chain: "marriott",
+    category: "lifestyle",
+    description: [
+      "Moxy® Frankfurt City Center nằm ngay trung tâm Frankfurt, thiết kế trẻ trung và năng động. Điểm sáng nhất là khu lounge và bar rộng, nơi khách có thể ngồi chờ tới giờ nhận phòng.",
+      "Phòng nhỏ nhưng sạch và ấm cúng — đủ cho một đêm như mình. Nếu ở Frankfurt lâu hơn, mình sẽ chọn khách sạn khác.",
+    ],
+    coverImage: {
+      src: "/images/hotels/moxy-frankfurt-city-center.jpg",
+      width: 2000,
+      height: 1126,
+      alt: "Khu lounge và bar nhiều màu sắc ở tầng trệt",
+      credit: MARRIOTT_CREDIT,
+    },
+    galleryImages: [],
+    youtubeUrl: "https://www.youtube.com/watch?v=9sa0ATpMLt0",
+    location: "Trung tâm Frankfurt — gần ga U-Bahn Eschenheimer Tor",
+    booked: "22,000 Marriott Bonvoy® points cho 1 đêm",
+    amenities: ["Lounge và bar rộng, ngồi chờ được trước giờ nhận phòng", "Nước đóng hộp miễn phí trong phòng"],
+    highlights: [
+      "Lounge và bar đẹp nhất mình từng thấy ở một khách sạn Moxy®",
+      "Phòng ở tầng trên cùng, nhỏ nhưng sạch và ấm cúng",
+    ],
+    notes: [
+      "Phòng nhỏ, amenities phòng tắm rất cơ bản",
+      "Không có trà hay cà phê miễn phí trong phòng, chỉ có nước",
+    ],
+    published: true,
+    affiliateLinks: [],
+    directBookingUrl: "https://www.marriott.com/en-us/hotels/fraor-moxy-frankfurt-city-center/overview/",
+    seoTitle: "Moxy® Frankfurt City Center: review và cách đổi điểm",
+    seoDescription:
+      "Moxy® Frankfurt City Center ngay trung tâm Frankfurt, lounge và bar rất đẹp: Ghế 1A ở 1 đêm bằng 22,000 Marriott Bonvoy® points. Review, video và cách đặt.",
+  },
+  {
+    id: "moxy-frankfurt-airport",
+    slug: "moxy-frankfurt-airport",
+    name: "Moxy® Frankfurt Airport",
+    city: "Frankfurt",
+    country: "DE",
+    brand: "Moxy Hotels®",
+    chain: "marriott",
+    category: "lifestyle",
+    description: [
+      "Moxy® Frankfurt Airport cách sân bay Frankfurt vài phút, hợp cho một đêm trước chuyến bay sớm. Mình ở đây đêm cuối của chuyến châu Âu mùa thu, trước khi bay về Toronto.",
+      "Dù là khách sạn sân bay, nó có lounge rộng để thư giãn, và trong những khách sạn sân bay mình từng ở thì đây là chỗ đẹp nhất.",
+    ],
+    coverImage: {
+      src: "/images/hotels/moxy-frankfurt-airport.jpg",
+      width: 2000,
+      height: 1124,
+      alt: "Lối vào khách sạn với cửa xoay và bảng tên màu hồng",
+      credit: MARRIOTT_CREDIT,
+    },
+    galleryImages: [],
+    youtubeUrl: "https://www.youtube.com/watch?v=WHRcgJacDSA",
+    location: "Gateway Gardens, cách sân bay Frankfurt vài phút",
+    booked: "12,400 Marriott Bonvoy® points cho 1 đêm",
+    amenities: ["Lounge rộng cho khách ngồi thư giãn"],
+    highlights: [
+      "Hạng Gold Elite xin phòng tầng trên cùng, khách sạn vui vẻ đáp ứng",
+      "Cửa sổ lớn — điểm cộng cho người mê máy bay như mình",
+      "Cân bằng tốt giữa tiện lợi và thư giãn; mình sẽ quay lại",
+    ],
+    notes: ["Phòng tắm nhỏ, dù rất sạch"],
+    published: true,
+    affiliateLinks: [],
+    directBookingUrl: "https://www.marriott.com/en-us/hotels/fraox-moxy-frankfurt-airport/overview/",
+    seoTitle: "Moxy® Frankfurt Airport: review khách sạn sân bay",
+    seoDescription:
+      "Moxy® Frankfurt Airport cách sân bay Frankfurt vài phút: Ghế 1A ở đêm cuối chuyến châu Âu bằng 12,400 Marriott Bonvoy® points. Review, video và cách đặt.",
   },
 
   // ——— Canada ———

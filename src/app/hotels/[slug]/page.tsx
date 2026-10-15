@@ -119,7 +119,11 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
         "@type": "Hotel",
         "@id": `${url}#hotel`,
         name: plainName(hotel.name),
-        address: { "@type": "PostalAddress", addressLocality: hotel.city, addressCountry: hotel.country },
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: hotel.addressLocality ?? hotel.city,
+          addressCountry: hotel.country,
+        },
         brand: { "@type": "Brand", name: plainName(hotel.brand) },
         mainEntityOfPage: url,
         ...(image && { image: [image] }),

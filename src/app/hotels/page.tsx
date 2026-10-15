@@ -14,6 +14,7 @@ import {
   HOTELS_BASE,
   HOTEL_CATEGORIES,
   HOTEL_CHAINS,
+  HOTEL_COUNTRIES,
   getFeaturedHotels,
   getHotels,
   hotelPath,
@@ -71,10 +72,13 @@ export default async function HotelsPage() {
   const reviewsHref = categoryPath(slugifyVi(HOTEL_CATEGORY));
 
   const facets: HotelFacet[] = [
+    // Điểm đến theo QUỐC GIA, không theo thành phố: 17 khách sạn ở 11 thành
+    // phố thành 11 chip, phần lớn chỉ một khách sạn — lọc không còn thu hẹp được
+    // gì. Thành phố vẫn hiện trên từng thẻ.
     {
       key: "destination",
       label: h("filterDestination"),
-      options: options(hotels, (hotel) => ({ value: hotel.city, label: hotel.city })),
+      options: options(hotels, (hotel) => ({ value: hotel.country, label: HOTEL_COUNTRIES[hotel.country] })),
     },
     {
       key: "chain",
@@ -167,7 +171,7 @@ export default async function HotelsPage() {
             <HotelFilterGrid
               items={hotels.map((hotel) => ({
                 slug: hotel.slug,
-                values: { destination: hotel.city, chain: hotel.chain, category: hotel.category },
+                values: { destination: hotel.country, chain: hotel.chain, category: hotel.category },
                 card: <HotelCard hotel={hotel} hasReview={hasLiveReview(hotel)} listOnMobile />,
               }))}
               facets={facets}
