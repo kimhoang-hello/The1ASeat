@@ -301,7 +301,9 @@ export const ALL_HOTELS: Hotel[] = [
     ],
     notes: ["Cửa sổ nhỏ và không có view — về view thì AC Hotel® Tokyo Ginza hơn"],
     published: true,
-    affiliateLinks: [],
+    affiliateLinks: [
+      { partner: "expedia", url: "https://expedia.com/affiliate/gfcNXld", enabled: true, trackingRef: "gfcNXld" },
+    ],
     directBookingUrl: "https://www.marriott.com/en-us/hotels/tyocy-courtyard-tokyo-ginza-hotel/overview/",
     seoTitle: "Courtyard® Tokyo Ginza: review và cách đổi Marriott Bonvoy®",
     seoDescription:
@@ -343,7 +345,9 @@ export const ALL_HOTELS: Hotel[] = [
       "Mình phải ra sân bay sớm nên chưa thử breakfast",
     ],
     published: true,
-    affiliateLinks: [],
+    affiliateLinks: [
+      { partner: "expedia", url: "https://expedia.com/affiliate/KKreNdi", enabled: true, trackingRef: "KKreNdi" },
+    ],
     directBookingUrl: "https://www.marriott.com/en-us/hotels/tyoar-ac-hotel-tokyo-ginza/overview/",
     seoTitle: "AC Hotel® Tokyo Ginza: review và cách đổi Marriott Bonvoy®",
     seoDescription:
@@ -404,7 +408,7 @@ export const ALL_HOTELS: Hotel[] = [
     featured: 1,
     published: true,
     affiliateLinks: [
-      { partner: "expedia", url: "https://expedia.com/affiliate/Np3Ul82", enabled: true, trackingRef: "Np3Ul82" },
+      { partner: "expedia", url: "https://expedia.com/affiliate/tn6f1Pk", enabled: true, trackingRef: "tn6f1Pk" },
     ],
     directBookingUrl: "https://www.hyatt.com/park-hyatt/en-US/itmph-park-hyatt-kyoto",
     seoTitle: "Park Hyatt® Kyoto: review suite và cách đặt bằng points",
@@ -447,7 +451,9 @@ export const ALL_HOTELS: Hotel[] = [
     ],
     notes: ["Số điểm cao; lần sau mình sẽ cân nhắc bù thêm một chút để ở The Mitsui Kyoto"],
     published: true,
-    affiliateLinks: [],
+    affiliateLinks: [
+      { partner: "expedia", url: "https://expedia.com/affiliate/4PGUTHx", enabled: true, trackingRef: "4PGUTHx" },
+    ],
     directBookingUrl: "https://www.ritzcarlton.com/en/hotels/ukyrz-the-ritz-carlton-kyoto/overview/",
     seoTitle: "The Ritz-Carlton® Kyoto: review phòng nhìn ra sông Kamogawa",
     seoDescription:
@@ -491,7 +497,9 @@ export const ALL_HOTELS: Hotel[] = [
     ],
     notes: ["Giường Queen hơi nhỏ nếu bạn quen giường King", "Cửa sổ phòng không có view đáng kể"],
     published: true,
-    affiliateLinks: [],
+    affiliateLinks: [
+      { partner: "expedia", url: "https://expedia.com/affiliate/j6s4T1z", enabled: true, trackingRef: "j6s4T1z" },
+    ],
     directBookingUrl: "https://www.hyatt.com/caption-by-hyatt/en-US/osacp-caption-by-hyatt-namba-osaka",
     seoTitle: "Caption by Hyatt® Namba Osaka: review khách sạn ở Namba",
     seoDescription:
@@ -531,7 +539,9 @@ export const ALL_HOTELS: Hotel[] = [
     notes: ["Hạng Platinum Elite không được breakfast miễn phí ở đây"],
     featured: 3,
     published: true,
-    affiliateLinks: [],
+    affiliateLinks: [
+      { partner: "expedia", url: "https://expedia.com/affiliate/zk5vYJv", enabled: true, trackingRef: "zk5vYJv" },
+    ],
     directBookingUrl: "https://www.ritzcarlton.com/en/hotels/fukrz-the-ritz-carlton-fukuoka/overview/",
     seoTitle: "The Ritz-Carlton® Fukuoka: review Premium Corner Suite",
     seoDescription:
@@ -572,7 +582,9 @@ export const ALL_HOTELS: Hotel[] = [
       "Mức $78 USD có được nhờ credit của thẻ American Express® Business Platinum Card (thẻ Mỹ); đặt thông thường sẽ không rẻ như vậy",
     ],
     published: true,
-    affiliateLinks: [],
+    affiliateLinks: [
+      { partner: "expedia", url: "https://expedia.com/affiliate/BdVZrsc", enabled: true, trackingRef: "BdVZrsc" },
+    ],
     directBookingUrl: "https://all.accor.com/hotel/C082/index.en.shtml",
     relatedLinks: [
       {
@@ -620,7 +632,9 @@ export const ALL_HOTELS: Hotel[] = [
       "Lần sau mình có lẽ sẽ thử một khách sạn Hyatt® khác ở phía bên kia thành phố (Hyatt Centric)",
     ],
     published: true,
-    affiliateLinks: [],
+    affiliateLinks: [
+      { partner: "expedia", url: "https://expedia.com/affiliate/KSs9hFj", enabled: true, trackingRef: "KSs9hFj" },
+    ],
     directBookingUrl: "https://www.hyatt.com/hyatt-regency/en-US/honhr-hyatt-regency-hong-kong-tsim-sha-tsui",
     seoTitle: "Hyatt Regency® Hong Kong, Tsim Sha Tsui: review và cách đặt",
     seoDescription:
@@ -677,7 +691,9 @@ export const ALL_HOTELS: Hotel[] = [
       "Lần sau mình có lẽ sẽ đổi điểm ở chỗ khác — lúc quay video, mình nhắm Park Hyatt® Taipei sắp mở cửa",
     ],
     published: true,
-    affiliateLinks: [],
+    affiliateLinks: [
+      { partner: "expedia", url: "https://expedia.com/affiliate/UO67Bra", enabled: true, trackingRef: "UO67Bra" },
+    ],
     directBookingUrl: "https://www.ihg.com/kimptonhotels/hotels/us/en/da-an-hotel-taipei/tpekm/hoteldetail",
     seoTitle: "Kimpton® Da An Hotel Taipei: review phòng King Premium",
     seoDescription:
@@ -723,7 +739,9 @@ export const ALL_HOTELS: Hotel[] = [
     ],
     notes: ["Vị trí không tiện nếu bạn đi lại chủ yếu bằng phương tiện công cộng như mình"],
     published: true,
-    affiliateLinks: [],
+    affiliateLinks: [
+      { partner: "expedia", url: "https://expedia.com/affiliate/OGmHpXW", enabled: true, trackingRef: "OGmHpXW" },
+    ],
     directBookingUrl: "https://www.hyatt.com/grand-hyatt/en-US/selrs-grand-hyatt-seoul",
     seoTitle: "Grand Hyatt® Seoul: review phòng view Namsan Tower",
     seoDescription:
@@ -770,7 +788,9 @@ export const ALL_HOTELS: Hotel[] = [
       "Cửa sổ gần như không có view",
     ],
     published: true,
-    affiliateLinks: [],
+    affiliateLinks: [
+      { partner: "expedia", url: "https://expedia.com/affiliate/YGNsSZi", enabled: true, trackingRef: "YGNsSZi" },
+    ],
     directBookingUrl: "https://www.hyatt.com/andaz/en-US/selaz-andaz-seoul-gangnam",
     seoTitle: "Andaz® Seoul Gangnam: review và cách đặt bằng points",
     seoDescription:
@@ -816,7 +836,9 @@ export const ALL_HOTELS: Hotel[] = [
     ],
     notes: ["Khó đặt bằng points nếu không lên kế hoạch sớm — mình đặt trước khoảng 3 tháng và may mắn còn phòng"],
     published: true,
-    affiliateLinks: [],
+    affiliateLinks: [
+      { partner: "expedia", url: "https://expedia.com/affiliate/6WLzXqh", enabled: true, trackingRef: "6WLzXqh" },
+    ],
     directBookingUrl: "https://www.hyatt.com/hyatt-regency/en-US/parhr-hyatt-regency-paris-etoile",
     seoTitle: "Hyatt Regency® Paris Etoile: review phòng view tháp Eiffel",
     seoDescription:
@@ -858,7 +880,9 @@ export const ALL_HOTELS: Hotel[] = [
       "Mình xin upgrade lên phòng rộng hơn bằng hạng Gold Elite nhưng khách sạn hết phòng",
     ],
     published: true,
-    affiliateLinks: [],
+    affiliateLinks: [
+      { partner: "expedia", url: "https://expedia.com/affiliate/ozdfAi4", enabled: true, trackingRef: "ozdfAi4" },
+    ],
     directBookingUrl: "https://www.marriott.com/en-us/hotels/parcv-courtyard-paris-porte-de-versailles/overview/",
     seoTitle: "Courtyard® Paris Porte de Versailles: review và đổi điểm",
     seoDescription:
@@ -903,7 +927,9 @@ export const ALL_HOTELS: Hotel[] = [
     ],
     notes: ["Không nằm ngay khu phố cổ: vào trung tâm phải đi một chặng tram"],
     published: true,
-    affiliateLinks: [],
+    affiliateLinks: [
+      { partner: "expedia", url: "https://expedia.com/affiliate/mYjSOHq", enabled: true, trackingRef: "mYjSOHq" },
+    ],
     directBookingUrl: "https://www.marriott.com/en-us/hotels/amsel-element-amsterdam/overview/",
     seoTitle: "Element® Amsterdam: review và cách đổi Marriott Bonvoy®",
     seoDescription:
@@ -945,7 +971,9 @@ export const ALL_HOTELS: Hotel[] = [
       "Không có trà hay cà phê miễn phí trong phòng, chỉ có nước",
     ],
     published: true,
-    affiliateLinks: [],
+    affiliateLinks: [
+      { partner: "expedia", url: "https://expedia.com/affiliate/TKhSnLv", enabled: true, trackingRef: "TKhSnLv" },
+    ],
     directBookingUrl: "https://www.marriott.com/en-us/hotels/fraor-moxy-frankfurt-city-center/overview/",
     seoTitle: "Moxy® Frankfurt City Center: review và cách đổi điểm",
     seoDescription:
@@ -983,7 +1011,9 @@ export const ALL_HOTELS: Hotel[] = [
     ],
     notes: ["Phòng tắm nhỏ, dù rất sạch"],
     published: true,
-    affiliateLinks: [],
+    affiliateLinks: [
+      { partner: "expedia", url: "https://expedia.com/affiliate/eD9AQL9", enabled: true, trackingRef: "eD9AQL9" },
+    ],
     directBookingUrl: "https://www.marriott.com/en-us/hotels/fraox-moxy-frankfurt-airport/overview/",
     seoTitle: "Moxy® Frankfurt Airport: review khách sạn sân bay",
     seoDescription:

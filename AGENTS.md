@@ -3578,8 +3578,12 @@ logic lọc thuần ở `src/lib/hotel-filters.ts` (Client Component chỉ impor
 - `RadioGroup`/`FilterChip` chuyển từ `bank-account-finder.tsx` sang
   `components/ui/radio-chips.tsx` (nơi dùng thứ hai). `PRIMARY_PILL_CLASS` trong
   `apply-button.tsx` không mang `display` — nơi dùng tự đặt.
-- Link Expedia® Park Hyatt® Kyoto (`Np3Ul82`) mở expedia.com bản Mỹ, Tokyo
-  (`Qw37WT2`) mở expedia.ca — link do tác giả tạo, không tự sửa tham số.
+- Link Expedia® do tác giả tạo trong Travel Creator, không tự sửa tham số. 15/10/2026 tác
+  giả gửi link cho 16 khách sạn (Park Hyatt® Kyoto thay `Np3Ul82` — link cũ mở expedia.com
+  bản Mỹ — bằng `tn6f1Pk`); cả 17 khách sạn đã publish nay đều có link. Đã mở thử từng link
+  trong browser pane: đều tới đúng khách sạn trên expedia.ca, có `affcid=CA.DIRECT.PHG…`.
+  curl không kiểm được: hop thứ hai (`www.expedia.com/affiliate/…`) trả 429 captcha.
+  Bài review Park Hyatt® Kyoto trên Contentful vẫn dùng `Np3Ul82` trong thân bài.
 - **Audit UX/UI 14/10/2026 tối** (impeccable audit + critique, Codex một vòng):
   - Trang khách sạn từ `xl`: hai cột, khối đặt phòng ở cột phải dính khi cuộn
     (`xl:tall:sticky`); dưới `xl` khối gọn ngay sau phần giới thiệu + khối cuối trang
