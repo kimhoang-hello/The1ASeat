@@ -3541,8 +3541,8 @@ logic lọc thuần ở `src/lib/hotel-filters.ts` (Client Component chỉ impor
   để lại 404.
 - **Nội dung chỉ từ nguồn của tác giả**: bài review, phụ đề cháy trong video
   (`research/video-captions/`), mô tả YouTube. Số điểm là số ĐÃ TRẢ, trang luôn in câu
-  `pointsNote`. Caption by Hyatt® Namba cố ý KHÔNG có số điểm: phụ đề có hai số lệch
-  nhau ("18k cho hai đêm" / "8K một đêm") — chờ tác giả. Park Hyatt® Toronto là nháp
+  `pointsNote`. Caption by Hyatt® Namba: phụ đề có hai số lệch nhau ("18k cho hai đêm" /
+  "8K một đêm"); tác giả xác nhận 15/10/2026 là 16,000 cho hai đêm. Park Hyatt® Toronto là nháp
   (`published: false` → 404): không có nội dung nào.
 - **Ảnh bìa là ảnh chính thức** của khách sạn (website của chuỗi), tác giả chốt
   14/10/2026; mang `credit` hiện dưới ảnh. Ảnh tự chụp chỉ ở `galleryImages`. KHÔNG lấy

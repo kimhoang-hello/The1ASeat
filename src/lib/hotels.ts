@@ -485,10 +485,10 @@ export const ALL_HOTELS: Hotel[] = [
     youtubeUrl: "https://www.youtube.com/watch?v=-lFFlcvKwGY",
     location: "Namba, Osaka — gần chợ Kuromon và Dotonbori",
     roomTypeReviewed: "Standard Queen",
-    // Số điểm cố ý KHÔNG ghi: phụ đề video có hai con số không khớp nhau ("18k
-    // cho hai đêm" rồi "8K một đêm") — chỉ tác giả biết số nào đúng. Xem
-    // `research/video-captions/caption-by-hyatt-namba-osaka-review.txt`.
-    booked: "World of Hyatt® points cho 2 đêm vào tháng 3, đặt kèm một Guest of Honor nên có breakfast miễn phí mỗi ngày",
+    // Số điểm do tác giả xác nhận 15/10/2026: 16k cho hai đêm. Phụ đề video ghi
+    // lệch ("18k cho hai đêm" rồi "8K một đêm") — đừng sửa theo phụ đề.
+    booked:
+      "16,000 World of Hyatt® points cho 2 đêm vào tháng 3, đặt kèm một Guest of Honor nên có breakfast miễn phí mỗi ngày",
     amenities: ["Nước lọc ở mỗi tầng", "Máy giặt cho khách", "Fitness studio"],
     highlights: [
       "Vị trí trung tâm, đi bộ ra chợ Kuromon",
@@ -503,7 +503,7 @@ export const ALL_HOTELS: Hotel[] = [
     directBookingUrl: "https://www.hyatt.com/caption-by-hyatt/en-US/osacp-caption-by-hyatt-namba-osaka",
     seoTitle: "Caption by Hyatt® Namba Osaka: review khách sạn ở Namba",
     seoDescription:
-      "Caption by Hyatt® Namba Osaka gần chợ Kuromon và Dotonbori: Ghế 1A ở hai đêm bằng World of Hyatt® points kèm Guest of Honor. Review, video và cách đặt.",
+      "Caption by Hyatt® Namba Osaka gần chợ Kuromon và Dotonbori: Ghế 1A ở 2 đêm bằng 16,000 World of Hyatt® points kèm Guest of Honor. Review, video và cách đặt.",
   },
   {
     id: "ritz-carlton-fukuoka",
