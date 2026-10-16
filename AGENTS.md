@@ -3630,12 +3630,11 @@ logic lọc thuần ở `src/lib/hotel-filters.ts` (Client Component chỉ impor
   diện (`pointsNote`, `noPrices`, `loyaltyNote`, `directNote`, `galleryHeading`) theo giọng ba
   bài review chữ: xưng "mình", câu liền mạch, bỏ gạch ngang dài giữa câu (bài của tác giả gần
   như không dùng), giữ thuật ngữ tiếng Anh (`elite night credits` thay "đêm tính hạng").
-  - **Ba chuỗi của spec (`hotels.title`, `subtitle`, `disclosure`) viết lại theo yêu cầu tác
-    giả** cùng ngày: tiêu đề "Khách sạn Ghế 1A đã ở" (bỏ "Khám phá" lặp ở phụ đề), phụ đề kể
-    trang ghi lại gì thay câu "từ boutique độc đáo đến luxury hàng đầu thế giới", disclosure
-    theo câu cuối các bài review của tác giả nhưng GIỮ chữ "commission" (câu công bố phải nói
-    rõ Ghế 1A nhận hoa hồng). Phụ đề cố ý không hứa "có video" — khách sạn sau này có thể chưa
-    có video.
+  - **Tiêu đề + phụ đề là chữ tác giả, GIỮ NGUYÊN** ("Khám phá khách sạn" / "Khám phá những
+    khách sạn Ghế 1A đã trải nghiệm…"). 15/10 mình viết lại theo yêu cầu, tác giả xem bản live
+    rồi bảo trả lại câu cũ — đừng đề xuất viết lại nữa. `seo.hotelsTitle` đi theo tiêu đề.
+    Riêng `disclosure` tác giả giữ bản mới: theo câu cuối các bài review, vẫn có chữ
+    "commission" (câu công bố phải nói rõ Ghế 1A nhận hoa hồng).
   - **Mô tả YouTube là nguồn thứ ba**, ngang phụ đề: phần lớn địa danh (Shinjuku, K11, ga
     Apgujeong "direct access", Champs-Élysées, tram ở Element®, Dotonbori) và toàn bộ dữ kiện
     Hotel Sosei Sapporo (không có file phụ đề) nằm ở đó. Đọc bằng
