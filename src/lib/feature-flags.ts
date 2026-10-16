@@ -113,5 +113,8 @@ export const US_CARDS_PUBLISHED = true;
  * review và bài video có dòng "đi tiếp" sang trang khách sạn của chúng, gỡ
  * `noindex` và dải báo nháp. Từng khách sạn còn cờ `published` riêng trong
  * dữ liệu — khách sạn chưa có nội dung kiểm chứng thì 404 dù cờ này bật.
+ *
+ * BẬT 15/10/2026 — tác giả chốt sau lượt kiểm toàn diện và rà copy (17 khách
+ * sạn, mọi link Expedia® và link đặt trực tiếp đã mở thử).
  */
-export const HOTELS_PUBLISHED = false;
+export const HOTELS_PUBLISHED = true;

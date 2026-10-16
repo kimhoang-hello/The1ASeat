@@ -3530,9 +3530,9 @@ Sạch: lint, tsc, build, 11 audit, 6 test suite (`test:reco` 484 + 23 skip MySQ
   Business Reserve ghi mức thường (120k/70k/90k) trong khi site ghi mức nâng — offer
   nâng theo KÊNH (memory Amex), lượt này không bấm đường Apply nên chưa kết luận.
 
-## Mục Khách sạn `/hotels` (14/10/2026) — CHƯA CÔNG BỐ, đừng đề xuất lại
+## Mục Khách sạn `/hotels` (14/10/2026, CÔNG BỐ 15/10/2026) — đừng đề xuất lại
 
-Cờ `HOTELS_PUBLISHED` (tắt). Dữ liệu `src/lib/hotels.ts`, test `npm run test:hotels`,
+Cờ `HOTELS_PUBLISHED` (bật 15/10/2026). Dữ liệu `src/lib/hotels.ts`, test `npm run test:hotels`,
 logic lọc thuần ở `src/lib/hotel-filters.ts` (Client Component chỉ import file này).
 
 - **Dữ liệu trong repo, không Contentful** — cùng lý do thẻ Mỹ: tạo content type qua
@@ -3630,8 +3630,12 @@ logic lọc thuần ở `src/lib/hotel-filters.ts` (Client Component chỉ impor
   diện (`pointsNote`, `noPrices`, `loyaltyNote`, `directNote`, `galleryHeading`) theo giọng ba
   bài review chữ: xưng "mình", câu liền mạch, bỏ gạch ngang dài giữa câu (bài của tác giả gần
   như không dùng), giữ thuật ngữ tiếng Anh (`elite night credits` thay "đêm tính hạng").
-  - **Ba chuỗi là chữ tác giả trong spec, CỐ Ý giữ nguyên:** `hotels.title`, `hotels.subtitle`,
-    `hotels.disclosure`. Muốn đổi thì hỏi tác giả.
+  - **Ba chuỗi của spec (`hotels.title`, `subtitle`, `disclosure`) viết lại theo yêu cầu tác
+    giả** cùng ngày: tiêu đề "Khách sạn Ghế 1A đã ở" (bỏ "Khám phá" lặp ở phụ đề), phụ đề kể
+    trang ghi lại gì thay câu "từ boutique độc đáo đến luxury hàng đầu thế giới", disclosure
+    theo câu cuối các bài review của tác giả nhưng GIỮ chữ "commission" (câu công bố phải nói
+    rõ Ghế 1A nhận hoa hồng). Phụ đề cố ý không hứa "có video" — khách sạn sau này có thể chưa
+    có video.
   - **Mô tả YouTube là nguồn thứ ba**, ngang phụ đề: phần lớn địa danh (Shinjuku, K11, ga
     Apgujeong "direct access", Champs-Élysées, tram ở Element®, Dotonbori) và toàn bộ dữ kiện
     Hotel Sosei Sapporo (không có file phụ đề) nằm ở đó. Đọc bằng

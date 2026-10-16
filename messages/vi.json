@@ -354,8 +354,8 @@
     "breadcrumbUsCards": "Thẻ Mỹ",
     "rhtTitle": "Refundable Hotel Trick: cash out points và travel credit",
     "rhtDescription": "Hướng dẫn từng bước Refundable Hotel Trick cho Amex® Travel Credit, CIBC® Aventura®, Scotiabank® Scene+™ và TD Rewards®, kèm calculator quy đổi points ra tiền.",
-    "hotelsTitle": "Khám phá khách sạn: review thật, video và cách đặt phòng",
-    "hotelsDescription": "Những khách sạn Ghế 1A đã ở thật, từ boutique tới luxury: số điểm đã trả, điều nên biết trước, video review và cách đặt phòng.",
+    "hotelsTitle": "Khách sạn Ghế 1A đã ở: review, video và cách đặt phòng",
+    "hotelsDescription": "Những khách sạn Ghế 1A đã ở thật: cách đặt phòng, số points đã trả, điều mình thích, điều nên biết trước và video review.",
     "breadcrumbHotels": "Khách sạn"
   },
   "awardCharts": {
@@ -771,8 +771,8 @@
     "lastUpdated": "Last Updated: {date}"
   },
   "hotels": {
-    "title": "Khám phá khách sạn",
-    "subtitle": "Khám phá những khách sạn Ghế 1A đã trải nghiệm, từ những khách sạn boutique độc đáo đến các thương hiệu luxury hàng đầu thế giới.",
+    "title": "Khách sạn Ghế 1A đã ở",
+    "subtitle": "Đây là những khách sạn mình đã ở thật. Ở mỗi khách sạn, mình ghi lại cách đặt phòng, số points hay số tiền đã trả, điều mình thích và những gì bạn nên biết trước khi đặt.",
     "reviewsLink": "Đọc tất cả review khách sạn",
     "draftNotice": "Bản nháp — mục Khách sạn chưa công bố. Trang chỉ vào được bằng link trực tiếp và không hiện trên Google.",
     "featuredHeading": "Ghế 1A chọn",
@@ -809,7 +809,7 @@
     "noPrices": "Ghế 1A không đăng giá phòng, vì giá và phòng trống thay đổi liên tục. Bạn xem giá mới nhất ở trang đặt phòng.",
     "loyaltyNote": "Đặt qua {partner} thường sẽ không được cộng điểm, elite night credits hay quyền lợi hạng thành viên {program}. Nếu cần những thứ này, bạn nên đặt trực tiếp với khách sạn.",
     "directNote": "Đặt trực tiếp với khách sạn thì bạn thường được cộng điểm {program} và hưởng quyền lợi hạng thành viên.",
-    "disclosure": "Một số link đặt phòng trên Ghế 1A là affiliate links. Ghế 1A có thể nhận commission khi bạn đặt phòng qua các link này, mà không phát sinh thêm phí affiliate riêng từ Ghế 1A.",
+    "disclosure": "Một số link đặt phòng ở đây là affiliate link: Ghế 1A có thể nhận commission khi bạn đặt phòng qua đó. Bạn không phải trả thêm gì, và việc này giúp Ghế 1A tiếp tục làm thêm những bài review như thế này.",
     "nextStepsTitle": "Đi tiếp từ đây",
     "siblingsTitle": "Khách sạn khác",
     "allHotelsLabel": "Tất cả khách sạn Ghế 1A đã ở",
