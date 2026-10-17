@@ -17,7 +17,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { offlineDataset } from "./data/index.ts";
-import { datasetAt } from "./temporal.ts";
+import { activeAt, datasetAt } from "./temporal.ts";
 import { executeRun, type RecommendationRunRecord } from "./runs.ts";
 import { candidateKey, diffRecords, explainChange, firstComputedDivergence } from "./run-diff.ts";
 import { compareCandidates, eligibilityUnknownCauses, explainProduct, findRanked } from "./debug.ts";
@@ -28,7 +28,7 @@ import { offerClimate } from "./offer-quality.ts";
 import { rankCandidates } from "./rank.ts";
 import { answersFor } from "./sensitivity.ts";
 import { indexDataset, type DatasetIndex } from "./indexes.ts";
-import { addedEarnFor, earnFitFor } from "./earn-fit.ts";
+import { addedEarnFor, earnFitFor, EXACT_LINKED_LIMIT } from "./earn-fit.ts";
 import { validateDataset } from "./validate.ts";
 import {
   advancedCollector,
@@ -47,7 +47,7 @@ import {
   vietnamTripShortfall,
 } from "./data/user-fixtures.ts";
 import type { OfferHistoryPoint } from "./offer-history.ts";
-import type { Product, RecommendationDataset, RedemptionMode, SpendCategory } from "./types.ts";
+import { SPEND_CATEGORIES, type Product, type RecommendationDataset, type RedemptionMode, type SpendCategory } from "./types.ts";
 import { amountRange, type UserDataGap, type UserSpendProfile, type UserState } from "./user-types.ts";
 import type { Candidate } from "./engine-types.ts";
 
@@ -1798,40 +1798,80 @@ function profileWith(byCategory: Partial<Record<SpendCategory, number>>): UserSp
   };
 }
 
-/** Giá trị tốt nhất của một tập thẻ: thử MỌI cách đặt trọn từng hạng mục lên một thẻ. */
-function bruteForceBest(cards: readonly string[], spend: UserSpendProfile, mode: RedemptionMode): number {
+interface AllocAt {
+  asOf: string;
+  data: RecommendationDataset;
+  ix: DatasetIndex;
+}
+const ALLOC: AllocAt = { asOf: ALLOC_ASOF, data: ALLOC_DATA, ix: ALLOC_IX };
+
+/**
+ * Giá trị tốt nhất của một tập thẻ: thử MỌI cách đặt trọn từng hạng mục lên một
+ * thẻ, mỗi thẻ đo bằng `earnFitFor` trên đúng tập nó nhận.
+ *
+ * Giá trị của một thẻ trên một tập hạng mục chỉ gọi `earnFitFor` một lần (nhớ
+ * theo mặt nạ bit, qua `memo`) — vẫn thử đủ mọi phân bổ, chỉ không tính lại
+ * cùng một ô: 4 thẻ × 10 hạng mục là 4^10 phân bổ, gọi `earnFitFor` cho từng
+ * phân bổ thì mất hàng phút. Không dùng chung gì với `addedEarnFor` ngoài
+ * `earnFitFor`.
+ */
+function bruteForceBest(
+  cards: readonly string[],
+  spend: UserSpendProfile,
+  mode: RedemptionMode,
+  at: AllocAt = ALLOC,
+  memo = new Map<string, Float64Array>(),
+): number {
   const categories = Object.keys(spend.byCategory) as SpendCategory[];
-  let best = 0;
-  const total = cards.length ** categories.length;
-  for (let code = 0; code < total; code += 1) {
-    const assigned = new Map<string, SpendCategory[]>();
-    let rest = code;
-    for (const category of categories) {
-      const card = cards[rest % cards.length];
-      rest = Math.floor(rest / cards.length);
-      assigned.set(card, [...(assigned.get(card) ?? []), category]);
+  const tables = cards.map((card) => {
+    let table = memo.get(card);
+    if (table === undefined) {
+      table = new Float64Array(1 << categories.length);
+      for (let mask = 1; mask < table.length; mask += 1) {
+        const owned = categories.filter((_, bit) => (mask & (1 << bit)) !== 0);
+        const sub: UserSpendProfile = {
+          ...spend,
+          monthlyTotal: null,
+          byCategory: Object.fromEntries(owned.map((category) => [category, spend.byCategory[category]])),
+        };
+        table[mask] = earnFitFor(card, sub, at.ix, at.asOf, mode).annualValueCents;
+      }
+      memo.set(card, table);
     }
-    let value = 0;
-    for (const [card, owned] of assigned) {
-      const sub: UserSpendProfile = {
-        ...spend,
-        monthlyTotal: null,
-        byCategory: Object.fromEntries(owned.map((category) => [category, spend.byCategory[category]])),
-      };
-      value += earnFitFor(card, sub, ALLOC_IX, ALLOC_ASOF, mode).annualValueCents;
+    return table;
+  });
+  const owned = cards.map(() => 0);
+  let best = -Infinity;
+  const place = (depth: number) => {
+    if (depth === categories.length) {
+      let value = 0;
+      for (let card = 0; card < cards.length; card += 1) value += tables[card][owned[card]];
+      if (value > best) best = value;
+      return;
     }
-    best = Math.max(best, value);
-  }
+    for (let card = 0; card < cards.length; card += 1) {
+      owned[card] |= 1 << depth;
+      place(depth + 1);
+      owned[card] ^= 1 << depth;
+    }
+  };
+  place(0);
   return best;
 }
 
-function assertMatchesBruteForce(heldSlugs: string[], spend: UserSpendProfile, mode: RedemptionMode = "best") {
+function assertMatchesBruteForce(
+  heldSlugs: string[],
+  spend: UserSpendProfile,
+  mode: RedemptionMode = "best",
+  at: AllocAt = ALLOC,
+) {
   const held = heldSlugs.map((slug) => productIdFor(slug) as string);
-  const candidates = ALLOC_DATA.products.map((product) => product.id as string).filter((id) => !held.includes(id));
-  const added = addedEarnFor(candidates, held, spend, ALLOC_IX, ALLOC_ASOF, mode);
-  const wallet = bruteForceBest(held, spend, mode);
+  const candidates = at.data.products.map((product) => product.id as string).filter((id) => !held.includes(id));
+  const added = addedEarnFor(candidates, held, spend, at.ix, at.asOf, mode);
+  const memo = new Map<string, Float64Array>();
+  const wallet = bruteForceBest(held, spend, mode, at, memo);
   for (const candidate of candidates) {
-    const expected = Math.max(0, bruteForceBest([...held, candidate], spend, mode) - wallet);
+    const expected = Math.max(0, bruteForceBest([...held, candidate], spend, mode, at, memo) - wallet);
     assert.ok(
       Math.abs((added.get(candidate) ?? NaN) - expected) < 1,
       `${heldSlugs.join("+")} → ${candidate} (${mode}): engine ${added.get(candidate)}, vét cạn ${expected}`,
@@ -1881,10 +1921,11 @@ test("phần tích THÊM bằng phép vét cạn — phân bổ cần ĐỔI CH�
 });
 
 test("đường lui leo đồi (nhóm dính trần quá lớn) vẫn chạy đúng ở những ca nó tới được tối ưu", () => {
-  // Dữ liệu hôm nay dính tối đa 7 hạng mục nên lời giải chính xác luôn áp dụng;
-  // hạ trần về 0 để chạy qua nhánh leo đồi. Ba ca dưới leo đồi tới đúng tối ưu
-  // (đã kiểm bằng vét cạn); ca đổi chéo ở test trên thì không — đó là lý do có
-  // lời giải chính xác.
+  // Dữ liệu hôm nay dính tối đa 10 hạng mục (= `EXACT_LINKED_LIMIT`) nên lời
+  // giải chính xác luôn áp dụng; hạ trần về 0 để chạy qua nhánh leo đồi. Ba ca
+  // dưới leo đồi tới đúng tối ưu (đã kiểm bằng vét cạn); ca đổi chéo ở test trên
+  // và các hồ sơ Scotiabank® Gold bên dưới thì không — đó là lý do có lời giải
+  // chính xác.
   const cases: [string[], UserSpendProfile, string, number][] = [
     [["amex-cobalt"], profileWith({ grocery: 4_000, dining: 4_000 }), "amex-gold-rewards", 86_400],
     [["scotiabank-gold-amex"], profileWith({ dining: 300, food_delivery: 2_400, grocery: 1_800 }), "amex-cobalt", 115_200],
@@ -1911,6 +1952,229 @@ test("phần tích THÊM bằng phép vét cạn — trần chung TD® Cash Back
   assertMatchesBruteForce(
     ["amex-cobalt", "scotiabank-gold-amex"],
     profileWith({ grocery: 3_000, dining: 1_500, food_delivery: 800, gas: 500 }),
+  );
+});
+
+/* ---- Từ 16/10/2026: MỘT trần chung cho tám hạng mục của Scotiabank® Gold ---- */
+
+const GOLD_CAP_ASOF = "2026-10-16";
+const GOLD_CAP_DATA = datasetAt(offlineDataset(), GOLD_CAP_ASOF, { knownAt: GOLD_CAP_ASOF });
+const GOLD_CAP: AllocAt = { asOf: GOLD_CAP_ASOF, data: GOLD_CAP_DATA, ix: indexDataset(GOLD_CAP_DATA) };
+
+/** Mười hạng mục DÍNH trần chung trên dữ liệu hôm nay — tám của Scotiabank® Gold, cộng sạc xe và hoá đơn định kỳ của TD® Cash Back. */
+const GOLD_TEN = {
+  grocery: 2_290,
+  dining: 2_100,
+  entertainment: 930,
+  food_delivery: 1_490,
+  gas: 840,
+  transit: 440,
+  rideshare: 880,
+  streaming: 1_250,
+  ev_charging: 1_140,
+  recurring: 20,
+} as const;
+
+function heuristicGap(heldSlugs: string[], spend: UserSpendProfile, slug: string) {
+  const held = heldSlugs.map((name) => productIdFor(name) as string);
+  const target = productIdFor(slug) as string;
+  const exact = addedEarnFor([target], held, spend, GOLD_CAP.ix, GOLD_CAP.asOf).get(target)!;
+  const heuristic = addedEarnFor([target], held, spend, GOLD_CAP.ix, GOLD_CAP.asOf, "best", 0).get(target)!;
+  return { exact, heuristic };
+}
+
+test("phần tích THÊM bằng phép vét cạn — ví CHỈ có thẻ dính trần: mỗi hạng mục vẫn phải nằm trên một thẻ thật", () => {
+  // Ví chỉ Scotiabank® Gold, $54,000 siêu thị + $9,600 streaming một năm: vượt
+  // trần $50,000, nên streaming (3x) làm loãng phần 5x của siêu thị — Gold nhận
+  // cả hai kiếm ÍT hơn Gold chỉ nhận siêu thị. Bản trước để "thẻ ảo" nhận
+  // streaming với giá $0 dù ví không có thẻ cộng thẳng nào, tức đo ví như thể
+  // streaming không đặt lên đâu: Amex® Green "thêm" $172.80 thay vì $227.74.
+  const spend = profileWith({ grocery: 4_500, streaming: 800 });
+  const added = assertMatchesBruteForce(["scotiabank-gold-amex"], spend, "best", GOLD_CAP);
+  assert.ok(Math.abs(added.get(productIdFor("amex-green") as string)! - 22_774.34) < 1);
+});
+
+test("phần tích THÊM bằng phép vét cạn — giữ Scotiabank® Gold, thẻ mới kéo nhóm dính trần lên 9–10 hạng mục", () => {
+  // Ví dính 8 hạng mục; TD® Cash Back kéo nhóm lên 10 (sạc xe, hoá đơn định kỳ),
+  // TD First Class® lên 9. Leo đồi (trần cũ 7) đo Amex® Aeroplan® Reserve thiếu
+  // gần $390/năm trên hồ sơ này.
+  const spend = profileWith({
+    grocery: 2_410,
+    dining: 1_110,
+    entertainment: 2_140,
+    food_delivery: 820,
+    gas: 510,
+    transit: 50,
+    rideshare: 860,
+    streaming: 10,
+    ev_charging: 1_800,
+    recurring: 1_130,
+  });
+  assertMatchesBruteForce(["scotiabank-gold-amex"], spend, "best", GOLD_CAP);
+  const { exact, heuristic } = heuristicGap(["scotiabank-gold-amex"], spend, "amex-aeroplan-reserve");
+  assert.ok(exact - heuristic > 30_000, `tiền đề: leo đồi lệch thật (${exact} so với ${heuristic})`);
+});
+
+test("phần tích THÊM bằng phép vét cạn — giữ Scotiabank® Gold + TD® Cash Back: ví dính đủ 10 hạng mục", () => {
+  const spend = profileWith({ ...GOLD_TEN, everything_else: 1_000 });
+  const added = assertMatchesBruteForce(["scotiabank-gold-amex", "td-cash-back-visa-infinite"], spend, "best", GOLD_CAP);
+  assertMatchesBruteForce(["scotiabank-gold-amex", "td-cash-back-visa-infinite"], spend, "cash", GOLD_CAP);
+  // Leo đồi (trần cũ 7): Amex® Platinum thêm $236.64 thay vì $729.04.
+  const platinum = added.get(productIdFor("amex-platinum") as string)!;
+  const { heuristic } = heuristicGap(["scotiabank-gold-amex", "td-cash-back-visa-infinite"], spend, "amex-platinum");
+  assert.ok(platinum - heuristic > 40_000, `tiền đề: leo đồi lệch thật (${platinum} so với ${heuristic})`);
+});
+
+/**
+ * Nhóm hạng mục dính trần RỘNG NHẤT mà bộ dữ liệu có thể tạo ra: hợp, trên mọi
+ * thẻ, các hạng mục cùng một trần với ít nhất một hạng mục khác — đo ở MỌI ngày
+ * bộ dữ liệu đổi tập thẻ, tỷ lệ hay trần (ngày dòng bắt đầu, ngày cuối và ngày
+ * ngay sau ngày cuối, vì `effectiveTo` tính cả ngày đó; kể cả dòng hẹn ngày
+ * tương lai), dưới MỌI mức hiểu biết (`knownAt` = mỗi ngày một dòng tỷ lệ hay
+ * trần được ghi vào kho, và không cắt — dòng ghi muộn vắng mặt thì hạng mục rơi
+ * về `everything_else`), trên MỌI hạng mục người dùng khai được — hạng mục không
+ * thẻ nào có dòng riêng vẫn rơi về `everything_else`, và dòng đó có trần là nó
+ * dính. Cùng phép chọn tỷ lệ của `earnFitFor`: dòng không giới hạn của hạng mục,
+ * không có thì `everything_else`.
+ */
+function widestLinkedGroup(all: RecommendationDataset): { asOf: string; knownAt?: string; categories: string[] } {
+  const nextDay = (date: string) => new Date(Date.parse(`${date}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
+  const dates = [
+    ...new Set(
+      [...all.products, ...all.earningRates, ...all.earningCaps].flatMap((row) =>
+        row.effectiveTo === null ? [row.effectiveFrom] : [row.effectiveFrom, row.effectiveTo, nextDay(row.effectiveTo)],
+      ),
+    ),
+  ].sort();
+  const recorded = [...new Set([...all.earningRates, ...all.earningCaps].map((row) => row.recordedAt))].sort();
+  let widest: { asOf: string; knownAt?: string; categories: string[] } = { asOf: "", categories: [] };
+  for (const asOf of dates) for (const knownAt of [undefined, ...recorded]) {
+    const data = datasetAt(all, asOf, knownAt === undefined ? {} : { knownAt });
+    const ix = indexDataset(data);
+    const linked = new Set<string>();
+    for (const product of data.products) {
+      const rates = activeAt(ix.ratesByProduct.get(product.id) ?? [], asOf);
+      const unrestricted = (category: string) =>
+        rates
+          .filter((rate) => rate.category === category && rate.restrictedTo === null)
+          .sort((a, b) => a.multiplier - b.multiplier)[0];
+      const byCap = new Map<string, string[]>();
+      for (const category of SPEND_CATEGORIES) {
+        const rate = unrestricted(category) ?? unrestricted("everything_else");
+        if (rate?.capId != null) byCap.set(rate.capId, [...(byCap.get(rate.capId) ?? []), category]);
+      }
+      for (const group of byCap.values()) if (group.length >= 2) group.forEach((category) => linked.add(category));
+    }
+    if (linked.size > widest.categories.length) widest = { asOf, knownAt, categories: [...linked] };
+  }
+  return widest;
+}
+
+test("mọi nhóm dính trần của dữ liệu gộp lại vừa `EXACT_LINKED_LIMIT` — không hồ sơ nào lui về leo đồi", () => {
+  // 16/10/2026 trần chung của Scotiabank® Gold đẩy nhóm lên 10 trong khi trần là
+  // 7, và không gì đỏ: người khai nhiều hạng mục lặng lẽ chạy leo đồi, lệch tới
+  // ~$490/năm phần thêm. Đỏ ở đây là việc phải làm: nâng trần (đo lại chi phí
+  // lượt gợi ý đầy đủ) hoặc ghi rõ ai chạy leo đồi.
+  const widest = widestLinkedGroup(offlineDataset());
+  assert.ok(widest.categories.length >= 10, `tiền đề: Scotiabank® Gold + TD® Cash Back dính 10 hạng mục, đọc được ${widest.categories.length}`);
+  assert.ok(
+    widest.categories.length <= EXACT_LINKED_LIMIT,
+    `${widest.asOf}: nhóm dính trần ${widest.categories.length} hạng mục (${widest.categories.join(", ")}) vượt EXACT_LINKED_LIMIT ${EXACT_LINKED_LIMIT}`,
+  );
+});
+
+test("phép đo nhóm dính trần thấy cả thẻ HẸN NGÀY ra mắt dính hạng mục mới", () => {
+  // Kiểm chính phép canh ở trên: bản đầu chỉ quét ngày của tỷ lệ và trần, nên một
+  // thẻ ra mắt 2027-01-01 mang tỷ lệ ghi từ trước, chung một trần cho du lịch,
+  // khách sạn, ngoại tệ, đẩy nhóm lên 13 mà test vẫn xanh (vòng Codex bác bản vá).
+  const all = offlineDataset();
+  const template = all.products[0];
+  const productId = "prd_test-future-shared-cap" as Product["id"];
+  const capId = "cap_test-future-shared-cap" as RecommendationDataset["earningCaps"][number]["id"];
+  const rate = all.earningRates[0];
+  const data: RecommendationDataset = {
+    ...all,
+    products: [...all.products, { ...template, id: productId, effectiveFrom: "2027-01-01", effectiveTo: null }],
+    earningCaps: [
+      ...all.earningCaps,
+      { ...all.earningCaps[0], id: capId, productId, kind: "spend", amount: 10_000, period: "annual", effectiveFrom: "2026-09-01", effectiveTo: null },
+    ],
+    earningRates: [
+      ...all.earningRates,
+      ...(["travel", "hotel", "foreign_currency"] as const).map((category) => ({
+        ...rate,
+        id: `rate_test-future-${category}` as typeof rate.id,
+        productId,
+        category,
+        multiplier: 3,
+        restrictedTo: null,
+        capId,
+        rateAfterCap: 1,
+        effectiveFrom: "2026-09-01",
+        effectiveTo: null,
+      })),
+    ],
+  };
+  const widest = widestLinkedGroup(data);
+  assert.equal(widest.asOf, "2027-01-01");
+  assert.equal(widest.categories.length, 13);
+});
+
+test("phép đo nhóm dính trần thấy cả lát cắt `knownAt` — dòng tỷ lệ ghi muộn", () => {
+  // Thẻ có trần ở dòng `everything_else`; dòng riêng (không trần) của du lịch,
+  // khách sạn, ngoại tệ ghi vào kho muộn. Trước ngày ghi, ba hạng mục đó rơi về
+  // `everything_else` có trần → nhóm 14. Chỉ đo với dữ liệu đầy đủ thì thấy 10
+  // (vòng Codex chốt bắt).
+  const all = offlineDataset();
+  const productId = "prd_test-late-recorded" as Product["id"];
+  const capId = "cap_test-late-recorded" as RecommendationDataset["earningCaps"][number]["id"];
+  const rate = all.earningRates[0];
+  const late = new Set(["travel", "hotel", "foreign_currency"]);
+  const data: RecommendationDataset = {
+    ...all,
+    products: [...all.products, { ...all.products[0], id: productId, effectiveFrom: "2026-09-01", effectiveTo: null }],
+    earningCaps: [
+      ...all.earningCaps,
+      {
+        ...all.earningCaps[0],
+        id: capId,
+        productId,
+        kind: "spend",
+        amount: 10_000,
+        period: "annual",
+        effectiveFrom: "2026-09-01",
+        effectiveTo: null,
+        recordedAt: "2026-09-01",
+      },
+    ],
+    earningRates: [
+      ...all.earningRates,
+      ...SPEND_CATEGORIES.map((category) => ({
+        ...rate,
+        id: `rate_test-late-${category}` as typeof rate.id,
+        productId,
+        category,
+        multiplier: 1,
+        restrictedTo: null,
+        capId: category === "everything_else" ? capId : null,
+        rateAfterCap: category === "everything_else" ? 1 : null,
+        effectiveFrom: "2026-09-01",
+        effectiveTo: null,
+        recordedAt: late.has(category) ? "2026-11-01" : "2026-09-01",
+      })),
+    ],
+  };
+  const widest = widestLinkedGroup(data);
+  assert.equal(widest.categories.length, 14);
+  assert.ok(widest.knownAt !== undefined && widest.knownAt < "2026-11-01", `cắt ở ${widest.knownAt}`);
+});
+
+test("phần tích THÊM bằng phép vét cạn — ví ba thẻ dính trần (Cobalt® + Scotiabank® Gold + TD® Cash Back)", () => {
+  assertMatchesBruteForce(
+    ["amex-cobalt", "scotiabank-gold-amex", "td-cash-back-visa-infinite"],
+    profileWith(GOLD_TEN),
+    "best",
+    GOLD_CAP,
   );
 });
 

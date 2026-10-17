@@ -345,6 +345,14 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  *   - "Từ chối nói thu nhập" đếm như thu nhập chưa biết ở độ đầy đủ. Trước đó
  *     nó không được đếm, nên từ chối khai được độ đầy đủ CAO hơn chưa trả lời.
  *
+ * 4.37.0 — phần tích điểm thêm vào ví (`addedEarnFor`) giải CHÍNH XÁC tới 10
+ * hạng mục dính trần chung (trước: 7), vừa đủ mọi nhóm của dữ liệu hôm nay sau
+ * khi Scotiabank® Gold có một trần chung cho tám hạng mục. Người giữ Gold khai
+ * nhiều hạng mục từng chạy leo đồi, lệch tới ~$490/năm phần thêm của một thẻ.
+ * Cùng bản: ví CHỈ có thẻ dính trần không còn được bỏ một hạng mục "không đặt
+ * lên đâu" khi nó làm loãng trần chi tiêu. 16 nhân vật mẫu ra y hệt 4.36.0 —
+ * không ai đi qua hai nhánh đó — nhưng §20 nói về MỌI đầu vào.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -357,7 +365,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.36.0";
+export const ENGINE_VERSION = "4.37.0";
 
 export interface RecommendInput {
   state: UserState;
