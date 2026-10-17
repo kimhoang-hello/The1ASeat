@@ -73,6 +73,21 @@ type RateSeed = [
 const ISSUER_CHECK = "2026-10-04";
 const BEFORE_ISSUER_CHECK = "2026-10-03";
 const SCOTIA_GOLD_SRC = "https://www.scotiabank.com/ca/en/personal/credit-cards/american-express/gold-card.html";
+/**
+ * Điều khoản trên trang Scotiabank® đọc 16/10/2026: "The Accelerated Earn Rates …
+ * applies to the first $50,000 in purchases … annually … January 1st to
+ * December 31st", vượt thì 1 điểm/$1. MỘT trần chung cho cả 6x, 5x và 3x. Seed
+ * cũ không có trần nên engine cộng thừa tới 4 điểm/$1 trên phần vượt — đủ đổi thẻ
+ * được khuyên cho người chi nhiều (Codex, audit 16/10/2026).
+ */
+const SCOTIA_GOLD_CAP_CHECK = "2026-10-16";
+const BEFORE_SCOTIA_GOLD_CAP_CHECK = "2026-10-15";
+const SCOTIA_GOLD_CAPPED = {
+  cap: "accelerated",
+  rateAfterCap: 1,
+  from: SCOTIA_GOLD_CAP_CHECK,
+  source: SCOTIA_GOLD_SRC,
+} as const;
 const TD_FIRST_CLASS_SRC =
   "https://www.td.com/ca/en/personal-banking/products/credit-cards/travel-rewards/first-class-travel-visa-infinite-card";
 const VIPORTER_SRC = "https://www.bmo.com/en-ca/main/personal/credit-cards/bmo-viporter-world-elite-mastercard/";
@@ -131,6 +146,16 @@ const CAPS: Record<string, Record<string, {
     gas3: { name: "Xăng và sạc xe điện 3%", kind: "spend", amount: 15000, period: "annual", from: TD_CASH_BACK_CHECK, source: TD_CASH_BACK_SRC },
     transit3: { name: "Phương tiện công cộng 3%", kind: "spend", amount: 15000, period: "annual", from: TD_CASH_BACK_CHECK, source: TD_CASH_BACK_SRC },
     bills3: { name: "Hoá đơn định kỳ và streaming 3%", kind: "spend", amount: 15000, period: "annual", from: TD_CASH_BACK_CHECK, source: TD_CASH_BACK_SRC },
+  },
+  "scotiabank-gold-amex": {
+    accelerated: {
+      name: "Mọi nhóm tăng điểm 6x, 5x, 3x (tính chung)",
+      kind: "spend",
+      amount: 50000,
+      period: "annual",
+      from: SCOTIA_GOLD_CAP_CHECK,
+      source: SCOTIA_GOLD_SRC,
+    },
   },
   "bmo-viporter-world-elite-mastercard": {
     porter3x: {
@@ -211,18 +236,29 @@ const RATES: Record<string, { program: string; rates: RateSeed[] }> = {
   "scotiabank-gold-amex": {
     program: "scene-plus",
     rates: [
-      ["grocery", 6, { restrictedTo: "Sobeys, Safeway, FreshCo và các siêu thị cùng nhóm" }],
-      ["dining", 5],
-      ["entertainment", 5],
+      // Đóng 15/10/2026: thiếu trần $50,000/năm — xem `SCOTIA_GOLD_CAP_CHECK`.
+      ["grocery", 6, { restrictedTo: "Sobeys, Safeway, FreshCo và các siêu thị cùng nhóm", to: BEFORE_SCOTIA_GOLD_CAP_CHECK }],
+      ["dining", 5, { to: BEFORE_SCOTIA_GOLD_CAP_CHECK }],
+      ["entertainment", 5, { to: BEFORE_SCOTIA_GOLD_CAP_CHECK }],
       // Trang Scotiabank® 04/10/2026: 5 điểm ở các siêu thị khác và giao đồ ăn,
       // 3 điểm xăng, đi lại (gồm rideshare) và streaming, 1 điểm còn lại.
-      ["grocery", 5, { from: ISSUER_CHECK, source: SCOTIA_GOLD_SRC }],
-      ["food_delivery", 5, { from: ISSUER_CHECK, source: SCOTIA_GOLD_SRC }],
-      ["gas", 3, { from: ISSUER_CHECK, source: SCOTIA_GOLD_SRC }],
-      ["transit", 3, { from: ISSUER_CHECK, source: SCOTIA_GOLD_SRC }],
-      ["rideshare", 3, { from: ISSUER_CHECK, source: SCOTIA_GOLD_SRC }],
-      ["streaming", 3, { from: ISSUER_CHECK, source: SCOTIA_GOLD_SRC }],
+      ["grocery", 5, { from: ISSUER_CHECK, to: BEFORE_SCOTIA_GOLD_CAP_CHECK, source: SCOTIA_GOLD_SRC }],
+      ["food_delivery", 5, { from: ISSUER_CHECK, to: BEFORE_SCOTIA_GOLD_CAP_CHECK, source: SCOTIA_GOLD_SRC }],
+      ["gas", 3, { from: ISSUER_CHECK, to: BEFORE_SCOTIA_GOLD_CAP_CHECK, source: SCOTIA_GOLD_SRC }],
+      ["transit", 3, { from: ISSUER_CHECK, to: BEFORE_SCOTIA_GOLD_CAP_CHECK, source: SCOTIA_GOLD_SRC }],
+      ["rideshare", 3, { from: ISSUER_CHECK, to: BEFORE_SCOTIA_GOLD_CAP_CHECK, source: SCOTIA_GOLD_SRC }],
+      ["streaming", 3, { from: ISSUER_CHECK, to: BEFORE_SCOTIA_GOLD_CAP_CHECK, source: SCOTIA_GOLD_SRC }],
       ["everything_else", 1, { from: ISSUER_CHECK, source: SCOTIA_GOLD_SRC }],
+      // Từ 16/10/2026: cùng tỷ lệ, chung MỘT trần $50,000 chi tiêu/năm.
+      ["grocery", 6, { restrictedTo: "Sobeys, Safeway, FreshCo và các siêu thị cùng nhóm", ...SCOTIA_GOLD_CAPPED }],
+      ["dining", 5, SCOTIA_GOLD_CAPPED],
+      ["entertainment", 5, SCOTIA_GOLD_CAPPED],
+      ["grocery", 5, SCOTIA_GOLD_CAPPED],
+      ["food_delivery", 5, SCOTIA_GOLD_CAPPED],
+      ["gas", 3, SCOTIA_GOLD_CAPPED],
+      ["transit", 3, SCOTIA_GOLD_CAPPED],
+      ["rideshare", 3, SCOTIA_GOLD_CAPPED],
+      ["streaming", 3, SCOTIA_GOLD_CAPPED],
     ],
   },
 

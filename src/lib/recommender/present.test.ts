@@ -28,7 +28,14 @@ import { datasetAt } from "../recommendation/temporal.ts";
 import type { RecommendationDataset } from "../recommendation/types.ts";
 import type { UserState } from "../recommendation/user-types.ts";
 import { userGaps } from "../recommendation/user-gaps.ts";
-import { COMPONENT_STRENGTH, REASON_COVERED_BY_WARNING, REASON_TEXT, WARNING_TEXT } from "./copy.ts";
+import {
+  COMPONENT_STRENGTH,
+  CONFIDENCE_BY_CAUSE,
+  CONFIDENCE_CLOSE,
+  REASON_COVERED_BY_WARNING,
+  REASON_TEXT,
+  WARNING_TEXT,
+} from "./copy.ts";
 import { answeredRows, coverageStatement, presentRun, primaryKeyOf, reasonsOf, spendSentenceOf } from "./present.ts";
 import {
   applyAnswer,
@@ -832,4 +839,80 @@ test("chặng chưa có giá / thiếu thừa số chuyến đi: khối 'Đọc 
     assert.ok(view?.trip);
     for (const text of tripTexts) assert.ok(!view.warnings.includes(text), `${goalValue}: "${text}"`);
   }
+});
+
+/* ---- Audit 16/10/2026 -------------------------------------------- */
+
+test("'chưa mở thẻ' đứng SAU một thẻ không nói 'mở thêm thẻ chưa mang lại gì'", () => {
+  const record = structuredClone(runFor(beginnerNoCards));
+  const result = record.outputSnapshot.results[0];
+  assert.equal(result.primaryAction.kind, "open_card", "tiền đề: một thẻ đứng đầu");
+  // Mã có mặt ở ứng viên thua là đúng hình dạng engine phát ra (điểm ≥ 0.5) —
+  // `u_japan_funded` 16/10/2026 trên production.
+  result.noAction.reasonCodes = [...result.noAction.reasonCodes, "NO_NEW_CARD_NEEDED"];
+  const text = REASON_TEXT.NO_NEW_CARD_NEEDED.text;
+  const view = presentRun(record, DATA, offersFor(DATA))!;
+  assert.ok(view.noAction !== null);
+  assert.ok(!view.noAction.reasons.some((row) => row.text === text));
+  assert.notEqual(view.noAction.lead, text);
+
+  // Khi chính nó thắng thì câu đó vẫn là lý do của nó.
+  const funded = runFor(japanTripFunded);
+  assert.equal(funded.outputSnapshot.results[0].primaryAction.kind, "no_new_card", "tiền đề: chưa mở thẻ đứng đầu");
+  assert.ok(funded.outputSnapshot.results[0].primaryAction.reasonCodes.includes("NO_NEW_CARD_NEEDED"), "tiền đề: có mã");
+  assert.ok(presentRun(funded, DATA, offersFor(DATA))!.primary.reasons.some((row) => row.text === text));
+});
+
+test("'Hai lựa chọn ngang nhau' chỉ khi ENGINE nói hoà; không gọi 'chưa mở thẻ' là thẻ", () => {
+  const record = structuredClone(runFor(beginnerNoCards));
+  const result = record.outputSnapshot.results[0];
+  const close = { dataCompleteness: 0.9, dataFreshness: 1, goalSpecificity: 0.9, scoreSeparation: 0.3, level: "medium" as const };
+  const view = (tied: boolean, factors = close) => {
+    result.confidence = { ...result.confidence, ...factors };
+    result.reasonCodes = [
+      ...result.reasonCodes.filter((code) => code !== "SCORES_NEARLY_TIED"),
+      ...(tied ? (["SCORES_NEARLY_TIED"] as const) : []),
+    ];
+    return presentRun(record, DATA, offersFor(DATA), 0, false)!.confidence;
+  };
+  // Khoảng cách là yếu tố yếu nhất nhưng chênh ≥ 0.05: "khá sát", không "ngang nhau".
+  assert.equal(view(false).label, CONFIDENCE_CLOSE.label);
+  assert.ok(!view(false).sentence.includes("chọn cái nào cũng hợp lý"));
+  assert.equal(view(true).label, CONFIDENCE_BY_CAUSE.scoreSeparation.label);
+  assert.ok(view(true).sentence.startsWith("Thẻ đứng đầu"));
+  // Không yếu tố nào yếu mà mức bị đặt trần (chặng chưa có bảng giá): không nói gì về khoảng cách.
+  const capped = view(false, { ...close, scoreSeparation: 0.9 });
+  assert.ok(![CONFIDENCE_CLOSE.label, CONFIDENCE_BY_CAUSE.scoreSeparation.label].includes(capped.label));
+
+  const funded = structuredClone(runFor(japanTripFunded));
+  const fundedResult = funded.outputSnapshot.results[0];
+  assert.equal(fundedResult.primaryAction.kind, "no_new_card", "tiền đề: chưa mở thẻ đứng đầu");
+  fundedResult.confidence = { ...fundedResult.confidence, ...close };
+  fundedResult.reasonCodes = [...fundedResult.reasonCodes, "SCORES_NEARLY_TIED"];
+  const sentence = presentRun(funded, DATA, offersFor(DATA), 0, false)!.confidence.sentence;
+  assert.ok(sentence.startsWith("Lựa chọn đứng đầu"), sentence);
+  assert.ok(!sentence.includes("{top}"));
+});
+
+test("chỉ còn 'chưa mở thẻ' (giữ đủ mọi thẻ): không nói 'khá sát', không bảo 'xem cả hai'", () => {
+  // Ca của Codex (vòng bác bản vá 16/10/2026): engine đặt `scoreSeparation` 0.5 khi
+  // không có đối thủ — "không đo được" — mà trang đọc thành "lựa chọn kế tiếp khá sát".
+  const state = structuredClone(beginnerNoCards);
+  state.cards = DATA.products.map((product) => ({
+    id: `uc_${product.id}` as (typeof state.cards)[number]["id"],
+    userId: state.profile.id,
+    productId: product.id,
+    status: "active" as const,
+    openedDate: "2025-01-01",
+    closedDate: null,
+  }));
+  const record = runFor(state);
+  const result = record.outputSnapshot.results[0];
+  assert.equal(result.primaryAction.kind, "no_new_card", "tiền đề: chỉ còn chưa mở thẻ");
+  assert.equal(result.alternatives.length, 0, "tiền đề: không còn thẻ nào khác");
+  assert.equal(result.confidence.scoreSeparation, 0.5, "tiền đề: engine nói không đo được");
+  const confidence = presentRun(record, DATA, offersFor(DATA), 0, false)!.confidence;
+  assert.notEqual(confidence.label, CONFIDENCE_CLOSE.label);
+  assert.notEqual(confidence.label, CONFIDENCE_BY_CAUSE.scoreSeparation.label);
+  assert.ok(!confidence.sentence.includes("cả hai"), confidence.sentence);
 });

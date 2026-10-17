@@ -195,7 +195,7 @@ const OFFER_SEEDS: OfferSeed[] = [
     startDate: "2026-09-07",
     endDate: "2026-11-01",
     feeFirstYear: 0,
-    rebate: 150,
+    rebate: 200,
     components: [
       {
         type: "statement_credit",

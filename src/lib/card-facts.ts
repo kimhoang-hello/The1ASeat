@@ -226,15 +226,17 @@ function earnLines(
    * hiệu lực hoặc chưa kiểm thì nói ra, không để dòng trông như không giới hạn.
    * `perCategory`: ý gộp từ nhiều hạng mục, mỗi hạng mục một trần y hệt nhau.
    */
-  const withCap = (text: string, rows: EarningRate[], perCategory = false): CardFactLine => {
+  const withCap = (text: string, rows: EarningRate[], perCategory = false, sharedWith: number[] = []): CardFactLine => {
     const first = rows[0];
     if (first.capId === null) return { text, sources: rows };
     const cap = caps.find((row) => row.id === first.capId);
     if (!cap) return { text: `${text} — trần: chưa kiểm`, sources: rows, unchecked: true };
     const rowCaps = perCategory ? caps.filter((row) => rows.some((rate) => rate.capId === row.id)) : [cap];
     const each = perCategory ? " cho mỗi hạng mục" : "";
+    const shared =
+      sharedWith.length > 0 ? ` tính chung cho các nhóm ${sharedWith.map((rate) => rateText(rate, cashBack)).join(", ")}` : "";
     const after = first.rateAfterCap !== null ? `, sau đó ${rateText(first.rateAfterCap, cashBack)}` : "";
-    return { text: `${text} — ${capText(cap, cashBack)}${each}${after}`, sources: [...rows, ...rowCaps] };
+    return { text: `${text} — ${capText(cap, cashBack)}${each}${shared}${after}`, sources: [...rows, ...rowCaps] };
   };
 
   // Hạng mục mỗi cái một trần RIÊNG mà các trần y hệt nhau (TD® First Class:
@@ -262,10 +264,10 @@ function earnLines(
     if (signature !== null) bySignature.set(signature, entry);
   }
 
-  const items: { multiplier: number; line: CardFactLine }[] = [];
+  const entries: { multiplier: number; text: string; rows: EarningRate[]; perCategory: boolean }[] = [];
   for (const { multiplier, rows, perCategory } of merged) {
     const text = `${rateText(multiplier, cashBack)} ${rows.map((row) => label(row.category)).join(", ")}`;
-    items.push({ multiplier, line: withCap(text, rows, perCategory) });
+    entries.push({ multiplier, text, rows, perCategory });
   }
   // Tỷ lệ chỉ áp ở một nhóm merchant: in kèm đúng nhóm đó, không thì "6x siêu
   // thị" đọc như mọi siêu thị. `restrictedTo` vì vậy là chữ cho NGƯỜI ĐỌC.
@@ -277,8 +279,23 @@ function earnLines(
     const text = categories.length
       ? `${rateText(multiplier, cashBack)} ${categories.join(", ")} — ${rows[0].restrictedTo}`
       : `${rateText(multiplier, cashBack)} ${rows[0].restrictedTo}`;
-    items.push({ multiplier, line: withCap(text, rows) });
+    entries.push({ multiplier, text, rows, perCategory: false });
   }
+
+  // MỘT trần dùng chung cho nhiều ý (Scotiabank® Gold: 6x, 5x, 3x chung $50,000
+  // chi tiêu/năm) thì mỗi ý phải nói là chung: ba dòng "tối đa $50,000" đứng
+  // riêng đọc như ba trần, tức hứa gấp ba phần chi tiêu được tăng điểm.
+  const sharing = new Map<string, number[]>();
+  for (const entry of entries) {
+    const capId = entry.perCategory ? null : entry.rows[0].capId;
+    if (capId !== null) sharing.set(capId, [...(sharing.get(capId) ?? []), entry.multiplier]);
+  }
+  const items: { multiplier: number; line: CardFactLine }[] = entries.map((entry) => {
+    const capId = entry.perCategory ? null : entry.rows[0].capId;
+    const sharers = capId === null ? [] : (sharing.get(capId) ?? []);
+    const sharedWith = sharers.length > 1 ? [...new Set(sharers)].sort((a, b) => b - a) : [];
+    return { multiplier: entry.multiplier, line: withCap(entry.text, entry.rows, entry.perCategory, sharedWith) };
+  });
   // Sort của JS ổn định: cùng hệ số thì giữ thứ tự của file dữ liệu, vốn theo
   // thứ tự trang thẻ liệt kê.
   items.sort((a, b) => b.multiplier - a.multiplier);

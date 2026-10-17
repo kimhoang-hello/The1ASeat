@@ -1016,12 +1016,13 @@ test("SCORES_NEARLY_TIED nói đúng khoảng cách điểm, không nói thay ch
   assert.equal(result.confidence.level, "low", "tiền đề: dữ liệu cũ kéo độ tin cậy xuống");
   assert.ok(!result.reasonCodes.includes("SCORES_NEARLY_TIED"));
 
-  // Và chiều ngược lại: mã có mặt ĐÚNG khi khoảng cách < 0.05, trên mọi nhân vật.
+  // Và chiều ngược lại: mã có mặt ĐÚNG khi khoảng cách < 0.05, trên mọi nhân vật
+  // — đo trên các lựa chọn người đọc THẤY (4.36.0: hạng cùng họ bị giấu không phải đối thủ).
   let tied = 0;
   for (const state of USER_FIXTURES) {
     const record = execute(state).record;
     record.outputSnapshot.results.forEach((row, goal) => {
-      const [a, b] = ranking(record, goal);
+      const [a, b] = ranking(record, goal).filter((rank) => rank.visibility !== "hidden_same_family");
       const expected = b !== undefined && a.candidate.score - b.candidate.score < 0.05;
       if (expected) tied += 1;
       assert.equal(row.reasonCodes.includes("SCORES_NEARLY_TIED"), expected, state.profile.id);
@@ -1963,4 +1964,40 @@ test("mục tiêu quy ra tiền đọc phần thêm THEO THƯỚC TIỀN MẶT, 
   const ranked = findRanked(record, "amex-cobalt")!;
   assert.equal(raw(ranked, "long_term_earn_fit"), 0);
   assert.equal(raw(ranked, "fee_drag"), 0);
+});
+
+/* ================================================================== *
+ * Audit 16/10/2026 — độ tin cậy §29 (engine 4.36.0)
+ * ================================================================== */
+
+test("§29 so hai lựa chọn người đọc THẤY — hạng cùng họ bị giấu không phải đối thủ thứ hai", () => {
+  // Ngày GHIM: hai hạng Quicksilver (vào kho 05/10/2026) hoà tuyệt đối, hạng
+  // dưới đứng đầu, hạng trên bị giấu; lựa chọn kế tiếp trên trang kém xa hơn 0.05.
+  const asOf = "2026-10-16";
+  const record = executeRun(
+    { state: studentStarter, data: datasetAt(offlineDataset(), asOf), asOf },
+    { id: "run_acceptance", createdAt: "2026-10-16T00:00:00.000Z" },
+  ).record;
+  const rows = ranking(record);
+  assert.equal(rows[1].visibility, "hidden_same_family", "tiền đề: hạng nhì là hạng cùng họ bị giấu");
+  assert.equal(rows[0].candidate.score, rows[1].candidate.score, "tiền đề: hai hạng hoà tuyệt đối");
+  const shown = rows.filter((row) => row.visibility !== "hidden_same_family");
+  const gap = shown[0].candidate.score - shown[1].candidate.score;
+  assert.ok(gap >= 0.05, "tiền đề: lựa chọn kế tiếp người đọc thấy không sát");
+  const result = record.outputSnapshot.results[0];
+  assert.ok(!result.reasonCodes.includes("SCORES_NEARLY_TIED"));
+  assert.ok(Math.abs(result.confidence.scoreSeparation - Math.min(1, (gap - 0.02) / 0.18)) < 1e-9);
+  assert.equal(record.derivedState.goals[0].confidenceInputs.secondScore, shown[1].candidate.score);
+});
+
+test("từ chối nói thu nhập vẫn là CHƯA BIẾT ở độ đầy đủ — không cao hơn chưa trả lời", () => {
+  const declined = structuredClone(studentStarter);
+  assert.ok(declined.profile.personalIncomeDeclined, "tiền đề: nhân vật từ chối khai");
+  const unanswered = structuredClone(studentStarter);
+  unanswered.profile.personalIncomeDeclined = false;
+  unanswered.profile.householdIncomeDeclined = false;
+  const completeness = (state: UserState) =>
+    execute(state).record.outputSnapshot.results[0].confidence.dataCompleteness;
+  assert.equal(completeness(declined), completeness(unanswered));
+  assert.ok(completeness(declined) < 1);
 });

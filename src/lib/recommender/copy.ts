@@ -329,7 +329,7 @@ export const CONFIDENCE_BY_CAUSE: Record<
 > = {
   scoreSeparation: {
     label: "Hai lựa chọn ngang nhau",
-    sentence: "Thẻ đứng đầu và thẻ kế tiếp gần như ngang điểm — chọn cái nào cũng hợp lý.",
+    sentence: "{top} và lựa chọn kế tiếp gần như ngang điểm — chọn cái nào cũng hợp lý.",
   },
   dataCompleteness: {
     label: "Còn thiếu thông tin",
@@ -344,6 +344,21 @@ export const CONFIDENCE_BY_CAUSE: Record<
     sentence: "Nói rõ hơn bạn muốn gì (chuyến bay nào, loại điểm nào) thì mình chọn sát hơn.",
   },
 };
+
+/**
+ * Khoảng cách điểm là yếu tố yếu nhất nhưng engine KHÔNG coi là hoà
+ * (`SCORES_NEARLY_TIED`, chênh dưới 0.05 — `confidence.ts`). "Ngang nhau" ở đây
+ * là nói một điều engine không kết luận: Scotiabank® Gold hơn Momentum® 0.084
+ * trên hồ sơ `u_cash` mà trang từng bảo "chọn cái nào cũng hợp lý" (audit
+ * 16/10/2026). `{top}` là "Thẻ đứng đầu" hoặc "Lựa chọn đứng đầu".
+ */
+export const CONFIDENCE_CLOSE = {
+  label: "Lựa chọn kế tiếp khá sát",
+  sentence: "{top} nhỉnh hơn lựa chọn kế tiếp, nhưng không nhiều — nên xem cả hai trước khi quyết.",
+};
+
+/** Không còn lựa chọn nào khác để so — xem `confidenceOf`. */
+export const CONFIDENCE_NO_RIVAL = "Không còn lựa chọn nào khác để so, nên mình chưa nói được lựa chọn này hơn bao nhiêu.";
 
 /** Thiếu dữ liệu mà không còn câu nào để hỏi — xem `confidenceOf`. */
 export const CONFIDENCE_NO_QUESTION_LEFT =

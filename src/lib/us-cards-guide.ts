@@ -1,7 +1,10 @@
-import { getPosts } from "./content";
+import { getPostsWithin } from "./content";
 import { US_CARDS_BEGINNER_SLUG, US_CARDS_GUIDE_SLUGS } from "./us-credit-cards";
 
 export type UsCardsGuide = { slug: string; href: string; title: string; excerpt: string };
+
+/** Hạn chờ danh sách bài viết — xem `getPostsWithin`. Cùng mức với trang khách sạn. */
+const POSTS_BUDGET_MS = 8_000;
 
 /**
  * Các bài hướng dẫn thẻ Mỹ đang PHỤC VỤ, theo đúng thứ tự trong
@@ -15,9 +18,15 @@ export type UsCardsGuide = { slug: string; href: string; title: string; excerpt:
  *
  * File riêng, không nằm trong `us-credit-cards.ts`: hàm này đọc Contentful,
  * còn file dữ liệu phải import được trần trong test (`node --test`).
+ *
+ * Bài viết là dữ liệu PHỤ của mục thẻ Mỹ — thẻ nằm trong repo — nên Contentful
+ * lỗi hoặc treo thì `[]`: mất khối hướng dẫn và nút "Xem hướng dẫn", không mất
+ * trang. Trước 16/10/2026 lỗi tải bài đi thẳng lên cả trang danh sách lẫn mọi
+ * trang chi tiết (Codex), cùng lớp lỗi đã vá cho trang khách sạn và bốn trang
+ * dữ liệu tĩnh ngày 10/10.
  */
 export async function usCardsGuides(): Promise<UsCardsGuide[]> {
-  const posts = await getPosts();
+  const posts = await getPostsWithin(POSTS_BUDGET_MS, "us-credit-cards");
   return US_CARDS_GUIDE_SLUGS.flatMap((slug) => {
     const post = posts.find((item) => item.slug === slug);
     if (!post) return [];

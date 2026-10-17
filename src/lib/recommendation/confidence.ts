@@ -39,6 +39,18 @@ const BLOCKING_USER_GAPS: ReadonlySet<UserDataGap["kind"]> = new Set([
   "country_unknown",
 ]);
 
+/**
+ * Chỗ trống đếm CHUNG một loại với chỗ trống khác. "Từ chối nói thu nhập" vẫn là
+ * CHƯA BIẾT thu nhập — chỉ khác ở chỗ không được hỏi lại (`user-gaps.ts`), và hai
+ * cái loại trừ nhau. Trước 16/10/2026 nó không được đếm: người từ chối khai nhận
+ * độ đầy đủ CAO hơn người chưa trả lời, trên cùng một điều kiện thu nhập chưa
+ * kiểm được (Codex: sinh viên 0.95 so với 0.89). Gộp vào loại sẵn có thay vì
+ * thêm loại mới để mẫu số không đổi cho mọi hồ sơ khác.
+ */
+const COUNTS_AS: Partial<Record<UserDataGap["kind"], UserDataGap["kind"]>> = {
+  personal_income_declined: "personal_income_unknown",
+};
+
 /** Số `DataGap["kind"]` mà lớp dữ liệu có thể phát ra — xem `types.ts`. */
 const DATA_GAP_KINDS = 7;
 
@@ -135,12 +147,13 @@ export function computeConfidence(input: ConfidenceInput): ConfidenceFactors {
   // thích rồi làm ngược lại trong công thức. Người có năm tài khoản điểm chưa
   // nhớ số dư sinh năm dòng cùng một `kind`, và phép đếm dòng hạ độ tin cậy
   // của họ năm lần chỉ vì họ có nhiều tài khoản hơn.
-  const blockingKinds = new Set(
-    input.userGaps.filter((gap) => BLOCKING_USER_GAPS.has(gap.kind)).map((gap) => gap.kind),
-  );
+  const blocking = input.userGaps.filter((gap) => BLOCKING_USER_GAPS.has(COUNTS_AS[gap.kind] ?? gap.kind));
+  const blockingKinds = new Set(blocking.map((gap) => COUNTS_AS[gap.kind] ?? gap.kind));
   const userCompleteness = clamp01(1 - blockingKinds.size / BLOCKING_USER_GAPS.size);
   if (blockingKinds.size > 0) {
-    notes.push(`${blockingKinds.size} loại chỗ trống ảnh hưởng kết quả: ${[...blockingKinds].sort().join(", ")}`);
+    // Ghi chú kể tên chỗ trống THẬT (`personal_income_declined`), không tên loại đã gộp.
+    const shown = new Set(blocking.map((gap) => gap.kind));
+    notes.push(`${blockingKinds.size} loại chỗ trống ảnh hưởng kết quả: ${[...shown].sort().join(", ")}`);
   }
 
   // Chỗ trống của LỚP DỮ LIỆU cũng phải kéo độ đầy đủ xuống, không chỉ để lại

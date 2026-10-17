@@ -336,6 +336,15 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * khuyên mở lại Amex® Gold — không bonus, phí $250, ví đã kiếm bằng hoặc hơn ở
  * mọi hạng mục — trên "chưa mở thẻ nào". Tác giả chốt 09/10/2026. Đổi điểm số.
  *
+ * 4.36.0 — audit 16/10/2026, hai chỗ của độ tin cậy §29, KHÔNG đổi điểm số hay
+ * thứ hạng:
+ *   - §29 và `SCORES_NEARLY_TIED` đo trên các lựa chọn người đọc THẤY — sau
+ *     phép gom họ. Hạng cùng họ bị giấu từng là "đối thủ thứ hai": hai hạng
+ *     Quicksilver hoà tuyệt đối nên sinh viên nhận "cách nhau 0.000" và câu
+ *     "ngang điểm", trong khi lựa chọn kế tiếp trên trang kém 0.046.
+ *   - "Từ chối nói thu nhập" đếm như thu nhập chưa biết ở độ đầy đủ. Trước đó
+ *     nó không được đếm, nên từ chối khai được độ đầy đủ CAO hơn chưa trả lời.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -348,7 +357,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.35.0";
+export const ENGINE_VERSION = "4.36.0";
 
 export interface RecommendInput {
   state: UserState;
@@ -706,8 +715,23 @@ export function recommend(input: RecommendInput): RecommendationRun {
     const oldest = oldestVerified(read, data, ix, asOf);
     const goalDataGaps = scopeDataGaps(normalized.goalGaps[goalIndex].dataGaps, read);
     goalDataGapSets.push(goalDataGaps);
+    // Gom họ TRƯỚC khi đo độ tin cậy: §29 so hai lựa chọn người đọc THẤY. Hạng
+    // cùng họ bị giấu (`hidden_same_family`) hoà tuyệt đối với thẻ đứng đầu thì
+    // "hai ứng viên đầu cách nhau 0.000" là nói về một thẻ không có trên trang —
+    // `u_student` 16/10/2026: hai hạng Quicksilver hoà, lựa chọn kế tiếp thật
+    // (Amex® Green) kém 0.046 (Codex, audit 16/10/2026).
+    const winner = ranked[0];
+    // Chỉ các thẻ, và `NO_NEW_CARD` luôn có chỗ riêng ở `noAction` — kể cả
+    // khi nó đang đứng đầu. Trộn nó vào `alternatives` là để nó biến mất
+    // khỏi đầu ra đúng lúc nó thắng.
+    const grouped = bestPerFamily(
+      ranked.filter((row) => row !== winner && row.kind === "open_card"),
+      ix,
+      [winner],
+    );
+    const visible = ranked.filter((row) => !grouped.hidden.has(row));
     const confidence = computeConfidence({
-      ranked,
+      ranked: visible,
       goal,
       userGaps: normalized.goalGaps[goalIndex].userGaps,
       dataGaps: goalDataGaps,
@@ -726,15 +750,6 @@ export function recommend(input: RecommendInput): RecommendationRun {
         ? undefined
         : need.byProgram.find((row) => row.programId === covered.bestProgram);
     const accessible = covered?.accessible ?? null;
-    const winner = ranked[0];
-    // Chỉ các thẻ, và `NO_NEW_CARD` luôn có chỗ riêng ở `noAction` — kể cả
-    // khi nó đang đứng đầu. Trộn nó vào `alternatives` là để nó biến mất
-    // khỏi đầu ra đúng lúc nó thắng.
-    const grouped = bestPerFamily(
-      ranked.filter((row) => row !== winner && row.kind === "open_card"),
-      ix,
-      [winner],
-    );
     const alternatives = grouped.kept.slice(0, 4);
 
     goalTraces.push({
@@ -745,9 +760,9 @@ export function recommend(input: RecommendInput): RecommendationRun {
       needs: snapshotNeeds(needs),
       ranking: rankingTrace(ranked, winner, alternatives, grouped.hidden),
       confidenceInputs: {
-        topScore: ranked[0]?.score ?? null,
-        secondScore: ranked[1]?.score ?? null,
-        rivalCount: Math.max(0, ranked.length - 1),
+        topScore: visible[0]?.score ?? null,
+        secondScore: visible[1]?.score ?? null,
+        rivalCount: Math.max(0, visible.length - 1),
         oldestVerifiedAt: oldest?.verifiedAt ?? null,
         oldestVerifiedRow: oldest === null ? null : { table: oldest.table, id: oldest.id },
       },
@@ -772,7 +787,7 @@ export function recommend(input: RecommendInput): RecommendationRun {
         // `EARN_FLEXIBLE_POINTS` hơn `DIVERSIFY` đúng vài phần trăm.
         ...strategies.filter((row) => row.score >= 0.5).map((row) => row.reasonCodes),
         need?.reasonCodes ?? [],
-        scoresNearlyTied(ranked) ? (["SCORES_NEARLY_TIED"] as ReasonCode[]) : [],
+        scoresNearlyTied(visible) ? (["SCORES_NEARLY_TIED"] as ReasonCode[]) : [],
         (covered?.unpricedHeldPrograms.length ?? 0) > 0
           ? (["AWARD_PRICE_IS_FLOOR_ONLY"] as ReasonCode[])
           : [],

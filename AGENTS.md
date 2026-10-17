@@ -3645,3 +3645,65 @@ logic lọc thuần ở `src/lib/hotel-filters.ts` (Client Component chỉ impor
   - Codex 2 vòng (đối chiếu nguồn + biên tập/bác bản vá): 6/6 bản vá ĐÚNG; sửa thêm hai câu
     nói mạnh hơn nguồn ("được săn đón nhất" ≠ "aspirational"; Fukuoka "quyết định giá trị"
     → "có thể làm đáng giá hơn").
+
+## Review toàn diện trang + engine 16/10/2026 — đừng đề xuất lại
+
+Gate: lint, tsc, build, 9 test suite (`test:reco` 486 + 23 skip MySQL), 11 audit, `audit:links`
+production (235 trang, không trang mồ côi). Chrome headless (puppeteer-core, chặn GA và mọi
+request không phải GET) quét 239 URL × 320/1280px trên bản build cục bộ: 0 lỗi console/JS, 0 tràn
+ngang, 0 ảnh hỏng, 1 h1, JSON-LD parse được, `lang="vi"`, og:image; 100 link nội bộ ngoài sitemap
+đều 200. Engine: `reco:debug run` cho 16 nhân vật mẫu ở ngày hôm nay, rồi dựng lại ĐÚNG nội dung
+trang kết quả (`presentRun` + lịch sử offer thật) để đọc câu chữ. Codex: vòng tầng trang, vòng
+engine (đóng vai chuyên gia đọc 16 lượt chạy), vòng bác bản vá (8 ĐÚNG, 2 BẢN VÁ HỎNG — đã vá lại,
+xem dải offer và ca một lựa chọn bên dưới).
+
+**Đã vá:**
+- **Seed rebate Scotiabank® Momentum® 150 → 200.** FinlyWealth đổi số, job sửa Contentful, seed
+  đứng yên → `check-rebates` đỏ 5 lượt liền từ 14/10 23:20 UTC (đúng cửa canh dựng 06/10). Không
+  ai đọc job đỏ thì cửa canh vô ích: đỏ dai ở job này là việc phải làm ngay.
+- **`us-cards-guide.ts` dùng `getPostsWithin`** — Contentful lỗi hoặc treo từng làm sập cả
+  `/us-credit-cards` lẫn mọi trang chi tiết thẻ Mỹ, dù thẻ nằm trong repo (Codex). Cùng tiền lệ
+  trang khách sạn / bốn trang dữ liệu tĩnh 10/10.
+- **Dải offer ở layout gốc có hạn chờ 8 giây** (`settleWithin`). Bản 03/10 chỉ bắt LỖI; một lượt
+  CDA TREO (SDK tự thử lại tới 6 × 30 giây) giữ cả layout, tức mọi URL — kể cả trang có nội dung
+  sẵn trong repo — không gửi nổi byte HTML nào (Codex, vòng bác bản vá: bản vá thẻ Mỹ ở trên không
+  kín nếu thiếu cái này). Dải là chỗ DUY NHẤT trong layout gọi Contentful.
+- **Scotiabank® Gold Amex® có MỘT trần chung $50,000 chi tiêu/năm** cho 6x/5x/3x (năm dương lịch,
+  vượt thì 1x — điều khoản trên trang Scotiabank®). Seed thiếu nên engine cộng thừa tới 4 điểm/$1 phần
+  vượt: hồ sơ `u_high_spend` + giao đồ ăn $1,200/tháng (một câu trả lời thử của §30) đổi người thắng
+  (Codex). Dòng cũ đóng 15/10, dòng mới từ 16/10. "Thông tin nhanh" in "tính chung cho các nhóm 6x,
+  5x, 3x" — ba dòng "tối đa $50,000" đứng riêng đọc như ba trần.
+- **Trang kết quả gợi ý tự mâu thuẫn ở hai chỗ** (lớp trình bày, engine không đổi điểm):
+  (1) hộp "Chưa mở thẻ nào" đứng SAU một thẻ in "Với mục tiêu này, mở thêm thẻ chưa mang lại gì
+  đáng kể" — `rank.ts` gắn `NO_NEW_CARD_NEEDED` khi điểm ≥ 0.5 kể cả khi thua (`u_japan_funded`:
+  Amex® Green 0.584 là gợi ý chính). Nay trang chỉ in câu đó khi "chưa mở thẻ" thắng; mã vẫn phát
+  như cũ, chú thích trong `reason-codes.ts` đã sửa cho đúng nghĩa. (2) Nhãn "Hai lựa chọn ngang
+  nhau — chọn cái nào cũng hợp lý" in khi `scoreSeparation < 0.75` (chênh < 0.155) trong khi engine
+  chỉ coi là hoà khi chênh < 0.05: `u_cash` chênh 0.084 vẫn nghe "ngang nhau". Nay hoà theo đúng
+  `SCORES_NEARLY_TIED`; không hoà mà khoảng cách là yếu tố yếu nhất thì "Lựa chọn kế tiếp khá sát";
+  đứng đầu là "chưa mở thẻ" thì "Lựa chọn đứng đầu", không "Thẻ đứng đầu"; KHÔNG còn lựa chọn nào
+  khác (giữ đủ mọi thẻ — engine đặt `scoreSeparation` 0.5 nghĩa là "không đo được") thì không nói
+  gì về khoảng cách (Codex bắt ở vòng bác bản vá).
+- **ENGINE 4.36.0 — độ tin cậy §29, không đổi điểm/thứ hạng** (Codex): §29 + `SCORES_NEARLY_TIED`
+  đo trên lựa chọn người đọc THẤY (bỏ hạng cùng họ bị giấu — hai hạng Quicksilver hoà tuyệt đối từng
+  cho sinh viên "cách nhau 0.000"); `personal_income_declined` đếm như thu nhập chưa biết (từ chối
+  khai từng có độ đầy đủ CAO hơn chưa trả lời).
+
+**Cố ý KHÔNG làm:**
+- **Không nâng `EXACT_LINKED_LIMIT` (7)** dù trần Gold gom 8 hạng mục: ngưỡng 8 làm lượt gợi ý đầy
+  đủ (cả §30) của hồ sơ 11 hạng mục chậm 120 → 470 ms, ngưỡng 10 → 2.2 s. Người khai ≥ 8 hạng mục
+  của Gold (hoặc giữ Gold cùng TD® Cash Back / TD First Class®) chạy leo đồi, lệch tới ~$120/năm phần
+  thêm. Chi tiết + việc còn lại ở HANDOFF §9.
+- `u_japan_funded` (200,000 MR, cần 170,000 điển hình / 205,000 cao) được khuyên Amex® Green trên
+  "chưa mở thẻ": trọng số §10.2 (`trip_currency_utility`), như ghi chú 07/10 — không phải lỗi code.
+- `u_student` được khuyên Quicksilver World (đòi thu nhập) trên thẻ sinh viên: thu nhập từ chối khai
+  là `unknown` −0.05 theo chính sách, và offer không thành phần giữ trọn §13 (4.33.0). Đã biết.
+- `u_flexible` (châu Âu, khứ hồi chưa biết) để trống "cần" và hỏi câu doanh nghiệp trước: khứ hồi
+  không đổi người thắng theo phép đo §30, câu doanh nghiệp thì đổi.
+
+**Đã kiểm, KHÔNG phải lỗi:**
+- `audit:us-offers` đỏ ở `bilt-palladium`: trang Bilt nay dựng câu "50,000 points and Gold Status
+  After you spend $4,000 … 90 days" bằng JavaScript; HTML chỉ còn ô bảng "50,000 Bilt Points + Gold
+  Status" và chú thích sao cách xa >300 ký tự. Mở bằng browser 16/10: offer + phí $495 khớp site.
+  Palladium nay còn tặng $300 Bilt Cash — site chưa ghi (task thẻ Mỹ lo).
+- `npm audit` 5 high: vẫn là `braces` qua `eslint-config-next` (mục 10/10).

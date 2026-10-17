@@ -147,7 +147,8 @@ export const REASON_CODE_NOTES: Record<ReasonCode, string> = {
   UPGRADE_WITHIN_HELD_FAMILY:
     "suitability.ts — người dùng đã giữ một hạng khác trong cùng họ thẻ; đây là NÂNG HẠNG, không phải thẻ thứ hai.",
 
-  NO_NEW_CARD_NEEDED: "rank.ts — ứng viên NO_NEW_CARD thắng (§16 Rule 8).",
+  NO_NEW_CARD_NEEDED:
+    "rank.ts — điểm của NO_NEW_CARD từ 0.5 (§16 Rule 8), và strategies.ts — đứng yên từ 0.7. KHÔNG có nghĩa nó thắng: trang chỉ in câu này khi nó là hành động chính (present.ts).",
   WAIT_FOR_BETTER_OFFER:
     "strategies.ts — offer của các ứng viên hàng đầu đang ở vùng thấp của chính lịch sử chúng.",
   FOCUS_ON_AWARD_AVAILABILITY:

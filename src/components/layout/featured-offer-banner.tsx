@@ -1,5 +1,6 @@
 import { getCreditCardOffers } from "@/lib/content";
 import { isElevatedLive } from "@/lib/credit-card-state";
+import { settleWithin } from "@/lib/deadline";
 import { FeaturedOfferRotator, type FeaturedOffer } from "./featured-offer-rotator";
 
 /** A backstop only — the split below is what does the shortening. */
@@ -52,6 +53,9 @@ function shuffle<T>(items: T[]): T[] {
  * inside it opens on the same card — the rotation in the browser is what makes
  * sure the others are seen regardless.
  */
+/** Hạn chờ danh sách thẻ — dải này là phần phụ của MỌI trang. */
+const OFFERS_BUDGET_MS = 8_000;
+
 export async function FeaturedOfferBanner() {
   // Dải này nằm trong layout GỐC, tức là có mặt ở mọi URL. `lib/content` không
   // bắt lỗi, và webhook publish xoá cache bằng `expire: 0` — Contentful nấc
@@ -60,13 +64,22 @@ export async function FeaturedOfferBanner() {
   // 02/10/2026). Một dải quảng bá không được phép làm vậy: lỗi thì ẩn dải, ghi
   // log, trang vẫn chạy. Bắt ở ĐÂY chứ không trong hàm cache, để mảng rỗng
   // không bị cache như dữ liệu thật.
-  let offers: Awaited<ReturnType<typeof getCreditCardOffers>>;
-  try {
-    offers = await getCreditCardOffers();
-  } catch (error) {
-    console.error("[featured-offer-banner] không tải được danh sách thẻ, ẩn dải offer", error);
+  //
+  // Lỗi chưa đủ — còn TREO: SDK Contentful tự thử lại tới 6 × 30 giây, nên một
+  // lượt CDA treo giữ cả layout, tức mọi trang kể cả trang có nội dung nằm sẵn
+  // trong repo (thẻ Mỹ, khách sạn, công cụ), không gửi nổi byte HTML nào (Codex,
+  // audit 16/10/2026). Quá hạn thì ẩn dải như khi lỗi — cùng mức chờ với
+  // `getPostsWithin`.
+  const loaded = await settleWithin(getCreditCardOffers(), OFFERS_BUDGET_MS);
+  if (!loaded.ok) {
+    if (loaded.reason === "timeout") {
+      console.error(`[featured-offer-banner] danh sách thẻ quá ${OFFERS_BUDGET_MS}ms, ẩn dải offer`);
+    } else {
+      console.error("[featured-offer-banner] không tải được danh sách thẻ, ẩn dải offer", loaded.error);
+    }
     return null;
   }
+  const offers = loaded.value;
 
   const featured: FeaturedOffer[] = shuffle(offers.filter(isElevatedLive))
     .map((offer) => ({

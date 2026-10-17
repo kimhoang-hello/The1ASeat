@@ -130,6 +130,19 @@ test("hạng mục mỗi cái một trần y hệt nhau gộp thành một ý 'c
   assert.equal(lines("td-cash-back-visa-infinite", "earn").filter((line) => line.startsWith("3%")).length, 2);
 });
 
+test("một trần chung cho nhiều ý: mỗi ý nói là tính chung (Scotiabank® Gold từ 16/10/2026)", () => {
+  assert.deepEqual(lines("scotiabank-gold-amex", "earn", "2026-10-16"), [
+    "6x siêu thị — Sobeys, Safeway, FreshCo và các siêu thị cùng nhóm — tối đa $50,000 chi tiêu/năm tính chung cho các nhóm 6x, 5x, 3x, sau đó 1x",
+    "5x ăn uống, giải trí, siêu thị, giao đồ ăn — tối đa $50,000 chi tiêu/năm tính chung cho các nhóm 6x, 5x, 3x, sau đó 1x",
+    "3x xăng, phương tiện công cộng, rideshare, streaming — tối đa $50,000 chi tiêu/năm tính chung cho các nhóm 6x, 5x, 3x, sau đó 1x",
+    "1x mọi chi tiêu khác",
+  ]);
+  // Trước ngày kiểm: dữ kiện cũ y nguyên (bản ghi chỉ thêm, không sửa tại chỗ).
+  assert.ok(lines("scotiabank-gold-amex", "earn", "2026-10-15").every((line) => !line.includes("$50,000")));
+  // Trần riêng một ý không mang chữ "tính chung".
+  assert.ok(lines("amex-cobalt", "earn", "2026-10-16").every((line) => !line.includes("tính chung")));
+});
+
 test("số của bảo hiểm thuê xe là giá trị xe, không phải hạn mức bồi thường", () => {
   assert.ok(lines("amex-business-platinum", "insurance").includes("Thuê xe (xe tới $85,000)"));
 });

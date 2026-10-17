@@ -34,7 +34,9 @@ import {
   COMPONENT_LABEL,
   COMPONENT_STRENGTH,
   CONFIDENCE_BY_CAUSE,
+  CONFIDENCE_CLOSE,
   CONFIDENCE_NO_QUESTION_LEFT,
+  CONFIDENCE_NO_RIVAL,
   CONFIDENCE_LABEL,
   REASON_COVERED_BY_WARNING,
   REASON_TEXT,
@@ -790,6 +792,21 @@ function confidenceOf(
     level: "high" | "medium" | "low";
   },
   hasFollowUp: boolean,
+  /**
+   * Engine có kết luận hai lựa chọn đầu HOÀ không (`SCORES_NEARLY_TIED`) — MỘT
+   * định nghĩa với `confidence.ts`. `scoreSeparation < 0.75` (chênh dưới 0.155)
+   * chỉ nói khoảng cách là yếu tố yếu, không nói hoà.
+   */
+  tied: boolean,
+  /** Lựa chọn đứng đầu là "chưa mở thẻ" — câu không được gọi nó là "thẻ". */
+  noCardFirst: boolean,
+  /**
+   * Còn lựa chọn nào khác hiện ra không. Hết (người giữ đủ mọi thẻ, chỉ còn "chưa
+   * mở thẻ") thì engine đặt `scoreSeparation` 0.5 — "không đo được", không phải
+   * "sát" — và câu "nên xem cả hai" chỉ vào một thứ không có (Codex, vòng bác
+   * bản vá 16/10/2026).
+   */
+  hasRival: boolean,
 ): { level: "high" | "medium" | "low"; label: string; sentence: string } {
   if (factors.level === "high") {
     return {
@@ -809,26 +826,35 @@ function confidenceOf(
       ["scoreSeparation", factors.scoreSeparation],
     ] as const
   )
-    .filter(([, value]) => value < WEAK)
+    .filter(([key, value]) => value < WEAK && (hasRival || key !== "scoreSeparation"))
     .sort((a, b) => a[1] - b[1]);
 
   // Còn câu để hỏi và dữ liệu còn thiếu → nói điều đó trước: đó là thứ người
   // đọc bấm một cái là sửa được.
   const actionable = hasFollowUp && factors.dataCompleteness < WEAK ? "dataCompleteness" : null;
-  const lead = actionable ?? weak[0]?.[0] ?? "scoreSeparation";
-  const tied = lead !== "scoreSeparation" && factors.scoreSeparation < WEAK;
-  // Hết câu để hỏi (người dùng đã bỏ qua hết) thì "trả lời thêm vài câu" là
-  // bảo họ làm một việc trang không còn cho làm (Codex, rà trang 22/09/2026).
+  const lead = actionable ?? weak[0]?.[0] ?? null;
+  const top = noCardFirst ? "Lựa chọn đứng đầu" : "Thẻ đứng đầu";
+  const fill = (row: { label: string; sentence: string }) => ({ ...row, sentence: row.sentence.replace("{top}", top) });
+  // Không yếu tố nào yếu mà mức vẫn chưa `high`: mức bị ĐẶT TRẦN (chặng chưa
+  // có bảng giá — `confidence.ts`). Trước 16/10/2026 nhánh này rơi về câu "ngang
+  // điểm" dù hai lựa chọn đầu cách xa nhau.
   const base =
-    lead === "dataCompleteness" && !hasFollowUp
-      ? { ...CONFIDENCE_BY_CAUSE.dataCompleteness, sentence: CONFIDENCE_NO_QUESTION_LEFT }
-      : CONFIDENCE_BY_CAUSE[lead];
+    lead === null
+      ? { label: CONFIDENCE_LABEL[factors.level], sentence: hasRival ? CONFIDENCE_NO_QUESTION_LEFT : CONFIDENCE_NO_RIVAL }
+      : lead === "scoreSeparation"
+        ? fill(tied ? CONFIDENCE_BY_CAUSE.scoreSeparation : CONFIDENCE_CLOSE)
+        : lead === "dataCompleteness" && !hasFollowUp
+          ? // Hết câu để hỏi (người dùng đã bỏ qua hết) thì "trả lời thêm vài câu"
+            // là bảo họ làm một việc trang không còn cho làm (Codex, rà trang 22/09/2026).
+            { ...CONFIDENCE_BY_CAUSE.dataCompleteness, sentence: CONFIDENCE_NO_QUESTION_LEFT }
+          : CONFIDENCE_BY_CAUSE[lead];
   return {
     level: factors.level,
     label: base.label,
-    sentence: tied
-      ? `${base.sentence} Hai thẻ đứng đầu cũng đang gần như ngang điểm nhau.`
-      : base.sentence,
+    sentence:
+      lead !== "scoreSeparation" && tied
+        ? `${base.sentence} Hai lựa chọn đứng đầu cũng đang gần như ngang điểm nhau.`
+        : base.sentence,
   };
 }
 
@@ -886,7 +912,21 @@ export function presentRun(
     })(),
     // "Chưa mở thẻ nào" luôn là một ứng viên (§16 Rule 8), nên nó luôn hiện ra
     // — như một lựa chọn thật, không phải như một dòng chữ an ủi ở cuối trang.
-    noAction: noActionIsPrimary ? null : actionOf(result.noAction, cards, primaryReasons),
+    //
+    // Đứng SAU một thẻ thì "chưa mở thẻ" không được nói "mở thêm thẻ chưa mang lại
+    // gì đáng kể": `rank.ts` gắn mã đó khi điểm của nó từ 0.5, kể cả khi một thẻ
+    // vẫn hơn nó — `u_japan_funded` 16/10/2026: Amex® Green (0.584) là gợi ý chính,
+    // ngay dưới là câu bảo mở thẻ không đáng (0.515). Mã chỉ đúng khi nó thắng.
+    noAction: noActionIsPrimary
+      ? null
+      : actionOf(
+          {
+            ...result.noAction,
+            reasonCodes: result.noAction.reasonCodes.filter((code) => code !== "NO_NEW_CARD_NEEDED"),
+          },
+          cards,
+          primaryReasons,
+        ),
     // Cảnh báo trùng câu với một lý do đã hiện ngay trên thẻ thì bỏ: người đọc
     // gặp đúng một câu hai lần, và khối "lưu ý" loãng đi vì nó.
     //
@@ -896,7 +936,14 @@ export function presentRun(
     warnings: warningsOf(
       runWarnings.filter((code) => trip === null || !TRIP_BLOCK_WARNINGS.has(code)),
     ).filter((text) => !primary.reasons.some((reason) => reason.text === text)),
-    confidence: confidenceOf(result.confidence, hasFollowUp),
+    confidence: confidenceOf(
+      result.confidence,
+      hasFollowUp,
+      result.reasonCodes.includes("SCORES_NEARLY_TIED"),
+      noActionIsPrimary,
+      // Thẻ đứng đầu thì "chưa mở thẻ" luôn là lựa chọn kế tiếp (§16 Rule 8).
+      !noActionIsPrimary || result.alternatives.length > 0,
+    ),
     trip,
     dataVerifiedAt: record.derivedState.goals[goalIndex]?.confidenceInputs.oldestVerifiedAt ?? null,
   };

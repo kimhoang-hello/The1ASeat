@@ -288,9 +288,15 @@ export function addedEarnFor(
   asOf: string,
   mode: RedemptionMode = "best",
   /**
-   * Trần cỡ nhóm dính trần cho lời giải chính xác. Dữ liệu hôm nay dính tối đa
-   * 7 hạng mục (Cobalt® 3 + TD® Cash Back 4), tức đường lui leo đồi chưa với
-   * tới được — test hạ trần về 0 để nhánh đó không thành code chưa ai chạy.
+   * Trần cỡ nhóm dính trần cho lời giải chính xác — test hạ trần về 0 để nhánh
+   * leo đồi không thành code chưa ai chạy. Tới 15/10/2026 dữ liệu dính tối đa 7
+   * hạng mục (Cobalt® 3 + TD® Cash Back 4). Từ 16/10/2026 Scotiabank® Gold có MỘT
+   * trần chung cho 8 hạng mục: người KHAI từ 8 hạng mục trong số đó (hoặc giữ
+   * Gold cùng TD® Cash Back / TD First Class®) lui về leo đồi, và leo đồi lệch
+   * thật — đo 16/10/2026 trên hồ sơ 10 hạng mục giữ Gold: phần thêm của RBC®
+   * Avion® $328 thay vì $451. Nâng trần lên 8 thì lượt gợi ý đầy đủ (cả §30) của
+   * hồ sơ 11 hạng mục chậm ~4× (120 → 470 ms), lên 10 thì ~18× (→ 2.2 s), nên giữ
+   * 7 cho tới khi lời giải chính xác nhanh hơn — HANDOFF §9.
    */
   exactLinkedLimit: number = EXACT_LINKED_LIMIT,
 ): Map<string, number> {
@@ -417,7 +423,7 @@ export function addedEarnFor(
   return added;
 }
 
-/** Nhóm hạng mục DÍNH trần chung lớn hơn chừng này thì lui về leo đồi: 3^n phép thử cho mỗi thẻ có trần chung. */
+/** Nhóm hạng mục DÍNH trần chung lớn hơn chừng này thì lui về leo đồi: 3^n phép thử cho mỗi thẻ có trần chung. Vì sao là 7: xem tham số `exactLinkedLimit`. */
 const EXACT_LINKED_LIMIT = 7;
 
 /**
