@@ -3703,6 +3703,8 @@ xem dải offer và ca một lựa chọn bên dưới).
   đủ (cả §30) của hồ sơ 11 hạng mục chậm 120 → 470 ms, ngưỡng 10 → 2.2 s. Người khai ≥ 8 hạng mục
   của Gold (hoặc giữ Gold cùng TD® Cash Back / TD First Class®) chạy leo đồi, lệch tới ~$120/năm phần
   thêm. Chi tiết + việc còn lại ở HANDOFF §9.
+  → **Đã làm cùng ngày** (4.37.0): lời giải chính xác nhanh lên ~40× rồi mới nâng trần lên 10 — mục
+  "Lời giải chính xác nhanh, `EXACT_LINKED_LIMIT` 10 (16/10/2026)" ngay dưới.
 - `u_japan_funded` (200,000 MR, cần 170,000 điển hình / 205,000 cao) được khuyên Amex® Green trên
   "chưa mở thẻ": trọng số §10.2 (`trip_currency_utility`), như ghi chú 07/10 — không phải lỗi code.
 - `u_student` được khuyên Quicksilver World (đòi thu nhập) trên thẻ sinh viên: thu nhập từ chối khai
@@ -3716,3 +3718,70 @@ xem dải offer và ca một lựa chọn bên dưới).
   Status" và chú thích sao cách xa >300 ký tự. Mở bằng browser 16/10: offer + phí $495 khớp site.
   Palladium nay còn tặng $300 Bilt Cash — site chưa ghi (task thẻ Mỹ lo).
 - `npm audit` 5 high: vẫn là `braces` qua `eslint-config-next` (mục 10/10).
+
+## Lời giải chính xác nhanh, `EXACT_LINKED_LIMIT` 10 (16/10/2026) — đừng đề xuất lại
+
+Engine 4.36.0 → **4.37.0**. Việc còn lại của mục 16/10 ngay trên: trần chung $50,000 của
+Scotiabank® Gold gom 8 hạng mục, nhóm hạng mục DÍNH trần của dữ liệu lên 10, trong khi lời giải
+chính xác của `addedEarnFor` chỉ chạy tới 7 — người khai nhiều hạng mục lặng lẽ chạy leo đồi.
+
+**Đo trước/sau** (hồ sơ `advancedCollector` + giữ thêm Scotiabank® Gold và TD® Cash Back, 11 hạng
+mục khai: siêu thị, ăn uống, du lịch, giải trí, giao đồ ăn, xăng, phương tiện công cộng, rideshare,
+streaming, sạc xe, hoá đơn định kỳ; ngày 2026-10-16; lượt đầy đủ = `recommend()` cả 25 lượt chạy
+lại của §30):
+
+| | lượt đầy đủ | một lượt không §30 | `addedEarnFor` best + cash |
+| --- | --- | --- | --- |
+| 4.36.0, trần 7 (leo đồi) | 89 ms | 2.8 ms | 1.9 ms |
+| 4.36.0 nếu nâng trần 10 | 2,155 ms | 82 ms | 81 ms |
+| **4.37.0, trần 10** | **55 ms** | 1.9 ms | 0.9 ms |
+
+Ca nặng nhất dựng được (giữ cả 4 thẻ có trần chung, 15 hạng mục): 46 ms. Số 120 → 470 ms ở mục 16/10
+là của một hồ sơ khác; với hồ sơ này trần 8 không đổi gì (ví dính 10 > 8 vẫn leo đồi).
+
+**Thời gian nằm ở đâu và đã sửa ra sao.** Bản cũ, với MỖI ứng viên có trần chung, dựng lại quy hoạch
+động 3^n cho mọi thẻ dính trần của ví VÀ gọi `earnFitFor` cho từng tập con (khoá chuỗi
+`id|0,1,2…`). Bản mới: (1) mỗi thẻ dựng mô hình trên các hạng mục một lần (`cardOnUnits`); (2) bảng
+giá trị trên mọi tập con tính bằng phép TÁCH theo nhóm trần (`subsetTable`) — hạng mục không chung
+trần cộng thẳng, mỗi nhóm chỉ phụ thuộc phần của nó — không gọi `earnFitFor`; (3) quy hoạch động
+phía ví dựng MỘT lần cho cả tập ứng viên; mỗi ứng viên chỉ thử 2^n tập nó có thể nhận
+(`linkedGain`); (4) phần thêm = cộng phần thêm từng chỗ, không trừ hai tổng, nên "không thêm gì" ra
+đúng 0. `earnFitFor` tách thành `earnEntryFor` / `capScale` / `entryValue` / `valueOfEntries` — cùng
+phép tính, cùng thứ tự cộng, khớp BITWISE với bản cũ (Codex so 44,400 phép), nên công thức trần chỉ
+sống ở một chỗ.
+
+**Lỗi có sẵn bắt được khi viết lại** (đổi số, có trong 4.37.0): thẻ ảo (gộp các thẻ đang giữ không
+có trần chung) nhận hạng mục với giá $0 cả khi ví KHÔNG có thẻ cộng thẳng nào — tức cho phép bỏ một
+hạng mục "không đặt lên đâu" khi nó làm loãng trần CHI TIÊU (trần theo điểm thì không loãng được).
+Ví chỉ Scotiabank® Gold, $4,500 siêu thị + $800 streaming một tháng: Amex® Green "thêm" $172.80 thay
+vì $227.74. Nay là −∞.
+
+**Leo đồi lệch bao nhiêu trên dữ liệu 16/10** — nhiều hơn ước tính ~$120 của mục trên: quét 900 hồ sơ
+ngẫu nhiên giữ Gold / Gold + TD® Cash Back / Cobalt® + Gold + TD® Cash Back, lệch lớn nhất $388
+(Amex® Aeroplan® Reserve), $492 (Amex® Platinum: $633 thật, leo đồi $141) và $206 (Scotiabank®
+Momentum®). Hai hồ sơ đầu nằm trong test, kèm phép kiểm leo đồi lệch thật (hồ sơ thứ hai trong test
+có thêm $1,000 "mọi thứ khác": Platinum $729.04 thật, leo đồi $236.64 — vẫn lệch $492).
+
+**Test.** Oracle vét cạn (`bruteForceBest`) nay nhớ giá trị mỗi thẻ trên mỗi tập hạng mục theo mặt nạ
+bit — vẫn thử đủ k^n phân bổ, chỉ không gọi lại `earnFitFor` cho cùng một ô (4 thẻ × 10 hạng mục =
+4^10). Bốn test mới ở ngày 2026-10-16 so MỌI thẻ ứng viên với vét cạn: ví chỉ Gold (ca −∞), ví Gold
+với thẻ mới kéo nhóm lên 9–10, ví Gold + TD® Cash Back dính đủ 10 (cả thước cash), ví ba thẻ dính
+trần. Test canh "mọi nhóm dính trần của dữ liệu gộp lại vừa `EXACT_LINKED_LIMIT`" (`widestLinkedGroup`)
+quét 17 hạng mục ở mọi ngày bộ seed đổi thẻ/tỷ lệ/trần (bắt đầu, ngày cuối, ngày sau ngày cuối) × mọi
+mức `knownAt` (ngày ghi của từng dòng tỷ lệ/trần, và không cắt) — lần này dữ liệu vượt mốc mà không gì
+đỏ, lần sau nó đỏ. Hai test dựng dữ liệu giả chứng minh chính phép canh đỏ được: thẻ hẹn ra mắt
+2027-01-01 dính ba hạng mục mới (13), và dòng tỷ lệ ghi muộn làm hạng mục rơi về `everything_else` có
+trần (14) — Codex bắt hai lỗ này ở vòng bác bản vá và vòng chốt. Test ép leo đồi (trần 0) giữ nguyên. Kiểm ngược: cài lại thẻ ảo $0, trần
+7, bảng tập con bỏ phần vượt trần, phía ví lấy 0 cho hạng mục chỉ dính trần ở thẻ mới, thẻ mới cộng
+thẳng không nhập thẻ ảo — cả năm đều đỏ. So với bản cũ trên 800 hồ sơ ngẫu nhiên (nhóm ≤ 7, có thẻ
+cộng thẳng): lệch tối đa 6e-11 cent; 16 nhân vật mẫu ra y hệt (bản chụp chỉ đổi version).
+
+**Codex, năm vòng:** (1) tìm lỗi lệch vét cạn — không có (16,870 phép so trên dữ liệu thật, `earnFitFor`
+bitwise 44,400 phép); (2) bác ba kết luận — "đủ nhanh cho MỌI hồ sơ" sai ở hồ sơ 126 lượt §30 (dưới),
+hai kết luận kia đứng; (3) bác bản vá — −∞, không làm bộ nhớ đệm, tăng version đều ĐÚNG; test canh là
+BẢN VÁ HỎNG (thiếu ngày của `products`); (4) chốt — thiếu trục `knownAt`, và một chú thích ghi số của
+hồ sơ khác. Đã vá cả hai; (5) xác nhận bản vá cuối — ĐÚNG, không còn chặn merge.
+
+**Cố ý KHÔNG làm:** nhớ phần tích thêm vào ví giữa các lượt chạy lại của §30 (HANDOFF §9). Codex dựng
+một hồ sơ 126 lượt chạy lại (20 thẻ từng giữ không ngày, hai mục tiêu) ≈ 260 ms — 4.36.0 cũng 270 ms,
+tức chi phí số lượt §30 có từ trước, không phải hồi quy.
