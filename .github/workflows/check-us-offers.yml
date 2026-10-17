@@ -3,7 +3,7 @@ name: Canh welcome offer thẻ Mỹ
 # Việc `check-rebates` làm cho thẻ Canada, làm cho mục `/us-credit-cards`.
 # Job CHỈ BÁO, không tự sửa và không bao giờ push: nó đỏ khi có thẻ Mỹ cần rà —
 # offer đã qua `expiresAt`, con số trên site không còn thấy trên trang ngân
-# hàng (chỉ đọc được Chase® và Bilt bằng `fetch`), hoặc quá 21 ngày không ai đối
+# hàng (chỉ đọc được Chase® bằng `fetch`; Bilt rời nhóm này 14/10/2026), hoặc quá 21 ngày không ai đối
 # chiếu. Rà và sửa là việc của task cục bộ `ghe-1a-canh-offer-the-my`, chạy
 # bằng browser thật; xem đầu `scripts/check-us-offers.mts`.
 #

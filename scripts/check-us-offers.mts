@@ -16,10 +16,10 @@
 // 2. QUÁ HẠN RÀ (không cần mạng). `verifiedOn` cũ hơn `STALE_DAYS` ngày — tức
 //    task cục bộ đã lâu không chạy được, và không ai biết số còn đúng không.
 // 3. LỆCH TRANG NGÂN HÀNG (cần mạng). Chỉ làm được với ngân hàng in offer
-//    thẳng vào HTML — đo 30/09/2026: Chase® và Bilt. American Express®,
-//    Capital One®, Bank of America® và Citi® dựng offer bằng JavaScript, `fetch`
-//    trần không thấy con số nào; các thẻ đó chỉ có phép 1 và 2, phần còn lại
-//    thuộc về task cục bộ.
+//    thẳng vào HTML — đo 30/09/2026: Chase® và Bilt; từ 14/10/2026 chỉ còn
+//    Chase®. American Express®, Capital One®, Bank of America®, Citi® và Bilt
+//    dựng offer bằng JavaScript, `fetch` trần không thấy đủ câu offer; các thẻ đó
+//    chỉ có phép 1 và 2, phần còn lại thuộc về task cục bộ.
 //
 // Phép 3 là phép tìm "dấu vết", không phải parser: nó hỏi "con số site đang
 // ghi CÒN xuất hiện trên trang ngân hàng không", và bonus phải đứng gần mức chi
@@ -32,8 +32,13 @@ const OFFLINE = process.argv.includes("--offline");
 /** Quá chừng này ngày không ai đối chiếu lại thì coi như không còn ai canh. */
 const STALE_DAYS = 21;
 
-/** Ngân hàng in offer vào HTML trả về cho `fetch` — xem đầu file. */
-const FETCHABLE = new Set(["chase", "bilt"]);
+/**
+ * Ngân hàng in offer vào HTML trả về cho `fetch` — xem đầu file. Bilt rời nhóm
+ * này 14/10/2026: câu "after you spend $4,000" chuyển sang phần dựng bằng
+ * JavaScript, HTML chỉ còn ô bảng "50,000 Bilt Points + Gold Status" với chú
+ * thích sao cách xa. Tác giả chọn rà Bilt bằng browser thay vì nới phép kiểm.
+ */
+const FETCHABLE = new Set(["chase"]);
 
 /** Bonus và mức chi tiêu phải nằm trong cùng một câu quảng cáo. */
 const NEAR = 300;

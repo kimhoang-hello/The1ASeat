@@ -1265,6 +1265,13 @@ Citi® dựng số bằng JavaScript (đo 30/09):
   `expiresAt`; con số trên site không còn trên trang Chase®/Bilt (bonus phải đi
   liền "spend $X" đúng mức chi — con số trần còn xuất hiện ở thẻ quảng cáo
   chéo); hoặc `verifiedOn` cũ hơn 21 ngày. Job đỏ ở đây là tín hiệu có chủ ý.
+  **Từ 16/10/2026 phép đọc trang chỉ còn Chase®.** Job đỏ từ 14/10 vì Bilt dời
+  câu "after you spend $4,000" sang phần dựng bằng JavaScript (HTML còn ô bảng
+  "50,000 Bilt Points + Gold Status" và chú thích sao cách xa >300 ký tự) dù
+  offer vẫn khớp. Tác giả chọn chuyển Bilt sang nhóm rà bằng browser thay vì
+  nới phép kiểm. Cùng ngày Bilt Palladium thêm $300 USD Bilt Cash vào welcome
+  bonus (bảng so sánh tách dòng "Bilt Cash welcome bonus" khỏi dòng bonus sau
+  khi chi tiêu).
 - Task cục bộ `ghe-1a-canh-offer-the-my` (T2 + T5, 9:23) mở trang ngân hàng bằng
   browser, sửa `us-credit-cards.ts`, đặt lại `verifiedOn`, commit + push. Đây là
   bên duy nhất SỬA số liệu thẻ Mỹ. Task không chạy (app đóng) quá 21 ngày thì
