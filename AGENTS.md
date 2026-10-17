@@ -1271,7 +1271,9 @@ Citi® dựng số bằng JavaScript (đo 30/09):
   offer vẫn khớp. Tác giả chọn chuyển Bilt sang nhóm rà bằng browser thay vì
   nới phép kiểm. Cùng ngày Bilt Palladium thêm $300 USD Bilt Cash vào welcome
   bonus (bảng so sánh tách dòng "Bilt Cash welcome bonus" khỏi dòng bonus sau
-  khi chi tiêu).
+  khi chi tiêu). Cũng ngày đó tác giả chốt: ba thẻ Atmos™ của Bank of America®
+  ghi "Limited-time online offer" mà không có ngày — đó là câu quảng cáo thường
+  lệ, KHÔNG bật elevated, đừng hỏi lại.
 - Task cục bộ `ghe-1a-canh-offer-the-my` (T2 + T5, 9:23) mở trang ngân hàng bằng
   browser, sửa `us-credit-cards.ts`, đặt lại `verifiedOn`, commit + push. Đây là
   bên duy nhất SỬA số liệu thẻ Mỹ. Task không chạy (app đóng) quá 21 ngày thì
