@@ -111,7 +111,7 @@ export default async function RecommenderPage({ searchParams }: PageProps) {
         breadcrumbs={[{ label: nav("creditCards"), href: "/credit-cards" }]}
         badge={<BetaBadge />}
         title="Gợi ý thẻ cho mục tiêu của bạn"
-        subtitle="Trả lời vài câu hỏi để mình đưa gợi ý về thẻ nào tiếp theo phù hợp với bạn."
+        subtitle="Trả lời vài câu hỏi để mình gợi ý thẻ phù hợp cho bạn mở tiếp theo."
       />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
