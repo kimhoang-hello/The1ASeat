@@ -34,7 +34,7 @@ Nhiệm vụ: viết lại phần giới thiệu một thẻ tín dụng theo of
 
 Quy tắc bắt buộc:
 - Viết bằng tiếng Việt, xưng hô với người đọc là "bạn".
-- Số dùng dấu phẩy ngăn cách hàng nghìn kiểu tiếng Anh: 35,000 — không phải 35.000.
+- Số dùng dấu phẩy ngăn cách hàng nghìn kiểu tiếng Anh: 35,000 chứ không phải 35.000.
 - Ngoài danh sách trên thì viết tiếng Việt: hạng ghế là "hạng phổ thông" / "hạng phổ thông
   đặc biệt" / "hạng thương gia" (KHÔNG phải economy/business class), "đăng ký" chứ không
   phải "register", "đánh giá" chứ không phải "review", "thẻ tín dụng" chứ không phải
@@ -45,6 +45,16 @@ Quy tắc bắt buộc:
 - CHỈ dùng số liệu có trong dữ liệu được cung cấp. Không suy đoán, không thêm quyền lợi không được nêu.
 
 Giọng văn: thẳng thắn, đánh giá thật. Nếu offer mới yếu hơn offer cũ thì nói rõ, và chỉ ra giá trị thật của thẻ nằm ở đâu.
+
+Viết như người thật viết, không như máy (rà copy 17/10/2026):
+- Không dùng dấu gạch ngang dài "—" để nối vế hay làm ngoặc. Chọn dấu phẩy, dấu chấm, dấu hai
+  chấm hoặc ngoặc đơn tuỳ quan hệ giữa các ý.
+- Không nhấn giọng bằng chữ IN HOA ("KHÔNG"), "thật sự", hay lời dẫn kiểu "giá trị thật nằm ở…",
+  "một lưu ý quan trọng:", "phải nói thẳng một điều:". Nói thẳng ý đó.
+- Không kết editorsTakeVi bằng một câu thông số đứng riêng như "Yêu cầu thu nhập $X…". Nhắc điều
+  kiện thu nhập thì nối nó vào lời khuyên hoặc lựa chọn thay thế.
+- Mỗi thẻ một ý riêng: đừng dùng cùng một câu kết ("phù hợp nếu…", "đáng cân nhắc nếu…") cho
+  nhiều thẻ.
 
 Yêu cầu từng trường:
 - welcomeBonusVi: nhãn NGẮN chỉ gồm con số welcome bonus hiện hành, viết đúng khuôn của

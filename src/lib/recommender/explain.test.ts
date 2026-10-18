@@ -412,8 +412,8 @@ test("vòng Codex rà đối kháng: lý do của 'chưa mở thẻ', điểm m�
   assert.equal(mixed.facts.find((fact) => fact.id === "bonus")?.text, "welcome bonus hiện hành là 60,000 điểm");
 
   assert.equal(coverageStatement({ gap: 10_000, coverage: 1.4 }), null, "trang và payload phải cùng bỏ câu phủ mâu thuẫn");
-  assert.equal(coverageStatement({ gap: 0, coverage: 1.4 }), "điểm hiện tại phủ được cả chuyến này");
-  assert.equal(coverageStatement({ gap: null, coverage: 0.456 }), "điểm hiện tại phủ khoảng 46% chuyến này");
+  assert.equal(coverageStatement({ gap: 0, coverage: 1.4 }), "điểm hiện tại đủ cho cả chuyến này");
+  assert.equal(coverageStatement({ gap: null, coverage: 0.456 }), "điểm hiện tại tương đương khoảng 46% số điểm cần cho chuyến này");
   const contradictory = explanationPayload({ ...base, trip: { ...base.trip, gap: 10_000, coverage: 1.4 } });
   assert.ok(contradictory.facts.some((fact) => fact.id === "trip_gap"));
   assert.ok(!contradictory.facts.some((fact) => fact.id === "trip_coverage"), "vừa 'còn thiếu' vừa 'phủ được cả chuyến'");
@@ -463,7 +463,7 @@ test("payload thiếu hoặc mơ hồ: không mệnh đề rỗng, không số d
   assert.ok(!("bonus" in texts(explanationPayload(variants["offer rỗng"]))), "chuỗi rỗng thành dữ kiện");
   assert.equal(texts(explanationPayload(variants["offer bẩn"])).fee, "annual fee là $599");
   assert.equal(texts(explanationPayload(variants["đủ điểm dư"])).trip_gap, undefined);
-  assert.match(texts(explanationPayload(variants["đủ điểm dư"])).trip_coverage, /phủ được cả chuyến này/u);
+  assert.match(texts(explanationPayload(variants["đủ điểm dư"])).trip_coverage, /đủ cho cả chuyến này/u);
   assert.match(texts(explanationPayload(variants["chỉ biết sàn"])).trip_need, /cần ít nhất 60,000 điểm \(chưa biết mức cao nhất\)/u);
   assert.match(texts(explanationPayload(variants["chỉ biết trần"])).trip_need, /cần tối đa 90,000 điểm \(chưa biết mức thấp nhất\)/u);
   assert.equal(texts(explanationPayload(variants["chuyến trống"])).trip, "bạn muốn bay Nhật Bản");

@@ -332,16 +332,16 @@ test("'không thiếu' ở giá điển hình mà phủ dưới 100% cận trên
   // Codex, audit 25/09/2026: "Không thiếu" ngay trên "phủ khoảng 98%".
   assert.equal(
     coverageStatement({ coverage: 0.976, gap: 0 }),
-    "điểm hiện tại đủ ở mức giá điển hình; so với mức giá cao nhất thì phủ khoảng 98%",
+    "điểm hiện tại đủ ở mức giá điển hình, tương đương khoảng 98% số điểm cần ở mức giá cao nhất",
   );
-  assert.equal(coverageStatement({ coverage: 0.5, gap: 100_000 }), "điểm hiện tại phủ khoảng 50% chuyến này");
-  assert.equal(coverageStatement({ coverage: 1, gap: 0 }), "điểm hiện tại phủ được cả chuyến này");
+  assert.equal(coverageStatement({ coverage: 0.5, gap: 100_000 }), "điểm hiện tại tương đương khoảng 50% số điểm cần cho chuyến này");
+  assert.equal(coverageStatement({ coverage: 1, gap: 0 }), "điểm hiện tại đủ cho cả chuyến này");
   assert.equal(coverageStatement({ coverage: 1.2, gap: 5_000 }), null);
   // Làm tròn không được đẩy lên 100% khi vẫn còn thiếu (kiểm định kỳ 26/09/2026).
-  assert.equal(coverageStatement({ coverage: 139_999 / 140_000, gap: 1 }), "điểm hiện tại phủ khoảng 99% chuyến này");
+  assert.equal(coverageStatement({ coverage: 139_999 / 140_000, gap: 1 }), "điểm hiện tại tương đương khoảng 99% số điểm cần cho chuyến này");
   assert.equal(
     coverageStatement({ coverage: 0.997, gap: 0 }),
-    "điểm hiện tại đủ ở mức giá điển hình; so với mức giá cao nhất thì phủ khoảng 99%",
+    "điểm hiện tại đủ ở mức giá điển hình, tương đương khoảng 99% số điểm cần ở mức giá cao nhất",
   );
 });
 
@@ -368,11 +368,11 @@ test("số dư đã khai mà chưa nói bao nhiêu: không in điểm giữa th�
   // và không hứa "ít nhất": mẫu số là cận trên của khoảng mô hình.
   assert.equal(
     coverageStatement({ coverage: 0.728, gap: null, coverageIsEstimate: true, coverageLowerBound: 0.456 }),
-    "số điểm đã biết của bạn phủ khoảng 46% chuyến này",
+    "số điểm bạn đã khai tương đương khoảng 46% số điểm cần cho chuyến này",
   );
   assert.equal(
     coverageStatement({ coverage: 0.9995, gap: null, coverageIsEstimate: true, coverageLowerBound: 0.999 }),
-    "số điểm đã biết của bạn phủ khoảng 99% chuyến này",
+    "số điểm bạn đã khai tương đương khoảng 99% số điểm cần cho chuyến này",
   );
 
   // Hai chương trình: sàn phải là của CHƯƠNG TRÌNH ĐANG HIỂN THỊ (Codex, review
@@ -390,7 +390,7 @@ test("số dư đã khai mà chưa nói bao nhiêu: không in điểm giữa th�
   assert.equal(mixedView.trip.needProgram, "Air Canada® Aeroplan®");
   assert.ok(mixedView.trip.coverageIsEstimate);
   assert.equal(mixedView.trip.coverageLowerBound, 100_000 / (mixedView.trip.needHigh ?? Number.NaN));
-  assert.equal(coverageStatement(mixedView.trip), "số điểm đã biết của bạn phủ khoảng 22% chuyến này");
+  assert.equal(coverageStatement(mixedView.trip), "số điểm bạn đã khai tương đương khoảng 22% số điểm cần cho chuyến này");
   assert.ok(mixedView.trip.missing.some((row) => row.questionKey === "point_balance_amount_unknown:amex-mr"));
 
   // Số dư chưa khai ở chương trình KHÔNG chạm tới chặng (Avios® không có bảng
@@ -651,7 +651,7 @@ test("offer đúng MỘT mốc chi, không phần nào trả muộn, mới đư�
   assert.equal(offer.spendPerNinetyDays, 3750);
   assert.equal(
     spendSentenceOf(components),
-    "Mở thẻ này, rồi chi $7,500 trong 180 ngày đầu, để nhận trọn welcome bonus.",
+    "Mở thẻ này, rồi chi $7,500 trong 180 ngày đầu để nhận đủ welcome bonus.",
   );
   // Mỗi chu kỳ sao kê là một mốc riêng — nói theo chu kỳ, không cộng dồn.
   assert.ok(

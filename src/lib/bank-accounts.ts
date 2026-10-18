@@ -192,8 +192,8 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     bonusExpiresOn: "2026-10-29",
     bonusConditionsVi: [
       "Mở tài khoản mới trong khoảng 03/07/2026 – 29/10/2026.",
-      "$700 khi mở Preferred Package hoặc Ultimate Package mới và hoàn thành các giao dịch yêu cầu.",
-      "Tối đa $300 nữa khi mở kèm Money Master Savings Account mới và/hoặc thẻ tín dụng Scotiabank® đủ điều kiện — chỉ tính khi bạn đã đạt phần $700.",
+      "$700 khi mở Preferred Package hoặc Ultimate Package mới và hoàn thành các giao dịch theo yêu cầu.",
+      "Tối đa $300 nữa khi mở kèm Money Master Savings Account mới và/hoặc thẻ tín dụng Scotiabank® đủ điều kiện; chỉ tính khi bạn đã đủ điều kiện nhận $700.",
     ],
     keyBenefitsVi: [
       "Giao dịch debit không giới hạn",
@@ -222,8 +222,8 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     bonusExpiresOn: "2026-10-29",
     bonusConditionsVi: [
       "Mở tài khoản mới trong khoảng 03/07/2026 – 29/10/2026.",
-      "$700 khi mở Preferred Package hoặc Ultimate Package mới và hoàn thành các giao dịch yêu cầu.",
-      "Tối đa $300 nữa khi mở kèm Money Master Savings Account mới và/hoặc thẻ tín dụng Scotiabank® đủ điều kiện — chỉ tính khi bạn đã đạt phần $700.",
+      "$700 khi mở Preferred Package hoặc Ultimate Package mới và hoàn thành các giao dịch theo yêu cầu.",
+      "Tối đa $300 nữa khi mở kèm Money Master Savings Account mới và/hoặc thẻ tín dụng Scotiabank® đủ điều kiện; chỉ tính khi bạn đã đủ điều kiện nhận $700.",
     ],
     keyBenefitsVi: [
       "Giao dịch debit và Interac e-Transfer® không giới hạn",
@@ -347,7 +347,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     bonusExpiresOn: "2026-11-02",
     bonusConditionsVi: [
       "Là thường trú nhân hoặc người có work permit đến Canada trong vòng 5 năm trở lại (BMO® yêu cầu PR Card, Confirmation of Permanent Residency hoặc IMM 1442).",
-      "Mở và nạp tiền tài khoản mới trước 02/11/2026.",
+      "Mở và nạp tiền vào tài khoản mới trước 02/11/2026.",
       "Set up direct deposit từ $500/tháng (lương, chính phủ hoặc lương hưu), khoản đầu tiên về trước 31/12/2026.",
       "Thanh toán 2 hoá đơn online từ $50 cho 2 nhà cung cấp khác nhau, hoặc set up 2 pre-authorized debit từ $50, trước 31/12/2026.",
     ],
@@ -376,7 +376,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     bonusLabelVi: "Tối đa $900",
     bonusExpiresOn: "2026-11-02",
     bonusConditionsVi: [
-      "$700: mở và nạp tiền tài khoản Performance hoặc Premium mới trước 02/11/2026, set up direct deposit từ $500/tháng, và thanh toán 2 hoá đơn online từ $50 cho 2 nhà cung cấp khác nhau (hoặc 2 pre-authorized debit từ $50) — tất cả trước 31/12/2026.",
+      "$700: mở và nạp tiền vào tài khoản Performance hoặc Premium mới trước 02/11/2026, set up direct deposit từ $500/tháng, và thanh toán 2 hoá đơn online từ $50 cho 2 nhà cung cấp khác nhau (hoặc 2 pre-authorized debit từ $50); tất cả trước 31/12/2026.",
       "$150 nữa: mở Savings Amplifier Account trước 02/11/2026, nạp từ $10,000 trong 30 ngày đầu và giữ mức đó thêm 120 + 90 ngày.",
       "$50 nữa: tạo 1 Goal và áp dụng 1 Strategy trong My Financial Progress trước 31/12/2026.",
       "Đã có tài khoản chequing BMO® trong khoảng 07/08/2025 – 02/11/2026 thì không đủ điều kiện; đóng tài khoản trước 02/11/2027 cũng mất bonus.",
@@ -404,7 +404,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     bonusLabelVi: "Tối đa $900",
     bonusExpiresOn: "2026-11-02",
     bonusConditionsVi: [
-      "$700: mở và nạp tiền tài khoản Performance hoặc Premium mới trước 02/11/2026, set up direct deposit từ $500/tháng, và thanh toán 2 hoá đơn online từ $50 cho 2 nhà cung cấp khác nhau (hoặc 2 pre-authorized debit từ $50) — tất cả trước 31/12/2026.",
+      "$700: mở và nạp tiền vào tài khoản Performance hoặc Premium mới trước 02/11/2026, set up direct deposit từ $500/tháng, và thanh toán 2 hoá đơn online từ $50 cho 2 nhà cung cấp khác nhau (hoặc 2 pre-authorized debit từ $50); tất cả trước 31/12/2026.",
       "$150 nữa: mở Savings Amplifier Account trước 02/11/2026, nạp từ $10,000 trong 30 ngày đầu và giữ mức đó thêm 120 + 90 ngày.",
       "$50 nữa: tạo 1 Goal và áp dụng 1 Strategy trong My Financial Progress trước 31/12/2026.",
       "Đã có tài khoản chequing BMO® trong khoảng 07/08/2025 – 02/11/2026 thì không đủ điều kiện; đóng tài khoản trước 02/11/2027 cũng mất bonus.",
@@ -434,7 +434,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     bonusExpiresOn: "2026-11-03",
     bonusConditionsVi: [
       "Mở tài khoản Student Chequing mới và đang học tại đại học, cao đẳng hoặc trường nghề.",
-      "Hoàn thành các bước BMO® yêu cầu để mở khoá phần thưởng.",
+      "Hoàn thành các bước BMO® yêu cầu để nhận phần thưởng.",
       "Nhận email trong vòng 3 tuần để chọn phần thưởng Best Buy.",
     ],
     keyBenefitsVi: [
@@ -477,7 +477,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     keyBenefitsVi: [
       "Giao dịch debit, Interac e-Transfer® và thanh toán hoá đơn miễn phí không giới hạn",
       "Không phí ATM và không phí chuyển đổi ngoại tệ, hoàn lại cả phí ATM của bên thứ ba, không giới hạn số lần",
-      "Lãi tính trên toàn bộ số dư, kể cả tiền đang chờ tiêu — không phải chuyển qua lại giữa hai tài khoản",
+      "Lãi tính trên toàn bộ số dư, kể cả tiền để chi tiêu. Bạn không phải chuyển tiền qua lại giữa hai tài khoản",
       "Bảo hiểm CDIC tới $1,000,000 cho khoản tiền gửi CAD đủ điều kiện",
     ],
     url: "https://www.wealthsimple.com/en-ca/product/cash",
@@ -501,10 +501,10 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     interestRate: 2.25,
     regularRate: 1.25,
     promoNoteVi:
-      "Đây chính là tài khoản Wealthsimple® Chequing — Wealthsimple không có tài khoản tiết kiệm riêng, và $25 bonus chỉ tính một lần cho tài khoản đầu tiên. Lãi đi theo hạng khách hàng: Core 1.25%, Premium 1.75%, Generation 2.25%; Core và Premium cộng thêm 0.50% khi có direct deposit từ $2,000/tháng, trần vẫn 2.25%.",
+      "Đây chính là tài khoản Wealthsimple® Chequing. Wealthsimple không có tài khoản tiết kiệm riêng, và $25 bonus chỉ tính một lần cho tài khoản đầu tiên. Lãi đi theo hạng khách hàng: Core 1.25%, Premium 1.75%, Generation 2.25%; Core và Premium cộng thêm 0.50% khi có direct deposit từ $2,000/tháng, trần vẫn 2.25%.",
     keyBenefitsVi: [
       "Không monthly fee, không yêu cầu số dư tối thiểu",
-      "Rút tiền lúc nào cũng được, không có kỳ hạn báo trước",
+      "Rút tiền lúc nào cũng được, không cần báo trước",
       "Mở tới 8 tài khoản cá nhân và 8 tài khoản chung để tách mục tiêu tiết kiệm",
       "Bảo hiểm CDIC tới $1,000,000 cho khoản tiền gửi CAD đủ điều kiện",
     ],
@@ -530,7 +530,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     ],
     interestRate: 0.1,
     promoNoteVi:
-      "0.10% chỉ áp dụng cho phần số dư tới $200,000; phần vượt quá không được tính lãi. Đây là tài khoản chi tiêu — muốn lãi thì để tiền ở Neo™ Savings Account.",
+      "0.10% chỉ áp dụng cho phần số dư tới $200,000; phần vượt quá không được tính lãi. Đây là tài khoản chi tiêu. Muốn có lãi thì để tiền ở Neo™ Savings Account.",
     keyBenefitsVi: [
       "Không monthly fee, không yêu cầu số dư tối thiểu",
       "Giao dịch và Interac e-Transfer® không giới hạn",
@@ -558,7 +558,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
       "Không monthly fee, không yêu cầu số dư tối thiểu",
       "Giao dịch và Interac e-Transfer® không giới hạn",
       "Lãi tăng theo số dư, không cần mã khuyến mãi hay đổi tài khoản",
-      "Rút tiền lúc nào cũng được, không có kỳ hạn báo trước",
+      "Rút tiền lúc nào cũng được, không cần báo trước",
     ],
     url: "https://www.neofinancial.com/accounts",
     affiliateUrl:
@@ -583,7 +583,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
       "Không monthly fee, không yêu cầu số dư tối thiểu",
       "Giao dịch và Interac e-Transfer® không giới hạn",
       "Tách được nhiều mục tiêu tiết kiệm và hẹn chuyển tiền tự động",
-      "Rút tiền lúc nào cũng được, không có kỳ hạn báo trước",
+      "Rút tiền lúc nào cũng được, không cần báo trước",
     ],
     url: "https://www.tangerine.ca/en/personal/save/savings-account",
     affiliateUrl:
@@ -608,12 +608,12 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     interestRate: 0.1,
     regularRate: 0.01,
     promoNoteVi:
-      "Bậc lãi ở đây đi ngược trực giác: 0.01% cho số dư dưới $50,000, 0.05% từ $50,000, 0.10% từ $100,000 — rồi tụt lại 0.01% từ $500,000 trở lên. Số dư của một tài khoản chi tiêu bình thường rơi vào bậc thấp nhất.",
+      "Bậc lãi ở đây khá ngược đời: 0.01% cho số dư dưới $50,000, 0.05% từ $50,000, 0.10% từ $100,000, rồi tụt lại 0.01% từ $500,000 trở lên. Số dư của một tài khoản chi tiêu bình thường rơi vào bậc thấp nhất.",
     keyBenefitsVi: [
       "Không monthly fee, không yêu cầu số dư tối thiểu",
       "Giao dịch và Interac e-Transfer® không giới hạn, có thẻ Visa Debit",
       "Rút ATM trong mạng lưới Scotiabank® và Tangerine® miễn phí; máy khác tại Canada $1.50",
-      "Phí chuyển đổi ngoại tệ 2.5%, phí NSF $10 — thấp hơn mức $45–$48 thường thấy ở ngân hàng lớn",
+      "Phí chuyển đổi ngoại tệ 2.5%, phí NSF $10, thấp hơn mức $45–$48 thường thấy ở ngân hàng lớn",
     ],
     url: "https://www.tangerine.ca/en/personal/spend/chequing-account",
     affiliateUrl:
@@ -634,7 +634,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     // Base Rate + 1.25%. Trang FinlyWealth còn ghi Base Rate 1.00%.
     regularRate: 1.5,
     promoNoteVi:
-      "2.75% chỉ khi có direct deposit định kỳ từ $2,000/tháng; không có thì 1.50%. Đây không phải lãi khuyến mãi có hạn — nó giữ nguyên chừng nào direct deposit còn về.",
+      "2.75% chỉ khi có direct deposit định kỳ từ $2,000/tháng; không có thì 1.50%. Đây không phải lãi khuyến mãi có hạn; mức này giữ nguyên chừng nào direct deposit còn về.",
     keyBenefitsVi: [
       "Không monthly fee, không yêu cầu số dư tối thiểu",
       "Giao dịch, Interac e-Transfer® và thanh toán hoá đơn miễn phí không giới hạn",
@@ -658,10 +658,10 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     // Cũng không đặt `regularRate`: 2.35% là loại báo trước 10 ngày, một lựa
     // chọn khác chứ không phải mức tụt xuống sau khi hết khuyến mãi.
     promoNoteVi:
-      "Đổi thanh khoản lấy lãi: loại báo trước 30 ngày được 2.75%, loại báo trước 10 ngày được 2.35%. Muốn rút thì phải báo trước đúng số ngày đó, nên đây không phải chỗ để tiền phòng thân cần lấy ngay.",
+      "Lãi suất tuỳ số ngày báo trước khi rút tiền: loại báo trước 30 ngày được 2.75%, loại báo trước 10 ngày được 2.35%. Muốn rút thì phải báo trước đúng số ngày đó, nên đây không phải chỗ để tiền phòng thân cần lấy ngay.",
     keyBenefitsVi: [
       "Không monthly fee, không yêu cầu số dư tối thiểu",
-      "Nạp và rút không giới hạn số lần, miễn phí — chỉ cần báo trước",
+      "Nạp và rút không giới hạn số lần, miễn phí (chỉ cần báo trước)",
       "Đủ điều kiện bảo hiểm CDIC tới $100,000 mỗi hạng mục",
     ],
     // EQ Bank™ trả HTTP 200 kèm nội dung "404 Error" cho đường dẫn cũ
@@ -688,7 +688,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     keyBenefitsVi: [
       "Không monthly fee, không yêu cầu số dư tối thiểu",
       "Giao dịch và Interac e-Transfer® không giới hạn",
-      "Rút tiền lúc nào cũng được, không có kỳ hạn báo trước",
+      "Rút tiền lúc nào cũng được, không cần báo trước",
       "Lãi tính theo ngày, trả hàng tháng",
     ],
     url: "https://www.simplii.com/en/bank-accounts/high-interest-savings.html",
@@ -720,7 +720,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
       "Không monthly fee, không yêu cầu số dư tối thiểu",
       "Giao dịch và Interac e-Transfer® không giới hạn, có thẻ Debit Mastercard®",
       "Rút ATM trong mạng lưới miễn phí; máy khác tại Canada $1.50",
-      "Phí chuyển đổi ngoại tệ 2.5%, phí NSF $10 — thấp hơn mức $45–$48 thường thấy ở ngân hàng lớn",
+      "Phí chuyển đổi ngoại tệ 2.5%, phí NSF $10, thấp hơn mức $45–$48 thường thấy ở ngân hàng lớn",
     ],
     url: "https://www.simplii.com/en/special-offers/no-fee-chequing-account.html",
     affiliateUrl:
@@ -753,15 +753,15 @@ export const BANK_ACCOUNTS: BankAccount[] = [
       "Chỉ dành cho khách hàng mới, chưa từng có tài khoản KOHO.",
       "Đăng ký bằng promo code FW10C26 khi mở tài khoản.",
       "Nạp tiền trong vòng 30 ngày kể từ ngày mở và chi tối thiểu $20 trong 30 ngày đầu.",
-      "Được 10% cashback trên chi tiêu 3 tháng đầu, tối đa $1,000 chi tiêu — tức tối đa $100.",
+      "Được 10% cashback trên chi tiêu 3 tháng đầu, tối đa $1,000 chi tiêu (tức tối đa $100).",
       "Không cộng dồn với khuyến mãi khác. Loại trừ cash advance, rút ATM, chuyển tiền, crypto, cờ bạc và gift card.",
     ],
     interestRate: 3.5,
     promoNoteVi:
-      "3.50% áp dụng cho mọi mức số dư, không phải lãi khuyến mãi có hạn — nó đi kèm gói Everything và mất đi nếu bạn hạ gói. Tính ra $14.75/tháng tức $177/năm, nên phần lãi chênh so với gói Extra chỉ hoà vốn khi số dư đủ lớn.",
+      "3.50% áp dụng cho mọi mức số dư, không phải lãi khuyến mãi có hạn. Mức lãi này đi kèm gói Everything và mất đi nếu bạn hạ gói. Tính ra $14.75/tháng tức $177/năm, nên phần lãi chênh so với gói Extra chỉ hoà vốn khi số dư đủ lớn.",
     keyBenefitsVi: [
-      "Lãi 3.50% trên toàn bộ số dư, kể cả tiền đang chờ tiêu",
-      "2% cashback cho tạp hoá, đi lại, ăn uống; tới thêm 6.5% tại một số cửa hàng",
+      "Lãi 3.50% trên toàn bộ số dư, kể cả tiền để chi tiêu",
+      "2% cashback cho tạp hoá, đi lại, ăn uống; thêm tới 6.5% tại một số cửa hàng",
       "Không phí chuyển đổi ngoại tệ, giao dịch và Interac e-Transfer® không giới hạn",
       "Kèm 3GB eSIM dùng ở nước ngoài, theo dõi credit score miễn phí và giảm 50% phí xây credit",
     ],
@@ -782,7 +782,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
       "Chỉ dành cho khách hàng mới, chưa từng có tài khoản KOHO.",
       "Đăng ký bằng promo code FW10C26 khi mở tài khoản.",
       "Nạp tiền trong vòng 30 ngày kể từ ngày mở và chi tối thiểu $20 trong 30 ngày đầu.",
-      "Được 10% cashback trên chi tiêu 3 tháng đầu, tối đa $1,000 chi tiêu — tức tối đa $100.",
+      "Được 10% cashback trên chi tiêu 3 tháng đầu, tối đa $1,000 chi tiêu (tức tối đa $100).",
       "Nạp tối thiểu $20 trong 30 ngày đầu cũng là điều kiện để nhận rebate của FinlyWealth.",
     ],
     interestRate: 2.5,
@@ -790,7 +790,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
       "2.50% áp dụng cho mọi mức số dư và đi kèm gói Extra ($12/tháng). Chênh đúng $2.75/tháng so với gói Everything nhưng lãi thấp hơn 1.00% và cashback cơ bản thấp hơn 0.5%.",
     keyBenefitsVi: [
       "Lãi 2.50% trên toàn bộ số dư",
-      "1.5% cashback cho tạp hoá, đi lại, ăn uống; tới thêm 6.5% tại một số cửa hàng",
+      "1.5% cashback cho tạp hoá, đi lại, ăn uống; thêm tới 6.5% tại một số cửa hàng",
       "Không phí chuyển đổi ngoại tệ, giao dịch và Interac e-Transfer® không giới hạn",
       "Dùng thử miễn phí 30 ngày, theo dõi credit score miễn phí và giảm 30% phí xây credit",
     ],
@@ -813,14 +813,14 @@ export const BANK_ACCOUNTS: BankAccount[] = [
       "Chỉ dành cho khách hàng mới, chưa từng có tài khoản KOHO.",
       "Đăng ký bằng promo code FW10C26 khi mở tài khoản.",
       "Nạp tiền trong vòng 30 ngày kể từ ngày mở và chi tối thiểu $20 trong 30 ngày đầu.",
-      "Được 10% cashback trên chi tiêu 3 tháng đầu, tối đa $1,000 chi tiêu — tức tối đa $100.",
+      "Được 10% cashback trên chi tiêu 3 tháng đầu, tối đa $1,000 chi tiêu (tức tối đa $100).",
     ],
     interestRate: 2,
     promoNoteVi:
-      "2.00% áp dụng cho mọi mức số dư. Đây là gói duy nhất của KOHO có đường miễn phí hẳn monthly fee, nên nếu bạn vẫn nạp lương về đây thì nó là gói rẻ nhất — đổi lại lãi và cashback thấp nhất, và vẫn còn phí chuyển đổi ngoại tệ 1.5%.",
+      "2.00% áp dụng cho mọi mức số dư. Đây là gói duy nhất của KOHO có thể miễn monthly fee, nên nếu bạn vẫn nạp lương về đây thì đây là gói rẻ nhất. Đổi lại lãi và cashback thấp nhất, và vẫn còn phí chuyển đổi ngoại tệ 1.5%.",
     keyBenefitsVi: [
       "Lãi 2.00% trên toàn bộ số dư",
-      "1% cashback cho tạp hoá, đi lại, ăn uống; tới thêm 6.5% tại một số cửa hàng",
+      "1% cashback cho tạp hoá, đi lại, ăn uống; thêm tới 6.5% tại một số cửa hàng",
       "Giao dịch và Interac e-Transfer® không giới hạn, miễn phí",
       "Chuyển tiền quốc tế tới hơn 190 nước, theo dõi credit score miễn phí",
     ],
@@ -838,7 +838,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     tags: ["newcomer"],
     monthlyFee: 15.95,
     feeWaiverVi:
-      "Miễn hoàn toàn monthly fee trong năm đầu. Năm 2 và năm 3 còn $7.98 rồi $11.96 mỗi tháng, và về $0 nếu giữ số dư tối thiểu $4,500 mỗi ngày hoặc có đủ ba thứ: thẻ tín dụng Mastercard® cá nhân, bank statement điện tử, và payroll deposit hằng tháng (hoặc thanh toán ít nhất 2 hoá đơn điện tử mỗi tháng). Hết năm 4 tài khoản tự chuyển sang gói The Connected®.",
+      "Miễn hoàn toàn monthly fee trong năm đầu. Năm 2 và năm 3 còn $7.98 rồi $11.96 mỗi tháng. Phí này về $0 nếu giữ số dư tối thiểu $4,500 mỗi ngày hoặc có đủ ba thứ: thẻ tín dụng Mastercard® cá nhân, bank statement điện tử, và payroll deposit hằng tháng (hoặc thanh toán ít nhất 2 hoá đơn điện tử mỗi tháng). Hết năm 4 tài khoản tự chuyển sang gói The Connected®.",
     // Đây là bốn khoản rời nhau, không phải một cục $600 cho không: chỉ khoản
     // $300 đầu là mở tài khoản, ba khoản $100 còn lại đòi thêm một sản phẩm
     // khác của National Bank. Viết tách ra vì gộp thành "tối đa $600" sẽ làm
@@ -883,7 +883,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     tags: [],
     monthlyFee: 30,
     feeWaiverVi:
-      "Giảm còn $17.05/tháng theo Value Program khi có thẻ tín dụng cá nhân RBC® cùng tài khoản đầu tư, kèm một khoản vay mua nhà hoặc một tài khoản doanh nghiệp nhỏ. Người từ 65 tuổi được giảm còn $22.50/tháng. Không có đường về $0.",
+      "Giảm còn $17.05/tháng theo Value Program khi có thẻ tín dụng cá nhân RBC® cùng tài khoản đầu tư, kèm một khoản vay mua nhà hoặc một tài khoản doanh nghiệp nhỏ. Người từ 65 tuổi được giảm còn $22.50/tháng. Không có cách giảm về $0.",
     bonusValue: 499,
     bonusLabelVi: "iPad (RBC® ghi $499)",
     bonusExpiresOn: "2026-11-02",
@@ -913,7 +913,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     tags: [],
     monthlyFee: 16.95,
     feeWaiverVi:
-      "Giảm $6/tháng khi có thẻ tín dụng cá nhân RBC® cùng tài khoản đầu tư, và thêm $6.95/tháng nữa khi có khoản vay mua nhà hoặc tài khoản doanh nghiệp nhỏ — gộp lại còn $4/tháng. Không có đường về $0.",
+      "Giảm $6/tháng khi có thẻ tín dụng cá nhân RBC® cùng tài khoản đầu tư, và thêm $6.95/tháng nữa khi có khoản vay mua nhà hoặc tài khoản doanh nghiệp nhỏ, gộp lại còn $4/tháng. Không có cách giảm về $0.",
     bonusValue: 499,
     bonusLabelVi: "iPad (RBC® ghi $499)",
     bonusExpiresOn: "2026-11-02",

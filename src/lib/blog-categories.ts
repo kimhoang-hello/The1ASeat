@@ -74,20 +74,20 @@ export interface BlogCategory {
  */
 const CATEGORY_DESCRIPTIONS: Record<string, string> = {
   "Khách sạn":
-    "Review khách sạn đổi điểm ở châu Á và châu Âu: cần bao nhiêu điểm cho một đêm, phòng và tiện ích thế nào, có đáng để đổi không.",
+    "Đánh giá khách sạn đổi điểm ở châu Á và châu Âu: cần bao nhiêu điểm cho một đêm, phòng và tiện ích thế nào, có đáng để đổi không.",
   "Đánh giá":
-    "Review hạng thương gia và hạng nhất của các hãng hàng không: ghế, suất ăn, dịch vụ và số điểm cần có để đổi được vé.",
+    "Đánh giá hạng thương gia và hạng nhất của các hãng hàng không: ghế, suất ăn, dịch vụ và số điểm cần có để đổi được vé.",
   "Kiến thức":
     "Kiến thức nền tảng về Miles & Points cho người mới: bắt đầu từ đâu, chọn thẻ nào, tích điểm ra sao và tránh các sai lầm phổ biến.",
   Deals:
-    "Các deal điểm thưởng đang chạy: transfer bonus, khuyến mãi mua điểm và welcome offer được nâng — kèm hạn chót từng chương trình.",
+    "Các deal điểm thưởng đang chạy: transfer bonus, khuyến mãi mua điểm và welcome offer tăng, kèm hạn chót từng chương trình.",
   Tips:
     "Tips và kinh nghiệm thực tế khi chơi Miles & Points: apply và dùng thẻ tín dụng sao cho hiệu quả, cách săn award seat và các công cụ đáng dùng.",
   // Giữ dưới 160 ký tự: đó là chỗ Google cắt mô tả, và bản cũ dài 165 nên câu
   // cuối — chính là câu hứa giá trị "kèm nhận định nên phản ứng thế nào" — bị
   // cắt mất trên kết quả tìm kiếm.
   News:
-    "Tin mới trong thế giới Miles & Points: chương trình nào vừa devalue, hãng nào đổi award chart, ngân hàng nào đổi điều kiện — và nên phản ứng thế nào.",
+    "Tin mới về Miles & Points: chương trình nào vừa devalue, hãng nào đổi award chart, ngân hàng nào đổi điều kiện và nên phản ứng thế nào.",
 };
 
 /**

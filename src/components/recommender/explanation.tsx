@@ -38,8 +38,7 @@ export async function ExplainedWhy({ view }: { view: ResultView }) {
         ))}
       </ul>
       <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-        AI chọn và sắp các ý trên từ kết quả tính của mình; mọi câu chữ đều viết sẵn — AI không
-        chọn thẻ, không xếp thứ tự và không tự viết chữ nào.{" "}
+        AI chọn và sắp các ý trên từ kết quả tính của mình. Các câu đều viết sẵn từ trước: AI không chọn thẻ, không xếp hạng thẻ và không tự viết thêm chữ nào.{" "}
         <strong className="text-foreground">Dữ kiện</strong>: chép từ trang của ngân hàng
         {shown.dataVerifiedAt ? ` (kiểm ngày ${vietnameseDate(shown.dataVerifiedAt)})` : ""} hoặc từ chính điều bạn
         khai. <strong className="text-foreground">Ước lượng</strong>: số mình tự tính, đổi theo ngày

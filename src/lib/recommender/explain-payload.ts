@@ -161,8 +161,8 @@ export function explanationPayload(view: ResultView): ExplanationPayload {
     if (good.length === 0) {
       action.strengths.forEach((row, index) =>
         ESTIMATE_STRENGTHS.has(row)
-          ? add(`strength_${index + 1}`, "estimate", "reason", estimateClause(`bảng điểm của thẻ mạnh ở phần ${row}`))
-          : add(`strength_${index + 1}`, "editorial", "reason", `bảng điểm của thẻ mạnh ở phần ${row}`),
+          ? add(`strength_${index + 1}`, "estimate", "reason", estimateClause(`thẻ này được điểm cao nhờ ${row}`))
+          : add(`strength_${index + 1}`, "editorial", "reason", `thẻ này được điểm cao nhờ ${row}`),
       );
     }
     // Bonus bị chặn thì con số bonus KHÔNG vào payload — không có mệnh đề nào
@@ -204,7 +204,7 @@ export function explanationPayload(view: ResultView): ExplanationPayload {
     }
   }
 
-  add("strategy", "editorial", "context", `hướng đi mình chọn cho mục tiêu này là: ${asClause(view.strategy)}`);
+  add("strategy", "editorial", "context", `hướng đi mình chọn cho mục tiêu này là ${asClause(view.strategy)}`);
 
   const trip = view.trip;
   if (trip !== null) {
@@ -222,7 +222,7 @@ export function explanationPayload(view: ResultView): ExplanationPayload {
         "trip",
         // Cùng câu với khối chuyến bay: có hạng ghế thì có thể chỉ HẠNG đó chưa có giá.
         trip.cabin
-          ? `chặng này, ${trip.cabin.toLowerCase()}, chưa có trong award chart của site, nên mình chưa tính được số điểm cần`
+          ? `chặng này chưa có giá cho ${trip.cabin.toLowerCase()} trong award chart của site, nên mình chưa tính được số điểm cần`
           : "chặng này chưa có trong award chart của site, nên mình chưa tính được số điểm cần",
       );
     } else {

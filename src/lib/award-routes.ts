@@ -109,46 +109,46 @@ function route(originCode: string, destinationCode: string, bodyVi: string[]): V
  *  và viết khác đi bốn lần chỉ để trông khác nhau là đúng thứ doorway page hay
  *  làm. Phần riêng của từng chặng nằm ở các đoạn sau nó. */
 const DA_NANG_NETWORK =
-  "Đà Nẵng là điểm đến hẹp nhất trong ba sân bay Việt Nam mà công cụ có dữ liệu. " +
+  "Trong ba sân bay Việt Nam mà công cụ có dữ liệu, Đà Nẵng có ít lựa chọn nhất. " +
   "Cathay Pacific® đã bỏ chặng Hong Kong – Đà Nẵng và Qatar Airways® không bay Doha – Đà Nẵng, " +
   "nên American Airlines® AAdvantage®, Asia Miles® và cả hai chương trình Avios® không còn " +
-  "một đường bay nào tới đây. Đó không phải \"chưa công bố giá\" — là không có chuyến, và bảng " +
-  "bên dưới nói rõ hai chuyện đó khác nhau.";
+  "một đường bay nào tới đây. Đó là không có chuyến, chứ không phải chưa công bố giá, và bảng " +
+  "bên dưới ghi rõ hai trường hợp này.";
 
 const DA_NANG_REMAINING =
   "Còn lại hai hướng. Star Alliance™ đi qua Seoul với Asiana Airlines® hoặc qua Đài Bắc với " +
-  "EVA Air® — đó là hướng Aeroplan® tra được giá trước. SkyTeam đi qua Paris hoặc Amsterdam rồi " +
-  "nối tiếp bằng Vietnam Airlines®: đường bay có thật, phần \"Đường bay có thật\" bên dưới liệt " +
-  "kê đủ, nhưng Flying Blue® định giá hoàn toàn động nên không con số nào tra trước được.";
+  "EVA Air®. Hướng này tra được giá trước bằng Aeroplan®. SkyTeam đi qua Paris hoặc Amsterdam rồi " +
+  "nối tiếp bằng Vietnam Airlines®. Phần \"Đường bay hiện có\" bên dưới liệt kê đủ các đường này, " +
+  "nhưng Flying Blue® định giá hoàn toàn động nên không tra trước được số điểm.";
 
 const PREMIUM_GAP =
-  "Không có Premium Economy trên trang này, và đó không phải chỗ thiếu dữ liệu: bảng partner của " +
-  "Aeroplan® chỉ in ba hạng Economy, Business và First. Premium Economy chỉ tồn tại ở cột giá động " +
-  "của Air Canada®, mà cột đó không áp cho chuyến bay của partner.";
+  "Trang này không có hạng phổ thông đặc biệt vì bảng partner của Aeroplan® chỉ có ba hạng phổ " +
+  "thông, thương gia và hạng nhất. Hạng phổ thông đặc biệt chỉ có ở cột giá động của Air Canada®, " +
+  "mà cột đó không áp cho chuyến bay của partner.";
 
 /** Cảnh báo dùng lại ở ba chặng mà AAdvantage® đứng đầu bảng. CỐ Ý không ghi
  *  tỷ lệ chuyển ra đây: tỷ lệ nằm ở cột "Chuyển từ" trong bảng, lấy thẳng từ
  *  `transfer-partners.ts`, nên chép nó vào chữ là tạo ra một con số thứ hai
  *  trôi được. */
 const AADVANTAGE_CATCH =
-  "Con số thấp nhất trên bảng thuộc về American Airlines® AAdvantage®, và đây đúng chỗ cần đọc kỹ. " +
+  "Con số thấp nhất trên bảng thuộc về American Airlines® AAdvantage®, nhưng cần đọc kỹ cách chuyển điểm. " +
   "AAdvantage® tính theo vùng chứ không theo quãng đường, nên nó ra cùng một giá cho mọi điểm đến ở " +
-  "Đông Nam Á. Nhưng đường duy nhất để một người ở Canada có AAdvantage® là chuyển từ RBC Avion®, " +
-  "chỉ bậc Avion® Elite mới chuyển được, và tỷ lệ không phải một đổi một — cột \"Chuyển từ\" trong " +
-  "bảng ghi tỷ lệ thật. Nhân tỷ lệ đó vào thì con số rẻ nhất trên bảng không còn là con số rẻ nhất " +
-  "trong ví bạn.";
+  "Đông Nam Á. Nhưng đường duy nhất để một người ở Canada có điểm AAdvantage® là chuyển từ RBC Avion®, " +
+  "chỉ bậc Avion® Elite mới chuyển được, và tỷ lệ không phải một đổi một. Cột \"Chuyển từ\" trong " +
+  "bảng ghi rõ tỷ lệ. Tính theo tỷ lệ đó thì lựa chọn rẻ nhất trên bảng không còn rẻ nhất khi dùng " +
+  "điểm trong ví bạn.";
 
 export const VIETNAM_ROUTES: VietnamRoute[] = [
   route("YYZ", "SGN", [
-    "Từ Toronto, đây là chặng có nhiều lựa chọn nhất trong cả mười hai trang này: Cathay Pacific® bay thẳng Toronto – Hong Kong rồi nối tiếp về Tân Sơn Nhất, Qatar Airways® bay thẳng Toronto – Doha, EVA Air® đi qua Đài Bắc, và Air China® qua Bắc Kinh. Bốn hub, bốn liên minh khác nhau — nên bốn trong sáu chương trình đều báo được giá.",
+    "Từ Toronto, đây là chặng có nhiều lựa chọn nhất trong cả mười hai trang này: Cathay Pacific® bay thẳng Toronto – Hong Kong rồi nối tiếp về Tân Sơn Nhất, Qatar Airways® bay thẳng Toronto – Doha, EVA Air® đi qua Đài Bắc, và Air China® qua Bắc Kinh. Với bốn hub và bốn liên minh khác nhau, bốn trong sáu chương trình đều báo được giá.",
     AADVANTAGE_CATCH,
-    "Aeroplan® đi hướng ngược lại: giá cao hơn trên bảng, nhưng chuyển một đổi một từ Amex Membership Rewards® trong khoảng ba mươi phút, và surcharge của Aeroplan® trên chặng partner thuộc loại thấp. Với phần lớn người đọc site này, đó mới là đường thật sự đi được.",
-    "Asia Miles® của Cathay Pacific® nằm giữa hai nhóm trên. Chương trình này đã rút bảng giá xuống khỏi trang chính thức của mình từ lâu; số trong bảng dưới đây dựng lại từ ba nguồn độc lập cùng khớp nhau, và mỗi hàng đều ghi rõ mức độ tin cậy của chương trình đó.",
+    "Aeroplan® thì ngược lại: giá cao hơn trên bảng, nhưng chuyển một đổi một từ Amex Membership Rewards® trong khoảng ba mươi phút, và surcharge của Aeroplan® trên chặng partner thuộc loại thấp. Với phần lớn người đọc site này, đây mới là lựa chọn thực tế nhất.",
+    "Asia Miles® của Cathay Pacific® nằm giữa hai nhóm trên. Chương trình này đã rút bảng giá xuống khỏi trang chính thức của mình từ lâu; mình dựng lại số trong bảng dưới đây từ ba nguồn độc lập có cùng kết quả, và mỗi hàng đều ghi rõ mức độ tin cậy của chương trình đó.",
   ]),
 
   route("YYZ", "HAN", [
-    "Toronto về Hà Nội đi qua đúng những hub như chặng về Sài Gòn — Hong Kong với Cathay Pacific®, Doha với Qatar Airways®, Đài Bắc với EVA Air®, Bắc Kinh với Air China® — và các bảng giá đều xếp Hà Nội cùng một vùng, cùng một bậc quãng đường với Sài Gòn. Nên nếu bạn đang phân vân giữa hai thành phố, số điểm không phải thứ để chọn giữa chúng.",
-    "Một khác biệt có thật: Air France® bay tới Tân Sơn Nhất nhưng không bay tới Nội Bài. Đường SkyTeam về Hà Nội vì thế phải nối tiếp bằng Vietnam Airlines® từ Paris hoặc Amsterdam. Điều đó không đổi con số trong bảng — Flying Blue® định giá hoàn toàn động, không có bảng nào để tra trước — nhưng nó đổi chuyện bạn đi tìm chỗ trống ở đâu.",
+    "Toronto về Hà Nội đi qua những hub như chặng về Sài Gòn (Hong Kong với Cathay Pacific®, Doha với Qatar Airways®, Đài Bắc với EVA Air®, Bắc Kinh với Air China®), và các bảng giá đều xếp Hà Nội cùng một vùng, cùng một bậc quãng đường với Sài Gòn. Nên nếu bạn đang phân vân giữa hai thành phố, số điểm không phải yếu tố để bạn chọn.",
+    "Có một khác biệt: Air France® bay tới Tân Sơn Nhất nhưng không bay tới Nội Bài. Đường SkyTeam về Hà Nội vì thế phải nối tiếp bằng Vietnam Airlines® từ Paris hoặc Amsterdam. Điều đó không đổi con số trong bảng vì Flying Blue® định giá hoàn toàn động, không có bảng nào để tra trước. Nhưng bạn sẽ phải tìm chỗ trống trên chuyến Vietnam Airlines® thay vì Air France®.",
     AADVANTAGE_CATCH,
   ]),
 
@@ -157,71 +157,71 @@ export const VIETNAM_ROUTES: VietnamRoute[] = [
     DA_NANG_REMAINING,
     "Từ Toronto, hai hành trình Aeroplan® là Toronto – Đài Bắc – Đà Nẵng, EVA Air® bay cả hai chặng; và Toronto – Seoul – Đà Nẵng, trong đó chặng cuối cần Asiana Airlines® còn chặng đầu là Air Canada®, vì Asiana® đã rút hẳn khỏi Canada.",
     PREMIUM_GAP,
-    "Nếu ngày bay linh động, đáng so thêm phương án bay về Sài Gòn hoặc Hà Nội rồi mua vé nội địa Việt Nam bằng tiền — vé nội địa rẻ, và bảng ở trang chặng Sài Gòn có bốn chương trình cạnh tranh nhau thay vì một.",
+    "Nếu ngày bay linh động, đáng so thêm phương án bay về Sài Gòn hoặc Hà Nội rồi mua vé nội địa Việt Nam bằng tiền. Vé nội địa rẻ, và bảng ở trang chặng Sài Gòn có bốn chương trình cạnh tranh nhau thay vì một.",
   ]),
 
   route("YVR", "SGN", [
-    "Vancouver là điểm xuất phát rẻ nhất Canada để về Việt Nam bằng điểm, và lý do là hình học chứ không phải khuyến mãi. Vancouver – Hong Kong – Tân Sơn Nhất vừa đủ nằm dưới mốc chia bậc mà cả bảng của Aeroplan® lẫn bảng của Asia Miles® dùng; cùng những chuyến bay ấy khởi hành từ Toronto thì vượt mốc và nhảy lên bậc trên. Cột quãng đường trong phần \"Đường bay có thật\" bên dưới cho thấy chênh lệch.",
-    "Asia Miles® của Cathay Pacific® vì thế cho con số thấp nhất ở hạng Economy trong cả mười hai trang này. Cathay bay cả hai chặng bằng máy bay của chính mình qua Hong Kong, nên đây là bảng giá dành cho chuyến bay nội bộ của họ — bảng partner đắt hơn.",
-    "Vancouver cũng là cửa ngõ duy nhất của ANA® ở Canada, nên đường qua Tokyo mở ra ở đây mà không có ở Toronto hay Montréal. Cộng thêm EVA Air® qua Đài Bắc và Air China® qua Bắc Kinh, Aeroplan® có sáu hành trình khác nhau cho chặng này — tất cả cùng một giá, vì bảng của Aeroplan® tính theo quãng đường chứ không theo hãng.",
-    "Ngược lại, Qatar Airways® không bay từ Vancouver. Muốn đi qua Doha thì phải bay ngược về Montréal trước, và quãng đường đó đẩy hành trình lên mức dài nhất trong bảng — vẫn tính được, nhưng không còn là lựa chọn hợp lý.",
+    "Vancouver là điểm xuất phát rẻ nhất Canada để về Việt Nam bằng điểm nhờ quãng đường bay, không phải khuyến mãi. Vancouver – Hong Kong – Tân Sơn Nhất vừa đủ nằm dưới mốc chia bậc mà cả bảng của Aeroplan® lẫn bảng của Asia Miles® dùng; cùng những chuyến bay ấy khởi hành từ Toronto thì vượt mốc và nhảy lên bậc trên. Cột quãng đường trong phần \"Đường bay hiện có\" bên dưới cho thấy chênh lệch.",
+    "Asia Miles® của Cathay Pacific® vì thế cho con số thấp nhất ở hạng phổ thông trong cả mười hai trang này. Cathay bay cả hai chặng bằng máy bay của chính mình qua Hong Kong, nên đây là bảng giá dành cho chuyến bay do Cathay khai thác. Bảng partner đắt hơn.",
+    "Vancouver cũng là cửa ngõ duy nhất của ANA® ở Canada, nên đường qua Tokyo mở ra ở đây mà không có ở Toronto hay Montréal. Cộng thêm EVA Air® qua Đài Bắc và Air China® qua Bắc Kinh, Aeroplan® có sáu hành trình khác nhau cho chặng này. Tất cả cùng một giá, vì bảng của Aeroplan® tính theo quãng đường chứ không theo hãng.",
+    "Ngược lại, Qatar Airways® không bay từ Vancouver. Muốn đi qua Doha thì phải bay ngược về Montréal trước, và quãng đường đó đẩy hành trình lên mức dài nhất trong bảng. Vẫn tính được giá, nhưng không còn là lựa chọn hợp lý.",
   ]),
 
   route("YVR", "HAN", [
-    "Cũng như chặng Vancouver – Sài Gòn, chặng này nằm gọn dưới mốc chia bậc mà Aeroplan® và Asia Miles® dùng — nên nó ăn bậc rẻ, trong khi cùng hành trình ấy xuất phát từ Toronto thì không. Đây là lợi thế lớn nhất của người đọc ở Vancouver, và nó có thật trên mọi hạng ghế.",
+    "Cũng như chặng Vancouver – Sài Gòn, chặng này nằm dưới mốc chia bậc mà Aeroplan® và Asia Miles® dùng, nên được tính ở bậc rẻ, trong khi cùng hành trình ấy xuất phát từ Toronto thì không. Đây là lợi thế lớn nhất của người đọc ở Vancouver và áp dụng cho mọi hạng ghế.",
     "Cathay Pacific® bay Hong Kong – Nội Bài, nên Asia Miles® báo giá được. ANA® nối Tokyo – Hà Nội và Vancouver là cửa ngõ duy nhất của ANA® ở Canada. EVA Air® đi qua Đài Bắc, Air China® qua Bắc Kinh, Asiana Airlines® qua Seoul với chặng đầu bay Air Canada®.",
-    "American Airlines® AAdvantage® vẫn ra con số thấp nhất ở hạng Business vì nó tính theo vùng và không quan tâm bạn khởi hành từ đâu. Nhưng lợi thế quãng đường của Vancouver chỉ có tác dụng với hai chương trình tính theo dặm — và đường tới AAdvantage® từ Canada chỉ có một, qua RBC Avion® Elite, ở tỷ lệ ghi trong cột \"Chuyển từ\". Đó là chỗ đáng so kỹ trước khi chuyển điểm đi đâu.",
+    "American Airlines® AAdvantage® vẫn ra con số thấp nhất ở hạng thương gia vì nó tính theo vùng và không quan tâm bạn khởi hành từ đâu. Nhưng lợi thế quãng đường của Vancouver chỉ có tác dụng với hai chương trình tính theo dặm. Đường tới AAdvantage® từ Canada chỉ có một, qua RBC Avion® Elite, ở tỷ lệ ghi trong cột \"Chuyển từ\". Đó là chỗ đáng so kỹ trước khi chuyển điểm đi đâu.",
   ]),
 
   route("YVR", "DAD", [
     DA_NANG_NETWORK,
     DA_NANG_REMAINING,
-    "Từ Vancouver, hai hành trình Aeroplan® là Vancouver – Đài Bắc – Đà Nẵng do EVA Air® bay cả hai chặng, và Vancouver – Seoul – Đà Nẵng với Air Canada® ở chặng đầu rồi Asiana Airlines® nối tiếp. Cả hai đều nằm dưới mốc chia bậc của Aeroplan®, nên đây là con số rẻ nhất để về Đà Nẵng bằng điểm từ bất cứ đâu ở Canada.",
+    "Từ Vancouver, hai hành trình Aeroplan® là Vancouver – Đài Bắc – Đà Nẵng do EVA Air® bay cả hai chặng, và Vancouver – Seoul – Đà Nẵng với Air Canada® ở chặng đầu rồi Asiana Airlines® nối tiếp. Cả hai đều nằm dưới mốc chia bậc của Aeroplan®, nên đây là mức điểm thấp nhất để về Đà Nẵng bằng điểm từ bất cứ đâu ở Canada.",
     PREMIUM_GAP,
-    "Vì chỉ có một chương trình tra được giá, chỗ để xoay không nằm ở việc chọn chương trình mà ở việc chọn ngày. Aeroplan® giữ giá cố định cho chuyến bay của partner, nên chỗ trống mới là thứ quyết định — không phải giá.",
+    "Vì chỉ có một chương trình tra được giá, bạn chỉ có thể linh động ở ngày bay. Aeroplan® giữ giá cố định cho chuyến bay của partner, nên chỗ trống là yếu tố quyết định.",
   ]),
 
   route("YUL", "SGN", [
-    "Montréal có một thứ Toronto cũng có và Vancouver thì không: chuyến bay thẳng của Qatar Airways® tới Doha. Đó là đường ngắn nhất từ Québec về Việt Nam trên một hãng duy nhất, và nó mở ra hai chương trình cùng lúc — AAdvantage® tính theo vùng, và Privilege Club của chính Qatar.",
-    "Đổi lại, Cathay Pacific® không bay từ Montréal. Asia Miles® vẫn có đúng một hành trình, nhưng phải bay Air Canada® tới Toronto trước — mà bảng của Asia Miles® ngừng áp dụng ngay khi vé có chặng nội địa Canada trong đó. Ô đó để trống vì lý do ấy, không phải vì thiếu chuyến bay.",
-    "Chuyện tương tự với Aeroplan®: cả sáu hành trình của nó đều mở đầu bằng một chặng Air Canada® tới Toronto hoặc Vancouver. Aeroplan® là chương trình duy nhất tính chặng nội địa đó chung vào một vé award, nên nó vẫn báo được giá — nhưng quãng đường cộng thêm đẩy hành trình lên bậc trên, và đó là lý do Montréal đắt hơn Vancouver dù cùng bay những chiếc máy bay ấy ở chặng dài.",
-    "Air France® thì bay thẳng Montréal – Paris – Tân Sơn Nhất, không cần chặng nội địa nào. Đường đó có thật và bảng liệt kê đủ, nhưng Flying Blue® định giá hoàn toàn động nên không tra trước được.",
+    "Montréal có một thứ Toronto cũng có và Vancouver thì không: chuyến bay thẳng của Qatar Airways® tới Doha. Đó là đường ngắn nhất từ Québec về Việt Nam trên một hãng duy nhất, và bạn có hai chương trình để chọn: AAdvantage® tính theo vùng, và Privilege Club của chính Qatar.",
+    "Đổi lại, Cathay Pacific® không bay từ Montréal. Asia Miles® vẫn có đúng một hành trình, nhưng phải bay Air Canada® tới Toronto trước. Bảng của Asia Miles® ngừng áp dụng ngay khi vé có chặng nội địa Canada trong đó. Ô đó để trống vì lý do ấy, không phải vì thiếu chuyến bay.",
+    "Chuyện tương tự với Aeroplan®: cả sáu hành trình của nó đều mở đầu bằng một chặng Air Canada® tới Toronto hoặc Vancouver. Aeroplan® là chương trình duy nhất tính chặng nội địa đó chung vào một vé award, nên vẫn báo được giá. Nhưng quãng đường cộng thêm đẩy hành trình lên bậc trên, khiến Montréal đắt hơn Vancouver dù các chặng dài vẫn giống nhau.",
+    "Air France® thì bay thẳng Montréal – Paris – Tân Sơn Nhất, không cần chặng nội địa nào. Đường bay này có trong bảng, nhưng Flying Blue® định giá hoàn toàn động nên không tra trước được.",
     AADVANTAGE_CATCH,
   ]),
 
   route("YUL", "HAN", [
     "Chuyến bay thẳng Montréal – Doha của Qatar Airways® nối tiếp được tới Nội Bài, nên từ Québec đây là hành trình ít chặng nhất về Hà Nội. AAdvantage® định giá nó theo vùng, còn Privilege Club của Qatar có một mức cố định riêng cho đường qua Doha.",
-    "Cathay Pacific® không bay từ Montréal, nên hành trình Asia Miles® duy nhất phải qua Toronto bằng Air Canada® — và bảng của Asia Miles® ngừng áp dụng khi vé có chặng nội địa Canada. Khác hẳn cùng chặng khởi hành từ Toronto hay Vancouver, nơi Asia Miles® là một trong những lựa chọn rẻ nhất.",
-    "Air France® bay từ Montréal nhưng không tới Nội Bài, nên đường SkyTeam về Hà Nội cần Vietnam Airlines® nối tiếp từ Paris hoặc Amsterdam. Flying Blue® định giá động hoàn toàn, không có bảng nào tra trước được — trang nói thẳng điều đó thay vì đoán một con số.",
+    "Cathay Pacific® không bay từ Montréal, nên hành trình Asia Miles® duy nhất phải qua Toronto bằng Air Canada®. Bảng của Asia Miles® ngừng áp dụng khi vé có chặng nội địa Canada. Khác hẳn cùng chặng khởi hành từ Toronto hay Vancouver, nơi Asia Miles® là một trong những lựa chọn rẻ nhất.",
+    "Air France® bay từ Montréal nhưng không tới Nội Bài, nên đường SkyTeam về Hà Nội cần Vietnam Airlines® nối tiếp từ Paris hoặc Amsterdam. Flying Blue® định giá hoàn toàn động nên không có bảng giá để tra trước.",
     "Aeroplan® có nhiều hành trình nhất, nhưng tất cả đều bay Air Canada® tới Toronto hoặc Vancouver trước, và quãng đường cộng thêm đó đẩy chặng lên bậc giá trên.",
   ]),
 
   route("YUL", "DAD", [
     DA_NANG_NETWORK,
     DA_NANG_REMAINING,
-    "Từ Montréal, hai hành trình Aeroplan® đều phải bay Air Canada® tới Toronto trước rồi mới nối tiếp qua Seoul hoặc Đài Bắc. Đó là chỗ quan trọng: một hành trình có chặng nội địa Canada chỉ được Aeroplan® tính chung thành một vé award. Các chương trình khác coi chặng nội địa đó là vé riêng hoặc tính lại giá — nên kể cả khi chúng có đường bay, không con số nào ở đây trung thực được cho chúng.",
+    "Từ Montréal, hai hành trình Aeroplan® đều phải bay Air Canada® tới Toronto trước rồi mới nối tiếp qua Seoul hoặc Đài Bắc. Lưu ý là chỉ Aeroplan® tính chung một hành trình có chặng nội địa Canada thành một vé award. Các chương trình khác coi chặng nội địa đó là vé riêng hoặc tính lại giá, nên kể cả khi có đường bay, mình cũng không thể đưa ra số điểm đáng tin cho các chương trình đó.",
     "Hướng SkyTeam thì ngược lại: Air France® và KLM® đều bay thẳng từ Montréal, không cần chặng nội địa nào, rồi Vietnam Airlines® nối tiếp về Đà Nẵng. Chỉ có điều Flying Blue® không công bố bảng giá nào.",
     PREMIUM_GAP,
   ]),
 
   route("YYC", "SGN", [
-    "Calgary không có chuyến bay thẳng nào tới châu Á. Mọi hành trình tra được giá trên trang này đều bắt đầu bằng một chặng Air Canada® tới Vancouver — hoặc tới Montréal nếu đi đường Doha — và chính chi tiết đó quyết định trang này trông khác hẳn ba thành phố kia. Ngoại lệ duy nhất là KLM®, hãng bay thẳng Calgary – Amsterdam; nhưng Flying Blue® định giá động nên đường đó cũng không tra trước được.",
-    "Chỉ Aeroplan® tính một hành trình có chặng nội địa Canada thành một vé award duy nhất. AAdvantage®, Asia Miles® và hai chương trình Avios® đều coi chặng Calgary – Vancouver là vé riêng hoặc tính lại giá, nên không có con số nào ở đây đáng tin cho chúng — và trang để trống thay vì đưa ra một con số nghe hợp lý mà sai.",
+    "Calgary không có chuyến bay thẳng nào tới châu Á. Mọi hành trình tra được giá trên trang này đều bắt đầu bằng một chặng Air Canada® tới Vancouver (hoặc tới Montréal nếu đi đường Doha), nên các lựa chọn ở đây khác hẳn ba thành phố kia. Ngoại lệ duy nhất là KLM®, hãng bay thẳng Calgary – Amsterdam; nhưng Flying Blue® định giá động nên đường đó cũng không tra trước được.",
+    "Chỉ Aeroplan® tính một hành trình có chặng nội địa Canada thành một vé award duy nhất. AAdvantage®, Asia Miles® và hai chương trình Avios® đều coi chặng Calgary – Vancouver là vé riêng hoặc tính lại giá, nên mình để trống chứ không đưa ra một con số nghe hợp lý mà sai.",
     "Cái giá của chặng nối đó đo được: cộng quãng đường Calgary – Vancouver vào là hành trình vượt mốc chia bậc của Aeroplan® và nhảy lên bậc trên. Cùng những chuyến bay xuyên Thái Bình Dương ấy, khởi hành từ Vancouver thì nằm ở bậc dưới.",
-    "Nếu bạn ở Calgary và ngày bay linh động, có một cách đáng cân nhắc: mua riêng vé Calgary – Vancouver bằng tiền rồi đổi điểm cho phần còn lại từ Vancouver. Cách đó mở lại cả bốn chương trình đang bị khoá ở đây, nhưng đổi lại bạn tự chịu rủi ro trễ chuyến giữa hai vé rời — không có bảo vệ nối chuyến nào giữa chúng.",
+    "Nếu bạn ở Calgary và ngày bay linh động, có một cách đáng cân nhắc: mua riêng vé Calgary – Vancouver bằng tiền rồi đổi điểm cho phần còn lại từ Vancouver. Cách đó mở lại cả bốn chương trình đang bị khoá ở đây, nhưng đổi lại bạn tự chịu rủi ro trễ chuyến giữa hai vé rời. Hai vé này không có bảo vệ nối chuyến.",
   ]),
 
   route("YYC", "HAN", [
-    "Từ Calgary, Hà Nội rẻ hơn Sài Gòn — và không phải vì khuyến mãi. Hành trình Calgary – Vancouver – hub – Nội Bài vừa đủ nằm dưới mốc chia bậc mà bảng của Aeroplan® dùng, còn cùng hành trình ấy về Tân Sơn Nhất thì vượt mốc. Chênh lệch giữa hai bậc lớn hơn giá một chuyến bay nội địa Việt Nam rất nhiều.",
-    "Như mọi chặng khởi hành từ Calgary: mọi hành trình tra được giá đều mở đầu bằng một chặng Air Canada® tới Vancouver, và chỉ Aeroplan® tính chặng nội địa đó chung vào một vé award. Bốn chương trình còn lại để trống không phải vì thiếu chuyến bay mà vì bảng giá của chúng ngừng áp dụng ngay khi có chặng nội địa trong vé.",
-    "Sáu hành trình Aeroplan® cho chặng này đi qua Bắc Kinh, Seoul, Thượng Hải, Tokyo Haneda, Tokyo Narita và Đài Bắc. Tất cả cùng một giá, vì bảng tính theo quãng đường chứ không theo hãng — nên hãy chọn theo chỗ trống và theo hãng bạn muốn bay, đừng chọn theo giá.",
+    "Từ Calgary, bay về Hà Nội rẻ hơn bay về Sài Gòn, không phải vì khuyến mãi. Hành trình Calgary – Vancouver – hub – Nội Bài vừa đủ nằm dưới mốc chia bậc mà bảng của Aeroplan® dùng, còn cùng hành trình ấy về Tân Sơn Nhất thì vượt mốc. Chênh lệch giữa hai bậc lớn hơn giá một chuyến bay nội địa Việt Nam rất nhiều.",
+    "Cũng như các chặng khác khởi hành từ Calgary, mọi hành trình tra được giá đều mở đầu bằng một chặng Air Canada® tới Vancouver, và chỉ Aeroplan® tính chặng nội địa đó chung vào một vé award. Bốn chương trình còn lại để trống không phải vì thiếu chuyến bay mà vì các bảng giá đó ngừng áp dụng ngay khi có chặng nội địa trong vé.",
+    "Sáu hành trình Aeroplan® cho chặng này đi qua Bắc Kinh, Seoul, Thượng Hải, Tokyo Haneda, Tokyo Narita và Đài Bắc. Tất cả cùng một giá, vì bảng tính theo quãng đường chứ không theo hãng. Bạn nên chọn theo chỗ trống và hãng bạn muốn bay, thay vì giá.",
   ]),
 
   route("YYC", "DAD", [
     DA_NANG_NETWORK,
     DA_NANG_REMAINING,
-    "Cộng thêm đặc điểm của Calgary — không có chuyến bay thẳng nào tới châu Á — thì hướng Aeroplan® chỉ còn hai hành trình, cả hai đều mở đầu bằng một chặng Air Canada® tới Vancouver rồi nối tiếp qua Seoul hoặc Đài Bắc. Hướng SkyTeam thì KLM® bay thẳng Calgary – Amsterdam rồi Vietnam Airlines® về Đà Nẵng, không cần chặng nội địa nào — nhưng vẫn không có giá tra trước.",
-    "Điểm sáng là quãng đường: hành trình Aeroplan® từ Calgary về Đà Nẵng nằm dưới mốc chia bậc, nên nó ăn bậc rẻ — ngang với chặng Calgary – Hà Nội và rẻ hơn chặng Calgary – Sài Gòn.",
+    "Calgary không có chuyến bay thẳng nào tới châu Á, nên hướng Aeroplan® chỉ còn hai hành trình, cả hai đều mở đầu bằng một chặng Air Canada® tới Vancouver rồi nối tiếp qua Seoul hoặc Đài Bắc. Hướng SkyTeam thì KLM® bay thẳng Calgary – Amsterdam rồi Vietnam Airlines® về Đà Nẵng, không cần chặng nội địa nào, nhưng vẫn không có giá tra trước.",
+    "Hành trình Aeroplan® từ Calgary về Đà Nẵng nằm dưới mốc chia bậc, nên được tính ở bậc rẻ, ngang với chặng Calgary – Hà Nội và rẻ hơn chặng Calgary – Sài Gòn.",
     PREMIUM_GAP,
   ]),
 ];

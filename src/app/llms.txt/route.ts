@@ -41,7 +41,7 @@ export async function GET() {
   const sections: string[] = [
     `# ${site("name")}`,
     `> ${seo("homeDescription")}`,
-    "Nội dung viết bằng tiếng Việt cho người Việt sống ở Canada. Số tiền viết `$` là CAD. Welcome offer và transfer bonus đổi thường xuyên — số trên từng trang thẻ đọc thẳng từ dữ liệu đang phục vụ, nên trang thẻ là nguồn đúng nhất.",
+    "Nội dung viết bằng tiếng Việt cho người Việt sống ở Canada. Số tiền viết `$` là CAD. Welcome offer và transfer bonus đổi thường xuyên. Số trên từng trang thẻ lấy trực tiếp từ dữ liệu đang hiển thị trên site, nên hãy tra số ở trang thẻ.",
     [
       "## Công cụ và trang tổng hợp",
       link(seo("creditCardsTitle"), "/credit-cards", seo("creditCardsDescription")),

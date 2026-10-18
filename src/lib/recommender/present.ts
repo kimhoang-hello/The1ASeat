@@ -441,7 +441,7 @@ export function spendSentenceOf(components: readonly OfferComponent[]): string |
     // phải làm, không hứa "trọn".
     return paidLater
       ? `Mở thẻ này, rồi ${parts[0]}${tail}.${keepCard}`
-      : `Mở thẻ này, rồi ${parts[0]}${tail}, để nhận trọn welcome bonus.`;
+      : `Mở thẻ này, rồi ${parts[0]}${tail} để nhận đủ welcome bonus.`;
   }
   const list = `${parts.slice(0, -1).join(", ")}, rồi ${parts[parts.length - 1]}`;
   return `Mở thẻ này. Welcome bonus trả theo từng mốc: ${list}${tail}.${keepCard}`;
@@ -599,7 +599,7 @@ const GOAL_TITLE: Record<GoalType, string> = {
   trip: "Chuyến bay bạn đang nhắm",
   earn_points: "Tích thêm điểm hằng ngày",
   cash: "Tích điểm quy đổi được thành tiền",
-  diversify: "Trải điểm ra nhiều chương trình",
+  diversify: "Tích điểm ở nhiều chương trình",
 };
 
 /**
@@ -960,14 +960,14 @@ export const BONUS_UNCERTAIN_NOTE = "chưa chắc bạn nhận được";
 /** Câu mở đầu của thẻ gợi ý chính (hành động `open_card`). */
 export function openCardSentence(action: ActionView): string {
   if (action.welcomeBonusBlocked) {
-    return "Mở thẻ này cho tỷ lệ tích điểm và quyền lợi của nó — welcome bonus thì bạn không nhận được, vì những thẻ bạn đã từng giữ.";
+    return "Mở thẻ này vì tỷ lệ tích điểm và quyền lợi. Bạn không nhận được welcome bonus vì những thẻ đã từng giữ.";
   }
   // Không dùng `spendSentence` ("… để nhận trọn welcome bonus"): đó là lời
   // hứa cho một bonus mình chưa kiểm được.
   if (action.welcomeBonusUncertain) {
-    return "Mở thẻ này là bước đáng làm tiếp theo — nhưng chưa chắc bạn còn nhận được welcome bonus, xem lưu ý bên dưới.";
+    return "Mình gợi ý bạn mở thẻ này tiếp theo, nhưng chưa chắc bạn còn nhận được welcome bonus. Bạn xem lưu ý bên dưới.";
   }
-  return action.spendSentence ?? "Mở thẻ này là bước đáng làm tiếp theo.";
+  return action.spendSentence ?? "Mình gợi ý bạn mở thẻ này tiếp theo.";
 }
 
 /**
@@ -1010,9 +1010,9 @@ export function coverageStatement(
   if (trip.coverageIsEstimate === true) {
     const known = trip.coverageLowerBound ?? 0;
     const percent = Math.min(99, Math.round(known * 100));
-    return percent > 0 ? `số điểm đã biết của bạn phủ khoảng ${percent}% chuyến này` : null;
+    return percent > 0 ? `số điểm bạn đã khai tương đương khoảng ${percent}% số điểm cần cho chuyến này` : null;
   }
-  if (trip.coverage >= 1) return trip.gap !== null && trip.gap > 0 ? null : "điểm hiện tại phủ được cả chuyến này";
+  if (trip.coverage >= 1) return trip.gap !== null && trip.gap > 0 ? null : "điểm hiện tại đủ cho cả chuyến này";
   // Chiều ngược lại của cùng mâu thuẫn: khoảng thiếu đo ở giá ĐIỂN HÌNH (bằng
   // 0), phần phủ đo ở mức CAO NHẤT (dưới 100%). In "Không thiếu" ngay trên
   // "phủ khoảng 98%" là hai câu cãi nhau (Codex, audit trang 25/09/2026) — nói
@@ -1022,9 +1022,9 @@ export function coverageStatement(
   // kiểm định kỳ 26/09/2026).
   const percent = Math.min(99, Math.round(trip.coverage * 100));
   if (trip.gap === 0) {
-    return `điểm hiện tại đủ ở mức giá điển hình; so với mức giá cao nhất thì phủ khoảng ${percent}%`;
+    return `điểm hiện tại đủ ở mức giá điển hình, tương đương khoảng ${percent}% số điểm cần ở mức giá cao nhất`;
   }
-  return `điểm hiện tại phủ khoảng ${percent}% chuyến này`;
+  return `điểm hiện tại tương đương khoảng ${percent}% số điểm cần cho chuyến này`;
 }
 
 /**

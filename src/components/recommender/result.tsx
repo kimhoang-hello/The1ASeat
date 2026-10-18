@@ -249,8 +249,7 @@ function PrimaryCard({
 
       {action.kind === "open_card" && action.apply?.affiliate && (
         <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-          Ghế 1A có thể nhận hoa hồng nếu bạn đăng ký qua link này. Hoa hồng không tham gia vào việc
-          chấm điểm: thứ tự gợi ý y hệt khi mình tắt hết link affiliate.
+          Ghế 1A có thể nhận hoa hồng nếu bạn đăng ký qua link này. Hoa hồng không ảnh hưởng tới cách chấm điểm: thứ tự gợi ý y hệt khi mình tắt hết link affiliate.
         </p>
       )}
     </section>
@@ -281,7 +280,7 @@ export function DeterministicWhy({ action }: { action: ActionView }) {
   if (action.strengths.length > 0) {
     return (
       <p className="mt-4 text-base leading-relaxed text-foreground/90">
-        Thẻ này lên đầu nhờ tổng điểm của cả bảng, mạnh nhất ở phần{" "}
+        Thẻ này đứng đầu nhờ tổng điểm, mạnh nhất ở phần{" "}
         {action.strengths.join(" và ")}.
       </p>
     );
@@ -342,8 +341,8 @@ function TripNumbers({ trip }: { trip: NonNullable<ResultView["trip"]> }) {
               thương gia, chưa có hạng nhất) — nói "chặng này" là sai, và đổi hạng
               ghế thì CÓ ra con số. */}
           {trip.cabin
-            ? `Chặng này, ${trip.cabin.toLowerCase()}, chưa có trong award chart của site, nên mình chưa nói được nó tốn bao nhiêu điểm — số người hay khứ hồi cũng không đổi được điều đó.`
-            : "Chặng này chưa có trong award chart của site, nên mình chưa nói được nó tốn bao nhiêu điểm — trả lời thêm câu nào cũng không ra con số."}{" "}
+            ? `Chặng này chưa có giá cho ${trip.cabin.toLowerCase()} trong award chart của site, nên mình chưa tính được số điểm cần. Biết thêm số người hay khứ hồi cũng không giúp tính được.`
+            : "Chặng này chưa có trong award chart của site, nên mình chưa tính được số điểm cần. Trả lời thêm câu nào cũng không ra con số."}{" "}
           Gợi ý thẻ bên trên vẫn dựa trên loại điểm bạn sẽ cần.
         </p>
       ) : nothingKnown ? (
@@ -399,7 +398,7 @@ function TripNumbers({ trip }: { trip: NonNullable<ResultView["trip"]> }) {
           {/* Chỉ nói "của bạn đi xa nhất" khi thật sự có điểm: khai 0 điểm thì
               engine vẫn chọn một chương trình để đo (Codex, audit 25/09/2026). */}
           {trip.accessible !== null && trip.accessible > 0
-            ? " — chương trình điểm của bạn đi được xa nhất trên chặng này."
+            ? ", loại điểm của bạn đổi được nhiều nhất cho chặng này."
             : "."}
         </p>
       )}
@@ -424,9 +423,9 @@ function TripNumbers({ trip }: { trip: NonNullable<ResultView["trip"]> }) {
           {/* Cùng luật với lời giải thích: không phần trăm vượt 100, không "phủ cả chuyến" cạnh "còn thiếu". */}
           {asSentenceStart(coverageStatement(trip) as string)}
           {trip.coverageUncertainty === "balance"
-            ? " — chưa tính phần điểm mình chưa biết."
+            ? ", chưa tính phần điểm mình chưa biết."
             : trip.coverageUncertainty === "price"
-              ? " — con số này chưa chắc, vì có chương trình mới chỉ công bố giá sàn."
+              ? ", nhưng con số này chưa chắc vì có chương trình mới chỉ công bố giá sàn."
               : "."}
         </p>
       )}
@@ -549,16 +548,16 @@ function HowItWorks({ view }: { view: ResultView }) {
         </tbody>
       </table>
       <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-        <strong className="text-foreground">Số nào là số chắc, số nào là ước lượng:</strong> welcome
+        <strong className="text-foreground">Số liệu nào đã kiểm, số liệu nào là ước lượng:</strong> welcome
         bonus, annual fee và mức spend chép từ trang của ngân hàng
         {view.dataVerifiedAt
-          ? ` (dòng cũ nhất mình dùng ở đây kiểm ngày ${vietnameseDate(view.dataVerifiedAt)})`
+          ? ` (ngày kiểm cũ nhất là ${vietnameseDate(view.dataVerifiedAt)})`
           : ""};
         số điểm một chuyến bay cần là khoảng ước lượng theo award chart và đổi theo ngày bay; phần
-        &ldquo;bạn gom được&rdquo; phụ thuộc chính con số bạn khai.
+        &ldquo;bạn gom được&rdquo; phụ thuộc vào số điểm bạn khai.
       </p>
       <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-        Dữ liệu thẻ tính đến {vietnameseDate(view.asOf)}. Mã tra cứu: <code>{view.runId}</code> — gửi mã này cho
+        Dữ liệu thẻ tính đến {vietnameseDate(view.asOf)}. Mã tra cứu: <code>{view.runId}</code>. Gửi mã này cho
         mình nếu bạn thấy kết quả sai, mình xem lại được đúng lượt tính của bạn.
       </p>
       </div>

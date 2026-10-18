@@ -39,7 +39,7 @@ export default function PrivacyPage() {
       </p>
       <p>
         <strong>Khi bạn gửi form Liên hệ:</strong> họ tên, địa chỉ email, chủ đề và nội dung bạn
-        viết — dùng để phản hồi đúng yêu cầu của bạn, không dùng cho việc khác và không tự động đưa
+        viết, dùng để trả lời tin nhắn của bạn, không dùng cho việc khác và không tự động đưa
         bạn vào danh sách nhận bản tin.
       </p>
       <p>
@@ -50,7 +50,7 @@ export default function PrivacyPage() {
       <p>
         <strong>Dữ liệu kỹ thuật:</strong> như mọi website, máy chủ ghi lại địa chỉ IP, loại trình
         duyệt và thời điểm truy cập. Chúng tôi cũng tạm giữ địa chỉ IP trong bộ nhớ máy chủ vài
-        giờ để giới hạn số lần gửi form — đây là biện pháp chống spam, không dùng để nhận dạng bạn
+        giờ để giới hạn số lần gửi form. Đây là biện pháp chống spam, không dùng để nhận dạng bạn
         và không được lưu lâu dài.
       </p>
       <p>
@@ -58,9 +58,9 @@ export default function PrivacyPage() {
         tín dụng của bạn. Không có chỗ nào trên trang yêu cầu những thông tin đó.
       </p>
       <p>
-        Ngoại lệ duy nhất là <strong>công cụ gợi ý thẻ</strong>: nó hỏi KHOẢNG thu nhập, KHOẢNG chi
+        Ngoại lệ duy nhất là <strong>công cụ gợi ý thẻ</strong>: nó hỏi khoảng thu nhập, khoảng chi
         tiêu và số điểm bạn đang có, vì không có những con số đó thì không tính được gợi ý nào.
-        Chúng được lưu ẩn danh — xem mục &ldquo;Công cụ gợi ý thẻ&rdquo; bên dưới.
+        Các thông tin này được lưu ẩn danh. Xem mục &ldquo;Công cụ gợi ý thẻ&rdquo; bên dưới.
       </p>
 
       <h2>Dịch vụ bên thứ ba chúng tôi dùng</h2>
@@ -71,31 +71,31 @@ export default function PrivacyPage() {
       </p>
       <ul>
         <li>
-          <strong>Kit (ConvertKit)</strong> — lưu danh sách email bản tin.
+          <strong>Kit (ConvertKit)</strong>: lưu danh sách email bản tin.
         </li>
         <li>
-          <strong>Resend</strong> — gửi email chào mừng cho bạn và chuyển nội dung form Liên hệ về
+          <strong>Resend</strong>: gửi email chào mừng cho bạn và chuyển nội dung form Liên hệ về
           hộp thư của chúng tôi.
         </li>
         <li>
-          <strong>Cusdis</strong> — giữ các bình luận gửi trước ngày 03/10/2026, khi trang còn
+          <strong>Cusdis</strong>: giữ các bình luận gửi trước ngày 03/10/2026, khi trang còn
           khung bình luận. Trang không còn gửi dữ liệu mới nào tới Cusdis.
         </li>
         <li>
-          <strong>Google Analytics 4</strong> — thống kê lượt xem và nguồn truy cập ở dạng tổng
+          <strong>Google Analytics 4</strong>: thống kê lượt xem và nguồn truy cập ở dạng tổng
           hợp. Có đặt cookie.
         </li>
         <li>
-          <strong>YouTube</strong> — các bài dạng video nhúng player của YouTube. Khi player tải,
+          <strong>YouTube</strong>: các bài dạng video nhúng player của YouTube. Khi player tải,
           Google có thể đặt cookie trên trình duyệt của bạn theo chính sách riêng của họ.
         </li>
         <li>
-          <strong>Hostinger</strong> — hạ tầng lưu trữ website và log máy chủ.
+          <strong>Hostinger</strong>: hạ tầng lưu trữ website và log máy chủ.
         </li>
         <li>
-          <strong>Anthropic (Claude)</strong> — viết lại lời giải thích trong công cụ gợi ý thẻ và
+          <strong>Anthropic (Claude)</strong>: viết lại lời giải thích trong công cụ gợi ý thẻ và
           phần giới thiệu offer của các trang thẻ. Với công cụ gợi ý, thứ được gửi đi là những câu
-          kết quả đã dựng sẵn (tên thẻ, welcome bonus, phí, số điểm chuyến bay ước lượng) —
+          kết quả đã dựng sẵn (tên thẻ, welcome bonus, phí, số điểm chuyến bay ước lượng);
           <strong>không</strong> gửi mã phiên, không gửi từng dòng số dư, không gửi thu nhập.
         </li>
       </ul>
@@ -105,11 +105,11 @@ export default function PrivacyPage() {
         Nếu bạn dùng công cụ gợi ý thẻ, những câu bạn trả lời (mục tiêu, thẻ đang giữ, khoảng chi
         tiêu, khoảng thu nhập, điểm đang có) được lưu trên máy chủ của chúng tôi cùng một mã ngẫu
         nhiên đặt trong cookie của trình duyệt bạn. <strong>Không có tên, email hay số tài khoản
-        nào</strong> — công cụ không hỏi và cũng không có chỗ để điền chúng.
+        nào</strong>, vì công cụ không hỏi và cũng không có chỗ để điền.
       </p>
       <p>
         Mỗi lượt gợi ý được lưu lại kèm chính những con số đã dùng để tính, để khi bạn báo kết quả
-        sai thì chúng tôi tra lại được đúng lượt đó. Bấm &ldquo;Làm lại từ đầu&rdquo; trong công cụ
+        sai thì mình tra lại được đúng lượt đó. Bấm &ldquo;Làm lại từ đầu&rdquo; trong công cụ
         sẽ xoá mã ngẫu nhiên khỏi trình duyệt bạn; muốn xoá hẳn phần dữ liệu đã lưu, nhắn cho chúng
         tôi qua trang liên hệ kèm mã lượt gợi ý hiện dưới mỗi kết quả. Chúng tôi xoá hồ sơ đó cùng
         mọi lượt gợi ý và lời giải thích của nó trong vòng 30 ngày.
@@ -142,7 +142,7 @@ export default function PrivacyPage() {
         bạn đến từ đâu.
       </p>
       <p>
-        Chúng tôi chỉ nhận được báo cáo tổng hợp về số lượt mở thẻ — <strong>không nhận được danh
+        Chúng tôi chỉ nhận được báo cáo tổng hợp về số lượt mở thẻ; <strong>không nhận được danh
         tính, hồ sơ đăng ký hay thông tin tài chính của bạn</strong> từ ngân hàng hay nền tảng
         rebate. Nếu bạn đăng ký nhận rebate, đó là thỏa thuận trực tiếp giữa bạn và nền tảng đó;
         hãy đọc chính sách bảo mật của họ.
@@ -165,11 +165,11 @@ export default function PrivacyPage() {
       <h2>Quyền của bạn</h2>
       <p>
         Theo luật bảo vệ dữ liệu cá nhân của Canada (PIPEDA), bạn có quyền yêu cầu xem, sửa hoặc
-        xoá thông tin cá nhân mà chúng tôi giữ về bạn, và rút lại sự đồng ý bất cứ lúc nào.
+        xoá thông tin cá nhân của bạn mà chúng tôi đang giữ, và rút lại sự đồng ý bất cứ lúc nào.
       </p>
       <p>
-        Huỷ đăng ký bản tin nhanh nhất là bấm liên kết ở cuối bất kỳ email nào chúng tôi gửi. Với
-        các yêu cầu khác — xoá bình luận, xoá dữ liệu liên hệ — bạn nhắn cho chúng tôi qua{" "}
+        Cách nhanh nhất để huỷ đăng ký bản tin là bấm liên kết ở cuối bất kỳ email nào chúng tôi gửi. Với
+        các yêu cầu khác (xoá bình luận, xoá dữ liệu liên hệ), bạn nhắn cho chúng tôi qua{" "}
         <Link href="/contact">trang Liên hệ</Link>, chúng tôi sẽ xử lý trong thời gian hợp lý.
       </p>
 
@@ -182,9 +182,7 @@ export default function PrivacyPage() {
 
       <h2>Bảo mật</h2>
       <p>
-        Trang chạy hoàn toàn qua HTTPS. Chúng tôi cố gắng bảo vệ dữ liệu ở mức hợp lý, nhưng không
-        có hệ thống nào trên internet an toàn tuyệt đối, nên chúng tôi không thể cam kết an toàn
-        tuyệt đối.
+        Trang chạy hoàn toàn qua HTTPS. Chúng tôi cố gắng bảo vệ dữ liệu ở mức hợp lý, nhưng không có hệ thống nào trên internet an toàn tuyệt đối nên chúng tôi không thể cam kết điều đó.
       </p>
 
       <h2>Thay đổi chính sách</h2>

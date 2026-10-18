@@ -61,7 +61,7 @@ export const REASON_TEXT: Record<ReasonCode, ReasonText> = {
   },
   WELCOME_BONUS_UNCERTAIN: {
     tone: "info",
-    text: "Chưa chắc bạn còn nhận được welcome bonus — điều khoản tính theo thẻ bạn từng giữ và lúc bạn mở hay đóng thẻ, mà mình chưa đủ thông tin đó.",
+    text: "Chưa chắc bạn còn nhận được welcome bonus. Điều khoản tính theo thẻ bạn từng giữ và lúc bạn mở hay đóng thẻ, mà mình chưa có đủ thông tin đó.",
   },
 
   MIN_SPEND_GOOD_FIT: {
@@ -70,7 +70,7 @@ export const REASON_TEXT: Record<ReasonCode, ReasonText> = {
   },
   MIN_SPEND_TIGHT: {
     tone: "caution",
-    text: "Mức spend sát với mức bạn dồn được — đạt được, nhưng không dư dả.",
+    text: "Mức spend sát với mức bạn dồn được. Bạn có thể đạt, nhưng không dư dả.",
   },
   MIN_SPEND_TOO_HIGH: {
     tone: "caution",
@@ -99,7 +99,7 @@ export const REASON_TEXT: Record<ReasonCode, ReasonText> = {
   },
   POINTS_COVERAGE_UNKNOWN: {
     tone: "info",
-    text: "Phần chuyến đi mà điểm của bạn phủ được mới là ước lượng, chưa phải con số chắc.",
+    text: "Điểm của bạn đủ cho bao nhiêu phần chuyến đi thì mới là ước lượng, chưa phải con số chắc.",
   },
   AWARD_PRICE_IS_FLOOR_ONLY: {
     tone: "caution",
@@ -116,7 +116,7 @@ export const REASON_TEXT: Record<ReasonCode, ReasonText> = {
   },
   FLEXIBLE_CURRENCY_VALUABLE: {
     tone: "good",
-    text: "Thẻ này kiếm loại điểm chuyển được sang nhiều hãng, nên bạn giữ được lựa chọn.",
+    text: "Thẻ này kiếm loại điểm chuyển được sang nhiều hãng, nên bạn có nhiều lựa chọn khi đổi điểm.",
   },
   NEW_CURRENCY_EXPOSURE: {
     tone: "good",
@@ -125,8 +125,8 @@ export const REASON_TEXT: Record<ReasonCode, ReasonText> = {
   CASH_VALUE_UNPRICED: {
     tone: "caution",
     text:
-      "Mình chưa tra được loại điểm của thẻ này rút ra tiền mặt theo tỷ lệ nào, nên phần tích điểm " +
-      "của nó đang được tính bằng 0 — chưa chắc là thấp, chỉ là chưa có số.",
+      "Mình chưa tra được tỷ lệ đổi điểm của thẻ này ra tiền mặt, nên phần tích điểm đang được tính " +
+      "bằng 0. Đây là do thiếu dữ liệu, chưa chắc giá trị đã thấp.",
   },
 
   EXISTING_BENEFIT_DUPLICATION: {
@@ -157,7 +157,7 @@ export const REASON_TEXT: Record<ReasonCode, ReasonText> = {
   },
   INCOME_MAY_NOT_QUALIFY: {
     tone: "caution",
-    text: "Khoảng thu nhập bạn khai nằm ngay quanh ngưỡng của thẻ — có thể đạt, có thể không.",
+    text: "Khoảng thu nhập bạn khai nằm quanh ngưỡng của thẻ, nên có thể đạt hoặc không.",
   },
   ANNUAL_FEE_ABOVE_TOLERANCE: {
     tone: "caution",
@@ -181,11 +181,11 @@ export const REASON_TEXT: Record<ReasonCode, ReasonText> = {
     tone: "good",
     // Không hứa tương lai: engine đo offer HÔM NAY so với lịch sử, không đo
     // được đợt offer sau có cao hơn không.
-    text: "Offer của những thẻ đáng mở đang ở vùng thấp so với lịch sử của chính chúng — lúc này chưa phải lúc tốt để mở.",
+    text: "Offer của những thẻ đáng mở đang thấp so với lịch sử của từng thẻ, nên lúc này chưa phù hợp để mở.",
   },
   FOCUS_ON_AWARD_AVAILABILITY: {
     tone: "good",
-    text: "Theo ước lượng của mình, bạn đã đủ điểm; việc khó còn lại là tìm chỗ trống, không phải kiếm thêm điểm.",
+    text: "Theo ước lượng của mình, bạn đã đủ điểm. Phần khó còn lại là tìm chỗ trống.",
   },
 
   GOAL_AMBIGUOUS: {
@@ -195,7 +195,7 @@ export const REASON_TEXT: Record<ReasonCode, ReasonText> = {
   GOAL_MISSING: { tone: "info", text: "Chưa có mục tiêu nào để tính." },
   SCORES_NEARLY_TIED: {
     tone: "info",
-    text: "Hai lựa chọn đầu gần như ngang điểm — chọn cái nào cũng hợp lý.",
+    text: "Hai lựa chọn đầu gần như ngang điểm. Chọn cái nào cũng hợp lý.",
   },
 };
 
@@ -211,16 +211,16 @@ export const WARNING_TEXT: Record<WarningCode, string> = {
   WELCOME_BONUS_BLOCKED_BY_PAST_CARD:
     "Theo điều khoản, những thẻ bạn đã từng giữ khiến bạn không nhận được welcome bonus của thẻ này.",
   WELCOME_BONUS_NOT_VERIFIABLE:
-    "Mình chưa kiểm được bạn còn đủ điều kiện nhận welcome bonus hay không — cần biết bạn từng giữ thẻ nào và mở/đóng khi nào.",
+    "Mình chưa kiểm được bạn còn đủ điều kiện nhận welcome bonus hay không. Mình cần biết bạn từng giữ thẻ nào và mở/đóng khi nào.",
   ELIGIBILITY_NOT_VERIFIABLE:
     "Mình chưa kiểm được hết điều kiện của ngân hàng với thông tin hiện có. Ngân hàng vẫn là bên quyết định.",
   AWARD_ROUTE_NOT_IN_DATASET: "Chặng bay này chưa có trong award chart của site.",
   AWARD_PRICE_FLOOR_ONLY: "Chương trình chỉ công bố giá sàn, nên số điểm thật có thể cao hơn.",
   POINTS_EXPIRY_NOT_MODELLED:
-    "Mình chưa tính hạn của điểm — kiểm lại xem điểm bạn đang có còn hạn không.",
+    "Mình chưa tính hạn của điểm. Bạn kiểm lại xem điểm đang có còn hạn không.",
   OFFER_TERMS_INCOMPLETE: "Điều khoản của offer này chưa đầy đủ trong dữ liệu của site.",
   TRIP_PASSENGERS_UNKNOWN: "Chưa biết chuyến đi có mấy người.",
-  TRIP_ROUND_TRIP_UNKNOWN: "Chưa biết khứ hồi hay một chiều — số điểm chênh nhau đúng gấp đôi.",
+  TRIP_ROUND_TRIP_UNKNOWN: "Chưa biết khứ hồi hay một chiều. Số điểm chênh nhau gấp đôi.",
   TRIP_CABIN_UNKNOWN: "Chưa biết bạn muốn bay hạng nào.",
   BALANCES_UNDECLARED: "Bạn chưa khai điểm đang có, nên mình chưa tính được phần điểm đó.",
   CARDS_UNDECLARED: "Bạn chưa khai thẻ đang giữ, nên gợi ý có thể trùng thẻ bạn đã có.",
@@ -250,11 +250,11 @@ export const STRATEGY_TEXT: Record<StrategyType, string> = {
   USE_EXISTING_POINTS: "Dùng số điểm đang có",
   EARN_FLEXIBLE_POINTS: "Tích thêm điểm linh hoạt",
   EARN_SPECIFIC_CURRENCY: "Tích đúng loại điểm chuyến đi cần",
-  DIVERSIFY: "Trải điểm ra nhiều chương trình",
+  DIVERSIFY: "Tích điểm ở nhiều chương trình",
   WAIT_FOR_BETTER_OFFER: "Đợi offer tốt hơn",
   OPEN_CARD: "Mở thêm một thẻ",
   FOCUS_ON_AVAILABILITY: "Tập trung tìm chỗ trống",
-  BUILD_POINTS: "Xây điểm từ đầu",
+  BUILD_POINTS: "Tích điểm từ đầu",
   NO_NEW_CARD: "Chưa mở thẻ mới",
 };
 
@@ -329,11 +329,11 @@ export const CONFIDENCE_BY_CAUSE: Record<
 > = {
   scoreSeparation: {
     label: "Hai lựa chọn ngang nhau",
-    sentence: "{top} và lựa chọn kế tiếp gần như ngang điểm — chọn cái nào cũng hợp lý.",
+    sentence: "{top} và lựa chọn kế tiếp gần như ngang điểm. Chọn cái nào cũng hợp lý.",
   },
   dataCompleteness: {
     label: "Còn thiếu thông tin",
-    sentence: "Trả lời thêm vài câu là gợi ý này chắc hơn hẳn.",
+    sentence: "Trả lời thêm vài câu sẽ giúp mình gợi ý sát hơn.",
   },
   dataFreshness: {
     label: "Dữ liệu cần kiểm lại",
@@ -354,7 +354,7 @@ export const CONFIDENCE_BY_CAUSE: Record<
  */
 export const CONFIDENCE_CLOSE = {
   label: "Lựa chọn kế tiếp khá sát",
-  sentence: "{top} nhỉnh hơn lựa chọn kế tiếp, nhưng không nhiều — nên xem cả hai trước khi quyết.",
+  sentence: "{top} nhỉnh hơn lựa chọn kế tiếp, nhưng không nhiều, nên xem cả hai trước khi quyết.",
 };
 
 /** Không còn lựa chọn nào khác để so — xem `confidenceOf`. */
@@ -382,23 +382,23 @@ export const CONFIDENCE_NO_QUESTION_LEFT =
  */
 export const BANKING_RELATIONSHIP_TEXT: Record<string, string> = {
   "wealthsimple-chequing":
-    "Wealthsimple® chỉ nhận đơn khi bạn có tài khoản chequing Wealthsimple® đang hoạt động — mở miễn phí, làm được ngay lúc đăng ký thẻ.",
+    "Wealthsimple® chỉ nhận đơn khi bạn có tài khoản chequing Wealthsimple® đang hoạt động. Bạn có thể mở tài khoản miễn phí ngay lúc đăng ký thẻ.",
 };
 export const BANKING_RELATIONSHIP_FALLBACK = "Ngân hàng đòi bạn có sẵn một tài khoản ở chính ngân hàng này mới nhận đơn.";
 
 export const NO_CARD_SENTENCE: Record<string, string> = {
   points_sufficient:
-    "Theo ước lượng của mình, số điểm bạn đang có đã đủ cho mục tiêu này — mở thêm thẻ lúc này không rút ngắn được gì.",
+    "Theo ước lượng của mình, số điểm bạn đang có đã đủ cho mục tiêu này. Mở thêm thẻ lúc này không rút ngắn được gì.",
   // Engine đo ví đang KIẾM được bao nhiêu so với thẻ tốt nhất còn lại — không
   // đo số điểm đã có. "Đã lo được việc này" đọc như "đủ điểm rồi" với người
   // khai 0 điểm và còn thiếu 120,000 (Codex, audit trang 25/09/2026).
   portfolio_covers:
     "Thẻ bạn đang giữ đã kiếm đúng loại điểm cho việc này, nên thẻ mới không thêm được bao nhiêu.",
   offers_weak:
-    "Offer của những thẻ đáng mở đang ở vùng thấp so với lịch sử của chính chúng — lúc này chưa phải lúc tốt để mở thêm thẻ.",
+    "Offer của những thẻ đáng mở đang thấp so với lịch sử của từng thẻ, nên lúc này chưa phù hợp để mở thêm thẻ.",
   nothing_fits:
     // Không khuyên "nới" gì: điều kiện của ngân hàng không phải thứ người dùng
     // đặt ra hay nới được (Codex, rà đối kháng Phase 6).
-    "Chưa thẻ nào vừa với hồ sơ của bạn lúc này — vướng mức annual fee bạn đặt ra hoặc điều kiện mở thẻ của ngân hàng.",
+    "Lúc này chưa có thẻ nào phù hợp với hồ sơ của bạn vì vướng mức annual fee bạn đặt ra hoặc điều kiện mở thẻ của ngân hàng.",
   default: "Mở thêm thẻ lúc này chưa mang lại gì đáng kể cho mục tiêu của bạn.",
 };

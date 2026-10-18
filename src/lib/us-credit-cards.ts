@@ -292,7 +292,7 @@ const UR_FROM_CANADA: CanadianAnswer = {
 /** Thẻ cash back trong hệ Ultimate Rewards®: phải ghép với một thẻ có quyền chuyển. */
 const UR_PAIRED_FROM_CANADA: CanadianAnswer = {
   short: "Có, nếu ghép thẻ",
-  note: "Tự nó chỉ quy ra tiền. Gộp điểm sang Sapphire Preferred®, Sapphire Reserve® hoặc Ink Business Preferred® thì chuyển được sang Aeroplan®.",
+  note: "Nếu dùng riêng thẻ này, bạn chỉ đổi điểm ra tiền được. Gộp điểm sang Sapphire Preferred®, Sapphire Reserve® hoặc Ink Business Preferred® thì chuyển được sang Aeroplan®.",
 };
 
 const IHG_FROM_CANADA: CanadianAnswer = {
@@ -307,7 +307,7 @@ const IHG_FROM_CANADA: CanadianAnswer = {
  * chính nó, nên có câu riêng.
  */
 const IHG_PERSONAL_WATCH_OUT =
-  "Thẻ này chịu luật 5/24 của Chase®. Chỉ mở được khi bạn không đang giữ thẻ IHG® cá nhân nào (kể cả Premier Select) và chưa nhận bonus thẻ IHG® cá nhân trong 24 tháng; thẻ doanh nghiệp không tính vào luật này.";
+  "Thẻ này chịu luật 5/24 của Chase®. Chỉ mở được khi bạn hiện không giữ thẻ IHG® cá nhân nào (kể cả Premier Select) và chưa nhận bonus thẻ IHG® cá nhân trong 24 tháng; thẻ doanh nghiệp không tính vào luật này.";
 
 /**
  * Hạn của welcome offer ra mắt cả dòng thẻ IHG® ("Apply by 11/18/2026" trên cả
@@ -388,7 +388,7 @@ const US_CARD_DATA: UsCardData[] = [
         note: "Ultimate Rewards® chuyển được sang Aeroplan®, nên điểm dùng được cho chuyến bay xuất phát từ Canada.",
       },
       watchOut:
-        "Chase® thường từ chối người đã mở từ 5 thẻ (của mọi ngân hàng) trong 24 tháng — luật \"5/24\" không có trong điều khoản nhưng được nhiều người xác nhận. Welcome bonus cũng không dành cho người đang có thẻ này.",
+        "Chase® thường từ chối người đã mở từ 5 thẻ (của mọi ngân hàng) trong 24 tháng. Luật \"5/24\" không có trong điều khoản nhưng được nhiều người xác nhận. Welcome bonus cũng không dành cho người đang có thẻ này.",
     },
     applyUrl: CHASE_PERSONAL_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred",
@@ -450,7 +450,7 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Thẻ travel cao cấp của Capital One®: credit du lịch $300 USD mỗi năm, lounge, và miles chuyển được sang Aeroplan®.",
     editorsTake:
-      "Credit du lịch $300 USD cộng 10,000 miles mỗi năm gia hạn bù lại phần lớn annual fee — nếu bạn đặt vé qua Capital One® Travel. 2x miles cho mọi chi tiêu làm nó dễ dùng hơn các thẻ chia hạng mục.",
+      "Credit du lịch $300 USD cộng 10,000 miles mỗi năm gia hạn bù lại phần lớn annual fee nếu bạn đặt vé qua Capital One® Travel. 2x miles cho mọi chi tiêu giúp thẻ này dễ dùng hơn các thẻ chia hạng mục.",
     keyBenefits: [
       "Credit du lịch $300 USD mỗi năm khi đặt qua Capital One® Travel",
       "10,000 miles mỗi năm gia hạn, bắt đầu từ năm thứ hai",
@@ -533,7 +533,7 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Thẻ cao cấp nhất của Bilt: tích điểm cả khi trả tiền thuê nhà hoặc tiền mortgage, và điểm Bilt chuyển được sang Aeroplan®.",
     editorsTake:
-      "Bilt hiện có ba thẻ: Blue, Obsidian và Palladium. Palladium là thẻ duy nhất có welcome bonus bằng điểm: 50,000 điểm + Gold Status sau khi chi $4,000 USD trong 90 ngày, cộng $300 USD Bilt Cash; hai thẻ kia chỉ tặng Bilt Cash. Chỉ đáng nhìn tới nếu bạn trả tiền nhà ở Mỹ.",
+      "Bilt hiện có ba thẻ: Blue, Obsidian và Palladium. Palladium là thẻ duy nhất có welcome bonus bằng điểm: 50,000 điểm + Gold Status sau khi chi $4,000 USD trong 90 ngày, cộng $300 USD Bilt Cash; hai thẻ kia chỉ tặng Bilt Cash. Chỉ đáng cân nhắc nếu bạn trả tiền nhà ở Mỹ.",
     keyBenefits: [
       "Tích tới 1.25x điểm khi trả tiền thuê nhà hoặc mortgage, không mất phí giao dịch",
       "2x điểm mọi chi tiêu khác",
@@ -658,7 +658,7 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Thẻ travel cao cấp của Chase®: 8x điểm qua Chase® Travel, credit du lịch $300 USD và lounge Priority Pass™.",
     editorsTake:
-      "Annual fee $795 USD chỉ đáng nếu bạn thật sự dùng hết credit du lịch $300 USD và các credit khách sạn. Điểm cùng hệ với Sapphire Preferred® nên vẫn chuyển được sang Aeroplan®.",
+      "Annual fee $795 USD chỉ đáng nếu bạn dùng hết credit du lịch $300 USD và các credit khách sạn. Điểm cùng hệ với Sapphire Preferred® nên vẫn chuyển được sang Aeroplan®.",
     keyBenefits: [
       "8x điểm khi đặt qua Chase® Travel, 4x vé máy bay và khách sạn đặt thẳng với hãng, 3x ăn uống",
       "Credit du lịch tới $300 USD mỗi năm gia hạn thẻ",
@@ -716,7 +716,7 @@ const US_CARD_DATA: UsCardData[] = [
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: MR_FROM_CANADA,
       watchOut:
-        "Phần lớn credit hằng năm chỉ dùng được ở Mỹ, nên giá trị thật với người sống ở Canada thấp hơn con số American Express® quảng cáo.",
+        "Phần lớn credit hằng năm chỉ dùng được ở Mỹ, nên giá trị với người sống ở Canada thấp hơn con số American Express® quảng cáo.",
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/platinum/",
     lastUpdated: VERIFIED_2,
@@ -740,7 +740,7 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Bản annual fee thấp của Venture X: 2x miles cho mọi chi tiêu, miles chuyển được sang Aeroplan®.",
     editorsTake:
-      "Cùng hệ miles với Venture X nhưng phí $95 USD thay vì $395 USD, đổi lại không có lounge. Capital One® đang chạy thêm credit khách sạn $300 USD nhưng không công bố ngày kết thúc — kiểm lại trên trang trước khi apply.",
+      "Cùng hệ miles với Venture X nhưng phí $95 USD thay vì $395 USD, đổi lại không có lounge. Capital One® đang chạy thêm credit khách sạn $300 USD nhưng không công bố ngày kết thúc. Kiểm lại trên trang trước khi apply.",
     keyBenefits: [
       "2x miles cho mọi chi tiêu, không giới hạn",
       "5x miles khách sạn và thuê xe đặt qua Capital One® Travel",
@@ -823,7 +823,7 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Thẻ Aeroplan® của Chase®: điểm vào thẳng tài khoản Aeroplan®, hạng 25K tự động và hành lý ký gửi miễn phí trên chuyến Air Canada®.",
     editorsTake:
-      "Welcome bonus tới 115,000 điểm chia hai nấc: 75,000 điểm sau khi chi $4,000 USD trong 3 tháng, thêm 40,000 điểm khi tổng chi đạt $20,000 USD trong 12 tháng — offer nâng từ mức thường 60,000 điểm, Chase® gọi là offer tốt nhất từ trước tới nay của thẻ nhưng không công bố ngày kết thúc. Với người Canada, đây là thẻ Mỹ tích thẳng ra Aeroplan® mà không cần bước chuyển điểm, và hạng 25K tự động đáng giá nếu bạn hay bay Air Canada®.",
+      "Welcome bonus tới 115,000 điểm chia hai nấc: 75,000 điểm sau khi chi $4,000 USD trong 3 tháng, thêm 40,000 điểm khi tổng chi đạt $20,000 USD trong 12 tháng. Offer nâng từ mức thường 60,000 điểm. Chase® gọi là offer tốt nhất từ trước tới nay của thẻ nhưng không công bố ngày kết thúc. Với người Canada, đây là thẻ Mỹ tích thẳng ra Aeroplan® mà không cần bước chuyển điểm, và hạng 25K tự động đáng giá nếu bạn hay bay Air Canada®.",
     keyBenefits: [
       "Hạng Aeroplan® 25K tự động khi còn giữ thẻ; chi $75,000 USD trong năm lên 35K",
       "3x điểm khi mua thẳng với Air Canada® và ở du lịch khác; 3x ở siêu thị và nhà hàng tới 31/12/2026 (sau đó 2x); 2x ở trạm xăng",
@@ -843,7 +843,7 @@ const US_CARD_DATA: UsCardData[] = [
         note: "Điểm tự chuyển vào tài khoản Aeroplan® gắn với thẻ sau mỗi kỳ sao kê. Aeroplan® không chia theo quốc gia, nên điểm dùng được cho chuyến bay xuất phát từ Canada như điểm từ thẻ Canada.",
       },
       watchOut:
-        "Thẻ này chịu luật 5/24 của Chase®. Điều khoản của Chase® chỉ chặn người đang có thẻ này hoặc đã nhận bonus của nó trong 24 tháng — không nhắc tới thẻ Aeroplan® Canada. Nấc 40,000 điểm đòi tổng chi $20,000 USD trong 12 tháng, khó với người ít tiêu ở Mỹ.",
+        "Thẻ này chịu luật 5/24 của Chase®. Điều khoản của Chase® chỉ chặn người đang có thẻ này hoặc đã nhận bonus của thẻ này trong 24 tháng; không nhắc tới thẻ Aeroplan® Canada. Nấc 40,000 điểm đòi tổng chi $20,000 USD trong 12 tháng, khó với người ít tiêu ở Mỹ.",
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/aircanada/aeroplan",
     lastUpdated: VERIFIED_4,
@@ -922,7 +922,7 @@ const US_CARD_DATA: UsCardData[] = [
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: HILTON_FROM_CANADA,
       watchOut:
-        "Điểm Hilton Honors® có giá trị mỗi điểm thấp hơn nhiều so với Aeroplan® hay World of Hyatt® — cần rất nhiều điểm cho một đêm.",
+        "Mỗi điểm Hilton Honors® có giá trị thấp hơn nhiều so với Aeroplan® hay World of Hyatt®, nên cần rất nhiều điểm cho một đêm.",
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/hilton-honors/",
     lastUpdated: VERIFIED_2,
@@ -947,7 +947,7 @@ const US_CARD_DATA: UsCardData[] = [
     editorsTake:
       "Không annual fee mà welcome bonus $750 USD. " +
       UR_CONVERT_NOTE +
-      " Lưu ý thẻ này CÓ phí giao dịch ngoại tệ 3%.",
+      " Lưu ý thẻ này có phí giao dịch ngoại tệ 3%.",
     keyBenefits: [
       "1.5% cash back cho mọi chi tiêu, không giới hạn",
       "Không annual fee",
@@ -987,7 +987,7 @@ const US_CARD_DATA: UsCardData[] = [
     editorsTake:
       "Cùng welcome bonus $750 USD và cùng annual fee $0 USD với Ink Business Unlimited®, khác ở chỗ nhân theo hạng mục thay vì đều 1.5%. " +
       UR_CONVERT_NOTE +
-      " Lưu ý thẻ này CÓ phí giao dịch ngoại tệ 3%.",
+      " Lưu ý thẻ này có phí giao dịch ngoại tệ 3%.",
     keyBenefits: [
       "5% cash back ở văn phòng phẩm và dịch vụ internet, cable, điện thoại (tới $25,000 USD mỗi năm gia hạn thẻ)",
       "2% cash back ở trạm xăng và nhà hàng (tới $25,000 USD mỗi năm gia hạn thẻ)",
@@ -1027,7 +1027,7 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Bản doanh nghiệp của Sapphire Reserve®: 200,000 điểm Ultimate Rewards® khi mở thẻ, đổi lại mức chi tiêu lớn nhất trong các thẻ Chase® ở đây.",
     editorsTake:
-      "200,000 điểm là con số rất lớn, nhưng phải chi $30,000 USD trong 6 tháng — chỉ hợp lý nếu doanh nghiệp bạn có dòng chi tiêu thật ở Mỹ. Chase® ghi \"Our best offer returns\" và gạch mức thường 150,000 điểm, nhưng không công bố ngày kết thúc.",
+      "200,000 điểm là con số rất lớn, nhưng phải chi $30,000 USD trong 6 tháng. Chỉ hợp lý nếu doanh nghiệp bạn có các khoản chi ở Mỹ. Chase® ghi \"Our best offer returns\" và gạch mức thường 150,000 điểm, nhưng không công bố ngày kết thúc.",
     keyBenefits: [
       "8x điểm khi đặt qua Chase® Travel",
       "Credit du lịch và credit dịch vụ doanh nghiệp hằng năm",
@@ -1042,7 +1042,7 @@ const US_CARD_DATA: UsCardData[] = [
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: UR_FROM_CANADA,
       watchOut:
-        "Là thẻ Pay in Full: dư nợ phải trả hết mỗi kỳ sao kê. Mức chi tiêu $30,000 USD trong 6 tháng là rào cản thật, không phải con số trang trí.",
+        "Là thẻ Pay in Full: dư nợ phải trả hết mỗi kỳ sao kê. Mức chi tiêu $30,000 USD trong 6 tháng không dễ đạt.",
     },
     applyUrl: CHASE_BUSINESS_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/business-credit-cards/sapphire/reserve",
@@ -1066,7 +1066,7 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Thẻ doanh nghiệp trả 2.5% cash back cho giao dịch lớn, 2% cho mọi chi tiêu khác.",
     editorsTake:
-      "Khác hai thẻ Ink không annual fee: cash back của Ink Business Premier® KHÔNG quy đổi được sang điểm Ultimate Rewards®, nên nó là thẻ tiền mặt thuần. Cũng là thẻ Pay in Full.",
+      "Khác hai thẻ Ink không annual fee, cash back của Ink Business Premier® không quy đổi được sang điểm Ultimate Rewards®, nên đây là thẻ cash back thuần tuý. Cũng là thẻ Pay in Full.",
     keyBenefits: [
       "2.5% cash back cho mỗi giao dịch từ $5,000 USD trở lên",
       "2% cash back cho mọi chi tiêu khác",
@@ -1267,7 +1267,7 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Thẻ Marriott Bonvoy® bậc giữa của Chase®: tới 18.5x điểm ở khách sạn Marriott Bonvoy® và 2x cho mọi chi tiêu khác.",
     editorsTake:
-      "Trong ba thẻ Marriott Bonvoy® cá nhân của Chase®, đây là thẻ tặng nhiều điểm nhất khi mở — Boundless® tặng đêm miễn phí thay vì điểm. Annual fee $250 USD nên chỉ đáng nếu bạn ở Marriott Bonvoy® nhiều lần mỗi năm.",
+      "Trong ba thẻ Marriott Bonvoy® cá nhân của Chase®, đây là thẻ tặng nhiều điểm nhất khi mở. Boundless® tặng đêm miễn phí thay vì điểm. Annual fee $250 USD nên chỉ đáng nếu bạn ở Marriott Bonvoy® nhiều lần mỗi năm.",
     keyBenefits: [
       "Tới 18.5x điểm ở khách sạn thuộc Marriott Bonvoy®",
       "2x điểm cho mọi chi tiêu khác",
@@ -1305,7 +1305,7 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Bản doanh nghiệp của thẻ World of Hyatt®: 2x điểm ở ba hạng mục chi tiêu nhiều nhất mỗi quý.",
     editorsTake:
-      "Welcome bonus cao hơn bản cá nhân nhưng đòi chi $7,000 USD trong 3 tháng. Điểm World of Hyatt® vẫn là hệ điểm khách sạn đổi ra giá trị cao.",
+      "Welcome bonus cao hơn bản cá nhân nhưng đòi chi $7,000 USD trong 3 tháng. Điểm World of Hyatt® vẫn có giá trị cao khi đổi đêm khách sạn.",
     keyBenefits: [
       "Tới 9x điểm ở khách sạn thuộc World of Hyatt®",
       "2x điểm ở ba hạng mục chi tiêu nhiều nhất mỗi quý",
@@ -1346,7 +1346,7 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Thẻ IHG® cao cấp ra mắt 01/10/2026: hạng Platinum Elite tự động, đêm miễn phí tới 60,000 điểm mỗi năm và 20 Elite Night Credits.",
     editorsTake:
-      "Welcome bonus 200,000 điểm sau khi chi $5,000 USD trong 3 tháng là offer ra mắt, chỉ apply tới 18/11/2026. Annual fee $350 USD chỉ hợp lý nếu bạn dùng hết credit ăn uống ở khách sạn IHG® và credit hãng bay — credit ăn uống chỉ dùng ở khách sạn IHG®, credit hãng bay đòi mua vé thẳng với hãng từ $250 USD mỗi năm.",
+      "Welcome bonus 200,000 điểm sau khi chi $5,000 USD trong 3 tháng là offer ra mắt, chỉ apply tới 18/11/2026. Annual fee $350 USD chỉ hợp lý nếu bạn dùng hết credit ăn uống ở khách sạn IHG® và credit hãng bay. Credit ăn uống chỉ dùng ở khách sạn IHG®; credit hãng bay đòi mua vé thẳng với hãng từ $250 USD mỗi năm.",
     keyBenefits: [
       "12x điểm ở khách sạn IHG®; 6x ở nhà hàng và mọi chi tiêu du lịch khác (kể cả rideshare); 3x cho mọi chi tiêu khác",
       "Đêm miễn phí mỗi năm gia hạn (khách sạn tới 60,000 điểm/đêm, bù thêm điểm được); chi $40,000 USD trong năm được thêm một đêm",
@@ -1363,7 +1363,7 @@ const US_CARD_DATA: UsCardData[] = [
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: IHG_FROM_CANADA,
       watchOut:
-        "Thẻ này chịu luật 5/24 của Chase®. Điều kiện in trên trang chỉ nói về chính thẻ này: không đang giữ nó và chưa nhận bonus của nó trong 24 tháng. Ngược lại, đang giữ thẻ này thì không mở được bản Premier hay bản không annual fee, vì hai thẻ đó đòi bạn không giữ thẻ IHG® cá nhân nào.",
+        "Thẻ này chịu luật 5/24 của Chase®. Điều kiện in trên trang chỉ nói về chính thẻ này: hiện không giữ thẻ này và chưa nhận bonus trong 24 tháng. Ngược lại, đang giữ thẻ này thì không mở được bản Premier hay bản không annual fee, vì hai thẻ đó đòi bạn không giữ thẻ IHG® cá nhân nào.",
     },
     applyUrl: CHASE_IHG_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/a1/ihg/PremierSelectNAEPQ410",
@@ -1388,7 +1388,7 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Thẻ IHG® bậc giữa của Chase®: hạng Gold Elite tự động, đêm miễn phí tới 50,000 điểm mỗi năm và 15 Elite Night Credits.",
     editorsTake:
-      "Welcome bonus 180,000 điểm sau khi chi $3,000 USD trong 3 tháng — mức chi thấp so với số điểm, chỉ apply tới 18/11/2026. Thẻ mở mới từ 01/10/2026 có hạng Gold Elite (trước là Platinum) và annual fee $150 USD (trước là $99 USD; người đang giữ thẻ được điều chỉnh phí trong năm 2027), đổi lại đêm miễn phí hằng năm nâng lên 50,000 điểm.",
+      "Welcome bonus 180,000 điểm sau khi chi $3,000 USD trong 3 tháng, chỉ apply tới 18/11/2026. Mức chi thấp so với số điểm. Thẻ mở mới từ 01/10/2026 có hạng Gold Elite (trước là Platinum) và annual fee $150 USD (trước là $99 USD; người đang giữ thẻ được điều chỉnh phí trong năm 2027), đổi lại đêm miễn phí hằng năm nâng lên 50,000 điểm.",
     keyBenefits: [
       "10x điểm ở khách sạn IHG®; 5x ở vé máy bay mua thẳng với hãng, thuê xe, nhà hàng, siêu thị và trạm xăng; 3x cho mọi chi tiêu khác",
       "Đêm miễn phí mỗi năm gia hạn (khách sạn tới 50,000 điểm/đêm, bù thêm điểm được)",
@@ -1524,7 +1524,7 @@ const US_CARD_DATA: UsCardData[] = [
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: MR_FROM_CANADA,
       watchOut:
-        "Thẻ Pay in Full và phần lớn credit chỉ dùng được ở Mỹ; mức chi tiêu $20,000 USD trong 3 tháng là rào cản thật.",
+        "Thẻ Pay in Full và phần lớn credit chỉ dùng được ở Mỹ; mức chi tiêu $20,000 USD trong 3 tháng không dễ đạt.",
     },
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
@@ -1586,7 +1586,7 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Thẻ doanh nghiệp annual fee thấp trong hệ Membership Rewards®: phí $95 USD, 2x điểm khi đặt du lịch qua American Express Travel®.",
     editorsTake:
-      "Annual fee $95 USD — trong các thẻ doanh nghiệp tích Membership Rewards® ở đây chỉ Blue Business® Plus (không annual fee) là rẻ hơn. American Express® ghi đây là offer đặc biệt, tăng từ 15,000 lên 25,000 điểm, nhưng không công bố ngày kết thúc — offer này đã tắt một lần (rà 12/10/2026) rồi bật lại, nên kiểm lại trang trước khi apply. Lưu ý thẻ này CÓ phí giao dịch ngoại tệ 2.7%.",
+      "Annual fee $95 USD. Trong các thẻ doanh nghiệp tích Membership Rewards® ở đây chỉ Blue Business® Plus (không annual fee) là rẻ hơn. American Express® ghi đây là offer đặc biệt, tăng từ 15,000 lên 25,000 điểm, nhưng không công bố ngày kết thúc. Offer này đã tắt một lần (rà 12/10/2026) rồi bật lại, nên kiểm lại trang trước khi apply. Lưu ý thẻ này có phí giao dịch ngoại tệ 2.7%.",
     keyBenefits: [
       "2x điểm khi đặt du lịch qua American Express Travel®",
       "1x điểm cho mọi chi tiêu khác",
@@ -1623,7 +1623,7 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Thẻ doanh nghiệp không annual fee tích điểm Membership Rewards®: 2x điểm cho mọi chi tiêu tới hạn mức mỗi năm.",
     editorsTake:
-      "Cách rẻ nhất để giữ một tài khoản Membership Rewards® sống: không annual fee mà vẫn tích 2x điểm. Welcome offer là \"lên đến\" 50,000 điểm sau khi chi $5,000 USD trong 3 tháng: American Express® chỉ báo mức của bạn sau khi apply, trước khi bạn nhận thẻ. Lưu ý thẻ này CÓ phí giao dịch ngoại tệ 2.7%.",
+      "Cách rẻ nhất để giữ tài khoản Membership Rewards®: không annual fee mà vẫn tích 2x điểm. Welcome offer là \"lên đến\" 50,000 điểm sau khi chi $5,000 USD trong 3 tháng: American Express® chỉ báo mức của bạn sau khi apply, trước khi bạn nhận thẻ. Lưu ý thẻ này có phí giao dịch ngoại tệ 2.7%.",
     keyBenefits: [
       "2x điểm cho mọi chi tiêu tới hạn mức hằng năm, sau đó 1x",
       "Không annual fee",
@@ -1636,7 +1636,7 @@ const US_CARD_DATA: UsCardData[] = [
       usAddress: ADDRESS_REQUIRED_BUSINESS,
       foreignTransactionFee: AMEX_FTF_27,
       pointsFromCanada: MR_FROM_CANADA,
-      watchOut: "Không phí thường niên nhưng phí ngoại tệ 2.7% — đừng quẹt thẻ này ở Canada.",
+      watchOut: "Không annual fee nhưng phí ngoại tệ 2.7%. Đừng quẹt thẻ này ở Canada.",
     },
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-blue-business-plus-credit-card-amex/",
@@ -1660,12 +1660,12 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Thẻ Marriott Bonvoy® bậc giữa của American Express®: hạng Gold Elite tự động, 15 Elite Night Credits và 4x điểm ở nhà hàng.",
     editorsTake:
-      "Welcome bonus 85,000 điểm sau khi chi $5,000 USD trong 6 tháng — offer giới hạn 125,000 điểm đã hết ngày 30/09/2026. Free Night Award chỉ đến khi chi $15,000 USD trong năm, nên với annual fee $250 USD thẻ này hợp người tiêu nhiều ở nhà hàng và ở siêu thị Mỹ.",
+      "Welcome bonus 85,000 điểm sau khi chi $5,000 USD trong 6 tháng. Offer giới hạn 125,000 điểm đã hết ngày 30/09/2026. Free Night Award chỉ nhận được khi chi $15,000 USD trong năm, nên với annual fee $250 USD thẻ này hợp người tiêu nhiều ở nhà hàng và ở siêu thị Mỹ.",
     keyBenefits: [
       "6x điểm ở khách sạn thuộc Marriott Bonvoy®; 4x ở nhà hàng toàn cầu và siêu thị Mỹ (tới $15,000 USD/năm, sau đó 2x); 2x cho mọi chi tiêu khác",
       "1 Free Night Award sau khi chi $15,000 USD trong năm",
       "Hạng Gold Elite tự động và 15 Elite Night Credits mỗi năm",
-      "1,000 điểm thưởng cho mỗi lần ở trả tiền đặt thẳng với Marriott Bonvoy®",
+      "1,000 điểm thưởng cho mỗi lần ở khách sạn trả bằng tiền và đặt thẳng với Marriott Bonvoy®",
       "Không phí giao dịch ngoại tệ",
     ],
     tags: ["Hotel", "Elite status", "Không phí ngoại tệ"],
@@ -1676,7 +1676,7 @@ const US_CARD_DATA: UsCardData[] = [
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: BONVOY_FROM_CANADA,
       watchOut:
-        "Marriott Bonvoy® giới hạn việc nhận bonus giữa các thẻ Marriott Bonvoy®, kể cả thẻ của Chase® — đọc điều khoản trước khi apply.",
+        "Marriott Bonvoy® giới hạn việc nhận bonus giữa các thẻ Marriott Bonvoy®, kể cả thẻ của Chase®. Đọc điều khoản trước khi apply.",
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/marriott-bonvoy-bevy/",
     lastUpdated: VERIFIED_4,
@@ -1699,7 +1699,7 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Thẻ Marriott Bonvoy® cao cấp nhất của American Express®: hạng Platinum Elite và đêm miễn phí hằng năm.",
     editorsTake:
-      "Welcome bonus 100,000 điểm sau khi chi $6,000 USD trong 6 tháng — offer giới hạn 150,000 điểm đã hết ngày 30/09/2026. Annual fee $650 USD chỉ hợp lý nếu bạn dùng hết credit ăn uống $300 USD và đêm miễn phí tới 85,000 điểm mỗi năm.",
+      "Welcome bonus 100,000 điểm sau khi chi $6,000 USD trong 6 tháng. Offer giới hạn 150,000 điểm đã hết ngày 30/09/2026. Annual fee $650 USD chỉ hợp lý nếu bạn dùng hết credit ăn uống $300 USD và đêm miễn phí tới 85,000 điểm mỗi năm.",
     keyBenefits: [
       "Hạng Platinum Elite tự động",
       "Free Night Award mỗi năm gia hạn (khách sạn tới 85,000 điểm/đêm)",
@@ -1715,7 +1715,7 @@ const US_CARD_DATA: UsCardData[] = [
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: BONVOY_FROM_CANADA,
       watchOut:
-        "Credit ăn uống chia $25 USD mỗi tháng — phải ăn ngoài bằng thẻ này đều đặn mới lấy đủ $300 USD. Marriott Bonvoy® giới hạn việc nhận bonus giữa các thẻ Marriott Bonvoy®, kể cả thẻ của Chase®.",
+        "Credit ăn uống chia $25 USD mỗi tháng, nên phải ăn ngoài bằng thẻ này đều đặn mới lấy đủ $300 USD. Marriott Bonvoy® giới hạn việc nhận bonus giữa các thẻ Marriott Bonvoy®, kể cả thẻ của Chase®.",
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/marriott-bonvoy-brilliant/",
     lastUpdated: VERIFIED_4,
@@ -1779,7 +1779,7 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Thẻ Hilton® bậc giữa: hạng Gold Elite tự động và offer giới hạn thời gian 130,000 điểm.",
     editorsTake:
-      "Mức chi tiêu $3,000 USD trong 6 tháng là dễ so với số điểm nhận được. Offer kết thúc 13/01/2027.",
+      "Mức chi tiêu $3,000 USD trong 6 tháng khá nhẹ so với số điểm nhận được. Offer kết thúc 13/01/2027.",
     keyBenefits: [
       "Hạng Hilton Honors™ Gold tự động",
       "12x điểm ở khách sạn thuộc Hilton®",
@@ -1794,7 +1794,7 @@ const US_CARD_DATA: UsCardData[] = [
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: HILTON_FROM_CANADA,
       watchOut:
-        "Điểm Hilton Honors® có giá trị mỗi điểm thấp — cần rất nhiều điểm cho một đêm.",
+        "Mỗi điểm Hilton Honors® có giá trị thấp, nên cần rất nhiều điểm cho một đêm.",
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-surpass/",
     lastUpdated: VERIFIED_3,
@@ -1833,7 +1833,7 @@ const US_CARD_DATA: UsCardData[] = [
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: HILTON_FROM_CANADA,
       watchOut:
-        "Nhiều credit chỉ dùng được ở Mỹ; annual fee $550 USD chỉ bù lại nếu bạn ở Hilton® thường xuyên.",
+        "Nhiều credit chỉ dùng được ở Mỹ; bạn chỉ bù được annual fee $550 USD nếu ở Hilton® thường xuyên.",
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-aspire/",
     lastUpdated: VERIFIED_3,
@@ -1871,7 +1871,7 @@ const US_CARD_DATA: UsCardData[] = [
       usAddress: ADDRESS_REQUIRED_BUSINESS,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: HILTON_FROM_CANADA,
-      watchOut: "Điểm Hilton Honors® có giá trị mỗi điểm thấp so với Aeroplan® hay World of Hyatt®.",
+      watchOut: "Mỗi điểm Hilton Honors® có giá trị thấp so với Aeroplan® hay World of Hyatt®.",
     },
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/hilton-honors/",
@@ -1910,7 +1910,7 @@ const US_CARD_DATA: UsCardData[] = [
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: ATMOS_FROM_CANADA,
       watchOut:
-        "Chương trình Atmos™ Rewards là bản gộp của Alaska Airlines® và Hawaiian Airlines® — điều khoản còn mới, đọc kỹ trước khi tính đường đổi điểm dài hạn.",
+        "Chương trình Atmos™ Rewards là bản gộp của Alaska Airlines® và Hawaiian Airlines®. Điều khoản còn mới, đọc kỹ trước khi tính đường đổi điểm dài hạn.",
     },
     applyUrl: "https://www.bankofamerica.com/credit-cards/products/alaska-airlines-infinite-credit-card/",
     lastUpdated: VERIFIED_3,

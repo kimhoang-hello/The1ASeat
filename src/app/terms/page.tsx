@@ -55,7 +55,7 @@ export default function TermsPage() {
           Điều khoản chính thức của ngân hàng phát hành mới là điều khoản có hiệu lực.
         </strong>{" "}
         Luôn đọc kỹ trang đăng ký của ngân hàng trước khi mở thẻ, và kiểm tra giá cùng chỗ trống
-        thật trên trang của chương trình trước khi chuyển điểm — điểm đã chuyển sang hãng bay gần
+        thật trên trang của chương trình trước khi chuyển điểm, vì điểm đã chuyển sang hãng bay gần
         như không lấy lại được.
       </p>
 
@@ -65,8 +65,7 @@ export default function TermsPage() {
         mở thẻ hoặc mở tài khoản qua liên kết trên trang. Điều này không làm bạn tốn thêm chi phí.
       </p>
       <p>
-        Các ý kiến, đánh giá và phân tích hoàn toàn là quan điểm độc lập của chúng tôi, không được
-        cung cấp, xét duyệt hay chấp thuận bởi bất kỳ tổ chức phát hành nào. Việc một thẻ hay một
+        Các ý kiến, đánh giá và phân tích hoàn toàn là quan điểm độc lập của chúng tôi, không do bất kỳ tổ chức phát hành nào cung cấp, xét duyệt hay chấp thuận. Việc một thẻ hay một
         tài khoản xuất hiện trên trang, hay xuất hiện ở vị trí nào, không đảm bảo đó là lựa chọn tốt
         nhất cho bạn.
       </p>
@@ -96,7 +95,7 @@ export default function TermsPage() {
         các tổ chức đó.
       </p>
 
-      <h2>Sử dụng được phép</h2>
+      <h2>Quy định sử dụng trang</h2>
       <p>
         Vui lòng không dùng trang để phát tán spam, thu thập dữ liệu tự động ở quy mô lớn, dò tìm
         lỗ hổng, hay gửi nội dung vi phạm pháp luật qua form liên hệ và phần bình luận. Chúng tôi
@@ -108,20 +107,19 @@ export default function TermsPage() {
         Nội dung được cung cấp &ldquo;nguyên trạng&rdquo;, không kèm bảo đảm nào về tính chính xác,
         đầy đủ hay phù hợp với mục đích của bạn. Trong phạm vi pháp luật cho phép, Ghế 1A không chịu
         trách nhiệm cho bất kỳ thiệt hại nào phát sinh từ việc bạn sử dụng trang hoặc dựa vào nội
-        dung trên trang — bao gồm nhưng không giới hạn ở tổn thất về điểm thưởng, annual fee,
+        dung trên trang, bao gồm nhưng không giới hạn ở tổn thất về điểm thưởng, annual fee,
         lãi suất, hay ưu đãi không nhận được.
       </p>
 
       <h2>Thay đổi điều khoản</h2>
       <p>
         Chúng tôi có thể cập nhật điều khoản này theo thời gian. Ngày cập nhật gần nhất luôn hiển
-        thị ở đầu trang. Việc bạn tiếp tục sử dụng trang sau khi có thay đổi được xem là bạn chấp
-        nhận bản cập nhật.
+        thị ở đầu trang. Tiếp tục sử dụng trang sau khi có thay đổi nghĩa là bạn chấp nhận bản cập nhật.
       </p>
 
       <h2>Luật áp dụng</h2>
       <p>
-        Điều khoản này được điều chỉnh bởi pháp luật tỉnh bang Ontario và pháp luật liên bang
+        Điều khoản này chịu sự điều chỉnh của pháp luật tỉnh bang Ontario và pháp luật liên bang
         Canada đang áp dụng tại đó.
       </p>
 

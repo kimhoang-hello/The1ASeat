@@ -443,7 +443,7 @@ export function questionFor(
       return {
         ...base,
         title: "Mục tiêu của bạn là gì?",
-        help: "Mình chấm điểm thẻ theo đúng mục tiêu này, nên nó quyết định mọi thứ phía sau.",
+        help: "Mình dựa vào mục tiêu này để chấm điểm và chọn thẻ cho bạn.",
         input: { type: "choice", name: "answer", options: GOAL_OPTIONS },
       };
 
@@ -451,7 +451,7 @@ export function questionFor(
       return {
         ...base,
         title: "Bạn đang sống ở Canada chứ?",
-        help: "Mọi thẻ ở đây là thẻ Canada, và điều kiện cư trú áp cho tất cả — đây là câu gỡ được cả danh sách.",
+        help: "Mọi thẻ ở đây đều là thẻ Canada và đòi bạn cư trú ở Canada, nên câu này quyết định bạn có mở được thẻ nào hay không.",
         input: {
           type: "choice",
           name: "answer",
@@ -466,7 +466,7 @@ export function questionFor(
       return {
         ...base,
         title: "Bạn đang có thẻ nào rồi?",
-        help: "Không biết bạn có gì thì mình có thể gợi ý đúng cái thẻ bạn đang cầm trong ví — và nhiều ngân hàng không cho nhận lại welcome bonus nếu bạn từng giữ thẻ đó.",
+        help: "Không biết bạn có gì thì mình có thể gợi ý đúng cái thẻ bạn đang cầm trong ví. Mà nhiều ngân hàng không cho nhận lại welcome bonus nếu bạn từng giữ thẻ đó.",
         input: { type: "cards", groups: productOptions(ctx), ...declaredCards(state, ctx) },
       };
 
@@ -474,7 +474,7 @@ export function questionFor(
       return {
         ...base,
         title: "Bạn đang có điểm ở chương trình nào?",
-        help: "Chỉ cần chọn tên chương trình. Số điểm cụ thể mình chỉ hỏi khi nó thật sự đổi kết quả.",
+        help: "Chỉ cần chọn tên chương trình. Số điểm cụ thể mình chỉ hỏi khi số đó làm thay đổi kết quả.",
         input: {
           type: "programs",
           programs: programOptions(ctx),
@@ -490,8 +490,8 @@ export function questionFor(
         // chuyến bay; với "thẻ tiếp theo" hay "quy điểm ra tiền" nó nói về một
         // chuyến bay người dùng chưa từng nhắc.
         help: state.goals.some((goal) => goal.type === "trip")
-          ? "Con số này quyết định bạn còn thiếu bao nhiêu cho chuyến bay — gõ áng chừng cũng được."
-          : "Số điểm đang có quyết định bạn cần thêm loại điểm nào — gõ áng chừng cũng được.",
+          ? "Con số này quyết định bạn còn thiếu bao nhiêu cho chuyến bay. Bạn gõ áng chừng cũng được."
+          : "Số điểm đang có quyết định bạn cần thêm loại điểm nào. Bạn gõ áng chừng cũng được.",
         input: {
           type: "number",
           name: "answer",
@@ -506,7 +506,7 @@ export function questionFor(
       return {
         ...base,
         title: "Trong 3 tháng tới, bạn dồn được khoảng bao nhiêu chi tiêu sang một thẻ mới?",
-        help: "Đây không phải tổng chi tiêu của bạn — chỉ phần thật sự quẹt được bằng thẻ mới. Nó quyết định welcome bonus có khả thi hay chỉ là con số trên giấy.",
+        help: "Chỉ tính phần bạn quẹt được bằng thẻ mới, không phải tổng chi tiêu. Con số này quyết định bạn có với tới welcome bonus hay không.",
         input: { type: "choice", name: "answer", options: bandOptions(CAPACITY_3M) },
       };
 
@@ -553,7 +553,7 @@ export function questionFor(
       return {
         ...base,
         title: "Thu nhập của cả hộ gia đình một năm khoảng bao nhiêu?",
-        help: "Điều kiện của ngân hàng Canada thường là \"thu nhập cá nhân $X HOẶC hộ gia đình $Y\" — vài thẻ cao cấp đòi $200,000 của cả hộ. Trả lời câu này có thể mở ra những thẻ đang bị loại.",
+        help: "Điều kiện của ngân hàng Canada thường là \"thu nhập cá nhân $X hoặc hộ gia đình $Y\". Vài thẻ cao cấp đòi $200,000 của cả hộ. Trả lời câu này có thể mở ra những thẻ đang bị loại.",
         input: {
           type: "choice",
           name: "answer",
@@ -592,7 +592,7 @@ export function questionFor(
       return {
         ...base,
         title: "Bạn có doanh nghiệp hoặc thu nhập tự doanh không?",
-        help: "Đây là điều kiện bắt buộc của thẻ doanh nghiệp — khác với việc bạn có muốn xét loại thẻ đó hay không.",
+        help: "Đây là điều kiện bắt buộc của thẻ doanh nghiệp. Điều này khác với việc bạn có muốn xét loại thẻ đó hay không.",
         input: { type: "choice", name: "answer", options: YES_NO },
       };
 
@@ -600,7 +600,7 @@ export function questionFor(
       return {
         ...base,
         title: "Bạn có đang là sinh viên không?",
-        help: "Có vài thẻ chỉ dành cho sinh viên, điều kiện duyệt dễ hơn hẳn.",
+        help: "Có vài thẻ chỉ dành cho sinh viên, điều kiện duyệt dễ hơn.",
         input: { type: "choice", name: "answer", options: YES_NO },
       };
 
@@ -623,7 +623,7 @@ export function questionFor(
       return {
         ...base,
         title: "Chuyến này bay mấy người?",
-        help: "Số điểm cần nhân THẲNG với số người, nên đây là con số đổi kết quả nhiều nhất. Gõ đúng số người, kể cả khi đông.",
+        help: "Mình nhân số điểm cần với số người, nên câu trả lời này ảnh hưởng tới kết quả nhiều nhất. Bạn nhập đúng số người, kể cả khi đi đông.",
         // Số chính xác, không phải dải: "6 trở lên" ghi thành 6 sẽ tính thiếu
         // điểm cho một đoàn bảy người — và tính thiếu ở đây làm engine kết
         // luận "bạn đủ điểm rồi" (Codex vòng 1, Phase 5 UI).
@@ -656,7 +656,7 @@ export function questionFor(
       return {
         ...base,
         title: "Ngày bay của bạn linh hoạt tới đâu?",
-        help: "Vé thưởng có chỗ trống thất thường; linh hoạt càng cao thì càng dễ đặt được.",
+        help: "Chỗ award lúc có lúc không; ngày bay càng linh hoạt thì càng dễ đặt được.",
         input: {
           type: "choice",
           name: "answer",
@@ -683,7 +683,7 @@ export function questionFor(
       return {
         ...base,
         title: `Bạn đóng thẻ ${cardName(state, ctx, gap.subject)} vào tháng nào?`,
-        help: "Vài ngân hàng chỉ chặn welcome bonus trong 12 hoặc 24 tháng sau khi đóng, nên tháng đóng có thể mở lại bonus cho bạn. Không nhớ chính xác thì chọn tháng muộn nhất có thể.",
+        help: "Vài ngân hàng chỉ chặn welcome bonus trong 12 hoặc 24 tháng sau khi đóng thẻ. Mình cần biết tháng đóng để kiểm tra bạn có nhận lại bonus được không. Không nhớ chính xác thì chọn tháng muộn nhất có thể.",
         // Tháng, không phải năm — xem `closedMonthChoices`.
         input: (() => {
           const months = closedMonthChoices(ctx.today);
@@ -721,7 +721,7 @@ export const GOAL_OPTIONS: ChoiceOption[] = [
   {
     value: "cash",
     label: "Tích điểm có thể quy đổi thành tiền",
-    hint: "Điểm trả thẳng vào sao kê hoặc trừ vào một giao dịch, không phải đổi vé",
+    hint: "Đổi điểm để trừ vào sao kê hoặc một giao dịch, không phải đổi vé",
   },
   { value: "diversify", label: "Điểm đang dồn một chỗ, muốn đa dạng hơn" },
 ];
@@ -872,7 +872,7 @@ const badMessage = (what: string) => `Câu trả lời không hợp lệ: ${what
 const BAD = (what: (typeof BAD_SUBJECTS)[number]): ApplyResult => ({ ok: false, error: badMessage(what) });
 
 export const CONFLICTING_ANSWER =
-  "Câu trả lời này ngược với một câu bạn đã trả lời trước đó — sửa câu đó trước đã.";
+  "Câu trả lời này ngược với một câu bạn đã trả lời trước đó. Bạn sửa câu đó trước đã.";
 
 /** Mọi câu lỗi `applyAnswer` / `applyAnswerChecked` có thể trả về. */
 export const ANSWER_ERRORS: readonly string[] = [...BAD_SUBJECTS.map(badMessage), CONFLICTING_ANSWER];

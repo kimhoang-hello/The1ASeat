@@ -167,11 +167,11 @@ const WELCOME_HTML = renderSubscriberEmailHtml({
   ...(START_HERE_PUBLISHED
     ? {
         ctaHref: `${SITE_URL}/bat-dau`,
-        ctaLabel: "Xem lộ trình mới bắt đầu ở đây →",
+        ctaLabel: "Xem lộ trình cho người mới bắt đầu →",
       }
     : {
         ctaHref: `${SITE_URL}/blog`,
-        ctaLabel: "Khám phá bài viết mới nhất →",
+        ctaLabel: "Đọc bài viết mới nhất →",
       }),
 });
 

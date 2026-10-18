@@ -107,8 +107,7 @@ export function QuestionCard({
               Mình chưa có thẻ nào &rarr;
             </button>
             <p className="text-sm text-muted-foreground">
-              Có rồi thì mở ngân hàng tương ứng và tick thẻ của bạn — cả thẻ đang giữ lẫn thẻ từng
-              giữ rồi đóng.
+              Có rồi thì mở mục ngân hàng tương ứng và tick thẻ của bạn, cả thẻ đang giữ lẫn thẻ từng giữ rồi đóng.
             </p>
             {spec.input.groups.map((group) => (
               <details

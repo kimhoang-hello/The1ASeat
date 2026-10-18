@@ -61,7 +61,7 @@ export const metadata: Metadata = {
   ...pageMetadata({
     title: "Gợi ý thẻ tín dụng cho mục tiêu của bạn",
     description:
-      "Trả lời vài câu hỏi để mình đưa gợi ý về thẻ nào tiếp theo phù hợp với bạn.",
+      "Trả lời vài câu hỏi để mình gợi ý thẻ phù hợp cho bạn mở tiếp theo.",
     path: "/credit-cards/goi-y",
   }),
   // Công cụ còn là bản nháp thì không cho Google index — cùng cách làm với
@@ -137,8 +137,7 @@ function OutsideCanadaNotice() {
       </h2>
       <p className="mt-2 text-base leading-relaxed text-foreground/90">
         Mọi thẻ Ghế 1A theo dõi đều là thẻ Canada, và ngân hàng đòi bạn cư trú ở Canada mới mở được.
-        Gợi ý thẻ cho người ở nước khác thì mình sẽ khuyên một thứ bạn không mở nổi, nên mình không
-        làm vậy.
+        Các thẻ ở đây chỉ mở được khi bạn sống ở Canada, nên mình không gợi ý cho người ở nước khác.
       </p>
       <p className="mt-3 text-base leading-relaxed text-foreground/90">
         Bạn vẫn đọc được{" "}
@@ -162,10 +161,10 @@ function BrokenProfileNotice() {
   return (
     <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
       <h2 className="font-display text-lg font-bold text-foreground">
-        Hồ sơ cũ của bạn không chạy lại được
+        Không tính lại được gợi ý từ hồ sơ cũ của bạn
       </h2>
       <p className="mt-2 text-base leading-relaxed text-foreground/90">
-        Có thể do dữ liệu thẻ đã đổi kể từ lần trước. Làm lại từ đầu thì chỉ mất vài câu.
+        Có thể do dữ liệu thẻ đã đổi kể từ lần trước. Bạn chỉ cần trả lời lại vài câu để làm lại từ đầu.
       </p>
       <form action={resetRecommendation} data-reco-event="reset" className="mt-4">
         <button
@@ -196,7 +195,7 @@ function StorageDownNotice() {
     <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
       <h2 className="font-display text-lg font-bold text-foreground">Công cụ đang tạm nghỉ</h2>
       <p className="mt-2 text-base leading-relaxed text-foreground/90">
-        Chỗ lưu hồ sơ đang không vào được, nên mình chưa chạy gợi ý được. Thử lại sau nhé.
+        Mình chưa truy cập được hồ sơ nên chưa đưa ra gợi ý được. Bạn thử lại sau nhé.
       </p>
     </section>
   );
@@ -320,8 +319,8 @@ async function Body({ editKey }: { editKey: string | null }) {
               followUp?.basis === "measured"
                 ? "Câu này có thể đổi thẻ mình đang gợi ý"
                 : followUp?.basis === "urgent"
-                  ? "Thẻ mình đang gợi ý dựa vào câu này"
-                  : "Câu này giúp tính sát chuyến bay của bạn"
+                  ? "Gợi ý thẻ hiện tại còn phụ thuộc vào câu trả lời này"
+                  : "Câu này giúp mình tính số điểm cho chuyến bay sát hơn"
             }
           />
         ) : (
@@ -332,7 +331,7 @@ async function Body({ editKey }: { editKey: string | null }) {
             </summary>
             <div className="px-5 pb-5 sm:px-6 sm:pb-6">
               <p className="text-base leading-relaxed text-foreground/80">
-                Câu này không đổi thẻ mình đang gợi ý, nhưng nó lấp một chỗ mình còn chưa biết.
+                Câu này không đổi thẻ mình đang gợi ý, nhưng giúp mình có thêm thông tin.
               </p>
               <div className="mt-4">
                 <QuestionCard session={session} version={stored.version} primary={primary} spec={question} />

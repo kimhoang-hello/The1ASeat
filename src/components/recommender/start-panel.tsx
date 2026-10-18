@@ -18,7 +18,7 @@ export function StartPanel() {
           Mục tiêu của bạn là gì?
         </h2>
         <p className="mt-2 text-base leading-relaxed text-foreground/80">
-          Chọn một mục tiêu. Câu nào đổi được gợi ý thì mình hỏi trước — thường là ba tới năm câu.
+          Chọn một mục tiêu. Câu nào đổi được gợi ý thì mình hỏi trước, thường là ba tới năm câu.
         </p>
 
         <label className="mt-5 flex items-start gap-2.5 rounded-xl border border-border px-4 py-3 text-base text-foreground">
@@ -55,8 +55,7 @@ export function StartPanel() {
 
       <p className="text-sm leading-relaxed text-muted-foreground">
         Câu trả lời của bạn được lưu ẩn danh trên máy chủ của Ghế 1A để mình đưa ra gợi ý và kiểm lại
-        được khi có ai đó nói gợi ý sai. Mình không hỏi tên, email hay số tài khoản, và không có chỗ
-        nào để điền chúng.
+        được khi có ai đó nói gợi ý sai. Mình không hỏi tên, email hay số tài khoản. Công cụ cũng không có ô để bạn điền các thông tin này.
       </p>
     </form>
   );

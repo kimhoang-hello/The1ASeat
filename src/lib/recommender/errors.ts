@@ -15,11 +15,11 @@ export const RECO_ERROR = {
   goalMissing: "Chọn một mục tiêu trước đã.",
   busy: "Công cụ đang bận, thử lại sau vài phút.",
   goalInvalid: "Mục tiêu không hợp lệ.",
-  storageDown: "Chỗ lưu hồ sơ đang không vào được — thử lại sau vài phút.",
-  questionGone: "Câu hỏi này không còn nữa — tải lại trang rồi thử lại.",
-  notSaved: "Không lưu được câu trả lời — thử lại lần nữa.",
-  staleList: "Danh sách này vừa được sửa ở một tab khác. Mình đã mở lại bản mới nhất — tick lại rồi bấm Xong.",
-  runLimit: "Bạn vừa chạy quá nhiều lượt gợi ý — thử lại sau một lúc.",
+  storageDown: "Hiện không truy cập được hồ sơ. Bạn thử lại sau vài phút.",
+  questionGone: "Câu hỏi này không còn nữa. Bạn tải lại trang rồi thử lại.",
+  notSaved: "Không lưu được câu trả lời. Bạn thử lại nhé.",
+  staleList: "Danh sách này vừa được sửa ở một tab khác. Mình đã mở lại bản mới nhất. Bạn tick lại rồi bấm Xong.",
+  runLimit: "Bạn vừa chạy quá nhiều lượt gợi ý. Đợi một lúc rồi thử lại nhé.",
   otherSession:
     "Câu trả lời đó đến từ một tab của lượt gợi ý cũ (bạn đã làm lại từ đầu ở tab khác), nên mình không lưu. Đây là lượt hiện tại.",
 } as const;
