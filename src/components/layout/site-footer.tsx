@@ -7,13 +7,16 @@ import { DisclosureText } from "@/components/layout/disclosure-text";
 import { BANK_ACCOUNTS_PUBLISHED, HOTELS_PUBLISHED } from "@/lib/feature-flags";
 import { SOCIAL_LINKS } from "@/lib/social-links";
 import { t as translate } from "@/lib/t";
+import { todayInSiteZone } from "@/lib/format-date";
 
 const t = translate("footer");
 const nav = translate("nav");
 const site = translate("site");
 
 export function SiteFooter() {
-  const year = new Date().getFullYear();
+  // Năm theo giờ Toronto, không theo giờ máy chủ (UTC): đêm giao thừa máy chủ
+  // sang năm mới trước người đọc 5 tiếng.
+  const year = todayInSiteZone().slice(0, 4);
 
   return (
     <footer className="border-t border-border bg-navy-ink text-white/70">
@@ -41,7 +44,9 @@ export function SiteFooter() {
               trên điện thoại tám link gãy thành ba hàng sát nhau, và chạm hụt
               là sang nhầm trang. Khoảng cách giữa các hàng giờ nằm trong chính
               vùng chạm nên `gap-y` về 0. */}
-          <nav className="flex flex-wrap gap-x-6 text-base">
+          {/* Có tên riêng: thiếu nó thì screen reader đọc hai vùng "navigation"
+              giống hệt nhau (menu chính và chân trang) — axe `landmark-unique`. */}
+          <nav aria-label={nav("footerLabel")} className="flex flex-wrap gap-x-6 text-base">
             <Link href="/" className="py-2.5 hover:text-white">
               {nav("home")}
             </Link>

@@ -22,7 +22,9 @@
     "bestCards": "Các thẻ tốt nhất",
     "cardRecommender": "Gợi ý thẻ",
     "usCards": "Thẻ Mỹ",
-    "hotels": "Khách sạn"
+    "hotels": "Khách sạn",
+    "mainLabel": "Menu chính",
+    "footerLabel": "Liên kết chân trang"
   },
   "navMenu": {
     "cardsAll": "Toàn bộ thẻ đang theo dõi",

@@ -73,13 +73,46 @@ export async function getPosts(): Promise<BlogPost[]> {
  * đua và chặn unhandled rejection nằm ở `settleWithin` (`lib/deadline.ts`, có
  * test riêng).
  */
-export async function getPostsWithin(timeoutMs: number, label: string): Promise<BlogPost[]> {
-  const result = await settleWithin(getPosts(), timeoutMs);
+export function getPostsWithin(timeoutMs: number, label: string): Promise<BlogPost[]> {
+  return secondaryList(getPosts(), timeoutMs, label, "danh sách bài viết", "bỏ các link sang blog");
+}
+
+/**
+ * Thẻ / transfer bonus làm dữ liệu PHỤ — cùng lý do và cùng cái giá với
+ * `getPostsWithin` ngay trên. Bản 10/10/2026 của các trang này chỉ `.catch()`:
+ * bắt được LỖI, không bắt được lượt gọi TREO (Codex 17/10/2026). `dropped` là
+ * phần trang bỏ đi, để log nói đúng người đọc mất gì.
+ */
+export function getCreditCardOffersWithin(
+  timeoutMs: number,
+  label: string,
+  dropped: string,
+): Promise<CreditCardOffer[]> {
+  return secondaryList(getCreditCardOffers(), timeoutMs, label, "danh sách thẻ", dropped);
+}
+
+export function getTransferBonusesWithin(
+  timeoutMs: number,
+  label: string,
+  dropped: string,
+): Promise<TransferBonus[]> {
+  return secondaryList(getTransferBonuses(), timeoutMs, label, "transfer bonus", dropped);
+}
+
+/** Quá hạn hoặc lỗi thì `[]` + log. Bắt ở đây, KHÔNG trong hàm cache — không thì mảng rỗng bị cache như dữ liệu thật. */
+async function secondaryList<T>(
+  load: Promise<T[]>,
+  timeoutMs: number,
+  label: string,
+  what: string,
+  dropped: string,
+): Promise<T[]> {
+  const result = await settleWithin(load, timeoutMs);
   if (result.ok) return result.value;
   if (result.reason === "timeout") {
-    console.error(`[${label}] danh sách bài viết quá ${timeoutMs}ms, bỏ các link sang blog`);
+    console.error(`[${label}] ${what} quá ${timeoutMs}ms, ${dropped}`);
   } else {
-    console.error(`[${label}] không tải được danh sách bài viết, bỏ các link sang blog`, result.error);
+    console.error(`[${label}] không tải được ${what}, ${dropped}`, result.error);
   }
   return [];
 }

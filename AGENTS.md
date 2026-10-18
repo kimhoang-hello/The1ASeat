@@ -3785,3 +3785,64 @@ hồ sơ khác. Đã vá cả hai; (5) xác nhận bản vá cuối — ĐÚNG, 
 **Cố ý KHÔNG làm:** nhớ phần tích thêm vào ví giữa các lượt chạy lại của §30 (HANDOFF §9). Codex dựng
 một hồ sơ 126 lượt chạy lại (20 thẻ từng giữ không ngày, hai mục tiêu) ≈ 260 ms — 4.36.0 cũng 270 ms,
 tức chi phí số lượt §30 có từ trước, không phải hồi quy.
+
+## Review toàn diện trang + engine 17/10/2026 — đừng đề xuất lại
+
+Gate: lint, tsc, build, 9 test suite (`test:reco` 494 + 23 skip MySQL), 11 audit, `audit:links` production (236
+trang). Ba cách đo MỚI, khác lượt 16/10:
+
+- **axe-core trên bản build**, 240 URL × 1280/375px (puppeteer-core, chặn GA và mọi request không GET). Trước
+  bản vá: 0 vi phạm WCAG A/AA ở 1280px; ở 375px `scrollable-region-focusable` (serious) trên 12 trang chặng.
+  Best-practice: `landmark-unique` (hai `<nav>` không tên trên MỌI trang), `empty-table-header` (ô góc
+  `/transfer-partners`). Kèm: tiêu đề/mô tả trùng giữa các trang (chỉ trang có tham số lọc — canonical về trang
+  gốc, cố ý), chữ hỏng (`undefined`/`NaN`/`[object`) trong chữ hiện ra, dấu chấm ngăn nghìn, `US$`.
+- **Người dùng giả đi hết luồng câu hỏi `/credit-cards/goi-y`** đúng thứ tự trang làm (`executeRun` →
+  `presentForPage` → `questionFor` → `applyAnswerChecked`), 300 hồ sơ × ~27 bước ≈ 8,500 lượt chạy. Mỗi hồ sơ có
+  một "sự thật" nhất quán (chi tiêu từng hạng mục, tổng ≥ tổng hạng mục, thu nhập, thẻ, số dư) và trả lời theo
+  đúng nấc chứa sự thật đó; bỏ qua ngẫu nhiên 0/15/40%. Trả lời NGẪU NHIÊN thì validator từ chối đúng (tổng cận
+  dưới các hạng mục vượt cận trên tổng chi) — đó là nhiễu, không phải lỗi. Kết quả: 0 câu hỏi lặp, 0 vòng lặp,
+  0 câu trả lời hợp lệ bị từ chối, 0 chữ hỏng. Thứ lộ ra lỗi engine là PHÂN BỐ NGƯỜI THẮNG, không phải phép kiểm
+  nào: Amex® Green thắng 128/300.
+- **Codex kiểm thử biến hình** (>70,000 lượt `recommend()`): tất định, hoán vị, thẻ không hợp lệ lọt bảng,
+  NaN/−0, đơn điệu theo số dư/số người/chi tiêu, ngày hết hạn offer, giao năm. Không ra lỗi triển khai — và
+  KHÔNG bắt được lỗi §11 dưới đây (phép kiểm "chưa khai sức dồn → `spend_fit` 0.5" đúng, lỗi nằm ở vế khác).
+
+**Đã vá:**
+- **ENGINE 4.38.0 — §11 chưa khai sức dồn 3 tháng.** `bestReachableSubset` trả `null` khi `capacity === null`,
+  nên `usableValueCents` null ở MỌI thẻ; tử số của vế "giá trị" lùi về giá trị cả offer nhưng mẫu số
+  (`offerClimate.maxUsableValueCents`) không lùi → 0 → vế giá trị (30% của §11) bằng 0 cho cả tập: 60,000 điểm
+  Amex® Gold ngang 15,000 điểm Green, thẻ không phí bonus nhỏ thắng. Nay một hàm `offerValueCents` cho cả tử lẫn
+  mẫu. 300 hồ sơ cuối chạy qua engine HEAD vs bản vá: 31/82 hồ sơ chưa khai sức dồn đổi người thắng (Green →
+  Platinum khi chịu phí $800+, → Gold khi $400, → RBC® Avion® khi $150), 0/218 hồ sơ đã khai đổi; 16 nhân vật mẫu
+  0 đổi hành động chính. Chỉ `offer-quality.ts` đọc `usableValueCents` theo kiểu này (grep 17/10; Codex rà lại 7
+  phép đọc production). Nhánh `null` còn lại của `bestReachableSubset` là offer > 12 thành phần đòi chi — seed hôm
+  nay tối đa 3 — nên "0 hồ sơ đã khai đổi" đúng với dữ liệu hôm nay, không phải bất biến; bản vá xử nhánh đó cùng
+  cách (tử số vốn đã lùi về cả offer).
+- **Năm trang dữ liệu tĩnh + trang thẻ + trang bài có hạn chờ 8 giây cho dữ liệu PHỤ** (Codex): bản 10/10 chỉ
+  `.catch()` — bắt LỖI, không bắt lượt gọi TREO (SDK tự thử lại tới 6 × 30 giây), cùng lớp lỗi 16/10 đã vá cho dải
+  offer. `getCreditCardOffersWithin` / `getTransferBonusesWithin` / `getPostsWithin` gom về `secondaryList`
+  (`lib/content/index.ts`). Nội dung CHÍNH của trang thẻ/trang bài vẫn để lỗi đi lên — cố ý, như 10/10.
+- `/hotels`: khối "Đi tiếp từ đây" chỉ hiện khi còn ít nhất một đường (Contentful lỗi → tiêu đề trên `<ul>` rỗng).
+- Footer: năm theo `todayInSiteZone()`, không theo giờ máy chủ (UTC sang năm mới trước Toronto 5 tiếng).
+- A11y: `aria-label` cho `<nav>` menu chính (desktop + điện thoại) và chân trang; khung cuộn bảng chặng
+  (`route-award-table.tsx`) `tabIndex={0} role="region" aria-label` — bảng không có link nào nên dưới ~600px bàn
+  phím không cuộn tới được cột hạng ghế bị che; ô góc trống hai bảng transfer partners `th` → `td`. Quét lại sau
+  bản vá: chỉ còn `region`.
+
+**Cố ý KHÔNG làm / đã kiểm, KHÔNG phải lỗi:**
+- **Thêm điểm Aeroplan® có thể lật "chưa mở thẻ" sang một thẻ Aeroplan®** (Codex, nhóm "đúng công thức"): ví
+  21,000 AAdvantage® + Aeroplan® 25,625 → 30,750, chuyến business một chiều EAST_ASIA — `points_gap_reduction` là
+  hiệu của hai cực đại độ phủ, nên bonus bổ trợ cho số dư sẵn có. Điểm sát nhau (0.2654 vs 0.2630); hợp lý về
+  quyết định. Đổi thì là đổi mô hình §10.2, không phải vá.
+- **Chi thêm vào nhóm 3x làm tổng điểm Scotiabank® Gold giảm**: trần chung $50,000 phân theo tỷ lệ — chi 3x chiếm
+  phần trần mà chi 5x đang dùng. Đúng như trần tiêu dùng theo thời gian thật; đừng "sửa" thành phân bổ tối ưu.
+- **Thêm một thẻ vào ví có thể TĂNG phần thêm của thẻ khác** (51/775,222 phép so): phân bổ nguyên hạng mục với
+  trần chung không có tính lợi ích biên giảm dần; vét cạn khớp engine.
+- **"Còn thiếu" tăng khi thêm 1 điểm** (37,500 AAdvantage® → 49,999 Aeroplan®): đổi CHƯƠNG TRÌNH, không so được
+  hai đồng điểm; trang giấu khoảng thiếu khi chưa có điểm nào.
+- Amex® Green vẫn thắng 80/218 hồ sơ ĐÃ khai sức dồn: 64/80 chỉ chịu phí $0–$150 — Green là thẻ Membership
+  Rewards® không phí duy nhất.
+- Hai carousel cùng số ảnh trong một bài review cùng nhãn "Bộ 2 ảnh" (axe `landmark-unique`, 4 bài): phải đếm
+  carousel trong bộ dựng rich text của `lib/content/contentful.ts`; `aria-roledescription="carousel"` đã nói vai
+  trò. Để lại. Dải offer nằm ngoài landmark (axe `region`, best-practice): để lại.
+- Tiêu đề trang thẻ tới 104 ký tự (`/us-credit-cards/amex-blue-business-plus`): luật title 10/10 (dài là cố ý).

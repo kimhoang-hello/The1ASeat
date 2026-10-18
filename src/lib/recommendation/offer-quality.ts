@@ -446,6 +446,15 @@ export function offerFacts(
 }
 
 /**
+ * Giá trị offer mà §11 cân: phần với tới được theo sức dồn, hoặc cả offer khi
+ * chưa biết sức dồn. MỘT hàm cho cả tử số (`offerQuality`) lẫn mẫu số
+ * (`offerClimate`) — hai dòng viết riêng từng lệch nhau đúng ở ca chưa biết.
+ */
+function offerValueCents(fact: OfferFacts): number {
+  return fact.usableValueCents ?? fact.fullValueCents ?? 0;
+}
+
+/**
  * Thang đo chung của MỘT lượt chạy: giá trị offer lớn nhất trong tập ứng viên.
  *
  * Có tên và có kiểu riêng để không ai lỡ tay tính nó bên trong vòng lặp ứng
@@ -487,15 +496,19 @@ export function offerClimate(
   const weighted: { value: number; weight: number }[] = [];
   const gatedValues: { value: number; weight: number }[] = [];
   for (const [index, fact] of facts.entries()) {
-    maxUsable = Math.max(maxUsable, fact.usableValueCents ?? 0);
+    // Cùng giá trị mà tử số của §11 đọc (`offerValueCents`). Chưa khai sức dồn
+    // thì `usableValueCents` là `null` ở MỌI thẻ; mẫu số chỉ đọc nó thì ra 0 và
+    // vế "giá trị" bằng 0 cho cả tập — 60,000 điểm của Amex® Gold ngang 15,000
+    // của Green, và Green thắng nhờ không phí (người dùng giả 17/10/2026: 53/76
+    // hồ sơ chưa khai sức dồn ra Green).
+    maxUsable = Math.max(maxUsable, offerValueCents(fact));
     maxFull = Math.max(maxFull, fact.fullValueCents ?? 0);
     if (fact.gatedValueCents !== null && fact.gatedValueCents > 0) {
       gatedValues.push({ value: fact.gatedValueCents, weight: weights?.[index] ?? 1 });
     }
     const required = fact.requiredPerNinetyDays ?? fact.fullRequiredPerNinetyDays;
-    const value = fact.usableValueCents ?? fact.fullValueCents;
-    if (required !== null && required > 0 && value !== null) {
-      maxPerDollar = Math.max(maxPerDollar, value / required);
+    if (required !== null && required > 0) {
+      maxPerDollar = Math.max(maxPerDollar, offerValueCents(fact) / required);
     }
     if (fact.historicalPercentile !== null) {
       percentiles.push(fact.historicalPercentile);
@@ -559,7 +572,7 @@ export function offerQuality(fact: OfferFacts, climate: OfferClimate): { score: 
   if (fact.active === null) return { score: 0, note: "§11: không có offer đang chạy" };
   if (fact.active.offer.bonusKind === "none") return { score: 0, note: "§11: thẻ không có welcome bonus" };
 
-  const value = fact.usableValueCents ?? fact.fullValueCents ?? 0;
+  const value = offerValueCents(fact);
   const valueScore = climate.maxUsableValueCents > 0 ? value / climate.maxUsableValueCents : 0;
 
   const percentileScore =

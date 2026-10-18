@@ -82,7 +82,8 @@ export function UsTransferTable({ today, quotable }: { today: string; quotable: 
       <table className="w-full min-w-[58rem] border-collapse text-sm">
         <thead>
           <tr className="border-b border-border bg-card">
-            <th className={`${STICKY_COL} bg-card px-4 py-3`} />
+            {/* Ô góc trống: `td`, không phải `th` — tiêu đề không chữ là ô vô danh với screen reader (axe `empty-table-header`). */}
+            <td className={`${STICKY_COL} bg-card px-4 py-3`} />
             {US_TRANSFER_ISSUERS.map((issuer) => (
               <th key={issuer.id} className="px-2 py-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}

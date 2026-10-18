@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import { getCreditCardOffers, getPostBySlug, getPosts, getTransferBonuses } from "@/lib/content";
+import { getCreditCardOffersWithin, getPostBySlug, getPosts, getTransferBonusesWithin } from "@/lib/content";
 import type { BlogPost } from "@/lib/content";
 import { formatDate, hasExpired } from "@/lib/format-date";
 import { MediaPlaceholder, type PlaceholderIcon } from "@/components/ui/media-placeholder";
@@ -72,21 +72,15 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const { slug } = await params;
   // Thẻ và transfer bonus là dữ liệu PHỤ của một bài viết (khối thẻ nhắc trong
   // bài, nút "đi tiếp" của nhãn ưu đãi). Để chúng chung một `Promise.all` trần
-  // thì một lượt Contentful nấc ở nguồn phụ làm mất luôn cả bài. Lỗi thì rơi về
+  // thì một lượt Contentful nấc ở nguồn phụ làm mất luôn cả bài. Lỗi hay treo quá 8 giây thì rơi về
   // mảng rỗng và ghi log: bài vẫn hiện, khối thẻ không hiện, còn nút đi tiếp
   // tự rẽ sang `/transfer-partners` — trang luôn có nội dung — vì không biết
   // bonus nào còn chạy. `getPosts()` vẫn để lỗi đi lên: không có nó thì không
   // có bài nào để hiện.
   const [allPosts, offers, transferBonuses] = await Promise.all([
     getPosts(),
-    getCreditCardOffers().catch((error) => {
-      console.error(`[blog/${slug}] không tải được danh sách thẻ, bỏ khối thẻ trong bài`, error);
-      return [];
-    }),
-    getTransferBonuses().catch((error) => {
-      console.error(`[blog/${slug}] không tải được transfer bonus, nút đi tiếp dùng đường trung tính`, error);
-      return [];
-    }),
+    getCreditCardOffersWithin(8_000, `blog/${slug}`, "bỏ khối thẻ trong bài"),
+    getTransferBonusesWithin(8_000, `blog/${slug}`, "nút đi tiếp dùng đường trung tính"),
   ]);
   const post = allPosts.find((item) => item.slug === slug);
 

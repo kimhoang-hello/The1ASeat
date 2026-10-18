@@ -137,7 +137,8 @@ export function CanadaTransferTable({
       <table className="w-full min-w-[35rem] border-collapse text-sm">
         <thead>
           <tr className="border-b border-border bg-card">
-            <th className={`${STICKY_COL} bg-card px-4 py-3`} />
+            {/* Ô góc trống: `td`, không phải `th` — tiêu đề không chữ là ô vô danh với screen reader (axe `empty-table-header`). */}
+            <td className={`${STICKY_COL} bg-card px-4 py-3`} />
             {CANADA_ISSUER_COLUMNS.map((column) => (
               <th key={column.programId} className="px-2 py-3">
                 <IssuerLogo column={column} linkable={linkablePrograms.has(column.programId)} />

@@ -185,19 +185,24 @@ export default async function HotelsPage() {
             />
           </section>
 
-          <NextSteps title={h("nextStepsTitle")} className="mt-12 max-w-3xl border-t border-border pt-8">
-            {hasHotelCategory && (
-              <StepLink href={reviewsHref} label={h("reviewsLabel")} description={h("reviewsDescription")} />
-            )}
-            {programPosts.map((chain) => (
-              <StepLink
-                key={chain.programPostSlug}
-                href={`/blog/${chain.programPostSlug}`}
-                label={h("programLabel", { program: chain.program })}
-                description={h("programDescription")}
-              />
-            ))}
-          </NextSteps>
+          {/* Cả hai đường đều đọc bài viết — dữ liệu phụ. Contentful lỗi/treo thì
+              không còn đường nào, và tiêu đề đứng một mình trên danh sách rỗng
+              trông như trang hỏng (Codex 17/10/2026). */}
+          {(hasHotelCategory || programPosts.length > 0) && (
+            <NextSteps title={h("nextStepsTitle")} className="mt-12 max-w-3xl border-t border-border pt-8">
+              {hasHotelCategory && (
+                <StepLink href={reviewsHref} label={h("reviewsLabel")} description={h("reviewsDescription")} />
+              )}
+              {programPosts.map((chain) => (
+                <StepLink
+                  key={chain.programPostSlug}
+                  href={`/blog/${chain.programPostSlug}`}
+                  label={h("programLabel", { program: chain.program })}
+                  description={h("programDescription")}
+                />
+              ))}
+            </NextSteps>
+          )}
         </div>
       </section>
     </>

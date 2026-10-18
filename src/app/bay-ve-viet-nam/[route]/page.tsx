@@ -11,7 +11,7 @@ import {
   RouteRoutings,
 } from "@/components/award-charts/route-award-table";
 import { formatDate } from "@/lib/format-date";
-import { getCreditCardOffers } from "@/lib/content";
+import { getCreditCardOffersWithin } from "@/lib/content";
 import { getCardPointsPrograms, creditCardsPath } from "@/lib/card-points-programs";
 import { ringAfter } from "@/lib/card-next-steps";
 import { TRANSFER_PARTNERS } from "@/lib/transfer-partners";
@@ -110,11 +110,8 @@ export default async function VietnamRoutePage({
   // trả về nguyên 23 thẻ và người đọc tưởng đó là kết quả lọc — đúng cái bẫy
   // đã ghi trong `TransferLegs`.
   // Bảng giá là dữ liệu tĩnh; danh sách thẻ chỉ quyết định link lọc nào được
-  // hiện. Contentful nấc thì rơi về `[]` + log: link lọc biến mất, bảng vẫn hiện.
-  const offers = await getCreditCardOffers().catch((error) => {
-    console.error("[bay-ve-viet-nam] không tải được danh sách thẻ, bỏ link lọc theo hệ điểm", error);
-    return [];
-  });
+  // hiện. Contentful nấc (lỗi hay treo quá 8 giây) thì rơi về `[]` + log: link lọc biến mất, bảng vẫn hiện.
+  const offers = await getCreditCardOffersWithin(8_000, "bay-ve-viet-nam", "bỏ link lọc theo hệ điểm");
   const cardPrograms = new Set(getCardPointsPrograms(offers).map((p) => p.id));
 
   // Chặng này với tới được những chương trình nào — và từ đó, loại điểm thẻ

@@ -596,6 +596,7 @@ export function SiteHeader() {
             menu năm mục hiện tại không đổi một pixel nào trước ngày công bố. */}
         <nav
           ref={navRef}
+          aria-label={nav("mainLabel")}
           className={`hidden items-center lg:flex ${navGapClassName}`}
         >
           {/* The logo already goes home, but that is a convention rather than a
@@ -741,7 +742,7 @@ export function SiteHeader() {
           ref={mobilePanelRef}
           className="min-h-0 scroll-py-2 overflow-y-auto overscroll-contain border-t border-border bg-background px-4 pb-6 pt-2 lg:hidden"
         >
-          <nav className="flex flex-col gap-1">
+          <nav aria-label={nav("mainLabel")} className="flex flex-col gap-1">
             <Link
               href="/"
               onClick={() => setOpen(false)}

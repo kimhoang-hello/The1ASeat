@@ -10,7 +10,7 @@ import {
 } from "@/components/transfer-partners/canada-transfer-table";
 import { t } from "@/lib/t";
 import { pageMetadata } from "@/lib/seo";
-import { getCreditCardOffers } from "@/lib/content";
+import { getCreditCardOffersWithin } from "@/lib/content";
 import { cardsInProgram, getCardPointsPrograms } from "@/lib/card-points-programs";
 import { PROGRAMS } from "@/lib/award-charts";
 import { TRANSFER_PARTNERS } from "@/lib/transfer-partners";
@@ -106,12 +106,9 @@ export default async function TransferPartnersPage() {
   // Hệ điểm nào thật sự có thẻ trên site — đọc từ chính danh sách mà bộ lọc sẽ
   // chạy trên đó, nên một link ở đây không bao giờ hứa một bộ lọc rỗng.
   // Bảng là dữ liệu tĩnh; danh sách thẻ chỉ nuôi các cột "thẻ tích hệ điểm
-  // này". Contentful nấc đúng lúc trang dựng lại thì rơi về `[]` + log — cột
+  // này". Contentful nấc (lỗi hay treo quá 8 giây) đúng lúc trang dựng lại thì rơi về `[]` + log — cột
   // thẻ biến mất, bảng vẫn hiện (như `/refundable-hotel-trick`).
-  const offers = await getCreditCardOffers().catch((error) => {
-    console.error("[transfer-partners] không tải được danh sách thẻ, bỏ cột thẻ", error);
-    return [];
-  });
+  const offers = await getCreditCardOffersWithin(8_000, "transfer-partners", "bỏ cột thẻ");
   const linkablePrograms = new Set(getCardPointsPrograms(offers).map((p) => p.id));
 
   // Cột nào không có thẻ nào thì biến mất hẳn thay vì hiện một tiêu đề trống —

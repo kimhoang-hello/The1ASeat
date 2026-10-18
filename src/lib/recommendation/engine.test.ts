@@ -29,7 +29,7 @@ import { computeConfidence } from "./confidence.ts";
 import { evaluateEligibility } from "./eligibility.ts";
 import { evaluateSuitability, minimumSpendFit } from "./suitability.ts";
 import { tripNeedFor } from "./trip-need.ts";
-import { historicalPercentile, offerClimate, offerFacts, offerQualityScore } from "./offer-quality.ts";
+import { historicalPercentile, offerClimate, offerFacts, offerQuality, offerQualityScore } from "./offer-quality.ts";
 import { earnFitFor } from "./earn-fit.ts";
 import { tripCoverage } from "./strategies.ts";
 import { candidateUniverse, normalize } from "./normalize.ts";
@@ -1272,6 +1272,27 @@ test("thẻ KHÔNG có welcome bonus được 0 điểm offer, không được ~
   const facts = offerFacts(product!, IX, ASOF, { low: 5_000, high: 5_000 }, []);
   const climate = offerClimate([facts]);
   assert.equal(offerQualityScore(facts, climate), 0);
+});
+
+test("§11 — chưa khai sức dồn thì vế giá trị vẫn cân theo cỡ offer, không về 0 cả tập", () => {
+  // Sức dồn `null` → `usableValueCents` null ở MỌI thẻ. Mẫu số từng chỉ đọc
+  // con số đó nên ra 0, và vế giá trị bằng 0 cho cả tập: 60,000 điểm ngang
+  // 15,000 điểm (người dùng giả 17/10/2026, Amex® Green thắng 53/76 hồ sơ).
+  const facts = DATA.products.map((product) => offerFacts(product, IX, ASOF, null, []));
+  const valued = facts.filter((fact) => (fact.fullValueCents ?? 0) > 0);
+  assert.ok(valued.length > 2, "bộ dữ liệu phải còn vài offer có giá trị");
+  assert.ok(valued.every((fact) => fact.usableValueCents === null), "dựng đúng ca chưa biết sức dồn");
+  const climate = offerClimate(facts);
+  const max = Math.max(...valued.map((fact) => fact.fullValueCents as number));
+  const valuePart = (fact: (typeof facts)[number]) =>
+    Number(/giá trị (\d\.\d{3})×/.exec(offerQuality(fact, climate).note)?.[1]);
+  for (const fact of valued) {
+    assert.equal(valuePart(fact).toFixed(3), ((fact.fullValueCents as number) / max).toFixed(3), fact.productId);
+  }
+  const richest = valued.find((fact) => fact.fullValueCents === max)!;
+  const poorest = valued.reduce((a, b) => ((a.fullValueCents as number) <= (b.fullValueCents as number) ? a : b));
+  assert.ok(offerQualityScore(richest, climate) > 0);
+  assert.ok(valuePart(richest) > valuePart(poorest), "offer lớn hơn phải được vế giá trị cao hơn");
 });
 
 test("§30 — chỉ hỏi về thẻ doanh nghiệp khi có thẻ doanh nghiệp trong bảng", () => {

@@ -353,6 +353,13 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * lên đâu" khi nó làm loãng trần chi tiêu. 16 nhân vật mẫu ra y hệt 4.36.0 —
  * không ai đi qua hai nhánh đó — nhưng §20 nói về MỌI đầu vào.
  *
+ * 4.38.0 — §11 chưa khai sức dồn 3 tháng: mẫu số của vế "giá trị" (offer lớn
+ * nhất tập) đọc cùng con số với tử số. Trước đó tử số lùi về giá trị cả offer
+ * còn mẫu số chỉ đọc phần với tới được — `null` ở MỌI thẻ khi chưa biết sức dồn
+ * — nên vế giá trị bằng 0 cho cả tập: 60,000 điểm ngang 15,000, và thẻ không
+ * phí bonus nhỏ thắng. 300 người dùng giả 17/10/2026: 31/82 hồ sơ chưa khai sức
+ * dồn đổi người thắng, 0/218 hồ sơ đã khai đổi.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -365,7 +372,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.37.0";
+export const ENGINE_VERSION = "4.38.0";
 
 export interface RecommendInput {
   state: UserState;

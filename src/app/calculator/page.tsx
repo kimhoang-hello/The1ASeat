@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { PointsCalculator } from "@/components/calculator/points-calculator";
-import { getCreditCardOffers } from "@/lib/content";
+import { getCreditCardOffersWithin } from "@/lib/content";
 import { getCardPointsPrograms } from "@/lib/card-points-programs";
 import { t } from "@/lib/t";
 import { pageMetadata } from "@/lib/seo";
@@ -27,12 +27,9 @@ export default async function CalculatorPage() {
   // không bao giờ hứa một bộ lọc rỗng — `/credit-cards` cố ý cho `?points=` lạ
   // rơi về danh sách KHÔNG lọc, nên một link sai sẽ hỏng lặng chứ không báo.
   // Chỉ nuôi khối "đi tiếp" — calculator là dữ liệu tĩnh. Contentful nấc đúng
-  // lúc trang dựng lại thì rơi về `[]` + log (khối đi tiếp về link chung), như
+  // lúc trang dựng lại — lỗi hay treo quá 8 giây — thì rơi về `[]` + log (khối đi tiếp về link chung), như
   // `/refundable-hotel-trick`. Bắt ở đây, KHÔNG trong hàm cache.
-  const offers = await getCreditCardOffers().catch((error) => {
-    console.error("[calculator] không tải được danh sách thẻ, bỏ link lọc theo hệ điểm", error);
-    return [];
-  });
+  const offers = await getCreditCardOffersWithin(8_000, "calculator", "bỏ link lọc theo hệ điểm");
   const cardProgramIds = getCardPointsPrograms(offers).map((program) => program.id);
 
   return (

@@ -6,7 +6,7 @@ import { NextSteps, StepLink } from "@/components/ui/next-steps";
 import { JsonLd } from "@/components/seo/json-ld";
 import { FlowChip, FlowChips, chipToneClass } from "@/components/refundable-hotel-trick/flow-chips";
 import { RhtCalculator } from "@/components/refundable-hotel-trick/rht-calculator";
-import { getCreditCardOffers, getPosts, type CreditCardOffer } from "@/lib/content";
+import { getCreditCardOffersWithin, getPostsWithin, type CreditCardOffer } from "@/lib/content";
 import { cashOutCents, formatDollars, formatPoints, rateLabel } from "@/lib/cash-out";
 import { formatDate } from "@/lib/format-date";
 import {
@@ -646,22 +646,13 @@ function Disclaimer() {
 
 export default async function RefundableHotelTrickPage() {
   // Cả hai chỉ nuôi khối link phụ — bốn workflow và calculator là dữ liệu tĩnh.
-  // Contentful nấc đúng lúc trang dựng lại (webhook xoá cache bằng `expire: 0`)
+  // Contentful nấc — lỗi hay treo quá 8 giây — đúng lúc trang dựng lại (webhook xoá cache bằng `expire: 0`)
   // thì rơi về `[]` + log, như trang bài viết: khối thẻ và link bài nền tảng
   // biến mất, còn hướng dẫn vẫn hiện. Bắt ở đây, KHÔNG trong hàm cache — không
   // thì mảng rỗng bị cache như dữ liệu thật (AGENTS.md, audit 03/10 đợt 0).
   const [offers, posts] = await Promise.all([
-    getCreditCardOffers().catch((error) => {
-      console.error("[refundable-hotel-trick] không tải được danh sách thẻ, bỏ khối thẻ", error);
-      return [];
-    }),
-    getPosts().catch((error) => {
-      console.error(
-        "[refundable-hotel-trick] không tải được bài viết, bỏ link bài nền tảng",
-        error,
-      );
-      return [];
-    }),
+    getCreditCardOffersWithin(8_000, "refundable-hotel-trick", "bỏ khối thẻ"),
+    getPostsWithin(8_000, "refundable-hotel-trick"),
   ]);
   const points101 = posts.find((post) => post.slug === POINTS_101_SLUG);
 

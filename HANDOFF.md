@@ -1,8 +1,8 @@
 # Bàn giao: Recommendation Engine
 
-Trạng thái **16/10/2026**. Phase 1–6 đã merge `main`; trang `/credit-cards/goi-y`
+Trạng thái **17/10/2026**. Phase 1–6 đã merge `main`; trang `/credit-cards/goi-y`
 đã CÔNG BỐ bản Beta từ 17/09/2026 (`RECOMMENDER_PUBLISHED = true`). Engine
-**4.37.0** (16/10: phần tích thêm vào ví giải CHÍNH XÁC tới 10 hạng mục dính trần — AGENTS.md mục "Lời giải chính xác nhanh, `EXACT_LINKED_LIMIT` 10 (16/10/2026)"; 4.36.0 cùng ngày: độ tin cậy §29 — mục "Review toàn diện trang + engine 16/10/2026"), lời giải thích **6.7.0**. Việc mới nhất và việc còn lại: **§0**.
+**4.38.0** (17/10: §11 chưa khai sức dồn không còn xoá vế giá trị của cả tập — AGENTS.md mục "Review toàn diện trang + engine 17/10/2026"; 4.37.0 ngày 16/10: phần tích thêm vào ví giải CHÍNH XÁC tới 10 hạng mục dính trần — AGENTS.md mục "Lời giải chính xác nhanh, `EXACT_LINKED_LIMIT` 10 (16/10/2026)"; 4.36.0 cùng ngày: độ tin cậy §29 — mục "Review toàn diện trang + engine 16/10/2026"), lời giải thích **6.7.0**. Việc mới nhất và việc còn lại: **§0**.
 Rủi ro đã biết: **§9**. Các mục bên dưới giữ nguyên lịch sử từng phase.
 
 Spec đầy đủ: [`docs/recommendation-engine-v1.md`](docs/recommendation-engine-v1.md).

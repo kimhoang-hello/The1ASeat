@@ -7,7 +7,7 @@ import { OfferDisclosure } from "@/components/credit-cards/offer-disclosure";
 import { HotTip, RebateChip } from "@/components/ui/hot-tip";
 import { ApplyButton } from "@/components/ui/apply-button";
 import { BankNextSteps } from "@/components/bank-accounts/bank-next-steps";
-import { getCreditCardOffers, getPosts } from "@/lib/content";
+import { getCreditCardOffersWithin, getPostsWithin } from "@/lib/content";
 import {
   BANK_ACCOUNTS,
   bankAccountBySlug,
@@ -101,17 +101,11 @@ export default async function BankAccountDetailPage({
   // `offers` ở file này đã là hàm dịch namespace "offers", nên danh sách thẻ
   // phải mang tên khác.
   // Tài khoản là dữ liệu trong repo; thẻ và bài chỉ nuôi khối "đi tiếp".
-  // Contentful nấc đúng lúc trang dựng lại thì rơi về `[]` + log, như
+  // Contentful nấc (lỗi hay treo quá 8 giây) đúng lúc trang dựng lại thì rơi về `[]` + log, như
   // `/refundable-hotel-trick` — bắt ở đây, KHÔNG trong hàm cache.
   const [cardOffers, posts] = await Promise.all([
-    getCreditCardOffers().catch((error) => {
-      console.error("[bank-accounts] không tải được danh sách thẻ, bỏ khối thẻ", error);
-      return [];
-    }),
-    getPosts().catch((error) => {
-      console.error("[bank-accounts] không tải được bài viết, bỏ link bài", error);
-      return [];
-    }),
+    getCreditCardOffersWithin(8_000, "bank-accounts", "bỏ khối thẻ"),
+    getPostsWithin(8_000, "bank-accounts"),
   ]);
 
   const jsonLd = {

@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   getCreditCardOfferBySlug,
   getCreditCardOffers,
-  getPosts,
+  getPostsWithin,
 } from "@/lib/content";
 import { CardImage, applyOverlay } from "@/components/credit-cards/card-image";
 import { CardBadges } from "@/components/credit-cards/card-badges";
@@ -87,11 +87,8 @@ export default async function CreditCardDetailPage({
     // publish gọi `revalidateTag(..., { expire: 0 })`, làm hết hạn luôn HTML
     // của trang thẻ, nên lần render lỗi sau đó không còn bản cũ để Next lui về
     // (Codex tái hiện 02/10/2026). Trang thiếu bài liên quan tự lành ở lượt
-    // regenerate sau.
-    getPosts().catch((err: unknown) => {
-      console.error(`credit-cards/${slug}: getPosts failed, rendering without related posts`, err);
-      return [];
-    }),
+    // regenerate sau. Có hạn 8 giây: `.catch()` không đỡ được lượt gọi TREO.
+    getPostsWithin(8_000, `credit-cards/${slug}`),
   ]);
 
   if (!offer) notFound();

@@ -191,7 +191,17 @@ export function RouteAwardTable({
     // trang. Đo 03/10/2026 ở 320px (iPhone bật Display Zoom): trang chặng kéo
     // ngang được 97px, `/transfer-partners` 204px. Cùng một dòng ở cả năm
     // khung cuộn ngang của site.
-    <div className="relative mt-4 overflow-x-auto rounded-xl border border-border">
+    //
+    // `tabIndex` + `role="region"`: bảng không có link nào, nên dưới ~600px
+    // người dùng bàn phím (hay desktop phóng 400%) không có cách nào cuộn tới
+    // các cột hạng ghế bị che. Khung nhận focus thì phím mũi tên cuộn được
+    // (axe `scrollable-region-focusable`, 12 trang chặng, đo 17/10/2026).
+    <div
+      tabIndex={0}
+      role="region"
+      aria-label={name}
+      className="relative mt-4 overflow-x-auto rounded-xl border border-border"
+    >
       <table
         aria-describedby={describedBy}
         className="w-full min-w-[36rem] border-collapse text-left"
