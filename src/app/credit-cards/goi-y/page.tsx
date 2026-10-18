@@ -137,7 +137,7 @@ function OutsideCanadaNotice() {
       </h2>
       <p className="mt-2 text-base leading-relaxed text-foreground/90">
         Mọi thẻ Ghế 1A theo dõi đều là thẻ Canada, và ngân hàng đòi bạn cư trú ở Canada mới mở được.
-        Các thẻ ở đây chỉ mở được khi bạn sống ở Canada, nên mình không gợi ý cho người ở nước khác.
+        Nên mình không gợi ý cho người ở nước khác.
       </p>
       <p className="mt-3 text-base leading-relaxed text-foreground/90">
         Bạn vẫn đọc được{" "}

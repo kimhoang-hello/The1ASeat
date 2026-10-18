@@ -178,7 +178,7 @@ export const VIETNAM_ROUTES: VietnamRoute[] = [
     DA_NANG_REMAINING,
     "Từ Vancouver, hai hành trình Aeroplan® là Vancouver – Đài Bắc – Đà Nẵng do EVA Air® bay cả hai chặng, và Vancouver – Seoul – Đà Nẵng với Air Canada® ở chặng đầu rồi Asiana Airlines® nối tiếp. Cả hai đều nằm dưới mốc chia bậc của Aeroplan®, nên đây là mức điểm thấp nhất để về Đà Nẵng bằng điểm từ bất cứ đâu ở Canada.",
     PREMIUM_GAP,
-    "Vì chỉ có một chương trình tra được giá, bạn chỉ có thể linh động ở ngày bay. Aeroplan® giữ giá cố định cho chuyến bay của partner, nên chỗ trống là yếu tố quyết định.",
+    "Vì chỉ có một chương trình tra được giá, chỗ linh động nằm ở ngày bay chứ không ở việc chọn chương trình. Aeroplan® giữ giá cố định cho chuyến bay của partner, nên chỗ trống là yếu tố quyết định.",
   ]),
 
   route("YUL", "SGN", [

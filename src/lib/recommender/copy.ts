@@ -99,7 +99,7 @@ export const REASON_TEXT: Record<ReasonCode, ReasonText> = {
   },
   POINTS_COVERAGE_UNKNOWN: {
     tone: "info",
-    text: "Điểm của bạn đủ cho bao nhiêu phần chuyến đi thì mới là ước lượng, chưa phải con số chắc.",
+    text: "Mình mới chỉ ước lượng được điểm của bạn đủ cho bao nhiêu phần của chuyến đi.",
   },
   AWARD_PRICE_IS_FLOOR_ONLY: {
     tone: "caution",

@@ -109,7 +109,7 @@ export default function PrivacyPage() {
       </p>
       <p>
         Mỗi lượt gợi ý được lưu lại kèm chính những con số đã dùng để tính, để khi bạn báo kết quả
-        sai thì mình tra lại được đúng lượt đó. Bấm &ldquo;Làm lại từ đầu&rdquo; trong công cụ
+        sai thì chúng tôi tra lại được đúng lượt đó. Bấm &ldquo;Làm lại từ đầu&rdquo; trong công cụ
         sẽ xoá mã ngẫu nhiên khỏi trình duyệt bạn; muốn xoá hẳn phần dữ liệu đã lưu, nhắn cho chúng
         tôi qua trang liên hệ kèm mã lượt gợi ý hiện dưới mỗi kết quả. Chúng tôi xoá hồ sơ đó cùng
         mọi lượt gợi ý và lời giải thích của nó trong vòng 30 ngày.
