@@ -3846,3 +3846,23 @@ trang). Ba cách đo MỚI, khác lượt 16/10:
   carousel trong bộ dựng rich text của `lib/content/contentful.ts`; `aria-roledescription="carousel"` đã nói vai
   trò. Để lại. Dải offer nằm ngoài landmark (axe `region`, best-practice): để lại.
 - Tiêu đề trang thẻ tới 104 ký tự (`/us-credit-cards/amex-blue-business-plus`): luật title 10/10 (dài là cố ý).
+
+## Rà copy toàn site cho bớt giọng AI (17/10/2026) — đừng đề xuất lại
+
+Tác giả yêu cầu "làm việc với Codex về toàn bộ copy, sửa cho tự nhiên, không giống AI". Thước đo là thân bài blog
+tác giả tự viết: gần như 0 gạch ngang dài trên 44 bài, xưng "mình", câu ngắn xen dài, trộn từ tiếng Anh tự nhiên.
+5 lượt Codex song song + 2 lượt bác bản vá; repo ~300 chỗ, Contentful ~170 chỗ (37 thẻ + đoạn tóm tắt bài).
+- **Dấu hiệu đã dọn**: "—" làm ngoặc/nối vế; nhấn "thật / thật sự / có thật"; chữ IN HOA; "vui lòng"; "chúng" chỉ
+  đồ vật; "Ghế 1A" ngôi thứ ba ở chỗ là lời tác giả; ngôn ngữ engine lọt ra trang Gợi ý thẻ ("phủ chuyến đi").
+  `rewrite-offer.ts` có 4 luật giọng văn để copy thẻ sinh lại không quay về khuôn cũ.
+- **KHÔNG phải văn AI, giữ**: khuôn "không phải X, mà là Y" (tác giả tự viết vậy trong bài), "giống nhau đến mức khó
+  tin", "dễ gật đầu nhất", "mua quyền lợi chứ không mua tốc độ", "cầm trong ví". Lặp có chủ ý trong UI quét mắt
+  ("Welcome bonus" đầu headline, nhãn "Xem chi tiết").
+- **Cố ý không đổi**: hero, mục Khách sạn, Refundable Hotel Trick, văn bản pháp lý vẫn "chúng tôi" + "vui lòng"
+  (tác giả giữ "chúng tôi" ở disclosure), `seoTitleVi` "Review…" và "credit card" trong tóm tắt/SEO bài của tác giả
+  (bài là giọng tác giả + từ khoá tìm kiếm; Codex bác quyết định này, để tác giả chọn), "—" trong ô Thông tin nhanh
+  (dấu phân cách dữ liệu), "BETA" in hoa ở dải Beta.
+- **Bẫy khi nhận bản viết lại hàng loạt**: thay một khuôn cũ bằng một khuôn mới. Codex đổi đuôi "Yêu cầu thu nhập $X"
+  ở 9 editor's take thành "Thẻ hợp nếu…" — vẫn là khuôn lặp. Viết lại từng câu theo cách khác nhau.
+- `explain.test.ts` cấm chữ "chắc chắn" trong câu viết sẵn của Gợi ý thẻ (kể cả "chưa chắc chắn").
+- Tên mục trang chặng "Đường bay có thật" → "Đường bay hiện có"; prose ở `award-routes.ts` trỏ tới tên mục này.
