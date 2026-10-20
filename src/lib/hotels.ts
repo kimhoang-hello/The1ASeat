@@ -677,11 +677,12 @@ export const ALL_HOTELS: Hotel[] = [
     youtubeUrl: "https://www.youtube.com/watch?v=OhLYjX_sbgY",
     location: "Da'an, Taipei, vài bước tới ga MRT Zhongxiao Fuxing",
     roomTypeReviewed: "King Premium (upgrade từ King Standard vài tuần trước ngày đến, nhờ hạng IHG® Platinum Elite)",
-    // Phụ đề: "I used 190,000 IHG points for a three-night stay. As an IHG
-    // cardholder, I received one free night when redeeming for three nights" —
-    // và trước đó "After a four-night stay": ba đêm trả điểm + một đêm miễn phí.
+    // Phụ đề ghi "I used 190,000 IHG points for a three-night stay", nhưng tác giả
+    // chốt 20/10/2026 số đúng là 195K cho cả 4 đêm (đã gồm đêm thứ 4 miễn phí của
+    // thẻ IHG®), khớp hai bài viết: cancel-rebook-de-tiet-kiem-hotel-points
+    // (215K → 195K sau khi rebook) và nang-gia-tri-scene-plus-points-len-hon-2-cent.
     booked:
-      "4 đêm dịp Giáng sinh: 190,000 IHG One Rewards® points cho 3 đêm, thêm 1 đêm miễn phí nhờ quyền lợi chủ thẻ tín dụng IHG®",
+      "4 đêm dịp Giáng sinh: 195,000 IHG One Rewards® points cho cả 4 đêm, đã gồm đêm thứ 4 miễn phí nhờ quyền lợi chủ thẻ tín dụng IHG®",
     amenities: [
       "Lounge nhỏ có cà phê và snack miễn phí buổi sáng",
       "Xe đạp miễn phí, kèm mũ bảo hiểm và khoá",
@@ -705,7 +706,7 @@ export const ALL_HOTELS: Hotel[] = [
     directBookingUrl: "https://www.ihg.com/kimptonhotels/hotels/us/en/da-an-hotel-taipei/tpekm/hoteldetail",
     seoTitle: "Kimpton® Da An Hotel Taipei: review phòng King Premium",
     seoDescription:
-      "Kimpton® Da An Hotel ở quận Da'an, Taipei: Ghế 1A ở 4 đêm Giáng sinh bằng 190,000 IHG One Rewards® points cộng 1 đêm miễn phí. Review, video và cách đặt.",
+      "Kimpton® Da An Hotel ở quận Da'an, Taipei: Ghế 1A ở 4 đêm Giáng sinh bằng 195,000 IHG One Rewards® points, đã gồm 1 đêm miễn phí. Review, video và cách đặt.",
   },
 
   // ——— Hàn Quốc ———
