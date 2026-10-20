@@ -488,12 +488,15 @@ async function maybeNotifyNewPost(payload: unknown, deadline: number): Promise<b
     <p style="${emailHeadlineStyle}" class="email-brand">${escapeHtml(title)}</p>
     ${bodyDocument ? renderPostBodyForEmail(bodyDocument, `/blog/${slug}`) : ""}
   `;
+  // Bỏ thân bài thì nút là đường DUY NHẤT tới bài vừa đăng — trỏ về `/blog`
+  // chung thì bản tin chỉ còn cái tiêu đề, không bấm vào đâu được (Codex,
+  // kiểm toàn diện 20/10/2026).
   const html = renderSubscriberEmailHtml({
     title,
     preheader: excerpt ?? title,
     bodyHtml,
-    ctaHref: `${SITE_URL}/blog`,
-    ctaLabel: "Đọc các bài viết khác tại Ghế 1A →",
+    ctaHref: bodyDocument ? `${SITE_URL}/blog` : `${SITE_URL}/blog/${encodeURIComponent(slug)}`,
+    ctaLabel: bodyDocument ? "Đọc các bài viết khác tại Ghế 1A →" : "Đọc bài trên Ghế 1A →",
   });
 
   // Giành chỗ ngay trước lời gọi, sau khi mọi kiểm tra đã qua — giành sớm hơn

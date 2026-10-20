@@ -996,6 +996,18 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     monthlyFee: 4,
     feeWaiverVi:
       "Về $0/tháng theo Value Program của RBC®. Miễn hẳn cho người cao tuổi, người bản địa và người thụ hưởng RDSP.",
+    // Offer đọc 20/10/2026 trên trang sản phẩm của RBC®: $150 tiền mặt + miễn
+    // monthly fee 12 tháng, chỉ khi mở online, hạn mở 08/12/2026.
+    bonusValue: 150,
+    bonusLabelVi: "$150",
+    bonusExpiresOn: "2026-12-08",
+    bonusConditionsVi: [
+      "Cư dân Canada, đủ tuổi trưởng thành, hiện không có và chưa từng có tài khoản ngân hàng cá nhân nào ở RBC® trong 5 năm trước đợt khuyến mãi, và chưa nhận offer mở tài khoản nào của RBC® trong thời gian đó.",
+      "Mở tài khoản Day to Day Banking đầu tiên qua app RBC® Mobile, website rbcroyalbank.com hoặc RBC® Online Banking trước 9 giờ tối (giờ miền Đông) ngày 08/12/2026. Mở ở chi nhánh không được tính.",
+      "Mở xong là được miễn monthly fee 12 tháng.",
+      "Muốn nhận thêm $150 thì trước 9 giờ tối ngày 16/02/2027 làm hai trong ba việc: cho 2 khoản thanh toán hằng tháng tự trích từ tài khoản này (pre-authorized payment, bên nhận tự rút theo uỷ quyền của bạn, không phải hoá đơn bạn tự hẹn lịch trả); nhận một khoản payroll hoặc lương hưu bằng direct deposit định kỳ; hoặc thanh toán 2 hoá đơn từ tài khoản này.",
+      "Không cộng dồn với offer mở tài khoản cá nhân khác của RBC®.",
+    ],
     keyBenefitsVi: [
       "12 giao dịch debit mỗi tháng, sau đó $1.25 mỗi giao dịch",
       "Interac e-Transfer® miễn phí không giới hạn, không tính vào 12 giao dịch",

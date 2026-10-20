@@ -3866,3 +3866,37 @@ tác giả tự viết: gần như 0 gạch ngang dài trên 44 bài, xưng "mì
   ở 9 editor's take thành "Thẻ hợp nếu…" — vẫn là khuôn lặp. Viết lại từng câu theo cách khác nhau.
 - `explain.test.ts` cấm chữ "chắc chắn" trong câu viết sẵn của Gợi ý thẻ (kể cả "chưa chắc chắn").
 - Tên mục trang chặng "Đường bay có thật" → "Đường bay hiện có"; prose ở `award-routes.ts` trỏ tới tên mục này.
+
+## Kiểm toàn diện 20/10/2026 — đừng đề xuất lại
+
+Gate: lint, tsc, build, 11 audit, 10 test suite (`test:reco` 494 + 23 skip MySQL), `audit:links` production
+(238 trang, không trang mồ côi), smoke test + `www` 308 + 5 header bảo mật. Codex ba vòng: rà route theo thứ tự
+hậu quả + diff `98721e1..HEAD`; bác bản vá (2 BẢN VÁ HỎNG, đã sửa); vòng chốt "CÒN CHẶN PUSH: KHÔNG".
+
+**Đã vá:**
+- **Bản tin bỏ thân bài thì không còn link nào tới bài** (`api/revalidate`). Nhánh `draftAhead` (tác giả lưu
+  nháp trong lúc webhook chạy) hoặc bài không có `bodyVi` gửi email chỉ có tiêu đề, nút trỏ `/blog` chung —
+  ngược với chú thích "chỉ có tiêu đề và link". Nay thiếu thân bài thì nút trỏ `/blog/<slug>` (đã
+  `encodeURIComponent`, vì `ctaHref` vào thẳng `href` không escape). Nhánh có thân bài giữ nguyên.
+- **`follow-redirects` 1.16.0 → 1.16.1** (GHSA-q3jh-wrc6-jgq8, GHSA-8r9p-f939-6h3c): phụ thuộc RUNTIME qua
+  `contentful` → `axios`, khác hẳn nhánh `braces` chỉ nằm trong công cụ lint. Lockfile chỉ đổi đúng gói đó.
+- Dữ liệu: **RBC® Day to Day có offer $150 + miễn phí tháng 12 tháng** (mở online trước 08/12/2026) mà site
+  không ghi. Điều kiện "2 pre-authorized payments" phải giữ nghĩa khoản bên nhận tự trích — dịch thành "thanh
+  toán định kỳ" là lẫn với tự hẹn lịch trả hoá đơn (Codex bắt).
+
+**Đã kiểm, KHÔNG vá (đừng báo lại):**
+- *Offer RBC® đóng 9 giờ tối ET mà dữ liệu chỉ lưu ngày → hiện thêm 3 tiếng*: mọi `bonusExpiresOn` trong
+  `bank-accounts.ts` đều theo NGÀY (`hasExpired` theo ngày Toronto); đổi sang mốc giờ là đổi mô hình cho cả
+  file vì 3 tiếng cuối ngày.
+- *`sync-videos` 409 khi `sys.id` `post-<slug>` bị entry đã đổi slug chiếm*: job đỏ dai kèm lỗi, không ghi đè
+  hay publish gì; cần cả đổi slug lẫn video mới trùng tiêu đề. Để người xử lý khi gặp.
+- `sync-videos` đỏ 19/10 + 20/10 ~06:10 UTC: "channel: 404, uploads-playlist: 404" (feed YouTube sập, mục 27/09).
+- Rà tay khớp trang ngân hàng: Scotiabank® Preferred/Ultimate (29/10), Student (01/11), BMO® $900 (02/11) +
+  Student (03/11), Tangerine® chequing (31/10) + savings 4.50%/0.30% (khách mới tới 30/11), Simplii™ HISA
+  4.60% (31/10) + chequing $350, National Bank® (03/11), RBC® VIP/Signature/Student (02/11), RBC® Advantage
+  không offer. Lãi Scotiabank® bảng hiệu lực 20/10/2026: MomentumPLUS 0.40% + 0.30% (360 ngày) — không đổi;
+  Money Master 0.01%/0.50%. CIBC® Aventura® ×2 (60,000, "Digital exclusive") và TD® First Class (160,000) vẫn
+  elevated.
+- Amex® Green/Business Platinum/Business Gold/Aeroplan® Business Reserve: trang công khai và trang review
+  FinlyWealth ghi mức THƯỜNG (10k/120k/—/90k) trong khi site ghi mức nâng. Offer theo KÊNH; lượt này không bấm
+  được đường Apply (`/go/creditCards/<slug>` bị chặn quyền) nên chưa kết luận — để tác giả bấm.
