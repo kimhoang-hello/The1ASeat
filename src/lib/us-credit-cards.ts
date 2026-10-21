@@ -256,6 +256,13 @@ const VERIFIED_4 = "2026-10-01";
  * Không thẻ nào đổi.
  */
 const REVERIFIED_5 = "2026-10-20";
+/**
+ * 21/10/2026: offer nâng của thẻ Atmos™ Rewards Summit và Ascent CHỈ có trên trang thẻ của
+ * Alaska Airlines® (alaskaair.com/atmosrewards/content/credit-cards/visa-*), trang
+ * bankofamerica.com vẫn ghi mức thường — nên `applyUrl` của ba thẻ Atmos™ trỏ về trang Alaska®.
+ * Trang đó dựng chữ trong shadow DOM: `get_page_text` ra rỗng, phải đi qua `shadowRoot` để đọc.
+ */
+const ATMOS_ALASKA_CHECKED = "2026-10-21";
 
 const AMEX_FTF_27: CanadianAnswer = {
   short: "Có — 2.7%",
@@ -270,17 +277,6 @@ const MR_FROM_CANADA: CanadianAnswer = {
 const HILTON_FROM_CANADA: CanadianAnswer = {
   short: "Có",
   note: "Hilton Honors® là chương trình toàn cầu; điểm dùng được ở khách sạn Canada.",
-};
-
-/**
- * Bank of America® KHÔNG in mức phí giao dịch ngoại tệ trên trang sản phẩm của
- * thẻ Ascent — bảng phí đầy đủ chỉ hiện trong luồng apply. Thẻ Summit và thẻ
- * doanh nghiệp thì trang nói thẳng là không có (rà lại 30/09/2026), nên chỉ
- * Ascent để ngỏ.
- */
-const BOA_FTF_UNKNOWN: CanadianAnswer = {
-  short: "Chưa rõ",
-  note: "Trang sản phẩm của Bank of America® không công bố mức phí này; kiểm lại trong bảng phí lúc apply trước khi dùng thẻ ngoài nước Mỹ.",
 };
 
 const ATMOS_FROM_CANADA: CanadianAnswer = {
@@ -1890,17 +1886,18 @@ const US_CARD_DATA: UsCardData[] = [
     issuerId: "bank-of-america",
     category: "airline",
     business: false,
-    elevatedBonus: false,
+    elevatedBonus: true,
+    offerEndUnannounced: true,
     cardImage: "/images/us-cards/atmos-summit.png",
-    welcomeBonus: "70,000 điểm Atmos™ Rewards + Global Companion Award 25,000 điểm",
-    minimumSpendUsd: 3_000,
+    welcomeBonus: "100,000 điểm Atmos™ Rewards + Global Companion Award 25,000 điểm",
+    minimumSpendUsd: 6_000,
     offerPeriod: "90 ngày đầu",
     annualFeeUsd: 395,
     rewardsCurrency: "Atmos™ Rewards",
     headline:
       "Thẻ cao cấp của chương trình Atmos™ Rewards (Alaska Airlines® và Hawaiian Airlines®): Global Companion Award mỗi năm và lounge Alaska®.",
     editorsTake:
-      "Bank of America® ghi đây là offer giới hạn thời gian nhưng không công bố ngày kết thúc. Global Companion Award 25,000 điểm mỗi năm gia hạn là thứ bù lại phần lớn annual fee nếu bạn bay Alaska Airlines® hoặc Hawaiian Airlines®.",
+      "Offer nâng từ mức 70,000 điểm khi chi $3,000 USD trên trang Bank of America®: nay 100,000 điểm cộng Global Companion Award 25,000 điểm, đổi lại mức chi tăng lên $6,000 USD trong 90 ngày đầu. Offer chỉ có qua trang thẻ của Alaska Airlines® và không công bố ngày kết thúc. Global Companion Award 25,000 điểm mỗi năm gia hạn là thứ bù lại phần lớn annual fee nếu bạn bay Alaska Airlines® hoặc Hawaiian Airlines®.",
     keyBenefits: [
       "Global Companion Award 25,000 điểm mỗi năm gia hạn thẻ",
       "3 điểm mỗi $1 USD ở nhà hàng, giao dịch ngoại tệ và vé Alaska Airlines®/Hawaiian Airlines®",
@@ -1917,9 +1914,9 @@ const US_CARD_DATA: UsCardData[] = [
       watchOut:
         "Chương trình Atmos™ Rewards là bản gộp của Alaska Airlines® và Hawaiian Airlines®. Điều khoản còn mới, đọc kỹ trước khi tính đường đổi điểm dài hạn.",
     },
-    applyUrl: "https://www.bankofamerica.com/credit-cards/products/alaska-airlines-infinite-credit-card/",
-    lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_5,
+    applyUrl: "https://www.alaskaair.com/atmosrewards/content/credit-cards/visa-summit",
+    lastUpdated: ATMOS_ALASKA_CHECKED,
+    verifiedOn: ATMOS_ALASKA_CHECKED,
     needsVerification: false,
   },
   {
@@ -1928,36 +1925,38 @@ const US_CARD_DATA: UsCardData[] = [
     issuerId: "bank-of-america",
     category: "airline",
     business: false,
-    elevatedBonus: false,
+    elevatedBonus: true,
+    offerEndUnannounced: true,
     cardImage: "/images/us-cards/atmos-ascent.png",
-    welcomeBonus: "50,000 điểm Atmos™ Rewards + Companion Fare $99 USD",
-    minimumSpendUsd: 1_500,
+    welcomeBonus: "60,000 điểm Atmos™ Rewards (tổng tới 80,000 + Companion Fare $99 USD)",
+    minimumSpendUsd: 3_000,
     offerPeriod: "90 ngày đầu",
     annualFeeUsd: 95,
     rewardsCurrency: "Atmos™ Rewards",
     headline:
       "Bản kế nhiệm của thẻ Alaska Airlines® Visa: Companion Fare $99 USD mỗi năm và hành lý ký gửi miễn phí.",
     editorsTake:
-      "Mức chi tiêu $1,500 USD trong 90 ngày là thấp nhất trong nhóm thẻ hãng bay ở đây. Companion Fare hằng năm đòi chi $6,000 USD trong năm trước đó mới nhận được.",
+      "Welcome bonus tới 80,000 điểm chia hai nấc trong cùng 90 ngày đầu: 60,000 điểm sau khi chi $3,000 USD, thêm 20,000 điểm khi tổng chi đạt $5,000 USD; chú thích của Alaska® gắn Companion Fare $99 USD của offer với mức $5,000 USD. Offer nâng từ mức 50,000 điểm khi chi $1,500 USD trên trang Bank of America®, chỉ có qua trang thẻ của Alaska Airlines® và không công bố ngày kết thúc. Companion Fare hằng năm đòi chi $6,000 USD trong năm trước đó mới nhận được.",
     keyBenefits: [
       "Companion Fare $99 USD (cộng thuế phí từ $23 USD) mỗi năm gia hạn, sau khi chi $6,000 USD trong năm",
       "Hành lý ký gửi miễn phí và ưu tiên lên máy bay cho tối đa 6 người cùng đặt chỗ",
       "3 điểm mỗi $1 USD cho vé Alaska Airlines® và Hawaiian Airlines®",
       "2 điểm ở xăng, sạc xe điện, streaming và giao thông địa phương",
+      "Không phí giao dịch ngoại tệ",
     ],
     tags: ["Airline", "Companion fare", "Hành lý miễn phí"],
     canada: {
       itin: ITIN_REQUIRED,
       usCreditHistory: HISTORY_REQUIRED,
       usAddress: ADDRESS_REQUIRED,
-      foreignTransactionFee: BOA_FTF_UNKNOWN,
+      foreignTransactionFee: NO_FTF,
       pointsFromCanada: ATMOS_FROM_CANADA,
       watchOut:
         "Companion Fare chỉ dùng cho chuyến của Alaska Airlines® và Hawaiian Airlines® trong Bắc Mỹ.",
     },
-    applyUrl: "https://www.bankofamerica.com/credit-cards/products/alaska-airlines-credit-card/",
-    lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_5,
+    applyUrl: "https://www.alaskaair.com/atmosrewards/content/credit-cards/visa-ascent",
+    lastUpdated: ATMOS_ALASKA_CHECKED,
+    verifiedOn: ATMOS_ALASKA_CHECKED,
     needsVerification: false,
   },
   {
@@ -1994,9 +1993,9 @@ const US_CARD_DATA: UsCardData[] = [
       pointsFromCanada: ATMOS_FROM_CANADA,
       watchOut: "Phí thẻ tính theo từng thẻ nhân viên, khác với thẻ doanh nghiệp của Chase® và American Express®.",
     },
-    applyUrl: "https://business.bankofamerica.com/en/credit-cards/atmos-rewards",
-    lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_5,
+    applyUrl: "https://www.alaskaair.com/atmosrewards/content/credit-cards/visa-small-business",
+    lastUpdated: ATMOS_ALASKA_CHECKED,
+    verifiedOn: ATMOS_ALASKA_CHECKED,
     needsVerification: false,
   },
 ];

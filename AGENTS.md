@@ -1273,7 +1273,8 @@ Citi® dựng số bằng JavaScript (đo 30/09):
   bonus (bảng so sánh tách dòng "Bilt Cash welcome bonus" khỏi dòng bonus sau
   khi chi tiêu). Cũng ngày đó tác giả chốt: ba thẻ Atmos™ của Bank of America®
   ghi "Limited-time online offer" mà không có ngày — đó là câu quảng cáo thường
-  lệ, KHÔNG bật elevated, đừng hỏi lại.
+  lệ, KHÔNG bật elevated, đừng hỏi lại. (21/10/2026: luật này vẫn đúng cho câu
+  chữ đứng một mình; offer nâng thật trên trang Alaska® thì xem mục 21/10 bên dưới.)
 - Task cục bộ `ghe-1a-canh-offer-the-my` (T2 + T5, 9:23) mở trang ngân hàng bằng
   browser, sửa `us-credit-cards.ts`, đặt lại `verifiedOn`, commit + push. Đây là
   bên duy nhất SỬA số liệu thẻ Mỹ. Task không chạy (app đóng) quá 21 ngày thì
@@ -3952,3 +3953,21 @@ PUSH: KHÔNG") và "chứng minh kết luận sạch là sai" (không tìm ra, c
 "555 Cash Back Welcome Offer", từ 29/09/2026): CHỈ khách Wealthsimple mới CÓ LỜI MỜI qua app/email, 5% cho 35 ngày,
 trần $10,000 chi tiêu. Site đang viết "không có welcome bonus" cho cả hai thẻ Wealthsimple® — chưa sửa vì là offer
 theo lời mời, người đọc bấm từ site không chắc nhận được.
+
+## Thẻ Atmos™ Rewards: offer nâng chỉ có trên trang Alaska® (21/10/2026) — đừng đề xuất lại
+
+Tác giả báo offer nâng của thẻ Atmos™ trên trang chính chủ Alaska Airlines®. Kiểm 21/10 (browser, hai trang
+`alaskaair.com/atmosrewards/content/credit-cards` và trang riêng từng thẻ): Summit 100,000 điểm + Global Companion
+Award 25,000 điểm khi chi $6,000 USD/90 ngày; Ascent 60,000 điểm khi chi $3,000 USD + 20,000 điểm khi tổng chi
+$5,000 USD trong cùng 90 ngày (chú thích gắn Companion Fare $99 USD của offer với mức $5,000 USD); Business vẫn
+70,000/$4,000 USD. Cùng ngày bankofamerica.com vẫn ghi 70,000/$3,000 USD (Summit) và 50,000/$1,500 USD (Ascent), và
+trang Alaska® ghi "online only offer may not be available elsewhere if you leave this page".
+- `applyUrl` cả ba thẻ Atmos™ trỏ trang thẻ của Alaska® (`visa-summit`, `visa-ascent`, `visa-small-business`;
+  `atmosrewards.com/...` chuyển hướng về đó). Không trỏ thẳng link `secure.bankofamerica.com/...initialize-...`
+  của Alaska®: đó là form đăng ký, bỏ qua trang ghi offer. alaskaair.com không phải link ref nên không cần
+  `sourceUrl`; task cục bộ mở thẳng `applyUrl` (job GitHub `audit:us-offers` chỉ fetch Chase®, với thẻ Atmos™ chỉ kiểm hạn và `verifiedOn`).
+- Summit và Ascent `elevatedBonus` + `offerEndUnannounced` (tác giả xác nhận là offer nâng). Copy KHÔNG viết "cao
+  nhất từ trước tới nay": nguồn cấp hai cho thấy Ascent từng có 80,000 (08–10/2025) và Summit 100,000 là "quay lại".
+- Trang Alaska® dựng chữ trong shadow DOM: `get_page_text`/`innerText` ra rỗng; đọc bằng JS đi qua `shadowRoot`.
+- Ascent KHÔNG có phí giao dịch ngoại tệ: khối thẻ Ascent trên trang Alaska® ghi "No foreign transaction fees†"
+  (kiểm bằng phần tử chứa riêng khối Ascent, không lẫn Summit). Hằng `BOA_FTF_UNKNOWN` đã bỏ.
