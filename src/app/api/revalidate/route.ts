@@ -482,11 +482,18 @@ async function maybeNotifyNewPost(payload: unknown, deadline: number): Promise<b
   const draftAhead = typeof version === "number" && version > publishedVersion + 1;
   const bodyDocument = draftAhead ? undefined : managementEntry.fields?.bodyVi?.[LOCALE];
   const now = new Date();
+  // "Có thân bài" phải đo trên CHỮ SẼ HIỆN trong email, không phải trên việc
+  // field có giá trị: rich text bị xoá trắng vẫn là một document (một đoạn
+  // rỗng, hoặc chỉ còn ký tự vô hình như U+200B), và thân bài chỉ có ảnh nhúng
+  // thì email không vẽ ảnh — cả hai ra email trống y như nhánh bỏ thân bài,
+  // nên cũng phải được nút trỏ thẳng vào bài (Codex, kiểm toàn diện 21/10/2026).
+  const bodyEmailHtml = bodyDocument ? renderPostBodyForEmail(bodyDocument, `/blog/${slug}`) : "";
+  const hasBody = bodyEmailHtml.replace(/<[^>]*>/g, "").replace(/&nbsp;|[\s\u00AD\u200B-\u200D\u2060\uFEFF]/g, "") !== "";
 
   const bodyHtml = `
     <p style="${emailParagraphStyle}" class="email-text">Có bài viết mới trên Ghế 1A:</p>
     <p style="${emailHeadlineStyle}" class="email-brand">${escapeHtml(title)}</p>
-    ${bodyDocument ? renderPostBodyForEmail(bodyDocument, `/blog/${slug}`) : ""}
+    ${hasBody ? bodyEmailHtml : ""}
   `;
   // Bỏ thân bài thì nút là đường DUY NHẤT tới bài vừa đăng — trỏ về `/blog`
   // chung thì bản tin chỉ còn cái tiêu đề, không bấm vào đâu được (Codex,
@@ -495,8 +502,8 @@ async function maybeNotifyNewPost(payload: unknown, deadline: number): Promise<b
     title,
     preheader: excerpt ?? title,
     bodyHtml,
-    ctaHref: bodyDocument ? `${SITE_URL}/blog` : `${SITE_URL}/blog/${encodeURIComponent(slug)}`,
-    ctaLabel: bodyDocument ? "Đọc các bài viết khác tại Ghế 1A →" : "Đọc bài trên Ghế 1A →",
+    ctaHref: hasBody ? `${SITE_URL}/blog` : `${SITE_URL}/blog/${encodeURIComponent(slug)}`,
+    ctaLabel: hasBody ? "Đọc các bài viết khác tại Ghế 1A →" : "Đọc bài trên Ghế 1A →",
   });
 
   // Giành chỗ ngay trước lời gọi, sau khi mọi kiểm tra đã qua — giành sớm hơn

@@ -3900,3 +3900,21 @@ hậu quả + diff `98721e1..HEAD`; bác bản vá (2 BẢN VÁ HỎNG, đã s�
 - Amex® Green/Business Platinum/Business Gold/Aeroplan® Business Reserve: trang công khai và trang review
   FinlyWealth ghi mức THƯỜNG (10k/120k/—/90k) trong khi site ghi mức nâng. Offer theo KÊNH; lượt này không bấm
   được đường Apply (`/go/creditCards/<slug>` bị chặn quyền) nên chưa kết luận — để tác giả bấm.
+
+## Kiểm toàn diện 21/10/2026 — đừng đề xuất lại
+
+Gate: lint, tsc, build, 10 audit, 6 test suite, `audit:links` production, smoke test + `www` 308 + 5 header bảo
+mật. `npm audit` còn 5 high đều là nhánh `braces` trong công cụ lint (mục 20/10). Codex hai vòng: rà route theo
+thứ tự hậu quả + soi lại `0d584d6`; bác bản vá (1 BẢN VÁ HỎNG — thiếu ký tự vô hình, đã sửa).
+
+**Đã vá:**
+- **Bản tin coi "field có giá trị" là "có thân bài"** (`api/revalidate`, sót của `0d584d6`). Rich text xoá trắng
+  vẫn là một document (đoạn rỗng), và thân bài chỉ có ảnh nhúng thì email không vẽ ảnh — cả hai ra email chỉ có
+  tiêu đề mà nút vẫn trỏ `/blog` chung. Nay `hasBody` đo trên HTML email đã render (bỏ tag, `&nbsp;`, khoảng
+  trắng, U+00AD/U+200B–U+200D/U+2060/U+FEFF). Entity viết tay trong chữ (`&#160;`) KHÔNG cần lọc: renderer
+  escape thành `&amp;#160;` nên nó hiện nguyên chữ.
+
+**Đã kiểm, KHÔNG phải lỗi:**
+- `sync-videos` đỏ 21/10 06:05 UTC: "channel: 404, uploads-playlist: 404" (feed YouTube sập, mục 27/09).
+- Rà tay khớp trang ngân hàng: Scotiabank® Preferred/Ultimate (29/10), Student (01/11), National Bank® (03/11),
+  RBC® VIP (02/11), Student (02/11), Day to Day (08/12). Ba thẻ RBC® Avion® `expiresAt` 25/11 — còn >7 ngày.
