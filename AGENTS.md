@@ -3918,3 +3918,37 @@ thứ tự hậu quả + soi lại `0d584d6`; bác bản vá (1 BẢN VÁ HỎNG
 - `sync-videos` đỏ 21/10 06:05 UTC: "channel: 404, uploads-playlist: 404" (feed YouTube sập, mục 27/09).
 - Rà tay khớp trang ngân hàng: Scotiabank® Preferred/Ultimate (29/10), Student (01/11), National Bank® (03/11),
   RBC® VIP (02/11), Student (02/11), Day to Day (08/12). Ba thẻ RBC® Avion® `expiresAt` 25/11 — còn >7 ngày.
+
+## Kiểm toàn diện hai trang thẻ Canada + Mỹ 21/10/2026 — đừng đề xuất lại
+
+Gate: lint, tsc, build, 8 audit, test:us-cards/card-facts/card-tags/us-transfer/reco. Quét puppeteer bản build cục
+bộ 79 trang (2 danh sách + 5 biến thể lọc/sắp + 37 thẻ Canada + 38 thẻ Mỹ) × 375/320/1440px: không lỗi console,
+không response ≥400, không tràn ngang, không ảnh hỏng, 1 h1, JSON-LD parse được, link affiliate có `sponsored`;
+222 link nội bộ 200; production 82 URL 200 (fetch cùng nguồn). Codex hai vòng: bác bản vá (4/4 ĐÚNG, "CÒN CHẶN
+PUSH: KHÔNG") và "chứng minh kết luận sạch là sai" (không tìm ra, có thử 256 tổ hợp query bằng fixture).
+
+**Đã sửa:**
+- **Offer nâng 09/10 của bốn thẻ Amex® Canada đã hết** — đúng đường nút Apply (Finly `/go/creditCards/<slug>` → CJ →
+  amex.ca `?CPID=`), tải hai lần: Green 10,000/$1,000; Business Platinum 120,000 (80k/$15,000 + 40k tháng 15–17);
+  Business Gold 70,000 (50k/$7,500 + 20k/$30,000 năm đầu); Aeroplan® Business Reserve 90,000 (65k/$10,500 + 25k/$3,500
+  tháng 13). Chữ Contentful lấy bản HIỆN TẠI (giữ chỉnh câu chữ 17/10) rồi chỉ đảo phần đổi của 09/10. Seed: bản mức
+  thường mở từ 21/10 đứng đầu, bản nâng đóng bằng `recordedTo` 20/10 (không sửa `endDate`, tiền lệ amex-green 22/09).
+- **CIBC® Aeroplan® Visa Infinite* / Privilege* tăng phí từ 12/01/2027** ($139 → $159, thẻ phụ $50 → $80; $599 →
+  $699, thẻ phụ $149 → $159; cibc.com). Ghi vào ngoặc của `annualFeeVi` theo khuôn Amex® Aeroplan® (mục 02/10) +
+  `products.ts` `from: "2027-01-12"`. Sau ngày đó phải đưa phí mới lên đầu chuỗi bằng tay, như ba thẻ Amex®.
+
+**Đã kiểm, KHÔNG phải lỗi:**
+- 37 thẻ Canada đối chiếu FinlyWealth (`welcomeBonusText` trong RSC + mục "How to earn") và trang ngân hàng (CIBC® ×5,
+  Capital One® ×2, Amex® ×7 qua đường Apply, Marriott Bonvoy® ×2 trang công khai): khớp, trừ bốn thẻ trên.
+- United® MileagePlus® Neo™ "25,000 miles": mục "How to earn" của Finly ghi "up to 20,000" vì tách 5,000 miles gia
+  hạn ra riêng; neofinancial.com ghi "UP TO 25,000 MILES" gồm cả 5,000 đó — site ghi đúng và đã tách từng phần.
+- TD® Aeroplan® ×3: td.com chưa công bố phí 2027 (21/10). Đừng thêm ghi chú phí khi ngân hàng chưa ghi.
+- 38 thẻ Mỹ: 18 Chase® khớp qua `audit:us-offers`, 20 thẻ còn lại mở browser (Citi® đọc JSON `offerPricingPositioning`)
+  khớp hết, không thẻ nào đổi so với lượt 20/10.
+- Chữ 11px chỉ ở badge viết hoa (luật DESIGN-SYSTEM 4.2); link trong câu công bố affiliate là link nội dòng; link
+  "← Về trang chủ" cao 15px không có đích chạm nào kề bên. Title trang thẻ >70 ký tự: luật title 10/10.
+
+**Chờ tác giả:** Wealthsimple ghi "Get 5% cash back on your first 5 weeks" trên trang thẻ; điều khoản (help centre,
+"555 Cash Back Welcome Offer", từ 29/09/2026): CHỈ khách Wealthsimple mới CÓ LỜI MỜI qua app/email, 5% cho 35 ngày,
+trần $10,000 chi tiêu. Site đang viết "không có welcome bonus" cho cả hai thẻ Wealthsimple® — chưa sửa vì là offer
+theo lời mời, người đọc bấm từ site không chắc nhận được.

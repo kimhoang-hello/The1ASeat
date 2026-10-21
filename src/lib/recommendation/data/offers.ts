@@ -116,6 +116,20 @@ type OfferSeed = {
 const OFFER_SEEDS: OfferSeed[] = [
   {
     slug: "amex-green",
+    name: "10,000 điểm Membership Rewards®",
+    headline: 10000,
+    currency: "amex-mr",
+    // Mức thường quay lại sau offer nâng 09/10 (kiểm 21/10/2026 qua đúng đường
+    // Apply của site). Ngày mình thấy — Amex® không ghi ngày bắt đầu. Bản đang
+    // mở đứng TRƯỚC các bản đã đóng: test vòng đời lấy offer đầu tiên làm
+    // "offer hiện hành" của thẻ đầu tiên.
+    startDate: "2026-10-21",
+    verifiedAt: "2026-10-21",
+    recordedAt: "2026-10-21",
+    components: [{ type: "spend_threshold", points: 10000, spend: 1000, windowDays: 90 }],
+  },
+  {
+    slug: "amex-green",
     name: "15,000 điểm Membership Rewards®",
     headline: 15000,
     currency: "amex-mr",
@@ -127,6 +141,10 @@ const OFFER_SEEDS: OfferSeed[] = [
     startDate: "2026-10-09",
     verifiedAt: "2026-10-09",
     recordedAt: "2026-10-09",
+    // 21/10/2026 đúng đường Apply của site (Finly → CJ → amex.ca ?CPID=), tải hai
+    // lần, chỉ còn mức thường. Amex® không công bố ngày offer nâng kết thúc, nên
+    // bản ghi đóng ở ngày cuối mình còn tin nó, không sửa `endDate`.
+    recordedTo: "2026-10-20",
     components: [{ type: "spend_threshold", points: 15000, spend: 1250, windowDays: 90 }],
   },
   {
@@ -400,15 +418,40 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "amex-aeroplan-business-reserve",
+    name: "90,000 điểm Aeroplan®",
+    headline: 90000,
+    currency: "aeroplan",
+    // Mức thường quay lại sau offer nâng 09/10 (kiểm 21/10/2026 qua đúng đường
+    // Apply của site). Bản đang mở đứng trước các bản đã đóng.
+    startDate: "2026-10-21",
+    verifiedAt: "2026-10-21",
+    recordedAt: "2026-10-21",
+    components: [
+      { type: "spend_threshold", points: 65000, spend: 10500, windowDays: 90 },
+      {
+        type: "anniversary",
+        points: 25000,
+        spend: 3500,
+        windowDays: 30,
+        startsAfterDays: 365,
+        note: "Chi $3,500 trong tháng thứ 13",
+      },
+    ],
+  },
+  {
+    slug: "amex-aeroplan-business-reserve",
     name: "120,000 điểm Aeroplan®",
     headline: 120000,
     currency: "aeroplan",
     // Offer nâng quay lại: thấy 09/10/2026 trên đúng đường Apply của site
-    // (Finly → CJ → amex.ca ?CPID=), cùng mốc chi với bản 01/10. Amex® không
-    // ghi ngày kết thúc. Bản đang mở đứng trước các bản đã đóng.
+    // (Finly → CJ → amex.ca ?CPID=), cùng mốc chi với bản 01/10.
     startDate: "2026-10-09",
     verifiedAt: "2026-10-09",
     recordedAt: "2026-10-09",
+    // 21/10/2026 đúng đường Apply của site (Finly → CJ → amex.ca ?CPID=), tải hai
+    // lần, chỉ còn mức thường. Amex® không công bố ngày offer nâng kết thúc, nên
+    // bản ghi đóng ở ngày cuối mình còn tin nó, không sửa `endDate`.
+    recordedTo: "2026-10-20",
     components: [
       { type: "spend_threshold", points: 80000, spend: 10500, windowDays: 90 },
       {
@@ -855,15 +898,39 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "amex-business-platinum",
+    name: "Tới 120,000 điểm Membership Rewards®",
+    headline: 120000,
+    currency: "amex-mr",
+    // Mức thường quay lại sau offer nâng 09/10 (kiểm 21/10/2026 qua đúng đường
+    // Apply của site). Bản đang mở đứng trước các bản đã đóng.
+    startDate: "2026-10-21",
+    verifiedAt: "2026-10-21",
+    recordedAt: "2026-10-21",
+    components: [
+      { type: "spend_threshold", points: 80000, spend: 15000, windowDays: 90 },
+      {
+        type: "anniversary",
+        points: 40000,
+        windowDays: 90,
+        startsAfterDays: 425,
+        note: "Quẹt một giao dịch trong khoảng tháng 15–17",
+      },
+    ],
+  },
+  {
+    slug: "amex-business-platinum",
     name: "Tới 150,000 điểm Membership Rewards®",
     headline: 150000,
     currency: "amex-mr",
     // Offer nâng quay lại: thấy 09/10/2026 trên đúng đường Apply của site
-    // (Finly → CJ → amex.ca ?CPID=), cùng mốc chi với bản 01/10. Amex® không
-    // ghi ngày kết thúc. Bản đang mở đứng trước các bản đã đóng.
+    // (Finly → CJ → amex.ca ?CPID=), cùng mốc chi với bản 01/10.
     startDate: "2026-10-09",
     verifiedAt: "2026-10-09",
     recordedAt: "2026-10-09",
+    // 21/10/2026 đúng đường Apply của site (Finly → CJ → amex.ca ?CPID=), tải hai
+    // lần, chỉ còn mức thường. Amex® không công bố ngày offer nâng kết thúc, nên
+    // bản ghi đóng ở ngày cuối mình còn tin nó, không sửa `endDate`.
+    recordedTo: "2026-10-20",
     components: [
       { type: "spend_threshold", points: 100000, spend: 15000, windowDays: 90 },
       {
@@ -938,15 +1005,33 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "amex-business-gold",
+    name: "Tới 70,000 điểm Membership Rewards®",
+    headline: 70000,
+    currency: "amex-mr",
+    // Mức thường quay lại sau offer nâng 09/10 (kiểm 21/10/2026 qua đúng đường
+    // Apply của site). Bản đang mở đứng trước các bản đã đóng.
+    startDate: "2026-10-21",
+    verifiedAt: "2026-10-21",
+    recordedAt: "2026-10-21",
+    components: [
+      { type: "spend_threshold", points: 50000, spend: 7500, windowDays: 90 },
+      { type: "spend_threshold", points: 20000, spend: 30000, windowDays: 365 },
+    ],
+  },
+  {
+    slug: "amex-business-gold",
     name: "Tới 90,000 điểm Membership Rewards®",
     headline: 90000,
     currency: "amex-mr",
     // Offer nâng quay lại: thấy 09/10/2026 trên đúng đường Apply của site
-    // (Finly → CJ → amex.ca ?CPID=), cùng mốc chi với bản 01/10. Amex® không
-    // ghi ngày kết thúc. Bản đang mở đứng trước các bản đã đóng.
+    // (Finly → CJ → amex.ca ?CPID=), cùng mốc chi với bản 01/10.
     startDate: "2026-10-09",
     verifiedAt: "2026-10-09",
     recordedAt: "2026-10-09",
+    // 21/10/2026 đúng đường Apply của site (Finly → CJ → amex.ca ?CPID=), tải hai
+    // lần, chỉ còn mức thường. Amex® không công bố ngày offer nâng kết thúc, nên
+    // bản ghi đóng ở ngày cuối mình còn tin nó, không sửa `endDate`.
+    recordedTo: "2026-10-20",
     components: [
       { type: "spend_threshold", points: 60000, spend: 7500, windowDays: 90 },
       { type: "spend_threshold", points: 30000, spend: 30000, windowDays: 365 },

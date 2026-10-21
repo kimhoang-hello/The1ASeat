@@ -535,7 +535,11 @@ const SEEDS: Seed[] = [
     program: "aeroplan",
     family: "cibc-aeroplan",
     tier: 2,
-    fees: [{ annualFee: 139, from: SEEDED_ON }],
+    fees: [
+      { annualFee: 139, from: SEEDED_ON, to: "2027-01-11" },
+      // CIBC® báo tăng phí từ 12/01/2027 (cibc.com, đọc 21/10/2026).
+      { annualFee: 159, from: "2027-01-12", verifiedAt: "2026-10-21", recordedAt: "2026-10-21" },
+    ],
     officialUrl: null,
   },
   {
@@ -548,7 +552,11 @@ const SEEDS: Seed[] = [
     program: "aeroplan",
     family: "cibc-aeroplan",
     tier: 3,
-    fees: [{ annualFee: 599, from: SEEDED_ON }],
+    fees: [
+      { annualFee: 599, from: SEEDED_ON, to: "2027-01-11" },
+      // CIBC® báo tăng phí từ 12/01/2027 (cibc.com, đọc 21/10/2026).
+      { annualFee: 699, from: "2027-01-12", verifiedAt: "2026-10-21", recordedAt: "2026-10-21" },
+    ],
     officialUrl: null,
   },
   {
