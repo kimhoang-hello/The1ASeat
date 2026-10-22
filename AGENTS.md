@@ -3972,6 +3972,61 @@ trang Alaska® ghi "online only offer may not be available elsewhere if you leav
 - Ascent KHÔNG có phí giao dịch ngoại tệ: khối thẻ Ascent trên trang Alaska® ghi "No foreign transaction fees†"
   (kiểm bằng phần tử chứa riêng khối Ascent, không lẫn Summit). Hằng `BOA_FTF_UNKNOWN` đã bỏ.
 
+## Audit engine Gợi ý thẻ 21/10/2026 — đừng đề xuất lại
+
+Engine 4.38.0 → **4.39.0**. Ba cách đo: 16 nhân vật mẫu ở ngày hôm nay (`reco:debug run`); **người dùng giả đi hết
+luồng trang** (`executeRun` → `presentForPage` → `questionFor` → `applyAnswerChecked`, 900 hồ sơ × ~27 bước, 3 seed,
+bỏ qua ngẫu nhiên 0/15/40%; script dựng lại vì bản 17/10 đã mất khỏi scratchpad); quét **trục thời gian** của seed
+(offer hết hạn không có bản nối tiếp, phí hẹn ngày) và chạy nhân vật ở 02/11/2026, 13/01/2027, 01/06/2027. Đo tác động
+bằng CÙNG trạng thái cuối qua engine HEAD (`git archive HEAD src data`) vs bản vá. Codex bốn vòng: tìm lỗi độc lập (4
+mức A — hai trùng phát hiện của mình), bác bản vá (4 ĐÚNG, 2 BẢN VÁ HỎNG), chốt (regex còn hai ca), xác nhận.
+
+**Đã vá:**
+- **Phí năm sau là phí ở kỳ gia hạn đầu** (`firstRenewalOf`), không phải phí hôm nay. `datasetAt` cắt mọi dòng
+  `product_fees` chưa hiệu lực, nên năm thẻ đã báo tăng phí từ 12/01/2027 (Amex® Aeroplan® ×3, CIBC® Aeroplan® ×2)
+  được chấm phí cũ cho năm thứ hai — kể cả sau commit sáng cùng ngày ghi phí 2027 "để engine không tính phí cũ cho
+  năm sau": engine chỉ đọc được dòng đó TỪ 12/01/2027. Nay `datasetAt` giữ dòng phí phủ [asOf, kỳ gia hạn đầu];
+  `ongoingFeeCents` đọc phí kỳ gia hạn (`fee_drag`, cảnh báo phí năm sau); `ANNUAL_FEE_WAIVED_FIRST_YEAR` so với phí
+  HÔM NAY (tăng phí không phải miễn phí); §29 đếm phí kỳ gia hạn CHỈ cho thẻ được chấm (bản đầu đếm cả tập khi chưa
+  khai ngưỡng — Codex: độ tươi 1 → 0 mà thứ hạng đứng nguyên); `why` kể cả hai dòng phí. 900 hồ sơ: 0 đổi người
+  thắng — chỉ đổi ở ca sát nút (Codex dựng: CIBC® và TD® Aeroplan® Visa Infinite hoà tuyệt đối, $159 tách hai thẻ).
+  **Bài học: ghi dữ liệu hẹn ngày thì chạy `reco:debug why` xem dòng đó có trong nguồn của dòng điểm không.**
+- **Hướng đi in ra ngược khuyến nghị.** `Recommendation.strategy` là `strategies[0]` — tính TRƯỚC bảng xếp hạng —
+  mà trang in nó là "Hướng đi mình chọn": 273/900 người dùng giả thấy "Đợi offer tốt hơn" ngay trên một thẻ khuyên mở
+  (thị trường offer ở percentile 33 sau khi bốn offer nâng Amex® hết, nên `WAIT_FOR_BETTER_OFFER` 0.67 vượt
+  `OPEN_CARD` 0.6), hoặc "Tích điểm ở nhiều chương trình" trên "Chưa mở thẻ mới". Nay `strategyOfAction`: chiến lược
+  điểm cao nhất cùng họ với hành động thắng; "điểm linh hoạt" chỉ khi thẻ thắng kiếm đồng tiền `isFlexibleInPractice`
+  (từng in cho CIBC® Aeroplan®). Hai hằng họ chiến lược dùng chung với phép tính `OPEN_CARD`/`NO_NEW_CARD`.
+- **Câu hạng ghế đưa "Hạng nhất"** trong khi không chặng nào có giá hạng nhất (`award-charts.ts`: không hãng nào bán
+  Canada → châu Á). Chọn nó là nhận "chặng này chưa có trong award chart" và mất câu số người/khứ hồi — 29/124 hồ sơ
+  chuyến bay không bỏ qua câu nào rơi đúng chỗ đó. Nay chỉ đưa hạng có award strategy trên chặng; không hạng nào có
+  giá (nội địa) thì giữ đủ bốn — câu đó khi ấy không được hỏi.
+- **`audit:reco-data` ba điểm mù**, cả ba đổi được khuyến nghị mà audit xanh: (1) seed hết offer (qua `endDate`, chưa
+  có bản nối tiếp) mà Contentful còn hứa bonus — từng là cảnh báo, còn hai lỗi đỏ cùng lúc thì nói SAI nguyên nhân
+  ("seed không có endDate", "rebate seed là không có"); dựng lại ngày 03/11/2026 thì năm thẻ đỏ đúng kiểu đó. (2)
+  Contentful hết con số bonus mà seed còn chấm (Codex). (3) `annualFeeFirstYear` lệch câu miễn phí năm đầu trên trang
+  (Codex). Khuôn chữ ở `audit-text.ts` + bảng ca hai chiều `audit-text.test.ts` — sai năm lần qua ba vòng Codex (miễn
+  phí giao dịch ngoại tệ, câu đảo, câu có điều kiện "nếu giữ số dư", "không còn được miễn"), lần nào cũng chỉ một chiều.
+
+**Chờ tác giả / còn lại:**
+- **Chuyến bay thiếu một thừa số → `points_gap_reduction` = 0 cho mọi thẻ.** Bỏ qua câu số người hoặc khứ hồi thì
+  `tripNeedFor` trả `null` (cố ý không mặc định), vế 20% biến mất, kích thước bonus chỉ còn 4.5% (§11 "giá trị"): Amex®
+  Green 10,000 điểm thắng 104/217 hồ sơ loại này (đủ thừa số: 38/185, phần lớn là người chịu phí $0–150, thu nhập
+  hay sức dồn thấp — hợp lý). Codex: nếu vẫn cho bỏ qua thì "điểm giữa của khoảng phần tăng qua mọi giá trị của thừa
+  số thiếu" là hợp lý nhất (miền số người phải chốt; thẻ và `NO_NEW_CARD` chấm nhất quán; Rule 1 vẫn đòi bằng chứng
+  chắc); "1 người một chiều rồi chia đôi" SAI (có 150,000, cần 100,000 một chiều → phần tăng 0 dù khứ hồi còn thiếu);
+  bắt buộc hỏi thì sạch nhất cho Rule 1 nhưng đổi chủ trương hồ sơ dở dang. Đổi mô hình — chưa làm.
+- Đầu tháng 11/2026 sáu offer seed hết hạn chưa có bản nối tiếp (BMO® VIPorter® 31/10; bốn Scotiabank® 01/11;
+  WestJet RBC® 04/11; ba RBC® Avion® 25/11). Từ hôm sau engine chấm chúng như không có bonus; audit nay đỏ đúng chỗ.
+- P3 (Codex): `EARN_SPECIFIC_CURRENCY` vẫn in khi `targetProgramId` đặt mà thẻ thắng không kiếm đồng đó. Trang không
+  bao giờ đặt `targetProgramId` (`goalFrom("earn_points")` luôn `null`) — chỉ hồ sơ tay chạm tới.
+
+**Đã kiểm, KHÔNG phải lỗi:**
+- 900 người dùng giả: 0 câu hỏi lặp, 0 câu trả lời đúng bị từ chối, 0 chữ hỏng (`undefined`/`NaN`), 0 lần khuyên thẻ
+  đang giữ, `executeRun` không ném. Hạng ghế chưa khai sinh mã `TRIP_ROUTE_NOT_PRICED` nhưng trang không in câu "chưa
+  có trong award chart" (82/82 hồ sơ).
+- Nhân vật ở 02/11/2026, 13/01/2027, 01/06/2027: dữ liệu không lỗi.
+
 ## Vá `next` 16.3.8 → 16.4.2 (23/10/2026)
 
 hPanel quét 22/10 23:35 báo 3 lỗ hổng `next@16.3.8`, công bố cùng ngày 22/10 (bản vá 16.4.1 ra từ 14/10):
