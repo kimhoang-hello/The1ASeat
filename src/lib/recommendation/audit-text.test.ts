@@ -20,6 +20,8 @@ test("miễn phí năm đầu: nhận đúng các cách site viết", () => {
     "năm đầu được miễn annual fee $139.",
     "năm đầu được miễn phí cho thẻ chính",
     "năm đầu được miễn annual fee $139 cho thẻ chính",
+    "Năm đầu được miễn annual fee $139/năm",
+    "Năm đầu được miễn annual fee $139/năm, thẻ phụ $50/năm",
     "Năm đầu miễn phí thường niên $139",
     "Không có welcome bonus, nhưng miễn phí năm đầu",
   ]) {
@@ -48,6 +50,8 @@ test("miễn phí năm đầu: không nhận phủ định, có điều kiện, 
     "miễn phí năm đầu khi chi $5,000",
     "Năm đầu được miễn annual fee $139 nếu giữ số dư $6,000",
     "năm đầu được miễn annual fee nếu giữ số dư $6,000",
+    "Năm đầu được miễn annual fee $139/năm nếu giữ số dư $6,000",
+    "năm đầu được miễn phí $139/năm giao dịch ngoại tệ",
   ]) {
     assert.equal(mentionsFirstYearWaiver(text), false, text);
   }

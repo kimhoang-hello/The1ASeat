@@ -23,7 +23,7 @@ export function mentionsFirstYearWaiver(text: string): boolean {
     // dịch ngoại tệ" không nói gì về annual fee (Codex, vòng chốt 21/10/2026). `$`
     // KHÔNG nằm trong lookahead: có nó thì khuôn lùi về trước "$139" và phép kiểm
     // điều kiện bên dưới không thấy "nếu" (vòng xác nhận).
-    String.raw`miễn ${fee}(?: \$[\d,]+)?(?: trong| cho)? năm đầu|năm đầu (?:được )?miễn ${fee}(?: \$[\d,]+)?(?=\s*(?:$|[.,;:|()]|cho |và |kể cả ))`,
+    String.raw`miễn ${fee}(?: \$[\d,]+)?(?: trong| cho)? năm đầu|năm đầu (?:được )?miễn ${fee}(?: \$[\d,]+(?:\/năm)?)?(?=\s*(?:$|[.,;:|()]|cho |và |kể cả ))`,
     "gi",
   );
   return [...text.matchAll(pattern)].some((match) => {

@@ -27,7 +27,7 @@ Còn lại:
 1. **Chuyến bay thiếu một thừa số → `points_gap_reduction` bằng 0 cho mọi thẻ.**
    Người dùng giả 21/10 (bản vá): bỏ qua câu hạng ghế, số người hoặc khứ hồi thì
    kích thước bonus gần như mất ảnh hưởng (chỉ còn 4.5% qua §11), Amex® Green
-   10,000 điểm thắng 53/87 (chưa khai hạng ghế) và 35/91 (thiếu số người/khứ
+   10,000 điểm thắng 53/87 (chặng có giá, chưa khai hạng ghế) và 35/91 (thiếu số người/khứ
    hồi), so với 56/235 khi đủ. `trip-need.ts` cố ý không mặc định thừa số. Đổi
    là đổi mô hình — chờ tác giả chọn phương án (Codex: điểm giữa của khoảng phần
    tăng, xem AGENTS.md).

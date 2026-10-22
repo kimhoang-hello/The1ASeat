@@ -3980,7 +3980,8 @@ bỏ qua ngẫu nhiên 0/15/40%; script dựng lại vì bản 17/10 đã mất 
 (offer hết hạn không có bản nối tiếp, phí hẹn ngày) và chạy nhân vật ở 02/11/2026, 13/01/2027, 01/06/2027. Đo tác động
 bằng CÙNG trạng thái cuối qua engine HEAD (`git archive HEAD src data`) vs bản vá. Codex năm vòng: tìm lỗi độc lập (4
 mức A — hai trùng phát hiện của mình), bác bản vá (4 ĐÚNG, 2 BẢN VÁ HỎNG), chốt (regex còn hai ca), xác nhận (regex
-hồi quy ở "$139 nếu…", bốn câu số liệu sai trong chính mục này — đã sửa), xác nhận lần hai.
+hồi quy ở "$139 nếu…", bốn câu số liệu sai trong chính mục này), xác nhận lần hai (hồi quy "$139/năm", hai câu
+thiếu phạm vi) — đều đã sửa.
 
 **Đã vá:**
 - **Phí năm sau là phí ở kỳ gia hạn đầu** (`firstRenewalOf`), không phải phí hôm nay. `datasetAt` cắt mọi dòng
@@ -4013,7 +4014,7 @@ hồi quy ở "$139 nếu…", bốn câu số liệu sai trong chính mục nà
 - **Chuyến bay thiếu một thừa số → `points_gap_reduction` = 0 cho mọi thẻ.** Bỏ qua câu hạng ghế, số người hoặc khứ
   hồi thì `tripNeedFor` không có tổng điểm (`low/typical/high` = `null`, cố ý không mặc định), vế 20% biến mất, kích
   thước bonus chỉ còn 4.5% (§11 "giá trị"). Người dùng giả trên bản vá (900 hồ sơ): Amex® Green 10,000 điểm thắng
-  53/87 hồ sơ chưa khai hạng ghế và 35/91 hồ sơ thiếu số người/khứ hồi, so với 56/235 khi đủ thừa số (phần lớn người
+  53/87 hồ sơ chặng có giá chưa khai hạng ghế và 35/91 hồ sơ thiếu số người/khứ hồi, so với 56/235 khi đủ thừa số (phần lớn người
   chịu phí $0–150, thu nhập hay sức dồn thấp — hợp lý). Codex: nếu vẫn cho bỏ qua thì "điểm giữa của khoảng phần tăng qua mọi giá trị của thừa
   số thiếu" là hợp lý nhất (miền số người phải chốt; thẻ và `NO_NEW_CARD` chấm nhất quán; Rule 1 vẫn đòi bằng chứng
   chắc); "1 người một chiều rồi chia đôi" SAI (có 150,000, cần 100,000 một chiều → phần tăng 0 dù khứ hồi còn thiếu);
@@ -4026,7 +4027,7 @@ hồi quy ở "$139 nếu…", bốn câu số liệu sai trong chính mục nà
 **Đã kiểm, KHÔNG phải lỗi:**
 - 900 người dùng giả: 0 câu hỏi lặp, 0 câu trả lời đúng bị từ chối, 0 chữ hỏng (`undefined`/`NaN`), 0 lần khuyên thẻ
   đang giữ, `executeRun` không ném. Hạng ghế chưa khai sinh mã `TRIP_ROUTE_NOT_PRICED` nhưng trang không in câu "chưa
-  có trong award chart" (82/82 hồ sơ).
+  có trong award chart" (87/87 hồ sơ chặng có giá chưa khai hạng ghế, bộ bản vá).
 - Nhân vật ở 02/11/2026, 13/01/2027, 01/06/2027: dữ liệu không lỗi.
 
 ## Vá `next` 16.3.8 → 16.4.2 (23/10/2026)
