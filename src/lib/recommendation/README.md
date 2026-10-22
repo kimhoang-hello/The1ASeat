@@ -90,6 +90,13 @@ Miễn phí năm đầu là ưu đãi của một OFFER (`Offer.annualFeeFirstYe
 theo điều kiện là một QUYỀN LỢI (`annual_fee_waiver_conditional`). Ba thứ khác
 nhau, ba chỗ khác nhau.
 
+**Phí năm sau là phí ở kỳ gia hạn đầu** (`firstRenewalOf(asOf)`, engine 4.39.0),
+không phải phí hôm nay: ngân hàng báo tăng phí trước nhiều tháng, và người mở
+thẻ hôm nay trả mức mới ở lần gia hạn đầu. Vì thế `datasetAt` giữ MỌI dòng phí
+phủ một ngày trong [asOf, kỳ gia hạn đầu] — bảng duy nhất được giữ dòng chưa
+hiệu lực. Ghi một lần tăng phí đã công bố = thêm dòng `from: <ngày>` trong
+`products.ts`, đóng dòng cũ ở ngày trước đó; engine tự đọc.
+
 ## Họ thẻ và thứ hạng
 
 `ProductFamily` + `Product.familyId` / `tierRank`. Ba thẻ CIBC® Aeroplan® là ba

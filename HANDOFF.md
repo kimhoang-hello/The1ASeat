@@ -1,8 +1,8 @@
 # Bàn giao: Recommendation Engine
 
-Trạng thái **17/10/2026**. Phase 1–6 đã merge `main`; trang `/credit-cards/goi-y`
+Trạng thái **21/10/2026**. Phase 1–6 đã merge `main`; trang `/credit-cards/goi-y`
 đã CÔNG BỐ bản Beta từ 17/09/2026 (`RECOMMENDER_PUBLISHED = true`). Engine
-**4.38.0** (17/10: §11 chưa khai sức dồn không còn xoá vế giá trị của cả tập — AGENTS.md mục "Review toàn diện trang + engine 17/10/2026"; 4.37.0 ngày 16/10: phần tích thêm vào ví giải CHÍNH XÁC tới 10 hạng mục dính trần — AGENTS.md mục "Lời giải chính xác nhanh, `EXACT_LINKED_LIMIT` 10 (16/10/2026)"; 4.36.0 cùng ngày: độ tin cậy §29 — mục "Review toàn diện trang + engine 16/10/2026"), lời giải thích **6.7.0**. Việc mới nhất và việc còn lại: **§0**.
+**4.39.0** (21/10: phí năm sau theo kỳ gia hạn đầu, hướng đi khớp hành động thắng — AGENTS.md mục "Audit engine Gợi ý thẻ 21/10/2026"; 4.38.0 ngày 17/10: §11 chưa khai sức dồn không còn xoá vế giá trị của cả tập — AGENTS.md mục "Review toàn diện trang + engine 17/10/2026"; 4.37.0 ngày 16/10: phần tích thêm vào ví giải CHÍNH XÁC tới 10 hạng mục dính trần — AGENTS.md mục "Lời giải chính xác nhanh, `EXACT_LINKED_LIMIT` 10 (16/10/2026)"; 4.36.0 cùng ngày: độ tin cậy §29 — mục "Review toàn diện trang + engine 16/10/2026"), lời giải thích **6.7.0**. Việc mới nhất và việc còn lại: **§0**.
 Rủi ro đã biết: **§9**. Các mục bên dưới giữ nguyên lịch sử từng phase.
 
 Spec đầy đủ: [`docs/recommendation-engine-v1.md`](docs/recommendation-engine-v1.md).
@@ -11,6 +11,29 @@ Tài liệu module: [`src/lib/recommendation/README.md`](src/lib/recommendation/
 — **đọc trước khi sửa bất cứ gì trong module**, nhất là mục Phase 4.
 
 ---
+
+## 0c. Audit engine 21/10/2026 — đã làm và còn lại
+
+Chi tiết: AGENTS.md, mục "Audit engine Gợi ý thẻ 21/10/2026". Engine **4.39.0**.
+
+Đã làm: phí năm thứ hai là mức ở kỳ gia hạn đầu (`firstRenewalOf`) — năm thẻ
+Aeroplan® đã báo tăng phí từ 12/01/2027 từng bị chấm phí cũ; `strategy` của kết
+quả là hướng đi của chính hành động thắng (`strategyOfAction`); câu hạng ghế chỉ
+đưa hạng có giá; `audit:reco-data` bắt ba lệch Contentful ↔ seed từng chỉ là
+cảnh báo hoặc im.
+
+Còn lại:
+
+1. **Chuyến bay thiếu một thừa số → `points_gap_reduction` bằng 0 cho mọi thẻ.**
+   Người dùng giả 21/10: hồ sơ chuyến bay bỏ qua câu số người hoặc khứ hồi thì
+   kích thước bonus gần như mất ảnh hưởng (chỉ còn 4.5% qua §11), Amex® Green
+   10,000 điểm thắng 104/217 (đủ thừa số: 38/185). `trip-need.ts` cố ý không
+   mặc định thừa số. Đổi là đổi mô hình — chờ tác giả chọn phương án.
+2. **Đầu tháng 11/2026 sáu offer seed hết hạn chưa có bản nối tiếp**: BMO®
+   VIPorter® (31/10), bốn thẻ Scotiabank® (01/11), WestJet RBC® (04/11); ba thẻ
+   RBC® Avion® 25/11. Từ hôm sau engine chấm chúng như không có welcome bonus;
+   `audit:reco-data` nay ĐỎ đúng nguyên nhân. Ghi bản nối tiếp khi ngân hàng công bố.
+3. Các mục còn lại của §0 và §0b bên dưới vẫn còn nguyên.
 
 ## 0a. Audit trang 10/10/2026 (lớp trình bày, engine không đổi)
 
@@ -610,8 +633,8 @@ npm run test:reco
 npm run test:recommender
 ```
 
-`test:reco` 436/436 (thêm `RECO_TEST_MYSQL_URL` để chạy cả backend MySQL) và
-`test:recommender` 34/34 cho lớp giao diện. Bản chụp hành vi §20:
+`test:reco` 496 + 23 bỏ qua (thêm `RECO_TEST_MYSQL_URL` để chạy cả backend MySQL) và
+`test:recommender` 86 + 1 bỏ qua cho lớp giao diện (đếm 21/10/2026). Bản chụp hành vi §20:
 
 ```bash
 UPDATE_ENGINE_SNAPSHOT=1 npm run test:reco

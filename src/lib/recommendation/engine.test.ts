@@ -3317,3 +3317,29 @@ test("hướng đi in ra cùng chiều với hành động thắng, và 'điểm
   // kịch bản, đừng gỡ phép kiểm.
   assert.ok(differs >= 2, `chỉ ${differs} nhân vật đi qua nhánh chọn lại hướng đi`);
 });
+
+test("độ tươi §29 đếm phí năm sau CHỈ của thẻ được chấm", () => {
+  // Codex, vòng bác bản vá 21/10/2026: chưa khai ngưỡng phí thì trung vị đọc phí
+  // HÔM NAY của cả tập, nhưng phí gia hạn chỉ vào `fee_drag`/cảnh báo của thẻ
+  // được chấm. Dòng phí gia hạn cũ của thẻ đã bị loại không được hạ độ tươi.
+  const stale = (slug: string) => {
+    const data = structuredClone(AUDIT_DATA);
+    const row = data.productFees.find(
+      (fee) => fee.productId === productIdFor(slug) && fee.effectiveFrom > AUDIT_ASOF,
+    );
+    assert.ok(row, `tiền đề: ${slug} có dòng phí gia hạn`);
+    row.verifiedAt = "2025-01-01";
+    return data;
+  };
+  const state: UserState = {
+    ...beginnerNoCards,
+    profile: { ...beginnerNoCards.profile, annualFeeTolerancePerCard: null, businessCardsAllowed: false },
+  };
+  const freshness = (data: typeof AUDIT_DATA) =>
+    recommend({ state, data, ix: indexDataset(data), asOf: AUDIT_ASOF, probeFollowUps: false }).results[0].confidence
+      .dataFreshness;
+  const base = freshness(AUDIT_DATA);
+  assert.equal(freshness(stale("amex-aeroplan-business-reserve")), base, "thẻ doanh nghiệp đã bị loại");
+  // Và thẻ ĐƯỢC chấm thì có đọc — phép kiểm trên không được là "không bao giờ đếm".
+  assert.ok(freshness(stale("amex-aeroplan-reserve")) < base, "thẻ được chấm đọc phí gia hạn");
+});

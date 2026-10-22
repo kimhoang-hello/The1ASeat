@@ -18,7 +18,7 @@
  * trình bày; Phase 6 có thể trình bày khác trên cùng dữ liệu này.
  */
 
-import { activeAt } from "./temporal.ts";
+import { activeAt, firstRenewalOf, isActiveAt } from "./temporal.ts";
 import { flexibilityReach, flexibilityScale, isOpenToEveryone } from "./portfolio.ts";
 import { indexDataset } from "./indexes.ts";
 import { candidateKey, type PipelineStage } from "./run-diff.ts";
@@ -519,7 +519,15 @@ export function provenanceFor(
   }
   const byProduct = <T extends Temporal & { productId: string }>(table: readonly T[]) =>
     activeAt(table.filter((row) => row.productId === facts.productId), asOf);
-  for (const row of byProduct(dataset.productFees)) rows.push(provenanceRow("product_fees", row));
+  // Hai ngày, cùng hai phép đọc của `offerFacts`: phí năm đầu (hôm nay) và phí
+  // năm sau (kỳ gia hạn đầu). Chỉ liệt kê dòng hôm nay thì `why` không kể nổi
+  // nguồn của mức $799 mà `fee_drag` vừa chia.
+  const renewal = firstRenewalOf(asOf);
+  for (const row of dataset.productFees.filter(
+    (fee) => fee.productId === facts.productId && (isActiveAt(fee, asOf) || isActiveAt(fee, renewal)),
+  )) {
+    rows.push(provenanceRow("product_fees", row));
+  }
   // Bản ghi trước 4.35.0 không có `addedValueCents`: phần tích điểm khi đó là
   // của riêng thẻ, không đọc ví.
   const readsWallet = facts.earn.addedValueCents !== undefined && walletProducts.length > 0;

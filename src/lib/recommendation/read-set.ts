@@ -186,10 +186,15 @@ export function oldestVerified(
   const earnProducts = read.readsEarn ? [...read.scored, ...read.held] : [];
 
   for (const productId of sorted(read.fees)) {
-    // Hai ngày, cùng hai phép đọc của `offerFacts`: phí năm đầu (hôm nay) và
-    // phí năm sau (kỳ gia hạn đầu).
-    const fees = ix.feesByProduct.get(productId) ?? [];
-    for (const row of [...activeAt(fees, asOf), ...activeAt(fees, firstRenewalOf(asOf))]) consider("product_fees", row);
+    for (const row of activeAt(ix.feesByProduct.get(productId) ?? [], asOf)) consider("product_fees", row);
+  }
+  // Phí năm sau (kỳ gia hạn đầu) chỉ đổi được đầu ra của thẻ ĐƯỢC CHẤM: `fee_drag`
+  // và cảnh báo phí năm sau. Trung vị phí của cả tập khi chưa khai ngưỡng đọc phí
+  // HÔM NAY — đếm phí gia hạn của thẻ đã bị loại là hạ độ tươi vô cớ (Codex, vòng
+  // bác bản vá 21/10/2026: `dataFreshness` 1 → 0 mà thứ hạng đứng nguyên).
+  const renewal = firstRenewalOf(asOf);
+  for (const productId of sorted(read.scored)) {
+    for (const row of activeAt(ix.feesByProduct.get(productId) ?? [], renewal)) consider("product_fees", row);
   }
   for (const productId of sorted(read.gated)) {
     for (const row of activeAt(ix.rulesByProduct.get(productId) ?? [], asOf)) consider("eligibility_rules", row);
