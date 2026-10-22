@@ -25,13 +25,15 @@ cảnh báo hoặc im.
 Còn lại:
 
 1. **Chuyến bay thiếu một thừa số → `points_gap_reduction` bằng 0 cho mọi thẻ.**
-   Người dùng giả 21/10: hồ sơ chuyến bay bỏ qua câu số người hoặc khứ hồi thì
+   Người dùng giả 21/10 (bản vá): bỏ qua câu hạng ghế, số người hoặc khứ hồi thì
    kích thước bonus gần như mất ảnh hưởng (chỉ còn 4.5% qua §11), Amex® Green
-   10,000 điểm thắng 104/217 (đủ thừa số: 38/185). `trip-need.ts` cố ý không
-   mặc định thừa số. Đổi là đổi mô hình — chờ tác giả chọn phương án.
-2. **Đầu tháng 11/2026 sáu offer seed hết hạn chưa có bản nối tiếp**: BMO®
-   VIPorter® (31/10), bốn thẻ Scotiabank® (01/11), WestJet RBC® (04/11); ba thẻ
-   RBC® Avion® 25/11. Từ hôm sau engine chấm chúng như không có welcome bonus;
+   10,000 điểm thắng 53/87 (chưa khai hạng ghế) và 35/91 (thiếu số người/khứ
+   hồi), so với 56/235 khi đủ. `trip-need.ts` cố ý không mặc định thừa số. Đổi
+   là đổi mô hình — chờ tác giả chọn phương án (Codex: điểm giữa của khoảng phần
+   tăng, xem AGENTS.md).
+2. **Chín offer seed hết hạn từ 31/10 tới 25/11/2026 chưa có bản nối tiếp**:
+   BMO® VIPorter® (31/10), bốn thẻ Scotiabank® (01/11), WestJet RBC® (04/11), ba
+   thẻ RBC® Avion® (25/11). Từ hôm sau engine chấm chúng như không có welcome bonus;
    `audit:reco-data` nay ĐỎ đúng nguyên nhân. Ghi bản nối tiếp khi ngân hàng công bố.
 3. Các mục còn lại của §0 và §0b bên dưới vẫn còn nguyên.
 
@@ -633,7 +635,7 @@ npm run test:reco
 npm run test:recommender
 ```
 
-`test:reco` 496 + 23 bỏ qua (thêm `RECO_TEST_MYSQL_URL` để chạy cả backend MySQL) và
+`test:reco` 500 + 23 bỏ qua (thêm `RECO_TEST_MYSQL_URL` để chạy cả backend MySQL) và
 `test:recommender` 86 + 1 bỏ qua cho lớp giao diện (đếm 21/10/2026). Bản chụp hành vi §20:
 
 ```bash

@@ -3978,8 +3978,9 @@ Engine 4.38.0 → **4.39.0**. Ba cách đo: 16 nhân vật mẫu ở ngày hôm 
 luồng trang** (`executeRun` → `presentForPage` → `questionFor` → `applyAnswerChecked`, 900 hồ sơ × ~27 bước, 3 seed,
 bỏ qua ngẫu nhiên 0/15/40%; script dựng lại vì bản 17/10 đã mất khỏi scratchpad); quét **trục thời gian** của seed
 (offer hết hạn không có bản nối tiếp, phí hẹn ngày) và chạy nhân vật ở 02/11/2026, 13/01/2027, 01/06/2027. Đo tác động
-bằng CÙNG trạng thái cuối qua engine HEAD (`git archive HEAD src data`) vs bản vá. Codex bốn vòng: tìm lỗi độc lập (4
-mức A — hai trùng phát hiện của mình), bác bản vá (4 ĐÚNG, 2 BẢN VÁ HỎNG), chốt (regex còn hai ca), xác nhận.
+bằng CÙNG trạng thái cuối qua engine HEAD (`git archive HEAD src data`) vs bản vá. Codex năm vòng: tìm lỗi độc lập (4
+mức A — hai trùng phát hiện của mình), bác bản vá (4 ĐÚNG, 2 BẢN VÁ HỎNG), chốt (regex còn hai ca), xác nhận (regex
+hồi quy ở "$139 nếu…", bốn câu số liệu sai trong chính mục này — đã sửa), xác nhận lần hai.
 
 **Đã vá:**
 - **Phí năm sau là phí ở kỳ gia hạn đầu** (`firstRenewalOf`), không phải phí hôm nay. `datasetAt` cắt mọi dòng
@@ -3992,11 +3993,11 @@ mức A — hai trùng phát hiện của mình), bác bản vá (4 ĐÚNG, 2 B�
   thắng — chỉ đổi ở ca sát nút (Codex dựng: CIBC® và TD® Aeroplan® Visa Infinite hoà tuyệt đối, $159 tách hai thẻ).
   **Bài học: ghi dữ liệu hẹn ngày thì chạy `reco:debug why` xem dòng đó có trong nguồn của dòng điểm không.**
 - **Hướng đi in ra ngược khuyến nghị.** `Recommendation.strategy` là `strategies[0]` — tính TRƯỚC bảng xếp hạng —
-  mà trang in nó là "Hướng đi mình chọn": 273/900 người dùng giả thấy "Đợi offer tốt hơn" ngay trên một thẻ khuyên mở
+  mà trang in nó là "Hướng đi mình chọn": 251/900 người dùng giả thấy hướng đi NGƯỢC hành động — "Đợi offer tốt hơn" ngay trên một thẻ khuyên mở
   (thị trường offer ở percentile 33 sau khi bốn offer nâng Amex® hết, nên `WAIT_FOR_BETTER_OFFER` 0.67 vượt
   `OPEN_CARD` 0.6), hoặc "Tích điểm ở nhiều chương trình" trên "Chưa mở thẻ mới". Nay `strategyOfAction`: chiến lược
   điểm cao nhất cùng họ với hành động thắng; "điểm linh hoạt" chỉ khi thẻ thắng kiếm đồng tiền `isFlexibleInPractice`
-  (từng in cho CIBC® Aeroplan®). Hai hằng họ chiến lược dùng chung với phép tính `OPEN_CARD`/`NO_NEW_CARD`.
+  (thêm 22/900 từng in nó cho thẻ kiếm Aeroplan® ×13, VIPorter® ×4, Marriott Bonvoy® ×3, Scene+™, TD Rewards® — tổng 273 hồ sơ đổi hướng đi, 0 đổi người thắng). Hai hằng họ chiến lược dùng chung với phép tính `OPEN_CARD`/`NO_NEW_CARD`.
 - **Câu hạng ghế đưa "Hạng nhất"** trong khi không chặng nào có giá hạng nhất (`award-charts.ts`: không hãng nào bán
   Canada → châu Á). Chọn nó là nhận "chặng này chưa có trong award chart" và mất câu số người/khứ hồi — 29/124 hồ sơ
   chuyến bay không bỏ qua câu nào rơi đúng chỗ đó. Nay chỉ đưa hạng có award strategy trên chặng; không hạng nào có
@@ -4009,14 +4010,15 @@ mức A — hai trùng phát hiện của mình), bác bản vá (4 ĐÚNG, 2 B�
   phí giao dịch ngoại tệ, câu đảo, câu có điều kiện "nếu giữ số dư", "không còn được miễn"), lần nào cũng chỉ một chiều.
 
 **Chờ tác giả / còn lại:**
-- **Chuyến bay thiếu một thừa số → `points_gap_reduction` = 0 cho mọi thẻ.** Bỏ qua câu số người hoặc khứ hồi thì
-  `tripNeedFor` trả `null` (cố ý không mặc định), vế 20% biến mất, kích thước bonus chỉ còn 4.5% (§11 "giá trị"): Amex®
-  Green 10,000 điểm thắng 104/217 hồ sơ loại này (đủ thừa số: 38/185, phần lớn là người chịu phí $0–150, thu nhập
-  hay sức dồn thấp — hợp lý). Codex: nếu vẫn cho bỏ qua thì "điểm giữa của khoảng phần tăng qua mọi giá trị của thừa
+- **Chuyến bay thiếu một thừa số → `points_gap_reduction` = 0 cho mọi thẻ.** Bỏ qua câu hạng ghế, số người hoặc khứ
+  hồi thì `tripNeedFor` không có tổng điểm (`low/typical/high` = `null`, cố ý không mặc định), vế 20% biến mất, kích
+  thước bonus chỉ còn 4.5% (§11 "giá trị"). Người dùng giả trên bản vá (900 hồ sơ): Amex® Green 10,000 điểm thắng
+  53/87 hồ sơ chưa khai hạng ghế và 35/91 hồ sơ thiếu số người/khứ hồi, so với 56/235 khi đủ thừa số (phần lớn người
+  chịu phí $0–150, thu nhập hay sức dồn thấp — hợp lý). Codex: nếu vẫn cho bỏ qua thì "điểm giữa của khoảng phần tăng qua mọi giá trị của thừa
   số thiếu" là hợp lý nhất (miền số người phải chốt; thẻ và `NO_NEW_CARD` chấm nhất quán; Rule 1 vẫn đòi bằng chứng
   chắc); "1 người một chiều rồi chia đôi" SAI (có 150,000, cần 100,000 một chiều → phần tăng 0 dù khứ hồi còn thiếu);
   bắt buộc hỏi thì sạch nhất cho Rule 1 nhưng đổi chủ trương hồ sơ dở dang. Đổi mô hình — chưa làm.
-- Đầu tháng 11/2026 sáu offer seed hết hạn chưa có bản nối tiếp (BMO® VIPorter® 31/10; bốn Scotiabank® 01/11;
+- Chín offer seed hết hạn từ 31/10 tới 25/11/2026 chưa có bản nối tiếp (BMO® VIPorter® 31/10; bốn Scotiabank® 01/11;
   WestJet RBC® 04/11; ba RBC® Avion® 25/11). Từ hôm sau engine chấm chúng như không có bonus; audit nay đỏ đúng chỗ.
 - P3 (Codex): `EARN_SPECIFIC_CURRENCY` vẫn in khi `targetProgramId` đặt mà thẻ thắng không kiếm đồng đó. Trang không
   bao giờ đặt `targetProgramId` (`goalFrom("earn_points")` luôn `null`) — chỉ hồ sơ tay chạm tới.

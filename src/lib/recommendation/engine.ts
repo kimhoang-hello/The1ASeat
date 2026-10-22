@@ -370,9 +370,9 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  *     Aeroplan® Visa Infinite hoà tuyệt đối, $159 tách hai thẻ).
  *   - `Recommendation.strategy` là hướng đi của CHÍNH hành động thắng
  *     (`strategyOfAction`), không phải chiến lược đứng đầu §8 — trang in nó là
- *     "Hướng đi mình chọn". 273/900 người dùng giả từng thấy hướng đi ngược với
- *     khuyến nghị ("Đợi offer tốt hơn" trên một thẻ khuyên mở). Không đổi điểm
- *     hay người thắng.
+ *     "Hướng đi mình chọn". 251/900 người dùng giả từng thấy hướng đi ngược với
+ *     khuyến nghị ("Đợi offer tốt hơn" trên một thẻ khuyên mở), thêm 22 "điểm
+ *     linh hoạt" trên thẻ không linh hoạt. Không đổi điểm hay người thắng.
  *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về

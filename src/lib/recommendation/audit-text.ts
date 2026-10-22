@@ -19,9 +19,11 @@
 export function mentionsFirstYearWaiver(text: string): boolean {
   const fee = String.raw`(?:annual fee|phí thường niên|phí)`;
   const pattern = new RegExp(
-    // Câu đảo phải DỪNG ở phí: "năm đầu được miễn phí giao dịch ngoại tệ" không
-    // nói gì về annual fee (Codex, vòng chốt 21/10/2026).
-    String.raw`miễn ${fee}(?: \$[\d,]+)?(?: trong| cho)? năm đầu|năm đầu (?:được )?miễn ${fee}(?: \$[\d,]+)?(?=\s*(?:$|[.,;:|()$]|cho |và |kể cả ))`,
+    // Câu đảo phải DỪNG ở phí (hoặc số tiền ngay sau): "năm đầu được miễn phí giao
+    // dịch ngoại tệ" không nói gì về annual fee (Codex, vòng chốt 21/10/2026). `$`
+    // KHÔNG nằm trong lookahead: có nó thì khuôn lùi về trước "$139" và phép kiểm
+    // điều kiện bên dưới không thấy "nếu" (vòng xác nhận).
+    String.raw`miễn ${fee}(?: \$[\d,]+)?(?: trong| cho)? năm đầu|năm đầu (?:được )?miễn ${fee}(?: \$[\d,]+)?(?=\s*(?:$|[.,;:|()]|cho |và |kể cả ))`,
     "gi",
   );
   return [...text.matchAll(pattern)].some((match) => {
@@ -29,7 +31,7 @@ export function mentionsFirstYearWaiver(text: string): boolean {
     const after = text.slice(match.index + match[0].length, match.index + match[0].length + 20);
     return (
       !/(?:không|hết|bỏ|chưa)(?: còn)?(?: được)?\s*$/i.test(before) &&
-      !/^\s*,?\s*(?:nếu|khi|với điều kiện|chỉ khi)\b/i.test(after)
+      !/^\s*(?:\$[\d,]+\s*)?,?\s*(?:nếu|khi|với điều kiện|chỉ khi)\b/i.test(after)
     );
   });
 }
