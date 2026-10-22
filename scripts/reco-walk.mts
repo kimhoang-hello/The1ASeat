@@ -16,9 +16,10 @@
  * PHÂN BỐ NGƯỜI THẮNG theo nhóm hồ sơ — đọc nó như một chuyên gia points. Bản
  * 17/10 sống ở scratchpad và mất; bản này nằm trong repo để khỏi dựng lại.
  *
- * `--out` ghi trạng thái cuối + người thắng; `--replay` chạy lại đúng các trạng
- * thái đó qua code hiện tại và đếm người thắng / hướng đi đổi — phép đo tác
- * động của một bản vá (chạy `--out` TRƯỚC khi sửa, `--replay` sau).
+ * `--out` ghi trạng thái cuối + người thắng + ngày chạy; `--replay` chạy lại
+ * đúng các trạng thái đó ở ĐÚNG ngày đó qua code hiện tại và đếm người thắng /
+ * hướng đi đổi — phép đo tác động của một bản vá (chạy `--out` TRƯỚC khi sửa,
+ * `--replay` sau).
  *
  * Welcome bonus / annual fee trên trang lấy từ Contentful (GET) nếu `.env.local`
  * có token; không có thì trang dựng không có phần chữ đó — engine không đổi.
@@ -57,7 +58,18 @@ const flag = (name: string): string | null => {
   return at === -1 ? null : (args[at + 1] ?? null);
 };
 
-const ASOF = flag("as-of") ?? todayInSiteZone();
+/** File `--out` mang theo ngày của lượt gốc: chạy lại ở ngày khác là đo dữ liệu đã đổi, không đo bản vá. */
+interface WalkFile {
+  asOf: string;
+  rows: WalkRow[];
+}
+const replay = flag("replay");
+const replayed = replay === null ? null : (JSON.parse(readFileSync(path.resolve(replay), "utf8")) as WalkFile);
+if (replayed !== null && flag("as-of") !== null && flag("as-of") !== replayed.asOf) {
+  console.error(`--as-of ${flag("as-of")} khác ngày của lượt gốc (${replayed.asOf}) — replay luôn chạy ở ngày gốc.`);
+  process.exit(1);
+}
+const ASOF = replayed?.asOf ?? flag("as-of") ?? todayInSiteZone();
 const N = Number(flag("n") ?? 300);
 const SEED = Number(flag("seed") ?? 1);
 
@@ -94,9 +106,8 @@ interface WalkRow {
   truth: Truth;
 }
 
-const replay = flag("replay");
-if (replay !== null) {
-  const rows = JSON.parse(readFileSync(path.resolve(replay), "utf8")) as WalkRow[];
+if (replayed !== null) {
+  const rows = replayed.rows;
   const moves = new Map<string, number>();
   let strategyChanged = 0;
   for (const row of rows) {
@@ -107,7 +118,7 @@ if (replay !== null) {
     if (result.strategy.strategy !== row.strategy) strategyChanged += 1;
   }
   const changed = [...moves.values()].reduce((sum, count) => sum + count, 0);
-  console.log(`hồ sơ ${rows.length} · đổi người thắng ${changed} · đổi hướng đi ${strategyChanged}`);
+  console.log(`asOf ${ASOF} · hồ sơ ${rows.length} · đổi người thắng ${changed} · đổi hướng đi ${strategyChanged}`);
   for (const [move, count] of [...moves].sort((a, b) => b[1] - a[1])) console.log(`  ${move} ×${count}`);
   process.exit(0);
 }
@@ -391,6 +402,6 @@ if (issues.size === 0) console.log("✓ không câu hỏi lặp, không câu tr�
 
 const out = flag("out");
 if (out !== null) {
-  writeFileSync(path.resolve(out), JSON.stringify(rows));
+  writeFileSync(path.resolve(out), JSON.stringify({ asOf: ASOF, rows } satisfies WalkFile));
   console.log(`đã ghi ${rows.length} trạng thái cuối → ${out}`);
 }
