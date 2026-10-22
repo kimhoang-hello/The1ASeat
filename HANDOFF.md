@@ -635,6 +635,15 @@ npm run test:reco
 npm run test:recommender
 ```
 
+Người dùng giả đi hết luồng trang (phân bố người thắng theo nhóm hồ sơ — cách tìm lỗi
+tốt nhất hai lần liền):
+
+```bash
+npm run reco:walk -- --n 300 --seed 1 --out /tmp/walk.json
+```
+
+`--replay /tmp/walk.json` chạy lại đúng các trạng thái cuối qua code hiện tại.
+
 `test:reco` 500 + 23 bỏ qua (thêm `RECO_TEST_MYSQL_URL` để chạy cả backend MySQL) và
 `test:recommender` 86 + 1 bỏ qua cho lớp giao diện (đếm 21/10/2026). Bản chụp hành vi §20:
 

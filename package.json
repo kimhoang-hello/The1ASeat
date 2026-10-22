@@ -30,6 +30,7 @@
     "record:offer-history": "tsx scripts/record-offer-history.mts",
     "reco:forget": "tsx scripts/reco-forget.mts",
     "reco:debug": "tsx scripts/reco-debug.mts",
+    "reco:walk": "tsx scripts/reco-walk.mts",
     "job:check-rebates": "tsx scripts/check-rebates.mts",
     "captions": "bash scripts/burned-captions.sh",
     "captions:all": "bash scripts/collect-captions.sh"

@@ -3976,7 +3976,8 @@ trang Alaska® ghi "online only offer may not be available elsewhere if you leav
 
 Engine 4.38.0 → **4.39.0**. Ba cách đo: 16 nhân vật mẫu ở ngày hôm nay (`reco:debug run`); **người dùng giả đi hết
 luồng trang** (`executeRun` → `presentForPage` → `questionFor` → `applyAnswerChecked`, 900 hồ sơ × ~27 bước, 3 seed,
-bỏ qua ngẫu nhiên 0/15/40%; script dựng lại vì bản 17/10 đã mất khỏi scratchpad); quét **trục thời gian** của seed
+bỏ qua ngẫu nhiên 0/15/40%; bản 17/10 mất khỏi scratchpad nên nay nằm trong repo: **`npm run reco:walk`**, `--out` rồi
+`--replay` để đo tác động một bản vá trên cùng trạng thái cuối); quét **trục thời gian** của seed
 (offer hết hạn không có bản nối tiếp, phí hẹn ngày) và chạy nhân vật ở 02/11/2026, 13/01/2027, 01/06/2027. Đo tác động
 bằng CÙNG trạng thái cuối qua engine HEAD (`git archive HEAD src data`) vs bản vá. Codex năm vòng: tìm lỗi độc lập (4
 mức A — hai trùng phát hiện của mình), bác bản vá (4 ĐÚNG, 2 BẢN VÁ HỎNG), chốt (regex còn hai ca), xác nhận (regex
