@@ -46,7 +46,7 @@
  *   award strategy   — của chặng đang hỏi.
  */
 
-import { activeAt } from "./temporal.ts";
+import { activeAt, firstRenewalOf } from "./temporal.ts";
 import { activeOfferFor } from "./offer-quality.ts";
 import { isOpenToEveryone } from "./portfolio.ts";
 import { tripCoverage } from "./strategies.ts";
@@ -186,7 +186,10 @@ export function oldestVerified(
   const earnProducts = read.readsEarn ? [...read.scored, ...read.held] : [];
 
   for (const productId of sorted(read.fees)) {
-    for (const row of activeAt(ix.feesByProduct.get(productId) ?? [], asOf)) consider("product_fees", row);
+    // Hai ngày, cùng hai phép đọc của `offerFacts`: phí năm đầu (hôm nay) và
+    // phí năm sau (kỳ gia hạn đầu).
+    const fees = ix.feesByProduct.get(productId) ?? [];
+    for (const row of [...activeAt(fees, asOf), ...activeAt(fees, firstRenewalOf(asOf))]) consider("product_fees", row);
   }
   for (const productId of sorted(read.gated)) {
     for (const row of activeAt(ix.rulesByProduct.get(productId) ?? [], asOf)) consider("eligibility_rules", row);

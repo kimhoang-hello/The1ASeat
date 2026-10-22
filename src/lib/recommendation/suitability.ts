@@ -23,7 +23,7 @@ import { typicalAmount } from "./user-types.ts";
 import type { DatasetIndex } from "./indexes.ts";
 import type { Product } from "./types.ts";
 import type { EstimatedAmount, UserState } from "./user-types.ts";
-import type { OfferFacts } from "./offer-quality.ts";
+import { annualFeeCents, type OfferFacts } from "./offer-quality.ts";
 import type { SuitabilityVerdict } from "./engine-types.ts";
 import type { ReasonCode, WarningCode } from "./reason-codes.ts";
 
@@ -124,7 +124,12 @@ export function evaluateSuitability(input: SuitabilityInput): SuitabilityVerdict
   const firstYearFee = facts.firstYearFeeCents / 100;
   const ongoingFee = facts.ongoingFeeCents / 100;
 
-  if (firstYearFee < ongoingFee) reasonCodes.push("ANNUAL_FEE_WAIVED_FIRST_YEAR");
+  // So với phí HÔM NAY, không với phí năm sau: phí năm sau nay là mức ở kỳ gia
+  // hạn đầu, và một lần tăng phí đã báo trước (Amex® Aeroplan® Reserve $599 →
+  // $799) cũng làm năm đầu rẻ hơn năm sau mà chẳng có gì được miễn.
+  if (facts.firstYearFeeCents < annualFeeCents(input.ix, product.id, input.asOf)) {
+    reasonCodes.push("ANNUAL_FEE_WAIVED_FIRST_YEAR");
+  }
 
   if (tolerance === null) {
     /*
@@ -157,8 +162,9 @@ export function evaluateSuitability(input: SuitabilityInput): SuitabilityVerdict
       const excess = (firstYearFee - tolerance) / Math.max(tolerance, 100);
       penalty *= Math.max(0.5, 1 - 0.5 * Math.min(1, excess));
     } else if (ongoingFee > tolerance) {
-      // Miễn năm đầu kéo phí xuống dưới ngưỡng, nhưng năm sau thì không. Không
-      // phạt — người dùng có thể đóng thẻ trước hạn — nhưng phải nói ra.
+      // Năm đầu dưới ngưỡng — nhờ miễn phí, hoặc vì phí tăng ở kỳ gia hạn —
+      // nhưng năm sau thì không. Không phạt — người dùng có thể đóng thẻ trước
+      // hạn — nhưng phải nói ra.
       warnings.push("SECOND_YEAR_FEE_APPLIES");
     }
   }

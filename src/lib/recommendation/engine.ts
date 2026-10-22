@@ -18,10 +18,10 @@
  * `Date.now`, không có LLM.
  */
 
-import { analyzePortfolio, topEcosystemShare } from "./portfolio.ts";
+import { analyzePortfolio, isFlexibleInPractice, topEcosystemShare } from "./portfolio.ts";
 import { normalize } from "./normalize.ts";
 import { buildReadSet, goalReadsEarn, oldestVerified, scopeDataGaps } from "./read-set.ts";
-import { generateStrategies, tripCoverage } from "./strategies.ts";
+import { generateStrategies, strategyOfAction, tripCoverage } from "./strategies.ts";
 import { computeNeeds } from "./needs.ts";
 import { evaluateEligibility } from "./eligibility.ts";
 import { evaluateSuitability } from "./suitability.ts";
@@ -360,6 +360,20 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * phí bonus nhỏ thắng. 300 người dùng giả 17/10/2026: 31/82 hồ sơ chưa khai sức
  * dồn đổi người thắng, 0/218 hồ sơ đã khai đổi.
  *
+ * 4.39.0 — audit 21/10/2026, hai chỗ:
+ *   - Phí năm sau là mức hiệu lực ở kỳ gia hạn đầu (`firstRenewalOf`), không
+ *     phải mức hôm nay. `datasetAt` từng cắt mọi dòng phí chưa hiệu lực, nên
+ *     năm thẻ đã báo tăng phí từ 12/01/2027 (Amex® Aeroplan® ×3, CIBC®
+ *     Aeroplan® ×2) được chấm phí cũ cho năm thứ hai. "Miễn phí năm đầu" nay so
+ *     với phí HÔM NAY — tăng phí không phải miễn phí. Đổi `fee_drag` và cảnh báo
+ *     phí năm sau; người thắng đổi được ở ca sát nút (Codex: CIBC® ↔ TD®
+ *     Aeroplan® Visa Infinite hoà tuyệt đối, $159 tách hai thẻ).
+ *   - `Recommendation.strategy` là hướng đi của CHÍNH hành động thắng
+ *     (`strategyOfAction`), không phải chiến lược đứng đầu §8 — trang in nó là
+ *     "Hướng đi mình chọn". 273/900 người dùng giả từng thấy hướng đi ngược với
+ *     khuyến nghị ("Đợi offer tốt hơn" trên một thẻ khuyên mở). Không đổi điểm
+ *     hay người thắng.
+ *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
  * MỌI đầu vào chứ không chỉ về fixture.
@@ -372,7 +386,7 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  * chính version này. Đổi hành vi mà không tăng version là test ĐỎ, và thông
  * báo lỗi nói thẳng phải làm gì.
  */
-export const ENGINE_VERSION = "4.38.0";
+export const ENGINE_VERSION = "4.39.0";
 
 export interface RecommendInput {
   state: UserState;
@@ -788,7 +802,15 @@ export function recommend(input: RecommendInput): RecommendationRun {
     return {
       goalId: goal.goal.id,
       goalType: goal.goal.type,
-      strategy: strategies[0] ?? { strategy: "OPEN_CARD", score: 0, reasonCodes: [] },
+      // Hướng đi của CHÍNH hành động thắng — xem `strategyOfAction`.
+      strategy: strategyOfAction(strategies, {
+        kind: winner.kind,
+        flexibleCurrency: (() => {
+          const programId =
+            winner.productId === null ? null : ix.productById.get(winner.productId)?.pointsProgramId ?? null;
+          return programId !== null && isFlexibleInPractice(ix, programId, asOf);
+        })(),
+      }),
       strategies,
       primaryAction: winner,
       alternatives,

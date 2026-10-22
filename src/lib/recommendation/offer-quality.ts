@@ -20,7 +20,7 @@
 
 import { compareToThreshold } from "./user.ts";
 import { centsPerPoint } from "./portfolio.ts";
-import { activeAt } from "./temporal.ts";
+import { activeAt, firstRenewalOf } from "./temporal.ts";
 import { requiredSpendOf, spendPerNinetyDays, spendWindowsOf } from "./spend.ts";
 import type { DatasetIndex } from "./indexes.ts";
 import type { OfferComponent, Product, RedemptionMode } from "./types.ts";
@@ -126,7 +126,9 @@ export interface OfferFacts {
   termsUnknown: boolean;
   /** Số ngày còn lại tới `endDate`, `null` khi offer không có ngày kết thúc. */
   endsInDays: number | null;
+  /** Phí năm đầu: ưu đãi miễn/giảm của offer, không có thì phí đang hiệu lực hôm nay. */
   firstYearFeeCents: number;
+  /** Phí từ năm thứ hai: mức hiệu lực ở kỳ gia hạn đầu (`firstRenewalOf`), kể cả mức tăng đã báo trước. */
   ongoingFeeCents: number;
   reasonCodes: ReasonCode[];
   warnings: WarningCode[];
@@ -319,11 +321,24 @@ function offerBonusUnit(bonusKind: "points" | "cash" | "none"): OfferUnit | null
   return null;
 }
 
-/** Phí thường niên đang hiệu lực (cent). 0 khi chưa có dòng phí nào. */
-function annualFeeCents(ix: DatasetIndex, productId: string, asOf: string): number {
-  const rows = activeAt(ix.feesByProduct.get(productId) ?? [], asOf);
-  if (rows.length === 0) return 0;
-  return Math.round(rows[0].annualFee * 100);
+/** Phí thường niên hiệu lực vào ngày `on` (cent). `null` khi không có dòng phí nào. */
+function feeOnCents(ix: DatasetIndex, productId: string, on: string): number | null {
+  const rows = activeAt(ix.feesByProduct.get(productId) ?? [], on);
+  return rows.length === 0 ? null : Math.round(rows[0].annualFee * 100);
+}
+
+/** Phí thường niên đang hiệu lực (cent) — phí năm đầu khi offer không miễn. 0 khi chưa có dòng phí nào. */
+export function annualFeeCents(ix: DatasetIndex, productId: string, asOf: string): number {
+  return feeOnCents(ix, productId, asOf) ?? 0;
+}
+
+/**
+ * Phí năm thứ hai (cent): mức hiệu lực ở kỳ gia hạn đầu — xem `firstRenewalOf`.
+ * Chưa có dòng phí nào phủ ngày đó thì giữ mức hôm nay: "chưa ai ghi mức sau"
+ * không phải "năm sau miễn phí".
+ */
+function renewalFeeCents(ix: DatasetIndex, productId: string, asOf: string): number {
+  return feeOnCents(ix, productId, firstRenewalOf(asOf)) ?? annualFeeCents(ix, productId, asOf);
 }
 
 export function offerFacts(
@@ -346,7 +361,8 @@ export function offerFacts(
 ): OfferFacts {
   const reasonCodes: ReasonCode[] = [];
   const warnings: WarningCode[] = [];
-  const ongoingFeeCents = annualFeeCents(ix, product.id, asOf);
+  const currentFeeCents = annualFeeCents(ix, product.id, asOf);
+  const ongoingFeeCents = renewalFeeCents(ix, product.id, asOf);
   const active = activeOfferFor(ix, product.id, asOf);
 
   if (active === null) {
@@ -364,7 +380,7 @@ export function offerFacts(
       historyPoints: 0,
       termsUnknown: false,
       endsInDays: null,
-      firstYearFeeCents: ongoingFeeCents,
+      firstYearFeeCents: currentFeeCents,
       ongoingFeeCents,
       reasonCodes,
       warnings,
@@ -437,7 +453,7 @@ export function offerFacts(
     // niệm khác nhau ở ba chỗ khác nhau (xem README Phase 1).
     firstYearFeeCents:
       offer.annualFeeFirstYear === null
-        ? ongoingFeeCents
+        ? currentFeeCents
         : Math.round(offer.annualFeeFirstYear * 100),
     ongoingFeeCents,
     reasonCodes,

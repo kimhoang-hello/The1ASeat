@@ -137,6 +137,17 @@ function bonusNumbersIn(text: string | undefined): number[] {
     .filter((value) => value >= 1000);
 }
 
+/**
+ * Chữ trên trang thẻ có nói miễn annual fee năm đầu không. Bỏ câu phủ định
+ * ("không còn miễn phí năm đầu", "hết miễn…") — đọc nhầm chúng là đỏ oan đúng
+ * ở thẻ vừa bỏ ưu đãi.
+ */
+function mentionsFirstYearWaiver(text: string): boolean {
+  return [...text.matchAll(/miễn (?:phí|annual fee)[^.|;()]*?năm đầu|năm đầu[^.|;()]*?miễn/gi)].some(
+    (match) => !/(?:không|hết|bỏ|chưa)(?: còn)?\s*$/i.test(text.slice(Math.max(0, match.index - 12), match.index)),
+  );
+}
+
 /** Số đô trong `rebateVi` ("$140" → 140). Cùng quy ước dấu phẩy ngăn nghìn
  *  với phần còn lại của site. */
 function rebateIn(text: string | undefined): number | undefined {
@@ -486,7 +497,23 @@ if (cards === null) {
      */
     const seedBonus = offer?.headlineBonus ?? undefined;
     const liveBonuses = bonusNumbersIn(card.welcomeBonusVi);
-    if (offer === undefined) {
+    const liveOfferCount = OFFERS.filter(
+      (row) => (row.productId as string) === product.id && isActiveAt(row, TODAY),
+    ).length;
+    if (offer === undefined && liveOfferCount === 0 && card.welcomeBonusVi?.trim()) {
+      // Offer seed qua `endDate` mà chưa ai ghi bản nối tiếp: engine chấm thẻ này
+      // như KHÔNG có welcome bonus trong khi trang thẻ vẫn hứa. Từng chỉ là cảnh
+      // báo (nghĩa là "chỗ trống đã biết, đừng lấp"); thứ đỏ lên cùng lúc là hai
+      // phép so bên dưới, và cả hai nói SAI nguyên nhân — "seed không có endDate,
+      // engine sẽ chấm offer này mãi", "rebate seed là (không có)" — trong khi
+      // seed có đủ cả hai, chỉ thiếu offer mới. Dựng lại ngày 03/11/2026 (rà
+      // 21/10/2026): năm thẻ đỏ đúng kiểu đó khi bốn offer Scotiabank® và BMO®
+      // VIPorter® hết hạn.
+      errors.push(
+        `[contentful] ${card.slug}: seed không còn offer nào hiệu lực hôm nay nhưng Contentful vẫn hứa ` +
+          `"${card.welcomeBonusVi}" — engine đang chấm thẻ này như không có welcome bonus`,
+      );
+    } else if (offer === undefined) {
       warnings.push(`[contentful] ${card.slug}: không có đúng một offer còn hiệu lực hôm nay, không đối chiếu bonus được`);
     } else if (card.welcomeBonusVi === undefined || card.welcomeBonusVi.trim() === "") {
       if (seedBonus != null) {
@@ -494,6 +521,14 @@ if (cards === null) {
           `[contentful] ${card.slug}: seed có welcome bonus ${seedBonus.toLocaleString("en-US")} nhưng Contentful để trống welcomeBonusVi`,
         );
       }
+    } else if (liveBonuses.length === 0 && seedBonus != null) {
+      // Contentful bỏ con số ("Không có welcome bonus") mà seed vẫn chấm bonus
+      // điểm: engine khuyên thẻ bằng một bonus trang thẻ không còn hứa (Codex,
+      // rà 21/10/2026 — từng chỉ là cảnh báo "không đối chiếu được").
+      errors.push(
+        `[contentful] ${card.slug}: seed chấm welcome bonus ${seedBonus.toLocaleString("en-US")} điểm nhưng ` +
+          `welcomeBonusVi không còn con số điểm nào ("${card.welcomeBonusVi}")`,
+      );
     } else if (liveBonuses.length === 0) {
       // Bonus không phải điểm (cashback, đêm khách sạn) thì không có con số nào
       // để so — nói ra chứ không im.
@@ -519,12 +554,17 @@ if (cards === null) {
      */
     const liveExpiry = card.expiresAt?.slice(0, 10);
     const seedExpiry = offer?.endDate ?? undefined;
+    // Không còn offer nào hiệu lực: lỗi đã báo ở trên, và hai phép so dưới đây
+    // so với một offer không tồn tại.
+    const noLiveOffer = liveOfferCount === 0;
     // So cả khi `elevatedBonus: false`. Nhánh cũ coi đó là ngày SÓT và chỉ cảnh
     // báo, nhưng `expire-offers` XOÁ `expiresAt` khi hạ thẻ (chỉ giữ lại khi lỗi
     // còn chạy lại được) — còn hai thẻ Scotiabank® mang ngày 01/11/2026 là hạn
     // THẬT của offer thường (cửa sổ mở tài khoản, đọc 01/10/2026). Bỏ qua chúng
     // là để engine chấm offer đó cả sau khi nó đóng.
-    if (liveExpiry !== undefined && seedExpiry === undefined) {
+    if (noLiveOffer) {
+      // đã báo
+    } else if (liveExpiry !== undefined && seedExpiry === undefined) {
       errors.push(
         `[contentful] ${card.slug}: Contentful nói offer hết ngày ${liveExpiry} nhưng seed không có endDate — ` +
           `engine sẽ chấm điểm offer này mãi`,
@@ -535,9 +575,30 @@ if (cards === null) {
       errors.push(`[contentful] ${card.slug}: offer đã hết hạn ${liveExpiry} mà vẫn còn hiệu lực trong seed`);
     }
 
+    /*
+     * MIỄN PHÍ NĂM ĐẦU — `annualFeeFirstYear` của offer seed so với chữ trên
+     * trang thẻ. Nó vào cả §11 (phí/giá trị) lẫn ngưỡng phí, nên một lần ngân
+     * hàng bỏ ưu đãi này mà seed còn giữ là engine khuyên thẻ bằng một khoản
+     * miễn đã hết (Codex, rà 21/10/2026: đổi người thắng giữa TD® và
+     * Scotiabank® Gold). Câu miễn phí nằm rải ở phí, bonus, headline hoặc key
+     * benefits, nên đọc cả bốn; ngày rà, 37 thẻ khớp cả hai chiều.
+     */
+    if (!noLiveOffer && offer !== undefined) {
+      const seedWaived = offer.annualFeeFirstYear != null;
+      const liveWaived = mentionsFirstYearWaiver(
+        [card.annualFeeVi, card.welcomeBonusVi, card.headlineVi, ...(card.keyBenefitsVi ?? [])].join(" | "),
+      );
+      if (seedWaived !== liveWaived) {
+        errors.push(
+          `[contentful] ${card.slug}: seed ${seedWaived ? "miễn" : "không miễn"} phí năm đầu, ` +
+            `Contentful ${liveWaived ? "có" : "không có"} câu miễn phí năm đầu`,
+        );
+      }
+    }
+
     const seedRebate = offer?.annualFeeRebate ?? undefined;
     const liveRebate = rebateIn(card.rebateVi);
-    if (seedRebate !== liveRebate) {
+    if (!noLiveOffer && seedRebate !== liveRebate) {
       errors.push(
         `[contentful] ${card.slug}: rebate seed là ${seedRebate ?? "(không có)"}, ` +
           `Contentful nói ${liveRebate ?? "(không có)"}`,

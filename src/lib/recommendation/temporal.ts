@@ -74,6 +74,22 @@ export function isAvailableAt(
   return windows.some((window) => isActiveAt(window, asOf));
 }
 
+/**
+ * Kỳ gia hạn đầu của một thẻ mở vào `asOf` — ngày ngân hàng thu phí năm thứ hai.
+ *
+ * "Phí năm sau" là mức hiệu lực vào ĐÚNG ngày này, không phải mức của hôm nay:
+ * ngân hàng báo tăng phí trước nhiều tháng (ba thẻ Aeroplan® của Amex® và hai
+ * của CIBC®, cùng từ 12/01/2027), và người mở thẻ hôm nay trả mức mới ở lần
+ * gia hạn đầu. Một hàm cho cả `datasetAt` (giữ dòng phí tới ngày này) lẫn
+ * `offerFacts` (đọc phí ở ngày này) — hai bên lệch nhau là engine đọc một dòng
+ * đã bị cắt khỏi bộ dữ liệu.
+ */
+export function firstRenewalOf(asOf: string): string {
+  const date = new Date(`${asOf}T00:00:00Z`);
+  date.setUTCFullYear(date.getUTCFullYear() + 1);
+  return date.toISOString().slice(0, 10);
+}
+
 export function datasetAt(
   data: RecommendationDataset,
   asOf: string,
@@ -117,8 +133,17 @@ export function datasetAt(
     // khuyến nghị cũ phải được giải thích bằng định giá của lúc đó.
     programValuations: activeAt(known(data.programValuations), asOf),
     products,
-    productFees: activeAt(known(data.productFees), asOf).filter((fee) =>
-      liveProductIds.has(fee.productId),
+    // Mọi dòng phí phủ một ngày trong [asOf, kỳ gia hạn đầu], không chỉ dòng
+    // của hôm nay — xem `firstRenewalOf`. Đây KHÔNG phải rò rỉ tương lai: mức
+    // phí hẹn ngày là điều ngân hàng đã công bố, và `known()` vẫn cắt nó khỏi
+    // bản dựng lại của trước ngày nó vào kho. Cắt ở `asOf` như các quan hệ
+    // khác thì engine tính phí $599 cho năm thứ hai của Amex® Aeroplan® Reserve
+    // trong khi chính trang thẻ ghi $799 từ 12/01/2027.
+    productFees: known(data.productFees).filter(
+      (fee) =>
+        liveProductIds.has(fee.productId) &&
+        fee.effectiveFrom <= firstRenewalOf(asOf) &&
+        (fee.effectiveTo === null || fee.effectiveTo >= asOf),
     ),
     // Giữ quãng ĐÃ ĐÓNG, bỏ quãng CHƯA MỞ.
     //

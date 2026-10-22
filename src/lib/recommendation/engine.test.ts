@@ -3241,3 +3241,79 @@ test("lượt chạy KHÔNG hỏi tới tiền mặt thì bản ghi không mang 
   const cash = run(cashSeeker);
   assert.ok(cash.derived.candidates.every((row) => row.offerCash !== undefined && row.earnCash !== undefined));
 });
+
+/* ================================================================== *
+ * Audit 21/10/2026 — phí năm sau, hướng đi của khuyến nghị
+ * ================================================================== */
+
+const AUDIT_ASOF = "2026-10-21";
+const AUDIT_DATA = datasetAt(RAW, AUDIT_ASOF, { knownAt: AUDIT_ASOF });
+const AUDIT_IX = indexDataset(AUDIT_DATA);
+function auditRun(state: UserState): RecommendationRun {
+  return recommend({ state, data: AUDIT_DATA, ix: AUDIT_IX, asOf: AUDIT_ASOF, probeFollowUps: false });
+}
+
+test("phí năm sau = phí ở kỳ gia hạn đầu: mức tăng đã báo trước được tính, và không bị gọi là 'miễn năm đầu'", () => {
+  // Amex® Aeroplan® Reserve $599 tới 11/01/2027, $799 từ 12/01/2027 (báo trước,
+  // ghi 01/10/2026). Người mở thẻ ngày 21/10/2026 trả $799 ở lần gia hạn đầu.
+  const reserve = productIdFor("amex-aeroplan-reserve");
+  const kept = AUDIT_DATA.productFees.filter((row) => row.productId === reserve).map((row) => row.annualFee);
+  assert.deepEqual([...kept].sort(), [599, 799], "datasetAt phải giữ dòng phí của kỳ gia hạn đầu");
+  // Dòng hiệu lực SAU kỳ gia hạn đầu thì vẫn bị cắt.
+  const later = { ...AUDIT_DATA.productFees.find((row) => row.productId === reserve && row.annualFee === 799)! };
+  const far = { ...later, id: `${later.id}_2028` as never, effectiveFrom: "2028-01-01", annualFee: 999 };
+  const cut = datasetAt({ ...RAW, productFees: [...RAW.productFees, far] }, AUDIT_ASOF, { knownAt: AUDIT_ASOF });
+  assert.ok(!cut.productFees.some((row) => row.annualFee === 999), "dòng sau kỳ gia hạn đầu là tương lai");
+
+  const facts = (slug: string) =>
+    offerFacts(AUDIT_IX.productById.get(productIdFor(slug))!, AUDIT_IX, AUDIT_ASOF, null, []);
+  assert.equal(facts("amex-aeroplan-reserve").firstYearFeeCents, 59_900);
+  assert.equal(facts("amex-aeroplan-reserve").ongoingFeeCents, 79_900);
+  // Miễn năm đầu + tăng phí cùng lúc (CIBC® $139 → $159 từ 12/01/2027).
+  assert.equal(facts("cibc-aeroplan-visa-infinite").firstYearFeeCents, 0);
+  assert.equal(facts("cibc-aeroplan-visa-infinite").ongoingFeeCents, 15_900);
+  // Thẻ không đổi phí: hai con số bằng nhau.
+  assert.equal(facts("amex-cobalt").firstYearFeeCents, facts("amex-cobalt").ongoingFeeCents);
+
+  // Ngưỡng $700: năm đầu $599 lọt, năm sau $799 vượt → cảnh báo năm sau, KHÔNG
+  // phải "miễn annual fee năm đầu".
+  const state: UserState = { ...vagueEarner, profile: { ...vagueEarner.profile, annualFeeTolerancePerCard: 700 } };
+  const output = auditRun(state);
+  const row = output.derived.goals[0].ranking.find((entry) => entry.candidate.productSlug === "amex-aeroplan-reserve")!;
+  assert.ok(row, "tiền đề: thẻ có trong bảng");
+  assert.ok(!row.candidate.reasonCodes.includes("ANNUAL_FEE_WAIVED_FIRST_YEAR"), "tăng phí không phải miễn phí");
+  assert.ok(row.candidate.warnings.includes("SECOND_YEAR_FEE_APPLIES"));
+  assert.equal(row.candidate.suitability?.ongoingFee, 799);
+  const cibc = output.derived.goals[0].ranking.find((entry) => entry.candidate.productSlug === "cibc-aeroplan-visa-infinite")!;
+  assert.ok(cibc.candidate.reasonCodes.includes("ANNUAL_FEE_WAIVED_FIRST_YEAR"), "miễn thật thì vẫn nói");
+
+  // `fee_drag` của mục tiêu tích điểm cân phí NĂM SAU.
+  const added = output.derived.candidates.find((entry) => entry.productSlug === "amex-aeroplan-reserve")!.earn.addedValueCents;
+  assert.ok(added > 0, "tiền đề: thẻ tích thêm được gì đó");
+  const drag = row.candidate.components.find((c) => c.key === "fee_drag")!.raw;
+  assert.equal(drag, Math.max(0, 1 - 79_900 / added));
+});
+
+test("hướng đi in ra cùng chiều với hành động thắng, và 'điểm linh hoạt' chỉ đi với đồng tiền linh hoạt", () => {
+  const STAND_STILL = new Set(["USE_EXISTING_POINTS", "FOCUS_ON_AVAILABILITY", "WAIT_FOR_BETTER_OFFER", "NO_NEW_CARD"]);
+  let differs = 0;
+  for (const state of USER_FIXTURES) {
+    for (const result of auditRun(state).results) {
+      const open = result.primaryAction.kind === "open_card";
+      const label = `${state.profile.id}: ${result.strategy.strategy} / ${result.primaryAction.productSlug ?? "NO_NEW_CARD"}`;
+      assert.equal(STAND_STILL.has(result.strategy.strategy), !open, label);
+      if (result.strategy.strategy === "EARN_FLEXIBLE_POINTS") {
+        const programId = AUDIT_IX.productById.get(result.primaryAction.productId!)!.pointsProgramId!;
+        assert.ok(isFlexibleInPractice(AUDIT_IX, programId, AUDIT_ASOF), label);
+      }
+      // Vẫn là chiến lược điểm CAO NHẤT trong số đi cùng chiều — không bịa hướng mới.
+      assert.ok(result.strategies.some((row) => row.strategy === result.strategy.strategy && row.score === result.strategy.score));
+      if (result.strategy.strategy !== result.strategies[0].strategy) differs += 1;
+    }
+  }
+  // Tiền đề: ngày này có nhân vật mà chiến lược đứng đầu ĐI NGƯỢC người thắng
+  // (u_beginner: WAIT_FOR_BETTER_OFFER 0.67 trên Scotiabank® Gold; u_flexible:
+  // "điểm linh hoạt" trên CIBC® Aeroplan®). Đỏ ở đây là dữ liệu đã đổi — đổi
+  // kịch bản, đừng gỡ phép kiểm.
+  assert.ok(differs >= 2, `chỉ ${differs} nhân vật đi qua nhánh chọn lại hướng đi`);
+});

@@ -28,7 +28,7 @@ import type {
   SpendCategory,
   TripRegion,
 } from "../recommendation/types.ts";
-import { SPEND_CATEGORIES } from "../recommendation/types.ts";
+import { CABINS, SPEND_CATEGORIES } from "../recommendation/types.ts";
 import type {
   EstimatedAmount,
   Goal,
@@ -41,7 +41,7 @@ import type {
   UserState,
 } from "../recommendation/user-types.ts";
 import { amountRange } from "../recommendation/user-types.ts";
-import { closedDateFromAnswer, closedMonthChoices } from "../recommendation/user.ts";
+import { closedDateFromAnswer, closedMonthChoices, resolveTripGoal } from "../recommendation/user.ts";
 
 /* ------------------------------------------------------------------ *
  * Kiểu
@@ -604,7 +604,23 @@ export function questionFor(
         input: { type: "choice", name: "answer", options: YES_NO },
       };
 
-    case "trip_cabin_unknown":
+    case "trip_cabin_unknown": {
+      // Chỉ những hạng CÓ GIÁ trên chặng này. Bảng giá không có hạng nhất ở chặng
+      // nào (`award-charts.ts`: không hãng nào bán hạng nhất Canada → châu Á), nên
+      // chọn "Hạng nhất" là nhận "chặng này chưa có trong award chart" và mất luôn
+      // số người, khứ hồi — 29/124 người dùng giả không bỏ qua câu nào rơi đúng
+      // chỗ đó (rà 21/10/2026). Chặng không hạng nào có giá (nội địa) thì giữ đủ:
+      // câu này khi đó không được hỏi (`followUpAfterSkips`).
+      const goal = tripGoalOf(state, gap.subject);
+      const trip = goal === null ? null : resolveTripGoal(state.profile, goal);
+      const priced = CABINS.filter((cabin) =>
+        ctx.dataset.awardStrategies.some(
+          (row) =>
+            row.originRegion === trip?.originRegion &&
+            row.destinationRegion === trip.destinationRegion &&
+            row.cabin === cabin,
+        ),
+      );
       return {
         ...base,
         title: "Bạn muốn bay hạng nào?",
@@ -612,12 +628,13 @@ export function questionFor(
         input: {
           type: "choice",
           name: "answer",
-          options: (["economy", "premium_economy", "business", "first"] as const).map((cabin) => ({
+          options: (priced.length === 0 ? CABINS : priced).map((cabin) => ({
             value: cabin,
             label: CABIN_LABEL[cabin],
           })),
         },
       };
+    }
 
     case "trip_passengers_unknown":
       return {

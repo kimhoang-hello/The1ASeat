@@ -207,7 +207,7 @@ export const WARNING_TEXT: Record<WarningCode, string> = {
   SPEND_REQUIREMENT_LIKELY_UNSUITABLE:
     "Nhiều khả năng bạn không kịp đạt mức spend của welcome offer này.",
   ANNUAL_FEE_ABOVE_STATED_TOLERANCE: "Annual fee năm đầu vượt mức bạn đã khai.",
-  SECOND_YEAR_FEE_APPLIES: "Năm đầu được miễn annual fee, nhưng từ năm thứ hai vẫn tính như thường.",
+  SECOND_YEAR_FEE_APPLIES: "Năm đầu annual fee nằm trong mức bạn chấp nhận, nhưng từ năm thứ hai thì cao hơn mức đó.",
   WELCOME_BONUS_BLOCKED_BY_PAST_CARD:
     "Theo điều khoản, những thẻ bạn đã từng giữ khiến bạn không nhận được welcome bonus của thẻ này.",
   WELCOME_BONUS_NOT_VERIFIABLE:

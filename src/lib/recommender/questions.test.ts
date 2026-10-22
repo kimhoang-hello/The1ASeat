@@ -240,6 +240,30 @@ test("áp câu trả lời KHÔNG sửa hồ sơ được truyền vào", () => 
   assert.equal(applied.state.goals[0].type === "trip" && applied.state.goals[0].cabin, "business");
 });
 
+test("câu hạng ghế chỉ đưa những hạng có giá trên chặng đó", () => {
+  // Bảng giá không có hạng nhất ở chặng nào; chọn nó từng là nhận "chặng này
+  // chưa có trong award chart" cho một chặng có giá (rà 21/10/2026).
+  // Chặng nào có giá ở ngày của CTX (châu Âu có từ 27/09) — chặng chưa có giá
+  // thì câu này không được hỏi, xem ca nội địa bên dưới.
+  const pricedRegions = [...new Set(DATA.awardStrategies.map((row) => row.destinationRegion))];
+  assert.ok(pricedRegions.length >= 3, "tiền đề: có chặng có giá để thử");
+  for (const region of pricedRegions) {
+    const spec = questionFor({ kind: "trip_cabin_unknown", subject: "g_1" }, stateWithGoal(`trip:${region}`), CTX);
+    assert.ok(spec !== null && spec.input.type === "choice");
+    const values = spec.input.options.map((option) => option.value);
+    assert.ok(values.includes("business"), region);
+    for (const cabin of values) {
+      assert.ok(
+        DATA.awardStrategies.some((row) => row.destinationRegion === region && row.cabin === cabin),
+        `${region}: "${cabin}" không có giá mà vẫn được đưa ra`,
+      );
+    }
+  }
+  // Chặng không có hạng nào có giá thì không lọc hết về rỗng.
+  const domestic = questionFor({ kind: "trip_cabin_unknown", subject: "g_1" }, stateWithGoal("trip:CANADA_US"), CTX);
+  assert.ok(domestic !== null && domestic.input.type === "choice" && domestic.input.options.length === 4);
+});
+
 test("giá trị lạ bị từ chối, không lặng lẽ ghi vào hồ sơ", () => {
   const state = stateWithGoal("next_card");
   const cases: [UserDataGap["kind"], string, Record<string, string | string[]>][] = [

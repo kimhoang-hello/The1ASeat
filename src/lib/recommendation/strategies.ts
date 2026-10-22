@@ -426,17 +426,8 @@ export function generateStrategies(input: StrategyInput): StrategyScore[] {
   );
 
   /* ---- Hai hành động tổng hợp -------------------------------------- */
-  const openCard = Math.max(
-    scores.get("BUILD_POINTS") ?? 0,
-    scores.get("EARN_FLEXIBLE_POINTS") ?? 0,
-    scores.get("EARN_SPECIFIC_CURRENCY") ?? 0,
-    scores.get("DIVERSIFY") ?? 0,
-  );
-  const standStill = Math.max(
-    scores.get("USE_EXISTING_POINTS") ?? 0,
-    scores.get("FOCUS_ON_AVAILABILITY") ?? 0,
-    scores.get("WAIT_FOR_BETTER_OFFER") ?? 0,
-  );
+  const openCard = Math.max(...OPEN_CARD_STRATEGIES.map((type) => scores.get(type) ?? 0));
+  const standStill = Math.max(...STAND_STILL_STRATEGIES.map((type) => scores.get(type) ?? 0));
 
   add("OPEN_CARD", openCard);
   add("NO_NEW_CARD", standStill, ...(standStill >= 0.7 ? (["NO_NEW_CARD_NEEDED"] as ReasonCode[]) : []));
@@ -452,6 +443,53 @@ export function generateStrategies(input: StrategyInput): StrategyScore[] {
         ? b.score - a.score
         : (TIEBREAK.get(a.strategy) ?? 99) - (TIEBREAK.get(b.strategy) ?? 99),
     );
+}
+
+/** Cách tiếp cận dẫn tới "mở thêm một thẻ" — `OPEN_CARD` là cực đại của chúng. */
+const OPEN_CARD_STRATEGIES: readonly StrategyType[] = [
+  "BUILD_POINTS",
+  "EARN_FLEXIBLE_POINTS",
+  "EARN_SPECIFIC_CURRENCY",
+  "DIVERSIFY",
+];
+/** Cách tiếp cận dẫn tới "chưa mở thẻ" — `NO_NEW_CARD` là cực đại của chúng. */
+const STAND_STILL_STRATEGIES: readonly StrategyType[] = [
+  "USE_EXISTING_POINTS",
+  "FOCUS_ON_AVAILABILITY",
+  "WAIT_FOR_BETTER_OFFER",
+];
+
+/**
+ * Hướng đi của KHUYẾN NGHỊ: chiến lược điểm cao nhất mà hành động thắng cuộc
+ * thật sự đi theo.
+ *
+ * Chiến lược §8 tính TRƯỚC bảng xếp hạng và chỉ là áp lực lên nhu cầu; người
+ * thắng do bảng xếp hạng quyết, có `NO_NEW_CARD` dự thi. Lấy `strategies[0]`
+ * làm hướng đi thì trang in "Hướng đi mình chọn: Đợi offer tốt hơn" ngay trên
+ * một thẻ khuyên mở, hoặc "Tích điểm ở nhiều chương trình" trên "Chưa mở thẻ
+ * mới" — 251/900 người dùng giả ngày 21/10/2026, phần lớn vì thị trường offer
+ * ở percentile 33 đẩy `WAIT_FOR_BETTER_OFFER` lên 0.67.
+ *
+ * "Tích thêm điểm linh hoạt" còn phải đúng với CHÍNH thẻ đó: CIBC® Aeroplan®
+ * thắng dưới nhãn ấy là nói một đồng tiền chỉ đổi được ở một hãng là linh hoạt.
+ * `OPEN_CARD` / `NO_NEW_CARD` luôn có mặt nên luôn có câu trả lời.
+ */
+export function strategyOfAction(
+  strategies: readonly StrategyScore[],
+  action: { kind: "open_card" | "no_new_card"; flexibleCurrency: boolean },
+): StrategyScore {
+  const fits = (type: StrategyType): boolean =>
+    action.kind === "no_new_card"
+      ? type === "NO_NEW_CARD" || STAND_STILL_STRATEGIES.includes(type)
+      : type === "OPEN_CARD" ||
+        (OPEN_CARD_STRATEGIES.includes(type) && (type !== "EARN_FLEXIBLE_POINTS" || action.flexibleCurrency));
+  return (
+    strategies.find((row) => fits(row.strategy)) ?? {
+      strategy: action.kind === "no_new_card" ? "NO_NEW_CARD" : "OPEN_CARD",
+      score: 0,
+      reasonCodes: [],
+    }
+  );
 }
 
 /**

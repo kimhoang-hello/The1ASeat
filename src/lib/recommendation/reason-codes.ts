@@ -193,7 +193,7 @@ export const WARNING_CODE_NOTES: Record<WarningCode, string> = {
   SPEND_REQUIREMENT_LIKELY_UNSUITABLE: "suitability.ts — chính câu §13 yêu cầu kèm theo khi phạt nặng.",
   ANNUAL_FEE_ABOVE_STATED_TOLERANCE: "suitability.ts — phí năm đầu vượt ngưỡng người dùng khai.",
   SECOND_YEAR_FEE_APPLIES:
-    "suitability.ts — offer miễn phí năm đầu nhưng phí thường niên vẫn tới ở năm thứ hai.",
+    "suitability.ts — phí năm đầu nằm trong ngưỡng người dùng khai, phí ở kỳ gia hạn đầu thì vượt: offer miễn phí năm đầu, hoặc ngân hàng đã báo tăng phí trước ngày gia hạn.",
   WELCOME_BONUS_BLOCKED_BY_PAST_CARD:
     "eligibility.ts — everHeld + luật once-in-a-lifetime (Amex®, BMO®, Neo™, loại thẻ Aeroplan®), hoặc luật N tháng (previous_cardholder_within_months) trượt. Thẻ gây chặn có thể là thẻ KHÁC cùng họ/cùng ngân hàng.",
   WELCOME_BONUS_NOT_VERIFIABLE:

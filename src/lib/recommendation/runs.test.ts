@@ -136,9 +136,11 @@ test("§20 — chạy lại với NHẦM bộ dữ liệu là LỖI, không ph�
 test("§20 — bộ dữ liệu / lịch sử offer CHƯA cắt theo asOf/knownAt bản ghi khai là lỗi, không phải một lượt chạy", () => {
   // Không kiểm thì bản ghi nói "biết tới ngày X" trong khi engine đã đọc cả
   // dòng nhập sau X — và dấu vân tay khớp chính cái bộ sai đó.
-  // Một phí mới hiệu lực SAU ngày chạy, và một đính chính nhập SAU knownAt.
+  // Một phí mới hiệu lực SAU kỳ gia hạn đầu, và một đính chính nhập SAU knownAt.
+  // Phí hiệu lực TRƯỚC kỳ gia hạn đầu thì `datasetAt` giữ — nó là phí năm sau
+  // của người mở thẻ hôm nay (`firstRenewalOf`), không phải tương lai lọt vào.
   const fee = DATA.productFees[0];
-  const future = { ...fee, id: `${fee.id}_future` as never, effectiveFrom: "2027-01-01" };
+  const future = { ...fee, id: `${fee.id}_future` as never, effectiveFrom: "2028-01-01" };
   const late = { ...fee, id: `${fee.id}_late` as never, recordedAt: "2026-09-08" };
   const uncut: RecommendationDataset = { ...DATA, productFees: [...DATA.productFees, future] };
   assert.notEqual(fingerprint(datasetAt(uncut, ASOF)), fingerprint(uncut), "tiền đề: cắt theo asOf bỏ dòng tương lai");
