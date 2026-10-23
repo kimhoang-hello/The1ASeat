@@ -3971,3 +3971,16 @@ trang Alaska® ghi "online only offer may not be available elsewhere if you leav
 - Trang Alaska® dựng chữ trong shadow DOM: `get_page_text`/`innerText` ra rỗng; đọc bằng JS đi qua `shadowRoot`.
 - Ascent KHÔNG có phí giao dịch ngoại tệ: khối thẻ Ascent trên trang Alaska® ghi "No foreign transaction fees†"
   (kiểm bằng phần tử chứa riêng khối Ascent, không lẫn Summit). Hằng `BOA_FTF_UNKNOWN` đã bỏ.
+
+## Vá `next` 16.3.8 → 16.4.2 (23/10/2026)
+
+hPanel quét 22/10 23:35 báo 3 lỗ hổng `next@16.3.8`, công bố cùng ngày 22/10 (bản vá 16.4.1 ra từ 14/10):
+- GHSA-2464-fhr4-w9xw (critical, RCE qua Image Optimization API với SVG): site có dùng `next/image` (remote chỉ
+  `images.ctfassets.net`, không `dangerouslyAllowSVG`) — khó khai thác vì ảnh nguồn do mình kiểm soát.
+- GHSA-673q-mjm6-r5xr (critical, RCE trong `use cache` trả typed array): KHÔNG dính, site chưa bật Cache
+  Components, vẫn dùng `unstable_cache`.
+- GHSA-p3m5-59mp-jv5r / CVE-2026-94482 (high, DoS App Router qua Server Actions): CÓ dính — `credit-cards/goi-y`
+  và `admin/reco-debugger` dùng `"use server"`.
+`next` + `eslint-config-next` ghim 16.4.2, `@next/third-parties` theo lên 16.4.2. Lần này hPanel và `npm audit`
+khớp nhau. `npm audit` còn 5 high nhánh `braces` ≤3.0.3 (qua `eslint-config-next` → `fast-glob` → `micromatch`):
+chỉ dev/lint, `npm audit --omit=dev` = 0, và CHƯA có bản `braces` nào vá (latest 3.0.3) — đừng thêm override.
