@@ -3992,3 +3992,39 @@ nhớ khi validate collection có ràng buộc mà quá lớn. `zod` chỉ là b
 dependency của `eslint-plugin-react-hooks` (dev/lint). Code site không import `zod` lẫn helper zod của SDK → không
 dính thật. Range `^3.25.0 || ^4.0.0` đã với tới bản vá nên chỉ cần `npm update zod`, không thêm override.
 Nhánh `braces` ghi ở mục 23/10 nay không còn trong `npm audit` (audit = 0).
+
+## Kiểm toàn diện định kỳ 24/10/2026 — đừng đề xuất lại
+
+Gate: lint, tsc, build, 10 audit, 6 test suite (`test:reco` 494 + 23 skip MySQL), `audit:links` production (239
+trang, không trang mồ côi), `npm audit` = 0, smoke test + `www` 308 + 5 header bảo mật. Codex hai vòng: rà route theo
+thứ tự hậu quả + commit từ 21/10; bác bản vá (2/2 ĐÚNG, "vẫn chặn được lỗi ban đầu, không lỗi mới").
+
+**Đã vá:**
+- **`expire-offers` có thể gỡ một transfer bonus vừa được gia hạn tới hôm nay.** Vòng bonus đọc CDA TRƯỚC rồi mới
+  `listEntries`; tác giả gia hạn tới `00:00` hôm nay và publish lọt vào giữa thì `liveExpiresAt` là hạn cũ, entry
+  mới vẫn khớp `expiresAt[lte]=now`, và `X-Contentful-Version` gửi kèm DELETE là version MỚI nên optimistic
+  concurrency không chặn. Nay vòng bonus cũng bỏ qua entry có hạn trong chính nó chưa qua — đúng cửa vòng thẻ đã có
+  (`if (expiresAt && !hasExpired(expiresAt)) continue`). Nếu site thật sự còn treo hạn cũ thì vòng đối chiếu
+  `liveBonusExpiry` vẫn báo 500.
+- Dữ liệu: **Tangerine® chequing $250 gia hạn tới 30/04/2027** (điều khoản: "Client Number was created between May
+  1, 2024 and April 30, 2027"). Site còn ghi 31/10/2026 — tới 01/11 trang sẽ tự giấu offer còn sống.
+
+**Đã kiểm, KHÔNG phải lỗi (đừng báo lại):**
+- *Bản tin render `entry-hyperlink`/`asset-hyperlink` thành chữ "type: … id: …"* (Codex): 0/75 bài dùng hai loại node
+  này (đếm qua CDA 24/10), và renderer của chính trang web cũng không xử lý chúng — không riêng email. Khi nào tác
+  giả bắt đầu dùng link tới entry/asset thì sửa cả hai renderer cùng lúc.
+- `sync-videos` đỏ 24/10 05:57 UTC ("channel: 404, uploads-playlist: 404", mục 27/09) và 12:02 UTC (HTTP 000,
+  "Failed to connect to ghe1a.com port 443 after 268994 ms" — như 12/10). Lượt 17:53/22:14 hôm trước xanh.
+- `audit:health` "0 transfer bonus" đang phục vụ: không bonus nào còn hạn, không phải lỗi đọc.
+- Rà tay khớp trang ngân hàng: Scotiabank® Preferred/Ultimate (29/10), Student (01/11); BMO® $900 (02/11) + Student
+  $200 Tech; National Bank® (03/11); RBC® VIP/Signature (iPad, 02/11), Student (02/11), Day to Day $150 (08/12);
+  Simplii™ chequing $350 (31/01/2027) + HISA 4.60% (31/10); Tangerine® savings 4.50%/0.30% (khách mới tới 30/11).
+  Lãi: bảng Scotiabank® hiệu lực 24/10/2026 MomentumPLUS 0.40% + 0.30% (360 ngày) — không đổi; Money Master
+  0.01%/0.50%; EQ Bank™ base 1.50%/2.75%. CIBC® Aventura® ×2 (60,000, "Digital exclusive") và TD® First Class
+  (160,000) vẫn elevated. BMO® VIPorter® 70,000 còn trên trang BMO®; hạn 31/10 là link `/rebates/` nên
+  `expire-offers` tự viết lại copy.
+
+**Chờ tác giả:** trang MomentumPLUS của Scotiabank® nay có "Welcome Bonus Interest Rate" 4.05% cho 3 tháng đầu (tài
+khoản đầu tiên), quảng cáo "4.65% với premium period 90 ngày" (4.70% Preferred, 4.75% Ultimate). Cộng các thành phần
+trên trang không ra 4.65% (0.40 + 0.05 + 4.05 = 4.50) và không thấy ngày kết thúc công khai — chưa sửa
+`interestRate`/`promoNoteVi` vì không chắc con số nào đúng.

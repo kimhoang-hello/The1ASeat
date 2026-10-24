@@ -253,6 +253,14 @@ async function handleExpire(request: NextRequest) {
     // slug bị đổi trong draft, hoặc CDN chưa kịp. Dừng lại, đừng gỡ mò.
     if (!liveExpiresAt) continue;
     if (!hasExpired(liveExpiresAt)) continue;
+    // Cùng cửa với vòng thẻ ở trên. CDA đọc TRƯỚC `listEntries`, nên nếu tác
+    // giả gia hạn tới `00:00` hôm nay và publish lọt vào giữa hai lượt đọc,
+    // `liveExpiresAt` là hạn cũ còn entry (và `sys.version` gửi kèm DELETE) đã
+    // là bản mới — optimistic concurrency không chặn được, vì version đọc SAU
+    // lần publish đó. Hạn trong chính entry còn sống thì đừng gỡ; vòng đối
+    // chiếu bên dưới báo lỗi nếu site thật sự vẫn treo hạn cũ.
+    const draftExpiresAt = field<string>(bonus, "expiresAt");
+    if (draftExpiresAt && !hasExpired(draftExpiresAt)) continue;
 
     consideredBonusSlugs.add(slug);
     try {

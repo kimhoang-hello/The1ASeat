@@ -599,11 +599,11 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     monthlyFee: 0,
     bonusValue: 250,
     bonusLabelVi: "$250",
-    bonusExpiresOn: "2026-10-31",
+    bonusExpiresOn: "2027-04-30",
     bonusConditionsVi: [
       "Mở tài khoản No Fee Daily Chequing mới, chỉ dành cho khách hàng mới của Tangerine®.",
       "Chuyển payroll deposit về tài khoản Tangerine® và duy trì 2 tháng liên tiếp.",
-      "Offer chạy 01/05/2024 – 31/10/2026.",
+      "Offer chạy 01/05/2024 – 30/04/2027.",
     ],
     interestRate: 0.1,
     regularRate: 0.01,
