@@ -3984,3 +3984,11 @@ hPanel quét 22/10 23:35 báo 3 lỗ hổng `next@16.3.8`, công bố cùng ngà
 `next` + `eslint-config-next` ghim 16.4.2, `@next/third-parties` theo lên 16.4.2. Lần này hPanel và `npm audit`
 khớp nhau. `npm audit` còn 5 high nhánh `braces` ≤3.0.3 (qua `eslint-config-next` → `fast-glob` → `micromatch`):
 chỉ dev/lint, `npm audit --omit=dev` = 0, và CHƯA có bản `braces` nào vá (latest 3.0.3) — đừng thêm override.
+
+## Vá `zod` 4.4.3 → 4.6.7 (24/10/2026)
+
+hPanel quét 23/10 16:02 và `npm audit` cùng báo 1 high: CVE-2023-54404 / GHSA-mrhx-c7xc-m3w5, `zod` < 4.6.6 cạn bộ
+nhớ khi validate collection có ràng buộc mà quá lớn. `zod` chỉ là bắc cầu: peer TUỲ CHỌN của `@anthropic-ai/sdk` và
+dependency của `eslint-plugin-react-hooks` (dev/lint). Code site không import `zod` lẫn helper zod của SDK → không
+dính thật. Range `^3.25.0 || ^4.0.0` đã với tới bản vá nên chỉ cần `npm update zod`, không thêm override.
+Nhánh `braces` ghi ở mục 23/10 nay không còn trong `npm audit` (audit = 0).
