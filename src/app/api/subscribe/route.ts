@@ -67,7 +67,7 @@ const UPSTREAM_TIMEOUT_MS = 10_000;
 export async function POST(request: Request) {
   // Ahead of parsing: this endpoint has someone else's inbox on the other end
   // of it, so the cheapest possible rejection is the right one.
-  const limit = rateLimit(`subscribe:${clientIp(request)}`, LIMIT, WINDOW_MS);
+  const limit = rateLimit(`subscribe:ip:${clientIp(request)}`, LIMIT, WINDOW_MS);
   if (!limit.ok) {
     return NextResponse.json(
       { error: "rate_limited" },

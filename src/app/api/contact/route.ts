@@ -62,7 +62,10 @@ function isValidBody(body: unknown): body is ContactBody {
 }
 
 export async function POST(request: Request) {
-  const limit = rateLimit(`contact:${clientIp(request)}`, LIMIT, WINDOW_MS);
+  // `ip:` tách xô IP khỏi trần chung `contact:all`: thiếu nó thì
+  // `X-Forwarded-For: all` biến xô IP thành chính trần chung, và POST rác chưa
+  // validate đếm thẳng vào phần của người thật (Codex 24/10/2026).
+  const limit = rateLimit(`contact:ip:${clientIp(request)}`, LIMIT, WINDOW_MS);
   if (!limit.ok) {
     return NextResponse.json(
       { error: "rate_limited" },

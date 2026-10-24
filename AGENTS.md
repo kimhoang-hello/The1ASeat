@@ -4028,3 +4028,22 @@ thứ tự hậu quả + commit từ 21/10; bác bản vá (2/2 ĐÚNG, "vẫn c
 khoản đầu tiên), quảng cáo "4.65% với premium period 90 ngày" (4.70% Preferred, 4.75% Ultimate). Cộng các thành phần
 trên trang không ra 4.65% (0.40 + 0.05 + 4.05 = 4.50) và không thấy ngày kết thúc công khai — chưa sửa
 `interestRate`/`promoNoteVi` vì không chắc con số nào đúng.
+
+## Kiểm toàn diện định kỳ 24/10/2026 (lượt hai, 10:20) — đừng đề xuất lại
+
+Chạy lại sau lượt sáng cùng ngày: gate, 11 audit, 6 test suite, `npm audit` = 0, smoke test + `www` 308 + 5 header
+đều xanh; không run GitHub đỏ mới. Rà tay ngân hàng không làm lại (lượt sáng đã khớp hết, dữ liệu chưa đổi). Codex
+ba vòng: rà route theo hậu quả; bác bản vá (1 BẢN VÁ HỎNG — thiếu ở `reco:start`, đã sửa); vòng chốt 4/4 ĐÚNG.
+
+**Đã vá:**
+- **Xô rate-limit theo IP trùng khoá trần chung.** Khoá là `contact:<ip>` / `subscribe:<ip>` / `reco:start:<ip>`,
+  trần chung là `contact:all` / `subscribe:all` / `reco:start:all`, và `<ip>` là phần tử đầu `X-Forwarded-For` do
+  client đặt được. Gửi `X-Forwarded-For: all` thì POST rác chưa validate tăng thẳng bộ đếm trần chung — câu "xoay
+  header chỉ vượt được xô IP, không vượt được trần chung" ở mục 26/09 SAI cho tới bản vá này. Nay xô IP mang tiền tố
+  `ip:` (`Map` so nguyên chuỗi, không ký tự nào trong XFF xoá được tiền tố). `subscribe:email:<hash>` là 64 hex,
+  `reco:run` dùng cookie dạng `u_<32hex>`, `reco:explain` dùng runId server sinh — không va chạm.
+- **`reco:start` đếm trần chung cả lượt đã bị trần IP chặn** (hai `rateLimit` gọi liền rồi mới `||`). Một IP thật,
+  không giả header, bấm 500 lần là khoá trang Gợi ý thẻ của mọi người một giờ. Nay trần IP chặn trước, chỉ lượt qua
+  mới đếm trần chung — cùng luật `contact`/`subscribe` đã có.
+- KHÔNG dời kiểm `goal` lên trước trần chung, có chủ ý: `goal=cash` hợp lệ gửi dễ như goal sai, nên đếm goal sai
+  không mở đường tấn công nào mới; trần chung chính là để giới hạn kịch bản xoay XFF với goal hợp lệ (Codex đồng ý).

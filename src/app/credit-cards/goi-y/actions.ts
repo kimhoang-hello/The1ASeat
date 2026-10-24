@@ -136,9 +136,13 @@ export async function startRecommendation(formData: FormData): Promise<void> {
   // HAI trần: theo IP, và một trần chung cho cả site. `x-forwarded-for` là
   // header client tự đặt được (AGENTS.md), nên trần theo IP một mình chỉ chặn
   // người dùng thật; trần chung đặt giới hạn cho cả kịch bản xoay IP giả.
-  const perIp = rateLimit(`reco:start:${ip}`, 30, 60 * 60 * 1000);
+  // Trần chung chỉ đếm lượt đã qua trần theo IP: đếm cả lượt đã bị chặn thì một
+  // IP duy nhất, không cần giả header, bấm 500 lần là khoá trang của mọi người
+  // một giờ (Codex 24/10/2026). `ip:` giữ xô IP khác khoá `reco:start:all`.
+  const perIp = rateLimit(`reco:start:ip:${ip}`, 30, 60 * 60 * 1000);
+  if (!perIp.ok) fail(RECO_ERROR.busy);
   const siteWide = rateLimit("reco:start:all", 500, 60 * 60 * 1000);
-  if (!perIp.ok || !siteWide.ok) fail(RECO_ERROR.busy);
+  if (!siteWide.ok) fail(RECO_ERROR.busy);
 
   const today = todayInSiteZone();
   // Phiên mới thì danh sách "đã bỏ qua" cũng mới: cookie bỏ qua theo khoá câu
