@@ -3306,6 +3306,11 @@ test("hướng đi in ra cùng chiều với hành động thắng, và 'điểm
         const programId = AUDIT_IX.productById.get(result.primaryAction.productId!)!.pointsProgramId!;
         assert.ok(isFlexibleInPractice(AUDIT_IX, programId, AUDIT_ASOF), label);
       }
+      if (result.strategy.strategy === "DIVERSIFY") {
+        const programId = AUDIT_IX.productById.get(result.primaryAction.productId!)!.pointsProgramId;
+        assert.notEqual(programId, auditRun(state).derived.portfolio.concentration[0]?.ecosystem, label);
+      }
+      assert.ok(result.strategy.score > 0 || ["OPEN_CARD", "NO_NEW_CARD"].includes(result.strategy.strategy), label);
       // Vẫn là chiến lược điểm CAO NHẤT trong số đi cùng chiều — không bịa hướng mới.
       assert.ok(result.strategies.some((row) => row.strategy === result.strategy.strategy && row.score === result.strategy.score));
       if (result.strategy.strategy !== result.strategies[0].strategy) differs += 1;
@@ -3316,6 +3321,77 @@ test("hướng đi in ra cùng chiều với hành động thắng, và 'điểm
   // "điểm linh hoạt" trên CIBC® Aeroplan®). Đỏ ở đây là dữ liệu đã đổi — đổi
   // kịch bản, đừng gỡ phép kiểm.
   assert.ok(differs >= 2, `chỉ ${differs} nhân vật đi qua nhánh chọn lại hướng đi`);
+});
+
+test("'Tích điểm ở nhiều chương trình' không đi với thẻ kiếm đúng đồng tiền đang dồn 100%", () => {
+  // `walk_1_286` của người dùng giả 24/10/2026 (Codex, vòng bác kết luận "sạch"):
+  // 127,748 Aeroplan®, đang giữ CIBC® Aeroplan® Visa, muốn bay châu Âu — DIVERSIFY
+  // 1.0 (hoà EARN_FLEXIBLE_POINTS, đứng sau nó ở thứ tự phá hoà), và thẻ thắng
+  // là một thẻ Aeroplan® khác. Trang từng in "Tích điểm ở nhiều chương trình"
+  // (4.38.0 thì in "Tích thêm điểm linh hoạt").
+  const asOf = "2026-10-24";
+  const data = datasetAt(RAW, asOf, { knownAt: asOf });
+  const ix = indexDataset(data);
+  const userId = "u_walk_1_286";
+  const zero = { low: 0, high: 0 };
+  const state = {
+    profile: {
+      id: userId, country: "CA", province: null,
+      annualPersonalIncome: { low: 200_000, high: null }, annualHouseholdIncome: { low: 200_000, high: null },
+      personalIncomeDeclined: false, householdIncomeDeclined: false, annualFeeTolerancePerCard: 150,
+      businessCardsAllowed: false, hasBusiness: true, isStudent: false, createdAt: asOf, updatedAt: asOf,
+    },
+    spend: {
+      userId, monthlyTotal: { low: 10_000, high: null },
+      byCategory: {
+        grocery: zero, dining: { low: 1_000, high: null }, food_delivery: zero, gas: { low: 500, high: 1_000 },
+        ev_charging: zero, travel: zero, airline_direct: { low: 1_000, high: null }, hotel: zero,
+        car_rental: { low: 500, high: 1_000 }, drugstore: zero, recurring: zero, streaming: zero, transit: zero,
+        rideshare: zero, entertainment: { low: 1_000, high: null }, foreign_currency: zero, everything_else: zero,
+      },
+      minimumSpendCapacity3m: { low: 12_000, high: null }, updatedAt: asOf,
+    },
+    cards: [
+      { id: "uc_1", userId, productId: productIdFor("cibc-aeroplan-visa"), status: "active", openedDate: null, closedDate: null },
+      { id: "uc_2", userId, productId: productIdFor("scotiabank-scene-plus-visa-students"), status: "closed", openedDate: null, closedDate: "2026-07-31" },
+      { id: "uc_3", userId, productId: productIdFor("bmo-viporter-world-elite-mastercard"), status: "closed", openedDate: null, closedDate: "2025-01-31" },
+      { id: "uc_4", userId, productId: productIdFor("wealthsimple-visa-infinite-privilege"), status: "closed", openedDate: null, closedDate: "2026-04-30" },
+    ],
+    balances: [{ userId, programId: "aeroplan", balance: 127_748, updatedAt: asOf }],
+    goals: [{
+      id: "g_1", userId, priority: 1, createdAt: asOf, type: "trip", originRegion: null, originAirport: null,
+      destinationRegion: "EUROPE", destinationAirport: null, cabin: "economy", passengers: 3, roundTrip: true,
+      travelStart: "2027-08-01", travelEnd: "2027-08-31", flexibility: "medium",
+    }],
+    declared: { cards: true, balances: true },
+  } as unknown as UserState;
+  const result = recommend({ state, data, ix, asOf, probeFollowUps: false }).results[0];
+  const programId = ix.productById.get(result.primaryAction.productId!)?.pointsProgramId;
+  // Tiền đề — đỏ ở đây là dữ liệu đã đổi: đổi kịch bản, đừng gỡ phép kiểm.
+  assert.equal(result.strategies.find((row) => row.strategy === "DIVERSIFY")?.score, 1, "tiền đề: dồn 100% → DIVERSIFY 1.0");
+  assert.equal(programId, "aeroplan", `tiền đề: thẻ thắng kiếm Aeroplan® (${result.primaryAction.productSlug})`);
+  assert.notEqual(result.strategy.strategy, "DIVERSIFY");
+  assert.notEqual(result.strategy.strategy, "EARN_FLEXIBLE_POINTS");
+});
+
+test("không còn thẻ nào để mở và chưa có điểm: hướng đi không phải 'Dùng số điểm đang có'", () => {
+  // Codex 24/10/2026: tập ứng viên rỗng, mọi chiến lược đứng yên đều 0, và
+  // thứ tự phá hoà đưa USE_EXISTING_POINTS (0.00) lên làm hướng đi.
+  const userId = "u_holds_everything";
+  const state = structuredClone(beginnerNoCards);
+  state.profile = { ...state.profile, id: userId as never };
+  state.goals = [{ type: "next_card", id: "g_next" as never, userId: userId as never, priority: 1, createdAt: AUDIT_ASOF }];
+  state.balances = [];
+  state.cards = AUDIT_DATA.products.map((product, index) => ({
+    id: `uc_all_${index}` as UserCardId, userId: userId as never, productId: product.id,
+    status: "active", openedDate: null, closedDate: null,
+  })) as UserState["cards"];
+  state.declared = { cards: true, balances: true };
+  const output = auditRun(state);
+  const result = output.results[0];
+  assert.equal(output.derived.candidates.length, 0, "tiền đề: không còn ứng viên");
+  assert.equal(result.primaryAction.kind, "no_new_card");
+  assert.equal(result.strategy.strategy, "NO_NEW_CARD");
 });
 
 test("độ tươi §29 đếm phí năm sau CHỈ của thẻ được chấm", () => {

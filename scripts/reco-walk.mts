@@ -361,6 +361,17 @@ for (let index = 0; index < N; index += 1) {
   if (STAND_STILL.has(result.strategy.strategy) !== (result.primaryAction.kind === "no_new_card")) {
     issue("strategy_vs_winner", `${truth.id}: ${result.strategy.strategy} / ${winner}`);
   }
+  // Một bit họ hướng đi là chưa đủ (Codex 24/10/2026): "Tích điểm ở nhiều
+  // chương trình" trên một thẻ kiếm đúng đồng tiền người dùng đang dồn 100%
+  // vẫn qua. Đối chiếu độc lập: chương trình của thẻ thắng ≠ hệ sinh thái đầu.
+  const winnerProgram = data.products.find((product) => product.id === result.primaryAction.productId)?.pointsProgramId;
+  const topEcosystem = last?.record.derivedState.portfolio.concentration[0]?.ecosystem;
+  if (result.strategy.strategy === "DIVERSIFY" && winnerProgram != null && winnerProgram === topEcosystem) {
+    issue("diversify_same_program", `${truth.id}: ${winner} / ${topEcosystem}`);
+  }
+  if (result.strategy.score <= 0 && result.strategy.strategy !== "OPEN_CARD" && result.strategy.strategy !== "NO_NEW_CARD") {
+    issue("zero_score_strategy", `${truth.id}: ${result.strategy.strategy}`);
+  }
   if (/undefined|NaN|\[object/.test(JSON.stringify(view))) issue("broken_text", truth.id);
   const held = new Set(state.cards.filter((card) => card.status === "active").map((card) => card.productId as string));
   if (result.primaryAction.productId !== null && held.has(result.primaryAction.productId)) {

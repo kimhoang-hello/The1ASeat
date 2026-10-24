@@ -18,7 +18,7 @@
  * `Date.now`, không có LLM.
  */
 
-import { analyzePortfolio, isFlexibleInPractice, topEcosystemShare } from "./portfolio.ts";
+import { addsOtherEcosystem, analyzePortfolio, isFlexibleInPractice, topEcosystemShare } from "./portfolio.ts";
 import { normalize } from "./normalize.ts";
 import { buildReadSet, goalReadsEarn, oldestVerified, scopeDataGaps } from "./read-set.ts";
 import { generateStrategies, strategyOfAction, tripCoverage } from "./strategies.ts";
@@ -373,6 +373,10 @@ import type { ReasonCode, WarningCode } from "./reason-codes.ts";
  *     "Hướng đi mình chọn". 251/900 người dùng giả từng thấy hướng đi ngược với
  *     khuyến nghị ("Đợi offer tốt hơn" trên một thẻ khuyên mở), thêm 22 "điểm
  *     linh hoạt" trên thẻ không linh hoạt. Không đổi điểm hay người thắng.
+ *     Thêm trước khi merge (24/10/2026, chưa lượt chạy nào lưu dưới 4.39.0):
+ *     "Tích điểm ở nhiều chương trình" chỉ khi thẻ thắng đưa giá trị ra ngoài
+ *     hệ sinh thái đang dồn nhiều nhất (`addsOtherEcosystem`), và chiến lược
+ *     điểm 0 không làm hướng đi.
  *
  * 3.3.0 và 3.4.0 KHÔNG đổi kết quả của 15 nhân vật mẫu — chúng không chứa đầu
  * vào hỏng nào — nhưng chúng đổi kết quả cho những đầu vào đó, và §20 nói về
@@ -803,14 +807,16 @@ export function recommend(input: RecommendInput): RecommendationRun {
       goalId: goal.goal.id,
       goalType: goal.goal.type,
       // Hướng đi của CHÍNH hành động thắng — xem `strategyOfAction`.
-      strategy: strategyOfAction(strategies, {
-        kind: winner.kind,
-        flexibleCurrency: (() => {
-          const programId =
-            winner.productId === null ? null : ix.productById.get(winner.productId)?.pointsProgramId ?? null;
-          return programId !== null && isFlexibleInPractice(ix, programId, asOf);
-        })(),
-      }),
+      strategy: (() => {
+        const programId =
+          winner.productId === null ? null : ix.productById.get(winner.productId)?.pointsProgramId ?? null;
+        return strategyOfAction(strategies, {
+          kind: winner.kind,
+          flexibleCurrency: programId !== null && isFlexibleInPractice(ix, programId, asOf),
+          // Cùng danh mục (cùng thước) mà `DIVERSIFY` của mục tiêu này đo.
+          addsProgram: programId !== null && addsOtherEcosystem(goalPortfolio, programId, ix, asOf),
+        });
+      })(),
       strategies,
       primaryAction: winner,
       alternatives,

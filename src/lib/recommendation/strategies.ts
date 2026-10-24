@@ -472,19 +472,28 @@ const STAND_STILL_STRATEGIES: readonly StrategyType[] = [
  *
  * "Tích thêm điểm linh hoạt" còn phải đúng với CHÍNH thẻ đó: CIBC® Aeroplan®
  * thắng dưới nhãn ấy là nói một đồng tiền chỉ đổi được ở một hãng là linh hoạt.
- * `OPEN_CARD` / `NO_NEW_CARD` luôn có mặt nên luôn có câu trả lời.
+ * "Tích điểm ở nhiều chương trình" cũng vậy: người dồn 100% vào Aeroplan® mà
+ * thẻ thắng lại là CIBC® Aeroplan® Visa Infinite thì thẻ đó không thêm chương
+ * trình nào (Codex, vòng bác kết luận "sạch" 24/10/2026 — `walk_1_286`).
+ *
+ * Chiến lược điểm 0 không phải hướng đi: không còn thẻ nào để mở thì người
+ * chưa có điểm nào từng nhận "Dùng số điểm đang có" (0.00) chỉ vì nó đứng đầu
+ * thứ tự phá hoà. `OPEN_CARD` / `NO_NEW_CARD` là chỗ lùi về khi không dòng nào
+ * vừa đi cùng chiều vừa có điểm.
  */
 export function strategyOfAction(
   strategies: readonly StrategyScore[],
-  action: { kind: "open_card" | "no_new_card"; flexibleCurrency: boolean },
+  action: { kind: "open_card" | "no_new_card"; flexibleCurrency: boolean; addsProgram: boolean },
 ): StrategyScore {
   const fits = (type: StrategyType): boolean =>
     action.kind === "no_new_card"
       ? type === "NO_NEW_CARD" || STAND_STILL_STRATEGIES.includes(type)
       : type === "OPEN_CARD" ||
-        (OPEN_CARD_STRATEGIES.includes(type) && (type !== "EARN_FLEXIBLE_POINTS" || action.flexibleCurrency));
+        (OPEN_CARD_STRATEGIES.includes(type) &&
+          (type !== "EARN_FLEXIBLE_POINTS" || action.flexibleCurrency) &&
+          (type !== "DIVERSIFY" || action.addsProgram));
   return (
-    strategies.find((row) => fits(row.strategy)) ?? {
+    strategies.find((row) => row.score > 0 && fits(row.strategy)) ?? {
       strategy: action.kind === "no_new_card" ? "NO_NEW_CARD" : "OPEN_CARD",
       score: 0,
       reasonCodes: [],

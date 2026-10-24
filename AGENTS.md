@@ -4000,6 +4000,13 @@ thiếu phạm vi) — đều đã sửa.
   `OPEN_CARD` 0.6), hoặc "Tích điểm ở nhiều chương trình" trên "Chưa mở thẻ mới". Nay `strategyOfAction`: chiến lược
   điểm cao nhất cùng họ với hành động thắng; "điểm linh hoạt" chỉ khi thẻ thắng kiếm đồng tiền `isFlexibleInPractice`
   (thêm 22/900 từng in nó cho thẻ kiếm Aeroplan® ×13, VIPorter® ×4, Marriott Bonvoy® ×3, Scene+™, TD Rewards® — tổng 273 hồ sơ đổi hướng đi, 0 đổi người thắng). Hai hằng họ chiến lược dùng chung với phép tính `OPEN_CARD`/`NO_NEW_CARD`.
+  **Vá thêm lúc merge 24/10/2026** (Codex, vòng bác kết luận "sạch" sau rebase): chỉ kiểm HỌ hướng đi là chưa đủ.
+  (1) "Tích điểm ở nhiều chương trình" in trên thẻ kiếm đúng đồng tiền người dùng đang dồn 100% (`walk_1_286`: 127,748
+  Aeroplan®, thẻ thắng CIBC® Aeroplan® Visa Infinite) — nay DIVERSIFY chỉ khi thẻ thắng đưa giá trị ra ngoài hệ sinh
+  thái đầu (`addsOtherEcosystem`, cùng `ecosystemShares` với `concentration`; Membership Rewards® chia qua đích chuyển
+  nên vẫn tính là thêm). (2) Tập ứng viên rỗng + chưa có điểm in "Dùng số điểm đang có" điểm 0.00 vì thứ tự phá hoà —
+  nay chiến lược điểm 0 không làm hướng đi, lùi về `OPEN_CARD`/`NO_NEW_CARD`. `reco:walk` kiểm độc lập cả hai
+  (`diversify_same_program`, `zero_score_strategy`). Gộp vào 4.39.0 vì chưa lượt chạy nào lưu dưới version đó.
 - **Câu hạng ghế đưa "Hạng nhất"** trong khi không chặng nào có giá hạng nhất (`award-charts.ts`: không hãng nào bán
   Canada → châu Á). Chọn nó là nhận "chặng này chưa có trong award chart" và mất câu số người/khứ hồi — 29/124 hồ sơ
   chuyến bay không bỏ qua câu nào rơi đúng chỗ đó. Nay chỉ đưa hạng có award strategy trên chặng; không hạng nào có

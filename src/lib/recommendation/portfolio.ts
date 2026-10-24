@@ -437,6 +437,27 @@ export function topEcosystemShare(portfolio: PortfolioAnalysis): number | null {
   return portfolio.concentration[0].share;
 }
 
+/**
+ * Thẻ kiếm `programId` có đưa giá trị ra NGOÀI hệ sinh thái đang dồn nhiều
+ * nhất không — điều kiện để hướng đi "Tích điểm ở nhiều chương trình" đúng với
+ * chính thẻ đó. Đo bằng đúng `ecosystemShares` mà `concentration` dùng: dồn
+ * 100% vào Aeroplan® thì CIBC® Aeroplan® không kéo ra phần nào, còn Membership
+ * Rewards® chia đều qua các đích chuyển nên có. Chưa có số dư nào thì chưa có
+ * gì để dồn — đồng điểm nào cũng là thêm một chương trình.
+ */
+export function addsOtherEcosystem(
+  portfolio: PortfolioAnalysis,
+  programId: PointsProgramId,
+  ix: DatasetIndex,
+  asOf: string,
+): boolean {
+  const program = ix.programById.get(programId);
+  if (program === undefined) return false;
+  const top = portfolio.concentration[0]?.ecosystem;
+  if (top === undefined) return true;
+  return (ecosystemShares(program, ix, asOf).get(top) ?? 0) < 1;
+}
+
 /** Sản phẩm người dùng TỪNG giữ, kể cả đã đóng — `closed` và `previously_held`
  *  cùng nghĩa. Dùng cho luật welcome offer, không dùng để loại ứng viên. */
 export function pastProductIds(state: UserState): Set<ProductId> {
