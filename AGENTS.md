@@ -4186,6 +4186,11 @@ hẹn giờ 25/10 → 15/11 + tầng render), bác bản vá (3/3 ĐÚNG), bác 
   link giới thiệu/affiliate khác (17 `expedia.com/affiliate/*` — đều 429; Chase® refer, Amex® referral, Wise, Airalo,
   Chexy, Neo, seats.aero). Lần sau lọc `affiliate|referral|refer|invite|/join/|go.link|/r/|[?&]ref=` trước khi gọi.
 
-**Chờ tác giả:** bài video `i-stayed-at-hotel-sosei-sapporo-for-just-78-full-hotel-revi` thiếu cả `seoTitleVi`
-lẫn `seoDescriptionVi`; 4 `seoDescriptionVi` dài 161–167 ký tự (cancel-rebook, Hyatt Regency Paris Etoile,
-Ritz-Carlton Fukuoka, "tại sao Hyatt"). Năm thẻ hết offer 31/10–01/11 (BMO® VIPorter®, bốn Scotiabank®).
+**Mô tả SEO (xong cùng ngày, tác giả yêu cầu):** viết `seoTitleVi` + `seoDescriptionVi` cho video Hotel Sosei
+Sapporo (số liệu lấy từ `hotels.ts`: hai đêm qua Amex Fine Hotels + Resorts, tự trả $78 USD sau credit), và rút năm
+`seoDescriptionVi` 161–167 ký tự xuống ≤160 bằng CẮT chữ, không thay chữ của tác giả (Codex bắt bản đầu đổi
+"kinh nghiệm" → "mẹo"): cancel-rebook, Hyatt Regency Paris Étoile, Ritz-Carlton Fukuoka, "tại sao Hyatt", và
+Caption by Hyatt Namba Osaka (đăng sáng 25/10). Cả sáu entry sạch draft trước khi ghi; webhook trả lý do bỏ qua
+bản tin (video / không phải Deals) — không email nào gửi đi.
+
+**Chờ tác giả:** năm thẻ hết offer 31/10–01/11 (BMO® VIPorter®, bốn Scotiabank®).
