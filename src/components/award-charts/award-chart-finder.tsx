@@ -97,7 +97,7 @@ function TransferLegs({ program }: { program: Program }) {
       {legs.map(({ issuer, leg, tint }) => (
         <span
           key={issuer}
-          className={`rounded-md px-2 py-1 text-[11px] font-medium leading-tight ${tint}`}
+          className={`rounded-md px-2 py-1 text-xs font-medium leading-tight ${tint}`}
         >
           {issuer} · {leg!.ratio}
         </span>

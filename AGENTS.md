@@ -4138,3 +4138,54 @@ ba vòng: rà route theo hậu quả; bác bản vá (1 BẢN VÁ HỎNG — thi
   mới đếm trần chung — cùng luật `contact`/`subscribe` đã có.
 - KHÔNG dời kiểm `goal` lên trước trần chung, có chủ ý: `goal=cash` hợp lệ gửi dễ như goal sai, nên đếm goal sai
   không mở đường tấn công nào mới; trần chung chính là để giới hạn kịch bản xoay XFF với goal hợp lệ (Codex đồng ý).
+
+## Kiểm toàn diện 25/10/2026 (lượt tay, mọi trang) — đừng đề xuất lại
+
+Gate: lint, tsc, build, 11 audit (+ `audit:awards -- --links`), 9 test suite (`test:reco` 502 + 23 skip MySQL),
+`npm audit` = 0, `reco:walk` 300 hồ sơ (mọi bất biến xanh), smoke test production + `www` 308 + header bảo mật. Quét
+puppeteer bản build cục bộ **244 URL × 1440/375/320px** (sitemap 239 + 5 URL lạ): không lỗi console, không response
+≥400 ngoài 404 cố ý, không tràn ngang, không ảnh hỏng/thiếu alt, mỗi trang 1 h1, JSON-LD parse được, không id trùng,
+affiliate đủ `sponsored`; 338 link nội bộ đều 200; 20 URL tham số rác không trang nào 500. Codex ba vòng: tìm lỗi (bom
+hẹn giờ 25/10 → 15/11 + tầng render), bác bản vá (3/3 ĐÚNG), bác kết luận "không phải lỗi" (4/8 BÁC, xử lý dưới).
+
+**Đã vá:**
+- **Từ 01/11/2026 trang Simplii™ HISA chỉ còn "0.30%", mất biểu lãi theo bậc** (Codex). `withLiveRate` xoá cả
+  `promoNoteVi` khi hết khuyến mãi, mà câu đó là chỗ DUY NHẤT kể các bậc 0.50–1.00%. Thêm field `regularNoteVi`
+  lên thay khi hết hạn. Bậc đọc từ API lãi công khai `online.simplii.com/ebm-pno/api/v2/json/rates/ALL` (trang
+  sản phẩm nạp số bằng JS từ đó). Tangerine® (lãi thường một mức) không cần.
+- **Ba chỗ chữ dữ liệu 11px** trái sàn 12px (DESIGN-SYSTEM 4.2, chốt 03/10): đơn vị điểm của lựa chọn rẻ thứ hai ở
+  `/bay-ve-viet-nam` và khối trang chủ (thêm 04/10, SAU luật), chip "ngân hàng · tỷ lệ chuyển" ở Award Flight Finder.
+  Quét lại 320px: không tràn.
+
+**Codex bác, mình GIỮ (đừng báo lại):**
+- *Tab lọc 36px đứng cạnh nhau* (`/blog`, `/credit-cards`, `/us-credit-cards`, finder ngân hàng; `py-2 text-sm`,
+  `gap-2`): cùng loại với chip lọc mà mục 03/10 chốt ở 38px; đổi tab là thao tác lùi lại được. Không nới.
+- *Nhãn "Surcharge thấp/trung bình/cao" 11px không có nền*: bảng DESIGN-SYSTEM 4.2 nêu đích danh surcharge trong
+  dòng `text-[11px]`, và lượt 03/10 sửa chính hai component đó mà để nguyên.
+- *`expire-offers` không tự viết lại được khi offer mới giữ số bonus mà đổi mốc chi*: `rewriteOfferCopy` từ chối,
+  job giữ hạn và đỏ — đúng thiết kế "đỏ để người nhìn". Hạn 01/11 còn hiệu lực HẾT ngày 01/11.
+- *Next rơi về swc-wasm thì `next.config.ts` gãy* ("Cannot find module …/content-security-policy" từ
+  `next.config.compiled.js`, vì import không đuôi): gặp thật trên máy 25/10 — file
+  `node_modules/@next/swc-darwin-arm64/next-swc.darwin-arm64.node` biến mất (thư mục đổi 24/10 09:18). Khôi phục:
+  giải nén `~/Library/Caches/next-swc/swc-darwin-arm64-<ver>.tgz` (so sha512 với lockfile trước) vào thư mục đó,
+  hoặc `npm ci`. Linux cũng có đường fallback này (Codex) nhưng Hostinger chưa từng đi vào; CI không chạy build.
+
+**Đã kiểm, KHÔNG phải lỗi:**
+- CLS 0.451 ở `/blog/park-hyatt-kyoto-review-park-suite-garden-view` là nhiễu của script quét (ép ảnh lazy thành
+  eager); tải thường + cuộn từng 300px ở 1440/375 ra 0.000. 113/113 ảnh thân bài có width/height (Codex).
+- Vùng chạm <44px còn lại là link đứng riêng hoặc link nội dòng trong câu công bố affiliate.
+- Hai thẻ Capital One® Quicksilver trùng meta description: headline >160 ký tự, phần khác nhau nằm ở đuôi bị cắt.
+  Muốn tách thì rút ngắn `headlineVi` trên Contentful.
+- `sync-videos` đỏ 24/10 16:38 UTC (curl 000 tới ghe1a.com, như 12/10) và 25/10 06:11 UTC (feed YouTube 404).
+- Rà tay khớp trang ngân hàng (chưa có offer nối tiếp): Scotiabank® Preferred/Ultimate (29/10), Student (01/11);
+  Simplii™ HISA 4.60% (31/10); National Bank® (03/11); RBC® VIP (02/11), Student (02/11, đăng ký tới 04/11).
+- Link ra ngoài: 58 trang đích FinlyWealth 200; link curl bị chặn mở lại bằng Browser pane đều sống (Chase®,
+  Facebook, IHG®, rooms.aero). **hyatt.com và marriott.com chặn cả Browser pane** (trang 797 byte) — 13 link
+  `/hotels/*` của hai chuỗi chưa kiểm được từ đây.
+- **Lỗi quy trình của lượt này:** script kiểm link bóc `url=` của FinlyWealth đúng luật nhưng vẫn GET một lượt vào
+  link giới thiệu/affiliate khác (17 `expedia.com/affiliate/*` — đều 429; Chase® refer, Amex® referral, Wise, Airalo,
+  Chexy, Neo, seats.aero). Lần sau lọc `affiliate|referral|refer|invite|/join/|go.link|/r/|[?&]ref=` trước khi gọi.
+
+**Chờ tác giả:** bài video `i-stayed-at-hotel-sosei-sapporo-for-just-78-full-hotel-revi` thiếu cả `seoTitleVi`
+lẫn `seoDescriptionVi`; 4 `seoDescriptionVi` dài 161–167 ký tự (cancel-rebook, Hyatt Regency Paris Etoile,
+Ritz-Carlton Fukuoka, "tại sao Hyatt"). Năm thẻ hết offer 31/10–01/11 (BMO® VIPorter®, bốn Scotiabank®).

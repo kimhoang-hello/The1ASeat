@@ -118,7 +118,7 @@ function CabinRow({ row }: { row: CheapestByCabin }) {
                   )}
                   {formatPoints(row.runnerUp.points)}
                 </span>
-                <span className="block text-[11px] text-muted-foreground">
+                <span className="block text-xs text-muted-foreground">
                   {row.runnerUp.programCurrency}
                 </span>
               </span>

@@ -157,6 +157,12 @@ export type BankAccount = {
   ratePromoEndsOn?: string;
   /** Điều kiện để hưởng mức lãi ở trên. */
   promoNoteVi?: string;
+  /**
+   * Điều kiện của mức lãi THƯỜNG (vd. bậc theo số dư), lên thay `promoNoteVi`
+   * khi khuyến mãi hết hạn. Không có thì sau hạn chỉ còn con số `regularRate`
+   * trơn — đúng với lãi một mức, thiếu với lãi theo bậc.
+   */
+  regularNoteVi?: string;
   /** Lý do không có con số, khi ngân hàng không công bố mức lãi cố định. */
   noRateNoteVi?: string;
   keyBenefitsVi: string[];
@@ -685,6 +691,9 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     ratePromoEndsOn: "2026-10-31",
     promoNoteVi:
       "4.60% là lãi khuyến mãi 153 ngày (khoảng 5 tháng) kể từ ngày mở tài khoản, chỉ tính trên phần số dư tới $200,000. Phải là khách hàng mới hoàn toàn của Simplii Financial™ và mở HISA đầu tiên trong vòng 60 ngày kể từ khi có Client Number; offer chạy 01/08/2026 – 31/10/2026. Hết kỳ khuyến mãi thì về biểu lãi thường theo bậc số dư: 0.30% dưới $50,000, 0.50% từ $50,000, 0.60% từ $100,000, 0.70% từ $500,000 và 1.00% từ $1,000,000.",
+    // Biểu bậc đọc từ API lãi công khai của Simplii™ ngày 25/10/2026.
+    regularNoteVi:
+      "0.30% là lãi thường cho số dư dưới $50,000. Lãi tăng theo bậc số dư: 0.50% từ $50,000, 0.60% từ $100,000, 0.70% từ $500,000 và 1.00% từ $1,000,000.",
     keyBenefitsVi: [
       "Không monthly fee, không yêu cầu số dư tối thiểu",
       "Giao dịch và Interac e-Transfer® không giới hạn",
@@ -1037,14 +1046,22 @@ export function bankAccountBySlug(slug: string): BankAccount | undefined {
  * Financial™ HISA vẫn in 4.60% làm số lớn nhất, vẫn đứng đầu "sắp theo lãi", và
  * JSON-LD vẫn khai 4.6 (Codex, kiểm toàn diện 10/10/2026). Hết hạn thì mức
  * thường lên làm số chính và câu khuyến mãi biến mất — nó nói về một offer
- * không còn đăng ký được.
+ * không còn đăng ký được. Chỗ của nó nhường cho `regularNoteVi`: bỏ trống thì
+ * lãi theo bậc của Simplii™ chỉ còn "0.30%", mất luôn các bậc tới 1.00% mà câu
+ * khuyến mãi từng kể (Codex, kiểm toàn diện 25/10/2026).
  *
  * Gọi ở chỗ ĐỌC (trang riêng, bảng so sánh, bộ lọc), lúc render, không phải lúc
  * nạp module: tiến trình server sống qua nhiều ngày.
  */
 export function withLiveRate(account: BankAccount): BankAccount {
   if (!account.ratePromoEndsOn || !hasExpired(account.ratePromoEndsOn)) return account;
-  return { ...account, interestRate: account.regularRate, regularRate: undefined, promoNoteVi: undefined };
+  return {
+    ...account,
+    interestRate: account.regularRate,
+    regularRate: undefined,
+    promoNoteVi: account.regularNoteVi,
+    regularNoteVi: undefined,
+  };
 }
 
 /** Đường dẫn trang riêng của một tài khoản. */

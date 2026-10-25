@@ -84,11 +84,9 @@ function ProgramFigure({
               } shrink-0 rounded border border-border bg-white object-contain p-px`}
             />
           )}
-          <span
-            className={`${
-              secondary ? "text-[11px]" : "text-xs"
-            } font-medium leading-tight text-muted-foreground`}
-          >
+          {/* Đơn vị điểm là chữ dữ liệu: sàn 12px ở cả lựa chọn rẻ thứ hai
+              (DESIGN-SYSTEM 4.2) — dòng phụ đã nhạt nhờ con số và logo nhỏ hơn. */}
+          <span className="text-xs font-medium leading-tight text-muted-foreground">
             {currency}
           </span>
         </span>
