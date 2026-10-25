@@ -2175,6 +2175,31 @@ Lượt `sync-videos` đỏ 24/09 03:06 UTC lại là **YouTube 404 cho feed Ato
   "browser"|"city"|"operatingSystemWithVersion"]`. `dataFilters` với
   `fieldName: landingPagePlusQueryString` KHÔNG chạy (báo cáo trắng).
 
+## Đo đạc GA4 (25/10/2026) — đừng đề xuất lại
+
+- **Ba lượt task tuần 04/10, 11/10, 18/10 không để lại báo cáo nào** (không file, không
+  commit). Tuần 27/09–10/10 không có số; tuần 11–17/10 được đọc lại trong bản 25/10.
+  Đừng nối chuỗi "N tuần liền" qua khoảng trống đó.
+- **Đọc bảng Explorer bằng `javascript_tool`, không bằng `get_page_text`:** bảng là
+  `<table>` cuối trang; lấy `tr` từ dòng 3 (dòng 1 header, dòng 2 tổng), mỗi `td` bỏ
+  phần `(x%)`. Nhanh và gọn hơn nhiều; output trong `browser_batch` bị cắt quanh
+  ~1.5k ký tự nên in gọn từng bảng.
+- **Chữ ký `/calculator` đã đổi:** tháng 9 mỗi phiên là một user mới; 11–17/10 là 12
+  phiên / 2 user, 18–24/10 là 2 phiên / 1 user — vẫn `google / organic`, `iOS 26.6`,
+  0s. Referrer chưa kiểm lại, nên nhóm tháng 10 CHƯA được xác nhận là tự động: báo
+  cáo giữ số thô làm số chính, bản loại nhóm này chỉ là kịch bản (tuần 18–24/10 nó đảo
+  chiều Google từ −7.8% thành +9.6% — Codex bắt ở vòng bác bản vá).
+- **Một dòng landing RỖNG (`""`, khác `(not set)`) có thể kéo thời gian tương tác cả
+  tuần:** 24/10 có 3 phiên / 1 user / 22h58m mỗi phiên, làm trung bình cả site thành
+  34m. Ngày cuối chưa settle; đừng trích thời gian tương tác khi thấy dòng này.
+- **Câu hỏi "người trong nhà hay độc giả" chặn kết luận ba lần** (`/us-credit-cards`
+  27/09, `/hotels` + `so-sanh` 11–17/10 với 5 user ~7.6 view/người, 9/25 `apply_clicked`
+  từ Vaughan 18–24/10). Chưa có internal traffic filter. Khuyến nghị đã đưa user:
+  Testing trước, Active sau.
+- `apply_clicked` theo ngày / thành phố / nguồn: `seldim`
+  `["unifiedPagePathScreen","date"|"city"|"sessionSourceMedium"]` + `dataFilters`
+  `eventName=apply_clicked` trên `all-pages-and-screens` — đều chạy.
+
 ## Luật welcome bonus theo cửa sổ thời gian (21/09/2026) — đừng đề xuất lại
 
 Chi tiết: `src/lib/recommendation/README.md`, mục "Luật welcome bonus theo cửa sổ
