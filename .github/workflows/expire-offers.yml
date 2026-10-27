@@ -5,7 +5,22 @@ name: Unpublish expired credit card offers & transfer bonuses
 # has passed, so they can just be republished later if the offer comes back.
 on:
   schedule:
+    # Hai lượt mỗi ngày, cùng nhịp với check-rebates. Một lượt là không đủ:
+    # 27/10/2026 lượt duy nhất trong ngày (GitHub xếp hàng tới 13:43 UTC) gặp
+    # đúng 25 phút ghe1a.com không nhận kết nối — 5 lượt `curl (28)` — nên một
+    # offer hết hạn hôm đó sẽ nằm nguyên copy welcome bonus cũ tới lượt hôm
+    # sau. `isElevatedLive` gỡ thẻ khỏi badge/tab/banner elevated lúc render,
+    # nhưng không đổi chữ welcome bonus.
+    #
+    # Chạy lặp an toàn: thẻ viết lại và publish xong thì mất `expiresAt` nên
+    # lượt sau không thấy nó; thẻ có draft thì job không ghi gì, chỉ đỏ; thẻ
+    # thiếu trang rebate được tắt cờ elevated một lần rồi đỏ ở mọi lượt. Thẻ kẹt
+    # ở lỗi tạm thời (rewrite hỏng) bị publish lại ở mỗi lần gọi route — tối đa
+    # 5 lần/lượt do action tự thử lại, nay tối đa 10 lần/ngày thay vì 5 — chữ
+    # không đổi, nhưng mỗi lần publish kéo theo một webhook revalidate + purge
+    # CDN. Webhook dừng ở `not_blog_post` trước Kit nên không gửi bản tin.
     - cron: "0 8 * * *"
+    - cron: "0 20 * * *"
   workflow_dispatch: {}
 
 # Quyền tối thiểu cho GITHUB_TOKEN. Mặc định của repo hiện là "read", nhưng đó

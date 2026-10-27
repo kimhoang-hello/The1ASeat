@@ -4194,3 +4194,47 @@ Caption by Hyatt Namba Osaka (đăng sáng 25/10). Cả sáu entry sạch draft 
 bản tin (video / không phải Deals) — không email nào gửi đi.
 
 **Chờ tác giả:** năm thẻ hết offer 31/10–01/11 (BMO® VIPorter®, bốn Scotiabank®).
+
+## Kiểm toàn diện 27/10/2026 — đừng đề xuất lại
+
+Gate: lint, tsc, build, 10 audit (+ `audit:awards -- --links`), 9 test suite (`test:reco` 502 + 23 skip MySQL),
+`npm audit` = 0, `audit:links` production (240 trang, không trang mồ côi), smoke test + `www` 308 + 5 header bảo mật.
+Quét puppeteer bản build cục bộ 240 URL × 320/1440px: 480/480 trả 200, không lỗi console, không request hỏng, không
+tràn ngang, không ảnh hỏng/thiếu alt, mỗi trang 1 h1, JSON-LD parse được, không id trùng, affiliate đủ `sponsored`.
+Codex ba vòng: bom hẹn giờ 14 ngày tới (đổi giờ Toronto 01/11 + chuỗi offer hết hạn 29/10–04/11); bác kết luận "sạch"
+của chính nó + kết luận của mình; bác bản vá.
+
+**Đã vá:**
+- **`expire-offers` chạy hai lượt mỗi ngày** (`0 8` + `0 20` UTC). 27/10 lượt duy nhất trong ngày (GitHub xếp hàng tới
+  13:43 UTC) gặp 25 phút ghe1a.com không nhận kết nối (5 × `curl (28)`), nên một offer hết hạn hôm đó sẽ giữ copy
+  welcome bonus cũ tới lượt hôm sau — `isElevatedLive` gỡ thẻ khỏi badge/tab/banner/thứ tự elevated lúc render nhưng
+  không đổi chữ welcome bonus. Chạy lặp an toàn (Codex bác bản vá: CÒN CHẶN LỖI BAN ĐẦU, KHÔNG LÀM HỎNG GÌ MỚI): thẻ
+  viết lại và publish xong mất `expiresAt`; thẻ có draft thì job không ghi, chỉ đỏ; thẻ thiếu trang rebate được tắt cờ
+  elevated một lần rồi đỏ mọi lượt; transfer bonus chỉ gỡ khi cả hạn CDA lẫn hạn trong entry đã qua, DELETE mang
+  version. Cái giá: thẻ kẹt lỗi tạm thời (rewrite hỏng) bị publish lại ở MỖI lần gọi route — action thử lại tối đa 5
+  lần/lượt, nên nay tối đa 10 lần/ngày thay vì 5 — chữ không đổi nhưng mỗi lần kéo theo webhook revalidate + purge CDN
+  (purge hỏng trả 502 cho webhook, không hoàn tác publish). Webhook dừng ở `not_blog_post` trước Kit nên không gửi bản
+  tin. Hai job cùng ghi thẻ (`expire-offers`, `check-rebates`) mà cron nổ trễ chồng giờ thì `X-Contentful-Version` chặn
+  ghi đè; `check-rebates` coi 409 là retryable. Nếu sau này thấy churn publish đáng ngại: bỏ `updateEntry` khi
+  `retryable` mà cờ elevated đã tắt (không còn gì để ghi).
+
+**Đã kiểm, KHÔNG phải lỗi (đừng báo lại):**
+- *Phép tính ngày lệch quanh đổi giờ 01/11*: `daysBetween` (offer-quality/validate/confidence) neo UTC nửa đêm +
+  `Math.round`; `hasExpired`/`todayInSiteZone` so chuỗi ngày Toronto; mốc `Date.now() - x` trong `api/revalidate` là
+  thời gian trôi. Codex thử 2,155 phép kiểm + ma trận 28/10–04/11 ở TZ Toronto lẫn UTC: đúng. Cron `0 8` UTC luôn sau
+  nửa đêm Toronto ở cả EDT lẫn EST.
+- *RBC® Student hiện bonus tới nửa đêm dù offer đóng 21:00 ET 02/11* (Codex nêu lại): đã chốt ở mục 20/10.
+- *`feed.xml` lấy `lastBuildDate` từ ngày đăng bài mới nhất nên sửa excerpt bài cũ không đổi mốc* (Codex): RSS reader
+  thường nhận bài mới theo `guid`/`pubDate`; tệ nhất là reader giữ excerpt CŨ của một bài vừa sửa (kể cả con số trong
+  excerpt) — không mất bài. Sửa `lastBuildDate` cũng không chữa được chuyện đó: reader có cập nhật item đã có `guid` hay
+  không là luật riêng của từng reader, còn việc tải lại feed đi theo header HTTP. Muốn đúng chữ spec thì lấy max
+  `updatedAt ?? publishedAt` (BlogPost có `updatedAt`). Không vá.
+- `sync-videos` đỏ 26/10 23:09 + 27/10 06:20 UTC ("channel: 404, uploads-playlist: 404", mục 27/09).
+- Rà tay khớp trang ngân hàng (chưa có offer nối tiếp): Scotiabank® Preferred/Ultimate (29/10), Student (01/11);
+  bốn thẻ Scotiabank® (01/11); BMO® $900 + Walmart+ (02/11), Student $200 Tech; National Bank® (03/11); RBC®
+  VIP/Signature iPad + Student AirPods 4 (02/11); Simplii™ HISA (31/10). CIBC® Aventura® ×2 (60,000, "Digital
+  exclusive") và TD® First Class (160,000) vẫn elevated.
+- **Lỗi quy trình của lượt này:** quét puppeteer 6 tab, tắt cache, thẳng vào ghe1a.com → sau ~60 trang edge hcdn trả
+  403 + `ERR_HTTP2_PROTOCOL_ERROR` rồi chặn cả IP máy nhà (kể cả `curl /robots.txt`). Quét hàng loạt LUÔN trên bản
+  `next start` cục bộ; production chỉ smoke test vài URL và `audit:links` (chỉ tải HTML, concurrency 8 — lượt này
+  không bị chặn, nhưng không có gì bảo đảm nó né được WAF).
