@@ -4247,3 +4247,28 @@ của chính nó + kết luận của mình; bác bản vá.
   403 + `ERR_HTTP2_PROTOCOL_ERROR` rồi chặn cả IP máy nhà (kể cả `curl /robots.txt`). Quét hàng loạt LUÔN trên bản
   `next start` cục bộ; production chỉ smoke test vài URL và `audit:links` (chỉ tải HTML, concurrency 8 — lượt này
   không bị chặn, nhưng không có gì bảo đảm nó né được WAF).
+
+## Kiểm toàn diện định kỳ 28/10/2026 — đừng đề xuất lại
+
+Gate: lint, tsc, build, 11 audit, 6 test suite (`test:reco` 502 + 23 skip MySQL), `npm audit` = 0, `audit:links`
+production (không trang mồ côi), smoke test + 5 header bảo mật. Codex ba vòng: rà route theo hậu quả (sạch); bác
+bản vá lần một (BẢN VÁ HỎNG, xử lý dưới); bác bản vá lần hai (ĐÚNG).
+
+**Đã vá:**
+- **Rebate Scotiabank® Passport™ trong seed engine còn $120** sau khi FinlyWealth hạ xuống $100 (job `check-rebates`
+  27/10 23:53 UTC sửa Contentful + câu HOT TIP rồi đỏ có chủ ý vì seed lệch). Bản vá đầu sửa tại chỗ như tiền lệ TD®
+  06/10 (5b04877) — Codex bắt: thế là truy vấn `datasetAt` ngày 26/10 cũng trả $100, tức ghi đè lịch sử. Nay theo
+  luật temporal của `offers.ts`: đóng bản $120 ở `recordedTo: 2026-10-26`, thêm bản $100 từ 27/10 đứng TRƯỚC (cùng
+  `endDate` 01/11, cùng components). Kiểm offline: 26/10 → 120, 27–28/10 → 100, 02/11 → không còn offer;
+  `oneActiveAt` của `check-rebates` lấy bản 100. **Lần sau rebate đổi: thêm bản ghi mới, đừng sửa tại chỗ** — 5b04877
+  của TD® cũng sai theo cách này nhưng để nguyên (đã ba tuần, không ai truy vấn lịch sử khoảng đó).
+
+**Đã kiểm, KHÔNG phải lỗi (đừng báo lại):**
+- `check-rebates` tài khoản ngân hàng đỏ 28/10 00:00 UTC: FinlyWealth trả 429 cho ~30 URL liên tiếp. Codex mô phỏng:
+  429 chỉ làm job đỏ, không ghi/xoá rebate nào. Lượt sau sẽ tự xanh nếu FinlyWealth hết chặn.
+- `https://www.ghe1a.com/` trả 503 (thân 807 byte, `server: hcdn`) đúng lúc vừa push 8420d60 — vài phút sau 308 về
+  apex như thường; `www/credit-cards` vẫn 308 suốt lúc đó. Là cửa sổ deploy, không phải cấu hình redirect hỏng.
+- `sync-videos` đỏ 28/10 06:53 UTC ("channel: 404, uploads-playlist: 404", mục 27/09).
+- Rà tay khớp trang ngân hàng: Scotiabank® Preferred/Ultimate (29/10), Student (01/11), chưa có offer nối tiếp; CIBC®
+  Aventura® ×2 (60,000) và TD® First Class (160,000) vẫn elevated. Ba thẻ RBC® Avion® hạn 25/11 (chưa tới ngưỡng 7
+  ngày). Thẻ Amex® elevated không có `expiresAt` không rà lượt này (offer theo kênh, phải bấm đường Apply).

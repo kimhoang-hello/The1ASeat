@@ -783,16 +783,40 @@ const OFFER_SEEDS: OfferSeed[] = [
     name: "Đến 35,000 điểm Scene+™",
     headline: 35000,
     currency: "scene-plus",
+    // Cùng offer với bản ngay dưới; chỉ rebate FinlyWealth đổi $120 → $100
+    // (job check-rebates ghi nhận 27/10/2026 19:53 giờ Toronto). Bản ghi MỚI
+    // chứ không sửa tại chỗ, để truy vấn `asOf`/`knownAt` trước 27/10 vẫn
+    // thấy $120 như người đọc đã thấy lúc đó.
+    startDate: "2026-08-04",
+    recordedFrom: "2026-10-27",
+    recordedAt: "2026-10-27",
+    verifiedAt: "2026-10-27",
+    endDate: "2026-11-01",
+    rebate: 100,
+    components: [
+      { type: "spend_threshold", points: 25000, spend: 2000, windowDays: 90 },
+      // Mốc $40,000/năm: với người chi $2,000/tháng thì đây là điều không xảy
+      // ra. Chính là ví dụ §11 lấy làm mẫu — 10,000 điểm này KHÔNG được cộng
+      // vào "mức dùng được" mặc định.
+      { type: "spend_threshold", points: 10000, spend: 40000, windowDays: 365 },
+    ],
+  },
+  {
+    slug: "scotiabank-passport-visa-infinite",
+    name: "Đến 35,000 điểm Scene+™",
+    headline: 35000,
+    currency: "scene-plus",
     // Cửa sổ mở tài khoản 04/08 – 01/11/2026 (scotiabank.com, đọc 01/10/2026).
     // Hạn 01/11 mới biết hôm đó nên là bản ghi MỚI, không gắn vào bản cũ —
     // xem scotiabank-gold-amex. Về `startDate` và `recordedFrom`, xem
     // scotiabank-scene-plus-visa-students.
     startDate: "2026-08-04",
     recordedFrom: "2026-10-01",
+    recordedTo: "2026-10-26",
     recordedAt: "2026-10-01",
     verifiedAt: "2026-10-01",
     endDate: "2026-11-01",
-    rebate: 100,
+    rebate: 120,
     components: [
       { type: "spend_threshold", points: 25000, spend: 2000, windowDays: 90 },
       // Mốc $40,000/năm: với người chi $2,000/tháng thì đây là điều không xảy
