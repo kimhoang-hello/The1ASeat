@@ -4084,6 +4084,15 @@ dependency của `eslint-plugin-react-hooks` (dev/lint). Code site không import
 dính thật. Range `^3.25.0 || ^4.0.0` đã với tới bản vá nên chỉ cần `npm update zod`, không thêm override.
 Nhánh `braces` ghi ở mục 23/10 nay không còn trong `npm audit` (audit = 0).
 
+## Vá `qs` 6.16.0 → 6.16.2 (28/10/2026)
+
+hPanel quét 27/10 14:02 và `npm audit` cùng báo 1 moderate: CVE-2026-110816 / GHSA-6pq8-jhm2-2vcw, `qs` ≤ 6.16.0
+ném TypeError (DoS) khi `qs.stringify` dùng `arrayFormat: 'comma'`. `qs` chỉ đến qua `contentful` →
+`contentful-sdk-core` (range `^6.15.0` đã với tới bản vá) — thứ giữ nó lại chính là override `"qs": "6.16.0"` ghim
+từ 02/09, nên nâng override lên 6.16.2 chứ không `npm update`. Không dính thật: Contentful dùng
+`arrayFormat: 'indices'` và chỉ stringify tham số truy vấn do code mình tạo. Bài học: override ghim exact sẽ tự
+thành nguồn lỗ hổng ở lượt sau — khi advisory mới trúng gói đang override, sửa số trong `overrides`.
+
 ## Kiểm toàn diện định kỳ 24/10/2026 — đừng đề xuất lại
 
 Gate: lint, tsc, build, 10 audit, 6 test suite (`test:reco` 494 + 23 skip MySQL), `audit:links` production (239
