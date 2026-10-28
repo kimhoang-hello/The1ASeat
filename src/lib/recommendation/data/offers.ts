@@ -792,7 +792,7 @@ const OFFER_SEEDS: OfferSeed[] = [
     recordedAt: "2026-10-01",
     verifiedAt: "2026-10-01",
     endDate: "2026-11-01",
-    rebate: 120,
+    rebate: 100,
     components: [
       { type: "spend_threshold", points: 25000, spend: 2000, windowDays: 90 },
       // Mốc $40,000/năm: với người chi $2,000/tháng thì đây là điều không xảy
