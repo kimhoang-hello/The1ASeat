@@ -4262,6 +4262,10 @@ bản vá lần một (BẢN VÁ HỎNG, xử lý dưới); bác bản vá lần
   `endDate` 01/11, cùng components). Kiểm offline: 26/10 → 120, 27–28/10 → 100, 02/11 → không còn offer;
   `oneActiveAt` của `check-rebates` lấy bản 100. **Lần sau rebate đổi: thêm bản ghi mới, đừng sửa tại chỗ** — 5b04877
   của TD® cũng sai theo cách này nhưng để nguyên (đã ba tuần, không ai truy vấn lịch sử khoảng đó).
+- **Cùng ngày, lượt job 15:22 UTC: FinlyWealth đổi tiếp $100 → $150** (`<title>` trang FinlyWealth xác nhận tối
+  28/10); job sửa Contentful + HOT TIP rồi lại đỏ vì seed. Làm đúng luật trên: bản $100 đóng ở `recordedTo:
+  2026-10-27`, thêm bản $150 từ 28/10 đứng trước. Kiểm offline: 26/10 → 120, 27/10 → 100, 28–29/10 → 150, 02/11 →
+  không còn offer.
 
 **Đã kiểm, KHÔNG phải lỗi (đừng báo lại):**
 - `check-rebates` tài khoản ngân hàng đỏ 28/10 00:00 UTC: FinlyWealth trả 429 cho ~30 URL liên tiếp. Codex mô phỏng:
