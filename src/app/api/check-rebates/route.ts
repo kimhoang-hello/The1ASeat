@@ -18,11 +18,14 @@ export async function POST(request: NextRequest) {
 
   const spaceId = process.env.CONTENTFUL_SPACE_ID;
   const managementToken = process.env.CONTENTFUL_MANAGEMENT_TOKEN;
-  if (!spaceId || !managementToken) {
+  // Key FinlyWealth Affiliate API: chỉ cần trên Hostinger nếu muốn gọi tay
+  // route này. Lượt theo lịch đọc nó từ secret của GitHub.
+  const finlyApiKey = process.env.FINLY_API_KEY;
+  if (!spaceId || !managementToken || !finlyApiKey) {
     return NextResponse.json({ message: "not_configured" }, { status: 501 });
   }
 
-  const result = await runCheckRebates({ spaceId, managementToken });
+  const result = await runCheckRebates({ spaceId, managementToken, finlyApiKey });
 
   // Gom lỗi vào body rồi vẫn trả 200 nghĩa là người gọi thấy xanh: FinlyWealth
   // đổi markup hay timeout thì con số rebate cũ nằm lại trên site vô thời hạn,

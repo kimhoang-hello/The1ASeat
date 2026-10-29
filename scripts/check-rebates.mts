@@ -33,6 +33,7 @@ import { isTransient } from "../src/lib/job-retry.ts";
 
 const spaceId = process.env.CONTENTFUL_SPACE_ID;
 const managementToken = process.env.CONTENTFUL_MANAGEMENT_TOKEN;
+const finlyApiKey = process.env.FINLY_API_KEY;
 
 // Thiếu biến thì đỏ NGAY, không chạy tiếp. Không có token thì `listEntries`
 // trả 401 và job sẽ đỏ với một câu lỗi HTTP nói về Contentful — đọc giống hệt
@@ -46,6 +47,9 @@ const missing = [
   ["CONTENTFUL_SPACE_ID", spaceId],
   ["CONTENTFUL_ACCESS_TOKEN", process.env.CONTENTFUL_ACCESS_TOKEN],
   ["CONTENTFUL_MANAGEMENT_TOKEN", managementToken],
+  // Key FinlyWealth Affiliate API (scope `offers`), secret của environment
+  // `contentful-write`. Thiếu nó thì mọi thẻ rơi vào lỗi "finly-api 401".
+  ["FINLY_API_KEY", finlyApiKey],
 ].filter(([, value]) => !value);
 
 if (missing.length) {
@@ -59,16 +63,18 @@ if (missing.length) {
  * Bản `curl --retry 5` cũ thử lại theo HTTP status, mà status thì gộp mọi loại
  * hỏng vào một mã 500: một trang FinlyWealth timeout và một con số viết tay gõ
  * nhầm đọc giống hệt nhau từ phía curl, nên nó chạy lại cả hai. Cái thứ hai
- * không bao giờ khỏi — mỗi lượt thừa là mười lần đọc FinlyWealth đổ đi, và
- * quota bên đó có hạn.
+ * không bao giờ khỏi — mỗi lượt thừa là một lần đọc FinlyWealth đổ đi, và
+ * quota bên đó có hạn (5,000 request một ngày).
  *
  * Ở đây phân biệt được vì đọc thẳng kết quả: `retryable` chỉ được gắn cho lỗi
- * mạng lúc đọc một trang thẻ. Ném thẳng (Contentful không liệt kê được, mạng
+ * mạng lúc đọc FinlyWealth API. Ném thẳng (Contentful không liệt kê được, mạng
  * chết giữa chừng) cũng chạy lại — lượt đó chưa kiểm được thẻ nào cả.
  *
- * BA lượt chứ không phải năm: gọi lại an toàn nhưng không miễn phí. Mỗi lượt
- * đọc tuần tự mười trang FinlyWealth, và từ 09/09/2026 job này chạy trong
- * runner nên không còn `curl --max-time 300` cắt ngang một lượt treo.
+ * BA lượt chứ không phải năm: gọi lại an toàn nhưng không miễn phí. Từ
+ * 29/10/2026 mỗi lượt chỉ còn MỘT request tới FinlyWealth API (trước đó là
+ * mười trang đọc tuần tự), nhưng vẫn đọc lại toàn bộ thẻ trong Contentful, và
+ * từ 09/09/2026 job này chạy trong runner nên không còn `curl --max-time 300`
+ * cắt ngang một lượt treo.
  */
 const ATTEMPTS = 3;
 const DELAY_MS = 30_000;
@@ -108,7 +114,11 @@ for (let attempt = 1; attempt <= ATTEMPTS; attempt += 1) {
   }
 
   try {
-    result = await runCheckRebates({ spaceId: spaceId!, managementToken: managementToken! });
+    result = await runCheckRebates({
+      spaceId: spaceId!,
+      managementToken: managementToken!,
+      finlyApiKey: finlyApiKey!,
+    });
   } catch (err) {
     // Lượt cuối thì để lỗi thoát ra: đỏ kèm nguyên stack đọc ra được nhiều hơn
     // là một câu tóm tắt tự chế.

@@ -174,10 +174,10 @@ export type BankAccount = {
    */
   affiliateUrl?: string;
   /**
-   * Tiền rebate FinlyWealth trả thêm, đọc từ <title> của trang đích — cùng
-   * chỗ và cùng cách mà job check-rebates đang đọc cho thẻ tín dụng. Chỉ link
-   * `/rebates/...` mới có; link `/banking/...` là trang giới thiệu, không có
-   * rebate.
+   * Tiền rebate FinlyWealth trả thêm qua đúng trang đích của `affiliateUrl`.
+   * Job `check-bank-rebates` giữ nó khớp với FinlyWealth Affiliate API (từ
+   * 29/10/2026; trước đó đọc <title> của trang). Chỉ link `/rebates/...` mới
+   * có; link `/banking/...` là trang giới thiệu, không có rebate.
    */
   rebate?: string;
 };

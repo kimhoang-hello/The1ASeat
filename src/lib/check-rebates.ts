@@ -1,6 +1,7 @@
 import { cmaClient, field, listEntries, LOCALE, updateEntry } from "@/lib/contentful-cma";
 import { fetchContentfulCreditCardOffers } from "@/lib/content/contentful";
-import { fetchFinlyWealthRebate, finlyWealthRebateUrl } from "@/lib/finlywealth";
+import { finlyWealthRebateUrl } from "@/lib/finlywealth";
+import { FinlyOfferIndex, fetchFinlyOffers } from "@/lib/finly-api";
 import { RESERVED_SLUG, slugClashMessage } from "@/lib/card-compare";
 import {
   RECOMMENDER_RESERVED_SLUG,
@@ -24,6 +25,10 @@ import { oneActiveAt } from "@/lib/recommendation/temporal";
 // is worse than no figure at all. This walks every card whose apply link is a
 // FinlyWealth rebate product and writes the current amount back.
 //
+// Số lấy từ FinlyWealth Affiliate API từ 29/10/2026, không đọc `<title>` từng
+// trang nữa — xem đầu `src/lib/finly-api.ts` cho lý do và hai ca rebate bị
+// pause mà tiêu đề không bao giờ cho thấy.
+//
 // Phần việc nằm ở ĐÂY chứ không nằm trong `app/api/check-rebates/route.ts`, để
 // chạy được từ cả hai phía: route (webhook, gọi tay) và
 // `scripts/check-rebates.mts` (runner của GitHub Actions). Lý do tách ra là
@@ -44,7 +49,7 @@ export interface CheckError {
   message: string;
   /**
    * `true` khi lỗi có thể tự khỏi ở lượt chạy lại — chỉ đúng với lỗi mạng khi
-   * đọc một trang FinlyWealth. Mọi lỗi còn lại (slug va chạm, chữ lệch số,
+   * đọc FinlyWealth API. Mọi lỗi còn lại (slug va chạm, chữ lệch số,
    * entry có bản nháp) là trạng thái của DỮ LIỆU: chạy lại mười lượt vẫn ra
    * đúng câu đó, và mỗi lượt là mười lần đọc FinlyWealth đổ đi.
    *
@@ -65,6 +70,8 @@ export interface CheckRebatesResult {
 export interface CheckRebatesConfig {
   spaceId: string;
   managementToken: string;
+  /** Key `fw_aff_…` của Affiliate API, chỉ cần scope `offers`. */
+  finlyApiKey: string;
 }
 
 /**
@@ -74,6 +81,7 @@ export interface CheckRebatesConfig {
 export async function runCheckRebates({
   spaceId,
   managementToken,
+  finlyApiKey,
 }: CheckRebatesConfig): Promise<CheckRebatesResult> {
   const client = cmaClient(spaceId, managementToken);
   const entries = await listEntries(client, CONTENT_TYPE);
@@ -165,6 +173,21 @@ export async function runCheckRebates({
     errors.push({ slug: "best-cards", message });
   }
 
+  // MỘT request cho mọi thẻ, đọc trước vòng lặp. Hỏng thì ghi một lỗi rồi để
+  // các lượt canh khác (slug, best-cards, chữ lệch badge) vẫn chạy — chúng chỉ
+  // cần Contentful. Thẻ vẫn được đếm vào `checkedSlugs` bên dưới, để lượt
+  // "thẻ không có entry nào khớp slug" không báo oan cả loạt.
+  let finly: FinlyOfferIndex | null = null;
+  try {
+    finly = new FinlyOfferIndex(await fetchFinlyOffers(finlyApiKey));
+  } catch (err) {
+    errors.push({
+      slug: "finly-api",
+      message: err instanceof Error ? err.message : String(err),
+      retryable: isTransient(err),
+    });
+  }
+
   const checkedSlugs = new Set<string>();
   for (const entry of entries) {
     const slug = field<string>(entry, "slug") ?? entry.sys.id;
@@ -181,9 +204,35 @@ export async function runCheckRebates({
 
     checked += 1;
     checkedSlugs.add(slug);
+    if (!finly) continue;
     try {
-      const current = await fetchFinlyWealthRebate(rebateUrl);
       const live = liveCard.rebate;
+      const found = finly.lookup(new URL(rebateUrl).pathname.replace(/\/+$/, ""));
+
+      // Hai nhánh dưới BÁO chứ không tự gỡ, cùng lý do với nhánh "link không
+      // trỏ tới /rebates/" ở cuối hàm: gỡ `rebateVi` thì câu HOT TIP vẫn hứa
+      // tiền, mà viết lại câu đó là việc của người. `updateEntry` cũng publish
+      // CẢ entry, kể cả phần tác giả đang viết dở.
+      if (found.kind === "paused") {
+        if (live) {
+          errors.push({
+            slug,
+            message: `site đang hiện rebate ${live} nhưng Finly API nói offer ${found.offer.id} hiện KHÔNG có rebate (tắt hoặc pause) — gỡ rebateVi và câu HOT TIP trong Contentful`,
+          });
+        } else {
+          unchanged.push(slug);
+        }
+        continue;
+      }
+      if (found.kind !== "amount") {
+        errors.push({
+          slug,
+          message: `link apply trỏ ${rebateUrl} nhưng Finly API không liệt kê trang rebate này (offer đã ngừng, đang pause, hoặc rời chương trình affiliate) — site đang hiện ${live ?? "(không có rebate)"}, kiểm trang Finly rồi sửa tay`,
+        });
+        continue;
+      }
+
+      const current = found.rebate;
 
       if (live === current) {
         unchanged.push(slug);

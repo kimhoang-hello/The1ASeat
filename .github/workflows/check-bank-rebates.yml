@@ -26,10 +26,10 @@ on:
     # đây là giờ SỚM NHẤT chứ không phải giờ chạy — cron của GitHub xếp hàng,
     # ba lượt 02-04/09/2026 bên thẻ đều nổ trễ ~4 tiếng.
     #
-    # Đắt hơn bên thẻ (checkout + `npm ci` + đọc 29 trang) nhưng vẫn rẻ, và
-    # lượt không có gì đổi KHÔNG deploy: bước commit tự thoát khi
-    # `src/lib/bank-accounts.ts` không đổi, nên không có commit rỗng nào kéo
-    # theo một lần build Hostinger.
+    # Rẻ: checkout + `npm ci` + MỘT request tới FinlyWealth API (từ 29/10/2026;
+    # trước đó là đọc 29 trang), và lượt không có gì đổi KHÔNG deploy: bước
+    # commit tự thoát khi `src/lib/bank-accounts.ts` không đổi, nên không có
+    # commit rỗng nào kéo theo một lần build Hostinger.
     - cron: "45 8 * * *"
     - cron: "45 20 * * *"
   workflow_dispatch: {}
@@ -37,6 +37,11 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    # `FINLY_API_KEY` là secret của environment `contentful-write` (chỉ cho
+    # branch `main`), cùng chỗ với token Contentful của check-rebates.yml và
+    # cùng lý do: repo PUBLIC và `workflow_dispatch` nhận `ref` bất kỳ, nên
+    # secret cấp repo là đủ để một branch sửa script đọc được key.
+    environment: contentful-write
     permissions:
       # Mặc định GITHUB_TOKEN chỉ đọc; job này phải đẩy commit lên main.
       contents: write
@@ -53,22 +58,25 @@ jobs:
       - run: npm ci
 
       - name: Đối chiếu rebate với FinlyWealth và sửa nếu lệch
+        env:
+          FINLY_API_KEY: ${{ secrets.FINLY_API_KEY }}
         run: npm run audit:rebates -- --fix
 
       # Chạy cả khi bước trên FAIL, vì hai việc ở đây độc lập với nhau và gộp
       # chúng làm một thì hỏng theo hướng tệ nhất.
       #
-      # Script exit 1 khi có BẤT KỲ trang nào không đọc được — và từ 31/08/2026
-      # nó ném ở nhiều nhánh hơn hẳn (5xx, <title> rỗng, tiêu đề lạ), đúng như
-      # phải thế: một lượt đọc hỏng không được phép biến thành lệnh xoá một con
-      # số tiền đang đúng. Nhưng nếu bước commit chỉ chạy khi bước trên xanh
-      # thì một trang FinlyWealth chập chờn trong 29 trang sẽ vứt luôn những
-      # con số ĐÃ sửa đúng của 28 trang kia — và nếu trang đó hỏng dai thì
-      # rebate không bao giờ được cập nhật nữa. Đó là đổi một lỗi hiếm lấy một
-      # lỗi thường trực.
+      # Script exit 1 khi có BẤT KỲ tài khoản nào cần người nhìn — và từ
+      # 29/10/2026 gồm cả tài khoản có link trỏ vào trang mà FinlyWealth API
+      # không liệt kê, thứ còn nguyên ở mọi lượt cho tới khi có người sửa link.
+      # Đọc API hỏng thì script thoát TRƯỚC `--fix`, nên không có gì để commit:
+      # một lượt đọc hỏng không được phép biến thành lệnh xoá một con số tiền
+      # đang đúng. Nhưng nếu bước commit chỉ chạy khi bước trên xanh thì một
+      # tài khoản lỗi dai sẽ vứt luôn những con số ĐÃ sửa đúng của mọi tài
+      # khoản khác, và rebate không bao giờ được cập nhật nữa. Đó là đổi một
+      # lỗi hiếm lấy một lỗi thường trực.
       #
       # Tách ra: commit những gì sửa được, VÀ vẫn để job đỏ vì bước trên đã
-      # fail. Người trực thấy đỏ, mở log ra thấy trang nào không đọc được, còn
+      # fail. Người trực thấy đỏ, mở log ra thấy tài khoản nào cần sửa, còn
       # phần đúng thì đã lên site. Trạng thái hỏng vẫn tự nhận ra được ở lượt
       # sau vì tài khoản đó còn lệch — đúng nguyên tắc trong AGENTS.md.
       #
@@ -90,7 +98,7 @@ jobs:
           git commit -m "Cập nhật rebate tài khoản ngân hàng theo FinlyWealth
 
           Tự động bởi .github/workflows/check-bank-rebates.yml. Số lấy từ
-          <title> của chính trang mà nút \"Apply ngay\" dẫn tới."
+          FinlyWealth Affiliate API, theo đúng trang mà nút \"Apply ngay\" dẫn tới."
           # Rebase phòng khi có commit khác vào main trong lúc job chạy —
           # không bao giờ force-push đè lên việc của người khác.
           git pull --rebase origin main

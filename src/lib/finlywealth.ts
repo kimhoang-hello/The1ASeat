@@ -1,6 +1,10 @@
 /**
  * Reading the current rebate off FinlyWealth.
  *
+ * Từ 29/10/2026 hai job rebate KHÔNG đọc ở đây nữa mà đọc FinlyWealth
+ * Affiliate API (`finly-api.ts`). File này còn phục vụ `expire-offers`, cần
+ * đoạn văn welcome bonus của trang để soạn lại offer.
+ *
  * The apply links stored on a card are affiliate redirects of the form
  * `https://www.finlywealth.com/r/<ref>?url=<encoded path>&utm_source=...`.
  * The `url` param is the real destination, and only the `/rebates/...` ones
@@ -128,11 +132,6 @@ function rebateFromTitle(html: string): string {
   if (!amount) throw new Error(`no rebate in title: ${title.trim().slice(0, 80)}`);
 
   return amount;
-}
-
-/** The dollar figure FinlyWealth currently advertises, formatted as "$120". */
-export async function fetchFinlyWealthRebate(url: string): Promise<string> {
-  return rebateFromTitle(await fetchPage(url));
 }
 
 export interface FinlyWealthOffer {

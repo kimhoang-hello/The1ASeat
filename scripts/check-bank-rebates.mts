@@ -20,275 +20,114 @@
 import fs from "node:fs";
 import path from "node:path";
 import { BANK_ACCOUNTS } from "../src/lib/bank-accounts.ts";
-import { rebateAmountInTitle } from "../src/lib/finlywealth.ts";
+import {
+  FinlyOfferIndex,
+  affiliateDestinationPath,
+  fetchFinlyOffers,
+  type PageLookup,
+} from "../src/lib/finly-api.ts";
 
 const FILE = path.join(process.cwd(), "src/lib/bank-accounts.ts");
 const fix = process.argv.includes("--fix");
 
-const REBATE_BASE = "https://www.finlywealth.com/rebates/bank-accounts/";
-
-/** Slug cuối cùng của đường dẫn đích, dù là link `/rebates/` hay `/banking/`. */
-function destinationSlug(affiliateUrl: string): string | null {
-  const dest = new URL(affiliateUrl).searchParams.get("url");
-  if (!dest) return null;
-  return dest.replace(/\/$/, "").split("/").pop() ?? null;
-}
-
-/**
- * Số tiền trên trang rebate, hoặc null nếu trang thật sự không còn.
- *
- * Đọc <title> chứ không đọc phần thân, đúng lý do đã ghi trong
- * `src/lib/finlywealth.ts`: phần thân còn giữ cả mức cũ đã gạch ngang
- * ("Get $75$100 rebate"), chỉ tiêu đề mới có đúng một con số.
- *
- * NÉM chứ không trả `null` ở mọi thứ không nhận ra được, vì `null` ở đây KHÔNG
- * phải "không đọc được" — nó là tín hiệu `gone`, và `--fix` xoá dòng `rebate:`
- * theo tín hiệu đó rồi commit thẳng vào main (xem check-bank-rebates.yml). Một
- * lần đọc hỏng mà trả `null` là tự tay xoá một con số tiền đang đúng.
- *
- * Ba cửa, theo đúng thứ tự đó:
- *
- * 1. `!res.ok` — trước đây status code bị bỏ qua HOÀN TOÀN, với lý do "trang
- *    không tồn tại trả 200 kèm tiêu đề Not Found nên không tin được status".
- *    Vế đó đúng, nhưng kết luận thì quá tay: 200 không chứng minh được trang
- *    còn sống, mà 503 thì chứng minh được là KHÔNG đọc được. Một trang lỗi
- *    5xx của CDN có `<title>Service Unavailable</title>` — không khớp "not
- *    found", không khớp regex tiền — nên trước đây rơi thẳng vào `gone`.
- *
- * 2. Tiêu đề rỗng. Đây không phải ca lý thuyết: đo ngày 31/08/2026, trang
- *    `koho-everything-plan` trả 200 với `<title></title>` ở 1 trong 7 lượt
- *    gọi liên tiếp, sáu lượt còn lại trả đúng "$100 …". Dòng `if (!title)
- *    return null` cũ biến đúng cú nấc đó thành lệnh xoá rebate.
- *
- * 3. Tiêu đề có chữ nhưng không phải trang rebate của FinlyWealth (không khớp
- *    "Not Found" và cũng không kết thúc bằng "Rebate from FinlyWealth") —
- *    trang chặn bot, trang interstitial, trang đăng nhập. Không biết là gì thì
- *    không được coi là dữ liệu.
- *
- * Trả về BA thứ khác nhau, không gộp thành `string | null` như trước, vì
- * "không có số" có hai nghĩa và chỉ một nghĩa được phép xoá dòng `rebate:`:
- *
- * - `"gone"` — tiêu đề "Not Found": sản phẩm rebate đã bị gỡ. Xoá là đúng.
- * - `"no-amount"` — trang rebate còn sống nhưng FinlyWealth chưa điền số,
- *   tiêu đề bắt đầu bằng "null" (EQ Bank™ Personal Account). KHÔNG phải
- *   `gone`: rebate không biến mất, chỉ là chưa hiện. Gộp hai cái này lại là
- *   một ngày FinlyWealth dựng lại trang thì site tự xoá con số đang đúng.
- * - một chuỗi `"$75"` — đọc được số.
- *
- * Mọi tiêu đề CÓ CHỮ nhưng không rơi vào ba nhóm trên đều ném. Trước đây điều
- * kiện là "không khớp regex số thì coi như không có số", nên một tiêu đề hợp
- * lệ kiểu "Up to $75 … Rebate from FinlyWealth" (không mở đầu bằng `$`) cũng
- * lặng lẽ thành `gone`.
- *
- * KHÔNG BẮT ĐƯỢC, ghi ra để không ai tưởng hàm này mạnh hơn thực tế: rebate bị
- * PAUSE mà FinlyWealth vẫn giữ con số cũ trong `<title>`. Trang Wealthsimple
- * Chequing ngày 31/08/2026 là đúng hình dạng đó — tiêu đề "$25 … Rebate from
- * FinlyWealth" trong khi thân trang nói đã pause. Đọc tiêu đề thì không có
- * cách nào thấy; mà đọc thân trang thì vấp đúng lý do khiến `finlywealth.ts`
- * chọn tiêu đề ngay từ đầu (thân trang giữ cả mức cũ đã gạch ngang). Đây là
- * giới hạn có sẵn của cách đọc này, không phải thứ ba trạng thái dưới đây
- * chữa được.
- */
-type RebateReading = string | "gone" | "no-amount";
-
-const FINLY_TITLE = /Rebate from FinlyWealth/i;
-
-/**
- * Thử lại cho TỪNG trang, vì một lượt chạy quét 29 URL tuần tự vào cùng một
- * host. Từ khi `fetchRebate` ném ở nhiều nhánh hơn, chỉ cần MỘT trang chạm
- * rate-limit là cả lượt chạy đỏ — và nếu Finly siết quota xuống dưới 29 thì nó
- * đỏ mọi lượt, mà từ 04/09/2026 mỗi ngày có hai lượt chứ không còn một, tức
- * gấp đôi áp lực quota. Thử lại đúng vào chỗ hỏng thì rẻ hơn nhiều so với nới
- * lỏng cửa an toàn, vì hết lượt thử vẫn ném và một trang hỏng dai vẫn hiện ra.
- */
-const ATTEMPTS = 3;
-
-async function getPage(url: string): Promise<Response> {
-  let lastError: unknown;
-
-  for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
-    if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
-    try {
-      const res = await fetch(url, {
-        headers: { "User-Agent": "Ghe1A-RebateCheck/1.0 (+https://ghe1a.com)" },
-        signal: AbortSignal.timeout(15_000),
-      });
-      // 404/403 là câu trả lời dứt khoát về chính URL này; thử lại vô ích.
-      if (res.ok || (res.status < 500 && res.status !== 429)) return res;
-      lastError = new Error(`${url} trả ${res.status} ${res.statusText}`);
-    } catch (err) {
-      lastError = err;
-    }
-  }
-
-  throw new Error(
-    `${url} hỏng sau ${ATTEMPTS} lượt: ` + (lastError instanceof Error ? lastError.message : String(lastError)),
+const apiKey = process.env.FINLY_API_KEY;
+if (!apiKey) {
+  console.error(
+    "Thiếu biến môi trường FINLY_API_KEY (key FinlyWealth Affiliate API, scope `offers`)." +
+      " Chạy trên máy thì thêm vào .env.local rồi `node --env-file=.env.local …`," +
+      " hoặc export trước khi chạy.",
   );
-}
-
-/**
- * Trang "không tồn tại" do CHÍNH app FinlyWealth trả.
- *
- * Từ 05/10/2026 FinlyWealth chạy Next.js: trang không tồn tại trả HTTP 404 THẬT
- * kèm tiêu đề chung của site ("FinlyWealth: Best Credit Cards, Bank Accounts,
- * and More"), không còn 200 + tiêu đề "Not Found" như trước. Script cũ coi mọi
- * thứ khác 2xx là "không đọc được", nên ba tài khoản dùng link `/banking/` (bản
- * `/rebates/` cùng slug không tồn tại — chuyện bình thường) làm job đỏ mọi lượt.
- *
- * Dấu nhận là chuỗi `notFound()` của Next nhúng vào trang: trang 200 không có
- * nó, còn trang lỗi của CDN/WAF không phải app Next nên cũng không có. 404 mà
- * thiếu dấu đó vẫn là "không đọc được" — `gone` là tín hiệu để `--fix` xoá số.
- */
-const NEXT_NOT_FOUND = "NEXT_HTTP_ERROR_FALLBACK;404";
-
-async function finlyNotFound(res: Response, url: string): Promise<boolean> {
-  if (res.status !== 404) return false;
-  if ((await res.text()).includes(NEXT_NOT_FOUND)) return true;
-  throw new Error(`${url} trả 404 nhưng không phải trang "không tồn tại" của FinlyWealth`);
-}
-
-async function fetchRebate(slug: string): Promise<RebateReading> {
-  const url = REBATE_BASE + slug;
-  const res = await getPage(url);
-  if (await finlyNotFound(res, url)) return "gone";
-  if (!res.ok) throw new Error(`${url} trả ${res.status} ${res.statusText}`);
-
-  const html = await res.text();
-  const title = html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1]?.trim() ?? "";
-  if (!title) throw new Error(`${url} trả 200 nhưng <title> rỗng`);
-
-  // Hình dạng "không tồn tại" cũ (trước 05/10/2026), giữ phòng khi họ đổi lại.
-  if (/^not found/i.test(title)) return "gone";
-
-  // Khớp ở BẤT KỲ đâu trong tiêu đề, không neo cuối chuỗi. Neo `\s*$` như bản
-  // đầu thì một ngày FinlyWealth thêm hậu tố SEO ("… Rebate from FinlyWealth
-  // | Bank Accounts") là script ném cho tất cả 29 tài khoản và không lượt chạy
-  // nào tự khỏi. Cụm giữa tiêu đề đã đủ nhận diện trang của họ.
-  if (!FINLY_TITLE.test(title)) {
-    throw new Error(`${REBATE_BASE}${slug} trả một tiêu đề lạ: ${title.slice(0, 80)}`);
-  }
-
-  // Dùng CHUNG bộ đọc với đường thẻ tín dụng. Trước đây hai bên chép cùng một
-  // regex, nên cùng một lỗ hổng nằm ở hai chỗ: nó lấy con số `$` ĐẦU TIÊN, tức
-  // một tiêu đề hai con số ("$700 … plus $200 … Rebate from FinlyWealth") ghi
-  // đè số sai vào `bank-accounts.ts` rồi commit lên main. Xem chú thích của
-  // `rebateAmountInTitle`.
-  const amount = rebateAmountInTitle(title);
-  if (amount) return amount;
-  if (/^null\b/i.test(title)) return "no-amount";
-
-  throw new Error(`${REBATE_BASE}${slug}: trang FinlyWealth nhưng không đọc ra số: ${title.slice(0, 80)}`);
+  process.exit(1);
 }
 
 type Finding =
   | { kind: "stale"; slug: string; stored: string; live: string }
   | { kind: "missing-link"; slug: string; live: string; rebateSlug: string }
+  /** Offer còn trong chương trình nhưng Finly đã tắt hoặc pause rebate. */
   | { kind: "gone"; slug: string; stored: string };
 
 const findings: Finding[] = [];
 const errors: string[] = [];
 /**
- * Tài khoản mà link apply trỏ vào một trang `/rebates/` đã bị gỡ.
+ * Tài khoản mà link apply trỏ vào một trang Finly API không liệt kê.
  *
- * Tách khỏi `gone` vì hai việc có hậu quả khác nhau: `gone` là con số tiền
- * (`--fix` xoá được), còn đây là cái NÚT — người bấm "mở tài khoản" rơi vào
- * trang "Not Found" của FinlyWealth, và không script nào biết nên đổi link sang
- * đâu. Trước 25/09/2026 nhánh `gone` chỉ xoá dòng `rebate:` rồi thoát 0: job
- * xanh, commit "đã sửa 1 con số", và từ lượt sau tài khoản không còn `rebate`
- * nên không ai nhắc tới nó nữa — link chết nằm đó vô thời hạn (KOHO Essential
- * Plan). Lỗi này không phụ thuộc `account.rebate`, nên nó đỏ ở MỌI lượt cho tới
- * khi có người đổi `affiliateUrl`.
- *
- * Từ 07/10/2026 gồm cả link `/banking/`: trang đích của chúng trước đó không
- * được ai đọc (script chỉ đọc bản `/rebates/` cùng slug để tìm tiền bỏ quên),
- * nên FinlyWealth gỡ trang là nút "mở tài khoản" chết mà job vẫn xanh.
+ * Thay cho danh sách "link chết (404)" trước 29/10/2026. Theo tài liệu của
+ * Finly, offer vắng khỏi lượt sync là offer không còn promote được: click qua
+ * link đó có thể không được ghi công, và trang đích có thể đã bị gỡ. Không
+ * script nào biết nên đổi link sang đâu, nên nó đỏ ở MỌI lượt cho tới khi có
+ * người sửa `affiliateUrl` — cùng lý do nhánh link chết cũ không tự rửa mình
+ * thành xanh (KOHO Essential Plan, 25/09/2026).
  */
-const deadLinks: string[] = [];
+const unlisted: string[] = [];
 let checked = 0;
 
-/** Trang đích thật của link `/r/` — chỉ nhận đường dẫn trên chính www.finlywealth.com. */
-function destinationUrl(affiliateUrl: string): string | null {
-  const dest = new URL(affiliateUrl).searchParams.get("url");
-  if (!dest?.startsWith("/")) return null;
-  const url = new URL(dest, "https://www.finlywealth.com");
-  return url.origin === "https://www.finlywealth.com" ? url.href : null;
+let finly: FinlyOfferIndex;
+try {
+  finly = new FinlyOfferIndex(await fetchFinlyOffers(apiKey));
+} catch (err) {
+  // Không đọc được API thì không so được tài khoản nào. Đỏ ngay, và tuyệt đối
+  // không đi tiếp tới `--fix`: một lượt đọc hỏng không được thành lệnh xoá số.
+  console.error(`không đọc được FinlyWealth API: ${err instanceof Error ? err.message : String(err)}`);
+  process.exit(1);
 }
 
 for (const account of BANK_ACCOUNTS) {
-  if (!account.affiliateUrl) continue;
-  const rebateSlug = destinationSlug(account.affiliateUrl);
-  if (!rebateSlug) continue;
-
+  const dest = affiliateDestinationPath(account.affiliateUrl);
+  if (!dest) continue;
   checked += 1;
-  const onRebateLink = account.affiliateUrl.includes("%2Frebates%2F");
 
-  if (!onRebateLink) {
-    const dest = destinationUrl(account.affiliateUrl);
-    try {
-      if (!dest) throw new Error(`không đọc được trang đích của ${account.affiliateUrl}`);
-      const res = await getPage(dest);
-      if (await finlyNotFound(res, dest)) deadLinks.push(account.slug);
-      else if (!res.ok) throw new Error(`${dest} trả ${res.status} ${res.statusText}`);
-    } catch (err) {
-      errors.push(`${account.slug}: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  }
-
-  let live: RebateReading;
+  let found: PageLookup;
   try {
-    live = await fetchRebate(rebateSlug);
+    found = finly.lookup(dest);
   } catch (err) {
     errors.push(`${account.slug}: ${err instanceof Error ? err.message : String(err)}`);
     continue;
   }
 
-  if (!onRebateLink) {
-    // Đang dùng link `/banking/` — nếu bản `/rebates/` cùng slug có tiền thì
-    // đây là tiền đang bỏ lại trên bàn.
-    if (live !== "gone" && live !== "no-amount") {
-      findings.push({ kind: "missing-link", slug: account.slug, live, rebateSlug });
+  if (found.kind === "amount") {
+    if (account.rebate !== found.rebate) {
+      findings.push({ kind: "stale", slug: account.slug, stored: account.rebate ?? "(chưa có)", live: found.rebate });
     }
-    continue;
-  }
-
-  if (live === "gone") {
+  } else if (found.kind === "paused") {
+    // `--fix` xoá dòng `rebate:` theo tín hiệu này. Đúng ở đây, khác bên thẻ:
+    // câu HOT TIP của tài khoản ngân hàng SINH RA từ chính trường `rebate`,
+    // nên xoá số là câu hứa tiền cũng biến theo.
     if (account.rebate) findings.push({ kind: "gone", slug: account.slug, stored: account.rebate });
-    deadLinks.push(account.slug);
-    continue;
-  }
-
-  // Trang còn sống nhưng chưa điền số: không xoá gì cả. Chỉ báo khi site đang
-  // ghi một con số, vì lúc đó hai bên đã lệch và cần người nhìn.
-  if (live === "no-amount") {
+  } else if (found.kind === "product") {
+    // Đang dùng link trang sản phẩm (`/banking/…`) — nếu offer có rebate thì
+    // đây là tiền đang bỏ lại trên bàn. Chỉ nhắc, xem ghi chú ở dưới.
+    if (found.twinRebate) {
+      findings.push({ kind: "missing-link", slug: account.slug, live: found.twinRebate, rebateSlug: found.offer.slug });
+    }
+    // Ngược lại thì là lỗi thật: site hứa một con số mà người bấm link này
+    // không nhận được, vì link không dẫn qua trang rebate.
     if (account.rebate) {
       errors.push(
-        `${account.slug}: site đang ghi ${account.rebate} nhưng trang rebate còn sống mà chưa hiện số` +
-          ` — kiểm tay, script không tự xoá`,
+        `${account.slug}: site đang ghi ${account.rebate} nhưng link apply trỏ trang sản phẩm ${dest},` +
+          " không phải trang rebate — gỡ `rebate:` hoặc sửa link",
       );
     }
-    continue;
-  }
-
-  if (account.rebate !== live) {
-    findings.push({ kind: "stale", slug: account.slug, stored: account.rebate ?? "(chưa có)", live });
+  } else {
+    unlisted.push(account.slug);
   }
 }
 
 console.log(`đã kiểm ${checked} tài khoản có link FinlyWealth\n`);
 
 if (errors.length) {
-  console.log(`không đọc được ${errors.length} trang:`);
+  console.log(`${errors.length} chuyện cần người nhìn vào:`);
   for (const e of errors) console.log("  ·", e);
   console.log();
 }
 
-if (deadLinks.length) {
-  console.log(`${deadLinks.length} tài khoản có link apply trỏ vào trang FinlyWealth đã bị gỡ (404):`);
-  for (const slug of deadLinks) console.log("  ·", slug);
+if (unlisted.length) {
+  console.log(`${unlisted.length} tài khoản có link apply trỏ vào trang mà FinlyWealth API không liệt kê:`);
+  for (const slug of unlisted) console.log("  ·", slug);
   console.log(
-    "  Người bấm nút mở tài khoản đang rơi vào trang lỗi. Đổi `affiliateUrl` tay trong" +
-      " src/lib/bank-accounts.ts — link /rebates/ chết thì thường là bản /banking/ cùng slug," +
-      " kèm gỡ câu nhắc rebate FinlyWealth trong `bonusConditionsVi` nếu có.\n",
+    "  Offer đã ngừng, đang pause, hoặc rời chương trình affiliate: click có thể không được" +
+      " ghi công và trang có thể đã bị gỡ. Mở trang kiểm tay rồi đổi `affiliateUrl` trong" +
+      " src/lib/bank-accounts.ts, kèm gỡ `rebate:` và câu nhắc rebate FinlyWealth trong" +
+      " `bonusConditionsVi` nếu có.\n",
   );
 }
 
@@ -302,7 +141,9 @@ const linkNotes = findings.filter((f) => f.kind === "missing-link");
 
 for (const f of drift) {
   if (f.kind === "stale") console.log(`  LỆCH  ${f.slug}: ${f.stored} -> ${f.live}`);
-  if (f.kind === "gone") console.log(`  LỆCH  ${f.slug}: đang ghi ${f.stored} nhưng trang rebate không còn`);
+  if (f.kind === "gone") {
+    console.log(`  LỆCH  ${f.slug}: đang ghi ${f.stored} nhưng Finly API nói hiện không có rebate (tắt hoặc pause)`);
+  }
 }
 
 /**
@@ -324,7 +165,9 @@ for (const f of drift) {
  * không phụ thuộc định dạng, và trong file này `slug: "` chỉ xuất hiện trong
  * các khối tài khoản.
  */
-const REBATE_LINE = /rebate: "[^"]*",\n/;
+// Ăn cả phần thụt lề đứng trước: xoá dòng mà để lại thụt lề thì nó dính vào
+// dấu `},` ngay dưới (`      },`) — lần `gone` thật đầu tiên, 29/10/2026.
+const REBATE_LINE = /([ \t]*)rebate: "[^"]*",\n/;
 
 function replaceRebateLine(source: string, slug: string, line: string | null): string | null {
   const start = source.indexOf(`slug: "${slug}",`);
@@ -336,7 +179,11 @@ function replaceRebateLine(source: string, slug: string, line: string | null): s
   if (!REBATE_LINE.test(block)) return null;
 
   // `line` đi qua dạng HÀM, không phải chuỗi thay thế: xem chú thích ở chỗ gọi.
-  return source.slice(0, start) + block.replace(REBATE_LINE, () => line ?? "") + source.slice(end);
+  return (
+    source.slice(0, start) +
+    block.replace(REBATE_LINE, (_match, indent: string) => (line === null ? "" : indent + line)) +
+    source.slice(end)
+  );
 }
 
 if (drift.length && fix) {
@@ -395,13 +242,13 @@ if (linkNotes.length) {
       ` trong khi bản /rebates/ cùng slug có trả tiền. Đây là link tác giả chọn,` +
       ` script không đổi. Muốn đổi thì sửa tay trong src/lib/bank-accounts.ts.`,
   );
-  for (const f of linkNotes) console.log(`  ·  ${f.slug} — /rebates/${f.rebateSlug} trả ${f.live}`);
+  for (const f of linkNotes) console.log(`  ·  ${f.slug} — offer ${f.rebateSlug} trả ${f.live} qua trang rebate`);
 }
 
 // Ở chế độ `--fix` thì lệch không phải là thất bại: nó vừa được sửa xong, và
 // commit mới là thứ báo cho người biết. Chỉ chế độ báo cáo mới coi lệch là lỗi,
 // để CI đỏ đúng lúc cần người nhìn vào.
 //
-// Không đọc được trang thì lúc nào cũng là lỗi: im lặng bỏ qua thì một trang
-// chết sẽ làm job xanh y như lúc mọi thứ đều đúng.
-process.exit((!fix && drift.length) || errors.length || deadLinks.length ? 1 : 0);
+// Lỗi và trang không có trong API thì lúc nào cũng đỏ: im lặng bỏ qua thì một
+// link chết sẽ làm job xanh y như lúc mọi thứ đều đúng.
+process.exit((!fix && drift.length) || errors.length || unlisted.length ? 1 : 0);
