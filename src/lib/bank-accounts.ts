@@ -396,7 +396,6 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     url: "https://www.bmo.com/en-ca/main/personal/bank-accounts/chequing-accounts/premium/",
     affiliateUrl:
       "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fbmo-premium-chequing-account&utm_source=ghe-1a",
-    rebate: "$75",
   },
   {
     slug: "bmo-performance-chequing",
