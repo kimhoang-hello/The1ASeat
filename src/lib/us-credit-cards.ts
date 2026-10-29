@@ -125,6 +125,8 @@ export type UsCardDetails = {
   verifiedOn?: string;
   /** Trang sản phẩm của ngân hàng khi `applyUrl` là link ref. Vắng thì nguồn chính là `applyUrl`. */
   sourceUrl?: string;
+  /** Slug bài review thẻ trên blog — xem `reviewSlug` ở `UsCardData`. */
+  reviewSlug?: string;
   /** `true` = số liệu mẫu, chưa kiểm. Không bao giờ hiện khi đã công bố. */
   needsVerification: boolean;
   /** Tạm ẩn khỏi site — xem `hidden` ở `UsCardData`. */
@@ -171,6 +173,12 @@ type UsCardData = {
   canada: UsCardCanadianPerspective;
   applyUrl?: string;
   sourceUrl?: string;
+  /**
+   * Slug bài review chữ trên blog (Contentful), như `reviewSlug` của khách sạn.
+   * Trang thẻ đọc tiêu đề bài lúc render và chỉ hiện link khi bài đang publish
+   * — bài bị gỡ thì link biến mất theo, không để lại đường dẫn 404.
+   */
+  reviewSlug?: string;
   lastUpdated: string;
   verifiedOn?: string;
   needsVerification: boolean;
@@ -727,8 +735,8 @@ const US_CARD_DATA: UsCardData[] = [
     needsVerification: false,
   },
   {
-    slug: "capital-one-venture",
-    name: "Capital One® Venture Card",
+    slug: "capital-one-venture-rewards",
+    name: "Capital One® Venture Rewards",
     issuerId: "capital-one",
     category: "travel",
     business: false,
@@ -764,6 +772,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: CAPITAL_ONE_REFERRAL,
     sourceUrl: "https://www.capitalone.com/credit-cards/venture/",
+    reviewSlug: "capital-one-venture-review",
     lastUpdated: "2026-09-27",
     verifiedOn: REVERIFIED_7,
     needsVerification: false,
@@ -2036,6 +2045,7 @@ function toOffer(card: UsCardData): UsCreditCardOffer {
       lastUpdated: card.lastUpdated,
       verifiedOn: card.verifiedOn,
       sourceUrl: card.sourceUrl,
+      reviewSlug: card.reviewSlug,
       needsVerification: card.needsVerification,
       hidden: card.hidden,
     },

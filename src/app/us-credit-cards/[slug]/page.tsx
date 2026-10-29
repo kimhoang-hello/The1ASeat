@@ -24,7 +24,7 @@ import {
   usCardPath,
   usCardSiblings,
 } from "@/lib/us-credit-cards";
-import { usCardsGuideHref } from "@/lib/us-cards-guide";
+import { usCardReview, usCardsGuideHref } from "@/lib/us-cards-guide";
 import { partnerCount, usTransferIssuerForCurrency } from "@/lib/us-transfer-partners";
 import { t as translate } from "@/lib/t";
 import { pageMetadata, breadcrumbJsonLd } from "@/lib/seo";
@@ -104,7 +104,7 @@ export default async function UsCreditCardDetailPage({
   const card = findCard(slug);
   if (!card) notFound();
 
-  const guideHref = await usCardsGuideHref();
+  const [guideHref, review] = await Promise.all([usCardsGuideHref(), usCardReview(card)]);
   const requirement = spendRequirement(card);
   const { sameCurrency, filter, sameFilter } = usCardSiblings(card, getUsCreditCards());
   // Hệ điểm của thẻ có cột trong bảng Transfer Partners Mỹ thì trỏ sang đó — như
@@ -210,6 +210,13 @@ export default async function UsCreditCardDetailPage({
             <CardTags tags={card.us.tags} className="mt-4" />
 
             <EditorsTake editorsTake={card.editorsTake} className="mt-6" />
+            {/* Ngay dưới nhận định ngắn: người muốn đọc kỹ hơn đi thẳng sang bài
+                review đầy đủ. Không thêm tiêu đề — nó thuộc mục "Ghế 1A đánh giá". */}
+            {review && (
+              <ul className="mt-4">
+                <StepLink href={review.href} label={us("reviewLabel")} description={review.title} />
+              </ul>
+            )}
 
             <h2 className="mt-8 font-display text-xl font-bold text-foreground">
               {offers("keyBenefits")}

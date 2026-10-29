@@ -1,5 +1,5 @@
 import { getPostsWithin } from "./content";
-import { US_CARDS_BEGINNER_SLUG, US_CARDS_GUIDE_SLUGS } from "./us-credit-cards";
+import { US_CARDS_BEGINNER_SLUG, US_CARDS_GUIDE_SLUGS, type UsCreditCardOffer } from "./us-credit-cards";
 
 export type UsCardsGuide = { slug: string; href: string; title: string; excerpt: string };
 
@@ -50,4 +50,17 @@ export function beginnerGuideHref(guides: UsCardsGuide[]): string | undefined {
 /** Cùng bài, cho chỗ chỉ cần một link và không cần cả danh sách. */
 export async function usCardsGuideHref(): Promise<string | undefined> {
   return beginnerGuideHref(await usCardsGuides());
+}
+
+/**
+ * Bài review của chính thẻ này (`us.reviewSlug`), chỉ khi bài đang publish —
+ * cùng luật với `reviewSlug` của trang khách sạn. Contentful lỗi hay treo thì
+ * `undefined`: mất link, không mất trang.
+ */
+export async function usCardReview(card: UsCreditCardOffer): Promise<UsCardsGuide | undefined> {
+  const slug = card.us.reviewSlug;
+  if (!slug) return undefined;
+  const posts = await getPostsWithin(POSTS_BUDGET_MS, `us-credit-cards/${card.slug}`);
+  const post = posts.find((item) => item.slug === slug);
+  return post && { slug, href: `/blog/${slug}`, title: post.title, excerpt: post.excerpt };
 }

@@ -92,6 +92,13 @@ const nextConfig: NextConfig = {
         destination: "/us-credit-cards/ihg-one-rewards-business",
         permanent: true,
       },
+      // Renamed to the author's "Capital One® Venture Rewards" on 28/10/2026;
+      // the old URL had been in the sitemap since 30/09.
+      {
+        source: "/us-credit-cards/capital-one-venture",
+        destination: "/us-credit-cards/capital-one-venture-rewards",
+        permanent: true,
+      },
     ];
   },
 };

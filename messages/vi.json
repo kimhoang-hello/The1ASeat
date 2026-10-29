@@ -722,6 +722,7 @@
     "transferTitle": "{currency} chuyển được đi đâu",
     "transferLabel": "Bảng Transfer Partners thẻ Mỹ",
     "transferDescription": "Tỷ lệ chuyển sang {count} chương trình hàng không và khách sạn",
+    "reviewLabel": "Đọc bài review đầy đủ",
     "bandTitle": "Tìm thẻ tín dụng Mỹ?",
     "bandBody": "{count} thẻ Mỹ, mỗi thẻ kèm góc nhìn cho người Canada: ITIN, US address, phí ngoại tệ.",
     "bandCta": "Xem thẻ Mỹ",
