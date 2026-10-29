@@ -92,6 +92,7 @@ const SRC = {
   amexAeroplanReserve: amexUrl("credit-cards/aeroplan-reserve"),
   amexAeroplan: amexUrl("charge-cards/aeroplan-card"),
   amexBonvoy: amexUrl("credit-cards/marriott-bonvoy-card"),
+  amexHilton: amexUrl("credit-cards/hilton-honors-card"),
   amexAeroplanBizReserve: amexUrl("credit-cards/aeroplan-business-reserve-card"),
   amexBonvoyBiz: amexUrl("credit-cards/marriott-bonvoy-business-card"),
   amexBizGold: amexUrl("charge-cards/small-business-gold-card"),
@@ -154,6 +155,7 @@ const PROVIDER_BY_PRODUCT: Record<string, string> = {
   "united-mileageplus-neo-world-elite-mastercard": "United®",
   "amex-marriott-bonvoy": "Marriott Bonvoy®",
   "amex-marriott-bonvoy-business": "Marriott Bonvoy®",
+  "amex-hilton-honors": "Hilton Honors™",
 };
 
 /**
@@ -449,6 +451,16 @@ const BY_PRODUCT: Record<string, BenefitSeed[]> = {
     ["flight-delay-insurance", 500, issuer(SRC.amexBonvoy, { text: "gộp với trễ hành lý" })],
     ["baggage-insurance", 500, issuer(SRC.amexBonvoy, { text: "thất lạc, mỗi chuyến" })],
     ["rental-car-insurance", 85000, issuer(SRC.amexBonvoy, AMEX_RENTAL)],
+  ],
+
+  // Free Night Reward của thẻ này chỉ đi cùng welcome bonus (xem offers.ts),
+  // không lặp lại mỗi năm như Marriott Bonvoy® — nên KHÔNG có `free-night-award`.
+  "amex-hilton-honors": [
+    ["hotel-status", null, { text: "Gold; Diamond khi chi $40,000/năm", from: "2026-10-29" }],
+    ["free-supplementary-card", 9, { text: "Tối đa 9 thẻ phụ", source: SRC.amexHilton, from: "2026-10-29" }],
+    ["flight-delay-insurance", 500, { text: "gộp với trễ hành lý", source: SRC.amexHilton, from: "2026-10-29" }],
+    ["baggage-insurance", 500, { text: "thất lạc, mỗi chuyến", source: SRC.amexHilton, from: "2026-10-29" }],
+    ["rental-car-insurance", 85000, { ...AMEX_RENTAL, source: SRC.amexHilton, from: "2026-10-29" }],
   ],
 
   "scotiabank-passport-visa-infinite": [

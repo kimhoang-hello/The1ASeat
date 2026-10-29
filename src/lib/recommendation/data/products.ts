@@ -433,6 +433,18 @@ const SEEDS: Seed[] = [
     officialUrl: null,
   },
   {
+    id: "prd_amex-hilton-honors",
+    slug: "amex-hilton-honors",
+    name: "American Express® Hilton Honors™ Card",
+    issuer: "amex",
+    network: "amex",
+    personalOrBusiness: "personal",
+    program: "hilton",
+    from: "2026-10-29",
+    fees: [{ annualFee: 150, from: "2026-10-29" }],
+    officialUrl: "https://www.americanexpress.com/en-ca/credit-cards/hilton-honors-card/",
+  },
+  {
     id: "prd_scotiabank-passport-visa-infinite",
     slug: "scotiabank-passport-visa-infinite",
     name: "Scotiabank® Passport® Visa Infinite+ Card",

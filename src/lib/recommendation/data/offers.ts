@@ -779,6 +779,30 @@ const OFFER_SEEDS: OfferSeed[] = [
     incomplete: "Nội dung site không nêu mốc chi của welcome bonus này.",
   },
   {
+    // Offer ra mắt cùng thẻ, "LIMITED TIME OFFER" trên amex.ca: đơn nộp từ
+    // 29/10/2026 tới 11/01/2027. Free Night Reward đi cùng mốc $3,000 nhưng
+    // không phải điểm, nên chỉ nằm ở `note` — §11 chỉ đếm cái quy được ra điểm.
+    slug: "amex-hilton-honors",
+    name: "70,000 điểm Hilton Honors™ + 1 Free Night Reward",
+    headline: 70000,
+    currency: "hilton",
+    startDate: "2026-10-29",
+    endDate: "2027-01-11",
+    verifiedAt: "2026-10-29",
+    recordedAt: "2026-10-29",
+    components: [
+      { type: "spend_threshold", points: 60000, spend: 3000, windowDays: 90, note: "Kèm 1 Free Night Reward" },
+      {
+        type: "anniversary",
+        points: 10000,
+        spend: 500,
+        windowDays: 30,
+        startsAfterDays: 365,
+        note: "Chi $500 trong tháng thứ 13",
+      },
+    ],
+  },
+  {
     slug: "scotiabank-passport-visa-infinite",
     name: "Đến 35,000 điểm Scene+™",
     headline: 35000,

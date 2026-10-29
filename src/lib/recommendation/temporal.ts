@@ -122,10 +122,22 @@ export function datasetAt(
     liveProductIds.has(offer.productId),
   );
   const liveOfferIds = new Set(offers.map((offer) => offer.id as string));
+  // Chương trình điểm KHÔNG có `Temporal`, nhưng chương trình vào kho sau đợt
+  // dựng (Hilton Honors™, 29/10/2026) có định giá mang `recordedAt` muộn, và
+  // `known()` cắt dòng đó khỏi bản dựng lại trước ngày ấy. Giữ chương trình mà
+  // mất định giá thì validator báo "không có định giá" cho một chương trình kho
+  // lúc đó chưa hề biết. Nên với `knownAt`, chương trình đi theo định giá của
+  // nó: chưa dòng định giá nào vào kho thì chương trình cũng chưa.
+  const knownProgramIds = new Set(
+    known(data.programValuations).map((valuation) => valuation.programId as string),
+  );
 
   const snapshot: RecommendationDataset = {
     issuers: data.issuers,
-    pointsPrograms: data.pointsPrograms,
+    pointsPrograms:
+      options?.knownAt === undefined
+        ? data.pointsPrograms
+        : data.pointsPrograms.filter((program) => knownProgramIds.has(program.id as string)),
     benefits: data.benefits,
     // Họ sản phẩm là từ điển, không có `Temporal` — nó chỉ nhóm các hạng lại.
     productFamilies: data.productFamilies,

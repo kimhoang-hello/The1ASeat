@@ -226,6 +226,28 @@ export const POINTS_PROGRAMS: PointsProgram[] = [
     contentPattern: /à la carte/i,
   },
   {
+    // Vào kho 29/10/2026 cùng American Express® Hilton Honors™ Card, thẻ Canada
+    // đầu tiên của site tích đồng điểm này. Amex® MR chuyển sang được 1:1,
+    // nhưng chưa có chặng trong `transfer-paths.ts` (cùng lý do Hilton vắng ở
+    // đó từ đầu: ngoài phạm vi V1, và với 1.8 so với 0.7 cent thì không bao
+    // giờ là nước đi đáng khuyên).
+    //
+    // Đứng SAU mọi chương trình khác trừ cash back: "Hilton" hay xuất hiện
+    // trong quyền lợi của thẻ hệ khác (hạng Hilton Honors™ Gold của Amex®
+    // Platinum), nên khi phải khớp tới danh sách quyền lợi thì hệ của chính thẻ
+    // phải thắng trước.
+    id: id<PointsProgramId>("hilton"),
+    slug: "hilton-honors",
+    name: "Hilton Honors™",
+    programType: "hotel",
+    transferable: false,
+    cashOut: "none",
+    calculatorProgramId: null,
+    cardFilterProgramId: "hilton",
+    awardChartProgramId: null,
+    contentPattern: /hilton/i,
+  },
+  {
     // Đồng tiền giả cho thẻ cashback, để engine so thẳng 4% hoàn tiền với 2x
     // điểm mà không cần một nhánh riêng trong mọi phép tính.
     //
@@ -278,6 +300,13 @@ type Valuation = {
    */
   confidence: "verified" | "editorial";
   sourceUrl?: string;
+  /**
+   * Ngày dòng này vào kho, khi nó vào SAU đợt dựng `VALUED_ON`. Cùng cách với
+   * `CASH_RECORDED_ON`: `effectiveFrom` vẫn là `VALUED_ON` (chương trình không
+   * mang ngày hiệu lực, nên validator đòi mọi chương trình có định giá ở mọi
+   * ngày của bộ dữ liệu), còn `recordedAt` là ngày mình thật sự biết nó.
+   */
+  recordedOn?: string;
 };
 
 const VALUATIONS: Valuation[] = [
@@ -289,6 +318,13 @@ const VALUATIONS: Valuation[] = [
   { programId: "asia-miles", centsPerPoint: 1.6, confidence: "editorial" },
   { programId: "aadvantage", centsPerPoint: 1.7, confidence: "editorial" },
   { programId: "bonvoy", centsPerPoint: 0.9, confidence: "editorial" },
+  {
+    programId: "hilton",
+    centsPerPoint: 0.7,
+    confidence: "editorial",
+    sourceUrl: "https://princeoftravel.com/points/hilton-honors/",
+    recordedOn: "2026-10-29",
+  },
   { programId: "scene-plus", centsPerPoint: 1.0, confidence: "verified" },
   { programId: "td-rewards", centsPerPoint: 0.5, confidence: "verified" },
   { programId: "aventura", centsPerPoint: 1.0, confidence: "verified" },
@@ -350,7 +386,7 @@ export const PROGRAM_VALUATIONS: ProgramValuation[] = VALUATIONS.map((v) => ({
   effectiveTo: null,
   sourceUrl: v.sourceUrl ?? null,
   sourceKind: v.confidence === "verified" ? "issuer" : "ghe1a",
-  verifiedAt: v.redemption === "cash" ? CASH_RECORDED_ON : VALUED_ON,
-  recordedAt: v.redemption === "cash" ? CASH_RECORDED_ON : VALUED_ON,
+  verifiedAt: v.recordedOn ?? (v.redemption === "cash" ? CASH_RECORDED_ON : VALUED_ON),
+  recordedAt: v.recordedOn ?? (v.redemption === "cash" ? CASH_RECORDED_ON : VALUED_ON),
   confidence: v.confidence,
 }));

@@ -65,4 +65,5 @@ export const VERIFIED_NONE: VerifiedNone[] = [
   // Thêm 05/10/2026 cùng ngày thẻ lên site.
   none("capital-one-quicksilver-world-elite-mastercard", "lounge", "https://www.capitalone.ca/credit-cards/quicksilver-world-elite-mastercard/", "2026-10-05"),
   none("capital-one-quicksilver-world-mastercard", "lounge", "https://www.capitalone.ca/credit-cards/quicksilver-world-mastercard/", "2026-10-05"),
+  none("amex-hilton-honors", "lounge", amexUrl("credit-cards/hilton-honors-card"), "2026-10-29"),
 ];

@@ -38,6 +38,8 @@ const VERIFIED_ON = "2026-09-07";
  */
 const RECORDED_ON = "2026-09-07";
 
+const HILTON_SOURCE = "https://www.americanexpress.com/en-ca/credit-cards/hilton-honors-card/";
+
 type RateSeed = [
   category: SpendCategory,
   multiplier: number,
@@ -487,6 +489,24 @@ const RATES: Record<string, { program: string; rates: RateSeed[] }> = {
       ["hotel", 5, { restrictedTo: "Khách sạn thuộc Marriott Bonvoy®" }],
       ["hotel", 2],
       ["everything_else", 2],
+    ],
+  },
+
+  // 4x chỉ cho giao dịch TẠI CANADA; engine coi mọi người dùng chi tiêu ở
+  // Canada nên không tách `restrictedTo` (engine bỏ qua dòng giới hạn).
+  // 50,000 điểm khi chi $12,000/năm là thưởng THƯỜNG NIÊN, không phải tỷ lệ:
+  // engine chưa có chiều đó (cùng chỗ trống với 10,000 điểm/$30,000 của
+  // Tangerine®), nên giá trị dài hạn của thẻ này đang bị tính THẤP.
+  "amex-hilton-honors": {
+    program: "hilton",
+    rates: [
+      ["hotel", 6, { restrictedTo: "Khách sạn thuộc Hilton®", from: "2026-10-29", source: HILTON_SOURCE }],
+      ["hotel", 2, { from: "2026-10-29", source: HILTON_SOURCE }],
+      ["gas", 4, { from: "2026-10-29", source: HILTON_SOURCE }],
+      ["grocery", 4, { from: "2026-10-29", source: HILTON_SOURCE }],
+      ["dining", 4, { from: "2026-10-29", source: HILTON_SOURCE }],
+      ["food_delivery", 4, { from: "2026-10-29", source: HILTON_SOURCE }],
+      ["everything_else", 2, { from: "2026-10-29", source: HILTON_SOURCE }],
     ],
   },
 

@@ -48,6 +48,18 @@ test("bộ dữ liệu nền không lỗi", () => {
   assert.deepEqual(errorsIn(BASE), []);
 });
 
+// Hilton Honors™ vào kho 29/10/2026: chương trình không mang ngày, định giá
+// thì có. Bản dựng lại của hôm trước phải không biết cả hai, chứ không phải
+// biết chương trình mà thiếu định giá (Codex bắt 29/10/2026).
+test("chương trình vào kho muộn không làm bản dựng lại của hôm trước báo lỗi", () => {
+  const before = datasetAt(BASE, "2026-10-28", { knownAt: "2026-10-28" });
+  assert.deepEqual(errorsIn(before, "2026-10-28"), []);
+  assert.ok(!before.pointsPrograms.some((program) => program.id === "hilton"));
+  const after = datasetAt(BASE, "2026-10-29", { knownAt: "2026-10-29" });
+  assert.deepEqual(errorsIn(after, "2026-10-29"), []);
+  assert.ok(after.pointsPrograms.some((program) => program.id === "hilton"));
+});
+
 /* --------------------------------------------------------------- *
  * 1. Thẻ đang có nhận welcome offer MỚI
  * --------------------------------------------------------------- */

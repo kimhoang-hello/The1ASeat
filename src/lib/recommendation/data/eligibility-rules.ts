@@ -333,6 +333,15 @@ const BY_PRODUCT: Record<string, RuleSeed[]> = {
     { type: "minimum_personal_income", value: 0, severity: "hard" },
   ],
   "amex-marriott-bonvoy": [AMEX_ONCE_IN_A_LIFETIME, ...amexNoIncome("credit-cards/marriott-bonvoy-card/")],
+  // "Current or former Cardmembers with this Card are not eligible", mục
+  // Eligibility cùng khuôn sáu trang Amex® kia (không dòng thu nhập). Luật cư
+  // trú khai ở đây để nó mang ngày thẻ vào kho, thay vì ngày dựng seed mà
+  // `CANADIAN_RESIDENCY` mặc định mang (xem `ELIGIBILITY_RULES`).
+  "amex-hilton-honors": [
+    { type: "residency", value: "CA", severity: "hard" } satisfies RuleSeed,
+    lifetimeFromIssuer("https://www.americanexpress.com/en-ca/credit-cards/hilton-honors-card/"),
+    ...amexNoIncome("credit-cards/hilton-honors-card/"),
+  ].map((rule) => ({ ...rule, from: "2026-10-29" })),
   "amex-aeroplan-reserve": [AMEX_ONCE_IN_A_LIFETIME, ...amexNoIncome("credit-cards/aeroplan-reserve/")],
   // "You'll also need to have a personal income of at least $80,000 or
   // household income of at least $150,000" — cộng một tài khoản chequing
@@ -426,7 +435,11 @@ const CANADIAN_RESIDENCY: RuleSeed = { type: "residency", value: "CA", severity:
 export const ELIGIBILITY_RULES: EligibilityRule[] = Object.entries(BY_PRODUCT).flatMap(
   ([slug, seeds]) =>
     [
-      CANADIAN_RESIDENCY,
+      // Thẻ tự khai luật cư trú (để mang ngày vào kho của chính nó) thì không
+      // rải thêm bản mặc định — hai luật `residency` sẽ trùng nhau. Thẻ thêm
+      // trước 29/10/2026 giữ nguyên bản mặc định: đổi ngày của chúng là đổi id
+      // mà các lượt chạy đã lưu đang trỏ tới.
+      ...(seeds.some((seed) => seed.type === "residency") ? [] : [CANADIAN_RESIDENCY]),
       ...seeds,
       ...(Object.values(AEROPLAN_CATEGORIES).flat().includes(slug) ? [aeroplanCategoryRule(slug)] : []),
     ].map((seed) => ({
