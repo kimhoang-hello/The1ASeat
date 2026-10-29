@@ -295,12 +295,31 @@ const OFFER_SEEDS: OfferSeed[] = [
     name: "Đến 5,000 điểm Scene+™",
     headline: 5000,
     currency: "scene-plus",
+    // FinlyWealth pause rebate $50 (trang rebate ghi "Finly rebate paused",
+    // Affiliate API không liệt kê offer). Gỡ `rebateVi` trên Contentful
+    // 29/10/2026 19:28 giờ Toronto. Bản ghi mới như bản dưới, offer giữ nguyên.
+    startDate: "2026-07-02",
+    recordedFrom: "2026-10-29",
+    recordedAt: "2026-10-29",
+    verifiedAt: "2026-10-29",
+    endDate: "2026-11-01",
+    components: [
+      { type: "spend_threshold", points: 2500, spend: 250, windowDays: 90 },
+      { type: "spend_threshold", points: 2500, spend: 1000, windowDays: 90 },
+    ],
+  },
+  {
+    slug: "scotiabank-scene-plus-visa-students",
+    name: "Đến 5,000 điểm Scene+™",
+    headline: 5000,
+    currency: "scene-plus",
     // `startDate` là ngày NHÀ PHÁT HÀNH công bố; `recordedFrom` là ngày BẢN GHI
     // của mình bắt đầu. Chúng tách nhau ở đây vì offer chạy trước khi kho này
     // tồn tại — nói `effectiveFrom: 2026-07-02` là khai rằng mình đã biết offer
     // này từ tháng 7, trong khi seed dựng ngày 07/09.
     startDate: "2026-07-02",
     recordedFrom: "2026-09-07",
+    recordedTo: "2026-10-28",
     endDate: "2026-11-01",
     rebate: 50,
     components: [
