@@ -159,6 +159,10 @@
         "at": "2026-08-31",
         "welcomeBonus": "5,000 điểm Scene+™",
         "rebate": "$50"
+      },
+      {
+        "at": "2026-10-30",
+        "welcomeBonus": "5,000 điểm Scene+™"
       }
     ],
     "td-aeroplan-visa-infinite": [
@@ -389,6 +393,12 @@
       {
         "at": "2026-10-06",
         "welcomeBonus": "Nhân đôi toàn bộ cashback năm đầu"
+      }
+    ],
+    "amex-hilton-honors": [
+      {
+        "at": "2026-10-30",
+        "welcomeBonus": "70,000 điểm Hilton Honors™ + 1 Free Night Reward"
       }
     ]
   }
