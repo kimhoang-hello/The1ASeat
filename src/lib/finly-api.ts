@@ -229,6 +229,30 @@ export type PageLookup =
   | { kind: "product"; offer: FinlyOffer; twinRebate: string | null }
   | { kind: "missing" };
 
+/**
+ * Link apply mà Finly API không liệt kê nhưng tác giả chốt GIỮ NGUYÊN.
+ *
+ * User quyết ngày 29/10/2026, cùng tinh thần luật link `/banking/` đã chốt
+ * 20/08: link trên site là link tác giả chọn. Không có danh sách này thì hai
+ * job đỏ ở MỌI lượt vì một trạng thái đã được chấp nhận, và một lỗi thật sẽ
+ * chìm giữa những dòng đỏ quen mắt.
+ *
+ * Khoá theo slug VÀ đường dẫn đích: đổi link sang một trang khác mà API cũng
+ * không liệt kê thì vẫn đỏ, vì đó là một lựa chọn mới chưa ai xem. Chỉ miễn cho
+ * trạng thái "không có trong API" — site mà vẫn hiện số rebate cho link này
+ * thì vẫn là lỗi, vì không còn nguồn nào xác nhận con số đó.
+ */
+const KEPT_UNLISTED_LINKS: ReadonlyMap<string, string> = new Map([
+  ["scotiabank-scene-plus-visa-students", "/rebates/credit-cards/scotia-scene-plus-visa-students"],
+  ["scotiabank-momentumplus-savings", "/banking/savings-accounts/scotiabank-momentum-plus-savings-account"],
+  ["koho-essential", "/banking/savings-accounts/koho-essential-plan"],
+]);
+
+/** Tác giả đã chốt giữ đúng link này (slug + trang đích) dù API không liệt kê. */
+export function keptUnlisted(slug: string, path: string): boolean {
+  return KEPT_UNLISTED_LINKS.get(slug) === path;
+}
+
 const CATEGORY_BY_SECTION: Record<string, string> = {
   "credit-cards": "credit_card",
   "bank-accounts": "bank_account",

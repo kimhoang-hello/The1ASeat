@@ -24,6 +24,7 @@ import {
   FinlyOfferIndex,
   affiliateDestinationPath,
   fetchFinlyOffers,
+  keptUnlisted,
   type PageLookup,
 } from "../src/lib/finly-api.ts";
 
@@ -59,6 +60,8 @@ const errors: string[] = [];
  * thành xanh (KOHO Essential Plan, 25/09/2026).
  */
 const unlisted: string[] = [];
+/** Như `unlisted`, nhưng tác giả đã chốt giữ link (xem `KEPT_UNLISTED_LINKS`). */
+const kept: string[] = [];
 let checked = 0;
 
 let finly: FinlyOfferIndex;
@@ -107,6 +110,14 @@ for (const account of BANK_ACCOUNTS) {
           " không phải trang rebate — gỡ `rebate:` hoặc sửa link",
       );
     }
+  } else if (keptUnlisted(account.slug, dest)) {
+    kept.push(account.slug);
+    if (account.rebate) {
+      errors.push(
+        `${account.slug}: site đang ghi ${account.rebate} cho link mà FinlyWealth API không liệt kê` +
+          " — không còn nguồn nào xác nhận con số đó, gỡ `rebate:`",
+      );
+    }
   } else {
     unlisted.push(account.slug);
   }
@@ -118,6 +129,13 @@ if (errors.length) {
   console.log(`${errors.length} chuyện cần người nhìn vào:`);
   for (const e of errors) console.log("  ·", e);
   console.log();
+}
+
+if (kept.length) {
+  console.log(
+    `Nhắc (không phải lỗi): ${kept.length} tài khoản giữ link mà FinlyWealth API không liệt kê,` +
+      ` theo lựa chọn của tác giả (29/10/2026): ${kept.join(", ")}\n`,
+  );
 }
 
 if (unlisted.length) {

@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { FinlyOfferIndex, affiliateDestinationPath, fetchFinlyOffers, formatRebate, type FinlyOffer } from "./finly-api.ts";
+import {
+  FinlyOfferIndex,
+  affiliateDestinationPath,
+  fetchFinlyOffers,
+  formatRebate,
+  keptUnlisted,
+  type FinlyOffer,
+} from "./finly-api.ts";
 
 // Con số đọc ra từ đây được GHI THẲNG lên site, như với `finlywealth.test.ts`.
 // Ba ca `paused`/`missing` dưới đây là hai sản phẩm thật ngày 29/10/2026: BMO®
@@ -73,6 +80,13 @@ test("link /banking/ trả về trang sản phẩm kèm rebate của trang rebat
 
 test("trang không offer nào nhận là missing", () => {
   assert.equal(index.lookup("/banking/savings-accounts/koho-essential-plan").kind, "missing");
+});
+
+test("link giữ nguyên chỉ được miễn khi đúng cả slug lẫn trang đích", () => {
+  assert.ok(keptUnlisted("koho-essential", "/banking/savings-accounts/koho-essential-plan"));
+  // Đổi sang một trang khác cũng không có trong API là lựa chọn mới, phải đỏ lại.
+  assert.ok(!keptUnlisted("koho-essential", "/banking/savings-accounts/koho-other-plan"));
+  assert.ok(!keptUnlisted("rbc-advantage", "/banking/savings-accounts/koho-essential-plan"));
 });
 
 test("formatRebate từ chối số lẻ xu, số 0 và số âm thay vì làm tròn", () => {

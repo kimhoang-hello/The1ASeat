@@ -1,7 +1,7 @@
 import { cmaClient, field, listEntries, LOCALE, updateEntry } from "@/lib/contentful-cma";
 import { fetchContentfulCreditCardOffers } from "@/lib/content/contentful";
 import { finlyWealthRebateUrl } from "@/lib/finlywealth";
-import { FinlyOfferIndex, fetchFinlyOffers } from "@/lib/finly-api";
+import { FinlyOfferIndex, fetchFinlyOffers, keptUnlisted } from "@/lib/finly-api";
 import { RESERVED_SLUG, slugClashMessage } from "@/lib/card-compare";
 import {
   RECOMMENDER_RESERVED_SLUG,
@@ -207,7 +207,8 @@ export async function runCheckRebates({
     if (!finly) continue;
     try {
       const live = liveCard.rebate;
-      const found = finly.lookup(new URL(rebateUrl).pathname.replace(/\/+$/, ""));
+      const path = new URL(rebateUrl).pathname.replace(/\/+$/, "");
+      const found = finly.lookup(path);
 
       // Hai nhánh dưới BÁO chứ không tự gỡ, cùng lý do với nhánh "link không
       // trỏ tới /rebates/" ở cuối hàm: gỡ `rebateVi` thì câu HOT TIP vẫn hứa
@@ -225,6 +226,12 @@ export async function runCheckRebates({
         continue;
       }
       if (found.kind !== "amount") {
+        // Tác giả chốt giữ link này dù API không liệt kê — xem
+        // `KEPT_UNLISTED_LINKS`. Chỉ miễn khi site không hứa con số nào.
+        if (found.kind === "missing" && !live && keptUnlisted(slug, path)) {
+          unchanged.push(slug);
+          continue;
+        }
         errors.push({
           slug,
           message: `link apply trỏ ${rebateUrl} nhưng Finly API không liệt kê trang rebate này (offer đã ngừng, đang pause, hoặc rời chương trình affiliate) — site đang hiện ${live ?? "(không có rebate)"}, kiểm trang Finly rồi sửa tay`,
