@@ -593,7 +593,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     url: "https://www.tangerine.ca/en/personal/save/savings-account",
     affiliateUrl:
       "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Ftangerine-savings&utm_source=ghe-1a",
-    rebate: "$75",
+    rebate: "$50",
   },
   {
     slug: "tangerine-no-fee-chequing",
@@ -623,7 +623,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     url: "https://www.tangerine.ca/en/personal/spend/chequing-account",
     affiliateUrl:
       "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Ftangerine-chequing&utm_source=ghe-1a",
-    rebate: "$75",
+    rebate: "$50",
   },
 
   // ------------------------------------------------------------- EQ Bank
