@@ -4093,6 +4093,16 @@ từ 02/09, nên nâng override lên 6.16.2 chứ không `npm update`. Không d�
 `arrayFormat: 'indices'` và chỉ stringify tham số truy vấn do code mình tạo. Bài học: override ghim exact sẽ tự
 thành nguồn lỗ hổng ở lượt sau — khi advisory mới trúng gói đang override, sửa số trong `overrides`.
 
+## Vá `follow-redirects` 1.16.1 → 1.16.2 (31/10/2026)
+
+hPanel quét 30/10 20:01 báo 3 moderate; `npm audit` báo cùng thứ nhưng xếp `follow-redirects` là HIGH.
+- CVE-2026-116689 / GHSA-mrwp-f3q8-3g9p, `follow-redirects` 1.16.0–1.16.1 để credentials/header nhạy cảm đi theo
+  redirect: runtime qua `contentful` → `axios`; `npm update follow-redirects` (chỉ lockfile, commit c981d11).
+  Dính rất ít: chỉ gọi API Contentful, không redirect sang host lạ.
+- CVE-2026-118764 / GHSA-g3hv-75wg-m249, `minimatch` < 11.0.1 (bản 3.1.5 + 10.2.6, dev-only qua eslint): CHƯA vá
+  được — vá chỉ có ở 11.x, kể cả `eslint` 10.14 / `typescript-eslint` mới nhất vẫn ghim `^10`. Override 3→11 sẽ
+  vỡ eslint. hPanel còn 2 dòng này (quét 31/10 07:59) — đợi eslint nâng, đừng thêm override.
+
 ## Kiểm toàn diện định kỳ 24/10/2026 — đừng đề xuất lại
 
 Gate: lint, tsc, build, 10 audit, 6 test suite (`test:reco` 494 + 23 skip MySQL), `audit:links` production (239
