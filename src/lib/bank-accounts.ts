@@ -195,11 +195,11 @@ export const BANK_ACCOUNTS: BankAccount[] = [
       "Miễn monthly fee nếu giữ số dư tối thiểu $4,000. Người mới định cư theo Scotiabank StartRight® được miễn monthly fee trong năm đầu.",
     bonusValue: 1000,
     bonusLabelVi: "Tối đa $1,000",
-    bonusExpiresOn: "2026-10-29",
+    bonusExpiresOn: "2027-03-04",
     bonusConditionsVi: [
-      "Mở tài khoản mới trong khoảng 03/07/2026 – 29/10/2026.",
+      "Mở tài khoản mới trong khoảng 30/10/2026 – 04/03/2027.",
       "$700 khi mở Preferred Package hoặc Ultimate Package mới và hoàn thành các giao dịch theo yêu cầu.",
-      "Tối đa $300 nữa khi mở kèm Money Master Savings Account mới và/hoặc thẻ tín dụng Scotiabank® đủ điều kiện; chỉ tính khi bạn đã đủ điều kiện nhận $700.",
+      "Tối đa $300 nữa, chỉ tính khi bạn đã đủ điều kiện nhận $700: $200 khi mở thêm một RRSP (trừ spousal và locked-in), TFSA hoặc FHSA mới ở Scotiabank® hoặc Scotia® Securities trong 60 ngày kể từ ngày mở chequing; và $100 khi mở thẻ tín dụng Scotiabank® đủ điều kiện trong 60 ngày kể từ ngày mở chequing, rồi mua ít nhất một lần trong 60 ngày kể từ ngày mở thẻ.",
     ],
     keyBenefitsVi: [
       "Giao dịch debit không giới hạn",
@@ -225,11 +225,11 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     feeWaiverVi: "Miễn monthly fee nếu giữ số dư tối thiểu $6,000.",
     bonusValue: 1000,
     bonusLabelVi: "Tối đa $1,000",
-    bonusExpiresOn: "2026-10-29",
+    bonusExpiresOn: "2027-03-04",
     bonusConditionsVi: [
-      "Mở tài khoản mới trong khoảng 03/07/2026 – 29/10/2026.",
+      "Mở tài khoản mới trong khoảng 30/10/2026 – 04/03/2027.",
       "$700 khi mở Preferred Package hoặc Ultimate Package mới và hoàn thành các giao dịch theo yêu cầu.",
-      "Tối đa $300 nữa khi mở kèm Money Master Savings Account mới và/hoặc thẻ tín dụng Scotiabank® đủ điều kiện; chỉ tính khi bạn đã đủ điều kiện nhận $700.",
+      "Tối đa $300 nữa, chỉ tính khi bạn đã đủ điều kiện nhận $700: $200 khi mở thêm một RRSP (trừ spousal và locked-in), TFSA hoặc FHSA mới ở Scotiabank® hoặc Scotia® Securities trong 60 ngày kể từ ngày mở chequing; và $100 khi mở thẻ tín dụng Scotiabank® đủ điều kiện trong 60 ngày kể từ ngày mở chequing, rồi mua ít nhất một lần trong 60 ngày kể từ ngày mở thẻ.",
     ],
     keyBenefitsVi: [
       "Giao dịch debit và Interac e-Transfer® không giới hạn",

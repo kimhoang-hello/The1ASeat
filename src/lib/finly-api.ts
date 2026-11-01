@@ -57,6 +57,48 @@ export interface FinlyOffer {
  * (key sai, bị revoke) và 403 (thiếu scope) là vĩnh viễn, 429 và 5xx thì không.
  */
 export async function fetchFinlyOffers(apiKey: string): Promise<FinlyOffer[]> {
+  try {
+    return await readOffers(apiKey);
+  } catch (err) {
+    throw redactKey(err, apiKey);
+  }
+}
+
+/**
+ * Câu lỗi đi thẳng ra log Actions và vào thân trả về của route
+ * `check-rebates`. Lỗi native của `fetch` (key dính ký tự xuống dòng làm
+ * `Headers` từ chối) và `error.message` do API trả về đều có thể chở nguyên
+ * key. Sửa `message` tại chỗ thay vì dựng Error mới, để giữ `name` và stack
+ * gốc; chỉ khi `message` không ghi được (getter như `DOMException`, hoặc
+ * property chỉ đọc) mới dựng Error mới — gán thẳng vào đó sẽ ném một
+ * `TypeError` mà câu lỗi chở nguyên key (Codex bắt 31/10/2026).
+ */
+function redactKey(err: unknown, apiKey: string): unknown {
+  // `Headers` cắt khoảng trắng hai đầu giá trị trước khi gửi, nên key dán vào
+  // secret mà dính xuống dòng thì API nhắc lại bản ĐÃ cắt. Che cả hai; bản dài
+  // trước, vì nó chứa bản ngắn. Key thật dài vài chục ký tự; chuỗi ngắn (key
+  // giả trong test) thì thay sẽ băm nát chính câu lỗi mà không che được gì.
+  const keys = [...new Set([apiKey, apiKey.trim()])].filter((key) => key.length >= 8);
+  const scrub = (text: string) => keys.reduce((out, key) => out.split(key).join("[FINLY_API_KEY]"), text);
+
+  const message = err instanceof Error ? err.message : String(err);
+  const clean = scrub(message);
+  if (clean === message) return err;
+  if (!(err instanceof Error)) return new Error(clean);
+
+  try {
+    err.message = clean;
+    if (err.stack) err.stack = scrub(err.stack);
+  } catch {
+    // rơi xuống dưới
+  }
+  if (err.message === clean) return err;
+  const copy = new Error(clean);
+  copy.name = err.name;
+  return copy;
+}
+
+async function readOffers(apiKey: string): Promise<FinlyOffer[]> {
   const offers: FinlyOffer[] = [];
 
   for (let page = 1; page <= MAX_PAGES; page += 1) {
@@ -264,10 +306,23 @@ export class FinlyOfferIndex {
   private readonly byId = new Map<string, FinlyOffer>();
 
   constructor(offers: FinlyOffer[]) {
+    // Hai dòng cùng id, hoặc hai offer cùng trang rebate, mà KHÁC số: không
+    // biết dòng nào đúng, và `Map.set` sẽ lặng lẽ lấy dòng đứng sau — job ghi
+    // số đó lên site, hay xoá hẳn một rebate đang đúng nếu dòng sau là `null`.
+    // Ném để cả hai job dừng trước khi ghi. Trùng mà cùng số thì vô hại.
+    const conflict = (seen: FinlyOffer | undefined, offer: FinlyOffer, what: string) => {
+      if (seen && (seen.rebate?.amount ?? null) !== (offer.rebate?.amount ?? null)) {
+        throw new Error(`Finly API: ${what} xuất hiện hai lần với rebate khác nhau (${seen.id}, ${offer.id})`);
+      }
+    };
     for (const offer of offers) {
+      conflict(this.byId.get(offer.id), offer, `offer ${offer.id}`);
       this.byId.set(offer.id, offer);
       const rebatePage = finlyPath(offer.links.rebatePageUrl);
-      if (rebatePage) this.byRebatePage.set(rebatePage, offer);
+      if (rebatePage) {
+        conflict(this.byRebatePage.get(rebatePage), offer, `trang ${rebatePage}`);
+        this.byRebatePage.set(rebatePage, offer);
+      }
       // `landingPageUrl` là trang sản phẩm khi offer không có rebate — và đó
       // là chỗ link cũ của offer vừa bị tắt rebate rơi vào.
       for (const url of [offer.links.productPageUrl, offer.links.landingPageUrl]) {

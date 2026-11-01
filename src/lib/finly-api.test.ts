@@ -178,3 +178,71 @@ test("429 thì chờ rồi thử lại", async () => {
     restore();
   }
 });
+
+test("offer trùng mà khác số thì ném, trùng cùng số thì cho qua", () => {
+  const a = withRebate("credit_card:dup", 50, "credit-cards", "/credit-cards/reviews/dup");
+  assert.throws(() => new FinlyOfferIndex([a, { ...a, rebate: { amount: 500 } }]), /hai lần với rebate khác nhau/);
+  assert.throws(() => new FinlyOfferIndex([a, { ...a, rebate: null }]), /hai lần với rebate khác nhau/);
+  const other = withRebate("credit_card:dup-2", 75, "credit-cards", "/credit-cards/reviews/dup-2");
+  assert.throws(
+    () => new FinlyOfferIndex([a, { ...other, links: { ...other.links, rebatePageUrl: a.links.rebatePageUrl } }]),
+    /hai lần với rebate khác nhau/,
+  );
+  const same = new FinlyOfferIndex([a, { ...a }]);
+  const found = same.lookup("/rebates/credit-cards/dup");
+  assert.equal(found.kind === "amount" && found.rebate, "$50");
+});
+
+test("câu lỗi không chở API key", async () => {
+  const key = "fk_live_secret123";
+  const restore = mockFetch([
+    () => new Response(JSON.stringify({ error: { code: "invalid_api_key", message: `key ${key} revoked` } }), { status: 401 }),
+  ]);
+  try {
+    await assert.rejects(fetchFinlyOffers(key), (err: Error) => {
+      assert.match(err.message, /^401 Finly API invalid_api_key/);
+      assert.ok(!err.message.includes(key));
+      return true;
+    });
+  } finally {
+    restore();
+  }
+});
+
+test("key dính xuống dòng: API nhắc lại bản đã cắt thì vẫn che", async () => {
+  const key = "fk_live_secret123";
+  const restore = mockFetch([
+    () => new Response(JSON.stringify({ error: { code: "invalid_api_key", message: `key ${key} revoked` } }), { status: 401 }),
+  ]);
+  try {
+    await assert.rejects(fetchFinlyOffers(`${key}\n`), (err: Error) => {
+      assert.ok(!err.message.includes(key));
+      return true;
+    });
+  } finally {
+    restore();
+  }
+});
+
+test("lỗi có message chỉ đọc: dựng lỗi mới đã che, không ném TypeError chở key", async () => {
+  const key = "fk_live_secret123";
+  const readonly = new Error("x");
+  Object.defineProperty(readonly, "message", { value: `bad ${key}`, writable: false });
+  const restore = mockFetch([
+    () => {
+      const res = new Response("{}", { status: 200 });
+      res.json = async () => {
+        throw readonly;
+      };
+      return res;
+    },
+  ]);
+  try {
+    await assert.rejects(fetchFinlyOffers(key), (err: Error) => {
+      assert.equal(err.message, "bad [FINLY_API_KEY]");
+      return true;
+    });
+  } finally {
+    restore();
+  }
+});

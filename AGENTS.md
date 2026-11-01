@@ -4286,3 +4286,64 @@ bản vá lần một (BẢN VÁ HỎNG, xử lý dưới); bác bản vá lần
 - Rà tay khớp trang ngân hàng: Scotiabank® Preferred/Ultimate (29/10), Student (01/11), chưa có offer nối tiếp; CIBC®
   Aventura® ×2 (60,000) và TD® First Class (160,000) vẫn elevated. Ba thẻ RBC® Avion® hạn 25/11 (chưa tới ngưỡng 7
   ngày). Thẻ Amex® elevated không có `expiresAt` không rà lượt này (offer theo kênh, phải bấm đường Apply).
+
+## Kiểm toàn diện 31/10/2026 — đừng đề xuất lại
+
+Lượt định kỳ sáng 31/10 (9:15) vá xong bốn chỗ, qua một vòng Codex, rồi dừng giữa lúc chạy lại gate mà chưa commit;
+lượt tay tối cùng ngày nhận lại, kiểm lại từng bản vá rồi mới commit. Gate: lint, tsc, build, 11 audit, 9 test suite
+(`test:reco` 503 + 23 skip MySQL, `test:jobs` 27), `audit:links` production (242 trang, không trang mồ côi), smoke test
++ `www` 308 + 5 header bảo mật. `npm audit` còn 16 moderate, toàn bộ là nhánh `minimatch` dev-only của eslint đã ghi
+ở mục 31/10 bên trên (`--omit=dev` = 0). Codex ba vòng: vòng sáng; vòng tối rà toàn bộ diff (A, C, D, E ĐÚNG; B BẢN VÁ
+HỎNG, xử lý dưới); bác bản vá của B (hai lỗi ban đầu ĐÚNG, test mới đỏ với code cũ; hai ca hẹp mình bác, ghi dưới).
+
+**Đã vá:**
+- **`expire-offers` sẽ gắn lại rebate FinlyWealth đang pause** (`offerPageRebate` trong `lib/finlywealth.ts`). Job này
+  vẫn đọc TRANG `/rebates/…`, và `<title>` không đổi khi FinlyWealth pause: Scotiabank® Scene+™ Visa for Students in
+  "$50 … Rebate from FinlyWealth" trong khi thân trang ghi "Finly rebate paused on this offer". Thẻ hết hạn 01/11, nên
+  lượt 02/11 sẽ gắn lại badge $50 + câu HOT TIP mà tác giả gỡ ở 9948ebf. Nay câu "paused" nằm TRƯỚC mục "How to earn
+  the welcome bonus" thì rebate là `undefined` → `updateEntry` xoá `rebateVi`, `rewriteOfferCopy` nhận "không có" và
+  từ chối bản viết còn HOT TIP. Không soi `"status":"PAUSED"` trong JSON nhúng: JSON đó chở cả offer khác cùng trang.
+  Kiểm trang thật tối 31/10: Scene+™ Student → không rebate; Momentum® VI $150, WestJet® RBC® $50, Gold Amex® $150.
+- **`FinlyOfferIndex` ném khi cùng id hoặc cùng trang rebate xuất hiện hai lần với số khác nhau** (trước đó `Map.set`
+  lặng lẽ lấy dòng sau, kể cả dòng `null` sẽ xoá một rebate đang đúng). Dựng index trước vòng ghi của cả hai job, nên
+  ném là 0 lượt ghi; lỗi retryable nhưng catalogue chưa đổi thì lượt sau vẫn đỏ.
+- **Câu lỗi Finly API không chở API key** (`redactKey` trong `lib/finly-api.ts`) — câu lỗi đi thẳng ra log Actions
+  và thân trả về của route. Bản sáng chỉ thay chuỗi key thô bằng gán `err.message`; Codex bắt hai ca hở: (1) `Headers`
+  cắt khoảng trắng hai đầu, nên key dán vào secret dính xuống dòng thì API nhắc lại bản ĐÃ cắt — nay che cả hai bản;
+  (2) lỗi có `message` không ghi được (getter như `DOMException`, property chỉ đọc) thì phép gán ném `TypeError` mà
+  câu lỗi chở nguyên key — nay dựng Error mới cùng `name`. `isTransient` chỉ đọc `message` nên Error mới không đổi
+  phân loại. Stack cũng được che khi ghi được.
+- **Seed engine còn rebate cũ cho 3 thẻ** FinlyWealth đổi tối 31/10 (job `check-rebates` đỏ có chủ ý ở lượt 14:41 và
+  23:31 UTC): Scotiabank® Momentum® VI+ $200 → $150, Scotiabank® Gold Amex® $200 → $150, WestJet® RBC® $140 → $50
+  (Affiliate API xác nhận cùng tối). Theo luật temporal mục 28/10: bản cũ `recordedTo: 2026-10-30`, bản mới
+  `recordedFrom: 2026-10-31` đứng trước. Momentum® đổi HAI lần trong ngày ($200 → $100 lúc 10:41, $100 → $150 lúc 19:31
+  giờ Toronto) — bản ghi theo ngày chỉ giữ số chốt của ngày, mức $100 không có bản riêng. Kiểm offline (cả Codex): 30/10
+  → số cũ, 31/10–01/11 → số mới, sau `endDate` → không offer; đổi giờ 01/11 không làm `oneActiveAt` trả hai bản.
+- Dữ liệu: **Scotiabank® Preferred/Ultimate có offer nối tiếp $1,000, mở tài khoản 30/10/2026 – 04/03/2027**; phần
+  $300 nay là $200 khi mở RRSP (trừ spousal, locked-in)/TFSA/FHSA trong 60 ngày + $100 khi mở thẻ tín dụng trong 60
+  ngày rồi mua một lần (điều khoản "Scotiabank Cash Bonus Bundle Offer", đọc lại tối 31/10).
+- `audit:rebates` nạp `.env.local` (`--env-file-if-exists`) — trước đó chạy trên máy thiếu `FINLY_API_KEY`.
+
+**Đã kiểm, KHÔNG phải lỗi (đừng báo lại):**
+- `check-rebates` đỏ 31/10 14:41 + 23:31 UTC: đúng thiết kế (seed lệch site), hết đỏ khi bản vá seed lên.
+- Rà tay khớp trang ngân hàng, chưa có offer nối tiếp: Scotiabank® Student (01/11); BMO® $900 + Walmart+ (02/11),
+  Student $200 Tech; National Bank® (03/11); RBC® VIP/Signature iPad (02/11), Student AirPods 4 (02/11, hoàn tất
+  15/01/2027), Day to Day $150 (08/12); Simplii™ chequing $350 (31/01/2027). Simplii™ HISA hết lãi khuyến mãi 31/10:
+  từ 01/11 trang tự về 0.30% + `regularNoteVi` (Codex mô phỏng). Lượt sáng: CIBC® Aventura® ×2 và TD® First Class vẫn
+  elevated.
+- KOHO, Wealthsimple®, Neo™ có bonus không ngày: đó là offer qua FinlyWealth (promo code FW10C26, link giới thiệu),
+  trang chính chủ không đăng — không đối chiếu được ở trang ngân hàng.
+- `audit:rebates` nhắc 7 tài khoản dùng link `/banking/` trong khi bản `/rebates/` có trả tiền: link tác giả chọn.
+
+**Codex bác, mình GIỮ (đừng báo lại):**
+- *`redactKey` không che key ngắn hơn 8 ký tự sau trim*: ngưỡng 8 có chủ ý (key giả trong test); key thật dài vài
+  chục ký tự, key ngắn là cấu hình hỏng và 401 ngay.
+- *Stack chỉ đọc trong khi `message` ghi được thì stack còn chở key*: V8 không sinh ra dạng đó cho lỗi thật, và hai job
+  chỉ in `.message` (`check-rebates.ts`, `check-bank-rebates.mts`).
+
+**Chờ tác giả:** sáu thẻ hết offer 31/10–04/11 (BMO® VIPorter® 31/10; Scotiabank® Gold Amex®, Momentum® VI+, Passport™,
+Scene+™ Student 01/11; WestJet® RBC® 04/11) — cả sáu link apply là trang `/rebates/` (Codex đối chiếu từng slug).
+`expire-offers` chỉ tự viết lại khi offer mới ĐỔI nhãn bonus; ngân hàng gia hạn giữ nguyên nhãn thì
+`rewriteOfferCopy` từ chối, job giữ hạn và đỏ có chủ ý (mục 25/10) cho tới khi sửa tay. Scene+™ Student mô phỏng 02/11
+(Codex): nhãn đổi → 200, xoá hạn, không gắn lại rebate; nhãn giữ → 500 mỗi lượt, không gắn lại rebate. Nhìn lại trang
+sau lượt 02/11 và 05/11. `audit:links` nhắc 1 mô tả SEO dưới 70 ký tự.

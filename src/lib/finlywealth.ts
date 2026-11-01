@@ -135,7 +135,8 @@ function rebateFromTitle(html: string): string {
 }
 
 export interface FinlyWealthOffer {
-  rebate: string;
+  /** `undefined` khi FinlyWealth đang pause rebate của offer này. */
+  rebate: string | undefined;
   /** The page's own prose about the current welcome bonus, earn rates and fees. */
   details: string;
 }
@@ -156,7 +157,31 @@ export async function fetchFinlyWealthOffer(url: string): Promise<FinlyWealthOff
   const details = start === -1 ? "" : text.slice(start, end === -1 ? start + 4000 : end).trim();
   if (!details) throw new Error("no welcome-bonus section on the page");
 
-  return { rebate: rebateFromTitle(html), details: details.slice(0, 4000) };
+  return { rebate: offerPageRebate(html, text), details: details.slice(0, 4000) };
+}
+
+/**
+ * Rebate của một trang `/rebates/…`, hoặc `undefined` khi trang ghi rebate
+ * đang pause.
+ *
+ * `<title>` KHÔNG đổi khi FinlyWealth pause rebate: Scotiabank® Scene+™ Visa for
+ * Students ngày 31/10/2026 vẫn in "$50 … Rebate from FinlyWealth" trong khi thân
+ * trang ghi "Finly rebate paused on this offer". Hai job rebate đã chuyển sang
+ * Affiliate API từ 29/10 vì đúng lý do này, nhưng `expire-offers` vẫn đọc trang
+ * — và thẻ đó hết hạn 01/11, nên lượt 02/11 sẽ gắn lại badge $50 cùng câu HOT
+ * TIP mà tác giả vừa gỡ ở 9948ebf. Chỉ soi câu chữ hiện trên trang, không soi
+ * `"status":"PAUSED"` trong JSON nhúng: JSON đó còn chở các offer khác (thẻ
+ * gợi ý cùng trang), khớp nhầm là xoá một rebate đang đúng.
+ */
+export function offerPageRebate(html: string, text = htmlToText(html)): string | undefined {
+  // Chỉ soi phần đầu trang (tên sản phẩm, khối rebate) — đứng TRƯỚC mục
+  // "How to earn the welcome bonus" của chính offer này. Câu "paused" nằm
+  // trong khối thẻ khác phía dưới thì không được xoá rebate của thẻ này.
+  // Trang thật 31/10/2026: câu đó ở ký tự 141, mục welcome bonus ở 897.
+  const welcome = text.search(/How to earn the welcome bonus/i);
+  const hero = welcome === -1 ? text : text.slice(0, welcome);
+  if (/rebate paused on this offer/i.test(hero)) return undefined;
+  return rebateFromTitle(html);
 }
 
 function htmlToText(html: string): string {

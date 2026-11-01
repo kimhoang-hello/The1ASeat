@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { rebateAmountInTitle } from "./finlywealth.ts";
+import { offerPageRebate, rebateAmountInTitle } from "./finlywealth.ts";
 
 // Con số đọc ra từ đây được GHI THẲNG lên site: `check-rebates` sửa `rebateVi`
 // cộng câu HOT TIP rồi publish, `scripts/check-bank-rebates.mts` sửa
@@ -64,4 +64,19 @@ test("trả null cho mọi trang không phải trang rebate", () => {
   assert.equal(rebateAmountInTitle("Not Found"), null);
   assert.equal(rebateAmountInTitle("Service Unavailable"), null);
   assert.equal(rebateAmountInTitle(""), null);
+});
+
+test("trang ghi rebate đang pause thì không có rebate, dù <title> còn in số cũ", () => {
+  // Dạng thật của trang Scotiabank® Scene+™ Visa for Students ngày 31/10/2026.
+  const title = "<title>$50 Scotia® Scene+™ Student Rebate from FinlyWealth</title>";
+  const paused = `${title}<div><p class="MuiTypography-root">Finly rebate paused on this offer</p></div>`;
+  assert.equal(offerPageRebate(paused), undefined);
+  assert.equal(offerPageRebate(`${title}<p>Get $50 rebate</p>`), "$50");
+  // JSON nhúng của offer KHÁC cùng trang không được làm mất rebate của offer này.
+  assert.equal(offerPageRebate(`${title}<script>{"status":"PAUSED"}</script>`), "$50");
+  // Khối thẻ khác phía dưới mục welcome bonus cũng vậy.
+  assert.equal(
+    offerPageRebate(`${title}<h2>How to earn the welcome bonus</h2><aside><p>Finly rebate paused on this offer</p></aside>`),
+    "$50",
+  );
 });
