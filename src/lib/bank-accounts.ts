@@ -805,7 +805,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     url: "https://www.koho.ca/extra/",
     affiliateUrl:
       "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fkoho-extra-plan&utm_source=ghe-1a",
-    rebate: "$75",
+    rebate: "$100",
   },
   {
     slug: "koho-essential",
