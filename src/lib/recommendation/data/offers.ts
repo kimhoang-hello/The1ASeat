@@ -210,7 +210,35 @@ const OFFER_SEEDS: OfferSeed[] = [
     name: "Cashback 15% trong 3 tháng đầu (tối đa $300)",
     headline: null,
     currency: null,
+    // Rebate FinlyWealth đổi HAI lần trong ngày 31/10/2026: $200 → $100 (job
+    // check-rebates 10:41 giờ Toronto) rồi $100 → $150 (19:31). Bản ghi theo
+    // ngày nên chỉ giữ được số chốt của ngày; mức $100 sống chưa tới chín tiếng
+    // không có bản riêng. Affiliate API xác nhận $150 cùng tối. Offer giữ nguyên.
     startDate: "2026-09-07",
+    recordedFrom: "2026-10-31",
+    recordedAt: "2026-10-31",
+    verifiedAt: "2026-10-31",
+    endDate: "2026-11-01",
+    feeFirstYear: 0,
+    rebate: 150,
+    components: [
+      {
+        type: "statement_credit",
+        cash: 300,
+        spend: 2000,
+        windowDays: 90,
+        note: "Hoàn 15% cho mọi chi tiêu, áp dụng cho tối đa $2,000 chi tiêu",
+      },
+      { type: "fee_waiver", cash: 120, note: "Miễn annual fee $120 năm đầu, kể cả thẻ phụ" },
+    ],
+  },
+  {
+    slug: "scotiabank-momentum-visa-infinite-plus",
+    name: "Cashback 15% trong 3 tháng đầu (tối đa $300)",
+    headline: null,
+    currency: null,
+    startDate: "2026-09-07",
+    recordedTo: "2026-10-30",
     endDate: "2026-11-01",
     feeFirstYear: 0,
     rebate: 200,
@@ -260,12 +288,32 @@ const OFFER_SEEDS: OfferSeed[] = [
     name: "Đến 50,000 điểm Scene+™",
     headline: 50000,
     currency: "scene-plus",
+    // Rebate FinlyWealth hạ $200 → $150 (job check-rebates ghi nhận 31/10/2026
+    // 19:31 giờ Toronto, Affiliate API xác nhận cùng tối). Bản ghi mới như bản
+    // dưới, offer giữ nguyên.
+    startDate: "2026-09-07",
+    recordedFrom: "2026-10-31",
+    recordedAt: "2026-10-31",
+    verifiedAt: "2026-10-31",
+    endDate: "2026-11-01",
+    rebate: 150,
+    components: [
+      { type: "spend_threshold", points: 30000, spend: 2000, windowDays: 90 },
+      { type: "spend_threshold", points: 20000, spend: 7500, windowDays: 365 },
+    ],
+  },
+  {
+    slug: "scotiabank-gold-amex",
+    name: "Đến 50,000 điểm Scene+™",
+    headline: 50000,
+    currency: "scene-plus",
     startDate: "2026-09-07",
     // Mốc chi chép từ `keyBenefitsVi` (thêm 01/10/2026, đọc từ scotiabank.com).
     // Bản ghi MỚI chứ không lấp vào bản cũ: lấp vào bản cũ là khai rằng kho đã
     // biết hai mốc này từ 07/09, và mọi phép đọc `knownAt` trước 01/10 sẽ thấy
     // chúng (Codex bắt). Cùng điều khoản, chỉ khác lúc mình biết.
     recordedFrom: "2026-10-01",
+    recordedTo: "2026-10-30",
     recordedAt: "2026-10-01",
     verifiedAt: "2026-10-01",
     endDate: "2026-11-01",
@@ -332,7 +380,28 @@ const OFFER_SEEDS: OfferSeed[] = [
     name: "Đến 70,000 điểm WestJet®",
     headline: 70000,
     currency: "westjet",
+    // Rebate FinlyWealth hạ $140 → $50 (job check-rebates ghi nhận 31/10/2026
+    // 19:31 giờ Toronto, Affiliate API xác nhận cùng tối). Bản ghi mới như bản
+    // dưới, offer giữ nguyên.
     startDate: "2026-09-07",
+    recordedFrom: "2026-10-31",
+    recordedAt: "2026-10-31",
+    verifiedAt: "2026-10-31",
+    endDate: "2026-11-04",
+    rebate: 50,
+    components: [
+      { type: "first_purchase", points: 30000 },
+      { type: "spend_threshold", points: 30000, spend: 5000, windowDays: 90 },
+      { type: "anniversary", points: 10000, windowDays: 365 },
+    ],
+  },
+  {
+    slug: "westjet-rbc-world-elite-mastercard",
+    name: "Đến 70,000 điểm WestJet®",
+    headline: 70000,
+    currency: "westjet",
+    startDate: "2026-09-07",
+    recordedTo: "2026-10-30",
     endDate: "2026-11-04",
     rebate: 140,
     components: [
