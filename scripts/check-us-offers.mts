@@ -64,13 +64,28 @@ const ENTITIES: Record<string, string> = {
   "&reg;": "®",
 };
 
-/** Chữ người đọc thấy: bỏ script/style/thẻ, gộp khoảng trắng. */
+/**
+ * Chữ người đọc thấy: bỏ script/style/thẻ, gộp khoảng trắng. Bỏ luôn số bị
+ * gạch (`<s>`, `<del>`, `<strike>`) — xem `withoutStruck`.
+ */
 function visibleText(html: string): string {
   return html
     .replace(/<(script|style|noscript)\b[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<(s|del|strike)\b[^>]*>[\s\S]*?<\/\1>/gi, " ")
     .replace(/<[^>]+>/g, " ")
     .replace(/&[a-z#0-9]+;/gi, (entity) => ENTITIES[entity.toLowerCase()] ?? " ")
     .replace(/\s+/g, " ");
+}
+
+/**
+ * Bỏ mức CŨ bị gạch. 31/10/2026 United℠ Explorer lên 80,000 mà job vẫn báo khớp
+ * với mức 60,000 cũ, vì số bị gạch vẫn đứng cách "spend $3,000" chưa tới `NEAR`
+ * ký tự. Chase® phục vụ hai kiểu HTML cho cùng trang: thẻ `<s>60,000</s>` (bỏ ở
+ * `visibleText`), hoặc số gạch kèm nhãn "Strike through" cho trình đọc màn hình,
+ * có chỗ in số đó hai lần: "Earn up to 60,000 60,000 Strike through 80,000".
+ */
+function withoutStruck(text: string): string {
+  return text.replace(/(?:\$?\d[\d,]*K?\s+)+Strike\s+through\s*/gi, " ");
 }
 
 /** "75,000" cũng có thể được viết "75K"; "$4,000" thành "$4K". */
@@ -118,7 +133,8 @@ function spendAfter(text: string, at: number): number | undefined {
 }
 
 /** Những con số site đang ghi mà trang ngân hàng không còn in. Rỗng = khớp. */
-function mismatches(card: UsCreditCardOffer, text: string): string[] {
+function mismatches(card: UsCreditCardOffer, page: string): string[] {
+  const text = withoutStruck(page);
   const missing: string[] = [];
   const spend = card.us.minimumSpendUsd;
   const money = (value: number) => `$${value.toLocaleString("en-US")}`;

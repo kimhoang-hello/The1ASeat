@@ -4347,3 +4347,44 @@ Scene+™ Student 01/11; WestJet® RBC® 04/11) — cả sáu link apply là tra
 `rewriteOfferCopy` từ chối, job giữ hạn và đỏ có chủ ý (mục 25/10) cho tới khi sửa tay. Scene+™ Student mô phỏng 02/11
 (Codex): nhãn đổi → 200, xoá hạn, không gắn lại rebate; nhãn giữ → 500 mỗi lượt, không gắn lại rebate. Nhìn lại trang
 sau lượt 02/11 và 05/11. `audit:links` nhắc 1 mô tả SEO dưới 70 ký tự.
+
+## Kiểm toàn diện hai trang thẻ Canada + Mỹ 31/10/2026 (lượt tối) — đừng đề xuất lại
+
+Gate: lint, tsc, build, 7 test suite, 9 audit. Quét puppeteer bản build cục bộ 116 URL (hai danh sách + 31 biến thể
+lọc/sắp/query rác + 38 thẻ Canada + 38 thẻ Mỹ + 3 URL 404 cố ý) × 320/375/1440px: không tràn ngang, không lỗi console,
+không ảnh hỏng/thiếu alt, mỗi trang 1 h1, JSON-LD parse được, không id trùng, affiliate đủ `sponsored`. Chữ 11px chỉ ở
+badge viết hoa. Dữ liệu: 38 thẻ Canada đối chiếu FinlyWealth Affiliate API (phí + rebate khớp 100%) + trang ngân hàng
+cho thẻ không qua Finly và mọi thẻ Amex® qua đường Apply; 38 thẻ Mỹ: 18 Chase® qua `audit:us-offers`, 20 thẻ còn lại mở
+browser. Codex một vòng (tìm lỗi); vòng bác bản vá KHÔNG chạy được — hết hạn mức tới 00:55 01/11.
+
+**Đã sửa:**
+- **`audit:us-offers` báo khớp với số đã bị gạch.** United℠ Explorer lên "OUR BEST OFFER RETURNS" 80,000 (70,000 khi
+  chi $3,000 USD/3 tháng + 10,000 khi thêm thẻ phụ, gạch 60,000) mà job vẫn xanh: số 60,000 cũ bị gạch đứng cách
+  "spend $3,000" chưa tới `NEAR`. Chase® phục vụ HAI kiểu HTML cho cùng trang — `<s>60,000</s>`, hoặc "60,000 60,000
+  Strike through 80,000" (nhãn cho trình đọc màn hình, số gạch in hai lần). Nay `visibleText` bỏ `<s>/<del>/<strike>`
+  và `withoutStruck` bỏ cụm số trước nhãn. Probe: dữ liệu cũ → đỏ đúng united-explorer, dữ liệu mới → 18/18 khớp.
+  United℠ Explorer CHƯA bật elevated (trang không ghi hạn) — chờ tác giả như tiền lệ Sapphire Reserve® for Business.
+- World of Hyatt® ghi theo luật offer hai nấc: "30,000 điểm (tổng tới 60,000)" — trước đó "Lên đến 60,000" đứng cạnh
+  dòng "Điều kiện: Chi $3,000 USD trong 3 tháng đầu", trong khi $3,000 chỉ mở 30,000 (Codex).
+
+**Đã kiểm, KHÔNG phải lỗi:**
+- Amex® Business Platinum là A/B: 1/3 lượt tải đường Apply ra 120,000 không gạch, 2/3 lượt (cả trang công khai) ra
+  "ELEVATED OFFER: UP TO 150,000" — site giữ 150,000.
+- Finly `welcomeBonus.text` của 5 thẻ Amex® elevated ghi mức thường — chậm như đã ghi ở mục 22/09; đường Apply quyết định.
+- `rbc-avion-visa-platinum`: trang Finly `rewards-calculator` sống (70,000, hạn 25/11) dù Affiliate API không liệt kê.
+- Scene+™ Student "sinh viên hoặc 18–25" là điều khoản REBATE của FinlyWealth (`termsMarkdown`), không phải điều kiện
+  thẻ — không mâu thuẫn với "Chỉ dành cho sinh viên" của Thông tin nhanh (Codex nêu, mình bác).
+
+**Chờ tác giả (Contentful, chưa ghi):**
+- Aeroplan® Reserve hết offer nâng: đường Apply tải 2 lần + trang công khai đều 85,000 (60,000/$7,500 + 25,000/$2,500
+  tháng 13); site còn 110,000 elevated. Bản vá: khôi phục y nguyên snapshot 18/10 (4 trường chữ + `elevatedBonus`),
+  seed `offers.ts` bản 85,000 từ 31/10 + đóng bản 110,000 ở 30/10, `best-cards.ts` 110,000 → 85,000. Hai thay đổi repo
+  đi đôi với Contentful (`audit:best-cards`/`audit:reco-data` đỏ nếu lệch nhau) nên chưa commit.
+- Nội dung (Codex tìm, mình kiểm ở nguồn): Amex® Gold Rewards "lớn nhất trong ba thẻ Membership Rewards®" (site có sáu
+  thẻ MR, ba thẻ cao hơn); CIBC®/TD® Aeroplan® VIP cùng tự nhận "duy nhất" vào Maple Leaf Lounge®; CIBC® Aeroplan® Visa
+  "kém bản Visa Infinite hơn hai lần" (thật ra 1.5 lần); Wealthsimple® Visa Infinite+ "$12,000/năm mới hoà vốn so với
+  một thẻ 2% miễn phí" (cùng 2% thì không bao giờ hoà vốn); Wealthsimple® Privilege hành lý $1,000 (help centre: $1,250);
+  headline Marriott Bonvoy® Business gắn 80,000 với riêng mốc $5,000.
+- Cần tác giả quyết: CIBC® ×3 "tổng đến $189" — chính cibc.com ghi "$139 + up to three authorized users ($50 each): up
+  to $189 value" dù cộng ra $289; Wealthsimple® ×2 `annualFeeVi` ghi "không phát hành thẻ phụ" mà keyBenefits của Plus
+  ghi "Thẻ phụ miễn phí" (FinlyWealth: "Additional Cards: $0").
