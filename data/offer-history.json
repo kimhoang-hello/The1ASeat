@@ -72,6 +72,11 @@
         "at": "2026-08-29",
         "welcomeBonus": "70,000 điểm VIPorter®",
         "rebate": "$200"
+      },
+      {
+        "at": "2026-11-01",
+        "welcomeBonus": "70,000 điểm VIPorter®",
+        "rebate": "$125"
       }
     ],
     "national-bank-world-elite-mastercard": [
@@ -108,6 +113,11 @@
         "at": "2026-09-06",
         "welcomeBonus": "50,000 điểm Scene+™",
         "rebate": "$200"
+      },
+      {
+        "at": "2026-11-01",
+        "welcomeBonus": "50,000 điểm Scene+™",
+        "rebate": "$150"
       }
     ],
     "scotiabank-momentum-visa-infinite-plus": [
@@ -140,6 +150,11 @@
         "at": "2026-10-31",
         "welcomeBonus": "Cashback 15% (tối đa $300)",
         "rebate": "$100"
+      },
+      {
+        "at": "2026-11-01",
+        "welcomeBonus": "Cashback 15% (tối đa $300)",
+        "rebate": "$150"
       }
     ],
     "scotiabank-passport-visa-infinite": [
@@ -257,6 +272,11 @@
         "at": "2026-09-02",
         "welcomeBonus": "70,000 điểm WestJet®",
         "rebate": "$140"
+      },
+      {
+        "at": "2026-11-01",
+        "welcomeBonus": "70,000 điểm WestJet®",
+        "rebate": "$50"
       }
     ],
     "cibc-aventura-gold-visa": [
