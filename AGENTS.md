@@ -2200,6 +2200,36 @@ Lượt `sync-videos` đỏ 24/09 03:06 UTC lại là **YouTube 404 cho feed Ato
   `["unifiedPagePathScreen","date"|"city"|"sessionSourceMedium"]` + `dataFilters`
   `eventName=apply_clicked` trên `all-pages-and-screens` — đều chạy.
 
+## Đo đạc GA4 (01/11/2026) — đừng đề xuất lại
+
+- **Nhóm `google / organic` + `iOS 26.6` đổi hành vi:** 25–31/10 là 20 phiên / ≤4 user
+  (11–17/10: 16, 18–24/10: 3), nhưng tuần này CÓ đi trang nội bộ (referrer ghe1a.com,
+  sang `goi-y`, trang thẻ) — khác chữ ký tháng 9 (chỉ landing, 0s). Đừng gộp vào nhóm
+  "tự động" của mục 27/09; giữ số thô làm số chính, bản bỏ nhóm chỉ là kịch bản (tuần
+  này lại đảo chiều Google: +25% → −3.6%). Lọc bằng `dataFilters` hai điều kiện
+  `operatingSystemWithVersion` + `sessionSourceMedium` trên `all-pages-and-screens`
+  chạy được; thêm `pageReferrer` vào `seldim` để xem đường đi.
+- **GSC tự bù sau một tuần:** 18–24/10 đọc 25/10 là 14 / 467, đọc 01/11 là 15 / 552.
+  So tuần nên dùng cửa sổ ngắn cùng thứ (5 ngày) hoặc đọc lại tuần trước.
+- **`recommender_result` không đếm được số lượt chạy:** tracker chỉ nhớ runId CUỐI, và
+  mỗi câu trả lời có thể chạy lại engine với runId mới. 53 event / 7 user tuần 25–31/10.
+- **Admin → Data filters có filter "Internal Traffic", Exclude, Testing** (filter GA4 tạo
+  sẵn). Panel *Configure tag settings* là iframe, công cụ không cuộn tới *Define
+  internal traffic* được — chưa xác định có quy tắc IP. Lịch sử Google tag chỉ có
+  "Tag Created" 08/04/2026. `seldim` `["testDataFilterName"]` qua URL không chạy (quay
+  về kênh mặc định). Nếu quy tắc đã có, Testing gắn dấu dữ liệu cũ; nếu chưa, không gắn
+  ngược (Codex vòng 2, 01/11).
+- **Luật "0 engaged mà có engagement time + key event = chưa xử lý xong" nằm trong prompt
+  task GA4, KHÔNG phải ở đây** — đừng viện `AGENTS.md` cho nó; dòng nguồn `(not set)`
+  0 engaged / có thời gian / 0 key event thì ghi "chưa rõ nguyên nhân".
+- **Đọc GA4 bằng JS, thêm:** `seldim` chỉ có custom dimension (không cặp dimension
+  chuẩn) hoặc chỉ `city` trên `all-pages-and-screens` → báo cáo lặng lẽ quay về Page
+  title. `seldim` `["date"]` trên `r=search-traffic` bị bỏ qua. Thứ tự cột của bảng
+  không ổn định giữa các dòng (ô index rỗng có/không) — lấy cột theo vị trí tính từ
+  CUỐI dòng. Output có chuỗi dạng `a=b` hoặc `x/y/z` có thể bị chặn "Cookie/query
+  string data" — in bằng chữ.
+- Regex bỏ `(x%)` mà viết `\([^)]*\)` sẽ xoá luôn `(direct)` / `(none)` / `(not set)`.
+
 ## Luật welcome bonus theo cửa sổ thời gian (21/09/2026) — đừng đề xuất lại
 
 Chi tiết: `src/lib/recommendation/README.md`, mục "Luật welcome bonus theo cửa sổ
