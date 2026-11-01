@@ -12,7 +12,7 @@ import {
   bestCardsProseDrift,
   bestCardsSlugClashMessage,
 } from "@/lib/best-cards";
-import { rebateProseMismatches, rebateProsePatch } from "@/lib/rebate-prose";
+import { rebateFiguresIn, rebateProseMismatches, rebateProsePatch } from "@/lib/rebate-prose";
 import { isTransient } from "@/lib/job-retry";
 import { todayInSiteZone } from "@/lib/format-date";
 import { OFFERS } from "@/lib/recommendation/data/offers";
@@ -188,6 +188,28 @@ export async function runCheckRebates({
     });
   }
 
+  /**
+   * Badge đã gỡ nhưng câu "… $50 rebate" còn nằm trong phần chữ đã publish.
+   *
+   * Vòng canh chữ lệch badge ở cuối hàm bỏ qua thẻ không có `rebateVi`, nên
+   * với thẻ mà API nói KHÔNG có rebate thì không chỗ nào khác bắt được câu
+   * hứa tiền sót lại (Codex 31/10). Trước khi chuyển sang API thì không cần:
+   * đọc `<title>` luôn ra một con số và job gắn lại cả badge lẫn câu chữ.
+   */
+  function flagStrayRebateProse(slug: string, prose: Record<string, unknown>): boolean {
+    const stray = Object.entries(prose).flatMap(([name, value]) =>
+      (Array.isArray(value) ? value : [value])
+        .filter((text): text is string => typeof text === "string")
+        .flatMap((text) => rebateFiguresIn(text).map((figure) => `${name} "${figure} rebate"`)),
+    );
+    if (!stray.length) return false;
+    errors.push({
+      slug,
+      message: `site không còn badge rebate nhưng phần chữ vẫn hứa tiền: ${stray.join(", ")} — Finly API nói hiện không có rebate, gỡ câu đó trong Contentful`,
+    });
+    return true;
+  }
+
   const checkedSlugs = new Set<string>();
   for (const entry of entries) {
     const slug = field<string>(entry, "slug") ?? entry.sys.id;
@@ -220,7 +242,7 @@ export async function runCheckRebates({
             slug,
             message: `site đang hiện rebate ${live} nhưng Finly API nói offer ${found.offer.id} hiện KHÔNG có rebate (tắt hoặc pause) — gỡ rebateVi và câu HOT TIP trong Contentful`,
           });
-        } else {
+        } else if (!flagStrayRebateProse(slug, liveCard.prose)) {
           unchanged.push(slug);
         }
         continue;
@@ -229,7 +251,7 @@ export async function runCheckRebates({
         // Tác giả chốt giữ link này dù API không liệt kê — xem
         // `KEPT_UNLISTED_LINKS`. Chỉ miễn khi site không hứa con số nào.
         if (found.kind === "missing" && !live && keptUnlisted(slug, path)) {
-          unchanged.push(slug);
+          if (!flagStrayRebateProse(slug, liveCard.prose)) unchanged.push(slug);
           continue;
         }
         errors.push({

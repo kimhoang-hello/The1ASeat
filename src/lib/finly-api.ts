@@ -114,7 +114,14 @@ async function readOffers(apiKey: string): Promise<FinlyOffer[]> {
     }
 
     for (const raw of body.data) offers.push(parseOffer(raw));
-    if (body.pagination.hasMore !== true) return offers;
+    // Spec bắt `hasMore` là boolean. Thiếu hay sai kiểu thì không biết catalogue
+    // đã đủ chưa, mà catalogue thiếu là offer "vắng mặt" — bên tài khoản ngân
+    // hàng, một dòng `rebate: null` lọt vào đó là `--fix` xoá số (Codex 31/10).
+    const { hasMore } = body.pagination;
+    if (typeof hasMore !== "boolean") {
+      throw new Error("Finly API: /offers trả pagination.hasMore không phải boolean");
+    }
+    if (!hasMore) return offers;
   }
 
   throw new Error(`Finly API: /offers còn trang sau ${MAX_PAGES} trang — phân trang hỏng`);
@@ -347,7 +354,11 @@ export class FinlyOfferIndex {
     const rebateMatch = path.match(/^\/rebates\/([^/]+)\/([^/]+)$/);
     if (rebateMatch) {
       const category = CATEGORY_BY_SECTION[rebateMatch[1]];
-      const offer = category ? this.byId.get(`${category}:${rebateMatch[2]}`) : undefined;
+      const byId = category ? this.byId.get(`${category}:${rebateMatch[2]}`) : undefined;
+      // Đòi slug + category của chính offer khớp đường dẫn, không tin riêng
+      // `id`: một dòng mang id nhầm thì `paused` rơi vào sản phẩm KHÁC và
+      // `--fix` xoá rebate của sản phẩm đó (Codex 31/10).
+      const offer = byId?.slug === rebateMatch[2] && byId.category === category ? byId : undefined;
       return offer && !offer.rebate ? { kind: "paused", offer } : { kind: "missing" };
     }
 

@@ -246,3 +246,21 @@ test("lỗi có message chỉ đọc: dựng lỗi mới đã che, không ném T
     restore();
   }
 });
+
+test("pagination.hasMore thiếu hoặc sai kiểu thì ném, không coi là hết trang", async () => {
+  for (const pagination of [{}, { hasMore: "true" }]) {
+    const restore = mockFetch([() => page([rawOffer(null)], { pagination })]);
+    try {
+      await assert.rejects(fetchFinlyOffers("k"), /hasMore không phải boolean/);
+    } finally {
+      restore();
+    }
+  }
+});
+
+test("tra theo id không nhận một dòng mang id nhầm của sản phẩm khác", () => {
+  const mislabeled = offer({ id: "bank_account:bmo-performance-chequing-account" });
+  mislabeled.slug = "bmo-premium-chequing-account";
+  const lookup = new FinlyOfferIndex([mislabeled]).lookup("/rebates/bank-accounts/bmo-performance-chequing-account");
+  assert.equal(lookup.kind, "missing");
+});
