@@ -4418,3 +4418,45 @@ browser. Codex một vòng (tìm lỗi); vòng bác bản vá KHÔNG chạy đư
 - Cần tác giả quyết: CIBC® ×3 "tổng đến $189" — chính cibc.com ghi "$139 + up to three authorized users ($50 each): up
   to $189 value" dù cộng ra $289; Wealthsimple® ×2 `annualFeeVi` ghi "không phát hành thẻ phụ" mà keyBenefits của Plus
   ghi "Thẻ phụ miễn phí" (FinlyWealth: "Additional Cards: $0").
+
+## Kiểm toàn diện engine + trang Gợi ý thẻ 31/10/2026 (tối) — đừng đề xuất lại
+
+Engine 4.39.0, không đổi logic. Gate: tsc, lint, build, `test:reco` 503 + 23 skip MySQL, `test:recommender` 86 + 1
+skip, `audit:reco-data` 0 lỗi / 10 cảnh báo đã biết. Đo: `reco:walk` 900 hồ sơ (seed 1–3) ở 31/10 + seed 1 ở 21/10 và
+02/11 (mọi bất biến xanh); 16 nhân vật `reco:debug run`; **sáu nhân vật đi hết luồng TRANG** trên `next start` cục bộ +
+MariaDB 11.8 (colima, cổng 3307) bằng puppeteer-core — mới, mục trước chỉ đi luồng qua hàm. Codex chạm hạn mức giữa
+vòng tìm lỗi độc lập (reset 01/11 00:55), chưa vòng nào xong.
+
+**Đã vá:**
+- Hai link bước tiếp theo của kết quả "Chưa cần mở thẻ mới" ("Tra chặng bay", "Theo dõi transfer bonus") cao 20px
+  trên điện thoại — mục 10/10 nới vùng chạm mọi link khác nhưng không lượt quét nào tới được kết quả này. Vùng ảo
+  của link phủ đúng dòng `li` (`relative pointer-coarse:py-2` + `before:inset-0`), nên hai link xếp chồng không chồng
+  vùng nhau. Bản đầu cho link cao thật (`inline-block py-2.5`) làm câu hai dòng giãn hở ở 375px — đừng quay lại.
+- HANDOFF §9 "Chưa kiểm CDN": hai GET production trả `private, no-cache, no-store` + `x-hcdn-cache-status: DYNAMIC`.
+  Phép thử hai trình duyệt CÓ hồ sơ cần POST lên production (tạo hồ sơ thật) — chưa làm.
+
+**Đã kiểm, KHÔNG phải lỗi (đừng báo lại):**
+- *Amex® Green thắng 1/3 người dùng giả* (300/900, ngày 21/10 cùng seed 75/300): theo ngưỡng phí trong trạng thái
+  cuối — $0: 60%, $150: 58%, CHƯA KHAI: 60%, $400/$800/không giới hạn: 6–8%. Tức thẻ $0 thắng nhóm phí thấp, và
+  "chưa khai phí" hành xử như ngưỡng ~$150 vì phạt phí trên trung vị (`suitability.ts`, chủ ý từ khi Business Platinum
+  đứng đầu hồ sơ trống). Lượt 21/10 ít Green hơn vì NO_NEW_CARD (57 → 23): offer nâng Amex® 22/10 kéo percentile thị
+  trường lên, `offer_climate_weak` của NO_NEW_CARD xuống. Hồ sơ giả hai ngày KHÔNG cùng sự thật (`data.products`
+  khác — có thẻ Hilton™), nên đừng so từng hồ sơ giữa hai ngày.
+- *"Bỏ qua" câu doanh nghiệp bị hỏi lại* (thấy ở script trang): puppeteer cuộn nút xuống dưới thanh dính rồi bấm trúng
+  thanh. Cuộn nút ra giữa màn trước khi bấm thì không lặp; `elementFromPoint` xác nhận nút không bị che khi người dùng
+  tự cuộn.
+- Người dùng đủ điểm (120k Aeroplan® + 120k MR, thương gia châu Âu một chiều) nhận "Chưa cần mở thẻ mới", khối chuyến
+  bay "gom được 240,000" — đúng (MR→Aeroplan® 1:1).
+- Thẻ Hilton™ mới: chương trình `hilton` 0.7¢, `cashOut: none`, không chặng chuyển — chưa thắng hồ sơ nào, đúng kỳ vọng.
+- 320/375/1280px: không tràn ngang, không lỗi console, không response ≥400 trên cả sáu luồng.
+
+**Chờ tác giả (quyết định sản phẩm):**
+- **Người chọn "Chỉ thẻ miễn phí" vẫn thấy thẻ $599–$799 trong "Lựa chọn khác".** 65/131 hồ sơ ngưỡng $0 có ít nhất
+  một lựa chọn vượt ngưỡng: Gold 36, Platinum $799 29, Aeroplan® Reserve $599 24, Cobalt® 14. Ví dụ: sinh viên, thu
+  nhập dưới $12,000, chuyến Nhật → lựa chọn thứ ba là Platinum (mốc $10,000/3 tháng). Phạt phí có SÀN ×0.5 bất kể vượt
+  bao nhiêu (`suitability.ts` — chú thích nói "chỉ ở cuối bảng"), mà thẻ $0 trên mục tiêu chuyến bay có điểm nền
+  ~0.15, nên thẻ $799 × 0.5 vẫn đứng trên. Đổi là đổi engine (sàn theo mức vượt, hoặc lọc lựa chọn hiển thị).
+- "Hai lựa chọn ngang nhau… Chọn cái nào cũng hợp lý" in trên 60% trang kết quả (`NEARLY_TIED_GAP` 0.05, 544/900).
+  Câu khẳng định mạnh cho một ngưỡng dễ chạm như vậy — đổi ngưỡng hay đổi câu là việc của tác giả.
+- Câu lý do của lựa chọn khác có lúc nói về NGƯỜI DÙNG, không về thẻ: Platinum dưới "Chưa cần mở thẻ mới" ghi "số điểm
+  bạn gom được đã đủ cho chuyến này".

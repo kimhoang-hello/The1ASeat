@@ -181,19 +181,23 @@ function PrimaryCard({
           chọn "quy điểm ra tiền". */}
       {action.kind === "no_new_card" && goalType !== "cash" && (
         <ul className="mt-4 space-y-2 text-base leading-relaxed text-foreground/90">
-          <li>
+          {/* Link cao 20px trên điện thoại (đo 31/10/2026), hai link xếp chồng
+              nên không nới ảo cả hai (DESIGN-SYSTEM 5.4). Vùng ảo phủ đúng dòng
+              `li` của nó — câu theo sau chỉ nói link dẫn tới đâu — nên hai vùng
+              không chồng nhau, và chữ không giãn dòng như khi cho link cao thật. */}
+          <li className="relative pointer-coarse:py-2">
             <Link
               href="/award-flight-finder"
-              className="font-semibold text-primary underline underline-offset-4"
+              className="font-semibold text-primary underline underline-offset-4 pointer-coarse:before:absolute pointer-coarse:before:inset-0 pointer-coarse:before:content-['']"
             >
               Tra chặng bay
             </Link>{" "}
             xem số điểm bạn có đổi được gì.
           </li>
-          <li>
+          <li className="relative pointer-coarse:py-2">
             <Link
               href="/transfer-bonuses"
-              className="font-semibold text-primary underline underline-offset-4"
+              className="font-semibold text-primary underline underline-offset-4 pointer-coarse:before:absolute pointer-coarse:before:inset-0 pointer-coarse:before:content-['']"
             >
               Theo dõi transfer bonus
             </Link>{" "}

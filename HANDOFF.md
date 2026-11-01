@@ -586,7 +586,7 @@ và event GA4 cho phễu.
 | Chỗ | Ảnh hưởng |
 | --- | --- |
 | Database production chưa tạo | Kho MySQL đã viết + test trên MariaDB 11.4; phiên bản Hostinger chưa kiểm — xem §3 "Còn chờ user" |
-| **Chưa kiểm CDN trên production** | Trang gợi ý trả kết quả RIÊNG từng người và đọc cookie. Trước khi bật `RECOMMENDER_PUBLISHED`: mở trang bằng HAI trình duyệt khác nhau trên ghe1a.com và xác nhận mỗi bên thấy hồ sơ của chính mình. Next đã gắn `Cache-Control: no-cache` (nó ghi đè cả header khai trong `next.config.ts`), nhưng edge của Hostinger thì chưa ai kiểm |
+| CDN trên production — đã kiểm header 31/10/2026 | Trang gợi ý trả kết quả RIÊNG từng người và đọc cookie. Hai lượt GET `https://ghe1a.com/credit-cards/goi-y` trả `cache-control: private, no-cache, no-store, max-age=0, must-revalidate` và `x-hcdn-cache-status: DYNAMIC` (edge hcdn không giữ bản nào). Chưa làm phép thử hai trình duyệt CÓ hồ sơ: nó cần bấm form trên production, tức tạo hồ sơ thật trong DB — để tác giả quyết |
 | Phễu đo được từ 27/09/2026 | `recommender_started/answered/skipped/reset` + `apply_clicked` (`placement=recommender_primary`). Tham số chưa đăng ký custom dimension trong GA4 Admin thì chưa đọc được theo chiều |
 | Cookie "đã bỏ qua" có trần 64 câu | Hồ sơ nhiều thẻ đã đóng + đủ hạng mục chi tiêu có thể sinh tới 79 câu hỏi được; từ câu 65 câu cũ bị đẩy ra và có thể được hỏi lại. Cookie khi đó ~3,3 KB (trần trình duyệt 4 KB). Chưa gặp ở người dùng thật — Codex vòng 2 nêu, cố ý không dựng thêm hạ tầng |
 | `x-forwarded-for` giả được | Trần tạo hồ sơ mới theo IP có thể bị lách; đã thêm trần chung cho cả site (500/giờ). Không có gì chống được bot có chủ đích ngoài hai trần đó |
