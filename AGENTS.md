@@ -4434,6 +4434,12 @@ nhánh viết lại bằng Claude chưa từng chạy trên production. bmo.com 
 site đúng, nhưng headline còn "elevated offer đến 31/10/2026". 02/11 thêm 4 thẻ Scotiabank® (Gold Amex®, Momentum®
 Visa Infinite+, Passport™, Scene+™ Student) hết hạn, 05/11 WestJet RBC® — cùng kẹt cho tới khi có key hoặc sửa tay.
 
+Sửa tay 02/11 (Contentful + seed `caaeb2c`, Codex vòng 5: không chặn): BMO® gia hạn chính offer 70,000 tới 31/10/2027
+(điều khoản ở popup `bmo.com/popups/.../terms-and-conditions-en.html#footnote-112`, trang sản phẩm không có chữ
+footnote) → `expiresAt` 31/10/2027, bỏ câu "elevated" khỏi headline. Momentum® về offer thường 10% (tối đa $200), mở
+02/11/2026–30/04/2027 → tắt `elevatedBonus`, giữ hạn offer thường. Gold Amex®, Passport™, Scene+™ Student do phiên
+"[Web] Kiểm offer thẻ Scene+ Scotiabank" làm cùng ngày. WestJet RBC® (hạn 04/11) vẫn chờ key hoặc sửa tay.
+
 **Codex vòng 3 nêu, mình bác:**
 - Cửa `rewrite-offer.ts` so nhãn bằng chuỗi nên "Lên đến 70,000…" lọt khi nhãn cũ là "70,000…". So bằng số thì chặn
   oan đúng ca BMO® này: ngân hàng giữ nguyên 70,000 sau hạn là chuyện có thật.
