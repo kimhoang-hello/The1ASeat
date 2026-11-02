@@ -4385,14 +4385,16 @@ lọc/sắp/query rác + 38 thẻ Canada + 38 thẻ Mỹ + 3 URL 404 cố ý) ×
 không ảnh hỏng/thiếu alt, mỗi trang 1 h1, JSON-LD parse được, không id trùng, affiliate đủ `sponsored`. Chữ 11px chỉ ở
 badge viết hoa. Dữ liệu: 38 thẻ Canada đối chiếu FinlyWealth Affiliate API (phí + rebate khớp 100%) + trang ngân hàng
 cho thẻ không qua Finly và mọi thẻ Amex® qua đường Apply; 38 thẻ Mỹ: 18 Chase® qua `audit:us-offers`, 20 thẻ còn lại mở
-browser. Codex một vòng (tìm lỗi); vòng bác bản vá KHÔNG chạy được — hết hạn mức tới 00:55 01/11.
+browser. Codex vòng 1 tìm lỗi; vòng bác bản vá chạy tối 01/11 (vòng 2 hết hạn mức) — kết quả ở cuối mục.
 
 **Đã sửa:**
 - **`audit:us-offers` báo khớp với số đã bị gạch.** United℠ Explorer lên "OUR BEST OFFER RETURNS" 80,000 (70,000 khi
   chi $3,000 USD/3 tháng + 10,000 khi thêm thẻ phụ, gạch 60,000) mà job vẫn xanh: số 60,000 cũ bị gạch đứng cách
   "spend $3,000" chưa tới `NEAR`. Chase® phục vụ HAI kiểu HTML cho cùng trang — `<s>60,000</s>`, hoặc "60,000 60,000
   Strike through 80,000" (nhãn cho trình đọc màn hình, số gạch in hai lần). Nay `visibleText` bỏ `<s>/<del>/<strike>`
-  và `withoutStruck` bỏ cụm số trước nhãn. Probe: dữ liệu cũ → đỏ đúng united-explorer, dữ liệu mới → 18/18 khớp.
+  và `withoutStruck` bỏ số liền trước nhãn (cùng bản lặp y hệt của nó). Probe: dữ liệu cũ → đỏ đúng united-explorer,
+  dữ liệu mới → 18/18 khớp. Bản đầu bỏ CẢ CHUỖI số đứng trước nhãn, nên "spend $3,000 60,000 Strike through 80,000"
+  mất luôn mức chi hiện hành: đỏ oan, hoặc xanh oan khi mức chi của offer khác đứng gần (Codex vòng 3).
   United℠ Explorer CHƯA bật elevated (trang không ghi hạn) — chờ tác giả như tiền lệ Sapphire Reserve® for Business.
 - World of Hyatt® ghi theo luật offer hai nấc: "30,000 điểm (tổng tới 60,000)" — trước đó "Lên đến 60,000" đứng cạnh
   dòng "Điều kiện: Chi $3,000 USD trong 3 tháng đầu", trong khi $3,000 chỉ mở 30,000 (Codex).
@@ -4402,22 +4404,43 @@ browser. Codex một vòng (tìm lỗi); vòng bác bản vá KHÔNG chạy đư
   "ELEVATED OFFER: UP TO 150,000" — site giữ 150,000.
 - Finly `welcomeBonus.text` của 5 thẻ Amex® elevated ghi mức thường — chậm như đã ghi ở mục 22/09; đường Apply quyết định.
 - `rbc-avion-visa-platinum`: trang Finly `rewards-calculator` sống (70,000, hạn 25/11) dù Affiliate API không liệt kê.
-- Scene+™ Student "sinh viên hoặc 18–25" là điều khoản REBATE của FinlyWealth (`termsMarkdown`), không phải điều kiện
-  thẻ — không mâu thuẫn với "Chỉ dành cho sinh viên" của Thông tin nhanh (Codex nêu, mình bác).
 
 **Chờ tác giả (Contentful, chưa ghi):**
 - Aeroplan® Reserve hết offer nâng: đường Apply tải 2 lần + trang công khai đều 85,000 (60,000/$7,500 + 25,000/$2,500
-  tháng 13); site còn 110,000 elevated. Bản vá: khôi phục y nguyên snapshot 18/10 (4 trường chữ + `elevatedBonus`),
-  seed `offers.ts` bản 85,000 từ 31/10 + đóng bản 110,000 ở 30/10, `best-cards.ts` 110,000 → 85,000. Hai thay đổi repo
-  đi đôi với Contentful (`audit:best-cards`/`audit:reco-data` đỏ nếu lệch nhau) nên chưa commit.
+  tháng 13); site còn 110,000 elevated. Bản vá: khôi phục y nguyên snapshot 18/10 (4 trường chữ + `elevatedBonus`;
+  từ 18/10 entry không có sửa nào khác), seed `offers.ts` bản 85,000 từ 31/10 + đóng bản 110,000 ở 30/10,
+  `best-cards.ts` 110,000 → 85,000. Thứ tự: publish Contentful rồi commit repo ngay. Lệch hai chiều KHÔNG cùng đỏ: repo
+  85k + Contentful 110k thì `best-cards` lẫn `reco-data` đỏ; repo 110k + Contentful 85k thì chỉ `reco-data` đỏ —
+  `best-cards` xanh vì editor's take 18/10 còn nhắc "đã hạ từ mức elevated 110,000", và audit nhận số ở BẤT KỲ đâu
+  trong entry làm bằng chứng (Codex vòng 3 chạy cả bốn tổ hợp).
 - Nội dung (Codex tìm, mình kiểm ở nguồn): Amex® Gold Rewards "lớn nhất trong ba thẻ Membership Rewards®" (site có sáu
   thẻ MR, ba thẻ cao hơn); CIBC®/TD® Aeroplan® VIP cùng tự nhận "duy nhất" vào Maple Leaf Lounge®; CIBC® Aeroplan® Visa
   "kém bản Visa Infinite hơn hai lần" (thật ra 1.5 lần); Wealthsimple® Visa Infinite+ "$12,000/năm mới hoà vốn so với
   một thẻ 2% miễn phí" (cùng 2% thì không bao giờ hoà vốn); Wealthsimple® Privilege hành lý $1,000 (help centre: $1,250);
   headline Marriott Bonvoy® Business gắn 80,000 với riêng mốc $5,000.
+- Scene+™ Student: editor's take gắn "bạn phải là sinh viên hoặc trong độ tuổi 18-25 (cần upload giấy tờ xác minh)"
+  vào điều kiện welcome bonus. Điều khoản offer trên scotiabank.com (`scene-student-card.html`, mục "Eligibility and
+  Exclusions") không có điều kiện đó, và thẻ không có rebate FinlyWealth để nó là điều khoản rebate. Vòng 1 mình bác
+  Codex bằng lập luận "đó là điều khoản rebate" — sai, vòng 3 Codex bác lại đúng. Bản vá: bỏ mệnh đề.
+- Wealthsimple® ×2 `annualFeeVi` "Wealthsimple® không phát hành thẻ phụ" sai: bài help centre "Understand credit bureau
+  reporting for your Wealthsimple credit card" nói về "supplementary cardholder on your account". Bản vá: bỏ mệnh đề
+  (keyBenefits của Plus đã ghi "Thẻ phụ miễn phí", khớp FinlyWealth "Additional Cards: $0").
 - Cần tác giả quyết: CIBC® ×3 "tổng đến $189" — chính cibc.com ghi "$139 + up to three authorized users ($50 each): up
-  to $189 value" dù cộng ra $289; Wealthsimple® ×2 `annualFeeVi` ghi "không phát hành thẻ phụ" mà keyBenefits của Plus
-  ghi "Thẻ phụ miễn phí" (FinlyWealth: "Additional Cards: $0").
+  to $189 value" dù cộng ra $289.
+
+**Job `expire-offers` đỏ từ 01/11 — server thiếu `ANTHROPIC_API_KEY`.** Hai lượt 01/11 đều trả 500 "ANTHROPIC_API_KEY is
+not set — giữ expiresAt" cho BMO® VIPorter® World Elite (hạn 31/10). Trong 40 lượt gần nhất `bonusRewritten` luôn rỗng:
+nhánh viết lại bằng Claude chưa từng chạy trên production. bmo.com 01/11 vẫn "70,000 VIPorter points" nên con số trên
+site đúng, nhưng headline còn "elevated offer đến 31/10/2026". 02/11 thêm 4 thẻ Scotiabank® (Gold Amex®, Momentum®
+Visa Infinite+, Passport™, Scene+™ Student) hết hạn, 05/11 WestJet RBC® — cùng kẹt cho tới khi có key hoặc sửa tay.
+
+**Codex vòng 3 nêu, mình bác:**
+- Cửa `rewrite-offer.ts` so nhãn bằng chuỗi nên "Lên đến 70,000…" lọt khi nhãn cũ là "70,000…". So bằng số thì chặn
+  oan đúng ca BMO® này: ngân hàng giữ nguyên 70,000 sau hạn là chuyện có thật.
+- `finly-api.ts` bỏ `boostEndsAt`, nên response cũ phát lại sau hạn boost vẫn ra $200: giả định upstream trả số cũ;
+  API 01/11 trả đúng `amount: 125`, site đúng $125.
+- (Nhận) `lastUpdated` của United℠ Explorer và World of Hyatt® còn 23/09 sau khi đổi offer 31/10 — `sitemap.ts` dùng
+  trường này làm `lastModified`. Đã sửa thành 31/10.
 
 ## Kiểm toàn diện engine + trang Gợi ý thẻ 31/10/2026 (tối) — đừng đề xuất lại
 

@@ -83,9 +83,11 @@ function visibleText(html: string): string {
  * ký tự. Chase® phục vụ hai kiểu HTML cho cùng trang: thẻ `<s>60,000</s>` (bỏ ở
  * `visibleText`), hoặc số gạch kèm nhãn "Strike through" cho trình đọc màn hình,
  * có chỗ in số đó hai lần: "Earn up to 60,000 60,000 Strike through 80,000".
+ * Chỉ bỏ đúng số liền trước nhãn và bản lặp y hệt của nó: bỏ cả chuỗi số đứng trước
+ * thì "spend $3,000 60,000 Strike through" mất luôn mức chi đang hiện hành.
  */
 function withoutStruck(text: string): string {
-  return text.replace(/(?:\$?\d[\d,]*K?\s+)+Strike\s+through\s*/gi, " ");
+  return text.replace(/(?<![\d,$])(\$?\d[\d,]*K?)\s+(?:\1\s+)?Strike\s+through\s*/gi, " ");
 }
 
 /** "75,000" cũng có thể được viết "75K"; "$4,000" thành "$4K". */
