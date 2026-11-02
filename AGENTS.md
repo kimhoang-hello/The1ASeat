@@ -4438,7 +4438,8 @@ Visa Infinite+, Passport™, Scene+™ Student) hết hạn, 05/11 WestJet RBC®
 Finly (`/go/creditCards/<slug>` → `?cid=a-fin…`) cùng trả: Gold Amex® 65,000 (40,000/$2,000 3 tháng + 25,000/$7,500 12
 tháng), Passport™ 45,000 (15,000/$3,000 3 tháng + 20,000 khi TỔNG chi $10,000 trong 6 tháng + 10,000 thưởng NĂM/$40,000),
 cùng cửa sổ 02/11/2026–03/01/2027; Scene+™ Student 10,000 (2,500/$500 + 7,500 khi tổng chi $1,500, cả hai trong 3 tháng),
-mở 02/11/2026–30/04/2027. `expiresAt` đặt theo ngày cuối, cờ `elevatedBonus` giữ như cũ (Gold bật, hai thẻ kia tắt).
+mở 02/11/2026–30/04/2027. `expiresAt` đặt theo ngày cuối, cờ `elevatedBonus` giữ như cũ (Gold bật, hai thẻ kia tắt) —
+tác giả xác nhận 02/11 "Giữ như hiện tại", đừng đề xuất bật elevated cho Passport™/Student với đợt offer này.
 FinlyWealth `welcomeBonus.text` 02/11 còn ghi Gold 50,000 — trang ngân hàng thắng. Codex (web) đọc trang Student ra bản
 cache 5,000; trình duyệt thật đọc 10,000. Momentum® và BMO® do phiên khác sửa cùng ngày (commit `caaeb2c`).
 
