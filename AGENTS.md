@@ -4434,6 +4434,14 @@ nhánh viết lại bằng Claude chưa từng chạy trên production. bmo.com 
 site đúng, nhưng headline còn "elevated offer đến 31/10/2026". 02/11 thêm 4 thẻ Scotiabank® (Gold Amex®, Momentum®
 Visa Infinite+, Passport™, Scene+™ Student) hết hạn, 05/11 WestJet RBC® — cùng kẹt cho tới khi có key hoặc sửa tay.
 
+**02/11/2026 — đã sửa tay ba thẻ Scene+™ của Scotiabank® (offer mới, không phải offer hết):** scotiabank.com + đường Apply
+Finly (`/go/creditCards/<slug>` → `?cid=a-fin…`) cùng trả: Gold Amex® 65,000 (40,000/$2,000 3 tháng + 25,000/$7,500 12
+tháng), Passport™ 45,000 (15,000/$3,000 3 tháng + 20,000 khi TỔNG chi $10,000 trong 6 tháng + 10,000 thưởng NĂM/$40,000),
+cùng cửa sổ 02/11/2026–03/01/2027; Scene+™ Student 10,000 (2,500/$500 + 7,500 khi tổng chi $1,500, cả hai trong 3 tháng),
+mở 02/11/2026–30/04/2027. `expiresAt` đặt theo ngày cuối, cờ `elevatedBonus` giữ như cũ (Gold bật, hai thẻ kia tắt).
+FinlyWealth `welcomeBonus.text` 02/11 còn ghi Gold 50,000 — trang ngân hàng thắng. Codex (web) đọc trang Student ra bản
+cache 5,000; trình duyệt thật đọc 10,000. Momentum® và BMO® do phiên khác sửa cùng ngày (commit `caaeb2c`).
+
 Sửa tay 02/11 (Contentful + seed `caaeb2c`, Codex vòng 5: không chặn): BMO® gia hạn chính offer 70,000 tới 31/10/2027
 (điều khoản ở popup `bmo.com/popups/.../terms-and-conditions-en.html#footnote-112`, trang sản phẩm không có chữ
 footnote) → `expiresAt` 31/10/2027, bỏ câu "elevated" khỏi headline. Momentum® về offer thường 10% (tối đa $200), mở

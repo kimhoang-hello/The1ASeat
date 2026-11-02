@@ -185,7 +185,7 @@ export const BEST_CARDS_CATEGORIES: BestCardsCategory[] = [
       {
         slug: "scotiabank-gold-amex",
         bodyVi: [
-          "Welcome bonus hiện tại lên đến 50,000 điểm Scene+™. Nhưng lý do mình đưa Scotiabank® Gold American Express® vào danh sách không chỉ nằm ở bonus.",
+          "Welcome bonus hiện tại lên đến 65,000 điểm Scene+™. Nhưng lý do mình đưa Scotiabank® Gold American Express® vào danh sách không chỉ nằm ở bonus.",
           "Thẻ kiếm 6X điểm Scene+™ tại một số supermarket thuộc hệ thống Sobeys, 5X cho dining và entertainment, đồng thời không có foreign transaction fee. Điểm Scene+™ có fixed value 1 cent/point nên không có những redemption Business Class 5–10 cent/point như Aeroplan®, nhưng bù lại cực kỳ dễ sử dụng.",
         ],
         bestForVi:
@@ -251,8 +251,8 @@ export const BEST_CARDS_CATEGORIES: BestCardsCategory[] = [
         slug: "scotiabank-passport-visa-infinite",
         roleVi: "Thẻ tốt nhất với no FX fee & lounge",
         bodyVi: [
-          "Nếu thường xuyên đi nước ngoài, đây là một trong những thẻ travel thực dụng nhất. Scotiabank® Passport® Visa Infinite+ không tính foreign transaction fee và có 6 lượt airport lounge miễn phí mỗi năm. Welcome bonus hiện lên đến 35,000 điểm Scene+™ và annual fee $150.",
-          "Điểm Scene+™ có fixed value 1 cent/point, nên 35,000 điểm về cơ bản tương đương $350 nếu sử dụng đúng cách. Không có upside lớn như Aeroplan®, nhưng rất dễ dùng.",
+          "Nếu thường xuyên đi nước ngoài, đây là một trong những thẻ travel thực dụng nhất. Scotiabank® Passport® Visa Infinite+ không tính foreign transaction fee và có 6 lượt airport lounge miễn phí mỗi năm. Welcome bonus hiện lên đến 45,000 điểm Scene+™ và annual fee $150.",
+          "Trong 45,000 điểm đó, 10,000 là thưởng hằng năm khi chi $40,000, nên phần welcome bonus là 35,000 điểm (cần chi tổng cộng $10,000 trong 6 tháng đầu). Điểm Scene+™ có fixed value 1 cent/point, nên 35,000 điểm về cơ bản tương đương $350 nếu sử dụng đúng cách. Không có upside lớn như Aeroplan®, nhưng rất dễ dùng.",
           "Điểm mình thích nhất vẫn là no FX fee. Phần lớn credit card Canada thu khoảng 2.5% foreign transaction fee, nên nếu mỗi năm bạn chi vài nghìn đô ở nước ngoài, khoản tiết kiệm này bắt đầu đáng kể.",
         ],
         bestForVi: "Người hay đi du lịch và muốn lounge + no FX fee.",
@@ -407,7 +407,7 @@ export const BEST_CARDS_CATEGORIES: BestCardsCategory[] = [
         roleVi: "Thẻ tốt nhất cho Students",
         bodyVi: [
           "Nếu đang là student và mục tiêu đầu tiên là build credit history, một thẻ đơn giản và không annual fee thường quan trọng hơn việc tối ưu Miles & Points.",
-          "Scotiabank® Scene+™ Visa* Card for Students không có annual fee, không yêu cầu minimum income và hiện có welcome bonus lên đến 5,000 điểm Scene+™.",
+          "Scotiabank® Scene+™ Visa* Card for Students không có annual fee, không yêu cầu minimum income và hiện có welcome bonus lên đến 10,000 điểm Scene+™.",
           "Điểm Scene+™ cũng rất dễ hiểu: về cơ bản 1 point có giá trị khoảng 1 cent khi redeem đúng cách. Bạn không cần học transfer partners hay award charts.",
         ],
         bestForVi: "Sinh viên đang mở credit card đầu tiên.",

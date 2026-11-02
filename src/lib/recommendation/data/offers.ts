@@ -309,6 +309,24 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "scotiabank-gold-amex",
+    name: "Đến 65,000 điểm Scene+™",
+    headline: 65000,
+    currency: "scene-plus",
+    // Offer mới thay đợt 50,000 (scotiabank.com và đường Apply FinlyWealth →
+    // `?cid=a-fin…`, đọc 02/11/2026): tài khoản mở 02/11/2026 – 03/01/2027.
+    // $7,500 trong 12 tháng là tổng tích luỹ, đã gồm $2,000 ở mốc đầu.
+    startDate: "2026-11-02",
+    verifiedAt: "2026-11-02",
+    recordedAt: "2026-11-02",
+    endDate: "2027-01-03",
+    rebate: 150,
+    components: [
+      { type: "spend_threshold", points: 40000, spend: 2000, windowDays: 90 },
+      { type: "spend_threshold", points: 25000, spend: 7500, windowDays: 365 },
+    ],
+  },
+  {
+    slug: "scotiabank-gold-amex",
     name: "Đến 50,000 điểm Scene+™",
     headline: 50000,
     currency: "scene-plus",
@@ -361,6 +379,23 @@ const OFFER_SEEDS: OfferSeed[] = [
       "Nội dung site chỉ nói 'đến 50,000 điểm trong năm đầu', không nêu mốc chi. " +
       "Chưa dựng được component nào, nên engine phải coi mức dùng được là chưa biết " +
       "chứ không được mặc định là 50,000.",
+  },
+  {
+    slug: "scotiabank-scene-plus-visa-students",
+    name: "Đến 10,000 điểm Scene+™",
+    headline: 10000,
+    currency: "scene-plus",
+    // Offer mới thay đợt 5,000 (scotiabank.com, đọc 02/11/2026): tài khoản mở
+    // 02/11/2026 – 30/04/2027. Cả hai mốc trong 3 tháng đầu; $1,500 là tổng
+    // tích luỹ, đã gồm $500. Rebate FinlyWealth vẫn pause.
+    startDate: "2026-11-02",
+    verifiedAt: "2026-11-02",
+    recordedAt: "2026-11-02",
+    endDate: "2027-04-30",
+    components: [
+      { type: "spend_threshold", points: 2500, spend: 500, windowDays: 90 },
+      { type: "spend_threshold", points: 7500, spend: 1500, windowDays: 90 },
+    ],
   },
   {
     slug: "scotiabank-scene-plus-visa-students",
@@ -961,6 +996,27 @@ const OFFER_SEEDS: OfferSeed[] = [
         startsAfterDays: 365,
         note: "Chi $500 trong tháng thứ 13",
       },
+    ],
+  },
+  {
+    slug: "scotiabank-passport-visa-infinite",
+    name: "Đến 45,000 điểm Scene+™",
+    headline: 45000,
+    currency: "scene-plus",
+    // Offer mới thay đợt 35,000 (scotiabank.com và đường Apply FinlyWealth →
+    // `?cid=a-fin…`, đọc 02/11/2026): tài khoản mở 02/11/2026 – 03/01/2027.
+    // $10,000 trong 6 tháng là tổng tích luỹ, đã gồm $3,000 ở mốc đầu.
+    startDate: "2026-11-02",
+    verifiedAt: "2026-11-02",
+    recordedAt: "2026-11-02",
+    endDate: "2027-01-03",
+    rebate: 150,
+    components: [
+      { type: "spend_threshold", points: 15000, spend: 3000, windowDays: 90 },
+      { type: "spend_threshold", points: 20000, spend: 10000, windowDays: 180 },
+      // Thưởng NĂM khi chi $40,000 — như các bản dưới, 10,000 điểm này KHÔNG
+      // được cộng vào "mức dùng được" mặc định.
+      { type: "spend_threshold", points: 10000, spend: 40000, windowDays: 365 },
     ],
   },
   {
