@@ -207,6 +207,30 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "scotiabank-momentum-visa-infinite-plus",
+    name: "Cashback 10% trong 3 tháng đầu (tối đa $200)",
+    headline: null,
+    currency: null,
+    // Offer thường thay offer nâng 15% (scotiabank.com, đọc 02/11/2026): tài
+    // khoản mở 02/11/2026 – 30/04/2027. Bản đang mở đứng TRƯỚC các bản đã đóng.
+    startDate: "2026-11-02",
+    verifiedAt: "2026-11-02",
+    recordedAt: "2026-11-02",
+    endDate: "2027-04-30",
+    feeFirstYear: 0,
+    rebate: 150,
+    components: [
+      {
+        type: "statement_credit",
+        cash: 200,
+        spend: 2000,
+        windowDays: 90,
+        note: "Hoàn 10% cho mọi chi tiêu, áp dụng cho tối đa $2,000 chi tiêu",
+      },
+      { type: "fee_waiver", cash: 120, note: "Miễn annual fee $120 năm đầu, kể cả thẻ phụ" },
+    ],
+  },
+  {
+    slug: "scotiabank-momentum-visa-infinite-plus",
     name: "Cashback 15% trong 3 tháng đầu (tối đa $300)",
     headline: null,
     currency: null,
@@ -828,6 +852,29 @@ const OFFER_SEEDS: OfferSeed[] = [
         startsAfterDays: 365,
         note: "Chi $1,000 trong tháng thứ 13",
       },
+    ],
+  },
+  {
+    slug: "bmo-viporter-world-elite-mastercard",
+    name: "70,000 điểm VIPorter®",
+    headline: 70000,
+    currency: "viporter",
+    // Cùng điều khoản, BMO® gia hạn: điều khoản offer (bmo.com, footnote 112,
+    // đọc 02/11/2026) nhận đơn từ 21/03/2025 tới 31/10/2027. Bản dưới mang hạn
+    // 31/10/2026 site ghi lúc dựng seed — giữ nguyên, đó là hạn đã công bố.
+    // `recordedFrom` 01/11: hôm đó bmo.com vẫn rao 70,000 sau hạn cũ.
+    startDate: "2025-03-21",
+    recordedFrom: "2026-11-01",
+    verifiedAt: "2026-11-02",
+    recordedAt: "2026-11-02",
+    endDate: "2027-10-31",
+    feeFirstYear: 0,
+    rebate: 125,
+    components: [
+      { type: "spend_threshold", points: 20000, spend: 5000, windowDays: 110 },
+      { type: "spend_threshold", points: 20000, spend: 9000, windowDays: 180 },
+      { type: "spend_threshold", points: 30000, spend: 18000, windowDays: 365 },
+      { type: "fee_waiver", cash: 199 },
     ],
   },
   {
