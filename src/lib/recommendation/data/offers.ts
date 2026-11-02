@@ -412,16 +412,42 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "amex-aeroplan-reserve",
+    name: "85,000 điểm Aeroplan®",
+    headline: 85000,
+    currency: "aeroplan",
+    // Mức thường quay lại sau offer nâng 22/10 (kiểm 31/10/2026: đường Apply
+    // của site tải hai lần + trang công khai amex.ca, cả ba lượt 85,000). Bản
+    // đang mở đứng trước các bản đã đóng.
+    startDate: "2026-10-31",
+    verifiedAt: "2026-10-31",
+    recordedAt: "2026-10-31",
+    components: [
+      { type: "spend_threshold", points: 60000, spend: 7500, windowDays: 90 },
+      {
+        type: "anniversary",
+        points: 25000,
+        spend: 2500,
+        windowDays: 30,
+        startsAfterDays: 365,
+        note: "Chi $2,500 trong tháng thứ 13 — cửa sổ riêng, không dùng lại tiền đã chi",
+      },
+    ],
+  },
+  {
+    slug: "amex-aeroplan-reserve",
     name: "110,000 điểm Aeroplan®",
     headline: 110000,
     currency: "aeroplan",
     // Lần đầu elevated trên CHÍNH trang công khai amex.ca (không chỉ kênh
     // referral riêng lẻ). Thấy 22/10/2026 qua đúng đường Apply của site (Finly
-    // → CJ → amex.ca ?CPID=). Amex® không ghi ngày kết thúc. Bản đang mở đứng
-    // trước bản đã đóng.
+    // → CJ → amex.ca ?CPID=). Amex® không ghi ngày kết thúc.
     startDate: "2026-10-22",
     verifiedAt: "2026-10-22",
     recordedAt: "2026-10-22",
+    // 31/10/2026 đường Apply của site và trang công khai chỉ còn 85,000. Amex®
+    // không công bố ngày offer nâng kết thúc, nên bản ghi đóng ở ngày cuối mình
+    // còn tin nó, không sửa `endDate`.
+    recordedTo: "2026-10-30",
     components: [
       { type: "spend_threshold", points: 70000, spend: 7500, windowDays: 90 },
       {
