@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jobAuthResponse } from "@/lib/job-auth";
+import { categorizeVideo } from "@/lib/video-category";
 
 // Called on a schedule (see .github/workflows/sync-videos.yml) to auto-post
 // new @HoangLeCA videos as `blogPost` (type: "video") entries — no manual
@@ -486,30 +487,6 @@ async function slugTaken(slug: string, cmaBase: string, authHeaders: Record<stri
   return data.items.length > 0;
 }
 
-const HOTEL_KEYWORDS = [
-  "hotel",
-  "resort",
-  "suite",
-  "hyatt",
-  "marriott",
-  "andaz",
-  "regency",
-  "kimpton",
-  "moxy",
-  "element",
-  "courtyard",
-  "bonvoy",
-  "caption",
-];
-
-function categorize(title: string): { categoryVi: string; categoryEn: string; icon: "airplane" | "building" } {
-  const lower = title.toLowerCase();
-  if (HOTEL_KEYWORDS.some((keyword) => lower.includes(keyword))) {
-    return { categoryVi: "Khách sạn", categoryEn: "Hotel", icon: "building" };
-  }
-  return { categoryVi: "Đánh giá", categoryEn: "Review", icon: "airplane" };
-}
-
 /** Slug của video, đã tránh id đang có. Chỉ thêm videoId khi thật sự trùng —
  *  URL công khai của bài nên đọc được, đuôi 11 ký tự chỉ là cái giá của ca
  *  hiếm. Cắt phần chữ ngắn lại đúng bằng chỗ cái đuôi chiếm, để id vẫn nằm
@@ -546,7 +523,7 @@ async function createVideoPost(
   authHeaders: Record<string, string>,
 ): Promise<void> {
   const slug = await uniqueSlug(video, cmaBase, authHeaders);
-  const { categoryVi, categoryEn, icon } = categorize(video.title);
+  const { categoryVi, categoryEn, icon } = categorizeVideo(video.title);
   const excerpt = `Video mới từ Ghế 1A: ${video.title}.`;
   const body = {
     nodeType: "document",

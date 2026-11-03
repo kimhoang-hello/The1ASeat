@@ -4553,6 +4553,16 @@ BẢN VÁ HỎNG — xử lý dưới), bác lần hai (đồng ý cả bốn đ
   / thu hồi bonus của đợt này chưa có trên site.
 - Scotiabank® Preferred Student `keyBenefitsVi` ghi "Rebate tới $150 annual fee thẻ tín dụng năm đầu", trang sản phẩm
   03/11 chỉ ghi "Ongoing $40 annual fee rebate" kèm điều kiện chi $15,000/12 tháng.
-- `audit:links`: mô tả SEO bài ANA First Class The Suite 162 ký tự (>160), `/credit-cards/goi-y` 67 ký tự (<70);
-  `audit:health`: video "I flew ANA's incredible First Class The Suite" (sync-videos tạo 01/11) thiếu `seoTitleVi` +
-  `seoDescriptionVi`.
+- `/credit-cards/goi-y` mô tả SEO 67 ký tự (<70) — chỉ là nhắc của `audit:links`.
+
+**SEO (xong cùng ngày, tác giả yêu cầu "Làm SEO đi"):**
+- Video "I Flew ANA's Incredible First Class THE Suite" có `seoTitleVi` + `seoDescriptionVi` theo mẫu 28 video cũ. Con
+  số 105,600 Aeroplan points lấy từ bài review cùng chuyến — bài đó nhúng chính entry video này trong thân bài.
+- `seoDescriptionVi` bài ANA First Class review 162 → 158 ký tự bằng cắt " CAD" sau "$110" (`$` trần = CAD). Bản đầu cắt
+  "Boeing "; Codex chỉ ra cắt " CAD" bỏ ít chữ tác giả hơn.
+- **`sync-videos` xếp video bay vào "Khách sạn" khi tiêu đề có "suite"** (từ khoá khách sạn): video ANA trên hiện icon
+  toà nhà và nằm trong `/blog/chuyen-muc/khach-san`. `categorize` tách ra `lib/video-category.ts`, video bay (hạng ghế,
+  "flew", tên hãng, "Qsuite") xét trước; test trong `test:jobs`. Trên 29 video thật chỉ đúng video ANA đổi. Codex bắt
+  bản đầu bắt quá rộng ("Flying Blue", "Flight Attendants" trong tiêu đề khách sạn) — đã bỏ fly/flying/flight. Entry
+  video đã sửa tay sang "Đánh giá"/"Review"/`airplane`. Cả hai entry sạch draft trước khi ghi; republish
+  (`publishedCounter` 2) nên không bản tin nào gửi đi.
