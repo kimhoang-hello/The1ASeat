@@ -439,11 +439,32 @@ const OFFER_SEEDS: OfferSeed[] = [
     name: "Đến 70,000 điểm WestJet®",
     headline: 70000,
     currency: "westjet",
+    // Rebate FinlyWealth lên lại $50 → $140 (job check-rebates ghi nhận
+    // 02/11/2026 21:29 giờ Toronto, Affiliate API xác nhận 03/11). Bản ghi mới
+    // như hai bản dưới, offer giữ nguyên.
+    startDate: "2026-09-07",
+    recordedFrom: "2026-11-02",
+    recordedAt: "2026-11-02",
+    verifiedAt: "2026-11-02",
+    endDate: "2026-11-04",
+    rebate: 140,
+    components: [
+      { type: "first_purchase", points: 30000 },
+      { type: "spend_threshold", points: 30000, spend: 5000, windowDays: 90 },
+      { type: "anniversary", points: 10000, windowDays: 365 },
+    ],
+  },
+  {
+    slug: "westjet-rbc-world-elite-mastercard",
+    name: "Đến 70,000 điểm WestJet®",
+    headline: 70000,
+    currency: "westjet",
     // Rebate FinlyWealth hạ $140 → $50 (job check-rebates ghi nhận 31/10/2026
     // 19:31 giờ Toronto, Affiliate API xác nhận cùng tối). Bản ghi mới như bản
     // dưới, offer giữ nguyên.
     startDate: "2026-09-07",
     recordedFrom: "2026-10-31",
+    recordedTo: "2026-11-01",
     recordedAt: "2026-10-31",
     verifiedAt: "2026-10-31",
     endDate: "2026-11-04",
@@ -933,7 +954,27 @@ const OFFER_SEEDS: OfferSeed[] = [
     name: "25,000 miles United® MileagePlus®",
     headline: 25000,
     currency: "mileageplus",
+    // Rebate FinlyWealth $100 → $125 (job check-rebates ghi nhận 02/11/2026
+    // 13:45 giờ Toronto, Affiliate API xác nhận 03/11). Bản ghi mới đứng trước
+    // bản đã đóng, offer giữ nguyên.
     startDate: "2026-09-07",
+    recordedFrom: "2026-11-02",
+    recordedAt: "2026-11-02",
+    verifiedAt: "2026-11-02",
+    rebate: 125,
+    components: [
+      { type: "first_purchase", points: 5000 },
+      { type: "spend_threshold", points: 15000, spend: 3000, windowDays: 90 },
+      { type: "anniversary", points: 5000, windowDays: 365, note: "Thưởng gia hạn mỗi năm" },
+    ],
+  },
+  {
+    slug: "united-mileageplus-neo-world-elite-mastercard",
+    name: "25,000 miles United® MileagePlus®",
+    headline: 25000,
+    currency: "mileageplus",
+    startDate: "2026-09-07",
+    recordedTo: "2026-11-01",
     rebate: 100,
     components: [
       { type: "first_purchase", points: 5000 },

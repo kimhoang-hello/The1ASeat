@@ -182,6 +182,34 @@ export type BankAccount = {
   rebate?: string;
 };
 
+/**
+ * Offer $600 của RBC® cho VIP Banking và Signature No Limit Banking, đọc
+ * 03/11/2026 ở trang offer (rbcroyalbank.com/bank-accounts/new-bank-accounts-
+ * offers-canada.html, phần hỏi đáp chép điều khoản rbc.com/offerterms600):
+ * $500 khi làm đủ điều kiện + $100 khi giữ tài khoản 13 tháng.
+ */
+const RBC_600_CONDITIONS = [
+  "Cư dân Canada, đủ tuổi trưởng thành, hiện không có tài khoản ngân hàng cá nhân nào ở RBC®, và trong 5 năm trước đợt khuyến mãi (lẫn trong đợt) chưa từng có tài khoản đó hay nhận offer mở tài khoản nào của RBC®.",
+  "Mở tài khoản Signature No Limit Banking hoặc VIP Banking đầu tiên trước 9 giờ tối (giờ miền Đông) ngày 01/03/2027. Nâng cấp tài khoản đang có không được tính.",
+  "Nhận $500 khi trước 9 giờ tối ngày 10/05/2027 làm hai trong ba việc: chuyển trọn payroll định kỳ hoặc lương hưu hằng tháng về đây bằng direct deposit; cho 2 khoản thanh toán hằng tháng tự trích từ tài khoản này (pre-authorized payment); hoặc thanh toán 2 hoá đơn qua RBC® Online Banking hay app.",
+  "Nhận thêm $100 khi làm đủ điều kiện trên và giữ tài khoản mở, ở trạng thái tốt ít nhất 13 tháng kể từ ngày mở.",
+  "Tài khoản chung thì chỉ chủ tài khoản chính được nhận.",
+  "Phải giữ tài khoản và giữ nguyên các điều kiện trên tới ít nhất 09/05/2028, nếu không RBC® có quyền trừ lại tiền thưởng.",
+];
+
+/**
+ * Offer $1,100 của BMO® cho Performance và Premium (kể cả BMO NewStart®), đọc
+ * 03/11/2026 ở trang /bank-accounts/new-bank-account-offers-and-promotions/ và
+ * phần hỏi đáp cùng trang. Ba phần cộng lại; điều khoản đầy đủ là PDF của BMO®.
+ */
+const BMO_1100_CONDITIONS = [
+  "$800: mở và nạp tiền vào tài khoản Performance hoặc Premium mới trước 01/03/2027, set up direct deposit định kỳ từ $500 trước 30/04/2027, và cũng trước 30/04/2027 làm thêm 1 việc: thanh toán 2 hoá đơn từ $50 cho 2 bên nhận khác nhau qua online hoặc mobile banking, hoặc set up 2 pre-authorized debit từ $50 của 2 bên khác nhau.",
+  "$200 nữa: mở Savings Amplifier Account trước 01/03/2027, nạp từ $10,000 trong 30 ngày đầu, giữ mức đó 4 tháng (hưởng lãi khuyến mãi 5.00%) rồi thêm 90 ngày nữa.",
+  "$100 nữa: mở và nạp tiền tài khoản chequing lẫn savings đủ điều kiện, và được duyệt một thẻ tín dụng BMO® đủ điều kiện (miễn annual fee năm đầu).",
+  "Hiện có tài khoản chequing BMO®, hoặc đã đóng tài khoản BMO® trong khoảng 03/11/2025 – 01/03/2027, thì không đủ điều kiện. Mở nhiều tài khoản cũng chỉ tài khoản đầu tiên được tính.",
+  "Bonus chequing và savings vào tài khoản trước 30/06/2027.",
+];
+
 export const BANK_ACCOUNTS: BankAccount[] = [
   // --------------------------------------------------------- Scotiabank
   {
@@ -267,12 +295,17 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     kind: "chequing",
     tags: ["student"],
     monthlyFee: 0,
-    bonusValue: 200,
-    bonusLabelVi: "Tối đa $200",
-    bonusExpiresOn: "2026-11-01",
+    // Offer nối tiếp đợt $200 (hết 01/11), đọc 03/11/2026 trong điều khoản
+    // "Welcome Offer" ngay trên trang sản phẩm: $175 tiền mặt, mở 02/11/2026 –
+    // 28/02/2027.
+    bonusValue: 175,
+    bonusLabelVi: "$175",
+    bonusExpiresOn: "2027-02-28",
     bonusConditionsVi: [
-      "Mở Preferred Package for Students and Youth mới trong khoảng 02/07/2026 – 01/11/2026.",
-      "Làm hai trong ba việc sau trong 60 ngày đầu: set up direct deposit định kỳ duy trì ít nhất 3 tháng liên tiếp; set up pre-authorized transaction định kỳ duy trì ít nhất 3 tháng; hoặc thực hiện 5 giao dịch Visa Debit online bằng ScotiaCard®.",
+      "Hiện không có và trong 2 năm qua chưa từng có tài khoản chequing nào ở Scotiabank®.",
+      "Mở Preferred Package for Students and Youth mới trong khoảng 02/11/2026 – 28/02/2027.",
+      "Làm hai trong ba việc sau trong 60 ngày đầu: nhận ít nhất 1 khoản direct deposit định kỳ, lặp lại hằng tháng ít nhất 3 tháng liên tiếp; thực hiện ít nhất 1 pre-authorized transaction định kỳ, lặp lại hằng tháng ít nhất 3 tháng liên tiếp; hoặc thực hiện 5 giao dịch Visa Debit bằng ScotiaCard® (chỉ tính mua online, hoặc quẹt tại cửa hàng ngoài Canada). Chuyển tiền sang tài khoản khác, ở Scotiabank® hay ngân hàng khác, không được tính.",
+      "Tiền thưởng vào tài khoản trong 6 tháng kể từ ngày mở. Mỗi người một lần, dù mở bao nhiêu tài khoản.",
     ],
     keyBenefitsVi: [
       "Giao dịch debit và Interac e-Transfer® không giới hạn",
@@ -334,11 +367,12 @@ export const BANK_ACCOUNTS: BankAccount[] = [
   },
 
   // --------------------------------------------------------------- BMO
-  // Cả ba tài khoản chequing thường ăn chung một offer $900 của BMO®: $700 cho
-  // chequing, $150 cho Savings Amplifier và $50 cho My Financial Progress —
-  // hai phần sau chỉ mở ra sau khi xong phần $700. Điều kiện viết theo đúng ba
-  // bước đó thay vì gộp thành một dòng "tối đa $900", vì gộp lại thì con số
-  // trông như tiền cho không.
+  // Cả ba tài khoản chequing thường ăn chung một offer $1,100 của BMO® (thay
+  // đợt $900 hết 02/11; đọc 03/11/2026 ở trang
+  // /bank-accounts/new-bank-account-offers-and-promotions/): $800 cho chequing,
+  // $200 cho Savings Amplifier và $100 khi được duyệt thẻ tín dụng. Điều kiện
+  // viết theo đúng ba phần đó thay vì gộp thành một dòng "tối đa $1,100", vì
+  // gộp lại thì con số trông như tiền cho không.
   {
     slug: "bmo-newstart-performance",
     bank: "bmo",
@@ -348,19 +382,17 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     monthlyFee: 17.95,
     feeWaiverVi:
       "Người mới định cư theo BMO NewStart® được miễn monthly fee trong 2 năm; ngoài ra giữ số dư tối thiểu $4,000 cũng được miễn.",
-    bonusValue: 900,
-    bonusLabelVi: "Tối đa $900",
-    bonusExpiresOn: "2026-11-02",
+    bonusValue: 1100,
+    bonusLabelVi: "Tối đa $1,100",
+    bonusExpiresOn: "2027-03-01",
     bonusConditionsVi: [
       "Là thường trú nhân hoặc người có work permit đến Canada trong vòng 5 năm trở lại (BMO® yêu cầu PR Card, Confirmation of Permanent Residency hoặc IMM 1442).",
-      "Mở và nạp tiền vào tài khoản mới trước 02/11/2026.",
-      "Set up direct deposit từ $500/tháng (lương, chính phủ hoặc lương hưu), khoản đầu tiên về trước 31/12/2026.",
-      "Thanh toán 2 hoá đơn online từ $50 cho 2 nhà cung cấp khác nhau, hoặc set up 2 pre-authorized debit từ $50, trước 31/12/2026.",
+      ...BMO_1100_CONDITIONS,
     ],
     keyBenefitsVi: [
       "Không cần credit history ở Canada để mở tài khoản",
       "Giao dịch và Interac e-Transfer® không giới hạn",
-      "Kèm membership Walmart+ tới 12 tháng khi mở trước 02/11/2026",
+      "Kèm membership Walmart+ tới 12 tháng khi mở trước 01/03/2027",
     ],
     // BMO® đã bỏ /en-ca/main/personal/newcomers-to-canada/ (404). Trang tài
     // khoản cho người mới định cư — chỗ nói về chính NewStart® — là link dưới
@@ -378,15 +410,10 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     tags: [],
     monthlyFee: 30.95,
     feeWaiverVi: "Miễn monthly fee nếu giữ số dư tối thiểu $6,000 trong tháng.",
-    bonusValue: 900,
-    bonusLabelVi: "Tối đa $900",
-    bonusExpiresOn: "2026-11-02",
-    bonusConditionsVi: [
-      "$700: mở và nạp tiền vào tài khoản Performance hoặc Premium mới trước 02/11/2026, set up direct deposit từ $500/tháng, và thanh toán 2 hoá đơn online từ $50 cho 2 nhà cung cấp khác nhau (hoặc 2 pre-authorized debit từ $50); tất cả trước 31/12/2026.",
-      "$150 nữa: mở Savings Amplifier Account trước 02/11/2026, nạp từ $10,000 trong 30 ngày đầu và giữ mức đó thêm 120 + 90 ngày.",
-      "$50 nữa: tạo 1 Goal và áp dụng 1 Strategy trong My Financial Progress trước 31/12/2026.",
-      "Đã có tài khoản chequing BMO® trong khoảng 07/08/2025 – 02/11/2026 thì không đủ điều kiện; đóng tài khoản trước 02/11/2027 cũng mất bonus.",
-    ],
+    bonusValue: 1100,
+    bonusLabelVi: "Tối đa $1,100",
+    bonusExpiresOn: "2027-03-01",
+    bonusConditionsVi: BMO_1100_CONDITIONS,
     keyBenefitsVi: [
       "Giao dịch và Interac e-Transfer® không giới hạn",
       "Rút ATM ngoài mạng BMO® tại Canada không mất phí",
@@ -405,19 +432,14 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     tags: [],
     monthlyFee: 17.95,
     feeWaiverVi: "Miễn monthly fee nếu giữ số dư tối thiểu $4,000 trong tháng.",
-    bonusValue: 900,
-    bonusLabelVi: "Tối đa $900",
-    bonusExpiresOn: "2026-11-02",
-    bonusConditionsVi: [
-      "$700: mở và nạp tiền vào tài khoản Performance hoặc Premium mới trước 02/11/2026, set up direct deposit từ $500/tháng, và thanh toán 2 hoá đơn online từ $50 cho 2 nhà cung cấp khác nhau (hoặc 2 pre-authorized debit từ $50); tất cả trước 31/12/2026.",
-      "$150 nữa: mở Savings Amplifier Account trước 02/11/2026, nạp từ $10,000 trong 30 ngày đầu và giữ mức đó thêm 120 + 90 ngày.",
-      "$50 nữa: tạo 1 Goal và áp dụng 1 Strategy trong My Financial Progress trước 31/12/2026.",
-      "Đã có tài khoản chequing BMO® trong khoảng 07/08/2025 – 02/11/2026 thì không đủ điều kiện; đóng tài khoản trước 02/11/2027 cũng mất bonus.",
-    ],
+    bonusValue: 1100,
+    bonusLabelVi: "Tối đa $1,100",
+    bonusExpiresOn: "2027-03-01",
+    bonusConditionsVi: BMO_1100_CONDITIONS,
     keyBenefitsVi: [
       "Giao dịch debit không giới hạn",
       "Interac e-Transfer® miễn phí, không giới hạn số lần",
-      "Kèm membership Walmart+ tới 12 tháng khi mở trước 02/11/2026",
+      "Kèm membership Walmart+ tới 12 tháng khi mở trước 01/03/2027",
     ],
     // ".../performance-plan/" đã 404; BMO® rút gọn còn ".../performance/".
     url: "https://www.bmo.com/en-ca/main/personal/bank-accounts/chequing-accounts/performance/",
@@ -877,12 +899,10 @@ export const BANK_ACCOUNTS: BankAccount[] = [
   },
 
   // ----------------------------------------------------------------- RBC
-  // Offer iPad chạy chung cho VIP Banking và Signature No Limit — cùng điều
-  // kiện, cùng ngày kết thúc, mỗi người chỉ nhận một lần dù mở mấy tài khoản.
-  // Phần thưởng là hiện vật nên `bonusValue` lấy đúng con số RBC® tự ghi trong
-  // điều khoản ($499 cho Apple 11-inch iPad Wi-Fi 128GB) — cùng cách đã làm với
-  // Tech Reward của BMO®. Ba tài khoản RBC® còn lại không có welcome bonus nào
-  // đang chạy; để trống chứ không mượn offer của tài khoản khác.
+  // Offer $600 chạy chung cho VIP Banking và Signature No Limit (thay offer iPad
+  // hết 02/11) — cùng điều kiện, cùng ngày kết thúc, nên dùng chung
+  // `RBC_600_CONDITIONS`. Advantage không có welcome bonus nào đang chạy; để
+  // trống chứ không mượn offer của tài khoản khác.
   {
     slug: "rbc-vip-banking",
     bank: "rbc",
@@ -892,16 +912,10 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     monthlyFee: 30,
     feeWaiverVi:
       "Giảm còn $17.05/tháng theo Value Program khi có thẻ tín dụng cá nhân RBC® cùng tài khoản đầu tư, kèm một khoản vay mua nhà hoặc một tài khoản doanh nghiệp nhỏ. Người từ 65 tuổi được giảm còn $22.50/tháng. Không có cách giảm về $0.",
-    bonusValue: 499,
-    bonusLabelVi: "iPad (RBC® ghi $499)",
-    bonusExpiresOn: "2026-11-02",
-    bonusConditionsVi: [
-      "Mở tài khoản VIP Banking hoặc Signature No Limit Banking mới trước 02/11/2026.",
-      "Làm hai trong ba việc sau trong 90 ngày: chuyển trọn payroll hoặc lương hưu về đây bằng direct deposit (không chia nhỏ); set up 2 khoản thanh toán định kỳ; hoặc thanh toán 2 hoá đơn qua RBC® Online Banking, app, ATM hay điện thoại.",
-      "Phần thưởng là Apple 11-inch iPad Wi-Fi 128GB, chỉ khi còn hàng.",
-      "Mỗi người một phần thưởng, dù mở bao nhiêu tài khoản.",
-      "Phải giữ tài khoản và giữ nguyên các điều kiện trên tới ít nhất 02/11/2027, nếu không RBC® có quyền trừ lại $499 từ tài khoản của bạn.",
-    ],
+    bonusValue: 600,
+    bonusLabelVi: "Tối đa $600",
+    bonusExpiresOn: "2027-03-01",
+    bonusConditionsVi: RBC_600_CONDITIONS,
     keyBenefitsVi: [
       "Giao dịch debit và Interac e-Transfer® không giới hạn, dùng được trên toàn thế giới",
       "Rebate tới $120 annual fee thẻ tín dụng đủ điều kiện",
@@ -922,16 +936,10 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     monthlyFee: 16.95,
     feeWaiverVi:
       "Giảm $6/tháng khi có thẻ tín dụng cá nhân RBC® cùng tài khoản đầu tư, và thêm $6.95/tháng nữa khi có khoản vay mua nhà hoặc tài khoản doanh nghiệp nhỏ, gộp lại còn $4/tháng. Không có cách giảm về $0.",
-    bonusValue: 499,
-    bonusLabelVi: "iPad (RBC® ghi $499)",
-    bonusExpiresOn: "2026-11-02",
-    bonusConditionsVi: [
-      "Mở tài khoản VIP Banking hoặc Signature No Limit Banking mới trước 02/11/2026.",
-      "Làm hai trong ba việc sau trong 90 ngày: chuyển trọn payroll hoặc lương hưu về đây bằng direct deposit (không chia nhỏ); set up 2 khoản thanh toán định kỳ; hoặc thanh toán 2 hoá đơn qua RBC® Online Banking, app, ATM hay điện thoại.",
-      "Phần thưởng là Apple 11-inch iPad Wi-Fi 128GB, chỉ khi còn hàng.",
-      "Mỗi người một phần thưởng, dù mở bao nhiêu tài khoản.",
-      "Phải giữ tài khoản và giữ nguyên các điều kiện trên tới ít nhất 02/11/2027, nếu không RBC® có quyền trừ lại $499 từ tài khoản của bạn.",
-    ],
+    bonusValue: 600,
+    bonusLabelVi: "Tối đa $600",
+    bonusExpiresOn: "2027-03-01",
+    bonusConditionsVi: RBC_600_CONDITIONS,
     keyBenefitsVi: [
       "Giao dịch debit và Interac e-Transfer® không giới hạn trong Canada",
       "Rebate tới $48 annual fee thẻ tín dụng đủ điều kiện",
@@ -952,17 +960,18 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     monthlyFee: 0,
     feeWaiverVi:
       "Miễn monthly fee cho sinh viên toàn thời gian hoặc bất kỳ ai từ 24 tuổi trở xuống. RBC® có quyền yêu cầu giấy xác nhận đang học.",
-    // AirPods 4 (model MXP63AM/A) — RBC® không ghi giá trong điều khoản, khác
-    // với offer iPad. $179 ở đây là giá niêm yết của Apple Canada cho đúng model
-    // đó, và chỉ dùng để xếp hạng; nhãn hiển thị không nhắc tới con số nào.
-    bonusValue: 179,
-    bonusLabelVi: "AirPods 4",
-    bonusExpiresOn: "2026-11-02",
+    // Offer nối tiếp đợt AirPods 4 (hết 02/11): $150 tiền mặt, đọc 03/11/2026
+    // trong điều khoản rbc.com/student150terms — đợt khuyến mãi 03/11/2026 –
+    // 31/05/2027.
+    bonusValue: 150,
+    bonusLabelVi: "$150",
+    bonusExpiresOn: "2027-05-31",
     bonusConditionsVi: [
-      "Từ 13 tuổi trở lên và chưa từng có tài khoản cá nhân RBC® trong 3 năm trước 02/06/2026.",
-      "Mở tài khoản Advantage Banking for Students đầu tiên trước 21:00 EST ngày 02/11/2026.",
-      "Làm hai trong các việc sau trước 21:00 EST ngày 15/01/2027: đăng ký Interac® Autodeposit và gửi/nhận 1 e-Transfer; lấy thẻ RBC® Virtual Visa Debit và quẹt ít nhất 1 lần; chuyển trọn payroll về tài khoản mới; set up 1 khoản thanh toán định kỳ; hoặc thanh toán 1 hoá đơn qua app/online banking.",
-      "Phần thưởng là AirPods 4, kèm 3 tháng Apple Music cho người đăng ký mới.",
+      "Từ 13 tuổi trở lên, đang học toàn thời gian, hiện không có tài khoản cá nhân RBC® và trong 3 năm trước 03/11/2026 chưa từng có tài khoản đó hay nhận offer mở tài khoản nào của RBC®. Từ 25 tuổi trở lên phải nộp giấy xác nhận đang học.",
+      "Mở tài khoản Advantage Banking for Students đầu tiên trước 21:00 giờ miền Đông ngày 31/05/2027.",
+      "Làm hai trong các việc sau trước 21:00 giờ miền Đông ngày 26/07/2027: đăng ký Interac® Autodeposit và gửi/nhận 1 e-Transfer; lấy thẻ RBC® Virtual Visa Debit (từ 14 tuổi) và có ít nhất 1 lần mua hàng hoặc thanh toán hoá đơn từ tài khoản này (bằng thẻ debit RBC®, Virtual Visa Debit, Interac Flash, Apple Pay, Google Pay hay Samsung Pay; giao dịch ở chi nhánh hay ATM RBC® không tính); chuyển trọn payroll về tài khoản mới; cho 1 khoản thanh toán hằng tháng tự trích từ tài khoản này (pre-authorized payment); hoặc thanh toán 1 hoá đơn qua app/online banking (không tính trả thẻ tín dụng RBC® hay trả bằng Virtual Visa Debit).",
+      "Tiền thưởng vào tài khoản trong 10 tuần sau khi đủ điều kiện.",
+      "Phải giữ tài khoản và giữ nguyên các điều kiện trên tới ít nhất 26/07/2028. Đóng, đổi hay hạ cấp tài khoản trước đó, kể cả vì không còn là sinh viên toàn thời gian, thì RBC® có quyền trừ lại $150.",
     ],
     keyBenefitsVi: [
       "Không monthly fee, giao dịch debit không giới hạn",

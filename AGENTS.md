@@ -4498,3 +4498,61 @@ vòng tìm lỗi độc lập (reset 01/11 00:55), chưa vòng nào xong.
   Câu khẳng định mạnh cho một ngưỡng dễ chạm như vậy — đổi ngưỡng hay đổi câu là việc của tác giả.
 - Câu lý do của lựa chọn khác có lúc nói về NGƯỜI DÙNG, không về thẻ: Platinum dưới "Chưa cần mở thẻ mới" ghi "số điểm
   bạn gom được đã đủ cho chuyến này".
+
+## Kiểm toàn diện 03/11/2026 (lượt tay, mọi trang) — đừng đề xuất lại
+
+Gate: lint, tsc, build, 11 audit (+ `audit:awards -- --links`), 9 test suite (`test:reco` 503 + 23 skip MySQL), `npm
+audit --omit=dev` = 0 (16 moderate còn lại là `minimatch` dev-only, như mục 31/10), `audit:links` production (245 trang,
+không trang mồ côi), smoke test + `www` 308 + 5 header bảo mật. Quét puppeteer bản build cục bộ 259 URL (sitemap 245 +
+14 URL lạ/404/query rác) × 320/375/1440px: không response lỗi ngoài 404 cố ý, không ảnh hỏng/thiếu alt, mỗi trang 1 h1,
+JSON-LD parse được, không id trùng; 348 link nội bộ đều 200. Codex bốn vòng: tìm lỗi (sạch), bác bản vá (A/B/C ĐÚNG, D
+BẢN VÁ HỎNG — xử lý dưới), bác lần hai (đồng ý cả bốn điểm mình bác, còn 2 chỗ diễn đạt), kiểm hai chỗ đó (ĐÚNG).
+
+**Đã vá:**
+- **Seed engine lệch rebate 2 thẻ → job `check-rebates` đỏ từ 02/11**: United℠ MileagePlus® Neo $100 → $125 (job ghi
+  nhận 02/11 13:45 Toronto), WestJet RBC® $50 → $140 (02/11 21:29 Toronto); Affiliate API xác nhận 03/11. Theo luật
+  temporal mục 28/10: bản cũ `recordedTo: 2026-11-01`, bản mới `recordedFrom: 2026-11-02` đứng trước. Codex kiểm từng
+  ngày 31/10–30/11: mỗi ngày đúng một bản; WestJet hết bản từ 05/11 là đúng hạn offer 04/11.
+- **Bài Deals "RBC Avion → British Airways Avios 30%" (đăng 02/11) chưa khai trong `post-offer-status.ts`** —
+  `audit:health` đỏ. Thêm `endsOn: 2026-11-30`, cùng ngày `expiresAt` của transferBonus.
+- **URL trần trong thân bài tràn khỏi màn điện thoại**: link avionrewards.com dài 392px trong bài trên, right = 408 ở màn
+  375px. `wrap-break-word` trên `PROSE` (`post-body.tsx`); cố ý không dùng `wrap-anywhere` vì nó hạ min-content làm ô
+  bảng trong bài bị bẻ giữa từ.
+- **Bonus tài khoản ngân hàng hết 01–02/11 nhưng ngân hàng đã có offer nối tiếp** (trang tự ẩn bonus hết hạn qua
+  `hasLiveBonus`, nên người đọc thấy "không có bonus" trong khi offer mới đang chạy): Scotiabank® Preferred Student
+  $175 (02/11/2026–28/02/2027); BMO® Performance/Premium/NewStart® tối đa $1,100 ($800 chequing + $200 Savings
+  Amplifier + $100 khi được duyệt thẻ, mở trước 01/03/2027); RBC® VIP + Signature No Limit tối đa $600 ($500 + $100 giữ
+  13 tháng, mở trước 01/03/2027, `RBC_600_CONDITIONS`); RBC® Advantage Students $150 (03/11/2026–31/05/2027). Nguồn:
+  trang ngân hàng đọc 03/11 (BMO® bằng browser — curl bị chặn; RBC® trang `new-bank-accounts-offers-canada.html` +
+  `students/offers/terms-and-conditions.html`; Scotiabank® mục "Welcome Offer" ngay trên trang sản phẩm).
+  Codex vòng 2 bắt bản đầu: biến giới hạn "5 năm trước đợt" của RBC® thành "chưa từng có tài khoản" (loại oan người đã
+  đóng tài khoản hơn 5 năm), thiếu "hằng tháng" cho lương hưu / pre-authorized payment, thu hẹp Virtual Visa Debit thành
+  "mua hàng", thiếu các ca bị thu hồi $150 (đổi/hạ cấp, hết là sinh viên toàn thời gian). Vòng 3 bắt thêm: Scotiabank®
+  đòi khoản direct deposit / pre-authorized ĐẦU TIÊN phát sinh trong 60 ngày (không chỉ "set up"), và hoạt động Virtual
+  Visa Debit của RBC® tính mọi giao dịch debit hợp lệ của tài khoản, không riêng chính thẻ đó. Đã sửa.
+
+**Codex nêu, mình bác (đừng báo lại):**
+- "Tài khoản chung chỉ chủ chính được nhận" ở offer $600 có nguồn: FAQ cùng trang offer.
+- Mốc 26/07/2028 của RBC® Student đúng nguyên văn điều khoản ("remain in effect until at least July 26, 2028"), không
+  phải 26/07/2027 + 365 ngày.
+- Không chép mọi loại trừ (nhân viên ngân hàng, 60% course load, discounted plan ngoài danh sách của BMO®): khối điều
+  kiện là bản tóm tắt, entry cũ cũng vậy, và trang luôn dẫn sang trang ngân hàng.
+
+**Đã kiểm, KHÔNG phải lỗi:**
+- `console: net::ERR_FAILED` trên vài bài blog khi quét là do script quét chặn request ra ngoài; tải thường không lỗi.
+- `reddit.com/r/churningcanada/` khớp mẫu `/r/` của bộ lọc affiliate — không phải link affiliate.
+- 304 trong kết quả quét là trình duyệt dùng lại ETag giữa ba bề ngang.
+- Rà tay trang ngân hàng: National Bank® newcomer và BMO® Student vẫn ghi hạn 03/11 (trang tự ẩn từ 04/11); CIBC®
+  Aventura® ×2 (60,000) và TD® First Class (160,000) vẫn elevated; WestJet RBC® còn "up to 70,000" mà trang không ghi
+  ngày.
+
+**Chờ tác giả:**
+- **WestJet RBC® hết hạn 04/11** — trang RBC® vẫn 70,000, không ghi ngày. Server vẫn thiếu `ANTHROPIC_API_KEY`, nên lượt
+  `expire-offers` 05/11 sẽ đỏ có chủ ý và headline giữ chữ elevated cho tới khi sửa tay hoặc thêm key (mục 31/10).
+- BMO® $1,100: điều khoản đầy đủ là PDF (`edb-chequing-terms-and-conditions-en.pdf`) chưa đọc — điều kiện giữ tài khoản
+  / thu hồi bonus của đợt này chưa có trên site.
+- Scotiabank® Preferred Student `keyBenefitsVi` ghi "Rebate tới $150 annual fee thẻ tín dụng năm đầu", trang sản phẩm
+  03/11 chỉ ghi "Ongoing $40 annual fee rebate" kèm điều kiện chi $15,000/12 tháng.
+- `audit:links`: mô tả SEO bài ANA First Class The Suite 162 ký tự (>160), `/credit-cards/goi-y` 67 ký tự (<70);
+  `audit:health`: video "I flew ANA's incredible First Class The Suite" (sync-videos tạo 01/11) thiếu `seoTitleVi` +
+  `seoDescriptionVi`.

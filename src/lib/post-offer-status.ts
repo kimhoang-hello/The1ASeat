@@ -40,6 +40,9 @@ export const POST_OFFER_DEADLINES: Record<string, PostOffer> = {
   // RBC ghi "October 16, 2026 (11:59 pm (PST))" — cùng ngày với `expiresAt`
   // của entry transferBonus `rbc-avion-to-cathay-asiamiles`.
   "asia-miles-transfer-bonus-15-rbc-avion": { endsOn: "2026-10-16", cta: "transferBonuses" },
+  // "Từ ngày 1/11 đến hết ngày 30/11/2026", giờ Pacific — cùng ngày với
+  // `expiresAt` của entry transferBonus `rbc-avion-to-british-airways-avios`.
+  "british-airways-avios-transfer-bonus-30-rbc-avion": { endsOn: "2026-11-30", cta: "transferBonuses" },
 };
 
 /**

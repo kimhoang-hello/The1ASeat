@@ -134,6 +134,13 @@ export function PostBody({
  *  `width` thì ảnh bị bóp méo chứ không thu nhỏ.
  *
  *  `prose-headings:scroll-mt-chrome` (globals.css) vì header dính trên đỉnh: không có nó, link
- *  mục lục nhảy tới đúng heading rồi để header che mất chính cái heading đó. */
+ *  mục lục nhảy tới đúng heading rồi để header che mất chính cái heading đó.
+ *
+ *  `wrap-break-word`: tác giả có lúc dán URL trần vào thân bài (bài BA Avios®
+ *  02/11/2026 — một link avionrewards.com dài 392px), và một "từ" không có chỗ
+ *  ngắt thì chạy thẳng ra ngoài màn 320–375px. Cố ý KHÔNG dùng `wrap-anywhere`
+ *  như các tên thẻ: `anywhere` hạ min-content, nên ô bảng trong bài sẽ bị bẻ
+ *  chữ giữa từ thay vì cuộn ngang; `break-word` chỉ ngắt khi một dòng không
+ *  chứa nổi từ đó. */
 const PROSE =
-  "prose prose-neutral max-w-none prose-headings:font-display prose-headings:scroll-mt-chrome prose-a:text-primary [&_:is(h1,h2,h3,h4)_a]:[font-weight:inherit] xl:prose-lg prose-img:mx-auto prose-img:w-auto prose-img:max-h-[80svh] prose-img:rounded-xl";
+  "prose prose-neutral max-w-none wrap-break-word prose-headings:font-display prose-headings:scroll-mt-chrome prose-a:text-primary [&_:is(h1,h2,h3,h4)_a]:[font-weight:inherit] xl:prose-lg prose-img:mx-auto prose-img:w-auto prose-img:max-h-[80svh] prose-img:rounded-xl";
