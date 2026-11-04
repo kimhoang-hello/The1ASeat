@@ -456,13 +456,20 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     monthlyFee: 0,
     // Bonus là voucher Best Buy chứ không phải tiền mặt — bonusValue chỉ để
     // xếp hạng, nhãn mới là thứ người đọc thấy.
-    bonusValue: 200,
-    bonusLabelVi: "Tối đa $200 Tech Reward",
-    bonusExpiresOn: "2026-11-03",
+    // Đợt "Student Winter Campaign" 04/11/2026 – 01/03/2027, điều khoản đọc
+    // 04/11/2026 ở PDF student-offer-terms-and-conditions-en.pdf của BMO®
+    // (curl bị chặn, đọc qua browser). Đợt trước ($200) hết 03/11.
+    bonusValue: 300,
+    bonusLabelVi: "Tối đa $300 Tech Reward",
+    bonusExpiresOn: "2027-03-01",
     bonusConditionsVi: [
-      "Mở tài khoản Student Chequing mới và đang học tại đại học, cao đẳng hoặc trường nghề.",
-      "Hoàn thành các bước BMO® yêu cầu để nhận phần thưởng.",
-      "Nhận email trong vòng 3 tuần để chọn phần thưởng Best Buy.",
+      "Đủ tuổi trưởng thành ở tỉnh bạn sống và học toàn thời gian tại đại học, cao đẳng hoặc trường nghề trước 01/03/2027.",
+      "Chưa có tài khoản chequing chính (CAD hoặc USD) hay interest chequing nào ở BMO®; đóng tài khoản cũ trong đợt rồi mở lại cũng không được.",
+      "Mở chequing CAD mới với Performance Plan ($0/tháng cho sinh viên) hoặc Premium Plan ($13/tháng cho sinh viên) theo chương trình giảm phí cho sinh viên, khai email hợp lệ và nạp tiền (bao nhiêu cũng được) trước 01/03/2027.",
+      "Tài khoản chung (joint) không được thưởng nếu người đứng tên cùng đang có hoặc vừa đóng chequing BMO® trong đợt; tài khoản đứng tên một người mà sau đó thêm một khách đang có chequing BMO® cũng mất thưởng.",
+      "Trong 30 ngày kể từ khi mở, làm ít nhất 2 trong 3 việc: gửi hoặc nhận 2 lần Interac e-Transfer®, trả 1 hoá đơn qua online/mobile banking, cài 1 pre-authorized debit.",
+      "BMO® gửi email trong vòng 90 ngày sau khi đủ điều kiện; link chọn phần thưởng Best Buy hết hạn sau 30 ngày.",
+      "Giữ tài khoản mở trong gói đủ điều kiện tới 01/03/2028, đóng hoặc đổi gói sớm hơn thì BMO® có thể gửi hoá đơn đòi lại giá trị phần thưởng.",
     ],
     keyBenefitsVi: [
       "Không mất monthly fee, không yêu cầu số dư tối thiểu",
@@ -707,11 +714,14 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     kind: "savings",
     tags: [],
     monthlyFee: 0,
-    interestRate: 4.6,
+    // Offer nối tiếp 01/11/2026 – 31/01/2027, điều khoản đọc 04/11/2026 ở
+    // simplii.com/en/special-offers/high-interest-savings-account.html: 5.00%
+    // trong 153 ngày, trần $100,000 (đợt trước 4.60%, trần $200,000).
+    interestRate: 5,
     regularRate: 0.3,
-    ratePromoEndsOn: "2026-10-31",
+    ratePromoEndsOn: "2027-01-31",
     promoNoteVi:
-      "4.60% là lãi khuyến mãi 153 ngày (khoảng 5 tháng) kể từ ngày mở tài khoản, chỉ tính trên phần số dư tới $200,000. Phải là khách hàng mới hoàn toàn của Simplii Financial™ và mở HISA đầu tiên trong vòng 60 ngày kể từ khi có Client Number; offer chạy 01/08/2026 – 31/10/2026. Hết kỳ khuyến mãi thì về biểu lãi thường theo bậc số dư: 0.30% dưới $50,000, 0.50% từ $50,000, 0.60% từ $100,000, 0.70% từ $500,000 và 1.00% từ $1,000,000.",
+      "5.00% là lãi khuyến mãi 153 ngày (khoảng 5 tháng) kể từ ngày mở tài khoản, chỉ tính trên phần số dư tới $100,000. Phải là khách hàng mới hoàn toàn của Simplii Financial™ và mở HISA đầu tiên (đứng tên chính) trong vòng 60 ngày kể từ khi có Client Number; offer chạy 01/11/2026 – 31/01/2027. Hết kỳ khuyến mãi thì về biểu lãi thường theo bậc số dư: 0.30% dưới $50,000, 0.50% từ $50,000, 0.60% từ $100,000, 0.70% từ $500,000 và 1.00% từ $1,000,000.",
     // Biểu bậc đọc từ API lãi công khai của Simplii™ ngày 25/10/2026.
     regularNoteVi:
       "0.30% là lãi thường cho số dư dưới $50,000. Lãi tăng theo bậc số dư: 0.50% từ $50,000, 0.60% từ $100,000, 0.70% từ $500,000 và 1.00% từ $1,000,000.",

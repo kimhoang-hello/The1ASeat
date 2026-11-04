@@ -4575,3 +4575,34 @@ BẢN VÁ HỎNG — xử lý dưới), bác lần hai (đồng ý cả bốn đ
   bản đầu bắt quá rộng ("Flying Blue", "Flight Attendants" trong tiêu đề khách sạn) — đã bỏ fly/flying/flight. Entry
   video đã sửa tay sang "Đánh giá"/"Review"/`airplane`. Cả hai entry sạch draft trước khi ghi; republish
   (`publishedCounter` 2) nên không bản tin nào gửi đi.
+
+## Kiểm toàn diện định kỳ 04/11/2026 — đừng đề xuất lại
+
+Gate: lint, tsc, build, 11 audit, 6 test suite, `audit:links` production (245 trang, không trang mồ côi), smoke test +
+`www` 308 + 5 header bảo mật. `npm audit` 15 moderate, đều là nhánh `minimatch` dev-only (mục 04/11 bên trên),
+`--omit=dev` = 0. Codex hai vòng: rà route theo hậu quả + diff (SẠCH); bác bản vá (Simplii™ ĐÚNG, audit ĐÚNG, BMO®
+BẢN VÁ HỎNG — xử lý dưới).
+
+**Đã vá:**
+- **Simplii™ HISA hiện 0.30% từ 01/11 trong khi offer nối tiếp đã chạy**: 5.00% trong 153 ngày, trần $100,000 (đợt
+  trước 4.60%, trần $200,000), mở 01/11/2026 – 31/01/2027 (điều khoản trên trang special-offers, đọc bằng browser).
+- **BMO® Student Chequing hết đợt $200 ngày 03/11, BMO® đã có đợt "Student Winter Campaign"**: Tech reward Best Buy tối
+  đa $300, 04/11/2026 – 01/03/2027. Điều khoản là PDF `bmo.com/pdf/student-offer-terms-and-conditions-en.pdf` — curl bị
+  chặn, navigate thì tải file; đọc được bằng `fetch` + pdf.js (cdnjs) chạy trong tab bmo.com. Codex (web) đọc ra bản
+  Summer cũ — bản Winter trong browser mới đúng. Codex bắt bản đầu: điều kiện cho chọn cả Premium Plan mà entry ghi
+  miễn phí — Premium sinh viên $13/tháng, nay ghi rõ; thêm loại trừ tài khoản chung.
+- **`audit:trademarks` đỏ 11 chỗ vì `video-category.test.ts`** (03/11): tiêu đề YouTube nguyên văn làm dữ liệu test.
+  Script nay bỏ `*.test.ts(x)` — file test không hiện trên site. Codex thử: không mất phát hiện nào ở mã sản phẩm.
+  File script có 2 byte NUL thật (`"\x00".repeat`) nên tool Edit từ chối — sửa bằng script giữ nguyên byte.
+
+**Đã kiểm, KHÔNG phải lỗi:**
+- `sync-videos` đỏ 03/11 07:57 + 04/11 07:31 UTC ("channel: 404, uploads-playlist: 404", mục 27/09).
+- `check-rebates` đỏ 02–03/11: seed lệch, đã vá ở mục 03/11; lượt 04/11 00:44 UTC xanh.
+- Rà tay khớp: Tangerine® 4.50% (Client Number tới 30/11), EQ Bank™ base 1.50%, Money Master 0.01%/0.50%, Simplii™
+  chequing $350 (31/01/2027; trang HISA ghi "January 1, 2027" cho offer chequing nhưng điều khoản chequing ghi 31/01);
+  National Bank® newcomer vẫn hạn 03/11, chưa có đợt mới (trang tự ẩn); CIBC® Aventura® ×2 60,000, TD® First Class
+  160,000 vẫn elevated; WestJet RBC® vẫn "up to 70,000" không ghi ngày.
+
+**Chờ tác giả:** WestJet RBC® hết hạn 04/11 — lượt `expire-offers` 05/11 sẽ đỏ có chủ ý (server thiếu
+`ANTHROPIC_API_KEY`, mục 31/10). MomentumPLUS 4.65% (mục 24/10) vẫn chưa sửa. Ba thẻ RBC® Avion® hạn 25/11 (link không
+phải `/rebates/`) — còn 21 ngày.
