@@ -4133,6 +4133,15 @@ hPanel quét 30/10 20:01 báo 3 moderate; `npm audit` báo cùng thứ nhưng x�
   được — vá chỉ có ở 11.x, kể cả `eslint` 10.14 / `typescript-eslint` mới nhất vẫn ghim `^10`. Override 3→11 sẽ
   vỡ eslint. hPanel còn 2 dòng này (quét 31/10 07:59) — đợi eslint nâng, đừng thêm override.
 
+## Vá một nửa `minimatch` (04/11/2026)
+
+hPanel quét 04/11 07:01 + `npm audit`: vẫn CVE-2026-118764 (2 moderate). Bản 10.2.6 dưới
+`@typescript-eslint/typescript-estree` dùng `minimatch_1.minimatch(...)` (export có tên) nên ghim
+`overrides["@typescript-eslint/typescript-estree"].minimatch = "11.0.4"` an toàn — gate xanh (commit 31f9a16).
+Bản 3.1.5 vẫn để nguyên: eslint/eslint-plugin-react gọi `require('minimatch')(...)` như hàm, còn 11.x chỉ có export
+có tên → override sẽ vỡ lint. Dev-only, không vào bundle site. Khi nâng `typescript-eslint` mà nó đã dùng `^11`
+thì xoá override lồng này.
+
 ## Kiểm toàn diện định kỳ 24/10/2026 — đừng đề xuất lại
 
 Gate: lint, tsc, build, 10 audit, 6 test suite (`test:reco` 494 + 23 skip MySQL), `audit:links` production (239
