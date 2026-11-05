@@ -316,24 +316,23 @@ xử lý mọi entry có `Expires At` đã qua:
 - **Transfer bonus** — hết là hết, nên vẫn tự **Unpublish** (không xoá). Nếu
   sau này bonus quay lại, chỉ cần sửa `Expires At` rồi Publish lại.
 
-  Phần chữ tiếng Việt (`Headline Vi`, `Key Benefits Vi`, `Editors Take Vi`)
-  cũng được **viết lại theo offer mới**: route đọc phần "How to earn the
-  welcome bonus" trên trang FinlyWealth của thẻ rồi nhờ Claude viết lại bằng
-  tiếng Việt, đúng quy ước của site (dấu phẩy ngăn cách hàng nghìn, $ là CAD,
-  giữ tiếng Anh các thuật ngữ, có ký hiệu ®/™, kết bằng dòng HOT TIP nếu thẻ
-  có rebate).
+  Phần chữ tiếng Việt (`Welcome Bonus Vi`, `Headline Vi`, `Key Benefits Vi`,
+  `Editors Take Vi`) được **trả về bản của offer thường**: route lấy bản copy
+  thẻ mang lần cuối trước khi bật `Elevated Bonus` (Contentful lưu một
+  snapshot mỗi lần publish), đổi con số rebate trong câu HOT TIP theo
+  FinlyWealth, rồi đối chiếu với trang FinlyWealth của thẻ trước khi publish.
+  Không có mô hình AI nào viết chữ (từ 05/11/2026; trước đó route nhờ Claude
+  viết lại). Chi tiết ở `src/lib/standing-offer.ts`.
 
-**Cần thêm 1 biến môi trường cho phần viết lại bonus** — vào hPanel →
-website → Environment variables, thêm `ANTHROPIC_API_KEY` (lấy ở
-console.anthropic.com). Nếu chưa có biến này, mọi thứ khác vẫn chạy bình
-thường, chỉ riêng phần viết lại lời văn là bỏ qua.
-
-> ⚠️ **Vẫn nên soát lại:** thẻ nào không viết lại được (FinlyWealth đổi cấu
-> trúc trang, thiếu API key, mạng lỗi...) sẽ nằm trong danh sách `needsReview`
-> kèm lý do; thẻ viết lại thành công nằm trong `bonusRewritten`. Vào tab
-> **Actions** trên GitHub, mở lần chạy gần nhất là thấy cả hai danh sách. Máy
-> viết đúng số liệu FinlyWealth công bố, nhưng bạn nên đọc lại lời văn một
-> lượt trước khi yên tâm.
+> ⚠️ **Thẻ không khôi phục được thì phải sửa tay:** thẻ chưa từng có bản offer
+> thường trên site (bật elevated ngay từ lần publish đầu), bản offer thường cũ
+> hơn 120 ngày, con số welcome bonus không còn khớp FinlyWealth, copy còn nhắc
+> một ngày đã qua, hay thẻ không có trang rebate FinlyWealth (các thẻ Amex®,
+> RBC® Avion®). Job không ghi gì, giữ `Expires At`, và đỏ ở mọi lượt kèm lý do
+> cho tới khi bạn sửa chữ rồi xoá `Expires At`. Trang vẫn gỡ thẻ khỏi tab
+> elevated ngay khi qua hạn (lúc render), nên không cần tắt cờ. Thẻ khôi phục thành
+> công nằm trong danh sách `restored` của lần chạy (tab **Actions** trên
+> GitHub).
 
 ## Tự động kiểm tra rebate FinlyWealth
 

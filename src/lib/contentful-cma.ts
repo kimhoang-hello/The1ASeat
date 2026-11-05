@@ -100,6 +100,56 @@ export async function listEntries(
 }
 
 /**
+ * Mọi lần PUBLISH của một entry.
+ *
+ * Contentful lưu một snapshot mỗi lần publish, chỉ ở environment `master`.
+ * `expire-offers` đọc nó để lấy lại copy của offer thường trước một đợt offer
+ * nâng (xem `standing-offer.ts`).
+ *
+ * Đọc HẾT các trang, không dừng ở trang đầu: lịch sử thiếu thì một bản publish
+ * elevated nằm ở trang sau biến mất, và copy elevated cũ bị nhận nhầm là copy
+ * đã viết lại (Codex 05/11/2026). Collection này không trả `total` (đo
+ * 05/11/2026), nên điều kiện dừng là một trang ngắn hơn `limit`; vượt
+ * `MAX_SNAPSHOT_PAGES` thì ném chứ không coi là đủ.
+ */
+const SNAPSHOT_PAGE = 100;
+const MAX_SNAPSHOT_PAGES = 10;
+
+export async function listPublishSnapshots(
+  client: CmaClient,
+  entryId: string,
+): Promise<{ publishedAt: string; fields: CmaEntry["fields"] }[]> {
+  const out = new Map<string, { publishedAt: string; fields: CmaEntry["fields"] }>();
+
+  for (let page = 0; page < MAX_SNAPSHOT_PAGES; page += 1) {
+    const url = `${client.base}/entries/${entryId}/snapshots?limit=${SNAPSHOT_PAGE}&skip=${page * SNAPSHOT_PAGE}`;
+    const res = await fetch(url, cmaInit({ headers: client.headers }));
+    if (!res.ok) throw new Error(`Snapshots ${entryId} failed: ${res.status} ${await res.text()}`);
+
+    const data = await res.json();
+    if (!Array.isArray(data.items)) throw new Error(`Snapshots ${entryId}: trả dữ liệu sai dạng (thiếu items)`);
+    for (const item of data.items as unknown[]) {
+      const row = item as {
+        sys?: { id?: unknown; createdAt?: unknown; snapshotType?: unknown };
+        snapshot?: { fields?: unknown };
+      };
+      if (row.sys?.snapshotType !== "publish" || typeof row.sys.createdAt !== "string") continue;
+      const fields = row.snapshot?.fields;
+      if (!fields || typeof fields !== "object") continue;
+      // Hai trang liền nhau có thể chồng một bản (skip trên tập đang lớn thêm):
+      // khử trùng theo id.
+      out.set(String(row.sys.id ?? row.sys.createdAt), {
+        publishedAt: row.sys.createdAt,
+        fields: fields as CmaEntry["fields"],
+      });
+    }
+    if (data.items.length < SNAPSHOT_PAGE) return [...out.values()];
+  }
+
+  throw new Error(`Snapshots ${entryId}: hơn ${MAX_SNAPSHOT_PAGES * SNAPSHOT_PAGE} bản — không đọc hết được lịch sử`);
+}
+
+/**
  * Write changed fields back and, when the entry was already live, publish the
  * new version so the change actually reaches the site. An entry sitting in
  * draft stays in draft — a job should not put something live that a human

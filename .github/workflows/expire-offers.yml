@@ -12,13 +12,13 @@ on:
     # sau. `isElevatedLive` gỡ thẻ khỏi badge/tab/banner elevated lúc render,
     # nhưng không đổi chữ welcome bonus.
     #
-    # Chạy lặp an toàn: thẻ viết lại và publish xong thì mất `expiresAt` nên
-    # lượt sau không thấy nó; thẻ có draft thì job không ghi gì, chỉ đỏ; thẻ
-    # thiếu trang rebate được tắt cờ elevated một lần rồi đỏ ở mọi lượt. Thẻ kẹt
-    # ở lỗi tạm thời (rewrite hỏng) bị publish lại ở mỗi lần gọi route — tối đa
-    # 5 lần/lượt do action tự thử lại, nay tối đa 10 lần/ngày thay vì 5 — chữ
-    # không đổi, nhưng mỗi lần publish kéo theo một webhook revalidate + purge
-    # CDN. Webhook dừng ở `not_blog_post` trước Kit nên không gửi bản tin.
+    # Chạy lặp an toàn: thẻ khôi phục copy offer thường và publish xong thì
+    # mất `expiresAt` nên lượt sau không thấy nó; thẻ có draft thì job không ghi
+    # gì, chỉ đỏ; thẻ không khôi phục được (không có bản offer thường, số lệch
+    # FinlyWealth, thiếu trang rebate) không bị ghi gì, chỉ đỏ ở mọi lượt — trang
+    # tự gỡ nó khỏi tab elevated lúc render khi qua hạn. Mỗi lần publish kéo
+    # theo một webhook revalidate + purge CDN; webhook dừng ở `not_blog_post`
+    # trước Kit nên không gửi bản tin.
     - cron: "0 8 * * *"
     - cron: "0 20 * * *"
   workflow_dispatch: {}

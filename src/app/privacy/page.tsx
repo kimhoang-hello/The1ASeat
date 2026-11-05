@@ -92,12 +92,6 @@ export default function PrivacyPage() {
         <li>
           <strong>Hostinger</strong>: hạ tầng lưu trữ website và log máy chủ.
         </li>
-        <li>
-          <strong>Anthropic (Claude)</strong>: viết lại lời giải thích trong công cụ gợi ý thẻ và
-          phần giới thiệu offer của các trang thẻ. Với công cụ gợi ý, thứ được gửi đi là những câu
-          kết quả đã dựng sẵn (tên thẻ, welcome bonus, phí, số điểm chuyến bay ước lượng);
-          <strong>không</strong> gửi mã phiên, không gửi từng dòng số dư, không gửi thu nhập.
-        </li>
       </ul>
 
       <h2>Công cụ gợi ý thẻ</h2>

@@ -45,8 +45,8 @@ sau — không phải mọi biến ở trên:
 | Environment `contentful-write` (chỉ branch `main`) | `CONTENTFUL_SPACE_ID`, `CONTENTFUL_ACCESS_TOKEN`, `CONTENTFUL_MANAGEMENT_TOKEN` | `check-rebates` |
 | Repo secret | `VPS_HOST`, `VPS_PORT`, `VPS_USERNAME`, `VPS_SSH_KEY`, `VPS_APP_PATH` | `deploy` |
 
-`ANTHROPIC_API_KEY` và `KIT_V4_API_KEY` chỉ nằm trên server — không workflow
-nào đọc chúng.
+`KIT_V4_API_KEY` chỉ nằm trên server — không workflow nào đọc nó. Site không
+còn dùng `ANTHROPIC_API_KEY` từ 05/11/2026; xoá được khỏi hPanel.
 
 Vì sao `check-rebates` khác mọi job khác: từ 09/09/2026 nó chạy THẲNG TRONG
 RUNNER chứ không gọi site (edge Hostinger chặn IP runner — xem

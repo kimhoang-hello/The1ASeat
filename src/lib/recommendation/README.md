@@ -1228,6 +1228,12 @@ CI (`.github/workflows/ci.yml`) chạy MariaDB như service và NỔ nếu thi�
 
 ## Phase 6 — lời giải thích bằng LLM (§28)
 
+> **TẮT từ 05/11/2026.** Tác giả bỏ hẳn Anthropic API. Mô hình được gọi qua
+> `claude-opus-5` đã bị gỡ khỏi `explain-llm.ts` cùng SDK; khung bên dưới
+> (cửa kiểm, kho, ghép chữ) giữ nguyên và vẫn chạy trong test với mô hình
+> tiêm vào. Bật lại = viết một `ExplanationModel` mới cho nhà cung cấp khác.
+> Các đoạn dưới mô tả lúc Phase 6 còn chạy.
+
 **LLM là lớp kể lại, không phải lớp quyết định — và nó không viết chữ.** Engine
 không biết Phase 6 tồn tại: không file nào trong thư mục này (cũng như
 `present.ts`, `copy.ts`, `questions.ts`, `follow-up.ts`, `result.tsx`) import
@@ -1240,7 +1246,7 @@ Code ở `src/lib/recommender/explain-*.ts`, component `explanation.tsx`:
 | --- | --- |
 | `explain-payload.ts` | `ResultView` → dữ kiện: mỗi cái là một MỆNH ĐỀ tiếng Việt viết sẵn, có id, nhãn `verified`/`estimate`/`editorial` và vai `reason`/`offer`/`trip`/`context`. Thuần. Không hồ sơ, `runId`, lựa chọn khác, điểm số, affiliate, cảnh báo |
 | `explain-check.ts` | `LEADS` (câu dẫn đóng) · `checkExplanation`: id có thật, câu dẫn hợp loại hành động, vai hợp câu dẫn, không lặp, 1–4 câu × 1–3 dữ kiện · `renderExplanation`: câu dẫn + mệnh đề, nhãn = nhãn yếu nhất, do CODE tính |
-| `explain-llm.ts` | Prompt + `claude-opus-5` (effort thấp, JSON schema, fallback phía server, timeout 20 s, không retry) + `explainPrimaryAction`: công tắc → kho → mô hình → cửa kiểm → LƯU → ghép chữ |
+| `explain-llm.ts` | Prompt + JSON schema (hợp đồng với mô hình) + `explainPrimaryAction`: công tắc → kho → mô hình → cửa kiểm → LƯU → ghép chữ. **Tắt từ 05/11/2026**: bỏ Anthropic API, `explanationModelFromEnv` luôn trả `null`, trang luôn hiện bảng tra Phase 5 |
 | `explain-store.ts` | `reco_explanations` (migration 2), chỉ thêm, khoá (runId, goal, dấu vân tay payload, version prompt), lưu cả JSON thô, bản dựng và chữ đã ghép |
 
 **Vì sao Claude không viết chữ (Codex vòng 1–2).** Hai bản đầu cho viết tự do

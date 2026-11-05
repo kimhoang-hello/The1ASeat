@@ -517,7 +517,7 @@ test("lớp LLM không chạm được vào đường chọn khuyến nghị: im
   const allowed: Record<string, RegExp> = {
     "lib/recommender/explain-payload.ts": /^(\.\.\/recommendation\/reason-codes\.ts|\.\/copy\.ts|\.\/present\.ts)$/,
     "lib/recommender/explain-check.ts": /^\.\/explain-payload\.ts$/,
-    "lib/recommender/explain-llm.ts": /^(@anthropic-ai\/sdk|\.\.\/recommendation\/fingerprint\.ts|\.\/explain-(check|payload|store)\.ts)$/,
+    "lib/recommender/explain-llm.ts": /^(\.\.\/recommendation\/fingerprint\.ts|\.\/explain-(check|payload|store)\.ts)$/,
     "lib/recommender/explain-store.ts": /^(mysql2\/promise|\.\.\/recommendation\/(mysql|store-keys)\.ts|\.\/explain-(check|payload)\.ts)$/,
     "components/recommender/explanation.tsx": /^@\/(components\/recommender\/result|lib\/recommender\/(explain-payload|explain-llm|present|session))$/,
   };
@@ -644,7 +644,7 @@ test("mọi nhánh hỏng đều rơi về bảng tra", async () => {
   assert.equal(await explainPrimaryAction(input, harness(GOOD, { store: cannotRead }).deps), null);
 });
 
-test("công tắc tắt (không key / RECO_LLM_EXPLAIN=0) tắt cả bản ĐÃ LƯU, không chỉ lượt gọi mới", async () => {
+test("công tắc tắt (model null) tắt cả bản ĐÃ LƯU, không chỉ lượt gọi mới", async () => {
   const input = inputFor(viewFor(beginnerNoCards));
   const on = harness(GOOD);
   assert.ok((await explainPrimaryAction(input, on.deps)) !== null);

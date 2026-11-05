@@ -1,5 +1,11 @@
 /**
- * Phase 6 — nhờ Claude dựng lời giải thích, kiểm, lưu, rồi mới trả cho trang.
+ * Phase 6 — nhờ một mô hình dựng lời giải thích, kiểm, lưu, rồi mới trả cho trang.
+ *
+ * TẮT từ 05/11/2026: tác giả bỏ hẳn Anthropic API (tài khoản hết credit làm
+ * job `expire-offers` hỏng cùng ngày), và hiện không có nhà cung cấp nào khác.
+ * `explanationModelFromEnv` luôn trả `null`, nên trang luôn hiện bảng tra Phase
+ * 5. Khung (cửa kiểm, kho, ghép chữ) giữ nguyên và vẫn được test bằng mô hình
+ * tiêm vào: bật lại là viết một `ExplanationModel` mới, không phải dựng lại.
  *
  * Thứ tự không đổi được:
  *
@@ -17,8 +23,6 @@
  * chạy: một khiếu nại "câu này sai" phải tra được đúng câu người đọc đã thấy,
  * không phải câu sinh lại hôm nay. Không có kho thì KHÔNG hiện bản của Claude.
  */
-
-import Anthropic from "@anthropic-ai/sdk";
 
 import { fingerprint } from "../recommendation/fingerprint.ts";
 import {
@@ -41,9 +45,12 @@ import type { ExplanationStore, StoredExplanation } from "./explain-store.ts";
  */
 export const EXPLANATION_PROMPT_VERSION = "6.7.0";
 
-export const EXPLANATION_MODEL = "claude-opus-5";
-
-const SYSTEM = `Bạn giúp công cụ gợi ý thẻ tín dụng của Ghế 1A (blog Miles & Points tiếng Việt cho người Việt tại Canada) trình bày lời giải thích cho người đọc.
+/**
+ * Prompt và JSON schema là HỢP ĐỒNG với mô hình, không gắn với nhà cung cấp
+ * nào: một `ExplanationModel` mới gửi đúng hai thứ này. Export để chúng không
+ * thành mã chết trong lúc Phase 6 tắt.
+ */
+export const EXPLANATION_SYSTEM_PROMPT = `Bạn giúp công cụ gợi ý thẻ tín dụng của Ghế 1A (blog Miles & Points tiếng Việt cho người Việt tại Canada) trình bày lời giải thích cho người đọc.
 
 Công cụ đã QUYẾT ĐỊNH xong: một engine tất định đã chọn hành động chính. Bạn không viết chữ nào. Bạn nhận một danh sách dữ kiện — mỗi dữ kiện là một mệnh đề tiếng Việt viết sẵn, có id, nhãn (basis) và vai (role) — và trả về cách GHÉP chúng thành 1 đến ${MAX_SENTENCES} câu:
 
@@ -59,7 +66,7 @@ ${LEAD_KEYS.map((key) => `  - "${key}": "${LEADS[key].text} …" — nhận vai 
 
 Chọn cho người đọc này: sắp lý do quan trọng nhất với mục tiêu của họ lên trước, gom những dữ kiện nói cùng một chuyện vào một câu. Đọc lại các mệnh đề sẽ được ghép để câu ra tự nhiên.`;
 
-const SCHEMA = {
+export const EXPLANATION_SCHEMA = {
   type: "object",
   properties: {
     sentences: {
@@ -88,54 +95,19 @@ const SCHEMA = {
 export type ExplanationModel = (payload: ExplanationPayload) => Promise<{
   output: unknown;
   /**
-   * Mô hình ĐÃ trả lời — khác `EXPLANATION_MODEL` khi fallback phía server chạy.
+   * Mô hình ĐÃ trả lời — khác mô hình được gọi khi nhà cung cấp tự chuyển sang mô hình dự phòng.
    * Bản ghi phải nói đúng ai dựng câu, nhất là ở đúng ca bị từ chối (Codex vòng 1).
    */
   model: string;
 }>;
 
 /**
- * Trang chờ lời giải thích trong `<Suspense>`: người đọc đã thấy bản bảng tra.
- * Quá mốc này thì bỏ — một lời giải thích tới sau 20 giây không ai đọc nữa.
- */
-const TIMEOUT_MS = 20_000;
-
-export function anthropicExplanationModel(client = new Anthropic()): ExplanationModel {
-  return async (payload) => {
-    const response = await client.beta.messages.create(
-      {
-        model: EXPLANATION_MODEL,
-        max_tokens: 8000,
-        system: SYSTEM,
-        // Việc chọn và sắp, không phải việc viết: effort thấp giữ độ trễ ở mức
-        // một trang web chịu được.
-        output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } },
-        // Bị từ chối thì để API chạy lại trên mô hình dự phòng; vẫn từ chối
-        // thì rơi về bảng tra như mọi lỗi khác.
-        betas: ["server-side-fallback-2026-07-01"],
-        fallbacks: "default",
-        messages: [{ role: "user", content: JSON.stringify(payload) }],
-      },
-      { timeout: TIMEOUT_MS, maxRetries: 0 },
-    );
-    if (response.stop_reason === "refusal") {
-      throw new Error(`từ chối: ${response.stop_details?.category ?? "không rõ"}`);
-    }
-    if (response.stop_reason === "max_tokens") throw new Error("hết max_tokens");
-    const text = response.content.find((block) => block.type === "text")?.text;
-    if (!text) throw new Error(`không có chữ (stop_reason: ${response.stop_reason})`);
-    return { output: JSON.parse(text) as unknown, model: response.model };
-  };
-}
-
-/**
- * `null` = Phase 6 TẮT. Tắt khi server không có key, hoặc khi đặt
- * `RECO_LLM_EXPLAIN=0` — và tắt nghĩa là tắt cả bản ĐÃ LƯU (xem
- * `explainPrimaryAction`), để công tắc dùng được như một nút dừng khẩn.
+ * `null` = Phase 6 TẮT — và tắt nghĩa là tắt cả bản ĐÃ LƯU (xem
+ * `explainPrimaryAction`). Từ 05/11/2026 luôn tắt: không có nhà cung cấp mô
+ * hình nào (xem đầu file).
  */
 export function explanationModelFromEnv(): ExplanationModel | null {
-  if (process.env.RECO_LLM_EXPLAIN === "0" || !process.env.ANTHROPIC_API_KEY) return null;
-  return anthropicExplanationModel();
+  return null;
 }
 
 export interface ExplainDeps {

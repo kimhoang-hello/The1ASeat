@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cmaClient, cmaInit, field, listEntries, updateEntry, type CmaEntry, type CmaClient } from "@/lib/contentful-cma";
+import {
+  cmaClient,
+  cmaInit,
+  field,
+  LOCALE,
+  listEntries,
+  listPublishSnapshots,
+  updateEntry,
+  type CmaEntry,
+  type CmaClient,
+} from "@/lib/contentful-cma";
 import { fetchFinlyWealthOffer, finlyWealthRebateUrl } from "@/lib/finlywealth";
-import { isRewriteConfigured, rewriteOfferCopy } from "@/lib/rewrite-offer";
+import { rebateProsePatch } from "@/lib/rebate-prose";
+import { copyOf, standingCopy, standingCopyProblems, withRebate } from "@/lib/standing-offer";
 import { jobAuthResponse } from "@/lib/job-auth";
-import { hasExpired } from "@/lib/format-date";
+import { hasExpired, todayInSiteZone } from "@/lib/format-date";
 import {
   fetchContentfulCreditCardOffers,
   fetchContentfulTransferBonuses,
@@ -18,14 +29,17 @@ import {
 // A credit card is different: the card still exists once its elevated offer
 // ends, it just goes back to the issuer's standing offer. So instead of pulling
 // the card off the site, this clears the elevated flag and the expiry date —
-// moving the card into the "Các offers khác" tab — and brings its content up to
-// date with the offer that is actually running: the rebate and the welcome
-// bonus both come from the card's FinlyWealth page, with the Vietnamese copy
-// rewritten from those figures (see lib/rewrite-offer.ts).
+// moving the card into the "Các offers khác" tab — and puts back the copy of
+// the standing offer: the version the card carried before the elevated offer,
+// read from the entry's own publish history and checked against the card's
+// FinlyWealth page before it goes live (see lib/standing-offer.ts). No model
+// writes any text: tới 05/11/2026 chỗ này nhờ Claude viết lại, và tác giả đã bỏ
+// hẳn Anthropic API ngày đó.
 //
-// Every step after the flag is best effort. A card whose bonus could not be
-// rewritten still moves tabs and is returned in `needsReview` with the reason,
-// because a card sitting in the wrong tab is worse than one with stale copy.
+// A card whose copy could not be restored is left untouched and turns the job
+// red with the reason, keeping `expiresAt` so every later run finds it again.
+// It still leaves the elevated tab: `isElevatedLive` drops it at render time
+// once `expiresAt` has passed.
 
 const CARD_TYPE = "creditCardOffer";
 const BONUS_TYPE = "transferBonus";
@@ -71,9 +85,9 @@ async function handleExpire(request: NextRequest) {
       .map((offer) => offer.slug),
   );
 
+  const today = todayInSiteZone();
   const movedToOther: string[] = [];
-  const bonusRewritten: string[] = [];
-  const needsReview: { slug: string; reason: string }[] = [];
+  const restored: { slug: string; from: string }[] = [];
   const unpublished: string[] = [];
   const errors: { slug: string; message: string }[] = [];
 
@@ -119,99 +133,95 @@ async function handleExpire(request: NextRequest) {
       const rebateUrl = finlyWealthRebateUrl(field<string>(card, "applyUrl") ?? "");
 
       // Thẻ không có trang rebate FinlyWealth (link thẳng ngân hàng, hoặc link
-      // FinlyWealth dạng rewards-calculator như ba thẻ RBC® Avion®): không có
-      // nguồn nào để viết lại copy, nên welcome bonus và câu "elevated offer đến
+      // FinlyWealth dạng rewards-calculator như ba thẻ RBC® Avion® và các thẻ
+      // Amex®): không có nguồn nào để đối chiếu copy, nên welcome bonus và câu "elevated offer đến
       // <ngày>" trong headline nằm nguyên sau khi offer chết. Trước 07/10/2026
       // nhánh này xoá `expiresAt` rồi trả 200 kèm `needsReview`: job xanh, và từ
       // lượt sau thẻ không còn khớp truy vấn nên không gì nhắc tới nó nữa — site
       // in mãi một offer đã hết. Nay GIỮ `expiresAt` và báo lỗi ở MỌI lượt cho
       // tới khi có người sửa copy rồi tự xoá hạn — đỏ dai có chủ ý, cùng loại với
-      // `sync-videos`. `elevatedBonus` vẫn tắt ngay (thẻ nằm sai tab còn tệ
-      // hơn), và chỉ ghi khi nó còn bật để lượt sau không publish lại vô cớ.
+      // `sync-videos`. Không ghi gì cả, kể cả cờ elevated: xem nhánh `failure`
+      // bên dưới.
       if (!rebateUrl) {
-        if (field<boolean>(card, "elevatedBonus") === true) {
-          await updateEntry(client, card, CARD_TYPE, { elevatedBonus: false });
-          movedToOther.push(slug);
-        }
         errors.push({
           slug,
           message:
-            "offer đã hết hạn nhưng thẻ không có trang rebate FinlyWealth để viết lại copy — sửa tay welcome bonus, headline, key benefits, editor's take rồi xoá expiresAt trong Contentful",
+            "offer đã hết hạn nhưng thẻ không có trang rebate FinlyWealth để đối chiếu copy offer thường — sửa tay welcome bonus, headline, key benefits, editor's take rồi xoá expiresAt trong Contentful",
         });
         continue;
       }
 
-      const changes: Record<string, unknown> = { elevatedBonus: false, expiresAt: undefined };
-      let rewrote = false;
-      let reason = "";
-      // Lỗi tạm thời (FinlyWealth hỏng, rewrite ném, thiếu API key): lượt sau
-      // chạy lại được, nên giữ `expiresAt` (xem bên dưới).
-      let retryable = false;
+      // Khôi phục copy offer thường, hoặc nói rõ vì sao không. Mọi bước đọc
+      // (FinlyWealth, snapshot) nằm trong cùng một khối: bất kỳ bước nào hỏng
+      // thì `changes` không được ghi và thẻ giữ nguyên chữ cũ.
+      const changes: Record<string, unknown> = {};
+      let source = "";
+      let failure = "";
+      try {
+        const current = copyOf(card.fields);
+        if (!current) throw new Error("entry thiếu headlineVi, keyBenefitsVi hoặc editorsTakeVi");
 
-      if (!isRewriteConfigured) {
-        reason = "ANTHROPIC_API_KEY is not set";
-        retryable = true;
-      } else {
-        // Best effort throughout: a card must still leave the elevated tab even
-        // if FinlyWealth is unreachable or the rewrite fails this morning.
-        try {
-          const offer = await fetchFinlyWealthOffer(rebateUrl);
+        const [offer, history] = await Promise.all([
+          fetchFinlyWealthOffer(rebateUrl),
+          listPublishSnapshots(client, card.sys.id),
+        ]);
+        const standing = standingCopy(history, current, today);
+        if (!standing.ok) throw new Error(standing.reason);
+        source = standing.source === "snapshot" ? `bản publish ${standing.publishedAt.slice(0, 10)}` : "copy hiện tại";
 
-          const copy = await rewriteOfferCopy({
+        const copy = withRebate(standing.copy, offer.rebate);
+        const problems = standingCopyProblems(
+          copy,
+          {
             name: field<string>(card, "name") ?? slug,
-            issuer: field<string>(card, "issuer") ?? "",
             annualFee: field<string>(card, "annualFeeVi") ?? "",
             rebate: offer.rebate,
             offerDetails: offer.details,
-            current: {
-              welcomeBonusVi: field<string>(card, "welcomeBonusVi") ?? "",
-              headlineVi: field<string>(card, "headlineVi") ?? "",
-              keyBenefitsVi: field<string[]>(card, "keyBenefitsVi") ?? [],
-              editorsTakeVi: field<string>(card, "editorsTakeVi") ?? "",
-            },
-          });
+          },
+          today,
+        );
+        if (problems.length > 0) throw new Error(`${source}: ${problems.join("; ")}`);
 
-          // `rebateVi` và phần chữ (đặc biệt câu HOT TIP trong `editorsTakeVi`)
-          // phải đi cùng một chuyến ghi — cùng lý do `check-rebates` gộp
-          // `rebateProsePatch` với `rebateVi` trong một lệnh `updateEntry` duy
-          // nhất. Trước đây dòng này chạy NGAY sau khi đọc FinlyWealth, tức
-          // trước `rewriteOfferCopy` — nếu rewrite ném (timeout, bị từ chối,
-          // vướng `assertFiguresAreSourced`), `changes.rebateVi` vẫn mang số
-          // MỚI trong khi `changes` không có phần chữ mới, và `updateEntry`
-          // bên dưới publish luôn: badge hiện số mới, HOT TIP vẫn nói số cũ —
-          // đúng lỗi mà `audit:rebate-prose` sinh ra để bắt, tự tay đưa lên
-          // site. Gộp chung một khối try thì rewrite ném là `changes` không
-          // đổi gì cả, thẻ giữ nguyên copy cũ và chờ lượt sau.
-          changes.rebateVi = offer.rebate;
-          Object.assign(changes, copy);
-          // Nhãn rỗng = thẻ hết welcome bonus: gỡ hẳn trường (`updateEntry`
-          // xoá field khi giá trị là `undefined`) thay vì ghi chuỗi rỗng.
-          if (!copy.welcomeBonusVi) changes.welcomeBonusVi = undefined;
-          rewrote = true;
-        } catch (err) {
-          reason = `rewrite failed: ${err instanceof Error ? err.message : String(err)}`;
-          retryable = true;
-        }
+        // `rebateVi` và câu HOT TIP đi cùng một chuyến ghi, cùng lý do
+        // `check-rebates` gộp `rebateProsePatch` với `rebateVi`: hai chuyến là
+        // hai lần publish, và lần sau hỏng thì badge một số, HOT TIP một số
+        // khác. Bản vá phủ cả các trường `...En` ẩn; bốn trường Vi lấy từ
+        // `copy`, đã đổi rebate ở `withRebate`.
+        Object.assign(changes, offer.rebate ? rebateProsePatch(card.fields, LOCALE, offer.rebate) : {}, copy, {
+          rebateVi: offer.rebate,
+          elevatedBonus: false,
+          expiresAt: undefined,
+        });
+      } catch (err) {
+        failure = err instanceof Error ? err.message : String(err);
       }
 
-      // GIỮ `expiresAt` khi lỗi còn chạy lại được. Xoá nó là xoá luôn thứ duy
-      // nhất khiến lượt sau tìm thấy thẻ này: truy vấn CMA lọc theo
-      // `expiresAt[lte]`, nên thẻ không còn hạn thì biến mất khỏi mọi lượt sau
-      // và trang thẻ nằm lại với welcome offer đã chết vĩnh viễn. Trả 500 một
-      // lần không cứu được — workflow gọi bằng `curl --retry`, lượt sau trả
-      // 200 là job xanh. Ngày mai chạy lại vẫn thấy thẻ, vẫn đỏ, cho tới khi
-      // rewrite thành công.
-      //
-      // `elevatedBonus: false` thì vẫn ghi ngay: thẻ nằm sai tab tệ hơn thẻ có
-      // copy cũ. Người đọc không thấy cái hạn còn treo lại — `CardBadges` chỉ
-      // in ngày hết hạn khi nó chưa qua.
-      if (retryable) delete changes.expiresAt;
+      if (failure) {
+        // GIỮ `expiresAt`: nó là thứ duy nhất khiến lượt sau còn tìm thấy thẻ
+        // này (truy vấn CMA lọc theo `expiresAt[lte]`). Xoá nó là để trang thẻ
+        // nằm lại với welcome offer đã chết vĩnh viễn — `--retry` của workflow
+        // cho một lượt 200 là job xanh. Giữ lại thì thẻ đỏ ở mọi lượt cho tới
+        // khi có người sửa copy rồi tự xoá hạn.
+        //
+        // KHÔNG ghi gì, kể cả cờ elevated. Tới 05/11/2026 nhánh này tắt cờ
+        // ngay ("thẻ nằm sai tab tệ hơn copy cũ"), nhưng việc đó nay thừa:
+        // `isElevatedLive` gỡ thẻ khỏi badge, tab, banner và trang chủ lúc
+        // render ngay khi `expiresAt` qua, mà nhánh này giữ `expiresAt`. Còn ghi
+        // thì có hại: mỗi lần là một snapshot "tắt cờ, giữ chữ elevated" —
+        // đúng hình dạng làm `standingCopy` không phân biệt được với một offer
+        // thường (Codex 05/11) — cộng một webhook revalidate + purge CDN, ở mọi
+        // lượt gọi route. Lượt 05/11 publish WestJet RBC® 5 lần như thế trong
+        // lúc RBC® vẫn đang chạy offer.
+        errors.push({
+          slug,
+          message: `chưa khôi phục được copy offer thường (${failure}) — sửa tay welcome bonus, headline, key benefits, editor's take rồi xoá expiresAt trong Contentful; giữ expiresAt để lượt sau thử lại`,
+        });
+        continue;
+      }
 
       await updateEntry(client, card, CARD_TYPE, changes);
       movedToOther.push(slug);
-      if (rewrote) bonusRewritten.push(slug);
-      else needsReview.push({ slug, reason });
-      if (retryable) errors.push({ slug, message: `${reason} — giữ expiresAt để lượt sau thử lại` });
+      restored.push({ slug, from: source });
     } catch (err) {
       errors.push({ slug, message: err instanceof Error ? err.message : String(err) });
     }
@@ -292,8 +302,7 @@ async function handleExpire(request: NextRequest) {
     {
       checked: cards.length + bonuses.length,
       movedToOther,
-      bonusRewritten,
-      needsReview,
+      restored,
       unpublished,
       errors,
     },

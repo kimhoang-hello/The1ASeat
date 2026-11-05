@@ -4655,6 +4655,52 @@ WestJet (SẠCH); bác bản vá (A–F ĐÚNG, CÒN CHẶN: KHÔNG).
 - `audit:links` nhắc WestJet chỉ có một đường dẫn vào: hệ quả của việc job tắt elevated (thẻ rơi khỏi các khối
   elevated); hết khi bật lại.
 
-**Chờ tác giả:** nạp credit tài khoản Anthropic (console → Plans & Billing) trước 19/11 — WestJet RBC® hết hạn 18/11 là
-lượt rewrite kế tiếp. Ba thẻ RBC® Avion® hạn 25/11 (link không phải `/rebates/`, job đỏ có chủ ý) — còn 20 ngày.
-MomentumPLUS 4.65% (mục 24/10) vẫn chưa sửa.
+**Chờ tác giả:** ~~nạp credit Anthropic~~ — tác giả bỏ hẳn Anthropic API cùng tối (mục kế). Ba thẻ RBC® Avion® hạn
+25/11 (link không phải `/rebates/`, job đỏ có chủ ý) — còn 20 ngày. MomentumPLUS 4.65% (mục 24/10) vẫn chưa sửa.
+
+## Bỏ Anthropic API 05/11/2026 — tác giả chốt, đừng đề xuất nạp credit hay gắn lại key
+
+Tác giả: "Không dùng key API Anthropic nữa, tìm cách khác." Hai chỗ từng gọi Claude:
+
+**1. `expire-offers` — nay khôi phục copy offer thường từ snapshot Contentful** (`src/lib/standing-offer.ts`). Contentful
+lưu một snapshot mỗi lần publish (`GET /entries/{id}/snapshots`, chỉ ở `master`). Khi offer nâng hết, route lấy bốn
+trường copy (`welcomeBonusVi`, `headlineVi`, `keyBenefitsVi`, `editorsTakeVi`) của lần publish cuối TRƯỚC đợt nâng, đổi
+"$X rebate" theo FinlyWealth (cả các trường `...En` ẩn, qua `rebateProsePatch`), đối chiếu với trang FinlyWealth rồi mới
+publish. "Copy elevated" xác định theo NỘI DUNG (mọi bộ bốn trường từng publish cùng `elevatedBonus: true`), không theo
+cờ của từng snapshot: lượt job hỏng 05/11 publish 5 lần WestJet RBC® với cờ tắt và nguyên copy nâng. Copy hiện tại không
+phải copy elevated (người đã viết lại, quên xoá hạn) thì giữ nguyên, chỉ kiểm. Lùi từ lần publish elevated cuối, gặp
+bản cờ tắt đầu tiên mà chữ trùng một bản elevated thì DỪNG và đỏ: "tắt cờ, giữ chữ" vừa có thể là lượt job hỏng, vừa có
+thể là tác giả chốt offer nâng cũ thành offer thường — lùi tiếp là khôi phục một offer còn cũ hơn (Codex vòng 1).
+
+Cửa chặn (`standingCopyProblems`), hiệu chỉnh trên dữ liệu thật 05/11 (~40 thẻ, chỉ đọc):
+- Mọi con số trong nhãn số lớn; số từ 1,000 và phần trăm trong headline + dòng đầu key benefits — phải có trên trang
+  FinlyWealth. Tiền dưới $1,000 ngoài nhãn không bị đòi ("giá trị $700 tiền vé", "voucher từ $119", "5 điểm/$1"):
+  đòi chúng làm đỏ oan 6/10 thẻ đang đúng. KHÔNG tự cộng các nấc điểm thành tổng: BMO® ghi 20,000 + 20,000 + 30,000
+  mà không in 70,000, nhưng hai luật "khi nào được cộng" đều bị Codex bác (cộng cả dòng "up to 50,000" ra 100,000;
+  "up to 50,000" + 30,000 ra 80,000). Thẻ kiểu BMO® đỏ và sửa tay.
+- Nhãn rỗng/không có số → chặn (Scotiabank® Gold Amex® chỉ còn bản 02/08 viết lúc chưa có welcome bonus).
+- Ngày đã qua, trừ ngày MỞ một khoảng còn hiệu lực ("mở từ 02/11/2026 đến 03/01/2027"); ngày tương lai ở mệnh đề
+  khác không che được nó (Codex vòng 1). Năm trong ngày không bị đọc thành số điểm.
+- Snapshot cũ hơn 120 ngày → chặn (khôi phục là xoá các lần sửa chữ sau đó: rà copy 17/10, ®/™).
+- Hết rebate mà copy còn hứa; HOT TIP không đọc ra số; số tiền sai định dạng.
+
+Không qua → KHÔNG ghi gì (kể cả cờ elevated; cả nhánh thẻ thiếu trang rebate), giữ `expiresAt`, đỏ ở mọi lượt kèm lý
+do. Tắt cờ nay thừa: `isElevatedLive` gỡ thẻ khỏi badge/tab/banner lúc render khi qua hạn (trang `revalidate = 60`). Mà
+ghi thì có hại: mỗi lần là một snapshot "tắt cờ, giữ chữ elevated" làm lịch sử mập mờ, cộng webhook + purge CDN mỗi lượt.
+Snapshot đọc hết các trang (`skip`, collection không trả `total`), quá 1,000 bản thì ném (Codex vòng 1). Response đổi
+`bonusRewritten`/`needsReview` thành `restored: [{ slug, from }]`.
+
+Kiểm trên dữ liệu thật: bản khôi phục của 4 thẻ Amex® hôm nay trùng khớp bản sửa tay, trừ đúng câu so sánh "offer liền
+trước 70,000 điểm" của Platinum — cửa kiểm KHÔNG bắt được lỗi ngữ nghĩa loại này (số 70,000 có thật trong nguồn).
+
+**Giới hạn đã biết, đừng tưởng là lỗi:** thẻ bật elevated ngay từ lần publish đầu không có gì để khôi phục — đo 05/11:
+WestJet RBC® (hạn 18/11), RBC® Avion® ×3 (25/11), CIBC® Aventura® ×2, Amex® Hilton, TD® First Class, Tangerine®. Thẻ
+không có trang `/rebates/` (Amex®, RBC® Avion®) vẫn không có nguồn đối chiếu. Mấy thẻ đó: job đỏ đúng ngày, sửa tay.
+Muốn thẻ mới tự khôi phục được: publish bản offer thường TRƯỚC rồi mới bật elevated.
+
+**2. Phase 6 engine gợi ý — TẮT.** `explanationModelFromEnv` luôn `null` → trang luôn hiện bảng tra Phase 5. Gỡ
+`anthropicExplanationModel` và SDK; prompt + schema export thành `EXPLANATION_SYSTEM_PROMPT`/`EXPLANATION_SCHEMA` (hợp
+đồng cho nhà cung cấp khác). Khung cửa kiểm/kho/ghép chữ giữ nguyên, test bằng mô hình tiêm vào vẫn chạy.
+
+Cùng lượt: xoá `src/lib/rewrite-offer.ts`, gỡ `@anthropic-ai/sdk`, bỏ Anthropic khỏi trang Privacy (`LEGAL_UPDATED`
+05/11/2026), sửa `.env.example`, `DEPLOY.md`, `CONTENTFUL.md`. `ANTHROPIC_API_KEY` trên hPanel giờ vô dụng — xoá được.
