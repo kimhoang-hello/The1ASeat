@@ -661,16 +661,42 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "amex-aeroplan-business-reserve",
+    name: "90,000 điểm Aeroplan®",
+    headline: 90000,
+    currency: "aeroplan",
+    // Mức thường quay lại sau offer nâng 22/10 (kiểm 05/11/2026: đường Apply của
+    // site + trang công khai amex.ca cùng 65,000/$10,500 + 25,000/$3,500 tháng
+    // 13; Finly API cùng số). Bản đang mở đứng trước các bản đã đóng.
+    startDate: "2026-11-05",
+    verifiedAt: "2026-11-05",
+    recordedAt: "2026-11-05",
+    components: [
+      { type: "spend_threshold", points: 65000, spend: 10500, windowDays: 90 },
+      {
+        type: "anniversary",
+        points: 25000,
+        spend: 3500,
+        windowDays: 30,
+        startsAfterDays: 365,
+        note: "Chi $3,500 trong tháng thứ 13",
+      },
+    ],
+  },
+  {
+    slug: "amex-aeroplan-business-reserve",
     name: "120,000 điểm Aeroplan®",
     headline: 120000,
     currency: "aeroplan",
     // Offer nâng quay lại LẦN BA: thấy 22/10/2026 trên đúng đường Apply của
     // site (Finly → CJ → amex.ca ?CPID=), chỉ MỘT ngày sau khi về mức thường
     // 21/10. Cùng mốc chi với các bản nâng trước. Amex® không ghi ngày kết
-    // thúc. Bản đang mở đứng trước các bản đã đóng.
+    // thúc.
     startDate: "2026-10-22",
     verifiedAt: "2026-10-22",
     recordedAt: "2026-10-22",
+    // 05/11/2026 chỉ còn mức thường (xem bản trên); đóng ở ngày cuối mình còn
+    // tin nó, không sửa `endDate`.
+    recordedTo: "2026-11-04",
     components: [
       { type: "spend_threshold", points: 80000, spend: 10500, windowDays: 90 },
       {
@@ -1284,15 +1310,40 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "amex-platinum",
+    name: "Tới 100,000 điểm Membership Rewards®",
+    headline: 100000,
+    currency: "amex-mr",
+    // Mức thường quay lại sau offer nâng 22/10 (kiểm 05/11/2026: đường Apply của
+    // site + trang công khai amex.ca cùng "UP TO 100,000", Finly API cùng số).
+    // Cùng mốc chi với bản 07/09. Bản đang mở đứng trước các bản đã đóng.
+    startDate: "2026-11-05",
+    verifiedAt: "2026-11-05",
+    recordedAt: "2026-11-05",
+    components: [
+      { type: "spend_threshold", points: 70000, spend: 10000, windowDays: 90 },
+      {
+        type: "anniversary",
+        points: 30000,
+        windowDays: 90,
+        startsAfterDays: 425,
+        note: "Quẹt một giao dịch trong khoảng tháng 15–17",
+      },
+    ],
+  },
+  {
+    slug: "amex-platinum",
     name: "Tới 130,000 điểm Membership Rewards®",
     headline: 130000,
     currency: "amex-mr",
     // Offer nâng: thấy 22/10/2026 trên đúng đường Apply của site (Finly → CJ
-    // → amex.ca ?CPID=). Amex® không ghi ngày kết thúc. Bản đang mở đứng trước
-    // bản đã đóng.
+    // → amex.ca ?CPID=). Amex® không ghi ngày kết thúc.
     startDate: "2026-10-22",
     verifiedAt: "2026-10-22",
     recordedAt: "2026-10-22",
+    // 05/11/2026 đường Apply và trang công khai chỉ còn 100,000. Amex® không công
+    // bố ngày offer nâng kết thúc, nên bản ghi đóng ở ngày cuối mình còn tin nó,
+    // không sửa `endDate`.
+    recordedTo: "2026-11-04",
     components: [
       { type: "spend_threshold", points: 90000, spend: 10000, windowDays: 90 },
       {
@@ -1327,16 +1378,42 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "amex-business-platinum",
+    name: "Tới 120,000 điểm Membership Rewards®",
+    headline: 120000,
+    currency: "amex-mr",
+    // Mức thường quay lại sau offer nâng 22/10 (kiểm 05/11/2026: đường Apply của
+    // site + trang công khai amex.ca, năm lượt tải đều "UP TO 120,000" — không
+    // còn thấy biến thể A/B 150,000 của 31/10; Finly API cùng số). Bản đang mở
+    // đứng trước các bản đã đóng.
+    startDate: "2026-11-05",
+    verifiedAt: "2026-11-05",
+    recordedAt: "2026-11-05",
+    components: [
+      { type: "spend_threshold", points: 80000, spend: 15000, windowDays: 90 },
+      {
+        type: "anniversary",
+        points: 40000,
+        windowDays: 90,
+        startsAfterDays: 425,
+        note: "Quẹt một giao dịch trong khoảng tháng 15–17",
+      },
+    ],
+  },
+  {
+    slug: "amex-business-platinum",
     name: "Tới 150,000 điểm Membership Rewards®",
     headline: 150000,
     currency: "amex-mr",
     // Offer nâng quay lại LẦN BA: thấy 22/10/2026 trên đúng đường Apply của
     // site (Finly → CJ → amex.ca ?CPID=), chỉ MỘT ngày sau khi về mức thường
     // 21/10. Cùng mốc chi với các bản nâng trước. Amex® không ghi ngày kết
-    // thúc. Bản đang mở đứng trước các bản đã đóng.
+    // thúc.
     startDate: "2026-10-22",
     verifiedAt: "2026-10-22",
     recordedAt: "2026-10-22",
+    // 05/11/2026 chỉ còn mức thường (xem bản trên); đóng ở ngày cuối mình còn
+    // tin nó, không sửa `endDate`.
+    recordedTo: "2026-11-04",
     components: [
       { type: "spend_threshold", points: 100000, spend: 15000, windowDays: 90 },
       {
@@ -1458,16 +1535,35 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "amex-business-gold",
+    name: "Tới 70,000 điểm Membership Rewards®",
+    headline: 70000,
+    currency: "amex-mr",
+    // Mức thường quay lại sau offer nâng 22/10 (kiểm 05/11/2026 qua đúng đường
+    // Apply của site: 50,000/$7,500 trong 3 tháng + 20,000/$30,000 trong năm
+    // đầu; Finly API cùng số). Bản đang mở đứng trước các bản đã đóng.
+    startDate: "2026-11-05",
+    verifiedAt: "2026-11-05",
+    recordedAt: "2026-11-05",
+    components: [
+      { type: "spend_threshold", points: 50000, spend: 7500, windowDays: 90 },
+      { type: "spend_threshold", points: 20000, spend: 30000, windowDays: 365 },
+    ],
+  },
+  {
+    slug: "amex-business-gold",
     name: "Tới 90,000 điểm Membership Rewards®",
     headline: 90000,
     currency: "amex-mr",
     // Offer nâng quay lại LẦN BA: thấy 22/10/2026 trên đúng đường Apply của
     // site (Finly → CJ → amex.ca ?CPID=), chỉ MỘT ngày sau khi về mức thường
     // 21/10. Cùng mốc chi với các bản nâng trước. Amex® không ghi ngày kết
-    // thúc. Bản đang mở đứng trước các bản đã đóng.
+    // thúc.
     startDate: "2026-10-22",
     verifiedAt: "2026-10-22",
     recordedAt: "2026-10-22",
+    // 05/11/2026 chỉ còn mức thường (xem bản trên); đóng ở ngày cuối mình còn
+    // tin nó, không sửa `endDate`.
+    recordedTo: "2026-11-04",
     components: [
       { type: "spend_threshold", points: 60000, spend: 7500, windowDays: 90 },
       { type: "spend_threshold", points: 30000, spend: 30000, windowDays: 365 },

@@ -4467,6 +4467,13 @@ hồ sơ nhận + duyệt 16/06–18/11/2026. Job chạy với `expiresAt` 04/11
 `expiresAt` thành `2026-11-18T23:59-05:00` và hai câu "promo đến 4/11/2026" (keyBenefitsVi[0]) / "chỉ chạy đến ngày 4
 tháng 11, 2026" (editorsTakeVi) thành 18/11. Ba audit kia sạch.
 
+Lượt cron 08:00 UTC nổ trễ lúc 15:54Z (sau lượt kiểm trên) và LẦN ĐẦU dùng key thật: `rewrite failed: 400 … "Your credit
+balance is too low to access the Anthropic API"` ở cả 5 lượt curl — key đúng, tài khoản Anthropic hết credit. Job làm
+đúng thiết kế cho lỗi retryable: giữ `expiresAt`, không đụng `rebateVi`/chữ, nhưng TẮT `elevatedBonus` (publish 5 lần)
+— tức đã gỡ WestJet khỏi tab elevated trong khi RBC® còn chạy offer. Lượt kiểm toàn diện tối 05/11 (tác giả duyệt) sửa
+Contentful: `expiresAt` → `2026-11-18T23:59-05:00`, bật lại `elevatedBonus`, hai câu 4/11 → 18/11. Hạn kế tiếp cần
+rewrite là chính WestJet 18/11 — nạp credit Anthropic TRƯỚC 19/11, không thì lượt 19/11 lặp lại y hệt hôm nay.
+
 **Codex vòng 3 nêu, mình bác:**
 - Cửa `rewrite-offer.ts` so nhãn bằng chuỗi nên "Lên đến 70,000…" lọt khi nhãn cũ là "70,000…". So bằng số thì chặn
   oan đúng ca BMO® này: ngân hàng giữ nguyên 70,000 sau hạn là chuyện có thật.
@@ -4615,3 +4622,39 @@ BẢN VÁ HỎNG — xử lý dưới).
 **Chờ tác giả:** WestJet RBC® hết hạn 04/11 — lượt `expire-offers` 05/11 sẽ đỏ có chủ ý (server thiếu
 `ANTHROPIC_API_KEY`, mục 31/10). MomentumPLUS 4.65% (mục 24/10) vẫn chưa sửa. Ba thẻ RBC® Avion® hạn 25/11 (link không
 phải `/rebates/`) — còn 21 ngày.
+
+## Kiểm toàn diện 05/11/2026 (lượt tay, mọi trang + mọi offer) — đừng đề xuất lại
+
+Gate: lint, tsc, build, 12 audit (+ `audit:awards -- --links`), 10 test suite (`test:reco` 503 + 23 skip MySQL), `npm
+audit` = 0 (cả nhánh dev — `minimatch` đã hết), `audit:links` production (245 trang, không trang mồ côi), smoke test +
+`www` 308 + 5 header bảo mật. Quét puppeteer bản build cục bộ 259 URL × 320/375/1440px: không response lỗi ngoài 404
+cố ý (`/catch-the-points` là 404 từ trước — game chạy qua iframe), không tràn ngang, không ảnh hỏng/thiếu alt, mỗi
+trang 1 h1, JSON-LD parse được, không id trùng. Codex hai vòng: rà route theo hậu quả + diff 67974b1..HEAD + mô phỏng
+WestJet (SẠCH); bác bản vá (A–F ĐÚNG, CÒN CHẶN: KHÔNG).
+
+**Đã sửa (Contentful, tác giả duyệt trong phiên; seed cùng commit):**
+- **WestJet RBC®** — xem đoạn "Lượt cron 08:00 UTC nổ trễ lúc 15:54Z" ở mục 31/10: hạn → 18/11, bật lại elevated.
+- **Bốn thẻ Amex® hết offer nâng 22/10**: Platinum 130,000 → 100,000 (70,000/$10,000 3 tháng + 30,000 tháng 15–17),
+  Business Platinum 150,000 → 120,000 (80,000/$15,000 + 40,000 tháng 15–17; 5 lượt tải, không còn biến thể A/B 150,000
+  của 31/10), Business Gold 90,000 → 70,000 (50,000/$7,500 + 20,000/$30,000 năm đầu), Aeroplan® Business Reserve
+  120,000 → 90,000 (65,000/$10,500 + 25,000/$3,500 tháng 13). Nguồn: đường Apply của site (Finly `/go/creditCards/…` →
+  CJ → amex.ca `?CPID=`), trang công khai amex.ca, Finly API `welcomeBonus.text` — ba nguồn cùng số. Cách sửa theo tiền
+  lệ Aeroplan® Reserve 31/10: khôi phục nguyên văn snapshot cuối có `elevatedBonus=false` (Platinum 18/10, ba thẻ kia
+  21/10; snapshot và bản phục vụ chỉ khác đúng 5 trường offer), tắt elevated. Riêng Platinum đổi một câu editor's take:
+  "thấp hơn offer liền trước 70,000 điểm" (viết khi offer trước là 170,000) → "thấp hơn offer nâng liền trước (130,000
+  điểm) 30,000 điểm". Seed: bản mức thường từ 05/11 đứng trước, bản nâng 22/10 đóng `recordedTo: 2026-11-04`.
+
+**Đã kiểm, KHÔNG phải lỗi:**
+- Rà tay khớp nguồn: CIBC® Aventura® ×2 ("Digital exclusive", 60,000), CIBC® Aeroplan® ×3 (10,000/50,000/100,000), TD®
+  First Class 160,000 (dòng "Offer expires December 29, 2026" trên trang là offer mortgage, không phải thẻ), Amex®
+  Gold/Green/Cobalt®/Aeroplan®/Aeroplan® Reserve/Bonvoy® ×2/Hilton (hạn 11/01/2027), Capital One® ×2 (match cashback
+  năm đầu); các thẻ còn lại khớp Finly API. Phí Amex® Aeroplan® ×3 tăng từ 12/01/2027 đã có trong `annualFeeVi`.
+- Transfer bonus RBC® Avion® → Avios 30%: trang avionrewards.com vẫn "Nov 1 and Nov 30, 2026".
+- National Bank® newcomer: trang không còn bonus tiền mặt sau 03/11 — site tự ẩn bonus, đúng.
+- `sync-videos` đỏ 05/11 07:56 UTC ("channel: 404, uploads-playlist: 404", mục 27/09).
+- `audit:links` nhắc WestJet chỉ có một đường dẫn vào: hệ quả của việc job tắt elevated (thẻ rơi khỏi các khối
+  elevated); hết khi bật lại.
+
+**Chờ tác giả:** nạp credit tài khoản Anthropic (console → Plans & Billing) trước 19/11 — WestJet RBC® hết hạn 18/11 là
+lượt rewrite kế tiếp. Ba thẻ RBC® Avion® hạn 25/11 (link không phải `/rebates/`, job đỏ có chủ ý) — còn 20 ngày.
+MomentumPLUS 4.65% (mục 24/10) vẫn chưa sửa.
