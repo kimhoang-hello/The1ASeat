@@ -439,6 +439,27 @@ const OFFER_SEEDS: OfferSeed[] = [
     name: "Đến 70,000 điểm WestJet®",
     headline: 70000,
     currency: "westjet",
+    // RBC® gia hạn offer: điều khoản 1 trên rbcroyalbank.com (đọc 05/11/2026)
+    // ghi hồ sơ nhận + duyệt từ 16/06/2026 đến 18/11/2026, cấu trúc giữ nguyên
+    // (30,000 + 30,000 khi chi $5,000/3 tháng + 10,000 kỷ niệm năm). Bản đang
+    // mở đứng TRƯỚC các bản đã đóng.
+    startDate: "2026-06-16",
+    recordedFrom: "2026-11-05",
+    recordedAt: "2026-11-05",
+    verifiedAt: "2026-11-05",
+    endDate: "2026-11-18",
+    rebate: 140,
+    components: [
+      { type: "first_purchase", points: 30000 },
+      { type: "spend_threshold", points: 30000, spend: 5000, windowDays: 90 },
+      { type: "anniversary", points: 10000, windowDays: 365 },
+    ],
+  },
+  {
+    slug: "westjet-rbc-world-elite-mastercard",
+    name: "Đến 70,000 điểm WestJet®",
+    headline: 70000,
+    currency: "westjet",
     // Rebate FinlyWealth lên lại $50 → $140 (job check-rebates ghi nhận
     // 02/11/2026 21:29 giờ Toronto, Affiliate API xác nhận 03/11). Bản ghi mới
     // như hai bản dưới, offer giữ nguyên.

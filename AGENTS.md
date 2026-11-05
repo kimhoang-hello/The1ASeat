@@ -4458,6 +4458,15 @@ footnote) → `expiresAt` 31/10/2027, bỏ câu "elevated" khỏi headline. Mome
 02/11/2026–30/04/2027 → tắt `elevatedBonus`, giữ hạn offer thường. Gold Amex®, Passport™, Scene+™ Student do phiên
 "[Web] Kiểm offer thẻ Scene+ Scotiabank" làm cùng ngày. WestJet RBC® (hạn 04/11) vẫn chờ key hoặc sửa tay.
 
+Kiểm 05/11 (task `ghe-1a-kiem-expire-offers-0511`, 15:20 UTC): key CHƯA được thử. Lượt duy nhất ngày 05/11 (UTC) là
+lượt cron 20:00 UTC của 04/11 nổ trễ lúc 00:37Z — trước hạn WestJet (04:59Z) — trả `checked: 4`, `bonusRewritten: []`,
+`errors: []`; lượt 08:00 UTC chưa nổ, nên không chạy tay (luật task). Và may là vậy: điều khoản 1 trên
+rbcroyalbank.com nay ghi RBC® **gia hạn** offer 70,000 (30,000 + 30,000 khi chi $5,000/3 tháng + 10,000 kỷ niệm năm),
+hồ sơ nhận + duyệt 16/06–18/11/2026. Job chạy với `expiresAt` 04/11 sẽ hạ nhầm thẻ. Seed thêm bản 05/11 → 18/11
+(Codex: không chặn); `audit:reco-data` đỏ "endDate seed 2026-11-18, Contentful nói 2026-11-04" tới khi user sửa
+`expiresAt` thành `2026-11-18T23:59-05:00` và hai câu "promo đến 4/11/2026" (keyBenefitsVi[0]) / "chỉ chạy đến ngày 4
+tháng 11, 2026" (editorsTakeVi) thành 18/11. Ba audit kia sạch.
+
 **Codex vòng 3 nêu, mình bác:**
 - Cửa `rewrite-offer.ts` so nhãn bằng chuỗi nên "Lên đến 70,000…" lọt khi nhãn cũ là "70,000…". So bằng số thì chặn
   oan đúng ca BMO® này: ngân hàng giữ nguyên 70,000 sau hạn là chuyện có thật.
