@@ -16,7 +16,9 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { isReferralUrl } from "@/lib/affiliate-links";
 import { creditCardJsonLd, creditCardMetaDescription, creditCardMetaTitle } from "@/lib/credit-card-schema";
 import { US_CARDS_PUBLISHED } from "@/lib/feature-flags";
-import { formatDate } from "@/lib/format-date";
+import { formatDate, todayInSiteZone } from "@/lib/format-date";
+import { liveBonusViews } from "@/lib/transfer-bonus-view";
+import { getUsTransferBonuses } from "@/lib/us-transfer-bonuses-data";
 import {
   US_CARDS_BASE,
   getUsCreditCards,
@@ -111,6 +113,13 @@ export default async function UsCreditCardDetailPage({
   // thẻ Canada hệ `amex-mr`/`avion` trỏ sang bảng Canada (`pointsToolFor`). Thẻ
   // Bonvoy®, Hilton®, Atmos™… không có cột nên không có link, thà thiếu còn hơn sai.
   const transferIssuer = usTransferIssuerForCurrency(card.us.rewardsCurrency);
+  // Transfer bonus đang chạy của chính hệ điểm này — người đang xem một thẻ
+  // Ultimate Rewards® muốn biết điểm của nó lúc này chuyển đi đâu được lời hơn.
+  const issuerBonuses = transferIssuer
+    ? liveBonusViews(getUsTransferBonuses(), todayInSiteZone()).filter(
+        (bonus) => bonus.partner?.issuer === transferIssuer.id,
+      )
+    : [];
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -265,6 +274,15 @@ export default async function UsCreditCardDetailPage({
                   label={us("transferLabel")}
                   description={us("transferDescription", { count: partnerCount(transferIssuer.id) })}
                 />
+                {issuerBonuses.length > 0 && (
+                  <StepLink
+                    href="/transfer-bonuses#my"
+                    label={us("bonusesLabel", { currency: card.us.rewardsCurrency })}
+                    description={issuerBonuses
+                      .map((bonus) => `${bonus.toProgram} +${bonus.bonusPercent}%`)
+                      .join(" · ")}
+                  />
+                )}
               </NextSteps>
             )}
             {sameCurrency.length > 0 && (

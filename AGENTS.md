@@ -4704,3 +4704,36 @@ Muốn thẻ mới tự khôi phục được: publish bản offer thường TR�
 
 Cùng lượt: xoá `src/lib/rewrite-offer.ts`, gỡ `@anthropic-ai/sdk`, bỏ Anthropic khỏi trang Privacy (`LEGAL_UPDATED`
 05/11/2026), sửa `.env.example`, `DEPLOY.md`, `CONTENTFUL.md`. `ANTHROPIC_API_KEY` trên hPanel giờ vô dụng — xoá được.
+
+## Transfer bonus Mỹ + tách Canada / Mỹ (06/11/2026) — đừng đề xuất lại
+
+Tác giả: mở rộng `/transfer-bonuses` sang Mỹ, phân biệt rõ hai nước; nguồn bonus Mỹ là
+dailydrop.com/transfer-partners-cheat-sheet#current-offers, job tự kiểm + cập nhật mỗi tuần.
+
+- **Bonus Mỹ nằm trong repo (`data/us-transfer-bonuses.json`), không ở Contentful.** Entry
+  `transferBonus` không có trường nước, "American Express Membership Rewards" là tên của cả hai
+  hệ, và sửa content model bị chặn ở tầng quyền (CMA schema). Contentful = Canada, mặc định
+  `region: "ca"` (gắn lại ngoài `unstable_cache` trong `getTransferBonuses`).
+- **Job `sync-us-transfer-bonuses.yml`** (thứ Hai 12:17 UTC + `workflow_dispatch`): `fetch` trần
+  đọc được HTML Webflow (đo 06/11: 11 hàng, khớp browser). `parseDailyDropBonuses` chỉ đọc trong
+  `section#current-offers` — bảng partner phía trên dùng CHUNG class `transfer-bonus-item` (84 hàng).
+  Lệch hình dạng/rỗng → ném, không ghi gì. Exit 2 = đã ghi nhưng có tên chương trình chưa khớp →
+  commit rồi đỏ; thêm vào `PARTNER_ALIASES`. `checkedOn` đổi mỗi lượt nên job commit mỗi tuần (hiện
+  "lần kiểm gần nhất" trên trang) — có chủ ý.
+- **Luật biên tập ở `us-transfer-bonuses.ts`, không ở job:** chỉ giữ sáu hệ của bảng Mỹ (Rove Miles
+  bị bỏ — bảng của chính Daily Drop cũng không có cột đó). Tên khớp hàng bảng Mỹ khi MỌI từ của tên
+  Daily Drop nằm trong đúng MỘT hàng; mơ hồ thì không khớp (hiện chữ thô, không mượn nhầm tỷ lệ).
+- **Hàng bonus Mỹ không phải link:** Daily Drop không có trang chi tiết ("Read more" ẩn), cổng
+  Chase® không đăng nhập thì về trang chủ. Nguồn + ngày kiểm ghi một lần ở đầu mục Mỹ.
+- **Tỷ lệ sau bonus** (`describeBonus`): nhân trên tỷ lệ thường của đúng ô bảng cùng nước (Canada
+  khớp tên `toProgram` với `TRANSFER_PARTNERS`; Amex® CA → Bonvoy® 1,000 : 1,200 nên +30% = 1,560).
+  Cùng dữ liệu cho nhãn xanh "+X% tới …" trong ô `/transfer-partners` và link ở trang thẻ Mỹ.
+- **Trang chủ: hai cột Canada / Mỹ, mỗi cột tối đa 3** — trộn một danh sách thì 3 ô sắp-hết-trước
+  toàn bonus Mỹ (10 so với 1). Hàng `compact` xếp hai dòng ở mọi khổ.
+- **Chỗ chỉ được tính bonus Canada giữ nguyên `getTransferBonuses()`**: nút đi tiếp của bài deal
+  (trỏ `#canada`), kết quả Gợi ý thẻ (trỏ `#canada`), `audit:health`.
+- `/transfer-bonuses` vẫn gọi `getTransferBonuses()` (không `…Within`): bonus Canada là nội dung
+  chính, lỗi thì để Next giữ bản cũ thay vì cache 60 giây một mục rỗng giả.
+- Cảnh báo `leg` của job 06/11: Capital One® → Copa có bonus nhưng bảng Mỹ chưa có Copa — chưa đối
+  chiếu trang chính chủ, bảng chưa sửa.
+

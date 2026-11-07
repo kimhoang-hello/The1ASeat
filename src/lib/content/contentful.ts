@@ -518,6 +518,8 @@ function toBonus(entry: Entry<BonusSkeleton, undefined>): TransferBonus {
   const f = entry.fields;
   return {
     slug: f.slug,
+    // Contentful chỉ giữ bonus Canada — bonus Mỹ nằm trong repo (`us-transfer-bonuses.ts`).
+    region: "ca",
     fromProgram: f.fromProgram,
     toProgram: f.toProgram,
     bonusPercent: f.bonusPercent,

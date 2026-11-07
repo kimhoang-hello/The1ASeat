@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { t } from "@/lib/t";
 import { creditCardsPath } from "@/lib/card-points-programs";
+import { formatDate } from "@/lib/format-date";
+import { cellKey, type BonusView } from "@/lib/transfer-bonus-view";
 import { TRANSFER_PARTNERS, type TransferPartnerRow } from "@/lib/transfer-partners";
 import {
   GroupHeaderRow,
@@ -80,10 +82,12 @@ function RowGroup({
   title,
   rows,
   quotable,
+  bonuses,
 }: {
   title: string;
   rows: TransferPartnerRow[];
   quotable: Set<string>;
+  bonuses: Map<string, BonusView>;
 }) {
   return (
     <tbody>
@@ -98,6 +102,7 @@ function RowGroup({
           />
           {CANADA_ISSUER_COLUMNS.map((column) => {
             const leg = row[column.legKey];
+            const bonus = leg ? bonuses.get(cellKey(column.legKey, row.program)) : undefined;
             return (
               <RatioCell
                 key={column.programId}
@@ -106,6 +111,13 @@ function RowGroup({
                   ...(leg?.note ? [{ text: leg.note }] : []),
                   ...(leg?.time ? [{ text: leg.time, muted: true }] : []),
                 ]}
+                bonus={
+                  bonus && {
+                    percent: bonus.bonusPercent,
+                    until: formatDate(bonus.expiresAt),
+                    href: "/transfer-bonuses#canada",
+                  }
+                }
               />
             );
           })}
@@ -124,9 +136,12 @@ function RowGroup({
 export function CanadaTransferTable({
   linkablePrograms,
   quotable,
+  bonuses,
 }: {
   linkablePrograms: Set<string>;
   quotable: Set<string>;
+  /** Transfer bonus Canada đang chạy theo ô (`bonusesByCell`). */
+  bonuses: Map<string, BonusView>;
 }) {
   const airlines = TRANSFER_PARTNERS.filter((row) => row.kind === "airline");
   const hotels = TRANSFER_PARTNERS.filter((row) => row.kind === "hotel");
@@ -156,8 +171,8 @@ export function CanadaTransferTable({
             ))}
           </tr>
         </thead>
-        <RowGroup title={tp("groupAirlines", { count: airlines.length })} rows={airlines} quotable={quotable} />
-        <RowGroup title={tp("groupHotels", { count: hotels.length })} rows={hotels} quotable={quotable} />
+        <RowGroup title={tp("groupAirlines", { count: airlines.length })} rows={airlines} quotable={quotable} bonuses={bonuses} />
+        <RowGroup title={tp("groupHotels", { count: hotels.length })} rows={hotels} quotable={quotable} bonuses={bonuses} />
       </table>
     </div>
   );

@@ -67,12 +67,29 @@ export interface CreditCardOffer {
 
 export interface TransferBonus {
   slug: string;
+  /**
+   * Nước phát hành của hệ điểm nguồn. Điểm Amex® Canada và Amex® Mỹ là hai hệ
+   * riêng, cùng một cái tên — bonus của bên này không dùng được cho bên kia.
+   * `ca`: entry `transferBonus` trong Contentful. `us`: Daily Drop, qua
+   * `us-transfer-bonuses.ts`.
+   */
+  region: "ca" | "us";
   fromProgram: string;
   toProgram: string;
   bonusPercent: number;
   expiresAt: string;
-  url: string;
+  /** Trang điều khoản chính chủ. Bonus Mỹ không có — nguồn chỉ là bảng tổng của Daily Drop. */
+  url?: string;
   note?: string;
+  /**
+   * Ô của bảng Transfer Partners cùng nước mà bonus này rơi vào: cột hệ điểm
+   * (`chase`, `capital-one`…) và tên các hàng chương trình, để lấy logo, tỷ lệ
+   * thường và gắn nhãn vào ô. Nhiều hàng khi một đợt áp cho cả nhóm (Avios®:
+   * British Airways®, Iberia®, Aer Lingus®); rỗng khi chương trình nhận chưa có
+   * hàng trong bảng. Cả khối vắng (bonus Canada): tự khớp theo tên lúc hiển
+   * thị (`describeBonus`).
+   */
+  partner?: { issuer: string; programs: string[] };
 }
 
 export interface AuthorProfile {

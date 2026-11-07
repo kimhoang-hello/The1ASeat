@@ -1,0 +1,80 @@
+name: Đồng bộ transfer bonus Mỹ từ Daily Drop
+
+# Đọc bảng "Current Transfer Bonuses" của Daily Drop
+# (dailydrop.com/transfer-partners-cheat-sheet#current-offers — nguồn tác giả
+# chọn 06/11/2026), ghi `data/us-transfer-bonuses.json` rồi commit thẳng lên
+# main. Hostinger tự deploy khi main có commit mới, nên mục "Mỹ" của
+# `/transfer-bonuses` có bonus mới trong vòng một lượt build.
+#
+# Cùng hình dạng với offer-history.yml: dữ liệu phải nằm trong repo — một route
+# đang chạy trên Hostinger không sửa được file nguồn.
+#
+# Bonus hết hạn giữa hai lượt chạy KHÔNG cần job này: trang lọc theo
+# `expiresAt` mỗi lần dựng lại (ISR 60 giây). Job chỉ lo bonus MỚI và bonus
+# đổi số/đổi hạn.
+#
+# Đỏ khi: Daily Drop không đọc được hoặc đổi cấu trúc (không ghi gì), hoặc có
+# chương trình nhận site chưa hiểu (đã ghi, bonus hiện bằng chữ thô — thêm vào
+# `PARTNER_ALIASES` trong `src/lib/us-transfer-bonuses.ts`). Tóm tắt thay đổi
+# nằm ở trang Summary của lượt chạy.
+on:
+  schedule:
+    # Thứ Hai 12:17 UTC (07:17 Toronto mùa đông). Cron GitHub hay nổ trễ vài
+    # tiếng — không sao với nhịp mỗi tuần.
+    - cron: "17 12 * * 1"
+  workflow_dispatch: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      # Mặc định GITHUB_TOKEN chỉ đọc; job này phải đẩy commit lên main.
+      contents: write
+    steps:
+      # Luôn main, kể cả khi bấm Run workflow trên nhánh khác: bước cuối đẩy
+      # `HEAD:main`, nên checkout nhánh thử là đưa luôn code chưa duyệt của nhánh
+      # đó lên production (Codex 06/11/2026).
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Đọc Daily Drop, ghi data/us-transfer-bonuses.json
+        id: sync
+        # Mã 2 = đã ghi nhưng có tên chưa hiểu: vẫn commit, rồi mới đỏ ở bước cuối.
+        run: |
+          set +e
+          npm run sync:us-transfer-bonuses
+          code=$?
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          if [ "$code" -ne 0 ] && [ "$code" -ne 2 ]; then exit "$code"; fi
+
+      - name: Commit nếu file đổi
+        run: |
+          if git diff --quiet -- data/us-transfer-bonuses.json; then
+            echo "Không có gì đổi."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/us-transfer-bonuses.json
+          git commit -m "Transfer bonus Mỹ: đồng bộ từ Daily Drop
+
+          Tự động bởi .github/workflows/sync-us-transfer-bonuses.yml."
+          # Rebase phòng khi có commit khác vào main trong lúc job chạy —
+          # không bao giờ force-push đè lên việc của người khác.
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      - name: Đỏ nếu có chương trình chưa khớp
+        if: steps.sync.outputs.code == '2'
+        run: |
+          echo "::error::Có chương trình nhận chưa khớp bảng Mỹ — xem cảnh báo ở bước sync, thêm vào PARTNER_ALIASES."
+          exit 1

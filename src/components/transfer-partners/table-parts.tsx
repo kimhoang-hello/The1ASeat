@@ -68,9 +68,12 @@ export function ProgramColumnHead() {
 export function RatioCell({
   ratio,
   lines = [],
+  bonus,
 }: {
   ratio: string | null;
   lines?: { text: string; muted?: boolean }[];
+  /** Transfer bonus đang chạy ở đúng ô này — nhãn xanh dẫn sang mục của nước đó ở `/transfer-bonuses`. */
+  bonus?: { percent: number; until: string; href: string };
 }) {
   if (!ratio) {
     return (
@@ -90,6 +93,14 @@ export function RatioCell({
             {line.text}
           </span>
         ))}
+        {bonus && (
+          <Link
+            href={bonus.href}
+            className="mt-1 whitespace-nowrap rounded-full bg-success-soft px-2 py-0.5 text-xs font-bold text-success hover:underline"
+          >
+            {tp("bonusChip", { percent: bonus.percent, date: bonus.until })}
+          </Link>
+        )}
       </div>
     </td>
   );

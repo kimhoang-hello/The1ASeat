@@ -177,9 +177,10 @@ for (const b of bonuses) {
 }
 
 // ---- 2. Sắp hết hạn ----------------------------------------------------
-// Không phải lỗi. Nhưng cả hai bonus cùng hết hạn một ngày là trang
+// Không phải lỗi. Nhưng cả hai bonus cùng hết hạn một ngày là mục Canada của
 // `/transfer-bonuses` rỗng vào sáng hôm sau, và biết trước một tuần thì còn
-// kịp tìm cái thay thế.
+// kịp tìm cái thay thế. (Bonus trong Contentful là bonus Canada; bonus Mỹ do
+// job `sync-us-transfer-bonuses` lo.)
 for (const c of cards) {
   if (soon(str(c, "expiresAt"))) notes.push(`thẻ "${str(c, "slug")}" hết hạn ${str(c, "expiresAt")?.slice(0, 10)}`);
 }
@@ -191,7 +192,7 @@ const liveBonuses = bonuses.filter((b) => !expired(str(b, "expiresAt")));
 const bonusesLeftAfterWeek = liveBonuses.filter((b) => !soon(str(b, "expiresAt"))).length;
 if (liveBonuses.length > 0 && bonusesLeftAfterWeek === 0) {
   notes.push(
-    `CẢ ${liveBonuses.length} transfer bonus đều hết hạn trong 7 ngày — trang /transfer-bonuses và khối trang chủ sẽ rỗng`,
+    `CẢ ${liveBonuses.length} transfer bonus đều hết hạn trong 7 ngày — mục Canada của /transfer-bonuses và của khối trang chủ sẽ rỗng`,
   );
 }
 

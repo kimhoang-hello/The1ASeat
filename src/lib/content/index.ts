@@ -142,8 +142,19 @@ export async function getCreditCardOfferBySlug(slug: string): Promise<CreditCard
   return offers.find((offer) => offer.slug === slug);
 }
 
+/**
+ * Transfer bonus CANADA (Contentful). Bonus Mỹ: `getUsTransferBonuses()` trong
+ * `us-transfer-bonuses-data.ts` — hai nguồn tách riêng có chủ ý, vì vài chỗ
+ * (nút "đi tiếp" của bài deal Canada) chỉ được tính bonus Canada.
+ */
 export async function getTransferBonuses(): Promise<TransferBonus[]> {
-  if (isContentfulConfigured) return getCachedTransferBonuses();
+  if (isContentfulConfigured) {
+    // Gắn lại `region` NGOÀI cache: bản cache dựng trước 06/11/2026 không có
+    // trường này, và trang lọc theo nó — thiếu là bonus Canada biến mất tới
+    // lúc cache hết hạn.
+    const bonuses = await getCachedTransferBonuses();
+    return bonuses.map((bonus) => ({ ...bonus, region: "ca" }));
+  }
   return getSampleTransferBonuses();
 }
 

@@ -95,6 +95,17 @@ Mẹo viết:
 | url          | Short text          |
 | noteVi       | Long text, optional — shown under the two program names, e.g. a "must register first" caveat |
 
+> **Chỉ nhập transfer bonus CANADA ở đây** (Amex® Membership Rewards® bản
+> Canada, RBC® Avion®…). Mọi entry `transferBonus` đều hiện trong mục **Canada**
+> của `/transfer-bonuses`. Bonus của điểm thẻ **Mỹ** (Chase®, Amex® Mỹ, Capital
+> One®, Citi®, Bilt, Wells Fargo®) KHÔNG nhập vào Contentful: một job GitHub
+> đọc bảng của Daily Drop mỗi thứ Hai và tự cập nhật mục **Mỹ**. Muốn chạy ngay: GitHub → Actions → *Đồng bộ transfer bonus Mỹ
+> từ Daily Drop* → **Run workflow**.
+>
+> `toProgram` viết đúng tên hàng trong bảng `/transfer-partners` (ví dụ
+> `British Airways® Club`, `Marriott Bonvoy®`) thì trang tự thêm logo, dòng
+> "Chuyển 1,000 điểm, nhận …" và nhãn xanh trong ô của bảng.
+
 ## `author`
 
 | Field ID | Type        |

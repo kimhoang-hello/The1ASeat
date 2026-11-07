@@ -196,7 +196,7 @@ function PrimaryCard({
           </li>
           <li className="relative pointer-coarse:py-2">
             <Link
-              href="/transfer-bonuses"
+              href="/transfer-bonuses#canada"
               className="font-semibold text-primary underline underline-offset-4 pointer-coarse:before:absolute pointer-coarse:before:inset-0 pointer-coarse:before:content-['']"
             >
               Theo dõi transfer bonus

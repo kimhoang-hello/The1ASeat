@@ -20,8 +20,8 @@ const posts_t = t("posts");
  */
 const CTA = (hasLiveTransferBonus: boolean): Record<OfferCta, { href: string; labelKey: string }> => ({
   transferBonuses: hasLiveTransferBonus
-    ? { href: "/transfer-bonuses", labelKey: "offerCtaTransferBonuses" }
-    : { href: "/transfer-partners", labelKey: "offerCtaTransferPartners" },
+    ? { href: "/transfer-bonuses#canada", labelKey: "offerCtaTransferBonuses" }
+    : { href: "/transfer-partners#canada", labelKey: "offerCtaTransferPartners" },
   creditCards: { href: "/credit-cards?type=noi-bat", labelKey: "offerCtaCreditCards" },
   bankAccounts: { href: "/bank-accounts", labelKey: "offerCtaBankAccounts" },
 });

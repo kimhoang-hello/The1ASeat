@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight } from "@phosphor-icons/react/ssr";
 import { getTransferBonuses } from "@/lib/content";
-import { EDITORIAL_REL, relForUrl } from "@/lib/affiliate-links";
-import { formatDate, hasExpired } from "@/lib/format-date";
+import { EDITORIAL_REL } from "@/lib/affiliate-links";
+import { formatDate, todayInSiteZone } from "@/lib/format-date";
+import { liveBonusViews, type BonusView } from "@/lib/transfer-bonus-view";
+import { US_BONUS_CHECKED_ON, US_BONUS_SOURCE, getUsTransferBonuses } from "@/lib/us-transfer-bonuses-data";
 import { PageHeader } from "@/components/layout/page-header";
 import { NextSteps, StepLink } from "@/components/ui/next-steps";
+import { RegionHeading, RegionJump } from "@/components/ui/region-nav";
+import { BonusList } from "@/components/transfer-bonuses/bonus-list";
 import { t } from "@/lib/t";
 import { pageMetadata } from "@/lib/seo";
 
-const bonuses_t = t("bonuses");
+const tb = t("bonuses");
 const next = t("nextSteps");
 const seo = t("seo");
 
@@ -19,79 +22,98 @@ export const metadata: Metadata = pageMetadata({
   path: "/transfer-bonuses",
 });
 
-// Content comes from Contentful; without this the page is fully static and
-// only picks up new Contentful publishes on the next code deploy.
+// Bonus Canada đến từ Contentful; không có dòng này trang tĩnh hoàn toàn và chỉ
+// thấy bonus mới ở lần deploy kế tiếp. Bonus Mỹ nằm trong repo nhưng cũng cần
+// nó: bonus hết hạn rời trang đúng ngày mà không phải đợi deploy.
 export const revalidate = 60;
 
-export default async function TransferBonusesPage() {
-  const published = await getTransferBonuses();
+function jumpDescription(bonuses: BonusView[]): string {
+  if (bonuses.length === 0) return tb("jumpEmpty");
+  return tb("jumpCount", { count: bonuses.length, date: formatDate(bonuses[0].expiresAt) });
+}
 
-  // Lưới an toàn cho job `expire-offers`: nó gỡ bonus hết hạn mỗi ngày một
-  // lần, nên giữa hai lần chạy — hoặc khi nó hỏng — bonus đã chết vẫn nằm
-  // trong Contentful. Danh sách sắp theo `expiresAt` tăng dần, nên cái chết
-  // trước lại đứng ĐẦU trang: không lọc thì thứ người đọc thấy trước tiên là
-  // một offer bấm vào không dùng được nữa.
-  const bonuses = published.filter((bonus) => !hasExpired(bonus.expiresAt));
+/** Danh sách của một nước, hoặc trạng thái rỗng dẫn sang bảng tỷ lệ thường ngày của đúng nước đó. */
+function RegionBonuses({
+  bonuses,
+  emptyText,
+  emptyHref,
+}: {
+  bonuses: BonusView[];
+  emptyText: string;
+  emptyHref: string;
+}) {
+  if (bonuses.length > 0) return <BonusList bonuses={bonuses} />;
+  // Không còn hàng nào thì khung viền rỗng trông như trang hỏng; bảng tỷ lệ
+  // transfer thường ngày là câu trả lời gần nhất cho người vừa tới đây.
+  return (
+    <div className="rounded-2xl border border-border px-5 py-8 text-center">
+      <p className="text-sm text-muted-foreground">{emptyText}</p>
+      <Link href={emptyHref} className="mt-3 inline-block text-sm font-semibold text-primary hover:underline">
+        {tb("emptyCta")} &rarr;
+      </Link>
+    </div>
+  );
+}
+
+export default async function TransferBonusesPage() {
+  // KHÔNG dùng bản `…Within`: bonus Canada là nội dung chính của trang. Lỗi thì
+  // để lượt dựng lại thất bại và Next giữ bản cũ, thay vì cache 60 giây một mục
+  // Canada báo "chưa có bonus nào" trong khi có.
+  const caPublished = await getTransferBonuses();
+  const today = todayInSiteZone();
+
+  // Lọc bonus hết hạn ngay ở trang: job `expire-offers` chỉ gỡ bonus Canada mỗi
+  // ngày một lần, còn bonus Mỹ chỉ được đọc lại mỗi tuần. Danh sách sắp theo
+  // `expiresAt` tăng dần nên không lọc thì cái đã chết đứng ĐẦU mỗi mục.
+  const ca = liveBonusViews(caPublished, today);
+  const us = liveBonusViews(getUsTransferBonuses(), today);
 
   return (
     <>
-      <PageHeader title={bonuses_t("title")} />
+      <PageHeader title={tb("title")} subtitle={tb("subtitle")} />
 
-      <section className="px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-page overflow-hidden rounded-2xl border border-border">
-          {/* Hết bonus thì trước đây trang vẽ một khung viền rỗng không chữ
-              nào — người đọc không biết là chưa có bonus hay trang hỏng. */}
-          {bonuses.length === 0 && (
-            <div className="px-5 py-8 text-center">
-              <p className="text-sm text-muted-foreground">{bonuses_t("empty")}</p>
-              {/* Hết bonus là lúc trang này cụt nhất: không còn một hàng nào,
-                  mà mọi hàng vốn cũng chỉ dẫn ra ngoài site. Bảng tỷ lệ transfer
-                  thường ngày là câu trả lời gần nhất cho người vừa tới đây. */}
-              <Link
-                href="/transfer-partners"
-                className="mt-3 inline-block text-sm font-semibold text-primary hover:underline"
-              >
-                {bonuses_t("emptyCta")} &rarr;
-              </Link>
-            </div>
-          )}
+      <div className="px-4 py-12 sm:px-6 lg:px-8">
+        <nav aria-label={tb("regionNavLabel")} className="mx-auto max-w-page">
+          <ul className="grid gap-3 sm:grid-cols-2">
+            <RegionJump href="#canada" country="ca" title={tb("regionCa")} description={jumpDescription(ca)} />
+            <RegionJump href="#my" country="us" title={tb("regionUs")} description={jumpDescription(us)} />
+          </ul>
+        </nav>
 
-          {bonuses.map((bonus, i) => (
+        <section id="canada" aria-labelledby="canada-title" className="mx-auto mt-12 max-w-page scroll-mt-chrome">
+          <RegionHeading id="canada-title" country="ca">
+            {tb("regionCa")}
+          </RegionHeading>
+          <p className="mb-6 mt-2 max-w-2xl text-muted-foreground">{tb("canadaIntro")}</p>
+          <RegionBonuses bonuses={ca} emptyText={tb("canadaEmpty")} emptyHref="/transfer-partners#canada" />
+        </section>
+
+        <section id="my" aria-labelledby="us-title" className="mx-auto mt-16 max-w-page scroll-mt-chrome">
+          <RegionHeading id="us-title" country="us">
+            {tb("regionUs")}
+          </RegionHeading>
+          <p className="mt-2 max-w-2xl text-muted-foreground">{tb("usIntro")}</p>
+          {/* Bonus Mỹ không có trang điều khoản riêng để dẫn tới như bonus
+              Canada — nói rõ một lần ở đây số liệu lấy từ đâu và cũ tới đâu. */}
+          <p className="mb-6 mt-2 max-w-2xl text-sm text-muted-foreground">
+            {tb("usSourceLabel")}{" "}
             <a
-              key={bonus.slug}
-              href={bonus.url}
+              href={US_BONUS_SOURCE}
               target="_blank"
-              rel={relForUrl(bonus.url) ?? EDITORIAL_REL}
-              className={`flex cursor-pointer flex-col gap-2 px-5 py-4 transition-colors hover:bg-secondary sm:flex-row sm:items-center sm:justify-between ${
-                i !== 0 ? "border-t border-border" : ""
-              }`}
+              rel={EDITORIAL_REL}
+              className="font-medium text-primary underline underline-offset-4"
             >
-              <div className="flex flex-col gap-1">
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="font-semibold text-foreground">{bonus.fromProgram}</span>
-                  <ArrowRight size={14} className="text-muted-foreground" />
-                  <span className="font-semibold text-foreground">{bonus.toProgram}</span>
-                </div>
-                {bonus.note && <p className="text-xs text-muted-foreground">{bonus.note}</p>}
-              </div>
-              <div className="flex items-center gap-4 text-sm">
-                <span className="font-medium text-warning">
-                  {bonuses_t("expires")} {formatDate(bonus.expiresAt)}
-                </span>
-                <span className="rounded-full bg-success-soft px-2.5 py-1 text-xs font-bold text-success">
-                  +{bonus.bonusPercent}%
-                </span>
-              </div>
+              Daily Drop
             </a>
-          ))}
-        </div>
+            , {tb("usSourceNote", { date: formatDate(US_BONUS_CHECKED_ON) })}
+          </p>
+          <RegionBonuses bonuses={us} emptyText={tb("usEmpty")} emptyHref="/transfer-partners#my" />
+        </section>
 
-        {/* Mọi hàng trong bảng trên là link ra ngoài site — trước khối này trang
-            không có một đường nội bộ nào, nên người đọc hoặc rời site hoặc bấm
-            back. Ba đường dưới đây là ba câu hỏi thật sự đứng ngay sau một
-            transfer bonus: chuyển từ đâu sang đâu, có đáng chuyển không, và lấy
-            điểm để chuyển ở đâu. */}
-        <div className="mx-auto mt-10 max-w-page">
+        {/* Hàng Canada dẫn ra ngoài site, hàng Mỹ không dẫn đâu cả — ba đường
+            dưới đây là ba câu hỏi đứng ngay sau một transfer bonus: chuyển từ
+            đâu sang đâu, có đáng chuyển không, và lấy điểm để chuyển ở đâu. */}
+        <div className="mx-auto mt-16 max-w-page">
           <NextSteps title={next("title")}>
             <StepLink
               href="/transfer-partners"
@@ -103,14 +125,10 @@ export default async function TransferBonusesPage() {
               label={next("calculatorLabel")}
               description={next("calculatorDescription")}
             />
-            <StepLink
-              href="/credit-cards"
-              label={next("cardsLabel")}
-              description={next("cardsDescription")}
-            />
+            <StepLink href="/credit-cards" label={next("cardsLabel")} description={next("cardsDescription")} />
           </NextSteps>
         </div>
-      </section>
+      </div>
     </>
   );
 }

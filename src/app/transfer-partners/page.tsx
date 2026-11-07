@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { ArrowDown } from "@phosphor-icons/react/ssr";
 import { PageHeader } from "@/components/layout/page-header";
 import { NextSteps, StepLink } from "@/components/ui/next-steps";
-import { Flag } from "@/components/ui/flag";
+import { RegionHeading, RegionJump } from "@/components/ui/region-nav";
 import { UsTransferTable } from "@/components/transfer-partners/us-transfer-table";
 import {
   CANADA_ISSUER_COLUMNS,
@@ -10,7 +9,9 @@ import {
 } from "@/components/transfer-partners/canada-transfer-table";
 import { t } from "@/lib/t";
 import { pageMetadata } from "@/lib/seo";
-import { getCreditCardOffersWithin } from "@/lib/content";
+import { getCreditCardOffersWithin, getTransferBonusesWithin } from "@/lib/content";
+import { bonusesByCell, liveBonusViews } from "@/lib/transfer-bonus-view";
+import { getUsTransferBonuses } from "@/lib/us-transfer-bonuses-data";
 import { cardsInProgram, getCardPointsPrograms } from "@/lib/card-points-programs";
 import { PROGRAMS } from "@/lib/award-charts";
 import { TRANSFER_PARTNERS } from "@/lib/transfer-partners";
@@ -50,65 +51,18 @@ export const metadata: Metadata = pageMetadata({
 });
 export const revalidate = 60;
 
-/**
- * Hai ô chọn đầu trang — link neo xuống bảng Canada hoặc bảng Mỹ, không phải
- * tab. Cả hai bảng nằm sẵn trong HTML: không cần JS, Google đọc được hết, nút
- * Back đưa người đọc về đây. Cùng lý do với bộ chọn của Refundable Hotel Trick.
- */
-function RegionJump({
-  href,
-  country,
-  title,
-  description,
-}: {
-  href: string;
-  country: "ca" | "us";
-  title: string;
-  description: string;
-}) {
-  return (
-    <li>
-      <a
-        href={href}
-        className="flex h-full items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary sm:p-5"
-      >
-        <span>
-          <span className="flex items-center gap-2 font-display text-lg font-bold text-foreground">
-            <Flag country={country} />
-            {title}
-          </span>
-          <span className="mt-1 block text-sm text-muted-foreground">{description}</span>
-        </span>
-        <ArrowDown size={18} weight="bold" className="shrink-0 text-primary" aria-hidden />
-      </a>
-    </li>
-  );
-}
-
-function RegionHeading({
-  id,
-  country,
-  children,
-}: {
-  id: string;
-  country: "ca" | "us";
-  children: React.ReactNode;
-}) {
-  return (
-    <h2 id={id} className="flex items-center gap-3 font-display text-2xl font-bold text-foreground">
-      <Flag country={country} />
-      {children}
-    </h2>
-  );
-}
-
 export default async function TransferPartnersPage() {
   // Hệ điểm nào thật sự có thẻ trên site — đọc từ chính danh sách mà bộ lọc sẽ
   // chạy trên đó, nên một link ở đây không bao giờ hứa một bộ lọc rỗng.
   // Bảng là dữ liệu tĩnh; danh sách thẻ chỉ nuôi các cột "thẻ tích hệ điểm
   // này". Contentful nấc (lỗi hay treo quá 8 giây) đúng lúc trang dựng lại thì rơi về `[]` + log — cột
   // thẻ biến mất, bảng vẫn hiện (như `/refundable-hotel-trick`).
-  const offers = await getCreditCardOffersWithin(8_000, "transfer-partners", "bỏ cột thẻ");
+  // Transfer bonus là dữ liệu PHỤ ở đây (nhãn xanh trong ô) nên đi bản `…Within`
+  // như danh sách thẻ: Contentful nấc thì bảng Canada mất nhãn, không mất bảng.
+  const [offers, caBonuses] = await Promise.all([
+    getCreditCardOffersWithin(8_000, "transfer-partners", "bỏ cột thẻ"),
+    getTransferBonusesWithin(8_000, "transfer-partners", "bỏ nhãn transfer bonus Canada"),
+  ]);
   const linkablePrograms = new Set(getCardPointsPrograms(offers).map((p) => p.id));
 
   // Cột nào không có thẻ nào thì biến mất hẳn thay vì hiện một tiêu đề trống —
@@ -121,6 +75,8 @@ export default async function TransferPartnersPage() {
   // Ngày Toronto một lần cho cả trang: ô có tỷ lệ đã công bố sẽ đổi (Bilt →
   // Hyatt từ 01/01/2027) tự lật đúng ngày, trang ISR làm mới mỗi phút.
   const today = todayInSiteZone();
+  const caBonusCells = bonusesByCell(liveBonusViews(caBonuses, today));
+  const usBonusCells = bonusesByCell(liveBonusViews(getUsTransferBonuses(), today));
 
   // Thẻ Mỹ tích từng hệ điểm của bảng Mỹ — cùng luật với `cardColumns`: cột nào
   // site chưa có thẻ (Wells Fargo®) thì không có khối, thay vì một tiêu đề rỗng.
@@ -171,9 +127,14 @@ export default async function TransferPartnersPage() {
           {/* `relative`: không có nó các `sr-only` trong bảng thoát khỏi khung
               cuộn và kéo ngang được cả trang — xem `route-award-table.tsx`. */}
           <div className="sm:mt-6">
-            <CanadaTransferTable linkablePrograms={linkablePrograms} quotable={QUOTABLE_PROGRAMS} />
+            <CanadaTransferTable
+              linkablePrograms={linkablePrograms}
+              quotable={QUOTABLE_PROGRAMS}
+              bonuses={caBonusCells}
+            />
           </div>
           <ul className="mt-4 max-w-prose space-y-2 text-xs leading-relaxed text-muted-foreground">
+            {caBonusCells.size > 0 && <li>{tp("bonusChipNote")}</li>}
             <li>{tp("canadaTimeNote")}</li>
             <li>{tp("aeroplanNote")}</li>
           </ul>
@@ -233,10 +194,11 @@ export default async function TransferPartnersPage() {
             </p>
           </div>
           <div className="mx-auto max-w-6xl lg:mt-6">
-            <UsTransferTable today={today} quotable={QUOTABLE_PROGRAMS} />
+            <UsTransferTable today={today} quotable={QUOTABLE_PROGRAMS} bonuses={usBonusCells} />
           </div>
           <div className="mx-auto max-w-4xl">
             <ul className="mt-4 max-w-prose space-y-2 text-xs leading-relaxed text-muted-foreground">
+              {usBonusCells.size > 0 && <li>{tp("bonusChipNote")}</li>}
               <li>{tp("usTimeNote")}</li>
               <li>{tp("usChaseNote")}</li>
               <li>{tp("usCitiNote")}</li>

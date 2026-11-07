@@ -1,5 +1,6 @@
 import { t } from "@/lib/t";
 import { formatDate } from "@/lib/format-date";
+import { cellKey, type BonusView } from "@/lib/transfer-bonus-view";
 import {
   US_TRANSFER_AIRLINES,
   US_TRANSFER_HOTELS,
@@ -26,11 +27,13 @@ function RowGroup({
   rows,
   today,
   quotable,
+  bonuses,
 }: {
   title: string;
   rows: UsTransferPartnerRow[];
   today: string;
   quotable: Set<string>;
+  bonuses: Map<string, BonusView>;
 }) {
   return (
     <tbody>
@@ -62,7 +65,21 @@ function RowGroup({
                   ...(leg.time ? [{ text: leg.time, muted: true }] : []),
                 ]
               : [];
-            return <RatioCell key={issuer.id} ratio={leg?.ratio ?? null} lines={lines} />;
+            const bonus = bonuses.get(cellKey(issuer.id, row.program));
+            return (
+              <RatioCell
+                key={issuer.id}
+                ratio={leg?.ratio ?? null}
+                lines={lines}
+                bonus={
+                  bonus && {
+                    percent: bonus.bonusPercent,
+                    until: formatDate(bonus.expiresAt),
+                    href: "/transfer-bonuses#my",
+                  }
+                }
+              />
+            );
           })}
         </tr>
       ))}
@@ -76,7 +93,16 @@ function RowGroup({
  * `today` truyền từ trang (ngày Toronto) chứ không tự tính ở đây, để ô có
  * tỷ lệ sắp đổi (`change`) đổi đúng ngày theo cùng một đồng hồ với cả trang.
  */
-export function UsTransferTable({ today, quotable }: { today: string; quotable: Set<string> }) {
+export function UsTransferTable({
+  today,
+  quotable,
+  bonuses,
+}: {
+  today: string;
+  quotable: Set<string>;
+  /** Transfer bonus Mỹ đang chạy theo ô (`bonusesByCell`). */
+  bonuses: Map<string, BonusView>;
+}) {
   return (
     <div className={TABLE_FRAME}>
       <table className="w-full min-w-[58rem] border-collapse text-sm">
@@ -103,12 +129,14 @@ export function UsTransferTable({ today, quotable }: { today: string; quotable: 
           rows={US_TRANSFER_AIRLINES}
           today={today}
           quotable={quotable}
+          bonuses={bonuses}
         />
         <RowGroup
           title={tp("groupHotels", { count: US_TRANSFER_HOTELS.length })}
           rows={US_TRANSFER_HOTELS}
           today={today}
           quotable={quotable}
+          bonuses={bonuses}
         />
       </table>
     </div>

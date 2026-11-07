@@ -1,22 +1,80 @@
 import Link from "next/link";
-import { ArrowRight } from "@phosphor-icons/react/ssr";
 import { t as translate } from "@/lib/t";
 import { getTransferBonuses } from "@/lib/content";
-import { formatDate, hasExpired } from "@/lib/format-date";
-import { EDITORIAL_REL, relForUrl } from "@/lib/affiliate-links";
+import { todayInSiteZone } from "@/lib/format-date";
+import { liveBonusViews, type BonusView } from "@/lib/transfer-bonus-view";
+import { getUsTransferBonuses } from "@/lib/us-transfer-bonuses-data";
+import { Flag } from "@/components/ui/flag";
+import { BonusList } from "@/components/transfer-bonuses/bonus-list";
 
 const t = translate("bonuses");
 
-export async function TransferBonusesSection() {
-  const allBonuses = await getTransferBonuses();
+/** Mỗi nước tối đa ba bonus — đủ để thấy có gì đang chạy, phần còn lại ở `/transfer-bonuses`. */
+const PER_REGION = 3;
 
+/**
+ * Một cột của một nước. Hai nước đứng CẠNH NHAU chứ không trộn vào một danh
+ * sách: bonus Mỹ nhiều gấp mấy lần bonus Canada (06/11/2026: 10 so với 1), nên
+ * ba ô "sắp hết hạn nhất" của danh sách chung toàn là bonus Mỹ, và người đọc
+ * Canada — phần lớn độc giả — không thấy bonus của chính mình.
+ */
+function RegionColumn({
+  country,
+  bonuses,
+  anchor,
+  emptyText,
+}: {
+  country: "ca" | "us";
+  bonuses: BonusView[];
+  anchor: string;
+  emptyText: string;
+}) {
+  const region = country === "us" ? t("regionUs") : t("regionCa");
+  const hidden = bonuses.length - PER_REGION;
+
+  return (
+    <section aria-labelledby={`home-bonuses-${country}`}>
+      <h3
+        id={`home-bonuses-${country}`}
+        className="mb-3 flex items-center gap-2 font-display text-lg font-bold text-foreground"
+      >
+        <Flag country={country} />
+        {region}
+        {bonuses.length > 0 && (
+          <span className="text-sm font-normal text-muted-foreground">
+            · {t("regionCount", { count: bonuses.length })}
+          </span>
+        )}
+      </h3>
+      {bonuses.length > 0 ? (
+        <BonusList bonuses={bonuses.slice(0, PER_REGION)} compact />
+      ) : (
+        <p className="rounded-2xl border border-border px-5 py-6 text-center text-sm text-muted-foreground">
+          {emptyText}
+        </p>
+      )}
+      {hidden > 0 && (
+        <Link
+          href={`/transfer-bonuses#${anchor}`}
+          className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-primary hover:underline"
+        >
+          {t("moreInRegion", { count: bonuses.length, region })} &rarr;
+        </Link>
+      )}
+    </section>
+  );
+}
+
+export async function TransferBonusesSection() {
+  const today = todayInSiteZone();
   // Lọc TRƯỚC khi cắt ba cái đầu, cùng lý do với `/transfer-bonuses`: danh
   // sách sắp theo `expiresAt` tăng dần nên cái chết trước đứng đầu, tức là
-  // không lọc thì đúng ba ô trên trang chủ là ba offer sắp chết hoặc đã chết.
+  // không lọc thì đúng mấy ô trên trang chủ là offer sắp chết hoặc đã chết.
   // Job `expire-offers` chạy 08:00 UTC mỗi ngày, nên một bonus hết hạn lúc nửa
   // đêm Toronto còn nằm đây vài tiếng — và nằm mãi nếu job hỏng. `revalidate`
   // 60 giây không cứu được: lượt render mới vẫn dựng lại đúng cái HTML đó.
-  const bonuses = allBonuses.filter((bonus) => !hasExpired(bonus.expiresAt)).slice(0, 3);
+  const ca = liveBonusViews(await getTransferBonuses(), today);
+  const us = liveBonusViews(getUsTransferBonuses(), today);
 
   return (
     <section className="border-t border-border bg-background px-4 py-16 sm:px-6 lg:px-8">
@@ -35,40 +93,9 @@ export async function TransferBonusesSection() {
           </Link>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-border">
-          {/* Hết bonus thì khung viền rỗng không chữ nào trông như trang hỏng —
-              cùng lý do đã thêm dòng này cho `/transfer-bonuses`. */}
-          {bonuses.length === 0 && (
-            <p className="px-5 py-8 text-center text-sm text-muted-foreground">{t("empty")}</p>
-          )}
-          {bonuses.map((bonus, i) => (
-            <a
-              key={bonus.slug}
-              href={bonus.url}
-              target="_blank"
-              rel={relForUrl(bonus.url) ?? EDITORIAL_REL}
-              className={`flex cursor-pointer flex-col gap-2 px-5 py-5 transition-colors hover:bg-secondary sm:flex-row sm:items-center sm:justify-between ${
-                i !== 0 ? "border-t border-border" : ""
-              }`}
-            >
-              <div className="flex flex-col gap-1">
-                <div className="flex flex-wrap items-center gap-2 text-base">
-                  <span className="font-semibold text-foreground">{bonus.fromProgram}</span>
-                  <ArrowRight size={16} className="text-muted-foreground" />
-                  <span className="font-semibold text-foreground">{bonus.toProgram}</span>
-                </div>
-                {bonus.note && <p className="text-sm text-muted-foreground">{bonus.note}</p>}
-              </div>
-              <div className="flex items-center gap-4 text-base">
-                <span className="font-medium text-warning">
-                  {t("expires")} {formatDate(bonus.expiresAt)}
-                </span>
-                <span className="rounded-full bg-success-soft px-3 py-1 text-sm font-bold text-success">
-                  +{bonus.bonusPercent}%
-                </span>
-              </div>
-            </a>
-          ))}
+        <div className="grid gap-10 lg:grid-cols-2 lg:gap-8">
+          <RegionColumn country="ca" bonuses={ca} anchor="canada" emptyText={t("canadaEmpty")} />
+          <RegionColumn country="us" bonuses={us} anchor="my" emptyText={t("usEmpty")} />
         </div>
       </div>
     </section>

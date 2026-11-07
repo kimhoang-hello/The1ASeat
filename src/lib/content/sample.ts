@@ -25,7 +25,11 @@ export function getSampleCreditCardOffers(): CreditCardOffer[] {
 }
 
 export function getSampleTransferBonuses(): TransferBonus[] {
-  return transferBonusesData as TransferBonus[];
+  // Như Contentful: mọi bonus mẫu là bonus Canada.
+  return (transferBonusesData as Omit<TransferBonus, "region">[]).map((bonus) => ({
+    ...bonus,
+    region: "ca" as const,
+  }));
 }
 
 export function getSampleAuthor(): AuthorProfile {

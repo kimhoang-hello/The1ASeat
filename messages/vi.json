@@ -30,7 +30,7 @@
     "cardsAll": "Toàn bộ thẻ đang theo dõi",
     "awardCharts": "Tìm chuyến bay đổi bằng điểm",
     "calculator": "Tính giá trị điểm bạn đang có",
-    "transferBonuses": "Transfer bonus đang chạy",
+    "transferBonuses": "Transfer bonus đang chạy, Canada và Mỹ",
     "transferPartners": "Điểm của bạn chuyển được đi đâu",
     "refundableHotelTrick": "Cash out points và travel credit",
     "bankAccounts": "Tài khoản chi tiêu và tiết kiệm ở Canada",
@@ -193,12 +193,29 @@
   },
   "bonuses": {
     "title": "Transfer bonus đang diễn ra",
-    "empty": "Hiện chưa có transfer bonus nào đang chạy. Transfer bonus thường ra theo đợt, bạn quay lại sau nhé.",
+    "empty": "Hiện chưa có transfer bonus nào đang chạy. Bonus ra theo đợt, bạn quay lại sau nhé.",
     "viewAll": "Xem tất cả transfer bonus",
     "partner": "Đối tác",
     "expires": "Hết hạn",
     "browsing": "Đang xem {shown}/{total} offer",
-    "emptyCta": "Xem tỷ lệ transfer thường ngày"
+    "emptyCta": "Xem tỷ lệ transfer thường ngày",
+    "subtitle": "Điểm thẻ Canada và điểm thẻ Mỹ là hai hệ riêng, kể cả khi cùng tên American Express®: bonus của bên này không dùng được cho điểm bên kia.",
+    "regionNavLabel": "Chọn transfer bonus theo nước phát hành thẻ",
+    "regionCa": "Canada",
+    "regionUs": "Mỹ",
+    "jumpCount": "{count} bonus đang chạy · sớm nhất hết hạn {date}",
+    "jumpEmpty": "Chưa có bonus nào đang chạy",
+    "regionCount": "{count} đang chạy",
+    "canadaIntro": "Cho điểm của thẻ phát hành ở Canada: Amex® Membership Rewards® (bản Canada) và RBC® Avion®. Bấm vào từng bonus để đọc điều khoản trên trang chính chủ.",
+    "usIntro": "Cho điểm của thẻ phát hành ở Mỹ: Chase®, Amex®, Capital One®, Citi®, Bilt và Wells Fargo®.",
+    "usSourceLabel": "Nguồn:",
+    "usSourceNote": "tự cập nhật mỗi tuần, lần kiểm gần nhất {date}. Điểm đã chuyển không chuyển ngược lại được, nên xem lại bonus trong công cụ chuyển điểm của ngân hàng trước khi bấm.",
+    "canadaEmpty": "Hiện chưa có transfer bonus nào cho điểm thẻ Canada. Bonus ra theo đợt, bạn quay lại sau nhé.",
+    "usEmpty": "Hiện chưa có transfer bonus nào cho điểm thẻ Mỹ.",
+    "ratio": "Chuyển {from} điểm, nhận {boosted} (thường {base})",
+    "to": "sang",
+    "opensTerms": "(mở điều khoản chính chủ trong tab mới)",
+    "moreInRegion": "Xem cả {count} bonus {region}"
   },
   "calculator": {
     "title": "Points Calculator",
@@ -243,7 +260,9 @@
     "usTimeNote": "Thời gian chuyển là mức thường gặp, không phải cam kết của ngân hàng; ô không ghi thời gian là chưa đủ dữ liệu.",
     "usChaseNote": "Chase Ultimate Rewards®: chỉ Sapphire Preferred®, Sapphire Reserve® (cả bản cho doanh nghiệp) và Ink Business Preferred® chuyển được điểm. Thẻ như Ink Business Cash® phải gộp điểm sang một trong các thẻ đó trước.",
     "usCitiNote": "Citi ThankYou®: tỷ lệ trong bảng dành cho Citi Strata Premier® và Citi Strata Elite® (cùng Citi Prestige®, thẻ đã ngừng nhận đơn mới). Thẻ ThankYou® khác chỉ được 70% (1,000 điểm thành 700) và không chuyển được sang AAdvantage®.",
-    "usCardsTitle": "Thẻ Mỹ tích {program}"
+    "usCardsTitle": "Thẻ Mỹ tích {program}",
+    "bonusChip": "+{percent}% tới {date}",
+    "bonusChipNote": "Nhãn xanh trong ô: transfer bonus đang chạy, bấm để xem cả danh sách."
   },
   "author": {
     "title": "Xin chào, mình là {name}.",
@@ -309,7 +328,7 @@
     "calculatorTitle": "Points Calculator",
     "calculatorDescription": "Nhập số point/mile, giá vé tiền mặt và thuế phí để biết mỗi điểm của bạn đáng bao nhiêu cent, kèm mức tham chiếu theo từng chương trình điểm thưởng.",
     "transferBonusesTitle": "Transfer bonus đang diễn ra",
-    "transferBonusesDescription": "Danh sách transfer bonus còn hiệu lực sang các đối tác hàng không và khách sạn, kèm tỷ lệ thưởng và ngày hết hạn, cập nhật thường xuyên.",
+    "transferBonusesDescription": "Transfer bonus đang chạy cho điểm thẻ Canada (Amex®, RBC® Avion®) và điểm thẻ Mỹ (Chase®, Amex®, Capital One®, Citi®), kèm tỷ lệ sau bonus và ngày hết hạn.",
     "transferPartnersTitle": "Transfer Partners: tỷ lệ chuyển điểm thẻ Canada và Mỹ",
     "transferPartnersDescription": "Bảng tỷ lệ transfer điểm sang hãng bay và khách sạn: Amex® và RBC® Avion® ở Canada; Chase®, Amex®, Capital One®, Citi®, Bilt và Wells Fargo® ở Mỹ.",
     "aboutTitle": "Giới thiệu về Ghế 1A",
@@ -726,7 +745,8 @@
     "bandTitle": "Tìm thẻ tín dụng Mỹ?",
     "bandBody": "{count} thẻ Mỹ, mỗi thẻ kèm góc nhìn cho người Canada: ITIN, US address, phí ngoại tệ.",
     "bandCta": "Xem thẻ Mỹ",
-    "homeLink": "Thẻ Mỹ"
+    "homeLink": "Thẻ Mỹ",
+    "bonusesLabel": "Transfer bonus đang chạy cho {currency}"
   },
   "rht": {
     "title": "Refundable Hotel Trick",
