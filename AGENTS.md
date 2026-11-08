@@ -2230,6 +2230,27 @@ Lượt `sync-videos` đỏ 24/09 03:06 UTC lại là **YouTube 404 cho feed Ato
   string data" — in bằng chữ.
 - Regex bỏ `(x%)` mà viết `\([^)]*\)` sẽ xoá luôn `(direct)` / `(none)` / `(not set)`.
 
+## Đo đạc GA4 (08/11/2026) — đừng đề xuất lại
+
+- **Đỉnh Facebook có thể đến từ bài CŨ.** 02/11 Facebook 39 phiên, bài Points 101
+  (`datePublished` 11/08/2026) 29 phiên landing trong ngày. Kiểm `datePublished` trên
+  trang live trước khi viết "bài mới".
+- **Người dùng theo quốc gia/thành phố đọc bằng URL:** `r=user-demographics-detail&
+  collectionId=user`, `seldim` `["country"]` hoặc `["city"]` — chạy, ra active users
+  không cộng trùng (khác cách cộng theo trang).
+- **`seldim` `["date", <custom slot>]` KHÔNG chạy** (quay về Page title). Muốn
+  `apply_clicked` theo thẻ của MỘT ngày thì đặt `date00 = date01` = ngày đó.
+- **`javascript_tool` timeout 45s:** một lần gọi chỉ nên đổi hash ≤6 lần (chờ 6s mỗi lần).
+- **Cửa sổ GSC 5 ngày ổn định hơn 7 ngày:** 25–29/10 đọc 01/11 và 08/11 đều 11 / 313,
+  trong khi 7 ngày 25–31/10 bù từ 13 / 352 lên 14 / 384. So tuần dùng 5 ngày cùng thứ.
+- Dòng nguồn `(not set)` của tuần trước lại biến mất khi đọc lại (188 → 187).
+- **Số NGƯỜI của một phân rã `apply_clicked` không được cộng qua các dòng trang** (cùng
+  người bấm ở hai trang bị đếm hai lần). Bản 08/11 ghi Calgary 4 người, thật là 2 — và che
+  mất một người bấm 8 lần. Đọc ở `r=top-events` với `seldim` `["eventName", <dim>]` +
+  `dataFilters` `eventName=apply_clicked` (thêm điều kiện `city`… để soi một nhóm): cột
+  *Total users* là người duy nhất của nhóm. Chạy được với `city`, `date`,
+  `sessionSourceMedium`, `unifiedPagePathScreen`, `customDimensionsGroup2Slot01/02`.
+
 ## Luật welcome bonus theo cửa sổ thời gian (21/09/2026) — đừng đề xuất lại
 
 Chi tiết: `src/lib/recommendation/README.md`, mục "Luật welcome bonus theo cửa sổ
