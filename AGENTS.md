@@ -4772,8 +4772,10 @@ hiện, nhận 4), bác bản vá (A–F ĐÚNG, không còn chặn).
 - **National Bank® World Elite® có welcome bonus mới, site ghi "không có welcome bonus".** nbc.ca: tới 35,000 điểm, mở
   05/11/2026 – 31/03/2027 — 5,000 ($5,000/90 ngày) + 10,000 ($20,000/12 tháng) + 10,000 (payment insurance có phí, đăng
   ký ở mục CCPP trong đơn, giữ suốt 90 ngày đầu) + 10,000 (chequing đầu tiên trong 14 ngày, giữ 180 ngày VÀ tới khi nhận
-  điểm). Finly API `welcomeBonus.text` đã ghi từ 05/11 — nguồn báo sớm nhất cho thẻ này. `expiresAt` 31/03/2027, cờ
-  elevated GIỮ TẮT (tiền lệ Passport/Momentum: offer có hạn thay cho "không bonus", không phải offer nâng). Seed chỉ dựng
+  điểm). Finly API `welcomeBonus.text` đã ghi từ 05/11 — nguồn báo sớm nhất cho thẻ này. `expiresAt` 31/03/2027. Cờ
+  elevated: lượt đầu để tắt theo tiền lệ Passport/Momentum, **tác giả chốt BẬT cùng ngày** — đừng đề xuất tắt lại.
+  Hệ quả cho `expire-offers` ngày 01/04/2027: snapshot 09/11 (cờ tắt, chữ 35,000) trùng chữ bản elevated, nên job DỪNG
+  và đỏ thay vì khôi phục bản "không có welcome bonus" — sửa tay, đúng luật "tắt cờ, giữ chữ" ở mục 05/11. Seed chỉ dựng
   hai mốc chi làm component (15,000): hai phần còn lại đòi mua sản phẩm khác, tổng component thấp hơn headline là hợp lệ.
 - **Amex® Gold Rewards lần đầu elevated: 90,000** (30,000 khi chi $4,000/3 tháng + 5,000 × 12 chu kỳ chi $1,000) — trang
   công khai tải hai lần + đường Apply Finly `/go/creditCards/amex-gold` → CJ → amex.ca `?CPID=` cùng số, không ghi ngày.
