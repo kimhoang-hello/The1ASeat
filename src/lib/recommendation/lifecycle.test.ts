@@ -64,7 +64,13 @@ test("chương trình vào kho muộn không làm bản dựng lại của hôm 
  * 1. Thẻ đang có nhận welcome offer MỚI
  * --------------------------------------------------------------- */
 test("1. offer mới nối tiếp offer cũ, và offer cũ vẫn tra được", () => {
-  const old = BASE.offers.find((o) => o.headlineBonus !== null)!;
+  // Offer ĐANG MỞ và bắt đầu trước ngày đóng giả định 31/10 — offer đầu tiên
+  // của seed đổi theo dữ liệu (09/11/2026 là Amex® Green 15,000 mở từ 09/11,
+  // tức SAU ngày đóng: đóng nó ở 31/10 là dựng một bản ghi kết thúc trước khi
+  // bắt đầu, sai tiền đề chứ không phải sai engine).
+  const old = BASE.offers.find(
+    (o) => o.headlineBonus !== null && o.effectiveTo === null && o.effectiveFrom < "2026-10-31",
+  )!;
   const fresh: Offer = {
     ...old,
     id: `${old.id}_v2` as Offer["id"],
@@ -377,7 +383,16 @@ test("9. sửa một thành phần = một offer MỚI, thành phần cũ đi th
 test("10. dựng lại toàn bộ thế giới như nó ở một ngày trong quá khứ", () => {
   // Kịch bản gộp: cùng lúc đổi phí, đổi offer, và ngừng một thẻ khác.
   const feeRow = BASE.productFees[0];
-  const offerRow = BASE.offers.find((o) => o.productId !== feeRow.productId && o.headlineBonus !== null)!;
+  // Offer phải ĐANG MỞ và đã chạy vào ngày 01/10/2026 mà bài test tra "thế giới
+  // cũ" — offer mở sau ngày đó (Amex® Gold 90,000 từ 09/11/2026) thì ngày cũ
+  // thấy bản trước nó, sai tiền đề chứ không phải sai engine.
+  const offerRow = BASE.offers.find(
+    (o) =>
+      o.productId !== feeRow.productId &&
+      o.headlineBonus !== null &&
+      o.effectiveTo === null &&
+      o.effectiveFrom <= "2026-10-01",
+  )!;
   const victim = BASE.products.find(
     (p) => p.id !== feeRow.productId && p.id !== offerRow.productId,
   )!;

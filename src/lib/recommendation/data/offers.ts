@@ -116,16 +116,31 @@ type OfferSeed = {
 const OFFER_SEEDS: OfferSeed[] = [
   {
     slug: "amex-green",
+    name: "15,000 điểm Membership Rewards®",
+    headline: 15000,
+    currency: "amex-mr",
+    // Offer nâng quay lại lần ba: thấy 09/11/2026 trên trang công khai amex.ca
+    // và đúng đường Apply của site (Finly → CJ → amex.ca ?CPID=), ba lượt tải
+    // cùng "ELEVATED OFFER" 15,000/$1,250. Amex® không ghi ngày bắt đầu lẫn kết
+    // thúc. Bản đang mở đứng TRƯỚC các bản đã đóng: test vòng đời lấy offer đầu
+    // tiên làm "offer hiện hành" của thẻ đầu tiên.
+    startDate: "2026-11-09",
+    verifiedAt: "2026-11-09",
+    recordedAt: "2026-11-09",
+    components: [{ type: "spend_threshold", points: 15000, spend: 1250, windowDays: 90 }],
+  },
+  {
+    slug: "amex-green",
     name: "10,000 điểm Membership Rewards®",
     headline: 10000,
     currency: "amex-mr",
     // Mức thường quay lại sau offer nâng 09/10 (kiểm 21/10/2026 qua đúng đường
-    // Apply của site). Ngày mình thấy — Amex® không ghi ngày bắt đầu. Bản đang
-    // mở đứng TRƯỚC các bản đã đóng: test vòng đời lấy offer đầu tiên làm
-    // "offer hiện hành" của thẻ đầu tiên.
+    // Apply của site). Ngày mình thấy — Amex® không ghi ngày bắt đầu.
     startDate: "2026-10-21",
     verifiedAt: "2026-10-21",
     recordedAt: "2026-10-21",
+    // 09/11/2026 offer nâng 15,000 quay lại; Amex® không công bố ngày.
+    recordedTo: "2026-11-08",
     components: [{ type: "spend_threshold", points: 10000, spend: 1000, windowDays: 90 }],
   },
   {
@@ -173,10 +188,39 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "amex-gold-rewards",
+    name: "90,000 điểm Membership Rewards®",
+    headline: 90000,
+    currency: "amex-mr",
+    // Offer nâng lần đầu ("ELEVATED OFFER: UP TO 90,000 POINTS"): thấy 09/11/2026
+    // trên trang công khai amex.ca (tải hai lần) và đúng đường Apply của site
+    // (Finly `/go/creditCards/amex-gold` → CJ → amex.ca ?CPID=). Amex® không ghi
+    // ngày bắt đầu lẫn kết thúc — `startDate` là ngày mình thấy. 30,000 điểm khi
+    // chi $4,000 trong 3 tháng đầu CỘNG THÊM vào 60,000 điểm theo chu kỳ.
+    startDate: "2026-11-09",
+    verifiedAt: "2026-11-09",
+    recordedAt: "2026-11-09",
+    components: [
+      { type: "spend_threshold", points: 30000, spend: 4000, windowDays: 90 },
+      {
+        type: "monthly_spend",
+        points: 5000,
+        spend: 1000,
+        windowDays: 365,
+        repeat: 12,
+        note: "5,000 điểm cho mỗi chu kỳ sao kê chi đủ $1,000, suốt 12 tháng đầu",
+      },
+    ],
+  },
+  {
+    slug: "amex-gold-rewards",
     name: "60,000 điểm Membership Rewards®",
     headline: 60000,
     currency: "amex-mr",
     startDate: "2026-09-07",
+    // 09/11/2026 amex.ca và đường Apply của site thấy mức nâng 90,000. Amex®
+    // không công bố ngày, nên bản ghi đóng ở ngày cuối mình còn tin nó, không
+    // đặt `endDate`.
+    recordedTo: "2026-11-08",
     components: [
       {
         type: "monthly_spend",
@@ -861,10 +905,40 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "national-bank-world-elite-mastercard",
+    name: "Đến 35,000 điểm À la carte™",
+    headline: 35000,
+    currency: "a-la-carte",
+    // Promotion mới trên nbc.ca (đọc 09/11/2026 bằng browser): "Length of the
+    // welcome promotion: From November 5, 2026, to March 31, 2027". Mình biết
+    // từ 09/11 (`recordedFrom`), nên truy vấn trước ngày đó vẫn thấy bản "không
+    // có welcome bonus" — đúng với điều kho biết lúc ấy. 35,000 = 5,000 ($5,000/90 ngày)
+    // + 10,000 ($20,000/12 tháng) + 10,000 khi đăng ký payment insurance (sản
+    // phẩm trả phí) giữ ít nhất 90 ngày + 10,000 khi mở tài khoản chequing đầu
+    // tiên trong 14 ngày (gói Connected®/Total®/newcomer, giữ 180 ngày). Hai
+    // phần sau đòi mua thêm sản phẩm, không phải chi tiêu, nên KHÔNG dựng thành
+    // component: engine chỉ tính 15,000 điểm từ hai mốc chi — tổng component
+    // thấp hơn headline là hợp lệ (validate.ts).
+    startDate: "2026-11-05",
+    endDate: "2027-03-31",
+    recordedFrom: "2026-11-09",
+    verifiedAt: "2026-11-09",
+    recordedAt: "2026-11-09",
+    rebate: 100,
+    components: [
+      { type: "spend_threshold", points: 5000, spend: 5000, windowDays: 90 },
+      { type: "spend_threshold", points: 10000, spend: 20000, windowDays: 365 },
+    ],
+  },
+  {
+    slug: "national-bank-world-elite-mastercard",
     name: "Không có welcome bonus",
     headline: null,
     currency: null,
     startDate: "2026-09-07",
+    // 09/11/2026 nbc.ca có promotion 35,000 điểm (bản ngay trên, NBC ghi mở từ
+    // 05/11). Bản ghi này đóng ở ngày cuối mình còn tin nó, không đặt `endDate`
+    // — NBC không công bố việc "không có bonus" kết thúc.
+    recordedTo: "2026-11-08",
     rebate: 100,
     components: [],
   },

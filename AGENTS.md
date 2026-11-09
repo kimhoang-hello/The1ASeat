@@ -4758,3 +4758,47 @@ dailydrop.com/transfer-partners-cheat-sheet#current-offers, job tự kiểm + c�
 - Cảnh báo `leg` của job 06/11: Capital One® → Copa có bonus nhưng bảng Mỹ chưa có Copa — chưa đối
   chiếu trang chính chủ, bảng chưa sửa.
 
+
+## Kiểm toàn diện 09/11/2026 (lượt tay: thẻ Canada + Mỹ + Gợi ý thẻ) — đừng đề xuất lại
+
+Gate: lint, tsc, build, 10 audit, 9 test suite (`test:reco` 525 kể cả backend MySQL trên MariaDB 11.8 colima cổng
+3307 — DB test `ghe_reco_test` phải tạo tay trước, không thì 23 test MySQL đỏ "Unknown database"), `npm audit` = 0,
+`audit:links` trên bản build cục bộ (245 trang, không trang mồ côi), smoke test + `www` 308 + 5 header bảo mật.
+`reco:walk` 300 hồ sơ ngày 09/11: mọi bất biến xanh. Luồng Gợi ý thẻ đi trên `next start` cục bộ + MariaDB (375px không
+tràn). Thẻ Mỹ: task sáng 09/11 đã rà đủ 38 thẻ (3d371e8) — đã lên site. Codex hai vòng: soát nội dung với nguồn (5 phát
+hiện, nhận 4), bác bản vá (A–F ĐÚNG, không còn chặn).
+
+**Đã sửa (Contentful + seed `offers.ts`, cùng ngày):**
+- **National Bank® World Elite® có welcome bonus mới, site ghi "không có welcome bonus".** nbc.ca: tới 35,000 điểm, mở
+  05/11/2026 – 31/03/2027 — 5,000 ($5,000/90 ngày) + 10,000 ($20,000/12 tháng) + 10,000 (payment insurance có phí, đăng
+  ký ở mục CCPP trong đơn, giữ suốt 90 ngày đầu) + 10,000 (chequing đầu tiên trong 14 ngày, giữ 180 ngày VÀ tới khi nhận
+  điểm). Finly API `welcomeBonus.text` đã ghi từ 05/11 — nguồn báo sớm nhất cho thẻ này. `expiresAt` 31/03/2027, cờ
+  elevated GIỮ TẮT (tiền lệ Passport/Momentum: offer có hạn thay cho "không bonus", không phải offer nâng). Seed chỉ dựng
+  hai mốc chi làm component (15,000): hai phần còn lại đòi mua sản phẩm khác, tổng component thấp hơn headline là hợp lệ.
+- **Amex® Gold Rewards lần đầu elevated: 90,000** (30,000 khi chi $4,000/3 tháng + 5,000 × 12 chu kỳ chi $1,000) — trang
+  công khai tải hai lần + đường Apply Finly `/go/creditCards/amex-gold` → CJ → amex.ca `?CPID=` cùng số, không ghi ngày.
+  Chưa từng có snapshot elevated nên copy viết mới, chỉ đổi phần offer. Thẻ này publish bản thường TRƯỚC rồi mới bật cờ,
+  nên lúc offer hết `expire-offers` không liên quan (không `expiresAt`) — rà tay như mọi offer nâng Amex®.
+- **Amex® Green elevated lần ba: 15,000/$1,250** (ba lượt tải, cả đường Apply). Khôi phục nguyên văn bản publish 18/10.
+- Gold `keyBenefitsVi[1]` "thêm 1 điểm khi đặt qua Amex® Travel Online" → chỉ khách sạn/thuê xe (trang Gold ghi
+  "On eligible hotel or car rental bookings"; Codex bắt).
+- `lifecycle.test.ts` test 1 và 10 chọn "offer đầu tiên của seed" rồi đóng nó ở ngày cố định 31/10 / tra ngày 01/10 —
+  gãy khi offer đầu mở SAU ngày đó (Green 09/11). Nay chọn offer đang mở và đã chạy trước ngày cố định của test.
+
+**Bẫy ghi Contentful:** mỗi dòng `keyBenefitsVi` là Symbol, tối đa 256 ký tự — PUT trả 422 không kèm lý do rõ. Dòng
+welcome nhiều nấc thì tách hai dòng (NBC), đừng nhồi.
+
+**Codex nêu, mình bác:** Gold thiếu điều kiện Instacart ($10/tháng, đăng ký Amex Offers) — copy có sẵn của tác giả, khối
+là bản tóm tắt (cùng luật mục 03/11). Codex vòng 2 đồng ý.
+
+**Đã kiểm, KHÔNG phải lỗi:** CIBC® ×5 (Aventura® 60,000 "Digital exclusive" ×2; Aeroplan® 10,000/50,000/100,000 đúng
+từng nấc), TD® First Class 160,000 (không ngày), WestJet RBC® 70,000 hạn 18/11, RBC® Avion® ×3 hạn 25/11 (task một lần
+26/11 đã có), Tangerine® 50,000 tới 31/01/2027, Capital One® ×2 match cashback năm đầu, Amex® còn lại (Platinum 100,000,
+Business Platinum 120,000, Business Gold 70,000, Aeroplan® 45,000, Reserve 85,000, Business Reserve 90,000, Cobalt®
+15,000, Hilton 70,000 + FNR hạn 11/01/2027, Bonvoy® Business 80,000) — qua đường Apply. Bonvoy® cá nhân công khai 100,000
+nhưng nút Apply là link referral (tác giả chốt 09/10 giữ 70,000). NBC newcomer: chưa có đợt bonus tiền mặt mới.
+`preview_start` lỗi đường dẫn scratchpad của phiên khác — chạy `next start` qua Bash nền.
+
+**Chờ tác giả:** WestJet RBC® hết hạn 18/11 — thẻ elevated từ lần publish đầu nên `expire-offers` không tự khôi phục
+được, job sẽ đỏ từ 19/11 tới khi sửa tay. Tangerine® Savings lãi khuyến mãi 4.50% hết 30/11. Wealthsimple® 5%/35 ngày
+(mục 21/10) vẫn chưa ghi.
