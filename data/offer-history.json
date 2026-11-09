@@ -91,6 +91,11 @@
       {
         "at": "2026-08-29",
         "rebate": "$100"
+      },
+      {
+        "at": "2026-11-09",
+        "welcomeBonus": "35,000 điểm À la carte™",
+        "rebate": "$100"
       }
     ],
     "rbc-avion-visa-infinite": [
@@ -398,6 +403,10 @@
       {
         "at": "2026-09-07",
         "welcomeBonus": "60,000 điểm Membership Rewards®"
+      },
+      {
+        "at": "2026-11-09",
+        "welcomeBonus": "90,000 điểm Membership Rewards®"
       }
     ],
     "amex-green": [
@@ -416,6 +425,10 @@
       {
         "at": "2026-10-22",
         "welcomeBonus": "10,000 điểm Membership Rewards®"
+      },
+      {
+        "at": "2026-11-09",
+        "welcomeBonus": "15,000 điểm Membership Rewards®"
       }
     ],
     "amex-platinum": [
