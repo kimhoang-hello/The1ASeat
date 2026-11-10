@@ -3,9 +3,9 @@
  *
  * Engine chỉ tính nửa phần bonus khi cửa welcome offer là `unknown`, nên thẻ
  * đó vẫn có thể đứng đầu. Trước vòng Codex 21/09/2026, trang khi ấy in trọn
- * con số bonus, câu "chi … để nhận trọn welcome bonus", và Phase 6 được phép
- * ghép "welcome bonus hiện hành là …" mà không một lời nào về chuyện chưa chắc
- * — đúng lời hứa của lỗi gốc (TD® Aeroplan® đã đóng, không rõ ngày).
+ * con số bonus và câu "chi … để nhận trọn welcome bonus" mà không một lời nào
+ * về chuyện chưa chắc — đúng lời hứa của lỗi gốc (TD® Aeroplan® đã đóng, không
+ * rõ ngày).
  */
 
 import assert from "node:assert/strict";
@@ -18,8 +18,6 @@ import { executeRun } from "../recommendation/runs.ts";
 import { datasetAt } from "../recommendation/temporal.ts";
 import type { RecommendationDataset } from "../recommendation/types.ts";
 import type { UserState } from "../recommendation/user-types.ts";
-import { checkExplanation, MAX_FACTS_PER_SENTENCE } from "./explain-check.ts";
-import { explanationPayload } from "./explain-payload.ts";
 import { alternativeBonusLead, openCardSentence, presentRun } from "./present.ts";
 
 // Luật "24 tháng" của Scotia Momentum® có hiệu lực từ ngày đọc điều khoản.
@@ -66,7 +64,7 @@ const undeclared: UserState = {
   declared: { ...cashSeeker.declared, cards: false },
 };
 
-test("bonus chưa chắc: trang và Phase 6 đều phải nói ra", () => {
+test("bonus chưa chắc: trang phải nói ra", () => {
   const view = viewFor(undeclared);
   assert.equal(view.primary.slug, "scotiabank-momentum-visa-infinite-plus", "tiền đề: thẻ Scotia Momentum® đứng đầu");
   assert.equal(view.primary.welcomeBonusUncertain, true);
@@ -75,24 +73,6 @@ test("bonus chưa chắc: trang và Phase 6 đều phải nói ra", () => {
   assert.doesNotMatch(openCardSentence(view.primary), /nhận trọn/);
   assert.match(openCardSentence(view.primary), /chưa chắc/);
   assert.match(alternativeBonusLead(view.primary) ?? "", /chưa chắc bạn nhận được/);
-
-  const payload = explanationPayload(view);
-  const ids = payload.facts.map((fact) => fact.id);
-  assert.ok(ids.includes("bonus") && ids.includes("bonus_uncertain"));
-
-  // Dựng một bản ghép hợp lệ về mọi mặt khác, rồi nói con số bonus mà giấu
-  // việc chưa chắc — cửa kiểm phải chặn.
-  const reasons = payload.facts.filter((fact) => fact.role === "reason").map((fact) => fact.id);
-  const sentences = [];
-  for (let start = 0; start < reasons.length; start += MAX_FACTS_PER_SENTENCE) {
-    sentences.push({ lead: start === 0 ? "why_card" : "also", facts: reasons.slice(start, start + MAX_FACTS_PER_SENTENCE) });
-  }
-  const hiding = checkExplanation(payload, { sentences: [...sentences, { lead: "cost", facts: ["bonus"] }] });
-  assert.equal(hiding.ok, false);
-  const honest = checkExplanation(payload, {
-    sentences: [...sentences, { lead: "cost", facts: ["bonus", "bonus_uncertain"] }],
-  });
-  assert.equal(honest.ok, true, honest.ok ? "" : honest.problems.join("; "));
 });
 
 test("đã khai thẻ và không vướng luật nào ⇒ không gắn cờ chưa chắc", () => {
@@ -100,5 +80,4 @@ test("đã khai thẻ và không vướng luật nào ⇒ không gắn cờ chư
   assert.equal(view.primary.slug, "scotiabank-momentum-visa-infinite-plus");
   assert.equal(view.primary.welcomeBonusUncertain, false);
   assert.doesNotMatch(openCardSentence(view.primary), /chưa chắc/);
-  assert.ok(!explanationPayload(view).facts.some((fact) => fact.id === "bonus_uncertain"));
 });

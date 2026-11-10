@@ -80,6 +80,8 @@ if (!confirm) {
 }
 
 // Thứ tự theo khoá ngoại: `reco_explanations.run_id` trỏ vào `reco_runs.id`.
+// Phase 6 đã gỡ (09/11/2026) nhưng bảng và dòng cũ còn trên production, nên
+// bước này vẫn phải chạy trước khi xoá lượt chạy.
 await db.pool.query(
   "DELETE FROM reco_explanations WHERE run_id IN (SELECT id FROM reco_runs WHERE user_id = ?)",
   [userId],

@@ -1226,102 +1226,26 @@ rồi đặt `sql_mode`/`collation_server` như production (xem `ci.yml`).
 CI (`.github/workflows/ci.yml`) chạy MariaDB như service và NỔ nếu thiếu
 `RECO_TEST_MYSQL_URL`, để backend production không bao giờ lặng lẽ bị bỏ qua.
 
-## Phase 6 — lời giải thích bằng LLM (§28)
+## Phase 6 — lời giải thích bằng LLM (§28): ĐÃ GỠ
 
-> **TẮT từ 05/11/2026.** Tác giả bỏ hẳn Anthropic API. Mô hình được gọi qua
-> `claude-opus-5` đã bị gỡ khỏi `explain-llm.ts` cùng SDK; khung bên dưới
-> (cửa kiểm, kho, ghép chữ) giữ nguyên và vẫn chạy trong test với mô hình
-> tiêm vào. Bật lại = viết một `ExplanationModel` mới cho nhà cung cấp khác.
-> Các đoạn dưới mô tả lúc Phase 6 còn chạy.
+Tắt từ 05/11/2026 (tác giả bỏ hẳn Anthropic API), gỡ khỏi repo 09/11/2026: không
+có nhà cung cấp mô hình nào, nên khung (cửa kiểm, kho, ghép chữ) là code không
+đường chạy nào tới được. Trang `/credit-cards/goi-y` là trang Phase 5 nguyên vẹn:
+khối "vì sao hợp với bạn" dựng từ mã lý do, tra bảng trong `copy.ts`.
 
-**LLM là lớp kể lại, không phải lớp quyết định — và nó không viết chữ.** Engine
-không biết Phase 6 tồn tại: không file nào trong thư mục này (cũng như
-`present.ts`, `copy.ts`, `questions.ts`, `follow-up.ts`, `result.tsx`) import
-lớp LLM — `explain.test.ts` quét mã nguồn canh chuyện đó. Gỡ Phase 6 thì trang
-là trang Phase 5 nguyên vẹn.
+Còn lại trong repo, có chủ ý:
 
-Code ở `src/lib/recommender/explain-*.ts`, component `explanation.tsx`:
+- **Bảng `reco_explanations` (migration 2 trong `mysql.ts`).** Migration chỉ
+  thêm, không sửa lùi: production đã chạy nó, và bảng có thể còn dòng từ
+  02–05/11/2026. Không code nào đọc hay ghi bảng này nữa.
+- **`scripts/reco-forget.mts` vẫn xoá dòng ở bảng đó** trước khi xoá lượt chạy,
+  vì khoá ngoại `reco_explanations.run_id` → `reco_runs.id`.
 
-| File | Vai trò |
-| --- | --- |
-| `explain-payload.ts` | `ResultView` → dữ kiện: mỗi cái là một MỆNH ĐỀ tiếng Việt viết sẵn, có id, nhãn `verified`/`estimate`/`editorial` và vai `reason`/`offer`/`trip`/`context`. Thuần. Không hồ sơ, `runId`, lựa chọn khác, điểm số, affiliate, cảnh báo |
-| `explain-check.ts` | `LEADS` (câu dẫn đóng) · `checkExplanation`: id có thật, câu dẫn hợp loại hành động, vai hợp câu dẫn, không lặp, 1–4 câu × 1–3 dữ kiện · `renderExplanation`: câu dẫn + mệnh đề, nhãn = nhãn yếu nhất, do CODE tính |
-| `explain-llm.ts` | Prompt + JSON schema (hợp đồng với mô hình) + `explainPrimaryAction`: công tắc → kho → mô hình → cửa kiểm → LƯU → ghép chữ. **Tắt từ 05/11/2026**: bỏ Anthropic API, `explanationModelFromEnv` luôn trả `null`, trang luôn hiện bảng tra Phase 5 |
-| `explain-store.ts` | `reco_explanations` (migration 2), chỉ thêm, khoá (runId, goal, dấu vân tay payload, version prompt), lưu cả JSON thô, bản dựng và chữ đã ghép |
-
-**Vì sao Claude không viết chữ (Codex vòng 1–2).** Hai bản đầu cho viết tự do
-rồi kiểm chữ: danh sách cụm cấm, rồi "mọi âm tiết phải có trong dữ kiện được
-trích". Codex viết được câu qua cả hai — "Welcome bonus sẽ được cộng vào tài
-khoản" khi bonus bị chặn, "Phí thường niên: $3,000; mốc chi: $120" (đổi chỗ hai
-số THẬT), "Bạn sẽ nhận được welcome bonus; ngân hàng không từ chối". Kiểm chữ
-không chứng minh được nghĩa; mỗi bản vá mở lỗ mới — đúng vòng lặp Phase 2–4. Nay
-Claude trả `{ sentences: [{ lead, facts: [id] }] }`, và những điều §28 cấm (bịa
-số, bịa điều kiện, chỗ trống, hứa duyệt, thẻ khác, ước lượng thành dữ kiện, nói
-ngược cảnh báo) không có đường nào để viết ra. Việc Claude còn làm: chọn dữ kiện
-đáng nói với mục tiêu này, gom và sắp thứ tự.
-
-Quyết định đáng nhớ:
-
-- **Chỉ khối "vì sao hợp với bạn" của hành động chính.** Tên thẻ, số trong thẻ,
-  cảnh báo, điều cần cân nhắc, độ chắc chắn, nút đăng ký vẫn là bảng tra.
-- **Lưu trước khi hiện; không có kho thì không hiện.** Khiếu nại "câu này sai" →
-  `listForRun(runId)` trả đúng chữ người đọc đã thấy (`rendered`).
-- **Bản đọc từ kho đi lại qua cửa kiểm**, và version prompt nằm trong khoá: đổi
-  câu dẫn / mệnh đề / luật thì tăng `EXPLANATION_PROMPT_VERSION`.
-- **Công tắc tắt cả bản đã lưu.** Không key hoặc `RECO_LLM_EXPLAIN=0` → trang
-  Phase 5, kể cả cho lượt chạy đã có lời giải thích (Codex vòng 2).
-- **Bản bị từ chối được lưu và không sinh lại** cho cùng khoá; lỗi đường truyền
-  không lưu, thử lại trong trần 3 lần/lượt chạy/giờ và 300 lần/giờ toàn site.
-- **Dấu vân tay payload nằm trong khoá** vì welcome bonus và phí đọc từ
-  Contentful LÚC HIỂN THỊ.
-- **Trang không chờ LLM.** `<Suspense>` với fallback `DeterministicWhy` — đúng
-  khối Phase 5; mọi nhánh hỏng dựng lại chính khối đó.
-- `model` trong bản ghi là mô hình ĐÃ trả lời (`response.model`).
-
-**Rà đối kháng 17/09/2026 — mô hình coi như thù địch.** Không có đường nào để
-viết chữ, nên mọi tấn công còn lại là bằng IM LẶNG, THỨ TỰ và dữ liệu vào xấu.
-Sáu lớp lỗi tìm ra và đã vá:
-
-| Tấn công | Vá |
-| --- | --- |
-| Bỏ hết lý do của engine, chỉ giữ chi phí/hướng đi — trang mất phần giải thích | MỌI dữ kiện vai `reason` bắt buộc; câu đầu phải là câu dẫn lý do; `also` chỉ sau nó; câu dẫn lý do đúng một lần |
-| "Về offer và chi phí: phí $799" cho người không nhận được bonus | Dùng dữ kiện `offer` thì bắt buộc kèm `bonus_blocked` |
-| "Số điểm bạn với tới được đã đủ cho chuyến này" mang nhãn Nhận định | `POINTS_ALREADY_SUFFICIENT`, `FOCUS_ON_AWARD_AVAILABILITY`, `POINTS_GAP_LARGE` và "chưa mở thẻ vì đủ điểm" mang nhãn Ước lượng + "theo ước lượng của mình" (`ReasonRow.code` trong `present.ts`) |
-| Chỉ biết giá sàn mà ghi "cần khoảng 60,000 điểm" | "ít nhất khoảng … (chưa biết mức cao nhất)" / "tối đa khoảng …" |
-| "Còn thiếu khoảng 0 điểm", "phủ khoảng 140%" | Bỏ dòng thiếu 0; phần phủ ≥ 1 thành "phủ được cả chuyến này" |
-| Chuỗi Contentful rỗng/xuống dòng/dấu chấm cuối → "phí thường niên là" | `cleanValue`: gộp khoảng trắng, bỏ dấu cuối, rỗng thì không có dữ kiện |
-
-Canh bằng test: fuzz 6,000 bản dựng thù địch có seed (không ném; bản nào qua cũng
-đủ lý do, đúng thứ tự, chỉ ghép chữ viết sẵn), 10 biến thể payload thiếu/bẩn, và
-danh sách import cho phép của lớp LLM (component chỉ lấy `explanationStore` +
-`allowExplanationCall` từ `session.ts`). Kiểm ngược 12/12 luật mới. Đầu-cuối
-trên `next dev` + MariaDB: LLM giả trả rác hoặc văn tự do ("mở American Express
-Platinum, chắc chắn được duyệt") → trang GIỐNG HỆT từng dòng trang tắt LLM, cùng
-`runId`; bản dựng hợp lệ → chỉ khối "vì sao hợp" khác; không lượt chạy mới nào.
-
-Codex vòng đối kháng sau đó bới thêm 7 chỗ, đã vá: lý do "ủng hộ" của `no_new_card`
-bị bỏ khỏi payload (luật "đủ mọi lý do" không canh gì ở đó); điểm mạnh
-`points_gap_reduction` mang nhãn Nhận định; ký tự vô hình (`\u200b`) lọt qua
-`cleanValue`; "còn thiếu 10,000" cạnh "phủ được cả chuyến"; và ba chỗ ở CHÍNH
-trang Phase 5 — ô "Cần khoảng" in một đầu khoảng như con số chắc, "Còn thiếu 0
-điểm", "phủ khoảng 140%" (nay `formatNeed` dùng chung cho ô số và mệnh đề).
-Câu viết sẵn cũng được sửa tại nguồn (`copy.ts`): lý do dựng trên ước lượng tự
-nói "theo ước lượng", bỏ hai lời hứa tương lai ("đợi thêm thì được nhiều hơn",
-"nới một điều kiện là danh sách mở ra ngay").
-
-Cố ý KHÔNG vá: chuỗi Contentful (welcome bonus, phí) là dữ liệu biên tập, hiện
-nguyên văn như ở trang Phase 5 — nó chỉ đi qua mô hình như dữ liệu, và mô hình
-không viết lại được nó.
-
-Giới hạn còn lại: câu ghép từ mệnh đề đọc kém mượt hơn văn viết tay, và một mệnh
-đề viết sẵn SAI thì sai ở mọi lượt — nhưng đó là lỗi bảng tra, sửa một chỗ, test
-thấy được.
-
-Kiểm ngược đã làm: gỡ từng luật (câu dẫn theo loại hành động, vai, lặp, id lạ,
-nhãn yếu nhất, số câu, công tắc, kiểm lại bản đã lưu) → `explain.test.ts` đỏ ở
-cả tám. Đầu-cuối trên `next dev` + MariaDB 11.8 + server giả API Anthropic: SDK
-gửi đúng `model`/`effort`/schema/`fallbacks`, payload không có dữ liệu cá nhân,
-bản được lưu rồi mới hiện, tải lại không gọi mô hình lần hai.
+Muốn dựng lại: lấy từ lịch sử git (commit gỡ ghi trong `AGENTS.md`, mục
+09/11/2026). Bài học đáng giữ nếu làm lại: đừng cho mô hình viết chữ tự do.
+Hai vòng Codex đã viết được câu sai nghĩa qua mọi cửa kiểm văn bản (đổi chỗ hai
+con số thật, dời chữ "không"), nên bản cuối chỉ cho mô hình chọn và sắp các
+mệnh đề viết sẵn.
 
 ## Chạy gì
 

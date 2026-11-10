@@ -200,6 +200,9 @@ export const MIGRATIONS: readonly Migration[] = [
   {
     id: 2,
     name: "lời giải thích Phase 6 (§28) — câu đã hiện, theo lượt chạy",
+    // Phase 6 đã gỡ khỏi repo 09/11/2026 và không code nào đọc/ghi bảng này
+    // nữa. Migration vẫn nằm đây vì danh sách này chỉ thêm: production đã chạy
+    // nó, và database dựng mới phải ra cùng một schema.
     statements: [
       // Một dòng cho mỗi (lượt chạy, mục tiêu, payload, version prompt) — payload
       // đổi khi offer trên Contentful đổi trong ngày, version đổi khi luật dựng

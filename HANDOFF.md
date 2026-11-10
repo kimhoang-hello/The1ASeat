@@ -113,7 +113,7 @@ Còn lại, theo thứ tự đáng làm:
 | 3 | Engine (Portfolio Analyzer → Ranking) | ✅ |
 | 4 | `recommendation_runs` + Debugger + Test A–J | ✅ |
 | 5 | **Frontend UX** | ✅ **XONG 16/09/2026**, đã merge `main`. Trang `/credit-cards/goi-y` còn sau cờ `RECOMMENDER_PUBLISHED` (chưa công bố). Xem §5. Phán quyết Phase 5: **READY FOR PHASE 6 WITH KNOWN RISKS** (§9) |
-| 6 | **LLM giải thích** (§28) | ✅ **DỰNG XONG 16/09/2026** trên nhánh `wt/reco-phase6` (chưa merge `main`). Xem §6 |
+| 6 | **LLM giải thích** (§28) | ❌ **ĐÃ GỠ 09/11/2026** — tắt từ 05/11 khi bỏ Anthropic API, không có nhà cung cấp khác. Xem §6 |
 
 Phase 4: **đã merge vào `main` ngày 13/09/2026** (nhánh `wt/reco-phase4`,
 29 commit), 21 vòng Codex, **389 test**,
@@ -321,80 +321,11 @@ GA4 cho phễu (mới chỉ có `apply_clicked` với `placement=recommender_pri
 đăng nhập admin trước khi bật `RECO_DEBUGGER` (§4 việc 5), và kiểm CDN trước
 khi bật cờ.
 
-## 6. Phase 6 — LLM giải thích (§28)
+## 6. Phase 6 — LLM giải thích (§28): ĐÃ GỠ
 
-**Đã làm (16/09/2026)** — chi tiết + quyết định: README module, mục "Phase 6".
-Bốn việc đầu tiên bên dưới đều đã xong, với MỘT thay đổi so với đề xuất: Claude
-KHÔNG viết chữ. Nó chọn, gom và sắp các mệnh đề viết sẵn; code ghép câu. Hai
-vòng Codex chứng minh cửa kiểm văn bản tự do không chặn được đổi nghĩa (đổi chỗ
-hai con số thật, dời chữ "không"), nên "số trong câu LLM phải có trong
-ResultView" (việc 2) không đủ. `test:recommender` thêm `explain.test.ts` (cả bài
-kho trên MariaDB 11.8).
-
-**Chưa làm / còn chờ:**
-
-- **Chưa gọi Claude thật lần nào.** Máy dev không có `ANTHROPIC_API_KEY`; luồng
-  đầu-cuối kiểm bằng server giả API. Lần chạy thật đầu tiên (trang còn sau cờ)
-  phải đọc `reco_explanations`: tỷ lệ `rejected`, và đọc cột chữ đã ghép xem có
-  đáng giữ Phase 6 không so với bảng tra.
-- Chưa có công cụ debugger đọc `reco_explanations` — hôm nay tra bằng SQL.
-- **Lỗi có sẵn từ Phase 5, chưa sửa:** câu đầu thẻ chính (`result.tsx`) ghi "chi
-  khoảng $X trong 3 tháng đầu để nhận trọn welcome bonus" bằng con số QUY ĐỔI
-  mỗi 90 ngày — sai với offer có nhiều mốc (vd. $3,000/90 ngày + $12,000/365
-  ngày). Phase 6 đã bỏ con số này khỏi dữ kiện của LLM (Codex vòng 3).
-- Codex 4 vòng: vòng 4 kết luận "CÒN CHẶN PUSH: KHÔNG".
-- **Rà đối kháng 17/09/2026** (mô hình coi như thù địch, payload thiếu/bẩn): 13
-  lỗi thật tìm ra và vá qua 3 vòng Codex, vòng cuối "CÒN CHẶN PUSH: KHÔNG".
-  Chi tiết: README module, mục Phase 6. Bài học: không viết được chữ, mô hình
-  vẫn làm trang nói lệch bằng IM LẶNG (bỏ lý do) và THỨ TỰ; và lỗi nói quá
-  thường nằm ở câu viết sẵn của bảng tra, không ở lớp LLM.
-
-### Thứ đã sẵn để LLM ăn vào
-
-Trang hôm nay dựng câu bằng bảng tra (`src/lib/recommender/copy.ts`). Đầu vào
-của Phase 6 không phải hồ sơ người dùng, mà là `ResultView` trong
-[`present.ts`](src/lib/recommender/present.ts) — thứ đã lọc sẵn:
-
-| Trường | Là gì |
-| --- | --- |
-| `primary` / `alternatives` / `noAction` | Tên thẻ, điểm, mã lý do đã dịch, mốc chi, cờ affiliate |
-| `warnings` | Câu người đọc phải biết TRƯỚC khi hành động |
-| `confidence` | Mức + nguyên nhân (đã chọn theo cái người dùng sửa được) |
-| `trip` | Khoảng điểm cần, điểm với tới được, phần thiếu, cờ `coverageIsEstimate` |
-| `dataVerifiedAt` | Ngày kiểm của dòng dữ liệu cũ nhất — vế "verified" của §28 |
-| `runId` | Mã tra cứu, để một lời giải thích sai tra ngược được về đúng lượt chạy |
-
-Repo đã có sẵn đường gọi Claude: [`rewrite-offer.ts`](src/lib/rewrite-offer.ts)
-(SDK `@anthropic-ai/sdk`, `ANTHROPIC_API_KEY` chỉ nằm trên server Hostinger,
-không có ở GitHub). Giọng và quy ước số của site nằm ngay trong prompt của nó —
-dùng lại, đừng viết prompt thứ hai nói cùng một chuyện.
-
-### Bốn việc đầu tiên, theo thứ tự
-
-1. **Chốt phạm vi câu chữ LLM được viết.** Đề xuất: CHỈ đoạn "vì sao thẻ này
-   hợp với bạn" của hành động chính. Tên thẻ, con số, cảnh báo, độ chắc chắn và
-   nút đăng ký giữ nguyên bảng tra — chúng là chỗ một câu bịa gây thiệt hại
-   thật.
-2. **Kiểm chứng đầu ra trước khi hiển thị.** Mọi con số trong câu LLM viết phải
-   xuất hiện trong `ResultView` được đưa vào; không khớp thì rơi về câu bảng
-   tra. Đây là phép kiểm rẻ nhất chống bịa số, và nó chạy được trong test.
-3. **Lưu câu đã hiển thị cùng `runId`.** Cùng lý do §20 lưu lượt chạy: một
-   khiếu nại "câu này sai" phải tra được đúng câu người dùng đã đọc, không phải
-   câu sinh lại hôm nay.
-4. **Đường lui khi LLM hỏng.** Hết quota, timeout, trả về rỗng → trang vẫn phải
-   hiện đủ kết quả bằng bảng tra. Trang hôm nay đã chạy được không cần LLM, nên
-   đừng để Phase 6 biến nó thành phụ thuộc.
-
-### Ba cạm bẫy đã thấy trước
-
-- **Đừng để LLM xếp lại thứ tự.** Đưa cho nó danh sách đã xếp, và chỉ nhận về
-  đoạn văn cho MỘT ứng viên mỗi lần gọi.
-- **Đừng đưa hồ sơ thô.** Đưa `ResultView` — nó không chứa id phiên, không chứa
-  số dư từng dòng, và đó là ranh giới giữ cho log của nhà cung cấp LLM không
-  thành một bản sao hồ sơ tài chính của người đọc.
-- **"Ước lượng" phải sống sót qua LLM.** Trang hiện ghi "Cần khoảng (ước
-  lượng)" và ngày kiểm dữ liệu; một đoạn văn mượt mà bỏ mất hai chữ đó là đúng
-  thứ §28 cấm.
+Dựng 16/09/2026, tắt 05/11/2026 (bỏ Anthropic API), gỡ khỏi repo 09/11/2026.
+Trang chạy bằng bảng tra của Phase 5. Lý do, thứ còn lại (bảng
+`reco_explanations`) và bài học: README module, mục "Phase 6".
 
 ### Phạm vi Phase 5 (đã xong)
 

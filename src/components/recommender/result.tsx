@@ -34,19 +34,12 @@ export function Result({
   view,
   answered,
   children,
-  why,
   changed = false,
 }: {
   view: ResultView;
   answered: AnsweredRow[];
   /** Thẻ câu hỏi tiếp theo — trang quyết định có hay không. */
   children?: React.ReactNode;
-  /**
-   * Khối "vì sao hợp với bạn" thay cho bản bảng tra — Phase 6 truyền lời giải
-   * thích của Claude (bọc `<Suspense>`) vào đây. Vắng thì trang là trang Phase 5
-   * nguyên vẹn: đó là đường chạy khi không có LLM.
-   */
-  why?: React.ReactNode;
   /** Câu trả lời vừa rồi đổi hành động chính — xem `primaryKeyOf`. */
   changed?: boolean;
 }) {
@@ -58,7 +51,6 @@ export function Result({
         action={view.primary}
         confidence={view.confidence}
         warnings={view.warnings}
-        why={why}
         goalType={view.goalType}
       />
 
@@ -94,7 +86,6 @@ function PrimaryCard({
   action,
   confidence,
   warnings,
-  why,
   goalType,
   changed,
 }: {
@@ -104,7 +95,6 @@ function PrimaryCard({
   goalType: ResultView["goalType"];
   /** Nằm TRONG thẻ này, ngay trên nút đăng ký — không phải một khối ở dưới. */
   warnings: string[];
-  why?: React.ReactNode;
 }) {
   const rest = action.reasons.filter((row) => row.tone !== "good");
   return (
@@ -164,7 +154,7 @@ function PrimaryCard({
         </div>
       )}
 
-      {why ?? <DeterministicWhy action={action} />}
+      <DeterministicWhy action={action} />
 
       {(rest.length > 0 || action.prerequisites.length > 0) && (
         <ul className="mt-3 space-y-2">
@@ -260,14 +250,8 @@ function PrimaryCard({
   );
 }
 
-/**
- * "Vì sao hợp với bạn" bằng bảng tra — bản Phase 5, và là đường lui của Phase 6.
- *
- * Mọi nhánh hỏng của lời giải thích LLM (tắt, timeout, bị cửa kiểm từ chối,
- * không lưu được) đều dựng lại ĐÚNG khối này, nên trang không bao giờ thiếu phần
- * giải thích vì LLM.
- */
-export function DeterministicWhy({ action }: { action: ActionView }) {
+/** "Vì sao hợp với bạn": câu dựng từ mã lý do của engine, tra bảng trong `copy.ts`. */
+function DeterministicWhy({ action }: { action: ActionView }) {
   const good = action.reasons.filter((row) => row.tone === "good");
   if (good.length > 0) {
     return (
