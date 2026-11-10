@@ -49,3 +49,6 @@ next-env.d.ts
 
 # recommendation debugger (§22) — lượt chạy lưu cục bộ bằng `npm run reco:debug -- run … --save`
 /.reco-runs/
+
+# superpowers (brainstorm skill) — trạng thái phiên cục bộ, có cả khoá localhost
+/.superpowers/
