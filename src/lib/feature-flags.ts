@@ -45,24 +45,6 @@ export const START_HERE_PUBLISHED = true;
 export const VIETNAM_ROUTES_PUBLISHED = true;
 
 /**
- * Trang "Mini-game: Catch The Points" (`/catch-the-points`). Nhận bàn giao và
- * tích hợp 05/09/2026 — game là bản V2.1 dựng sẵn, đưa vào site dưới dạng
- * trang tĩnh (nay ở `games/catch-the-points/web/`) và nhúng bằng iframe cùng
- * domain. Tắt cờ suốt buổi để tác giả xem và sửa trên chính bản deploy thật,
- * **bật lại cùng ngày sau khi tác giả duyệt** — cùng lúc với bảng kỷ lục chung
- * (xem mục `gameHighScore` trong CONTENTFUL.md).
- *
- * Bật cờ là công bố: mục hiện trong menu Miles & Points (cả desktop lẫn
- * mobile), vào sitemap, vào ô tìm kiếm, `noindex` được gỡ và dải báo nháp biến
- * mất — tất cả cùng một lúc, không cần sửa chỗ nào khác.
- *
- * **Tắt lại 17/09/2026** theo yêu cầu tác giả, và chặn hẳn: khác các cờ khác,
- * cờ này tắt là trang, file tĩnh `/games/catch-the-points/*` và
- * `/api/game-record` đều trả 404 — không vào được kể cả bằng URL trực tiếp.
- */
-export const CATCH_THE_POINTS_PUBLISHED = false;
-
-/**
  * Công cụ gợi ý thẻ (`/credit-cards/goi-y`) — mặt trước của recommendation
  * engine. Dựng 15/09/2026.
  *

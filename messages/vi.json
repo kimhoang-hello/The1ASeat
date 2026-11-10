@@ -18,7 +18,6 @@
     "awardCharts": "Award Flight Finder",
     "bankAccounts": "Ngân hàng",
     "vietnamRoutes": "Bay về Việt Nam",
-    "catchThePoints": "Mini-game: Catch The Points",
     "bestCards": "Các thẻ tốt nhất",
     "cardRecommender": "Gợi ý thẻ",
     "usCards": "Thẻ Mỹ",
@@ -36,7 +35,6 @@
     "bankAccounts": "Tài khoản chi tiêu và tiết kiệm ở Canada",
     "compare": "Đặt hai, ba thẻ cạnh nhau để xem khác nhau ở đâu",
     "vietnamRoutes": "Về Sài Gòn, Hà Nội, Đà Nẵng tốn bao nhiêu điểm",
-    "catchThePoints": "Mini-game 45 giây: hứng điểm, né phí",
     "bestCards": "Thẻ tốt nhất theo từng mục đích, chọn sẵn kèm lý do",
     "cardRecommender": "Trả lời vài câu, mình gợi ý bước tiếp theo"
   },
@@ -364,9 +362,6 @@
     "vietnamRoutesTitle": "Bay từ Canada về Việt Nam bằng điểm",
     "vietnamRoutesDescription": "Mười hai chặng từ Toronto, Vancouver, Montréal và Calgary về Sài Gòn, Hà Nội và Đà Nẵng: số điểm của sáu chương trình, đường bay và cách chuyển điểm.",
     "breadcrumbVietnamRoutes": "Bay về Việt Nam bằng điểm",
-    "catchThePointsTitle": "Mini-game: Catch The Points",
-    "catchThePointsDescription": "Mini-game 45 giây của Ghế 1A: hứng điểm Aeroplan®, Amex® MR, Avios®, Bonvoy®, né annual fee và devaluation. Xem ai đang giữ kỷ lục.",
-    "breadcrumbCatchThePoints": "Mini-game: Catch The Points",
     "bestCardsTitle": "Các thẻ tốt nhất Canada",
     "bestCardsDescription": "Thẻ tín dụng tốt nhất Canada theo từng mục đích: offers đang chạy, travel, Aeroplan® và thẻ cho người mới.",
     "breadcrumbBestCards": "Các thẻ tốt nhất",
@@ -652,19 +647,6 @@
     "tableName": "Số điểm sáu chương trình cho chặng {origin} → {destination}",
     "hubTableName": "Số điểm rẻ nhất và rẻ thứ hai của mười hai chặng Canada → Việt Nam",
     "draftNotice": "Bản nháp — trang này chưa công bố. Số liệu đã đúng nhưng phần trình bày còn đang sửa."
-  },
-  "game": {
-    "title": "Mini-game: Catch The Points",
-    "subtitle": "Một lượt chơi 45 giây. Kéo vali qua lại để hứng điểm thưởng, né annual fee & devaluation, và tuyệt đối đừng carry balance.",
-    "frameTitle": "Catch The Points — mini-game của Ghế 1A",
-    "draftNotice": "Bản nháp: trang này chưa công bố. Nó chưa có trong menu, sitemap hay ô tìm kiếm, và Google được yêu cầu không index.",
-    "howToTitle": "Chơi thế nào",
-    "howToDesktop": "Máy tính: phím ← →, hoặc A / D. Kéo chuột ngang trong khung game cũng được.",
-    "howToMobile": "Điện thoại: kéo ngón tay sang trái, phải ngay trong khung game.",
-    "howToRule": "Trúng CARRYING A BALANCE là hết lượt ngay, y như quy tắc số 1 ngoài đời.",
-    "noteTitle": "Vài điều nên biết",
-    "noteScore": "Kỷ lục cá nhân và achievements lưu ngay trong trình duyệt của bạn, không gửi đi đâu cả. Đổi máy hoặc xoá dữ liệu duyệt web là mất.",
-    "noteFiction": "Tên chương trình, phí và devaluation trong game chỉ để chơi cho vui. Số liệu thật nằm ở các công cụ bên dưới."
   },
   "bestCards": {
     "hubTitle": "Các thẻ tốt nhất Canada",

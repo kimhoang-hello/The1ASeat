@@ -12,7 +12,6 @@ import {
   CaretDown,
   Calculator,
   CreditCard,
-  GameController,
   List,
   Compass,
   PaperPlaneTilt,
@@ -33,7 +32,6 @@ import { RECOMMENDER_PATH } from "@/lib/recommender/path";
 import { BANK_COMPARE_PATH } from "@/lib/bank-compare-path";
 import {
   BANK_ACCOUNTS_PUBLISHED,
-  CATCH_THE_POINTS_PUBLISHED,
   HOTELS_PUBLISHED,
   RECOMMENDER_PUBLISHED,
   US_CARDS_PUBLISHED,
@@ -420,7 +418,7 @@ export function SiteHeader() {
       icon: ArrowsLeftRight,
     },
     // Hướng dẫn chứ không phải công cụ tra cứu, nhưng có calculator riêng và
-    // người đọc quay lại nó mỗi lần cash out — nên ở đây, trước mini-game.
+    // người đọc quay lại nó mỗi lần cash out — nên ở đây, cuối nhóm.
     // Đường dẫn viết thẳng, cùng lý do với các mục trên.
     {
       href: "/refundable-hotel-trick",
@@ -428,19 +426,6 @@ export function SiteHeader() {
       description: tMenu("refundableHotelTrick"),
       icon: Bed,
     },
-    // Đứng CUỐI nhóm, sau bốn công cụ tra cứu: nó là thứ duy nhất ở đây không
-    // trả lời một câu hỏi nào cả. Đường dẫn viết thẳng, cùng lý do với các mục
-    // trên — xem ghi chú `bank-compare-path` ở đầu file.
-    ...(CATCH_THE_POINTS_PUBLISHED
-      ? [
-          {
-            href: "/catch-the-points",
-            label: nav("catchThePoints"),
-            description: tMenu("catchThePoints"),
-            icon: GameController,
-          },
-        ]
-      : []),
   ];
 
   const cardsActive = pathname === "/credit-cards" || pathname.startsWith("/credit-cards/");

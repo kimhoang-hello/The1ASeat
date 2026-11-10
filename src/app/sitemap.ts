@@ -16,12 +16,10 @@ import {
   bestCardsPath,
   pickSlugs,
 } from "@/lib/best-cards";
-import { CATCH_THE_POINTS_PATH } from "@/lib/catch-the-points-path";
 import { BANK_COMPARE_PATH } from "@/lib/bank-compare";
 import { BANK_ACCOUNTS, bankAccountPath } from "@/lib/bank-accounts";
 import {
   BANK_ACCOUNTS_PUBLISHED,
-  CATCH_THE_POINTS_PUBLISHED,
   HOTELS_PUBLISHED,
   RECOMMENDER_PUBLISHED,
   START_HERE_PUBLISHED,
@@ -203,16 +201,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.7,
     },
-    // Không có `lastModified`: game nằm nguyên trong repo, chỉ đổi lúc deploy.
-    ...(CATCH_THE_POINTS_PUBLISHED
-      ? ([
-          {
-            url: absoluteUrl(CATCH_THE_POINTS_PATH),
-            changeFrequency: "yearly" as const,
-            priority: 0.4,
-          },
-        ] satisfies MetadataRoute.Sitemap)
-      : []),
     { url: absoluteUrl("/about"), changeFrequency: "monthly", priority: 0.5 },
     { url: absoluteUrl("/contact"), changeFrequency: "yearly", priority: 0.3 },
     { url: absoluteUrl("/privacy"), changeFrequency: "yearly", priority: 0.1 },

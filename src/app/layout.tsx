@@ -131,8 +131,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* The strip and the nav bar stick to the top as one block. Sticking
             them separately would mean pinning the bar at a fixed offset, and
             the strip is not a fixed height — it wraps onto a second line on a
-            phone, and disappears entirely once it is dismissed.
-            `StickyChrome` là chỗ quyết định trang nào KHÔNG dính. */}
+            phone, and disappears entirely once it is dismissed. */}
         <StickyChrome>
           <FeaturedOfferBanner />
           <SiteHeader />

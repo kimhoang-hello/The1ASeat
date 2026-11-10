@@ -181,8 +181,8 @@ export function emailKey(email: string): string {
  * cho cả hai trước đây).
  */
 /**
- * Hạn đọc body cho các route công khai (contact, subscribe, game-record).
- * Payload của cả ba chỉ vài KB, người thật gửi xong trong chưa tới một giây kể
+ * Hạn đọc body cho các route công khai (contact, subscribe).
+ * Payload của cả hai chỉ vài KB, người thật gửi xong trong chưa tới một giây kể
  * cả trên 3G — 10 giây chỉ chạm tới khi có người cố tình giữ kết nối.
  */
 export const PUBLIC_BODY_TIMEOUT_MS = 10_000;
@@ -205,7 +205,7 @@ export type JsonBodyResult =
  * trước, chỉ để từ chối sớm client trung thực mà khỏi mở stream.
  *
  * `timeoutMs` là hạn cho CẢ lượt đọc, và BẮT BUỘC. Bản trước để nó tuỳ chọn,
- * và contact/subscribe/game-record đều bỏ trống — một client gửi nửa body rồi
+ * và contact/subscribe đều bỏ trống — một client gửi nửa body rồi
  * giữ kết nối là giữ được request ở `reader.read()` vô hạn, trước cả trần
  * chung của site (vốn chỉ đếm SAU khi body hợp lệ). Đủ kết nối kiểu đó là cạn
  * socket/bộ nhớ của tiến trình duy nhất phục vụ cả site (Codex 28/09/2026).

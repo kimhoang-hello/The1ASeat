@@ -2,14 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { CATCH_THE_POINTS_PATH } from "@/lib/catch-the-points-path";
 
 /**
- * Dải offer + thanh nav dính trên cùng — trừ vài trang tự xin không dính.
- *
- * Trang game là trang duy nhất hiện nay: lúc chơi, khung game cao gần hết màn
- * hình, mà một thanh dính đè lên đó vừa ăn mất chiều cao sân chơi vừa che
- * đúng phần HUD điểm và đồng hồ đếm ngược.
+ * Dải offer + thanh nav dính trên cùng, ở mọi trang.
  *
  * Dưới `lg` khối này TRƯỢT LÊN khi người đọc cuộn xuống và hiện lại ngay khi
  * cuộn lên. Đo 03/10/2026: trên điện thoại nó cao 114–147px suốt lúc đọc, tức
@@ -20,8 +15,6 @@ import { CATCH_THE_POINTS_PATH } from "@/lib/catch-the-points-path";
  * `children` vẫn được layout gốc (Server Component) dựng sẵn rồi truyền vào,
  * nên phần client ở đây chỉ là đường dẫn và vị trí cuộn.
  */
-const NOT_STICKY: string[] = [CATCH_THE_POINTS_PATH];
-
 /** Khoảng màn hình khối này được phép trượt đi — đúng chỗ menu mobile thay cho thanh nav desktop. */
 const HIDE_BELOW = "(width < 64rem)";
 
@@ -34,18 +27,17 @@ const SHOW_AFTER_UP_PX = 12;
 
 export function StickyChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const sticky = !NOT_STICKY.includes(pathname);
   const ref = useRef<HTMLDivElement>(null);
 
   // Trạng thái ẩn gắn với ĐƯỜNG DẪN lúc ẩn: sang trang khác là khối tự hiện
   // lại, không cần effect nào đặt lại state — kể cả khi bấm Back về một vị trí
   // cuộn sâu.
   const [hiddenOn, setHiddenOn] = useState<string | null>(null);
-  const hidden = sticky && hiddenOn === pathname;
+  const hidden = hiddenOn === pathname;
 
   useEffect(() => {
     const chrome = ref.current;
-    if (!sticky || !chrome) return;
+    if (!chrome) return;
 
     const small = window.matchMedia(HIDE_BELOW);
     let lastY = window.scrollY;
@@ -116,7 +108,7 @@ export function StickyChrome({ children }: { children: React.ReactNode }) {
       chrome.removeEventListener("focusin", show);
       cancelAnimationFrame(frame);
     };
-  }, [sticky, pathname]);
+  }, [pathname]);
 
   // Chiều cao THẬT của khối, ra biến `--chrome-h` cho phần tử nào phải dính sát
   // mép dưới nó — hàng tên cột của bảng Transfer Partners Mỹ. `top-chrome`
@@ -138,8 +130,8 @@ export function StickyChrome({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // `z-50` giữ nguyên ở cả hai nhánh: panel tìm kiếm và menu mobile thả xuống
-  // từ thanh này, chúng vẫn phải nằm trên nội dung trang.
+  // `z-50`: panel tìm kiếm và menu mobile thả xuống từ thanh này, chúng phải
+  // nằm trên nội dung trang.
   //
   // Cột flex cao TỐI ĐA một màn hình: phần nào của khối dính thò khỏi mép
   // dưới màn hình thì không bao giờ cuộn tới được (cuộn chỉ trượt trang phía
@@ -156,7 +148,7 @@ export function StickyChrome({ children }: { children: React.ReactNode }) {
     hidden ? "-translate-y-full" : ""
   }`;
   return (
-    <div ref={ref} className={`${sticky ? "sticky top-0" : "relative"} z-50 ${cap} ${slide}`}>
+    <div ref={ref} className={`sticky top-0 z-50 ${cap} ${slide}`}>
       {children}
     </div>
   );
