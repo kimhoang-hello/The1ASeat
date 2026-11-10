@@ -26,7 +26,7 @@
     "audit:best-cards": "tsx scripts/audit-best-cards.mts",
     "audit:card-mentions": "tsx scripts/audit-card-mentions.mts",
     "indexnow": "tsx scripts/indexnow.mts",
-    "record:offer-history": "tsx scripts/record-offer-history.mts",
+    "record:offer-history": "tsx --env-file-if-exists=.env.local scripts/record-offer-history.mts",
     "sync:us-transfer-bonuses": "tsx scripts/sync-us-transfer-bonuses.mts",
     "reco:forget": "tsx scripts/reco-forget.mts",
     "reco:debug": "tsx scripts/reco-debug.mts",

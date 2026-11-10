@@ -10,9 +10,10 @@ name: Check FinlyWealth rebate amounts
 # nào), trong khi site vẫn trả 200 trong 0.4 giây khi gọi từ máy nhà. Hai ngày
 # liền mỗi ngày mất một trong hai lượt.
 #
-# Ba job còn lại (`expire-offers`, `sync-videos`, `offer-history`) vẫn đi qua
-# ghe1a.com và vẫn dính đúng rủi ro đó — chưa chuyển vì chúng cần những thứ
-# khác nữa từ server, không chỉ token Contentful.
+# `offer-history` cũng chạy trong runner từ 09/11/2026. Hai job còn lại
+# (`expire-offers`, `sync-videos`) vẫn đi qua ghe1a.com và vẫn dính đúng rủi ro
+# đó — chưa chuyển vì chúng cần những thứ khác nữa từ server, không chỉ token
+# Contentful.
 on:
   schedule:
     # Hai lượt mỗi ngày, cách nhau 12 tiếng. Một lượt là không đủ: 04/09/2026
@@ -51,8 +52,7 @@ jobs:
     # khác.
     #
     # Đây cũng là lý do KHÔNG bỏ `workflow_dispatch` cho xong: chạy tay trên
-    # `main` là cách duy nhất kiểm được chính đường chạy trong runner (gọi
-    # route `/api/check-rebates` chỉ kiểm được đường trên server).
+    # `main` là cách duy nhất kiểm được chính đường chạy trong runner.
     environment: contentful-write
     steps:
       - uses: actions/checkout@v4

@@ -29,10 +29,11 @@ import { oneActiveAt } from "@/lib/recommendation/temporal";
 // trang nữa — xem đầu `src/lib/finly-api.ts` cho lý do và hai ca rebate bị
 // pause mà tiêu đề không bao giờ cho thấy.
 //
-// Phần việc nằm ở ĐÂY chứ không nằm trong `app/api/check-rebates/route.ts`, để
-// chạy được từ cả hai phía: route (webhook, gọi tay) và
-// `scripts/check-rebates.mts` (runner của GitHub Actions). Lý do tách ra là
-// chuyện đo được ngày 09/09/2026 — xem đầu file script.
+// Người gọi duy nhất là `scripts/check-rebates.mts` (`npm run job:check-rebates`):
+// theo lịch trong runner của GitHub Actions, hoặc chạy tay trên máy có
+// `.env.local`. Route `/api/check-rebates` (đường gọi tay qua site) đã gỡ
+// 09/11/2026 — nó làm đúng việc của script, qua một endpoint công khai có
+// quyền ghi Contentful.
 
 const CONTENT_TYPE = "creditCardOffer";
 

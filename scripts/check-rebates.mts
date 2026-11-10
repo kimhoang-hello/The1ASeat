@@ -2,9 +2,9 @@
 //
 //   npm run job:check-rebates
 //
-// Chạy hai lượt mỗi ngày bởi .github/workflows/check-rebates.yml. Đây là cùng
-// một phép so mà `/api/check-rebates` chạy — cả hai gọi `runCheckRebates` trong
-// `src/lib/check-rebates.ts`, không bên nào chép lại của bên nào.
+// Chạy hai lượt mỗi ngày bởi .github/workflows/check-rebates.yml. Phép so nằm
+// trong `runCheckRebates` (`src/lib/check-rebates.ts`). Chạy tay: cùng lệnh này
+// trên máy có `.env.local`, hoặc "Run workflow" trên `main`.
 //
 // VÌ SAO CHẠY TRONG RUNNER CHỨ KHÔNG GỌI QUA ghe1a.com NỮA:
 //
@@ -155,9 +155,8 @@ result = {
   unchanged: result.unchanged.filter((slug) => !written.has(slug)),
 };
 
-// In nguyên khối JSON như route vẫn trả, để log của lượt chạy trong runner đọc
-// giống hệt log của những lượt gọi qua HTTP trước đây — nhật ký cũ và mới so
-// được với nhau.
+// In nguyên khối JSON kết quả, cùng hình dạng với log của những lượt gọi qua
+// HTTP trước 09/09/2026 — nhật ký cũ và mới so được với nhau.
 console.log(JSON.stringify(result));
 
 if (result.updated.length) {
@@ -175,7 +174,6 @@ if (result.errors.length) {
   for (const err of result.errors) console.error(`  ·  ${err.slug}: ${err.message}`);
 }
 
-// Đỏ khi có lỗi, cùng ngưỡng với mã 500 mà route trả: gom lỗi vào body rồi vẫn
-// xanh nghĩa là FinlyWealth đổi markup hay timeout thì con số cũ nằm lại trên
+// Đỏ khi có BẤT KỲ lỗi nào: gom lỗi vào log rồi vẫn xanh nghĩa là FinlyWealth đổi markup hay timeout thì con số cũ nằm lại trên
 // site vô thời hạn, không ai được báo.
 process.exit(result.errors.length ? 1 : 0);

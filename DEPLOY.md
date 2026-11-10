@@ -40,10 +40,9 @@ sau — không phải mọi biến ở trên:
 
 | Ở đâu trên GitHub | Biến | Job dùng |
 |---|---|---|
-| Repo secret | `EXPIRE_OFFERS_SECRET` | `expire-offers`, `offer-history` |
+| Repo secret | `EXPIRE_OFFERS_SECRET` | `expire-offers` |
 | Repo secret | `SYNC_VIDEOS_SECRET` | `sync-videos` |
-| Environment `contentful-write` (chỉ branch `main`) | `CONTENTFUL_SPACE_ID`, `CONTENTFUL_ACCESS_TOKEN`, `CONTENTFUL_MANAGEMENT_TOKEN` | `check-rebates` |
-| Repo secret | `VPS_HOST`, `VPS_PORT`, `VPS_USERNAME`, `VPS_SSH_KEY`, `VPS_APP_PATH` | `deploy` |
+| Environment `contentful-write` (chỉ branch `main`) | `CONTENTFUL_SPACE_ID`, `CONTENTFUL_ACCESS_TOKEN`, `CONTENTFUL_MANAGEMENT_TOKEN`, `FINLY_API_KEY` | `check-rebates`, `check-bank-rebates`, `offer-history` (chỉ hai biến đọc) |
 
 `KIT_V4_API_KEY` chỉ nằm trên server — không workflow nào đọc nó. Site không
 còn dùng `ANTHROPIC_API_KEY` từ 05/11/2026; xoá được khỏi hPanel.

@@ -12,18 +12,6 @@ import historyJson from "../../data/offer-history.json";
  * đổi, nên nó là nhật ký thay đổi chứ không phải bản chép hằng ngày.
  */
 
-export interface OfferSnapshotCard {
-  slug: string;
-  name: string;
-  welcomeBonus?: string;
-  rebate?: string;
-}
-
-export interface OfferSnapshot {
-  takenAt: string;
-  cards: OfferSnapshotCard[];
-}
-
 /** Một lần con số của thẻ đổi. `at` là NGÀY (YYYY-MM-DD) — giờ giấc không thêm
  *  thông tin gì cho thứ được đọc mỗi ngày một lần. */
 export interface OfferHistoryEntry {

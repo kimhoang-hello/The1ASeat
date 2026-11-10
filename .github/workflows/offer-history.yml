@@ -9,9 +9,9 @@ name: Ghi lịch sử welcome bonus và rebate
 # nếu file đổi. Lịch sử phải nằm trong repo — một route đang chạy trên Hostinger
 # không sửa được file nguồn, và ổ đĩa của nó dựng lại mỗi lần deploy.
 #
-# Chiều dữ liệu đi ngược so với ba job kia: runner KHÔNG có token Contentful
-# (chỉ có EXPIRE_OFFERS_SECRET), nên nó gọi `/api/offer-snapshot` để server đọc
-# hộ rồi trả về.
+# Script đọc thẳng Contentful qua CDA (bản đã publish) trong runner, như
+# check-rebates.yml. Trước 09/11/2026 nó gọi vòng qua `/api/offer-snapshot`
+# trên ghe1a.com, từ thời runner chưa có token Contentful.
 on:
   schedule:
     # 9:00 UTC — sau lượt sáng của check-rebates (8:30) và check-bank-rebates
@@ -29,6 +29,10 @@ on:
 jobs:
   record:
     runs-on: ubuntu-latest
+    # Token CDA là secret của environment `contentful-write` (chỉ cho branch
+    # `main`) — cùng chỗ và cùng lý do với check-rebates.yml. Job này chỉ dùng
+    # hai biến ĐỌC; token management không được đưa vào đây.
+    environment: contentful-write
     permissions:
       # Mặc định GITHUB_TOKEN chỉ đọc; job này phải đẩy commit lên main.
       contents: write
@@ -44,7 +48,8 @@ jobs:
 
       - name: Ghi lại số nào vừa đổi
         env:
-          EXPIRE_OFFERS_SECRET: ${{ secrets.EXPIRE_OFFERS_SECRET }}
+          CONTENTFUL_SPACE_ID: ${{ secrets.CONTENTFUL_SPACE_ID }}
+          CONTENTFUL_ACCESS_TOKEN: ${{ secrets.CONTENTFUL_ACCESS_TOKEN }}
         run: npm run record:offer-history
 
       - name: Commit nếu lịch sử có dòng mới

@@ -171,8 +171,8 @@ local), thêm 4 biến:
 > không bị ghi vào những chỗ đó, và tick ô **Secret** khiến Contentful cũng
 > giấu luôn giá trị đó trong giao diện của nó. Từ 29/08/2026 route CHỈ còn
 > nhận Header (xem [src/lib/job-auth.ts](src/lib/job-auth.ts)): webhook hay
-> caller nào còn gọi `?secret=...` sẽ nhận 401. Ba job route
-> (`expire-offers`, `check-rebates`, `sync-videos`) cũng chỉ còn nhận **POST**,
+> caller nào còn gọi `?secret=...` sẽ nhận 401. Hai job route
+> (`expire-offers`, `sync-videos`) cũng chỉ còn nhận **POST**,
 > không mở được bằng cách dán URL vào browser.
 
 **4. Kiểm tra** — Publish thử 1 entry bất kỳ, đợi ~10 giây rồi mở lại `ghe1a.com`
@@ -329,42 +329,43 @@ nếu lệch — nên con số hiển thị trên web luôn khớp với số ng
 Chỉ những thẻ có `Apply Url` trỏ tới trang `/rebates/...` của FinlyWealth mới
 được kiểm tra; thẻ dùng link referral riêng của ngân hàng thì job bỏ qua.
 
-Phép so nằm trong [`src/lib/check-rebates.ts`](src/lib/check-rebates.ts) và có
-HAI người gọi cùng gọi một hàm:
+Phép so nằm trong [`src/lib/check-rebates.ts`](src/lib/check-rebates.ts), gọi
+bằng `npm run job:check-rebates`:
 
-- [`.github/workflows/check-rebates.yml`](.github/workflows/check-rebates.yml)
-  → `npm run job:check-rebates`, chạy **thẳng trong runner**. Đây là đường theo
-  lịch. Cần ba secret trong **environment `contentful-write`** (không phải
-  secret cấp repo): `CONTENTFUL_SPACE_ID`, `CONTENTFUL_ACCESS_TOKEN` (CDA) và
-  `CONTENTFUL_MANAGEMENT_TOKEN` (CMA).
-- [`/api/check-rebates`](src/app/api/check-rebates/route.ts) → đường gọi tay,
-  dùng `EXPIRE_OFFERS_SECRET` như ba route job kia.
+- Theo lịch: [`.github/workflows/check-rebates.yml`](.github/workflows/check-rebates.yml)
+  chạy lệnh đó **thẳng trong runner**. Cần các secret trong **environment
+  `contentful-write`** (không phải secret cấp repo): `CONTENTFUL_SPACE_ID`,
+  `CONTENTFUL_ACCESS_TOKEN` (CDA), `CONTENTFUL_MANAGEMENT_TOKEN` (CMA) và
+  `FINLY_API_KEY`.
+- Chạy tay: bấm **Run workflow** trên `main`, hoặc chạy cùng lệnh trên máy có
+  `.env.local`.
 
-Trước 09/09/2026 chỉ có route, và workflow gọi nó bằng `curl`. Bỏ vì edge
-Hostinger chặn IP của runner GitHub — 403 rồi tới chặn thẳng ở tầng TCP, mất
-đều một trong hai lượt mỗi ngày trong khi site vẫn khoẻ. Lý do đầy đủ ở đầu
-[`scripts/check-rebates.mts`](scripts/check-rebates.mts).
+Trước 09/09/2026 workflow gọi route `/api/check-rebates` trên site bằng `curl`.
+Bỏ vì edge Hostinger chặn IP của runner GitHub — 403 rồi tới chặn thẳng ở tầng
+TCP, mất đều một trong hai lượt mỗi ngày trong khi site vẫn khoẻ (lý do đầy đủ ở
+đầu [`scripts/check-rebates.mts`](scripts/check-rebates.mts)). Route đó gỡ hẳn
+ngày 09/11/2026: nó chỉ còn là một cửa gọi tay thứ ba cho cùng một việc.
 
 **1. Thêm 1 biến môi trường cho site live** — vào đúng chỗ bạn đã điền
 `CONTENTFUL_SPACE_ID` (hPanel → website → Environment variables), thêm:
 
 | Biến                   | Giá trị                                                                 |
 |-------------------------|--------------------------------------------------------------------------|
-| `EXPIRE_OFFERS_SECRET`  | một chuỗi bất kỳ bạn tự nghĩ ra, để không ai gọi được ba route dưới đây nếu không có nó |
+| `EXPIRE_OFFERS_SECRET`  | một chuỗi bất kỳ bạn tự nghĩ ra, để không ai gọi được route dưới đây nếu không có nó |
 
-Secret này che BA route: `/api/expire-offers` và `/api/offer-snapshot` (GitHub
-Actions gọi theo lịch) và `/api/check-rebates` (nay chỉ còn là đường CHẠY TAY —
-lượt theo lịch không đi qua route nữa).
+Secret này che đúng MỘT route: `/api/expire-offers` (GitHub Actions gọi theo
+lịch). Hai route từng dùng chung nó, `/api/check-rebates` và
+`/api/offer-snapshot`, đã gỡ 09/11/2026 — hai job đó nay chạy thẳng trong runner.
 
 (`CONTENTFUL_MANAGEMENT_TOKEN` đã cần có sẵn từ phần "Tự động đăng bài khi có
-video YouTube mới" ở trên — hai route này dùng lại, không cần thêm.)
+video YouTube mới" ở trên — route này dùng lại, không cần thêm.)
 
 **2a. Secret cấp repo** — **Settings → Secrets and variables → Actions → New
 repository secret**:
 
 | Secret | Dùng cho | Giá trị |
 |---|---|---|
-| `EXPIRE_OFFERS_SECRET` | `expire-offers` và `offer-history` (cả hai gọi route qua HTTP) | giống hệt giá trị bạn vừa điền ở bước 1 |
+| `EXPIRE_OFFERS_SECRET` | `expire-offers` (gọi route qua HTTP) | giống hệt giá trị bạn vừa điền ở bước 1 |
 
 **2b. Secret của environment `contentful-write`** — **Settings → Environments →
 `contentful-write` → Environment secrets**. Environment này đã tạo sẵn và **chỉ
@@ -376,8 +377,8 @@ cho phép branch `main`**:
 | `CONTENTFUL_ACCESS_TOKEN` | giống biến cùng tên trên hPanel (token Delivery API) |
 | `CONTENTFUL_MANAGEMENT_TOKEN` | giống biến cùng tên trên hPanel (token Content management) |
 
-Ba cái này chỉ `check-rebates` cần, vì từ 09/09/2026 job đó chạy THẲNG TRONG
-RUNNER thay vì gọi route qua HTTP. Thiếu chúng thì job đỏ ngay ở bước đầu với
+`check-rebates` cần cả ba, vì từ 09/09/2026 job đó chạy THẲNG TRONG RUNNER thay
+vì gọi route qua HTTP. `offer-history` (từ 09/11/2026) chỉ đọc hai biến đầu. Thiếu chúng thì job đỏ ngay ở bước đầu với
 câu `Thiếu biến môi trường: …`, không chạy nửa vời.
 
 > **Vì sao là environment chứ không phải secret cấp repo.**

@@ -71,8 +71,8 @@ runs:
             exit 0
           fi
 
-          # 401 thì gọi thêm mười lượt cũng vậy — cùng lý do đã ghi trong
-          # `record-offer-history.mts`. Đỏ ngay là tín hiệu đúng.
+          # 401 là secret sai: gọi thêm mười lượt cũng vậy. Đỏ ngay là tín
+          # hiệu đúng.
           if [ "$code" = "401" ]; then
             echo "::error::Token sai — không thử lại."
             exit 1
