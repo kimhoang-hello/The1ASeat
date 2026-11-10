@@ -12,17 +12,34 @@ const posts_t = translate("posts");
 const spaceId = process.env.CONTENTFUL_SPACE_ID;
 const accessToken = process.env.CONTENTFUL_ACCESS_TOKEN;
 
-export const isContentfulConfigured = Boolean(spaceId && accessToken);
-
 // `CONTENTFUL_HOST=preview.contentful.com` (kèm token Preview API ở
 // `CONTENTFUL_ACCESS_TOKEN`) cho chạy site ở máy với cả bản NHÁP — để tác giả
 // duyệt một bài trước khi bấm Publish. Không đặt thì SDK dùng CDA như cũ;
 // Hostinger không có biến này.
 const host = process.env.CONTENTFUL_HOST;
 
-const client = isContentfulConfigured
-  ? createClient({ space: spaceId!, accessToken: accessToken!, ...(host ? { host } : {}) })
-  : null;
+const client =
+  spaceId && accessToken
+    ? createClient({ space: spaceId, accessToken, ...(host ? { host } : {}) })
+    : null;
+
+/**
+ * Thiếu cấu hình thì NÉM, không rơi về dữ liệu nào khác.
+ *
+ * Trước 09/11/2026 site có "chế độ mẫu": thiếu hai biến này là lặng lẽ phục vụ
+ * `content/sample/*.json` — vài thẻ và offer giả từ 08/2026. Trên production
+ * đó là hướng hỏng tệ nhất: một biến bị xoá nhầm trong hPanel thành một bản
+ * build xanh in số liệu bịa cho người đọc. Ném ở đây thì bản build đó đỏ và
+ * Hostinger giữ nguyên bản đang chạy.
+ */
+function contentful() {
+  if (!client) {
+    throw new Error(
+      "Contentful chưa cấu hình: thiếu CONTENTFUL_SPACE_ID hoặc CONTENTFUL_ACCESS_TOKEN (xem .env.example).",
+    );
+  }
+  return client;
+}
 
 function escapeAttribute(value: string): string {
   return value
@@ -566,7 +583,7 @@ async function getAllEntries<S extends EntrySkeletonType>(
   let pageNext: string | undefined;
 
   for (;;) {
-    const res = await client!.getEntriesWithCursor<S>({
+    const res = await contentful().getEntriesWithCursor<S>({
       ...query,
       limit: PAGE_SIZE,
       ...(pageNext ? { pageNext } : {}),
@@ -610,6 +627,6 @@ export async function fetchContentfulTransferBonuses(): Promise<TransferBonus[]>
 }
 
 export async function fetchContentfulAuthor(): Promise<AuthorProfile | null> {
-  const res = await client!.getEntries<AuthorSkeleton>({ content_type: "author", limit: 1 });
+  const res = await contentful().getEntries<AuthorSkeleton>({ content_type: "author", limit: 1 });
   return res.items[0] ? toAuthor(res.items[0]) : null;
 }

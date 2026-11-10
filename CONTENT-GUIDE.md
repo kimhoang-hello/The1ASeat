@@ -94,5 +94,5 @@ Câu công bố affiliate trên trang khách sạn nằm ở `messages/vi.json` 
   được (Contentful chặn xoá trực tiếp entry đang published).
 - Nếu server chạy local (`npm run dev`) không thấy nội dung mới ngay, refresh
   lại trang — nội dung được lấy trực tiếp từ Contentful mỗi lần tải trang.
-- Nếu vì lý do nào đó Contentful bị lỗi/mất kết nối, site tự động dùng lại nội
-  dung mẫu trong `content/sample/*.json` để không bị sập trang.
+- Nếu Contentful bị lỗi hay mất kết nối, site giữ nguyên bản trang đã dựng gần
+  nhất cho tới khi đọc lại được. Site không có "nội dung mẫu" nào để thay vào.

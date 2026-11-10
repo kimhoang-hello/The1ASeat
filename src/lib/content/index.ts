@@ -1,17 +1,11 @@
 import { unstable_cache } from "next/cache";
+import authorFallback from "./author-fallback.json";
 import {
   fetchContentfulAuthor,
   fetchContentfulCreditCardOffers,
   fetchContentfulPosts,
   fetchContentfulTransferBonuses,
-  isContentfulConfigured,
 } from "./contentful";
-import {
-  getSampleAuthor,
-  getSampleCreditCardOffers,
-  getSamplePosts,
-  getSampleTransferBonuses,
-} from "./sample";
 import { isElevatedLive } from "../credit-card-state";
 import { settleWithin } from "../deadline";
 import type { AuthorProfile, BlogPost, CreditCardOffer, TransferBonus } from "./types";
@@ -53,8 +47,7 @@ const getCachedTransferBonuses = cached(fetchContentfulTransferBonuses, "content
 const getCachedAuthor = cached(fetchContentfulAuthor, "contentful-author");
 
 export async function getPosts(): Promise<BlogPost[]> {
-  if (isContentfulConfigured) return getCachedPosts();
-  return getSamplePosts();
+  return getCachedPosts();
 }
 
 /**
@@ -131,9 +124,7 @@ function creditCardPriority(offer: CreditCardOffer): number {
 export async function getCreditCardOffers(): Promise<CreditCardOffer[]> {
   // Sắp xếp nằm ngoài cache: thứ tự là quyết định của site, không phải dữ
   // liệu Contentful trả về, nên đổi nó không cần chờ cache hết hạn.
-  const offers = isContentfulConfigured
-    ? await getCachedCreditCardOffers()
-    : await getSampleCreditCardOffers();
+  const offers = await getCachedCreditCardOffers();
   return [...offers].sort((a, b) => creditCardPriority(a) - creditCardPriority(b));
 }
 
@@ -148,22 +139,21 @@ export async function getCreditCardOfferBySlug(slug: string): Promise<CreditCard
  * (nút "đi tiếp" của bài deal Canada) chỉ được tính bonus Canada.
  */
 export async function getTransferBonuses(): Promise<TransferBonus[]> {
-  if (isContentfulConfigured) {
-    // Gắn lại `region` NGOÀI cache: bản cache dựng trước 06/11/2026 không có
-    // trường này, và trang lọc theo nó — thiếu là bonus Canada biến mất tới
-    // lúc cache hết hạn.
-    const bonuses = await getCachedTransferBonuses();
-    return bonuses.map((bonus) => ({ ...bonus, region: "ca" }));
-  }
-  return getSampleTransferBonuses();
+  // Gắn lại `region` NGOÀI cache: bản cache dựng trước 06/11/2026 không có
+  // trường này, và trang lọc theo nó — thiếu là bonus Canada biến mất tới
+  // lúc cache hết hạn.
+  const bonuses = await getCachedTransferBonuses();
+  return bonuses.map((bonus) => ({ ...bonus, region: "ca" }));
 }
 
+/**
+ * Entry `author` bị unpublish (CDA trả 0 dòng) thì dùng bản dự phòng trong
+ * repo — bio thật của tác giả chép lúc dựng site, không phải nội dung giả.
+ * Trang chủ và trang Giới thiệu nhờ vậy không gãy vì một cú bấm nhầm. Lỗi gọi
+ * Contentful thì vẫn ném như mọi hàm khác ở đây.
+ */
 export async function getAuthor(): Promise<AuthorProfile> {
-  if (isContentfulConfigured) {
-    const author = await getCachedAuthor();
-    if (author) return author;
-  }
-  return getSampleAuthor();
+  return (await getCachedAuthor()) ?? (authorFallback as AuthorProfile);
 }
 
 export * from "./types";

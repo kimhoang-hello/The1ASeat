@@ -1,51 +1,52 @@
 # Ghế 1A
 
-Blog cá nhân về Miles & Points và Award Travel, xây bằng Next.js (App
-Router), Tailwind CSS 4, và tích hợp Contentful (tuỳ chọn). Website chỉ có
-phiên bản tiếng Việt.
+Site tiếng Việt về Miles & Points, thẻ tín dụng và Award Travel cho người Việt ở
+Canada. Next.js 16 (App Router), Tailwind CSS 4, nội dung từ Contentful.
 
-## Bắt đầu
+## Chạy ở máy
 
 ```bash
 npm install
 npm run dev
 ```
 
-Mở [http://localhost:3000](http://localhost:3000).
+Cần `.env.local` có `CONTENTFUL_SPACE_ID` và `CONTENTFUL_ACCESS_TOKEN` (mẫu ở
+[.env.example](.env.example)). Site không có dữ liệu mẫu: thiếu hai biến này là
+trang báo lỗi ngay.
 
-## Sửa nội dung / viết bài
+## Tài liệu
 
-Xem [CONTENT-GUIDE.md](CONTENT-GUIDE.md) — hướng dẫn sửa text giao diện và
-đăng bài blog mới, không cần biết code.
+| File | Nội dung |
+|---|---|
+| [CONTENT-GUIDE.md](CONTENT-GUIDE.md) | Sửa chữ giao diện và đăng bài, không cần biết code |
+| [CONTENTFUL.md](CONTENTFUL.md) | Content model, webhook, các job tự động |
+| [DEPLOY.md](DEPLOY.md) | Hostinger tự deploy khi push `main`; biến môi trường; cache |
+| [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md) | Token màu/chữ/khoảng cách, đặc tả thành phần UI |
+| [SEO.md](SEO.md) | Việc SEO đã làm và còn lại |
+| [AGENTS.md](AGENTS.md) | Ghi chú cho agent: sự thật đã kiểm, quyết định có chủ ý, chạy gì trước khi kết luận |
+| [HANDOFF.md](HANDOFF.md) | Recommendation engine của trang Gợi ý thẻ |
 
-## Giao diện
+## Cấu trúc
 
-Xem [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md) — token màu/chữ/khoảng cách, đặc tả
-từng thành phần UI, và checklist khi thêm giao diện mới.
+| Đường dẫn | Nội dung |
+|---|---|
+| `src/app/` | Trang và route API (App Router) |
+| `src/components/` | Component UI |
+| `src/lib/` | Dữ liệu trong repo (thẻ Mỹ, khách sạn, tài khoản ngân hàng, bảng award) và logic |
+| `src/lib/content/` | Tầng đọc Contentful (bài viết, thẻ Canada, transfer bonus, tác giả) |
+| `src/lib/recommendation/`, `src/lib/recommender/` | Engine và lớp trình bày của trang Gợi ý thẻ |
+| `messages/vi.json` | Chuỗi giao diện tiếng Việt |
+| `scripts/` | Audit và job (`npm run audit:*`, `npm run job:*`) |
+| `data/` | Dữ liệu do job GitHub Actions ghi (lịch sử offer, transfer bonus Mỹ) |
 
-## Cấu trúc chính
+## Kiểm trước khi push
 
-| Đường dẫn                        | Nội dung                                           |
-|-----------------------------------|-----------------------------------------------------|
-| `src/app/`                         | Các trang (App Router)                              |
-| `src/components/`                 | Component UI (layout, home sections, calculator...)  |
-| `src/lib/content/`                 | Tầng dữ liệu: Contentful hoặc nội dung mẫu           |
-| `content/sample/*.json`           | Nội dung mẫu (bài viết, thẻ tín dụng, transfer bonus)|
-| `messages/vi.json`                | Chuỗi giao diện tiếng Việt                           |
+```bash
+npm run lint
+npx tsc --noEmit
+npm test
+npm run build
+```
 
-## Nội dung
-
-Mặc định site chạy với nội dung mẫu trong `content/sample/`. Để chuyển sang
-Contentful thật, xem [CONTENTFUL.md](CONTENTFUL.md) rồi điền `CONTENTFUL_SPACE_ID`
-và `CONTENTFUL_ACCESS_TOKEN` vào `.env.local` (copy từ `.env.example`).
-
-## Deploy
-
-Xem [DEPLOY.md](DEPLOY.md) để deploy lên Hostinger VPS (PM2 + Nginx + GitHub Actions CI/CD).
-
-## Stack
-
-- [Next.js 16](https://nextjs.org) (App Router, Turbopack)
-- [Tailwind CSS 4](https://tailwindcss.com)
-- [Contentful](https://www.contentful.com) — CMS (tuỳ chọn, có fallback nội dung mẫu)
-- [Phosphor Icons](https://phosphoricons.com)
+Các audit nội dung (`npm run audit:*`) và khi nào chạy cái nào: xem
+[CLAUDE.md](CLAUDE.md) và mục "Chạy gì trước khi kết luận" trong AGENTS.md.

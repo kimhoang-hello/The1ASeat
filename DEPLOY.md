@@ -20,8 +20,9 @@ website trên hPanel → bấm **Redeploy**.
 `.env.local` — file đó chỉ dùng khi chạy local). Cần các biến giống
 [.env.example](.env.example):
 
-- `CONTENTFUL_SPACE_ID`, `CONTENTFUL_ACCESS_TOKEN` — bắt buộc để site đọc nội dung
-  thật thay vì dữ liệu mẫu trong `content/sample/`
+- `CONTENTFUL_SPACE_ID`, `CONTENTFUL_ACCESS_TOKEN` — BẮT BUỘC. Thiếu một trong
+  hai là bản build hỏng (cố ý: site không có dữ liệu mẫu để rơi về), và
+  Hostinger giữ nguyên bản đang chạy.
 - `KIT_API_KEY`, `KIT_FORM_ID` — cho form đăng ký bản tin. Thiếu thì form trả về
   lỗi `not_configured`.
 - `RESEND_API_KEY` — gửi email liên hệ từ `/contact` về info@ghe1a.com và email
@@ -100,4 +101,4 @@ biết. Hai lỗi, cả hai chỉ có trong môi trường build của Hostinger
 `next dev` vẫn dùng Turbopack — chỉ bản build production đổi. Muốn quay lại
 Turbopack thì bỏ cờ `--webpack` trong `package.json`, push, rồi PHẢI xem tab
 Deployments cho tới khi lượt đó "Completed".
-- Xem [CONTENTFUL.md](CONTENTFUL.md) để chuyển từ nội dung mẫu sang Contentful thật.
+- Content model và các job ghi vào Contentful: xem [CONTENTFUL.md](CONTENTFUL.md).

@@ -17,9 +17,6 @@ mỗi lần, không nhớ gì giữa các phiên). Ghi lại để không phải
 - **Tính đúng sai của số liệu thẻ** — chỉ đối chiếu được với trang ngân hàng,
   không phải việc của review code.
 - **Thẩm mỹ, brand, thumbnail, kịch bản video.**
-- **Chế độ sample** (`content/sample/*.json`, chạy khi chưa cấu hình
-  Contentful): đó là đường dev, không phải production. Đừng chấm High cho lỗi
-  chỉ xảy ra ở đó.
 
 ## Sự thật đã kiểm chứng — đừng đoán lại
 

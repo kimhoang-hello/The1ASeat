@@ -3,7 +3,7 @@
 Khi bạn tạo Contentful Space, tạo 4 Content Type đầu tiên sau đây với đúng Field ID (chữ thường,
 camelCase) để khớp với code trong `src/lib/content/contentful.ts`. Sau khi có
 **Space ID** và một **Content Delivery API access token**, điền vào `.env.local`
-(copy từ `.env.example`) — site sẽ tự chuyển từ nội dung mẫu sang Contentful.
+(copy từ `.env.example`). Hai biến này bắt buộc: thiếu thì site không build được.
 
 ## `blogPost`
 
@@ -115,9 +115,8 @@ Mẹo viết:
 | bioVi    | Long text   |
 | bioEn    | Long text   |
 
-Cho tới khi bạn cấu hình xong, site chạy với nội dung mẫu ở `content/sample/*.json`
-— chỉnh sửa trực tiếp các file này để thay nội dung demo bằng nội dung thật nhanh
-hơn nếu bạn muốn bắt đầu với Markdown/JSON thay vì Contentful.
+Entry `author` bị unpublish thì trang chủ và trang Giới thiệu dùng bản bio dự
+phòng trong repo (`src/lib/content/author-fallback.json`) cho tới khi publish lại.
 
 ## `gameHighScore` (không còn dùng)
 
