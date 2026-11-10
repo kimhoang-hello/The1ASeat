@@ -8,6 +8,12 @@ File này dành cho agent đọc code ở đây (Codex chạy `codex exec` khở
 mỗi lần, không nhớ gì giữa các phiên). Ghi lại để không phải tìm lại từ đầu, và
 để không lặp lại những nhầm lẫn đã xảy ra.
 
+**Cách đọc file này.** File rất dài, và Codex chỉ TỰ NẠP 32,768 byte đầu
+(`project_doc_max_bytes` mặc định; đo 10/11/2026 là tới giữa mục "Trang Bắt đầu
+ở đây"). Phần còn lại phải tự mở: `grep -n '^## ' AGENTS.md` ra mục lục, rồi
+đọc mục liên quan tới chỗ đang rà. Hai mục nên mở trước tiên dù rà gì: "Chạy gì
+trước khi kết luận" và "Đâu là chỗ đáng soi nhất". Mục mới ghi ở CUỐI file.
+
 ## Không nhận xét về
 
 - **Câu chữ tiếng Việt, giọng văn, thuật ngữ.** Có luật riêng: xưng "bạn"; giữ
@@ -1402,6 +1408,7 @@ vào được bằng URL, `noindex`, dải báo nháp; bật cờ là hiện "�
 ```
 npm run lint
 npx tsc --noEmit
+npm test                    # mọi *.test.ts trong src/, ~25 giây
 npm run build
 npm run audit:trademarks    # thiếu ®/™
 npm run audit:rebates       # số rebate lệch FinlyWealth (tài khoản ngân hàng)
@@ -4801,3 +4808,64 @@ nhưng nút Apply là link referral (tác giả chốt 09/10 giữ 70,000). NBC 
 **Chờ tác giả:** WestJet RBC® hết hạn 18/11 — thẻ elevated từ lần publish đầu nên `expire-offers` không tự khôi phục
 được, job sẽ đỏ từ 19/11 tới khi sửa tay. Tangerine® Savings lãi khuyến mãi 4.50% hết 30/11. Wealthsimple® 5%/35 ngày
 (mục 21/10) vẫn chưa ghi.
+
+## Audit dọn dẹp codebase 09–10/11/2026 — đã gỡ, đừng dựng lại; đừng đề xuất lại
+
+Tác giả: audit toàn bộ codebase, "ưu tiên xoá hơn đơn giản hoá, đơn giản hoá hơn tối ưu, tối ưu hơn tự động hoá".
+Chín commit `c547ec7^..991a281`, khoảng 9,000 dòng xoá. Mọi thứ đã gỡ còn trong lịch sử git: `git revert <commit>` là dựng lại.
+
+**Đã gỡ (commit ghi kèm để revert):**
+- **Mini-game Catch The Points** (`c547ec7`): cờ tắt từ 17/09, ba URL vốn đã 404. Gỡ `games/`, ba route,
+  `lib/game-record`, cờ `CATCH_THE_POINTS_PUBLISHED`, mục menu/sitemap/search, chuỗi `vi.json`, `test:game`.
+  `StickyChrome` bỏ nhánh "trang không dính" (trang game là trang duy nhất dùng). Content type `gameHighScore` còn
+  trong Contentful, không ai đọc/ghi.
+- **Tàn dư hạ tầng** (`7fd1cca`): `deploy.yml` + `ecosystem.config.js` + phụ lục VPS của DEPLOY.md (kế hoạch
+  SSH/PM2 chưa từng chạy), `tasks/` (autonomous loop, thay bằng task kiểm định kỳ từ 07/10), `.superpowers/` (rác
+  phiên, nay gitignore), `seo-reports/` (routine cloud đã xoá), 4 logo mồ côi trong `logos/partners`.
+- **Khung Phase 6 — LLM giải thích** (`9a8cded`): tắt từ 05/11, không nhà cung cấp nào. Trang kết quả dựng thẳng
+  `DeterministicWhy`. GIỮ migration 2 (`reco_explanations`, production đã chạy) và bước xoá bảng đó trong
+  `reco-forget.mts` (khoá ngoại). Muốn làm lại: đừng cho mô hình viết chữ tự do (README engine, mục Phase 6).
+- **Trang `/admin/reco-debugger`** (`e276ab2`): chỉ chạy dưới `next dev`, trùng `npm run reco:debug`.
+- **Route `/api/check-rebates` và `/api/offer-snapshot`** (`ebe4969`): route đầu là cửa gọi tay thứ ba cho việc
+  của `npm run job:check-rebates`; route sau tồn tại vì "runner không có token Contentful" — hết đúng từ 09/09.
+  `record-offer-history.mts` nay đọc thẳng CDA trong runner (environment `contentful-write`, chỉ hai biến đọc).
+  `EXPIRE_OFFERS_SECRET` chỉ còn che `/api/expire-offers`. Còn đi vòng qua ghe1a.com: `expire-offers`, `sync-videos`.
+- **Chế độ nội dung mẫu** (`1cdda6a`): thiếu `CONTENTFUL_SPACE_ID`/`CONTENTFUL_ACCESS_TOKEN` thì tầng đọc
+  Contentful NÉM (trước đó lặng lẽ phục vụ `content/sample/*.json` — thẻ và offer giả). Build thiếu biến nay đỏ, có
+  chủ ý. `getAuthor` vẫn rơi về `src/lib/content/author-fallback.json` khi CDA trả 0 author (bio thật).
+- **Chín lệnh `test:*` → `npm test`** (`2ee51a3`): glob `src/**/*.test.ts`, ~25 giây; CI chạy đúng lệnh đó (trước
+  chỉ chạy 4/9 bộ; test khách sạn và transfer partners Mỹ không nơi nào chạy). Giữ `test:reco` cho luồng
+  `UPDATE_ENGINE_SNAPSHOT=1`. Đã kiểm trên Node 22.23 (container) và Node 24: 727 test, 0 fail.
+- **10 chuỗi `vi.json` không code nào gọi** (`ccc14ff`). Khoá động duy nhất của repo: `howStep${n}Title/Body`.
+
+**Cách kiểm (dùng lại được cho đợt xoá sau):** build bản trước và bản sau liền nhau (worktree tạm ở commit gốc, cùng
+`.env.local`), rồi so từng trang prerender sau khi bỏ `<script>`, băm tên file và dải offer xoay ngẫu nhiên
+(`FeaturedOfferBanner`): 241/241 trang chung cho cùng nội dung; khác nhau chỉ ở 4 thẻ ngẫu nhiên của trang chủ
+(`OffersSection`) và thứ tự hai thẻ `<meta>` ở 14 trang. `sitemap.xml`, `feed.xml`, `llms.txt`, `robots.txt`,
+`/api/search` giống từng byte. CSS mất 17 selector, không trang hay chunk nào còn dùng. Route mất đúng 6 cái đã gỡ.
+Thêm: lint, tsc, 8 audit, `npm test` kèm MariaDB 11.8 (726 pass, 1 skip), `audit:links` 245 trang, luồng Gợi ý thẻ
+trên `next start` + MariaDB.
+
+**Codex hai vòng (gpt-6.1-sol, xhigh).** Vòng 1 bác từng khẳng định A–H: bảy ĐÚNG, một ĐÚNG NHƯNG BẢN VÁ HỎNG —
+`record:offer-history` nay nạp `.env.local`, nên chạy tay trên máy đang đặt `CONTENTFUL_HOST=preview.contentful.com`
+là ghi offer NHÁP vào nhật ký mà engine đọc lại; đường cũ qua server production không có cửa đó. Vá ở `991a281`: có
+`CONTENTFUL_HOST` là từ chối trước khi đọc (kiểm: exit 1, file không đổi). Cùng vòng nó chỉ ra ba chỉ dẫn cũ
+(HANDOFF nhắc `deploy.yml` và `RECO_DEBUGGER`, comment migration trỏ `explainPrimaryAction`), đã sửa. **Mình bác:**
+"`day` lấy từ `new Date()` không tương đương `snapshot.takenAt`" — chỉ lệch khi lượt đọc vắt đúng nửa đêm Toronto,
+job chạy 9:00 UTC, và `takenAt` cũ cũng là "lúc server đọc xong"; vòng 2 nó rút lại. Vòng 2: "CÒN CHẶN PUSH: KHÔNG".
+
+**Đã cân nhắc và GIỮ — đừng đề xuất xoá:**
+- Sáu cờ `*_PUBLISHED` đang `true`: tác giả đã dùng làm công tắc gỡ khẩn ba lần (Ngân hàng 16/08, trang chặng 04/09,
+  game 17/09). Nhánh `false` là code chết hôm nay, nhưng là thứ rẻ nhất để gỡ một mục khi số liệu sai.
+- Header CSP trong `next.config.ts` dù edge Hostinger ghi đè: một dòng, có hiệu lực ở local.
+- `scripts/reco-migrate-closed-year.mts`: chạy-một-lần sau deploy 21/09; KHÔNG kiểm được nó đã chạy trên database
+  production chưa (máy dev không có kết nối). Xoá khi tác giả xác nhận.
+- `research/`, `data-reports/`, `.agents/`, `.impeccable/live/config.json`: tư liệu và cấu hình đang dùng.
+- knip báo ~50 "unused export": toàn bộ là export thừa chữ `export` (dùng trong chính file), không phải code chết.
+
+**Phát hiện chưa xử lý, chờ tác giả:**
+- **File này 410 KB mà Codex chỉ tự nạp 32,768 byte đầu** (`project_doc_max_bytes` mặc định, binary 0.160; config
+  không ghi đè) — tới khoảng dòng 404. Ghi chú ở đầu file nay nói rõ điều đó. Đề xuất: lõi dưới 32 KB, nhật ký theo
+  ngày chuyển sang `docs/`. Chưa làm vì đổi cách 5 task định kỳ ghi chép.
+- `sync-videos` đỏ 19/60 lượt gần nhất (lượt đã mở log: RSS YouTube trả 404 từ máy Hostinger, lượt sau tự xanh);
+  `check-rebates` đỏ 14/60 (lượt đã mở log: rebate Contentful lệch seed `offers.ts`, chờ sửa tay).
