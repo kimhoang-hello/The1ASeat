@@ -200,13 +200,14 @@ export const MIGRATIONS: readonly Migration[] = [
   {
     id: 2,
     name: "lời giải thích Phase 6 (§28) — câu đã hiện, theo lượt chạy",
-    // Phase 6 đã gỡ khỏi repo 09/11/2026 và không code nào đọc/ghi bảng này
-    // nữa. Migration vẫn nằm đây vì danh sách này chỉ thêm: production đã chạy
-    // nó, và database dựng mới phải ra cùng một schema.
+    // Phase 6 đã gỡ khỏi repo 09/11/2026: site không còn đọc/ghi bảng này,
+    // chỉ `scripts/reco-forget.mts` còn đếm và xoá dòng cũ. Migration vẫn nằm
+    // đây vì danh sách này chỉ thêm: production đã chạy nó, và database dựng
+    // mới phải ra cùng một schema.
     statements: [
       // Một dòng cho mỗi (lượt chạy, mục tiêu, payload, version prompt) — payload
       // đổi khi offer trên Contentful đổi trong ngày, version đổi khi luật dựng
-      // câu đổi; xem `explainPrimaryAction`. `body` là
+      // câu đổi. `body` là
       // bản ghi nguyên vẹn (payload gửi đi, JSON nhận về, câu đã hiện); các cột
       // còn lại là bản sao để lọc. Vài KB một dòng — không nén.
       //

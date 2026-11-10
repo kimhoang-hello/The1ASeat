@@ -255,8 +255,7 @@ trang quyết định chạy-không-lưu hay báo lỗi.
    và `npm test` (mọi `*.test.ts`, kèm MariaDB) trên mỗi push — BÁO, chưa CHẶN.
    Còn thiếu vế chặn thật (hook `pre-push` hoặc deploy qua nhánh) — cần user
    quyết vì nó đổi cách mọi phiên push lên `main`. Bối cảnh: repo từng KHÔNG có CI chạy test; Hostinger tự deploy mỗi
-   lần push lên `main` (xem `DEPLOY.md`, `.github/workflows/deploy.yml` chỉ là
-   workflow tay không dùng). Nên một bản build làm sai engine mà quên tăng
+   lần push lên `main` (xem `DEPLOY.md`). Nên một bản build làm sai engine mà quên tăng
    `ENGINE_VERSION` sẽ lên production và ghi lượt chạy dưới nhãn version cũ —
    lỗ duy nhất `replay` không tự bịt được (diễn tập, §1). Tối thiểu: workflow
    chạy `tsc`, `lint`, `test:reco` trên mỗi push (báo, không chặn được
@@ -316,8 +315,8 @@ chúng không đổi thứ hạng nhưng đổi chính con số người dùng t
 
 Còn lại của Phase 5: gắn lối vào (trang thẻ, `/bat-dau`, ô tìm kiếm), event
 GA4 cho phễu (mới chỉ có `apply_clicked` với `placement=recommender_primary`),
-đăng nhập admin trước khi bật `RECO_DEBUGGER` (§4 việc 5), và kiểm CDN trước
-khi bật cờ.
+và kiểm CDN trước khi bật cờ. (Việc "đăng nhập admin trước khi bật
+`RECO_DEBUGGER`" hết hiệu lực: debugger web đã gỡ 09/11/2026.)
 
 ## 6. Phase 6 — LLM giải thích (§28): ĐÃ GỠ
 

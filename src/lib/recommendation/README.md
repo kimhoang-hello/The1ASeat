@@ -1237,7 +1237,7 @@ Còn lại trong repo, có chủ ý:
 
 - **Bảng `reco_explanations` (migration 2 trong `mysql.ts`).** Migration chỉ
   thêm, không sửa lùi: production đã chạy nó, và bảng có thể còn dòng từ
-  02–05/11/2026. Không code nào đọc hay ghi bảng này nữa.
+  02–05/11/2026. Site không còn đọc hay ghi bảng này.
 - **`scripts/reco-forget.mts` vẫn xoá dòng ở bảng đó** trước khi xoá lượt chạy,
   vì khoá ngoại `reco_explanations.run_id` → `reco_runs.id`.
 

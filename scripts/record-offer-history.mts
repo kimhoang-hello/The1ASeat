@@ -29,6 +29,19 @@ if (missing.length) {
   process.exit(1);
 }
 
+// Lịch sử chỉ được ghi từ bản ĐÃ PUBLISH. `CONTENTFUL_HOST` là công tắc cho
+// tác giả xem bản nháp ở máy (`preview.contentful.com`, xem
+// `src/lib/content/contentful.ts`); lệnh này nạp `.env.local`, nên chạy tay
+// trên một máy đang bật công tắc đó là ghi offer CHƯA TỪNG publish vào nhật ký
+// mà engine gợi ý thẻ đọc lại. Đường cũ qua server production không có cửa
+// này (Codex, 10/11/2026). Có biến đó thì từ chối, bất kể giá trị.
+if (process.env.CONTENTFUL_HOST) {
+  console.error(
+    `CONTENTFUL_HOST đang đặt (${process.env.CONTENTFUL_HOST}) — lịch sử offer chỉ ghi từ CDA mặc định. Bỏ biến đó rồi chạy lại.`,
+  );
+  process.exit(1);
+}
+
 // Lỗi mạng thoáng qua do SDK Contentful tự thử lại. Còn hỏng thì ném và job
 // đỏ, chứ không đọc thành "không có gì đổi": im lặng ở đây là mất hẳn một mốc
 // lịch sử, mà mốc đã mất thì không dựng lại được.
