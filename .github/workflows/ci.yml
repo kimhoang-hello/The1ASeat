@@ -1,6 +1,6 @@
 name: CI
 
-# Kiểm kiểu, lint và test engine khuyến nghị trên MỌI lần push.
+# Kiểm kiểu, lint và toàn bộ test trên MỌI lần push.
 #
 # Vì sao cần: Hostinger tự deploy mỗi lần push lên `main` (DEPLOY.md) và
 # KHÔNG chạy test nào. Một bản build làm sai engine mà quên tăng
@@ -70,10 +70,7 @@ jobs:
 
       - run: npm run lint
 
-      - run: npm run test:reco
-
-      - run: npm run test:recommender
-
-      - run: npm run test:jobs
-
-      - run: npm run test:card-tags
+      # MỌI file `*.test.ts` dưới `src/`, không phải một danh sách gõ tay. Trước
+      # 09/11/2026 có chín lệnh `test:*` rời và CI chỉ chạy bốn: test của thẻ
+      # Mỹ, transfer partners Mỹ, khách sạn và card-facts chưa từng chạy ở đây.
+      - run: npm test

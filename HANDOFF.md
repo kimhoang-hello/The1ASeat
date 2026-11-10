@@ -252,7 +252,7 @@ trang quyết định chạy-không-lưu hay báo lỗi.
 
 1. ✅ **Chốt database** (§3) — MySQL của Hostinger.
 2. 🟡 **Chặn deploy hỏng.** `.github/workflows/ci.yml` nay chạy `tsc`, `lint`,
-   `test:reco` (kèm MariaDB) và `test:jobs` trên mỗi push — BÁO, chưa CHẶN.
+   và `npm test` (mọi `*.test.ts`, kèm MariaDB) trên mỗi push — BÁO, chưa CHẶN.
    Còn thiếu vế chặn thật (hook `pre-push` hoặc deploy qua nhánh) — cần user
    quyết vì nó đổi cách mọi phiên push lên `main`. Bối cảnh: repo từng KHÔNG có CI chạy test; Hostinger tự deploy mỗi
    lần push lên `main` (xem `DEPLOY.md`, `.github/workflows/deploy.yml` chỉ là
@@ -561,7 +561,8 @@ npm run test:reco
 ```
 
 ```bash
-npm run test:recommender
+npm test                                         # mọi *.test.ts trong src/ (~25 giây)
+node --test --experimental-strip-types src/lib/recommender/*.test.ts   # riêng lớp giao diện
 ```
 
 Người dùng giả đi hết luồng trang (phân bố người thắng theo nhóm hồ sơ — cách tìm lỗi
@@ -574,7 +575,7 @@ npm run reco:walk -- --n 300 --seed 1 --out /tmp/walk.json
 `--replay /tmp/walk.json` chạy lại đúng các trạng thái cuối qua code hiện tại.
 
 `test:reco` 500 + 23 bỏ qua (thêm `RECO_TEST_MYSQL_URL` để chạy cả backend MySQL) và
-`test:recommender` 86 + 1 bỏ qua cho lớp giao diện (đếm 21/10/2026). Bản chụp hành vi §20:
+lớp giao diện (`src/lib/recommender/*.test.ts`) 86 + 1 bỏ qua (đếm 21/10/2026, trước khi gỡ Phase 6). Bản chụp hành vi §20:
 
 ```bash
 UPDATE_ENGINE_SNAPSHOT=1 npm run test:reco
