@@ -212,10 +212,8 @@ npm run reco:debug -- what-if u_beginner --set 'profile.annualHouseholdIncome={"
 Còn `compare`, `replay`, `diff`, `list`, `fixtures`, `--save` — xem đầu
 `scripts/reco-debug.mts`. Lượt `--save` nằm ở `.reco-runs/` (gitignore).
 
-Trang `/admin/reco-debugger` làm cùng những việc đó bằng form, trên đúng dữ
-liệu Contentful + lịch sử offer của production. **Chỉ bật dưới `next dev`
-hoặc với `RECO_DEBUGGER=1`** — site chưa có đăng nhập, và server action nhận
-POST trực tiếp. Bản build production trả 404 (đã kiểm).
+Debugger chỉ có bản dòng lệnh: trang `/admin/reco-debugger` (bản form, chỉ
+chạy dưới `next dev`) đã gỡ 09/11/2026 vì trùng với CLI.
 
 ---
 
@@ -271,8 +269,8 @@ trang quyết định chạy-không-lưu hay báo lỗi.
    questionnaire thích ứng. Không có lượt mốc thì năm tầng giữa (chiến lược,
    nhu cầu, luật, xếp hạng, chấm điểm) chỉ chẩn đoán được bằng hiểu biết
    nghiệp vụ; có mốc thì `replay`/`diff` quy về đúng tầng một cách máy móc.
-5. **Đăng nhập admin trước khi bật `RECO_DEBUGGER=1` trên production** — trang
-   debugger và server action của nó hiện chỉ được chặn bằng cờ môi trường.
+5. ~~Đăng nhập admin trước khi bật `RECO_DEBUGGER=1` trên production~~ — hết
+   hiệu lực: trang debugger web đã gỡ 09/11/2026, chỉ còn CLI.
 6. **Dịch mã thành câu tiếng Việt ở tầng trang.** `REASON_CODE_NOTES` là ghi
    chú cho DEV (nói mã phát ra ở đâu), không phải câu cho người đọc.
 7. **Không đổi engine trong lúc làm UI.** Cần đổi logic thì tăng

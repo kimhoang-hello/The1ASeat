@@ -1082,9 +1082,9 @@ npm run reco:debug -- what-if u_beginner --set 'profile.annualHouseholdIncome={"
 npm run reco:debug -- run u_beginner --save && npm run reco:debug -- replay <run-id>
 ```
 
-Trang `/admin/reco-debugger` làm đúng những việc đó bằng form — chỉ bật dưới
-`next dev` hoặc với `RECO_DEBUGGER=1` (site chưa có đăng nhập, và server
-action nhận POST trực tiếp). Bản build production trả 404.
+Debugger chỉ có bản dòng lệnh. Trang `/admin/reco-debugger` (cùng những việc
+đó bằng form, chỉ chạy dưới `next dev`) đã gỡ 09/11/2026: nó trùng với CLI, và
+là hai Server Action nằm trong bản build production chỉ để trả 404.
 
 ### Cách đọc một khuyến nghị sai
 

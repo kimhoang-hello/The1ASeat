@@ -179,4 +179,3 @@ export {
 } from "./debug-render.ts";
 export { applyAssignment, applyAssignments } from "./debug-input.ts";
 export { answersFor, probeGap, type GapProbe } from "./sensitivity.ts";
-export { recoDebuggerEnabled } from "./debugger-gate.ts";
