@@ -562,9 +562,13 @@ export const BANK_ACCOUNTS: BankAccount[] = [
       "Chi tiêu tối thiểu $1,000 trong 3 tháng đầu bằng thẻ Neo Money™ hoặc bất kỳ thẻ tín dụng Neo™ nào.",
       "Mỗi người một lần, không cộng dồn với mã khuyến mãi khác.",
     ],
-    interestRate: 0.1,
+    // Bảng lãi Neo™ (hiệu lực 29/10/2026, đọc 11/11/2026 ở
+    // neofinancial.com/accounts/interest-rates): chequing 0%, trước đó 0.10%.
+    // Ghi 0 chứ không bỏ trống: bỏ trống thì bảng so sánh in "Không công bố",
+    // trong khi Neo™ có công bố — con số là 0.
+    interestRate: 0,
     promoNoteVi:
-      "0.10% chỉ áp dụng cho phần số dư tới $200,000; phần vượt quá không được tính lãi. Đây là tài khoản chi tiêu. Muốn có lãi thì để tiền ở Neo™ Savings Account.",
+      "Từ 29/10/2026 Neo™ không trả lãi cho tài khoản chequing (trước đó 0.10%). Đây là tài khoản chi tiêu. Muốn có lãi thì để tiền ở Neo™ Savings Account.",
     keyBenefitsVi: [
       "Không monthly fee, không yêu cầu số dư tối thiểu",
       "Giao dịch và Interac e-Transfer® không giới hạn",
@@ -583,15 +587,21 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     kind: "savings",
     tags: [],
     monthlyFee: 0,
-    interestRate: 2.75,
-    // Không đặt `regularRate`: 2.00% không phải mức sau khuyến mãi mà là bậc
-    // thấp nhất của cùng một biểu lãi, và nhãn "Lãi thường" sẽ nói ngược lại.
+    // Từ 29/10/2026 lãi đi theo gói membership chứ không theo số dư nữa (bảng
+    // lãi + trang memberships của Neo™, đọc 11/11/2026; trang FinlyWealth cùng
+    // số): Essentials $0 2.25%, Start $4.99 2.50%, Build $9.99 2.75%, Grow
+    // $14.99 3.00%. Con số chính là 2.25% của gói miễn phí, không phải 3.00%:
+    // `monthlyFee` ở đây là $0, mà mô tả SEO ghép "Lãi suất X. Không mất
+    // monthly fee." — 3.00% đi kèm phí $14.99/tháng thì câu đó nói sai. Cùng
+    // lý do KOHO ghi phí của gói vào `monthlyFee`. Không đặt `regularRate`:
+    // các gói là lựa chọn song song, không phải mức tụt xuống sau khuyến mãi.
+    interestRate: 2.25,
     promoNoteVi:
-      "Lãi theo bậc số dư, không phải khuyến mãi có hạn: dưới $5,000 được 2.00%, từ $5,000 được 2.50%, từ $20,000 trở lên được 2.75%. Để nhận rebate của FinlyWealth phải nạp tối thiểu $100.",
+      "2.25% là gói Essentials miễn phí. Lãi đi theo gói membership trả phí hằng tháng, không theo số dư và không phải khuyến mãi có hạn: Essentials ($0) 2.25%, Start ($4.99/tháng) 2.50%, Build ($9.99/tháng, miễn phí nếu bạn có thẻ World Elite® Mastercard® của Neo™) 2.75%, Grow ($14.99/tháng) 3.00%. Để nhận rebate của FinlyWealth phải nạp tối thiểu $100.",
     keyBenefitsVi: [
       "Không monthly fee, không yêu cầu số dư tối thiểu",
       "Giao dịch và Interac e-Transfer® không giới hạn",
-      "Lãi tăng theo số dư, không cần mã khuyến mãi hay đổi tài khoản",
+      "Lên gói membership cao hơn là lãi tăng ngay, không cần mã khuyến mãi hay đổi tài khoản",
       "Rút tiền lúc nào cũng được, không cần báo trước",
     ],
     url: "https://www.neofinancial.com/accounts",
@@ -663,12 +673,12 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     kind: "chequing",
     tags: [],
     monthlyFee: 0,
-    interestRate: 2.75,
-    // Base Rate 1.50% theo chú thích trên trang EQ Bank™ (10/10/2026): 2.75% =
-    // Base Rate + 1.25%. Trang FinlyWealth còn ghi Base Rate 1.00%.
+    interestRate: 3,
+    // Base Rate 1.50% theo chú thích trên trang EQ Bank™ (đọc 11/11/2026): 3.00%
+    // = Base Rate + 1.50% (trước đó + 1.25% = 2.75%).
     regularRate: 1.5,
     promoNoteVi:
-      "2.75% chỉ khi có direct deposit định kỳ từ $2,000/tháng; không có thì 1.50%. Đây không phải lãi khuyến mãi có hạn; mức này giữ nguyên chừng nào direct deposit còn về.",
+      "3.00% chỉ khi có direct deposit định kỳ từ $2,000/tháng; không có thì 1.50%. Đây không phải lãi khuyến mãi có hạn; mức này giữ nguyên chừng nào direct deposit còn về.",
     keyBenefitsVi: [
       "Không monthly fee, không yêu cầu số dư tối thiểu",
       "Giao dịch, Interac e-Transfer® và thanh toán hoá đơn miễn phí không giới hạn",
@@ -688,11 +698,13 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     kind: "savings",
     tags: [],
     monthlyFee: 0,
-    interestRate: 2.75,
-    // Cũng không đặt `regularRate`: 2.35% là loại báo trước 10 ngày, một lựa
+    // 30 ngày 3.00%, 10 ngày 2.50% theo trang EQ Bank™ đọc 11/11/2026 (trước
+    // đó 2.75% / 2.35%).
+    interestRate: 3,
+    // Cũng không đặt `regularRate`: 2.50% là loại báo trước 10 ngày, một lựa
     // chọn khác chứ không phải mức tụt xuống sau khi hết khuyến mãi.
     promoNoteVi:
-      "Lãi suất tuỳ số ngày báo trước khi rút tiền: loại báo trước 30 ngày được 2.75%, loại báo trước 10 ngày được 2.35%. Muốn rút thì phải báo trước đúng số ngày đó, nên đây không phải chỗ để tiền phòng thân cần lấy ngay.",
+      "Lãi suất tuỳ số ngày báo trước khi rút tiền: loại báo trước 30 ngày được 3.00%, loại báo trước 10 ngày được 2.50%. Muốn rút thì phải báo trước đúng số ngày đó, nên đây không phải chỗ để tiền phòng thân cần lấy ngay.",
     keyBenefitsVi: [
       "Không monthly fee, không yêu cầu số dư tối thiểu",
       "Nạp và rút không giới hạn số lần, miễn phí (chỉ cần báo trước)",

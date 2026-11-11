@@ -4869,3 +4869,32 @@ job chạy 9:00 UTC, và `takenAt` cũ cũng là "lúc server đọc xong"; vòn
   ngày chuyển sang `docs/`. Chưa làm vì đổi cách 5 task định kỳ ghi chép.
 - `sync-videos` đỏ 19/60 lượt gần nhất (lượt đã mở log: RSS YouTube trả 404 từ máy Hostinger, lượt sau tự xanh);
   `check-rebates` đỏ 14/60 (lượt đã mở log: rebate Contentful lệch seed `offers.ts`, chờ sửa tay).
+
+## Kiểm toàn diện định kỳ 11/11/2026 — đừng đề xuất lại
+
+Gate: lint, tsc, build, 10 audit, `npm test` (727: 704 pass, 23 skip MySQL), `npm audit` = 0, `audit:links` production
+(245 trang, không trang mồ côi), smoke test + `www` 308 + 5 header bảo mật. Codex hai vòng: tìm lỗi theo hậu quả + diff
+`c547ec7^..HEAD` (SẠCH) kèm soát bản vá (2 phát hiện, nhận cả hai — dưới); bác bản vá (A–D ĐÚNG, không hỏng gì mới).
+
+**Đã vá (`src/lib/bank-accounts.ts`) — lãi suất ngân hàng đổi, không job nào canh:**
+- **EQ Bank™ tăng lãi**: Personal Account 2.75% → 3.00% (Base Rate 1.50% + 1.50% khi direct deposit ≥ $2,000/tháng);
+  Notice Savings 30 ngày 2.75% → 3.00%, 10 ngày 2.35% → 2.50%. Nguồn: chú thích trên trang sản phẩm EQ Bank™.
+- **Neo™ đổi hẳn cấu trúc lãi từ 29/10/2026** (neofinancial.com/accounts/interest-rates + /memberships; FinlyWealth cùng
+  số): Savings theo gói membership chứ không theo số dư — Essentials $0 2.25%, Start $4.99 2.50%, Build $9.99 (miễn phí
+  với thẻ World Elite® của Neo™) 2.75%, Grow $14.99 3.00%; Chequing 0% (trước 0.10%).
+  - Con số chính của Neo™ Savings là **2.25%, không phải 3.00%** — cố ý: `monthlyFee` là $0 và mô tả SEO ghép "Lãi suất X.
+    Không mất monthly fee."; 3.00% đi kèm $14.99/tháng thì câu đó nói sai (Codex vòng 1 bắt bản đầu ghi 3). Khác
+    MomentumPLUS (0.80% cần Ultimate Package) là tiền lệ cũ, chưa đụng.
+  - Neo™ Chequing ghi `interestRate: 0` chứ không bỏ trống: bỏ trống thì bảng so sánh in "Không công bố" (Codex vòng 1).
+    Headline thẻ vẫn là bonus $100 (`hasLiveBonus`); sort dùng `?? -1` nên 0 không lẫn với không công bố.
+
+**Đã kiểm, KHÔNG phải lỗi:**
+- `sync-videos` đỏ 11/11 07:46 UTC ("channel: 404, uploads-playlist: 404", mục 27/09). Mọi job khác xanh.
+- Rà tay khớp nguồn: Scotiabank® MomentumPLUS 0.40% + 0.30% (360 ngày), Money Master 0.01%/0.50% (bảng 13/02/2026);
+  Tangerine® 4.50% (Client Number tới 30/11) / 0.30%; Simplii™ HISA 5.00% tới 31/01/2027 + chequing $350; Wealthsimple®
+  2.25% + $25; KOHO 3.5%/2.5% + 10% cashback tối đa $100; Neo™ Chequing $100 (chi $1,000/3 tháng); National Bank®
+  newcomer "promotion ended" 03/11 (trang tự ẩn); CIBC® Aventura® 60,000, TD® First Class 160,000 vẫn elevated.
+
+**Chờ tác giả:** WestJet RBC® hết hạn 18/11 (7 ngày) — elevated từ lần publish đầu, `expire-offers` sẽ đỏ từ 19/11 tới khi
+sửa tay. Ba thẻ RBC® Avion® hạn 25/11 (14 ngày, link không phải `/rebates/`). Tangerine® Savings 4.50% hết 30/11.
+MomentumPLUS "Welcome Bonus Interest Rate" 3 tháng đầu (mục 24/10) và Wealthsimple® 5%/35 ngày (mục 21/10) vẫn chưa ghi.
