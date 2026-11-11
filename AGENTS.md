@@ -4898,3 +4898,53 @@ Gate: lint, tsc, build, 10 audit, `npm test` (727: 704 pass, 23 skip MySQL), `np
 **Chờ tác giả:** WestJet RBC® hết hạn 18/11 (7 ngày) — elevated từ lần publish đầu, `expire-offers` sẽ đỏ từ 19/11 tới khi
 sửa tay. Ba thẻ RBC® Avion® hạn 25/11 (14 ngày, link không phải `/rebates/`). Tangerine® Savings 4.50% hết 30/11.
 MomentumPLUS "Welcome Bonus Interest Rate" 3 tháng đầu (mục 24/10) và Wealthsimple® 5%/35 ngày (mục 21/10) vẫn chưa ghi.
+
+## Kiểm toàn diện 11/11/2026 (lượt tay, mọi trang + engine + mọi offer) — đừng đề xuất lại
+
+Chạy cùng ngày với lượt định kỳ ngay trên; EQ Bank™ và Neo™ đã ghi ở đó (`aa1f39f`), không lặp lại.
+
+Gate: lint, tsc, build, 12 audit, `npm test` (727, 23 skip MySQL), `npm audit` = 0, smoke test + `www` 308 + 5 header
+bảo mật. Quét puppeteer bản build cục bộ (worktree riêng) 259 URL × 375/1440px: không response lỗi ngoài 404 cố ý, không
+tràn ngang, không ảnh hỏng/thiếu alt, mỗi trang 1 h1, JSON-LD parse được, không id trùng, canonical + mô tả đủ; 346 link
+nội bộ đều 200. `reco:walk` 300 hồ sơ ngày 11/11: mọi bất biến xanh, Amex® Green thắng 129/300 (cùng cỡ mục 17/10 và
+31/10). Codex một vòng bác bản vá (cả `aa1f39f`): EQ Bank™ / Neo™ / Green / Business Green đều ĐÚNG, "CÒN CHẶN PUSH: KHÔNG".
+
+**Hai phiên chạy trùng.** Task định kỳ thứ Tư 9:07 chạy CÙNG LÚC với lượt tay này, trong cùng thư mục; nó push
+`aa1f39f` rồi dừng vì hết hạn mức 5 giờ trước khi báo cáo. Lượt tay phát hiện nhờ `git status` có thay đổi không phải
+của mình, chuyển sang `./scripts/worktree.sh new` cho phần build + quét, và chỉ ghi vào thư mục chính sau khi lượt kia
+đã dừng. Sáng thứ Tư / thứ Bảy: `list_task_runs` trước khi kiểm tay.
+
+**Đã sửa:**
+- **Amex® Green Canada hết offer nâng lần ba: 15,000/$1,250 → 10,000/$1,000.** Contentful khôi phục nguyên văn 5 trường
+  offer từ snapshot 21/10 (entry sạch draft trước khi ghi; mọi trường khác trùng snapshot); seed: bản thường mở 11/11
+  đứng đầu, bản nâng 09/11 đóng `recordedTo: 2026-11-10`.
+- **Amex® Business Green (Mỹ) bật lại "Special Welcome Offer" 25,000 điểm** (gạch 15,000; chi $3,000 USD, 3 tháng):
+  elevated + `offerEndUnannounced`, editor's take ghi rõ offer chia theo phiên. `verifiedOn` 38 thẻ → 11/11 (20 thẻ
+  Amex®, Capital One®, Citi® qua JSON, Bilt, Atmos™ mở bằng browser; 18 thẻ Chase® qua `audit:us-offers`).
+
+**American Express® chia welcome offer THEO PHIÊN TRÌNH DUYỆT — đo được hôm nay, đổi cách rà:**
+- Cùng một buổi chiều: Gold Canada 90,000 ở Chrome thật (cả qua đường Apply) và hai hồ sơ mới, nhưng 60,000 ở browser
+  pane (trang công khai lẫn đường Apply). Business Green Mỹ 25,000 ở pane và Chrome thật, 15,000 ở hai hồ sơ headless.
+  Green Canada thì MỌI phiên buổi chiều (4 phiên, đường Apply ở 2 trình duyệt) đều 10,000 — nên mới sửa.
+- Ba thẻ business Canada (Business Platinum 150,000, Business Gold 90,000, Aeroplan® Business Reserve 120,000) hiện
+  "SPECIAL OFFER" lúc ~10h (hai lượt tải + đường Apply mỗi thẻ), tới ~16h thì 19 lượt tải ở ba trình duyệt đều về mức
+  thường. Site giữ mức thường — suýt ghi offer nâng lên Contentful theo số buổi sáng.
+- Hệ quả: "hai lượt tải cùng số" trong MỘT trình duyệt chỉ là một quan sát. Muốn kết luận offer Amex® đổi thì cần ít
+  nhất hai phiên độc lập (browser pane + Chrome thật của tác giả) cộng đường Apply, và rà LẠI ngay trước khi ghi. Đa số
+  phiên thấy mức nào thì site ghi mức đó (tiền lệ Business Platinum 31/10).
+- Đừng chạy vòng lặp nhiều hồ sơ headless mới để đo tỷ lệ A/B: lượt 12 lần tải bị chặn ở tầng quyền.
+
+**Đã kiểm, KHÔNG phải lỗi:**
+- Thẻ Canada khớp trang ngân hàng: TD® ×5, CIBC® ×5, RBC® ×4 (Avion® hạn 25/11, WestJet 70,000 không ghi ngày),
+  Scotiabank® ×4 (hạn 03/01 và 30/04/2027), National Bank® (31/03/2027), Tangerine® (31/01/2027), Neo United, Capital
+  One® ×2; Amex® Platinum 100,000, Cobalt® 15,000, Aeroplan® 45,000, Aeroplan® Reserve 85,000, Hilton 70,000 + FNR (hạn
+  11/01/2027), Bonvoy® Business 80,000; Bonvoy® cá nhân công khai 100,000 (tác giả chốt giữ 70,000, mục 09/11).
+- RBC® Day to Day $150 hạn 08/12, VIP $600 hạn 01/03/2027, Students $150 hạn 31/05/2027.
+- URL `/search?q=…` 404: site không có trang đó (tìm kiếm chạy qua `/api/search`), URL do script quét tự bịa.
+
+**Chờ tác giả (ngoài danh sách ở mục trên):**
+- FinlyWealth từ 01/11 có trang `/rebates/` cho bốn thẻ Amex® (Platinum $150, Business Platinum $175, Aeroplan® Reserve
+  $150, Cobalt® $75, tới 30/12/2026). Link trên site trỏ `rewards-calculator` / `reviews` nên không hiện rebate — báo
+  MỘT lần theo luật link của tác giả, không tự đổi.
+- Bốn thẻ IHG® Mỹ hết hạn 18/11. Wealthsimple® 5%/5 tuần nay in ngay trên trang thẻ công khai ("New clients get 5% cash
+  back on everything for 5 weeks") — site vẫn ghi không có welcome bonus (mục 21/10).

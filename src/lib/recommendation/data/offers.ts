@@ -116,17 +116,35 @@ type OfferSeed = {
 const OFFER_SEEDS: OfferSeed[] = [
   {
     slug: "amex-green",
+    name: "10,000 điểm Membership Rewards®",
+    headline: 10000,
+    currency: "amex-mr",
+    // Mức thường quay lại sau offer nâng 09/11. Kiểm chiều 11/11/2026: trang công
+    // khai amex.ca ở bốn phiên trình duyệt độc lập và đúng đường Apply của site
+    // (Finly → CJ → amex.ca ?CPID=) ở hai trình duyệt đều 10,000/$1,000; sáng
+    // cùng ngày một phiên còn thấy 15,000. Ngày mình thấy — Amex® không ghi ngày
+    // bắt đầu. Bản đang mở đứng TRƯỚC các bản đã đóng: test vòng đời lấy offer
+    // đầu tiên làm "offer hiện hành" của thẻ đầu tiên.
+    startDate: "2026-11-11",
+    verifiedAt: "2026-11-11",
+    recordedAt: "2026-11-11",
+    components: [{ type: "spend_threshold", points: 10000, spend: 1000, windowDays: 90 }],
+  },
+  {
+    slug: "amex-green",
     name: "15,000 điểm Membership Rewards®",
     headline: 15000,
     currency: "amex-mr",
     // Offer nâng quay lại lần ba: thấy 09/11/2026 trên trang công khai amex.ca
     // và đúng đường Apply của site (Finly → CJ → amex.ca ?CPID=), ba lượt tải
     // cùng "ELEVATED OFFER" 15,000/$1,250. Amex® không ghi ngày bắt đầu lẫn kết
-    // thúc. Bản đang mở đứng TRƯỚC các bản đã đóng: test vòng đời lấy offer đầu
-    // tiên làm "offer hiện hành" của thẻ đầu tiên.
+    // thúc.
     startDate: "2026-11-09",
     verifiedAt: "2026-11-09",
     recordedAt: "2026-11-09",
+    // 11/11/2026 chỉ còn mức thường (xem bản trên); đóng ở ngày cuối mình còn
+    // tin nó, không sửa `endDate`.
+    recordedTo: "2026-11-10",
     components: [{ type: "spend_threshold", points: 15000, spend: 1250, windowDays: 90 }],
   },
   {
