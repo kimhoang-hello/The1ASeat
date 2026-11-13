@@ -255,7 +255,32 @@ const OFFER_SEEDS: OfferSeed[] = [
     name: "15,000 điểm Membership Rewards®",
     headline: 15000,
     currency: "amex-mr",
+    // Link apply chuyển sang trang /rebates/ của FinlyWealth 13/11/2026 (Finly API: $75, tới
+    // 30/12/2026 14:00 giờ Toronto). Offer giữ nguyên; bản đang mở đứng TRƯỚC bản đã đóng.
+    rebate: 75,
     startDate: "2026-09-07",
+    verifiedAt: "2026-11-13",
+    recordedAt: "2026-11-13",
+    recordedFrom: "2026-11-13",
+    components: [
+      {
+        type: "monthly_spend",
+        points: 1250,
+        spend: 750,
+        windowDays: 365,
+        repeat: 12,
+        note: "1,250 điểm cho mỗi chu kỳ sao kê chi đủ $750, suốt 12 tháng đầu",
+      },
+    ],
+  },
+  {
+    slug: "amex-cobalt",
+    name: "15,000 điểm Membership Rewards®",
+    headline: 15000,
+    currency: "amex-mr",
+    startDate: "2026-09-07",
+    // Bản ghi trước khi link apply chuyển sang trang /rebates/ của FinlyWealth (13/11/2026).
+    recordedTo: "2026-11-12",
     components: [
       {
         type: "monthly_spend",
@@ -578,10 +603,39 @@ const OFFER_SEEDS: OfferSeed[] = [
     name: "85,000 điểm Aeroplan®",
     headline: 85000,
     currency: "aeroplan",
+    // Link apply chuyển sang trang /rebates/ của FinlyWealth 13/11/2026 (Finly API: $150, tới
+    // 30/12/2026 14:00 giờ Toronto). Offer giữ nguyên; bản đang mở đứng TRƯỚC bản đã đóng.
+    rebate: 150,
     // Mức thường quay lại sau offer nâng 22/10 (kiểm 31/10/2026: đường Apply
     // của site tải hai lần + trang công khai amex.ca, cả ba lượt 85,000). Bản
     // đang mở đứng trước các bản đã đóng.
     startDate: "2026-10-31",
+    recordedFrom: "2026-11-13",
+    verifiedAt: "2026-11-13",
+    recordedAt: "2026-11-13",
+    components: [
+      { type: "spend_threshold", points: 60000, spend: 7500, windowDays: 90 },
+      {
+        type: "anniversary",
+        points: 25000,
+        spend: 2500,
+        windowDays: 30,
+        startsAfterDays: 365,
+        note: "Chi $2,500 trong tháng thứ 13 — cửa sổ riêng, không dùng lại tiền đã chi",
+      },
+    ],
+  },
+  {
+    slug: "amex-aeroplan-reserve",
+    name: "85,000 điểm Aeroplan®",
+    headline: 85000,
+    currency: "aeroplan",
+    // Mức thường quay lại sau offer nâng 22/10 (kiểm 31/10/2026: đường Apply
+    // của site tải hai lần + trang công khai amex.ca, cả ba lượt 85,000). Bản
+    // đang mở đứng trước các bản đã đóng.
+    startDate: "2026-10-31",
+    // Bản ghi trước khi link apply chuyển sang trang /rebates/ của FinlyWealth (13/11/2026).
+    recordedTo: "2026-11-12",
     verifiedAt: "2026-10-31",
     recordedAt: "2026-10-31",
     components: [
@@ -986,17 +1040,27 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "wealthsimple-visa-infinite-privilege",
-    name: "Không có welcome bonus",
+    name: "Không có welcome bonus công khai",
     headline: null,
     currency: null,
+    // Từ 13/11/2026 trang thẻ trên site có ghi "555 Cash Back Welcome Offer" của Wealthsimple®
+    // (5% tổng cashback 35 ngày, tối đa $10,000 chi tiêu), nhưng offer đó CHỈ THEO LỜI MỜI qua
+    // email/app — engine chỉ seed offer công khai (xem `isTargeted` ở `OFFERS`), và mô hình
+    // `statement_credit` coi $10,000 là ngưỡng nhận trọn chứ không tính 3% theo từng đô chi.
+    // Nên engine vẫn coi thẻ này không có welcome bonus. Codex 13/11/2026.
     startDate: "2026-09-07",
     components: [],
   },
   {
     slug: "wealthsimple-visa-infinite-plus",
-    name: "Không có welcome bonus",
+    name: "Không có welcome bonus công khai",
     headline: null,
     currency: null,
+    // Từ 13/11/2026 trang thẻ trên site có ghi "555 Cash Back Welcome Offer" của Wealthsimple®
+    // (5% tổng cashback 35 ngày, tối đa $10,000 chi tiêu), nhưng offer đó CHỈ THEO LỜI MỜI qua
+    // email/app — engine chỉ seed offer công khai (xem `isTargeted` ở `OFFERS`), và mô hình
+    // `statement_credit` coi $10,000 là ngưỡng nhận trọn chứ không tính 3% theo từng đô chi.
+    // Nên engine vẫn coi thẻ này không có welcome bonus. Codex 13/11/2026.
     startDate: "2026-09-07",
     components: [],
   },
@@ -1405,10 +1469,38 @@ const OFFER_SEEDS: OfferSeed[] = [
     name: "Tới 100,000 điểm Membership Rewards®",
     headline: 100000,
     currency: "amex-mr",
+    // Link apply chuyển sang trang /rebates/ của FinlyWealth 13/11/2026 (Finly API: $150, tới
+    // 30/12/2026 14:00 giờ Toronto). Offer giữ nguyên; bản đang mở đứng TRƯỚC bản đã đóng.
+    rebate: 150,
     // Mức thường quay lại sau offer nâng 22/10 (kiểm 05/11/2026: đường Apply của
     // site + trang công khai amex.ca cùng "UP TO 100,000", Finly API cùng số).
     // Cùng mốc chi với bản 07/09. Bản đang mở đứng trước các bản đã đóng.
     startDate: "2026-11-05",
+    recordedFrom: "2026-11-13",
+    verifiedAt: "2026-11-13",
+    recordedAt: "2026-11-13",
+    components: [
+      { type: "spend_threshold", points: 70000, spend: 10000, windowDays: 90 },
+      {
+        type: "anniversary",
+        points: 30000,
+        windowDays: 90,
+        startsAfterDays: 425,
+        note: "Quẹt một giao dịch trong khoảng tháng 15–17",
+      },
+    ],
+  },
+  {
+    slug: "amex-platinum",
+    name: "Tới 100,000 điểm Membership Rewards®",
+    headline: 100000,
+    currency: "amex-mr",
+    // Mức thường quay lại sau offer nâng 22/10 (kiểm 05/11/2026: đường Apply của
+    // site + trang công khai amex.ca cùng "UP TO 100,000", Finly API cùng số).
+    // Cùng mốc chi với bản 07/09. Bản đang mở đứng trước các bản đã đóng.
+    startDate: "2026-11-05",
+    // Bản ghi trước khi link apply chuyển sang trang /rebates/ của FinlyWealth (13/11/2026).
+    recordedTo: "2026-11-12",
     verifiedAt: "2026-11-05",
     recordedAt: "2026-11-05",
     components: [
@@ -1473,11 +1565,40 @@ const OFFER_SEEDS: OfferSeed[] = [
     name: "Tới 120,000 điểm Membership Rewards®",
     headline: 120000,
     currency: "amex-mr",
+    // Link apply chuyển sang trang /rebates/ của FinlyWealth 13/11/2026 (Finly API: $175, tới
+    // 30/12/2026 14:00 giờ Toronto). Offer giữ nguyên; bản đang mở đứng TRƯỚC bản đã đóng.
+    rebate: 175,
     // Mức thường quay lại sau offer nâng 22/10 (kiểm 05/11/2026: đường Apply của
     // site + trang công khai amex.ca, năm lượt tải đều "UP TO 120,000" — không
     // còn thấy biến thể A/B 150,000 của 31/10; Finly API cùng số). Bản đang mở
     // đứng trước các bản đã đóng.
     startDate: "2026-11-05",
+    recordedFrom: "2026-11-13",
+    verifiedAt: "2026-11-13",
+    recordedAt: "2026-11-13",
+    components: [
+      { type: "spend_threshold", points: 80000, spend: 15000, windowDays: 90 },
+      {
+        type: "anniversary",
+        points: 40000,
+        windowDays: 90,
+        startsAfterDays: 425,
+        note: "Quẹt một giao dịch trong khoảng tháng 15–17",
+      },
+    ],
+  },
+  {
+    slug: "amex-business-platinum",
+    name: "Tới 120,000 điểm Membership Rewards®",
+    headline: 120000,
+    currency: "amex-mr",
+    // Mức thường quay lại sau offer nâng 22/10 (kiểm 05/11/2026: đường Apply của
+    // site + trang công khai amex.ca, năm lượt tải đều "UP TO 120,000" — không
+    // còn thấy biến thể A/B 150,000 của 31/10; Finly API cùng số). Bản đang mở
+    // đứng trước các bản đã đóng.
+    startDate: "2026-11-05",
+    // Bản ghi trước khi link apply chuyển sang trang /rebates/ của FinlyWealth (13/11/2026).
+    recordedTo: "2026-11-12",
     verifiedAt: "2026-11-05",
     recordedAt: "2026-11-05",
     components: [

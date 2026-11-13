@@ -4985,3 +4985,37 @@ newcomer (đã ghi 11/11, trang tự ẩn). Mọi job khác xanh từ 11/11 tớ
 
 **Chờ tác giả:** WestJet RBC® hết hạn 18/11 (5 ngày; `expire-offers` đỏ từ 19/11 tới khi sửa tay). RBC® Avion® ×3 hạn
 25/11 (task một lần 26/11 đã có). Tangerine® Savings 4.50% hết 30/11. Bốn thẻ IHG® Mỹ hạn 18/11.
+
+## Xử lý việc treo 13/11/2026 (tác giả: "làm luôn mấy cái đang treo") — đừng đề xuất lại
+
+**Đã làm:**
+- **Bốn thẻ Amex® sang trang `/rebates/` của FinlyWealth** (tác giả chốt hôm nay — cái "báo MỘT lần" ở mục 11/11):
+  Platinum $150, Business Platinum $175, Aeroplan® Reserve $150, Cobalt® $75. `applyUrl` = đúng `links.affiliateUrl` của
+  Finly API, thêm `rebateVi` + câu HOT TIP; seed `offers.ts`: đóng bản cũ `recordedTo 2026-11-12`, bản mới từ 13/11 mang
+  `rebate` (Codex bác bản đầu sửa thẳng bản cũ — làm đổi lịch sử). **Rebate Finly hết 30/12/2026 14:00 giờ Toronto**
+  (`endsAt 19:00Z`): `check-rebates` KHÔNG tự gỡ — API trả paused/missing thì job đỏ có chủ ý; khi đó sửa tay `rebateVi`,
+  câu HOT TIP và seed cùng lúc (hoặc gia hạn nếu Finly ra đợt mới). Parser không đọc `endsAt`, nên API còn trả số cũ thì
+  job vẫn xanh.
+- **Wealthsimple® ×2 có welcome offer** ("555 Cash Back Welcome Offer", help centre cập nhật 08/11): tổng 5% cashback 35
+  ngày sau khi duyệt, cho $10,000 chi tiêu đầu (tối đa $500, phần thêm $300 so với 2%). CHỈ THEO LỜI MỜI qua email/app,
+  khách mới chưa từng có thẻ Wealthsimple®, duyệt trong 30 ngày từ lời mời, giữ thẻ 180 ngày sau 35 ngày. Trang
+  `/en-ca/5-percent-welcome-offer` công khai có ô để lại email — copy chỉ nói vậy, KHÔNG hứa để email là được mời (Codex
+  bác bản đầu). `elevatedBonus: false` (không có chữ giới hạn thời gian, không ngày). Seed engine CỐ Ý giữ "Không có welcome
+  bonus công khai": engine chỉ seed offer công khai, và `statement_credit` coi $10,000 là ngưỡng chứ không tính 3%/đô.
+  `audit:reco-data` cảnh báo "không đối chiếu được" cho hai thẻ — đã biết.
+- **Bài `chase-aeroplan-card-refresh-115000-points-25k-status`** chuyển sang `POST_OFFER_DEADLINES` (`endsOn 2026-11-12`,
+  ngày cuối task thẻ Mỹ còn thấy offer cũ) với CTA mới `usCreditCards` → `/us-credit-cards`. Bài giữ nguyên chữ.
+
+**Đã kiểm, không cần sửa:**
+- **MomentumPLUS**: bảng lãi Scotiabank® hiệu lực 13/11/2026 không còn "Welcome Bonus Interest Rate" (mục 24/10), trang sản
+  phẩm chỉ hiện 0.40% + premium. Site 0.80% (0.40 + 0.30 + 0.10 Ultimate) vẫn đúng. Mục 24/10 đóng.
+- **Tangerine® Savings 4.50%**: vẫn cho Client Number tạo tới 30/11/2026, chưa có đợt mới. Từ 01/12 trang tự về 0.30%
+  (`ratePromoEndsOn`) — đúng thiết kế; lượt kiểm 02/12 xem Tangerine® có đợt mới không.
+- **WestJet RBC®**: điều khoản trong trang RBC® ghi "between June 16, 2026 and November 18th, 2026", mức sau đó chưa công
+  bố. Sửa tay ngày 19/11 (task một lần bị bộ phân loại auto mode chặn khi tạo — chờ tác giả cho phép hoặc làm tay).
+- **IHG® ×4 (Mỹ) hạn 18/11**: task canh thẻ Mỹ thứ Năm 19/11 9:23 xử lý (`audit:us-offers` báo "OFFER ĐÃ HẾT HẠN").
+- RBC® Avion® ×3 hạn 25/11: task một lần 26/11 đã có.
+
+Gate: lint, tsc, build, `npm test` (704 pass, 23 skip), `test:reco` 503 (snapshot chỉ đổi `datasetFingerprint`),
+`audit:rebate-prose` / `reco-data` / `best-cards` / `health` / `card-mentions` / `trademarks` sạch. Codex hai vòng
+(soát + bác bản vá): "CÒN CHẶN GHI/PUSH: KHÔNG".

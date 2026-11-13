@@ -22,7 +22,7 @@ import { hasExpired } from "./format-date";
  */
 
 /** Nơi người đọc nên tới khi ưu đãi trong bài đã kết thúc. */
-export type OfferCta = "transferBonuses" | "creditCards" | "bankAccounts";
+export type OfferCta = "transferBonuses" | "creditCards" | "usCreditCards" | "bankAccounts";
 
 export interface PostOffer {
   /** Ngày CUỐI CÙNG còn hiệu lực, đọc y như `expiresAt` của thẻ và của bonus. */
@@ -43,6 +43,11 @@ export const POST_OFFER_DEADLINES: Record<string, PostOffer> = {
   // "Từ ngày 1/11 đến hết ngày 30/11/2026", giờ Pacific — cùng ngày với
   // `expiresAt` của entry transferBonus `rbc-avion-to-british-airways-avios`.
   "british-airways-avios-transfer-bonus-30-rbc-avion": { endsOn: "2026-11-30", cta: "transferBonuses" },
+  // Bài News về offer 115,000 điểm của thẻ Aeroplan® Chase®. Chase® không công
+  // bố ngày kết thúc; task canh thẻ Mỹ còn thấy offer này sáng 12/11/2026, và
+  // 13/11/2026 trang đã đổi sang offer tới 80,000 — nên 12/11 là ngày cuối
+  // còn chắc chắn. Trước đó bài nằm ở `POSTS_WITHOUT_DEADLINE`.
+  "chase-aeroplan-card-refresh-115000-points-25k-status": { endsOn: "2026-11-12", cta: "usCreditCards" },
 };
 
 /**
@@ -54,10 +59,6 @@ export const POSTS_WITHOUT_DEADLINE: Record<string, string> = {
   // (120 ngày, 153 ngày), không có một ngày chốt chung nào cho cả bài.
   "top-hisa-promo-lai-suat-cao-canada-thang-8-2026":
     "promo tính theo số ngày kể từ lúc mở tài khoản, không có ngày chốt",
-  // Bài News về thẻ Mỹ. "31/12/2026" trong thân bài là ngày 3X grocery/dining
-  // hạ về 2X, không phải hạn welcome offer — Chase không công bố ngày kết thúc.
-  "chase-aeroplan-card-refresh-115000-points-25k-status":
-    "welcome offer không có ngày kết thúc công bố; 31/12/2026 là hạn earn rate 3X grocery/dining",
   // Bài News về benefits thẻ Aeroplan Canada. 12/01/2027 là ngày benefits mới
   // BẮT ĐẦU; 10/09/2026–11/01/2027 là promo 15% đã có bài riêng (bảng trên).
   "aeroplan-credit-cards-benefits-moi-2027":

@@ -7,8 +7,8 @@ import { t } from "@/lib/t";
 const posts_t = t("posts");
 
 /**
- * Nơi đi tiếp khi ưu đãi trong bài đã kết thúc — ba mặt hàng có ưu đãi của
- * site. Href để ở đây chứ không để trong `post-offer-status.ts`: file đó là
+ * Nơi đi tiếp khi ưu đãi trong bài đã kết thúc — bốn mặt hàng có ưu đãi của
+ * site (thẻ Canada và thẻ Mỹ tách riêng). Href để ở đây chứ không để trong `post-offer-status.ts`: file đó là
  * dữ liệu biên tập, còn đây là chỗ biết trang nào đang ở URL nào.
  *
  * `transferBonuses` rẽ theo DỮ LIỆU THẬT. Transfer bonus là thứ có lúc không
@@ -23,6 +23,7 @@ const CTA = (hasLiveTransferBonus: boolean): Record<OfferCta, { href: string; la
     ? { href: "/transfer-bonuses#canada", labelKey: "offerCtaTransferBonuses" }
     : { href: "/transfer-partners#canada", labelKey: "offerCtaTransferPartners" },
   creditCards: { href: "/credit-cards?type=noi-bat", labelKey: "offerCtaCreditCards" },
+  usCreditCards: { href: "/us-credit-cards", labelKey: "offerCtaUsCreditCards" },
   bankAccounts: { href: "/bank-accounts", labelKey: "offerCtaBankAccounts" },
 });
 
