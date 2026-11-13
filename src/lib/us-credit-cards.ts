@@ -150,8 +150,8 @@ type UsCardData = {
   elevatedBonus: boolean;
   /**
    * Ngân hàng ghi offer có thời hạn nhưng không công bố ngày (Capital One®), hoặc
-   * offer nâng mà ngân hàng không ghi hạn (thẻ Aeroplan® của Chase®: "best offer
-   * ever", mức thường gạch bỏ).
+   * offer nâng mà ngân hàng không ghi hạn (thẻ Aeroplan® của Chase®: "Limited-Time
+   * Offer" không ngày; tới 12/11/2026 là "best offer ever", mức thường gạch bỏ).
    * Thay cho `expiresAt`, nên thẻ KHÔNG tự rời mục Elevated — mỗi lượt rà phải
    * mở lại trang ngân hàng, hết chữ "Limited-Time" thì tắt tay.
    */
@@ -280,16 +280,13 @@ const ATMOS_ALASKA_CHECKED = "2026-10-21";
  */
 const REVERIFIED_11 = "2026-11-05";
 // Đợt 05/11 ở trên nay đã được `REVERIFIED_12` thay.
-/**
- * Rà lại 09/11/2026, cùng cách làm. Hai thẻ đổi:
- * - World of Hyatt®: Chase® thay offer 30,000 + 30,000 điểm (chi $3,000 USD) bằng "LIMITED-TIME
- *   OFFER" 4 Free Night Awards ở khách sạn hạng 1–4, chi $5,000 USD trong 3 tháng, không ghi ngày
- *   kết thúc → elevated + `offerEndUnannounced`.
- * - Business Green Amex®: hết offer đặc biệt 25,000 điểm → 15,000 điểm (chi $3,000 USD, 3 tháng),
- *   thấy cùng số ở hai lần tải.
- */
-const REVERIFIED_12 = "2026-11-09";
-// Đợt 09/11 ở trên nay đã được `REVERIFIED_13` thay.
+// Rà lại 09/11/2026, cùng cách làm. Hai thẻ đổi:
+// - World of Hyatt®: Chase® thay offer 30,000 + 30,000 điểm (chi $3,000 USD) bằng "LIMITED-TIME
+//   OFFER" 4 Free Night Awards ở khách sạn hạng 1–4, chi $5,000 USD trong 3 tháng, không ghi ngày
+//   kết thúc → elevated + `offerEndUnannounced`.
+// - Business Green Amex®: hết offer đặc biệt 25,000 điểm → 15,000 điểm (chi $3,000 USD, 3 tháng),
+//   thấy cùng số ở hai lần tải.
+// Đợt đó nay đã được `REVERIFIED_13` thay.
 /**
  * Rà lại 11/11/2026, cùng cách làm. Một thẻ đổi:
  * - Business Green Amex®: "Special Welcome Offer" 25,000 điểm (gạch 15,000; chi $3,000 USD, 3
@@ -306,6 +303,16 @@ const REVERIFIED_13 = "2026-11-11";
  * các thẻ Chase® còn lại khớp qua `audit:us-offers`. Không thẻ nào đổi.
  */
 const REVERIFIED_14 = "2026-11-12";
+/**
+ * 13/11/2026, job "Canh welcome offer thẻ Mỹ" đỏ: thẻ Aeroplan® của Chase® thay offer 75,000 +
+ * 40,000 điểm (chi $4,000 USD / $20,000 USD) bằng "LIMITED-TIME OFFER" tới 80,000 điểm — 60,000
+ * sau khi chi $3,000 USD trong 3 tháng, cộng tới 20,000 điểm từ 50% điểm thêm (1.5x) ở nhóm chi 1x
+ * trong 2 tháng đầu, chỉ cho người CHƯA TỪNG có thẻ Aeroplan® nào ở Mỹ hay Canada. Không ghi
+ * ngày kết thúc, hết chữ "best offer ever" và số gạch → vẫn elevated + `offerEndUnannounced`
+ * theo nhãn "LIMITED-TIME OFFER" (cùng luật World of Hyatt® 09/11). Đọc bằng curl và browser
+ * pane cùng số. JSON CMS trong HTML trang còn khối 115,000 cũ, nhưng chữ hiện ra là 80K.
+ */
+const AEROPLAN_CHASE_CHECKED = "2026-11-13";
 
 const AMEX_FTF_27: CanadianAnswer = {
   short: "Có — 2.7%",
@@ -860,15 +867,15 @@ const US_CARD_DATA: UsCardData[] = [
     elevatedBonus: true,
     offerEndUnannounced: true,
     cardImage: "/images/us-cards/chase-aeroplan.png",
-    welcomeBonus: "75,000 điểm Aeroplan® (tổng tới 115,000)",
-    minimumSpendUsd: 4_000,
+    welcomeBonus: "60,000 điểm Aeroplan® (tổng tới 80,000)",
+    minimumSpendUsd: 3_000,
     offerPeriod: "3 tháng đầu",
     annualFeeUsd: 195,
     rewardsCurrency: "Aeroplan®",
     headline:
       "Thẻ Aeroplan® của Chase®: điểm vào thẳng tài khoản Aeroplan®, hạng 25K tự động và hành lý ký gửi miễn phí trên chuyến Air Canada®.",
     editorsTake:
-      "Welcome bonus tới 115,000 điểm chia hai nấc: 75,000 điểm sau khi chi $4,000 USD trong 3 tháng, thêm 40,000 điểm khi tổng chi đạt $20,000 USD trong 12 tháng. Offer nâng từ mức thường 60,000 điểm. Chase® gọi là offer tốt nhất từ trước tới nay của thẻ nhưng không công bố ngày kết thúc. Với người Canada, đây là thẻ Mỹ tích thẳng ra Aeroplan® mà không cần bước chuyển điểm, và hạng 25K tự động đáng giá nếu bạn hay bay Air Canada®.",
+      "Welcome bonus tới 80,000 điểm chia hai phần: 60,000 điểm sau khi chi $3,000 USD trong 3 tháng đầu, cộng tới 20,000 điểm nữa nhờ được thêm 50% điểm (1.5x) ở các khoản chi thường chỉ được 1x trong 2 tháng đầu. Phần 20,000 điểm chỉ dành cho người chưa từng có thẻ Aeroplan® nào, ở Mỹ hay Canada, của bất kỳ ngân hàng nào; muốn nhận đủ 20,000 thì phải chi $40,000 USD ở nhóm 1x trong 2 tháng. Chase® ghi \"Limited-Time Offer\" nhưng không công bố ngày kết thúc. Với người Canada, đây là thẻ Mỹ tích thẳng ra Aeroplan® mà không cần bước chuyển điểm, và hạng 25K tự động đáng giá nếu bạn hay bay Air Canada®.",
     keyBenefits: [
       "Hạng Aeroplan® 25K tự động khi còn giữ thẻ; chi $75,000 USD trong năm lên 35K",
       "3x điểm khi mua thẳng với Air Canada® và ở du lịch khác; 3x ở siêu thị và nhà hàng tới 31/12/2026 (sau đó 2x); 2x ở trạm xăng",
@@ -888,11 +895,11 @@ const US_CARD_DATA: UsCardData[] = [
         note: "Điểm tự chuyển vào tài khoản Aeroplan® gắn với thẻ sau mỗi kỳ sao kê. Aeroplan® không chia theo quốc gia, nên điểm dùng được cho chuyến bay xuất phát từ Canada như điểm từ thẻ Canada.",
       },
       watchOut:
-        "Thẻ này chịu luật 5/24 của Chase®. Điều khoản của Chase® chỉ chặn người đang có thẻ này hoặc đã nhận bonus của thẻ này trong 24 tháng; không nhắc tới thẻ Aeroplan® Canada. Nấc 40,000 điểm đòi tổng chi $20,000 USD trong 12 tháng, khó với người ít tiêu ở Mỹ.",
+        "Thẻ này chịu luật 5/24 của Chase®. Điều khoản của phần 60,000 điểm chỉ chặn người đang có thẻ này hoặc đã nhận bonus của thẻ này trong 24 tháng; không nhắc tới thẻ Aeroplan® Canada. Phần thêm tới 20,000 điểm thì khác: chỉ dành cho người chưa từng có thẻ Aeroplan® nào, ở Mỹ hay Canada — đã có thẻ Aeroplan® Canada là không được.",
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/aircanada/aeroplan",
-    lastUpdated: VERIFIED_4,
-    verifiedOn: REVERIFIED_14,
+    lastUpdated: AEROPLAN_CHASE_CHECKED,
+    verifiedOn: AEROPLAN_CHASE_CHECKED,
     needsVerification: false,
   },
   {

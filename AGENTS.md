@@ -4948,3 +4948,40 @@ của mình, chuyển sang `./scripts/worktree.sh new` cho phần build + quét,
   MỘT lần theo luật link của tác giả, không tự đổi.
 - Bốn thẻ IHG® Mỹ hết hạn 18/11. Wealthsimple® 5%/5 tuần nay in ngay trên trang thẻ công khai ("New clients get 5% cash
   back on everything for 5 weeks") — site vẫn ghi không có welcome bonus (mục 21/10).
+
+## Kiểm toàn diện 13/11/2026 (lượt tay) — đừng đề xuất lại
+
+Gate: lint, tsc, build, 10 audit, `npm test` (727: 704 pass, 23 skip MySQL), `npm audit` = 0, `audit:links` production (245
+trang, không trang mồ côi), smoke test + `www` 308 + 5 header bảo mật. Codex bốn lượt: soát bản vá thẻ Aeroplan® với trang
+nguồn, tìm lỗi theo hậu quả, hai vòng bác bản vá ("CÒN CHẶN PUSH: KHÔNG").
+
+**Đã sửa:**
+- **Thẻ Aeroplan® của Chase® đổi offer** (job "Canh welcome offer thẻ Mỹ" đỏ 13/11 17:11 UTC — đỏ ĐÚNG): 75,000 + 40,000
+  (chi $4,000 / $20,000 USD) → "LIMITED-TIME OFFER" tới 80,000 = 60,000 sau $3,000 USD/3 tháng + tới 20,000 từ 50% điểm
+  thêm (1.5x) ở nhóm 1x trong 2 tháng đầu. Phần 20,000 chỉ cho người CHƯA TỪNG có thẻ Aeroplan® nào ở Mỹ hay Canada, và
+  nhận đủ cần $40,000 USD chi ở nhóm 1x (0.5 điểm thêm/$1). Không ngày → giữ elevated + `offerEndUnannounced` (cùng luật
+  World of Hyatt® 09/11). HTML của Chase® còn khối CMS 115,000 cũ trong JSON nhúng — chữ hiện ra (curl lẫn browser) là
+  80K; đừng kết luận ngược từ grep HTML thô. Codex bác câu "đa số người Canada chỉ nhận 60,000" (không có dữ liệu) rồi bác
+  luôn câu thay "đã từng có thẻ Aeroplan® thì chỉ nhận 60,000" (bỏ sót luật 24 tháng của phần 60,000) — đã bỏ cả hai.
+  Bài blog `chase-aeroplan-card-refresh-115000-points-25k-status` (tin offer cũ) để nguyên — việc của tác giả.
+- **`sync-videos` publish HAI bài cho một video khi hai lượt chạy chồng nhau** (Codex tìm, harness mock xác nhận trên HEAD:
+  2 bài, cả hai lượt 200, lượt sau cũng 200 — không ai được báo). Hai lượt cùng chụp danh sách trước khi bên kia tạo entry;
+  lượt sau thấy slug gốc bận bởi entry của lượt trước rồi lùi sang `post-<slug>-<videoId>`. Đường tới đó: "Run workflow" tay
+  chồng cron, hoặc curl thử lại sau 5xx của edge trong khi lượt đầu còn chạy trên server. Vá: `slugHolders` trả `type` +
+  `videoUrl` của entry giữ slug; người giữ là entry `type: video` của CHÍNH video này thì ném (lượt đó đỏ, lượt sau thấy
+  video đã có, xanh). Hai lượt cùng thấy slug trống thì cùng PUT một `sys.id` — CMA trả 409 VersionMismatch cho lượt sau
+  (đã ghi trong tài liệu lỗi của Contentful), nên không trùng. Chỉ tính `type: video`: bài chữ tình cờ cùng slug + cùng
+  `videoUrl` không lọt vòng lọc `fields.type=video` ở mọi lượt, tính nó là đỏ dai (Codex vòng bác bắt bản đầu).
+- Lint: `REVERIFIED_12` không còn ai dùng → chuyển thành comment như các đợt cũ.
+
+**Codex nêu, mình bác (Codex đồng ý):** (1) hai lượt chồng nhau VÀ tác giả đổi tiêu đề YouTube đúng trong vài giây đó vẫn
+ra hai slug khác nhau → trùng; khe có từ HEAD, đóng hẳn cần đặt `sys.id` theo `videoId` cho video mới — không đáng so với
+xác suất. (2) `videoUrl` lưu dạng `youtu.be` trong Contentful lọt phép so chuỗi — khe cũ, vòng lọc đầu cũng so chuỗi.
+
+**Đã kiểm, KHÔNG phải lỗi:** CIBC® Aventura® ×2 60,000 "Digital exclusive", TD® First Class 160,000, RBC® Avion® Visa
+Infinite 70,000 + Privilege 100,000 "Apply by November 25, 2026", WestJet RBC® "Special Offer" 70,000 (trang không ghi
+ngày; site hạn 18/11). Tài khoản ngân hàng: không bonus/lãi khuyến mãi nào hết hạn trước 27/11 ngoài National Bank®
+newcomer (đã ghi 11/11, trang tự ẩn). Mọi job khác xanh từ 11/11 tới nay.
+
+**Chờ tác giả:** WestJet RBC® hết hạn 18/11 (5 ngày; `expire-offers` đỏ từ 19/11 tới khi sửa tay). RBC® Avion® ×3 hạn
+25/11 (task một lần 26/11 đã có). Tangerine® Savings 4.50% hết 30/11. Bốn thẻ IHG® Mỹ hạn 18/11.
