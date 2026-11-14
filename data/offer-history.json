@@ -53,6 +53,11 @@
       {
         "at": "2026-11-02",
         "welcomeBonus": "85,000 điểm Aeroplan®"
+      },
+      {
+        "at": "2026-11-14",
+        "welcomeBonus": "85,000 điểm Aeroplan®",
+        "rebate": "$150"
       }
     ],
     "amex-marriott-bonvoy": [
@@ -292,11 +297,19 @@
     "wealthsimple-visa-infinite-plus": [
       {
         "at": "2026-08-29"
+      },
+      {
+        "at": "2026-11-14",
+        "welcomeBonus": "Cashback 5% trong 35 ngày (tối đa $500, theo lời mời)"
       }
     ],
     "wealthsimple-visa-infinite-privilege": [
       {
         "at": "2026-08-29"
+      },
+      {
+        "at": "2026-11-14",
+        "welcomeBonus": "Cashback 5% trong 35 ngày (tối đa $500, theo lời mời)"
       }
     ],
     "westjet-rbc-world-elite-mastercard": [
@@ -391,12 +404,22 @@
       {
         "at": "2026-11-06",
         "welcomeBonus": "120,000 điểm Membership Rewards®"
+      },
+      {
+        "at": "2026-11-14",
+        "welcomeBonus": "120,000 điểm Membership Rewards®",
+        "rebate": "$175"
       }
     ],
     "amex-cobalt": [
       {
         "at": "2026-09-07",
         "welcomeBonus": "15,000 điểm Membership Rewards®"
+      },
+      {
+        "at": "2026-11-14",
+        "welcomeBonus": "15,000 điểm Membership Rewards®",
+        "rebate": "$75"
       }
     ],
     "amex-gold-rewards": [
@@ -447,6 +470,11 @@
       {
         "at": "2026-11-06",
         "welcomeBonus": "100,000 điểm Membership Rewards®"
+      },
+      {
+        "at": "2026-11-14",
+        "welcomeBonus": "100,000 điểm Membership Rewards®",
+        "rebate": "$150"
       }
     ],
     "cibc-aeroplan-visa": [
