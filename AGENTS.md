@@ -5072,3 +5072,25 @@ hết), chỉ đụng hạn của ngân hàng ghi theo giờ Pacific, và vá đ
 ×4 Mỹ hạn 18/11 (task thẻ Mỹ 19/11 xử lý). RBC® Avion® ×3 hạn 25/11 (task một lần 26/11). Tangerine® Savings 4.50% hết
 30/11 (trang tự về 0.30%). Amex® Gold Canada: pane thấy 60,000, site ghi 90,000 elevated — sáng nay Chrome thật không kết
 nối nên chưa đủ hai phiên để kết luận (luật mục 11/11); giữ nguyên.
+
+## Kiểm toàn diện 15/11/2026 (phiên cloud, KHÔNG có mạng tới site) — đừng đề xuất lại
+
+Phiên chạy trên Claude Code cloud, môi trường "Default": proxy chặn `ghe1a.com`, `cdn.contentful.com` và trang ngân hàng,
+không có `.env.local`. Tác giả từ chối tạo môi trường mới có các host đó. Môi trường "Ghế 1A SEO" (có `ghe1a.com`) KHÔNG
+chuyển sang được giữa phiên: tên có dấu nên không hiện được trên hộp duyệt — muốn dùng thì đổi tên nó trong Settings, hoặc
+mở phiên mới chọn sẵn môi trường đó. Hệ quả: không build, không crawl, không đối chiếu Contentful/ngân hàng ở lượt này.
+
+Chạy được: lint, tsc, `npm test` (727: 704 pass, 23 skip MySQL — CI của `93fc3da` chạy đủ cả MySQL, xanh), `audit:awards`,
+`audit:trademarks` bản chỉ quét repo (script đọc `.env.local` ở dòng đầu; bản sao bỏ khối Contentful: 313 cụm, 0 chỗ thiếu).
+Dữ liệu 38 thẻ Mỹ đang hiện: `verifiedOn` 11–13/11 (xa ngưỡng 21 ngày); mọi câu "nhất"/so sánh trong `us-credit-cards.ts`
+còn đúng với tập thẻ đang hiện (Bold chi thấp nhất trong ba thẻ Bonvoy® Chase®, Bountiful nhiều điểm nhất, Sapphire Reserve®
+for Business chi $30,000 cao nhất Chase®, Business Platinum 300,000 lớn nhất, Business Green chỉ đắt hơn Blue Business®
+Plus trong nhóm MR doanh nghiệp; câu "$500 thấp nhất" thuộc Freedom Unlimited đang `hidden`). Code hai trang danh sách,
+trang chi tiết thẻ Mỹ, `credit-card-schema`, `credit-card-sort`, `format-date`: không thấy lỗi mới.
+
+Job (đọc log qua GitHub): "Canh welcome offer thẻ Mỹ" 14/11 — 18 thẻ Chase® khớp, 20 thẻ rà bằng browser; `check-rebates`
+15/11 00:00Z — 15 thẻ không đổi; `expire-offers` 15/11 15:05Z — `checked: 4`, không lỗi; `sync-videos` đỏ (YouTube 404, mục
+27/09). Mới thấy: mọi workflow cảnh báo "Node.js 20 is deprecated … actions/checkout@v4, actions/setup-node@v4 … forced to
+run on Node.js 24" — job vẫn xanh; lên `@v5` khi tiện, chưa đổi ở lượt này.
+
+Chờ tác giả: không đổi so với mục 14/11.
