@@ -2255,6 +2255,28 @@ Lượt `sync-videos` đỏ 24/09 03:06 UTC lại là **YouTube 404 cho feed Ato
   *Total users* là người duy nhất của nhóm. Chạy được với `city`, `date`,
   `sessionSourceMedium`, `unifiedPagePathScreen`, `customDimensionsGroup2Slot01/02`.
 
+## Đo đạc GA4 (15/11/2026) — đừng đề xuất lại
+
+- **Phần thừa của bảng nguồn = đúng dòng `(not set)`, và đếm `session_start` theo nguồn
+  cộng ĐÚNG tổng.** Tuần 08–14/11: các dòng Traffic acquisition cộng 150, tổng 141, dòng
+  `(not set)` 9 (Unassigned 9); cửa sổ 6 ngày cũng thừa đúng 8 = `(not set)` 8 — tức lần
+  này KHÔNG dồn vào ngày cuối. `r=top-events`, `seldim` `["eventName","sessionSourceMedium"]`
+  + `dataFilters` `eventName=session_start` ra 141, không có dòng `(not set)`. Dùng cách
+  đếm này làm bảng nguồn, ghi rõ là đếm event (khác metric Sessions 1 đơn vị ở 01–06/11:
+  220 vs 219). Cơ chế CHƯA kiểm chứng; đừng viết thành "phiên không có session_start".
+  Các dòng nguồn `(not set)` có landing trang thẻ, 7–10 phút tương tác, 0 engaged.
+- **Phiên theo ngày:** `r=top-events` + `seldim` `["eventName","date"]` + lọc
+  `session_start` (Traffic acquisition bỏ qua `seldim ["date"]`). Nguồn × một ngày: đặt
+  `date00 = date01`.
+- **Landing × ngày:** `r=landing-page`, `seldim` `["landingPagePlusQueryString","date"]` +
+  `filterTerm` — chạy. `dataFilters` với `landingPagePlusQueryString` vẫn KHÔNG chạy.
+- **Mã hoá `seldim`/`dataFilters` trong URL: `encodeURIComponent` MỘT lần.** Mã hoá hai lần
+  → GA4 lặng lẽ đá về Home.
+- **`data/offer-history.json` chỉ theo dõi `welcomeBonus` + `rebate`** — "không ghi nhận
+  đổi bonus" ≠ "offer không đổi" (hạn, điều kiện chi không có trong đó).
+- Nhóm `google / organic` + `iOS 26.6` tuần 08–14/11: **0 phiên** (12 tuần trước, 20 tuần
+  25–31/10).
+
 ## Luật welcome bonus theo cửa sổ thời gian (21/09/2026) — đừng đề xuất lại
 
 Chi tiết: `src/lib/recommendation/README.md`, mục "Luật welcome bonus theo cửa sổ
