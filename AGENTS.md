@@ -5019,3 +5019,34 @@ newcomer (đã ghi 11/11, trang tự ẩn). Mọi job khác xanh từ 11/11 tớ
 Gate: lint, tsc, build, `npm test` (704 pass, 23 skip), `test:reco` 503 (snapshot chỉ đổi `datasetFingerprint`),
 `audit:rebate-prose` / `reco-data` / `best-cards` / `health` / `card-mentions` / `trademarks` sạch. Codex hai vòng
 (soát + bác bản vá): "CÒN CHẶN GHI/PUSH: KHÔNG".
+
+## Kiểm toàn diện 14/11/2026 (lượt tay, tối) — đừng đề xuất lại
+
+Lượt định kỳ sáng 14/11 xanh mọi gate và rà xong tài khoản ngân hàng + thẻ Canada, nhưng dừng ngay lúc gọi Codex, không
+báo cáo, không commit. Lượt này làm nốt.
+
+Gate: lint, tsc, build, 12 audit, `npm test` (727: 704 pass, 23 skip MySQL), `npm audit` = 0, `audit:links` production
+(245 trang, không trang mồ côi; "1 mô tả dưới 70 ký tự" đã biết từ 31/10), smoke test 10 URL + `www` 308 + 5 header bảo
+mật, production đã phục vụ đủ ba thay đổi 13/11. Bản build cục bộ: 13 trang chính ở 375px không tràn ngang, không ảnh
+hỏng, không lỗi console; trang 4 thẻ Amex® có HOT TIP rebate, bài Chase® Aeroplan® có dải "đã kết thúc ngày 12/11/2026".
+Job: chỉ `sync-videos` đỏ (07:37 và 22:59 UTC, "channel: 404, uploads-playlist: 404" — mục 27/09). IndexNow: 18 URL, 200.
+
+**Codex một vòng, góc mới "bom hẹn giờ"** — lần theo code từng mốc trong 50 ngày tới (18/11 WestJet RBC® + IHG® ×4, 25/11
+RBC® Avion® ×3, 30/11 Tangerine® + transfer bonus, 08/12 RBC® Day to Day, 30/12 rebate Amex® ×4, 01/01/2027 đổi năm) và
+ngày hôm sau: không chỗ nào hiện thông tin sai mà không job nào đỏ. 425 phép kiểm biên ngày đạt ở cả TZ UTC lẫn Toronto;
+mọi route có `revalidate` (`goi-y` là `force-dynamic`), không HTML tài chính nào bị CDN giữ một năm. Tầng A (revalidate,
+expire-offers, sync-videos + `slugHolders` 13/11, contentful-cma, subscribe/contact, affiliate/FinlyWealth, job-auth,
+rate-limit): SẠCH.
+
+**Codex nêu, mình KHÔNG vá (đánh đổi chấp nhận):** hạn của RBC® ghi theo giờ Pacific ("11:59 pm PST"), còn site so ngày
+theo giờ Toronto (`hasExpired`). Transfer bonus Avion® → Avios hạn 30/11/2026 sẽ biến khỏi `/transfer-bonuses` + trang
+chủ, và bài `british-airways-avios-transfer-bonus-30-rbc-avion` hiện "đã kết thúc", từ 00:00 01/12 Toronto — tức 21:00
+30/11 Pacific, sớm khoảng 3 giờ. Lệch về phía AN TOÀN (báo hết sớm, đêm khuya giờ miền Đông; không bao giờ báo còn khi đã
+hết), chỉ đụng hạn của ngân hàng ghi theo giờ Pacific, và vá đúng phải thêm múi giờ cho từng hạn ở cả Contentful
+(`expiresAt`), `POST_OFFER_DEADLINES` lẫn job `expire-offers` — không đáng. Đừng đề xuất lùi `endsOn`/`expiresAt` sang
+01/12: nhãn "còn hiệu lực đến hết 01/12" sẽ sai cả ngày.
+
+**Chờ tác giả (không đổi so với 13/11):** WestJet RBC® hết hạn 18/11 (`expire-offers` đỏ từ 19/11 tới khi sửa tay). IHG®
+×4 Mỹ hạn 18/11 (task thẻ Mỹ 19/11 xử lý). RBC® Avion® ×3 hạn 25/11 (task một lần 26/11). Tangerine® Savings 4.50% hết
+30/11 (trang tự về 0.30%). Amex® Gold Canada: pane thấy 60,000, site ghi 90,000 elevated — sáng nay Chrome thật không kết
+nối nên chưa đủ hai phiên để kết luận (luật mục 11/11); giữ nguyên.
