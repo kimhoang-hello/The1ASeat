@@ -5094,3 +5094,59 @@ Job (đọc log qua GitHub): "Canh welcome offer thẻ Mỹ" 14/11 — 18 thẻ 
 run on Node.js 24" — job vẫn xanh; lên `@v5` khi tiện, chưa đổi ở lượt này.
 
 Chờ tác giả: không đổi so với mục 14/11.
+
+## Kiểm toàn diện 15/11/2026 (lượt tay trên máy tác giả: trang Thẻ tín dụng + Thẻ Mỹ) — đừng đề xuất lại
+
+Chạy sau mục cloud ngay trên, trên máy có `.env.local`, mạng và trình duyệt. Gate: lint, tsc, build, `npm test` (704 pass,
+23 skip MySQL), 11 audit, `npm audit` = 0, `audit:links` production (245 trang, không trang mồ côi), smoke test 9 URL + `www`
+308 + 5 header bảo mật. Job: chỉ `sync-videos` đỏ (mục 27/09).
+
+**Đã sửa:** Business Green Amex® (Mỹ) hết "Special Welcome Offer" 25,000 → 15,000 điểm (chi $3,000 USD, 3 tháng): thấy
+15,000 ở HAI phiên độc lập (browser pane + Chrome thật của tác giả), ba lượt tải → tắt elevated + `offerEndUnannounced`, viết
+lại câu offer trong editor's take. `verifiedOn` 38 thẻ → 15/11 (`REVERIFIED_15`; Citi® đọc JSON `offerPricingPositioning`);
+ba hằng ngày rà cũ thành comment.
+
+**Codex hai vòng** (soát diff + nội dung 76 thẻ; bác bản vá — "CÒN CHẶN" ở vòng 2 vì câu ngày bật/tắt, đã sửa theo):
+- Hilton Honors Business Amex® (Mỹ): keyBenefits "Free Night Reward hằng năm sau khi chi tiêu đủ mức" — trang amex.com 15/11
+  không còn quyền lợi đó (Free Night chỉ nằm trong welcome offer). Thay bằng credit Hilton® $240 USD/năm ($60 USD/quý) +
+  Diamond khi chi $40,000 USD/năm, đúng mục Featured Benefits. Surpass® vẫn có Free Night khi chi $15,000 — đừng sửa theo.
+- World of Hyatt® Business: "Welcome bonus cao hơn bản cá nhân" lỗi thời từ khi bản cá nhân đổi sang 4 Free Night Awards
+  (09/11) — thay bằng câu nêu thẳng 70,000 / $7,000 USD / 3 tháng. Cùng loại lỗi với mục câu so sánh tuyệt đối.
+- TD® Aeroplan® Visa Infinite Privilege (Contentful, version 12 → publish 13): "quyền lợi mà bình thường bạn phải mua gói
+  Air Canada® Elite Status mới có" → "mà không cần hạng Aeroplan® Elite Status" (hạng đạt bằng SQC, không bán thành gói).
+- Business Green: câu "tắt 15/11" nói quá bằng chứng (13–14/11 không ai mở trang) → "thấy 25,000 ở lượt rà 11–12/11, và
+  15,000 ở lượt rà 15/11/2026".
+- **Mình bác, Codex đồng ý:** headline Sapphire Reserve® for Business "mức chi tiêu lớn nhất trong các thẻ Chase® ở đây"
+  vẫn đúng — $30,000 là `minimumSpendUsd` cao nhất trong 18 thẻ Chase® (kế tiếp $10,000). $40,000 của thẻ Aeroplan® là trần
+  tích thêm 0.5 điểm/USD ở nhóm 1x, không phải ngưỡng nhận welcome bonus.
+
+**Thẻ Mỹ, đã kiểm KHÔNG đổi:** 13 Amex® (Gold "as high as" 100,000/$8,000; Platinum 175,000/$12,000; Business Platinum
+300,000/$20,000; Business Gold 200,000/$15,000; Blue Business® Plus 50,000/$5,000; Bevy 85,000; Brilliant 100,000; Bonvoy
+Business 75,000/$6,000 — chữ "Limited Time Offer" trên trang đó là nhãn menu của thẻ Hilton Business, không phải của thẻ
+Bonvoy; Hilton ×4 hạn 1/13/2027), Capital One® ×2 (Venture "LIMITED-TIME OFFER" $300 + 75,000 còn), Citi Strata Premier®
+60,000/$4,000, Bilt Palladium 50,000 + Gold + $300 Bilt Cash, Atmos™ ×3 (Summit 100,000, Ascent tới 80,000, Business
+70,000); Chase® 18 thẻ qua `audit:us-offers` + nhãn "LIMITED-TIME OFFER" (Aeroplan®, World of Hyatt®) và "OUR BEST OFFER
+RETURNS" (Sapphire Reserve® for Business) còn trong HTML.
+
+**Thẻ Canada:** 27 thẻ qua FinlyWealth Affiliate API (phí + rebate khớp 100%; `welcomeBonus.text` khớp trừ Gold — Finly
+chậm, mục 22/09). Amex® qua đường Apply Finly `/go/creditCards/<slug>`: Platinum 100,000, Business Platinum 120,000,
+Business Gold 70,000, Aeroplan® 45,000, Reserve 85,000, Business Reserve 90,000, Cobalt® 15,000, Hilton 60,000 + 10,000 +
+FNR hạn 11/01/2027 — khớp. WestJet RBC® vẫn "SPECIAL OFFER" 70,000 (hạn 18/11).
+- **Amex® Gold + Green Canada chia theo phiên CẢ NHÓM:** pane thấy Gold 90,000 + Green "SPECIAL OFFER" 15,000/$1,250
+  (công khai + đường Apply); Chrome thật cùng giờ thấy Gold 60,000 + Green 10,000/$1,000. Đảo chiều so với 11/11. Hai phiên
+  lệch = hoà → giữ site (Gold 90,000 elevated, Green 10,000). Hệ quả: site đang ghi Gold theo nhóm "nâng" nhưng Green theo
+  nhóm "thường" — báo tác giả, không tự sửa.
+- Các lỗi nội dung "chờ tác giả" của mục 31/10 đã sửa hết trên Contentful, trừ CIBC® "tổng đến $189" (chép đúng cibc.com).
+- Mọi ngày đã qua trong chữ thẻ (Canada + Mỹ) đều là câu lịch sử ("mở từ 02/11/2026", "đã hết ngày 30/09/2026").
+
+**Giao diện (bản build cục bộ, puppeteer-core + axe-core 4):** 104 URL (28 trang danh sách/biến thể lọc-sắp/query rác/so
+sánh/tốt nhất/gợi ý + 38 thẻ Canada + 38 thẻ Mỹ) × 320/375/1440px = 312 lượt: 0 tràn ngang, 0 lỗi console, 0 response ≥400,
+0 ảnh hỏng/thiếu alt, mỗi trang 1 h1, JSON-LD parse được, không id trùng, link ref/affiliate đủ `sponsored`, không chữ
+`undefined`/`NaN`/`US$`; axe WCAG 2.0/2.1/2.2 A+AA 208 lượt (375 + 1440px): 0 vi phạm. Không chữ nào bị cắt ngoài `sr-only`.
+Link tiêu đề thẻ cao 19–23px: axe `target-size` (có ngoại lệ khoảng cách) không báo — không phải lỗi. Lighthouse mobile
+`/credit-cards`, `/us-credit-cards`: Accessibility / Best Practices / SEO 100. HTML hai trang danh sách 543 / 624 KB thô
+nhưng ~44 KB gzip — không phải lỗi.
+
+**Chờ tác giả:** Amex® Gold / Green Canada chia theo phiên (trên). WestJet RBC® hết hạn 18/11 (`expire-offers` đỏ từ 19/11
+tới khi sửa tay), IHG® ×4 Mỹ hạn 18/11 (task thẻ Mỹ 19/11), RBC® Avion® ×3 hạn 25/11 (task một lần 26/11), Tangerine®
+Savings 4.50% hết 30/11, CIBC® "tổng đến $189" — không đổi so với mục 14/11.

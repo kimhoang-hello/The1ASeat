@@ -294,25 +294,29 @@ const REVERIFIED_11 = "2026-11-05";
  *   này theo phiên: hai hồ sơ trình duyệt mới tinh (headless) cùng buổi chỉ thấy 15,000, nên
  *   editor's take nói rõ điều đó. Đừng kết luận "đã tắt" từ MỘT phiên trình duyệt.
  */
-const REVERIFIED_13 = "2026-11-11";
-// Đợt 11/11 ở trên nay đã được `REVERIFIED_14` thay — trừ Citi Strata Premier®, vẫn không đọc
-// được số trên trang Citi® nên giữ ngày cũ.
+// Đợt 11/11 (`REVERIFIED_13`) đã được `REVERIFIED_14` thay — trừ Citi Strata Premier®, vẫn không
+// đọc được số trên trang Citi® nên giữ ngày cũ.
+// Rà lại 12/11/2026 bằng browser (`REVERIFIED_14`): 12 thẻ American Express®, 2 Capital One®, Bilt
+// Palladium, 3 Atmos™ (trang Alaska®), Chase® Aeroplan® và Sapphire Reserve® for Business (số gạch
+// còn); các thẻ Chase® còn lại khớp qua `audit:us-offers`. Không thẻ nào đổi.
+// 13/11/2026 (`AEROPLAN_CHASE_CHECKED`), job "Canh welcome offer thẻ Mỹ" đỏ: thẻ Aeroplan® của
+// Chase® thay offer 75,000 + 40,000 điểm (chi $4,000 USD / $20,000 USD) bằng "LIMITED-TIME OFFER"
+// tới 80,000 điểm — 60,000 sau khi chi $3,000 USD trong 3 tháng, cộng tới 20,000 điểm từ 50% điểm
+// thêm (1.5x) ở nhóm chi 1x trong 2 tháng đầu, chỉ cho người CHƯA TỪNG có thẻ Aeroplan® nào ở Mỹ
+// hay Canada. Không ghi ngày kết thúc → elevated + `offerEndUnannounced` theo nhãn "LIMITED-TIME
+// OFFER" (cùng luật World of Hyatt® 09/11). JSON CMS trong HTML trang còn khối 115,000 cũ, nhưng
+// chữ hiện ra là 80K.
+// Ba đợt trên nay đã được `REVERIFIED_15` thay.
 /**
- * Rà lại 12/11/2026 bằng browser: 12 thẻ American Express®, 2 Capital One®, Bilt Palladium,
- * 3 Atmos™ (trang Alaska®), Chase® Aeroplan® và Sapphire Reserve® for Business (số gạch còn);
- * các thẻ Chase® còn lại khớp qua `audit:us-offers`. Không thẻ nào đổi.
+ * Rà lại 15/11/2026 bằng browser, cùng cách làm: 13 thẻ American Express®, 2 Capital One®, Citi
+ * Strata Premier® (JSON `offerPricingPositioning`: 60,000 / $4,000 USD / 3 tháng / $95 USD), Bilt
+ * Palladium, 3 Atmos™ (trang Alaska®); 18 thẻ Chase® khớp qua `audit:us-offers`, nhãn
+ * "LIMITED-TIME OFFER" (Aeroplan®, World of Hyatt®) và "OUR BEST OFFER RETURNS" (Sapphire
+ * Reserve® for Business) còn. Một thẻ đổi:
+ * - Business Green Amex®: hết "Special Welcome Offer" 25,000 → 15,000 điểm (chi $3,000 USD, 3
+ *   tháng). Thấy 15,000 ở HAI phiên độc lập (browser pane + Chrome thật), ba lượt tải.
  */
-const REVERIFIED_14 = "2026-11-12";
-/**
- * 13/11/2026, job "Canh welcome offer thẻ Mỹ" đỏ: thẻ Aeroplan® của Chase® thay offer 75,000 +
- * 40,000 điểm (chi $4,000 USD / $20,000 USD) bằng "LIMITED-TIME OFFER" tới 80,000 điểm — 60,000
- * sau khi chi $3,000 USD trong 3 tháng, cộng tới 20,000 điểm từ 50% điểm thêm (1.5x) ở nhóm chi 1x
- * trong 2 tháng đầu, chỉ cho người CHƯA TỪNG có thẻ Aeroplan® nào ở Mỹ hay Canada. Không ghi
- * ngày kết thúc, hết chữ "best offer ever" và số gạch → vẫn elevated + `offerEndUnannounced`
- * theo nhãn "LIMITED-TIME OFFER" (cùng luật World of Hyatt® 09/11). Đọc bằng curl và browser
- * pane cùng số. JSON CMS trong HTML trang còn khối 115,000 cũ, nhưng chữ hiện ra là 80K.
- */
-const AEROPLAN_CHASE_CHECKED = "2026-11-13";
+const REVERIFIED_15 = "2026-11-15";
 
 const AMEX_FTF_27: CanadianAnswer = {
   short: "Có — 2.7%",
@@ -444,7 +448,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_PERSONAL_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred",
     lastUpdated: VERIFIED,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -482,7 +486,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/gold-card/",
     lastUpdated: VERIFIED,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -524,7 +528,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CAPITAL_ONE_REFERRAL,
     sourceUrl: "https://www.capitalone.com/credit-cards/venture-x/",
     lastUpdated: VERIFIED,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -565,7 +569,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.citi.com/credit-cards/citi-strata-premier-credit-card",
     lastUpdated: VERIFIED,
-    verifiedOn: REVERIFIED_13,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -607,7 +611,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.bilt.com/card",
     lastUpdated: "2026-10-16",
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -648,7 +652,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/marriott-bonvoy/boundless",
     lastUpdated: VERIFIED,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -689,7 +693,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_BUSINESS_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/business-credit-cards/ink/business-preferred",
     lastUpdated: VERIFIED,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -733,7 +737,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_PERSONAL_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/rewards-credit-cards/sapphire/reserve",
     lastUpdated: VERIFIED_2,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -771,7 +775,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/platinum/",
     lastUpdated: VERIFIED_2,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -814,7 +818,7 @@ const US_CARD_DATA: UsCardData[] = [
     sourceUrl: "https://www.capitalone.com/credit-cards/venture/",
     reviewSlug: "capital-one-venture-review",
     lastUpdated: "2026-09-27",
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -855,7 +859,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/united/united-explorer",
     lastUpdated: "2026-10-31",
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -898,8 +902,8 @@ const US_CARD_DATA: UsCardData[] = [
         "Thẻ này chịu luật 5/24 của Chase®. Điều khoản của phần 60,000 điểm chỉ chặn người đang có thẻ này hoặc đã nhận bonus của thẻ này trong 24 tháng; không nhắc tới thẻ Aeroplan® Canada. Phần thêm tới 20,000 điểm thì khác: chỉ dành cho người chưa từng có thẻ Aeroplan® nào, ở Mỹ hay Canada — đã có thẻ Aeroplan® Canada là không được.",
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/aircanada/aeroplan",
-    lastUpdated: AEROPLAN_CHASE_CHECKED,
-    verifiedOn: AEROPLAN_CHASE_CHECKED,
+    lastUpdated: "2026-11-13",
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -940,7 +944,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/world-of-hyatt-credit-card",
     lastUpdated: "2026-11-09",
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -979,7 +983,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/hilton-honors/",
     lastUpdated: VERIFIED_2,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -1019,7 +1023,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_BUSINESS_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/business-credit-cards/ink/unlimited",
     lastUpdated: VERIFIED_2,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -1060,7 +1064,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_BUSINESS_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/business-credit-cards/ink/cash",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -1100,7 +1104,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_BUSINESS_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/business-credit-cards/sapphire/reserve",
     lastUpdated: VERIFIED_4,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -1141,7 +1145,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_BUSINESS_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/business-credit-cards/ink/premier",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -1301,7 +1305,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/marriott-bonvoy/bold",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -1339,7 +1343,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/marriott-bonvoy/bountiful",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -1358,7 +1362,7 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Bản doanh nghiệp của thẻ World of Hyatt®: 2x điểm ở ba hạng mục chi tiêu nhiều nhất mỗi quý.",
     editorsTake:
-      "Welcome bonus cao hơn bản cá nhân nhưng đòi chi $7,000 USD trong 3 tháng. Điểm World of Hyatt® vẫn có giá trị cao khi đổi đêm khách sạn.",
+      "Welcome bonus 70,000 điểm sau khi chi $7,000 USD trong 3 tháng đầu. Điểm World of Hyatt® vẫn có giá trị cao khi đổi đêm khách sạn.",
     keyBenefits: [
       "Tới 9x điểm ở khách sạn thuộc World of Hyatt®",
       "2x điểm ở ba hạng mục chi tiêu nhiều nhất mỗi quý",
@@ -1378,8 +1382,8 @@ const US_CARD_DATA: UsCardData[] = [
       watchOut: "Thẻ doanh nghiệp nên không tính vào 5/24, nhưng Chase® vẫn xét 5/24 khi duyệt.",
     },
     applyUrl: "https://creditcards.chase.com/business-credit-cards/world-of-hyatt/hyatt-business-card",
-    lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_14,
+    lastUpdated: "2026-11-15",
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -1421,7 +1425,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_IHG_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/a1/ihg/PremierSelectNAEPQ410",
     lastUpdated: VERIFIED_4,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -1462,7 +1466,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_IHG_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/a1/ihg/PremierNAEPQ410",
     lastUpdated: VERIFIED_4,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -1502,7 +1506,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_IHG_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/a1/ihg/OneRewardsNAEPQ410",
     lastUpdated: VERIFIED_4,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -1543,7 +1547,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_IHG_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/a1/ihg/BizNAEPQ410",
     lastUpdated: VERIFIED_4,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -1582,7 +1586,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -1619,7 +1623,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-gold-card-amex/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -1628,10 +1632,9 @@ const US_CARD_DATA: UsCardData[] = [
     issuerId: "amex",
     category: "travel",
     business: true,
-    elevatedBonus: true,
-    offerEndUnannounced: true,
+    elevatedBonus: false,
     cardImage: "/images/us-cards/amex-business-green.png",
-    welcomeBonus: "25,000 điểm Membership Rewards®",
+    welcomeBonus: "15,000 điểm Membership Rewards®",
     minimumSpendUsd: 3_000,
     offerPeriod: "3 tháng đầu",
     annualFeeUsd: 95,
@@ -1639,7 +1642,7 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Thẻ doanh nghiệp annual fee thấp trong hệ Membership Rewards®: phí $95 USD, 2x điểm khi đặt du lịch qua American Express Travel®.",
     editorsTake:
-      "Annual fee $95 USD. Trong các thẻ doanh nghiệp tích Membership Rewards® ở đây chỉ Blue Business® Plus (không annual fee) là rẻ hơn. American Express® ghi đây là offer đặc biệt, tăng từ 15,000 lên 25,000 điểm sau khi chi $3,000 USD trong 3 tháng đầu, nhưng không công bố ngày kết thúc. Offer này đã tắt hai lần (rà 12/10 và 09/11/2026) rồi bật lại, và không phải phiên trình duyệt nào cũng thấy: lượt rà 11/11/2026 có trình duyệt hiện 25,000, có trình duyệt chỉ hiện 15,000. Kiểm lại con số trên trang ngay trước khi apply. Lưu ý thẻ này có phí giao dịch ngoại tệ 2.7%.",
+      "Annual fee $95 USD. Trong các thẻ doanh nghiệp tích Membership Rewards® ở đây chỉ Blue Business® Plus (không annual fee) là rẻ hơn. Welcome bonus hiện là 15,000 điểm sau khi chi $3,000 USD trong 3 tháng đầu. American Express® hay bật offer đặc biệt 25,000 điểm cho thẻ này rồi tắt, không công bố ngày (Ghế 1A thấy 25,000 ở lượt rà 11–12/11, và 15,000 ở lượt rà 15/11/2026), và không phải phiên trình duyệt nào cũng thấy cùng một mức. Kiểm lại con số trên trang ngay trước khi apply. Lưu ý thẻ này có phí giao dịch ngoại tệ 2.7%.",
     keyBenefits: [
       "2x điểm khi đặt du lịch qua American Express Travel®",
       "1x điểm cho mọi chi tiêu khác",
@@ -1656,8 +1659,8 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-green-card-amex/",
-    lastUpdated: "2026-11-11",
-    verifiedOn: REVERIFIED_14,
+    lastUpdated: "2026-11-15",
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -1694,7 +1697,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-blue-business-plus-credit-card-amex/",
     lastUpdated: "2026-10-16",
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -1733,7 +1736,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/marriott-bonvoy-bevy/",
     lastUpdated: VERIFIED_4,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -1772,7 +1775,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/marriott-bonvoy-brilliant/",
     lastUpdated: VERIFIED_4,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -1811,7 +1814,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/amex-marriott-bonvoy-business-credit-card/",
     lastUpdated: REVERIFIED_11,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -1850,7 +1853,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-surpass/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -1889,7 +1892,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-aspire/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -1913,7 +1916,7 @@ const US_CARD_DATA: UsCardData[] = [
     keyBenefits: [
       "Hạng Hilton Honors™ Gold tự động",
       "12x điểm ở khách sạn thuộc Hilton®",
-      "Free Night Reward hằng năm sau khi chi tiêu đủ mức",
+      "Credit Hilton® tới $240 USD mỗi năm (tối đa $60 USD mỗi quý); chi $40,000 USD trong năm được nâng hạng Diamond",
       "Không phí giao dịch ngoại tệ",
     ],
     tags: ["Hotel", "Business", "Elite status"],
@@ -1927,8 +1930,8 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/hilton-honors/",
-    lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_14,
+    lastUpdated: "2026-11-15",
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -1967,7 +1970,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.alaskaair.com/atmosrewards/content/credit-cards/visa-summit",
     lastUpdated: ATMOS_ALASKA_CHECKED,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -2007,7 +2010,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.alaskaair.com/atmosrewards/content/credit-cards/visa-ascent",
     lastUpdated: ATMOS_ALASKA_CHECKED,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
   {
@@ -2046,7 +2049,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.alaskaair.com/atmosrewards/content/credit-cards/visa-small-business",
     lastUpdated: ATMOS_ALASKA_CHECKED,
-    verifiedOn: REVERIFIED_14,
+    verifiedOn: REVERIFIED_15,
     needsVerification: false,
   },
 ];
