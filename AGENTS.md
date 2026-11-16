@@ -5150,3 +5150,44 @@ nhưng ~44 KB gzip — không phải lỗi.
 **Chờ tác giả:** Amex® Gold / Green Canada chia theo phiên (trên). WestJet RBC® hết hạn 18/11 (`expire-offers` đỏ từ 19/11
 tới khi sửa tay), IHG® ×4 Mỹ hạn 18/11 (task thẻ Mỹ 19/11), RBC® Avion® ×3 hạn 25/11 (task một lần 26/11), Tangerine®
 Savings 4.50% hết 30/11, CIBC® "tổng đến $189" — không đổi so với mục 14/11.
+
+## Rà offer thẻ Canada + Mỹ 16/11/2026 (lượt tay, tác giả: "kiểm tra và cập nhật offers mới") — đừng đề xuất lại
+
+**Thẻ Mỹ (commit e0bde27):** 38/38 khớp, không thẻ nào đổi. 20 thẻ mở bằng browser pane (13 Amex®, 2 Capital One®, Citi
+Strata Premier® qua JSON `offerPricingPositioning`, Bilt, 3 Atmos™ trang Alaska®), 18 Chase® qua `audit:us-offers`.
+`verifiedOn` → `REVERIFIED_16`. Bẫy nhỏ: bóc HTML Chase® bằng `sed 's/<[^>]*>//'` rồi grep "LIMITED-TIME OFFER" trả rỗng cho
+Aeroplan® dù nhãn còn — đọc lại bằng Python bỏ `<script>`/`<style>` mới thấy. Đừng kết luận "mất nhãn" từ một lần grep.
+
+**Thẻ Canada — 4 thẻ sửa trên Contentful (Codex hai vòng, vòng 2 "không chặn"):**
+- **Amex® Gold Rewards: hết offer nâng 90,000 → 60,000** (5,000 điểm mỗi chu kỳ chi $1,000, 12 tháng), tắt elevated. Lần
+  này KHÔNG phải ca "chia phiên": browser pane + Chrome thật, trang công khai + đường Apply Finly, 6 lượt tải (gồm lượt rà
+  lại ngay trước khi ghi) đều 60,000; Finly API cũng 60,000. Chữ lấy từ snapshot 02/11 (bản cuối trước đợt nâng), giữ sửa
+  "khách sạn hoặc thuê xe" ở key benefit 2 của bản 09/11. Seed: bản 60,000 mới (16/11) + đóng bản 90,000 `recordedTo` 15/11.
+- **CIBC® Aventura® Visa Infinite + Gold Visa: offer 60,000 hết; từ 16/11/2026 offer công khai 35,000** (15,000 lần mua
+  đầu + 20,000 khi chi $3,000 trong 4 kỳ sao kê đầu; CIBC® ghi "up to $1,500 in value"), không ngày kết thúc → tắt
+  elevated. Điều khoản trên trang sản phẩm: "approved for a new eligible card beginning November 16, 2026". Trang
+  `/en/special-offers/aventura-rewards-inspire.html` (banner "up to $1,600") có 45,000 (30,000 ở mốc $3,000) nhưng CHỈ
+  cho người nhận lời mời trực tiếp từ CIBC®/đối tác và apply qua link trong lời mời — không phải đích nút Apply của site;
+  editor's take bản Infinite nhắc điều đó. Finly API không liệt kê hai thẻ này (link apply là cibc.com) nên không job nào
+  bắt được — chỉ lượt rà tay đọc trang sản phẩm. Đã sửa kèm: `best-cards.ts` (hai đoạn + `sharedFiguresVi`), seed engine
+  (bản 35,000 mới + đóng 60,000 `recordedTo` 15/11), field `...En` ẩn (chỉ số). Test vòng đời số 9 chọn offer ≥3 thành
+  phần đầu tiên làm "offer cũ" — bản Aventura® mới (mở 16/11) làm nó gãy; nay lọc offer đang mở và đã chạy trước
+  01/10/2026, cùng tiền đề test 10. Bản chụp engine chụp lại (`UPDATE_ENGINE_SNAPSHOT=1`).
+- **BMO® VIPorter®: offer Black Friday mới** — đơn apply 12/11–08/12/2026, chưa từng có thẻ, chi $2,000 mua hàng ròng trong
+  50 ngày từ ngày mở thẻ (hoặc tới 01/02/2027), chia đều 50 triệu điểm; BMO® chốt 02/02/2027, cộng trong 8 tuần. Chỉ thêm
+  một câu vào editor's take. **Cố ý KHÔNG bật elevated:** welcome bonus 70,000 không đổi, phần chia không có số đảm bảo,
+  và bật elevated + `expiresAt` 08/12 thì `expire-offers` xoá luôn hạn 31/10/2027 của offer thường (route ghi
+  `expiresAt: undefined` khi khôi phục). Câu này có ngày 08/12/2026 — lượt kiểm định kỳ T4 09/12 phải gỡ hoặc viết lại
+  thành câu lịch sử.
+
+**Đã kiểm, khớp:** Amex® Canada 10 thẻ còn lại qua đường Apply Finly + Marriott ×2 trang công khai (Hilton "Offer ends January
+11, 2027"); TD® ×5, RBC® Avion® ×3 (apply by 25/11) + WestJet RBC® 70,000, Scotiabank® ×4, National Bank® (hết 31/03/2027),
+Tangerine®, Capital One® Canada ×2, CIBC® Aeroplan® ×3; FinlyWealth API: phí + rebate 38 thẻ khớp. Bốn audit thẻ +
+`audit:health` + `npm test` (704) + tsc + lint xanh sau khi ghi.
+
+**Codex bị bác (Codex đồng ý ở vòng 2):** "tổng đến $189" ở key benefits CIBC® (câu có sẵn, đang chờ tác giả từ 31/10) và
+"thẻ travel dễ dùng nhất trong nhóm thẻ ngân hàng Canada" (copy cũ, không thuộc phần offer) — không sửa trong lượt này.
+
+**Chờ tác giả:** CIBC® Aventura® còn nằm trong trang "Thẻ có offers tốt nhất Canada" dù offer nay chỉ 35,000 — giữ hay thay
+là việc biên tập. BMO® có muốn đưa lên tab "Offers nổi bật" không (xem lý do không bật ở trên). Các mục cũ: WestJet RBC®
+hết hạn 18/11, IHG® ×4 Mỹ 18/11, RBC® Avion® ×3 25/11, CIBC® "tổng đến $189".

@@ -206,6 +206,29 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "amex-gold-rewards",
+    name: "60,000 điểm Membership Rewards®",
+    headline: 60000,
+    currency: "amex-mr",
+    // Mức thường quay lại: 16/11/2026 trang công khai amex.ca và đúng đường Apply
+    // của site (Finly → CJ → amex.ca ?CPID=) đều 60,000, ở HAI phiên độc lập
+    // (browser pane + Chrome thật), bốn lượt tải. Ngày mình thấy — Amex® không ghi
+    // ngày bắt đầu. Bản đang mở đứng TRƯỚC các bản đã đóng.
+    startDate: "2026-11-16",
+    verifiedAt: "2026-11-16",
+    recordedAt: "2026-11-16",
+    components: [
+      {
+        type: "monthly_spend",
+        points: 5000,
+        spend: 1000,
+        windowDays: 365,
+        repeat: 12,
+        note: "5,000 điểm cho mỗi chu kỳ sao kê chi đủ $1,000, suốt 12 tháng đầu",
+      },
+    ],
+  },
+  {
+    slug: "amex-gold-rewards",
     name: "90,000 điểm Membership Rewards®",
     headline: 90000,
     currency: "amex-mr",
@@ -217,6 +240,9 @@ const OFFER_SEEDS: OfferSeed[] = [
     startDate: "2026-11-09",
     verifiedAt: "2026-11-09",
     recordedAt: "2026-11-09",
+    // 16/11/2026 hai phiên độc lập chỉ còn 60,000 (xem bản trên). Amex® không công
+    // bố ngày kết thúc, nên đóng ở ngày cuối mình còn tin nó, không đặt `endDate`.
+    recordedTo: "2026-11-15",
     components: [
       { type: "spend_threshold", points: 30000, spend: 4000, windowDays: 90 },
       {
@@ -366,10 +392,37 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "cibc-aventura-gold-visa",
+    name: "35,000 điểm Aventura®",
+    headline: 35000,
+    currency: "aventura",
+    // Offer thường thay offer 60,000 (cibc.com, đọc 16/11/2026): thẻ duyệt từ
+    // 16/11/2026, không ghi ngày kết thúc. 15,000 điểm lần mua đầu + 20,000 điểm
+    // khi chi $3,000 trong 4 kỳ sao kê đầu. Bản đang mở đứng TRƯỚC bản đã đóng.
+    startDate: "2026-11-16",
+    verifiedAt: "2026-11-16",
+    recordedAt: "2026-11-16",
+    feeFirstYear: 0,
+    components: [
+      { type: "first_purchase", points: 15000 },
+      {
+        type: "spend_threshold",
+        points: 20000,
+        spend: 3000,
+        windowDays: 120,
+        windowText: "trong 4 kỳ sao kê đầu tiên",
+      },
+      { type: "fee_waiver", cash: 139 },
+    ],
+  },
+  {
+    slug: "cibc-aventura-gold-visa",
     name: "60,000 điểm Aventura®",
     headline: 60000,
     currency: "aventura",
     startDate: "2026-09-07",
+    // CIBC® thay bằng offer 35,000 cho thẻ duyệt từ 16/11/2026 (bản trên). Offer
+    // cũ không có ngày kết thúc công bố, nên chỉ đóng bản ghi, không đặt `endDate`.
+    recordedTo: "2026-11-15",
     feeFirstYear: 0,
     components: [
       { type: "first_purchase", points: 15000 },
@@ -750,10 +803,36 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "cibc-aventura-visa-infinite",
+    name: "35,000 điểm Aventura®",
+    headline: 35000,
+    currency: "aventura",
+    // Cùng offer với bản Gold ở trên (một điều khoản cho cả hai thẻ). Mức 45,000 ở
+    // trang offer riêng chỉ cho người nhận lời mời trực tiếp — không phải link site.
+    startDate: "2026-11-16",
+    verifiedAt: "2026-11-16",
+    recordedAt: "2026-11-16",
+    feeFirstYear: 0,
+    components: [
+      { type: "first_purchase", points: 15000 },
+      {
+        type: "spend_threshold",
+        points: 20000,
+        spend: 3000,
+        windowDays: 120,
+        windowText: "trong 4 kỳ sao kê đầu tiên",
+      },
+      { type: "fee_waiver", cash: 139 },
+    ],
+  },
+  {
+    slug: "cibc-aventura-visa-infinite",
     name: "60,000 điểm Aventura®",
     headline: 60000,
     currency: "aventura",
     startDate: "2026-09-07",
+    // CIBC® thay bằng offer 35,000 cho thẻ duyệt từ 16/11/2026 (bản trên). Offer
+    // cũ không có ngày kết thúc công bố, nên chỉ đóng bản ghi, không đặt `endDate`.
+    recordedTo: "2026-11-15",
     feeFirstYear: 0,
     components: [
       { type: "first_purchase", points: 15000 },

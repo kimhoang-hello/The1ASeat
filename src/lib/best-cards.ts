@@ -171,16 +171,16 @@ export const BEST_CARDS_CATEGORIES: BestCardsCategory[] = [
         alsoSlug: "cibc-aventura-gold-visa",
         headingVi: "CIBC® Aventura® Visa Infinite* / Gold Visa*",
         bodyVi: [
-          "Hai thẻ hiện có welcome bonus 60,000 điểm Aventura® và miễn annual fee $139 năm đầu. Ngoài bonus, bạn còn có 4 lượt airport lounge và rebate phí NEXUS™.",
+          "Hai thẻ hiện có welcome bonus 35,000 điểm Aventura® và miễn annual fee $139 năm đầu. Ngoài bonus, bạn còn có 4 lượt airport lounge và rebate phí NEXUS™.",
           "Điều thú vị là thẻ Gold cho cùng welcome bonus nhưng chỉ yêu cầu thu nhập hộ gia đình $15,000, trong khi thẻ Visa Infinite yêu cầu $60,000 cá nhân hoặc $100,000 hộ gia đình. Nếu chỉ quan tâm đến welcome bonus, thẻ Gold vì vậy có thể là lựa chọn dễ tiếp cận hơn.",
           "Điểm Aventura® không phải là transferable points như Amex® MR hay RBC® Avion® vì không transfer được sang các airline partners, nhưng đây lại là một offer khá dễ hiểu đối với người không muốn bước quá sâu vào Miles & Points.",
         ],
         bestForVi:
           "Người muốn một travel card tương đối đơn giản, có lounge và annual fee năm đầu được miễn.",
-        // "Hai thẻ hiện có welcome bonus 60,000 điểm Aventura® và miễn annual
+        // "Hai thẻ hiện có welcome bonus 35,000 điểm Aventura® và miễn annual
         // fee $139 năm đầu" — nói về cả hai bản. Ngược lại, $15,000 và $60,000
         // trong cùng đoạn là điều kiện thu nhập RIÊNG của từng bản.
-        sharedFiguresVi: ["60,000", "$139"],
+        sharedFiguresVi: ["35,000", "$139"],
       },
       {
         slug: "scotiabank-gold-amex",
@@ -387,7 +387,7 @@ export const BEST_CARDS_CATEGORIES: BestCardsCategory[] = [
         roleVi: "Thẻ travel tốt nhất cho người mới",
         bodyVi: [
           "Nếu bạn chưa muốn bước vào transferable points và award availability, Aventura® Gold là một thẻ đơn giản hơn nhiều.",
-          "Welcome bonus hiện tại lên đến 60,000 điểm Aventura®, annual fee $139 được miễn năm đầu và chỉ yêu cầu thu nhập hộ gia đình $15,000. Thẻ còn có 4 lượt airport lounge và rebate phí NEXUS™.",
+          "Welcome bonus hiện tại lên đến 35,000 điểm Aventura®, annual fee $139 được miễn năm đầu và chỉ yêu cầu thu nhập hộ gia đình $15,000. Thẻ còn có 4 lượt airport lounge và rebate phí NEXUS™.",
           "Điểm Aventura® không có upside lớn như Aeroplan®, nhưng cũng vì vậy mà dễ hiểu hơn. Bạn không cần biết EVA Air® release award seat lúc nào hay Avios® transfer bonus bao nhiêu phần trăm mới dùng được points.",
         ],
         bestForVi: "Người muốn travel rewards nhưng chưa muốn học quá nhiều thứ cùng lúc.",

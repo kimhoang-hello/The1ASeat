@@ -334,8 +334,15 @@ test("8b. thẻ có bản kế nhiệm: chuỗi lần được, vòng lặp bị
  * 9. Offer nhiều chặng: một thành phần đổi
  * --------------------------------------------------------------- */
 test("9. sửa một thành phần = một offer MỚI, thành phần cũ đi theo offer cũ", () => {
+  // Offer phải ĐANG MỞ và đã chạy vào ngày 01/10/2026 mà bài test tra "ngày cũ" —
+  // cùng tiền đề với test 10: offer mở sau ngày đó (CIBC® Aventura® 35,000 từ
+  // 16/11/2026) thì ngày cũ không thấy thành phần nào, sai tiền đề chứ không phải
+  // sai engine.
   const old = BASE.offers.find(
-    (o) => BASE.offerComponents.filter((c) => c.offerId === o.id).length >= 3,
+    (o) =>
+      o.effectiveTo === null &&
+      o.effectiveFrom <= "2026-10-01" &&
+      BASE.offerComponents.filter((c) => c.offerId === o.id).length >= 3,
   )!;
   const oldComponents = BASE.offerComponents.filter((c) => c.offerId === old.id);
 
