@@ -316,7 +316,16 @@ const REVERIFIED_11 = "2026-11-05";
  * - Business Green Amex®: hết "Special Welcome Offer" 25,000 → 15,000 điểm (chi $3,000 USD, 3
  *   tháng). Thấy 15,000 ở HAI phiên độc lập (browser pane + Chrome thật), ba lượt tải.
  */
-const REVERIFIED_15 = "2026-11-15";
+// Đợt 15/11 ở trên nay đã được `REVERIFIED_16` thay.
+/**
+ * Rà lại 16/11/2026 bằng browser, cùng cách làm: 13 thẻ American Express® (Hilton® ×4 còn "Offer
+ * ends 1/13/2027"), 2 Capital One® (Venture còn "LIMITED-TIME OFFER"), Citi Strata Premier® (JSON
+ * `offerPricingPositioning`: 60,000 / $4,000 USD / 3 tháng / $95 USD), Bilt Palladium, 3 Atmos™
+ * (trang Alaska®: Summit 100,000, Ascent tới 80,000, Business 70,000); 18 thẻ Chase® khớp qua
+ * `audit:us-offers`, nhãn "LIMITED-TIME OFFER" (Aeroplan®, World of Hyatt®) và "OUR BEST OFFER
+ * RETURNS" (Sapphire Reserve® for Business) còn, IHG® ×4 vẫn hạn 11/18/2026. Không thẻ nào đổi.
+ */
+const REVERIFIED_16 = "2026-11-16";
 
 const AMEX_FTF_27: CanadianAnswer = {
   short: "Có — 2.7%",
@@ -448,7 +457,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_PERSONAL_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred",
     lastUpdated: VERIFIED,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -486,7 +495,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/gold-card/",
     lastUpdated: VERIFIED,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -528,7 +537,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CAPITAL_ONE_REFERRAL,
     sourceUrl: "https://www.capitalone.com/credit-cards/venture-x/",
     lastUpdated: VERIFIED,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -569,7 +578,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.citi.com/credit-cards/citi-strata-premier-credit-card",
     lastUpdated: VERIFIED,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -611,7 +620,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.bilt.com/card",
     lastUpdated: "2026-10-16",
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -652,7 +661,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/marriott-bonvoy/boundless",
     lastUpdated: VERIFIED,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -693,7 +702,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_BUSINESS_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/business-credit-cards/ink/business-preferred",
     lastUpdated: VERIFIED,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -737,7 +746,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_PERSONAL_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/rewards-credit-cards/sapphire/reserve",
     lastUpdated: VERIFIED_2,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -775,7 +784,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/platinum/",
     lastUpdated: VERIFIED_2,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -818,7 +827,7 @@ const US_CARD_DATA: UsCardData[] = [
     sourceUrl: "https://www.capitalone.com/credit-cards/venture/",
     reviewSlug: "capital-one-venture-review",
     lastUpdated: "2026-09-27",
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -859,7 +868,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/united/united-explorer",
     lastUpdated: "2026-10-31",
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -903,7 +912,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/aircanada/aeroplan",
     lastUpdated: "2026-11-13",
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -944,7 +953,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/world-of-hyatt-credit-card",
     lastUpdated: "2026-11-09",
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -983,7 +992,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/hilton-honors/",
     lastUpdated: VERIFIED_2,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -1023,7 +1032,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_BUSINESS_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/business-credit-cards/ink/unlimited",
     lastUpdated: VERIFIED_2,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -1064,7 +1073,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_BUSINESS_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/business-credit-cards/ink/cash",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -1104,7 +1113,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_BUSINESS_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/business-credit-cards/sapphire/reserve",
     lastUpdated: VERIFIED_4,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -1145,7 +1154,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_BUSINESS_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/business-credit-cards/ink/premier",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -1305,7 +1314,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/marriott-bonvoy/bold",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -1343,7 +1352,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/marriott-bonvoy/bountiful",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -1383,7 +1392,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/business-credit-cards/world-of-hyatt/hyatt-business-card",
     lastUpdated: "2026-11-15",
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -1425,7 +1434,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_IHG_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/a1/ihg/PremierSelectNAEPQ410",
     lastUpdated: VERIFIED_4,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -1466,7 +1475,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_IHG_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/a1/ihg/PremierNAEPQ410",
     lastUpdated: VERIFIED_4,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -1506,7 +1515,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_IHG_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/a1/ihg/OneRewardsNAEPQ410",
     lastUpdated: VERIFIED_4,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -1547,7 +1556,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_IHG_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/a1/ihg/BizNAEPQ410",
     lastUpdated: VERIFIED_4,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -1586,7 +1595,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -1623,7 +1632,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-gold-card-amex/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -1660,7 +1669,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-green-card-amex/",
     lastUpdated: "2026-11-15",
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -1697,7 +1706,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-blue-business-plus-credit-card-amex/",
     lastUpdated: "2026-10-16",
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -1736,7 +1745,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/marriott-bonvoy-bevy/",
     lastUpdated: VERIFIED_4,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -1775,7 +1784,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/marriott-bonvoy-brilliant/",
     lastUpdated: VERIFIED_4,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -1814,7 +1823,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/amex-marriott-bonvoy-business-credit-card/",
     lastUpdated: REVERIFIED_11,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -1853,7 +1862,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-surpass/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -1892,7 +1901,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-aspire/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -1931,7 +1940,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/hilton-honors/",
     lastUpdated: "2026-11-15",
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -1970,7 +1979,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.alaskaair.com/atmosrewards/content/credit-cards/visa-summit",
     lastUpdated: ATMOS_ALASKA_CHECKED,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -2010,7 +2019,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.alaskaair.com/atmosrewards/content/credit-cards/visa-ascent",
     lastUpdated: ATMOS_ALASKA_CHECKED,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
   {
@@ -2049,7 +2058,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.alaskaair.com/atmosrewards/content/credit-cards/visa-small-business",
     lastUpdated: ATMOS_ALASKA_CHECKED,
-    verifiedOn: REVERIFIED_15,
+    verifiedOn: REVERIFIED_16,
     needsVerification: false,
   },
 ];
