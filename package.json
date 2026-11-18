@@ -36,7 +36,7 @@
     "@phosphor-icons/react": "^2.1.10",
     "contentful": "^11.12.9",
     "mysql2": "^3.24.4",
-    "next": "16.4.2",
+    "next": "16.4.6",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
@@ -47,7 +47,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.4.2",
+    "eslint-config-next": "16.4.6",
     "tailwindcss": "^4",
     "tsx": "^4.23.12",
     "typescript": "^5"
