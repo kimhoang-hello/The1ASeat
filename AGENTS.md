@@ -4194,8 +4194,8 @@ thì xoá override lồng này.
 `npm audit` báo 2 moderate của `next` 16.2.0–16.4.4: GHSA-mfr8-8qww-v76h + GHSA-vc7v-qv4w-wrv8 (rò cache giữa các
 giá trị root param khi hàm `'use cache'` gọi qua `unstable_cache` / lồng nhau). Dính rất ít: site có `'use cache'`
 (`src/lib/content`, `src/lib/recommendation`) nhưng không có segment root param. `next` + `eslint-config-next` ghim
-16.4.6, `@next/third-parties` theo lên 16.4.6 (commit 0e01e08). hPanel lượt này không đọc được (Chrome extension
-mất kết nối). Còn 14 high nhánh `picomatch` ≤4.0.7 ReDoS (GHSA-fc5q-39xc-vjpf) qua `eslint-config-next` →
+16.4.6, `@next/third-parties` theo lên 16.4.6 (commit 0e01e08). hPanel trước deploy không đọc được (Chrome extension
+mất kết nối); sau deploy quét 17/11 20:07 = sạch. Còn 14 high nhánh `picomatch` ≤4.0.7 ReDoS (GHSA-fc5q-39xc-vjpf) qua `eslint-config-next` →
 `fast-glob`/`tinyglobby`: dev-only, CHƯA có bản vá (latest 4.0.7) — đừng thêm override, đợi picomatch ra bản mới.
 
 ## Kiểm toàn diện định kỳ 24/10/2026 — đừng đề xuất lại
