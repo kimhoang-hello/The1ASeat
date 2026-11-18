@@ -76,6 +76,12 @@ export const POSTS_WITHOUT_DEADLINE: Record<string, string> = {
   // 31/01/2028 và 31/01/2029 là hạn của STATUS nhận được, không phải hạn đăng ký.
   "hyatt-globalist-fast-track-aeroplan-50k-17k-sqc":
     "challenge mở mỗi năm, không có ngày đóng; 14/10/2026 là ngày mở, 31/01/2028 và 31/01/2029 là hạn của status nhận được",
+  // Bài Tips về Triple Dip: apply thẻ có credit theo calendar year vào tháng 12.
+  // "12/2026", "1/2028" là ví dụ mốc thời gian của chiến thuật, không phải hạn
+  // của một ưu đãi; mẹo dùng lại được mỗi tháng 12. "1/1/2027" là ngày Amex®
+  // đổi điều kiện FHR (tối thiểu hai đêm), cũng không phải hạn ưu đãi.
+  "triple-dip-credit-card-thang-12":
+    "mẹo apply theo calendar-year credits, lặp lại mỗi tháng 12; các mốc 12/2026–1/2028 là ví dụ, 1/1/2027 là ngày đổi điều kiện FHR",
 };
 
 export interface OfferStatus extends PostOffer {

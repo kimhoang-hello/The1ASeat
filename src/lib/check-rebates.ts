@@ -273,10 +273,18 @@ export async function runCheckRebates({
       // nháp tác giả đang viết dở, và `updateEntry` publish cả entry chứ không
       // publish riêng một trường. Báo để người sửa, tuyệt đối không tự đẩy bản
       // nháp của người khác lên site.
-      if (entry.sys.publishedVersion && entry.sys.version > entry.sys.publishedVersion + 1) {
+      //
+      // Entry KHÔNG có `publishedVersion` mà CDA vẫn trả thẻ: tác giả vừa
+      // unpublish và CDA còn trễ vài giây. `updateEntry` sẽ không publish, chỉ
+      // ghi số (theo link apply CŨ của CDA) vào bản nháp — có thể đè lên link
+      // tác giả đang sửa — rồi báo `updated` dù site không đổi gì. Cùng nhánh
+      // báo lỗi: lượt sau CDA không còn thẻ thì job tự xanh.
+      if (!entry.sys.publishedVersion || entry.sys.version > entry.sys.publishedVersion + 1) {
         errors.push({
           slug,
-          message: `site đang hiện ${live ?? "(trống)"} còn FinlyWealth trả ${current}, nhưng entry có thay đổi chưa publish — job không tự ghi, publish tay trong Contentful`,
+          message: entry.sys.publishedVersion
+            ? `site đang hiện ${live ?? "(trống)"} còn FinlyWealth trả ${current}, nhưng entry có thay đổi chưa publish — job không tự ghi, publish tay trong Contentful`
+            : `site đang hiện ${live ?? "(trống)"} còn FinlyWealth trả ${current}, nhưng entry vừa bị unpublish (CDA còn trễ) — job không ghi vào bản nháp`,
         });
         continue;
       }

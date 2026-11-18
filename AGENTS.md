@@ -5202,3 +5202,38 @@ Tangerine®, Capital One® Canada ×2, CIBC® Aeroplan® ×3; FinlyWealth API: p
 **Chờ tác giả:** CIBC® Aventura® còn nằm trong trang "Thẻ có offers tốt nhất Canada" dù offer nay chỉ 35,000 — giữ hay thay
 là việc biên tập. BMO® có muốn đưa lên tab "Offers nổi bật" không (xem lý do không bật ở trên). Các mục cũ: WestJet RBC®
 hết hạn 18/11, IHG® ×4 Mỹ 18/11, RBC® Avion® ×3 25/11, CIBC® "tổng đến $189".
+
+## Kiểm toàn diện định kỳ 18/11/2026 — đừng đề xuất lại
+
+Gate: lint, tsc, build, 10 audit, `npm test` (727: 704 pass, 23 skip MySQL), `audit:links` production (246 trang, không
+trang mồ côi; "1 mô tả dưới 70 ký tự" đã biết), smoke test 10 URL + `www` 308 + 5 header bảo mật. Mọi job xanh từ 16/11
+(cả `sync-videos`). `npm audit`: 14 high nhánh `picomatch` ≤4.0.7 — đã ghi ở mục 17/11, vẫn chưa có bản vá (latest 4.0.7).
+
+**Đã sửa:**
+- `audit:health` đỏ vì bài Tips `triple-dip-credit-card-thang-12` (publish 16/11) chưa khai trong
+  `lib/post-offer-status.ts`. Đưa vào `POSTS_WITHOUT_DEADLINE`: mẹo apply thẻ có credit theo calendar year vào tháng 12,
+  lặp lại mỗi năm; "12/2026–1/2028" là ví dụ, "1/1/2027" là ngày Amex® đổi điều kiện FHR — không phải hạn ưu đãi.
+- `lib/check-rebates.ts` (Codex tìm): tác giả vừa unpublish một thẻ (CMA không còn `publishedVersion`) trong khi CDA còn
+  trả bản cũ ĐÚNG lúc Finly đổi rebate → job từng ghi `rebateVi` + câu HOT TIP mới vào bản nháp (`updateEntry` không
+  publish, `applyUrl` của nháp giữ nguyên) và báo `updated` dù site không đổi. Nay cùng nhánh báo lỗi với "entry có thay
+  đổi chưa publish": lượt đó đỏ, lượt sau CDA không còn thẻ thì tự xanh. Còn hở (không vá): lệnh tay
+  `audit:rebate-prose -- --fix` vẫn ghi được vào nháp; ghép theo slug có thể báo nhầm "vừa unpublish" nếu một nháp trùng
+  slug với thẻ live.
+
+**Codex nêu, mình KHÔNG vá (đánh đổi chấp nhận):** `api/revalidate` — trong Route Handler, Next 16.4.6 chỉ thực thi
+`revalidateTag`/`revalidatePath` SAU khi handler trả về (`pendingRevalidatedTags` → `executeRevalidates` trong
+`app-route/module.js`), mà purge Hostinger chạy giữa handler. Lượt truy cập rơi vào khe giữa purge và lúc handler kết thúc
+(vài trăm ms; vài giây nếu gọi Kit) có thể làm CDN nạp lại HTML cũ. Đo 18/11: các trang ISR (kể cả route khai
+`revalidate = 3600` — manifest build ghi 60s cho cả nhóm vì layout dùng cache 60s) trả `s-maxage=60,
+stale-while-revalidate=31535940`; `/credit-cards`, `/blog` là route động (`no-store`); bốn lượt đo đều
+`x-hcdn-cache-status: DYNAMIC`. TTL thực tế của Hostinger CHƯA xác lập được. Không gửi trùng bản tin, không sai dữ liệu
+nguồn. Vá đúng cần đẩy purge ra sau khi revalidate đã áp (không có API công khai) — chưa đáng chừng nào chưa thấy HTML cũ
+thật sau một lần publish.
+
+**Đã kiểm, KHÔNG phải lỗi:** EQ Bank™ 3.00% (Base 1.50%) + Notice 3.00%/2.50%; Neo™ Savings 2.25–3% theo membership;
+Wealthsimple® tới 2.25%; RBC® Day to Day $150 "Offer Ends December 8, 2026"; National Bank® newcomer "promotion ended"
+03/11 (trang tự ẩn); TD® First Class vẫn 160,000 (elevated, không ngày); WestJet RBC® vẫn "Special Offer" 70,000 hôm nay.
+
+**Chờ tác giả:** WestJet RBC® hết hạn HÔM NAY 18/11 — `expire-offers` đỏ có chủ ý từ 19/11 tới khi sửa tay. IHG® ×4 Mỹ hạn
+18/11 (task thẻ Mỹ 19/11). RBC® Avion® ×3 hạn 25/11 (7 ngày, link không phải `/rebates/`, task một lần 26/11) — chuẩn bị
+copy. Tangerine® Savings 4.50% hết 30/11 (trang tự về 0.30%). BMO® VIPorter® câu Black Friday 08/12 (lượt 09/12 gỡ).
