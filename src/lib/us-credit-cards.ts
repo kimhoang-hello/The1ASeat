@@ -438,7 +438,7 @@ const US_CARD_DATA: UsCardData[] = [
       "5x điểm khi đặt qua Chase® Travel; 3x ở nhà hàng, trạm xăng, streaming và siêu thị online; 2x ở du lịch khác",
       "Credit khách sạn tới $100 USD mỗi năm khi đặt qua Chase® Travel",
       "Credit phí Global Entry, TSA PreCheck® hoặc NEXUS™ tới $120 USD, 4 năm một lần",
-      "Chuyển điểm sang 10 hãng bay (có Aeroplan®) và 4 chương trình khách sạn",
+      "Chuyển điểm sang 12 hãng bay (có Aeroplan®) và 4 chương trình khách sạn",
       "Không phí giao dịch ngoại tệ",
     ],
     tags: ["Travel", "Chuyển điểm", "Credit NEXUS™"],

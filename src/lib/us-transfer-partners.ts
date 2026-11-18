@@ -21,6 +21,10 @@
 // - Chase®: trang quyền lợi Sapphire Preferred® (chase.com/sapphire-cards/personal/
 //   preferred) — 10 hãng bay, 4 khách sạn, có Wyndham (thêm 25/02/2026), và câu
 //   "transfer to World of Hyatt at a rate of 4:3" cho Sapphire Preferred®.
+//   Cathay Pacific® Asia Miles® và Qantas® Frequent Flyer (1:1) thêm ngày
+//   18/11/2026 → 12 hãng bay. Hôm đó trang Sapphire Preferred® và media.chase.com
+//   chưa cập nhật; đối chiếu bằng TPG, Frequent Miler, AwardWallet, Upgraded
+//   Points (cùng ngày, cùng tỷ lệ). Daily Drop chưa có ô Chase® nên chưa có `time`.
 // - Capital One®: capitalone.com/learn-grow/money-management/venture-miles-
 //   transfer-partnerships — 22 đối tác kèm tỷ lệ.
 // - Citi®: thankyou.com/partnerProgramsListing.htm, mở từng ô đối tác — 20 đối
@@ -234,6 +238,7 @@ export const US_TRANSFER_AIRLINES: UsTransferPartnerRow[] = [
     logo: `${LOGO}/cathay-pacific.png`,
     legs: {
       amex: { ratio: TO_800, time: "Từ 48 giờ" },
+      chase: { ratio: ONE_TO_ONE },
       "capital-one": { ratio: ONE_TO_ONE, time: "24–36 giờ" },
       citi: { ratio: ONE_TO_ONE, time: INSTANT },
       bilt: { ratio: ONE_TO_ONE, time: INSTANT },
@@ -316,6 +321,7 @@ export const US_TRANSFER_AIRLINES: UsTransferPartnerRow[] = [
     logo: `${LOGO}/qantas.png`,
     legs: {
       amex: { ratio: ONE_TO_ONE, time: INSTANT },
+      chase: { ratio: ONE_TO_ONE },
       "capital-one": { ratio: ONE_TO_ONE, time: INSTANT },
       citi: { ratio: ONE_TO_ONE, time: INSTANT },
     },

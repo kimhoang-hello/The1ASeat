@@ -3221,7 +3221,9 @@ trình có ít nhất một ngân hàng chuyển được** — `npm run test:us
   điểm Canada; thêm cột Mỹ là engine khuyên người Canada chuyển điểm Chase® họ không có.
 - **Đối chiếu nguồn chính chủ 06/10/2026, khớp Daily Drop:** Amex® (công cụ
   `global.americanexpress.com/rewards/transfer`, chân trang "United States", 20 đối
-  tác), Chase® (trang quyền lợi Sapphire Preferred®: 14 đối tác, Hyatt 4:3), Capital
+  tác), Chase® (trang quyền lợi Sapphire Preferred®: 14 đối tác, Hyatt 4:3; thêm
+  Cathay + Qantas 1:1 ngày 18/11/2026 → 16, khi đó trang Chase® chưa cập nhật nên đối
+  chiếu qua TPG/Frequent Miler/AwardWallet — FM ghi Hyatt "5:4" là sai), Capital
   One® (trang transfer partners, 22), Citi® (`thankyou.com/partnerProgramsListing.htm`,
   mở từng ô mới ra tỷ lệ theo loại thẻ, 20). Bilt: danh sách sau đăng nhập — đối chiếu
   qua AwardWallet. Wells Fargo®: trang sản phẩm không liệt kê — JetBlue/Cathay theo

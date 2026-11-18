@@ -27,7 +27,7 @@ test("mọi chương trình đều có ít nhất một hệ điểm chuyển đ
 // Wells Fargo® qua nguồn thứ cấp — xem đầu `us-transfer-partners.ts`). Ngân hàng
 // thêm/bớt đối tác thì sửa dữ liệu VÀ con số ở đây, sau khi đối chiếu lại.
 test("số đối tác của mỗi hệ điểm khớp lần đối chiếu gần nhất", () => {
-  const expected = { amex: 20, chase: 14, "capital-one": 22, citi: 20, bilt: 24, "wells-fargo": 10 };
+  const expected = { amex: 20, chase: 16, "capital-one": 22, citi: 20, bilt: 24, "wells-fargo": 10 };
   for (const issuer of US_TRANSFER_ISSUERS) {
     assert.equal(partnerCount(issuer.id), expected[issuer.id], issuer.name);
   }
