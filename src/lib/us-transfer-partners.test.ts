@@ -24,7 +24,9 @@ test("mọi chương trình đều có ít nhất một hệ điểm chuyển đ
 });
 
 // Số đối tác của từng hệ điểm, đếm trên trang chính chủ ngày 06/10/2026 (Bilt và
-// Wells Fargo® qua nguồn thứ cấp — xem đầu `us-transfer-partners.ts`). Ngân hàng
+// Wells Fargo® qua nguồn thứ cấp — xem đầu `us-transfer-partners.ts`). Chase® 16
+// từ 18/11/2026 (thêm Cathay + Qantas), đối chiếu qua báo ngành vì trang Chase®
+// chưa cập nhật hôm đó. Ngân hàng
 // thêm/bớt đối tác thì sửa dữ liệu VÀ con số ở đây, sau khi đối chiếu lại.
 test("số đối tác của mỗi hệ điểm khớp lần đối chiếu gần nhất", () => {
   const expected = { amex: 20, chase: 16, "capital-one": 22, citi: 20, bilt: 24, "wells-fargo": 10 };

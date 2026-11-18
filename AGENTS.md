@@ -3214,7 +3214,7 @@ nên `PLAIN_REL` là đúng). Ảnh thẻ lấy bản 472×298 không có nhãn 
 dữ liệu) và `#my` (bảng mới: 6 hệ điểm Mỹ × 36 chương trình, dữ liệu ở
 `src/lib/us-transfer-partners.ts`, bảng ở `components/transfer-partners/us-transfer-table.tsx`).
 Tác giả giao danh sách theo cheat sheet của Daily Drop, kèm luật: **chỉ thêm chương
-trình có ít nhất một ngân hàng chuyển được** — `npm run test:us-transfer` canh luật đó.
+trình có ít nhất một ngân hàng chuyển được** — `src/lib/us-transfer-partners.test.ts` (chạy trong `npm test`) canh luật đó.
 
 - **File riêng, không thêm cột vào `TRANSFER_PARTNERS`.** Bảng Canada được Award
   Flight Finder, trang chặng, engine gợi ý (`transfer-paths.ts`) và hai audit đọc như
