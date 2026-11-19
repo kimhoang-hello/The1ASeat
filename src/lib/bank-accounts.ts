@@ -607,7 +607,6 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     url: "https://www.neofinancial.com/accounts",
     affiliateUrl:
       "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fneo-savings-account&utm_source=ghe-1a",
-    rebate: "$80",
   },
 
   // ----------------------------------------------------------- Tangerine
