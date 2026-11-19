@@ -264,7 +264,7 @@ const VERIFIED_4 = "2026-10-01";
 // Alaska Airlines® (alaskaair.com/atmosrewards/content/credit-cards/visa-*), trang
 // bankofamerica.com vẫn ghi mức thường — nên `applyUrl` của ba thẻ Atmos™ trỏ về trang Alaska®.
 // Trang đó dựng chữ trong shadow DOM: `get_page_text` ra rỗng, phải đi qua `shadowRoot` để đọc.
-const ATMOS_ALASKA_CHECKED = "2026-10-21";
+// (Mốc đó từng là hằng `ATMOS_ALASKA_CHECKED`; 19/11/2026 cả ba thẻ đổi offer, xem `REVERIFIED_19`.)
 // Rà lại 22/10/2026, cùng cách làm: không thẻ nào đổi. Đợt đó nay đã được `REVERIFIED_7` thay.
 // Rà lại 26/10/2026, cùng cách làm: không thẻ nào đổi. Đợt đó nay đã được `REVERIFIED_8` thay.
 // Rà lại 29/10/2026, cùng cách làm: không thẻ nào đổi. Đợt đó nay đã được `REVERIFIED_9` thay.
@@ -325,7 +325,24 @@ const REVERIFIED_11 = "2026-11-05";
  * `audit:us-offers`, nhãn "LIMITED-TIME OFFER" (Aeroplan®, World of Hyatt®) và "OUR BEST OFFER
  * RETURNS" (Sapphire Reserve® for Business) còn, IHG® ×4 vẫn hạn 11/18/2026. Không thẻ nào đổi.
  */
-const REVERIFIED_16 = "2026-11-16";
+// Đợt 16/11 ở trên nay đã được `REVERIFIED_19` thay.
+/**
+ * Rà lại 19/11/2026 bằng browser, cùng cách làm: 13 thẻ American Express® (Hilton® ×4 còn "Offer
+ * ends 1/13/2027"), 2 Capital One® (Venture còn "LIMITED-TIME OFFER"), Citi Strata Premier® (JSON
+ * `offerPricingPositioning`: 60,000 / $4,000 USD / 3 tháng / $95 USD), Bilt Palladium, nhãn
+ * "LIMITED-TIME OFFER" (Aeroplan®, World of Hyatt®) và "OUR BEST OFFER RETURNS" (Sapphire
+ * Reserve® for Business) còn; các thẻ Chase® khác khớp qua `audit:us-offers`. Bảy thẻ đổi:
+ * - IHG® ×4: offer ra mắt hết hạn 18/11/2026. Trang landing `/a1/ihg/…` và trang ref vẫn treo
+ *   số cũ kèm "Apply by 11/18/2026" (đã qua), trang sản phẩm chính của Chase® ghi mức thường:
+ *   Premier Select 150,000 / $4,000 USD, Premier 140,000 / $3,000 USD, One Rewards 80,000 /
+ *   $2,000 USD, Business 150,000 / $4,000 USD. `sourceUrl` chuyển sang trang sản phẩm chính.
+ * - Atmos™ ×3 (trang Alaska®, đọc hai lượt): Summit 80,000 + Global Companion Award 25,000 điểm
+ *   / $4,000 USD; Ascent 70,000 + Companion Fare $99 USD / $2,500 USD; Business ra bản mới (thẻ
+ *   mở trước 18/11/2026 là bản cũ): 90,000 / $6,000 USD, annual fee $195 USD cho cả công ty, thẻ
+ *   nhân viên miễn phí, 4 vé Alaska Lounge® mỗi năm, không còn Companion Fare. Không trang nào
+ *   ghi offer có thời hạn (chỉ "online only offer") → tắt elevated cả ba.
+ */
+const REVERIFIED_19 = "2026-11-19";
 
 const AMEX_FTF_27: CanadianAnswer = {
   short: "Có — 2.7%",
@@ -372,13 +389,6 @@ const IHG_FROM_CANADA: CanadianAnswer = {
  */
 const IHG_PERSONAL_WATCH_OUT =
   "Thẻ này chịu luật 5/24 của Chase®. Chỉ mở được khi bạn hiện không giữ thẻ IHG® cá nhân nào (kể cả Premier Select) và chưa nhận bonus thẻ IHG® cá nhân trong 24 tháng; thẻ doanh nghiệp không tính vào luật này.";
-
-/**
- * Hạn của welcome offer ra mắt cả dòng thẻ IHG® ("Apply by 11/18/2026" trên cả
- * bốn trang Chase®). Qua ngày này bốn thẻ tự rời mục Elevated, nhưng số bonus
- * vẫn phải rà tay.
- */
-const IHG_LAUNCH_OFFER_ENDS = "2026-11-18";
 
 const BONVOY_FROM_CANADA: CanadianAnswer = {
   short: "Có",
@@ -457,7 +467,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_PERSONAL_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred",
     lastUpdated: VERIFIED,
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -495,7 +505,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/gold-card/",
     lastUpdated: VERIFIED,
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -537,7 +547,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CAPITAL_ONE_REFERRAL,
     sourceUrl: "https://www.capitalone.com/credit-cards/venture-x/",
     lastUpdated: VERIFIED,
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -578,7 +588,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.citi.com/credit-cards/citi-strata-premier-credit-card",
     lastUpdated: VERIFIED,
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -620,7 +630,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.bilt.com/card",
     lastUpdated: "2026-10-16",
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -661,7 +671,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/marriott-bonvoy/boundless",
     lastUpdated: VERIFIED,
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -702,7 +712,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_BUSINESS_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/business-credit-cards/ink/business-preferred",
     lastUpdated: VERIFIED,
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -746,7 +756,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_PERSONAL_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/rewards-credit-cards/sapphire/reserve",
     lastUpdated: VERIFIED_2,
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -784,7 +794,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/platinum/",
     lastUpdated: VERIFIED_2,
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -827,7 +837,7 @@ const US_CARD_DATA: UsCardData[] = [
     sourceUrl: "https://www.capitalone.com/credit-cards/venture/",
     reviewSlug: "capital-one-venture-review",
     lastUpdated: "2026-09-27",
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -868,7 +878,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/united/united-explorer",
     lastUpdated: "2026-10-31",
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -912,7 +922,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/aircanada/aeroplan",
     lastUpdated: "2026-11-13",
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -953,7 +963,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/world-of-hyatt-credit-card",
     lastUpdated: "2026-11-09",
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -992,7 +1002,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/hilton-honors/",
     lastUpdated: VERIFIED_2,
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -1032,7 +1042,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_BUSINESS_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/business-credit-cards/ink/unlimited",
     lastUpdated: VERIFIED_2,
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -1073,7 +1083,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_BUSINESS_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/business-credit-cards/ink/cash",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -1113,7 +1123,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_BUSINESS_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/business-credit-cards/sapphire/reserve",
     lastUpdated: VERIFIED_4,
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -1154,7 +1164,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CHASE_BUSINESS_REFERRAL,
     sourceUrl: "https://creditcards.chase.com/business-credit-cards/ink/premier",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -1314,7 +1324,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/marriott-bonvoy/bold",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -1352,7 +1362,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/travel-credit-cards/marriott-bonvoy/bountiful",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -1392,7 +1402,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://creditcards.chase.com/business-credit-cards/world-of-hyatt/hyatt-business-card",
     lastUpdated: "2026-11-15",
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -1401,18 +1411,17 @@ const US_CARD_DATA: UsCardData[] = [
     issuerId: "chase",
     category: "hotel",
     business: false,
-    elevatedBonus: true,
+    elevatedBonus: false,
     cardImage: "/images/us-cards/ihg-one-rewards-premier-select.png",
-    welcomeBonus: "200,000 điểm IHG® One Rewards",
-    minimumSpendUsd: 5_000,
+    welcomeBonus: "150,000 điểm IHG® One Rewards",
+    minimumSpendUsd: 4_000,
     offerPeriod: "3 tháng đầu",
     annualFeeUsd: 350,
     rewardsCurrency: "IHG® One Rewards",
-    expiresAt: IHG_LAUNCH_OFFER_ENDS,
     headline:
       "Thẻ IHG® cao cấp ra mắt 01/10/2026: hạng Platinum Elite tự động, đêm miễn phí tới 60,000 điểm mỗi năm và 20 Elite Night Credits.",
     editorsTake:
-      "Welcome bonus 200,000 điểm sau khi chi $5,000 USD trong 3 tháng là offer ra mắt, chỉ apply tới 18/11/2026. Annual fee $350 USD chỉ hợp lý nếu bạn dùng hết credit ăn uống ở khách sạn IHG® và credit hãng bay. Credit ăn uống chỉ dùng ở khách sạn IHG®; credit hãng bay đòi mua vé thẳng với hãng từ $250 USD mỗi năm.",
+      "Welcome bonus 150,000 điểm sau khi chi $4,000 USD trong 3 tháng (offer ra mắt 200,000 điểm đã hết hạn 18/11/2026). Annual fee $350 USD chỉ hợp lý nếu bạn dùng hết credit ăn uống ở khách sạn IHG® và credit hãng bay. Credit ăn uống chỉ dùng ở khách sạn IHG®; credit hãng bay đòi mua vé thẳng với hãng từ $250 USD mỗi năm.",
     keyBenefits: [
       "12x điểm ở khách sạn IHG®; 6x ở nhà hàng và mọi chi tiêu du lịch khác (kể cả rideshare); 3x cho mọi chi tiêu khác",
       "Đêm miễn phí mỗi năm gia hạn (khách sạn tới 60,000 điểm/đêm, bù thêm điểm được); chi $40,000 USD trong năm được thêm một đêm",
@@ -1432,9 +1441,9 @@ const US_CARD_DATA: UsCardData[] = [
         "Thẻ này chịu luật 5/24 của Chase®. Điều kiện in trên trang chỉ nói về chính thẻ này: hiện không giữ thẻ này và chưa nhận bonus trong 24 tháng. Ngược lại, đang giữ thẻ này thì không mở được bản Premier hay bản không annual fee, vì hai thẻ đó đòi bạn không giữ thẻ IHG® cá nhân nào.",
     },
     applyUrl: CHASE_IHG_REFERRAL,
-    sourceUrl: "https://creditcards.chase.com/a1/ihg/PremierSelectNAEPQ410",
-    lastUpdated: VERIFIED_4,
-    verifiedOn: REVERIFIED_16,
+    sourceUrl: "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier-select",
+    lastUpdated: "2026-11-19",
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -1443,18 +1452,17 @@ const US_CARD_DATA: UsCardData[] = [
     issuerId: "chase",
     category: "hotel",
     business: false,
-    elevatedBonus: true,
+    elevatedBonus: false,
     cardImage: "/images/us-cards/ihg-one-rewards-premier.png",
-    welcomeBonus: "180,000 điểm IHG® One Rewards",
+    welcomeBonus: "140,000 điểm IHG® One Rewards",
     minimumSpendUsd: 3_000,
     offerPeriod: "3 tháng đầu",
     annualFeeUsd: 150,
     rewardsCurrency: "IHG® One Rewards",
-    expiresAt: IHG_LAUNCH_OFFER_ENDS,
     headline:
       "Thẻ IHG® bậc giữa của Chase®: hạng Gold Elite tự động, đêm miễn phí tới 50,000 điểm mỗi năm và 15 Elite Night Credits.",
     editorsTake:
-      "Welcome bonus 180,000 điểm sau khi chi $3,000 USD trong 3 tháng, chỉ apply tới 18/11/2026. Mức chi thấp so với số điểm. Thẻ mở mới từ 01/10/2026 có hạng Gold Elite (trước là Platinum) và annual fee $150 USD (trước là $99 USD; người đang giữ thẻ được điều chỉnh phí trong năm 2027), đổi lại đêm miễn phí hằng năm nâng lên 50,000 điểm.",
+      "Welcome bonus 140,000 điểm sau khi chi $3,000 USD trong 3 tháng (offer ra mắt 180,000 điểm đã hết hạn 18/11/2026). Mức chi thấp so với số điểm. Thẻ mở mới từ 01/10/2026 có hạng Gold Elite (trước là Platinum) và annual fee $150 USD (trước là $99 USD; người đang giữ thẻ được điều chỉnh phí trong năm 2027), đổi lại đêm miễn phí hằng năm nâng lên 50,000 điểm.",
     keyBenefits: [
       "10x điểm ở khách sạn IHG®; 5x ở vé máy bay mua thẳng với hãng, thuê xe, nhà hàng, siêu thị và trạm xăng; 3x cho mọi chi tiêu khác",
       "Đêm miễn phí mỗi năm gia hạn (khách sạn tới 50,000 điểm/đêm, bù thêm điểm được)",
@@ -1473,9 +1481,9 @@ const US_CARD_DATA: UsCardData[] = [
       watchOut: IHG_PERSONAL_WATCH_OUT,
     },
     applyUrl: CHASE_IHG_REFERRAL,
-    sourceUrl: "https://creditcards.chase.com/a1/ihg/PremierNAEPQ410",
-    lastUpdated: VERIFIED_4,
-    verifiedOn: REVERIFIED_16,
+    sourceUrl: "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+    lastUpdated: "2026-11-19",
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -1484,18 +1492,17 @@ const US_CARD_DATA: UsCardData[] = [
     issuerId: "chase",
     category: "hotel",
     business: false,
-    elevatedBonus: true,
+    elevatedBonus: false,
     cardImage: "/images/us-cards/ihg-one-rewards.png",
-    welcomeBonus: "125,000 điểm IHG® One Rewards",
+    welcomeBonus: "80,000 điểm IHG® One Rewards",
     minimumSpendUsd: 2_000,
     offerPeriod: "3 tháng đầu",
     annualFeeUsd: 0,
     rewardsCurrency: "IHG® One Rewards",
-    expiresAt: IHG_LAUNCH_OFFER_ENDS,
     headline:
       "Thẻ IHG® không annual fee của Chase® (trước 01/10/2026 tên là Traveler): hạng Silver Elite tự động và 5 Elite Night Credits mỗi năm.",
     editorsTake:
-      "Welcome bonus 125,000 điểm sau khi chi $2,000 USD trong 3 tháng, không tốn annual fee, chỉ apply tới 18/11/2026. Đổi lại không có đêm miễn phí hằng năm, và từ 2027 ưu đãi đổi 3 đêm tặng đêm thứ 4 chỉ mở khi chi $5,000 USD trong một năm (dùng được hết năm đó và cả năm sau).",
+      "Welcome bonus 80,000 điểm sau khi chi $2,000 USD trong 3 tháng, không tốn annual fee (offer ra mắt 125,000 điểm đã hết hạn 18/11/2026). Đổi lại không có đêm miễn phí hằng năm, và từ 2027 ưu đãi đổi 3 đêm tặng đêm thứ 4 chỉ mở khi chi $5,000 USD trong một năm (dùng được hết năm đó và cả năm sau).",
     keyBenefits: [
       "5x điểm ở khách sạn IHG®; 3x ở nhà hàng, siêu thị và trạm xăng; 2x cho mọi chi tiêu khác",
       "Hạng Silver Elite tự động; chi $15,000 USD trong năm lên Gold Elite",
@@ -1513,9 +1520,9 @@ const US_CARD_DATA: UsCardData[] = [
       watchOut: IHG_PERSONAL_WATCH_OUT,
     },
     applyUrl: CHASE_IHG_REFERRAL,
-    sourceUrl: "https://creditcards.chase.com/a1/ihg/OneRewardsNAEPQ410",
-    lastUpdated: VERIFIED_4,
-    verifiedOn: REVERIFIED_16,
+    sourceUrl: "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/one-rewards",
+    lastUpdated: "2026-11-19",
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -1524,18 +1531,17 @@ const US_CARD_DATA: UsCardData[] = [
     issuerId: "chase",
     category: "hotel",
     business: true,
-    elevatedBonus: true,
+    elevatedBonus: false,
     cardImage: "/images/us-cards/ihg-one-rewards-business.png",
-    welcomeBonus: "190,000 điểm IHG® One Rewards",
-    minimumSpendUsd: 5_000,
+    welcomeBonus: "150,000 điểm IHG® One Rewards",
+    minimumSpendUsd: 4_000,
     offerPeriod: "3 tháng đầu",
     annualFeeUsd: 200,
     rewardsCurrency: "IHG® One Rewards",
-    expiresAt: IHG_LAUNCH_OFFER_ENDS,
     headline:
       "Thẻ IHG® doanh nghiệp của Chase® (trước 01/10/2026 tên là Premier Business): hạng Platinum Elite tự động và đêm miễn phí tới 50,000 điểm mỗi năm.",
     editorsTake:
-      "Welcome bonus 190,000 điểm sau khi chi $5,000 USD trong 3 tháng, chỉ apply tới 18/11/2026. Giữ hạng Platinum Elite mà bản Premier cá nhân vừa mất, và điều kiện \"không giữ thẻ IHG® cá nhân nào\" của hai thẻ cá nhân ghi rõ không tính thẻ doanh nghiệp.",
+      "Welcome bonus 150,000 điểm sau khi chi $4,000 USD trong 3 tháng (offer ra mắt 190,000 điểm đã hết hạn 18/11/2026). Giữ hạng Platinum Elite mà bản Premier cá nhân vừa mất, và điều kiện \"không giữ thẻ IHG® cá nhân nào\" của hai thẻ cá nhân ghi rõ không tính thẻ doanh nghiệp.",
     keyBenefits: [
       "10x điểm ở khách sạn IHG®; 5x ở vé máy bay mua thẳng với hãng, thuê xe, nhà hàng, quảng cáo mạng xã hội/tìm kiếm và trạm xăng; 3x cho mọi chi tiêu khác",
       "Đêm miễn phí mỗi năm gia hạn (khách sạn tới 50,000 điểm/đêm); chi $60,000 USD trong năm được thêm một đêm",
@@ -1554,9 +1560,9 @@ const US_CARD_DATA: UsCardData[] = [
       watchOut: "Thẻ doanh nghiệp nên không tính vào 5/24, nhưng Chase® vẫn xét 5/24 khi duyệt.",
     },
     applyUrl: CHASE_IHG_REFERRAL,
-    sourceUrl: "https://creditcards.chase.com/a1/ihg/BizNAEPQ410",
-    lastUpdated: VERIFIED_4,
-    verifiedOn: REVERIFIED_16,
+    sourceUrl: "https://creditcards.chase.com/business-credit-cards/IHG/business",
+    lastUpdated: "2026-11-19",
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -1595,7 +1601,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -1632,7 +1638,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-gold-card-amex/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -1669,7 +1675,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-green-card-amex/",
     lastUpdated: "2026-11-15",
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -1706,7 +1712,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-blue-business-plus-credit-card-amex/",
     lastUpdated: "2026-10-16",
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -1745,7 +1751,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/marriott-bonvoy-bevy/",
     lastUpdated: VERIFIED_4,
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -1784,7 +1790,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/marriott-bonvoy-brilliant/",
     lastUpdated: VERIFIED_4,
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -1823,7 +1829,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/amex-marriott-bonvoy-business-credit-card/",
     lastUpdated: REVERIFIED_11,
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -1862,7 +1868,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-surpass/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -1901,7 +1907,7 @@ const US_CARD_DATA: UsCardData[] = [
     },
     applyUrl: "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-aspire/",
     lastUpdated: VERIFIED_3,
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -1940,7 +1946,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl:
       "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/hilton-honors/",
     lastUpdated: "2026-11-15",
-    verifiedOn: REVERIFIED_16,
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -1949,18 +1955,17 @@ const US_CARD_DATA: UsCardData[] = [
     issuerId: "bank-of-america",
     category: "airline",
     business: false,
-    elevatedBonus: true,
-    offerEndUnannounced: true,
+    elevatedBonus: false,
     cardImage: "/images/us-cards/atmos-summit.png",
-    welcomeBonus: "100,000 điểm Atmos™ Rewards + Global Companion Award 25,000 điểm",
-    minimumSpendUsd: 6_000,
+    welcomeBonus: "80,000 điểm Atmos™ Rewards + Global Companion Award 25,000 điểm",
+    minimumSpendUsd: 4_000,
     offerPeriod: "90 ngày đầu",
     annualFeeUsd: 395,
     rewardsCurrency: "Atmos™ Rewards",
     headline:
       "Thẻ cao cấp của chương trình Atmos™ Rewards (Alaska Airlines® và Hawaiian Airlines®): Global Companion Award mỗi năm và lounge Alaska®.",
     editorsTake:
-      "Offer nâng từ mức 70,000 điểm khi chi $3,000 USD trên trang Bank of America®: nay 100,000 điểm cộng Global Companion Award 25,000 điểm, đổi lại mức chi tăng lên $6,000 USD trong 90 ngày đầu. Offer chỉ có qua trang thẻ của Alaska Airlines® và không công bố ngày kết thúc. Global Companion Award 25,000 điểm mỗi năm gia hạn là thứ bù lại phần lớn annual fee nếu bạn bay Alaska Airlines® hoặc Hawaiian Airlines®.",
+      "Welcome bonus 80,000 điểm cộng Global Companion Award 25,000 điểm sau khi chi $4,000 USD trong 90 ngày đầu. Offer này là offer online trên trang thẻ của Alaska Airlines®. Global Companion Award 25,000 điểm mỗi năm gia hạn là thứ bù lại phần lớn annual fee nếu bạn bay Alaska Airlines® hoặc Hawaiian Airlines®.",
     keyBenefits: [
       "Global Companion Award 25,000 điểm mỗi năm gia hạn thẻ",
       "3 điểm mỗi $1 USD ở nhà hàng, giao dịch ngoại tệ và vé Alaska Airlines®/Hawaiian Airlines®",
@@ -1978,8 +1983,8 @@ const US_CARD_DATA: UsCardData[] = [
         "Chương trình Atmos™ Rewards là bản gộp của Alaska Airlines® và Hawaiian Airlines®. Điều khoản còn mới, đọc kỹ trước khi tính đường đổi điểm dài hạn.",
     },
     applyUrl: "https://www.alaskaair.com/atmosrewards/content/credit-cards/visa-summit",
-    lastUpdated: ATMOS_ALASKA_CHECKED,
-    verifiedOn: REVERIFIED_16,
+    lastUpdated: "2026-11-19",
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
@@ -1988,18 +1993,17 @@ const US_CARD_DATA: UsCardData[] = [
     issuerId: "bank-of-america",
     category: "airline",
     business: false,
-    elevatedBonus: true,
-    offerEndUnannounced: true,
+    elevatedBonus: false,
     cardImage: "/images/us-cards/atmos-ascent.png",
-    welcomeBonus: "60,000 điểm Atmos™ Rewards (tổng tới 80,000 + Companion Fare $99 USD)",
-    minimumSpendUsd: 3_000,
+    welcomeBonus: "70,000 điểm Atmos™ Rewards + Companion Fare $99 USD",
+    minimumSpendUsd: 2_500,
     offerPeriod: "90 ngày đầu",
     annualFeeUsd: 95,
     rewardsCurrency: "Atmos™ Rewards",
     headline:
       "Bản kế nhiệm của thẻ Alaska Airlines® Visa: Companion Fare $99 USD mỗi năm và hành lý ký gửi miễn phí.",
     editorsTake:
-      "Welcome bonus tới 80,000 điểm chia hai nấc trong cùng 90 ngày đầu: 60,000 điểm sau khi chi $3,000 USD, thêm 20,000 điểm khi tổng chi đạt $5,000 USD; chú thích của Alaska® gắn Companion Fare $99 USD của offer với mức $5,000 USD. Offer nâng từ mức 50,000 điểm khi chi $1,500 USD trên trang Bank of America®, chỉ có qua trang thẻ của Alaska Airlines® và không công bố ngày kết thúc. Companion Fare hằng năm đòi chi $6,000 USD trong năm trước đó mới nhận được.",
+      "Welcome bonus 70,000 điểm cộng Companion Fare $99 USD (cộng thuế phí từ $23 USD) sau khi chi $2,500 USD trong 90 ngày đầu. Offer này là offer online trên trang thẻ của Alaska Airlines®. Companion Fare hằng năm đòi chi $6,000 USD trong năm trước đó mới nhận được.",
     keyBenefits: [
       "Companion Fare $99 USD (cộng thuế phí từ $23 USD) mỗi năm gia hạn, sau khi chi $6,000 USD trong năm",
       "Hành lý ký gửi miễn phí và ưu tiên lên máy bay cho tối đa 6 người cùng đặt chỗ",
@@ -2018,47 +2022,47 @@ const US_CARD_DATA: UsCardData[] = [
         "Companion Fare chỉ dùng cho chuyến của Alaska Airlines® và Hawaiian Airlines® trong Bắc Mỹ.",
     },
     applyUrl: "https://www.alaskaair.com/atmosrewards/content/credit-cards/visa-ascent",
-    lastUpdated: ATMOS_ALASKA_CHECKED,
-    verifiedOn: REVERIFIED_16,
+    lastUpdated: "2026-11-19",
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
   {
     slug: "atmos-rewards-business",
-    name: "Atmos™ Rewards Visa Signature® Business Card",
+    name: "Atmos™ Rewards Visa® Business Card",
     issuerId: "bank-of-america",
     category: "airline",
     business: true,
     elevatedBonus: false,
     cardImage: "/images/us-cards/atmos-business.png",
-    welcomeBonus: "70,000 điểm Atmos™ Rewards + Companion Fare $99 USD",
-    minimumSpendUsd: 4_000,
+    welcomeBonus: "90,000 điểm Atmos™ Rewards",
+    minimumSpendUsd: 6_000,
     offerPeriod: "90 ngày đầu",
-    annualFeeUsd: 70,
-    annualFeeNote: "thêm $25 USD/năm cho mỗi thẻ",
+    annualFeeUsd: 195,
+    annualFeeNote: "trả một lần cho cả công ty, thẻ nhân viên miễn phí",
     rewardsCurrency: "Atmos™ Rewards",
     headline:
-      "Bản doanh nghiệp của thẻ Atmos™ Rewards: annual fee $70 USD cho công ty cộng $25 USD mỗi thẻ, Companion Fare hằng năm.",
+      "Bản doanh nghiệp của thẻ Atmos™ Rewards (ra bản mới 18/11/2026): 4 vé Alaska Lounge® mỗi năm, annual fee $195 USD cho cả công ty.",
     editorsTake:
-      "Phí công ty $70 USD cộng $25 USD mỗi thẻ, nên công ty một thẻ trả $95 USD mỗi năm. Cùng Companion Fare và hành lý miễn phí như bản cá nhân.",
+      "Welcome bonus 90,000 điểm sau khi chi $6,000 USD trong 90 ngày đầu. Bản mới bỏ Companion Fare hằng năm, đổi lại 4 vé Alaska Lounge® mỗi năm và thẻ nhân viên không tốn thêm phí. Thẻ mở trước 18/11/2026 vẫn là bản cũ.",
     keyBenefits: [
-      "Companion Fare $99 USD (cộng thuế phí từ $23 USD) mỗi năm gia hạn, sau khi chi $6,000 USD trong năm",
-      "Hành lý ký gửi miễn phí và ưu tiên lên máy bay",
-      "3 điểm mỗi $1 USD cho vé Alaska Airlines® và Hawaiian Airlines®",
-      "2 điểm ở xăng, sạc xe điện, vận chuyển và giao thông địa phương",
-      "Không phí giao dịch ngoại tệ",
+      "4 vé Alaska Lounge® mỗi năm (mỗi quý một vé), dùng cả ngày bay",
+      "Hành lý ký gửi miễn phí và ưu tiên lên máy bay cho tối đa 6 người cùng đặt chỗ",
+      "10 điểm mỗi $1 USD cho vé đặt qua Atmos™ for Business; 3 điểm cho vé Alaska Airlines® và Hawaiian Airlines®; 2 điểm ở nhà hàng",
+      "Chi $100,000 USD trong năm thẻ được 10,000 status points và mã giảm 50% vé máy bay (lặp lại ở mốc $200,000 USD)",
+      "Chia điểm miễn phí với tối đa 10 thành viên Atmos™ Rewards khác",
     ],
-    tags: ["Airline", "Business", "Companion fare"],
+    tags: ["Airline", "Business", "Lounge"],
     canada: {
       itin: ITIN_REQUIRED,
       usCreditHistory: HISTORY_REQUIRED,
       usAddress: ADDRESS_REQUIRED_BUSINESS,
       foreignTransactionFee: NO_FTF,
       pointsFromCanada: ATMOS_FROM_CANADA,
-      watchOut: "Phí thẻ tính theo từng thẻ nhân viên, khác với thẻ doanh nghiệp của Chase® và American Express®.",
+      watchOut: "Từ 18/11/2026 thẻ ra bản mới: annual fee $195 USD trả một lần cho cả công ty và không còn Companion Fare hằng năm; thẻ mở trước ngày đó giữ quyền lợi cũ.",
     },
     applyUrl: "https://www.alaskaair.com/atmosrewards/content/credit-cards/visa-small-business",
-    lastUpdated: ATMOS_ALASKA_CHECKED,
-    verifiedOn: REVERIFIED_16,
+    lastUpdated: "2026-11-19",
+    verifiedOn: REVERIFIED_19,
     needsVerification: false,
   },
 ];
