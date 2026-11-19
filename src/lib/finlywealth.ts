@@ -104,7 +104,11 @@ async function fetchPage(url: string): Promise<string> {
  *    (cách ngăn nghìn kiểu Pháp) đọc thành `$2` là hụt 998 đô.
  */
 export function rebateAmountInTitle(title: string): string | null {
-  const phrase = title.search(/Rebate from FinlyWealth/i);
+  // Từ khoảng giữa 18–19/11/2026 FinlyWealth viết tên mình CÓ dấu cách trong
+  // `<title>` ("$140 WestJet RBC World Elite Rebate from Finly Wealth"). Chỉ
+  // nhận đúng hai cách viết đó (liền, hoặc tách bằng MỘT dấu cách), không
+  // nhận chữ khác chen vào — để cụm nhận diện vẫn là cụm nhận diện.
+  const phrase = title.search(/Rebate from Finly ?Wealth/i);
   if (phrase === -1) return null;
 
   // Chỉ xét phần ĐỨNG TRƯỚC cụm nhận diện, và quét MỌI cụm `$` trong đó chứ

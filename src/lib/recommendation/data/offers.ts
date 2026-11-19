@@ -576,6 +576,37 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "westjet-rbc-world-elite-mastercard",
+    name: "Đến 55,000 điểm WestJet®",
+    headline: 55000,
+    currency: "westjet",
+    // Offer kế tiếp khi offer 70,000 hết 18/11. Điều khoản 1 trên
+    // rbcroyalbank.com (đọc 19/11/2026, khớp mục welcome bonus của FinlyWealth):
+    // hồ sơ nhận + duyệt từ 19/11/2026 đến 02/02/2027; 25,000 sau giao dịch đầu
+    // + 20,000 khi chi $5,000 trong 3 tháng đầu + 10,000 khi tổng chi $10,000
+    // trong 12 tháng đầu (tính cả $5,000 kia, cùng mở từ ngày mở thẻ). Nhãn
+    // "Offer Available" giống thẻ WestJet RBC® Mastercard thường — không phải
+    // offer nâng. Bản đang mở đứng TRƯỚC các bản đã đóng.
+    startDate: "2026-11-19",
+    endDate: "2027-02-02",
+    recordedAt: "2026-11-19",
+    verifiedAt: "2026-11-19",
+    rebate: 140,
+    components: [
+      { type: "first_purchase", points: 25000 },
+      // Điều khoản viết "three (3) months", không phải 90 ngày: 3 tháng dài
+      // 89–92 ngày tuỳ ngày mở thẻ, nên in "90 ngày đầu" là sai lệch tới 2 ngày.
+      { type: "spend_threshold", points: 20000, spend: 5000, windowDays: 90, windowText: "trong 3 tháng đầu" },
+      {
+        type: "anniversary",
+        points: 10000,
+        spend: 10000,
+        windowDays: 365,
+        note: "Chi tổng $10,000 trong 12 tháng đầu (tính cả $5,000 của 3 tháng đầu), nhận sau mốc 1 năm",
+      },
+    ],
+  },
+  {
+    slug: "westjet-rbc-world-elite-mastercard",
     name: "Đến 70,000 điểm WestJet®",
     headline: 70000,
     currency: "westjet",

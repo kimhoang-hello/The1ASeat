@@ -834,7 +834,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
       "Đăng ký bằng promo code FW10C26 khi mở tài khoản.",
       "Nạp tiền trong vòng 30 ngày kể từ ngày mở và chi tối thiểu $20 trong 30 ngày đầu.",
       "Được 10% cashback trên chi tiêu 3 tháng đầu, tối đa $1,000 chi tiêu (tức tối đa $100).",
-      "Nạp tối thiểu $20 trong 30 ngày đầu cũng là điều kiện để nhận rebate của FinlyWealth.",
+      "Để nhận rebate của FinlyWealth: nạp tối thiểu $100 trong 30 ngày đầu, xác minh danh tính với KOHO và giữ tiền trong tài khoản ít nhất 30 ngày.",
     ],
     interestRate: 2.5,
     promoNoteVi:

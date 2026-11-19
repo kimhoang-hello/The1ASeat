@@ -23,6 +23,16 @@ test("đọc đúng con số của mọi dạng tiêu đề FinlyWealth đang d�
     "$100",
   );
   assert.equal(rebateAmountInTitle("$1,500 Something Big Rebate from FinlyWealth"), "$1,500");
+  // Dạng thật từ 19/11/2026: tên viết tách "Finly Wealth". Bản cũ không nhận ra
+  // nên `expire-offers` đỏ với "no rebate in title" dù trang vẫn ghi rõ $140.
+  assert.equal(
+    rebateAmountInTitle("$140 WestJet RBC World Elite Rebate from Finly Wealth"),
+    "$140",
+  );
+  assert.equal(
+    offerPageRebate("<title>$140 WestJet RBC World Elite Rebate from Finly Wealth</title><p>Get $140 rebate</p>"),
+    "$140",
+  );
 });
 
 test("giữ hai dạng tiêu đề đã được ghi nhận là hợp lệ", () => {

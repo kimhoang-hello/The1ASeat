@@ -5237,3 +5237,46 @@ Wealthsimple® tới 2.25%; RBC® Day to Day $150 "Offer Ends December 8, 2026";
 **Chờ tác giả:** WestJet RBC® hết hạn HÔM NAY 18/11 — `expire-offers` đỏ có chủ ý từ 19/11 tới khi sửa tay. IHG® ×4 Mỹ hạn
 18/11 (task thẻ Mỹ 19/11). RBC® Avion® ×3 hạn 25/11 (7 ngày, link không phải `/rebates/`, task một lần 26/11) — chuẩn bị
 copy. Tangerine® Savings 4.50% hết 30/11 (trang tự về 0.30%). BMO® VIPorter® câu Black Friday 08/12 (lượt 09/12 gỡ).
+
+## Kiểm toàn diện 19/11/2026 (lượt tay, tác giả: "kiểm tra toàn diện và update") — đừng đề xuất lại
+
+Gate: lint, tsc, build, 11 audit, `npm test` (727: 704 pass, 23 skip MySQL), `test:reco` (503 pass), `npm audit` = 0 (nhánh
+`picomatch` của mục 18/11 đã hết), `audit:links` production (246 trang, không trang mồ côi), smoke test 10 URL + `www` 308 +
+5 header bảo mật. Job: chỉ `expire-offers` 19/11 đỏ (WestJet RBC®, dưới) — mọi job khác xanh, kể cả `sync-videos`.
+
+**Đã sửa:**
+- **FinlyWealth đổi tên trong `<title>` thành "Finly Wealth" (có dấu cách)**, thấy 19/11: "$140 WestJet RBC World Elite Rebate
+  from Finly Wealth". `rebateAmountInTitle` tìm `/Rebate from FinlyWealth/` nên `expire-offers` báo "no rebate in title" —
+  mọi lượt khôi phục copy offer thường qua trang `/rebates/` sẽ đỏ dù trang vẫn ghi rõ số. Nay `/Rebate from Finly ?Wealth/i`
+  (đúng hai cách viết, không nhận chữ chen vào); các bất biến fail-closed giữ nguyên, thêm 2 test. Hai job rebate đọc
+  Affiliate API nên không bị ảnh hưởng; `offerPageRebate` ("Finly rebate paused"), `standing-offer`, `rebate-prose` không
+  phụ thuộc cách viết tên (Codex rà).
+- **WestJet RBC® World Elite: offer 70,000 hết 18/11 → offer mới 55,000** (sửa tay trên Contentful, publish v29). Điều
+  khoản 1 trên rbcroyalbank.com (mở "View Legal Disclaimers" bằng browser — chữ nằm trong JS, curl không thấy), khớp mục
+  welcome bonus của FinlyWealth: hồ sơ nhận + duyệt 19/11/2026–02/02/2027; 25,000 sau giao dịch đầu + 20,000 khi chi
+  $5,000 trong 3 tháng đầu + 10,000 khi tổng chi $10,000 trong 12 tháng đầu (gồm cả $5,000 kia), về ~16 tuần sau năm đầu.
+  Chỉ đổi số/ngày trong copy tác giả (welcome bonus, headline, key benefit 1, câu đầu editor's take, ba field `...En` ẩn).
+  **`elevatedBonus: false` có chủ ý:** nhãn trang RBC® là "Offer Available" — y như thẻ WestJet RBC® Mastercard thường
+  (10,000), khác nhãn "Special Offer" của đợt 70,000. `expiresAt` 02/02/2027 (offer thường có hạn, như BMO® VIPorter®):
+  lượt `expire-offers` 03/02/2027 sẽ đỏ đòi sửa tay — nay đã có snapshot offer thường để lần sau khôi phục được. Seed
+  engine thêm bản 55,000 (`windowText: "trong 3 tháng đầu"`; anniversary `spend: 10000` không `startsAfterDays` → tổng
+  chi $10,000, cùng mô hình TD® Aeroplan® Privilege).
+- **KOHO Extra: điều kiện nhận rebate Finly ghi "nạp $20"**, trang Finly ("Rebate eligibility & offer terms", 19/11) đòi
+  nạp tối thiểu $100 trong 30 ngày đầu, xác minh danh tính, giữ tiền ≥30 ngày. Người đọc làm theo site là mất $100 rebate.
+  Dòng "$20" còn lại là mức CHI của cashback KOHO, không phải điều kiện rebate — giữ.
+
+**Bẫy Contentful:** field mảng `Symbol` (vd. `keyBenefitsVi`, `keyBenefitsEn`) giới hạn **256 ký tự mỗi phần tử** dù
+content type không khai validation — PUT dài hơn trả 422 trơn, không ghi gì.
+
+**Codex hai vòng — mình bác (đã kiểm tại nguồn):**
+- *KOHO Extra còn đòi "chi ít nhất $10 bằng thẻ KOHO"*: không có trên trang Finly (curl cả HTML lẫn JSON nhúng + browser
+  `innerText` 19/11) — SAI.
+- *Copy WestJet thiếu "nhận và duyệt", "hạch toán", "16 tuần", "voucher cần chi $5,000"*: copy ghi "hồ sơ phải được RBC®
+  duyệt" trong kỳ và "10,000 điểm sau năm đầu"; điều kiện $5,000 của voucher đã có ở key benefit 2 + editor's take; ngày
+  hạch toán là chi tiết điều khoản mà không thẻ nào trên site in ra. Không sửa.
+- *81 component `windowDays: 90` không `windowText` in "90 ngày đầu" ở trang Gợi ý thẻ trong khi điều khoản ghi "3 tháng"*:
+  có thật, lệch ≤2 ngày (3 tháng = 89–92 ngày), có ca hứa dư 1 ngày (mở thẻ 01/02 → 3 tháng chỉ 89 ngày). KHÔNG vá hàng loạt
+  lượt này: phải đọc lại điều khoản từng thẻ vì một số thẻ thật sự ghi "90 days". Chờ tác giả quyết.
+
+**Chờ tác giả:** RBC® Avion® ×3 hạn 25/11 (6 ngày; link không phải `/rebates/`; task một lần 26/11 viết lại). Tangerine®
+Savings 4.50% hết 30/11 (trang tự về 0.30%). BMO® VIPorter® câu Black Friday 08/12 (lượt 09/12 gỡ). Lựa chọn vá 81 mốc "90 ngày".
