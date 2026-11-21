@@ -5280,3 +5280,34 @@ content type không khai validation — PUT dài hơn trả 422 trơn, không gh
 
 **Chờ tác giả:** RBC® Avion® ×3 hạn 25/11 (6 ngày; link không phải `/rebates/`; task một lần 26/11 viết lại). Tangerine®
 Savings 4.50% hết 30/11 (trang tự về 0.30%). BMO® VIPorter® câu Black Friday 08/12 (lượt 09/12 gỡ). Lựa chọn vá 81 mốc "90 ngày".
+
+## Kiểm toàn diện định kỳ 21/11/2026 — đừng đề xuất lại
+
+Gate: lint, tsc, build, 10 audit, `npm test` (727: 704 pass, 23 skip MySQL), `npm audit` = 0, `audit:links` production
+(246 trang, không trang mồ côi; nhắc: `/credit-cards/westjet-rbc-world-elite-mastercard` chỉ còn một đường vào từ
+`/credit-cards` — không phải lỗi), smoke test 8 URL + `www` 308 + 5 header bảo mật. Job: chỉ "Check FinlyWealth rebate
+amounts (bank accounts)" 21/11 01:44Z đỏ (Neo™ Savings, dưới).
+
+**Đã sửa:**
+- **Neo™ Savings mất badge rebate $80.** Job gỡ dòng `rebate:` ngày 19/11 (Finly API báo pause); 21/11 API trả lại $80 nhưng
+  `--fix` cố ý không chèn dòng mới, nên job đỏ và site không hiện rebate. Thêm tay `rebate: "$80"` (trang Finly: "Promotional
+  Finly rebate expires on December 15, 2026", mức thường $50; điều kiện nạp tối thiểu $100 đã có trong `promoNoteVi`). Sau 15/12
+  site còn $80 tới khi job hạ số — đánh đổi chấp nhận, cùng kiểu rebate Amex® hết 30/12 (mục 13/11).
+- **`lib/check-rebates.ts` (Codex):** entry sạch mà `applyUrl` trong CMA khác link CDA đang trả (tác giả vừa publish link mới,
+  CDA còn trễ) → job từng đọc rebate theo link CŨ rồi publish badge + HOT TIP số cũ cạnh link mới. Nay báo lỗi `retryable`
+  và không ghi. So với `?.trim()` vì `safeApplyUrl` trả bản đã cắt khoảng trắng (Codex vòng 2 bắt bản vá đầu thiếu chỗ này;
+  21/11 cả 38 link không có khoảng trắng).
+
+**Codex nêu, chờ tác giả (không tự sửa):** bốn thẻ IHG® (Mỹ) hiện offer thường mới (150,000 / 140,000 / 80,000 / 150,000) nhưng
+nút Apply là link giới thiệu `CHASE_IHG_REFERRAL`, mà lượt 19/11 ghi trang ref còn treo số cũ "Apply by 11/18/2026". Không gọi
+thử link ref (luật link đếm click), nên chưa biết hôm nay trang đó hiện gì — tác giả tự mở xem, giữ link ref hay đổi sang trang
+sản phẩm.
+
+**Đã kiểm, KHÔNG phải lỗi:** Tangerine® Savings 4.50% (browser): Client Number tạo 28/07–30/11/2026, chưa có đợt mới — từ
+01/12 trang tự về 0.30%; trang còn khuyến mãi 5.00% cho tài khoản tiết kiệm đăng ký (TFSA/RSP), site không liệt kê loại đó.
+RBC® Avion® Visa Infinite vẫn "Apply by November 25, 2026" (70,000), chưa công bố offer sau đó. TD® First Class 160,000 elevated
+không ngày: trang TD® còn "Special Offer … up to 160,000". Wealthsimple® / Neo™ / KOHO bonus không ngày: offer qua Finly (mục 31/10).
+
+**Chờ tác giả:** RBC® Avion® ×3 hạn 25/11 (4 ngày; link không phải `/rebates/`, task một lần 26/11). Tangerine® Savings 4.50%
+hết 30/11. BMO® VIPorter® câu Black Friday 08/12 + RBC® Day to Day $150 hạn 08/12 (lượt 09/12). IHG® ×4 link ref (trên). Lựa
+chọn vá 81 mốc "90 ngày" (mục 19/11).

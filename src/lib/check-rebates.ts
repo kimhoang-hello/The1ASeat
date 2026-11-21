@@ -289,6 +289,22 @@ export async function runCheckRebates({
         continue;
       }
 
+      // Entry sạch (draft = bản published) mà link apply khác link CDA đang
+      // trả: tác giả vừa publish link mới và CDA còn trễ vài giây. Số `current`
+      // đọc theo link CŨ, ghi vào thì badge + HOT TIP mang rebate của offer cũ
+      // đứng cạnh link mới tới tận lượt chạy sau (Codex 21/11/2026). Đánh
+      // `retryable` để runner chạy lại khi CDA đã bắt kịp. `trim()` vì
+      // `safeApplyUrl` trả bản đã cắt khoảng trắng — so nguyên gốc thì một
+      // link có dấu cách ở đuôi làm job đỏ mãi (Codex vòng 2).
+      if (field<string>(entry, "applyUrl")?.trim() !== liveCard.applyUrl) {
+        errors.push({
+          slug,
+          message: `link apply trong Contentful khác link CDA đang phục vụ (CDA còn trễ sau publish?) — job không ghi rebate ${current} theo link cũ`,
+          retryable: true,
+        });
+        continue;
+      }
+
       // Sửa luôn con số viết tay trong phần chữ, TRONG CÙNG một lần ghi.
       //
       // Không tách thành lượt ghi thứ hai: `updateEntry` publish cả entry, nên

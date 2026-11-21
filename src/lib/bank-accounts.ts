@@ -607,6 +607,11 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     url: "https://www.neofinancial.com/accounts",
     affiliateUrl:
       "https://www.finlywealth.com/r/pYQhcEuX?url=%2Frebates%2Fbank-accounts%2Fneo-savings-account&utm_source=ghe-1a",
+    // Job gỡ dòng này 19/11 (Finly API báo pause) nhưng không tự thêm lại được
+    // khi offer quay về — thêm tay 21/11/2026: trang Finly ghi $80 khuyến mãi
+    // ("Promotional Finly rebate expires on December 15, 2026", mức thường
+    // $50); hết đợt thì job tự hạ số theo API.
+    rebate: "$80",
   },
 
   // ----------------------------------------------------------- Tangerine
