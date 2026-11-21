@@ -16,9 +16,14 @@
  *
  * Tài liệu: https://www.finlywealth.com/affiliate-hub/api-docs (cần đăng nhập),
  * spec công khai tại `${BASE}/openapi.json`.
+ *
+ * Từ 12/11/2026 API ở host riêng `api.finlywealth.com`; key, endpoint, tham số
+ * và response giữ nguyên. Địa chỉ cũ `www.finlywealth.com/api/affiliate/v1`
+ * chỉ forward (kèm header Deprecation/Sunset) tới 14/12/2026 rồi tắt.
  */
 
-const BASE = "https://www.finlywealth.com/api/affiliate/v1";
+const BASE = "https://api.finlywealth.com/affiliate/v1";
+/** Host của trang sản phẩm/trang rebate mà API trả trong `links` — KHÔNG phải host API. */
 const HOST = "www.finlywealth.com";
 
 /** Cùng hạn giờ với `finlywealth.ts`: lớp duy nhất cắt ở thang giây. */
