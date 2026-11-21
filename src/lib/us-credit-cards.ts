@@ -424,6 +424,8 @@ const INK_FTF: CanadianAnswer = {
 const CHASE_PERSONAL_REFERRAL = "https://www.referyourchasecard.com/19y/UZBI95X9X8";
 const CHASE_BUSINESS_REFERRAL = "https://www.referyourchasecard.com/21h/X40C9Z2AN2";
 const CAPITAL_ONE_REFERRAL = "https://i.capitalone.com/J2YmzuLB7";
+// Tác giả chốt 21/11/2026: giữ link ref này cho bốn thẻ IHG® dù offer hiển thị
+// lấy theo trang sản phẩm chính Chase® (`sourceUrl`) — đừng đề xuất đổi link.
 const CHASE_IHG_REFERRAL = "https://www.referyourchasecard.com/210z/PMZG4LIGL3";
 
 const US_CARD_DATA: UsCardData[] = [

@@ -5298,10 +5298,9 @@ amounts (bank accounts)" 21/11 01:44Z đỏ (Neo™ Savings, dưới).
   và không ghi. So với `?.trim()` vì `safeApplyUrl` trả bản đã cắt khoảng trắng (Codex vòng 2 bắt bản vá đầu thiếu chỗ này;
   21/11 cả 38 link không có khoảng trắng).
 
-**Codex nêu, chờ tác giả (không tự sửa):** bốn thẻ IHG® (Mỹ) hiện offer thường mới (150,000 / 140,000 / 80,000 / 150,000) nhưng
-nút Apply là link giới thiệu `CHASE_IHG_REFERRAL`, mà lượt 19/11 ghi trang ref còn treo số cũ "Apply by 11/18/2026". Không gọi
-thử link ref (luật link đếm click), nên chưa biết hôm nay trang đó hiện gì — tác giả tự mở xem, giữ link ref hay đổi sang trang
-sản phẩm.
+**IHG® ×4 (Mỹ): tác giả chốt 21/11 — GIỮ link giới thiệu `CHASE_IHG_REFERRAL`, offer theo mức mới.** Site đã hiện offer
+thường mới từ 19/11 (150,000 / 140,000 / 80,000 / 150,000, nguồn là trang sản phẩm chính Chase® qua `sourceUrl`). Nút Apply
+vẫn trỏ link ref của tác giả dù trang ref có thể còn treo số cũ — ĐỪNG báo lại, ĐỪNG đề xuất đổi sang trang sản phẩm.
 
 **Đã kiểm, KHÔNG phải lỗi:** Tangerine® Savings 4.50% (browser): Client Number tạo 28/07–30/11/2026, chưa có đợt mới — từ
 01/12 trang tự về 0.30%; trang còn khuyến mãi 5.00% cho tài khoản tiết kiệm đăng ký (TFSA/RSP), site không liệt kê loại đó.
@@ -5309,5 +5308,5 @@ RBC® Avion® Visa Infinite vẫn "Apply by November 25, 2026" (70,000), chưa c
 không ngày: trang TD® còn "Special Offer … up to 160,000". Wealthsimple® / Neo™ / KOHO bonus không ngày: offer qua Finly (mục 31/10).
 
 **Chờ tác giả:** RBC® Avion® ×3 hạn 25/11 (4 ngày; link không phải `/rebates/`, task một lần 26/11). Tangerine® Savings 4.50%
-hết 30/11. BMO® VIPorter® câu Black Friday 08/12 + RBC® Day to Day $150 hạn 08/12 (lượt 09/12). IHG® ×4 link ref (trên). Lựa
+hết 30/11. BMO® VIPorter® câu Black Friday 08/12 + RBC® Day to Day $150 hạn 08/12 (lượt 09/12). Lựa
 chọn vá 81 mốc "90 ngày" (mục 19/11).
