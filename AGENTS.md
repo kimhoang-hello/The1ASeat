@@ -2277,6 +2277,26 @@ Lượt `sync-videos` đỏ 24/09 03:06 UTC lại là **YouTube 404 cho feed Ato
 - Nhóm `google / organic` + `iOS 26.6` tuần 08–14/11: **0 phiên** (12 tuần trước, 20 tuần
   25–31/10).
 
+## Đo đạc GA4 (22/11/2026) — đừng đề xuất lại
+
+- **`apply_clicked` theo cohort landing:** `r=landing-page` + `dataFilters`
+  `eventName=apply_clicked` (không `seldim`) — cột key event cộng đúng tổng `apply_clicked`
+  (31 tuần 15–21/11), gom theo landing page của PHIÊN chứa click, tức tính cả click ở trang
+  khác trong cùng phiên. `seldim` `["eventName","landingPagePlusQueryString"]` trên
+  `r=top-events` thì ra bảng trắng.
+- **Lọc theo thẻ:** `dataFilters` `fieldName: customDimensionsGroup2Slot01` chạy;
+  `customEvent:product` ra bảng trắng. Ghép `seldim` [standard, Slot01] trên
+  `all-pages-and-screens` mà standard là nguồn/ngày → báo cáo quay về Page title.
+- **`dataFilters` nhiều giá trị trong `expressionList` chỉ khớp giá trị đầu** (thử 2 thành
+  phố ra đúng số của thành phố thứ nhất). Muốn khử trùng hai nhóm user thì chưa có cách qua URL.
+- **Bài mới share Facebook ≠ click Apply.** Bài Triple Dip (đăng 16/11) kéo thứ Hai 16/11
+  từ 16 lên 157 `session_start`, cohort landing bài 163 phiên → 1 `apply_clicked`; người bấm
+  toàn site 30 → 17. Tỷ lệ người bấm / active users vì thế rơi 35.7% → 8.2% — đừng đọc tỷ
+  lệ này khi mẫu số phình vì một bài viral.
+- **Sessions/users của GA4 ước lượng bằng HyperLogLog++** (Google công bố) — `session_start`
+  290 vs Sessions 289 là hai phép đo. Chưa chứng minh HLL++ gây phần thừa của bảng nguồn.
+- Tuần 15–21/11 bảng nguồn KHÔNG có dòng `(not set)`, thừa chỉ +1/+2.
+
 ## Luật welcome bonus theo cửa sổ thời gian (21/09/2026) — đừng đề xuất lại
 
 Chi tiết: `src/lib/recommendation/README.md`, mục "Luật welcome bonus theo cửa sổ
