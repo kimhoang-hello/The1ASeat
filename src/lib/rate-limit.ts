@@ -102,7 +102,28 @@ export interface RateLimitResult {
   retryAfter: number;
 }
 
-export function rateLimit(key: string, limit: number, windowMs: number): RateLimitResult {
+export interface RateLimitOptions {
+  /**
+   * Khoá là TRẦN CHUNG của cả site (`contact:all`, `subscribe:all`,
+   * `reco:start:all`): một chuỗi cố định trong code, không phải thứ người gọi
+   * tự sinh. Khoá loại này không bao giờ bị đẩy vào xô chung.
+   *
+   * Không có cờ này, lúc Map đầy mà trần chung chưa có ô (hết giờ, hoặc cả giờ
+   * qua chưa ai gửi hợp lệ) thì nó rơi vào xô chung với ngân sách
+   * `OVERFLOW_LIMIT`: `contact:all` từ 30 lên 100 (Codex tái hiện 23/11/2026,
+   * bơm Map bằng IP xoay trong `X-Forwarded-For`), còn `reco:start:all` từ 500
+   * xuống 100. Trần chung tồn tại đúng để chặn kẻ xoay header — nó không được
+   * phụ thuộc vào việc Map đã đầy hay chưa.
+   */
+  siteWide?: boolean;
+}
+
+export function rateLimit(
+  key: string,
+  limit: number,
+  windowMs: number,
+  options: RateLimitOptions = {},
+): RateLimitResult {
   const now = Date.now();
   sweep(now);
 
@@ -113,7 +134,9 @@ export function rateLimit(key: string, limit: number, windowMs: number): RateLim
   // `MAX_WINDOWS` khoá thường, lượt overflow ĐẦU TIÊN vẫn thêm ô thứ
   // `MAX_WINDOWS + 1` — trần vẫn cứng, nhưng code nói một con số và làm một
   // con số khác, và đó là kiểu sai lặng lẽ khó thấy nhất khi ai đó sửa sau này.
-  if (!windows.has(key) && windows.size >= MAX_WINDOWS - 1) {
+  // Khoá `siteWide` được miễn: Map có thể vượt `MAX_WINDOWS` thêm đúng số trần
+  // chung viết cứng trong code (ba), không phải con số người gọi điều khiển.
+  if (!options.siteWide && !windows.has(key) && windows.size >= MAX_WINDOWS - 1) {
     key = OVERFLOW_KEY;
     limit = OVERFLOW_LIMIT;
     windowMs = OVERFLOW_WINDOW_MS;

@@ -41,3 +41,22 @@ export function categorizeVideo(title: string): {
   }
   return { categoryVi: "Đánh giá", categoryEn: "Review", icon: "airplane" };
 }
+
+/**
+ * Entry trong feed Atom của YouTube có phải Shorts không — đọc ĐÚNG link
+ * `rel="alternate"` của entry, không quét cả khối.
+ *
+ * Feed của @HoangLeCA (cả `channel_id` lẫn `playlist_id=UU…`, đo 31/08 và
+ * 23/11/2026) đánh dấu Shorts bằng `href="https://www.youtube.com/shorts/…"`
+ * ở link đó. Trước 23/11 route tìm "/shorts/" trong CẢ khối `<entry>`, tức cả
+ * `<media:description>` — video thường mà phần mô tả trỏ sang một Short bị lọc
+ * như Short, không bao giờ lên site, và job vẫn xanh (Codex 23/11/2026).
+ */
+export function isShortsEntry(entryXml: string): boolean {
+  for (const tag of entryXml.match(/<link\b[^>]*>/g) ?? []) {
+    if (!/\brel="alternate"/.test(tag)) continue;
+    const href = tag.match(/\bhref="([^"]*)"/)?.[1] ?? "";
+    return /^https?:\/\/(?:www\.|m\.)?youtube\.com\/shorts\//.test(href);
+  }
+  return false;
+}

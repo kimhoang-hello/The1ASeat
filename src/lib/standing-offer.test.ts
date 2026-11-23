@@ -49,7 +49,6 @@ const ELEVATED: OfferCopy = {
 
 const SOURCE = {
   name: "WestJet RBC® World Elite Mastercard®",
-  annualFee: "$139",
   rebate: "$140",
   offerDetails:
     "How to earn the welcome bonus Get up to 50,000 WestJet points 30,000 WestJet points upon your first purchase 20,000 WestJet points when you spend $5,000 in the first 3 months Earns rewards on 1.5x - 2x Fees & rates Annual fee $139",
@@ -175,6 +174,59 @@ test("số tiền dưới $1,000 trong headline không bị đòi, nhưng trong 
   const cashback = { ...STANDING, welcomeBonusVi: "Cashback 10% (tối đa $200)" };
   const problems = standingCopyProblems(withRebate(cashback, "$140"), source, TODAY);
   assert.ok(problems.some((p) => /10%|200/.test(p)));
+});
+
+test("số rebate không chứng minh được con số của welcome bonus (Codex 23/11/2026)", () => {
+  // Trang chỉ còn cashback tối đa $100; rebate FinlyWealth tình cờ là $200.
+  const source = {
+    ...SOURCE,
+    rebate: "$200",
+    offerDetails:
+      "How to earn the welcome bonus Earn 10% cash back on purchases up to $100 in the first 3 months Earns rewards on 1% - 4% Fees & rates Annual fee $139",
+  };
+  const stale: OfferCopy = {
+    welcomeBonusVi: "Cashback 10% (tối đa $200)",
+    headlineVi: "Welcome bonus cashback 10% trong 3 tháng đầu.",
+    keyBenefitsVi: ["Cashback 10% trong 3 tháng đầu", "Cashback 4% cho đồ ăn"],
+    editorsTakeVi: "Thẻ cashback dễ dùng. HOT TIP: Apply thẻ qua FinlyWealth để nhận thêm $150 rebate.",
+  };
+  const problems = standingCopyProblems(withRebate(stale, "$200"), source, TODAY);
+  assert.ok(problems.some((p) => /\b200\b/.test(p)), problems.join(" | "));
+  // Cùng copy, trang ghi đúng $200: qua.
+  const current = { ...source, offerDetails: source.offerDetails.replace("$100", "$200") };
+  assert.deepEqual(standingCopyProblems(withRebate(stale, "$200"), current, TODAY), []);
+
+  // Annual fee của ENTRY cũng không còn là nguồn: trang (ở đây không in phí)
+  // ghi tối đa $100 thì "tối đa $139" bị chặn. Phí in TRÊN trang FinlyWealth thì
+  // vẫn là số có nguồn — giới hạn ngữ nghĩa đã chấp nhận (AGENTS.md 05/11/2026).
+  const feeTwin = { ...stale, welcomeBonusVi: "Cashback 10% (tối đa $139)" };
+  const noFeeOnPage = { ...source, offerDetails: source.offerDetails.replace(/ Fees & rates.*$/, "") };
+  assert.ok(standingCopyProblems(withRebate(feeTwin, "$200"), noFeeOnPage, TODAY).some((p) => /\b139\b/.test(p)));
+});
+
+test("câu '$X rebate' khớp rebate hiện hành không bị cửa 1 chặn oan; sai số thì vẫn chặn", () => {
+  // Headline đi qua `withRebate` ($100 → $140); nhãn ghi đúng $140.
+  const copy = withRebate(
+    {
+      ...STANDING,
+      welcomeBonusVi: "50,000 điểm WestJet® + $140 rebate",
+      headlineVi: "Welcome bonus lên đến 50,000 điểm WestJet® cộng $100 rebate khi apply qua FinlyWealth.",
+    },
+    "$140",
+  );
+  assert.match(copy.headlineVi, /\$140 rebate/);
+  assert.deepEqual(standingCopyProblems(copy, SOURCE, TODAY), []);
+
+  // Nhãn không đi qua `withRebate`: số rebate cũ, hay số tiền bất kỳ đứng trước
+  // chữ "rebate", vẫn phải có nguồn (Codex vòng chốt 23/11/2026).
+  const staleLabel = { ...copy, welcomeBonusVi: "50,000 điểm WestJet® + $100 rebate" };
+  assert.ok(standingCopyProblems(staleLabel, SOURCE, TODAY).some((p) => /\b100\b/.test(p)));
+  const fakeCap = { ...copy, welcomeBonusVi: "Cashback 10% (tối đa $999 rebate từ ngân hàng)" };
+  assert.ok(standingCopyProblems(fakeCap, SOURCE, TODAY).some((p) => /\b999\b/.test(p)));
+
+  // Nhãn chỉ có rebate thì không phải welcome bonus.
+  const onlyRebate = { ...copy, welcomeBonusVi: "$140 rebate" };
+  assert.ok(standingCopyProblems(onlyRebate, SOURCE, TODAY).some((p) => /nhãn/.test(p)));
 });
 
 test("không tự cộng các nấc điểm thành tổng (BMO® không in 70,000; 'up to 50,000' + 30,000 ≠ 80,000)", () => {

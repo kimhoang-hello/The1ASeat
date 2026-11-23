@@ -1,4 +1,4 @@
-import { rebateFiguresIn, withRebateFigure } from "./rebate-prose.ts";
+import { rebateFiguresIn, withRebateFigure, withoutRebateFigure } from "./rebate-prose.ts";
 
 /**
  * Copy của offer THƯỜNG cho một thẻ vừa hết offer nâng, lấy lại từ lịch sử
@@ -161,7 +161,6 @@ export function withRebate(copy: OfferCopy, rebate: string | undefined): OfferCo
 
 export interface OfferSource {
   name: string;
-  annualFee: string;
   /** Rebate FinlyWealth hiện hành; `undefined` = không có hoặc đang pause. */
   rebate?: string;
   /** Prose tiếng Anh của FinlyWealth về offer đang chạy. */
@@ -195,20 +194,35 @@ export interface OfferSource {
 export function standingCopyProblems(copy: OfferCopy, source: OfferSource, today: string): string[] {
   const problems: string[] = [];
 
-  const sourceText = [source.offerDetails, source.annualFee, source.rebate ?? "", source.name].join(" ");
+  // Nguồn của cửa 1 CHỈ là trang FinlyWealth (phần welcome bonus, tích điểm,
+  // phí) cộng tên thẻ. Trước 23/11/2026 còn gộp `source.rebate` và annual fee
+  // lấy từ chính entry, nên một con số cũ tình cờ trùng một trong hai được coi
+  // là "có nguồn": nhãn "Cashback 10% (tối đa $200)" lọt khi trang chỉ còn tối
+  // đa $100 mà rebate là $200, hay "tối đa $139" khi phí là $139 (Codex
+  // 23/11/2026). Phí nằm sẵn trong mục "Fees & rates" của trang FinlyWealth.
+  const sourceText = [source.offerDetails, source.name].join(" ");
   const sourced = new Set<number | string>([
     ...moneyAndPointsIn(sourceText),
     ...percentsIn(sourceText).map((p) => `${p}%`),
   ]);
 
+  // Con số "$X rebate" BẰNG rebate hiện hành là tiền FinlyWealth trả, không
+  // phải offer ngân hàng: cửa 1 bỏ nó ra khỏi chữ đang xét, không thì câu rebate
+  // đúng (đã qua `withRebate`) bị đòi có trên phần offer của trang và chặn oan.
+  // Chỉ bỏ số KHỚP: nhãn không đi qua `withRebate`, và cửa 3 chỉ kiểm có/không
+  // có rebate — xoá mọi "$X rebate" thì nhãn "$100 rebate" (rebate thật $140)
+  // hay "tối đa $999 rebate từ ngân hàng" lọt qua (Codex vòng chốt 23/11/2026).
+  const bankText = (text: string) => (source.rebate ? withoutRebateFigure(text, source.rebate) : text);
+
   // Nhãn là con số to nhất trên trang thẻ, nên đòi MỌI con số trong nó, kể cả
   // tiền dưới $1,000 ("Cashback 10% (tối đa $200)").
-  const labelFigures = [...moneyAndPointsIn(copy.welcomeBonusVi), ...percentsIn(copy.welcomeBonusVi).map((p) => `${p}%`)];
+  const label = bankText(copy.welcomeBonusVi);
+  const labelFigures = [...moneyAndPointsIn(label), ...percentsIn(label).map((p) => `${p}%`)];
   if (labelFigures.length === 0) {
     problems.push(`nhãn welcome bonus không có con số ("${copy.welcomeBonusVi}")`);
   }
 
-  const offerText = [copy.headlineVi, copy.keyBenefitsVi[0] ?? ""].join(" ");
+  const offerText = [copy.headlineVi, copy.keyBenefitsVi[0] ?? ""].map(bankText).join(" ");
   const bankFigures = [
     ...labelFigures,
     ...moneyAndPointsIn(offerText).filter((value) => value >= 1000),

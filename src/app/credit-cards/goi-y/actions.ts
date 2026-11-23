@@ -141,7 +141,7 @@ export async function startRecommendation(formData: FormData): Promise<void> {
   // một giờ (Codex 24/10/2026). `ip:` giữ xô IP khác khoá `reco:start:all`.
   const perIp = rateLimit(`reco:start:ip:${ip}`, 30, 60 * 60 * 1000);
   if (!perIp.ok) fail(RECO_ERROR.busy);
-  const siteWide = rateLimit("reco:start:all", 500, 60 * 60 * 1000);
+  const siteWide = rateLimit("reco:start:all", 500, 60 * 60 * 1000, { siteWide: true });
   if (!siteWide.ok) fail(RECO_ERROR.busy);
 
   const today = todayInSiteZone();

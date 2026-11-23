@@ -87,7 +87,7 @@ export async function POST(request: Request) {
   // 30 POST `{}` từ 30 IP (giả hay thật) là đủ khoá form của cả site trong một
   // giờ (Codex tái hiện 26/09/2026). Lượt rác và lượt đã bị chặn theo IP không
   // được ăn vào phần của người thật.
-  const siteWide = rateLimit("contact:all", SITE_WIDE_LIMIT, WINDOW_MS);
+  const siteWide = rateLimit("contact:all", SITE_WIDE_LIMIT, WINDOW_MS, { siteWide: true });
   if (!siteWide.ok) {
     return NextResponse.json(
       { error: "rate_limited" },

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jobAuthResponse } from "@/lib/job-auth";
-import { categorizeVideo } from "@/lib/video-category";
+import { categorizeVideo, isShortsEntry } from "@/lib/video-category";
 
 // Called on a schedule (see .github/workflows/sync-videos.yml) to auto-post
 // new @HoangLeCA videos as `blogPost` (type: "video") entries — no manual
@@ -275,7 +275,7 @@ function parseFeed(xml: string): VideoEntry[] {
     const videoId = block.match(/<yt:videoId>([^<]+)<\/yt:videoId>/)?.[1];
     const title = block.match(/<title>([^<]*)<\/title>/)?.[1];
     const publishedAt = block.match(/<published>([^<]+)<\/published>/)?.[1];
-    const isShort = block.includes("/shorts/");
+    const isShort = isShortsEntry(block);
     if (!videoId || !title || !publishedAt || isShort) continue;
 
     entries.push({

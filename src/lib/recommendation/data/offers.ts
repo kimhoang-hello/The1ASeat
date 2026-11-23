@@ -452,10 +452,30 @@ const OFFER_SEEDS: OfferSeed[] = [
     name: "Đến 65,000 điểm Scene+™",
     headline: 65000,
     currency: "scene-plus",
+    // Rebate FinlyWealth nâng $150 → $200 (job check-rebates ghi Contentful
+    // 22/11/2026 19:59 giờ Toronto; `<title>` trang /rebates/ xác nhận 23/11).
+    // Bản ghi mới như bản dưới, offer giữ nguyên.
+    startDate: "2026-11-02",
+    recordedFrom: "2026-11-22",
+    recordedAt: "2026-11-22",
+    verifiedAt: "2026-11-22",
+    endDate: "2027-01-03",
+    rebate: 200,
+    components: [
+      { type: "spend_threshold", points: 40000, spend: 2000, windowDays: 90 },
+      { type: "spend_threshold", points: 25000, spend: 7500, windowDays: 365 },
+    ],
+  },
+  {
+    slug: "scotiabank-gold-amex",
+    name: "Đến 65,000 điểm Scene+™",
+    headline: 65000,
+    currency: "scene-plus",
     // Offer mới thay đợt 50,000 (scotiabank.com và đường Apply FinlyWealth →
     // `?cid=a-fin…`, đọc 02/11/2026): tài khoản mở 02/11/2026 – 03/01/2027.
     // $7,500 trong 12 tháng là tổng tích luỹ, đã gồm $2,000 ở mốc đầu.
     startDate: "2026-11-02",
+    recordedTo: "2026-11-21",
     verifiedAt: "2026-11-02",
     recordedAt: "2026-11-02",
     endDate: "2027-01-03",

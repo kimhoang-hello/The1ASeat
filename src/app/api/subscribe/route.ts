@@ -90,7 +90,7 @@ export async function POST(request: Request) {
   // không còn đọc được trực tiếp trong bộ nhớ, và `rate-limit` có trần số khoá
   // — xem chú thích ở cả hai chỗ đó, kể cả phần nói rõ chúng KHÔNG làm được gì.
   const perEmail = rateLimit(`subscribe:email:${emailKey(email)}`, EMAIL_LIMIT, WINDOW_MS);
-  const emailLimit = perEmail.ok ? rateLimit("subscribe:all", SITE_WIDE_LIMIT, WINDOW_MS) : perEmail;
+  const emailLimit = perEmail.ok ? rateLimit("subscribe:all", SITE_WIDE_LIMIT, WINDOW_MS, { siteWide: true }) : perEmail;
   if (!emailLimit.ok) {
     return NextResponse.json(
       { error: "rate_limited" },

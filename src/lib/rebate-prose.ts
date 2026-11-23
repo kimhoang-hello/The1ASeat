@@ -54,6 +54,16 @@ export function withRebateFigure(text: string, amount: string): string {
   return text.replace(REBATE_FIGURE, amount);
 }
 
+/**
+ * Đoạn chữ với các con số rebate BẰNG `amount` bị xoá; con số rebate khác giữ
+ * nguyên. Dùng để một câu rebate đúng không bị đòi có trên phần offer của
+ * trang FinlyWealth, mà câu rebate sai số thì vẫn bị đòi (`standing-offer`).
+ */
+export function withoutRebateFigure(text: string, amount: string): string {
+  const wanted = Number(amount.replace(/[^\d.]/g, ""));
+  return text.replace(REBATE_FIGURE, (found) => (Number(found.replace(/[^\d.]/g, "")) === wanted ? "" : found));
+}
+
 export interface ProseMismatch {
   field: string;
   found: string;

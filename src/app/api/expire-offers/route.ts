@@ -174,7 +174,6 @@ async function handleExpire(request: NextRequest) {
           copy,
           {
             name: field<string>(card, "name") ?? slug,
-            annualFee: field<string>(card, "annualFeeVi") ?? "",
             rebate: offer.rebate,
             offerDetails: offer.details,
           },

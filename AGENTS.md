@@ -5330,3 +5330,52 @@ không ngày: trang TD® còn "Special Offer … up to 160,000". Wealthsimple® 
 **Chờ tác giả:** RBC® Avion® ×3 hạn 25/11 (4 ngày; link không phải `/rebates/`, task một lần 26/11). Tangerine® Savings 4.50%
 hết 30/11. BMO® VIPorter® câu Black Friday 08/12 + RBC® Day to Day $150 hạn 08/12 (lượt 09/12). Lựa
 chọn vá 81 mốc "90 ngày" (mục 19/11).
+
+## Kiểm toàn diện 23/11/2026 (lượt tay, tác giả: "Kiểm tra toàn diện Ghế 1A") — đừng đề xuất lại
+
+Gate: lint, tsc, build, 10 audit, `npm test` (731: 708 pass, 23 skip MySQL), `test:reco` (503 pass), `npm audit` = 0,
+`audit:links` production (247 trang, không trang mồ côi; WestJet RBC® một đường vào — đã biết), smoke test 12 URL + `www`
+308 + 5 header bảo mật. Job: `check-rebates` 23/11 00:59Z đỏ (Gold Amex®, dưới); `expire-offers` 21/11 23:59Z đỏ 5 lượt
+HTTP 000 "Failed to connect to ghe1a.com" (~13 phút, cùng kiểu 08/09, 18/09, 25/09, 12/10, 24/10; lượt 22/11 15:45Z xanh)
+— không phải lỗi code. Không có task định kỳ nào chạy song song lúc kiểm.
+
+**Đã sửa:**
+- **Seed engine Scotiabank® Gold Amex® rebate $150 → $200.** FinlyWealth nâng rebate; job ghi Contentful 22/11 19:59 giờ
+  Toronto (badge + HOT TIP) rồi đỏ đúng thiết kế vì seed còn 150. Theo luật temporal: đóng bản 65,000 cũ `recordedTo:
+  2026-11-21`, thêm bản mới `recordedFrom 2026-11-22` đứng trước. `<title>` trang `/rebates/` xác nhận $200 ngày 23/11.
+  **`engine.snapshot.json` KHÔNG đổi khi sửa seed của offer bắt đầu sau 08/09** — `DATA` của test là `datasetAt(RAW,
+  "2026-09-08")`, nên `UPDATE_ENGINE_SNAPSHOT=1` ghi lại đúng nội dung cũ. Không phải lỗi; đừng tưởng lệnh cập nhật hỏng.
+- **`lib/rate-limit.ts`: trần chung bị thay bằng xô chung khi Map đầy (Codex tái hiện).** Bơm Map tới 9,999 khoá bằng IP xoay
+  trong `X-Forwarded-For`; lúc đó `contact:all` chưa có ô (hết giờ, hoặc cả giờ chưa ai gửi hợp lệ) thì rơi vào
+  `OVERFLOW_KEY` với ngân sách 100: form Liên hệ cho qua 100 lượt/giờ thay vì 30; `reco:start:all` ngược lại bị ép từ 500
+  xuống 100. Nay `rateLimit(..., { siteWide: true })` miễn ba khoá trần chung khỏi xô chung. Cờ chỉ đặt từ code với chuỗi
+  cố định, người gọi không điều khiển được; Map tối đa 10,003 ô; dưới 9,999 ô hành vi như cũ. Test `rate-limit.test.ts`
+  đỏ trên code cũ.
+- **`lib/standing-offer.ts` (`expire-offers` khôi phục copy): số rebate và annual fee của entry từng là "nguồn" của cửa 1.**
+  Nhãn cũ "Cashback 10% (tối đa $200)" lọt khi trang FinlyWealth chỉ còn tối đa $100 mà rebate tình cờ là $200 (Codex).
+  Bản vá đầu chỉ bỏ `source.rebate` → Codex vòng 2 chấm BẢN VÁ HỎNG: câu "$X rebate" đúng trong nhãn/headline bị chặn oan,
+  và phí lấy từ entry vẫn chứng nhầm. Bản thứ hai xoá MỌI "$X rebate" trước cửa 1 → Codex vòng chốt: BẢN VÁ HỎNG, vì nhãn
+  không đi qua `withRebate` và cửa 3 chỉ kiểm có/không có rebate, nên nhãn "$100 rebate" (rebate thật $140) hay "tối đa
+  $999 rebate từ ngân hàng" lọt. **Bản cuối:** nguồn cửa 1 chỉ là `offerDetails` (đã gồm "Fees & rates") + tên thẻ;
+  `annualFee` bỏ khỏi `OfferSource` và route; cửa 1 chỉ bỏ con số "$X rebate" BẰNG `source.rebate`
+  (`withoutRebateFigure` trong `lib/rebate-prose.ts`, so theo giá trị) — số rebate khác vẫn phải có nguồn. Vòng xác nhận
+  của Codex bị cắt vì hết hạn mức; thay bằng chứng minh: mọi copy qua bản cuối đều qua bản HEAD (số còn lại ⊂ nguồn cũ, số
+  bị bỏ = rebate, vốn có trong nguồn cũ), tức bản vá chỉ SIẾT, không mở đường lọt nào so với trước. Chạy cửa cũ và mới
+  trên copy đang phục vụ của 15 thẻ có trang `/rebates/` (đọc trang FinlyWealth thật): kết luận trùng 15/15, không chặn oan.
+  **Còn hở, chấp nhận:** số in TRÊN trang FinlyWealth ở vai khác (vd. phí $139 trong "Fees & rates") vẫn chứng được một nhãn
+  "tối đa $139" — cùng giới hạn ngữ nghĩa đã ghi ở mục 05/11.
+- **`api/sync-videos` lọc Shorts bằng `block.includes("/shorts/")` trên CẢ entry, gồm `<media:description>`** (Codex): video
+  thường có mô tả trỏ sang một Short bị bỏ như Short, không lên site, job vẫn xanh. Nay `isShortsEntry` (`lib/video-category.ts`)
+  chỉ đọc href của `<link rel="alternate">`. Feed thật 23/11 (cả `channel_id` lẫn `playlist_id=UU…`): 15 entry, 4 Shorts,
+  kết quả trùng cách cũ 15/15 — mục 31/08 ("guard chạy đúng") vẫn đúng, đây là chiều ngược lại (nhận nhầm video thường).
+
+**Đã kiểm, KHÔNG phải lỗi:** EQ Bank™ 3.00% + Notice 3.00%/2.50% (trang sản phẩm); Simplii™ 5.00% welcome; RBC® Avion® Visa
+Infinite vẫn "Apply by November 25, 2026" (70,000), chưa công bố offer sau đó; TD® First Class "Special Offer … up to 160,000";
+bonus không ngày Wealthsimple® / Neo™ / KOHO (offer qua Finly, mục 31/10); National Bank® newcomer hết 03/11 (trang tự ẩn);
+`/transfer-bonuses` và khối trang chủ đã có chữ trống riêng cho mục Canada / Mỹ khi hết bonus.
+
+**Chờ tác giả:** RBC® Avion® ×3 hạn 25/11 (2 ngày; task một lần 26/11 viết lại). **Transfer bonus Canada DUY NHẤT** (RBC®
+Avion® → British Airways® Avios +30%) hết 30/11 — từ 01/12 mục Canada của `/transfer-bonuses` và trang chủ hiện chữ trống.
+Tangerine® Savings 4.50% hết 30/11 (trang tự về 0.30%). Video "Park Hyatt Toronto" (sync-videos tạo 22/11) thiếu `seoTitleVi`
++ `seoDescriptionVi`. BMO® VIPorter® câu Black Friday 08/12 + RBC® Day to Day $150 hạn 08/12 (lượt 09/12). Lựa chọn vá 81 mốc
+"90 ngày" (mục 19/11).
