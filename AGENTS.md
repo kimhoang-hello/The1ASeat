@@ -5376,6 +5376,12 @@ bonus không ngày Wealthsimple® / Neo™ / KOHO (offer qua Finly, mục 31/10)
 
 **Chờ tác giả:** RBC® Avion® ×3 hạn 25/11 (2 ngày; task một lần 26/11 viết lại). **Transfer bonus Canada DUY NHẤT** (RBC®
 Avion® → British Airways® Avios +30%) hết 30/11 — từ 01/12 mục Canada của `/transfer-bonuses` và trang chủ hiện chữ trống.
-Tangerine® Savings 4.50% hết 30/11 (trang tự về 0.30%). Video "Park Hyatt Toronto" (sync-videos tạo 22/11) thiếu `seoTitleVi`
-+ `seoDescriptionVi`. BMO® VIPorter® câu Black Friday 08/12 + RBC® Day to Day $150 hạn 08/12 (lượt 09/12). Lựa chọn vá 81 mốc
+Tangerine® Savings 4.50% hết 30/11 (trang tự về 0.30%). BMO® VIPorter® câu Black Friday 08/12 + RBC® Day to Day $150 hạn 08/12 (lượt 09/12). Lựa chọn vá 81 mốc
 "90 ngày" (mục 19/11).
+
+**SEO video "Park Hyatt Toronto" (xong cùng ngày, tác giả: "Làm luôn"):** `seoTitleVi` "Review Park Hyatt Toronto: ở bằng
+Free Night Award" (50), `seoDescriptionVi` 158 ký tự theo mẫu các video Hyatt cũ ("điểm Hyatt", đuôi "Video review đầy đủ trên
+kênh YouTube Ghế 1A."). Số liệu chỉ lấy từ mô tả YouTube của tác giả: Free Night Award Category 1–7, "approximately
+25,000–35,000 Hyatt points per night" → "khoảng". Entry sạch nháp trước khi ghi (v2/pub1 → v4/pub3); webhook trả
+`newPostNotified: "video_post"` — không email nào gửi. `excerptVi` vẫn là câu tự sinh của sync-videos (như video ANA®), không
+đụng; `bodyVi` tạm giữ theo quyết định 29/09. Codex hết hạn mức tới 24/11 19:53 nên lượt này không có vòng Codex.
