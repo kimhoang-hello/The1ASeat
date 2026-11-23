@@ -817,7 +817,10 @@ const US_CARD_DATA: UsCardData[] = [
     category: "travel",
     business: false,
     elevatedBonus: true,
-    offerEndUnannounced: true,
+    // 23/11/2026: offer "LIMITED-TIME" có ngày kết thúc thứ Hai 07/12/2026 (tác giả báo; MilesTalk
+    // và InsideFlyer cùng ngày ghi cùng hạn). Trang capitalone.com mở từ Canada vẫn chưa in ngày —
+    // trước đó thẻ mang `offerEndUnannounced`.
+    expiresAt: "2026-12-07",
     cardImage: "/images/us-cards/capital-one-venture.png",
     welcomeBonus: "75,000 miles Capital One® + $300 USD credit",
     minimumSpendUsd: 4_000,
@@ -827,11 +830,11 @@ const US_CARD_DATA: UsCardData[] = [
     headline:
       "Bản annual fee thấp của Venture X: 2x miles cho mọi chi tiêu, miles chuyển được sang Aeroplan®.",
     editorsTake:
-      "Cùng hệ miles với Venture X nhưng phí $95 USD thay vì $395 USD, đổi lại không có lounge. Capital One® đang chạy thêm credit khách sạn $300 USD nhưng không công bố ngày kết thúc. Kiểm lại trên trang trước khi apply.",
+      "Cùng hệ miles với Venture X nhưng phí $95 USD thay vì $395 USD, đổi lại không có lounge. Capital One® đang chạy thêm credit khách sạn $300 USD, offer kết thúc 07/12/2026.",
     keyBenefits: [
       "2x miles cho mọi chi tiêu, không giới hạn",
       "5x miles khách sạn và thuê xe đặt qua Capital One® Travel",
-      "Credit $300 USD cho khách sạn và nhà thuê qua Capital One® Travel trong năm đầu (offer giới hạn thời gian)",
+      "Credit $300 USD cho khách sạn và nhà thuê qua Capital One® Travel trong năm đầu (offer kết thúc 07/12/2026)",
       "Không phí giao dịch ngoại tệ",
     ],
     tags: ["Travel", "Chuyển điểm", "Không phí ngoại tệ"],
@@ -849,7 +852,7 @@ const US_CARD_DATA: UsCardData[] = [
     applyUrl: CAPITAL_ONE_REFERRAL,
     sourceUrl: "https://www.capitalone.com/credit-cards/venture/",
     reviewSlug: "capital-one-venture-review",
-    lastUpdated: "2026-09-27",
+    lastUpdated: "2026-11-23",
     verifiedOn: REVERIFIED_23,
     needsVerification: false,
   },
