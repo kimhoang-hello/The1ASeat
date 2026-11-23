@@ -24,6 +24,7 @@ import { CardFacts } from "@/components/credit-cards/card-facts";
 import { cardTagsFor } from "@/lib/card-tags";
 import { todayInSiteZone } from "@/lib/format-date";
 import { OfferHistoryNote } from "@/components/credit-cards/offer-history-note";
+import { RebateHistory } from "@/components/credit-cards/rebate-history";
 import { RebateChip } from "@/components/ui/hot-tip";
 import { ApplyButton } from "@/components/ui/apply-button";
 import { isReferralUrl } from "@/lib/affiliate-links";
@@ -227,6 +228,11 @@ export default async function CreditCardDetailPage({
           {/* Dữ kiện có cấu trúc TRƯỚC nhận định (03/10/2026): người đang so hai
               thẻ tìm tỷ lệ tích điểm và điều kiện thu nhập, không tìm đoạn văn. */}
           <CardFacts slug={offer.slug} className="mt-8" />
+
+          {/* Lịch sử rebate: dữ kiện có cấu trúc, nên đứng cùng nhóm với "Thông tin
+              nhanh" và TRƯỚC nhận định. Tác giả chọn vị trí này 23/11/2026; đặt ngay dưới
+              con số thì đẩy nút Apply trên điện thoại xuống thêm một khối. */}
+          <RebateHistory offer={offer} className="mt-8" />
 
           <EditorsTake editorsTake={offer.editorsTake} className="mt-8" />
 

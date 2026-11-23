@@ -295,6 +295,30 @@ chip lọc và tụt xuống cuối danh sách sắp theo bonus.
 - **Câu "từ khi theo dõi" lấy ngày ghi nhận ĐẦU TIÊN CỦA THẺ ĐÓ**
   (`peak.trackedSince`), không lấy `since` của cả file: thẻ thêm vào tháng sau
   mà nói theo `since` là nói quá thời gian đã quan sát nó.
+- **Section "Lịch sử rebate FinlyWealth" trên trang thẻ (23/11/2026).** Logic thuần ở
+  `src/lib/rebate-history.ts` (không import JSON, để `node --test` chạy được),
+  component server ở `components/credit-cards/rebate-history.tsx`. Tác giả CHỐT:
+  biểu đồ bậc thang + ba số (hiện tại/cao nhất/thấp nhất), đặt sau "Thông tin
+  nhanh", thẻ một mức thì một câu, nhãn "Cao nhất từ khi Ghế 1A theo dõi" CHỈ khi
+  đang ở mức cao nhất. Đã cân và bỏ: dạng danh sách, dạng thước, nhãn "thấp hơn
+  mức cao nhất $X", đặt ngay dưới con số (đẩy nút Apply trên điện thoại xuống).
+- **Bỏ các dòng đầu không có rebate.** Thẻ Amex® chỉ có link /rebates/ từ 13/11/2026;
+  trước đó KHÔNG có nghĩa là FinlyWealth không trả. Dòng CÓ `rebate` mà không đọc
+  được (khác dạng `formatRebate`) thì cả section im lặng: bỏ qua dòng đó kéo dài
+  đoạn trước sai số ngày, vẽ thành "Không có rebate" là nói sai.
+- **Mức hiện tại lấy từ `offer.rebate`, không từ file.** File cập nhật mỗi sáng còn
+  chip đọc Contentful: Gold Amex® lên $200 tối 22/11 trong khi file vẫn $150. Lệch
+  thì nối một đoạn từ hôm nay ("theo trang"); sáng hôm sau job ghi đúng ngày đó.
+  Ngày ghi trễ tối đa một ngày là sai số ĐÃ CÔNG BỐ trong chú thích — Codex đề
+  xuất đánh dấu "ước tính" cho đoạn trước, đã bác (23/11/2026).
+- **"Chưa đổi lần nào" chỉ khi đúng một đoạn và đoạn đó có trong file.** Một mức
+  nhưng từng bị ngắt, hay thẻ mới chỉ có đoạn dựng từ trang, in câu ngắn không có vế đó.
+- **Chú thích dưới section dừng ở "…trễ một ngày so với FinlyWealth."** Tác giả xoá
+  vế "đổi rồi đổi lại trong cùng ngày thì không ghi được" vì đọc như AI viết. Giới hạn
+  đó vẫn đúng (Passport™ cuối 10/2026), chỉ không ghi lên trang.
+- **Biểu đồ không thêm JS:** SVG `preserveAspectRatio="none"` + nét không co; chữ
+  là HTML đặt theo % để giữ cỡ trên điện thoại. Vạch tháng đầu cách mốc bắt đầu
+  ≥26% (vùng vẽ ở màn 320px ~200px), vạch >70% ẩn dưới `sm` để nhường "Hôm nay".
 
 ## Trang "Bắt đầu ở đây" (30/08/2026) — ĐÃ CÔNG BỐ
 

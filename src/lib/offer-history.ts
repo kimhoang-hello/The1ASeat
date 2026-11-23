@@ -1,4 +1,5 @@
 import historyJson from "../../data/offer-history.json";
+import { buildRebateHistory } from "./rebate-history";
 
 /**
  * Welcome bonus và rebate của một thẻ đổi liên tục, và cho tới giờ site không
@@ -127,4 +128,13 @@ export function welcomeBonusPeak(slug: string, current: string | undefined): Off
     isCurrent: currentAmount >= best.amount,
     trackedSince: entries[0]?.at ?? TRACKING_SINCE,
   };
+}
+
+/**
+ * Lịch sử rebate của một thẻ, dồn thành các đoạn — xem `buildRebateHistory`.
+ * Phần logic nằm ở `rebate-history.ts`, tách khỏi file này vì file này nạp
+ * JSON lúc import, còn test chạy bằng `node --test` thì không nạp được.
+ */
+export function rebateHistory(slug: string, currentRebate: string | undefined, today: string) {
+  return buildRebateHistory(historyFor(slug), currentRebate, today);
 }
