@@ -1,7 +1,25 @@
 {
   "source": "https://www.dailydrop.com/transfer-partners-cheat-sheet#current-offers",
-  "checkedOn": "2026-11-16",
+  "checkedOn": "2026-11-23",
   "bonuses": [
+    {
+      "from": "Chase Ultimate Rewards",
+      "to": "Virgin Atlantic Flying Club",
+      "bonusPercent": 40,
+      "expiresOn": "2026-12-30"
+    },
+    {
+      "from": "American Express Membership Rewards",
+      "to": "Avianca lifemiles",
+      "bonusPercent": 10,
+      "expiresOn": "2026-12-16"
+    },
+    {
+      "from": "Capital One miles",
+      "to": "Qatar Privilege Club",
+      "bonusPercent": 15,
+      "expiresOn": "2026-12-14"
+    },
     {
       "from": "American Express Membership Rewards",
       "to": "Marriott Bonvoy",
@@ -55,18 +73,6 @@
       "to": "Virgin Atlantic Flying Club",
       "bonusPercent": 30,
       "expiresOn": "2026-11-20"
-    },
-    {
-      "from": "Citi ThankYou points",
-      "to": "Cathay Pacific",
-      "bonusPercent": 10,
-      "expiresOn": "2026-11-14"
-    },
-    {
-      "from": "Rove Miles",
-      "to": "JetBlue TrueBlue",
-      "bonusPercent": 20,
-      "expiresOn": "2026-11-14"
     }
   ]
 }
