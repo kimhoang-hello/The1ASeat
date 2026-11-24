@@ -429,7 +429,11 @@ const SEEDS: Seed[] = [
     network: "amex",
     personalOrBusiness: "personal",
     program: "bonvoy",
-    fees: [{ annualFee: 120, from: SEEDED_ON }],
+    fees: [
+      { annualFee: 120, from: SEEDED_ON, to: "2027-02-08" },
+      // Amex® báo tăng phí từ 09/02/2027 (amex.ca/en-ca/campaigns/marriott-bonvoy/product-changes, đọc 24/11/2026).
+      { annualFee: 150, from: "2027-02-09", verifiedAt: "2026-11-24", recordedAt: "2026-11-24" },
+    ],
     officialUrl: null,
   },
   {

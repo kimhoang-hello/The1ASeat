@@ -5409,3 +5409,64 @@ kênh YouTube Ghế 1A."). Số liệu chỉ lấy từ mô tả YouTube của t
 25,000–35,000 Hyatt points per night" → "khoảng". Entry sạch nháp trước khi ghi (v2/pub1 → v4/pub3); webhook trả
 `newPostNotified: "video_post"` — không email nào gửi. `excerptVi` vẫn là câu tự sinh của sync-videos (như video ANA®), không
 đụng; `bodyVi` tạm giữ theo quyết định 29/09. Codex hết hạn mức tới 24/11 19:53 nên lượt này không có vòng Codex.
+
+## Kiểm toàn diện 24/11/2026 (lượt tay, tác giả: "Kiểm tra toàn diện Ghế 1A, đặc biệt là các offers chưa được update mới") — đừng đề xuất lại
+
+Gate: lint, tsc, build, 10 audit, `npm test` (744: 721 pass, 23 skip MySQL), `test:reco` (503 pass), `npm audit` = 0,
+`audit:links` production (247 trang, không trang mồ côi), smoke test 14 URL + `www` 308 + 5 header bảo mật. Job GitHub 23–24/11
+xanh hết. Không có task định kỳ nào chạy song song (thứ Ba).
+
+**Offer — đã rà, KHỚP (không sửa số):**
+- Thẻ Canada 38/38. FinlyWealth Affiliate API (`GET /offers?category=credit_card`, đọc welcomeBonus) khớp 29 thẻ có link Finly;
+  trang chính chủ đọc bằng curl + bóc chữ: RBC® Avion® ×3 vẫn "Apply by November 25, 2026" (chưa có offer kế tiếp — task
+  một lần 26/11 lo), WestJet RBC® 55,000; TD® ×5 (Aeroplan® "effective as of September 1, 2026", không ngày kết thúc); CIBC® ×5
+  (Aeroplan® 10k/50k/100k "Digital exclusive", Aventura® ×2 35,000); Scotiabank® ×4 (Gold/Passport™ mở tới 03/01/2027,
+  Momentum®/Scene+™ tới 30/04/2027); National Bank® (hết 31/03/2027); Capital One® ×2 (cashback match năm đầu); Neo United®
+  25,000; Wealthsimple 5%/35 ngày; Tangerine® 50,000/$5,000 (trang `/en/offers/world-elite-mastercard-offer`); BMO® VIPorter®
+  (Chrome thật: 70,000 + chia 50 triệu điểm, apply 12/11–08/12/2026).
+- **Amex® Canada chia phiên lần nữa:** browser pane thấy cả nhóm "SPECIAL OFFER" (Gold 90k, Green 15k, Business Platinum 150k,
+  Aeroplan® Business Reserve 120k, Business Gold 90k = 60k/$7,500 + 30k/$30,000, Marriott Bonvoy® 100k); Chrome thật cùng giờ
+  thấy mức thường hết (Gold 60k, Marriott 70k, Business Platinum 120k, Business Reserve 90k). Hai phiên lệch = hoà → giữ site
+  (đang khớp nhóm thường một cách nhất quán). Hilton "Offer ends January 11, 2027", Aeroplan® Card 45k, Reserve 85k, Platinum
+  100k, Cobalt 15k, Marriott Business 80k khớp.
+- Tài khoản ngân hàng 29: Scotiabank® Preferred/Ultimate $1,000 (30/10/2026–04/03/2027), Student $175 (tới 28/02/2027),
+  Tangerine® chequing $250, Simplii™ $350 + HISA (tới 31/01/2027), RBC® VIP/Signature $600 (tới 01/03/2027), Student $150 (tới
+  31/05/2027), Day to Day $150 (tới 08/12/2026). National Bank® newcomer vẫn "promotion ended" (03/11), chưa có offer mới.
+- Thẻ Mỹ: lượt browser đầy đủ 23/11 (38 khớp) + `audit:us-offers` 24/11 (18 Chase® khớp) — không rà browser lại sau 1 ngày.
+- Transfer bonus Mỹ: `data/us-transfer-bonuses.json` (Daily Drop, job 23/11) có Amex® MR → Marriott 35% tới 10/12, → Virgin 30%
+  tới 30/11, → LifeMiles 10% tới 16/12; bonus đã hết (Capital One® → Virgin 20/11) không hiện trên `/transfer-bonuses`.
+
+**Đã sửa:**
+- **`post-offer-status.ts`: thêm `capital-one-venture-review` (`endsOn 2026-12-07`, cta `usCreditCards`).** Lượt 23/11 ghi
+  "kết thúc 07/12/2026" vào thân bài nhưng không khai bảng → `audit:health` đỏ. Codex xác nhận `endsOn` đúng nghĩa ngày cuối.
+- **Marriott Bonvoy® Amex® ×2 đổi quyền lợi từ 09/02/2027** (amex.ca `/en-ca/campaigns/marriott-bonvoy/product-changes/` và
+  `…/marriott-bonvoy-business/product-changes/`): thẻ cá nhân phí $120 → $150; cả hai thẻ Silver → Gold Elite tặng sẵn; Free
+  Night Award hằng năm cần $3,000 chi tiêu trước ngày reset theo kỷ niệm thẻ, tính từ 09/02/2027 hoặc ngày reset năm 2027 nếu
+  muộn hơn. Business KHÔNG đổi phí. Contentful: `annualFeeVi` thẻ cá nhân theo khuôn Aeroplan® ("…; từ 09/02/2027: $150/năm"),
+  cả hai thẻ thêm MỘT dòng cuối `keyBenefitsVi`: "Từ 09/02/2027: tặng hạng Gold Elite; Free Night Award từ kỳ kỷ niệm thẻ năm
+  2028 trở đi chỉ có khi chi đủ $3,000 trong năm thẻ trước đó (chi tiêu trước 09/02/2027 không được tính)". Codex bác HAI bản câu
+  trước: "trong năm thẻ" (thiếu kỳ chuyển tiếp) và "(chi tiêu tính từ 09/02/2027)" — sai với kỷ niệm 25/02: giao dịch 09–24/02/2027
+  KHÔNG tính, khoảng tính là 25/02/2027–24/02/2028. Phiếu kỳ 2027 vẫn vô điều kiện (điều khoản CMA PDF hai thẻ, Codex đối chiếu).
+  Dòng cũ và editor's take giữ nguyên (hôm nay vẫn đúng). Seed: `products.ts`
+  phí $120 `to 2027-02-08` + $150 `from 2027-02-09`; `product-benefits.ts` đóng `hotel-status` + `free-night-award` cũ bằng
+  `to 2027-02-08`, dòng mới `from 2027-02-09` (free night `minimumAnnualSpend: 3000`). `engine.snapshot.json`: chỉ mã băm đổi.
+  **Sau 09/02/2027 phải sửa tay:** đưa $150 lên đầu `annualFeeVi`, gỡ/viết lại hai dòng quyền lợi cũ.
+- **`BenefitSeed.recordedAt` (Codex vòng 1):** builder lấy `recordedAt` = `from`, nên dòng báo trước mang ngày vào kho
+  09/02/2027 — `datasetAt(asOf ≥ 09/02/2027, { knownAt: 24/11/2026 })` mất cả Gold Elite lẫn free night (dòng cũ đã đóng, dòng
+  mới "chưa vào kho"). Nay `opts.recordedAt` ghi đè; `bonvoyChange` đặt 24/11/2026. `knownAt` TRƯỚC 24/11 vẫn thấy khoảng trống —
+  giới hạn đã ghi ở comment `datasetAt` (đóng dòng là sửa dòng), cùng hệ với phí Aeroplan® `to 2027-01-11`. Codex vòng 2 dựng
+  `asOf 2027-02-09` + `knownAt 2026-11-23`: thẻ cá nhân phí $120 → $0 và 6 → 4 quyền lợi, validator báo thiếu dòng phí (ồn, không
+  im lặng). Lượt chạy cũ dựng lại ĐÚNG ngày của nó (`asOf = knownAt` trước 24/11) vẫn an toàn: `renewalFeeCents` rơi về phí hôm
+  đó khi không có dòng phủ ngày gia hạn. Chấp nhận, không vá.
+
+**Không sửa, có lý do:**
+- `benefit-fit` không đọc `minimumAnnualSpend` (Codex A; vòng 2 đồng ý là lỗi cũ ở lượt chấm thường) — LỖI CŨ: `companion-pass` của WestJet RBC®, CIBC®/TD® Aeroplan®, BMO®
+  VIPorter® đã bị đếm vô điều kiện từ trước; free night Marriott trước/sau bản vá đếm như nhau. Sửa = đổi logic engine, việc riêng.
+- `best-cards.ts` (mục offers + travel) còn "$120", Free Night "mỗi năm", Silver Elite — copy tác giả, hôm nay đúng; tiền lệ
+  Aeroplan® Reserve ($599 → $799) cũng không sửa `best-cards.ts` (Codex xác nhận tiền lệ). `audit:best-cards` KHÔNG bắt lời hứa
+  Free Night/Silver Elite; từ 09/02/2027 `audit:reco-data` sẽ đỏ vì `annualFeeVi` còn mở đầu $120 — đó là lời nhắc sửa tay.
+  Để tác giả quyết.
+
+**Chờ tác giả:** RBC® Avion® ×3 hạn 25/11 (task 26/11). Transfer bonus Canada duy nhất (RBC® → Avios® +30%) hết 30/11 → mục
+Canada rỗng từ 01/12. Tangerine® Savings 4.50% hết 30/11. BMO® Black Friday + RBC® Day to Day hạn 08/12 (lượt 09/12). Venture
+hết 07/12. Đoạn Marriott ở "Các thẻ tốt nhất".

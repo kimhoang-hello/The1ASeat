@@ -58,6 +58,14 @@ type BenefitSeed = [
   /** Ngày kiểm lại. Vắng thì lấy `from`. ĐỘC LẬP với ngày vào kho. */
   verifiedAt?: string;
   /**
+   * Ngày dòng này vào kho, khi nó vào kho TRƯỚC ngày hiệu lực (thay đổi được
+   * báo trước). Vắng thì lấy `from` như cũ. Không có nó thì dòng hẹn ngày mang
+   * `recordedAt` = `from`, và `datasetAt(asOf ≥ from, { knownAt })` với `knownAt`
+   * nằm giữa ngày biết và ngày hiệu lực thấy dòng cũ đã đóng mà dòng mới chưa vào
+   * kho — quyền lợi biến mất (Codex 24/11/2026).
+   */
+  recordedAt?: string;
+  /**
    * URL trang chính chủ mà dòng này được đọc từ đó. Có thì `sourceKind` là
    * `issuer` — `audit:reco-data` không đòi số của dòng này có trong Contentful
    * (nó chưa bao giờ đến từ đó) mà canh bằng ngày kiểm.
@@ -80,6 +88,25 @@ const issuer = (url: string, extra: Omit<SeedOpts, "source" | "from"> = {}): See
   from: ISSUER_CHECK,
 });
 
+/**
+ * Amex® báo trên amex.ca (đọc 24/11/2026): từ 09/02/2027 hai thẻ Marriott Bonvoy®
+ * tặng thẳng Gold Elite thay vì Silver Elite, và Free Night Award hằng năm chỉ có
+ * khi chi $3,000 trong năm thẻ. Bản cũ đóng ngày trước đó, bản mới nằm cạnh.
+ */
+const BONVOY_CHANGE = "2027-02-09";
+const BEFORE_BONVOY_CHANGE = "2027-02-08";
+const BONVOY_CHANGE_KNOWN = "2026-11-24";
+const bonvoyChange = (
+  url: string,
+  extra: Omit<SeedOpts, "source" | "from" | "verifiedAt" | "recordedAt"> = {},
+): SeedOpts => ({
+  ...extra,
+  source: url,
+  from: BONVOY_CHANGE,
+  verifiedAt: BONVOY_CHANGE_KNOWN,
+  recordedAt: BONVOY_CHANGE_KNOWN,
+});
+
 const amexUrl = (path: string) => `https://www.americanexpress.com/en-ca/${path}/`;
 const scotiaUrl = (path: string) => `https://www.scotiabank.com/ca/en/personal/credit-cards/${path}.html`;
 const tdUrl = (path: string) => `https://www.td.com/ca/en/personal-banking/products/credit-cards/${path}`;
@@ -95,6 +122,9 @@ const SRC = {
   amexHilton: amexUrl("credit-cards/hilton-honors-card"),
   amexAeroplanBizReserve: amexUrl("credit-cards/aeroplan-business-reserve-card"),
   amexBonvoyBiz: amexUrl("credit-cards/marriott-bonvoy-business-card"),
+  // Trang Amex® báo thay đổi quyền lợi hai thẻ Marriott Bonvoy® từ 09/02/2027.
+  amexBonvoyChanges: amexUrl("campaigns/marriott-bonvoy/product-changes"),
+  amexBonvoyBizChanges: amexUrl("campaigns/marriott-bonvoy-business/product-changes"),
   amexBizGold: amexUrl("charge-cards/small-business-gold-card"),
   amexPlatinum: amexUrl("charge-cards/the-platinum-card"),
   amexBizPlatinum: amexUrl("charge-cards/small-business-platinum-card"),
@@ -346,9 +376,11 @@ const BY_PRODUCT: Record<string, BenefitSeed[]> = {
   ],
 
   "amex-marriott-bonvoy-business": [
-    ["free-night-award", 1],
+    ["free-night-award", 1, { to: BEFORE_BONVOY_CHANGE }],
+    ["free-night-award", 1, bonvoyChange(SRC.amexBonvoyBizChanges, { minimumAnnualSpend: 3000 })],
     ["elite-night-credits", 15],
-    ["hotel-status", null, { text: "Đủ điều kiện lên Gold Elite" }],
+    ["hotel-status", null, { text: "Đủ điều kiện lên Gold Elite", to: BEFORE_BONVOY_CHANGE }],
+    ["hotel-status", null, bonvoyChange(SRC.amexBonvoyBizChanges, { text: "Gold Elite" })],
     ["flight-delay-insurance", 500, issuer(SRC.amexBonvoyBiz, { text: "gộp với trễ hành lý" })],
     ["baggage-insurance", 500, issuer(SRC.amexBonvoyBiz, { text: "thất lạc, mỗi chuyến" })],
     ["rental-car-insurance", 85000, issuer(SRC.amexBonvoyBiz, AMEX_RENTAL)],
@@ -445,8 +477,10 @@ const BY_PRODUCT: Record<string, BenefitSeed[]> = {
   ],
 
   "amex-marriott-bonvoy": [
-    ["hotel-status", null, { text: "Silver Elite; Gold Elite khi chi $30,000/năm" }],
-    ["free-night-award", 1],
+    ["hotel-status", null, { text: "Silver Elite; Gold Elite khi chi $30,000/năm", to: BEFORE_BONVOY_CHANGE }],
+    ["hotel-status", null, bonvoyChange(SRC.amexBonvoyChanges, { text: "Gold Elite" })],
+    ["free-night-award", 1, { to: BEFORE_BONVOY_CHANGE }],
+    ["free-night-award", 1, bonvoyChange(SRC.amexBonvoyChanges, { minimumAnnualSpend: 3000 })],
     ["elite-night-credits", 15],
     ["flight-delay-insurance", 500, issuer(SRC.amexBonvoy, { text: "gộp với trễ hành lý" })],
     ["baggage-insurance", 500, issuer(SRC.amexBonvoy, { text: "thất lạc, mỗi chuyến" })],
@@ -616,7 +650,7 @@ export const PRODUCT_BENEFITS: ProductBenefit[] = Object.entries(BY_PRODUCT).fla
       sourceUrl: opts?.source ?? `https://ghe1a.com/credit-cards/${slug}`,
       sourceKind: opts?.source ? "issuer" : "ghe1a",
       verifiedAt: opts?.verifiedAt ?? opts?.from ?? VERIFIED_ON,
-      recordedAt: opts?.from ?? RECORDED_ON,
+      recordedAt: opts?.recordedAt ?? opts?.from ?? RECORDED_ON,
       confidence: "verified",
     })),
 );

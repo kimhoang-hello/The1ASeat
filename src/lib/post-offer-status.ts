@@ -48,6 +48,9 @@ export const POST_OFFER_DEADLINES: Record<string, PostOffer> = {
   // 13/11/2026 trang đã đổi sang offer tới 80,000 — nên 12/11 là ngày cuối
   // còn chắc chắn. Trước đó bài nằm ở `POSTS_WITHOUT_DEADLINE`.
   "chase-aeroplan-card-refresh-115000-points-25k-status": { endsOn: "2026-11-12", cta: "usCreditCards" },
+  // Bài review ghi "limited-time welcome offer (kết thúc 07/12/2026)" — cùng
+  // `expiresAt` của thẻ trong `us-credit-cards.ts` (thêm 23/11/2026).
+  "capital-one-venture-review": { endsOn: "2026-12-07", cta: "usCreditCards" },
 };
 
 /**
