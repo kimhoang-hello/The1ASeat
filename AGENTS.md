@@ -5469,4 +5469,8 @@ xanh hết. Không có task định kỳ nào chạy song song (thứ Ba).
 
 **Chờ tác giả:** RBC® Avion® ×3 hạn 25/11 (task 26/11). Transfer bonus Canada duy nhất (RBC® → Avios® +30%) hết 30/11 → mục
 Canada rỗng từ 01/12. Tangerine® Savings 4.50% hết 30/11. BMO® Black Friday + RBC® Day to Day hạn 08/12 (lượt 09/12). Venture
-hết 07/12. Đoạn Marriott ở "Các thẻ tốt nhất".
+hết 07/12.
+
+**Tác giả chốt (24/11/2026): GIỮ NGUYÊN đoạn Marriott Bonvoy® ở `best-cards.ts` tới 09/02/2027 rồi mới sửa** — đừng đề
+xuất sửa sớm. Task cục bộ một lần `ghe-1a-marriott-sau-09-02` (09/02/2027 10:00) lo cả `best-cards.ts` lẫn Contentful (đưa
+$150 lên đầu `annualFeeVi`, viết lại dòng Silver Elite/Free Night và editor's take hai thẻ, gỡ dòng "Từ 09/02/2027: …").
