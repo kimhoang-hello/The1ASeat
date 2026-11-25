@@ -4244,6 +4244,13 @@ giá trị root param khi hàm `'use cache'` gọi qua `unstable_cache` / lồng
 mất kết nối); sau deploy quét 17/11 20:07 = sạch. Còn 14 high nhánh `picomatch` ≤4.0.7 ReDoS (GHSA-fc5q-39xc-vjpf) qua `eslint-config-next` →
 `fast-glob`/`tinyglobby`: dev-only, CHƯA có bản vá (latest 4.0.7) — đừng thêm override, đợi picomatch ra bản mới.
 
+## Vá `axios` 1.20.0 → 1.21.1 (25/11/2026)
+
+hPanel quét 24/11 15:01 báo 2 high, công bố cùng ngày: GHSA-wwgw-vggh-5g74 (`proxy: false` bị agent proxy gốc của
+Node bỏ qua) + GHSA-g987-ghpm-49w8 (NO_PROXY không khớp dạng host IDN/IPv6). `npm audit` lúc đó vẫn 0 — lại một lần
+hPanel đi trước. `axios` chỉ đến qua `contentful` (range `^1.15.0`), nên `npm update axios` (chỉ lockfile, commit
+4e9f39f). Dính rất ít: site không cấu hình proxy cho axios, chỉ gọi API Contentful. hPanel quét lại 25/11 08:00 sạch.
+
 ## Kiểm toàn diện định kỳ 24/10/2026 — đừng đề xuất lại
 
 Gate: lint, tsc, build, 10 audit, 6 test suite (`test:reco` 494 + 23 skip MySQL), `audit:links` production (239
