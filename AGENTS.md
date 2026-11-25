@@ -5481,3 +5481,32 @@ hết 07/12.
 **Tác giả chốt (24/11/2026): GIỮ NGUYÊN đoạn Marriott Bonvoy® ở `best-cards.ts` tới 09/02/2027 rồi mới sửa** — đừng đề
 xuất sửa sớm. Task cục bộ một lần `ghe-1a-marriott-sau-09-02` (09/02/2027 10:00) lo cả `best-cards.ts` lẫn Contentful (đưa
 $150 lên đầu `annualFeeVi`, viết lại dòng Silver Elite/Free Night và editor's take hai thẻ, gỡ dòng "Từ 09/02/2027: …").
+
+## Kiểm toàn diện định kỳ 25/11/2026 — đừng đề xuất lại
+
+Gate: lint, tsc, build, 10 audit, `npm test` (744: 721 pass, 23 skip MySQL), `npm audit` = 0, `audit:links` production
+(247 trang, không trang mồ côi; WestJet RBC® một đường vào + "1 mô tả dưới 70 ký tự" — đã biết), smoke test 10 URL + `www`
+308 + 5 header bảo mật. Job GitHub 23–25/11 xanh hết.
+
+**Đã sửa:** rebate Scotiabank® Preferred Package $75 → $125, Ultimate Package $100 → $150 (`audit:rebates` đỏ: Finly
+Affiliate API nâng số sau lượt job 03:44Z; sửa bằng `--fix`, commit `6848633`). Không chỗ nào khác trong repo chép hai số này.
+
+**Codex — mình bác (đã kiểm tại nguồn):**
+- *Webhook không lọc môi trường nên publish trong môi trường "Miles" gửi newsletter với nội dung bản sao*: SAI. Webhook
+  "Refresh Ghế 1A site" có `filters: null`; tài liệu Contentful (configure-webhook, mục Filters): không có filter thì
+  webhook chỉ chạy cho entry trong môi trường `master` (`filters: []` mới mở mọi môi trường). Môi trường `Miles` (tạo
+  02/08/2026) đang rỗng. Đã viết bản vá chặn `sys.environment != master`, rồi Codex vòng bác bỏ chấm SAI → gỡ, không
+  commit. **Nếu ai đặt `filters: []` cho webhook thì lỗi này thành thật** — lúc đó mới vá.
+- *`expire-offers` gỡ transfer bonus vừa gia hạn khi tác giả publish hạn mới rồi lưu nháp mang lại hạn CŨ trong lúc CDA
+  còn trễ*: đòi tác giả tự lưu lùi một hạn đã qua; hậu quả là unpublish (khôi phục được). Không vá; cùng hệ mục 24/10.
+- *`welcomeBonusVi` không nằm trong `PROSE_FIELDS` nên nhãn "… + $140 rebate" không được sửa theo*: giả định — CDA 25/11
+  không trường nào ngoài `PROSE_FIELDS` chứa "$X rebate". Không vá.
+- Codex mô phỏng lượt `expire-offers` 26/11 cho RBC® Avion® ×3: trả 500, giữ nguyên Contentful — đúng thiết kế.
+
+**Đã kiểm, KHÔNG phải lỗi:** RBC® Avion® ×3 vẫn "Apply by November 25, 2026", chưa công bố offer kế tiếp (task một lần
+26/11). TD® First Class "Special Offer … up to 160,000" (elevated không ngày). Tài khoản ngân hàng bonus không ngày
+(Wealthsimple® ×2, Neo™, KOHO ×3): offer qua Finly, mục 31/10.
+
+**Chờ tác giả:** RBC® Avion® ×3 hết hôm nay (job đỏ có chủ ý từ 26/11 tới khi sửa tay). Transfer bonus Canada duy nhất
+(RBC® → Avios® +30%) hết 30/11 → mục Canada rỗng từ 01/12. Tangerine® Savings 4.50% hết 30/11. BMO® Black Friday + RBC®
+Day to Day hạn 08/12. Venture hết 07/12.
