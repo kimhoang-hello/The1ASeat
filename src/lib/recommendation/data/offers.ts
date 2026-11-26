@@ -323,9 +323,36 @@ const OFFER_SEEDS: OfferSeed[] = [
     name: "Cashback 10% trong 3 tháng đầu (tối đa $200)",
     headline: null,
     currency: null,
+    // Rebate FinlyWealth nâng $150 → $200 (job check-rebates ghi Contentful
+    // 25/11/2026 21:57 giờ Toronto; Affiliate API xác nhận 26/11: boost tới
+    // 30/11, mức thường $100). Bản ghi mới như bản dưới, offer giữ nguyên.
+    startDate: "2026-11-02",
+    recordedFrom: "2026-11-25",
+    recordedAt: "2026-11-25",
+    verifiedAt: "2026-11-25",
+    endDate: "2027-04-30",
+    feeFirstYear: 0,
+    rebate: 200,
+    components: [
+      {
+        type: "statement_credit",
+        cash: 200,
+        spend: 2000,
+        windowDays: 90,
+        note: "Hoàn 10% cho mọi chi tiêu, áp dụng cho tối đa $2,000 chi tiêu",
+      },
+      { type: "fee_waiver", cash: 120, note: "Miễn annual fee $120 năm đầu, kể cả thẻ phụ" },
+    ],
+  },
+  {
+    slug: "scotiabank-momentum-visa-infinite-plus",
+    name: "Cashback 10% trong 3 tháng đầu (tối đa $200)",
+    headline: null,
+    currency: null,
     // Offer thường thay offer nâng 15% (scotiabank.com, đọc 02/11/2026): tài
     // khoản mở 02/11/2026 – 30/04/2027. Bản đang mở đứng TRƯỚC các bản đã đóng.
     startDate: "2026-11-02",
+    recordedTo: "2026-11-24",
     verifiedAt: "2026-11-02",
     recordedAt: "2026-11-02",
     endDate: "2027-04-30",
@@ -1196,6 +1223,30 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "rbc-avion-visa-infinite-privilege",
+    name: "70,000 điểm Avion®",
+    headline: 70000,
+    currency: "avion",
+    // Offer thay đợt 100,000 (rbcroyalbank.com, điều khoản 1, đọc 26/11/2026):
+    // hồ sơ nhận 26/11/2026 – 24/02/2027. Nhãn trang "Offer Available", không
+    // phải "Special Offer" → Contentful `elevatedBonus: false`, như WestJet RBC®.
+    // Bản đang mở đứng TRƯỚC bản đã đóng.
+    startDate: "2026-11-26",
+    verifiedAt: "2026-11-26",
+    recordedAt: "2026-11-26",
+    endDate: "2027-02-24",
+    components: [
+      {
+        type: "first_purchase",
+        points: 35000,
+        windowDays: 60,
+        note: "Trong vòng 60 ngày sau khi đơn được duyệt, không cần mốc chi",
+      },
+      { type: "spend_threshold", points: 20000, spend: 5000, windowDays: 180 },
+      { type: "anniversary", points: 15000, windowDays: 365 },
+    ],
+  },
+  {
+    slug: "rbc-avion-visa-infinite-privilege",
     name: "100,000 điểm Avion®",
     headline: 100000,
     currency: "avion",
@@ -1377,10 +1428,33 @@ const OFFER_SEEDS: OfferSeed[] = [
     name: "Đến 45,000 điểm Scene+™",
     headline: 45000,
     currency: "scene-plus",
+    // Rebate FinlyWealth nâng $150 → $200 (job check-rebates ghi Contentful
+    // 25/11/2026 21:57 giờ Toronto; Affiliate API xác nhận 26/11: boost tới
+    // 30/11, mức thường $100). Bản ghi mới như bản dưới, offer giữ nguyên.
+    startDate: "2026-11-02",
+    recordedFrom: "2026-11-25",
+    recordedAt: "2026-11-25",
+    verifiedAt: "2026-11-25",
+    endDate: "2027-01-03",
+    rebate: 200,
+    components: [
+      { type: "spend_threshold", points: 15000, spend: 3000, windowDays: 90 },
+      { type: "spend_threshold", points: 20000, spend: 10000, windowDays: 180 },
+      // Thưởng NĂM khi chi $40,000 — như các bản dưới, 10,000 điểm này KHÔNG
+      // được cộng vào "mức dùng được" mặc định.
+      { type: "spend_threshold", points: 10000, spend: 40000, windowDays: 365 },
+    ],
+  },
+  {
+    slug: "scotiabank-passport-visa-infinite",
+    name: "Đến 45,000 điểm Scene+™",
+    headline: 45000,
+    currency: "scene-plus",
     // Offer mới thay đợt 35,000 (scotiabank.com và đường Apply FinlyWealth →
     // `?cid=a-fin…`, đọc 02/11/2026): tài khoản mở 02/11/2026 – 03/01/2027.
     // $10,000 trong 6 tháng là tổng tích luỹ, đã gồm $3,000 ở mốc đầu.
     startDate: "2026-11-02",
+    recordedTo: "2026-11-24",
     verifiedAt: "2026-11-02",
     recordedAt: "2026-11-02",
     endDate: "2027-01-03",
@@ -1532,6 +1606,24 @@ const OFFER_SEEDS: OfferSeed[] = [
   },
   {
     slug: "rbc-avion-visa-infinite",
+    name: "Đến 55,000 điểm Avion®",
+    headline: 55000,
+    currency: "avion",
+    // Offer thay đợt 70,000 (rbcroyalbank.com, điều khoản 1 chung cho Visa
+    // Infinite + Visa Platinum, đọc 26/11/2026): hồ sơ nhận 26/11/2026 –
+    // 24/02/2027, không còn điểm thưởng gia hạn. Nhãn "Offer Available" →
+    // Contentful `elevatedBonus: false`. Bản đang mở đứng TRƯỚC bản đã đóng.
+    startDate: "2026-11-26",
+    verifiedAt: "2026-11-26",
+    recordedAt: "2026-11-26",
+    endDate: "2027-02-24",
+    components: [
+      { type: "first_purchase", points: 35000, windowDays: 60, note: "Khi đơn được duyệt" },
+      { type: "spend_threshold", points: 20000, spend: 5000, windowDays: 180 },
+    ],
+  },
+  {
+    slug: "rbc-avion-visa-infinite",
     name: "Đến 70,000 điểm Avion®",
     headline: 70000,
     currency: "avion",
@@ -1541,6 +1633,21 @@ const OFFER_SEEDS: OfferSeed[] = [
       { type: "first_purchase", points: 35000, windowDays: 60, note: "Khi đơn được duyệt" },
       { type: "spend_threshold", points: 20000, spend: 5000, windowDays: 180 },
       { type: "anniversary", points: 15000, windowDays: 365, note: "Thưởng khi gia hạn thẻ" },
+    ],
+  },
+  {
+    slug: "rbc-avion-visa-platinum",
+    name: "Đến 55,000 điểm Avion®",
+    headline: 55000,
+    currency: "avion",
+    // Cùng offer và cùng điều khoản với bản Visa Infinite ngay trên.
+    startDate: "2026-11-26",
+    verifiedAt: "2026-11-26",
+    recordedAt: "2026-11-26",
+    endDate: "2027-02-24",
+    components: [
+      { type: "first_purchase", points: 35000, windowDays: 60, note: "Khi đơn được duyệt" },
+      { type: "spend_threshold", points: 20000, spend: 5000, windowDays: 180 },
     ],
   },
   {

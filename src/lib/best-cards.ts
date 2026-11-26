@@ -132,15 +132,15 @@ export const BEST_CARDS_CATEGORIES: BestCardsCategory[] = [
         alsoSlug: "rbc-avion-visa-platinum",
         headingVi: "RBC® Avion® Visa Infinite / Visa Platinum",
         bodyVi: [
-          "Đây là một trong những offer mình thích nhất hiện tại nếu mục tiêu là tích một loại transferable point. Cả RBC® Avion® Visa Infinite và Visa Platinum đều đang có welcome bonus lên đến 70,000 điểm Avion®: 35,000 điểm khi được approved thẻ, thêm 20,000 điểm sau khi chi $5,000 trong 6 tháng đầu và 15,000 điểm khi gia hạn sang năm thứ hai. Annual fee của cả hai thẻ này đều là $120.",
-          "Điểm mình thích ở Avion® không phải việc dùng chúng để book travel trực tiếp với RBC® mà là khả năng transfer sang các airline programs. Avion® có thể chuyển sang British Airways® Avios® và Cathay Pacific® Asia Miles®, và đôi khi RBC® còn có transfer bonus sang các programs này lên đến 30%. Nếu biết mình đang tích điểm cho chuyến đi nào và có thể chuyển sang program nào, 70,000 điểm Avion® có thể có giá trị hơn khá nhiều so với việc nhìn chúng như một travel credit thông thường.",
+          "Đây là một trong những offer mình thích nhất hiện tại nếu mục tiêu là tích một loại transferable point. Cả RBC® Avion® Visa Infinite và Visa Platinum đều đang có welcome bonus lên đến 55,000 điểm Avion®: 35,000 điểm khi được approved thẻ và thêm 20,000 điểm sau khi chi $5,000 trong 6 tháng đầu. Annual fee của cả hai thẻ này đều là $120.",
+          "Điểm mình thích ở Avion® không phải việc dùng chúng để book travel trực tiếp với RBC® mà là khả năng transfer sang các airline programs. Avion® có thể chuyển sang British Airways® Avios® và Cathay Pacific® Asia Miles®, và đôi khi RBC® còn có transfer bonus sang các programs này lên đến 30%. Nếu biết mình đang tích điểm cho chuyến đi nào và có thể chuyển sang program nào, 55,000 điểm Avion® có thể có giá trị hơn khá nhiều so với việc nhìn chúng như một travel credit thông thường.",
           "Thẻ Visa Infinite có thêm 1.25X cho travel nhưng yêu cầu thu nhập tối thiểu $60,000 đối với cá nhân hoặc $100,000 cho hộ gia đình. Nếu không đạt yêu cầu này, thẻ Visa Platinum cho cùng welcome bonus và không có minimum income requirement.",
         ],
         bestForVi:
           "Người muốn tích transferable points và đặc biệt quan tâm đến Avios® hoặc Asia Miles®.",
-        // "Cả … đều đang có welcome bonus lên đến 70,000" và "Annual fee của
+        // "Cả … đều đang có welcome bonus lên đến 55,000" và "Annual fee của
         // cả hai thẻ này đều là $120" — hai lời hứa về cả hai bản.
-        sharedFiguresVi: ["70,000", "$120"],
+        sharedFiguresVi: ["55,000", "$120"],
       },
       {
         slug: "amex-marriott-bonvoy",
@@ -194,7 +194,7 @@ export const BEST_CARDS_CATEGORIES: BestCardsCategory[] = [
     ],
     closingHeadingVi: "Nếu chỉ chọn một offer?",
     closingVi: [
-      "Không có một offer tốt nhất cho tất cả mọi người. Nếu mình ưu tiên transferable points, RBC® Avion® 70,000 điểm là offer mình sẽ nhìn đầu tiên. Nếu thường ở khách sạn của Marriott Bonvoy®, thẻ Bonvoy® với Free Night Award mỗi năm vẫn đáng chú ý. Nếu muốn một chương trình đơn giản hơn, TD First Class Travel® hoặc CIBC® Aventura® sẽ dễ sử dụng hơn.",
+      "Không có một offer tốt nhất cho tất cả mọi người. Nếu mình ưu tiên transferable points, RBC® Avion® 55,000 điểm là offer mình sẽ nhìn đầu tiên. Nếu thường ở khách sạn của Marriott Bonvoy®, thẻ Bonvoy® với Free Night Award mỗi năm vẫn đáng chú ý. Nếu muốn một chương trình đơn giản hơn, TD First Class Travel® hoặc CIBC® Aventura® sẽ dễ sử dụng hơn.",
       "Đừng apply chỉ vì thấy một con số welcome bonus lớn. Trước tiên hãy xem minimum spend, annual fee và quan trọng nhất là bạn định dùng số points đó vào việc gì.",
     ],
     keywordsVi: "welcome bonus offer tốt nhất khuyến mãi thẻ đang có ưu đãi lớn nhất",
@@ -227,7 +227,7 @@ export const BEST_CARDS_CATEGORIES: BestCardsCategory[] = [
         slug: "rbc-avion-visa-infinite",
         roleVi: "Thẻ tốt nhất cho airline points",
         bodyVi: [
-          "RBC® Avion® Visa Infinite đang có welcome bonus lên đến 70,000 điểm Avion® và annual fee $120.",
+          "RBC® Avion® Visa Infinite đang có welcome bonus lên đến 55,000 điểm Avion® và annual fee $120.",
           "Điểm Avion® có thể transfer sang British Airways® Avios® và Cathay Pacific® Asia Miles®, hai chương trình mình sử dụng khá nhiều khi tìm vé đi châu Á. RBC® cũng thường xuyên có transfer bonus, đặc biệt sang Avios® lên đến 30%.",
           "Nếu Amex® MR là transferable currency mình ưu tiên đầu tiên, Avion® là một currency rất tốt để có thêm trong portfolio. Có nhiều point currencies đồng nghĩa với việc khi một chương trình không có award availability, bạn vẫn còn những lựa chọn khác.",
         ],
@@ -445,7 +445,7 @@ export function pickSlugs(category: BestCardsCategory): string[] {
  * thiếu bất kỳ thẻ nào.
  *
  * TẤT CẢ hoặc KHÔNG GÌ CẢ, cố ý. Một pick ghép hai thẻ có đoạn văn nói "cả hai
- * thẻ này đều đang có welcome bonus lên đến 70,000 điểm Avion®"; nếu bản
+ * thẻ này đều đang có welcome bonus lên đến 55,000 điểm Avion®"; nếu bản
  * Infinite bị unpublish tay giữa hai lượt revalidate mà bản Platinum còn, cách
  * "bỏ qua thẻ thiếu" sẽ vẽ ra một mục nói về hai thẻ nhưng chỉ hiện một —
  * người đọc không có cách nào biết mình đang thiếu nửa nào. Bỏ hẳn mục thì
