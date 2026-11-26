@@ -339,6 +339,7 @@ const OFFER_SEEDS: OfferSeed[] = [
         cash: 200,
         spend: 2000,
         windowDays: 90,
+        windowText: "trong 3 tháng đầu",
         note: "Hoàn 10% cho mọi chi tiêu, áp dụng cho tối đa $2,000 chi tiêu",
       },
       { type: "fee_waiver", cash: 120, note: "Miễn annual fee $120 năm đầu, kể cả thẻ phụ" },
@@ -1241,7 +1242,7 @@ const OFFER_SEEDS: OfferSeed[] = [
         windowDays: 60,
         note: "Trong vòng 60 ngày sau khi đơn được duyệt, không cần mốc chi",
       },
-      { type: "spend_threshold", points: 20000, spend: 5000, windowDays: 180 },
+      { type: "spend_threshold", points: 20000, spend: 5000, windowDays: 180, windowText: "trong 6 tháng đầu" },
       { type: "anniversary", points: 15000, windowDays: 365 },
     ],
   },
@@ -1438,8 +1439,8 @@ const OFFER_SEEDS: OfferSeed[] = [
     endDate: "2027-01-03",
     rebate: 200,
     components: [
-      { type: "spend_threshold", points: 15000, spend: 3000, windowDays: 90 },
-      { type: "spend_threshold", points: 20000, spend: 10000, windowDays: 180 },
+      { type: "spend_threshold", points: 15000, spend: 3000, windowDays: 90, windowText: "trong 3 tháng đầu" },
+      { type: "spend_threshold", points: 20000, spend: 10000, windowDays: 180, windowText: "trong 6 tháng đầu" },
       // Thưởng NĂM khi chi $40,000 — như các bản dưới, 10,000 điểm này KHÔNG
       // được cộng vào "mức dùng được" mặc định.
       { type: "spend_threshold", points: 10000, spend: 40000, windowDays: 365 },
@@ -1619,7 +1620,7 @@ const OFFER_SEEDS: OfferSeed[] = [
     endDate: "2027-02-24",
     components: [
       { type: "first_purchase", points: 35000, windowDays: 60, note: "Khi đơn được duyệt" },
-      { type: "spend_threshold", points: 20000, spend: 5000, windowDays: 180 },
+      { type: "spend_threshold", points: 20000, spend: 5000, windowDays: 180, windowText: "trong 6 tháng đầu" },
     ],
   },
   {
@@ -1647,7 +1648,7 @@ const OFFER_SEEDS: OfferSeed[] = [
     endDate: "2027-02-24",
     components: [
       { type: "first_purchase", points: 35000, windowDays: 60, note: "Khi đơn được duyệt" },
-      { type: "spend_threshold", points: 20000, spend: 5000, windowDays: 180 },
+      { type: "spend_threshold", points: 20000, spend: 5000, windowDays: 180, windowText: "trong 6 tháng đầu" },
     ],
   },
   {

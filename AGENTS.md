@@ -5510,3 +5510,52 @@ Affiliate API nâng số sau lượt job 03:44Z; sửa bằng `--fix`, commit `6
 **Chờ tác giả:** RBC® Avion® ×3 hết hôm nay (job đỏ có chủ ý từ 26/11 tới khi sửa tay). Transfer bonus Canada duy nhất
 (RBC® → Avios® +30%) hết 30/11 → mục Canada rỗng từ 01/12. Tangerine® Savings 4.50% hết 30/11. BMO® Black Friday + RBC®
 Day to Day hạn 08/12. Venture hết 07/12.
+
+## Kiểm toàn diện 26/11/2026 (lượt tay chiều, tác giả: "Kiểm tra toàn diện Ghế 1A") — đừng đề xuất lại
+
+Gate: lint, tsc, build, 10 audit, `npm test` (744: 721 pass, 23 skip MySQL), `test:reco`, `npm audit` = 0, `audit:links`
+production (247 trang, không trang mồ côi; "1 mô tả dưới 70 ký tự" — đã biết), smoke test 12 URL + `www` 308 + 5 header bảo
+mật. Không có phiên hay task định kỳ nào chạy song song. Code không đổi kể từ vòng Codex 25/11 (chỉ dữ liệu), nên vòng Codex
+lượt này soát phần mình sửa thay vì quét lại toàn repo.
+
+**Job đỏ hôm nay, đều đã xử lý:**
+- `check-rebates` 02:57Z + 18:35Z: FinlyWealth nâng rebate Scotiabank® Passport™ + Momentum® $150 → $200 (job ghi Contentful
+  25/11 21:57 giờ Toronto; Affiliate API 26/11: `amount 200`, `regularAmount 100`, `boostEndsAt 30/11`), seed còn 150. Theo
+  luật temporal: đóng bản cũ `recordedTo 2026-11-24`, thêm bản `recordedFrom 2026-11-25`. **KHÔNG thêm `recordedTo
+  2026-11-30` theo hạn boost** (Codex vòng 2 đồng ý): seed sẽ mất CẢ offer ngân hàng từ 01/12 và `check-rebates` bỏ qua phép
+  so khi thiếu offer hiệu lực. Finly hạ số thì job đỏ, lúc đó mới thêm bản ghi — cùng tiền lệ Gold Amex® (boost cũng tới 30/11).
+- `expire-offers` 17:57Z: RBC® Avion® ×3 hết hạn 25/11, đỏ có chủ ý (link Apply không phải trang `/rebates/`). Task một lần
+  `ghe-1a-rbc-avion-sau-25-11` chạy 10:01 thấy trang RBC® còn offer cũ nên không sửa; RBC® đăng offer mới trong ngày.
+
+**RBC® Avion® ×3 viết lại tay** (rbcroyalbank.com bằng browser, điều khoản 1: hồ sơ nhận 26/11/2026–24/02/2027):
+- Visa Infinite + Visa Platinum (chung điều khoản): "Đến 70,000" → **55,000** = 35,000 khi duyệt (lên sao kê trong 60 ngày)
+  + 20,000 khi chi $5,000 trong 6 tháng đầu. KHÔNG còn điểm gia hạn (điều khoản chỉ còn câu boilerplate "Anniversary Points").
+- Visa Infinite Privilege: 100,000 → **70,000** = 35,000 + 20,000 + 15,000 sau kỷ niệm 1 năm (lên sao kê 12–16 tuần sau).
+  RBC® quy 70,000 điểm = "up to $1,500 in travel value" tới một số điểm đến; 6 lượt phòng chờ/năm vẫn còn.
+- Contentful (entry sạch trước khi ghi; v22/pub21, v22/pub21, v12/pub11): `welcomeBonusVi`, `headlineVi/En`, dòng 1
+  `keyBenefitsVi/En`, `editorsTakeVi/En` — giữ giọng cũ, bỏ "elevated offer cao kỷ lục"/"mức cao nhất RBC® từng chạy".
+  **`elevatedBonus: false` có chủ ý:** nhãn trang là "Offer Available", không phải "Special Offer" — cùng luật WestJet RBC®
+  (mục 19/11). `expiresAt` 24/02/2027: lượt `expire-offers` 25/02/2027 sẽ lại đỏ đòi sửa tay.
+- Seed engine: ba bản ghi mới `startDate 2026-11-26`, `endDate 2027-02-24`, đứng trước bản cũ (bản cũ giữ nguyên).
+  `best-cards.ts`: 70,000 → 55,000 ở mục offers + travel + `sharedFiguresVi`; bỏ vế "15,000 điểm khi gia hạn".
+- Trang thẻ vẫn in "từng lên tới 100,000 / 70,000 điểm Avion® (29/08/2026), cao hơn mức đang chạy" — đó là section lịch sử
+  offer, đúng thiết kế.
+
+**Codex (2 vòng):** số/ngày ba thẻ khớp nguồn. Vá theo vòng 1: thêm `windowText` ("trong 6 tháng đầu"/"trong 3 tháng đầu")
+cho các mốc chi của sáu bản ghi mới hôm nay (3 RBC®, Passport™ ×2 mốc, Momentum® `statement_credit`) — không có nó, Gợi ý thẻ
+in "chi $5,000 trong 180 ngày đầu" (`periodOf`: 180 không chia hết 365). Vòng 2 chấm ĐÚNG, validator sạch. Bản ghi Gold Amex®
+23/11 và các bản đã đóng còn thiếu `windowText` — không sửa ở lượt này.
+**Không vá, có lý do:** engine tính MỌI thành phần `anniversary` ở ngày 365 (`trip.ts`, `Math.max(365, opensAt)`), trong khi
+RBC® (và WestJet RBC®) ghi điểm 12–16 tuần sau mốc 1 năm — Codex vòng 2 vẫn chấm là sai lệch thật (chuyến bay ở tháng 13–16
+được tính cả 15,000 điểm). Đây là giới hạn chung của mô hình, không riêng bản ghi mới; sửa = thêm khái niệm độ trễ ghi điểm
+cho engine, việc riêng. Copy "hồ sơ nộp đến 24/02/2027"/"khi được duyệt" và bảng so sánh (hạn hiện ở hàng "Ghế 1A đánh giá",
+hàng "Elevated offer" = "Không" theo cờ): Codex vòng 2 chấm ĐÚNG, không vá.
+
+**Đã kiểm, KHÔNG phải lỗi:** Tangerine® Savings 4.50% (client number tạo tới 30/11/2026, trang tự về 0.30%); National Bank®
+newcomer vẫn "promotion ended" 03/11; RBC® Day to Day $150 "Offer Ends December 8, 2026"; Scotiabank® Money Master
+0.01%/0.50%; EQ Bank™ Base Rate 1.50%. Thẻ Mỹ: task định kỳ 26/11 sáng (38 khớp) + `audit:us-offers`.
+
+**Chờ tác giả:** transfer bonus Canada DUY NHẤT (RBC® → British Airways® Avios® +30%) hết 30/11 → mục Canada rỗng từ 01/12.
+Tangerine® Savings 4.50% hết 30/11. Rebate boost hết 30/11: Scotiabank® Passport™/Momentum® $200 → $100, Gold Amex® $200 →
+$150 (job sẽ ghi Contentful rồi đỏ vì seed — sửa seed như hôm nay). BMO® Black Friday + RBC® Day to Day hạn 08/12. Venture hết
+07/12.
