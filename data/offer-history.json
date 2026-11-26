@@ -188,6 +188,11 @@
         "at": "2026-11-02",
         "welcomeBonus": "Cashback 10% (tối đa $200)",
         "rebate": "$150"
+      },
+      {
+        "at": "2026-11-26",
+        "welcomeBonus": "Cashback 10% (tối đa $200)",
+        "rebate": "$200"
       }
     ],
     "scotiabank-passport-visa-infinite": [
@@ -205,6 +210,11 @@
         "at": "2026-11-02",
         "welcomeBonus": "45,000 điểm Scene+™",
         "rebate": "$150"
+      },
+      {
+        "at": "2026-11-26",
+        "welcomeBonus": "45,000 điểm Scene+™",
+        "rebate": "$200"
       }
     ],
     "scotiabank-scene-plus-visa-students": [
