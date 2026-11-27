@@ -5568,8 +5568,8 @@ hay task định kỳ nào chạy song song. Code không đổi kể từ vòng 
 
 **Offer — đã rà, KHỚP:**
 - Thẻ Canada 38/38. FinlyWealth Affiliate API (`welcomeBonus.text` + `rebate.amount`) khớp mọi thẻ có link Finly; trang chính
-  chủ bằng curl + bóc chữ: TD® ×5, CIBC® ×5, Scotiabank® ×4 (Scene+™ Students ở `/visa/scene-student-card.html` — URL cũ
-  `scene-visa-card-for-students.html` 404; Passport™ có `<meta description>` cũ "60,000", thân trang 45,000 — đọc thân trang),
+  chủ bằng curl + bóc chữ: TD® ×5, CIBC® ×5, Scotiabank® ×4 (Scene+™ Students ở `/visa/scene-student-card.html` — repo không
+  lưu URL trang thẻ này, đoán `scene-visa-card-for-students.html` là 404; Passport™ có `<meta description>` cũ "60,000", thân trang 45,000 — đọc thân trang),
   RBC® Avion® ×2 + WestJet RBC® (Avion® Platinum trả trang rỗng cho curl — chung điều khoản Visa Infinite), National Bank®,
   Tangerine®, Neo United®, Wealthsimple ×2, Capital One® ×2. BMO® VIPorter® (Chrome thật): 70,000 + chia 50 triệu điểm, apply tới
   08/12/2026.
