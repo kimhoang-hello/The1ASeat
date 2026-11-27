@@ -5559,3 +5559,44 @@ newcomer vẫn "promotion ended" 03/11; RBC® Day to Day $150 "Offer Ends Decemb
 Tangerine® Savings 4.50% hết 30/11. Rebate boost hết 30/11: Scotiabank® Passport™/Momentum® $200 → $100, Gold Amex® $200 →
 $150 (job sẽ ghi Contentful rồi đỏ vì seed — sửa seed như hôm nay). BMO® Black Friday + RBC® Day to Day hạn 08/12. Venture hết
 07/12.
+
+## Kiểm toàn diện 27/11/2026 (lượt tay Black Friday, tác giả: "Kiểm tra toàn diện Ghế 1A, đặc biệt là các offers chưa được update mới") — đừng đề xuất lại
+
+Gate: lint, tsc, build, 10 audit, `npm test` (744: 721 pass, 23 skip MySQL), `npm audit` = 0, `audit:links` production (247
+trang, không trang mồ côi; "1 mô tả dưới 70 ký tự" — đã biết), smoke test 15 URL + `www` 308 + 5 header bảo mật. Không có phiên
+hay task định kỳ nào chạy song song. Code không đổi kể từ vòng Codex 25–26/11. **Không sửa số liệu nào: mọi offer khớp.**
+
+**Offer — đã rà, KHỚP:**
+- Thẻ Canada 38/38. FinlyWealth Affiliate API (`welcomeBonus.text` + `rebate.amount`) khớp mọi thẻ có link Finly; trang chính
+  chủ bằng curl + bóc chữ: TD® ×5, CIBC® ×5, Scotiabank® ×4 (Scene+™ Students ở `/visa/scene-student-card.html` — URL cũ
+  `scene-visa-card-for-students.html` 404; Passport™ có `<meta description>` cũ "60,000", thân trang 45,000 — đọc thân trang),
+  RBC® Avion® ×2 + WestJet RBC® (Avion® Platinum trả trang rỗng cho curl — chung điều khoản Visa Infinite), National Bank®,
+  Tangerine®, Neo United®, Wealthsimple ×2, Capital One® ×2. BMO® VIPorter® (Chrome thật): 70,000 + chia 50 triệu điểm, apply tới
+  08/12/2026.
+- **Amex® Canada chia phiên lần thứ ba:** browser pane thấy cả nhóm "SPECIAL OFFER" (Gold 90k, Green, Business Gold, Marriott
+  Bonvoy® 100k, Business Platinum 150k, Aeroplan® Business Reserve 120k); Chrome thật cùng giờ thấy mức thường hết (Gold 60k —
+  trang không in "SPECIAL OFFER", Green 10,000/$1,000, Business Gold 70k, Marriott 70k, Business Platinum 120k, Business Reserve
+  90k). Hai phiên lệch = hoà → giữ site (đang khớp nhóm thường). Hilton "Offer ends January 11, 2027", Aeroplan® Card 45k ($900),
+  Cobalt 15k, Marriott Business 80k, Platinum 100k, Reserve 85k khớp.
+- Tài khoản ngân hàng 29: Scotiabank® Preferred/Ultimate $1,000 ($700 + $200 + $100), Student $175; BMO® $1,100 (trang
+  `/new-bank-account-offers-and-promotions/`: $800 + $200 + $100, mở trước 01/03/2027 — trang Performance/Premium KHÔNG in số
+  $1,100, đọc trang offers) + Student $300 Tech Reward; RBC® VIP/Signature $600 (01/03/2027), Student $150 (31/05/2027), Day to
+  Day $150 (08/12/2026); Simplii™ $350 + HISA 5.00% (31/01/2027); Tangerine® chequing $250; National Bank® newcomer vẫn "promotion
+  ended". `audit:rebates` khớp Finly.
+- Thẻ Mỹ: task định kỳ 26/11 (38 khớp) + `audit:us-offers` hôm nay (18 Chase® khớp) + spot-check Black Friday ở pane: Amex®
+  Platinum "as high as 175,000", Gold 100,000, Business Platinum 300,000; Capital One® Venture X 75,000/$4,000, Venture 75K + $300
+  "Limited-Time Offer" — khớp.
+- Transfer bonus Mỹ: `sync:us-transfer-bonuses -- --dry` → "Không có bonus nào đổi" so với file 23/11 (cảnh báo Copa thiếu ô
+  ở `/transfer-partners#my` là chuyện cũ). Canada: không thấy bonus mới (avionrewards.com, tìm web) — chỉ còn RBC® → Avios®.
+
+**Job:** `expire-offers` 27/11 02:33Z đỏ 5 lượt HTTP 000 (runner không kết nối được ghe1a.com, lần thứ 7 cùng kiểu, mục 23/11) —
+không phải lỗi code; lượt 20:00 UTC thường xanh.
+
+**Codex không chạy được:** hết hạn mức ChatGPT giữa vòng (mở lại 13:57). Mình tự soát ba thứ tự hết hạn 30/11–01/12, không cần
+sửa: (1) `/transfer-bonuses` và khối trang chủ có `canadaEmpty` khi mục Canada rỗng, mục Mỹ vẫn hiện; (2) mọi chỗ in lãi Tangerine®
+(`bankAccountBySlug` → trang riêng + JSON-LD + meta, `bank-compare`, `bank-account-finder`) đi qua `withLiveRate`; `BankNextSteps`,
+`/api/search`, ItemList `/bank-accounts` nhận `BANK_ACCOUNTS` thô nhưng không in lãi; (3) rebate boost hết 30/11 — đúng kế hoạch mục 26/11.
+
+**Chờ tác giả:** mục transfer bonus Canada rỗng từ 01/12. Tangerine® Savings 4.50% hết 30/11 (trang tự về 0.30%). Rebate boost hết
+30/11: Scotiabank® Passport™/Momentum® $200 → $100, Gold Amex® $200 → $150 (sửa seed khi job đỏ). BMO® Black Friday + RBC® Day to
+Day hạn 08/12. Venture hết 07/12. WestJet RBC® rebate $140 → $50 và Neo United® $125 → $100 sau 31/12.
